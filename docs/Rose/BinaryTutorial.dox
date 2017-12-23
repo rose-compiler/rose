@@ -1,6 +1,6 @@
 // -*- c++ -*-
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** @page binary_tutorial Binary analysis tutorial
@@ -115,7 +115,7 @@ namespace BinaryAnalysis {
  *
  *  The Partitioner2 namespace contains many classes, but @ref Partitioner2::Engine "Engine" is the highest abstraction and the
  *  one that most tools use.  In this example, we are invoking the @ref Partitioner2::Engine::frontend "frontend", which is
- *  similar in nature to ROSE's global @ref frontend in that it does everything necessary to make ROSE ready to do analysis: it
+ *  similar in nature to ROSE's global @ref ::frontend in that it does everything necessary to make ROSE ready to do analysis: it
  *  parses, loads, disassembles, partitions, runs basic analysis, and checks consistency. In the end, it returns an abstract
  *  syntax tree (AST).
  *
@@ -132,7 +132,7 @@ namespace BinaryAnalysis {
  *
  *  Now that an abstract syntax tree has been created we can "unparse" it. Unparsing in a binary is slightly different
  *  than unparsing source code. Binary specimens are usually not transformed like source code, so the unparser for a binary
- *  generates a human-readable pseudo-assembly listing instead.  We could have also called the global @ref backend (same as
+ *  generates a human-readable pseudo-assembly listing instead.  We could have also called the global @ref ::backend (same as
  *  source code) which would have produced a number of output files including a new executable, but backend only works on
  *  SgProject nodes which might not be present (see above).
  *
@@ -140,19 +140,40 @@ namespace BinaryAnalysis {
  *
  *  @includelineno binaryHelloWorld.C
  *
+ *
+ *
+ *  @section bintut_compile Compiling programs that use ROSE
+ *
  *  To compile this program you'll want to use the same compiler, preprocessor switches, compiler switches, and loader switches
- *  as are used when compiling ROSE.  This is important!  For instance, if you've compiled Boost with default settings it
- *  probably has multi-threading support, in which case if you're compiling with g++ you'll amost certainly need the "-pthread"
- *  switch in your compile and link commands, and failing to do so might result in core dumps.  ROSE has a tool that provides
- *  you with this information: rose-config.  Invoke it with one argument, the word "cxx", "cppflags", "cflags", or "ldflags"
- *  to get the necessary switches.
+ *  as are used when compiling ROSE.  This is important! Since C++ has no official, documented application binary interface,
+ *  mixing libraries compiled with different compilers, compiler versions, compiler optimization levels, or even other
+ *  seemingly benign compiler switches is not guaranteed to work.  The easiest way to compile the above example is to change
+ *  directories to <code>$ROSE_BUILD/tutorial</code>, where $ROSE_BUILD is the top of your build tree, and run <code>make
+ *  binaryHelloWorld</code>. Similar commands will work for the other examples in this tutorial.
  *
- *  When you run the "Hello, World!" example you may need to provide paths for the dynamic libraries. It is important to use
- *  the currect versions of libraries--the same versions used when compiling rose--so the rose-config command comes in handy
- *  again with its "libdirs" setting, which should be stored in the @c LD_LIBRARY_PATH environment variable on Linux (similar
- *  mechanisms exist on other operating systems).  See the output from "rose-config --help".
+ *  On the other hand, if you've already installed the ROSE library and blown away your build tree, or if you're writing your
+ *  own programs that use ROSE, you won't be able to leverage ROSE's own build system to compile your program, and you probably
+ *  have no idea what compiler command was used to compile ROSE. Fear not, ROSE installed a "rose-config" tool in its "bin"
+ *  directory that has all this info (at least if you configured and built ROSE using GNU auto-tools; CMake users are out of
+ *  luck for the time being). Using it is a three step process:
  *
- * 
+ *  @li First, you need to be able to run "rose-config". Since it uses a couple shared libraries, you may need to add those
+ *  directories to your LD_LIBRARY_PATH environment variable. On my machine, I need the directory that holds the Java virtual
+ *  machine library (libjvm.so) and the directory that holds the Boost libraries. Be sure to use the same libraries that were
+ *  used when you compiled ROSE, and be sure that LD_LIBRARY_PATH is exported.  Once you do this, the <code>rose-config
+ *  --help</code> should work. If the program runs but you don't get a man page, try installing perldoc, which on Debian-based
+ *  systems (inc. Ubunbu) is done with <code>sudo apt-get install perl-doc</code>.
+ *
+ *  @li Once rose-config is working, you can compile your program like this: <code>$(rose-config cxx) $(rose-config cppflags)
+ *  $(rose-config cxxflags) -o binaryHelloWorld binaryHelloWorld.C $(rose-config ldflags)</code>.  Most projects will have a
+ *  Makefile or CMakeLists.txt that can call rose-config to set variables. Traditionally, makefiles have variables with the
+ *  same name (but upper case) as the argument passed to rose-config.  The @ref installation "ROSE installation guide" as an
+ *  example makefile at the bottom of the page.
+ *
+ *  @li When you run your program, you may need additional shared libraries beyond what is needed to run rose-config. You can
+ *  get this list with <code>rose-config libdirs</code> and add them to your LD_LIBRARY_PATH environment variable. It is
+ *  important that you use the same libraries at runtime as you did when compiling ROSE and your program.
+ *
  *
  *
  *  @section bintut_fcfg Generating a function control flow graph.
@@ -204,7 +225,7 @@ namespace BinaryAnalysis {
  *
  *  @snippet binaryCallGraph.C namespaces
  *
- *  This time we'll use a few namespaces to reduce our typing. The @ref rose::Diagnostics namespace brings into scope the
+ *  This time we'll use a few namespaces to reduce our typing. The @ref Rose::Diagnostics namespace brings into scope the
  *  diagnostic support (@c mlog and @c FATAL in this example) which is accessed through the "--log" or "-L" command-line
  *  switches and controls what kinds of debugging output is produced. If you run this program with "-L all" you'll get traces
  *  and debugging from all the ROSE components that use this mechanism; see "-L help" for info about fine tuning this.
@@ -311,9 +332,99 @@ namespace BinaryAnalysis {
  *
  *
  *
+ *  @section bintut_dominators Graph dominators and post dominators
+ *
+ *  Loosely speaking, the dominator of a vertex of a graph is another vertex that's visited on every path from some
+ *  starting vertex to the vertex in question.  Most of the time, we're interested in an immediate dominator, which is the
+ *  closest dominator to the vertex in question. A more rigorous definition can be found in Wikipedia, among other places.
+ *  Post-dominators are similar in that a post dominator of a vertex is some other vertex that's visited on every path from the
+ *  vertex in question to some ending vertex.
+ *
+ *  ROSE uses the @ref Sawyer::Container::Graph "Sawyer Graph API" for all binary analysis graphs, and Sawyer has functions for
+ *  calculating dominators and post-dominators. The following example is a tool that finds the dominator for each vertex in the
+ *  control flow graph of each function.
+ *
+ *  @snippet binaryDominance.C headers
+ *
+ *  The first step, above, is to include the appropriate declarations. Our convention for writing tools is to describe the tool
+ *  with a couple of strings that appear at the very top of the source code. These strings are used later in the program to
+ *  generate the documentation for the "--help" output.
+ *
+ *  This tool is so simple that everything else is in "main". First we initialize things:
+ *
+ *  @snippet binaryDominance.C init
+ *
+ *  The @ref Rose::initialize "ROSE_INITIALIZE" macro is always the first ROSE-related statement and checks that this tool was
+ *  compiled with header files that are binary compatible with the ROSE library.  Then we create a partitioning engine to parse
+ *  the command-line to get the specimen resources. The specimen is some combination of a ELF or PE file name, raw memory
+ *  dumps, S-Records, and/or process IDs.  The @ref Rose::BinaryAnalysis::Partitioner2::Engine::partition "engine.partition"
+ *  call does all the hard work of parsing containers, loading data into the virtual address space, decoding CPU instructions,
+ *  and creating basic blocks and functions. It returns a @ref Rose::BinaryAnalysis::Partitioner2::Partitioner "partitioner"
+ *  object that stores all the results, which include a global control flow graph.
+ *
+ *  Then we iterate over the functions:
+ *
+ *  @snippet binaryDominance.C iterate
+ *
+ *  We want to create a function CFG, but all we have from the partitioner is a global CFG. We can use the fact that a function
+ *  CFG is a subset of the global CFG and therefore create the function CFG by copying the global CFG and removing all vertices
+ *  and edges that are not part of the function CFG. Although this isn't the most efficient way to create function CFGs in a
+ *  loop over all functions, it is very simple.
+ *
+ *  We'll need to know the entry vertex of the function's CFG:
+ *
+ *  @snippet binaryDominance.C cfg_enter
+ *
+ *  We found the entry vertex in the function CFG by first finding it in the global CFG and then using a feature of Sawyer
+ *  graphs, namely, when a graph is copied its vertices and edges have the same IDs as those in the source graph, and we can
+ *  obtain a vertex pointer (iterator) in constant time if we know its ID.  We have to convert the ID to a vertex pointer
+ *  before removing the non-function vertices because IDs are not stable across erase operations, but iterators are.
+ *
+ *  Next we erase the non-function vertices and edges:
+ *
+ *  @snippet binaryDominance.C cfg_build
+ *
+ *  This is the simple way to build a function CFG from a global CFG. It's important to use a post-increment in the
+ *  @c eraseVertex call. Since we're inside a loop iterating over every function, a more efficient implementation would have
+ *  created all the function CFGs in a single pass over the global CFG. As of June 2017, ROSE does not have functions for
+ *  returning function CFGs -- it only has a global CFG -- because there are many details that need to be considered depending
+ *  on the situation (e.g., function calls and returns are two cases that typically need massaging in a function CFG depending
+ *  on the purpose of the CFG).
+ *
+ *  Finally, we get to the real meat of this example: finding the immediate dominator for every vertex in the function CFG
+ *  given the CFG's entry vertex:
+ *
+ *  @snippet binaryDominance.C dominators
+ *
+ *  The @ref Sawyer::Container::Algorithm::graphDominators "graphDominators" function can handle any type of Sawyer graph, thus
+ *  we could also pass a function call graph or a data-flow graph.
+ *
+ *  The return value is a vector indexed by vertex ID, whose values point to either the corresponding immediate dominator or
+ *  the vertex end iterator (not all vertices have an immediate dominator).  Using a vector indexed by vertex ID is an idiom
+ *  used throughout ROSE whenever we need to associated extra data with an existing graph. Since a vertex pointer (iterator)
+ *  can be converted to a vertex ID in constant time, and indexing into the vector is constant time, we can always find the
+ *  extra data in constant time. And since vertex IDs are consecutive integers beginning at zero, this is also a
+ *  space-efficient way to represent data that's present for most, if not all, vertices.
+ *
+ *  Finally, let us iterate over the results to print them:
+ *
+ *  @snippet binaryDominance.C results
+ *
+ *  Since vector indexes are equivalent to vertex IDs, we can obtain a vertex with a constant-time @c findVertex call and a
+ *  constant-time iterator dereference.  Since this is a CFG from the partitioner (or at least a copy thereof), we can use the
+ *  @ref Rose::BinaryAnalysis::Partitioner2::Partitioner::vertexName "vertexName" static method to print some info about
+ *  it. Using the static method (that takes a vertex value) is important; the non-static method (that takes a vertex iterator)
+ *  will think that we're handing it a pointer to some vertex in the partitioner's own global CFG.
+ *
+ *  Here's the entire program:
+ *
+ *  @includelineno binaryDominance.C
+ *
+ *
+ *  
  *  @section bintut_next Next steps
  *
- *  Most binary analysis capabilities are documented in the @ref rose::BinaryAnalysis namespace. The test directory,
+ *  Most binary analysis capabilities are documented in the @ref Rose::BinaryAnalysis namespace. The test directory,
  *  "$ROSE_SOURCE/tests/nonsmoke/functional/roseTests/BinaryTests", also has many examples, some of which are slightly hard to read since there
  *  main purpose is to test rather than demonstrate.  The "$ROSE_SOURCE/projects/BinaryAnalysisTools" directory (as well as
  *  some other project directories) has real programs that use the binary analysis interface. */

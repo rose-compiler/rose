@@ -1,9 +1,10 @@
 // This simple example code shows how to retrieve symbol information 
 // on Linux (ELF) or Windows (PE) binary executables.
 
-#include "rose.h"
+#include <rose.h>                                       // must be first
+#include <stringify.h>                                  // ROSE
 #define __STDC_FORMAT_MACROS
-#include <inttypes.h>
+#include <inttypes.h>                                   // ROSE
 
 class Visitor: public AstSimpleProcessing
    {
@@ -25,9 +26,13 @@ Visitor::visit(SgNode* n)
           printf ("symbol->get_size()      = %" PRIu64 " \n",symbol->get_size());
           printf ("symbol->get_value()     = %" PRIu64 " \n",symbol->get_value());
 
-          printf ("symbol->get_type()      = %u = %s \n",symbol->get_type(),symbol->stringifyType().c_str());
-          printf ("symbol->get_binding()   = %u = %s \n",symbol->get_binding(),symbol->stringifyBinding().c_str());
-          printf ("symbol->get_def_state() = %u = %s \n",symbol->get_def_state(),symbol->stringifyDefState().c_str());
+          std::string typeStr = Rose::stringifySgAsmGenericSymbolSymbolType(symbol->get_type());
+          std::string bindingStr = Rose::stringifySgAsmGenericSymbolSymbolBinding(symbol->get_binding());
+          std::string stateStr = Rose::stringifySgAsmGenericSymbolSymbolDefState(symbol->get_def_state());
+
+          printf ("symbol->get_type()      = %u = %s\n", symbol->get_type(), typeStr.c_str());
+          printf ("symbol->get_binding()   = %u = %s\n", symbol->get_binding(), bindingStr.c_str());
+          printf ("symbol->get_def_state() = %u = %s\n", symbol->get_def_state(), stateStr.c_str());
 
           /* All the ELF-specific stuff and most of the COFF-specific stuff is also represented in the base class, displayed
            * above.  The general rule is that notions that are present in at least two file formats are represented in a
@@ -67,7 +72,7 @@ Visitor::visit(SgNode* n)
 int
 main( int argc, char * argv[] )
    {
-  // Initialize and check compatibility. See rose::initialize
+  // Initialize and check compatibility. See Rose::initialize
      ROSE_INITIALIZE;
 
      SgProject* project = frontend(argc,argv);

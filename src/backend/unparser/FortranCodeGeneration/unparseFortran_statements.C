@@ -18,7 +18,7 @@
 #endif
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 inline bool
 namesMatch ( const string &x, const string &y )
@@ -366,8 +366,9 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
 
      if (usingGfortran)
         {
+       // DQ (3/17/2017): Fixed this to support GNU 5.1.
           if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
-               ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
+               ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
              {
             // gfortran versions before 4.2 can not handle absolute path names in the Fortran specific include mechanism.
 
@@ -2055,7 +2056,9 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
      if (u_rename)
         {
           curprint(",");
-          unparseExprList(u_rename, info, false /*paren*/);
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(u_rename, info, false /*paren*/);
+          unparseExprList(u_rename, info);
         }
        else
         {
@@ -2889,10 +2892,14 @@ FortranCodeGeneration_locatedNode::unparseStopOrPauseStmt(SgStatement* stmt, SgU
      if (kind == SgStopOrPauseStatement::e_stop)
         {
           curprint("STOP ");
-       // curprint(sp_stmt->get_code().str());
           unparseExpression(sp_stmt->get_code(), info);
         }
-       else
+     else if (kind == SgStopOrPauseStatement::e_error_stop)
+        {
+          curprint("ERROR STOP ");
+          unparseExpression(sp_stmt->get_code(), info);
+        }
+     else
         {
           ROSE_ASSERT(kind == SgStopOrPauseStatement::e_pause);
           curprint("PAUSE ");
@@ -3007,7 +3014,11 @@ FortranCodeGeneration_locatedNode::unparseIOStmt(SgStatement* stmt, SgUnparse_In
         }
      
      curprint(" ");
-     unparseExprList(iolist, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
+
      unp->cur.insert_newline(1); 
    }
 #endif
@@ -3161,7 +3172,10 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
         }
 
      SgExprListExp* iolist = printStatement->get_io_stmt_list();
-     unparseExprList(iolist, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
 
      unp->cur.insert_newline(1); 
    }
@@ -3275,7 +3289,10 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
           curprint(") ");
         }
 
-     unparseExprList(iolist, info, false /*paren*/);
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3301,7 +3318,11 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
      curprint(") ");
 
      SgExprListExp* iolist = writeStatement->get_io_stmt_list();
-     unparseExprList(iolist, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3431,7 +3452,12 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
 
      SgExprListExp* iolist = inquireStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3450,7 +3476,11 @@ FortranCodeGeneration_locatedNode::unparseFlushStatement(SgStatement* stmt, SgUn
 
      SgExprListExp* iolist = flushStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
      unp->cur.insert_newline(1); 
    }
 
@@ -3469,7 +3499,12 @@ FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgU
 
      SgExprListExp* iolist = rewindStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3488,7 +3523,11 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
 
      SgExprListExp* iolist = backspaceStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
      unp->cur.insert_newline(1); 
    }
 
@@ -3507,7 +3546,12 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
 
      SgExprListExp* iolist = endfileStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3526,7 +3570,11 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
 
      SgExprListExp* iolist = waitStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
 
      unp->cur.insert_newline(1); 
    }
@@ -4247,17 +4295,17 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
        // Code generation support for "pure" attribute
           if (procedureHeader->get_functionModifier().isPure() == true)
              {
-               curprint("pure ");
+               curprint("PURE ");
              }
 
           if (procedureHeader->get_functionModifier().isElemental() == true)
              {
-               curprint("elemental ");
+               curprint("ELEMENTAL ");
              }
 
           if (procedureHeader->get_functionModifier().isRecursive() == true)
              {
-               curprint("recursive ");
+               curprint("RECURSIVE ");
              }
 
        // Output the forward declaration only
@@ -5346,7 +5394,10 @@ FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, S
      ROSE_ASSERT(exprList != NULL);
 
      curprint("allocate( ");
-     unparseExprList(exprList, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(exprList, info, false /*paren*/);
+     unparseExprList(exprList, info);
 
      if (s->get_stat_expression() != NULL)
         {
@@ -5378,7 +5429,10 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
      ROSE_ASSERT(exprList != NULL);
 
      curprint("deallocate( ");
-     unparseExprList(exprList, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(exprList, info, false /*paren*/);
+     unparseExprList(exprList, info);
 
      if (s->get_stat_expression() != NULL)
         {

@@ -63,7 +63,7 @@ std::string toString( std::vector<SymbolicVal> & analvec)
 {
   std::stringstream out;
           for (size_t j = 0; j < analvec.size(); ++j)
-             out << analvec[j].toString()<<" ";
+             out << analvec[j].toString();
   return out.str();
 }
 std::string toString( std::vector< std::vector<SymbolicVal> > & analMatrix)
@@ -175,7 +175,7 @@ GetLoopInfo( const AstNodePtr& s)
        info.domain = op.get_domain1();
        info.domain.ClosureCond();
        if (DebugDep())
-         std::cerr << "domain of statement " << AstToString(s) << " is : " << info.domain.toString() << std::endl;
+         std::cerr << "domain of statement " << AstInterface::AstToString(s) << " is : " << info.domain.toString() << std::endl;
     }
     assert(!info.IsTop());
     return info;
@@ -283,7 +283,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                 ai.get_fileInfo(root,&fileName,&dummy);
                 */
                 /** Due to the time they take, do only the tests that are
-                *        called for
+                *         called for
                 **/
 #ifdef OMEGA
                 switch(test)
@@ -327,7 +327,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                         {
                                 handle = AdhocTest;
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);                            
+                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);                                
 
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
                                 plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
@@ -337,7 +337,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                         {
                                 handle = OmegaTest;
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-                                d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);         
+                                d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);                
 
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
                                 plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
@@ -394,10 +394,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype)
 {
   if (DebugDep())
-  {
-     std::cerr << " /////////////////////////// " << std::endl;
-     std::cerr << "compute array dep between " << AstToString(ref.r1.ref) << " and " << AstToString(ref.r2.ref) << std::endl;
-    }
+     std::cerr << "compute array dep between " << AstInterface::AstToString(ref.r1.ref) << " and " << AstInterface::AstToString(ref.r2.ref) << std::endl;
 
   const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(ref.r1.stmt);
   const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(ref.r2.stmt);
@@ -446,12 +443,6 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
     std::vector<SymbolicVal> cur;
     SymbolicVal left1 = DecomposeAffineExpression(val1, info1.ivars, cur,dim1); 
     SymbolicVal left2 = DecomposeAffineExpression(-val2, info2.ivars,cur,dim2); 
-
-    if (DebugDep()) {
-      std::cerr << "DecomposeAffineExpression() returns left1 "<< left1.toString() <<std::endl;
-      std::cerr << "DecomposeAffineExpression() returns left2 "<< left2.toString() <<std::endl;
-    }
-    
     if (left1.IsNIL() || left2.IsNIL()) {
          precise = false;
          continue;
@@ -468,7 +459,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
     cur.push_back(leftVal);  
     if (DebugDep()) {
        assert(dim+1 == cur.size());
-       std::cerr << "coefficients for induction variables dim1 + dim2 +1 = (" << dim1 << " + " << dim2 << "+ 1)\n";
+       std::cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
        for (size_t i = 0; i < dim; ++i) 
          std::cerr << cur[i].toString() << bounds[i].toString() << " " ;
        std::cerr << cur[dim].toString() << std::endl;
@@ -480,14 +471,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
              continue;
         std::vector<SymbolicVal> split;
         if (SplitEquation(cur, cut, bounds, boundop, split)) 
-        {
-          if (DebugDep()) 
-          {
-            std::cerr << "\t Coefficient is not 0/1/-1, split equation for dim " << i << std::endl;
-            std::cerr << "\t split equation is " << toString(split)  << std::endl;
-          }
-          analMatrix.push_back(split);
-        }
+             analMatrix.push_back(split);
     }
     analMatrix.push_back(cur);
   }
@@ -504,8 +488,6 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   }
   if (DebugDep()) 
       std::cerr << "after normalization, relation matrix = \n" << toString(analMatrix) << std::endl;
-    
-   //  Create DepInfo object  , containing DepEDDRefInfo (derived class for reference counting) 
    DepInfo result=DepInfoGenerator::GetDepInfo(dim1, dim2, deptype, ref.r1.ref, ref.r2.ref, false, ref.commLevel);
   SetDep setdep( info1.domain, info2.domain, &result);
   for (size_t k = 0; setdep && k < analMatrix.size(); ++k) {
@@ -537,18 +519,14 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   {
           adhocProbNum++;
           //adhocDV = PlatoOmegaInterface::DirVector(result);
-                //buffer << "Prob\t" << adhocProbNum << " between " << lineNo1 << " and " << lineNo2 << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tTime\t" << adhocTime << std::endl;
+                  //buffer << "Prob\t" << adhocProbNum << " between " << lineNo1 << " and " << lineNo2 << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tTime\t" << adhocTime << std::endl;
           //buffer << "Prob\t" << adhocProbNum << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tDV\t" << adhocDV << "\tTime\t" << adhocTime <<  std::endl;
                 //PrintResults(buffer.str());
   }
 #endif
 
   if (!setdep)
-  {
-    if (DebugDep()) 
-      std::cerr << "Return empty DepInfo since AnalyzeEquation() failed , SetDep() returns false\n" << std::endl;
-    return DepInfo();
-  }
+      return DepInfo();
   if (precise) 
       result.set_precise(); 
   if (DebugDep()) 
@@ -672,7 +650,7 @@ ComputeDataDep( const AstNodePtr& s1,  const AstNodePtr& s2,
   if (!AnalyzeStmtRefs( fa, s1, cwRef1, crRef1) || 
         (s1 != s2 && !AnalyzeStmtRefs( fa, s2, cwRef2, crRef2))) {
        if (DebugDep())
-          std::cerr << "cannot determine side effects of statements: " << AstToString(s1) << "; or " << AstToString(s2) << std::endl;
+          std::cerr << "cannot determine side effects of statements: " << AstInterface::AstToString(s1) << "; or " << AstInterface::AstToString(s2) << std::endl;
        ComputeIODep( s1, s2, outDeps, inDeps, DEPTYPE_IO);
   }
   StmtRefDep ref = GetStmtRefDep( s1, AST_NULL, s2, AST_NULL);

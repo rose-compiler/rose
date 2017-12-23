@@ -8,7 +8,7 @@
 #include "grammarString.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #define BOOL2STR(b) ((b) ? "true" : "false")
 
@@ -313,7 +313,19 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionHeader (
        // DQ (10/13/2007): Make this the function prototype for the copy mechanism.
        // This also fixes a bug where the code above was causing more than just the 
        // prototype to be output in the Cxx_Grammar.h header file.
-          returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
+
+       // printf ("In AstNodeClass::buildCopyMemberFunctionHeader(): baseName = %s \n",this->baseName.c_str());
+
+       // DQ (3/21/2017): Added support to eliminate override warning in Clang C++11 mode.
+       // returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
+          if (baseName == "Node")
+             {
+               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
+             }
+            else
+             {
+               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const ROSE_OVERRIDE;", "" /* "<copy member function>" */, 1));
+             }
         }
        else
         {

@@ -29,7 +29,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_DEBUGGING_FUNCTION_INTERNALS  0
@@ -1289,6 +1289,8 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
 #if 0
      curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
+#endif
+#if 0
      ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
   // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
      int numberOfComments = -1;
@@ -1531,6 +1533,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
        // Liao, 5/31/2009, add OpenMP support, TODO refactor some code to language independent part
           case V_SgOmpForStatement:                      unparseOmpForStatement(stmt, info); break;
+          case V_SgOmpForSimdStatement:                  unparseOmpForSimdStatement(stmt, info); break;
 
        // DQ (4/16/2011): Added Java specific IR node until we support the Java specific unparsing.
           case V_SgJavaImportStatement:
@@ -2070,7 +2073,7 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(declarationStatement);
                     ROSE_ASSERT(templateDeclaration != NULL);
                     SgName templateName = templateDeclaration->get_name();
-                    curprint ( templateName.str());
+                    curprint (templateName.str());
                     break;
                   }
 
@@ -2080,7 +2083,17 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(declarationStatement);
                     ROSE_ASSERT(enumDeclaration != NULL);
                     SgName enumName = enumDeclaration->get_name();
-                    curprint ( enumName.str());
+                    curprint (enumName.str());
+                    break;
+                  }
+
+            // DQ (3/8/2017): Added support for SgTemplateTypedefDeclaration IR nodes in using declaration (Cxx11_tests/test20017_03.C).
+               case V_SgTemplateTypedefDeclaration:
+                  {
+                    SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(declarationStatement);
+                    ROSE_ASSERT(templateTypedefDeclaration != NULL);
+                    SgName name = templateTypedefDeclaration->get_name();
+                    curprint (name.str());
                     break;
                   }
 
@@ -2488,7 +2501,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME || 0
-     printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt() name = %s (qualified_name = %s)  transformed = %s prototype = %s static = %s friend = %s compiler generated = %s transformed = %s output = %s \n",
+     printf ("In unparseTemplateInstantiationFunctionDeclStmt() name = %s (qualified_name = %s)  transformed = %s prototype = %s static = %s friend = %s compiler generated = %s transformed = %s output = %s \n",
        // templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_qualified_name().str(),
@@ -2510,10 +2523,13 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                (templateInstantiationFunctionDeclaration->get_file_info()->isCompilerGenerated() == true) && 
                (templateInstantiationFunctionDeclaration->get_definition() == NULL) &&
                (templateInstantiationFunctionDeclaration->get_definingDeclaration() == NULL);
+#if 0
+          printf ("In unparseTemplateInstantiationFunctionDeclStmt(): skipforwardDeclarationOfTemplateSpecialization = %s \n",skipforwardDeclarationOfTemplateSpecialization ? "true" : "false");
+#endif
           if (skipforwardDeclarationOfTemplateSpecialization == true)
              {
             // This is a compiler generated forward function declaration of a template instatiation, so skip it!
-#if PRINT_DEVELOPER_WARNINGS || 0
+#if PRINT_DEVELOPER_WARNINGS || 1
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
                curprint ( string("\n/* Skipping output of compiler generated forward function declaration of a template specialization */"));
 #endif
@@ -2526,7 +2542,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // skip output of inlined templates since these are likely to have been used 
             // previously and would be defined too late if provided as an inline template 
             // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS || 0
+#if PRINT_DEVELOPER_WARNINGS || 1
                printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
                curprint ( string("\n/* Skipping output of inlined template specialization */"));
 #endif
@@ -2644,6 +2660,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
        // Now output the function declaration
 #if 0
+          printf ("Now output the function declaration (unparseFuncDeclStmt) \n");
           curprint ("\n/* Now output the function declaration (unparseFuncDeclStmt) */\n ");
 #endif
           unparseFuncDeclStmt(functionDeclaration,info);
@@ -4166,6 +4183,12 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 #endif
 
+#if 0
+  // DQ (5/12/2017): Commented this out appears to cause a problem for Fortran tests in the:
+  //    tests/nonsmoke/functional/roseTests/astOutliningTests directory.
+  // DQ (5/10/2017): This should be commented out (since we now use the specification of the nondefining 
+  // declaration as "output in generated code" to determine when it should be output).
+
   // DQ (11/27/2015): The updated support for templates demonstrates that we need this code (see test2004_37.C).
   // However, the larger issue is that the defining function declaration should not have been output, which is 
   // the root cause of this problem.
@@ -4190,6 +4213,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
              }
         }
+#endif
 
 #if 0
      printf ("funcdecl_stmt = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
@@ -6086,7 +6110,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
             else
              {
-               printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+            // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+               mprintf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
              }
 
        // For C we need to use the GNU 4.9 compiler.
@@ -6555,7 +6580,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                  else
                   {
-                    printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+                 // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+                    mprintf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
                   }
 #if 0
                printf ("In unparseVarDeclStmt(): is_C_Compiler = %s is_Cxx_Compiler = %s \n",is_C_Compiler ? "true" : "false",is_Cxx_Compiler ? "true" : "false");
@@ -7097,7 +7123,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("In unparseVarDeclStmt(): Output asm register name code \n");
 #endif
                       // an asm ("<register name>") is in use
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+                      // DQ (2/4/2017): Added support for asm register names for Intel compiler (see test2015_105,c).
+                         curprint ( string(" __asm__ (\""));
+#else
                          curprint ( string(" asm (\""));
+#endif
                       // curprint ( string("<unparse register name>";
                          curprint ( unparse_register_name(decl_item->get_register_name_code()));
                          curprint ( string("\")"));
@@ -7112,7 +7143,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("In unparseVarDeclStmt(): Output asm register name \n");
 #endif
                       // an asm ("<register name>") is in use
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+                      // DQ (2/4/2017): Added support for asm register names for Intel compiler (see test2015_105,c).
+                         curprint ( string(" __asm__ (\""));
+#else
                          curprint ( string(" asm (\""));
+#endif
                          curprint ( decl_item->get_register_name_string() );
                          curprint ( string("\")"));
                        }
@@ -8754,7 +8790,10 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
                SgBasicBlock* basicBlock = isSgBasicBlock(case_body);
                ROSE_ASSERT(basicBlock != NULL);
-               SgStatementPtrList::iterator first = basicBlock->get_statements().begin();
+
+            // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+            // SgStatementPtrList::iterator first = basicBlock->get_statements().begin();
+
 #if 0
 #if 0
                printf ("Top of loop to find first non-transformation: *first = %p = %s \n",*first,(*first)->class_name().c_str());
@@ -8953,13 +8992,34 @@ Unparse_ExprStmt::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) {
-  SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
-  ROSE_ASSERT(goto_stmt != NULL);
+Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) 
+   {
+     SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
+     ROSE_ASSERT(goto_stmt != NULL);
 
-  curprint ( string("goto " ) + goto_stmt->get_label()->get_label().str());
-  if (!info.SkipSemiColon()) { curprint ( string(";")); }
-}
+     if (goto_stmt->get_label() != NULL)
+        {
+       // DQ (11/22/2017): Original code.
+          curprint ( string("goto " ) + goto_stmt->get_label()->get_label().str());
+
+        }
+       else
+        {
+       // DQ (11/22/2017): Added suport for GNU extension for computed goto.
+          curprint ("goto *");
+          SgExpression* selector_expression = goto_stmt->get_selector_expression();
+          ROSE_ASSERT(selector_expression != NULL);
+
+          SgUnparse_Info ninfo(info);
+          unparseExpression(selector_expression,ninfo);
+        }
+
+     if (!info.SkipSemiColon())
+        {
+          curprint ( string(";")); 
+        }
+   }
+
 
 static bool
 isOutputAsmOperand(SgAsmOp* asmOp)
@@ -10767,21 +10827,48 @@ void Unparse_ExprStmt::unparseOmpForStatement (SgStatement* stmt,     SgUnparse_
   }
 }
 
+void Unparse_ExprStmt::unparseOmpForSimdStatement (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  SgOmpForSimdStatement * f_stmt = isSgOmpForSimdStatement (stmt);
+  ROSE_ASSERT (f_stmt != NULL);
+
+  unparseOmpDirectivePrefixAndName(stmt, info);
+
+  unparseOmpBeginDirectiveClauses(stmt, info);
+  // TODO a better way to new line? and add indentation 
+  curprint (string ("\n"));
+
+  SgUnparse_Info ninfo(info);
+  if (f_stmt->get_body())
+  {
+    unparseStatement(f_stmt->get_body(), ninfo);
+  }
+  else
+  {
+    cerr<<"Error: empty body for:"<<stmt->class_name()<<" is not allowed!"<<endl;
+    ROSE_ASSERT(false);
+  }
+}
+
+
 void
 Unparse_ExprStmt::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnparse_Info& info)
 {
   ROSE_ASSERT (stmt != NULL);
   // optional clauses
-  if (isSgOmpClauseBodyStatement(stmt))
+  SgOmpClauseBodyStatement* bodystmt= isSgOmpClauseBodyStatement(stmt);
+  SgOmpDeclareSimdStatement* simdstmt= isSgOmpDeclareSimdStatement(stmt);
+  if (bodystmt||simdstmt)
   {
-    const SgOmpClausePtrList& clause_ptr_list = isSgOmpClauseBodyStatement(stmt)->get_clauses();
+    const SgOmpClausePtrList& clause_ptr_list = bodystmt?bodystmt->get_clauses():simdstmt->get_clauses();
     SgOmpClausePtrList::const_iterator i;
     for (i= clause_ptr_list.begin(); i!= clause_ptr_list.end(); i++)
     {
       SgOmpClause* c_clause = *i;
       unparseOmpClause(c_clause, info);
     }
-  }
+  } 
 }
 
 
@@ -10794,7 +10881,19 @@ Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnpars
      SgStaticAssertionDeclaration* staticAssertionDeclaration = isSgStaticAssertionDeclaration(stmt);
      ROSE_ASSERT(staticAssertionDeclaration != NULL);
 
-     curprint("_Static_assert(");
+  // DQ (4/29/2017): This is the C11 syntax, and for C++11 we need the alternative syntax ("static_assert").
+  // curprint("_Static_assert(");
+     if (SageInterface::is_Cxx_language() == true)
+        {
+       // This must be C++11 (or later).
+          curprint("static_assert(");
+        }
+       else
+        {
+       // This must be C11 (or later).
+          curprint("_Static_assert(");
+        }
+
      unparseExpression(staticAssertionDeclaration->get_condition(), info);
      curprint(",\"");
   // unparseExpression(staticAssertionDeclaration->get_string_literal(), info);

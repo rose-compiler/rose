@@ -40,10 +40,10 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Message logging mechanism.
 Sawyer::Message::Facility TestChildPointersInMemoryPool::mlog;
@@ -2858,9 +2858,10 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
                     if (isSgTemplateInstantiationDecl(definingDeclaration) != NULL)
                        {
-                         printf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-                         printf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                         printf ("Warning: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                      // DQ (3/11/2017): Fixed to use message streams.
+                         mprintf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                         mprintf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         mprintf ("Warning: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
                        }
                       else
                        {
@@ -4778,6 +4779,13 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
           ROSE_ASSERT(symbol->get_parent() != NULL);
         }
 
+  // DQ (10/16/2017): Skip parent pointer checking for the untyped IR nodes.
+     if (isSgUntypedNode(locatedNode) != NULL)
+        {
+          printf ("TestParentPointersInMemoryPool::visit(): Skipping SgUntypedNode IR Node \n");
+          return;
+        }
+
 #if 0
      if (isSgExpression(locatedNode) != NULL)
         {
@@ -5071,7 +5079,7 @@ void TestChildPointersInMemoryPool::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::TestChildPointersInMemoryPool");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::TestChildPointersInMemoryPool");
         }
    }
 
@@ -5407,7 +5415,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
-                              printf ("Warning: TestChildPointersInMemoryPool::visit(). SgVariableSymbol is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                           // DQ (3/19/2017): Added support for using message logging.
+                              mprintf ("Warning: TestChildPointersInMemoryPool::visit(). SgVariableSymbol is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                             }
                          break;

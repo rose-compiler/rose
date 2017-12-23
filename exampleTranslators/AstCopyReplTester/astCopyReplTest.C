@@ -103,11 +103,15 @@ int main ( int argc, char * argv[] )
    {
      ios::sync_with_stdio();     // Syncs C++ and C I/O subsystems!
 
+  // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
+  // any warning message using the message looging feature in ROSE will fail).
+     ROSE_INITIALIZE;
+
   // Declare usage (if incorrect number of inputs):
      if (argc == 1)
         {
        // Print usage and exit with exit status == 1
-          rose::usage (1);
+          Rose::usage (1);
         }
 
      SgProject sageProject (argc,argv);

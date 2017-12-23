@@ -18,6 +18,9 @@
 #include <iostream>
 #endif /* NDEBUG */
 
+
+#define WITH_BINARY_ANALYSIS 0
+
 // #include "Cxx_Grammar.h"
 
 // DQ (10/5/2014): We can't include this here.
@@ -117,2586 +120,693 @@ namespace sg
     return static_cast<const SageNode&>(n);
   }
 
-/// \brief implementation for dispatcher objects
-///        ( invokes roseVisitor.handle(sgnode) )
-  template <class T>
-  struct VisitDispatcher
+#define GEN_VISIT(X) \
+    void visit(X * n) { rv.handle(*n); }
+
+  template <class RoseVisitor>
+  struct VisitDispatcher : ROSE_VisitorPatternDefaultBase
   {
-    template <class SageNode>
-    static
-    void dispatch(T& rv, SageNode& node)
-    {
-      rv.handle(node);
-    }
+    explicit
+    VisitDispatcher(const RoseVisitor& rosevisitor)
+    : rv(rosevisitor)
+    {}
+
+    GEN_VISIT(SgNode)
+
+    GEN_VISIT(SgName)
+    GEN_VISIT(SgSymbolTable)
+    GEN_VISIT(SgPragma)
+    GEN_VISIT(SgModifierNodes)
+    GEN_VISIT(SgConstVolatileModifier)
+    GEN_VISIT(SgStorageModifier)
+    GEN_VISIT(SgAccessModifier)
+    GEN_VISIT(SgFunctionModifier)
+    GEN_VISIT(SgUPC_AccessModifier)
+    GEN_VISIT(SgLinkageModifier)
+    GEN_VISIT(SgSpecialFunctionModifier)
+    GEN_VISIT(SgTypeModifier)
+    GEN_VISIT(SgElaboratedTypeModifier)
+    GEN_VISIT(SgBaseClassModifier)
+    GEN_VISIT(SgDeclarationModifier)
+    GEN_VISIT(SgOpenclAccessModeModifier)
+    GEN_VISIT(SgModifier)
+    GEN_VISIT(Sg_File_Info)
+    GEN_VISIT(SgSourceFile)
+
+    GEN_VISIT(SgUnknownFile)
+    GEN_VISIT(SgFile)
+    GEN_VISIT(SgFileList)
+    GEN_VISIT(SgDirectory)
+    GEN_VISIT(SgDirectoryList)
+    GEN_VISIT(SgProject)
+    GEN_VISIT(SgOptions)
+    GEN_VISIT(SgUnparse_Info)
+    GEN_VISIT(SgFuncDecl_attr)
+    GEN_VISIT(SgClassDecl_attr)
+    GEN_VISIT(SgTypedefSeq)
+    GEN_VISIT(SgFunctionParameterTypeList)
+    GEN_VISIT(SgTemplateParameter)
+    GEN_VISIT(SgTemplateArgument)
+    GEN_VISIT(SgTemplateParameterList)
+    GEN_VISIT(SgTemplateArgumentList)
+    GEN_VISIT(SgTemplateMemberFunctionDeclaration)
+    GEN_VISIT(SgTemplateFunctionDeclaration)
+    GEN_VISIT(SgTemplateFunctionDefinition)
+    GEN_VISIT(SgTemplateVariableDeclaration)
+    GEN_VISIT(SgTemplateParameterVal)
+    GEN_VISIT(SgTemplateFunctionRefExp)
+    GEN_VISIT(SgTemplateMemberFunctionRefExp)
+    GEN_VISIT(SgTypeTraitBuiltinOperator)
+    GEN_VISIT(SgBitAttribute)
+    GEN_VISIT(SgAttribute)
+    GEN_VISIT(SgBaseClass)
+    GEN_VISIT(SgUndirectedGraphEdge)
+    GEN_VISIT(SgDirectedGraphEdge)
+    GEN_VISIT(SgGraphNode)
+    GEN_VISIT(SgGraphEdge)
+    GEN_VISIT(SgStringKeyedBidirectionalGraph)
+    GEN_VISIT(SgIntKeyedBidirectionalGraph)
+    GEN_VISIT(SgBidirectionalGraph)
+    GEN_VISIT(SgIncidenceDirectedGraph)
+    GEN_VISIT(SgIncidenceUndirectedGraph)
+    GEN_VISIT(SgGraph)
+    GEN_VISIT(SgGraphNodeList)
+    GEN_VISIT(SgGraphEdgeList)
+    GEN_VISIT(SgQualifiedName)
+    GEN_VISIT(SgNameGroup)
+    GEN_VISIT(SgCommonBlockObject)
+    GEN_VISIT(SgDimensionObject)
+    GEN_VISIT(SgDataStatementGroup)
+    GEN_VISIT(SgDataStatementObject)
+    GEN_VISIT(SgDataStatementValue)
+    GEN_VISIT(SgFormatItem)
+    GEN_VISIT(SgFormatItemList)
+    GEN_VISIT(SgTypeTable)
+    GEN_VISIT(SgSupport)
+    GEN_VISIT(SgForStatement)
+    GEN_VISIT(SgMatlabForStatement)
+    GEN_VISIT(SgForInitStatement)
+    GEN_VISIT(SgCatchStatementSeq)
+    GEN_VISIT(SgFunctionParameterList)
+    GEN_VISIT(SgCtorInitializerList)
+    GEN_VISIT(SgBasicBlock)
+    GEN_VISIT(SgGlobal)
+    GEN_VISIT(SgIfStmt)
+    GEN_VISIT(SgFunctionDefinition)
+    GEN_VISIT(SgWhileStmt)
+    GEN_VISIT(SgDoWhileStmt)
+    GEN_VISIT(SgSwitchStatement)
+    GEN_VISIT(SgCatchOptionStmt)
+    GEN_VISIT(SgVariableDeclaration)
+    GEN_VISIT(SgVariableDefinition)
+    GEN_VISIT(SgEnumDeclaration)
+    GEN_VISIT(SgAsmStmt)
+    GEN_VISIT(SgTypedefDeclaration)
+    GEN_VISIT(SgFunctionTypeTable)
+    GEN_VISIT(SgExprStatement)
+    GEN_VISIT(SgLabelStatement)
+    GEN_VISIT(SgCaseOptionStmt)
+    GEN_VISIT(SgTryStmt)
+    GEN_VISIT(SgDefaultOptionStmt)
+    GEN_VISIT(SgBreakStmt)
+    GEN_VISIT(SgContinueStmt)
+    GEN_VISIT(SgReturnStmt)
+    GEN_VISIT(SgGotoStatement)
+    GEN_VISIT(SgSpawnStmt)
+    GEN_VISIT(SgNullStatement)
+    GEN_VISIT(SgVariantStatement)
+    GEN_VISIT(SgPragmaDeclaration)
+    GEN_VISIT(SgTemplateDeclaration)
+    GEN_VISIT(SgTemplateInstantiationDecl)
+    GEN_VISIT(SgTemplateInstantiationDefn)
+    GEN_VISIT(SgTemplateClassDeclaration)
+    GEN_VISIT(SgTemplateClassDefinition)
+    GEN_VISIT(SgTemplateInstantiationFunctionDecl)
+    GEN_VISIT(SgTemplateInstantiationMemberFunctionDecl)
+    GEN_VISIT(SgProgramHeaderStatement)
+    GEN_VISIT(SgProcedureHeaderStatement)
+    GEN_VISIT(SgEntryStatement)
+    GEN_VISIT(SgFortranNonblockedDo)
+    GEN_VISIT(SgInterfaceStatement)
+    GEN_VISIT(SgParameterStatement)
+    GEN_VISIT(SgCommonBlock)
+    GEN_VISIT(SgModuleStatement)
+    GEN_VISIT(SgUseStatement)
+    GEN_VISIT(SgStopOrPauseStatement)
+    GEN_VISIT(SgPrintStatement)
+    GEN_VISIT(SgReadStatement)
+    GEN_VISIT(SgWriteStatement)
+    GEN_VISIT(SgOpenStatement)
+    GEN_VISIT(SgCloseStatement)
+    GEN_VISIT(SgInquireStatement)
+    GEN_VISIT(SgFlushStatement)
+    GEN_VISIT(SgBackspaceStatement)
+    GEN_VISIT(SgRewindStatement)
+    GEN_VISIT(SgEndfileStatement)
+    GEN_VISIT(SgWaitStatement)
+    GEN_VISIT(SgCAFWithTeamStatement)
+    GEN_VISIT(SgFormatStatement)
+    GEN_VISIT(SgFortranDo)
+    GEN_VISIT(SgForAllStatement)
+    GEN_VISIT(SgIOStatement)
+    GEN_VISIT(SgUpcNotifyStatement)
+    GEN_VISIT(SgUpcWaitStatement)
+    GEN_VISIT(SgUpcBarrierStatement)
+    GEN_VISIT(SgUpcFenceStatement)
+    GEN_VISIT(SgUpcForAllStatement)
+    GEN_VISIT(SgOmpParallelStatement)
+    GEN_VISIT(SgOmpSingleStatement)
+    GEN_VISIT(SgOmpSimdStatement)
+    GEN_VISIT(SgOmpTaskStatement)
+    GEN_VISIT(SgOmpForStatement)
+    GEN_VISIT(SgOmpForSimdStatement)
+    GEN_VISIT(SgOmpDoStatement)
+    GEN_VISIT(SgOmpSectionsStatement)
+    GEN_VISIT(SgOmpClauseBodyStatement)
+    GEN_VISIT(SgOmpAtomicStatement)
+    GEN_VISIT(SgOmpMasterStatement)
+    GEN_VISIT(SgOmpSectionStatement)
+    GEN_VISIT(SgOmpOrderedStatement)
+    GEN_VISIT(SgOmpWorkshareStatement)
+    GEN_VISIT(SgOmpCriticalStatement)
+    GEN_VISIT(SgOmpBodyStatement)
+    GEN_VISIT(SgBlockDataStatement)
+    GEN_VISIT(SgImplicitStatement)
+    GEN_VISIT(SgStatementFunctionStatement)
+    GEN_VISIT(SgWhereStatement)
+    GEN_VISIT(SgNullifyStatement)
+    GEN_VISIT(SgEquivalenceStatement)
+    GEN_VISIT(SgDerivedTypeStatement)
+    GEN_VISIT(SgAttributeSpecificationStatement)
+    GEN_VISIT(SgAllocateStatement)
+    GEN_VISIT(SgDeallocateStatement)
+    GEN_VISIT(SgContainsStatement)
+    GEN_VISIT(SgSequenceStatement)
+    GEN_VISIT(SgElseWhereStatement)
+    GEN_VISIT(SgArithmeticIfStatement)
+    GEN_VISIT(SgAssignStatement)
+    GEN_VISIT(SgComputedGotoStatement)
+    GEN_VISIT(SgAssignedGotoStatement)
+    GEN_VISIT(SgNamelistStatement)
+    GEN_VISIT(SgImportStatement)
+    GEN_VISIT(SgAssociateStatement)
+    GEN_VISIT(SgFortranIncludeLine)
+    GEN_VISIT(SgNamespaceDeclarationStatement)
+    GEN_VISIT(SgNamespaceAliasDeclarationStatement)
+    GEN_VISIT(SgNamespaceDefinitionStatement)
+    GEN_VISIT(SgUsingDeclarationStatement)
+    GEN_VISIT(SgUsingDirectiveStatement)
+    GEN_VISIT(SgTemplateInstantiationDirectiveStatement)
+    GEN_VISIT(SgClassDeclaration)
+    GEN_VISIT(SgClassDefinition)
+    GEN_VISIT(SgScopeStatement)
+    GEN_VISIT(SgMemberFunctionDeclaration)
+    GEN_VISIT(SgFunctionDeclaration)
+    GEN_VISIT(SgIncludeDirectiveStatement)
+    GEN_VISIT(SgDefineDirectiveStatement)
+    GEN_VISIT(SgUndefDirectiveStatement)
+    GEN_VISIT(SgIfdefDirectiveStatement)
+    GEN_VISIT(SgIfndefDirectiveStatement)
+    GEN_VISIT(SgIfDirectiveStatement)
+    GEN_VISIT(SgDeadIfDirectiveStatement)
+    GEN_VISIT(SgElseDirectiveStatement)
+    GEN_VISIT(SgElseifDirectiveStatement)
+    GEN_VISIT(SgEndifDirectiveStatement)
+    GEN_VISIT(SgLineDirectiveStatement)
+    GEN_VISIT(SgWarningDirectiveStatement)
+    GEN_VISIT(SgErrorDirectiveStatement)
+    GEN_VISIT(SgEmptyDirectiveStatement)
+    GEN_VISIT(SgIncludeNextDirectiveStatement)
+    GEN_VISIT(SgIdentDirectiveStatement)
+    GEN_VISIT(SgLinemarkerDirectiveStatement)
+    GEN_VISIT(SgC_PreprocessorDirectiveStatement)
+    GEN_VISIT(SgClinkageStartStatement)
+    GEN_VISIT(SgClinkageEndStatement)
+    GEN_VISIT(SgClinkageDeclarationStatement)
+    GEN_VISIT(SgOmpFlushStatement)
+    GEN_VISIT(SgOmpDeclareSimdStatement)
+    GEN_VISIT(SgOmpBarrierStatement)
+    GEN_VISIT(SgOmpTaskwaitStatement)
+    GEN_VISIT(SgOmpThreadprivateStatement)
+    GEN_VISIT(SgDeclarationStatement)
+    GEN_VISIT(SgExprListExp)
+    GEN_VISIT(SgVarRefExp)
+    GEN_VISIT(SgLabelRefExp)
+    GEN_VISIT(SgClassNameRefExp)
+    GEN_VISIT(SgFunctionRefExp)
+    GEN_VISIT(SgMemberFunctionRefExp)
+    GEN_VISIT(SgFunctionCallExp)
+    GEN_VISIT(SgSizeOfOp)
+    GEN_VISIT(SgUpcLocalsizeofExpression)
+    GEN_VISIT(SgUpcBlocksizeofExpression)
+    GEN_VISIT(SgUpcElemsizeofExpression)
+    GEN_VISIT(SgVarArgStartOp)
+    GEN_VISIT(SgVarArgStartOneOperandOp)
+    GEN_VISIT(SgVarArgOp)
+    GEN_VISIT(SgVarArgEndOp)
+    GEN_VISIT(SgVarArgCopyOp)
+    GEN_VISIT(SgTypeIdOp)
+    GEN_VISIT(SgConditionalExp)
+    GEN_VISIT(SgNewExp)
+    GEN_VISIT(SgDeleteExp)
+    GEN_VISIT(SgThisExp)
+    GEN_VISIT(SgRefExp)
+    GEN_VISIT(SgAggregateInitializer)
+    GEN_VISIT(SgConstructorInitializer)
+    GEN_VISIT(SgAssignInitializer)
+    GEN_VISIT(SgExpressionRoot)
+    GEN_VISIT(SgMinusOp)
+    GEN_VISIT(SgUnaryAddOp)
+    GEN_VISIT(SgNotOp)
+    GEN_VISIT(SgPointerDerefExp)
+    GEN_VISIT(SgAddressOfOp)
+    GEN_VISIT(SgMinusMinusOp)
+    GEN_VISIT(SgPlusPlusOp)
+    GEN_VISIT(SgBitComplementOp)
+    GEN_VISIT(SgRealPartOp)
+    GEN_VISIT(SgImagPartOp)
+    GEN_VISIT(SgConjugateOp)
+    GEN_VISIT(SgCastExp)
+    GEN_VISIT(SgThrowOp)
+    GEN_VISIT(SgArrowExp)
+    GEN_VISIT(SgDotExp)
+    GEN_VISIT(SgDotStarOp)
+    GEN_VISIT(SgArrowStarOp)
+    GEN_VISIT(SgEqualityOp)
+    GEN_VISIT(SgLessThanOp)
+    GEN_VISIT(SgGreaterThanOp)
+    GEN_VISIT(SgNotEqualOp)
+    GEN_VISIT(SgLessOrEqualOp)
+    GEN_VISIT(SgGreaterOrEqualOp)
+    GEN_VISIT(SgAddOp)
+    GEN_VISIT(SgSubtractOp)
+    GEN_VISIT(SgMultiplyOp)
+    GEN_VISIT(SgDivideOp)
+    GEN_VISIT(SgIntegerDivideOp)
+    GEN_VISIT(SgModOp)
+    GEN_VISIT(SgAndOp)
+    GEN_VISIT(SgOrOp)
+    GEN_VISIT(SgBitXorOp)
+    GEN_VISIT(SgBitAndOp)
+    GEN_VISIT(SgBitOrOp)
+    GEN_VISIT(SgCommaOpExp)
+    GEN_VISIT(SgLshiftOp)
+    GEN_VISIT(SgRshiftOp)
+    GEN_VISIT(SgPntrArrRefExp)
+    GEN_VISIT(SgScopeOp)
+    GEN_VISIT(SgAssignOp)
+    GEN_VISIT(SgPlusAssignOp)
+    GEN_VISIT(SgMinusAssignOp)
+    GEN_VISIT(SgAndAssignOp)
+    GEN_VISIT(SgIorAssignOp)
+    GEN_VISIT(SgMultAssignOp)
+    GEN_VISIT(SgDivAssignOp)
+    GEN_VISIT(SgModAssignOp)
+    GEN_VISIT(SgXorAssignOp)
+    GEN_VISIT(SgLshiftAssignOp)
+    GEN_VISIT(SgRshiftAssignOp)
+    GEN_VISIT(SgConcatenationOp)
+    GEN_VISIT(SgBoolValExp)
+    GEN_VISIT(SgStringVal)
+    GEN_VISIT(SgShortVal)
+    GEN_VISIT(SgCharVal)
+    GEN_VISIT(SgUnsignedCharVal)
+    GEN_VISIT(SgWcharVal)
+    GEN_VISIT(SgUnsignedShortVal)
+    GEN_VISIT(SgIntVal)
+    GEN_VISIT(SgEnumVal)
+    GEN_VISIT(SgUnsignedIntVal)
+    GEN_VISIT(SgLongIntVal)
+    GEN_VISIT(SgLongLongIntVal)
+    GEN_VISIT(SgUnsignedLongLongIntVal)
+    GEN_VISIT(SgUnsignedLongVal)
+    GEN_VISIT(SgFloatVal)
+    GEN_VISIT(SgDoubleVal)
+    GEN_VISIT(SgLongDoubleVal)
+    GEN_VISIT(SgUpcThreads)
+    GEN_VISIT(SgUpcMythread)
+    GEN_VISIT(SgComplexVal)
+    GEN_VISIT(SgNullExpression)
+    GEN_VISIT(SgVariantExpression)
+    GEN_VISIT(SgStatementExpression)
+    GEN_VISIT(SgAsmOp)
+    GEN_VISIT(SgCudaKernelExecConfig)
+    GEN_VISIT(SgCudaKernelCallExp)
+    GEN_VISIT(SgSubscriptExpression)
+    GEN_VISIT(SgColonShapeExp)
+    GEN_VISIT(SgAsteriskShapeExp)
+    GEN_VISIT(SgIOItemExpression)
+    GEN_VISIT(SgImpliedDo)
+    GEN_VISIT(SgExponentiationOp)
+    GEN_VISIT(SgUnknownArrayOrFunctionReference)
+    GEN_VISIT(SgActualArgumentExpression)
+    GEN_VISIT(SgUserDefinedBinaryOp)
+    GEN_VISIT(SgPointerAssignOp)
+    GEN_VISIT(SgCAFCoExpression)
+    GEN_VISIT(SgDesignatedInitializer)
+    GEN_VISIT(SgInitializer)
+    GEN_VISIT(SgUserDefinedUnaryOp)
+    GEN_VISIT(SgPseudoDestructorRefExp)
+    GEN_VISIT(SgUnaryOp)
+    GEN_VISIT(SgBinaryOp)
+    GEN_VISIT(SgValueExp)
+    GEN_VISIT(SgVariableSymbol)
+    GEN_VISIT(SgFunctionTypeSymbol)
+    GEN_VISIT(SgClassSymbol)
+    GEN_VISIT(SgTemplateSymbol)
+    GEN_VISIT(SgEnumSymbol)
+    GEN_VISIT(SgEnumFieldSymbol)
+    GEN_VISIT(SgTypedefSymbol)
+    GEN_VISIT(SgMemberFunctionSymbol)
+    GEN_VISIT(SgLabelSymbol)
+    GEN_VISIT(SgDefaultSymbol)
+    GEN_VISIT(SgNamespaceSymbol)
+    GEN_VISIT(SgIntrinsicSymbol)
+    GEN_VISIT(SgModuleSymbol)
+    GEN_VISIT(SgInterfaceSymbol)
+    GEN_VISIT(SgCommonSymbol)
+    GEN_VISIT(SgRenameSymbol)
+    GEN_VISIT(SgFunctionSymbol)
+    GEN_VISIT(SgAsmBinaryAddressSymbol)
+    GEN_VISIT(SgAsmBinaryDataSymbol)
+    GEN_VISIT(SgAliasSymbol)
+    GEN_VISIT(SgSymbol)
+
+#if WITH_BINARY_ANALYSIS
+    GEN_VISIT(SgBinaryComposite)
+    GEN_VISIT(SgAsmBlock)
+    GEN_VISIT(SgAsmOperandList)
+    GEN_VISIT(SgAsmArmInstruction)
+    GEN_VISIT(SgAsmX86Instruction)
+    GEN_VISIT(SgAsmPowerpcInstruction)
+    GEN_VISIT(SgAsmInstruction)
+    GEN_VISIT(SgAsmStatement)
+    GEN_VISIT(SgAsmBinaryAdd)
+    GEN_VISIT(SgAsmBinarySubtract)
+    GEN_VISIT(SgAsmBinaryMultiply)
+    GEN_VISIT(SgAsmBinaryDivide)
+    GEN_VISIT(SgAsmBinaryMod)
+    GEN_VISIT(SgAsmBinaryAddPreupdate)
+    GEN_VISIT(SgAsmBinarySubtractPreupdate)
+    GEN_VISIT(SgAsmBinaryAddPostupdate)
+    GEN_VISIT(SgAsmBinarySubtractPostupdate)
+    GEN_VISIT(SgAsmBinaryLsl)
+    GEN_VISIT(SgAsmBinaryLsr)
+    GEN_VISIT(SgAsmBinaryAsr)
+    GEN_VISIT(SgAsmBinaryRor)
+    GEN_VISIT(SgAsmBinaryExpression)
+    GEN_VISIT(SgAsmUnaryPlus)
+    GEN_VISIT(SgAsmUnaryMinus)
+    GEN_VISIT(SgAsmUnaryRrx)
+    GEN_VISIT(SgAsmUnaryArmSpecialRegisterList)
+    GEN_VISIT(SgAsmUnaryExpression)
+    GEN_VISIT(SgAsmMemoryReferenceExpression)
+    GEN_VISIT(SgAsmControlFlagsExpression)
+    GEN_VISIT(SgAsmCommonSubExpression)
+    GEN_VISIT(SgAsmDirectRegisterExpression)
+    GEN_VISIT(SgAsmIndirectRegisterExpression)
+    GEN_VISIT(SgAsmIntegerValueExpression)
+    GEN_VISIT(SgAsmFloatValueExpression)
+    GEN_VISIT(SgAsmValueExpression)
+    GEN_VISIT(SgAsmExprListExp)
+    GEN_VISIT(SgAsmExpression)
+    GEN_VISIT(SgAsmIntegerType)
+    GEN_VISIT(SgAsmFloatType)
+    GEN_VISIT(SgAsmScalarType)
+    GEN_VISIT(SgAsmVectorType)
+    GEN_VISIT(SgAsmType)
+    GEN_VISIT(SgAsmGenericDLL)
+    GEN_VISIT(SgAsmPEImportItemList)
+    GEN_VISIT(SgAsmPEImportDirectoryList)
+    GEN_VISIT(SgAsmGenericFormat)
+    GEN_VISIT(SgAsmGenericFile)
+    GEN_VISIT(SgAsmElfFileHeader)
+    GEN_VISIT(SgAsmPEFileHeader)
+    GEN_VISIT(SgAsmNEFileHeader)
+    GEN_VISIT(SgAsmLEFileHeader)
+    GEN_VISIT(SgAsmDOSFileHeader)
+    GEN_VISIT(SgAsmGenericHeader)
+    GEN_VISIT(SgAsmElfRelocSection)
+    GEN_VISIT(SgAsmElfDynamicSection)
+    GEN_VISIT(SgAsmElfSymbolSection)
+    GEN_VISIT(SgAsmElfStringSection)
+    GEN_VISIT(SgAsmElfEHFrameSection)
+    GEN_VISIT(SgAsmElfNoteSection)
+    GEN_VISIT(SgAsmElfSymverSection)
+    GEN_VISIT(SgAsmElfSymverDefinedSection)
+    GEN_VISIT(SgAsmElfSymverNeededSection)
+    GEN_VISIT(SgAsmElfStrtab)
+    GEN_VISIT(SgAsmCoffStrtab)
+    GEN_VISIT(SgAsmGenericStrtab)
+    GEN_VISIT(SgAsmElfSection)
+    GEN_VISIT(SgAsmElfSectionTable)
+    GEN_VISIT(SgAsmElfSegmentTable)
+    GEN_VISIT(SgAsmPEImportSection)
+    GEN_VISIT(SgAsmPEExportSection)
+    GEN_VISIT(SgAsmPEStringSection)
+    GEN_VISIT(SgAsmPESection)
+    GEN_VISIT(SgAsmPESectionTable)
+    GEN_VISIT(SgAsmCoffSymbolTable)
+    GEN_VISIT(SgAsmDOSExtendedHeader)
+    GEN_VISIT(SgAsmNESection)
+    GEN_VISIT(SgAsmNESectionTable)
+    GEN_VISIT(SgAsmNENameTable)
+    GEN_VISIT(SgAsmNEModuleTable)
+    GEN_VISIT(SgAsmNEStringTable)
+    GEN_VISIT(SgAsmNEEntryTable)
+    GEN_VISIT(SgAsmNERelocTable)
+    GEN_VISIT(SgAsmLESection)
+    GEN_VISIT(SgAsmLESectionTable)
+    GEN_VISIT(SgAsmLENameTable)
+    GEN_VISIT(SgAsmLEPageTable)
+    GEN_VISIT(SgAsmLEEntryTable)
+    GEN_VISIT(SgAsmLERelocTable)
+    GEN_VISIT(SgAsmGenericSection)
+    GEN_VISIT(SgAsmCoffSymbol)
+    GEN_VISIT(SgAsmElfSymbol)
+    GEN_VISIT(SgAsmGenericSymbol)
+    GEN_VISIT(SgAsmElfSectionTableEntry)
+    GEN_VISIT(SgAsmElfSegmentTableEntry)
+    GEN_VISIT(SgAsmElfSegmentTableEntryList)
+    GEN_VISIT(SgAsmElfRelocEntry)
+    GEN_VISIT(SgAsmElfRelocEntryList)
+    GEN_VISIT(SgAsmElfDynamicEntry)
+    GEN_VISIT(SgAsmElfDynamicEntryList)
+    GEN_VISIT(SgAsmElfEHFrameEntryCI)
+    GEN_VISIT(SgAsmElfEHFrameEntryCIList)
+    GEN_VISIT(SgAsmElfEHFrameEntryFD)
+    GEN_VISIT(SgAsmElfEHFrameEntryFDList)
+    GEN_VISIT(SgAsmElfNoteEntry)
+    GEN_VISIT(SgAsmElfNoteEntryList)
+    GEN_VISIT(SgAsmElfSymverEntry)
+    GEN_VISIT(SgAsmElfSymverEntryList)
+    GEN_VISIT(SgAsmElfSymverDefinedEntry)
+    GEN_VISIT(SgAsmElfSymverDefinedEntryList)
+    GEN_VISIT(SgAsmElfSymverDefinedAux)
+    GEN_VISIT(SgAsmElfSymverDefinedAuxList)
+    GEN_VISIT(SgAsmElfSymverNeededEntry)
+    GEN_VISIT(SgAsmElfSymverNeededEntryList)
+    GEN_VISIT(SgAsmElfSymverNeededAux)
+    GEN_VISIT(SgAsmElfSymverNeededAuxList)
+    GEN_VISIT(SgAsmPERVASizePair)
+    GEN_VISIT(SgAsmPEExportDirectory)
+    GEN_VISIT(SgAsmPEExportEntry)
+    GEN_VISIT(SgAsmPEImportDirectory)
+    GEN_VISIT(SgAsmPEImportItem)
+    GEN_VISIT(SgAsmPESectionTableEntry)
+    GEN_VISIT(SgAsmNEEntryPoint)
+    GEN_VISIT(SgAsmNERelocEntry)
+    GEN_VISIT(SgAsmNESectionTableEntry)
+    GEN_VISIT(SgAsmLEPageTableEntry)
+    GEN_VISIT(SgAsmLEEntryPoint)
+    GEN_VISIT(SgAsmLESectionTableEntry)
+    GEN_VISIT(SgAsmGenericSectionList)
+    GEN_VISIT(SgAsmGenericHeaderList)
+    GEN_VISIT(SgAsmGenericSymbolList)
+    GEN_VISIT(SgAsmElfSymbolList)
+    GEN_VISIT(SgAsmCoffSymbolList)
+    GEN_VISIT(SgAsmGenericDLLList)
+    GEN_VISIT(SgAsmPERVASizePairList)
+    GEN_VISIT(SgAsmPEExportEntryList)
+    GEN_VISIT(SgAsmBasicString)
+    GEN_VISIT(SgAsmStoredString)
+    GEN_VISIT(SgAsmGenericString)
+    GEN_VISIT(SgAsmStringStorage)
+    GEN_VISIT(SgAsmDwarfMacro)
+    GEN_VISIT(SgAsmDwarfLine)
+    GEN_VISIT(SgAsmDwarfMacroList)
+    GEN_VISIT(SgAsmDwarfLineList)
+    GEN_VISIT(SgAsmDwarfArrayType)
+    GEN_VISIT(SgAsmDwarfClassType)
+    GEN_VISIT(SgAsmDwarfEntryPoint)
+    GEN_VISIT(SgAsmDwarfEnumerationType)
+    GEN_VISIT(SgAsmDwarfFormalParameter)
+    GEN_VISIT(SgAsmDwarfImportedDeclaration)
+    GEN_VISIT(SgAsmDwarfLabel)
+    GEN_VISIT(SgAsmDwarfLexicalBlock)
+    GEN_VISIT(SgAsmDwarfMember)
+    GEN_VISIT(SgAsmDwarfPointerType)
+    GEN_VISIT(SgAsmDwarfReferenceType)
+    GEN_VISIT(SgAsmDwarfCompilationUnit)
+    GEN_VISIT(SgAsmDwarfStringType)
+    GEN_VISIT(SgAsmDwarfStructureType)
+    GEN_VISIT(SgAsmDwarfSubroutineType)
+    GEN_VISIT(SgAsmDwarfTypedef)
+    GEN_VISIT(SgAsmDwarfUnionType)
+    GEN_VISIT(SgAsmDwarfUnspecifiedParameters)
+    GEN_VISIT(SgAsmDwarfVariant)
+    GEN_VISIT(SgAsmDwarfCommonBlock)
+    GEN_VISIT(SgAsmDwarfCommonInclusion)
+    GEN_VISIT(SgAsmDwarfInheritance)
+    GEN_VISIT(SgAsmDwarfInlinedSubroutine)
+    GEN_VISIT(SgAsmDwarfModule)
+    GEN_VISIT(SgAsmDwarfPtrToMemberType)
+    GEN_VISIT(SgAsmDwarfSetType)
+    GEN_VISIT(SgAsmDwarfSubrangeType)
+    GEN_VISIT(SgAsmDwarfWithStmt)
+    GEN_VISIT(SgAsmDwarfAccessDeclaration)
+    GEN_VISIT(SgAsmDwarfBaseType)
+    GEN_VISIT(SgAsmDwarfCatchBlock)
+    GEN_VISIT(SgAsmDwarfConstType)
+    GEN_VISIT(SgAsmDwarfConstant)
+    GEN_VISIT(SgAsmDwarfEnumerator)
+    GEN_VISIT(SgAsmDwarfFileType)
+    GEN_VISIT(SgAsmDwarfFriend)
+    GEN_VISIT(SgAsmDwarfNamelist)
+    GEN_VISIT(SgAsmDwarfNamelistItem)
+    GEN_VISIT(SgAsmDwarfPackedType)
+    GEN_VISIT(SgAsmDwarfSubprogram)
+    GEN_VISIT(SgAsmDwarfTemplateTypeParameter)
+    GEN_VISIT(SgAsmDwarfTemplateValueParameter)
+    GEN_VISIT(SgAsmDwarfThrownType)
+    GEN_VISIT(SgAsmDwarfTryBlock)
+    GEN_VISIT(SgAsmDwarfVariantPart)
+    GEN_VISIT(SgAsmDwarfVariable)
+    GEN_VISIT(SgAsmDwarfVolatileType)
+    GEN_VISIT(SgAsmDwarfDwarfProcedure)
+    GEN_VISIT(SgAsmDwarfRestrictType)
+    GEN_VISIT(SgAsmDwarfInterfaceType)
+    GEN_VISIT(SgAsmDwarfNamespace)
+    GEN_VISIT(SgAsmDwarfImportedModule)
+    GEN_VISIT(SgAsmDwarfUnspecifiedType)
+    GEN_VISIT(SgAsmDwarfPartialUnit)
+    GEN_VISIT(SgAsmDwarfImportedUnit)
+    GEN_VISIT(SgAsmDwarfMutableType)
+    GEN_VISIT(SgAsmDwarfCondition)
+    GEN_VISIT(SgAsmDwarfSharedType)
+    GEN_VISIT(SgAsmDwarfFormatLabel)
+    GEN_VISIT(SgAsmDwarfFunctionTemplate)
+    GEN_VISIT(SgAsmDwarfClassTemplate)
+    GEN_VISIT(SgAsmDwarfUpcSharedType)
+    GEN_VISIT(SgAsmDwarfUpcStrictType)
+    GEN_VISIT(SgAsmDwarfUpcRelaxedType)
+    GEN_VISIT(SgAsmDwarfUnknownConstruct)
+    GEN_VISIT(SgAsmDwarfConstruct)
+    GEN_VISIT(SgAsmDwarfConstructList)
+    GEN_VISIT(SgAsmDwarfCompilationUnitList)
+    GEN_VISIT(SgAsmDwarfInformation)
+    GEN_VISIT(SgAsmExecutableFileFormat)
+    GEN_VISIT(SgAsmInterpretation)
+    GEN_VISIT(SgAsmInterpretationList)
+    GEN_VISIT(SgAsmGenericFileList)
+    GEN_VISIT(SgAsmNode)
+#endif /* WITH_BINARY_ANALYSIS */
+
+    GEN_VISIT(SgInitializedName)
+    GEN_VISIT(SgOmpOrderedClause)
+    GEN_VISIT(SgOmpNowaitClause)
+    GEN_VISIT(SgOmpUntiedClause)
+    GEN_VISIT(SgOmpMergeableClause)
+    GEN_VISIT(SgOmpDefaultClause)
+    GEN_VISIT(SgOmpCollapseClause)
+    GEN_VISIT(SgOmpIfClause)
+    GEN_VISIT(SgOmpFinalClause)
+    GEN_VISIT(SgOmpPriorityClause)
+    GEN_VISIT(SgOmpNumThreadsClause)
+    GEN_VISIT(SgOmpExpressionClause)
+    GEN_VISIT(SgOmpCopyprivateClause)
+    GEN_VISIT(SgOmpPrivateClause)
+    GEN_VISIT(SgOmpFirstprivateClause)
+    GEN_VISIT(SgOmpSharedClause)
+    GEN_VISIT(SgOmpCopyinClause)
+    GEN_VISIT(SgOmpLastprivateClause)
+    GEN_VISIT(SgOmpReductionClause)
+    GEN_VISIT(SgOmpVariablesClause)
+    GEN_VISIT(SgOmpScheduleClause)
+    GEN_VISIT(SgOmpDependClause)
+    GEN_VISIT(SgOmpClause)
+    GEN_VISIT(SgRenamePair)
+    GEN_VISIT(SgInterfaceBody)
+    GEN_VISIT(SgLocatedNodeSupport)
+    GEN_VISIT(SgToken)
+
+    //
+    // Types
+    GEN_VISIT(SgTypeUnknown)
+    GEN_VISIT(SgTypeChar)
+    GEN_VISIT(SgTypeSignedChar)
+    GEN_VISIT(SgTypeUnsignedChar)
+    GEN_VISIT(SgTypeShort)
+    GEN_VISIT(SgTypeSignedShort)
+    GEN_VISIT(SgTypeUnsignedShort)
+    GEN_VISIT(SgTypeInt)
+    GEN_VISIT(SgTypeSignedInt)
+    GEN_VISIT(SgTypeUnsignedInt)
+    GEN_VISIT(SgTypeLong)
+    GEN_VISIT(SgTypeSignedLong)
+    GEN_VISIT(SgTypeUnsignedLong)
+    GEN_VISIT(SgTypeVoid)
+    GEN_VISIT(SgTypeGlobalVoid)
+    GEN_VISIT(SgTypeWchar)
+    GEN_VISIT(SgTypeFloat)
+    GEN_VISIT(SgTypeDouble)
+    GEN_VISIT(SgTypeLongLong)
+    GEN_VISIT(SgTypeSignedLongLong)
+    GEN_VISIT(SgTypeUnsignedLongLong)
+    GEN_VISIT(SgTypeLongDouble)
+    GEN_VISIT(SgTypeString)
+    GEN_VISIT(SgTypeBool)
+    GEN_VISIT(SgTypeComplex)
+    GEN_VISIT(SgTypeImaginary)
+    GEN_VISIT(SgTypeDefault)
+    GEN_VISIT(SgPointerMemberType)
+    GEN_VISIT(SgReferenceType)
+    GEN_VISIT(SgTypeCAFTeam)
+    GEN_VISIT(SgClassType)
+    GEN_VISIT(SgTemplateType)
+    GEN_VISIT(SgEnumType)
+    GEN_VISIT(SgTypedefType)
+    GEN_VISIT(SgModifierType)
+    GEN_VISIT(SgPartialFunctionModifierType)
+    GEN_VISIT(SgArrayType)
+    GEN_VISIT(SgTypeEllipse)
+    GEN_VISIT(SgTypeCrayPointer)
+    GEN_VISIT(SgPartialFunctionType)
+    GEN_VISIT(SgMemberFunctionType)
+    GEN_VISIT(SgFunctionType)
+    GEN_VISIT(SgPointerType)
+    GEN_VISIT(SgNamedType)
+    GEN_VISIT(SgQualifiedNameType)
+   // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
+    GEN_VISIT(SgDeclType)
+
+    RoseVisitor rv;
   };
 
-/// \brief implementation for dispatcher pointers
-///        ( invokes roseVisitor->handle(sgnode) )
-  template <class T>
-  struct VisitDispatcher<T*>
-  {
-    template <class SageNode>
-    static
-    void dispatch(T* rv, SageNode& node)
-    {
-      rv->handle(node);
-    }
-  };
+#undef GEN_VISIT
 
-/// \brief for internal use (use dispatch instead)
-  template <class RoseVisitor, class SageNode>
-  static inline
+  template <class RoseVisitor>
+  inline
   RoseVisitor
-  _dispatch(RoseVisitor rv, SageNode* n)
+  _dispatch(const RoseVisitor& rv, SgNode* n)
   {
-    typedef sg::VisitDispatcher<RoseVisitor> Dispatcher;
+    ROSE_ASSERT(n);
 
-    ROSE_ASSERT( n );
+    VisitDispatcher<RoseVisitor> vis(rv);
 
-    switch (n->variantT())
-    {
-      case V_SgName:
-        Dispatcher::dispatch(rv, assume_sage_type<SgName>(*n));
-        break;
-
-      case V_SgSymbolTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSymbolTable>(*n));
-        break;
-
-      case V_SgPragma:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPragma>(*n));
-        break;
-
-      case V_SgModifierNodes:
-        Dispatcher::dispatch(rv, assume_sage_type<SgModifierNodes>(*n));
-        break;
-
-      case V_SgConstVolatileModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgConstVolatileModifier>(*n));
-        break;
-
-      case V_SgStorageModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgStorageModifier>(*n));
-        break;
-
-      case V_SgAccessModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAccessModifier>(*n));
-        break;
-
-      case V_SgFunctionModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionModifier>(*n));
-        break;
-
-      case V_SgUPC_AccessModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUPC_AccessModifier>(*n));
-        break;
-
-      case V_SgLinkageModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLinkageModifier>(*n));
-        break;
-
-      case V_SgSpecialFunctionModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSpecialFunctionModifier>(*n));
-        break;
-
-      case V_SgTypeModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeModifier>(*n));
-        break;
-
-      case V_SgElaboratedTypeModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgElaboratedTypeModifier>(*n));
-        break;
-
-      case V_SgBaseClassModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBaseClassModifier>(*n));
-        break;
-
-      case V_SgDeclarationModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDeclarationModifier>(*n));
-        break;
-
-      case V_SgOpenclAccessModeModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOpenclAccessModeModifier>(*n));
-        break;
-
-      case V_SgModifier:
-        Dispatcher::dispatch(rv, assume_sage_type<SgModifier>(*n));
-        break;
-
-      case V_Sg_File_Info:
-        Dispatcher::dispatch(rv, assume_sage_type<Sg_File_Info>(*n));
-        break;
-
-      case V_SgSourceFile:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSourceFile>(*n));
-        break;
-
-      case V_SgBinaryComposite:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBinaryComposite>(*n));
-        break;
-
-      case V_SgUnknownFile:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnknownFile>(*n));
-        break;
-
-      case V_SgFile:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFile>(*n));
-        break;
-
-      case V_SgFileList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFileList>(*n));
-        break;
-
-      case V_SgDirectory:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDirectory>(*n));
-        break;
-
-      case V_SgDirectoryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDirectoryList>(*n));
-        break;
-
-      case V_SgProject:
-        Dispatcher::dispatch(rv, assume_sage_type<SgProject>(*n));
-        break;
-
-      case V_SgOptions:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOptions>(*n));
-        break;
-
-      case V_SgUnparse_Info:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnparse_Info>(*n));
-        break;
-
-      case V_SgFuncDecl_attr:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFuncDecl_attr>(*n));
-        break;
-
-      case V_SgClassDecl_attr:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClassDecl_attr>(*n));
-        break;
-
-      case V_SgTypedefSeq:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypedefSeq>(*n));
-        break;
-
-      case V_SgFunctionParameterTypeList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionParameterTypeList>(*n));
-        break;
-
-      case V_SgTemplateParameter:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateParameter>(*n));
-        break;
-
-      case V_SgTemplateArgument:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateArgument>(*n));
-        break;
-
-      case V_SgTemplateParameterList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateParameterList>(*n));
-        break;
-
-      case V_SgTemplateArgumentList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateArgumentList>(*n));
-        break;
-
-      case V_SgBitAttribute:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBitAttribute>(*n));
-        break;
-
-      case V_SgAttribute:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAttribute>(*n));
-        break;
-
-      case V_SgBaseClass:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBaseClass>(*n));
-        break;
-
-      case V_SgUndirectedGraphEdge:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUndirectedGraphEdge>(*n));
-        break;
-
-      case V_SgDirectedGraphEdge:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDirectedGraphEdge>(*n));
-        break;
-
-      case V_SgGraphNode:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGraphNode>(*n));
-        break;
-
-      case V_SgGraphEdge:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGraphEdge>(*n));
-        break;
-
-      case V_SgStringKeyedBidirectionalGraph:
-        Dispatcher::dispatch(rv, assume_sage_type<SgStringKeyedBidirectionalGraph>(*n));
-        break;
-
-      case V_SgIntKeyedBidirectionalGraph:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIntKeyedBidirectionalGraph>(*n));
-        break;
-
-      case V_SgBidirectionalGraph:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBidirectionalGraph>(*n));
-        break;
-
-      case V_SgIncidenceDirectedGraph:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIncidenceDirectedGraph>(*n));
-        break;
-
-      case V_SgIncidenceUndirectedGraph:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIncidenceUndirectedGraph>(*n));
-        break;
-
-      case V_SgGraph:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGraph>(*n));
-        break;
-
-      case V_SgGraphNodeList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGraphNodeList>(*n));
-        break;
-
-      case V_SgGraphEdgeList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGraphEdgeList>(*n));
-        break;
-
-      case V_SgQualifiedName:
-        Dispatcher::dispatch(rv, assume_sage_type<SgQualifiedName>(*n));
-        break;
-
-      case V_SgNameGroup:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNameGroup>(*n));
-        break;
-
-      case V_SgCommonBlockObject:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCommonBlockObject>(*n));
-        break;
-
-      case V_SgDimensionObject:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDimensionObject>(*n));
-        break;
-
-      case V_SgDataStatementGroup:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDataStatementGroup>(*n));
-        break;
-
-      case V_SgDataStatementObject:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDataStatementObject>(*n));
-        break;
-
-      case V_SgDataStatementValue:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDataStatementValue>(*n));
-        break;
-
-      case V_SgFormatItem:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFormatItem>(*n));
-        break;
-
-      case V_SgFormatItemList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFormatItemList>(*n));
-        break;
-
-      case V_SgTypeTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeTable>(*n));
-        break;
-
-      case V_SgSupport:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSupport>(*n));
-        break;
-
-      case V_SgForStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgForStatement>(*n));
-        break;
-
-      case V_SgForInitStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgForInitStatement>(*n));
-        break;
-
-      case V_SgCatchStatementSeq:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCatchStatementSeq>(*n));
-        break;
-
-      case V_SgFunctionParameterList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionParameterList>(*n));
-        break;
-
-      case V_SgCtorInitializerList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCtorInitializerList>(*n));
-        break;
-
-      case V_SgBasicBlock:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBasicBlock>(*n));
-        break;
-
-      case V_SgGlobal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGlobal>(*n));
-        break;
-
-      case V_SgIfStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIfStmt>(*n));
-        break;
-
-      case V_SgFunctionDefinition:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionDefinition>(*n));
-        break;
-
-      case V_SgWhileStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgWhileStmt>(*n));
-        break;
-
-      case V_SgDoWhileStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDoWhileStmt>(*n));
-        break;
-
-      case V_SgSwitchStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSwitchStatement>(*n));
-        break;
-
-      case V_SgCatchOptionStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCatchOptionStmt>(*n));
-        break;
-
-      case V_SgVariableDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVariableDeclaration>(*n));
-        break;
-
-      case V_SgVariableDefinition:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVariableDefinition>(*n));
-        break;
-
-      case V_SgEnumDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEnumDeclaration>(*n));
-        break;
-
-      case V_SgAsmStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmStmt>(*n));
-        break;
-
-      case V_SgTypedefDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypedefDeclaration>(*n));
-        break;
-
-      case V_SgFunctionTypeTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionTypeTable>(*n));
-        break;
-
-      case V_SgExprStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgExprStatement>(*n));
-        break;
-
-      case V_SgLabelStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLabelStatement>(*n));
-        break;
-
-      case V_SgCaseOptionStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCaseOptionStmt>(*n));
-        break;
-
-      case V_SgTryStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTryStmt>(*n));
-        break;
-
-      case V_SgDefaultOptionStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDefaultOptionStmt>(*n));
-        break;
-
-      case V_SgBreakStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBreakStmt>(*n));
-        break;
-
-      case V_SgContinueStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgContinueStmt>(*n));
-        break;
-
-      case V_SgReturnStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgReturnStmt>(*n));
-        break;
-
-      case V_SgGotoStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGotoStatement>(*n));
-        break;
-
-      case V_SgSpawnStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSpawnStmt>(*n));
-        break;
-
-      case V_SgNullStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNullStatement>(*n));
-        break;
-
-      case V_SgVariantStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVariantStatement>(*n));
-        break;
-
-      case V_SgPragmaDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPragmaDeclaration>(*n));
-        break;
-
-      case V_SgTemplateDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateDeclaration>(*n));
-        break;
-
-      case V_SgTemplateInstantiationDecl:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateInstantiationDecl>(*n));
-        break;
-
-      case V_SgTemplateInstantiationDefn:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateInstantiationDefn>(*n));
-        break;
-
-      case V_SgTemplateClassDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateClassDeclaration>(*n));
-        break;
-
-      case V_SgTemplateClassDefinition:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateClassDefinition>(*n));
-        break;
-
-      case V_SgTemplateInstantiationFunctionDecl:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateInstantiationFunctionDecl>(*n));
-        break;
-
-      case V_SgTemplateInstantiationMemberFunctionDecl:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateInstantiationMemberFunctionDecl>(*n));
-        break;
-
-      case V_SgProgramHeaderStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgProgramHeaderStatement>(*n));
-        break;
-
-      case V_SgProcedureHeaderStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgProcedureHeaderStatement>(*n));
-        break;
-
-      case V_SgEntryStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEntryStatement>(*n));
-        break;
-
-      case V_SgFortranNonblockedDo:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFortranNonblockedDo>(*n));
-        break;
-
-      case V_SgInterfaceStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgInterfaceStatement>(*n));
-        break;
-
-      case V_SgParameterStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgParameterStatement>(*n));
-        break;
-
-      case V_SgCommonBlock:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCommonBlock>(*n));
-        break;
-
-      case V_SgModuleStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgModuleStatement>(*n));
-        break;
-
-      case V_SgUseStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUseStatement>(*n));
-        break;
-
-      case V_SgStopOrPauseStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgStopOrPauseStatement>(*n));
-        break;
-
-      case V_SgPrintStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPrintStatement>(*n));
-        break;
-
-      case V_SgReadStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgReadStatement>(*n));
-        break;
-
-      case V_SgWriteStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgWriteStatement>(*n));
-        break;
-
-      case V_SgOpenStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOpenStatement>(*n));
-        break;
-
-      case V_SgCloseStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCloseStatement>(*n));
-        break;
-
-      case V_SgInquireStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgInquireStatement>(*n));
-        break;
-
-      case V_SgFlushStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFlushStatement>(*n));
-        break;
-
-      case V_SgBackspaceStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBackspaceStatement>(*n));
-        break;
-
-      case V_SgRewindStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgRewindStatement>(*n));
-        break;
-
-      case V_SgEndfileStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEndfileStatement>(*n));
-        break;
-
-      case V_SgWaitStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgWaitStatement>(*n));
-        break;
-
-      case V_SgCAFWithTeamStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCAFWithTeamStatement>(*n));
-        break;
-
-      case V_SgFormatStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFormatStatement>(*n));
-        break;
-
-      case V_SgFortranDo:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFortranDo>(*n));
-        break;
-
-      case V_SgForAllStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgForAllStatement>(*n));
-        break;
-
-      case V_SgIOStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIOStatement>(*n));
-        break;
-
-      case V_SgUpcNotifyStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcNotifyStatement>(*n));
-        break;
-
-      case V_SgUpcWaitStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcWaitStatement>(*n));
-        break;
-
-      case V_SgUpcBarrierStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcBarrierStatement>(*n));
-        break;
-
-      case V_SgUpcFenceStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcFenceStatement>(*n));
-        break;
-
-      case V_SgUpcForAllStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcForAllStatement>(*n));
-        break;
-
-      case V_SgOmpParallelStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpParallelStatement>(*n));
-        break;
-
-      case V_SgOmpSingleStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpSingleStatement>(*n));
-        break;
-
-      case V_SgOmpSimdStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpSimdStatement>(*n));
-        break;
-
-      case V_SgOmpTaskStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpTaskStatement>(*n));
-        break;
-
-      case V_SgOmpForStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpForStatement>(*n));
-        break;
-
-      case V_SgOmpDoStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpDoStatement>(*n));
-        break;
-
-      case V_SgOmpSectionsStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpSectionsStatement>(*n));
-        break;
-
-      case V_SgOmpClauseBodyStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpClauseBodyStatement>(*n));
-        break;
-
-      case V_SgOmpAtomicStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpAtomicStatement>(*n));
-        break;
-
-      case V_SgOmpMasterStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpMasterStatement>(*n));
-        break;
-
-      case V_SgOmpSectionStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpSectionStatement>(*n));
-        break;
-
-      case V_SgOmpOrderedStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpOrderedStatement>(*n));
-        break;
-
-      case V_SgOmpWorkshareStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpWorkshareStatement>(*n));
-        break;
-
-      case V_SgOmpCriticalStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpCriticalStatement>(*n));
-        break;
-
-      case V_SgOmpBodyStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpBodyStatement>(*n));
-        break;
-
-      case V_SgBlockDataStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBlockDataStatement>(*n));
-        break;
-
-      case V_SgImplicitStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgImplicitStatement>(*n));
-        break;
-
-      case V_SgStatementFunctionStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgStatementFunctionStatement>(*n));
-        break;
-
-      case V_SgWhereStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgWhereStatement>(*n));
-        break;
-
-      case V_SgNullifyStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNullifyStatement>(*n));
-        break;
-
-      case V_SgEquivalenceStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEquivalenceStatement>(*n));
-        break;
-
-      case V_SgDerivedTypeStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDerivedTypeStatement>(*n));
-        break;
-
-      case V_SgAttributeSpecificationStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAttributeSpecificationStatement>(*n));
-        break;
-
-      case V_SgAllocateStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAllocateStatement>(*n));
-        break;
-
-      case V_SgDeallocateStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDeallocateStatement>(*n));
-        break;
-
-      case V_SgContainsStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgContainsStatement>(*n));
-        break;
-
-      case V_SgSequenceStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSequenceStatement>(*n));
-        break;
-
-      case V_SgElseWhereStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgElseWhereStatement>(*n));
-        break;
-
-      case V_SgArithmeticIfStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgArithmeticIfStatement>(*n));
-        break;
-
-      case V_SgAssignStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAssignStatement>(*n));
-        break;
-
-      case V_SgComputedGotoStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgComputedGotoStatement>(*n));
-        break;
-
-      case V_SgAssignedGotoStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAssignedGotoStatement>(*n));
-        break;
-
-      case V_SgNamelistStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNamelistStatement>(*n));
-        break;
-
-      case V_SgImportStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgImportStatement>(*n));
-        break;
-
-      case V_SgAssociateStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAssociateStatement>(*n));
-        break;
-
-      case V_SgFortranIncludeLine:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFortranIncludeLine>(*n));
-        break;
-
-      case V_SgNamespaceDeclarationStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNamespaceDeclarationStatement>(*n));
-        break;
-
-      case V_SgNamespaceAliasDeclarationStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNamespaceAliasDeclarationStatement>(*n));
-        break;
-
-      case V_SgNamespaceDefinitionStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNamespaceDefinitionStatement>(*n));
-        break;
-
-      case V_SgUsingDeclarationStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUsingDeclarationStatement>(*n));
-        break;
-
-      case V_SgUsingDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUsingDirectiveStatement>(*n));
-        break;
-
-      case V_SgTemplateInstantiationDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateInstantiationDirectiveStatement>(*n));
-        break;
-
-      case V_SgClassDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClassDeclaration>(*n));
-        break;
-
-      case V_SgClassDefinition:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClassDefinition>(*n));
-        break;
-
-      case V_SgScopeStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgScopeStatement>(*n));
-        break;
-
-      case V_SgMemberFunctionDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMemberFunctionDeclaration>(*n));
-        break;
-
-      case V_SgFunctionDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionDeclaration>(*n));
-        break;
-
-      case V_SgIncludeDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIncludeDirectiveStatement>(*n));
-        break;
-
-      case V_SgDefineDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDefineDirectiveStatement>(*n));
-        break;
-
-      case V_SgUndefDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUndefDirectiveStatement>(*n));
-        break;
-
-      case V_SgIfdefDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIfdefDirectiveStatement>(*n));
-        break;
-
-      case V_SgIfndefDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIfndefDirectiveStatement>(*n));
-        break;
-
-      case V_SgIfDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIfDirectiveStatement>(*n));
-        break;
-
-      case V_SgDeadIfDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDeadIfDirectiveStatement>(*n));
-        break;
-
-      case V_SgElseDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgElseDirectiveStatement>(*n));
-        break;
-
-      case V_SgElseifDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgElseifDirectiveStatement>(*n));
-        break;
-
-      case V_SgEndifDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEndifDirectiveStatement>(*n));
-        break;
-
-      case V_SgLineDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLineDirectiveStatement>(*n));
-        break;
-
-      case V_SgWarningDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgWarningDirectiveStatement>(*n));
-        break;
-
-      case V_SgErrorDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgErrorDirectiveStatement>(*n));
-        break;
-
-      case V_SgEmptyDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEmptyDirectiveStatement>(*n));
-        break;
-
-      case V_SgIncludeNextDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIncludeNextDirectiveStatement>(*n));
-        break;
-
-      case V_SgIdentDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIdentDirectiveStatement>(*n));
-        break;
-
-      case V_SgLinemarkerDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLinemarkerDirectiveStatement>(*n));
-        break;
-
-      case V_SgC_PreprocessorDirectiveStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgC_PreprocessorDirectiveStatement>(*n));
-        break;
-
-      case V_SgClinkageStartStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClinkageStartStatement>(*n));
-        break;
-
-      case V_SgClinkageEndStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClinkageEndStatement>(*n));
-        break;
-
-      case V_SgClinkageDeclarationStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClinkageDeclarationStatement>(*n));
-        break;
-
-      case V_SgOmpFlushStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpFlushStatement>(*n));
-        break;
-
-      case V_SgOmpBarrierStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpBarrierStatement>(*n));
-        break;
-
-      case V_SgOmpTaskwaitStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpTaskwaitStatement>(*n));
-        break;
-
-      case V_SgOmpThreadprivateStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpThreadprivateStatement>(*n));
-        break;
-
-      case V_SgDeclarationStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDeclarationStatement>(*n));
-        break;
-
-      case V_SgExprListExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgExprListExp>(*n));
-        break;
-
-      case V_SgVarRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVarRefExp>(*n));
-        break;
-
-      case V_SgLabelRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLabelRefExp>(*n));
-        break;
-
-      case V_SgClassNameRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClassNameRefExp>(*n));
-        break;
-
-      case V_SgFunctionRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionRefExp>(*n));
-        break;
-
-      case V_SgMemberFunctionRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMemberFunctionRefExp>(*n));
-        break;
-
-      case V_SgFunctionCallExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionCallExp>(*n));
-        break;
-
-      case V_SgSizeOfOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSizeOfOp>(*n));
-        break;
-
-      case V_SgUpcLocalsizeofExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcLocalsizeofExpression>(*n));
-        break;
-
-      case V_SgUpcBlocksizeofExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcBlocksizeofExpression>(*n));
-        break;
-
-      case V_SgUpcElemsizeofExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcElemsizeofExpression>(*n));
-        break;
-
-      case V_SgVarArgStartOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVarArgStartOp>(*n));
-        break;
-
-      case V_SgVarArgStartOneOperandOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVarArgStartOneOperandOp>(*n));
-        break;
-
-      case V_SgVarArgOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVarArgOp>(*n));
-        break;
-
-      case V_SgVarArgEndOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVarArgEndOp>(*n));
-        break;
-
-      case V_SgVarArgCopyOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVarArgCopyOp>(*n));
-        break;
-
-      case V_SgTypeIdOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeIdOp>(*n));
-        break;
-
-      case V_SgConditionalExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgConditionalExp>(*n));
-        break;
-
-      case V_SgNewExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNewExp>(*n));
-        break;
-
-      case V_SgDeleteExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDeleteExp>(*n));
-        break;
-
-      case V_SgThisExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgThisExp>(*n));
-        break;
-
-      case V_SgRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgRefExp>(*n));
-        break;
-
-      case V_SgAggregateInitializer:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAggregateInitializer>(*n));
-        break;
-
-      case V_SgConstructorInitializer:
-        Dispatcher::dispatch(rv, assume_sage_type<SgConstructorInitializer>(*n));
-        break;
-
-      case V_SgAssignInitializer:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAssignInitializer>(*n));
-        break;
-
-      case V_SgExpressionRoot:
-        Dispatcher::dispatch(rv, assume_sage_type<SgExpressionRoot>(*n));
-        break;
-
-      case V_SgMinusOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMinusOp>(*n));
-        break;
-
-      case V_SgUnaryAddOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnaryAddOp>(*n));
-        break;
-
-      case V_SgNotOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNotOp>(*n));
-        break;
-
-      case V_SgPointerDerefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPointerDerefExp>(*n));
-        break;
-
-      case V_SgAddressOfOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAddressOfOp>(*n));
-        break;
-
-      case V_SgMinusMinusOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMinusMinusOp>(*n));
-        break;
-
-      case V_SgPlusPlusOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPlusPlusOp>(*n));
-        break;
-
-      case V_SgBitComplementOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBitComplementOp>(*n));
-        break;
-
-      case V_SgRealPartOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgRealPartOp>(*n));
-        break;
-
-      case V_SgImagPartOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgImagPartOp>(*n));
-        break;
-
-      case V_SgConjugateOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgConjugateOp>(*n));
-        break;
-
-      case V_SgCastExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCastExp>(*n));
-        break;
-
-      case V_SgThrowOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgThrowOp>(*n));
-        break;
-
-      case V_SgArrowExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgArrowExp>(*n));
-        break;
-
-      case V_SgDotExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDotExp>(*n));
-        break;
-
-      case V_SgDotStarOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDotStarOp>(*n));
-        break;
-
-      case V_SgArrowStarOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgArrowStarOp>(*n));
-        break;
-
-      case V_SgEqualityOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEqualityOp>(*n));
-        break;
-
-      case V_SgLessThanOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLessThanOp>(*n));
-        break;
-
-      case V_SgGreaterThanOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGreaterThanOp>(*n));
-        break;
-
-      case V_SgNotEqualOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNotEqualOp>(*n));
-        break;
-
-      case V_SgLessOrEqualOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLessOrEqualOp>(*n));
-        break;
-
-      case V_SgGreaterOrEqualOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgGreaterOrEqualOp>(*n));
-        break;
-
-      case V_SgAddOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAddOp>(*n));
-        break;
-
-      case V_SgSubtractOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSubtractOp>(*n));
-        break;
-
-      case V_SgMultiplyOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMultiplyOp>(*n));
-        break;
-
-      case V_SgDivideOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDivideOp>(*n));
-        break;
-
-      case V_SgIntegerDivideOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIntegerDivideOp>(*n));
-        break;
-
-      case V_SgModOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgModOp>(*n));
-        break;
-
-      case V_SgAndOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAndOp>(*n));
-        break;
-
-      case V_SgOrOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOrOp>(*n));
-        break;
-
-      case V_SgBitXorOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBitXorOp>(*n));
-        break;
-
-      case V_SgBitAndOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBitAndOp>(*n));
-        break;
-
-      case V_SgBitOrOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBitOrOp>(*n));
-        break;
-
-      case V_SgCommaOpExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCommaOpExp>(*n));
-        break;
-
-      case V_SgLshiftOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLshiftOp>(*n));
-        break;
-
-      case V_SgRshiftOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgRshiftOp>(*n));
-        break;
-
-      case V_SgPntrArrRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPntrArrRefExp>(*n));
-        break;
-
-      case V_SgScopeOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgScopeOp>(*n));
-        break;
-
-      case V_SgAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAssignOp>(*n));
-        break;
-
-      case V_SgPlusAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPlusAssignOp>(*n));
-        break;
-
-      case V_SgMinusAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMinusAssignOp>(*n));
-        break;
-
-      case V_SgAndAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAndAssignOp>(*n));
-        break;
-
-      case V_SgIorAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIorAssignOp>(*n));
-        break;
-
-      case V_SgMultAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMultAssignOp>(*n));
-        break;
-
-      case V_SgDivAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDivAssignOp>(*n));
-        break;
-
-      case V_SgModAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgModAssignOp>(*n));
-        break;
-
-      case V_SgXorAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgXorAssignOp>(*n));
-        break;
-
-      case V_SgLshiftAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLshiftAssignOp>(*n));
-        break;
-
-      case V_SgRshiftAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgRshiftAssignOp>(*n));
-        break;
-
-      case V_SgConcatenationOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgConcatenationOp>(*n));
-        break;
-
-      case V_SgBoolValExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBoolValExp>(*n));
-        break;
-
-      case V_SgStringVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgStringVal>(*n));
-        break;
-
-      case V_SgShortVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgShortVal>(*n));
-        break;
-
-      case V_SgCharVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCharVal>(*n));
-        break;
-
-      case V_SgUnsignedCharVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnsignedCharVal>(*n));
-        break;
-
-      case V_SgWcharVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgWcharVal>(*n));
-        break;
-
-      case V_SgUnsignedShortVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnsignedShortVal>(*n));
-        break;
-
-      case V_SgIntVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIntVal>(*n));
-        break;
-
-      case V_SgEnumVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEnumVal>(*n));
-        break;
-
-      case V_SgUnsignedIntVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnsignedIntVal>(*n));
-        break;
-
-      case V_SgLongIntVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLongIntVal>(*n));
-        break;
-
-      case V_SgLongLongIntVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLongLongIntVal>(*n));
-        break;
-
-      case V_SgUnsignedLongLongIntVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnsignedLongLongIntVal>(*n));
-        break;
-
-      case V_SgUnsignedLongVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnsignedLongVal>(*n));
-        break;
-
-      case V_SgFloatVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFloatVal>(*n));
-        break;
-
-      case V_SgDoubleVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDoubleVal>(*n));
-        break;
-
-      case V_SgLongDoubleVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLongDoubleVal>(*n));
-        break;
-
-      case V_SgUpcThreads:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcThreads>(*n));
-        break;
-
-      case V_SgUpcMythread:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUpcMythread>(*n));
-        break;
-
-      case V_SgComplexVal:
-        Dispatcher::dispatch(rv, assume_sage_type<SgComplexVal>(*n));
-        break;
-
-      case V_SgNullExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNullExpression>(*n));
-        break;
-
-      case V_SgVariantExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVariantExpression>(*n));
-        break;
-
-      case V_SgStatementExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgStatementExpression>(*n));
-        break;
-
-      case V_SgAsmOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmOp>(*n));
-        break;
-
-      case V_SgCudaKernelExecConfig:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCudaKernelExecConfig>(*n));
-        break;
-
-      case V_SgCudaKernelCallExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCudaKernelCallExp>(*n));
-        break;
-
-      case V_SgSubscriptExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSubscriptExpression>(*n));
-        break;
-
-      case V_SgColonShapeExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgColonShapeExp>(*n));
-        break;
-
-      case V_SgAsteriskShapeExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsteriskShapeExp>(*n));
-        break;
-
-      case V_SgIOItemExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIOItemExpression>(*n));
-        break;
-
-      case V_SgImpliedDo:
-        Dispatcher::dispatch(rv, assume_sage_type<SgImpliedDo>(*n));
-        break;
-
-      case V_SgExponentiationOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgExponentiationOp>(*n));
-        break;
-
-      case V_SgUnknownArrayOrFunctionReference:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnknownArrayOrFunctionReference>(*n));
-        break;
-
-      case V_SgActualArgumentExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgActualArgumentExpression>(*n));
-        break;
-
-      case V_SgUserDefinedBinaryOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUserDefinedBinaryOp>(*n));
-        break;
-
-      case V_SgPointerAssignOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPointerAssignOp>(*n));
-        break;
-
-      case V_SgCAFCoExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCAFCoExpression>(*n));
-        break;
-
-      case V_SgDesignatedInitializer:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDesignatedInitializer>(*n));
-        break;
-
-      case V_SgInitializer:
-        Dispatcher::dispatch(rv, assume_sage_type<SgInitializer>(*n));
-        break;
-
-      case V_SgUserDefinedUnaryOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUserDefinedUnaryOp>(*n));
-        break;
-
-      case V_SgPseudoDestructorRefExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPseudoDestructorRefExp>(*n));
-        break;
-
-      case V_SgUnaryOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgUnaryOp>(*n));
-        break;
-
-      case V_SgBinaryOp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgBinaryOp>(*n));
-        break;
-
-      case V_SgValueExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgValueExp>(*n));
-        break;
-
-      case V_SgVariableSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgVariableSymbol>(*n));
-        break;
-
-      case V_SgFunctionTypeSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionTypeSymbol>(*n));
-        break;
-
-      case V_SgClassSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClassSymbol>(*n));
-        break;
-
-      case V_SgTemplateSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateSymbol>(*n));
-        break;
-
-      case V_SgEnumSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEnumSymbol>(*n));
-        break;
-
-      case V_SgEnumFieldSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEnumFieldSymbol>(*n));
-        break;
-
-      case V_SgTypedefSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypedefSymbol>(*n));
-        break;
-
-      case V_SgMemberFunctionSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMemberFunctionSymbol>(*n));
-        break;
-
-      case V_SgLabelSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLabelSymbol>(*n));
-        break;
-
-      case V_SgDefaultSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgDefaultSymbol>(*n));
-        break;
-
-      case V_SgNamespaceSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNamespaceSymbol>(*n));
-        break;
-
-      case V_SgIntrinsicSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgIntrinsicSymbol>(*n));
-        break;
-
-      case V_SgModuleSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgModuleSymbol>(*n));
-        break;
-
-      case V_SgInterfaceSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgInterfaceSymbol>(*n));
-        break;
-
-      case V_SgCommonSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgCommonSymbol>(*n));
-        break;
-
-      case V_SgRenameSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgRenameSymbol>(*n));
-        break;
-
-      case V_SgFunctionSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionSymbol>(*n));
-        break;
-
-      case V_SgAsmBinaryAddressSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryAddressSymbol>(*n));
-        break;
-
-      case V_SgAsmBinaryDataSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryDataSymbol>(*n));
-        break;
-
-      case V_SgAliasSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAliasSymbol>(*n));
-        break;
-
-      case V_SgSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgSymbol>(*n));
-        break;
-
-      case V_SgAsmBlock:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBlock>(*n));
-        break;
-
-      case V_SgAsmOperandList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmOperandList>(*n));
-        break;
-
-      case V_SgAsmArmInstruction:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmArmInstruction>(*n));
-        break;
-
-      case V_SgAsmX86Instruction:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmX86Instruction>(*n));
-        break;
-
-      case V_SgAsmPowerpcInstruction:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPowerpcInstruction>(*n));
-        break;
-
-      case V_SgAsmInstruction:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmInstruction>(*n));
-        break;
-
-      case V_SgAsmStatement:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmStatement>(*n));
-        break;
-
-      case V_SgAsmBinaryAdd:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryAdd>(*n));
-        break;
-
-      case V_SgAsmBinarySubtract:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinarySubtract>(*n));
-        break;
-
-      case V_SgAsmBinaryMultiply:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryMultiply>(*n));
-        break;
-
-      case V_SgAsmBinaryDivide:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryDivide>(*n));
-        break;
-
-      case V_SgAsmBinaryMod:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryMod>(*n));
-        break;
-
-      case V_SgAsmBinaryAddPreupdate:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryAddPreupdate>(*n));
-        break;
-
-      case V_SgAsmBinarySubtractPreupdate:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinarySubtractPreupdate>(*n));
-        break;
-
-      case V_SgAsmBinaryAddPostupdate:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryAddPostupdate>(*n));
-        break;
-
-      case V_SgAsmBinarySubtractPostupdate:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinarySubtractPostupdate>(*n));
-        break;
-
-      case V_SgAsmBinaryLsl:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryLsl>(*n));
-        break;
-
-      case V_SgAsmBinaryLsr:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryLsr>(*n));
-        break;
-
-      case V_SgAsmBinaryAsr:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryAsr>(*n));
-        break;
-
-      case V_SgAsmBinaryRor:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryRor>(*n));
-        break;
-
-      case V_SgAsmBinaryExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBinaryExpression>(*n));
-        break;
-
-      case V_SgAsmUnaryPlus:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmUnaryPlus>(*n));
-        break;
-
-      case V_SgAsmUnaryMinus:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmUnaryMinus>(*n));
-        break;
-
-      case V_SgAsmUnaryRrx:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmUnaryRrx>(*n));
-        break;
-
-      case V_SgAsmUnaryArmSpecialRegisterList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmUnaryArmSpecialRegisterList>(*n));
-        break;
-
-      case V_SgAsmUnaryExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmUnaryExpression>(*n));
-        break;
-
-      case V_SgAsmMemoryReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmMemoryReferenceExpression>(*n));
-        break;
-
-      case V_SgAsmControlFlagsExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmControlFlagsExpression>(*n));
-        break;
-
-      case V_SgAsmCommonSubExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmCommonSubExpression>(*n));
-        break;
-
-      case V_SgAsmDirectRegisterExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDirectRegisterExpression>(*n));
-        break;
-
-      case V_SgAsmIndirectRegisterExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIndirectRegisterExpression>(*n));
-        break;
-
-      case V_SgAsmIntegerValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerValueExpression>(*n));
-        break;
-
-      case V_SgAsmFloatValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmFloatValueExpression>(*n));
-        break;
-
-      case V_SgAsmValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmValueExpression>(*n));
-        break;
-
-      case V_SgAsmExprListExp:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmExprListExp>(*n));
-        break;
-
-      case V_SgAsmExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmExpression>(*n));
-        break;
-
-      case V_SgAsmIntegerType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerType>(*n));
-        break;
-
-      case V_SgAsmFloatType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmFloatType>(*n));
-        break;
-
-      case V_SgAsmScalarType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmScalarType>(*n));
-        break;
-
-      case V_SgAsmVectorType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmVectorType>(*n));
-        break;
-
-      case V_SgAsmType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmType>(*n));
-        break;
-
-      case V_SgAsmGenericDLL:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericDLL>(*n));
-        break;
-
-      case V_SgAsmPEImportItemList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportItemList>(*n));
-        break;
-
-      case V_SgAsmPEImportDirectoryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportDirectoryList>(*n));
-        break;
-
-      case V_SgAsmGenericFormat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericFormat>(*n));
-        break;
-
-      case V_SgAsmGenericFile:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericFile>(*n));
-        break;
-
-      case V_SgAsmElfFileHeader:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfFileHeader>(*n));
-        break;
-
-      case V_SgAsmPEFileHeader:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEFileHeader>(*n));
-        break;
-
-      case V_SgAsmNEFileHeader:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNEFileHeader>(*n));
-        break;
-
-      case V_SgAsmLEFileHeader:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLEFileHeader>(*n));
-        break;
-
-      case V_SgAsmDOSFileHeader:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDOSFileHeader>(*n));
-        break;
-
-      case V_SgAsmGenericHeader:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericHeader>(*n));
-        break;
-
-      case V_SgAsmElfRelocSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfRelocSection>(*n));
-        break;
-
-      case V_SgAsmElfDynamicSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfDynamicSection>(*n));
-        break;
-
-      case V_SgAsmElfSymbolSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymbolSection>(*n));
-        break;
-
-      case V_SgAsmElfStringSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfStringSection>(*n));
-        break;
-
-      case V_SgAsmElfEHFrameSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfEHFrameSection>(*n));
-        break;
-
-      case V_SgAsmElfNoteSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfNoteSection>(*n));
-        break;
-
-      case V_SgAsmElfSymverSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverSection>(*n));
-        break;
-
-      case V_SgAsmElfSymverDefinedSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverDefinedSection>(*n));
-        break;
-
-      case V_SgAsmElfSymverNeededSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverNeededSection>(*n));
-        break;
-
-      case V_SgAsmElfStrtab:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfStrtab>(*n));
-        break;
-
-      case V_SgAsmCoffStrtab:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmCoffStrtab>(*n));
-        break;
-
-      case V_SgAsmGenericStrtab:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericStrtab>(*n));
-        break;
-
-      case V_SgAsmElfSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSection>(*n));
-        break;
-
-      case V_SgAsmElfSectionTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSectionTable>(*n));
-        break;
-
-      case V_SgAsmElfSegmentTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSegmentTable>(*n));
-        break;
-
-      case V_SgAsmPEImportSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportSection>(*n));
-        break;
-
-      case V_SgAsmPEExportSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEExportSection>(*n));
-        break;
-
-      case V_SgAsmPEStringSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEStringSection>(*n));
-        break;
-
-      case V_SgAsmPESection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPESection>(*n));
-        break;
-
-      case V_SgAsmPESectionTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPESectionTable>(*n));
-        break;
-
-      case V_SgAsmCoffSymbolTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmCoffSymbolTable>(*n));
-        break;
-
-      case V_SgAsmDOSExtendedHeader:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDOSExtendedHeader>(*n));
-        break;
-
-      case V_SgAsmNESection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNESection>(*n));
-        break;
-
-      case V_SgAsmNESectionTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNESectionTable>(*n));
-        break;
-
-      case V_SgAsmNENameTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNENameTable>(*n));
-        break;
-
-      case V_SgAsmNEModuleTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNEModuleTable>(*n));
-        break;
-
-      case V_SgAsmNEStringTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNEStringTable>(*n));
-        break;
-
-      case V_SgAsmNEEntryTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNEEntryTable>(*n));
-        break;
-
-      case V_SgAsmNERelocTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNERelocTable>(*n));
-        break;
-
-      case V_SgAsmLESection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLESection>(*n));
-        break;
-
-      case V_SgAsmLESectionTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLESectionTable>(*n));
-        break;
-
-      case V_SgAsmLENameTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLENameTable>(*n));
-        break;
-
-      case V_SgAsmLEPageTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLEPageTable>(*n));
-        break;
-
-      case V_SgAsmLEEntryTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLEEntryTable>(*n));
-        break;
-
-      case V_SgAsmLERelocTable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLERelocTable>(*n));
-        break;
-
-      case V_SgAsmGenericSection:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericSection>(*n));
-        break;
-
-      case V_SgAsmCoffSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmCoffSymbol>(*n));
-        break;
-
-      case V_SgAsmElfSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymbol>(*n));
-        break;
-
-      case V_SgAsmGenericSymbol:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericSymbol>(*n));
-        break;
-
-      case V_SgAsmElfSectionTableEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSectionTableEntry>(*n));
-        break;
-
-      case V_SgAsmElfSegmentTableEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSegmentTableEntry>(*n));
-        break;
-
-      case V_SgAsmElfSegmentTableEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSegmentTableEntryList>(*n));
-        break;
-
-      case V_SgAsmElfRelocEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfRelocEntry>(*n));
-        break;
-
-      case V_SgAsmElfRelocEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfRelocEntryList>(*n));
-        break;
-
-      case V_SgAsmElfDynamicEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfDynamicEntry>(*n));
-        break;
-
-      case V_SgAsmElfDynamicEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfDynamicEntryList>(*n));
-        break;
-
-      case V_SgAsmElfEHFrameEntryCI:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfEHFrameEntryCI>(*n));
-        break;
-
-      case V_SgAsmElfEHFrameEntryCIList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfEHFrameEntryCIList>(*n));
-        break;
-
-      case V_SgAsmElfEHFrameEntryFD:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfEHFrameEntryFD>(*n));
-        break;
-
-      case V_SgAsmElfEHFrameEntryFDList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfEHFrameEntryFDList>(*n));
-        break;
-
-      case V_SgAsmElfNoteEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfNoteEntry>(*n));
-        break;
-
-      case V_SgAsmElfNoteEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfNoteEntryList>(*n));
-        break;
-
-      case V_SgAsmElfSymverEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverEntry>(*n));
-        break;
-
-      case V_SgAsmElfSymverEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverEntryList>(*n));
-        break;
-
-      case V_SgAsmElfSymverDefinedEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverDefinedEntry>(*n));
-        break;
-
-      case V_SgAsmElfSymverDefinedEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverDefinedEntryList>(*n));
-        break;
-
-      case V_SgAsmElfSymverDefinedAux:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverDefinedAux>(*n));
-        break;
-
-      case V_SgAsmElfSymverDefinedAuxList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverDefinedAuxList>(*n));
-        break;
-
-      case V_SgAsmElfSymverNeededEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverNeededEntry>(*n));
-        break;
-
-      case V_SgAsmElfSymverNeededEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverNeededEntryList>(*n));
-        break;
-
-      case V_SgAsmElfSymverNeededAux:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverNeededAux>(*n));
-        break;
-
-      case V_SgAsmElfSymverNeededAuxList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymverNeededAuxList>(*n));
-        break;
-
-      case V_SgAsmPERVASizePair:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPERVASizePair>(*n));
-        break;
-
-      case V_SgAsmPEExportDirectory:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEExportDirectory>(*n));
-        break;
-
-      case V_SgAsmPEExportEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEExportEntry>(*n));
-        break;
-
-      case V_SgAsmPEImportDirectory:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportDirectory>(*n));
-        break;
-
-      case V_SgAsmPEImportItem:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEImportItem>(*n));
-        break;
-
-      case V_SgAsmPESectionTableEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPESectionTableEntry>(*n));
-        break;
-
-      case V_SgAsmNEEntryPoint:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNEEntryPoint>(*n));
-        break;
-
-      case V_SgAsmNERelocEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNERelocEntry>(*n));
-        break;
-
-      case V_SgAsmNESectionTableEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNESectionTableEntry>(*n));
-        break;
-
-      case V_SgAsmLEPageTableEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLEPageTableEntry>(*n));
-        break;
-
-      case V_SgAsmLEEntryPoint:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLEEntryPoint>(*n));
-        break;
-
-      case V_SgAsmLESectionTableEntry:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmLESectionTableEntry>(*n));
-        break;
-
-      case V_SgAsmGenericSectionList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericSectionList>(*n));
-        break;
-
-      case V_SgAsmGenericHeaderList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericHeaderList>(*n));
-        break;
-
-      case V_SgAsmGenericSymbolList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericSymbolList>(*n));
-        break;
-
-      case V_SgAsmElfSymbolList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmElfSymbolList>(*n));
-        break;
-
-      case V_SgAsmCoffSymbolList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmCoffSymbolList>(*n));
-        break;
-
-      case V_SgAsmGenericDLLList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericDLLList>(*n));
-        break;
-
-      case V_SgAsmPERVASizePairList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPERVASizePairList>(*n));
-        break;
-
-      case V_SgAsmPEExportEntryList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPEExportEntryList>(*n));
-        break;
-
-      case V_SgAsmBasicString:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmBasicString>(*n));
-        break;
-
-      case V_SgAsmStoredString:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmStoredString>(*n));
-        break;
-
-      case V_SgAsmGenericString:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericString>(*n));
-        break;
-
-      case V_SgAsmStringStorage:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmStringStorage>(*n));
-        break;
-
-      case V_SgAsmDwarfMacro:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfMacro>(*n));
-        break;
-
-      case V_SgAsmDwarfLine:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfLine>(*n));
-        break;
-
-      case V_SgAsmDwarfMacroList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfMacroList>(*n));
-        break;
-
-      case V_SgAsmDwarfLineList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfLineList>(*n));
-        break;
-
-      case V_SgAsmDwarfArrayType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfArrayType>(*n));
-        break;
-
-      case V_SgAsmDwarfClassType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfClassType>(*n));
-        break;
-
-      case V_SgAsmDwarfEntryPoint:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfEntryPoint>(*n));
-        break;
-
-      case V_SgAsmDwarfEnumerationType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfEnumerationType>(*n));
-        break;
-
-      case V_SgAsmDwarfFormalParameter:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfFormalParameter>(*n));
-        break;
-
-      case V_SgAsmDwarfImportedDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfImportedDeclaration>(*n));
-        break;
-
-      case V_SgAsmDwarfLabel:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfLabel>(*n));
-        break;
-
-      case V_SgAsmDwarfLexicalBlock:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfLexicalBlock>(*n));
-        break;
-
-      case V_SgAsmDwarfMember:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfMember>(*n));
-        break;
-
-      case V_SgAsmDwarfPointerType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfPointerType>(*n));
-        break;
-
-      case V_SgAsmDwarfReferenceType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfReferenceType>(*n));
-        break;
-
-      case V_SgAsmDwarfCompilationUnit:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfCompilationUnit>(*n));
-        break;
-
-      case V_SgAsmDwarfStringType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfStringType>(*n));
-        break;
-
-      case V_SgAsmDwarfStructureType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfStructureType>(*n));
-        break;
-
-      case V_SgAsmDwarfSubroutineType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfSubroutineType>(*n));
-        break;
-
-      case V_SgAsmDwarfTypedef:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfTypedef>(*n));
-        break;
-
-      case V_SgAsmDwarfUnionType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfUnionType>(*n));
-        break;
-
-      case V_SgAsmDwarfUnspecifiedParameters:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfUnspecifiedParameters>(*n));
-        break;
-
-      case V_SgAsmDwarfVariant:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfVariant>(*n));
-        break;
-
-      case V_SgAsmDwarfCommonBlock:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfCommonBlock>(*n));
-        break;
-
-      case V_SgAsmDwarfCommonInclusion:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfCommonInclusion>(*n));
-        break;
-
-      case V_SgAsmDwarfInheritance:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfInheritance>(*n));
-        break;
-
-      case V_SgAsmDwarfInlinedSubroutine:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfInlinedSubroutine>(*n));
-        break;
-
-      case V_SgAsmDwarfModule:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfModule>(*n));
-        break;
-
-      case V_SgAsmDwarfPtrToMemberType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfPtrToMemberType>(*n));
-        break;
-
-      case V_SgAsmDwarfSetType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfSetType>(*n));
-        break;
-
-      case V_SgAsmDwarfSubrangeType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfSubrangeType>(*n));
-        break;
-
-      case V_SgAsmDwarfWithStmt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfWithStmt>(*n));
-        break;
-
-      case V_SgAsmDwarfAccessDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfAccessDeclaration>(*n));
-        break;
-
-      case V_SgAsmDwarfBaseType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfBaseType>(*n));
-        break;
-
-      case V_SgAsmDwarfCatchBlock:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfCatchBlock>(*n));
-        break;
-
-      case V_SgAsmDwarfConstType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfConstType>(*n));
-        break;
-
-      case V_SgAsmDwarfConstant:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfConstant>(*n));
-        break;
-
-      case V_SgAsmDwarfEnumerator:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfEnumerator>(*n));
-        break;
-
-      case V_SgAsmDwarfFileType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfFileType>(*n));
-        break;
-
-      case V_SgAsmDwarfFriend:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfFriend>(*n));
-        break;
-
-      case V_SgAsmDwarfNamelist:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfNamelist>(*n));
-        break;
-
-      case V_SgAsmDwarfNamelistItem:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfNamelistItem>(*n));
-        break;
-
-      case V_SgAsmDwarfPackedType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfPackedType>(*n));
-        break;
-
-      case V_SgAsmDwarfSubprogram:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfSubprogram>(*n));
-        break;
-
-      case V_SgAsmDwarfTemplateTypeParameter:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfTemplateTypeParameter>(*n));
-        break;
-
-      case V_SgAsmDwarfTemplateValueParameter:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfTemplateValueParameter>(*n));
-        break;
-
-      case V_SgAsmDwarfThrownType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfThrownType>(*n));
-        break;
-
-      case V_SgAsmDwarfTryBlock:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfTryBlock>(*n));
-        break;
-
-      case V_SgAsmDwarfVariantPart:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfVariantPart>(*n));
-        break;
-
-      case V_SgAsmDwarfVariable:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfVariable>(*n));
-        break;
-
-      case V_SgAsmDwarfVolatileType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfVolatileType>(*n));
-        break;
-
-      case V_SgAsmDwarfDwarfProcedure:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfDwarfProcedure>(*n));
-        break;
-
-      case V_SgAsmDwarfRestrictType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfRestrictType>(*n));
-        break;
-
-      case V_SgAsmDwarfInterfaceType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfInterfaceType>(*n));
-        break;
-
-      case V_SgAsmDwarfNamespace:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfNamespace>(*n));
-        break;
-
-      case V_SgAsmDwarfImportedModule:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfImportedModule>(*n));
-        break;
-
-      case V_SgAsmDwarfUnspecifiedType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfUnspecifiedType>(*n));
-        break;
-
-      case V_SgAsmDwarfPartialUnit:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfPartialUnit>(*n));
-        break;
-
-      case V_SgAsmDwarfImportedUnit:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfImportedUnit>(*n));
-        break;
-
-      case V_SgAsmDwarfMutableType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfMutableType>(*n));
-        break;
-
-      case V_SgAsmDwarfCondition:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfCondition>(*n));
-        break;
-
-      case V_SgAsmDwarfSharedType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfSharedType>(*n));
-        break;
-
-      case V_SgAsmDwarfFormatLabel:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfFormatLabel>(*n));
-        break;
-
-      case V_SgAsmDwarfFunctionTemplate:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfFunctionTemplate>(*n));
-        break;
-
-      case V_SgAsmDwarfClassTemplate:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfClassTemplate>(*n));
-        break;
-
-      case V_SgAsmDwarfUpcSharedType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfUpcSharedType>(*n));
-        break;
-
-      case V_SgAsmDwarfUpcStrictType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfUpcStrictType>(*n));
-        break;
-
-      case V_SgAsmDwarfUpcRelaxedType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfUpcRelaxedType>(*n));
-        break;
-
-      case V_SgAsmDwarfUnknownConstruct:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfUnknownConstruct>(*n));
-        break;
-
-      case V_SgAsmDwarfConstruct:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfConstruct>(*n));
-        break;
-
-      case V_SgAsmDwarfConstructList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfConstructList>(*n));
-        break;
-
-      case V_SgAsmDwarfCompilationUnitList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfCompilationUnitList>(*n));
-        break;
-
-      case V_SgAsmDwarfInformation:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDwarfInformation>(*n));
-        break;
-
-      case V_SgAsmExecutableFileFormat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmExecutableFileFormat>(*n));
-        break;
-
-      case V_SgAsmInterpretation:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmInterpretation>(*n));
-        break;
-
-      case V_SgAsmInterpretationList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmInterpretationList>(*n));
-        break;
-
-      case V_SgAsmGenericFileList:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmGenericFileList>(*n));
-        break;
-
-      case V_SgAsmNode:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmNode>(*n));
-        break;
-
-      case V_SgInitializedName:
-        Dispatcher::dispatch(rv, assume_sage_type<SgInitializedName>(*n));
-        break;
-
-      case V_SgOmpOrderedClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpOrderedClause>(*n));
-        break;
-
-      case V_SgOmpNowaitClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpNowaitClause>(*n));
-        break;
-
-      case V_SgOmpUntiedClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpUntiedClause>(*n));
-        break;
-
-      case V_SgOmpDefaultClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpDefaultClause>(*n));
-        break;
-
-      case V_SgOmpCollapseClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpCollapseClause>(*n));
-        break;
-
-      case V_SgOmpIfClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpIfClause>(*n));
-        break;
-
-      case V_SgOmpNumThreadsClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpNumThreadsClause>(*n));
-        break;
-
-      case V_SgOmpExpressionClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpExpressionClause>(*n));
-        break;
-
-      case V_SgOmpCopyprivateClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpCopyprivateClause>(*n));
-        break;
-
-      case V_SgOmpPrivateClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpPrivateClause>(*n));
-        break;
-
-      case V_SgOmpFirstprivateClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpFirstprivateClause>(*n));
-        break;
-
-      case V_SgOmpSharedClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpSharedClause>(*n));
-        break;
-
-      case V_SgOmpCopyinClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpCopyinClause>(*n));
-        break;
-
-      case V_SgOmpLastprivateClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpLastprivateClause>(*n));
-        break;
-
-      case V_SgOmpReductionClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpReductionClause>(*n));
-        break;
-
-      case V_SgOmpVariablesClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpVariablesClause>(*n));
-        break;
-
-      case V_SgOmpScheduleClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpScheduleClause>(*n));
-        break;
-
-      case V_SgOmpClause:
-        Dispatcher::dispatch(rv, assume_sage_type<SgOmpClause>(*n));
-        break;
-
-      case V_SgRenamePair:
-        Dispatcher::dispatch(rv, assume_sage_type<SgRenamePair>(*n));
-        break;
-
-      case V_SgInterfaceBody:
-        Dispatcher::dispatch(rv, assume_sage_type<SgInterfaceBody>(*n));
-        break;
-
-      case V_SgLocatedNodeSupport:
-        Dispatcher::dispatch(rv, assume_sage_type<SgLocatedNodeSupport>(*n));
-        break;
-
-      case V_SgToken:
-        Dispatcher::dispatch(rv, assume_sage_type<SgToken>(*n));
-        break;
-
-      //
-      // Types
-
-      case V_SgTypeUnknown:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeUnknown>(*n));
-        break;
-
-      case V_SgTypeChar:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeChar>(*n));
-        break;
-
-      case V_SgTypeSignedChar:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeSignedChar>(*n));
-        break;
-
-      case V_SgTypeUnsignedChar:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeUnsignedChar>(*n));
-        break;
-
-      case V_SgTypeShort:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeShort>(*n));
-        break;
-
-      case V_SgTypeSignedShort:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeSignedShort>(*n));
-        break;
-
-      case V_SgTypeUnsignedShort:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeUnsignedShort>(*n));
-        break;
-
-      case V_SgTypeInt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeInt>(*n));
-        break;
-
-      case V_SgTypeSignedInt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeSignedInt>(*n));
-        break;
-
-      case V_SgTypeUnsignedInt:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeUnsignedInt>(*n));
-        break;
-
-      case V_SgTypeLong:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeLong>(*n));
-        break;
-
-      case V_SgTypeSignedLong:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeSignedLong>(*n));
-        break;
-
-      case V_SgTypeUnsignedLong:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeUnsignedLong>(*n));
-        break;
-
-      case V_SgTypeVoid:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeVoid>(*n));
-        break;
-
-      case V_SgTypeGlobalVoid:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeGlobalVoid>(*n));
-        break;
-
-      case V_SgTypeWchar:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeWchar>(*n));
-        break;
-
-      case V_SgTypeFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeFloat>(*n));
-        break;
-
-      case V_SgTypeDouble:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeDouble>(*n));
-        break;
-
-      case V_SgTypeLongLong:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeLongLong>(*n));
-        break;
-
-      case V_SgTypeSignedLongLong:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeSignedLongLong>(*n));
-        break;
-
-      case V_SgTypeUnsignedLongLong:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeUnsignedLongLong>(*n));
-        break;
-
-      case V_SgTypeLongDouble:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeLongDouble>(*n));
-        break;
-
-      case V_SgTypeString:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeString>(*n));
-        break;
-
-      case V_SgTypeBool:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeBool>(*n));
-        break;
-
-      case V_SgTypeComplex:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeComplex>(*n));
-        break;
-
-      case V_SgTypeImaginary:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeImaginary>(*n));
-        break;
-
-      case V_SgTypeDefault:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeDefault>(*n));
-        break;
-
-      case V_SgPointerMemberType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPointerMemberType>(*n));
-        break;
-
-      case V_SgReferenceType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgReferenceType>(*n));
-        break;
-
-      case V_SgTypeCAFTeam:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeCAFTeam>(*n));
-        break;
-
-      case V_SgClassType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgClassType>(*n));
-        break;
-
-      case V_SgTemplateType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateType>(*n));
-        break;
-
-      case V_SgEnumType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgEnumType>(*n));
-        break;
-
-      case V_SgTypedefType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypedefType>(*n));
-        break;
-
-      case V_SgModifierType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgModifierType>(*n));
-        break;
-
-      case V_SgPartialFunctionModifierType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPartialFunctionModifierType>(*n));
-        break;
-
-      case V_SgArrayType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgArrayType>(*n));
-        break;
-
-      case V_SgTypeEllipse:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeEllipse>(*n));
-        break;
-
-      case V_SgTypeCrayPointer:
-        Dispatcher::dispatch(rv, assume_sage_type<SgTypeCrayPointer>(*n));
-        break;
-
-      case V_SgPartialFunctionType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPartialFunctionType>(*n));
-        break;
-
-      case V_SgMemberFunctionType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgMemberFunctionType>(*n));
-        break;
-
-      case V_SgFunctionType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgFunctionType>(*n));
-        break;
-
-      case V_SgPointerType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgPointerType>(*n));
-        break;
-
-      case V_SgNamedType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgNamedType>(*n));
-        break;
-
-      case V_SgQualifiedNameType:
-        Dispatcher::dispatch(rv, assume_sage_type<SgQualifiedNameType>(*n));
-        break;
-
-      // intermediary types - should not occur during AST traversal
-      // \note this list is incomplete
-      case V_SgNode:
-      case V_SgLocatedNode:
-      case V_SgExpression:
-      case V_SgStatement:
-      case V_SgNumVariants:
-      case V_SgType:        /* fall-through */
-      default:
-        unexpected_node(*n);
-    }
-
-    return rv;
+    n->accept(vis);
+    return vis.rv;
   }
-
 
 /// \brief    uncovers the type of SgNode and passes it to an
 ///           overloaded function handle in RoseVisitor.
@@ -2773,7 +883,7 @@ namespace sg
   RoseVisitor
   dispatch(const RoseVisitor& rv, const SgNode* n)
   {
-    return _dispatch(rv, n);
+    return _dispatch(rv, const_cast<SgNode*>(n));
   }
 
   template <class SageNode>

@@ -13,21 +13,26 @@ using namespace std;
 //using namespace AbstractHandle;
 using namespace SageInterface;
 
-namespace AbstractHandle{
-
-  // A helper function to convert SageType string to its enumerate type
-  // TODO move to SageInterface, add error checking using bound check
+namespace AbstractHandle
+{
+  // A helper function to convert SageType string to its enumerate type.
+  // V_SgNumVariants is the last enum value of VariantT, which means no match is found.
   static VariantT getVariantT(string type_str)
   {
     int i=0;
     string temp;
     //Assume the simplest conversion: adding 'Sg' is enough
-    temp = "Sg"+type_str;
-    while (Cxx_GrammarTerminalNames[i].name!=temp)
+    //Be compatible with both SgStatement and Statement
+    string::size_type pos = type_str.find ("Sg",0);
+    if (pos!=0)
+      temp = "Sg"+type_str;
+    else
+      temp = type_str; 
+    while (Cxx_GrammarTerminalNames[i].name!=temp && i != V_SgNumVariants)
       i++;
     return (VariantT)i;  
   }
-// test LDADD dependency
+  // test LDADD dependency
   roseNode* buildroseNode(SgNode* snode)
   {
     static std::map<SgNode*, roseNode*> sgNodeMap;
@@ -46,11 +51,11 @@ namespace AbstractHandle{
   }
 
   // the major constructor
-   roseNode::roseNode(SgNode* snode)
-   {
-     assert(snode != NULL);
-     mNode=snode;
-   }
+  roseNode::roseNode(SgNode* snode)
+  {
+    assert(snode != NULL);
+    mNode=snode;
+  }
 
   /* Remove 'Sg' prefix will get a construct type name for now.
    * More serious implementation will have a conversion from 
@@ -110,7 +115,7 @@ namespace AbstractHandle{
             ROSE_ASSERT(result.length()!=0);
             break;
           }
-         // No explicit name available
+          // No explicit name available
         case V_SgCtorInitializerList:
         case V_SgPragmaDeclaration:
         case V_SgFunctionParameterList:
@@ -264,6 +269,9 @@ namespace AbstractHandle{
   {
     abstract_node* result=NULL;
     VariantT vt = getVariantT(construct_type_str); 
+    // somehow the construct type str does not match any node types. 
+    if (vt == V_SgNumVariants)
+      return NULL; 
 
     //Get all matched nodes according to node type
     Rose_STL_Container<SgNode*> nodelist =  NodeQuery::querySubTree((SgNode*)(getNode()),vt);
@@ -364,23 +372,65 @@ namespace AbstractHandle{
       scope_list.push_back(p_scope);
       p_scope =  SageInterface::getEnclosingScope(p_scope);
     }
-    
+
     ROSE_ASSERT (isSgGlobal(p_scope));
     abstract_handle * p_handle = buildSingleAbstractHandle (p_scope);
-   
-   // Now go through the list to generate numbering handles
+
+    // Now go through the list to generate numbering handles
     std::vector<SgNode*>::reverse_iterator riter;
     for (riter = scope_list.rbegin(); riter!= scope_list.rend(); riter++)
     {
       SgNode* c_node = *riter;
       p_handle = buildSingleAbstractHandle (c_node, p_handle);
     }
-   
-   ROSE_ASSERT (p_handle != NULL);
 
-   return buildSingleAbstractHandle (snode, p_handle);
+    ROSE_ASSERT (p_handle != NULL);
+
+    return buildSingleAbstractHandle (snode, p_handle);
   }
 
+  //! Convert an abstract handle string to a located node in AST
+  SgLocatedNode* convertHandleToNode(const std::string& cur_handle)
+  {
+    SgLocatedNode* lnode=NULL;
+
+    SgProject* project = getProject();
+    if (project == NULL)
+      return NULL; 
+
+    SgFilePtrList & filelist = project->get_fileList();
+    SgFilePtrList::iterator iter= filelist.begin();
+    for (;iter!=filelist.end();iter++)
+    {
+      SgSourceFile* sfile = isSgSourceFile(*iter);
+      if (sfile != NULL)
+      { 
+        // prepare a file handle first
+        abstract_node * file_node = buildroseNode(sfile);
+        ROSE_ASSERT (file_node);
+        abstract_handle* fhandle = new abstract_handle(file_node);
+        ROSE_ASSERT (fhandle);
+        // try to match the string and get the statement handle
+        abstract_handle * shandle = new abstract_handle (fhandle,cur_handle);
+        // it is possible that a handle is created but no matching IR node is found
+        if (shandle != NULL)
+        { 
+          if (shandle->getNode() != NULL)
+          { // get SgNode from the handle
+#ifdef _MSC_VER  // abstract_node::getNode() using covariant type is not supported on Windows MSVC
+          lnode = NULL; 
+#else          
+            SgNode* target_node = (SgNode*) (shandle->getNode()->getNode());
+            ROSE_ASSERT(isSgStatement(target_node));
+            lnode= isSgLocatedNode(target_node);
+#endif            
+            break;
+          }
+        }
+      } //end if sfile
+    } // end for
+   return lnode;
+  } // end convertHandleToNode
 } // end of namespace
 
 

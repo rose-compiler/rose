@@ -33,6 +33,7 @@ libroseutil_la_SOURCES =			\
 	FileSystem.C				\
 	LinearCongruentialGenerator.C		\
 	processSupport.C			\
+	Progress.C				\
 	rose_getline.C				\
 	rose_strtoull.C
 nodist_libroseutil_la_SOURCES = rose_paths.C
@@ -57,8 +58,11 @@ pkginclude_HEADERS =				\
 	GraphUtility.h				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
+	timing.h				\
 	ParallelSort.h				\
 	processSupport.h			\
+	Progress.h				\
+	RecursionCounter.h			\
 	rose_isnan.h				\
 	rose_getline.h				\
 	rose_override.h				\
@@ -73,6 +77,7 @@ EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 # rules for the Sawyer subdirectory
 
 noinst_LTLIBRARIES += libroseSawyer.la
+libroseSawyer_la_CPPFLAGS = $(ROSE_INCLUDES) -DCOMPILING_ROSE
 libroseSawyer_la_SOURCES =			\
 	Sawyer/Assert.C				\
 	Sawyer/Attribute.C			\

@@ -25,7 +25,7 @@ dynamicStaticBinaryAnalysis_SOURCES = dynamicStaticBinaryAnalysis.C
 dynamicStaticBinaryAnalysis_LDADD   = $(LIBTOOL_RPATH_LDADD)
 
 # dynamicStaticBinaryAnalysis_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
-AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
+AM_LDFLAGS = $(ROSE_RPATHS) $(ROSE_DWARF_LIBS_WITH_PATH)
 
 # This ROSE application mixes dynamic analysis with static analysis (dynamic analysis first and then static analysis)
 # as a result is must link to both ROSE and Pin.

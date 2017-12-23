@@ -84,7 +84,7 @@ class ValGetBound : public SymbolicVisitor
          SymbolicBound orig = result;
          bool change = false, isrepl = true, reverse = false;
          SymOpType op = exp.GetOpType(); 
-         std::list<SymbolicBound> args;
+         std::vector<SymbolicBound> args;
          for (SymbolicExpr::OpdIterator iter = exp.GetOpdIterator();
                !iter.ReachEnd(); iter.Advance()) {
             SymbolicVal cur = exp.Term2Val(iter.Current());
@@ -98,7 +98,7 @@ class ValGetBound : public SymbolicVisitor
             args.push_back(curbound); 
          }
          if (change) {
-            std::list<SymbolicBound>::const_iterator p = args.begin(); 
+            std::vector<SymbolicBound>::const_iterator p = args.begin(); 
             result = *p;
             for ( ++p ; p != args.end(); ++p) {
                SymbolicBound cur = *p;

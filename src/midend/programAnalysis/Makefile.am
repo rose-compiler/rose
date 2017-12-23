@@ -13,7 +13,17 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #else
 #SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
 #endif
-SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+
+# DQ (4/3/2017): Boost 1.62 is not working due to internal Boost header files issues (Boost group suggestes using alternative version).
+#SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+SUBDIRS = 
+if !ROSE_USING_BOOST_VERSION_1_62
+# SUBDIRS += staticSingleAssignment
+  SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
+else
+#  SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
+endif
+# SUBDIRS += ssaUnfilteredCfg
 
 ###############################################################################
 # Subdirectory specifics
@@ -32,7 +42,6 @@ include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
 include $(srcdir)/genericDataflow/Makefile_variables
-include $(srcdir)/graphAnalysis/Makefile_variables
 include $(srcdir)/OAWrap/Makefile_variables
 include $(srcdir)/pointerAnal/Makefile_variables
 include $(srcdir)/sideEffectAnalysis/Makefile_variables
@@ -51,7 +60,6 @@ mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
 mpaGenericDataflowPath=$(srcdir)/genericDataflow#
-mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
 mpaOAWrapPath=$(srcdir)/OAWrap#
 mpaPointerAnalPath=$(srcdir)/pointerAnal#
 mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
@@ -108,7 +116,6 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaBitvectorDataflow_la_sources) \
 	$(mpaVirtualFunctionAnalysis_la_sources) \
 	$(mpaDefUseAnalysis_la_sources) \
-	$(mpaGraphAnalysis_la_sources) \
 	$(mpaGenericDataflow_la_sources) \
 	$(mpaOAWrap_la_sources) \
 	$(mpaPointerAnal_la_sources) \
@@ -125,9 +132,14 @@ libprogramAnalysis_la_SOURCES=\
 # else
 # libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la systemDependenceGraph/libSDG.la
 # endif
-libprogramAnalysis_la_LIBADD = \
-	staticSingleAssignment/libSSA.la \
-	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+
+# DQ (4/3/2017): Boost 1.62 is a problem and it is suggested that people not use it.  We disable some minimal parts of ROSE to address this.
+# libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+if !ROSE_USING_BOOST_VERSION_1_62
+   libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+else
+   libprogramAnalysis_la_LIBADD = 
+endif
 
 pkginclude_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
@@ -138,7 +150,6 @@ pkginclude_HEADERS=\
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
 	$(mpaDominanceAnalysis_includeHeaders) \
 	$(mpaGenericDataflow_includeHeaders) \
-	$(mpaGraphAnalysis_includeHeaders) \
 	$(mpaOAWrap_includeHeaders) \
 	$(mpaPointerAnal_includeHeaders) \
 	$(mpaSideEffectAnalysis_includeHeaders) \
@@ -165,7 +176,6 @@ EXTRA_DIST=\
 	$(mpaDistributedMemoryAnalysis_extraDist) \
 	$(mpaDominanceAnalysis_extraDist) \
 	$(mpaGenericDataflow_extraDist) \
-	$(mpaGraphAnalysis_extraDist) \
 	$(mpaOAWrap_extraDist) \
 	$(mpaPointerAnal_extraDist) \
 	$(mpaSideEffectAnalysis_extraDist) \
@@ -185,7 +195,6 @@ clean-local:
 	$(mpaDefUseAnalysis_cleanLocal)
 	$(mpaDominanceAnalysis_cleanLocal)
 	$(mpaGenericDataflow_cleanLocal)
-	$(mpaGraphAnalysis_cleanLocal)
 	$(mpaOAWrap_cleanLocal)
 	$(mpaPointerAnal_cleanLocal)
 	$(mpaStaticInterproceduralSlicing_cleanLocal)
@@ -203,7 +212,6 @@ distclean-local:
 	$(mpaDefUseAnalysis_distCleanLocal)
 	$(mpaDominanceAnalysis_distCleanLocal)
 	$(mpaGenericDataflow_distCleanLocal)
-	$(mpaGraphAnalysis_distCleanLocal)
 	$(mpaOAWrap_distCleanLocal)
 	$(mpaPointerAnal_distCleanLocal)
 	$(mpaStaticInterproceduralSlicing_distCleanLocal)

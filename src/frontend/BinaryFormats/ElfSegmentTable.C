@@ -2,9 +2,19 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
-/** Converts 32-bit disk representation to host representation */
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk) {
+     ctor(sex, disk);
+}
+
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk) {
+    ctor(sex, disk);
+}
+
+/* Converts 32-bit disk representation to host representation */
 void
 SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const struct Elf32SegmentTableEntry_disk *disk) 
 {
@@ -18,7 +28,7 @@ SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const struct Elf32Seg
     p_align     = ByteOrder::disk_to_host(sex, disk->p_align);
 }
 
-/** Converts 64-bit disk representation to host representation */
+/* Converts 64-bit disk representation to host representation */
 void
 SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SegmentTableEntry_disk *disk) 
 {
@@ -32,7 +42,6 @@ SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SegmentTab
     p_align     = ByteOrder::disk_to_host(sex, disk->p_align);
 }
 
-/** Converts segment table entry back into disk structure */
 void *
 SgAsmElfSegmentTableEntry::encode(ByteOrder::Endianness sex, Elf32SegmentTableEntry_disk *disk) const
 {
@@ -60,7 +69,6 @@ SgAsmElfSegmentTableEntry::encode(ByteOrder::Endianness sex, Elf64SegmentTableEn
     return disk;
 }
 
-/** Update this segment table entry with newer information from the section */
 void
 SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
 {
@@ -91,7 +99,6 @@ SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
     }
 }
 
-/** Print some debugging info */
 void
 SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -177,8 +184,7 @@ SgAsmElfSegmentTableEntry::to_string(SegmentFlags val)
 
 }
 
-
-/** Non-parsing constructor for an ELF Segment (Program Header) Table */
+/* Non-parsing constructor for an ELF Segment (Program Header) Table */
 void
 SgAsmElfSegmentTable::ctor()
 {
@@ -195,8 +201,6 @@ SgAsmElfSegmentTable::ctor()
     fhdr->set_segment_table(this);
 }
 
-/** Parses an ELF Segment (Program Header) Table and constructs and parses all segments reachable from the table. The section
- *  is extended as necessary based on the number of entries and teh size of each entry. */
 SgAsmElfSegmentTable *
 SgAsmElfSegmentTable::parse()
 {
@@ -280,15 +284,6 @@ SgAsmElfSegmentTable::parse()
     return this;
 }
 
-/** Attaches a previously unattached ELF Segment (SgAsmElfSection) to the ELF Segment Table (SgAsmElfSegmentTable). This
- *  method complements SgAsmElfSection::init_from_segment_table. This method initializes the segment table from the segment
- *  while init_from_segment_table() initializes the segment from the segment table.
- *  
- *  ELF Segments are represented by SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much in their
- *  features and thus should share an interface. An SgAsmElfSection can appear in the ELF Section Table and/or the ELF Segment
- *  Table and you can determine where it was located by calling get_section_entry() and get_segment_entry().
- *
- *  Returns the new segment table entry linked into the AST. */
 SgAsmElfSegmentTableEntry *
 SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
 {
@@ -313,8 +308,6 @@ SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
     return shdr;
 }
 
-/** Returns info about the size of the entries based on information already available. Any or all arguments may be null
- *  pointers if the caller is not interested in the value. */
 rose_addr_t
 SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -367,7 +360,6 @@ SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return entry_size * nentries;
 }
 
-/** Pre-unparsing updates */
 bool
 SgAsmElfSegmentTable::reallocate()
 {
@@ -396,7 +388,6 @@ SgAsmElfSegmentTable::reallocate()
     return reallocated;
 }
 
-/** Write the segment table to disk. */
 void
 SgAsmElfSegmentTable::unparse(std::ostream &f) const
 {
@@ -446,7 +437,6 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
     }
 }
 
-/** Print some debugging info */
 void
 SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

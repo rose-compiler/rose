@@ -36,11 +36,15 @@ main( int argc, char * argv[] )
   // SgTopDownBottomUpProcessing traversal and a traversal using the 
   // AST Rewrite Mechanism.
 
+  // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
+  // any warning message using the message looging feature in ROSE will fail).
+     ROSE_INITIALIZE;
+
      ios::sync_with_stdio();     // Syncs C++ and C I/O subsystems!
      if (argc == 1)
         {
        // Print usage and exit with exit status == 1
-          rose::usage (1);
+          Rose::usage (1);
         }
 
   // Build the project object which we will fill up with multiple files and use as a

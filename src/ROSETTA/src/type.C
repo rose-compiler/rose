@@ -699,8 +699,17 @@ Grammar::setUpTypes ()
   // NamedType.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= p_defaultQualifiedNamePtrList",
   //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/16/2017): We need to mark that a named type is associated with a template parameter.
+     NamedType.setDataPrototype     ("bool", "is_from_template_parameter","= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      ClassType.setFunctionPrototype ("HEADER_CLASS_TYPE", "../Grammar/Type.code" );
      ClassType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+  // DQ (3/20/2017): We need to support a flag to indicate packing in template parameters.
+  // This is required only for the RoseExample tests using Boost 1.56 (no where else that I know of so far).
+     ClassType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -738,7 +747,8 @@ Grammar::setUpTypes ()
      JavaUnionType.setFunctionPrototype ("HEADER_JAVA_UNION_TYPE", "../Grammar/Type.code" );
      JavaUnionType.setDataPrototype     ("SgTypePtrList","type_list","",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JavaUnionType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+  // DQ (3/22/2017): This is reserved for virtual function specification.
+  // JavaUnionType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
      JavaParameterType.setFunctionPrototype ("HEADER_JAVA_PARAMETER_TYPE", "../Grammar/Type.code" );
      JavaParameterType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
@@ -753,6 +763,9 @@ Grammar::setUpTypes ()
   // template parameters and the template declaration (OR just the template paramters only; I have not decided).
      TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/18/2017): We need to support a flag to indicate packing in template parameters.
+     TemplateType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Skip building a parse function for this AstNodeClass/nonterminal of the Grammar
      if (isRootGrammar() == false)
@@ -885,7 +898,12 @@ Grammar::setUpTypes ()
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
-     ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+  // DQ (3/22/2017): I think it is a mistake to include this this way. This is for the virtual 
+  // function support and it is not a virtual function in SgArrayType.
+  // ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     ArrayType.setFunctionPrototype ("HEADER_ARRAY_TYPE", "../Grammar/Type.code" );
+
      ArrayType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      ArrayType.setDataPrototype ("SgType*"      , "base_type", "= NULL",

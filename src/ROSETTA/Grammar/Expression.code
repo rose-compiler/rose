@@ -54,12 +54,12 @@ HEADER_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 	  // Overriding SgNode versions of these
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int index) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int index) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // get lvalue
@@ -71,14 +71,14 @@ HEADER_START
 
        // DQ (11/6/2006): use this to return the operatorPosition 
        // (instead of the startOfConstruct as it is used for SgStatement objects)
-          virtual Sg_File_Info* get_file_info(void) const;
-          virtual void set_file_info(Sg_File_Info* X);
+          virtual Sg_File_Info* get_file_info(void) const $ROSE_OVERRIDE;
+          virtual void set_file_info(Sg_File_Info* X) $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (11/1/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -149,7 +149,7 @@ HEADER_FUNCTIONS_START
 HEADER_FUNCTIONS_END
 
 HEADER_GET_TYPE_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_GET_TYPE_END
 
 
@@ -164,18 +164,18 @@ HEADER_SET_TYPE_END
 
 
 HEADER_POST_CONSTRUCTION_INITIALIZATION_START
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_POST_CONSTRUCTION_INITIALIZATION_END
 
 
 HEADER_PRECEDENCE_START
-          int precedence() const { return PRECEDENCE_VALUE; }
+          int precedence() const $ROSE_OVERRIDE { return PRECEDENCE_VALUE; }
 HEADER_PRECEDENCE_END
 
 
 HEADER_GET_NEXT_EXPRESSION_START
           SgExpression *get_next( int& n) const ROSE_DEPRECATED_FUNCTION;
-          int replace_expression( SgExpression *, SgExpression *) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression( SgExpression *, SgExpression *) $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
 HEADER_GET_NEXT_EXPRESSION_END
 
 
@@ -195,7 +195,7 @@ HEADER_UNARY_EXPRESSION_START
 
           SgExpression* get_operand() const;
           void set_operand (SgExpression * exp);
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // Enums are not properly scoped in the class declaration and are assigned 
        // to a global scope so we have to change the name to make it unique across 
@@ -215,9 +215,9 @@ HEADER_UNARY_EXPRESSION_START
              };
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_UNARY_EXPRESSION_END
@@ -227,12 +227,12 @@ HEADER_BINARY_EXPRESSION_START
           void set_lhs_operand(SgExpression * exp);
           SgExpression* get_rhs_operand() const;
           void set_rhs_operand(SgExpression * exp);
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_BINARY_EXPRESSION_END
@@ -267,16 +267,16 @@ HEADER_LIST_DECLARATIONS
         // void insert_expression(const SgExpressionPtrList::iterator &, SgExpression*);
         // void insert_expression( SgExpression*, SgExpression*, int);
 
-          int replace_expression(SgExpression *o, SgExpression *n) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression *o, SgExpression *n) $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // get lvalue
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 HEADER_EXPRESSION_LIST_EXPRESSION_END
 
 
@@ -290,9 +290,9 @@ HEADER_RANGE_EXP_END
 
 HEADER_VAR_REF_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (11/7/2007): I think this is not used any more.
@@ -300,45 +300,45 @@ HEADER_VAR_REF_EXPRESSION_START
        // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 
        // get lvalue
-          virtual bool isDefinable() const;
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isDefinable() const $ROSE_OVERRIDE;
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_VAR_REF_EXPRESSION_END
 
 
 HEADER_COMPOUND_LITERAL_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // get lvalue
-          virtual bool isDefinable() const;
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isDefinable() const $ROSE_OVERRIDE;
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 HEADER_COMPOUND_LITERAL_EXPRESSION_END
 
 
 HEADER_LABEL_REF_EXPRESSION_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
           SgName get_name() const;
@@ -372,9 +372,9 @@ HEADER_FUNCTION_REF_EXPRESSION_START
           void set_symbol(SgFunctionSymbol * symbol);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
@@ -388,16 +388,16 @@ HEADER_FUNCTION_REF_EXPRESSION_START
 //          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_FUNCTION_REF_EXPRESSION_END
 
@@ -407,9 +407,9 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
           void set_symbol(SgMemberFunctionSymbol * symbol);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
       	  //! This is helpful in chasing down the associated declaration to this member function reference.
@@ -418,20 +418,20 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
           SgMemberFunctionDeclaration* getAssociatedMemberFunctionDeclaration() const;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
 
@@ -443,9 +443,9 @@ HEADER_TEMPLATE_FUNCTION_REF_EXPRESSION_START
           void set_symbol(SgTemplateFunctionSymbol * symbol);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
@@ -459,16 +459,16 @@ HEADER_TEMPLATE_FUNCTION_REF_EXPRESSION_START
 //          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_TEMPLATE_FUNCTION_REF_EXPRESSION_END
 
@@ -480,9 +480,9 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION_START
           void set_symbol(SgTemplateMemberFunctionSymbol * symbol);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
         //! This is helpful in chasing down the associated declaration to this member function reference.
@@ -496,25 +496,25 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION_START
        // virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int  get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int  get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION_END
 
 
 HEADER_VALUE_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/12/2011): Added const so that this could be called in get_mangled() (and more generally).
@@ -539,8 +539,8 @@ HEADER_STRING_VALUE_EXPRESSION_START
       // ~$CLASSNAME();
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_STRING_VALUE_EXPRESSION_END
 
@@ -575,16 +575,16 @@ HEADER_INT_VALUE_EXPRESSION_END
 HEADER_ENUM_VALUE_EXPRESSION_START
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_ENUM_VALUE_EXPRESSION_END
 
@@ -626,7 +626,7 @@ HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
        // DQ (11/28/2011): Added to support template declarations in the AST.
           SgName get_template_parameter_name() const;
 
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
 HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
 
@@ -634,6 +634,8 @@ HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
 HEADER_COMPLEX_VALUE_EXPRESSION_START
 HEADER_COMPLEX_VALUE_EXPRESSION_END
 
+// HEADER_LABEL_ADDRESS_VALUE_EXPRESSION_START
+// HEADER_LABEL_ADDRESS_VALUE_EXPRESSION_END
 
 HEADER_UPC_THREADS_EXPRESSION_START
 HEADER_UPC_THREADS_EXPRESSION_END
@@ -651,9 +653,9 @@ HEADER_CALL_EXPRESSION_END
 HEADER_FUNCTION_CALL_EXPRESSION_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
@@ -669,8 +671,8 @@ HEADER_FUNCTION_CALL_EXPRESSION_START
           SgFunctionSymbol* getAssociatedFunctionSymbol() const;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
@@ -679,9 +681,9 @@ HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_START
        // DQ (7/13/2013): I have verified that we need implementations of these functions for the CFG support.
        // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure and lack definitions.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure.
@@ -692,11 +694,11 @@ HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_START
 HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_END
 
 HEADER_ARROW_EXPRESSION_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (7/16/2014): Shared types from expressions in UPC have some expected symantics that are not a matter of returning the result of get_type().
        // This function supports the get_type() function.
@@ -706,38 +708,39 @@ HEADER_ARROW_EXPRESSION_END
 
 
 HEADER_DOT_EXPRESSION_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_DOT_EXPRESSION_END
 
 
 HEADER_DOT_STAR_OPERATOR_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_DOT_STAR_OPERATOR_END
 
 
 HEADER_ARROW_STAR_OPERATOR_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ARROW_STAR_OPERATOR_END
 
 
 HEADER_BOOLEAN_GET_TYPE_START
+       // DQ (3/23/2017): This is used as ROSE_OVERRIDE instead of $ROSE_OVERRIDE since the order of the editing to build the generated code appears to be important.
        // DQ (6/20/2006): Used for all relational operators
-          virtual SgType* get_type() const;
+          virtual SgType* get_type() const ROSE_OVERRIDE;
 HEADER_BOOLEAN_GET_TYPE_END
 
 HEADER_EQUALITY_OPERATOR_START
@@ -769,7 +772,7 @@ HEADER_ADD_OPERATOR_START
 HEADER_ADD_OPERATOR_END
 
 HEADER_DOTDOT_EXPRESSION_START
-   SgType* get_type() const;
+   SgType* get_type() const $ROSE_OVERRIDE;
 
    // get lvalue
 //   virtual bool isLValue() const;
@@ -824,35 +827,35 @@ HEADER_NARY_OP_START
 HEADER_NARY_OP_END
 
 HEADER_NARY_COMPARISON_OP_START
-    virtual SgType* get_type() const;
+    virtual SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_NARY_COMPARISON_OP_END
 
 HEADER_NARY_BOOLEAN_OP_START
-    virtual SgType* get_type() const;
+    virtual SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_NARY_BOOLEAN_OP_END
 
 HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 HEADER_IS_NOT_OP_END
 
 HEADER_AND_OPERATOR_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_AND_OPERATOR_END
 
 
 HEADER_OR_OPERATOR_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_OR_OPERATOR_END
@@ -873,11 +876,11 @@ HEADER_BIT_OR_OPERATOR_END
 HEADER_COMMA_OPERATOR_EXPRESSION_START
 
        // get the type associated with this expression (using the rhs)
-          virtual SgType* get_type() const;
+          virtual SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_COMMA_OPERATOR_EXPRESSION_END
 
@@ -904,49 +907,49 @@ HEADER_UNARY_ADD_OPERATOR_END
 
 HEADER_SIZEOF_OPERATOR_START
  // Liao, 11/17/2009
-          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression*, SgExpression*) $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_SIZEOF_OPERATOR_END
 
 
 HEADER_ALIGNOF_OPERATOR_START
-          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression*, SgExpression*) $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int  get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int  get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_ALIGNOF_OPERATOR_END
 
@@ -956,9 +959,9 @@ HEADER_NOEXCEPT_OPERATOR_START
        // int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_NOEXCEPT_OPERATOR_END
@@ -966,9 +969,9 @@ HEADER_NOEXCEPT_OPERATOR_END
 
 HEADER_JAVA_INSTANCEOF_OPERATOR_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_JAVA_INSTANCEOF_OPERATOR_END
@@ -976,34 +979,34 @@ HEADER_JAVA_INSTANCEOF_OPERATOR_END
 
 HEADER_TYPE_ID_OPERATOR_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_TYPE_ID_OPERATOR_END
 
 HEADER_VARARG_START_OPERATOR_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_VARARG_START_OPERATOR_END
@@ -1011,49 +1014,49 @@ HEADER_VARARG_START_OPERATOR_END
 HEADER_VARARG_OPERATOR_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression*, SgExpression*) $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
        // void set_type( SgType* type );
 
 HEADER_VARARG_OPERATOR_END
 
 HEADER_VARARG_END_OPERATOR_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression*, SgExpression*) $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
 
 HEADER_VARARG_END_OPERATOR_END
 
 HEADER_NOT_OPERATOR_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
 HEADER_NOT_OPERATOR_END
 
 
 HEADER_POINTER_DEREF_EXPRESSION_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_POINTER_DEREF_EXPRESSION_END
 
 
 HEADER_ADDRESS_OF_OPERATOR_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (7/16/2014): Shared types from expressions in UPC have some expected symantics that are not a matter of returning the result of get_type().
        // This function supports the get_type() function.
@@ -1067,8 +1070,8 @@ HEADER_MINUS_MINUS_OPERATOR_START
           $CLASSNAME ( SgExpression* operand_i, Sgop_mode a_mode );
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MINUS_MINUS_OPERATOR_END
 
@@ -1078,8 +1081,8 @@ HEADER_PLUS_PLUS_OPERATOR_START
           $CLASSNAME ( SgExpression* operand_i, Sgop_mode a_mode );
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_PLUS_PLUS_OPERATOR_END
 
@@ -1109,16 +1112,16 @@ HEADER_FINISHEXP_EXPRESSION_END
 
 HEADER_CONDITIONAL_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_CONDITIONAL_EXPRESSION_END
 
@@ -1155,34 +1158,34 @@ HEADER_CAST_EXPRESSION_START
 
        // DQ (1/16/2006): Added to support special version of get_type which uses the p_expression_type 
        // (one of the few places where we have to store the expression type explicitly).
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgFindChildIndex(SgNode* n); // CFG children do not match traversalSuccessorContainer
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE; // CFG children do not match traversalSuccessorContainer
 #endif
 
        // DQ (1/17/2008): Added to permit the type to be set.
           void set_type (SgType* type);
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (10/24/2014): Added support to determine when cast should be allowable.
        // This is used in the SageInterace support for evaluation of constant expressions.
           bool cast_looses_precision();
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
           static std::string cast_type_to_string ( enum cast_type_enum );
 
@@ -1192,11 +1195,11 @@ HEADER_CAST_EXPRESSION_END
 HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_START
        // DQ (1/16/2006): Added to support special version of get_type.
        // returns get_lhs_operand()->get_type()  (maybe we should call get_base_type() ???)
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_END
 
@@ -1207,32 +1210,32 @@ HEADER_NEW_OPERATOR_EXPRESSION_START
        // SgType* get_type() const;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_NEW_OPERATOR_EXPRESSION_END
 
 
 HEADER_DELETE_OPERATOR_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_DELETE_OPERATOR_EXPRESSION_END
@@ -1242,27 +1245,27 @@ HEADER_HERE_EXPRESSION_END
 
 HEADER_THIS_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_THIS_EXPRESSION_END
 
 HEADER_SUPER_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_SUPER_EXPRESSION_END
 
 HEADER_CLASS_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_CLASS_EXPRESSION_END
@@ -1299,16 +1302,16 @@ HEADER_STRING_CONVERSION_END
 
 HEADER_SCOPE_OPERATOR_START
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 HEADER_SCOPE_OPERATOR_END
 
 
 HEADER_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_OPERATOR_END
 
@@ -1316,8 +1319,8 @@ HEADER_ASSIGNMENT_OPERATOR_END
 HEADER_COMPOUND_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_COMPOUND_ASSIGNMENT_OPERATOR_END
 
@@ -1335,7 +1338,7 @@ HEADER_ELEMENT_WISE_OP_END
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
-          virtual bool isDefinable() const;
+          virtual bool isDefinable() const $ROSE_OVERRIDE;
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_END
 
@@ -1361,12 +1364,12 @@ HEADER_THROW_OPERATOR_START
              };
 
        // DQ (1/16/2006): Added to support special version of get_type()
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          unsigned int cfgIndexForEnd() const;
-          std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_THROW_OPERATOR_END
@@ -1378,7 +1381,7 @@ HEADER_CONCATENATION_OPERATOR_END
 
 HEADER_INITIALIZER_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
 #endif
 
 HEADER_INITIALIZER_EXPRESSION_END
@@ -1387,8 +1390,8 @@ HEADER_INITIALIZER_EXPRESSION_END
 HEADER_AGGREGATE_INITIALIZER_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
@@ -1412,17 +1415,17 @@ HEADER_AGGREGATE_INITIALIZER_EXPRESSION_END
 HEADER_COMPOUND_INITIALIZER_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_COMPOUND_INITIALIZER_EXPRESSION_END
 
 HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
 #endif
 
       /*! \brief Get the SgClassDeclaration associated with this constructor call.
@@ -1437,40 +1440,40 @@ HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
           SgClassDeclaration* get_class_decl () const;
 
        // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length() const;
-          void set_name_qualification_length(int name_qualification_length);
+          int get_name_qualification_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required);
+          bool get_type_elaboration_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required(bool type_elaboration_required) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required);
+          bool get_global_qualification_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_END
 
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
           SgExpression * get_operand() const;
           void set_operand(SgExpression * exp);
 
        // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isLValue() const $ROSE_OVERRIDE;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
 
 HEADER_BRACED_INITIALIZER_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if 0
@@ -1481,30 +1484,30 @@ HEADER_LIST_DECLARATIONS
           void set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType);
 
        // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_length_for_type() const;
-          void set_name_qualification_length_for_type(int name_qualification_length_for_type);
+          int get_name_qualification_length_for_type() const $ROSE_OVERRIDE;
+          void set_name_qualification_length_for_type(int name_qualification_length_for_type) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required_for_type() const;
-          void set_type_elaboration_required_for_type(bool type_elaboration_required_for_type);
+          bool get_type_elaboration_required_for_type() const $ROSE_OVERRIDE;
+          void set_type_elaboration_required_for_type(bool type_elaboration_required_for_type) $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for non ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required_for_type() const;
-          void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
+          bool get_global_qualification_required_for_type() const $ROSE_OVERRIDE;
+          void set_global_qualification_required_for_type(bool global_qualification_required_for_type) $ROSE_OVERRIDE;
 #endif
 
 HEADER_BRACED_INITIALIZER_EXPRESSION_END
 
 
 HEADER_REPLACE_EXPRESSION_START
-          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression*, SgExpression*) $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
 HEADER_REPLACE_EXPRESSION_END
 
 HEADER_NULL_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_NULL_EXPRESSION_END
@@ -1514,9 +1517,9 @@ HEADER_VARIANT_EXPRESSION_END
 
 HEADER_STATEMENT_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_STATEMENT_EXPRESSION_END
@@ -1602,9 +1605,9 @@ HEADER_ASM_OP_START
              };
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_ASM_OP_END
@@ -1616,9 +1619,9 @@ HEADER_ASM_OP_END
 
 HEADER_SUBSCRIPT_EXPR_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_SUBSCRIPT_EXPR_EXPRESSION_END
@@ -1634,9 +1637,9 @@ HEADER_COLON_SHAPE_EXPRESSION_END
 
 HEADER_ASTERISK_SHAPE_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_ASTERISK_SHAPE_EXPRESSION_END
@@ -1652,9 +1655,9 @@ HEADER_IO_ITEM_EXPR_END
 
 HEADER_IMPLIED_DO_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_IMPLIED_DO_END
@@ -1664,18 +1667,18 @@ HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_END
 
 HEADER_ACTUAL_ARGUMENT_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_ACTUAL_ARGUMENT_EXPRESSION_END
 
 HEADER_DESIGNATED_INITIALIZER_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
 #endif
 
 HEADER_DESIGNATED_INITIALIZER_END
@@ -1699,18 +1702,18 @@ HEADER_UPC_ELEM_SIZEOF_EXPRESSION_START
 HEADER_UPC_ELEM_SIZEOF_EXPRESSION_END
 
 HEADER_USER_DEFINED_UNARY_EXPRESSION_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_USER_DEFINED_UNARY_EXPRESSION_END
 
 HEADER_USER_DEFINED_BINARY_EXPRESSION_START
-          SgType* get_type() const;
+          SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_USER_DEFINED_BINARY_EXPRESSION_END
 
 HEADER_PSEUDO_DESTRUCTOR_REF_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_PSEUDO_DESTRUCTOR_REF_END
@@ -1735,9 +1738,9 @@ HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
 
 HEADER_JAVA_ANNOTATION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_JAVA_ANNOTATION_END
@@ -1758,18 +1761,18 @@ HEADER_JAVA_NORMAL_ANNOTATION_END
 
 HEADER_JAVA_TYPE_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_JAVA_TYPE_EXPRESSION_END
 
 HEADER_TYPE_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_TYPE_EXPRESSION_END
@@ -1779,9 +1782,9 @@ HEADER_FUNCTION_PARAMETER_REFERENCE_EXPRESSION_START
 
        // DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
 #if 0
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
        // SgType* get_type() const;
 
@@ -4163,6 +4166,9 @@ SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
 
 SOURCE_COMPLEX_VALUE_EXPRESSION_START
 SOURCE_COMPLEX_VALUE_EXPRESSION_END
+
+// SOURCE_LABEL_ADDRESS_VALUE_EXPRESSION_START
+// SOURCE_LABEL_ADDRESS_VALUE_EXPRESSION_END
 
 SOURCE_UPC_THREADS_EXPRESSION_START
 SOURCE_UPC_THREADS_EXPRESSION_END

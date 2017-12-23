@@ -6,18 +6,19 @@
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
 #include "FileSystem.h"
+#include "x86InstructionProperties.h"
 
 #include <Sawyer/MappedBuffer.h>
 
 #include <errno.h>
 #include <fcntl.h>
 
-using namespace rose;
+using namespace Rose;
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
-static void
-printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned variant=V_SgNode)
+void
+printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned variant=V_SgNode)
 {
     if (!e) {
         fprintf(f, "null");
@@ -27,7 +28,6 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         variant = e->variantT();
     switch (variant) {
         case V_SgAsmExpression: {
-            fprintf(f, ",\n%sreplacement=\"%s\"", prefix.c_str(), e->get_replacement().c_str());
             fprintf(f, ",\n%scomment=\"%s\"", prefix.c_str(), e->get_comment().c_str());
             break;
         }
@@ -38,8 +38,8 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             SgAsmValueExpression *ee = isSgAsmValueExpression(e);
             fprintf(f, ",\n%sbit_offset=%u, bit_size=%u", prefix.c_str(), ee->get_bit_offset(), ee->get_bit_size());
             fprintf(f, ", unfolded=");
-            printExpr(f, ee->get_unfolded_expression_tree(), prefix+"  ");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, ee->get_unfolded_expression_tree(), prefix+"  ");
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
         case V_SgAsmIntegerValueExpression: {
@@ -54,7 +54,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmFloatValueExpression: {
             SgAsmFloatValueExpression *ee = isSgAsmFloatValueExpression(e);
             fprintf(f, "FloatValue {value=%g", ee->get_nativeValue());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmValueExpression);
             fprintf(f, "}");
             break;
         }
@@ -64,87 +64,87 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmBinaryExpression: {
             SgAsmBinaryExpression *ee = isSgAsmBinaryExpression(e);
             fprintf(f, "\n%slhs=", prefix.c_str());
-            printExpr(f, ee->get_lhs(), prefix+"  ");
+            printSgAsmExpression(f, ee->get_lhs(), prefix+"  ");
             fprintf(f, "\n%srhs=", prefix.c_str());
-            printExpr(f, ee->get_rhs(), prefix+"  ");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, ee->get_rhs(), prefix+"  ");
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
         case V_SgAsmBinaryAdd: {
             fprintf(f, "Add {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinarySubtract: {
             fprintf(f, "Subtract {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryMultiply: {
             fprintf(f, "Multiply {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryDivide: {
             fprintf(f, "Divide {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryMod: {
             fprintf(f, "Mod {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryAddPreupdate: {
             fprintf(f, "AddPreupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinarySubtractPreupdate: {
             fprintf(f, "SubtractPreupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryAddPostupdate: {
             fprintf(f, "AddPostupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinarySubtractPostupdate: {
             fprintf(f, "SubtractPostupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryLsl: {
             fprintf(f, "Lsl {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryLsr: {
             fprintf(f, "Lsr {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryAsr: {
             fprintf(f, "Asr {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryRor: {
             fprintf(f, "Ror {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
@@ -154,31 +154,31 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmUnaryExpression: {
             SgAsmUnaryExpression *ee = isSgAsmUnaryExpression(e);
             fprintf(f, "operand=");
-            printExpr(f, ee->get_operand(), prefix+"  ");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, ee->get_operand(), prefix+"  ");
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
         case V_SgAsmUnaryPlus: {
             fprintf(f, "Plus {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmUnaryMinus: {
             fprintf(f, "Minus {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmUnaryRrx: {
             fprintf(f, "Rrx {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmUnaryArmSpecialRegisterList: {
             fprintf(f, "ArmSpecialRegisterList {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
@@ -188,7 +188,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmDirectRegisterExpression:
         case V_SgAsmIndirectRegisterExpression: {
             fprintf(f, ", type=?");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
 
@@ -197,11 +197,11 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression *ee = isSgAsmMemoryReferenceExpression(e);
             fprintf(f, "MemoryReference {\n%saddress=", prefix.c_str());
-            printExpr(f, ee->get_address(), prefix+"  ");
+            printSgAsmExpression(f, ee->get_address(), prefix+"  ");
             fprintf(f, "\n%ssegment=", prefix.c_str());
-            printExpr(f, ee->get_segment(), prefix+"  ");
+            printSgAsmExpression(f, ee->get_segment(), prefix+"  ");
             fprintf(f, "\n%stype=?", prefix.c_str());
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
@@ -209,14 +209,14 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmControlFlagsExpression: {
             SgAsmControlFlagsExpression *ee = isSgAsmControlFlagsExpression(e);
             fprintf(f, "ControlFlags {bit_flags=0x%08lx", ee->get_bit_flags());
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
             
         case V_SgAsmCommonSubExpression: {
             fprintf(f, "CommonSub {");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
@@ -227,9 +227,9 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             for (size_t i=0; i<ee->get_expressions().size(); i++) {
                 SgAsmExpression *operand = ee->get_expressions()[i];
                 fprintf(f, "\n%soperand[%" PRIuPTR "]=", prefix.c_str(), i);
-                printExpr(f, operand, prefix+"  ");
+                printSgAsmExpression(f, operand, prefix+"  ");
             }
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
@@ -1693,7 +1693,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         for (size_t i=0; i<insn->get_operandList()->get_operands().size(); i++) {
             SgAsmExpression *operand = insn->get_operandList()->get_operands()[i];
             fprintf(p_debug, "  operand[%" PRIuPTR "]=", i);
-            printExpr(p_debug, operand, "    ");
+            printSgAsmExpression(p_debug, operand, "    ");
             fprintf(p_debug, "\n");
         }
 #endif
@@ -1761,8 +1761,8 @@ SgUnsignedCharList
 AssemblerX86::assembleProgram(const std::string &source)
 {
 #if BOOST_VERSION < 104700
-#warning "rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0"
-    ASSERT_not_reachable("rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0");
+#warning "Rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0"
+    ASSERT_not_reachable("Rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0");
 #else
     struct Resources {
         FileSystem::Path srcFileName, dstFileName;

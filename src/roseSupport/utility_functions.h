@@ -87,6 +87,11 @@ ROSE_DLL_API int copy_backend( SgProject* project, UnparseFormatHelp *unparseFor
 ROSE_DLL_API void generatePDF ( const SgProject & project );
 ROSE_DLL_API void generateDOT ( const SgProject & project, std::string filenamePostfix = "" );
 
+// DQ (9/22/2017): Adding support that is can work with any IR node, so that we can generated DOT files on untyped ASTs.
+// I prefer the API that takes a SgNode pointer.
+// ROSE_DLL_API void generateDOT ( SgNode* node, std::string baseFilename, std::string filenamePostfix = "" );
+ROSE_DLL_API void generateDOT ( SgNode* node, std::string filename );
+
 // DQ (9/1/2008): Added function to generate the compete AST when specificed with multiple files 
 // on the command line.  This is the older default behavior of generateDOT (from last year, or so).
 ROSE_DLL_API void generateDOT_withIncludes   ( const SgProject & project, std::string filenamePostfix = "" );
@@ -132,11 +137,46 @@ struct generateDOTExtendedforMultipleFile ;
 // src/util/stringSupport/string_functions.h:223: Error: Previous declaration of 'getPathFromFileName'
 // So exclude this code below.
 
-namespace rose
+namespace Rose
    {
   // This class serves as a catch all location for functions of general use within ROSE
   // we have added variables that are set using command line parameters to avoid the use of
   // global variables.  
+
+  // DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options such as:
+  //    1) output of warnings from the EDG (or other) frontend.
+  //    2) output of notes from the EDG (or other) frontend.
+  //    3) output of warnings from the backend compiler.
+  // The reason for this options clas is to support tools that would want to suppress warnings from ROSE,
+  // and still also permit compilers that would be implemented using ROSE to have the full range of output
+  // from EDG (or other frontends) to control notes and warnings.
+     class Options
+        {
+          private:
+               bool frontend_notes;
+               bool frontend_warnings;
+               bool backend_notes;
+               bool backend_warnings;
+
+          public:
+               ROSE_DLL_API Options();
+               ROSE_DLL_API Options(const Options & X);
+               ROSE_DLL_API Options & operator= (const Options & X);
+
+            // Access functions for options API.
+               ROSE_DLL_API bool get_frontend_notes();
+               ROSE_DLL_API void set_frontend_notes(bool flag);
+               ROSE_DLL_API bool get_frontend_warnings();
+               ROSE_DLL_API void set_frontend_warnings(bool flag);
+               ROSE_DLL_API bool get_backend_notes();
+               ROSE_DLL_API void set_backend_notes(bool flag);
+               ROSE_DLL_API bool get_backend_warnings();
+               ROSE_DLL_API void set_backend_warnings(bool flag);
+        };
+
+  // Global variable (in this rose namespace) to permit multiple parts of ROSE to access consistant information on options.
+     ROSE_DLL_API extern Options global_options;
+
 
        // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
        // DQ (8/11/2004): Need to put this back so that there is a global concept of verbosity for all of ROSE.
@@ -210,6 +250,12 @@ namespace rose
 
        // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
           extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
+
+
+  // DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
+     extern Sawyer::Message::Facility ir_node_mlog;
+
+     void initDiagnostics();
    };
 
 

@@ -13,10 +13,10 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Message logging mechanism.
 Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
@@ -41,7 +41,7 @@ UnparseLanguageIndependentConstructs::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::UnparseLanguageIndependentConstructs");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::UnparseLanguageIndependentConstructs");
         }
    }
 
@@ -277,7 +277,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        else
         {
        // Compare the file names from the file info object in each statement
-       // char* statementfilename = rose::getFileName(stmt);
+       // char* statementfilename = Rose::getFileName(stmt);
        // const char* statementfilename = "default";
           string statementfilename = "default";
 
@@ -321,13 +321,13 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
              {
             // DQ (8/17/2005): Need to replace this with call to compare Sg_File_Info::file_id 
             // numbers so that we can remove the string comparision operator.
-            // statementfilename = rose::getFileName(stmt);
+            // statementfilename = Rose::getFileName(stmt);
 
             // DQ (9/20/2013): We need to use the physical file name in checking which statements to unparse.
             // statementfilename = stmt->get_file_info()->get_filenameString();
                statementfilename = stmt->get_file_info()->get_physical_filename();
 
-               if (info.get_language() == SgFile::e_Fortran_output_language)
+               if (info.get_language() == SgFile::e_Fortran_language)
                   {
                  // DQ (9/24/2013): In the case of Fortran we need to generate the preprocessor name (at least for file requireing CPP).
                  // This was handled properly under the previous implementation using the logical source position, so for Fortran we 
@@ -495,7 +495,9 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
 void
 UnparseLanguageIndependentConstructs::outputCompilerGeneratedStatements( SgUnparse_Info & info )
    {
-     list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
+  // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+  // list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
+
   // printf ("compilerGeneratedStatementQueue.size() = %" PRIuPTR " \n",compilerGeneratedStatementQueue.size());
      while (info.outputCompilerGeneratedStatements() == false && unp->compilerGeneratedStatementQueue.empty() == false)
         {
@@ -989,7 +991,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
-     SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+  // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+  // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
 
   // This implementation uses the refactored code.
      bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
@@ -1456,8 +1459,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                curprint("/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): calling unparseAttachedPreprocessingInfoUsingTokenStream test 0 */");
 #endif
+            // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
             // DQ (1/15/2014): This value is not used in the logic below.
-               bool unparseTrailingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::after);
+            // bool unparseTrailingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::after);
 #if 0
                curprint("/* DONE: In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): calling unparseAttachedPreprocessingInfoUsingTokenStream test 0 */");
 #endif
@@ -2408,12 +2412,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
 
                  // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
-                    case V_SgOmpAtomicStatement:
                     case V_SgOmpSectionStatement:
                     case V_SgOmpTaskwaitStatement:
                     case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
                     case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
                     case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
+                    case V_SgOmpDeclareSimdStatement:       unparseOmpDeclareSimdStatement   (stmt, info);break;
 
                  // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
                     case V_SgOmpCriticalStatement:
@@ -2427,6 +2431,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     case V_SgOmpSingleStatement:
                     case V_SgOmpTaskStatement:
                     case V_SgOmpSimdStatement:
+                    case V_SgOmpAtomicStatement: // Atomic may have clause now
                          unparseOmpGenericStatement (stmt, info); 
                          break;
 
@@ -3175,13 +3180,15 @@ UnparseLanguageIndependentConstructs::isTransformed(SgStatement* stmt)
   // Assume no transformation at the moment while we debug templates.
 
   // DQ (6/29/2005): return false while we try to return to compiling KULL
-#if 1
+#if 0
      return false;
 #else
-
-#error "DEAD CODE!"
-
-     return true;
+  // DQ (5/9/2017): Fix this to look at the statement (non-defining template instantiations are not being unparsed).
+#if 0
+     printf ("In UnparseLanguageIndependentConstructs::isTransformed(): stmt = %p = %s stmt->isTransformation() = %s \n",
+          stmt,stmt->class_name().c_str(),(stmt->isTransformation() == true) ? "true" : "false");
+#endif
+     return stmt->isTransformation();
 #endif
    }
 
@@ -3334,9 +3341,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #if 1
                          << currentStatement->get_file_info()->displayString()
 #else
-                         << rose::getLineNumber(currentStatement)
+                         << Rose::getLineNumber(currentStatement)
                          << " getFileName(currentStatement) = " 
-                         << rose::getFileName(currentStatement)
+                         << Rose::getFileName(currentStatement)
 #endif
                          << " unp->cur_index = " 
                          << unp->cur_index
@@ -4145,22 +4152,57 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
    {
      bool suppressOutputOfImplicitArrowExp = false;
 
+#if 0
+     printf ("In isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s info.supressImplicitThisOperator = %s \n",expr,expr->class_name().c_str(),info.supressImplicitThisOperator() ? "true" : "false");
+#endif
+
      if (info.supressImplicitThisOperator() == true)
         {
           SgArrowExp* arrowExp = isSgArrowExp(expr);
           if (arrowExp != NULL)
              {
+               SgExpression* lhs = arrowExp->get_lhs_operand();
+               ROSE_ASSERT(lhs != NULL);
 
-                SgExpression* lhs = arrowExp->get_lhs_operand();
-                ROSE_ASSERT(lhs != NULL);
-                SgThisExp* thisExp = isSgThisExp(lhs);
-                if (thisExp != NULL)
-                   {
-                     if (thisExp->get_file_info()->isCompilerGenerated() == true)
-                        {
-                          suppressOutputOfImplicitArrowExp = true;
-                        }
-                   }
+               SgThisExp* thisExp = isSgThisExp(lhs);
+               if (thisExp != NULL)
+                  {
+                    if (thisExp->get_file_info()->isCompilerGenerated() == true)
+                       {
+                         suppressOutputOfImplicitArrowExp = true;
+                       }
+                  }
+
+            // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
+               SgArrowExp* nested_arrowExp = isSgArrowExp(lhs);
+               if (nested_arrowExp != NULL)
+                  {
+#if 0
+                    printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
+#endif
+                    suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+                  }
+
+            // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
+               SgCastExp* nested_cast = isSgCastExp(lhs);
+               if (nested_cast != NULL)
+                  {
+#if 0
+                    printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested cast expression: nested_cast = %p = %s \n",nested_cast,nested_cast->class_name().c_str());
+#endif
+                    if (nested_cast->get_file_info()->isCompilerGenerated() == true)
+                       {
+                         ROSE_ASSERT(nested_cast->get_operand() != NULL);
+                         SgArrowExp* nested_arrowExp = isSgArrowExp(nested_cast->get_operand());
+                         if (nested_arrowExp != NULL)
+                            {
+#if 0
+                              printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression behind cast: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
+#endif
+                              suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+                            }
+                       }
+                  }
              }
         }
 
@@ -4928,7 +4970,7 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
 #endif
 
 #if 1
-  // DQ (7/6/2014): Simpler appraoch, but wrong since overloaded operators unparsed 
+  // DQ (7/6/2014): Simpler approach, but wrong since overloaded operators unparsed 
   // using operator syntax will always be marked as compiler generated.
   // bool is_compiler_generated = binary_op->isCompilerGenerated();
 
@@ -5147,12 +5189,12 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
         {
        // DQ (9/15/2012): We have added a mechanism for the language to be specified directly.
        // C_language_support = true;
-          if (info.get_language() != SgFile::e_default_output_language)
+          if (info.get_language() != SgFile::e_default_language)
              {
 #if 0
                printf ("In unparseBoolVal(): The output language has been specified directly info.get_language() = %d \n");
 #endif
-               C_language_support = (info.get_language() == SgFile::e_C_output_language);
+               C_language_support = (info.get_language() == SgFile::e_C_language);
              }
             else
              {
@@ -6185,10 +6227,81 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpDefaultClause() meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
       break;
   }    
   curprint(string(")"));
 }
+
+void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpProcBindClause * c = isSgOmpProcBindClause(clause);
+  ROSE_ASSERT(c!= NULL);
+  curprint(string(" proc_bind("));
+  SgOmpClause::omp_proc_bind_policy_enum dv = c->get_policy(); 
+  switch (dv)
+  {
+    case SgOmpClause::e_omp_proc_bind_policy_master:
+      {
+        curprint(string("master"));
+        break;
+      }
+    case SgOmpClause::e_omp_proc_bind_policy_close:
+      {
+        curprint(string("close"));
+        break;
+      }   
+    case SgOmpClause::e_omp_proc_bind_policy_spread:
+      {
+        curprint(string("spread"));
+        break;
+      }
+   default:
+      cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpProcBindClause() meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
+      break;
+  }    
+  curprint(string(")"));
+}
+
+void UnparseLanguageIndependentConstructs::unparseOmpAtomicClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpAtomicClause * c = isSgOmpAtomicClause(clause);
+  ROSE_ASSERT(c!= NULL);
+//  curprint(string(" "));
+  SgOmpClause::omp_atomic_clause_enum dv = c->get_atomicity(); 
+  switch (dv)
+  {
+    case SgOmpClause::e_omp_atomic_clause_read:
+      {
+        curprint(string("read"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_write:
+      {
+        curprint(string("write"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_update:
+      {
+        curprint(string("update"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_capture:
+      {
+        curprint(string("capture"));
+        break;
+      }
+  default:
+      cerr<<"Error: "<< __FUNCTION__ <<" meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
+      break;
+  }    
+}
+
+
 
 void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause* clause, SgUnparse_Info& info)
 {
@@ -6226,6 +6339,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause*
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpScheduleClause() meets unacceptable kind option value:"<<skind<<endl;
+      ROSE_ASSERT (false);
       break;
   }
 
@@ -6346,6 +6460,38 @@ static std::string reductionOperatorToString(SgOmpClause::omp_reduction_operator
   return result;
 }
 
+//! A helper function to convert dependence type to strings
+// TODO put into a better place and expose it to users.
+static std::string dependenceTypeToString(SgOmpClause::omp_dependence_type_enum ro)
+{
+  string result;
+  switch (ro)
+  {
+    case SgOmpClause::e_omp_depend_in: 
+      {
+        result = "in";
+        break;
+      }
+    case SgOmpClause::e_omp_depend_out: 
+      {
+        result = "out";
+        break;
+      }
+    case SgOmpClause::e_omp_depend_inout:   
+      {
+        result = "inout";
+        break;
+      }
+    default:
+      {
+        cerr<<"Error: unhandled operator type"<<__func__<< "():"<< ro <<endl;
+        ROSE_ASSERT(false);
+      }
+  }
+  return result;
+}
+
+
 static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
 {
   string result;
@@ -6440,6 +6586,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
   SgOmpVariablesClause* c= isSgOmpVariablesClause (clause);  
   ROSE_ASSERT(c!= NULL);
   bool is_map = false;
+  bool is_depend= false;
   // unparse the  clause name first
   switch (c->variantT())
   {
@@ -6470,11 +6617,19 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
         //reductionOperatorToString() will handle language specific issues 
         curprint(reductionOperatorToString(isSgOmpReductionClause(c)->get_operation()));
         curprint(string(" : "));
-      break;
+        break;
+      }
+    case V_SgOmpDependClause:
+      {
+        curprint(string(" depend("));
+        curprint(dependenceTypeToString(isSgOmpDependClause(c)->get_dependence_type()));
+        curprint(string(" : "));
+        is_depend = true; 
+        break;
+      }
     case V_SgOmpLinearClause:
       curprint(string(" linear("));
       break;
-      }
     case V_SgOmpMapClause:
       {
         is_map = true;
@@ -6502,60 +6657,119 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     ROSE_ASSERT (m_clause != NULL);
     dims = m_clause->get_array_dimensions();
     dist_policies = m_clause->get_dist_data_policies();
-  }  
+  } 
+  else if (is_depend) // task depend(A[i:BS][j:BS]) , is also stored as array section. 
+   // TODO: long term, we need a dedicated array section AST node
+  {
+    SgOmpDependClause* m_clause = isSgOmpDependClause (clause);
+    ROSE_ASSERT (m_clause != NULL);
+    dims = m_clause->get_array_dimensions();
+  }
 
   //unparse variable list then
-  SgVarRefExpPtrList::iterator p = c->get_variables().begin();
-  while ( p != c->get_variables().end() )
+  SgExpressionPtrList::iterator p = c->get_variables()->get_expressions().begin();
+  while ( p != c->get_variables()->get_expressions().end() )
   {
-    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();           
-    SgName tmp_name  = init_name->get_name();
-    curprint( tmp_name.str());
-    SgVariableSymbol * sym  = (*p)->get_symbol();
-    ROSE_ASSERT (sym != NULL);
-    if (is_map)
+    // We now try to put array reference expression into variable list.
+    if (SgPntrArrRefExp* aref = isSgPntrArrRefExp(*p)) 
     {
-      std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
-      if (bounds.size() >0)
+      // curprint (aref->unparseToString()); // This does not work!
+      SgUnparse_Info ninfo(info);
+      unparseExpression(aref, ninfo);
+    }
+    else if (SgVarRefExp* vref= isSgVarRefExp(*p))
+    {
+      SgInitializedName* init_name = vref->get_symbol()->get_declaration();           
+      SgName tmp_name  = init_name->get_name();
+      curprint( tmp_name.str());
+      SgVariableSymbol * sym  = isSgVarRefExp(*p)->get_symbol();
+      ROSE_ASSERT (sym != NULL);
+      if (is_map)
       {
-        std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
-        for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+        std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
+        if (bounds.size() >0)
         {
-          SgUnparse_Info ninfo(info);
-          std::pair<SgExpression*, SgExpression*> bound  = (*iter);
-          SgExpression* lower = bound.first;
-          SgExpression* upper = bound.second;
-          ROSE_ASSERT (lower != NULL);
-          ROSE_ASSERT (upper != NULL);
+          std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
+          for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+          {
+            SgUnparse_Info ninfo(info);
+            std::pair<SgExpression*, SgExpression*> bound  = (*iter);
+            SgExpression* lower = bound.first;
+            SgExpression* upper = bound.second;
+            ROSE_ASSERT (lower != NULL);
+            ROSE_ASSERT (upper != NULL);
 
-          curprint(string("["));
-//          curprint(lower->unparseToString());
-          unparseExpression(lower, ninfo);
-          curprint(string(":"));
-//          curprint(upper->unparseToString());
-          unparseExpression(upper, ninfo);
-          curprint(string("]"));
-       
-          std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies = dist_policies[sym];
-          if (policies.size() !=0)
-            unparseMapDistDataPoliciesToString (policies, ninfo);
+            curprint(string("["));
+            //          curprint(lower->unparseToString());
+            unparseExpression(lower, ninfo);
+            curprint(string(":"));
+            //          curprint(upper->unparseToString());
+            unparseExpression(upper, ninfo);
+            curprint(string("]"));
+
+            std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies = dist_policies[sym];
+            if (policies.size() !=0)
+              unparseMapDistDataPoliciesToString (policies, ninfo);
             //curprint(mapDistDataPoliciesToString (policies));
 
-        } // end for
-      } // end if has bounds
-    } // end if map 
+          } // end for
+        } // end if has bounds
+      } // end if map 
+      else if (is_depend)
+      {
+        std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
+        if (bounds.size() >0)
+        {
+          std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
+          for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+          {
+            SgUnparse_Info ninfo(info);
+            std::pair<SgExpression*, SgExpression*> bound  = (*iter);
+            SgExpression* lower = bound.first;
+            SgExpression* upper = bound.second;
+            ROSE_ASSERT (lower != NULL);
+            ROSE_ASSERT (upper != NULL);
+
+            curprint(string("["));
+            unparseExpression(lower, ninfo);
+            curprint(string(":"));
+            unparseExpression(upper, ninfo);
+            curprint(string("]"));
+          } // end for
+        } // end if has bounds
+      }
+    }
+    else
+    {
+      cerr<<"Unhandled type of variable in a varlist:"<< (*p)->class_name()<<endl;
+      ROSE_ASSERT (false);
+    }
 
     // output the optional dimension info for map() variable 
     // Move to the next argument
     p++;
 
     // Check if this is the last argument (output a "," separator if not)
-    if (p != c->get_variables().end())
+    if (p != c->get_variables()->get_expressions().end())
     {
       curprint( ",");
     }
   }
 
+  // optional :step  for linear(list:step)
+  if (isSgOmpLinearClause(c) && isSgOmpLinearClause(c)->get_step())
+  {
+    curprint(string(":"));
+    unparseExpression(isSgOmpLinearClause(c)->get_step(), info);
+  }
+  
+   // optional :alignment for aligned(list:alignment)
+  if (isSgOmpAlignedClause(c) && isSgOmpAlignedClause(c)->get_alignment())
+  {
+    curprint(string(":"));
+    unparseExpression(isSgOmpAlignedClause(c)->get_alignment(), info);
+  }
+ 
   curprint(string(")"));
 }
 
@@ -6570,10 +6784,18 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" collapse("));
   else if (isSgOmpIfClause(c))
     curprint(string(" if("));
+  else if (isSgOmpFinalClause(c))
+    curprint(string(" final("));
+  else if (isSgOmpPriorityClause(c))
+    curprint(string(" priority("));
   else if (isSgOmpNumThreadsClause(c))
     curprint(string(" num_threads("));
   else if (isSgOmpDeviceClause(c))
     curprint(string(" device("));
+  else if (isSgOmpSafelenClause(c))
+    curprint(string(" safelen("));
+  else if (isSgOmpSimdlenClause(c))
+    curprint(string(" simdlen("));
   else {
     cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
@@ -6603,11 +6825,33 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         unparseOmpDefaultClause(isSgOmpDefaultClause(clause),info);
         break;
       }
+    case V_SgOmpProcBindClause:
+      {
+        unparseOmpProcBindClause(isSgOmpProcBindClause(clause),info);
+        break;
+      }
+    case V_SgOmpAtomicClause:
+      {
+        unparseOmpAtomicClause(isSgOmpAtomicClause(clause),info);
+        break;
+      }
+ 
     case V_SgOmpNowaitClause:
       {
         curprint(string(" nowait"));
         break;
       }
+    case V_SgOmpInbranchClause:
+      {
+        curprint(string(" inbranch"));
+        break;
+      }
+     case V_SgOmpNotinbranchClause:
+      {
+        curprint(string(" notinbranch"));
+        break;
+      }
+ 
     case V_SgOmpOrderedClause:
       {
         curprint(string(" ordered"));
@@ -6616,6 +6860,11 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpUntiedClause:
       {
         curprint(string(" untied"));
+        break;
+      }
+    case V_SgOmpMergeableClause:
+      {
+        curprint(string(" mergeable"));
         break;
       }
     case V_SgOmpBeginClause:
@@ -6636,7 +6885,11 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpDeviceClause:
     case V_SgOmpCollapseClause:
     case V_SgOmpIfClause:  
+    case V_SgOmpFinalClause:  
+    case V_SgOmpPriorityClause:  
     case V_SgOmpNumThreadsClause:  
+    case V_SgOmpSafelenClause:  
+    case V_SgOmpSimdlenClause:  
       //case V_SgOmpExpressionClause: // there should be no instance for this clause
       {
         unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);
@@ -6648,17 +6901,17 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpLastprivateClause:
     case V_SgOmpPrivateClause:
     case V_SgOmpReductionClause:
+    case V_SgOmpDependClause:
     case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
-    case V_SgOmpLinearClause:
     case V_SgOmpUniformClause:
     case V_SgOmpAlignedClause:
+    case V_SgOmpLinearClause: 
       {     
         unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
         break;
       }     
-
-    default:
+   default:
       {
         cerr<<"Unhandled OpenMP clause type in UnparseLanguageIndependentConstructs::unparseOmpClause():"<<clause->class_name()<<endl;
         ROSE_ASSERT(false);
@@ -6684,7 +6937,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpSimpleStatement(SgStatement
   SgOmpBodyStatement* b_stmt = isSgOmpBodyStatement(stmt);
   if (b_stmt)
   {
-    ROSE_ASSERT (stmt->variantT() == V_SgOmpAtomicStatement || stmt->variantT() == V_SgOmpSectionStatement);
+    ROSE_ASSERT (stmt->variantT() == V_SgOmpSectionStatement);
     SgUnparse_Info ninfo(info);
     unparseStatement(b_stmt->get_body(), ninfo);
   }
@@ -6723,6 +6976,20 @@ void UnparseLanguageIndependentConstructs::unparseOmpFlushStatement(SgStatement*
     curprint (string (")"));
   unp->u_sage->curprint_newline();
 }
+
+void UnparseLanguageIndependentConstructs::unparseOmpDeclareSimdStatement(SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  SgOmpDeclareSimdStatement * s = isSgOmpDeclareSimdStatement(stmt);
+  ROSE_ASSERT (s!= NULL);
+//cout<<"debug "<<s->get_clauses().size()<<endl;
+  unparseOmpDirectivePrefixAndName(stmt, info); 
+
+  unparseOmpBeginDirectiveClauses(stmt, info);
+  unp->u_sage->curprint_newline();
+
+}
+
 
 void UnparseLanguageIndependentConstructs::unparseOmpThreadprivateStatement(SgStatement* stmt,     SgUnparse_Info& info)
 {
@@ -6843,6 +7110,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
         curprint(string ("for "));
         break;
       }
+         case V_SgOmpForSimdStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("for simd "));
+        break;
+      }
         case V_SgOmpDoStatement:
       {
         unparseOmpPrefix(info);
@@ -6876,7 +7149,13 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       case V_SgOmpSimdStatement:
       {
         unparseOmpPrefix(info);
-        curprint(string ("simd "));
+        curprint(string ("simd"));
+        break;
+      }
+      case V_SgOmpDeclareSimdStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("declare simd"));
         break;
       }
      case V_SgOmpSectionsStatement:
@@ -7095,8 +7374,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 #if 1
                if (functionCallExp->get_uses_operator_syntax() == true)
                   {
-                    printf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
-                    printf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
+                 // DQ (3/5/2017): Converted to use message logging, but the mechanism is not supported here yet.
+                    mprintf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
+                    mprintf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
                   }
 #endif
             // ROSE_ASSERT(functionCallExp->get_uses_operator_syntax() == false);

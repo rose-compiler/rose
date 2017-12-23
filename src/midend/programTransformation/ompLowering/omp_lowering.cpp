@@ -6,7 +6,7 @@
 #include "omp_lowering.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
@@ -2396,7 +2396,7 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
    // make sure the categorization is complete
     ROSE_ASSERT (all_vars.size() == (array_syms.size() + atom_syms.size()) );
   }
-
+#if 0
  //! Generate expression calculating the size of a linearized array
  // e.g. row_size * sizeof(double)* column_size
  static
@@ -2437,18 +2437,18 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
 
   return result; 
 }                    
-
+#endif
   // Check if a variable is in the clause's variable list
 bool isInClauseVariableList(SgOmpClause* cls, SgSymbol* var)
 {
   ROSE_ASSERT (cls && var); 
   SgOmpVariablesClause* var_cls = isSgOmpVariablesClause(cls);
   ROSE_ASSERT (var_cls); 
-  SgVarRefExpPtrList refs = isSgOmpVariablesClause(var_cls)->get_variables();
+  SgExpressionPtrList refs = isSgOmpVariablesClause(var_cls)->get_variables()->get_expressions();
 
   std::vector<SgSymbol*> var_list;
   for (size_t j =0; j< refs.size(); j++)
-    var_list.push_back(refs[j]->get_symbol());
+    var_list.push_back(isSgVarRefExp(refs[j])->get_symbol());
 
   if (find(var_list.begin(), var_list.end(), var) != var_list.end() )
     return true;
@@ -4429,10 +4429,10 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     {  
       //result2 = isSgOmpVariablesClause(p_clause[i])->get_variables();  
       // get initialized name from varRefExp
-      SgVarRefExpPtrList refs = isSgOmpVariablesClause(p_clause[i])->get_variables();
+      SgExpressionPtrList refs = isSgOmpVariablesClause(p_clause[i])->get_variables()->get_expressions();
       result2.clear();
       for (size_t j =0; j< refs.size(); j++)
-         result2.push_back(refs[j]->get_symbol()->get_declaration()); 
+         result2.push_back(isSgVarRefExp(refs[j])->get_symbol()->get_declaration()); 
       std::copy(result2.begin(), result2.end(), back_inserter(result));
     }
     return result;
@@ -4491,10 +4491,10 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
      {
        SgOmpReductionClause* r_clause = isSgOmpReductionClause(p_clause[i]);
        ROSE_ASSERT(r_clause != NULL );
-       SgVarRefExpPtrList refs = isSgOmpVariablesClause(r_clause)->get_variables();
+       SgExpressionPtrList refs = isSgOmpVariablesClause(r_clause)->get_variables()->get_expressions();
        SgInitializedNamePtrList var_list ; //= isSgOmpVariablesClause(r_clause)->get_variables();
        for (size_t j=0; j< refs.size(); j++)
-         var_list.push_back (refs[j]->get_symbol()->get_declaration());
+         var_list.push_back (isSgVarRefExp(refs[j])->get_symbol()->get_declaration());
        SgInitializedNamePtrList::const_iterator iter = find (var_list.begin(), var_list.end(), init_name);
        if (iter != var_list.end())
        {
@@ -5405,22 +5405,22 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
       switch(vt)
       {
         case V_SgOmpCopyinClause:
-          result = new SgOmpCopyinClause();
+          result = new SgOmpCopyinClause(buildExprListExp());
           break;
         case V_SgOmpCopyprivateClause:
-          result = new SgOmpCopyprivateClause();
+          result = new SgOmpCopyprivateClause(buildExprListExp());
           break;
         case V_SgOmpFirstprivateClause:
-          result = new SgOmpFirstprivateClause();
+          result = new SgOmpFirstprivateClause(buildExprListExp());
           break;
         case V_SgOmpLastprivateClause:
-          result = new SgOmpLastprivateClause();
+          result = new SgOmpLastprivateClause(buildExprListExp());
           break;
         case V_SgOmpPrivateClause:
-          result = new SgOmpPrivateClause();
+          result = new SgOmpPrivateClause(buildExprListExp());
           break;
         case V_SgOmpSharedClause:
-          result = new SgOmpSharedClause();
+          result = new SgOmpSharedClause(buildExprListExp());
           break;
         case V_SgOmpReductionClause:
         default:
@@ -5485,7 +5485,7 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
       // Insert only if the variable is not in the list
       if (!isInClauseVariableList(var, clause_stmt, vt)) 
       {
-        target_clause->get_variables().push_back(buildVarRefExp(var));
+        target_clause->get_variables()->get_expressions().push_back(buildVarRefExp(var));
       }
     }
 // Patch up private variables for a single OpenMP For or DO loop    
@@ -5894,7 +5894,7 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
   if(isSgOmpTargetStatement(target_stmt))
   {
     Rose_STL_Container<SgOmpClause*> map_clauses;
-    SgOmpMapClause * map_to;
+    SgOmpMapClause * map_to = NULL;
 
     /*get the data clause of this target statement*/
     SgOmpClauseBodyStatement * target_clause_body = isSgOmpClauseBodyStatement(target_stmt); 
@@ -5929,7 +5929,7 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
       cerr <<"prepare to create a map in clause" << endl;
     }
 
-    SgVarRefExpPtrList & mapto_var_list = map_to->get_variables();
+    SgExpressionPtrList & mapto_var_list = map_to->get_variables()->get_expressions();
     SgExpressionPtrList new_vars = new_var_list->get_expressions();
     for(size_t i = 0; i < new_vars.size(); i++)
     {

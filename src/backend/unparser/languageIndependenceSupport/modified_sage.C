@@ -17,7 +17,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 
@@ -1355,8 +1355,8 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                          if (templateClassInstatiationDefn != NULL)
                             {
                            // Supress output of "template<>" syntax for template member function instantiations.
-                              SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
 #if 0
+                              SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
                               printf ("templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
                               printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
                               printf ("templateInstantiationMemberFunctionDecl->get_templateDeclaration() = %p \n",templateInstantiationMemberFunctionDecl->get_templateDeclaration());

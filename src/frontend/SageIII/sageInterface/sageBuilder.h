@@ -84,7 +84,10 @@ extern bool symbol_table_case_insensitive_semantics;
 
 //! Public interfaces of the scope stack, should be stable
 ROSE_DLL_API void pushScopeStack (SgScopeStatement* stmt);
-ROSE_DLL_API void pushScopeStack (SgNode* node);
+
+// DQ (3/20/2017): This function is not called (the function above is the more useful one that is used).
+// ROSE_DLL_API void pushScopeStack (SgNode* node);
+
 ROSE_DLL_API void popScopeStack();
 ROSE_DLL_API SgScopeStatement* topScopeStack();
 ROSE_DLL_API bool emptyScopeStack();
@@ -94,16 +97,20 @@ ROSE_DLL_API void clearScopeStack();
 //! Support to retrive the SgGlobal from the internal scope stack (error if not present in a non-empty list, return null for empty list).
 SgScopeStatement* getGlobalScopeFromScopeStack();
 
-bool isInScopeStack(SgScopeStatement * scope);
+// DQ (3/20/2017): This function is not used.
+// bool isInScopeStack(SgScopeStatement * scope);
 
 bool inSwitchScope();
 
+// DQ (3/20/2017): This function is not used.
 // TV: for debug purpose
-std::string stringFromScopeStack();
+// std::string stringFromScopeStack();
 
 
 //@}
 
+#if 0
+// DQ (3/20/2017): These functions are not used (suggest using the API in the symbol table initialization).
 //----------------------------------------------------------
 //@{
 /*! @name Case sensitivity interfaces
@@ -120,6 +127,8 @@ ROSE_DLL_API void setCaseSensitive();
 ROSE_DLL_API void setCaseFromScope(SgScopeStatement* scope);
 
 //@}
+#endif
+
 
 // *************************************************************************************************************
 // DQ (5/1/2012): This is another possible interface: supporting how we set the source code position and mark is
@@ -249,8 +258,9 @@ ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionPa
 //! DQ (1/16/2009): Added to support member function in C++ (for new interface)
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgClassDefinition *struct_name, unsigned int mfunc_specifier);
 
+// DQ (3/20/2017): This function is not used (so let's see if we can remove it).
 //! DQ (12/2/2011): Added for symetry with other functios to generate SgFunctionType
-ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterList* argList = NULL, SgClassDefinition *struct_name = NULL, unsigned int mfunc_specifier = 0);
+// ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterList* argList = NULL, SgClassDefinition *struct_name = NULL, unsigned int mfunc_specifier = 0);
 
 //! DQ (8/19/2012): Refactored some of the code supporting construction of the SgMemberFunctionType.
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassType *classType, unsigned int mfunc_specifier);
@@ -359,7 +369,8 @@ ROSE_DLL_API SgNullptrValExp* buildNullptrValExp_nfi();
 ROSE_DLL_API SgWcharVal* buildWcharVal(wchar_t value = 0);
 ROSE_DLL_API SgWcharVal* buildWcharVal_nfi(wchar_t value, const std::string& str);
 
-ROSE_DLL_API SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
+// DQ (3/20/2017): This function has never existed (inputs must be SgValueExp pointers).
+// ROSE_DLL_API SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
 ROSE_DLL_API SgComplexVal* buildComplexVal(SgValueExp* real_value, SgValueExp* imaginary_value);
 ROSE_DLL_API SgComplexVal* buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, const std::string& str);
 ROSE_DLL_API SgComplexVal* buildImaginaryVal(long double imaginary_value);
@@ -799,7 +810,6 @@ ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_varia
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
 
-
 //@}
 
 //@{
@@ -986,7 +996,8 @@ buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* ret
 ROSE_DLL_API SgMemberFunctionDeclaration*
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, unsigned int functionConstVolatileFlags, SgMemberFunctionDeclaration* first_nondefinng_declaration, SgTemplateArgumentPtrList* templateArgumentsList);
 
-#if 1
+#if 0
+// DQ (3/20/2017): This function is not used (so let's see if we can remove it).
 // DQ (8/29/2012): This is re-enabled because the backstroke project is using it (also added back the default parameters; which I don't think I like in the API).
 // DQ (7/26/2012): I would like to remove this from the API (at least for now while debugging the newer API required for template argument handling).
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
@@ -994,10 +1005,13 @@ ROSE_DLL_API SgMemberFunctionDeclaration*
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL /* , unsigned int functionConstVolatileFlags = 0 */, SgMemberFunctionDeclaration* first_nondefinng_declaration = NULL);
 #endif
 
+#if 0
+// DQ (3/20/2017): This function is not used (so let's see if we can remove it).
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine)
 // SgMemberFunctionDeclaration*
 ROSE_DLL_API SgMemberFunctionDeclaration*
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+#endif
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
 // We need to decide if the SageBuilder API should include these sorts of functions.
@@ -1047,6 +1061,10 @@ SgGotoStatement * buildGotoStatement_nfi(SgLabelStatement *  label);
 
 //! Build a goto statement from a label symbol, supporting both C/C++ and Fortran cases
 ROSE_DLL_API SgGotoStatement * buildGotoStatement(SgLabelSymbol*  symbol);
+
+// DQ (11/22/2017): Added support for computed code goto as defined by GNU C/C++ extension.
+//! Build a goto statement from a label expression, supporting only C/C++ and not Fortran cases
+SgGotoStatement * buildGotoStatement_nfi(SgExpression*  expr);
 
 //! Build a case option statement
 ROSE_DLL_API SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);
@@ -1594,9 +1612,9 @@ namespace Rose {
             extern ROSE_DLL_API SgClassType *ClassClassType;
             extern ROSE_DLL_API SgVariableSymbol *lengthSymbol;
 
-        }// ::rose::frontend::java
-    }// ::rose::frontend
-}// ::rose
+        }// ::Rose::frontend::java
+    }// ::Rose::frontend
+}// ::Rose
 //-----------------------------------------------------------------------------
 //#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------

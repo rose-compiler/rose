@@ -242,6 +242,28 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgCaseOptionStmt:
   case V_SgClassDeclaration:
     return 1;
+
+    // represent all parallel omp constructs as nodes
+  case V_SgOmpCriticalStatement:
+  case V_SgOmpDoStatement:
+  case V_SgOmpFlushStatement:   
+  case V_SgOmpForStatement:
+  case V_SgOmpForSimdStatement:
+  case V_SgOmpMasterStatement:
+  case V_SgOmpOrderedStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSectionStatement:
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpSingleStatement:
+  case V_SgOmpTargetDataStatement:      
+  case V_SgOmpTargetStatement:
+  case V_SgOmpTaskStatement:
+  case V_SgOmpTaskwaitStatement:
+  case V_SgOmpThreadprivateStatement:
+  case V_SgOmpWorkshareStatement:
+    return 1;
+
   case V_SgReturnStmt:
     if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
       //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;
@@ -303,7 +325,7 @@ void Labeler::createLabels(SgNode* root) {
     if(isSgExprStatement(*i)||isSgReturnStmt(*i)/*||isSgVariableDeclaration(*i)*/)
       i.skipChildrenOnForward();
   }
-  std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
+  //std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
   //std::cout << "DEBUG: mappingLabelToLabelProperty:\n"<<this->toString()<<std::endl;
 }
 
@@ -341,7 +363,7 @@ void Labeler::ensureValidNodeToLabelMapping() {
 
 void Labeler::computeNodeToLabelMapping() {
   mappingNodeToLabel.clear();
-  std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToLabelProperty.size()<<std::endl;
+  //std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToLabelProperty.size()<<std::endl;
   for(Label i=0;i<mappingLabelToLabelProperty.size();++i) {
     SgNode* node=mappingLabelToLabelProperty[i.getId()].getNode();
     assert(node);

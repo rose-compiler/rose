@@ -2,23 +2,26 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 
-# DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
-# SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-# SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
 # This was something that was discussed in email previously with the group.  Thei point is to have the
 # first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
-# SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
+
+# We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
+# ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
+# you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
 SUBDIRS = libltdl config src
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
-   SUBDIRS += tests
+   SUBDIRS += tests/smoke
+endif
+if ROSE_USE_LONG_MAKE_CHECK_RULE
+SUBDIRS += tests/nonsmoke
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
@@ -29,15 +32,32 @@ if !ROSE_USE_INSURE
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
+
+# DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
+# Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
+# in compiling the C++ code represented by some more complex C++ test codes using ROSE).  Interestingly, the
+# GNU 4.8 C++11 mode works fine for the C++ code that implements ROSE itself.
+# if ROSE_USING_GCC_VERSION_4_8_CXX11
+#check-local:
+# all: remove_sage3basic_h_pch
+# all:
+#	@echo "**********************************************************************************************"
+#	@echo "**********************************************************************************************"
+#	@echo "Skipping tests in tutorial, exampleTranslators, docs, tools, scripts, and directories for"
+#	@echo "GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
+#	@echo "**********************************************************************************************"
+#	@echo "**********************************************************************************************"
+if !ROSE_USING_GCC_VERSION_4_8_CXX11
+
 if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't generate example translators or the documentation
    SUBDIRS += tutorial exampleTranslators docs 
 endif
 SUBDIRS += tools scripts 
-if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
- # If we can't process the tutorial directory then we can't run demos
-   SUBDIRS += demo
+
+# endif for excluding tests using GNU 4.8 and C++11 mode together.
 endif
+
 # endif for controling Insure++ usage.
 endif
 endif
@@ -77,11 +97,65 @@ install-compass: install-core
 # Install ONLY the library components (no examples, no tests, no projects). This is even more "core" than "core" but I'm
 # not changing "install-core" because users use that and expect certain behavior. The purpose of this target is mainly for
 # ROSE project developers that have a need to install the library and other specific tools (via other install targets) but
-# don't want to install anything (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
+# don't want to install anything else (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
 install-rose-library: install-data-local
 	$(MAKE) -C $(top_builddir)/src install
 	cp rosePublicConfig.h $(pkgincludedir)
 
+# Build a binary release of the ROSE library.  This assumes that you're running in the RMC-2 environment because it uses
+# some "make" variables that are initialized from shell exported variables. Other build environments will need other targets.
+#
+# It installs whatever is in the ROSE installation prefix, but at least the ROSE library and supporting header files.
+#
+# We cannot distribute Oracle Java because it requires the user to agree to a license. The user must download it themselves.
+#
+# We cannot distribute CXX_ROOT or C_ROOT because it might be pointing to an Intel compiler, which needs to be purchased
+# by the user.
+#
+# We cannot distribute Yices because it requires the user to agree to a license. The user must download it themselves.
+#
+# We should not distribute /usr or /usr/local as these are general locations with lots of other software.
+rose-installer-rmc2: install-rose-library
+	rm -rf $@.tmp
+	mkdir  $@.tmp
+	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller					\
+		--create="$@"								\
+		--cc="$(C_VENDOR) $(C_VERSION)"						\
+		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"					\
+		--contact="http://rosecompiler.org"					\
+		--os="$(RMC_OS_NAME)"							\
+		--prjnam=ROSE								\
+		--prjver=$(PACKAGE_VERSION)						\
+		--postinstall-perl=$(top_srcdir)/scripts/rose-post-install		\
+		$(prefix)/*								\
+		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
+		    $(BOOST_ROOT)							\
+		    $(CMAKE_ROOT)							\
+		    $(DLIB_ROOT)							\
+		    $(GNU_COMPILERS_ROOT)						\
+		    $(LIBBZ2_ROOT)							\
+		    $(LIBGCRYPT_ROOT)							\
+		    $(LIBGPG_ERROR_ROOT)						\
+		    $(LIBGRAPHICSMAGICK_ROOT)						\
+		    $(LIBJPEG_ROOT)							\
+		    $(LIBLCMS_ROOT)							\
+		    $(LIBLZMA_ROOT)							\
+		    $(LIBPNG_ROOT)							\
+		    $(LIBTIFF_ROOT)							\
+		    $(PYTHON_ROOT)							\
+		    $(SPOT_ROOT)							\
+		    $(WT_ROOT)								\
+		    $(YAMLCPP_ROOT)							\
+		    $(ZLIB_ROOT)							\
+		))
+	rm -rf $@.tmp
+
+check-rose-installer-rmc2: rose-installer-rmc2
+	rm -rf $@.tmp installed installed-binary
+	mkdir  $@.tmp
+	TMPDIR=$@.tmp ./rose-installer-rmc2 --prefix=installed-binary
+	LD_LIBRARY_PATH=installed-binary/lib ./installed-binary/bin/rose-config --version
+	rm -rf $@.tmp installed-binary
 
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
@@ -172,9 +246,8 @@ pkginclude_HEADERS = rosePublicConfig.h
 include $(top_srcdir)/config/build_rose_paths.Makefile
 
 check-local: enforce_policies
-	@echo '************************************************************'
-	@echo '****** make check rule complete (terminated normally) ******'
-	@echo '************************************************************'
+	@echo 'To run additional "non-smoke" tests, use this command:'
+	@echo "  $(MAKE) -C $$(pwd)/tests/nonsmoke check"
 
 install-exec-local:
 	@echo '*****************************************************************'
@@ -427,8 +500,6 @@ NumberOfMakefiles:
 	@du -a $(srcdir)/tutorial | $(FILTER_MAKEFILES)| wc -l
 	@echo "Number of Makefile.am files in docs directory: "
 	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
-	@echo "Number of Makefile.am files in demo directory: "
-	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in tools directory: "
 	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in config directory: "
@@ -621,7 +692,6 @@ lcov:
 -d src/frontend/ECJ_ROSE_Connection/.libs \
 -d src/frontend/X10_ROSE_Connection/.libs \
 -d src/frontend/PHPFrontend/.libs \
--d src/frontend/BinaryDisassembly/.libs \
 -d src/frontend/BinaryLoader/.libs \
 -d src/frontend/BinaryFormats/.libs \
 -d src/frontend/Disassemblers/.libs \
@@ -702,17 +772,133 @@ all-lcov.info:
 	lcov --capture --no-recursion $(patsubst %,-d %,$(lcov_data_dirs)) -o $@
 
 # Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
+# DQ (3/26/2017): Removed CodeThorn from being included in lcov results (CodeThorn testing is still done to test ROSE 
+# and those results are a part of the cover coverage for ROSE.
+# DQ (3/13/2017): Modified to remove specific directories of old code to be removed from ROSE and 3rd party code that we do not maintain.
 # (04/26/2016) Pei-Hung lcov has issue to output extracted result to librose-lcov.info with -o option. Using piping instead.
+#	lcov --extract $< "$(top_srcdir)/src/*" "$(top_srcdir)/projects/CodeThorn/*" > $@
 librose-lcov.info: all-lcov.info
 	lcov --extract $< "$(top_srcdir)/src/*" > $@
+	lcov --remove librose-lcov.info \
+        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/debugging.*" \
+        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/edgGraph.*" \
+        "$(top_srcdir)/src/backend/unparser/PythonCodeGeneration/*" \
+        "$(top_srcdir)/src/backend/unparser/PHPCodeGeneration/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/OAWrap/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/OpenAnalysis/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/genericDataflow/*" \
+        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_4.9/*" \
+        "$(top_srcdir)/src/midend/astRewriteMechanism/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/pointerAnal/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/ssaUnfilteredCfg/*" \
+        "$(top_srcdir)/src/src/midend/programAnalysis/staticInterproceduralSlicing/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/variableRenaming/*" \
+        "$(top_srcdir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/*" \
+        "$(top_srcdir)/src/midend/programTransformation/finiteDifferencing/*" \
+        "$(top_srcdir)/src/midend/programTransformation/functionCallNormalization/*" \
+        "$(top_srcdir)/src/midend/programTransformation/implicitCodeGeneration/*" \
+        "$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization/*" \
+        "$(top_srcdir)/src/roseSupport/stringify.C" \
+        "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
+        "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
+        "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
+        "$(top_srcdir)/src/midend/astProcessing/AstProcessing.h" \
+        "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" \
+         -o librose-lcov.info
+
+# Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.
+#       sageGeneric.h causes 1274 template instantiations, and we only have a test for one of them (so this file is a problem due to how lcov handles template instantaitions.
+#       DQ (3/30/2017): Removed src/midend/astProcessing/AstProcessing.h file because it's template use is not handled accurately by lcov (wildly incorrect).
+
+# DQ (4/9/2017): After getting better coverage, the ultimate limitation proved to be the poor template handling within LCOV to support more significant coverage results.
+# DQ (4/5/2017): This fails with GNU 6.1 and Boost 1.51 and Boost 1.52, but it is now called and should contribute to code coverage so let it back in as a test.
+#       "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" 
+
+
+librose_lcov_web_pages: librose-lcov.info
+	genhtml                                 \
+                --title librose                 \
+                --legend                        \
+                --demangle-cpp                  \
+                --rc genhtml_hi_limit=85        \
+                --rc genhtml_med_limit=60       \
+                --prefix $(top_srcdir)          \
+                --ignore-errors=source          \
+                --output-directory $@ $<
+
+# Directories to remove from LCOV testing of ROSE:
+# src/frontend/CxxFrontend/EDG/edgRose/debugging.*
+# src/frontend/CxxFrontend/EDG/edgRose/edgGraph.*
+# src/backend/unparser/PythonCodeGeneration/*
+# src/backend/unparser/PHPCodeGeneration/*
+# src/midend/programAnalysis/OAWrap/*
+# src/midend/programAnalysis/OpenAnalysis/*
+# src/midend/programAnalysis/genericDataflowflow/*
+# src/frontend/CxxFrontend/EDG/EDG_4.9/*
+# src/midend/astRewriteMechanism/*
+# src/midend/programAnalysis/dominanceAnalysis/*
+# src/midend/programAnalysis/pointerAnal/*
+# src/midend/programAnalysis/ssaUnfilteredCfg/*
+# src/src/midend/programAnalysis/staticInterproceduralSlicing/*
+# src/midend/programAnalysis/staticSingleAssignment/*
+# src/midend/programAnalysis/staticSingleAssignment/*
+# src/midend/programAnalysis/variableRenaming/*
+# src/midend/programTransformation/extractFunctionArgumentsNormalization/*
+# src/midend/programTransformation/finiteDifferencing/*
+# src/midend/programTransformation/functionCallNormalization/*
+# src/midend/programTransformation/implicitCodeGeneration/*
+# src/midend/programTransformation/singleStatementToBlockNormalization/*
+# src/roseSupport/stringify.C
+# 
+# 
+# Directories to remove from ROSE:
+# src/midend/programAnalysis/dominanceAnalysis
+# src/midend/programAnalysis/pointerAnal
+# src/midend/programAnalysis/ssaUnfilteredCfg
+# src/midend/programAnalysis/staticInterproceduralSlicing
+# src/midend/programAnalysis/staticSingleAssignment
+# src/midend/programAnalysis/variableRenaming
+# src/midend/programTransformation/extractFunctionArgumentsNormalization
+# src/midend/programTransformation/finiteDifferencing
+# src/midend/programTransformation/functionCallNormalization
+# src/midend/programTransformation/implicitCodeGeneration
+# src/midend/programTransformation/singleStatementToBlockNormalization
+# 
+# May be removed in the future (to be discussed) DQ (3/13/2017):
+# src/midend/programTransformation/constantFolding
+# src/midend/programTransformation/ompLowering
+# src/midend/programTransformation/partialRedundancyElimination 
+#
+# These should not be evaluated using lcov (to be discussed) DQ (3/13/2017):
+# src/roseSupport/stringify.C 
+#      Generated file, placed in source tree because it took a long time to generate when it was put into the build tree).
+#      A few functions from this file are tested (14 of 864), but not all.
+#      This file could only be tested using an automatically generated test and that might no be productive.
+#
+#
+# What is this:
+# src/midend/abstractMemoryObject  (DTEC work by Liao)
+# 
+#
+# Why are these so poorly tested:
+# src/midend/programTransformation/astInlining
+# src/midend/programTransformation/astOutlining
+# 
+# 
+# 
+
 
 # Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
 # THIS INCLUDES EDG SOURCES; DO NOT DISTRIBUTE THIS DIRECTORY
 librose_lcov_web_pages: librose-lcov.info
-	genhtml					\
-		--title librose			\
-		--legend			\
-		--demangle-cpp			\
-		--prefix $(top_srcdir)		\
-		--ignore-errors=source		\
-		--output-directory $@ $<
+	genhtml                                 \
+                --title librose                 \
+                --legend                        \
+                --demangle-cpp                  \
+                --rc genhtml_hi_limit=85        \
+                --rc genhtml_med_limit=60       \
+                --prefix $(top_srcdir)          \
+                --ignore-errors=source          \
+                --output-directory $@ $<

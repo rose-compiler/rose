@@ -1,7 +1,7 @@
 
 #include "GrammarFile.h"
 
-using namespace rose;
+using namespace Rose;
 
 //GrammarFile::GrammarFile ( std::string inputFilename, const StringUtility::FileWithLineNumbers inputBuffer = StringUtility::FileWithLineNumbers() ) {
 GrammarFile::GrammarFile ( std::string inputFilename, const StringUtility::FileWithLineNumbers inputBuffer) {

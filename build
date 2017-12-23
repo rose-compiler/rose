@@ -123,8 +123,8 @@ OS="$(uname -s)"
 if [ "x$OS" = "xDarwin" ]; then
     if [ -n "$(type glibtool)" ]; then
         echo "Found glibtool... $(which glibtool)"
-    elif [ -n "$(type glibtool)" ]; then
-        echo "checking if $(which libtool) is GNU libtool..."
+    elif [ -n "$(type libtool)" ]; then
+        echo "checking that $(which libtool) is GNU libtool..."
         libtool --version
         if [ $? -ne 0 ]; then
             echo "Error: $(which libtool) is not GNU libtool!"
@@ -134,7 +134,19 @@ if [ "x$OS" = "xDarwin" ]; then
         fi
     fi
 
-    libtoolize_name="$(which glibtoolize)"
+    if [ -n "$(type glibtoolize)" ]; then
+        libtoolize_name="$(which glibtoolize)"
+    elif [ -n "$(type libtoolize)" ]; then
+        echo "checking that $(which libtoolize) is GNU libtoolize..."
+        libtoolize --version
+        if [ $? -ne 0 ]; then
+            echo "Error: $(which libtoolize) is not GNU libtoolize!"
+            exit 1
+        else
+            libtoolize_name="$(which libtoolize)"
+        fi
+    fi
+
     if [ ! -n "$libtoolize_name" ]; then
         echo "glibtoolize not found!"
         exit 1
@@ -159,7 +171,14 @@ LIBTOOL_VERSION="$VERSION"
 if [[ -z "$LIBTOOL_VERSION" ]]; then
     echo "$0: warning: cannot determine libtool version; skipping libtoolize" 2>&1
 elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
-    (set -x; $libtoolize_name --force --copy --ltdl --automake)
+# Pei-Hung 10/25/2017
+# libltdl copied through libtoolize would require a specific version of aclocal and automake depending on the libtool version.
+# rerun aclocal in libltdl source directory will regenerate aclocal.m4 and eliminate that software dependence.
+    (set -ex 
+        $libtoolize_name --force --copy --ltdl --automake
+        cd libltdl
+        autoreconf
+    )
 else
     echo "$0: warning: libtool $LIBTOOL_VERSION is too old (require >= $LIBTOOL_VERSION_PREREQ); skipping libtoolize" 2>&1
 fi
