@@ -7,7 +7,7 @@
 #include <Sawyer/CommandLine.h>
 #include <unistd.h>                                     // execvp
 
-using namespace rose;
+using namespace Rose;
 
 int
 main(int argc, char *argv[]) {

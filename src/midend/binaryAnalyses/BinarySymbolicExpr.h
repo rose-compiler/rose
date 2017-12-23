@@ -23,10 +23,10 @@
 #include <Sawyer/SmallObject.h>
 #include <set>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
-class SMTSolver;
+class SmtSolver;
 
 /** Namespace supplying types and functions for symbolic expressions.
  *
@@ -52,22 +52,19 @@ public:
  *  operand is often a constant). */
 enum Operator {
     OP_ADD,                 /**< Addition. One or more operands, all the same width. */
-    OP_AND,                 /**< Boolean AND. Operands are all Boolean (1-bit) values. See also OP_BV_AND. */
+    OP_AND,                 /**< Bitwise conjunction. One or more operands all the same width. */
     OP_ASR,                 /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). A is unsigned. */
-    OP_BV_AND,              /**< Bitwise AND. One or more operands, all the same width. */
-    OP_BV_OR,               /**< Bitwise OR. One or more operands, all the same width. */
-    OP_BV_XOR,              /**< Bitwise exclusive OR. One or more operands, all the same width. */
     OP_CONCAT,              /**< Concatenation. Operand A becomes high-order bits. Any number of operands. */
     OP_EQ,                  /**< Equality. Two operands, both the same width. */
     OP_EXTRACT,             /**< Extract subsequence of bits. Extract bits [A..B) of C. 0 <= A < B <= width(C). */
-    OP_INVERT,              /**< Boolean inversion. One operand. */
+    OP_INVERT,              /**< Bitwise inversion. One operand. */
     OP_ITE,                 /**< If-then-else. A must be one bit. Returns B if A is set, C otherwise. */
     OP_LSSB,                /**< Least significant set bit or zero. One operand. */
     OP_MSSB,                /**< Most significant set bit or zero. One operand. */
     OP_NE,                  /**< Inequality. Two operands, both the same width. */
-    OP_NEGATE,              /**< Arithmetic negation. One operand. */
+    OP_NEGATE,              /**< Arithmetic negation. One operand. For Booleans, use OP_INVERT (2's complement is a no-op). */
     OP_NOOP,                /**< No operation. Used only by the default constructor. */
-    OP_OR,                  /**< Boolean OR. Operands are all Boolean (1-bit) values. See also OP_BV_OR. */
+    OP_OR,                  /**< Bitwise disjunction. One or more operands all the same width. */
     OP_READ,                /**< Read a value from memory.  Arguments are the memory state and the address expression. */
     OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). A is unsigned. */
     OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B). A is unsigned.  */
@@ -93,7 +90,12 @@ enum Operator {
     OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
     OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
     OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
-    OP_ZEROP                /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+    OP_XOR,                 /**< Bitwise exclusive disjunction. One or more operands, all the same width. */
+    OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+
+    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated
+    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated
+    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated
 };
 
 std::string toStr(Operator);
@@ -170,7 +172,11 @@ public:
 
 /** Base class for symbolic expression nodes.
  *
- *  Every node has a specified number of significant bits that is constant over the life of the node.
+ *  Every node has a specified width measured in bits that is constant over the life of the node. The width is always a
+ *  concrete, positive value stored in a 64-bit field.  The corollary of this invariant is that if an expression's result
+ *  width depends on the @em values of some of its arguments, those arguments must be concrete and not wider than 64 bits. Only
+ *  a few operators fall into this category since most expressions depend on the @em widths of their arguments rather than the
+ *  @em values of their arguments.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
  *  lattice and not a graph with cycles), two things are required: First, tree nodes are always referenced through
@@ -220,7 +226,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & nBits_ & domainWidth_ & flags_ & comment_ & hashval_;
+        s & BOOST_SERIALIZATION_NVP(nBits_);
+        s & BOOST_SERIALIZATION_NVP(domainWidth_);
+        s & BOOST_SERIALIZATION_NVP(flags_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(hashval_);
         // s & userData_;
     }
 #endif
@@ -256,18 +266,18 @@ public:
      *  If an SMT solver is specified then that solver is used to answer this question, otherwise equality is established by
      *  looking only at the structure of the two expressions. Two expressions can be equal without being the same width (e.g.,
      *  a 32-bit constant zero is equal to a 16-bit constant zero). */
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) = 0;
+    virtual bool mustEqual(const Ptr &other, SmtSolver*) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool must_equal(const Ptr& other, SMTSolver *solver) ROSE_DEPRECATED("use mustEqual instead") {
+    bool must_equal(const Ptr& other, SmtSolver *solver) ROSE_DEPRECATED("use mustEqual instead") {
         return mustEqual(other, solver);
     }
 
     /** Returns true if two expressions might be equal, but not necessarily be equal. */
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) = 0;
+    virtual bool mayEqual(const Ptr &other, SmtSolver*) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool may_equal(const Ptr &other, SMTSolver *solver) ROSE_DEPRECATED("use mayEqual instead") {
+    bool may_equal(const Ptr &other, SmtSolver *solver) ROSE_DEPRECATED("use mayEqual instead") {
         return mayEqual(other, solver);
     }
     
@@ -725,8 +735,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Node>(*this);
-        s & op_ & children_ & nnodes_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
+        s & BOOST_SERIALIZATION_NVP(op_);
+        s & BOOST_SERIALIZATION_NVP(children_);
+        s & BOOST_SERIALIZATION_NVP(nnodes_);
     }
 #endif
 
@@ -760,17 +772,17 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual bool mustEqual(const Ptr &other, SMTSolver*);
-    virtual bool mayEqual(const Ptr &other, SMTSolver*);
-    virtual bool isEquivalentTo(const Ptr &other);
-    virtual int compareStructure(const Ptr& other);
-    virtual Ptr substitute(const Ptr &from, const Ptr &to);
-    virtual bool isNumber() {
+    virtual bool mustEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
+    virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
+    virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to) ROSE_OVERRIDE;
+    virtual bool isNumber() ROSE_OVERRIDE {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t toInt() { ASSERT_forbid2(true, "not a number"); return 0;}
-    virtual VisitAction depthFirstTraversal(Visitor&);
-    virtual uint64_t nNodes() { return nnodes_; }
+    virtual uint64_t toInt() ROSE_OVERRIDE { ASSERT_forbid2(true, "not a number"); return 0;}
+    virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
+    virtual uint64_t nNodes() ROSE_OVERRIDE { return nnodes_; }
 
     /** Returns the number of children. */
     size_t nChildren() { return children_.size(); }
@@ -892,14 +904,18 @@ private:
 
     template<class S>
     void save(S &s, const unsigned version) const {
-        s & boost::serialization::base_object<Node>(*this);
-        s & leafType_ & bits_ & name_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
+        s & BOOST_SERIALIZATION_NVP(leafType_);
+        s & BOOST_SERIALIZATION_NVP(bits_);
+        s & BOOST_SERIALIZATION_NVP(name_);
     }
 
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Node>(*this);
-        s & leafType_ & bits_ & name_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
+        s & BOOST_SERIALIZATION_NVP(leafType_);
+        s & BOOST_SERIALIZATION_NVP(bits_);
+        s & BOOST_SERIALIZATION_NVP(name_);
         nextNameCounter(name_);
     }
 
@@ -982,8 +998,8 @@ public:
     // from base class
     virtual bool isNumber() ROSE_OVERRIDE;
     virtual uint64_t toInt() ROSE_OVERRIDE;
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
+    virtual bool mustEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
     virtual Ptr substitute(const Ptr &from, const Ptr &to) ROSE_OVERRIDE;
@@ -1083,7 +1099,8 @@ Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, cons
  *
  * @{ */
 Ptr makeAdd(const Ptr&a, const Ptr &b, const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeAnd instead");             // [Robb Matzke 2017-11-21]: deprecated
 Ptr makeAsr(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
 Ptr makeOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
@@ -1097,7 +1114,8 @@ Ptr makeLssb(const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeMssb(const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeNe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
 Ptr makeNegate(const Ptr &a, const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeOr instead");              // [Robb Matzke 2017-11-21]: deprecated
 Ptr makeRead(const Ptr &mem, const Ptr &addr, const std::string &comment="", unsigned flags=0);
 Ptr makeRol(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeRor(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
@@ -1137,7 +1155,7 @@ std::ostream& operator<<(std::ostream &o, Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
 /** Convert a set to an ite expression. */
-Ptr setToIte(const Ptr&);
+Ptr setToIte(const Ptr&, const LeafPtr &var = LeafPtr());
 
 /** Counts the number of nodes.
  *
@@ -1253,8 +1271,8 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Interior);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Leaf);
 #endif
 
 #endif

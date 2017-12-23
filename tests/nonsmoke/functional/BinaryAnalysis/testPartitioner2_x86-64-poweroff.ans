@@ -1,23 +1,27 @@
 /* Interpretation ELF */
 0x00400e70: ================================== Function (call instruction, graph) unknown name
+0x00400e70: Function stack delta: +8
 
 0x00400e70: Basic block reasons: entry point, CFG head
 0x00400e70: 48 83 ec 08             |H...    |<sp+0 >   sub    rsp, 0x08
 0x00400e74: e8 f3 02 00 00          |.....   |<sp-8 >   call   0x000000000040116c<<Func>>
 0x00400e74: Outgoing stack delta: -16
-0x00400e74: Successor blocks: 0x0040116c<<Func>>, 0x00400e79
+0x00400e74: Successor blocks: 0x00400e79, 0x0040116c<<Func>>
 
 0x00400e79: Basic block reasons: 
-0x00400e79: e8 52 03 00 00          |.R...   |          call   0x00000000004011d0<<Func>>
-0x00400e79: Successor blocks: 0x004011d0<<Func>>, 0x00400e7e
+0x00400e79: e8 52 03 00 00          |.R...   |<sp-8 >   call   0x00000000004011d0<<Func>>
+0x00400e79: Outgoing stack delta: -16
+0x00400e79: Successor blocks: 0x00400e7e, 0x004011d0<<Func>>
 
 0x00400e7e: Basic block reasons: 
-0x00400e7e: e8 ed 0f 00 00          |.....   |          call   0x0000000000401e70<<Func>>
-0x00400e7e: Successor blocks: 0x00401e70<<Func>>, 0x00400e83
+0x00400e7e: e8 ed 0f 00 00          |.....   |<sp-8 >   call   0x0000000000401e70<<Func>>
+0x00400e7e: Outgoing stack delta: -16
+0x00400e7e: Successor blocks: 0x00400e83, 0x00401e70<<Func>>
 
 0x00400e83: Basic block reasons: 
-0x00400e83: 48 83 c4 08             |H...    |          add    rsp, 0x08
-0x00400e87: c3                      |.       |          ret    
+0x00400e83: 48 83 c4 08             |H...    |<sp-8 >   add    rsp, 0x08
+0x00400e87: c3                      |.       |<sp+0 >   ret    
+0x00400e87: Outgoing stack delta: +8
 0x00400e87: Successor blocks: unknown
 
 0x00400e88: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
@@ -384,10 +388,12 @@
 0x00401165: Successor blocks: 0x00400ea8<__libc_start_main@plt>, 0x0040116a
 
 0x0040116a: Basic block reasons: 
-0x0040116a: f4                      |.       |          hlt    
+0x0040116a: f4                      |.       |<sp-16>   hlt    
+0x0040116a: Outgoing stack delta: -16
 0x0040116a: Successor blocks: none
 
 0x0040116c: ================================== Function (function call, graph) unknown name
+0x0040116c: Function stack delta: +8
 
 0x0040116c: Basic block reasons: entry point
 0x0040116c: 48 83 ec 08             |H...    |<sp+0 >   sub    rsp, 0x08
@@ -403,8 +409,9 @@
 0x0040117c: Successor blocks: 0x0040117e, unknown
 
 0x0040117e: Basic block reasons: 
-0x0040117e: 48 83 c4 08             |H...    |          add    rsp, 0x08
-0x00401182: c3                      |.       |          ret    
+0x0040117e: 48 83 c4 08             |H...    |<sp-8 >   add    rsp, 0x08
+0x00401182: c3                      |.       |<sp+0 >   ret    
+0x00401182: Outgoing stack delta: +8
 0x00401182: Successor blocks: unknown
 
 0x00401190: ================================== Function (call instruction, graph) unknown name
@@ -435,24 +442,27 @@
 0x0040119f: Successor blocks: 0x004011a0
 
 0x004011a0: Basic block reasons: 
-0x004011a0: 48 83 c0 08             |H...    |          add    rax, 0x08
-0x004011a4: 48 89 05 ad 16 10 00    |H...... |          mov    qword ds:[rip + 0x00000000001016ad], rax
-0x004011ab: ff d2                   |..      |          call   rdx
+0x004011a0: 48 83 c0 08             |H...    |<sp-8 >   add    rax, 0x08
+0x004011a4: 48 89 05 ad 16 10 00    |H...... |<sp-8 >   mov    qword ds:[rip + 0x00000000001016ad], rax
+0x004011ab: ff d2                   |..      |<sp-8 >   call   rdx
+0x004011ab: Outgoing stack delta: -16
 0x004011ab: Successor blocks: 0x004011ad, unknown
 
 0x004011ad: Basic block reasons: 
-0x004011ad: 48 8b 05 a4 16 10 00    |H...... |          mov    rax, qword ds:[rip + 0x00000000001016a4]
-0x004011b4: 48 8b 10                |H..     |          mov    rdx, qword ds:[rax]
-0x004011b7: 48 85 d2                |H..     |          test   rdx, rdx
-0x004011ba: 75 e4                   |u.      |          jne    0x00000000004011a0<<BBlock>>
+0x004011ad: 48 8b 05 a4 16 10 00    |H...... |<sp-8 >   mov    rax, qword ds:[rip + 0x00000000001016a4]
+0x004011b4: 48 8b 10                |H..     |<sp-8 >   mov    rdx, qword ds:[rax]
+0x004011b7: 48 85 d2                |H..     |<sp-8 >   test   rdx, rdx
+0x004011ba: 75 e4                   |u.      |<sp-8 >   jne    0x00000000004011a0<<BBlock>>
+0x004011ba: Outgoing stack delta: -8
 0x004011ba: Successor blocks: 0x004011a0, 0x004011bc
 
 0x004011bc: Basic block reasons: 
-0x004011bc: c6 05 c9 16 10 00 01    |....... |          mov    byte ds:[rip + 0x00000000001016c9], 0x01
+0x004011bc: c6 05 c9 16 10 00 01    |....... |<sp-8 >   mov    byte ds:[rip + 0x00000000001016c9], 0x01
+0x004011bc: Outgoing stack delta: -8
 0x004011bc: Successor blocks: 0x004011c3
 
 0x004011c3: Basic block reasons: 
-0x004011c3: c9                      |.       |          leave  
+0x004011c3: c9                      |.       |<sp-8 >   leave  
 0x004011c4: c3                      |.       |<sp+0 >   ret    
 0x004011c4: Outgoing stack delta: +8
 0x004011c4: Successor blocks: unknown
@@ -503,51 +513,58 @@
 0x00401219: Successor blocks: 0x00400f88<fprintf@plt>, 0x0040121e
 
 0x0040121e: Basic block reasons: 
-0x0040121e: 48 8b 15 6b 16 10 00    |H..k... |          mov    rdx, qword ds:[rip + 0x000000000010166b]
-0x00401225: 48 8b 3d 4c 16 10 00    |H.=L... |          mov    rdi, qword ds:[rip + 0x000000000010164c]
-0x0040122c: be 20 1f 40 00          |. .@.   |          mov    esi, 0x00401f20<"\t\t  -n: don't sync before"+18 more>
-0x00401231: 31 c0                   |1.      |          xor    eax, eax
-0x00401233: e8 50 fd ff ff          |.P...   |          call   0x0000000000400f88<fprintf@plt>
+0x0040121e: 48 8b 15 6b 16 10 00    |H..k... |<sp-8 >   mov    rdx, qword ds:[rip + 0x000000000010166b]
+0x00401225: 48 8b 3d 4c 16 10 00    |H.=L... |<sp-8 >   mov    rdi, qword ds:[rip + 0x000000000010164c]
+0x0040122c: be 20 1f 40 00          |. .@.   |<sp-8 >   mov    esi, 0x00401f20<"\t\t  -n: don't sync before"+18 more>
+0x00401231: 31 c0                   |1.      |<sp-8 >   xor    eax, eax
+0x00401233: e8 50 fd ff ff          |.P...   |<sp-8 >   call   0x0000000000400f88<fprintf@plt>
+0x00401233: Outgoing stack delta: -16
 0x00401233: Successor blocks: 0x00400f88<fprintf@plt>, 0x00401238
 
 0x00401238: Basic block reasons: 
-0x00401238: 48 8b 0d 39 16 10 00    |H..9... |          mov    rcx, qword ds:[rip + 0x0000000000101639]
-0x0040123f: ba 32 00 00 00          |.2...   |          mov    edx, 0x00000032
-0x00401244: be 01 00 00 00          |.....   |          mov    esi, 0x00000001
-0x00401249: bf 50 1f 40 00          |.P.@.   |          mov    edi, 0x00401f50<"\t\t  -w: only write a wtmp"+25 more>
-0x0040124e: e8 f5 fc ff ff          |.....   |          call   0x0000000000400f48<fwrite@plt>
+0x00401238: 48 8b 0d 39 16 10 00    |H..9... |<sp-8 >   mov    rcx, qword ds:[rip + 0x0000000000101639]
+0x0040123f: ba 32 00 00 00          |.2...   |<sp-8 >   mov    edx, 0x00000032
+0x00401244: be 01 00 00 00          |.....   |<sp-8 >   mov    esi, 0x00000001
+0x00401249: bf 50 1f 40 00          |.P.@.   |<sp-8 >   mov    edi, 0x00401f50<"\t\t  -w: only write a wtmp"+25 more>
+0x0040124e: e8 f5 fc ff ff          |.....   |<sp-8 >   call   0x0000000000400f48<fwrite@plt>
+0x0040124e: Outgoing stack delta: -16
 0x0040124e: Successor blocks: 0x00400f48<fwrite@plt>, 0x00401253
 
 0x00401253: Basic block reasons: 
-0x00401253: 48 8b 0d 1e 16 10 00    |H...... |          mov    rcx, qword ds:[rip + 0x000000000010161e]
-0x0040125a: ba 23 00 00 00          |.#...   |          mov    edx, 0x00000023
-0x0040125f: be 01 00 00 00          |.....   |          mov    esi, 0x00000001
-0x00401264: bf 88 1f 40 00          |...@.   |          mov    edi, 0x00401f88<"\t\t  -d: don't write a wtm"+10 more>
-0x00401269: e8 da fc ff ff          |.....   |          call   0x0000000000400f48<fwrite@plt>
+0x00401253: 48 8b 0d 1e 16 10 00    |H...... |<sp-8 >   mov    rcx, qword ds:[rip + 0x000000000010161e]
+0x0040125a: ba 23 00 00 00          |.#...   |<sp-8 >   mov    edx, 0x00000023
+0x0040125f: be 01 00 00 00          |.....   |<sp-8 >   mov    esi, 0x00000001
+0x00401264: bf 88 1f 40 00          |...@.   |<sp-8 >   mov    edi, 0x00401f88<"\t\t  -d: don't write a wtm"+10 more>
+0x00401269: e8 da fc ff ff          |.....   |<sp-8 >   call   0x0000000000400f48<fwrite@plt>
+0x00401269: Outgoing stack delta: -16
 0x00401269: Successor blocks: 0x00400f48<fwrite@plt>, 0x0040126e
 
 0x0040126e: Basic block reasons: 
-0x0040126e: 48 8b 0d 03 16 10 00    |H...... |          mov    rcx, qword ds:[rip + 0x0000000000101603]
-0x00401275: ba 30 00 00 00          |.0...   |          mov    edx, 0x00000030
-0x0040127a: be 01 00 00 00          |.....   |          mov    esi, 0x00000001
-0x0040127f: bf b0 1f 40 00          |...@.   |          mov    edi, 0x00401fb0<"\t\t  -f: force halt/reboot"+23 more>
-0x00401284: e8 bf fc ff ff          |.....   |          call   0x0000000000400f48<fwrite@plt>
+0x0040126e: 48 8b 0d 03 16 10 00    |H...... |<sp-8 >   mov    rcx, qword ds:[rip + 0x0000000000101603]
+0x00401275: ba 30 00 00 00          |.0...   |<sp-8 >   mov    edx, 0x00000030
+0x0040127a: be 01 00 00 00          |.....   |<sp-8 >   mov    esi, 0x00000001
+0x0040127f: bf b0 1f 40 00          |...@.   |<sp-8 >   mov    edi, 0x00401fb0<"\t\t  -f: force halt/reboot"+23 more>
+0x00401284: e8 bf fc ff ff          |.....   |<sp-8 >   call   0x0000000000400f48<fwrite@plt>
+0x00401284: Outgoing stack delta: -16
 0x00401284: Successor blocks: 0x00400f48<fwrite@plt>, 0x00401289
 
 0x00401289: Basic block reasons: 
-0x00401289: 48 8b 3d e8 15 10 00    |H.=.... |          mov    rdi, qword ds:[rip + 0x00000000001015e8]
-0x00401290: 48 8b 15 f9 15 10 00    |H...... |          mov    rdx, qword ds:[rip + 0x00000000001015f9]
-0x00401297: be e8 1f 40 00          |...@.   |          mov    esi, 0x00401fe8<"\t\t  -p: power down the sy"+33 more>
-0x0040129c: 31 c0                   |1.      |          xor    eax, eax
-0x0040129e: e8 e5 fc ff ff          |.....   |          call   0x0000000000400f88<fprintf@plt>
+0x00401289: 48 8b 3d e8 15 10 00    |H.=.... |<sp-8 >   mov    rdi, qword ds:[rip + 0x00000000001015e8]
+0x00401290: 48 8b 15 f9 15 10 00    |H...... |<sp-8 >   mov    rdx, qword ds:[rip + 0x00000000001015f9]
+0x00401297: be e8 1f 40 00          |...@.   |<sp-8 >   mov    esi, 0x00401fe8<"\t\t  -p: power down the sy"+33 more>
+0x0040129c: 31 c0                   |1.      |<sp-8 >   xor    eax, eax
+0x0040129e: e8 e5 fc ff ff          |.....   |<sp-8 >   call   0x0000000000400f88<fprintf@plt>
+0x0040129e: Outgoing stack delta: -16
 0x0040129e: Successor blocks: 0x00400f88<fprintf@plt>, 0x004012a3
 
 0x004012a3: Basic block reasons: 
-0x004012a3: bf 01 00 00 00          |.....   |          mov    edi, 0x00000001
-0x004012a8: e8 fb fd ff ff          |.....   |          call   0x00000000004010a8<exit@plt>
+0x004012a3: bf 01 00 00 00          |.....   |<sp-8 >   mov    edi, 0x00000001
+0x004012a8: e8 fb fd ff ff          |.....   |<sp-8 >   call   0x00000000004010a8<exit@plt>
+0x004012a8: Outgoing stack delta: -16
 0x004012a8: Successor blocks: 0x004010a8<exit@plt>
 
 0x004012b0: ================================== Function (call instruction, graph) unknown name
+0x004012b0: Function stack delta: +8
 
 0x004012b0: Basic block reasons: entry point, CFG head
 0x004012b0: 48 83 ec 08             |H...    |<sp+0 >   sub    rsp, 0x08
@@ -557,24 +574,28 @@
 0x004012b9: Successor blocks: 0x00400f08<getenv@plt>, 0x004012be
 
 0x004012be: Basic block reasons: 
-0x004012be: 48 85 c0                |H..     |          test   rax, rax
-0x004012c1: 74 1d                   |t.      |          je     0x00000000004012e0<<BBlock>>
+0x004012be: 48 85 c0                |H..     |<sp-8 >   test   rax, rax
+0x004012c1: 74 1d                   |t.      |<sp-8 >   je     0x00000000004012e0<<BBlock>>
+0x004012c1: Outgoing stack delta: -8
 0x004012c1: Successor blocks: 0x004012c3, 0x004012e0
 
 0x004012c3: Basic block reasons: 
-0x004012c3: bf b2 20 40 00          |.. @.   |          mov    edi, 0x004020b2<"RUNLEVEL">
-0x004012c8: e8 3b fc ff ff          |.;...   |          call   0x0000000000400f08<getenv@plt>
+0x004012c3: bf b2 20 40 00          |.. @.   |<sp-8 >   mov    edi, 0x004020b2<"RUNLEVEL">
+0x004012c8: e8 3b fc ff ff          |.;...   |<sp-8 >   call   0x0000000000400f08<getenv@plt>
+0x004012c8: Outgoing stack delta: -16
 0x004012c8: Successor blocks: 0x00400f08<getenv@plt>, 0x004012cd
 
 0x004012cd: Basic block reasons: 
-0x004012cd: 48 85 c0                |H..     |          test   rax, rax
-0x004012d0: 74 0e                   |t.      |          je     0x00000000004012e0<<BBlock>>
+0x004012cd: 48 85 c0                |H..     |<sp-8 >   test   rax, rax
+0x004012d0: 74 0e                   |t.      |<sp-8 >   je     0x00000000004012e0<<BBlock>>
+0x004012d0: Outgoing stack delta: -8
 0x004012d0: Successor blocks: 0x004012d2, 0x004012e0
 
 0x004012d2: Basic block reasons: 
-0x004012d2: 0f be 00                |...     |          movsx  eax, byte ds:[rax]
-0x004012d5: 48 83 c4 08             |H...    |          add    rsp, 0x08
-0x004012d9: c3                      |.       |          ret    
+0x004012d2: 0f be 00                |...     |<sp-8 >   movsx  eax, byte ds:[rax]
+0x004012d5: 48 83 c4 08             |H...    |<sp-8 >   add    rsp, 0x08
+0x004012d9: c3                      |.       |<sp+0 >   ret    
+0x004012d9: Outgoing stack delta: +8
 0x004012d9: Successor blocks: unknown
 
 0x004012da: Basic block reasons: CFG head
@@ -583,54 +604,63 @@
 0x004012dd: Successor blocks: 0x004012e0
 
 0x004012e0: Basic block reasons: 
-0x004012e0: e8 13 fe ff ff          |.....   |          call   0x00000000004010f8<setutent@plt>
+0x004012e0: e8 13 fe ff ff          |.....   |<sp-8 >   call   0x00000000004010f8<setutent@plt>
+0x004012e0: Outgoing stack delta: -16
 0x004012e0: Successor blocks: 0x004010f8<setutent@plt>, 0x004012e5
 
 0x004012e5: Basic block reasons: 
-0x004012e5: e8 3e fc ff ff          |.>...   |          call   0x0000000000400f28<getutent@plt>
+0x004012e5: e8 3e fc ff ff          |.>...   |<sp-8 >   call   0x0000000000400f28<getutent@plt>
+0x004012e5: Outgoing stack delta: -16
 0x004012e5: Successor blocks: 0x00400f28<getutent@plt>, 0x004012ea
 
 0x004012ea: Basic block reasons: 
-0x004012ea: 48 85 c0                |H..     |          test   rax, rax
-0x004012ed: 66 66 90                |ff.     |          nop    
-0x004012f0: 74 0f                   |t.      |          je     0x0000000000401301<<BBlock>>
+0x004012ea: 48 85 c0                |H..     |<sp-8 >   test   rax, rax
+0x004012ed: 66 66 90                |ff.     |<sp-8 >   nop    
+0x004012f0: 74 0f                   |t.      |<sp-8 >   je     0x0000000000401301<<BBlock>>
+0x004012f0: Outgoing stack delta: -8
 0x004012f0: Successor blocks: 0x004012f2, 0x00401301
 
 0x004012f2: Basic block reasons: 
-0x004012f2: 66 83 38 01             |f.8.    |          cmp    word ds:[rax], 0x01
-0x004012f6: 75 ed                   |u.      |          jne    0x00000000004012e5<<BBlock>>
+0x004012f2: 66 83 38 01             |f.8.    |<sp-8 >   cmp    word ds:[rax], 0x01
+0x004012f6: 75 ed                   |u.      |<sp-8 >   jne    0x00000000004012e5<<BBlock>>
+0x004012f6: Outgoing stack delta: -8
 0x004012f6: Successor blocks: 0x004012e5, 0x004012f8
 
 0x004012f8: Basic block reasons: 
-0x004012f8: 0f b6 40 04             |..@.    |          movzx  eax, byte ds:[rax + 0x04]
-0x004012fc: 48 83 c4 08             |H...    |          add    rsp, 0x08
-0x00401300: c3                      |.       |          ret    
+0x004012f8: 0f b6 40 04             |..@.    |<sp-8 >   movzx  eax, byte ds:[rax + 0x04]
+0x004012fc: 48 83 c4 08             |H...    |<sp-8 >   add    rsp, 0x08
+0x00401300: c3                      |.       |<sp+0 >   ret    
+0x00401300: Outgoing stack delta: +8
 0x00401300: Successor blocks: unknown
 
 0x00401301: Basic block reasons: 
-0x00401301: e8 f2 fb ff ff          |.....   |          call   0x0000000000400ef8<endutent@plt>
+0x00401301: e8 f2 fb ff ff          |.....   |<sp-8 >   call   0x0000000000400ef8<endutent@plt>
+0x00401301: Outgoing stack delta: -16
 0x00401301: Successor blocks: 0x00400ef8<endutent@plt>, 0x00401306
 
 0x00401306: Basic block reasons: 
-0x00401306: 48 8b 15 83 15 10 00    |H...... |          mov    rdx, qword ds:[rip + 0x0000000000101583]
-0x0040130d: 48 8b 3d 64 15 10 00    |H.=d... |          mov    rdi, qword ds:[rip + 0x0000000000101564]
-0x00401314: be 28 20 40 00          |.( @.   |          mov    esi, 0x00402028<"WARNING: could not determ"+29 more>
-0x00401319: 31 c0                   |1.      |          xor    eax, eax
-0x0040131b: e8 68 fc ff ff          |.h...   |          call   0x0000000000400f88<fprintf@plt>
+0x00401306: 48 8b 15 83 15 10 00    |H...... |<sp-8 >   mov    rdx, qword ds:[rip + 0x0000000000101583]
+0x0040130d: 48 8b 3d 64 15 10 00    |H.=d... |<sp-8 >   mov    rdi, qword ds:[rip + 0x0000000000101564]
+0x00401314: be 28 20 40 00          |.( @.   |<sp-8 >   mov    esi, 0x00402028<"WARNING: could not determ"+29 more>
+0x00401319: 31 c0                   |1.      |<sp-8 >   xor    eax, eax
+0x0040131b: e8 68 fc ff ff          |.h...   |<sp-8 >   call   0x0000000000400f88<fprintf@plt>
+0x0040131b: Outgoing stack delta: -16
 0x0040131b: Successor blocks: 0x00400f88<fprintf@plt>, 0x00401320
 
 0x00401320: Basic block reasons: 
-0x00401320: 48 8b 15 69 15 10 00    |H..i... |          mov    rdx, qword ds:[rip + 0x0000000000101569]
-0x00401327: 48 8b 3d 4a 15 10 00    |H.=J... |          mov    rdi, qword ds:[rip + 0x000000000010154a]
-0x0040132e: be 60 20 40 00          |.` @.   |          mov    esi, 0x00402060<"  (it's better to use shu"+43 more>
-0x00401333: 31 c0                   |1.      |          xor    eax, eax
-0x00401335: e8 4e fc ff ff          |.N...   |          call   0x0000000000400f88<fprintf@plt>
+0x00401320: 48 8b 15 69 15 10 00    |H..i... |<sp-8 >   mov    rdx, qword ds:[rip + 0x0000000000101569]
+0x00401327: 48 8b 3d 4a 15 10 00    |H.=J... |<sp-8 >   mov    rdi, qword ds:[rip + 0x000000000010154a]
+0x0040132e: be 60 20 40 00          |.` @.   |<sp-8 >   mov    esi, 0x00402060<"  (it's better to use shu"+43 more>
+0x00401333: 31 c0                   |1.      |<sp-8 >   xor    eax, eax
+0x00401335: e8 4e fc ff ff          |.N...   |<sp-8 >   call   0x0000000000400f88<fprintf@plt>
+0x00401335: Outgoing stack delta: -16
 0x00401335: Successor blocks: 0x00400f88<fprintf@plt>, 0x0040133a
 
 0x0040133a: Basic block reasons: 
-0x0040133a: b8 ff ff ff ff          |.....   |          mov    eax, 0xffffffff<-1>
-0x0040133f: 48 83 c4 08             |H...    |          add    rsp, 0x08
-0x00401343: c3                      |.       |          ret    
+0x0040133a: b8 ff ff ff ff          |.....   |<sp-8 >   mov    eax, 0xffffffff<-1>
+0x0040133f: 48 83 c4 08             |H...    |<sp-8 >   add    rsp, 0x08
+0x00401343: c3                      |.       |<sp+0 >   ret    
+0x00401343: Outgoing stack delta: +8
 0x00401343: Successor blocks: unknown
 
 0x00401350: ================================== Function (call instruction, graph) unknown name
@@ -668,28 +698,33 @@
 0x0040139c: Successor blocks: 0x00401038<execv@plt>, 0x004013a1
 
 0x004013a1: Basic block reasons: 
-0x004013a1: 48 89 e6                |H..     |          mov    rsi, rsp
-0x004013a4: bf d1 20 40 00          |.. @.   |          mov    edi, 0x004020d1<"/etc/shutdown">
-0x004013a9: e8 8a fc ff ff          |.....   |          call   0x0000000000401038<execv@plt>
+0x004013a1: 48 89 e6                |H..     |<sp-72>   mov    rsi, rsp
+0x004013a4: bf d1 20 40 00          |.. @.   |<sp-72>   mov    edi, 0x004020d1<"/etc/shutdown">
+0x004013a9: e8 8a fc ff ff          |.....   |<sp-72>   call   0x0000000000401038<execv@plt>
+0x004013a9: Outgoing stack delta: -80
 0x004013a9: Successor blocks: 0x00401038<execv@plt>, 0x004013ae
 
 0x004013ae: Basic block reasons: 
-0x004013ae: 48 89 e6                |H..     |          mov    rsi, rsp
-0x004013b1: bf df 20 40 00          |.. @.   |          mov    edi, 0x004020df<"/bin/shutdown">
-0x004013b6: e8 7d fc ff ff          |.}...   |          call   0x0000000000401038<execv@plt>
+0x004013ae: 48 89 e6                |H..     |<sp-72>   mov    rsi, rsp
+0x004013b1: bf df 20 40 00          |.. @.   |<sp-72>   mov    edi, 0x004020df<"/bin/shutdown">
+0x004013b6: e8 7d fc ff ff          |.}...   |<sp-72>   call   0x0000000000401038<execv@plt>
+0x004013b6: Outgoing stack delta: -80
 0x004013b6: Successor blocks: 0x00401038<execv@plt>, 0x004013bb
 
 0x004013bb: Basic block reasons: 
-0x004013bb: bf d6 20 40 00          |.. @.   |          mov    edi, 0x004020d6<"shutdown">
-0x004013c0: e8 d3 fb ff ff          |.....   |          call   0x0000000000400f98<perror@plt>
+0x004013bb: bf d6 20 40 00          |.. @.   |<sp-72>   mov    edi, 0x004020d6<"shutdown">
+0x004013c0: e8 d3 fb ff ff          |.....   |<sp-72>   call   0x0000000000400f98<perror@plt>
+0x004013c0: Outgoing stack delta: -80
 0x004013c0: Successor blocks: 0x00400f98<perror@plt>, 0x004013c5
 
 0x004013c5: Basic block reasons: 
-0x004013c5: bf 01 00 00 00          |.....   |          mov    edi, 0x00000001
-0x004013ca: e8 d9 fc ff ff          |.....   |          call   0x00000000004010a8<exit@plt>
+0x004013c5: bf 01 00 00 00          |.....   |<sp-72>   mov    edi, 0x00000001
+0x004013ca: e8 d9 fc ff ff          |.....   |<sp-72>   call   0x00000000004010a8<exit@plt>
+0x004013ca: Outgoing stack delta: -80
 0x004013ca: Successor blocks: 0x004010a8<exit@plt>
 
 0x00401710: ================================== Function (call instruction, graph) unknown name
+0x00401710: Function stack delta: +8
 
 0x00401710: Basic block reasons: entry point, CFG head
 0x00401710: 41 57                   |AW      |<sp+0 >   push   r15
@@ -707,131 +742,150 @@
 0x0040172d: Successor blocks: 0x00400ec8<socket@plt>, 0x00401732
 
 0x00401732: Basic block reasons: 
-0x00401732: 85 c0                   |..      |          test   eax, eax
-0x00401734: 89 44 24 0c             |.D$.    |          mov    dword ds:[rsp + 0x0c], eax
-0x00401738: 0f 88 3b 01 00 00       |..;...  |          js     0x0000000000401879<<BBlock>>
+0x00401732: 85 c0                   |..      |<sp-2648>   test   eax, eax
+0x00401734: 89 44 24 0c             |.D$.    |<sp-2648>   mov    dword ds:[rsp + 0x0c], eax
+0x00401738: 0f 88 3b 01 00 00       |..;...  |<sp-2648>   js     0x0000000000401879<<BBlock>>
+0x00401738: Outgoing stack delta: -2648
 0x00401738: Successor blocks: 0x0040173e, 0x00401879
 
 0x0040173e: Basic block reasons: 
-0x0040173e: 48 8d 44 24 20          |H.D$    |          lea    rax, [rsp + 0x20]
-0x00401743: 8b 7c 24 0c             |.|$.    |          mov    edi, dword ds:[rsp + 0x0c]
-0x00401747: 48 8d 54 24 10          |H.T$.   |          lea    rdx, [rsp + 0x10]
-0x0040174c: be 12 89 00 00          |.....   |          mov    esi, 0x00008912<35090>
-0x00401751: c7 44 24 10 00 0a 00 00 |.D$.....|          mov    dword ds:[rsp + 0x10], 0x00000a00<2560>
-0x00401759: 48 89 44 24 18          |H.D$.   |          mov    qword ds:[rsp + 0x18], rax
-0x0040175e: 31 c0                   |1.      |          xor    eax, eax
-0x00401760: e8 73 f9 ff ff          |.s...   |          call   0x00000000004010d8<ioctl@plt>
+0x0040173e: 48 8d 44 24 20          |H.D$    |<sp-2648>   lea    rax, [rsp + 0x20]
+0x00401743: 8b 7c 24 0c             |.|$.    |<sp-2648>   mov    edi, dword ds:[rsp + 0x0c]
+0x00401747: 48 8d 54 24 10          |H.T$.   |<sp-2648>   lea    rdx, [rsp + 0x10]
+0x0040174c: be 12 89 00 00          |.....   |<sp-2648>   mov    esi, 0x00008912<35090>
+0x00401751: c7 44 24 10 00 0a 00 00 |.D$.....|<sp-2648>   mov    dword ds:[rsp + 0x10], 0x00000a00<2560>
+0x00401759: 48 89 44 24 18          |H.D$.   |<sp-2648>   mov    qword ds:[rsp + 0x18], rax
+0x0040175e: 31 c0                   |1.      |<sp-2648>   xor    eax, eax
+0x00401760: e8 73 f9 ff ff          |.s...   |<sp-2648>   call   0x00000000004010d8<ioctl@plt>
+0x00401760: Outgoing stack delta: -2656
 0x00401760: Successor blocks: 0x004010d8<ioctl@plt>, 0x00401765
 
 0x00401765: Basic block reasons: 
-0x00401765: 85 c0                   |..      |          test   eax, eax
-0x00401767: 0f 88 38 01 00 00       |..8...  |          js     0x00000000004018a5<<BBlock>>
+0x00401765: 85 c0                   |..      |<sp-2648>   test   eax, eax
+0x00401767: 0f 88 38 01 00 00       |..8...  |<sp-2648>   js     0x00000000004018a5<<BBlock>>
+0x00401767: Outgoing stack delta: -2648
 0x00401767: Successor blocks: 0x0040176d, 0x004018a5
 
 0x0040176d: Basic block reasons: 
-0x0040176d: 48 63 54 24 10          |HcT$.   |          movsxd rdx, dword ds:[rsp + 0x10]
+0x0040176d: 48 63 54 24 10          |HcT$.   |<sp-2648>   movsxd rdx, dword ds:[rsp + 0x10]
 0x00401772: 48 b8 cd cc cc cc cc cc |H.......|
-0x0040177a: cc cc                   |..      |          mov    rax, 0xcccccccccccccccd<-3689348814741910323>
-0x0040177c: 41 bd 01 00 00 00       |A.....  |          mov    r13d, 0x00000001
-0x00401782: 48 f7 e2                |H..     |          mul    rdx
-0x00401785: 49 89 d6                |I..     |          mov    r14, rdx
-0x00401788: 49 c1 ee 05             |I...    |          shr    r14, 0x05
+0x0040177a: cc cc                   |..      |<sp-2648>   mov    rax, 0xcccccccccccccccd<-3689348814741910323>
+0x0040177c: 41 bd 01 00 00 00       |A.....  |<sp-2648>   mov    r13d, 0x00000001
+0x00401782: 48 f7 e2                |H..     |<sp-2648>   mul    rdx
+0x00401785: 49 89 d6                |I..     |<sp-2648>   mov    r14, rdx
+0x00401788: 49 c1 ee 05             |I...    |<sp-2648>   shr    r14, 0x05
+0x00401788: Outgoing stack delta: -2648
 0x00401788: Successor blocks: 0x0040178c
 
 0x0040178c: Basic block reasons: 
-0x0040178c: 45 31 e4                |E1.     |          xor    r12d, r12d
-0x0040178f: 45 39 f4                |E9.     |          cmp    r12d, r14d
-0x00401792: 0f 8d b8 00 00 00       |......  |          jge    0x0000000000401850<<BBlock>>
+0x0040178c: 45 31 e4                |E1.     |<sp-2648>   xor    r12d, r12d
+0x0040178f: 45 39 f4                |E9.     |<sp-2648>   cmp    r12d, r14d
+0x00401792: 0f 8d b8 00 00 00       |......  |<sp-2648>   jge    0x0000000000401850<<BBlock>>
+0x00401792: Outgoing stack delta: -2648
 0x00401792: Successor blocks: 0x00401798, 0x00401850
 
 0x00401798: Basic block reasons: 
-0x00401798: 48 8d 5c 24 20          |H.\$    |          lea    rbx, [rsp + 0x20]
-0x0040179d: 41 bf 0c 22 40 00       |A.."@.  |          mov    r15d, 0x0040220c<"shaper">
-0x004017a3: 31 ed                   |1.      |          xor    ebp, ebp
-0x004017a5: eb 14                   |..      |          jmp    0x00000000004017bb<<BBlock>>
+0x00401798: 48 8d 5c 24 20          |H.\$    |<sp-2648>   lea    rbx, [rsp + 0x20]
+0x0040179d: 41 bf 0c 22 40 00       |A.."@.  |<sp-2648>   mov    r15d, 0x0040220c<"shaper">
+0x004017a3: 31 ed                   |1.      |<sp-2648>   xor    ebp, ebp
+0x004017a5: eb 14                   |..      |<sp-2648>   jmp    0x00000000004017bb<<BBlock>>
+0x004017a5: Outgoing stack delta: -2648
 0x004017a5: Successor blocks: 0x004017bb
 
 0x004017a7: Basic block reasons: 
-0x004017a7: 41 ff c4                |A..     |          inc    r12d
-0x004017aa: 48 83 c5 28             |H..(    |          add    rbp, 0x28
-0x004017ae: 48 83 c3 28             |H..(    |          add    rbx, 0x28
-0x004017b2: 45 39 f4                |E9.     |          cmp    r12d, r14d
-0x004017b5: 0f 8d 95 00 00 00       |......  |          jge    0x0000000000401850<<BBlock>>
+0x004017a7: 41 ff c4                |A..     |<sp-2648>   inc    r12d
+0x004017aa: 48 83 c5 28             |H..(    |<sp-2648>   add    rbp, 0x28
+0x004017ae: 48 83 c3 28             |H..(    |<sp-2648>   add    rbx, 0x28
+0x004017b2: 45 39 f4                |E9.     |<sp-2648>   cmp    r12d, r14d
+0x004017b5: 0f 8d 95 00 00 00       |......  |<sp-2648>   jge    0x0000000000401850<<BBlock>>
+0x004017b5: Outgoing stack delta: -2648
 0x004017b5: Successor blocks: 0x004017bb, 0x00401850
 
 0x004017bb: Basic block reasons: 
-0x004017bb: fc                      |.       |          cld    
-0x004017bc: b9 06 00 00 00          |.....   |          mov    ecx, 0x00000006
-0x004017c1: 48 89 de                |H..     |          mov    rsi, rbx
-0x004017c4: 4c 89 ff                |L..     |          mov    rdi, r15
-0x004017c7: f3 a6                   |..      |          repe_cmpsb 
-0x004017c9: 0f 94 c0                |...     |          sete   al
-0x004017cc: 0f b6 c0                |...     |          movzx  eax, al
-0x004017cf: 44 39 e8                |D9.     |          cmp    eax, r13d
-0x004017d2: 75 d3                   |u.      |          jne    0x00000000004017a7<<BBlock>>
+0x004017bb: fc                      |.       |<sp-2648>   cld    
+0x004017bc: b9 06 00 00 00          |.....   |<sp-2648>   mov    ecx, 0x00000006
+0x004017c1: 48 89 de                |H..     |<sp-2648>   mov    rsi, rbx
+0x004017c4: 4c 89 ff                |L..     |<sp-2648>   mov    rdi, r15
+0x004017c7: f3 a6                   |..      |<sp-2648>   repe_cmpsb 
+0x004017c9: 0f 94 c0                |...     |<sp-2648>   sete   al
+0x004017cc: 0f b6 c0                |...     |<sp-2648>   movzx  eax, al
+0x004017cf: 44 39 e8                |D9.     |<sp-2648>   cmp    eax, r13d
+0x004017d2: 75 d3                   |u.      |<sp-2648>   jne    0x00000000004017a7<<BBlock>>
+0x004017d2: Outgoing stack delta: -2648
 0x004017d2: Successor blocks: 0x004017a7, 0x004017d4
 
 0x004017d4: Basic block reasons: 
-0x004017d4: 0f b6 44 2c 20          |..D,    |          movzx  eax, byte ds:[rsp + rbp + 0x20]
-0x004017d9: 83 e8 6c                |..l     |          sub    eax, 0x6c
-0x004017dc: 75 12                   |u.      |          jne    0x00000000004017f0<<BBlock>>
+0x004017d4: 0f b6 44 2c 20          |..D,    |<sp-2648>   movzx  eax, byte ds:[rsp + rbp + 0x20]
+0x004017d9: 83 e8 6c                |..l     |<sp-2648>   sub    eax, 0x6c
+0x004017dc: 75 12                   |u.      |<sp-2648>   jne    0x00000000004017f0<<BBlock>>
+0x004017dc: Outgoing stack delta: -2648
 0x004017dc: Successor blocks: 0x004017de, 0x004017f0
 
 0x004017de: Basic block reasons: 
-0x004017de: 0f b6 44 2c 21          |..D,!   |          movzx  eax, byte ds:[rsp + rbp + 0x21]
-0x004017e3: 83 e8 6f                |..o     |          sub    eax, 0x6f
-0x004017e6: 75 08                   |u.      |          jne    0x00000000004017f0<<BBlock>>
+0x004017de: 0f b6 44 2c 21          |..D,!   |<sp-2648>   movzx  eax, byte ds:[rsp + rbp + 0x21]
+0x004017e3: 83 e8 6f                |..o     |<sp-2648>   sub    eax, 0x6f
+0x004017e6: 75 08                   |u.      |<sp-2648>   jne    0x00000000004017f0<<BBlock>>
+0x004017e6: Outgoing stack delta: -2648
 0x004017e6: Successor blocks: 0x004017e8, 0x004017f0
 
 0x004017e8: Basic block reasons: 
-0x004017e8: 0f b6 44 2c 22          |..D,"   |          movzx  eax, byte ds:[rsp + rbp + 0x22]
-0x004017ed: 66 66 90                |ff.     |          nop    
+0x004017e8: 0f b6 44 2c 22          |..D,"   |<sp-2648>   movzx  eax, byte ds:[rsp + rbp + 0x22]
+0x004017ed: 66 66 90                |ff.     |<sp-2648>   nop    
+0x004017ed: Outgoing stack delta: -2648
 0x004017ed: Successor blocks: 0x004017f0
 
 0x004017f0: Basic block reasons: 
-0x004017f0: 85 c0                   |..      |          test   eax, eax
-0x004017f2: 74 b3                   |t.      |          je     0x00000000004017a7<<BBlock>>
+0x004017f0: 85 c0                   |..      |<sp-2648>   test   eax, eax
+0x004017f2: 74 b3                   |t.      |<sp-2648>   je     0x00000000004017a7<<BBlock>>
+0x004017f2: Outgoing stack delta: -2648
 0x004017f2: Successor blocks: 0x004017a7, 0x004017f4
 
 0x004017f4: Basic block reasons: 
-0x004017f4: be 3a 00 00 00          |.:...   |          mov    esi, 0x0000003a
-0x004017f9: 48 89 df                |H..     |          mov    rdi, rbx
-0x004017fc: e8 57 f8 ff ff          |.W...   |          call   0x0000000000401058<strchr@plt>
+0x004017f4: be 3a 00 00 00          |.:...   |<sp-2648>   mov    esi, 0x0000003a
+0x004017f9: 48 89 df                |H..     |<sp-2648>   mov    rdi, rbx
+0x004017fc: e8 57 f8 ff ff          |.W...   |<sp-2648>   call   0x0000000000401058<strchr@plt>
+0x004017fc: Outgoing stack delta: -2656
 0x004017fc: Successor blocks: 0x00401058<strchr@plt>, 0x00401801
 
 0x00401801: Basic block reasons: 
-0x00401801: 48 85 c0                |H..     |          test   rax, rax
-0x00401804: 75 a1                   |u.      |          jne    0x00000000004017a7<<BBlock>>
+0x00401801: 48 85 c0                |H..     |<sp-2648>   test   rax, rax
+0x00401804: 75 a1                   |u.      |<sp-2648>   jne    0x00000000004017a7<<BBlock>>
+0x00401804: Outgoing stack delta: -2648
 0x00401804: Successor blocks: 0x004017a7, 0x00401806
 
 0x00401806: Basic block reasons: 
-0x00401806: 66 83 64 2c 30 fe       |f.d,0.  |          and    word ds:[rsp + rbp + 0x30], 0xfe<-2>
-0x0040180c: 48 89 da                |H..     |          mov    rdx, rbx
-0x0040180f: be 14 89 00 00          |.....   |          mov    esi, 0x00008914<35092>
-0x00401814: 8b 7c 24 0c             |.|$.    |          mov    edi, dword ds:[rsp + 0x0c]
-0x00401818: e8 bb f8 ff ff          |.....   |          call   0x00000000004010d8<ioctl@plt>
+0x00401806: 66 83 64 2c 30 fe       |f.d,0.  |<sp-2648>   and    word ds:[rsp + rbp + 0x30], 0xfe<-2>
+0x0040180c: 48 89 da                |H..     |<sp-2648>   mov    rdx, rbx
+0x0040180f: be 14 89 00 00          |.....   |<sp-2648>   mov    esi, 0x00008914<35092>
+0x00401814: 8b 7c 24 0c             |.|$.    |<sp-2648>   mov    edi, dword ds:[rsp + 0x0c]
+0x00401818: e8 bb f8 ff ff          |.....   |<sp-2648>   call   0x00000000004010d8<ioctl@plt>
+0x00401818: Outgoing stack delta: -2656
 0x00401818: Successor blocks: 0x004010d8<ioctl@plt>, 0x0040181d
 
 0x0040181d: Basic block reasons: 
-0x0040181d: 85 c0                   |..      |          test   eax, eax
-0x0040181f: 79 86                   |y.      |          jns    0x00000000004017a7<<BBlock>>
+0x0040181d: 85 c0                   |..      |<sp-2648>   test   eax, eax
+0x0040181f: 79 86                   |y.      |<sp-2648>   jns    0x00000000004017a7<<BBlock>>
+0x0040181f: Outgoing stack delta: -2648
 0x0040181f: Successor blocks: 0x004017a7, 0x00401821
 
 0x00401821: Basic block reasons: 
-0x00401821: 48 8b 0d 50 10 10 00    |H..P... |          mov    rcx, qword ds:[rip + 0x0000000000101050]
-0x00401828: ba 11 00 00 00          |.....   |          mov    edx, 0x00000011
-0x0040182d: be 01 00 00 00          |.....   |          mov    esi, 0x00000001
-0x00401832: bf 13 22 40 00          |.."@.   |          mov    edi, 0x00402213<"ifdown: shutdown ">
-0x00401837: e8 0c f7 ff ff          |.....   |          call   0x0000000000400f48<fwrite@plt>
+0x00401821: 48 8b 0d 50 10 10 00    |H..P... |<sp-2648>   mov    rcx, qword ds:[rip + 0x0000000000101050]
+0x00401828: ba 11 00 00 00          |.....   |<sp-2648>   mov    edx, 0x00000011
+0x0040182d: be 01 00 00 00          |.....   |<sp-2648>   mov    esi, 0x00000001
+0x00401832: bf 13 22 40 00          |.."@.   |<sp-2648>   mov    edi, 0x00402213<"ifdown: shutdown ">
+0x00401837: e8 0c f7 ff ff          |.....   |<sp-2648>   call   0x0000000000400f48<fwrite@plt>
+0x00401837: Outgoing stack delta: -2656
 0x00401837: Successor blocks: 0x00400f48<fwrite@plt>, 0x0040183c
 
 0x0040183c: Basic block reasons: 
-0x0040183c: 48 89 df                |H..     |          mov    rdi, rbx
-0x0040183f: e8 54 f7 ff ff          |.T...   |          call   0x0000000000400f98<perror@plt>
+0x0040183c: 48 89 df                |H..     |<sp-2648>   mov    rdi, rbx
+0x0040183f: e8 54 f7 ff ff          |.T...   |<sp-2648>   call   0x0000000000400f98<perror@plt>
+0x0040183f: Outgoing stack delta: -2656
 0x0040183f: Successor blocks: 0x00400f98<perror@plt>, 0x00401844
 
 0x00401844: Basic block reasons: 
-0x00401844: e9 5e ff ff ff          |.^...   |          jmp    0x00000000004017a7<<BBlock>>
+0x00401844: e9 5e ff ff ff          |.^...   |<sp-2648>   jmp    0x00000000004017a7<<BBlock>>
+0x00401844: Outgoing stack delta: -2648
 0x00401844: Successor blocks: 0x004017a7
 
 0x00401849: Basic block reasons: CFG head
@@ -840,73 +894,85 @@
 0x0040184d: Successor blocks: 0x00401850
 
 0x00401850: Basic block reasons: 
-0x00401850: 41 ff cd                |A..     |          dec    r13d
-0x00401853: 0f 89 33 ff ff ff       |..3...  |          jns    0x000000000040178c<<BBlock>>
+0x00401850: 41 ff cd                |A..     |<sp-2648>   dec    r13d
+0x00401853: 0f 89 33 ff ff ff       |..3...  |<sp-2648>   jns    0x000000000040178c<<BBlock>>
+0x00401853: Outgoing stack delta: -2648
 0x00401853: Successor blocks: 0x0040178c, 0x00401859
 
 0x00401859: Basic block reasons: 
-0x00401859: 8b 7c 24 0c             |.|$.    |          mov    edi, dword ds:[rsp + 0x0c]
-0x0040185d: 66 66 90                |ff.     |          nop    
-0x00401860: e8 83 f8 ff ff          |.....   |          call   0x00000000004010e8<close@plt>
+0x00401859: 8b 7c 24 0c             |.|$.    |<sp-2648>   mov    edi, dword ds:[rsp + 0x0c]
+0x0040185d: 66 66 90                |ff.     |<sp-2648>   nop    
+0x00401860: e8 83 f8 ff ff          |.....   |<sp-2648>   call   0x00000000004010e8<close@plt>
+0x00401860: Outgoing stack delta: -2656
 0x00401860: Successor blocks: 0x004010e8<close@plt>, 0x00401865
 
 0x00401865: Basic block reasons: 
-0x00401865: 31 c0                   |1.      |          xor    eax, eax
+0x00401865: 31 c0                   |1.      |<sp-2648>   xor    eax, eax
+0x00401865: Outgoing stack delta: -2648
 0x00401865: Successor blocks: 0x00401867
 
 0x00401867: Basic block reasons: 
-0x00401867: 48 81 c4 28 0a 00 00    |H..(... |          add    rsp, 0x00000a28<2600>
-0x0040186e: 5b                      |[       |          pop    rbx
-0x0040186f: 5d                      |]       |          pop    rbp
-0x00401870: 41 5c                   |A\      |          pop    r12
-0x00401872: 41 5d                   |A]      |          pop    r13
-0x00401874: 41 5e                   |A^      |          pop    r14
-0x00401876: 41 5f                   |A_      |          pop    r15
-0x00401878: c3                      |.       |          ret    
+0x00401867: 48 81 c4 28 0a 00 00    |H..(... |<sp-2648>   add    rsp, 0x00000a28<2600>
+0x0040186e: 5b                      |[       |<sp-48>   pop    rbx
+0x0040186f: 5d                      |]       |<sp-40>   pop    rbp
+0x00401870: 41 5c                   |A\      |<sp-32>   pop    r12
+0x00401872: 41 5d                   |A]      |<sp-24>   pop    r13
+0x00401874: 41 5e                   |A^      |<sp-16>   pop    r14
+0x00401876: 41 5f                   |A_      |<sp-8 >   pop    r15
+0x00401878: c3                      |.       |<sp+0 >   ret    
+0x00401878: Outgoing stack delta: +8
 0x00401878: Successor blocks: unknown
 
 0x00401879: Basic block reasons: 
-0x00401879: 48 8b 0d f8 0f 10 00    |H...... |          mov    rcx, qword ds:[rip + 0x0000000000100ff8]
-0x00401880: ba 08 00 00 00          |.....   |          mov    edx, 0x00000008
-0x00401885: be 01 00 00 00          |.....   |          mov    esi, 0x00000001
-0x0040188a: bf 25 22 40 00          |.%"@.   |          mov    edi, 0x00402225<"ifdown: ">
-0x0040188f: e8 b4 f6 ff ff          |.....   |          call   0x0000000000400f48<fwrite@plt>
+0x00401879: 48 8b 0d f8 0f 10 00    |H...... |<sp-2648>   mov    rcx, qword ds:[rip + 0x0000000000100ff8]
+0x00401880: ba 08 00 00 00          |.....   |<sp-2648>   mov    edx, 0x00000008
+0x00401885: be 01 00 00 00          |.....   |<sp-2648>   mov    esi, 0x00000001
+0x0040188a: bf 25 22 40 00          |.%"@.   |<sp-2648>   mov    edi, 0x00402225<"ifdown: ">
+0x0040188f: e8 b4 f6 ff ff          |.....   |<sp-2648>   call   0x0000000000400f48<fwrite@plt>
+0x0040188f: Outgoing stack delta: -2656
 0x0040188f: Successor blocks: 0x00400f48<fwrite@plt>, 0x00401894
 
 0x00401894: Basic block reasons: 
-0x00401894: bf 2e 22 40 00          |.."@.   |          mov    edi, 0x0040222e<"socket">
-0x00401899: e8 fa f6 ff ff          |.....   |          call   0x0000000000400f98<perror@plt>
+0x00401894: bf 2e 22 40 00          |.."@.   |<sp-2648>   mov    edi, 0x0040222e<"socket">
+0x00401899: e8 fa f6 ff ff          |.....   |<sp-2648>   call   0x0000000000400f98<perror@plt>
+0x00401899: Outgoing stack delta: -2656
 0x00401899: Successor blocks: 0x00400f98<perror@plt>, 0x0040189e
 
 0x0040189e: Basic block reasons: 
-0x0040189e: b8 ff ff ff ff          |.....   |          mov    eax, 0xffffffff<-1>
-0x004018a3: eb c2                   |..      |          jmp    0x0000000000401867<<BBlock>>
+0x0040189e: b8 ff ff ff ff          |.....   |<sp-2648>   mov    eax, 0xffffffff<-1>
+0x004018a3: eb c2                   |..      |<sp-2648>   jmp    0x0000000000401867<<BBlock>>
+0x004018a3: Outgoing stack delta: -2648
 0x004018a3: Successor blocks: 0x00401867
 
 0x004018a5: Basic block reasons: 
-0x004018a5: 48 8b 0d cc 0f 10 00    |H...... |          mov    rcx, qword ds:[rip + 0x0000000000100fcc]
-0x004018ac: ba 08 00 00 00          |.....   |          mov    edx, 0x00000008
-0x004018b1: be 01 00 00 00          |.....   |          mov    esi, 0x00000001
-0x004018b6: bf 25 22 40 00          |.%"@.   |          mov    edi, 0x00402225<"ifdown: ">
-0x004018bb: e8 88 f6 ff ff          |.....   |          call   0x0000000000400f48<fwrite@plt>
+0x004018a5: 48 8b 0d cc 0f 10 00    |H...... |<sp-2648>   mov    rcx, qword ds:[rip + 0x0000000000100fcc]
+0x004018ac: ba 08 00 00 00          |.....   |<sp-2648>   mov    edx, 0x00000008
+0x004018b1: be 01 00 00 00          |.....   |<sp-2648>   mov    esi, 0x00000001
+0x004018b6: bf 25 22 40 00          |.%"@.   |<sp-2648>   mov    edi, 0x00402225<"ifdown: ">
+0x004018bb: e8 88 f6 ff ff          |.....   |<sp-2648>   call   0x0000000000400f48<fwrite@plt>
+0x004018bb: Outgoing stack delta: -2656
 0x004018bb: Successor blocks: 0x00400f48<fwrite@plt>, 0x004018c0
 
 0x004018c0: Basic block reasons: 
-0x004018c0: bf 35 22 40 00          |.5"@.   |          mov    edi, 0x00402235<"SIOCGIFCONF">
-0x004018c5: e8 ce f6 ff ff          |.....   |          call   0x0000000000400f98<perror@plt>
+0x004018c0: bf 35 22 40 00          |.5"@.   |<sp-2648>   mov    edi, 0x00402235<"SIOCGIFCONF">
+0x004018c5: e8 ce f6 ff ff          |.....   |<sp-2648>   call   0x0000000000400f98<perror@plt>
+0x004018c5: Outgoing stack delta: -2656
 0x004018c5: Successor blocks: 0x00400f98<perror@plt>, 0x004018ca
 
 0x004018ca: Basic block reasons: 
-0x004018ca: 8b 7c 24 0c             |.|$.    |          mov    edi, dword ds:[rsp + 0x0c]
-0x004018ce: e8 15 f8 ff ff          |.....   |          call   0x00000000004010e8<close@plt>
+0x004018ca: 8b 7c 24 0c             |.|$.    |<sp-2648>   mov    edi, dword ds:[rsp + 0x0c]
+0x004018ce: e8 15 f8 ff ff          |.....   |<sp-2648>   call   0x00000000004010e8<close@plt>
+0x004018ce: Outgoing stack delta: -2656
 0x004018ce: Successor blocks: 0x004010e8<close@plt>, 0x004018d3
 
 0x004018d3: Basic block reasons: 
-0x004018d3: b8 ff ff ff ff          |.....   |          mov    eax, 0xffffffff<-1>
-0x004018d8: eb 8d                   |..      |          jmp    0x0000000000401867<<BBlock>>
+0x004018d3: b8 ff ff ff ff          |.....   |<sp-2648>   mov    eax, 0xffffffff<-1>
+0x004018d8: eb 8d                   |..      |<sp-2648>   jmp    0x0000000000401867<<BBlock>>
+0x004018d8: Outgoing stack delta: -2648
 0x004018d8: Successor blocks: 0x00401867
 
 0x004018e0: ================================== Function (call instruction, graph) unknown name
+0x004018e0: Function stack delta: +8
 
 0x004018e0: Basic block reasons: entry point, CFG head
 0x004018e0: 41 57                   |AW      |<sp+0 >   push   r15
@@ -923,236 +989,270 @@
 0x004018f9: Successor blocks: 0x00400ff8<opendir@plt>, 0x004018fe
 
 0x004018fe: Basic block reasons: 
-0x004018fe: 49 89 c4                |I..     |          mov    r12, rax
-0x00401901: 4c 8d bc 24 10 01 00 00 |L..$....|          lea    r15, [rsp + 0x00000110<272>]
-0x00401909: b8 ff ff ff ff          |.....   |          mov    eax, 0xffffffff<-1>
-0x0040190e: 4d 85 e4                |M..     |          test   r12, r12
-0x00401911: 4c 8d 6c 24 10          |L.l$.   |          lea    r13, [rsp + 0x10]
-0x00401916: 0f 84 64 01 00 00       |..d...  |          je     0x0000000000401a80<<BBlock>>
+0x004018fe: 49 89 c4                |I..     |<sp-856>   mov    r12, rax
+0x00401901: 4c 8d bc 24 10 01 00 00 |L..$....|<sp-856>   lea    r15, [rsp + 0x00000110<272>]
+0x00401909: b8 ff ff ff ff          |.....   |<sp-856>   mov    eax, 0xffffffff<-1>
+0x0040190e: 4d 85 e4                |M..     |<sp-856>   test   r12, r12
+0x00401911: 4c 8d 6c 24 10          |L.l$.   |<sp-856>   lea    r13, [rsp + 0x10]
+0x00401916: 0f 84 64 01 00 00       |..d...  |<sp-856>   je     0x0000000000401a80<<BBlock>>
+0x00401916: Outgoing stack delta: -856
 0x00401916: Successor blocks: 0x0040191c, 0x00401a80
 
 0x0040191c: Basic block reasons: 
-0x0040191c: 66 66 66 90             |fff.    |          nop    
+0x0040191c: 66 66 66 90             |fff.    |<sp-856>   nop    
+0x0040191c: Outgoing stack delta: -856
 0x0040191c: Successor blocks: 0x00401920
 
 0x00401920: Basic block reasons: 
-0x00401920: 4c 89 e7                |L..     |          mov    rdi, r12
-0x00401923: e8 a0 f7 ff ff          |.....   |          call   0x00000000004010c8<readdir@plt>
+0x00401920: 4c 89 e7                |L..     |<sp-856>   mov    rdi, r12
+0x00401923: e8 a0 f7 ff ff          |.....   |<sp-856>   call   0x00000000004010c8<readdir@plt>
+0x00401923: Outgoing stack delta: -864
 0x00401923: Successor blocks: 0x004010c8<readdir@plt>, 0x00401928
 
 0x00401928: Basic block reasons: 
-0x00401928: 48 85 c0                |H..     |          test   rax, rax
-0x0040192b: 0f 84 8b 00 00 00       |......  |          je     0x00000000004019bc<<BBlock>>
+0x00401928: 48 85 c0                |H..     |<sp-856>   test   rax, rax
+0x0040192b: 0f 84 8b 00 00 00       |......  |<sp-856>   je     0x00000000004019bc<<BBlock>>
+0x0040192b: Outgoing stack delta: -856
 0x0040192b: Successor blocks: 0x00401931, 0x004019bc
 
 0x00401931: Basic block reasons: 
-0x00401931: 48 8d 58 13             |H.X.    |          lea    rbx, [rax + 0x13]
-0x00401935: bf 86 22 40 00          |.."@.   |          mov    edi, 0x00402286<"hd">
-0x0040193a: b9 02 00 00 00          |.....   |          mov    ecx, 0x00000002
-0x0040193f: fc                      |.       |          cld    
-0x00401940: 48 89 de                |H..     |          mov    rsi, rbx
-0x00401943: f3 a6                   |..      |          repe_cmpsb 
-0x00401945: 75 d9                   |u.      |          jne    0x0000000000401920<<BBlock>>
+0x00401931: 48 8d 58 13             |H.X.    |<sp-856>   lea    rbx, [rax + 0x13]
+0x00401935: bf 86 22 40 00          |.."@.   |<sp-856>   mov    edi, 0x00402286<"hd">
+0x0040193a: b9 02 00 00 00          |.....   |<sp-856>   mov    ecx, 0x00000002
+0x0040193f: fc                      |.       |<sp-856>   cld    
+0x00401940: 48 89 de                |H..     |<sp-856>   mov    rsi, rbx
+0x00401943: f3 a6                   |..      |<sp-856>   repe_cmpsb 
+0x00401945: 75 d9                   |u.      |<sp-856>   jne    0x0000000000401920<<BBlock>>
+0x00401945: Outgoing stack delta: -856
 0x00401945: Successor blocks: 0x00401920, 0x00401947
 
 0x00401947: Basic block reasons: 
-0x00401947: 48 89 d9                |H..     |          mov    rcx, rbx
-0x0040194a: ba 89 22 40 00          |.."@.   |          mov    edx, 0x00402289<"/proc/ide/%s/media">
-0x0040194f: be 00 01 00 00          |.....   |          mov    esi, 0x00000100<256>
-0x00401954: 4c 89 ef                |L..     |          mov    rdi, r13
-0x00401957: 31 c0                   |1.      |          xor    eax, eax
-0x00401959: c6 44 24 10 00          |.D$..   |          mov    byte ds:[rsp + 0x10], 0x00
-0x0040195e: e8 55 f6 ff ff          |.U...   |          call   0x0000000000400fb8<snprintf@plt>
+0x00401947: 48 89 d9                |H..     |<sp-856>   mov    rcx, rbx
+0x0040194a: ba 89 22 40 00          |.."@.   |<sp-856>   mov    edx, 0x00402289<"/proc/ide/%s/media">
+0x0040194f: be 00 01 00 00          |.....   |<sp-856>   mov    esi, 0x00000100<256>
+0x00401954: 4c 89 ef                |L..     |<sp-856>   mov    rdi, r13
+0x00401957: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401959: c6 44 24 10 00          |.D$..   |<sp-856>   mov    byte ds:[rsp + 0x10], 0x00
+0x0040195e: e8 55 f6 ff ff          |.U...   |<sp-856>   call   0x0000000000400fb8<snprintf@plt>
+0x0040195e: Outgoing stack delta: -864
 0x0040195e: Successor blocks: 0x00400fb8<snprintf@plt>, 0x00401963
 
 0x00401963: Basic block reasons: 
-0x00401963: be 12 21 40 00          |..!@.   |          mov    esi, 0x00402112<"r">
-0x00401968: 4c 89 ef                |L..     |          mov    rdi, r13
-0x0040196b: e8 b8 f7 ff ff          |.....   |          call   0x0000000000401128<fopen@plt>
+0x00401963: be 12 21 40 00          |..!@.   |<sp-856>   mov    esi, 0x00402112<"r">
+0x00401968: 4c 89 ef                |L..     |<sp-856>   mov    rdi, r13
+0x0040196b: e8 b8 f7 ff ff          |.....   |<sp-856>   call   0x0000000000401128<fopen@plt>
+0x0040196b: Outgoing stack delta: -864
 0x0040196b: Successor blocks: 0x00401128<fopen@plt>, 0x00401970
 
 0x00401970: Basic block reasons: 
-0x00401970: 48 85 c0                |H..     |          test   rax, rax
-0x00401973: 48 89 c5                |H..     |          mov    rbp, rax
-0x00401976: 74 a8                   |t.      |          je     0x0000000000401920<<BBlock>>
+0x00401970: 48 85 c0                |H..     |<sp-856>   test   rax, rax
+0x00401973: 48 89 c5                |H..     |<sp-856>   mov    rbp, rax
+0x00401976: 74 a8                   |t.      |<sp-856>   je     0x0000000000401920<<BBlock>>
+0x00401976: Outgoing stack delta: -856
 0x00401976: Successor blocks: 0x00401920, 0x00401978
 
 0x00401978: Basic block reasons: 
-0x00401978: 48 89 c2                |H..     |          mov    rdx, rax
-0x0040197b: be 00 01 00 00          |.....   |          mov    esi, 0x00000100<256>
-0x00401980: 4c 89 ef                |L..     |          mov    rdi, r13
-0x00401983: e8 40 f6 ff ff          |.@...   |          call   0x0000000000400fc8<fgets@plt>
+0x00401978: 48 89 c2                |H..     |<sp-856>   mov    rdx, rax
+0x0040197b: be 00 01 00 00          |.....   |<sp-856>   mov    esi, 0x00000100<256>
+0x00401980: 4c 89 ef                |L..     |<sp-856>   mov    rdi, r13
+0x00401983: e8 40 f6 ff ff          |.@...   |<sp-856>   call   0x0000000000400fc8<fgets@plt>
+0x00401983: Outgoing stack delta: -864
 0x00401983: Successor blocks: 0x00400fc8<fgets@plt>, 0x00401988
 
 0x00401988: Basic block reasons: 
-0x00401988: 48 85 c0                |H..     |          test   rax, rax
-0x0040198b: 74 16                   |t.      |          je     0x00000000004019a3<<BBlock>>
+0x00401988: 48 85 c0                |H..     |<sp-856>   test   rax, rax
+0x0040198b: 74 16                   |t.      |<sp-856>   je     0x00000000004019a3<<BBlock>>
+0x0040198b: Outgoing stack delta: -856
 0x0040198b: Successor blocks: 0x0040198d, 0x004019a3
 
 0x0040198d: Basic block reasons: 
-0x0040198d: fc                      |.       |          cld    
-0x0040198e: bf 9c 22 40 00          |.."@.   |          mov    edi, 0x0040229c<"disk\n">
-0x00401993: b9 06 00 00 00          |.....   |          mov    ecx, 0x00000006
-0x00401998: 4c 89 ee                |L..     |          mov    rsi, r13
-0x0040199b: f3 a6                   |..      |          repe_cmpsb 
-0x0040199d: 0f 84 ef 00 00 00       |......  |          je     0x0000000000401a92<<BBlock>>
+0x0040198d: fc                      |.       |<sp-856>   cld    
+0x0040198e: bf 9c 22 40 00          |.."@.   |<sp-856>   mov    edi, 0x0040229c<"disk\n">
+0x00401993: b9 06 00 00 00          |.....   |<sp-856>   mov    ecx, 0x00000006
+0x00401998: 4c 89 ee                |L..     |<sp-856>   mov    rsi, r13
+0x0040199b: f3 a6                   |..      |<sp-856>   repe_cmpsb 
+0x0040199d: 0f 84 ef 00 00 00       |......  |<sp-856>   je     0x0000000000401a92<<BBlock>>
+0x0040199d: Outgoing stack delta: -856
 0x0040199d: Successor blocks: 0x004019a3, 0x00401a92
 
 0x004019a3: Basic block reasons: 
-0x004019a3: 48 89 ef                |H..     |          mov    rdi, rbp
-0x004019a6: e8 ad f5 ff ff          |.....   |          call   0x0000000000400f58<fclose@plt>
+0x004019a3: 48 89 ef                |H..     |<sp-856>   mov    rdi, rbp
+0x004019a6: e8 ad f5 ff ff          |.....   |<sp-856>   call   0x0000000000400f58<fclose@plt>
+0x004019a6: Outgoing stack delta: -864
 0x004019a6: Successor blocks: 0x00400f58<fclose@plt>, 0x004019ab
 
 0x004019ab: Basic block reasons: 
-0x004019ab: 4c 89 e7                |L..     |          mov    rdi, r12
-0x004019ae: e8 15 f7 ff ff          |.....   |          call   0x00000000004010c8<readdir@plt>
+0x004019ab: 4c 89 e7                |L..     |<sp-856>   mov    rdi, r12
+0x004019ae: e8 15 f7 ff ff          |.....   |<sp-856>   call   0x00000000004010c8<readdir@plt>
+0x004019ae: Outgoing stack delta: -864
 0x004019ae: Successor blocks: 0x004010c8<readdir@plt>, 0x004019b3
 
 0x004019b3: Basic block reasons: 
-0x004019b3: 48 85 c0                |H..     |          test   rax, rax
-0x004019b6: 0f 85 75 ff ff ff       |..u...  |          jne    0x0000000000401931<<BBlock>>
+0x004019b3: 48 85 c0                |H..     |<sp-856>   test   rax, rax
+0x004019b6: 0f 85 75 ff ff ff       |..u...  |<sp-856>   jne    0x0000000000401931<<BBlock>>
+0x004019b6: Outgoing stack delta: -856
 0x004019b6: Successor blocks: 0x00401931, 0x004019bc
 
 0x004019bc: Basic block reasons: 
-0x004019bc: 4c 89 e7                |L..     |          mov    rdi, r12
-0x004019bf: e8 24 f5 ff ff          |.$...   |          call   0x0000000000400ee8<closedir@plt>
+0x004019bc: 4c 89 e7                |L..     |<sp-856>   mov    rdi, r12
+0x004019bf: e8 24 f5 ff ff          |.$...   |<sp-856>   call   0x0000000000400ee8<closedir@plt>
+0x004019bf: Outgoing stack delta: -864
 0x004019bf: Successor blocks: 0x00400ee8<closedir@plt>, 0x004019c4
 
 0x004019c4: Basic block reasons: 
-0x004019c4: 41 83 fe 40             |A..@    |          cmp    r14d, 0x40
-0x004019c8: 7d 0b                   |}.      |          jge    0x00000000004019d5<<BBlock>>
+0x004019c4: 41 83 fe 40             |A..@    |<sp-856>   cmp    r14d, 0x40
+0x004019c8: 7d 0b                   |}.      |<sp-856>   jge    0x00000000004019d5<<BBlock>>
+0x004019c8: Outgoing stack delta: -856
 0x004019c8: Successor blocks: 0x004019ca, 0x004019d5
 
 0x004019ca: Basic block reasons: 
-0x004019ca: 49 63 c6                |Ic.     |          movsxd rax, r14d
-0x004019cd: 49 c7 04 c7 00 00 00 00 |I.......|          mov    qword ds:[r15 + rax*0x08], 0x00000000
+0x004019ca: 49 63 c6                |Ic.     |<sp-856>   movsxd rax, r14d
+0x004019cd: 49 c7 04 c7 00 00 00 00 |I.......|<sp-856>   mov    qword ds:[r15 + rax*0x08], 0x00000000
+0x004019cd: Outgoing stack delta: -856
 0x004019cd: Successor blocks: 0x004019d5
 
 0x004019d5: Basic block reasons: 
-0x004019d5: 31 ed                   |1.      |          xor    ebp, ebp
+0x004019d5: 31 ed                   |1.      |<sp-856>   xor    ebp, ebp
 0x004019d7: 48 83 bc 24 10 01 00 00 |H..$....|
-0x004019df: 00                      |.       |          cmp    qword ds:[rsp + 0x00000110<272>], 0x00
-0x004019e0: 0f 84 98 00 00 00       |......  |          je     0x0000000000401a7e<<BBlock>>
+0x004019df: 00                      |.       |<sp-856>   cmp    qword ds:[rsp + 0x00000110<272>], 0x00
+0x004019e0: 0f 84 98 00 00 00       |......  |<sp-856>   je     0x0000000000401a7e<<BBlock>>
+0x004019e0: Outgoing stack delta: -856
 0x004019e0: Successor blocks: 0x004019e6, 0x00401a7e
 
 0x004019e6: Basic block reasons: 
-0x004019e6: 31 c9                   |1.      |          xor    ecx, ecx
-0x004019e8: 45 31 ed                |E1.     |          xor    r13d, r13d
-0x004019eb: 45 31 e4                |E1.     |          xor    r12d, r12d
-0x004019ee: eb 1d                   |..      |          jmp    0x0000000000401a0d<<BBlock>>
+0x004019e6: 31 c9                   |1.      |<sp-856>   xor    ecx, ecx
+0x004019e8: 45 31 ed                |E1.     |<sp-856>   xor    r13d, r13d
+0x004019eb: 45 31 e4                |E1.     |<sp-856>   xor    r12d, r12d
+0x004019ee: eb 1d                   |..      |<sp-856>   jmp    0x0000000000401a0d<<BBlock>>
+0x004019ee: Outgoing stack delta: -856
 0x004019ee: Successor blocks: 0x00401a0d
 
 0x004019f0: Basic block reasons: 
-0x004019f0: ff c5                   |..      |          inc    ebp
-0x004019f2: 48 63 cd                |Hc.     |          movsxd rcx, ebp
+0x004019f0: ff c5                   |..      |<sp-856>   inc    ebp
+0x004019f2: 48 63 cd                |Hc.     |<sp-856>   movsxd rcx, ebp
 0x004019f5: 48 83 bc cc 10 01 00 00 |H.......|
-0x004019fd: 00                      |.       |          cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
-0x004019fe: 0f 95 c2                |...     |          setne  dl
-0x00401a01: 31 c0                   |1.      |          xor    eax, eax
-0x00401a03: 83 fd 3f                |..?     |          cmp    ebp, 0x3f
-0x00401a06: 0f 9e c0                |...     |          setle  al
-0x00401a09: 85 c2                   |..      |          test   edx, eax
-0x00401a0b: 74 71                   |tq      |          je     0x0000000000401a7e<<BBlock>>
+0x004019fd: 00                      |.       |<sp-856>   cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
+0x004019fe: 0f 95 c2                |...     |<sp-856>   setne  dl
+0x00401a01: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401a03: 83 fd 3f                |..?     |<sp-856>   cmp    ebp, 0x3f
+0x00401a06: 0f 9e c0                |...     |<sp-856>   setle  al
+0x00401a09: 85 c2                   |..      |<sp-856>   test   edx, eax
+0x00401a0b: 74 71                   |tq      |<sp-856>   je     0x0000000000401a7e<<BBlock>>
+0x00401a0b: Outgoing stack delta: -856
 0x00401a0b: Successor blocks: 0x00401a0d, 0x00401a7e
 
 0x00401a0d: Basic block reasons: 
-0x00401a0d: 48 8b bc cc 10 01 00 00 |H.......|          mov    rdi, qword ds:[rsp + rcx*0x08 + 0x00000110<272>]
-0x00401a15: 31 c0                   |1.      |          xor    eax, eax
-0x00401a17: 41 b5 e0                |A..     |          mov    r13b, 0xe0<-32>
-0x00401a1a: 41 b4 94                |A..     |          mov    r12b, 0x94<-108>
-0x00401a1d: be 02 00 00 00          |.....   |          mov    esi, 0x00000002
-0x00401a22: 44 89 6c 24 0c          |D.l$.   |          mov    dword ds:[rsp + 0x0c], r13d
-0x00401a27: 44 89 64 24 08          |D.d$.   |          mov    dword ds:[rsp + 0x08], r12d
-0x00401a2c: e8 e7 f5 ff ff          |.....   |          call   0x0000000000401018<open@plt>
+0x00401a0d: 48 8b bc cc 10 01 00 00 |H.......|<sp-856>   mov    rdi, qword ds:[rsp + rcx*0x08 + 0x00000110<272>]
+0x00401a15: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401a17: 41 b5 e0                |A..     |<sp-856>   mov    r13b, 0xe0<-32>
+0x00401a1a: 41 b4 94                |A..     |<sp-856>   mov    r12b, 0x94<-108>
+0x00401a1d: be 02 00 00 00          |.....   |<sp-856>   mov    esi, 0x00000002
+0x00401a22: 44 89 6c 24 0c          |D.l$.   |<sp-856>   mov    dword ds:[rsp + 0x0c], r13d
+0x00401a27: 44 89 64 24 08          |D.d$.   |<sp-856>   mov    dword ds:[rsp + 0x08], r12d
+0x00401a2c: e8 e7 f5 ff ff          |.....   |<sp-856>   call   0x0000000000401018<open@plt>
+0x00401a2c: Outgoing stack delta: -864
 0x00401a2c: Successor blocks: 0x00401018<open@plt>, 0x00401a31
 
 0x00401a31: Basic block reasons: 
-0x00401a31: 85 c0                   |..      |          test   eax, eax
-0x00401a33: 89 c3                   |..      |          mov    ebx, eax
-0x00401a35: 78 b9                   |x.      |          js     0x00000000004019f0<<BBlock>>
+0x00401a31: 85 c0                   |..      |<sp-856>   test   eax, eax
+0x00401a33: 89 c3                   |..      |<sp-856>   mov    ebx, eax
+0x00401a35: 78 b9                   |x.      |<sp-856>   js     0x00000000004019f0<<BBlock>>
+0x00401a35: Outgoing stack delta: -856
 0x00401a35: Successor blocks: 0x004019f0, 0x00401a37
 
 0x00401a37: Basic block reasons: 
-0x00401a37: 48 8d 54 24 0c          |H.T$.   |          lea    rdx, [rsp + 0x0c]
-0x00401a3c: 89 c7                   |..      |          mov    edi, eax
-0x00401a3e: be 1f 03 00 00          |.....   |          mov    esi, 0x0000031f<799>
-0x00401a43: 31 c0                   |1.      |          xor    eax, eax
-0x00401a45: e8 8e f6 ff ff          |.....   |          call   0x00000000004010d8<ioctl@plt>
+0x00401a37: 48 8d 54 24 0c          |H.T$.   |<sp-856>   lea    rdx, [rsp + 0x0c]
+0x00401a3c: 89 c7                   |..      |<sp-856>   mov    edi, eax
+0x00401a3e: be 1f 03 00 00          |.....   |<sp-856>   mov    esi, 0x0000031f<799>
+0x00401a43: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401a45: e8 8e f6 ff ff          |.....   |<sp-856>   call   0x00000000004010d8<ioctl@plt>
+0x00401a45: Outgoing stack delta: -864
 0x00401a45: Successor blocks: 0x004010d8<ioctl@plt>, 0x00401a4a
 
 0x00401a4a: Basic block reasons: 
-0x00401a4a: 85 c0                   |..      |          test   eax, eax
-0x00401a4c: 74 a2                   |t.      |          je     0x00000000004019f0<<BBlock>>
+0x00401a4a: 85 c0                   |..      |<sp-856>   test   eax, eax
+0x00401a4c: 74 a2                   |t.      |<sp-856>   je     0x00000000004019f0<<BBlock>>
+0x00401a4c: Outgoing stack delta: -856
 0x00401a4c: Successor blocks: 0x004019f0, 0x00401a4e
 
 0x00401a4e: Basic block reasons: 
-0x00401a4e: 48 8d 54 24 08          |H.T$.   |          lea    rdx, [rsp + 0x08]
-0x00401a53: ff c5                   |..      |          inc    ebp
-0x00401a55: 31 c0                   |1.      |          xor    eax, eax
-0x00401a57: be 1f 03 00 00          |.....   |          mov    esi, 0x0000031f<799>
-0x00401a5c: 89 df                   |..      |          mov    edi, ebx
-0x00401a5e: e8 75 f6 ff ff          |.u...   |          call   0x00000000004010d8<ioctl@plt>
+0x00401a4e: 48 8d 54 24 08          |H.T$.   |<sp-856>   lea    rdx, [rsp + 0x08]
+0x00401a53: ff c5                   |..      |<sp-856>   inc    ebp
+0x00401a55: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401a57: be 1f 03 00 00          |.....   |<sp-856>   mov    esi, 0x0000031f<799>
+0x00401a5c: 89 df                   |..      |<sp-856>   mov    edi, ebx
+0x00401a5e: e8 75 f6 ff ff          |.u...   |<sp-856>   call   0x00000000004010d8<ioctl@plt>
+0x00401a5e: Outgoing stack delta: -864
 0x00401a5e: Successor blocks: 0x004010d8<ioctl@plt>, 0x00401a63
 
 0x00401a63: Basic block reasons: 
-0x00401a63: 48 63 cd                |Hc.     |          movsxd rcx, ebp
+0x00401a63: 48 63 cd                |Hc.     |<sp-856>   movsxd rcx, ebp
 0x00401a66: 48 83 bc cc 10 01 00 00 |H.......|
-0x00401a6e: 00                      |.       |          cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
-0x00401a6f: 0f 95 c2                |...     |          setne  dl
-0x00401a72: 31 c0                   |1.      |          xor    eax, eax
-0x00401a74: 83 fd 3f                |..?     |          cmp    ebp, 0x3f
-0x00401a77: 0f 9e c0                |...     |          setle  al
-0x00401a7a: 85 c2                   |..      |          test   edx, eax
-0x00401a7c: 75 8f                   |u.      |          jne    0x0000000000401a0d<<BBlock>>
+0x00401a6e: 00                      |.       |<sp-856>   cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
+0x00401a6f: 0f 95 c2                |...     |<sp-856>   setne  dl
+0x00401a72: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401a74: 83 fd 3f                |..?     |<sp-856>   cmp    ebp, 0x3f
+0x00401a77: 0f 9e c0                |...     |<sp-856>   setle  al
+0x00401a7a: 85 c2                   |..      |<sp-856>   test   edx, eax
+0x00401a7c: 75 8f                   |u.      |<sp-856>   jne    0x0000000000401a0d<<BBlock>>
+0x00401a7c: Outgoing stack delta: -856
 0x00401a7c: Successor blocks: 0x00401a0d, 0x00401a7e
 
 0x00401a7e: Basic block reasons: 
-0x00401a7e: 31 c0                   |1.      |          xor    eax, eax
+0x00401a7e: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401a7e: Outgoing stack delta: -856
 0x00401a7e: Successor blocks: 0x00401a80
 
 0x00401a80: Basic block reasons: 
-0x00401a80: 48 81 c4 28 03 00 00    |H..(... |          add    rsp, 0x00000328<808>
-0x00401a87: 5b                      |[       |          pop    rbx
-0x00401a88: 5d                      |]       |          pop    rbp
-0x00401a89: 41 5c                   |A\      |          pop    r12
-0x00401a8b: 41 5d                   |A]      |          pop    r13
-0x00401a8d: 41 5e                   |A^      |          pop    r14
-0x00401a8f: 41 5f                   |A_      |          pop    r15
-0x00401a91: c3                      |.       |          ret    
+0x00401a80: 48 81 c4 28 03 00 00    |H..(... |<sp-856>   add    rsp, 0x00000328<808>
+0x00401a87: 5b                      |[       |<sp-48>   pop    rbx
+0x00401a88: 5d                      |]       |<sp-40>   pop    rbp
+0x00401a89: 41 5c                   |A\      |<sp-32>   pop    r12
+0x00401a8b: 41 5d                   |A]      |<sp-24>   pop    r13
+0x00401a8d: 41 5e                   |A^      |<sp-16>   pop    r14
+0x00401a8f: 41 5f                   |A_      |<sp-8 >   pop    r15
+0x00401a91: c3                      |.       |<sp+0 >   ret    
+0x00401a91: Outgoing stack delta: +8
 0x00401a91: Successor blocks: unknown
 
 0x00401a92: Basic block reasons: 
-0x00401a92: 48 89 ef                |H..     |          mov    rdi, rbp
-0x00401a95: e8 be f4 ff ff          |.....   |          call   0x0000000000400f58<fclose@plt>
+0x00401a92: 48 89 ef                |H..     |<sp-856>   mov    rdi, rbp
+0x00401a95: e8 be f4 ff ff          |.....   |<sp-856>   call   0x0000000000400f58<fclose@plt>
+0x00401a95: Outgoing stack delta: -864
 0x00401a95: Successor blocks: 0x00400f58<fclose@plt>, 0x00401a9a
 
 0x00401a9a: Basic block reasons: 
-0x00401a9a: ba a2 22 40 00          |.."@.   |          mov    edx, 0x004022a2<"/dev/%s">
-0x00401a9f: 48 89 d9                |H..     |          mov    rcx, rbx
-0x00401aa2: be 00 01 00 00          |.....   |          mov    esi, 0x00000100<256>
-0x00401aa7: 4c 89 ef                |L..     |          mov    rdi, r13
-0x00401aaa: 31 c0                   |1.      |          xor    eax, eax
-0x00401aac: e8 07 f5 ff ff          |.....   |          call   0x0000000000400fb8<snprintf@plt>
+0x00401a9a: ba a2 22 40 00          |.."@.   |<sp-856>   mov    edx, 0x004022a2<"/dev/%s">
+0x00401a9f: 48 89 d9                |H..     |<sp-856>   mov    rcx, rbx
+0x00401aa2: be 00 01 00 00          |.....   |<sp-856>   mov    esi, 0x00000100<256>
+0x00401aa7: 4c 89 ef                |L..     |<sp-856>   mov    rdi, r13
+0x00401aaa: 31 c0                   |1.      |<sp-856>   xor    eax, eax
+0x00401aac: e8 07 f5 ff ff          |.....   |<sp-856>   call   0x0000000000400fb8<snprintf@plt>
+0x00401aac: Outgoing stack delta: -864
 0x00401aac: Successor blocks: 0x00400fb8<snprintf@plt>, 0x00401ab1
 
 0x00401ab1: Basic block reasons: 
-0x00401ab1: 4c 89 ef                |L..     |          mov    rdi, r13
-0x00401ab4: e8 bf f4 ff ff          |.....   |          call   0x0000000000400f78<__strdup@plt>
+0x00401ab1: 4c 89 ef                |L..     |<sp-856>   mov    rdi, r13
+0x00401ab4: e8 bf f4 ff ff          |.....   |<sp-856>   call   0x0000000000400f78<__strdup@plt>
+0x00401ab4: Outgoing stack delta: -864
 0x00401ab4: Successor blocks: 0x00400f78<__strdup@plt>, 0x00401ab9
 
 0x00401ab9: Basic block reasons: 
-0x00401ab9: 49 63 d6                |Ic.     |          movsxd rdx, r14d
-0x00401abc: 41 ff c6                |A..     |          inc    r14d
-0x00401abf: 41 83 fe 40             |A..@    |          cmp    r14d, 0x40
-0x00401ac3: 49 89 04 d7             |I...    |          mov    qword ds:[r15 + rdx*0x08], rax
-0x00401ac7: 0f 8c 53 fe ff ff       |..S...  |          jl     0x0000000000401920<<BBlock>>
+0x00401ab9: 49 63 d6                |Ic.     |<sp-856>   movsxd rdx, r14d
+0x00401abc: 41 ff c6                |A..     |<sp-856>   inc    r14d
+0x00401abf: 41 83 fe 40             |A..@    |<sp-856>   cmp    r14d, 0x40
+0x00401ac3: 49 89 04 d7             |I...    |<sp-856>   mov    qword ds:[r15 + rdx*0x08], rax
+0x00401ac7: 0f 8c 53 fe ff ff       |..S...  |<sp-856>   jl     0x0000000000401920<<BBlock>>
+0x00401ac7: Outgoing stack delta: -856
 0x00401ac7: Successor blocks: 0x00401920, 0x00401acd
 
 0x00401acd: Basic block reasons: 
-0x00401acd: e9 ea fe ff ff          |.....   |          jmp    0x00000000004019bc<<BBlock>>
+0x00401acd: e9 ea fe ff ff          |.....   |<sp-856>   jmp    0x00000000004019bc<<BBlock>>
+0x00401acd: Outgoing stack delta: -856
 0x00401acd: Successor blocks: 0x004019bc
 
 0x00401ae0: ================================== Function (call instruction, graph) unknown name
+0x00401ae0: Function stack delta: +8
 
 0x00401ae0: Basic block reasons: entry point, CFG head
 0x00401ae0: 48 89 6c 24 d8          |H.l$.   |<sp+0 >   mov    qword ds:[rsp + 0xd8<-40>], rbp
@@ -1175,80 +1275,91 @@
 0x00401b21: Successor blocks: 0x00401018<open@plt>, 0x00401b26
 
 0x00401b26: Basic block reasons: 
-0x00401b26: 85 c0                   |..      |          test   eax, eax
-0x00401b28: 41 89 c6                |A..     |          mov    r14d, eax
-0x00401b2b: 0f 88 90 00 00 00       |......  |          js     0x0000000000401bc1<<BBlock>>
+0x00401b26: 85 c0                   |..      |<sp-856>   test   eax, eax
+0x00401b28: 41 89 c6                |A..     |<sp-856>   mov    r14d, eax
+0x00401b2b: 0f 88 90 00 00 00       |......  |<sp-856>   js     0x0000000000401bc1<<BBlock>>
+0x00401b2b: Outgoing stack delta: -856
 0x00401b2b: Successor blocks: 0x00401b31, 0x00401bc1
 
 0x00401b31: Basic block reasons: 
-0x00401b31: 48 8d 9c 24 a0 01 00 00 |H..$....|          lea    rbx, [rsp + 0x000001a0<416>]
-0x00401b39: ba 80 01 00 00          |.....   |          mov    edx, 0x00000180<384>
-0x00401b3e: 31 f6                   |1.      |          xor    esi, esi
-0x00401b40: 48 89 df                |H..     |          mov    rdi, rbx
-0x00401b43: e8 20 f5 ff ff          |. ...   |          call   0x0000000000401068<memset@plt>
+0x00401b31: 48 8d 9c 24 a0 01 00 00 |H..$....|<sp-856>   lea    rbx, [rsp + 0x000001a0<416>]
+0x00401b39: ba 80 01 00 00          |.....   |<sp-856>   mov    edx, 0x00000180<384>
+0x00401b3e: 31 f6                   |1.      |<sp-856>   xor    esi, esi
+0x00401b40: 48 89 df                |H..     |<sp-856>   mov    rdi, rbx
+0x00401b43: e8 20 f5 ff ff          |. ...   |<sp-856>   call   0x0000000000401068<memset@plt>
+0x00401b43: Outgoing stack delta: -864
 0x00401b43: Successor blocks: 0x00401068<memset@plt>, 0x00401b48
 
 0x00401b48: Basic block reasons: 
-0x00401b48: 48 8d bb 54 01 00 00    |H..T... |          lea    rdi, [rbx + 0x00000154<340>]
-0x00401b4f: 31 f6                   |1.      |          xor    esi, esi
-0x00401b51: e8 c2 f5 ff ff          |.....   |          call   0x0000000000401118<gettimeofday@plt>
+0x00401b48: 48 8d bb 54 01 00 00    |H..T... |<sp-856>   lea    rdi, [rbx + 0x00000154<340>]
+0x00401b4f: 31 f6                   |1.      |<sp-856>   xor    esi, esi
+0x00401b51: e8 c2 f5 ff ff          |.....   |<sp-856>   call   0x0000000000401118<gettimeofday@plt>
+0x00401b51: Outgoing stack delta: -864
 0x00401b51: Successor blocks: 0x00401118<gettimeofday@plt>, 0x00401b56
 
 0x00401b56: Basic block reasons: 
-0x00401b56: 48 8d 7b 2c             |H.{,    |          lea    rdi, [rbx + 0x2c]
-0x00401b5a: ba 20 00 00 00          |. ...   |          mov    edx, 0x00000020
-0x00401b5f: 4c 89 ee                |L..     |          mov    rsi, r13
-0x00401b62: 89 ac 24 a4 01 00 00    |..$.... |          mov    dword ds:[rsp + 0x000001a4<420>], ebp
+0x00401b56: 48 8d 7b 2c             |H.{,    |<sp-856>   lea    rdi, [rbx + 0x2c]
+0x00401b5a: ba 20 00 00 00          |. ...   |<sp-856>   mov    edx, 0x00000020
+0x00401b5f: 4c 89 ee                |L..     |<sp-856>   mov    rsi, r13
+0x00401b62: 89 ac 24 a4 01 00 00    |..$.... |<sp-856>   mov    dword ds:[rsp + 0x000001a4<420>], ebp
 0x00401b69: 66 44 89 a4 24 a0 01 00 |fD..$...|
-0x00401b71: 00                      |.       |          mov    word ds:[rsp + 0x000001a0<416>], r12w
-0x00401b72: 48 8d 6c 24 10          |H.l$.   |          lea    rbp, [rsp + 0x10]
-0x00401b77: e8 bc f3 ff ff          |.....   |          call   0x0000000000400f38<strncpy@plt>
+0x00401b71: 00                      |.       |<sp-856>   mov    word ds:[rsp + 0x000001a0<416>], r12w
+0x00401b72: 48 8d 6c 24 10          |H.l$.   |<sp-856>   lea    rbp, [rsp + 0x10]
+0x00401b77: e8 bc f3 ff ff          |.....   |<sp-856>   call   0x0000000000400f38<strncpy@plt>
+0x00401b77: Outgoing stack delta: -864
 0x00401b77: Successor blocks: 0x00400f38<strncpy@plt>, 0x00401b7c
 
 0x00401b7c: Basic block reasons: 
-0x00401b7c: 48 8d 7b 28             |H.{(    |          lea    rdi, [rbx + 0x28]
-0x00401b80: ba 04 00 00 00          |.....   |          mov    edx, 0x00000004
-0x00401b85: 4c 89 fe                |L..     |          mov    rsi, r15
-0x00401b88: e8 ab f3 ff ff          |.....   |          call   0x0000000000400f38<strncpy@plt>
+0x00401b7c: 48 8d 7b 28             |H.{(    |<sp-856>   lea    rdi, [rbx + 0x28]
+0x00401b80: ba 04 00 00 00          |.....   |<sp-856>   mov    edx, 0x00000004
+0x00401b85: 4c 89 fe                |L..     |<sp-856>   mov    rsi, r15
+0x00401b88: e8 ab f3 ff ff          |.....   |<sp-856>   call   0x0000000000400f38<strncpy@plt>
+0x00401b88: Outgoing stack delta: -864
 0x00401b88: Successor blocks: 0x00400f38<strncpy@plt>, 0x00401b8d
 
 0x00401b8d: Basic block reasons: 
-0x00401b8d: 48 8b 74 24 08          |H.t$.   |          mov    rsi, qword ds:[rsp + 0x08]
-0x00401b92: 48 8d 7b 08             |H.{.    |          lea    rdi, [rbx + 0x08]
-0x00401b96: ba 20 00 00 00          |. ...   |          mov    edx, 0x00000020
-0x00401b9b: e8 98 f3 ff ff          |.....   |          call   0x0000000000400f38<strncpy@plt>
+0x00401b8d: 48 8b 74 24 08          |H.t$.   |<sp-856>   mov    rsi, qword ds:[rsp + 0x08]
+0x00401b92: 48 8d 7b 08             |H.{.    |<sp-856>   lea    rdi, [rbx + 0x08]
+0x00401b96: ba 20 00 00 00          |. ...   |<sp-856>   mov    edx, 0x00000020
+0x00401b9b: e8 98 f3 ff ff          |.....   |<sp-856>   call   0x0000000000400f38<strncpy@plt>
+0x00401b9b: Outgoing stack delta: -864
 0x00401b9b: Successor blocks: 0x00400f38<strncpy@plt>, 0x00401ba0
 
 0x00401ba0: Basic block reasons: 
-0x00401ba0: 48 89 ef                |H..     |          mov    rdi, rbp
-0x00401ba3: e8 a0 f4 ff ff          |.....   |          call   0x0000000000401048<uname@plt>
+0x00401ba0: 48 89 ef                |H..     |<sp-856>   mov    rdi, rbp
+0x00401ba3: e8 a0 f4 ff ff          |.....   |<sp-856>   call   0x0000000000401048<uname@plt>
+0x00401ba3: Outgoing stack delta: -864
 0x00401ba3: Successor blocks: 0x00401048<uname@plt>, 0x00401ba8
 
 0x00401ba8: Basic block reasons: 
-0x00401ba8: 85 c0                   |..      |          test   eax, eax
-0x00401baa: 74 54                   |tT      |          je     0x0000000000401c00<<BBlock>>
+0x00401ba8: 85 c0                   |..      |<sp-856>   test   eax, eax
+0x00401baa: 74 54                   |tT      |<sp-856>   je     0x0000000000401c00<<BBlock>>
+0x00401baa: Outgoing stack delta: -856
 0x00401baa: Successor blocks: 0x00401bac, 0x00401c00
 
 0x00401bac: Basic block reasons: 
-0x00401bac: bf aa 22 40 00          |.."@.   |          mov    edi, 0x004022aa<"/var/log/wtmp">
-0x00401bb1: 48 89 de                |H..     |          mov    rsi, rbx
-0x00401bb4: e8 4f f4 ff ff          |.O...   |          call   0x0000000000401008<updwtmp@plt>
+0x00401bac: bf aa 22 40 00          |.."@.   |<sp-856>   mov    edi, 0x004022aa<"/var/log/wtmp">
+0x00401bb1: 48 89 de                |H..     |<sp-856>   mov    rsi, rbx
+0x00401bb4: e8 4f f4 ff ff          |.O...   |<sp-856>   call   0x0000000000401008<updwtmp@plt>
+0x00401bb4: Outgoing stack delta: -864
 0x00401bb4: Successor blocks: 0x00401008<updwtmp@plt>, 0x00401bb9
 
 0x00401bb9: Basic block reasons: 
-0x00401bb9: 44 89 f7                |D..     |          mov    edi, r14d
-0x00401bbc: e8 27 f5 ff ff          |.'...   |          call   0x00000000004010e8<close@plt>
+0x00401bb9: 44 89 f7                |D..     |<sp-856>   mov    edi, r14d
+0x00401bbc: e8 27 f5 ff ff          |.'...   |<sp-856>   call   0x00000000004010e8<close@plt>
+0x00401bbc: Outgoing stack delta: -864
 0x00401bbc: Successor blocks: 0x004010e8<close@plt>, 0x00401bc1
 
 0x00401bc1: Basic block reasons: 
-0x00401bc1: 48 8b 9c 24 28 03 00 00 |H..$(...|          mov    rbx, qword ds:[rsp + 0x00000328<808>]
-0x00401bc9: 48 8b ac 24 30 03 00 00 |H..$0...|          mov    rbp, qword ds:[rsp + 0x00000330<816>]
-0x00401bd1: 4c 8b a4 24 38 03 00 00 |L..$8...|          mov    r12, qword ds:[rsp + 0x00000338<824>]
-0x00401bd9: 4c 8b ac 24 40 03 00 00 |L..$@...|          mov    r13, qword ds:[rsp + 0x00000340<832>]
-0x00401be1: 4c 8b b4 24 48 03 00 00 |L..$H...|          mov    r14, qword ds:[rsp + 0x00000348<840>]
-0x00401be9: 4c 8b bc 24 50 03 00 00 |L..$P...|          mov    r15, qword ds:[rsp + 0x00000350<848>]
-0x00401bf1: 48 81 c4 58 03 00 00    |H..X... |          add    rsp, 0x00000358<856>
-0x00401bf8: c3                      |.       |          ret    
+0x00401bc1: 48 8b 9c 24 28 03 00 00 |H..$(...|<sp-856>   mov    rbx, qword ds:[rsp + 0x00000328<808>]
+0x00401bc9: 48 8b ac 24 30 03 00 00 |H..$0...|<sp-856>   mov    rbp, qword ds:[rsp + 0x00000330<816>]
+0x00401bd1: 4c 8b a4 24 38 03 00 00 |L..$8...|<sp-856>   mov    r12, qword ds:[rsp + 0x00000338<824>]
+0x00401bd9: 4c 8b ac 24 40 03 00 00 |L..$@...|<sp-856>   mov    r13, qword ds:[rsp + 0x00000340<832>]
+0x00401be1: 4c 8b b4 24 48 03 00 00 |L..$H...|<sp-856>   mov    r14, qword ds:[rsp + 0x00000348<840>]
+0x00401be9: 4c 8b bc 24 50 03 00 00 |L..$P...|<sp-856>   mov    r15, qword ds:[rsp + 0x00000350<848>]
+0x00401bf1: 48 81 c4 58 03 00 00    |H..X... |<sp-856>   add    rsp, 0x00000358<856>
+0x00401bf8: c3                      |.       |<sp+0 >   ret    
+0x00401bf8: Outgoing stack delta: +8
 0x00401bf8: Successor blocks: unknown
 
 0x00401bf9: Basic block reasons: CFG head
@@ -1257,14 +1368,16 @@
 0x00401bfd: Successor blocks: 0x00401c00
 
 0x00401c00: Basic block reasons: 
-0x00401c00: 48 8d b5 82 00 00 00    |H...... |          lea    rsi, [rbp + 0x00000082]
-0x00401c07: 48 8d 7b 4c             |H.{L    |          lea    rdi, [rbx + 0x4c]
-0x00401c0b: ba 00 01 00 00          |.....   |          mov    edx, 0x00000100<256>
-0x00401c10: e8 23 f3 ff ff          |.#...   |          call   0x0000000000400f38<strncpy@plt>
+0x00401c00: 48 8d b5 82 00 00 00    |H...... |<sp-856>   lea    rsi, [rbp + 0x00000082]
+0x00401c07: 48 8d 7b 4c             |H.{L    |<sp-856>   lea    rdi, [rbx + 0x4c]
+0x00401c0b: ba 00 01 00 00          |.....   |<sp-856>   mov    edx, 0x00000100<256>
+0x00401c10: e8 23 f3 ff ff          |.#...   |<sp-856>   call   0x0000000000400f38<strncpy@plt>
+0x00401c10: Outgoing stack delta: -864
 0x00401c10: Successor blocks: 0x00400f38<strncpy@plt>, 0x00401c15
 
 0x00401c15: Basic block reasons: 
-0x00401c15: eb 95                   |..      |          jmp    0x0000000000401bac<<BBlock>>
+0x00401c15: eb 95                   |..      |<sp-856>   jmp    0x0000000000401bac<<BBlock>>
+0x00401c15: Outgoing stack delta: -856
 0x00401c15: Successor blocks: 0x00401bac
 
 0x00401e70: ================================== Function (function call, pattern, graph) unknown name
@@ -1287,23 +1400,26 @@
 0x00401e8d: Successor blocks: 0x00401e90
 
 0x00401e90: Basic block reasons: 
-0x00401e90: 48 83 eb 08             |H...    |          sub    rbx, 0x08
-0x00401e94: ff d0                   |..      |          call   rax
+0x00401e90: 48 83 eb 08             |H...    |<sp-24>   sub    rbx, 0x08
+0x00401e94: ff d0                   |..      |<sp-24>   call   rax
+0x00401e94: Outgoing stack delta: -32
 0x00401e94: Successor blocks: 0x00401e96, unknown
 
 0x00401e96: Basic block reasons: 
-0x00401e96: 48 8b 03                |H..     |          mov    rax, qword ds:[rbx]
+0x00401e96: 48 8b 03                |H..     |<sp-24>   mov    rax, qword ds:[rbx]
+0x00401e96: Outgoing stack delta: -24
 0x00401e96: Successor blocks: 0x00401e99
 
 0x00401e99: Basic block reasons: 
-0x00401e99: 48 83 f8 ff             |H...    |          cmp    rax, 0xff<-1>
-0x00401e9d: 75 f1                   |u.      |          jne    0x0000000000401e90<<BBlock>>
+0x00401e99: 48 83 f8 ff             |H...    |<sp-24>   cmp    rax, 0xff<-1>
+0x00401e9d: 75 f1                   |u.      |<sp-24>   jne    0x0000000000401e90<<BBlock>>
+0x00401e9d: Outgoing stack delta: -24
 0x00401e9d: Successor blocks: 0x00401e90, 0x00401e9f
 
 0x00401e9f: Basic block reasons: 
-0x00401e9f: 48 83 c4 08             |H...    |          add    rsp, 0x08
-0x00401ea3: 5b                      |[       |          pop    rbx
-0x00401ea4: c9                      |.       |          leave  
+0x00401e9f: 48 83 c4 08             |H...    |<sp-24>   add    rsp, 0x08
+0x00401ea3: 5b                      |[       |<sp-16>   pop    rbx
+0x00401ea4: c9                      |.       |<sp-8 >   leave  
 0x00401ea5: c3                      |.       |<sp+0 >   ret    
 0x00401ea5: Outgoing stack delta: +8
 0x00401ea5: Successor blocks: unknown

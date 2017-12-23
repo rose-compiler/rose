@@ -10,6 +10,7 @@ CLEAN_TARGETS =
 C_CHECK_TARGETS =
 FORTRAN_CHECK_TARGETS =
 
+AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD = $(ROSE_LIBS) 
 
 SAF_SRC_ROOT = $(top_srcdir)/src/midend/programAnalysis/genericDataflow/

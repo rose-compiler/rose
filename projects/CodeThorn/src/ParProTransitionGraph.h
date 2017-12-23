@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2016.
 
 #ifndef PAR_PRO_TRANSITION_GRAPH_H
 #define PAR_PRO_TRANSITION_GRAPH_H
@@ -6,8 +5,9 @@
 #include "sage3basic.h"
 
 // SPRAY includes
-// #include "Flow.h"
-#include "StateRepresentations.h"
+#include "Flow.h"
+#include "ParProEState.h"
+#include "ParallelAutomataGenerator.h"
 
 // CodeThorn includes
 
@@ -23,7 +23,10 @@
 using namespace CodeThorn;
 
 namespace SPRAY {
-
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class ParProTransition {
   public:
     ParProTransition(const ParProEState* s, Edge e, const ParProEState* t) : source(s), edge(e), target(t) {}
@@ -40,7 +43,13 @@ namespace SPRAY {
   typedef std::set<ParProTransition> ParProTransitions; // multiple identical edges are not desired in the STG
   typedef boost::unordered_map<const ParProEState*, ParProTransitions> EStateTransitionMap;
 
-  // the state transition graph of a parallel program
+  /*! 
+   * \brief State transition graph consisting of ParProEStates.
+   * \author Marc Jasper
+   * \date 2016.
+   * \details Graph is implemented as a map: Each state is mapped to its set of outgoing transitions. 
+   Transitions store pointers to their source and target states.
+   */
   class ParProTransitionGraph {
   public:
     ParProTransitionGraph() : _preciseStg(true), _completeStg(false) {}
@@ -51,11 +60,13 @@ namespace SPRAY {
     ParProTransitions succ(const ParProEState* source);
     EStateTransitionMap* getOutEdgesMap() { return &_outEdges; }
     size_t size();
+    size_t numStates();
     std::set<std::string> getAllAnnotations();
     bool isPrecise() { return _preciseStg; }
     void setIsPrecise(bool p) { _preciseStg = p; }
     bool isComplete() { return _completeStg; }
     void setIsComplete(bool c) { _completeStg = c; }
+    Flow* toFlowEnumerateStates(NumberGenerator& numGen);
 
   private:
     EStateTransitionMap _outEdges;

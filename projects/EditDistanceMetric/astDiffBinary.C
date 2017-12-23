@@ -13,8 +13,8 @@
 #endif
 
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
 static std::vector<std::string>
@@ -68,7 +68,7 @@ int
 main(int argc, char *argv[]) {
     // Initialize
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command-line (see --help for usage)
     Partitioner2::Engine engine;

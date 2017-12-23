@@ -1,7 +1,7 @@
 #ifndef FICONSTANALYSIS_H
 #define FICONSTANALYSIS_H
 
-#include "AType.h"
+#include "AbstractValue.h"
 #include <cassert>
 #include <map>
 #include <set>
@@ -9,22 +9,22 @@
 #include "Labeler.h"
 
 using namespace std;
-using namespace CodeThorn::AType;
+using namespace CodeThorn;
 using namespace SPRAY;
 
 // does not support -inf, +inf yet
 class VariableValueRangeInfo {
 public:
-  VariableValueRangeInfo(ConstIntLattice min, ConstIntLattice max);
-  VariableValueRangeInfo(ConstIntLattice value);
+  VariableValueRangeInfo(AbstractValue min, AbstractValue max);
+  VariableValueRangeInfo(AbstractValue value);
   bool isTop() const { return _width.isTop(); }
   bool isBot() const { return _width.isBot(); }
   bool isEmpty() const { return (_width.operatorEq(0)).isTrue(); }
-  ConstIntLattice minValue() const { return _min; }
-  ConstIntLattice maxValue() const { return _max; }
+  AbstractValue minValue() const { return _min; }
+  AbstractValue maxValue() const { return _max; }
   int minIntValue() const { assert(_min.isConstInt()); return _min.getIntValue(); }
   int maxIntValue() const { assert(_max.isConstInt()); return _max.getIntValue(); }
-  ConstIntLattice width() const { return _width; }
+  AbstractValue width() const { return _width; }
   string toString() const {
     if(isBot())
       return "bot";
@@ -35,13 +35,13 @@ public:
   void setArraySize(int asize);
   int arraySize();
 private:
-  ConstIntLattice _width;
-  ConstIntLattice _min;
-  ConstIntLattice _max;
+  AbstractValue _width;
+  AbstractValue _min;
+  AbstractValue _max;
   int _asize;
 };
 
-typedef map<VariableId, set<ConstIntLattice> > VarConstSetMap;
+typedef map<VariableId, set<AbstractValue> > VarConstSetMap;
 
 class VariableConstInfo {
 public:
@@ -57,7 +57,7 @@ public:
   int arraySize(VariableId);
   bool haveEmptyIntersection(VariableId,VariableId);
   static VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map);
-  static ConstIntLattice isConstInSet(ConstIntLattice val, set<ConstIntLattice> valSet);
+  static AbstractValue isConstInSet(AbstractValue val, set<AbstractValue> valSet);
 private:
   VariableIdMapping* _variableIdMapping;
   VarConstSetMap* _map;
@@ -66,17 +66,17 @@ private:
 class VariableValuePair {
 public:
   VariableValuePair(){}
-  VariableValuePair(VariableId varId, ConstIntLattice varValue):varId(varId),varValue(varValue){}
+  VariableValuePair(VariableId varId, AbstractValue varValue):varId(varId),varValue(varValue){}
   VariableId varId;
-  ConstIntLattice varValue;
+  AbstractValue varValue;
   string toString(VariableIdMapping& varIdMapping) {
-    string varNameString=varIdMapping.uniqueShortVariableName(varId);
+    string varNameString=varIdMapping.uniqueVariableName(varId);
     string varValueString=varValue.toString();
     return varNameString+"="+varValueString;
   }
 };
 
-typedef ConstIntLattice EvalValueType;
+typedef AbstractValue EvalValueType;
 class FIConstAnalysis {
  public:
   FIConstAnalysis(VariableIdMapping*);
@@ -91,7 +91,7 @@ class FIConstAnalysis {
 
   VariableIdMapping::VariableIdSet determinedConstantVariables();
 
-  static ConstIntLattice analyzeAssignRhs(SgNode* rhs);
+  static AbstractValue analyzeAssignRhs(SgNode* rhs);
   static bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping);
   // allows to analyse SgAssignOp and SgCompoundAssignOp
   static bool analyzeAssignment(SgExpression* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);

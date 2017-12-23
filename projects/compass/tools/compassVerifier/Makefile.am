@@ -17,13 +17,23 @@ libCompassVerifierCheckers.la: $(libCompassVerifierCheckers_la_OBJECTS) $(libCom
 bin_PROGRAMS = compassVerifier
 
 compassVerifier_SOURCES = compassMain.C checkers.h
+compassVerifier_LDFLAGS = $(ROSE_RPATHS)
 compassVerifier_LDADD = -lCompassVerifierCheckers $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
 
 # This does not contribute to the link line
 compassVerifier_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassVerifierCheckers.la
 
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
 test: compassVerifier compass_parameters $(compass_test_dir)/exampleTest_1.C
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C 
+	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassVerifier -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C 
 
 check-local:
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)

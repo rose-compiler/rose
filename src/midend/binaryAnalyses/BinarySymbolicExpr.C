@@ -2,8 +2,8 @@
 
 #include "sage3basic.h"
 
+#include "BinarySmtSolver.h"
 #include "BinarySymbolicExpr.h"
-#include "SMTSolver.h"
 #include "stringify.h"
 #include "integerOps.h"
 #include "Combinatorics.h"
@@ -13,11 +13,11 @@
 #include <boost/thread/mutex.hpp>
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Interior);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpr::Leaf);
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace SymbolicExpr {
 
@@ -27,6 +27,8 @@ namespace SymbolicExpr {
 
 // A mutex that's used by various methods in this namespace
 static boost::mutex symbolicExprMutex;
+
+typedef Sawyer::Container::BitVector::BitRange BitRange;
 
 const uint64_t
 MAX_NNODES = UINT64_MAX;
@@ -134,13 +136,13 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
 }
 
 Ptr
-setToIte(const Ptr &set) {
+setToIte(const Ptr &set, const LeafPtr &var) {
     ASSERT_not_null(set);
     InteriorPtr iset = set->isInteriorNode();
     if (!iset || iset->getOperator() != OP_SET)
         return set;
     ASSERT_require(iset->nChildren() >= 1);
-    Ptr condVar = makeVariable(32);
+    LeafPtr condVar = var==NULL ? makeVariable(32)->isLeafNode() : var;
     Ptr retval;
     for (size_t i=iset->nChildren(); i>0; --i) {
         Ptr member = iset->child(i-1);
@@ -207,7 +209,6 @@ struct Hasher: Visitor {
                         h = hash(h, leaf->toInt());
                     } else {
                         for (size_t i=0; i<leaf->nBits(); i+=64) {
-                            typedef Sawyer::Container::BitVector::BitRange BitRange;
                             size_t j = std::min(i+64, leaf->nBits());
                             h = hash(h, leaf->bits().toInteger(BitRange::hull(i, j-1)));
                         }
@@ -441,6 +442,10 @@ Interior::adjustWidth() {
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be an integer constant");
             if (!child(1)->isNumber())
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be an integer constant");
+            if (child(0)->nBits() > 64)
+                throw Exception(toStr(op_) + " operator's first argument (begin bit) must be 64 bits or narrower");
+            if (child(1)->nBits() > 64)
+                throw Exception(toStr(op_) + " operator's second argument (end bit) must be 64 bits or narrower");
             if (!child(2)->isScalar())
                 throw Exception(toStr(op_) + " operator's third argument must be scalar");
             if (child(0)->toInt() >= child(1)->toInt())
@@ -505,6 +510,8 @@ Interior::adjustWidth() {
                 throw Exception(toStr(op_) + " operator expects two arguments");
             if (!child(0)->isNumber())
                 throw Exception(toStr(op_) + " operator's first argument (size) must be a numeric constant");
+            if (child(0)->nBits() > 64)
+                throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
             if (!child(1)->isScalar())
                 throw Exception(toStr(op_) + " operator's second argument must be scalar");
             nBits_ = child(0)->toInt();
@@ -645,9 +652,9 @@ Interior::print(std::ostream &o, Formatter &fmt) {
                     }
                     break;
 
-                case OP_BV_AND:
-                case OP_BV_OR:
-                case OP_BV_XOR:
+                case OP_AND:
+                case OP_OR:
+                case OP_XOR:
                 case OP_CONCAT:
                 case OP_UDIV:
                 case OP_UGE:
@@ -677,7 +684,7 @@ Interior::print(std::ostream &o, Formatter &fmt) {
 }
 
 bool
-Interior::mustEqual(const Ptr &other_, SMTSolver *solver/*NULL*/) {
+Interior::mustEqual(const Ptr &other_, SmtSolver *solver/*NULL*/) {
     bool retval = false;
     if (this==getRawPointer(other_)) {
         retval = true;
@@ -687,13 +694,13 @@ Interior::mustEqual(const Ptr &other_, SMTSolver *solver/*NULL*/) {
         retval = true;
     } else if (solver) {
         Ptr assertion = makeNe(sharedFromThis(), other_);
-        retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
+        retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
     }
     return retval;
 }
 
 bool
-Interior::mayEqual(const Ptr &other, SMTSolver *solver/*NULL*/) {
+Interior::mayEqual(const Ptr &other, SmtSolver *solver/*NULL*/) {
     bool retval = false;
     if (this==getRawPointer(other)) {
         return true;
@@ -703,7 +710,7 @@ Interior::mayEqual(const Ptr &other, SMTSolver *solver/*NULL*/) {
         retval = true;
     } else if (solver) {
         Ptr assertion = makeEq(sharedFromThis(), other);
-        retval = SMTSolver::SAT_YES==solver->satisfiable(assertion);
+        retval = SmtSolver::SAT_YES==solver->satisfiable(assertion);
     }
     return retval;
 }
@@ -982,8 +989,10 @@ Interior::identity(uint64_t ident) {
 
     // Don't simplify the return value recursively
     Interior *inode = new Interior(0, getOperator(), args, comment());
-    if (inode->nBits() != nBits())
+    if (inode->nBits() != nBits()) {
+        delete inode;
         return sharedFromThis();                        // don't simplify if width changed.
+    }
     return InteriorPtr(inode);
 }
 
@@ -1216,7 +1225,7 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 
 Ptr
 XorSimplifier::rewrite(Interior *inode) const {
-    SMTSolver *solver = NULL;   // FIXME
+    SmtSolver *solver = NULL;   // FIXME
 
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
     std::vector<bool> removed(inode->nChildren(), false);
@@ -1294,7 +1303,6 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
     for (size_t sa=resultSize; begin!=end; ++begin) {
         LeafPtr leaf = (*begin)->isLeafNode();
         sa -= leaf->nBits();
-        typedef Sawyer::Container::BitVector::BitRange BitRange;
         BitRange destination = BitRange::baseSize(sa, leaf->nBits());
         accumulator.copy(destination, leaf->bits(), leaf->bits().hull());
         flags |= (*begin)->flags();
@@ -1304,7 +1312,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
 
 Ptr
 ConcatSimplifier::rewrite(Interior *inode) const {
-    SMTSolver *solver = NULL; // FIXME
+    SmtSolver *solver = NULL; // FIXME
 
     // If all the concatenated expressions are extract expressions, all extracting bits from the same expression and
     // in the correct order, then we can simplify this to that expression.  For instance:
@@ -1385,7 +1393,6 @@ ExtractSimplifier::rewrite(Interior *inode) const {
     if (from_node && to_node && from_node->isNumber() && to_node->isNumber() &&
         operand->isLeafNode() && operand->isLeafNode()->isNumber()) {
         Sawyer::Container::BitVector result(to-from);
-        typedef Sawyer::Container::BitVector::BitRange BitRange;
         BitRange source = BitRange::hull(from, to-1);
         result.copy(result.hull(), operand->isLeafNode()->bits(), source);
         return makeConstant(result, inode->comment(), inode->flags());
@@ -1533,37 +1540,107 @@ NoopSimplifier::rewrite(Interior *inode) const {
     return Ptr();
 }
 
+template<typename T>
+static Sawyer::Optional<size_t>
+isPowerOfTwo(T n) {
+    for (size_t i=0; i<8*sizeof(T); ++i) {
+        if (T(1) << i == n)
+            return i;
+    }
+    return Sawyer::Nothing();
+}
+
 Ptr
 RolSimplifier::rewrite(Interior *inode) const {
-    // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
-    if (sa_leaf && val_leaf && sa_leaf->isNumber() && val_leaf->isNumber()) {
-        Sawyer::Container::BitVector result = val_leaf->bits();
-        result.rotateLeft(sa_leaf->toInt());
-        return makeConstant(result, inode->comment(), inode->flags());
+
+    // Get the effective shift amount
+    Sawyer::Optional<uint64_t> sa;
+    if (sa_leaf && sa_leaf->isNumber()) {
+        if (sa_leaf->nBits() <= 64) {
+            sa = sa_leaf->toInt();
+        } else {
+            Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
+            size_t twoPow = 0;
+            if (!msbSetIdx) {
+                sa = 0;
+            } else if (*msbSetIdx < 64) {
+                // Only low-order bits are set, so we can truncate to 64 bits.
+                sa = sa_leaf->bits().toInteger();
+            } else if (isPowerOfTwo(inode->nBits()).assignTo(twoPow)) {
+                // Shift count modulo number of bits in result.
+                sa = sa_leaf->bits().toInteger(BitRange::hull(0, twoPow));
+            }
+        }
     }
 
-    // If the shift amount is known and is a multiple of the operand size, then this is a no-op
-    if (sa_leaf && sa_leaf->isNumber() && 0==sa_leaf->toInt() % inode->nBits())
+    // Constant folding
+    if (val_leaf && val_leaf->isNumber() && sa) {
+        Sawyer::Container::BitVector result = val_leaf->bits();
+        result.rotateLeft(*sa);
+        return makeConstant(result, inode->comment(), inode->flags());
+    }
+    
+    // If the shift amount is zero then this is a no-op
+    if (sa && *sa % inode->nBits() == 0)
         return inode->child(1);
+
+    // If the shift amount is greater than the value width, replace it with modulo
+    if (sa && *sa > inode->nBits()) {
+        return Interior::create(0, inode->getOperator(),
+                                makeInteger(inode->child(0)->nBits(), *sa % inode->nBits(),
+                                               inode->child(0)->comment(), inode->child(0)->flags()),
+                                inode->child(1),
+                                inode->comment(), inode->flags());
+    }
 
     return Ptr();
 }
 Ptr
 RorSimplifier::rewrite(Interior *inode) const {
-    // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
-    if (sa_leaf && val_leaf && sa_leaf->isNumber() && val_leaf->isNumber()) {
+
+    // Get the effective shift amount
+    Sawyer::Optional<uint64_t> sa;
+    if (sa_leaf && sa_leaf->isNumber()) {
+        if (sa_leaf->nBits() <= 64) {
+            sa = sa_leaf->toInt();
+        } else {
+            Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
+            size_t twoPow = 0;
+            if (!msbSetIdx) {
+                sa = 0;
+            } else if (*msbSetIdx < 64) {
+                // Only low-order bits are set, so we can truncate to 64 bits.
+                sa = sa_leaf->bits().toInteger();
+            } else if (isPowerOfTwo(inode->nBits()).assignTo(twoPow)) {
+                // Shift count modulo number of bits in result.
+                sa = sa_leaf->bits().toInteger(BitRange::hull(0, twoPow));
+            }
+        }
+    }
+
+    // Constant folding
+    if (val_leaf && val_leaf->isNumber() && sa) {
         Sawyer::Container::BitVector result = val_leaf->bits();
-        result.rotateRight(sa_leaf->toInt());
+        result.rotateRight(*sa);
         return makeConstant(result, inode->comment(), inode->flags());
     }
 
-    // If the shift amount is known and is a multiple of the operand size, then this is a no-op
-    if (sa_leaf && sa_leaf->isNumber() && 0==sa_leaf->toInt() % inode->nBits())
+    // If the shift amount is zero then this is a no-op
+    if (sa && *sa % inode->nBits() == 0)
         return inode->child(1);
+
+    // If the shift amount is greater than the value width, replace it with modulo
+    if (sa && *sa > inode->nBits()) {
+        return Interior::create(0, inode->getOperator(),
+                                makeInteger(inode->child(0)->nBits(), *sa % inode->nBits(),
+                                               inode->child(0)->comment(), inode->child(0)->flags()),
+                                inode->child(1),
+                                inode->comment(), inode->flags());
+    }
 
     return Ptr();
 }
@@ -1768,7 +1845,7 @@ SdivSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && b_leaf->toInt()!=0) {
+    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             int64_t a = IntegerOps::signExtend2(a_leaf->toInt(), a_leaf->nBits(), 8*sizeof(int8_t));
             int64_t b = IntegerOps::signExtend2(b_leaf->toInt(), b_leaf->nBits(), 8*sizeof(int8_t));
@@ -1786,7 +1863,7 @@ SmodSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && b_leaf->toInt()!=0) {
+    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             int64_t a = IntegerOps::signExtend2(a_leaf->toInt(), a_leaf->nBits(), 8*sizeof(int8_t));
             int64_t b = IntegerOps::signExtend2(b_leaf->toInt(), b_leaf->nBits(), 8*sizeof(int8_t));
@@ -1805,7 +1882,7 @@ UdivSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && b_leaf->toInt()!=0) {
+    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             uint64_t a = a_leaf->toInt();
             uint64_t b = b_leaf->toInt();
@@ -1824,7 +1901,7 @@ UmodSimplifier::rewrite(Interior *inode) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && b_leaf->toInt()!=0) {
+    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             uint64_t a = a_leaf->toInt();
             uint64_t b = b_leaf->toInt();
@@ -1869,14 +1946,32 @@ ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_wi
 
 Ptr
 ShlSimplifier::rewrite(Interior *inode) const {
-    // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
-    if (sa_leaf && val_leaf && sa_leaf->isNumber() && val_leaf->isNumber()) {
-        uint64_t sa = sa_leaf->toInt();
-        sa = std::min((uint64_t)inode->nBits(), sa);
+
+    // Effective shift amount
+    Sawyer::Optional<uint64_t> sa;
+    if (sa_leaf && sa_leaf->isNumber()) {
+        if (sa_leaf->nBits() <= 64) {
+            sa = sa_leaf->toInt();
+        } else {
+            Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
+            if (!msbSetIdx) {
+                sa = 0;
+            } else if (*msbSetIdx < 64) {
+                sa = sa_leaf->bits().toInteger();       // truncate to 64 bits
+            } else {
+                sa = inode->nBits();
+            }
+        }
+    }
+    if (sa)
+        sa = std::min((uint64_t)inode->nBits(), *sa);
+
+    // Constant folding
+    if (val_leaf && val_leaf->isNumber() && sa) {
         Sawyer::Container::BitVector result = val_leaf->bits();
-        result.shiftLeft(sa, newbits);
+        result.shiftLeft(*sa, newbits);
         return makeConstant(result, inode->comment(), inode->flags());
     }
 
@@ -1890,39 +1985,57 @@ ShlSimplifier::rewrite(Interior *inode) const {
     }
 
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
-    if (sa_leaf && sa_leaf->isNumber() && sa_leaf->toInt() >= inode->nBits()) {
+    if (sa && *sa >= inode->nBits()) {
         Sawyer::Container::BitVector result(inode->nBits(), newbits);
         return makeConstant(result, inode->comment());
     }
 
     // If the shift amount is zero then this is a no-op
-    if (sa_leaf && sa_leaf->isNumber() && sa_leaf->toInt()==0)
+    if (sa && 0==*sa)
         return inode->child(1);
 
     // If the shift amount is a constant, then:
     // (shl0[N] AMT X) ==> (concat (extract 0 N-AMT X)<hiBits> 0[AMT]<loBits>)
     // (shl1[N] AMT X) ==> (concat (extract 0 N-AMT X)<hiBits> -1[AMT]<loBits>)
-    if (sa_leaf && sa_leaf->isNumber()) {
-        ASSERT_require(sa_leaf->toInt()>0 && sa_leaf->toInt()<inode->nBits());// handled above
-        size_t nHiBits = inode->nBits() - sa_leaf->toInt();
+    if (sa) {
+        ASSERT_require(*sa > 0 && *sa < inode->nBits());// handled above
+        size_t nHiBits = inode->nBits() - *sa;
         Ptr hiBits = makeExtract(makeInteger(32, 0), makeInteger(32, nHiBits), inode->child(1));
-        Ptr loBits = makeInteger(sa_leaf->toInt(), newbits?uint64_t(-1):uint64_t(0));
+        Ptr loBits = makeInteger(*sa, newbits?uint64_t(-1):uint64_t(0));
         return makeConcat(hiBits, loBits);
     }
-    
+
     return Ptr();
 }
 
 Ptr
 ShrSimplifier::rewrite(Interior *inode) const {
-    // Constant folding
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
-    if (sa_leaf && val_leaf && sa_leaf->isNumber() && val_leaf->isNumber()) {
-        uint64_t sa = sa_leaf->toInt();
-        sa = std::min((uint64_t)inode->nBits(), sa);
+
+    // Effective shift amount
+    Sawyer::Optional<uint64_t> sa;
+    if (sa_leaf && sa_leaf->isNumber()) {
+        if (sa_leaf->nBits() <= 64) {
+            sa = sa_leaf->toInt();
+        } else {
+            Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
+            if (!msbSetIdx) {
+                sa = 0;
+            } else if (*msbSetIdx < 64) {
+                sa = sa_leaf->bits().toInteger();       // truncate to 64 bits
+            } else {
+                sa = inode->nBits();
+            }
+        }
+    }
+    if (sa)
+        sa = std::min((uint64_t)inode->nBits(), *sa);
+
+    // Constant folding
+    if (val_leaf && val_leaf->isNumber() && sa) {
         Sawyer::Container::BitVector result = val_leaf->bits();
-        result.shiftRight(sa, newbits);
+        result.shiftRight(*sa, newbits);
         return makeConstant(result, inode->comment(), inode->flags());
     }
 
@@ -1934,27 +2047,27 @@ ShrSimplifier::rewrite(Interior *inode) const {
             return Interior::create(0, inode->getOperator(), strength, val_inode->child(1));
         }
     }
-    
+
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
-    if (sa_leaf && sa_leaf->isNumber() && sa_leaf->toInt() >= inode->nBits()) {
+    if (sa && *sa >= inode->nBits()) {
         Sawyer::Container::BitVector result(inode->nBits(), newbits);
         return makeConstant(result, inode->comment(), inode->flags());
     }
 
     // If the shift amount is zero then this is a no-op
-    if (sa_leaf && sa_leaf->isNumber() && sa_leaf->toInt()==0)
+    if (sa && 0 == *sa)
         return inode->child(1);
 
     // If the shift amount is a constant, then:
     // (shr0[N] AMT X) ==> (concat 0[AMT]  (extract AMT N X))
     // (shr1[N] AMT X) ==> (concat -1[AMT] (extract AMT N X))
-    if (sa_leaf && sa_leaf->isNumber()) {
-        ASSERT_require(sa_leaf->toInt()>0 && sa_leaf->toInt()<inode->nBits());// handled above
-        Ptr loBits = makeExtract(makeInteger(32, sa_leaf->toInt()), makeInteger(32, inode->nBits()), inode->child(1));
-        Ptr hiBits = makeInteger(sa_leaf->toInt(), newbits?uint64_t(-1):uint64_t(0));
+    if (sa) {
+        ASSERT_require(*sa > 0 && *sa < inode->nBits());// handled above
+        Ptr loBits = makeExtract(makeInteger(32, *sa), makeInteger(32, inode->nBits()), inode->child(1));
+        Ptr hiBits = makeInteger(*sa, newbits?uint64_t(-1):uint64_t(0));
         return makeConcat(hiBits, loBits);
     }
-    
+
     return Ptr();
 }
 
@@ -1986,7 +2099,7 @@ MssbSimplifier::rewrite(Interior *inode) const {
 
 Ptr
 SetSimplifier::rewrite(Interior *inode) const {
-    SMTSolver *solver = NULL;                           // FIXME[Robb Matzke 2015-11-03]
+    SmtSolver *solver = NULL;                           // FIXME[Robb Matzke 2015-11-03]
 
     // (set x) => x
     if (1 == inode->nChildren())
@@ -2027,10 +2140,11 @@ Interior::simplifyTop() {
                 if (newnode==node)
                     newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
+                    newnode = inode->unaryNoOp();
+                if (newnode==node)
                     newnode = inode->foldConstants(AddSimplifier());
                 break;
             case OP_AND:
-            case OP_BV_AND:
                 newnode = inode->associative()->commutative()->identity((uint64_t)-1);
                 if (newnode==node)
                     newnode = inode->foldConstants(AndSimplifier());
@@ -2042,7 +2156,7 @@ Interior::simplifyTop() {
                 if (newnode==node)
                     newnode = inode->rewrite(AsrSimplifier());
                 break;
-            case OP_BV_XOR:
+            case OP_XOR:
                 newnode = inode->associative()->commutative()->foldConstants(XorSimplifier());
                 if (newnode==node)
                     newnode = inode->rewrite(XorSimplifier());
@@ -2086,7 +2200,6 @@ Interior::simplifyTop() {
                 newnode = inode->rewrite(NoopSimplifier());
                 break;
             case OP_OR:
-            case OP_BV_OR:
                 newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->foldConstants(OrSimplifier());
@@ -2432,7 +2545,7 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) {
 }
 
 bool
-Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) {
+Leaf::mustEqual(const Ptr &other_, SmtSolver *solver) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
@@ -2443,7 +2556,7 @@ Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) {
         // We need an SMT solver to figure this out.  This handles things like "x mustEqual (not (not x))" which is true.
         if (solver) {
             Ptr assertion = makeNe(sharedFromThis(), other_);
-            retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
+            retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
         }
     } else if (isNumber()) {
         retval = other->isNumber() && 0==bits_.compare(other->bits_);
@@ -2454,7 +2567,7 @@ Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) {
 }
 
 bool
-Leaf::mayEqual(const Ptr &other_, SMTSolver *solver) {
+Leaf::mayEqual(const Ptr &other_, SmtSolver *solver) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
@@ -2463,7 +2576,7 @@ Leaf::mayEqual(const Ptr &other_, SMTSolver *solver) {
         // We need an SMT solver to figure out things like "x mayEqual (add y 1))", which is true.
         if (solver) {
             Ptr assertion = makeEq(sharedFromThis(), other_);
-            retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
+            retval = SmtSolver::SAT_YES == solver->satisfiable(assertion);
         }
     } else if (!isNumber() || !other->isNumber() || 0==bits_.compare(other->bits_)) {
         retval = true;
@@ -2604,17 +2717,17 @@ makeAsr(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags)
 
 Ptr
 makeAnd(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_AND, a, b, comment, flags);
+    return Interior::create(0, OP_AND, a, b, comment, flags);
 }
 
 Ptr
 makeOr(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_OR, a, b, comment, flags);
+    return Interior::create(0, OP_OR, a, b, comment, flags);
 }
 
 Ptr
 makeXor(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_XOR, a, b, comment, flags);
+    return Interior::create(0, OP_XOR, a, b, comment, flags);
 }
     
 Ptr

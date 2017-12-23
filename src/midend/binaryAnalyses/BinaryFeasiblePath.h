@@ -2,11 +2,12 @@
 #define ROSE_BinaryAnalysis_FeasiblePath_H
 
 #include <BaseSemantics2.h>
+#include <BinarySmtSolver.h>
 #include <Partitioner2/CfgPath.h>
 #include <Sawyer/Message.h>
-#include <SMTSolver.h>
+#include <boost/filesystem/path.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Feasible path analysis.
@@ -29,10 +30,12 @@ public:
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
         std::vector<SymbolicExpr::Ptr> postConditions;  /**< Additional constraints to be satisifed at the end of a path. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
+        bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
 
         /** Default settings. */
         Settings()
-            : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit(0), maxPathLength(0), maxCallDepth(0) {}
+            : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
+              maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true) {}
     };
 
     /** Diagnostic output. */
@@ -76,7 +79,7 @@ public:
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const std::vector<SymbolicExpr::Ptr> &pathConditions,
                              const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
-                             SMTSolver &solver) = 0;
+                             SmtSolver &solver) = 0;
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -150,7 +153,8 @@ public:
     /** Property: Settings used by this analysis.
      *
      * @{ */
-    const Settings& settings() { return settings_; }
+    const Settings& settings() const { return settings_; }
+    Settings& settings() { return settings_; }
     void settings(const Settings &s) { settings_ = s; }
     /** @} */
 
@@ -253,7 +257,7 @@ public:
      *  @p postConditions are additional optional conditions that must be satisified at the end of the path.  The entire set of
      *  conditions is returned via @p pathConditions argument, which can also initially contain preconditions. */
     virtual boost::tribool
-    isPathFeasible(const Partitioner2::CfgPath &path, SMTSolver&, const std::vector<SymbolicExpr::Ptr> &postConditions,
+    isPathFeasible(const Partitioner2::CfgPath &path, SmtSolver&, const std::vector<SymbolicExpr::Ptr> &postConditions,
                    std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 
@@ -331,6 +335,8 @@ private:
     void insertCallSummary(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                            const Partitioner2::ControlFlowGraph &cfg,
                            const Partitioner2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge);
+
+    boost::filesystem::path emitPathGraph(size_t callId, size_t graphId);  // emit paths graph to "rose-debug" directory
 };
 
 } // namespace

@@ -52,25 +52,25 @@ noinst_PROGRAMS = convert \
                   test_highlevel
 
 convert_SOURCES = convert.cc
-convert_LDFLAGS = $(ROSEHPCT_LIBS)
+convert_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 simple_read2_SOURCES = simple_read2.cc
-simple_read2_LDFLAGS = $(ROSEHPCT_LIBS)
+simple_read2_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 process_cmdline_SOURCES = process_cmdline.cc
-process_cmdline_LDFLAGS = $(ROSEHPCT_LIBS)
+process_cmdline_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 attach_metrics_SOURCES = attach_metrics.cc
-attach_metrics_LDFLAGS = $(ROSEHPCT_LIBS)
+attach_metrics_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 propagate_metrics_SOURCES = propagate_metrics.cc
-propagate_metrics_LDFLAGS = $(ROSEHPCT_LIBS)
+propagate_metrics_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 read_ast_SOURCES = read_ast.cc
-read_ast_LDFLAGS = $(ROSEHPCT_LIBS)
+read_ast_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 test_highlevel_SOURCES = test_highlevel.cc
-test_highlevel_LDFLAGS = $(ROSEHPCT_LIBS)
+test_highlevel_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 # used for invoking individual tests
 # test_attach01.sh
@@ -98,13 +98,15 @@ PHONIES += test_attach01 test_attach01a test_prop01 update_xml
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
 conditional-check-local:
-	@echo "********************************************************************************************"
+	@echo "****************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests: (commented out all tests for Cygwin) ******"
-	@echo "********************************************************************************************"
+	@echo "****************************************************************************************************************"
 else
 conditional-check-local:
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
 if !OS_VENDOR_DEBIAN
+# DQ (1/28/2017): HPCToolKit appears to have problems on later versions of GNU compilers (GNU 4.9 and later).
+if !ROSE_USING_GCC_VERSION_LATER_4_9
 if ROSE_BUILD_C_LANGUAGE_SUPPORT
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_attach01a.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_attach01.sh
@@ -112,12 +114,15 @@ if ROSE_BUILD_C_LANGUAGE_SUPPORT
 #	$(srcdir)/test_attach03.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_prop01.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_hl01.sh
-	@echo "******************************************************************************************************"
+	@echo "**************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests: make check rule complete (terminated normally) ******"
-	@echo "******************************************************************************************************"
+	@echo "**************************************************************************************************************************"
 else
 	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
 	@echo "      because C/C++ language support is not enabled              *****"
+endif
+else
+	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
 endif
 else
 	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
@@ -142,6 +147,10 @@ EXTRA_DIST = test_attach01a.sh \
   propagate_metrics.cc \
   read_ast.cc \
   test_highlevel.cc
+
+conditional-check-local:
+	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
+	@echo "      because ROSE is not built with HPC Toolkit support         *****"
 
 endif # ROSE_BUILD_ROSEHPCT
 

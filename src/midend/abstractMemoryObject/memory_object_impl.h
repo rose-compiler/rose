@@ -118,7 +118,7 @@ namespace AbstractMemoryObject
       bool mayEqual (const IndexSet & other) const; 
       bool mustEqual (const IndexSet & other) const; 
       bool operator != (const IndexSet & other) const; 
-      std::string toString() {return "["+rose::StringUtility::numberToString(value) + "]" ;};
+      std::string toString() {return "["+Rose::StringUtility::numberToString(value) + "]" ;};
     private:
       size_t value;
       ConstIndexSet(size_t i):IndexSet(Integer_type), value(i) {}
@@ -272,7 +272,7 @@ namespace AbstractMemoryObject
   {
     public:
       ScalarExprObj (SgExpression* e, SgType* t):ExprObj(e,t) {}
-      std::set<SgType*> getType() const;
+      std::set<SgType*> getType() ;
       // Implement ObjSet::operator== () at this level, through ExprObj::operator==().
       bool operator == (const ObjSet& o2) const;
       // multiple inheritance, must be clear about the behavior inherited from both parents
@@ -287,7 +287,7 @@ namespace AbstractMemoryObject
   {
     public:
       FunctionExprObj (SgExpression* e, SgType* t):ExprObj(e,t) {}
-      std::set<SgType*> getType() const;
+      std::set<SgType*> getType() ;
       // Implement ObjSet::operator== () at this level, through ExprObj::operator==().
       bool operator == (const ObjSet& o2) const;
 
@@ -419,7 +419,7 @@ namespace AbstractMemoryObject
   {
     public:
       PointerNamedObj   (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) {}
-      std::set<SgType*> getType() const;
+      std::set<SgType*> getType() ;
       // used for a pointer to non-array
       ObjSet* getDereference () ;
       // used for a pointer to an array
@@ -501,7 +501,7 @@ namespace AbstractMemoryObject
       PointerAliasedObj (SgType* t): AliasedObj(t){}
       ObjSet* getDereference ();
       // ObjSet * getElements() const;
-      bool equalPoints(const Pointer & that);
+      bool equalPoints(Pointer & that);
       std::set<SgType*> getType();
       bool operator == (const ObjSet& o2) const; 
 

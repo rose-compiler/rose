@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
@@ -125,7 +125,7 @@ int
 main(int argc, char *argv[]) {
     // Initialize libraries
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command line
     Settings settings;

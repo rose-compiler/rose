@@ -4,8 +4,8 @@
 #include <AsmUnparser_compat.h>
 #include <BinaryToSource.h>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 typedef SourceAstSemantics::SValue SValue;
 typedef SourceAstSemantics::SValuePtr SValuePtr;
@@ -18,13 +18,13 @@ typedef SourceAstSemantics::StatePtr StatePtr;
 typedef SourceAstSemantics::RiscOperators RiscOperators;
 typedef SourceAstSemantics::RiscOperatorsPtr RiscOperatorsPtr;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void
 BinaryToSource::init(const P2::Partitioner &partitioner) {
     disassembler_ = partitioner.instructionProvider().disassembler();
-    const RegisterDictionary *regDict = disassembler_->get_registers();
+    const RegisterDictionary *regDict = disassembler_->registerDictionary();
     raisingOps_ = RiscOperators::instance(regDict, NULL);
     BaseSemantics::DispatcherPtr protoCpu = disassembler_->dispatcher();
     if (!protoCpu)
@@ -59,7 +59,7 @@ BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostrea
     if (!settings_.allocateMemoryArray) {
         out <<"extern uint8_t *mem;\n";
     } else if (0 == *settings_.allocateMemoryArray) {
-        out <<"uint8_t mem[" <<StringUtility::addrToString(partitioner.memoryMap().greatest()+1) <<"];\n";
+        out <<"uint8_t mem[" <<StringUtility::addrToString(partitioner.memoryMap()->greatest()+1) <<"];\n";
     } else {
         out <<"uint8_t mem[" <<StringUtility::addrToString(*settings_.allocateMemoryArray) <<"];\n";
     }
@@ -252,13 +252,13 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std
         <<"initialize_memory(void) {\n";
     rose_addr_t va = 0;
     uint8_t buf[8192];
-    while (AddressInterval where = partitioner.memoryMap().atOrAfter(va).limit(sizeof buf).read(buf)) {
+    while (AddressInterval where = partitioner.memoryMap()->atOrAfter(va).limit(sizeof buf).read(buf)) {
         uint8_t *bufptr = buf;
         for (va = where.least(); va <= where.greatest(); ++va, ++bufptr) {
             out <<"    mem[" <<StringUtility::addrToString(va) <<"]"
                 <<"= " <<StringUtility::toHex2(*bufptr, 8, false, false) <<";\n";
         }
-        if (va <= partitioner.memoryMap().hull().least())
+        if (va <= partitioner.memoryMap()->hull().least())
             break;                                      // overflow of ++va
     }
     out <<"}\n";
@@ -287,7 +287,7 @@ BinaryToSource::emitMain(std::ostream &out) {
     // Initialize call frame
     {
         static const rose_addr_t magic = 0xfffffffffffffeull ; // arbitrary
-        size_t bytesPerWord = disassembler_->get_wordsize();
+        size_t bytesPerWord = disassembler_->wordSizeBytes();
         std::string sp = raisingOps_->registerVariableName(disassembler_->stackPointerRegister());
         for (size_t i=0; i<bytesPerWord; ++i)
             out <<"    mem[--" <<sp <<"] = " <<((magic>>(8*i)) & 0xff) <<"; /* arbitrary */\n";

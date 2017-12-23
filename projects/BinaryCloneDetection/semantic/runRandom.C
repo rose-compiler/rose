@@ -22,11 +22,11 @@
 # define INSTRUCTION_POINTER eip
 #endif
 
-using namespace rose;
+using namespace Rose;
 using namespace StringUtility;
 using namespace BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
@@ -178,7 +178,7 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
             const P2::Partitioner &partitioner, rose_addr_t randomAddress) {
     Stream debug(mlog[DEBUG]);
 
-    BinaryDebugger debugger(specimenName);
+    BinaryDebugger debugger(specimenName, BinaryDebugger::CLOSE_FILES);
     if (debugger.isTerminated()) {
         mlog[FATAL] <<"child " <<debugger.isAttached() <<" " <<debugger.howTerminated() <<" before we could gain control\n";
         exit(1);
@@ -254,7 +254,7 @@ isUnnamed(const P2::Function::Ptr &function) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;
@@ -291,7 +291,7 @@ main(int argc, char *argv[]) {
     P2::Partitioner partitioner = engine.partition();
     if (settings.showMaps) {
         std::cout <<"ROSE loader specimen memory map:\n";
-        partitioner.memoryMap().dump(std::cout);
+        partitioner.memoryMap()->dump(std::cout);
     }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
     info <<"; completed in " <<partitionTimer <<" seconds.\n";

@@ -12,11 +12,11 @@
 #include <Sawyer/ThreadWorkers.h>
 #include <SymbolicSemantics2.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -137,7 +137,7 @@ struct StackDeltaWorker {
         Sawyer::Stopwatch t;
         partitioner.functionStackDelta(function);
 
-        // Show some results. We're using rose::BinaryAnalysis::StackDelta::mlog[TRACE] for the messages, so the mutex here
+        // Show some results. We're using Rose::BinaryAnalysis::StackDelta::mlog[TRACE] for the messages, so the mutex here
         // doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex helps
         // keep the output lines separated from one another, especially when they're all first starting up.
         if (StackDelta::mlog[TRACE]) {
@@ -147,7 +147,9 @@ struct StackDeltaWorker {
             trace <<"stack-delta for " <<function->printableName() <<" took " <<t <<" seconds\n";
         }
 
+        // Progress reports
         ++progress;
+        partitioner.updateProgress("stack-delta", progress.ratio());
     }
 };
 
@@ -159,9 +161,9 @@ Partitioner::allFunctionStackDelta() const {
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "stack-delta analysis");
-    Sawyer::Message::FacilitiesGuard guard();
+    Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
-        rose::BinaryAnalysis::StackDelta::mlog[MARCH].disable();
+        Rose::BinaryAnalysis::StackDelta::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, StackDeltaWorker(*this, progress));
 }
 

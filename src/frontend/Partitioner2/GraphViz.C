@@ -11,10 +11,10 @@
 #define pclose _pclose
 #endif
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 using namespace Sawyer::Container::Algorithm;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace GraphViz {
@@ -159,7 +159,7 @@ CfgEmitter::CfgEmitter(const Partitioner &partitioner, const ControlFlowGraph &g
 
 void
 CfgEmitter::init() {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     // Class initialization
     if (0 == versionDate_) {
@@ -180,7 +180,7 @@ CfgEmitter::init() {
 
     // Instance initialization
     if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
-        SMTSolver *solver = NULL;
+        SmtSolver *solver = NULL;
         const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
         size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);
@@ -835,12 +835,12 @@ CfgEmitter::functionAttributes(const Function::Ptr &function) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CgEmitter::CgEmitter(const Partitioner &partitioner)
-    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
+    : functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
     callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
 }
 
-CgEmitter::CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg)
-    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
+CgEmitter::CgEmitter(const Partitioner& /*for consistency and future expansion*/, const FunctionCallGraph &cg)
+    : functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
     callGraph(cg);
 }
 

@@ -12,10 +12,10 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::Diagnostics;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -115,12 +115,12 @@ struct FunctionNoopWorker {
         : partitioner(partitioner), progress(progress) {}
 
     void operator()(size_t workId, const Function::Ptr &function) {
-#if 1 // DEBUGGING [Robb Matzke 2016-02-26]
+#if 0 // DEBUGGING [Robb Matzke 2016-02-26]
         std::cerr <<"ROBB: starting " <<function->printableName() <<"\n";
 #endif
         partitioner.functionIsNoop(function);
         ++progress;
-#if 1 // DEBUGGING [Robb Matzke 2016-02-26]
+#if 0 // DEBUGGING [Robb Matzke 2016-02-26]
         std::cerr <<"      ending   " <<function->printableName() <<"\n";
 #endif
     }

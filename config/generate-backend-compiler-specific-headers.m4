@@ -133,6 +133,13 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
       cp ${srcdir}/config/rose_specific_clang_atomic ./include-staging/${compilerName}_HEADERS/atomic
    fi
 
+# DQ (2/21/2017): This is only required for C language support (not for C++).
+# DQ (2/4/2017): Need to add required header file to support Intel compiler because we are using 
+# the __INTEL_CLANG_COMPILER macro to use EDG with the Intel header files.
+#  if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xintel"; then
+#     cp ${srcdir}/config/rose_specific_tgmath_clang.h ./include-staging/${compilerName}_HEADERS/tgmath_clang.h
+#  fi
+
 # DQ (1/15/2017): Debugging info to debug clange on Mac OSX.
 echo "edg_major_version_number = $edg_major_version_number"
 echo "compilerName = ${compilerName}"
@@ -151,9 +158,22 @@ echo "build_vendor = $build_vendor"
          # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
          # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
            echo "Now output the builtin generated file into build directory."
-         # ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-           ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
 
+         # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
+         # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
+         # to fail randomly.  This can only so far be traced to it failing for EDG 4.9, but not EDG 4.12.  So the only practical solution 
+         # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
+         # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
+         # is not pratical to focus more time on this issue.
+         # ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+         # ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+           if test "$edg_minor_version_number" -le "9"; then
+              echo "Building EDG 4.9 specific version of rose_generated_builtin_functions.h"
+              ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins_EDG_49.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+           else
+              echo "Building EDG 4.12 (and later) specific version of rose_generated_builtin_functions.h"
+              ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+           fi
            echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
 
          # DQ (1/17/2017): Make this different for Mac OSX and other (Linux) systems.
@@ -163,14 +183,28 @@ echo "build_vendor = $build_vendor"
            if test "x$build_vendor" = "xapple"; then
               sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
            else
-              sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+            # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
+            # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
+            # to fail randomly.  This can only so far be traced to it failing for EDG 4.9, but not EDG 4.12.  So the only practical solution 
+            # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
+            # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
+            # is not pratical to focus more time on this issue.
+            # sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+              if test "$edg_minor_version_number" -le "9"; then
+                 echo "Building EDG 4.9 specific version of rose_edg_required_macros_and_functions.h"
+                 sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions_EDG_49.h"
+                 cp ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions_EDG_49.h ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h
+              else
+                 echo "Building EDG 4.12 (and later) specific version of rose_edg_required_macros_and_functions.h"
+                 sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+              fi
            fi
 
          # echo "ERROR: Could not identify the EDG minor version number."
          # exit 1
         else
          # Note that we will likely want to use our mechanism (but with a smaller list of builtins that are still being missed).
-           echo "EDG 4.12 and later version builtins are determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
+           echo "Future versions of EDG 5.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
 #     fi
    fi
 
@@ -390,7 +424,15 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
    echo "includeString = $includeString"
    AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])
 
- # echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES"
- # exit 1
+# DQ (2/21/2017): Need to add required header file to support Intel compiler because we are using 
+# the __INTEL_CLANG_COMPILER macro to use EDG with the Intel header files.
+   if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xintel"; then
+#     echo "SETUP BACKEND C COMPILER: Copying config/rose_specific_tgmath_clang.h to ${compilerNameC}_HEADERS/tgmath_clang.h"
+      cp ${srcdir}/config/rose_specific_tgmath_clang.h ./include-staging/${compilerNameC}_HEADERS/tgmath_clang.h
+#     echo "DONE: SETUP BACKEND C COMPILER: Copying config/rose_specific_tgmath_clang.h to ${compilerNameC}_HEADERS/tgmath_clang.h"
+   fi
+
+#  echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES: BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
+#  exit 1
 ])
 

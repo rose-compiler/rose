@@ -17,9 +17,9 @@
 #include <Sawyer/CommandLine.h>                         // Command-line parsing. Sawyer is distributed with ROSE sources.
 #include <Sawyer/Message.h>                             // Diagnostic output streams
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 Sawyer::Message::Facility mlog;                         // This tool's diagnostic streams
 
@@ -192,7 +192,7 @@ int
 main(int argc, char *argv[], char *envp[]) {
     // Initialization
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Command-line parsing
     Settings settings;

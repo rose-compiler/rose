@@ -1,50 +1,52 @@
 #include <sage3basic.h>
 #include <BinaryUnparserPowerpc.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
 void
 Powerpc::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
-    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
-    ASSERT_not_null2(insn, "not a PowerPC instruction");
+    ASSERT_not_null(isSgAsmPowerpcInstruction(insn_));
     Base::emitInstruction(out, insn_, state);
 }
 
 void
-Powerpc::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
+Powerpc::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;
 
     if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(expr)) {
-        emitOperandBody(out, add->get_lhs(), state);
+        outputExpr(out, add->get_lhs(), state);
         out <<" + ";
-        emitOperandBody(out, add->get_rhs(), state);
+        outputExpr(out, add->get_rhs(), state);
 
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr)) {
-        emitTypeName(out, mre->get_type(), state);
+        state.frontUnparser().emitTypeName(out, mre->get_type(), state);
         out <<" [";
-        emitOperandBody(out, mre->get_address(), state);
+        outputExpr(out, mre->get_address(), state);
         out <<"]";
 
     } else if (SgAsmDirectRegisterExpression *dre = isSgAsmDirectRegisterExpression(expr)) {
-        emitRegister(out, dre->get_descriptor(), state);
+        state.frontUnparser().emitRegister(out, dre->get_descriptor(), state);
 
     } else if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(expr)) {
-        comments = emitSignedInteger(out, ive->get_bitVector(), state);
+        comments = state.frontUnparser().emitSignedInteger(out, ive->get_bitVector(), state);
     } else {
         ASSERT_not_implemented(expr->class_name());
     }
 
-    if (!expr->get_replacement().empty())
-        comments.push_back(expr->get_replacement());
     if (!expr->get_comment().empty())
         comments.push_back(expr->get_comment());
     if (!comments.empty())
         out <<"<" + boost::join(comments, ",") <<">";
 }
-    
+
+void
+Powerpc::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
+    outputExpr(out, expr, state);
+}
+
 } // namespace
 } // namespace
 } // namespace

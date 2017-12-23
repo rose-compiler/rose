@@ -15,7 +15,7 @@
 #include <msvc_stdint.h>
 #endif
 
-namespace rose {
+namespace Rose {
 
 /** Functions for operating on strings.
  *
@@ -246,21 +246,21 @@ ROSE_UTIL_API unsigned hexadecimalToInt(char);
  *  instance, here's how to convert a set of integers to a comma-separated list:
  *
  * @code
- *  using namespace rose::StringUtility;
+ *  using namespace Rose::StringUtility;
  *  std::set<int> numbers = ...;
  *  std::string s = join(", ", toStrings(numbers));
  * @endcode
  *
  *  Here's how to convert a vector of addresses to space-separated hexadecimal values:
  * @code
- *  using namespace rose::StringUtility;
+ *  using namespace Rose::StringUtility;
  *  std::vector<rose_addr_t> addresses = ...;
  *  std::string s = join(" ", toStrings(addresses, addrToString));
  * @endcode
  *
  *  Here's how one could surround each address with angle brackets:
  * @code
- *  using namespace rose::StringUtility;
+ *  using namespace Rose::StringUtility;
  *  struct AngleSurround {
  *      std::string operator()(rose_addr_t addr) {
  *         return "<" + addrToString(addr) + ">";

@@ -8,7 +8,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -21,6 +21,9 @@ namespace InstructionSemantics2 {
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
+public:
+    typedef BaseSemantics::Dispatcher Super;
+
 protected:
     X86InstructionSize processorMode_;
 
@@ -62,14 +65,14 @@ private:
 
     template<class S>
     void save(S &s, const unsigned version) const {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
-        s & processorMode_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(processorMode_);
     }
     
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
-        s & processorMode_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(processorMode_);
         regcache_init();
         iproc_init();
         memory_init();
@@ -169,16 +172,18 @@ public:
 
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
 
+    enum AccessMode { READ_REGISTER, PEEK_REGISTER };
+
     /** Architecture-specific read from register.
      *
      *  Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor, AccessMode mode = READ_REGISTER);
 
     /** Architecture-specific write to register.
      *
      *  Similar to RiscOperators::writeRegister, but might do additional architecture-specific things. For instance, writing to
      *  a 32-bit GPR such as "eax" on x86-64 will write zeros to the upper half of "rax". */
-    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr &result);
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &result);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);
@@ -303,7 +308,7 @@ public:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
 #endif
 
 #endif

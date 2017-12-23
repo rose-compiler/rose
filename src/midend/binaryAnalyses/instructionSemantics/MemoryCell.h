@@ -6,7 +6,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/list.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -71,10 +71,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & address_;
-        s & value_;
-        s & writers_;
-        s & ioProperties_;
+        s & BOOST_SERIALIZATION_NVP(address_);
+        s & BOOST_SERIALIZATION_NVP(value_);
+        s & BOOST_SERIALIZATION_NVP(writers_);
+        s & BOOST_SERIALIZATION_NVP(ioProperties_);
     }
 #endif
 

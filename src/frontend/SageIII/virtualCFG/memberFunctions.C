@@ -231,7 +231,8 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
 #else
     if (isSgTemplateMemberFunctionDeclaration(decl) != NULL)
        {
-         printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
+         if ( SgProject::get_verbose() > 1 )
+           printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
        }
 #endif
 
@@ -1636,6 +1637,34 @@ std::vector<CFGEdge> SgNullStatement::cfgInEdges(unsigned int idx) {
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
   return result;
 }
+
+unsigned int   // straight line statement, start==end
+SgStaticAssertionDeclaration::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+bool SgStaticAssertionDeclaration::cfgIsIndexInteresting(unsigned int idx) const {
+  return idx == 1;
+}
+
+std::vector<CFGEdge> SgStaticAssertionDeclaration::cfgOutEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  return result;
+}
+
+std::vector<CFGEdge>
+SgStaticAssertionDeclaration::cfgInEdges(unsigned int idx)
+   {
+     ROSE_ASSERT (idx == 0);
+     std::vector<CFGEdge> result;
+     addIncomingFortranGotos(this, idx, result);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
 
 unsigned int
 SgTypedefDeclaration::cfgIndexForEnd() const
@@ -5036,20 +5065,35 @@ bool SgFunctionCallExp::isLValue() const
         // Liao 10/20/2015 . We may encounter a function pointer, strip the pointer       
         type = type->stripType (SgType::STRIP_POINTER_TYPE);
         SgFunctionType* ftype = isSgFunctionType(type);
-        if (!ftype)
+        if (ftype)
         {
-                //cout<<this->get_file_info()->get_filename()<<":"<< this->get_file_info()->get_line()<<endl;;
+            if (SageInterface::isReferenceType(ftype->get_return_type()))
+                    return true;
+            else
+                    return false;
+        }
+        else if (isSgClassType (type))
+        {
+          // Liao, 4/19/2017. Support calls to class member functions. 
+          SgExpression* func = get_function();
+          if (isSgDotExp(func) || isSgArrowExp(func) || isSgVarRefExp (func) )
+            return func->isLValue();
+          else if (isSgConstructorInitializer(func)) //TODO: double check this. Now assume it is similar to SgVarRefExp::isLValue(). 
+            return true; 
+          else
+          {
+             cerr<<"SgFunctionCallExp function class name:"<<func->class_name()<<endl;
+             ROSE_ASSERT(!"Error when handling a member function call in SgFunctionCallExp::isLValue");  
+          }
+        }
+        else  
+        {
+               //cout<<this->get_file_info()->get_filename()<<":"<< this->get_file_info()->get_line()<<endl;;
                 this->get_file_info()->display();
                 cerr<<"SgFunctionCallExp function base type:"<<type->class_name()<<endl;
                 ROSE_ASSERT(!"Error calling a function through a non-function type in isLValue on SgFunctionCallExp");
                 return true;
-        }
-        else
-        {
-                if (SageInterface::isReferenceType(ftype->get_return_type()))
-                        return true;
-                else
-                        return false;
+ 
         }
 }
 

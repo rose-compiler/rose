@@ -141,7 +141,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2004_81.C \
 	test2004_83.C \
 	test2004_84.C \
-	test2004_85.C \
 	test2004_86.C \
 	test2004_87.C \
 	test2004_88.C \
@@ -418,7 +417,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2006_05.C \
 	test2006_06.C \
 	test2006_07.C \
-	test2006_08.C \
 	test2006_10.C \
 	test2006_12.C \
 	test2006_13.C \
@@ -433,7 +431,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2006_26.C \
 	test2006_28.C \
 	test2006_34.C \
-	test2006_37.C \
 	test2006_38.C \
 	test2006_39.C \
 	test2006_40.C \
@@ -1348,6 +1345,12 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 # test2012_188.C 
 # test2013_243.C 
 
+# DQ (11/17/2017): These were not previously being tested by the Intel and were part of a large number that were missed from Intel (and GNU 6.1) testing.
+if !USING_INTEL_COMPILER
+ROSE__CXX_TESTS_WITHOUT_2013_241 += \
+	test2006_08.C \
+        test2006_37.C
+endif
 
 # ROSE__CXX_TESTS_WITHOUT_2013_241 = $(ROSE__CXX_TESTS)
 
@@ -1396,13 +1399,33 @@ ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) \
 ROSE__CXX_TESTS_WITHOUT_2013_241 += \
 	test2013_234.C \
 	test2013_240.C 
+else
+# DQ (11/17/2017): We want to include the test codes test2001_xx.C through test2013_xx.C and there were being droped by mistake (I think).
+# ROSE__CXX_TESTS =
+ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241)
 endif
 
 ROSE__CXX_TESTS__BOOST += \
 	test2013_235.C 
+
 else
 # DQ (1/16/2017): We need to include this to get the larger list of older test codes as well.
 ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) 
+endif
+
+# DQ (2/18/2017): Moved test2004_143.C and test2004_149.C to be excluded from CLANG using EDG 4.9.
+# DQ (1/28/2017): This fails in EDG for EDG 4.9 using Clang 3.8 header files.
+# EDG 4.9 can't handle the header files from later versions of GNU and Clang 
+# is using the later version GNU header files (need to configure ROSE with 
+# version EDG 4.12 or later).
+if USING_CLANG_COMPILER
+if !ROSE_USE_EDG_VERSION_4_9
+ROSE__CXX_TESTS += \
+	test2004_85.C
+endif
+else
+ROSE__CXX_TESTS += \
+   test2004_85.C 
 endif
 
 # endif

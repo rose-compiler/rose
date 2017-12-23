@@ -4,7 +4,7 @@
 #include "BinaryDataFlow.h"
 #include "Diagnostics.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;
@@ -17,7 +17,7 @@ DataFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        rose::Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::DataFlow");
+        Rose::Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::DataFlow");
     }
 }
 

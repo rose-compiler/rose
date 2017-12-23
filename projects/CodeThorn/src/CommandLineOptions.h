@@ -14,40 +14,47 @@
 #include <boost/program_options.hpp>
 #endif
 
-//namespace po = boost::program_options;
-
-class BoolOptions {
+class CommandLineOptions 
+#ifdef USE_SAWYER_COMMANDLINE
+  : public Sawyer::CommandLine::Boost::variables_map
+#else
+  : public boost::program_options::variables_map
+#endif
+  {
 public:
-  BoolOptions();
-  BoolOptions(int argc, char* argv[]);
-  void init(int argc0, char* argv0[]);
-  void registerOption(std::string name, bool defaultval);
-  void setOption(std::string name, bool val);
-
-  /* checks whether the argument with name 'name' (with no parameters)
-     is specified on the command line and sets the value to true if it
-     is detected. If name with the prefix 'no-' is specified it sets
-     the value for 'name' to false. Note, this function does *not* set a
-     default value. This must be set with registerOption.
-  */
-  void processZeroArgumentsOption(std::string name);
-
-  void processOptions();
-  bool operator[](std::string option);
-  std::string toString();
-private:
-  int argc;
-  char** argv;
-  std::map<std::string,bool> mapping;
+  /// Returns true iff "option" is available.
+  bool isDefined(std::string option);
+  /// Returns true iff "option" is available, but was not set explicitly.
+  /** Note that an exlicit selection of the default value will cause this function to return false. */
+  bool isDefaulted(std::string option);
+  /// Returns true iff "option" was provided by the user.
+  bool isUserProvided(std::string option);
+  /// Returns the value of the Boolean option with name "option".
+  bool getBool(std::string option);
+  /// Returns the value of the integer option with name "option".
+  int getInt(std::string option);
+  /// Returns the value of the string option with name "option".
+  std::string getString(std::string option);
+  /// (Over-)writes the current entry for "option" with "value".
+  template<typename T> void setOption(std::string option, T value);
 };
 
-extern BoolOptions boolOptions; // defined in CommandLineOptions.C
-
-#ifdef USE_SAWYER_COMMANDLINE
-extern Sawyer::CommandLine::Boost::variables_map args;
-#else
-extern boost::program_options::variables_map args; // defined in CommandLineOptions.C
-#endif
+extern CommandLineOptions args; // defined in CommandLineOptions.C
 
 extern int option_debug_mode;
+
+
+// template function implementation
+#include "CodeThornException.h"
+using namespace std;
+
+template<typename T>
+void CommandLineOptions::setOption(string option, T value) {
+  if (count(option) < 1) {
+    throw CodeThorn::Exception("Trying to set command line option \"" + option + "\" that does not exist.");
+  }
+  const_cast<boost::program_options::variable_value&>(operator[](option)) = 
+    boost::program_options::variable_value(boost::any(value), false);
+}
 #endif
+

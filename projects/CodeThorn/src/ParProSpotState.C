@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "ParProSpotState.h"
 
 using namespace CodeThorn;
@@ -36,3 +39,5 @@ std::string ParProSpotState::toString() const {
 const ParProEState& ParProSpotState::getEState() const {
   return estate;
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

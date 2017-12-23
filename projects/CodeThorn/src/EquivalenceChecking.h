@@ -10,13 +10,6 @@ class SgNode;
 class SgPragmaDeclaration;
 
 class EquivalenceChecking {
- public:
-  typedef map<SgForStatement*,SgPragmaDeclaration*> ForStmtToOmpPragmaMap;
-  static bool isInsideOmpParallelFor(SgNode* node, EquivalenceChecking::ForStmtToOmpPragmaMap& forStmtToPragmaMap);
-  static bool isOmpParallelFor(SgForStatement* forNode, EquivalenceChecking::ForStmtToOmpPragmaMap& forStmtToPragmaMap);
-  static LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler);
-  static ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root);
-  static list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string pragmaKeyWord);
 };
 
 #endif

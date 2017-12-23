@@ -4,7 +4,7 @@
 
 #include <Sawyer/CommandLine.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
@@ -18,6 +18,7 @@ struct Settings {
 
     struct {
         bool showingReasons;                            /**< Show reasons for function existing. */
+        bool showingDemangled;                          /**< Show demangled name in preference to mangled name. */
         struct {
             bool showing;                               /**< Show function call graph? */
         } cg;                                           /**< Settings for function call graphs. */
@@ -72,6 +73,7 @@ struct Settings {
 
         struct {
             bool showing;                               /**< Show instruction comments? */
+            bool usingDescription;                      /**< Lacking comment, use instruction description as comment? */
             std::string pre;                            /**< String to introduce a comment. */
             std::string post;                           /**< String to terminate a comment. */
             size_t fieldWidth;                          /**< Min characters to use for the comment field. */
@@ -85,6 +87,7 @@ struct Settings {
 
 // Forward declarations.
 class Base;
+class State;
 typedef Sawyer::SharedPointer<Base> BasePtr;
 
 /** Command-line switches for unparser settings. */

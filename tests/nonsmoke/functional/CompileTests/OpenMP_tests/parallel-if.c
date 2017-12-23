@@ -2,6 +2,7 @@
 // number of threads should be set to 1 if the if-clause's expression evaluates to be false
 #include <assert.h>
 #include <stdio.h>
+#include <omp.h>
 
 int main(void)
 {

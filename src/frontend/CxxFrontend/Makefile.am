@@ -35,7 +35,11 @@ EDGBIN_SIGNATURE      = $(shell cat $(EDGBIN_SIGNATURE_FILE) 2>/dev/null)
 # not to use EDGBIN_NAME as a target or dependency in this makefile since make needs to parse those before the
 # $(EDGBIN_SIGNATURE_FILE) can be created.
 EDGBIN_NAME_PREFIX = roseBinaryEDG-@ROSE_EDG_MAJOR_VERSION_NUMBER@-@ROSE_EDG_MINOR_VERSION_NUMBER@
+if ROSE_USE_MICROSOFT_EXTENSIONS
+EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(FRONTEND_CXX_VENDOR_AND_VERSION2)-microsoft
+else
 EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(FRONTEND_CXX_VENDOR_AND_VERSION2)
+endif
 EDGBIN_NAME        = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 # All the .PHONY's need to be outside any automake "if" statements otherwise automake complains.
@@ -195,6 +199,11 @@ MOSTLYCLEANFILES += EDG/libroseEDG.la
 endif
 
 clean-local:
-	rm -rf EDG/.libs $(EDGBIN_NAME_PREFIX)-*.tar.gz
+# DQ (3/1/2017): Need to be able to run make clean whenClang frontend support is defined.
+#	rm -rf EDG/.libs $(EDGBIN_NAME_PREFIX)-*.tar.gz
+	rm -rf EDG/.libs 
+if !ROSE_USE_CLANG_FRONTEND
+	rm -rf $(EDGBIN_NAME_PREFIX)-*.tar.gz
+endif
 
 .PHONY: $(PHONIES)

@@ -5,7 +5,7 @@
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Holds a set of registers without regard for register boundaries.
@@ -23,9 +23,13 @@ namespace BinaryAnalysis {
  *  query whether each is fully present in this container, report its name if present, and then remove its part from this
  *  container. If the container is non-empty at the end then all that can be done is to report which parts are still present. */
 class RegisterParts {
+
 private:
     typedef Sawyer::Container::Interval<size_t> BitRange;
     typedef Sawyer::Container::IntervalSet<BitRange> BitSet;
+
+ // DQ (2/13/2017): Testing a simpler case.
+ // BitSet XXX;
 
 private:
     class MajorMinor {
@@ -37,14 +41,15 @@ private:
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & majr_ & minr_;
+            s & BOOST_SERIALIZATION_NVP(majr_);
+            s & BOOST_SERIALIZATION_NVP(minr_);
         }
 #endif
 
     public:
         MajorMinor(): majr_(0), minr_(0) {}
 
-        MajorMinor(const RegisterDescriptor &reg) /*implicit*/
+        MajorMinor(RegisterDescriptor reg) /*implicit*/
             : majr_(reg.get_major()), minr_(reg.get_minor()) {}
 
         bool operator<(const MajorMinor &other) const {
@@ -56,8 +61,18 @@ private:
     };
 
 private:
+ // DQ (2/13/2017): Test alternative formulation.
     typedef Sawyer::Container::Map<MajorMinor, BitSet> Map;
+
+ // DQ (2/13/2017): Testing a simpler case.
+ // typedef Sawyer::Container::Map<MajorMinor, BitSet > MapXXX;
+ // MapXXX Map_YYY;
+
+ // DQ (2/13/2017): Both of these work fine.
+ // typedef Sawyer::Container::Map<MajorMinor, Sawyer::Container::IntervalSet< Sawyer::Container::Interval<size_t> > > Map;
+ // typedef Sawyer::Container::Map<MajorMinor, Sawyer::Container::IntervalSet< BitRange > > Map;
     Map map_;
+
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -65,11 +80,21 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & map_;
+        s & BOOST_SERIALIZATION_NVP(map_);
     }
 #endif
     
 public:
+    /** Default construct an object with no register parts. */
+    RegisterParts() {}
+
+    /** Constructor to insert a register.
+     *
+     *  This is the same as default-constructing an instance and inserting the specified register. */
+    explicit RegisterParts(RegisterDescriptor reg) {
+        insert(reg);
+    }
+
     /** Predicate checking whether this container is empty.
      *
      *  Returns true if this container holds no part of any register. */
@@ -81,7 +106,7 @@ public:
      *
      *  Returns true if any part of @p reg is present in this container. The @p reg need not be entirely present. See also @ref
      *  existsAll. */
-    bool existsAny(const RegisterDescriptor &reg) const {
+    bool existsAny(RegisterDescriptor reg) const {
         return map_.exists(reg) && map_[reg].isOverlapping(bitRange(reg));
     }
 
@@ -89,7 +114,7 @@ public:
      *
      *  Returns true if all of @p reg is present in this container. It is not sufficient for just part of @p reg to be
      *  present. See also @ref existsAny. */
-    bool existsAll(const RegisterDescriptor &reg) const {
+    bool existsAll(RegisterDescriptor reg) const {
         return map_.exists(reg) && map_[reg].contains(bitRange(reg));
     }
 
@@ -97,7 +122,7 @@ public:
      *
      *  Inserts @p reg into this container. After inserting, @ref existsAll and @ref existsAny will both return true for @p
      *  reg. Nothing happens if @p reg is already fully present in this container. */
-    void insert(const RegisterDescriptor &reg) {
+    void insert(RegisterDescriptor reg) {
         map_.insertMaybeDefault(reg).insert(bitRange(reg));
     }
 
@@ -105,7 +130,7 @@ public:
      *
      *  Removes all of @p reg from this container.  After erasing, @ref existsAll and @ref existsAny will both return false for
      *  @p reg.  Nothing happens if @p reg is already fully absent from this container. */
-    void erase(const RegisterDescriptor &reg);
+    void erase(RegisterDescriptor reg);
 
     /** Erase everything.
      *
@@ -171,10 +196,11 @@ public:
 
 
 private:
-    static BitRange bitRange(const RegisterDescriptor &reg) {
+    static BitRange bitRange(RegisterDescriptor reg) {
         ASSERT_require(reg.is_valid());
         return BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     }
+
 };
 
 } // namespace

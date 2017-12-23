@@ -1,3 +1,5 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
 
 #ifndef PAR_PRO_SPOT_SUCC_ITERATOR_HH
 #define PAR_PRO_SPOT_SUCC_ITERATOR_HH
@@ -11,7 +13,7 @@
 
 //CodeThron includes
 #include "ParProSpotState.h"
-#include "StateRepresentations.h"
+#include "ParProEState.h"
 
 // BOOST includes
 #include "boost/unordered_set.hpp"
@@ -28,7 +30,11 @@ namespace CodeThorn {
 
 typedef boost::unordered_map<string, int> String2Int;
 
-  //An iterator over the successor states of the given parameter state
+  /*! 
+   * \brief SPOT-specific iterator over the successor states of a ParProEState (see SpotConnection).
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParProSpotSuccIter : public spot::tgba_succ_iterator {
   public:
     ParProSpotSuccIter(ParProTransitionGraph& tg, const ParProEState& state,
@@ -67,3 +73,5 @@ typedef boost::unordered_map<string, int> String2Int;
 }
 
 #endif
+
+#endif // end of "#ifdef HAVE_SPOT"

@@ -6,7 +6,7 @@
 #include "integerOps.h"
 #include "sageBuilderAsm.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for the PowerPC architecture. */
@@ -16,11 +16,11 @@ public:
     DisassemblerPowerpc(const DisassemblerPowerpc& other): Disassembler(other), ip(other.ip), insn(other.insn) {}
     virtual ~DisassemblerPowerpc() {}
     virtual DisassemblerPowerpc *clone() const { return new DisassemblerPowerpc(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const;
     virtual Unparser::BasePtr unparser() const;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
-    virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
+    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&);
 private:
     /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerPowerpc. This
      *  constructor should be used when an exception occurs during disassembly of an instruction; it is not suitable for

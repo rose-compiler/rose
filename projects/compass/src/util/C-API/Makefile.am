@@ -3,6 +3,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = -I$(srcdir)/.. -I$(srcdir)/../../compassSupport $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 #==========================================================================
 # Auxiliary library.
@@ -32,7 +33,6 @@ noinst_PROGRAMS = testC-API
 # this problem still need to be solved in the future
 LDADD = $(ROSE_LIBS_WITH_PATH) ../../compassSupport/libCompass.la libC-API.la
 #LDADD = ../../compassSupport/libCompass.la libC-API.la $(ROSE_LIBS_WITH_PATH)
-#LDADD = ../../compassSupport/libCompass.la libC-API.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 testC_API_SOURCES = testC-API.C
 
@@ -40,7 +40,17 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 # VALGRIND  = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
+
 
 test: libC-API.la testC-API$(EXEEXT) $(srcdir)/c-string.api $(srcdir)/c-string.c
 	$(VALGRIND) ./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only -c $(srcdir)/c-string.c

@@ -13,6 +13,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 if ROSE_USE_SQLITE_DATABASE
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 noinst_PROGRAMS += libraryIdentificationTest
 libraryIdentificationTest_SOURCES = libraryIdentificationTest.C

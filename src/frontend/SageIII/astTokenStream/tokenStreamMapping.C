@@ -67,7 +67,7 @@
 #define ERROR_CHECKING 0
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // namespace for token ID values.
 using namespace ROSE_token_ids;
@@ -676,10 +676,11 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                int trailing_whitespace_end_line     = trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.line_num;
                int trailing_whitespace_end_column   = trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.column_num;
 
-               int else_whitespace_start_line       = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.line_num; 
-               int else_whitespace_start_column     = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.column_num;
-               int else_whitespace_end_line         = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.line_num;
-               int else_whitespace_end_column       = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.column_num;
+            // DQ (3/25/2017): Clang reports these as unused variables.
+            // int else_whitespace_start_line       = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.line_num; 
+            // int else_whitespace_start_column     = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.column_num;
+            // int else_whitespace_end_line         = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.line_num;
+            // int else_whitespace_end_column       = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.column_num;
 
                label += "\\n leading_whitespace token #'s (" + StringUtility::numberToString(leading_whitespace_start) + "," + StringUtility::numberToString(leading_whitespace_end) +
                         ") pos (" + StringUtility::numberToString(leading_whitespace_start_line)  + ":" + StringUtility::numberToString(leading_whitespace_start_column) + "," + 
@@ -1337,7 +1338,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                               int test_end = for_test_mappingInfo->token_subsequence_end;
                               int increment_start = for_increment_mappingInfo->token_subsequence_start;
-                              int increment_end = for_increment_mappingInfo->token_subsequence_start;
+
+                           // DQ (3/25/2017): Clang reports these as unused variables.
+                           // int increment_end = for_increment_mappingInfo->token_subsequence_start;
 #if 0
                               printf ("test_end = %d increment_start = %d increment_end = %d \n",test_end,increment_start,increment_end);
 #endif
@@ -1860,8 +1863,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ROSE_ASSERT(tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end());
                               TokenStreamSequenceToNodeMapping* current_mappingInfo = tokenStreamSequenceMap[n];
                               ROSE_ASSERT(current_mappingInfo != NULL);
-                              int current_token_sequence_start  = current_mappingInfo->token_subsequence_start;
-                              int current_token_sequence_end    = current_mappingInfo->token_subsequence_end;
+
+                           // DQ (3/25/2017): Clang reports these as unused variables.
+                           // int current_token_sequence_start  = current_mappingInfo->token_subsequence_start;
+                           // int current_token_sequence_end    = current_mappingInfo->token_subsequence_end;
 #if 0
                               printf ("   --- n = %p = %s current_token_sequence (%d,%d) \n",n,n->class_name().c_str(),current_token_sequence_start,current_token_sequence_end);
 #endif
@@ -2521,8 +2526,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    if (previous_mappingInfo != NULL)
                                       {
                                         int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
-                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
 #if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
                                         printf ("   --- previous_mappingInfo_leading_whitespace_end = %d \n",previous_mappingInfo_leading_whitespace_end);
                                         printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
 #endif
@@ -2595,8 +2600,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       {
                                      // int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
                                         int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_end + 1;
-                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
 #if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
                                         printf ("   --- previous_mappingInfo_leading_whitespace_end = %d \n",previous_mappingInfo_leading_whitespace_end);
                                         printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
 #endif
@@ -3697,7 +3702,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               bool done = false;
 
                               while ( (done == false) && 
-                                      (temp_starting_NodeSequenceWithoutTokenMapping >= 0) &&
+                                   // DQ (3/25/2017): Eliminate Clang warning: warning: comparison of unsigned expression >= 0 is always true [-Wtautological-compare]
+                                   // (temp_starting_NodeSequenceWithoutTokenMapping >= 0) &&
                                       ( (childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node == NULL) ||
                                         (tokenStreamSequenceMap.find(childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node) == tokenStreamSequenceMap.end()) ) )
                                  {
@@ -3726,8 +3732,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         temp_starting_NodeSequenceWithoutTokenMapping--;
                                       }
 
-                                   if (temp_starting_NodeSequenceWithoutTokenMapping >= 0)
-                                      {
+                                // DQ (3/25/2017): Eliminate Clang warning: warning: comparison of unsigned expression >= 0 is always true [-Wtautological-compare]
+                                // if (temp_starting_NodeSequenceWithoutTokenMapping >= 0)
+                                //    {
                                         left_edge_node = childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node;
 #if 0
                                         printf ("   --- temp_starting_NodeSequenceWithoutTokenMapping = %zu \n",temp_starting_NodeSequenceWithoutTokenMapping);
@@ -3748,7 +3755,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                   (tokenStreamSequenceMap.find(childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node) != tokenStreamSequenceMap.end()) ? "true" : "false");
                                            }
 #endif
-                                      }
+                                  //  }
 #if 0
                                    printf ("   --- (end of loop): done = %s \n",done ? "true" : "false");
 #endif
@@ -4225,8 +4232,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                          printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector[%zu] = %p \n",i,tokenToNodeVector[i]);
 #endif
-                         TokenStreamSequenceToNodeMapping* mappingInfo = tokenToNodeVector[i];
 #if 0
+                         TokenStreamSequenceToNodeMapping* mappingInfo = tokenToNodeVector[i];
                          printf ("   --- node = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
                       // Need to define intervals and detect redundant intervals (based on token_subsequence_start and token_subsequence_end, and not the leading and trailing intervals).
@@ -4736,9 +4743,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                               printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.column_num    = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
                               printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
+#if 0
                               int ending_token_line_number   = tokenStream[end_of_token_subsequence]->ending_fpi.line_num;
                               int ending_token_column_number = tokenStream[end_of_token_subsequence]->ending_fpi.column_num;
-#if 0
                               printf ("ending_token_line_number   = %d ending_line   = %d \n",ending_token_line_number,ending_line);
                               printf ("ending_token_column_number = %d ending_column = %d \n",ending_token_column_number,ending_column);
 #endif
@@ -5544,9 +5551,9 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
        // int tokenStream_start = i->second.first;
        // int tokenStream_end = i->second.second;
           SgNode* node          = (*i)->node;
+#if 0
           int tokenStream_start = (*i)->token_subsequence_start;
           int tokenStream_end   = (*i)->token_subsequence_end;
-#if 0
           printf ("In outputTokenStreamSequenceMap(): node = %p = %s tokenStream_start = %d tokenStream_end = %d \n",node,node->class_name().c_str(),tokenStream_start,tokenStream_end);
 #endif
        // if ( (tokenStream_start - previous_end) > 1)
@@ -5560,6 +5567,9 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
             // Output the tokens between the end of the last token and the start of the current token.
             // printf ("\n\nSpace before node = %p = %s tokens previous_end = %d to tokenStream_start-1 = %d \n",node,node->class_name().c_str(),previous_end,tokenStream_start-1);
             // int node_start_line   = node->get_startOfConstruct()->get_line();
+
+               int trailing_whitespace_end   = (*i)->trailing_whitespace_end;
+#if 0
                int node_start_line   = node->get_startOfConstruct()->get_physical_line();
                int node_start_column = node->get_startOfConstruct()->get_col();
             // int node_end_line     = node->get_endOfConstruct()->get_line();
@@ -5569,8 +5579,7 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
                int leading_whitespace_start  = (*i)->leading_whitespace_start;
                int leading_whitespace_end    = (*i)->leading_whitespace_end;
                int trailing_whitespace_start = (*i)->trailing_whitespace_start;
-               int trailing_whitespace_end   = (*i)->trailing_whitespace_end;
-#if 0
+
             // if (tokenStream.size() <= (size_t)trailing_whitespace_end)
                if (tokenStream.size() <= trailing_whitespace_end)
                   {

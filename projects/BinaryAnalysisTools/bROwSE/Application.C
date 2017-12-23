@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
 
 
 
-using namespace ::rose;
-using namespace ::rose::BinaryAnalysis;
-using namespace ::rose::Diagnostics;
+using namespace ::Rose;
+using namespace ::Rose::BinaryAnalysis;
+using namespace ::Rose::Diagnostics;
 
 namespace bROwSE {
 
@@ -131,7 +131,7 @@ Application::main(int argc, char *argv[]) {
     Diagnostics::destination = Sawyer::Message::Multiplexer::instance()
                                ->to(Sawyer::Message::FileSink::instance(stderr));
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "bROwSE");
+    Diagnostics::initAndRegister(&mlog, "bROwSE");
 
     // Parse the command-line
     Settings settings;
@@ -374,7 +374,7 @@ Application::isTabAvailable(MainTab idx) {
         case PartitionerTab:
             return true;
         case MemoryMapTab:
-            return !wMemoryMap_->memoryMap().isEmpty();
+            return !wMemoryMap_->memoryMap()->isEmpty();
         case FunctionListTab:
             return (!ctx_.partitioner.isDefaultConstructed() && wFunctionList_->functions().size());
         case FunctionSummaryTab:
@@ -382,11 +382,11 @@ Application::isTabAvailable(MainTab idx) {
         case AssemblyTab:
             return currentFunction_ != NULL;
         case HexDumpTab:
-            return !wHexDump_->memoryMap().isEmpty();
+            return !wHexDump_->memoryMap()->isEmpty();
         case MagicTab:
-            return !wMagic_->memoryMap().isEmpty();
+            return !wMagic_->memoryMap()->isEmpty();
         case StringsTab:
-            return !wStrings_->memoryMap().isEmpty();
+            return !wStrings_->memoryMap()->isEmpty();
         case StatusTab:
             return true;
         default:
@@ -431,7 +431,7 @@ Application::handleSpecimenLoaded(bool done) {
     if (done) {
         wMemoryMap_->memoryMap(ctx_.engine.memoryMap());
     } else {
-        wMemoryMap_->memoryMap(MemoryMap());
+        wMemoryMap_->memoryMap(MemoryMap::instance());
     }
     showHideTabs();
 }

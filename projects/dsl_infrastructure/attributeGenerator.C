@@ -26,7 +26,7 @@
 // #include "dslSupport.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Inherited Attribute
 AttributeGenerator_InheritedAttribute::AttributeGenerator_InheritedAttribute()

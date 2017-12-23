@@ -4,9 +4,9 @@
 #include <BinaryString.h>
 #include <Sawyer/ProgressBar.h>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Strings {
 
@@ -21,7 +21,7 @@ initDiagnostics(void) {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::Strings");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Strings");
     }
 }
     

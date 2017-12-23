@@ -23,38 +23,125 @@
  *  registers (such as "eax" and "rax", the 32- and 64-bit versions of a single CPU register) do, in fact, overlap in the
  *  RegisterDescriptor address space and that the overlap indicates how the registers are related.
  *
- *  Users should not assume that RegisterDescriptor entries from two separate dictionaries are compatible. Looking up the "eax"
- *  register in one dictionary may return a different descriptor than "eax" looked up in a different dictionary.  Components of
- *  the ROSE binary support that generate RegisterDescriptors provide a mechanism for obtaining (and possibly setting) the
- *  register dictionary.  For instance, the Disassembler class has get_registers() and set_registers() methods. */
+ *  Users should not assume that RegisterDescriptor entries from two separate dictionaries are compatible, although the
+ *  dictionaries created by the ROSE library do use compatible descriptors across each family. Looking up the "eax" register in
+ *  one dictionary may return a different descriptor than "eax" looked up in a different dictionary (but not in ROSE-created
+ *  dictinaries).  Components of the ROSE binary support that generate RegisterDescriptors provide a mechanism for obtaining
+ *  (and possibly setting) the register dictionary.  For instance, the Disassembler class has get_registers() and
+ *  set_registers() methods. */
 class RegisterDictionary {
 public:
     typedef std::map<std::string/*name*/, RegisterDescriptor> Entries;
     typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
-    /* Functions that return a dictionary for a particular machine architecute. (See implementation for documentation.) */
-    static const RegisterDictionary *dictionary_i8086();                // Intel 8086
-    static const RegisterDictionary *dictionary_i8088();                // Intel 8088
-    static const RegisterDictionary *dictionary_i286();                 // Intel 80286
-    static const RegisterDictionary *dictionary_i386();                 // Intel 80386
-    static const RegisterDictionary *dictionary_i386_387();             // Intel 80386 with 80387 math coprocessor
-    static const RegisterDictionary *dictionary_i486();                 // Intel 80486
-    static const RegisterDictionary *dictionary_pentium();              // Intel Pentium
-    static const RegisterDictionary *dictionary_pentiumiii();           // Intel Pentium III
-    static const RegisterDictionary *dictionary_pentium4();             // Intel Pentium 4
-    static const RegisterDictionary *dictionary_amd64();                // AMD Athlon 64
-    static const RegisterDictionary *dictionary_arm7();                 // ARMv7-M architecture (ARM Cortex-M3)
+
+    /** Intel 8086 registers.
+     *
+     *  The Intel 8086 has fourteen 16-bit registers. Four of them (AX, BX, CX, DX) are general registers (although each may
+     *  have an additional purpose; for example only CX can be used as a counter with the loop instruction). Each can be
+     *  accessed as two separate bytes (thus BX's high byte can be accessed as BH and low byte as BL). Four segment registers
+     *  (CS, DS, SS and ES) are used to form a memory address. There are two pointer registers. SP points to the bottom of the
+     *  stack and BP which is used to point at some other place in the stack or the memory(Offset).  Two registers (SI and DI)
+     *  are for array indexing. The FLAGS register contains flags such as carry flag, overflow flag and zero flag. Finally, the
+     *  instruction pointer (IP) points to the next instruction that will be fetched from memory and then executed. */
+    static const RegisterDictionary *dictionary_i8086();
+
+    /** Intel 8088 registers.
+     *
+     *  Intel 8088 has the same set of registers as Intel 8086. */
+    static const RegisterDictionary *dictionary_i8088();
+
+    /** Intel 80286 registers.
+     *
+     *  The 80286 has the same registers as the 8086 but adds two new flags to the "flags" register. */
+    static const RegisterDictionary *dictionary_i286();
+
+    /** Intel 80386 registers.
+     *
+     *  The 80386 has the same registers as the 80286 but extends the general-purpose registers, base registers, index
+     *  registers, instruction pointer, and flags register to 32 bits.  Register names from the 80286 refer to the same offsets
+     *  and sizes while the full 32 bits are accessed by names prefixed with "e" as in "eax" (the "e" means "extended"). Two
+     *  new segment registers (FS and GS) were added and all segment registers remain 16 bits. */
+    static const RegisterDictionary *dictionary_i386();
+
+    /** Intel 80386 with 80387 math co-processor. */
+    static const RegisterDictionary *dictionary_i386_387();
+
+    /** Intel 80486 registers.
+     *
+     *  The 80486 has the same registers as the 80386 with '387 co-processor but adds a new flag to the "eflags" register. */
+    static const RegisterDictionary *dictionary_i486();
+
+    /** Intel Pentium registers.
+     *
+     *  The Pentium has the same registers as the 80486 but adds a few flags to the "eflags" register and MMX registers. */
+    static const RegisterDictionary *dictionary_pentium();
+
+    /** Intel Pentium III registers.
+     *
+     *  The Pentium III has the same register set as the Pentium but adds the xmm0 through xmm7 registers for the SSE
+     *  instruction set. */
+    static const RegisterDictionary *dictionary_pentiumiii();
+
+    /** Intel Pentium 4 registers. */
+    static const RegisterDictionary *dictionary_pentium4();
+
+    /** Amd64 registers.
+     *
+     *  The AMD64 architecture increases the size of the general purpose registers, base registers, index registers,
+     *  instruction pointer, and flags register to 64-bits.  Most register names from the Pentium architecture still exist and
+     *  refer to 32-bit quantities, while the AMD64 adds new names that start with "r" rather than "e" (such as "rax" for the
+     *  64-bit register and "eax" for the 32 low-order bits of the same register).  It also adds eight additional 64-bit
+     *  general purpose registers named "r8" through "r15" along with "b", "w", and "d" suffixes for the low-order 8, 16, and
+     *  32 bits, respectively.
+     *
+     *  The only registers that are not retained are the control registers cr0-cr4, which are replaced by 64-bit registers of
+     *  the same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
+    static const RegisterDictionary *dictionary_amd64();
+
+    /** ARM7 registers.
+     *
+     * The CPU has a total of 37 registers, each 32 bits wide: 31 general purpose registers named and six status registers
+     * named.  At most 16 (8 in Thumb mode) general purpose registers are visible at a time depending on the mode of
+     * operation. They have names rN where N is an integer between 0 and 15, inclusive and are mapped onto a subset of the 31
+     * physical general purpose registers. Register r13 and r14 are, by convention, a stack pointer and link register (the link
+     * register holds the return address for a function call). Register r15 is the instruction pointer.  Also, at most two
+     * status registers are available at a time.
+     *
+     * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The
+     * minor number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
+    static const RegisterDictionary *dictionary_arm7();
+
+    /** PowerPC registers. */
     static const RegisterDictionary *dictionary_powerpc();
-    static const RegisterDictionary *dictionary_mips32();               // MIPS32 Release 1
+
+    /** MIPS32 Release 1.
+     *
+     * Release 1 of MIPS32 supports only a 32-bit FPU (support for 64-bit FPU was added in MIPS32 Release 2). */
+    static const RegisterDictionary *dictionary_mips32();
+
+    /** MIPS32 Release 1 with special registers.
+     *
+     * This is the same dictionary as dictionary_mips32(), except additional names are supplied for the general purpose
+     * registers (e.g., "zero" for r0, "at" for r1, "gp" for r28, "sp" for r29, "fp" for r30, "ra" for r31, etc.).  This is
+     * intended mostly for the AsmUnparser; any layer that looks up registers by name should probably use the standard names
+     * rather than relying on these alternate names.  */ 
     static const RegisterDictionary *dictionary_mips32_altnames();
+
+    /** Motorola M68330 register names */
     static const RegisterDictionary *dictionary_m68000();
+
+    /** Motorola M68330 alternate registers. */
     static const RegisterDictionary *dictionary_m68000_altnames();
-    static const RegisterDictionary *dictionary_coldfire();             // FreeScale ColdFire (generic hardware)
-    static const RegisterDictionary *dictionary_coldfire_emac();        // FreeScale ColdFire (generic hardware)
+
+    /** FreeScale ColdFire generic hardware registers. */
+    static const RegisterDictionary *dictionary_coldfire();
+
+    /** Registers for FreeScale ColdFire CPUs with EMAC (extended multiply-accumulate) unit. */
+    static const RegisterDictionary *dictionary_coldfire_emac();
 
 private:
-    typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;
-    static uint64_t hash(const RegisterDescriptor&);
+    typedef std::map<RegisterDescriptor, std::vector<std::string> > Reverse; // a descriptor can have more than one name
     std::string name; /*name of the dictionary, usually an architecture name like 'i386'*/
     Entries forward;
     Reverse reverse;
@@ -65,7 +152,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & name & forward & reverse;
+        s & BOOST_SERIALIZATION_NVP(name);
+        s & BOOST_SERIALIZATION_NVP(forward);
+        s & BOOST_SERIALIZATION_NVP(reverse);
     }
 #endif
 
@@ -100,7 +189,7 @@ public:
 
     /** Insert a definition into the dictionary.  If the name already exists in the dictionary then the new RegisterDescriptor
      *  will replace the one that already exists. */
-    void insert(const std::string &name, const RegisterDescriptor&);
+    void insert(const std::string &name, RegisterDescriptor);
 
     /** Insert a definition into the dictionary.  If the name already exists in the dictionary then the new RegisterDescriptor
      *  will replace the one that already exists. */
@@ -127,7 +216,14 @@ public:
     /** Returns a register name for a given descriptor. If more than one register has the same descriptor then the name added
      *  latest is returned.  If no register is found then either return the empty string (default) or generate a generic name
      *  according to the optional supplied NameGenerator. */
-    const std::string& lookup(const RegisterDescriptor&) const;
+    const std::string& lookup(RegisterDescriptor) const;
+
+    /** Determine if a register descriptor exists.
+     *
+     *  This is similar to the @ref lookup method that takes a @ref RegisterDescriptor argument, but instead of returning the
+     *  name it returns a pointer to the @ref RegisterDescriptor in the dictionary. Returns null if the specified register does
+     *  not exist in this dictionary. Beware that this pointer is only valid until the dictionary is modified. */
+    const RegisterDescriptor* exists(RegisterDescriptor) const;
 
     /** Finds the first largest register with specified major and minor number.
      *
@@ -145,7 +241,7 @@ public:
      *  will only contain the fact that the 16 bits corresponding to AX are stored, which also happens to contain the eight
      *  bits of AL, but it won't keep track that AX and AL were inserted separately. In other words, erasing AL from the
      *  returned container would also erase the low-order 8 bits of AX. */
-    rose::BinaryAnalysis::RegisterParts getAllParts() const;
+    Rose::BinaryAnalysis::RegisterParts getAllParts() const;
 
     /** Returns the list of all register definitions in the dictionary.
      * @{ */
@@ -178,7 +274,7 @@ public:
     public:
         enum Direction { ASCENDING, DESCENDING };
         explicit SortBySize(Direction d=DESCENDING): direction(d) {}
-        bool operator()(const RegisterDescriptor &a, const RegisterDescriptor &b) const {
+        bool operator()(RegisterDescriptor a, RegisterDescriptor b) const {
             return ASCENDING==direction ?
                 a.get_nbits() < b.get_nbits() :
                 a.get_nbits() > b.get_nbits();
@@ -259,11 +355,11 @@ class RegisterNames {
 public:
     /** Constructor. A RegisterDictionary can be supplied to the constructor, or to each operator() call. */
     explicit RegisterNames(const RegisterDictionary *dict=NULL)
-        : dflt_dict(dict), prefix("REG"), show_offset(-1), offset_prefix("@"), show_size(false) {}
+        : dflt_dict(dict), prefix("REG"), show_offset(-1), offset_prefix("@"), show_size(-1), size_prefix("+") {}
 
     /** Obtain a name for a register descriptor.  If a dictionary is supplied, then it will be used instead of the dictionary
      *  that was supplied to the constructor. */
-    std::string operator()(const RegisterDescriptor&, const RegisterDictionary *dict=NULL) const;
+    std::string operator()(RegisterDescriptor, const RegisterDictionary *dict=NULL) const;
 
     const RegisterDictionary *dflt_dict;/**< Dictionary supplied to the constructor. */
     std::string prefix;                 /**< The leading part of a register name. */
@@ -271,7 +367,7 @@ public:
     int show_offset;                    /**< 0=>never show offset; positive=>always show; negative=>show only when non-zero */
     std::string offset_prefix;          /**< String printed before the offset when the offset is shown. */
     std::string offset_suffix;          /**< String printed after the offset when the offset is shown. */
-    bool show_size;                     /**< Whether to show the size in bits of the register. */
+    int show_size;                      /**< 0=>never; positive=>always; negative=>when offset is non-zero */
     std::string size_prefix;            /**< String printed prior to the size when the size is printed. */
     std::string size_suffix;            /**< String printed after the size when the size is printed. */
 };

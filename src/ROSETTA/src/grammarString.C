@@ -10,7 +10,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // ################################################################
 // #            GrammarString Member Functions                    #
@@ -90,6 +90,10 @@ GrammarString::getFunctionPrototypeString () const
   // This function returns the "functionNameString" which is used to
   // hold source code and header file prototypes.  Other functions return
   // more specialized strings for constructor parameter lists etc.
+
+  // printf ("In GrammarString::getFunctionPrototypeString(): typeNameString = %s \n",typeNameString.c_str());
+  // printf ("In GrammarString::getFunctionPrototypeString(): functionNameString = \n %s \n",functionNameString.c_str());
+
      return functionNameString;
    }
 
@@ -713,6 +717,31 @@ GrammarString::getDataPrototypeString () const
    }
 
 
+// DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
+bool
+GrammarString::generate_override_keyword( string variableNameString ) const
+   {
+  // This function is required to control where the $ROSE_OVERRIDE macro is inserted into the code generatiion.
+  // Note that control in Grammar.C will control how it is translated into either empty space of the C/C++ 
+  // language macro "ROSE_OVERRIDE".
+
+     bool returnResult = false;
+     if ( (variableNameString == "startOfConstruct")       ||
+          (variableNameString == "endOfConstruct")         ||
+          (variableNameString == "end_numeric_label")      ||
+          (variableNameString == "scope")                  ||
+          (variableNameString == "originalExpressionTree") ||
+          (variableNameString == "type")                   ||
+          (variableNameString == "name")                   ||
+          (variableNameString == "attributeMechanism") )
+       {
+         returnResult = true;
+       }
+
+     return returnResult;
+   }
+
+
 string
 GrammarString::getDataAccessFunctionPrototypeString () const
    {
@@ -728,6 +757,10 @@ GrammarString::getDataAccessFunctionPrototypeString () const
         }
 
      string variableNameStringTmp = string(variableNameString);
+#if 0
+     printf ("In GrammarString::getDataAccessFunctionPrototypeString(): variableNameStringTmp = %s \n",variableNameStringTmp.c_str());
+#endif
+     bool use_override_keyword = generate_override_keyword(variableNameStringTmp);
 
      string returnString;
      switch (automaticGenerationOfDataAccessFunctions) 
@@ -737,10 +770,28 @@ GrammarString::getDataAccessFunctionPrototypeString () const
 
           case BUILD_ACCESS_FUNCTIONS:
           case BUILD_FLAG_ACCESS_FUNCTIONS:
+#if 0
                returnString = "     public: \n         " + typeNameStringTmp + " get_" +
                          variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
                          variableNameStringTmp + ");\n";
+#else
+            // DQ (3/21/2017): Added support to eliminate override warnings for Clang C++11 mode.
+               if (use_override_keyword == true)
+                  {
+                    returnString = "     public: \n         " + typeNameStringTmp + " get_" +
+                         variableNameStringTmp + "() const $ROSE_OVERRIDE_GET /* (getDataAccessFunctionPrototypeString) */;\n         void set_"  
+                         + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
+                         variableNameStringTmp + ") $ROSE_OVERRIDE_SET /* (getDataAccessFunctionPrototypeString) */;\n";
+                  }
+                 else
+                  {
+                    returnString = "     public: \n         " + typeNameStringTmp + " get_" +
+                         variableNameStringTmp + "() const;\n         void set_"  
+                         + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
+                         variableNameStringTmp + ");\n";
+                  }
+#endif
                break;
 
           case BUILD_LIST_ACCESS_FUNCTIONS:
@@ -752,6 +803,18 @@ GrammarString::getDataAccessFunctionPrototypeString () const
           default:
                assert(false);
         }
+
+#if 0
+     printf ("In GrammarString::getDataAccessFunctionPrototypeString(): returnString = %s \n",returnString.c_str());
+#endif
+#if 0
+  // DQ (3/22/2017): Debuggung code.
+     if (variableNameStringTmp == "startOfConstruct")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
 
      return returnString;
    }
@@ -1369,6 +1432,24 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
                goto done;
              }
 
+          if (typenameString == "SgUntypedNamePtrList")
+             {
+               returnString = "SgUntypedName";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPtrList")
+             {
+               returnString = "SgUntypedToken";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPairPtrList")
+             {
+               returnString = "SgUntypedTokenPair";
+               goto done;
+             }
+
           if (typenameString == "SgExpressionPtrList")
              {
                returnString = "SgExpression";
@@ -1740,6 +1821,24 @@ GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
           if (typenameString == "SgUntypedInitializedNamePtrList")
              {
                // returnString = "SgUntypedInitializedName";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedNamePtrList")
+             {
+               // returnString = "SgUntypedName";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPtrList")
+             {
+               // returnString = "SgUntypedToken";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPairPtrList")
+             {
+               // returnString = "SgUntypedTokenPair";
                goto done;
              }
 

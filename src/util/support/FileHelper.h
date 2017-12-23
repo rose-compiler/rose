@@ -55,7 +55,7 @@ public:
     }
 
     static std::string getFileName(const std::string& aPath) {
-        return rose::FileSystem::toString(boost::filesystem::path(aPath).filename());
+        return Rose::FileSystem::toString(boost::filesystem::path(aPath).filename());
     }
 
     static std::string makeAbsoluteNormalizedPath(const std::string& path, const std::string& workingDirectory) {
@@ -91,7 +91,7 @@ public:
     //Assumes that both arguments are absolute and normalized.
     //Argument toPath can be either a folder or a file.
     static std::string getRelativePath(const std::string& fromFolder, const std::string& toPath) {
-        return rose::FileSystem::toString(rose::FileSystem::makeRelative(toPath, fromFolder));
+        return Rose::FileSystem::toString(Rose::FileSystem::makeRelative(toPath, fromFolder));
     }
     
     static bool fileExists(const std::string& fullFileName) {

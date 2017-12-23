@@ -1,0 +1,10 @@
+START
+PROGRAM integerterm ;
+  BEGIN
+    ivar = 13 ;
+    ivar = 1 * 2 ;
+    ivar = 2 / 1 ;
+    ivar = 5 MOD 2 ;
+    ivar = 5 * 2 / 5 MOD 2 ;
+  END
+TERM

@@ -7,7 +7,7 @@
 #include <iostream>
 #include <sstream>
 
-using namespace rose;
+using namespace Rose;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Vertex and Edge value types
@@ -26,7 +26,7 @@ struct VertexValue {
     VertexValue(int i1, int i2, const std::string &name)
         : i1(i1), i2(i2), name(name) {}
 
-    // Required; called by rose::GraphUtility::serialize()
+    // Required; called by Rose::GraphUtility::serialize()
     void serialize(std::ostream &output) const {
         output.write((const char*)&i1, sizeof i1);
         output.write((const char*)&i2, sizeof i2);
@@ -35,7 +35,7 @@ struct VertexValue {
         output.write(name.data(), name.size());
     }
 
-    // Required; called by rose::GraphUtility::deserialize()
+    // Required; called by Rose::GraphUtility::deserialize()
     void deserialize(std::istream &input) {
         input.read((char*)&i1, sizeof i1);
         input.read((char*)&i2, sizeof i2);
@@ -65,12 +65,12 @@ struct EdgeValue {
     EdgeValue(double weight)
         : weight(weight) {}
 
-    // Required by rose::GraphUtility::serialize
+    // Required by Rose::GraphUtility::serialize
     void serialize(std::ostream &output) const {
         output.write((const char*)&weight, sizeof weight);
     }
 
-    // Required by rose::GraphUtility::deserialize
+    // Required by Rose::GraphUtility::deserialize
     void deserialize(std::istream &input) {
         input.read((char*)&weight, sizeof weight);
     }
@@ -151,8 +151,8 @@ static void showHelpAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
 }
 
 int main(int argc, char *argv[]) {
-    using namespace rose;
-    using namespace rose::Diagnostics;
+    using namespace Rose;
+    using namespace Rose::Diagnostics;
     using namespace StringUtility;
 
     typedef Sawyer::Container::Graph<VertexValue, EdgeValue> Graph;
@@ -190,28 +190,31 @@ int main(int argc, char *argv[]) {
                "string, then deserializes the string to create a new graph, then tests that both graphs are identical.");
     Sawyer::CommandLine::ParserResult cmdline = parser.parse(argc, argv).apply();
     ASSERT_always_require2(cmdline.unreachedArgs().empty(), "invalid program arguments; see --help");
-    mlog[DEBUG].enable(showGraph);
+
+ // DQ (3/6/2017): Need explicit qualification to about mlog in rose namespace.
+ // mlog[DEBUG].enable(showGraph);
+    Rose::Diagnostics::mlog[DEBUG].enable(showGraph);
 
     // Build and serialize the inital graph
-    mlog[INFO] <<"building the initial graph: " <<plural(nverts, "vertices", "vertex") <<" and " <<plural(nedges, "edges") <<"\n";
+    Rose::Diagnostics::mlog[INFO] <<"building the initial graph: " <<plural(nverts, "vertices", "vertex") <<" and " <<plural(nedges, "edges") <<"\n";
     Graph g1;
     buildGraph(g1, nverts, nedges);
-    SAWYER_MESG(mlog[DEBUG]) <<"Original graph:\n" <<g1;
-    mlog[INFO] <<"serializing original graph\n";
+    SAWYER_MESG(Rose::Diagnostics::mlog[DEBUG]) <<"Original graph:\n" <<g1;
+    Rose::Diagnostics::mlog[INFO] <<"serializing original graph\n";
     std::ostringstream oss;
     GraphUtility::serialize(oss, g1);
-    mlog[INFO] <<"serialized to " <<plural(oss.str().size(), "bytes") <<"\n";
+    Rose::Diagnostics::mlog[INFO] <<"serialized to " <<plural(oss.str().size(), "bytes") <<"\n";
 
     // De-serialize to create a second graph
-    mlog[INFO] <<"creating a new graph by de-serializing\n";
+    Rose::Diagnostics::mlog[INFO] <<"creating a new graph by de-serializing\n";
     Graph g2;
     std::istringstream iss(oss.str());
     GraphUtility::deserialize(iss, g2);
     ASSERT_always_require2(g2.nVertices()==nverts, "wrong number of vertices deserialized");
     ASSERT_always_require2(g2.nEdges()==nedges, "wrong number of edges deserialized");
-    SAWYER_MESG(mlog[DEBUG]) <<"Reconstructed graph:\n" <<g2;
+    SAWYER_MESG(Rose::Diagnostics::mlog[DEBUG]) <<"Reconstructed graph:\n" <<g2;
 
     // Check that both graphs are the same
-    mlog[INFO] <<"comparing new graph with original\n";
+    Rose::Diagnostics::mlog[INFO] <<"comparing new graph with original\n";
     checkGraphs(g1, g2);
 }

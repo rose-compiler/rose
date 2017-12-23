@@ -47,7 +47,7 @@ void visitorTraversal::analyzePath(vector<Vertex>& pth) {
 
 
 int main(int argc, char *argv[]) {
-    // Initialize and check compatibility. See rose::initialize
+    // Initialize and check compatibility. See Rose::initialize
     ROSE_INITIALIZE;
 
     /* Parse the binary file */

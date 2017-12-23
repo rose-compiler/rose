@@ -29,7 +29,7 @@
 #include "Miscellaneous2.h"
 #include "ProgramStats.h"
 #include "AnalysisAbstractionLayer.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "DFAstAttributeConversion.h"
 #include "FIConstAnalysis.h"
@@ -65,7 +65,6 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace AType;
 using namespace DFAstAttributeConversion;
 using namespace AnalysisAbstractionLayer;
 
@@ -143,11 +142,13 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
               cerr<<"Internal error: determined array variable, but it is not registered as array variable."<<endl;
               exit(1);
             }
-            size_t arraySize=variableIdMapping->getSize(arrayVarId);
+            size_t arraySize=variableIdMapping->getNumberOfElements(arrayVarId);
             if(intervalPropertyState->variableExists(indexVarId)) {
               NumberIntervalLattice indexVariableInterval=intervalPropertyState->getVariable(indexVarId);
               if(indexVariableInterval.isTop()
+                 ||indexVariableInterval.isLowInf()
                  ||indexVariableInterval.getLow()<0
+                 ||indexVariableInterval.isHighInf()
                  ||indexVariableInterval.getHigh()>(arraySize-1)) {
                 cout<<"DETECTED: array out of bounds access: "<<lineCol
                     <<": "<<node->unparseToString()
@@ -161,15 +162,15 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
                 issuesFound++;
               }
             } else if(intervalPropertyState->isBot()) {
-              cout<<"ANALYSIS: not reachable: "<<node->unparseToString()<<endl;
+              //cout<<"ANALYSIS: not reachable: "<<node->unparseToString()<<endl;
               // nothing to do
             } else {
               cout<<"Error: variable "<<indexVarId.toString()<<" does not exist in property state."<<endl;
               exit(1);
             }
           } else {
-            cerr<<"WARNING: Unsupported array access expression: ";
-            cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
+            //cerr<<"WARNING: Unsupported array access expression: ";
+            //cerr<<AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
           }
         }
       }
@@ -410,7 +411,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         }
       }
       else {
-        cout << "ERROR: No declaration for " << variableIdMapping.uniqueShortVariableName(*idIter) << " available." << endl;
+        cout << "ERROR: No declaration for " << variableIdMapping.uniqueVariableName(*idIter) << " available." << endl;
         ROSE_ASSERT(false);
       }
     }
@@ -895,8 +896,6 @@ int main(int argc, char* argv[]) {
     }
 
     cout << "INIT: Parsing and creating AST."<<endl;
-    boolOptions.registerOption("semantic-fold",false); // temporary
-    boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
 
     if(option_trace) {

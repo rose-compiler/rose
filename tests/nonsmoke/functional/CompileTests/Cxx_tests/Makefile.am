@@ -39,7 +39,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_279.C \
    test2013_280.C \
    test2013_281.C \
-   test2013_282.C \
    test2013_283.C \
    test2013_284.C \
    test2013_285.C \
@@ -112,12 +111,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_73.C \
    test2014_74.C \
    test2014_75.C \
-   test2014_77.C \
-   test2014_78.C \
    test2013_117.C \
    test2014_79.C \
    test2014_80.C \
-   test2014_81.C \
    test2014_82.C \
    test2014_83.C \
    test2014_84.C \
@@ -135,7 +131,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_96.C \
    test2014_97.C \
    test2014_98.C \
-   test2014_99.C \
    test2014_100.C \
    test2014_101.C \
    test2014_102.C \
@@ -147,9 +142,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_115.C \
    test2014_116.C \
    test2014_117.C \
-   test2014_118.C \
    test2014_119.C \
-   test2014_120.C \
    test2014_121.C \
    test2014_122.C \
    test2014_123.C \
@@ -185,7 +178,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_154.C \
    test2014_155.C \
    test2014_156.C \
-   test2014_157.C \
    test2014_160.C \
    test2014_161.C \
    test2014_162.C \
@@ -252,8 +244,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_233.C \
    test2014_234.C \
    test2014_235.C \
-   test2014_236.C \
-   test2014_238.C \
    test2014_239.C \
    test2014_240.C \
    test2014_241.C \
@@ -297,8 +287,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_79.C \
    test2015_80.C \
    test2015_97.C \
-   lulesh.C \
-   luleshTALC.C \
    Area-01.C \
    $(NEW_TESTCODES)
 
@@ -368,7 +356,6 @@ NEW_TESTCODES = \
    test2016_13.C \
    test2016_14.C \
    test2016_19.C \
-   test2016_20.C \
    test2016_21.C \
    test2016_25.C \
    test2016_26.C \
@@ -420,35 +407,113 @@ NEW_TESTCODES = \
    test2016_87.C \
    test2016_88.C \
    test2016_91.C \
-   test2016_93.C
+   test2016_93.C \
+   test2017_04.C \
+   test2017_09.C \
+   test2017_10.C \
+   test2017_11.C \
+   $(NEW_2017_TESTS)
 
-# DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
+NEW_2017_TESTS = \
+   test2017_13.C \
+   test2017_14.C \
+   test2017_15.C \
+   test2017_16.C \
+   test2017_17.C \
+   test2017_18.C \
+   test2017_19.C \
+   test2017_21.C \
+   test2017_22.C \
+   test2017_23.C \
+   test2017_25.C \
+   test2017_26.C \
+   test2017_27.C \
+   test2017_28.C \
+   test2017_30.C \
+   test2017_35.C \
+   test2017_36.C \
+   test2017_37.C \
+   test2017_38.C \
+   test2017_39.C \
+   test2017_40.C \
+   test2017_41.C \
+   test2017_42.C \
+   test2017_43.C \
+   test2017_45.C \
+   test2017_48.C \
+   test2017_49.C \
+   test2017_50.C \
+   test2017_51.C \
+   test2017_52.C \
+   test2017_53.C \
+   test2017_54.C \
+   test2017_55.C \
+   test2017_56.C \
+   test2017_57.C \
+   test2017_58.C 
+
+if !ROSE_USE_EDG_VERSION_4_9
+# DQ (11/15/2017): I think this should be "+=" instead of "=".
+# NEW_2017_TESTS = 
+NEW_2017_TESTS += \
+   test2017_12.C 
+
+# DQ (11/16/2017): These are not portabile to the Intel v16 compiler).
+#   test2017_33.C 
+#   test2017_34.C 
+endif
+
+if ROSE_USING_GCC_VERSION_LATER_4_4
+# DQ (11/15/2017): These tests fail for GNU 4.2 compiler.
+NEW_2017_TESTS += \
+   test2017_31.C \
+   test2017_32.C \
+   test2017_44.C \
+   test2017_46.C \
+   test2017_47.C 
+endif
+
+STILL_FAILING = \
+   test2017_20.C \
+   test2017_24.C \
+   test2017_29.C \
+   non_existing_test_to_close_automake_list.C 
+
+# DQ (1/29/2017): This appers to fail for Boost 1.57
+if !ROSE_USING_BOOST_VERSION_1_57
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_77.C \
+   test2014_78.C 
+endif
+
+# DQ (1/16/2017): These test codes include non-portable macros and references to header files that are a problem for Clang.
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_71.C \
-   test2014_76.C \
-   test2014_110.C \
    test2014_111.C \
    test2015_70.C \
    test2015_81.C 
 
 NEW_TESTCODES += \
-   test2015_115.C \
-   test2015_116.C \
-   test2015_148.C \
-   test2015_30.C \
-   test2016_16.C \
-   test2016_17.C \
-   test2016_18.C \
-   test2016_15.C \
-   test2016_82.C \
-   test2016_89.C 
+   test2016_82.C 
 endif
 
 # DQ (11/21/2016): This test code does not work on older versions of GNU g++.
 if ROSE_USING_GCC_VERSION_LATER_4_4
 NEW_TESTCODES += test2016_96.C
 endif
+
+# DQ (3/8/2017): These test codes have not been integrated yet. test2017_01.C is moved to C++11_tests, test2017_02 
+# is an example of nonconforming C++ code, and test2017_03.C passes, but is not yet integrated for general testing.
+TESTCODES_NOT_INTEGRATED = \
+   test2017_01.C \
+   test2017_02.C \
+   test2017_03.C \
+   test2017_03.C \
+   test2017_05.C \
+   test2017_06.C \
+   test2017_07.C \
+   test2017_08.C
 
 # DQ (11/14/2016): Test codes not yet passing.
 #  test2016_91.C 
@@ -525,11 +590,23 @@ endif
 #    test2014_60.C \
 #    test2014_61.C 
 
-
-if !ROSE_USE_EDG_VERSION_4_7
-if !ROSE_USING_BOOST_VERSION_1_57
+# DQ (3/10/2017): I think we can fix these now (appear to be only buildins missing at this point).
+# if !ROSE_USE_EDG_VERSION_4_7
+# if !ROSE_USING_BOOST_VERSION_1_57
 # These boost 1.57 specific tests fail in EDG 4.7 and pass in EDG 4.9, so
 # avoid testing them in this combination.  The issue is fixed in EDG 4.9.
+# NEW_TESTCODES += \
+#   test2014_187.C \
+#   test2014_187_work_around.C \
+#   test2014_188.C \
+#   test2015_120.C 
+# endif
+# endif
+
+# DQ (3/12/2017): These test codes are no long a problem for BOOST 1.57 on GNU and 
+# Intel compilers, but are an issue for Clang (at least 3.8.0).
+if !USING_CLANG_COMPILER
+if !USING_INTEL_COMPILER
 NEW_TESTCODES += \
    test2014_187.C \
    test2014_187_work_around.C \
@@ -591,13 +668,43 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_159.C \
    test2014_211.C 
 
+# DQ (11/16/2017): Tests test2014_76, test2014_110.C, test2015_30.C, test2015_115.C, test2015_116.C, 
+# test2015_148.C, test2016_16.C, test2016_17.C, test2016_18.C, test2016_15.C, and test2016_89.C; all
+# were previously not passing for CLANG, but now also fail for the Intel compiler, at least V16).
+# DQ (2/21/2017): CLANG compiler requires more builtin functions to be defined.
 # DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_304.C \
-   test2015_55.C
+   test2014_81.C  \
+   test2014_236.C \
+   test2014_238.C \
+   test2015_55.C  \
+   test2016_20.C  
 endif
 endif
+
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_76.C  \
+   test2014_110.C \
+   test2015_30.C  \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_15.C \
+   test2016_89.C 
+
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   lulesh.C \
+   luleshTALC.C \
+   test2013_282.C \
+   test2014_99.C \
+   test2014_118.C \
+   test2014_120.C \
+   test2014_157.C 
 
 # These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).
 # I thnk this has much less to do with Intel compiler being used.
@@ -1260,7 +1367,7 @@ STATISTICALLY_FAILING_TESTS = \
 test2007_62.C \
 math.C 
 
-# DQ (5/17/2012): These are new tests which I deamed up and which fail.
+# DQ (5/17/2012): These are new tests which I dreamed up and which fail.
 # they likely failed in the older version of EDG support, but were not 
 # tested there.  Since the current focus is on the previous level of
 # robustness. These are considered to be NEW failing tests to work on 
@@ -1359,6 +1466,8 @@ VALGRIND =
 endif
 
 TEST_TRANSLATOR = ../../testTranslator
+
+TEST_PDF_TRANSLATOR = ../../testPDFGeneration
 
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
@@ -1461,6 +1570,7 @@ test2013_09.C.passed: $(TEST_TRANSLATOR)
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 else
 test2013_09.C.passed: $(TEST_TRANSLATOR)
+	echo "Skip this test code on Intel compiler because it includes something that Intel considers a C++11 feature!"
 endif
 
 cpp_test2010_07: $(TEST_TRANSLATOR)
@@ -1533,6 +1643,9 @@ testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
 
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
+
+$(TEST_PDF_TRANSLATOR):
+	cd ../..; $(MAKE) testPDFGeneration
 
 ../../testTranslatorFoldedConstants:
 	cd ../..; $(MAKE) testTranslatorFoldedConstants
@@ -1611,11 +1724,19 @@ test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 
 print_testcodes:
-	echo $(TESTCODES)
+#	echo $(TESTCODES)
+	echo "PASSING_TEST_Sources = $(PASSING_TEST_Sources)"
 
 # Added performance test for ROSE evaluation:
 performance_timing:
 	../../testGraphGeneration --edg:no_warnings -w -rose:verbose 3 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/testPerformance.C
+
+# DQ (3/17/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
+test_pdf_generation: $(TEST_PDF_TRANSLATOR)
+	../../testPDFGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
+	ls -l *.pdf
+	@echo "Removing the generated PDF file because it is up to 150Meg and we want to save disk space."
+	rm *.pdf
 
 # DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
 hpctoolkit:
@@ -1628,12 +1749,47 @@ hpctoolkit:
 # check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 # check-local: $(TEST_Objects_unnormalized) $(PASSING_TEST_Sources) $(FAILING_TEST_targets) 
 # check-local: $(TEST_Objects_unnormalized)
-check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+check-local: 
+if ROSE_USE_EDG_VERSION_4_9
+	@echo "Using EDG 4.9"
+# if ROSE_USING_GCC_VERSION_LATER_4_9
+if USING_GNU_COMPILER
+	@echo "Using GNU compiler"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "Using EDG 4.9 and GNU version later then 4.9 (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "Using GNU compiler (version up to 4.8)"
+	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
+endif #  ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+	@echo "NOT Using GNU compiler"
+if USING_CLANG_COMPILER
+	@echo "Using EDG 4.9 and CLANG compiler (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
+else  # NOT USING_CLANG_COMPILER
+if USING_INTEL_COMPILER
+	@echo "Using EDG 4.9 and INTEL compiler (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
+else  # NOT USING_INTEL_COMPILER
+	@echo "Using EDG 4.9 and GNU version 4.8 or earlier (ROSE supports running C++ tests with this configuration)"
+	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+	@echo "Using EDG 4.12"
+	@echo "Using EDG version later than 4.9 (ROSE supports running all C++ tests across all compilers)"
+	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
+endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
+# DQ (2/27/2017): Adding additional restrictions for EDG 4.9 (fails for Clang and Boost 1.55).
+if !ROSE_USE_EDG_VERSION_4_9
 	@$(MAKE) test_common_configure_test_with_link_part_1.passed
 	@$(MAKE) test_common_configure_test_with_link_part_2.passed
+endif
 #	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
 #	@$(MAKE) test_common_configure_test_with_link_part_3
 	@$(MAKE) testTemplateExample
@@ -1642,7 +1798,7 @@ check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 	@echo "*******************************************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti *.pdf
 	rm -f *.foldedConstants-o
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest

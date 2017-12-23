@@ -221,7 +221,7 @@ template<class Graph>
 void find_vertex() {
     std::cout <<"find vertex by ID:\n";
     typedef typename Graph::VertexIterator VertexDesc;
-    
+
     Graph graph;
     VertexDesc v0 = graph.insertVertex("vine");
     VertexDesc v1 = graph.insertVertex("vinegar");
@@ -266,19 +266,19 @@ void insert_edge() {
     ASSERT_always_require(e1->target() == v1);
     ASSERT_always_require(e1 != e0);
     ASSERT_always_require(e1 < e0 || e0 < e1);
-    
+
     ASSERT_always_require(e2->value() == "vine-visa");
     ASSERT_always_require(e2->source() == v0);
     ASSERT_always_require(e2->target() == v3);
     ASSERT_always_require(e2 != e1);
     ASSERT_always_require(e2 < e1 || e1 < e2);
-    
+
     ASSERT_always_require(e3->value() == "visa-vine");
     ASSERT_always_require(e3->source() == v3);
     ASSERT_always_require(e3->target() == v0);
     ASSERT_always_require(e3 != e2);
     ASSERT_always_require(e3 < e2 || e2 < e3);
-    
+
     ASSERT_always_require(e4->value() == "visa-visa");
     ASSERT_always_require(e4->source() == v3);
     ASSERT_always_require(e4->target() == v3);
@@ -293,7 +293,7 @@ void insert_edge() {
     ASSERT_always_require(v2->nOutEdges() == 1);
     ASSERT_always_require(v3->nInEdges() == 2);
     ASSERT_always_require(v3->nOutEdges() == 2);
-    
+
     std::cout <<graph;
 }
 
@@ -302,7 +302,7 @@ void erase_edge() {
     std::cout <<"edge erasure:\n";
     typedef typename Graph::VertexIterator Vertex;
     typedef typename Graph::EdgeIterator Edge;
-    
+
     Graph graph;
     Vertex v0 = graph.insertVertex("vine");
     Vertex v1 = graph.insertVertex("vinegar");
@@ -361,7 +361,7 @@ void erase_vertex() {
     std::cout <<"erase vertices with edges:\n";
     typedef typename Graph::VertexIterator Vertex;
     typedef typename Graph::EdgeIterator Edge;
-    
+
     Graph graph;
     Vertex v0 = graph.insertVertex("vine");
     Vertex v1 = graph.insertVertex("vinegar");
@@ -397,7 +397,7 @@ void iterator_conversion() {
     std::cout <<"iterator implicit conversions:\n";
     typedef typename Graph::VertexIterator Vertex;
     typedef typename Graph::EdgeIterator Edge;
-    
+
     Graph graph;
     Vertex v0 = graph.insertVertex("vine");
     Vertex v1 = graph.insertVertex("vinegar");
@@ -413,7 +413,7 @@ void iterator_conversion() {
 #if 0 // [Robb Matzke 2014-04-21]: going the other way is not indended to work (compile error)
     typename Graph::EdgeIterator e0fail = eval;
 #endif
-    
+
 }
 
 template<class Graph>
@@ -421,7 +421,7 @@ void copy_ctor() {
     std::cout <<"copy constructor:\n";
     typedef typename Graph::VertexIterator Vertex;
     typedef typename Graph::EdgeIterator Edge;
-    
+
     Graph graph;
     Vertex v0 = graph.insertVertex("vine");
     Vertex v1 = graph.insertVertex("vinegar");
@@ -532,7 +532,7 @@ void conversion() {
     std::cout <<"conversion constructor:\n";
     typedef typename Graph::VertexIterator Vertex;
     typedef typename Graph::EdgeIterator Edge;
-    
+
     Graph graph;
     Vertex v0 = graph.insertVertex("vine");
     Vertex v1 = graph.insertVertex("vinegar");
@@ -573,7 +573,7 @@ void assignment_conversion() {
     std::cout <<"assignment operator conversion:\n";
     typedef typename Graph::VertexIterator Vertex;
     typedef typename Graph::EdgeIterator Edge;
-    
+
     Graph graph;
     Vertex v0 = graph.insertVertex("vine");
     Vertex v1 = graph.insertVertex("vinegar");
@@ -658,7 +658,7 @@ static void dfltGraph() {
 
     ASSERT_always_require(v1->value() == Sawyer::Nothing());
     ASSERT_always_require(e1->value() == Sawyer::Nothing());
-    
+
     BOOST_FOREACH (const Sawyer::Nothing &v, graph.vertexValues()) {
         ASSERT_always_require(v == Sawyer::Nothing());
     }
@@ -733,7 +733,7 @@ public:
         current_ = 0;
         isGood_ = true;
     }
-    
+
     void operator()(Sawyer::Container::Algorithm::TraversalEvent event,
                     typename Sawyer::Container::GraphTraits<Graph>::VertexIterator vertex,
                     typename Sawyer::Container::GraphTraits<Graph>::EdgeIterator edge) {
@@ -755,7 +755,7 @@ public:
         }
         return ss.str();
     }
-    
+
     template<class Traversal>
     void check(Traversal &t) {
         Ans got(t.event(), t.vertex(), t.edge());
@@ -999,7 +999,7 @@ static void traversals() {
     for (BreadthFirstReverseGraphTraversal<Graph> t(g, va); t; ++t)
         ans.check(t);
     ASSERT_always_require(ans.isGood());
-    
+
     std::cout <<"Breadth-first reverse traversal starting at edge E0\n";
     ans.clear();
     ans(ENTER_EDGE,             no_vert,e0);
@@ -1091,6 +1091,390 @@ breakCycles() {
     ASSERT_always_require(!Algorithm::graphContainsCycle(g));
 }
 
+static void
+vertexPrinter(Sawyer::Container::Graph<std::string, std::string>::VertexIterator vertex) {
+    std::cout <<"      visited vertex " <<vertex->value() <<"\n";
+}
+
+static void
+vertexPrinter2(Sawyer::Container::Graph<std::string, std::string>::VertexIterator vertex,
+                           Sawyer::Container::Graph<std::string, std::string>::VertexIterator root) {
+    std::cout <<"      visited vertex " <<vertex->value() <<" (root=" <<root->value() <<")\n";
+}
+
+static void
+edgePrinter(Sawyer::Container::Graph<std::string, std::string>::EdgeIterator edge) {
+    std::cout <<"      visited edge " <<edge->value() <<"\n";
+}
+
+static void
+edgePrinter2(Sawyer::Container::Graph<std::string, std::string>::EdgeIterator edge,
+             Sawyer::Container::Graph<std::string, std::string>::EdgeIterator root) {
+    std::cout <<"      visited edge " <<edge->value() <<" (root=" <<root->value() <<")\n";
+}
+
+class VertexVisitor {
+public:
+    std::string hits;
+    void operator()(Sawyer::Container::Graph<std::string, std::string>::VertexIterator vertex) {
+        hits += vertex->value();
+    }
+    void operator()(Sawyer::Container::Graph<std::string, std::string>::VertexIterator vertex,
+                    Sawyer::Container::Graph<std::string, std::string>::VertexIterator /*root*/) {
+        hits += vertex->value();
+    }
+};
+
+class EdgeVisitor {
+public:
+    std::string hits;
+    void operator()(Sawyer::Container::Graph<std::string, std::string>::EdgeIterator edge) {
+        hits += edge->value();
+    }
+    void operator()(Sawyer::Container::Graph<std::string, std::string>::EdgeIterator edge,
+                    Sawyer::Container::Graph<std::string, std::string>::EdgeIterator /*root*/) {
+        hits += edge->value();
+    }
+};
+
+// Helper for functorTraversals
+template<class VertexTraversal, class Graph>
+static void
+testVertices(const std::string &traversalName,
+             Graph &g, typename Sawyer::Container::GraphTraits<Graph>::VertexIterator root,
+             const std::string &reachableAnswer, const std::string &allAnswer) {
+    using namespace Sawyer::Container;
+    using namespace Sawyer::Container::Algorithm;
+    std::cout <<"  " <<traversalName <<"\n";
+
+    // Test using a global function as a functor
+    std::cout <<"    reachable vertices:\n";
+    VertexTraversal(g, root).mapVertices(vertexPrinter);
+
+    std::cout <<"    all vertices:\n";
+    graphTraverseAllVertices(VertexTraversal(g), vertexPrinter2);
+
+    // Test reachability using a non-const class as a functor
+    VertexVisitor v1;
+    VertexTraversal(g, root).mapVertices(v1);
+    ASSERT_always_require2(v1.hits == reachableAnswer, "v1.hits="+v1.hits+"\n  reachableAnswer="+reachableAnswer);
+
+    VertexVisitor v2;
+    graphTraverseAllVertices(VertexTraversal(g), v2);
+    ASSERT_always_require2(v2.hits == allAnswer, "v2.hits="+v2.hits+"\n  allAnswer="+allAnswer);
+
+    // Test reachability using a lambda function. This doesn't actually have to do anything but compile.
+#if __cplusplus == 201103L
+    VertexTraversal(g, root).mapVertices([](typename GraphTraits<Graph>::VertexIterator) {});
+    graphTraverseAllVertices(VertexTraversal(g), [](typename GraphTraits<Graph>::VertexIterator,
+                                                    typename GraphTraits<Graph>::VertexIterator) {});
+#endif
+
+    // Test that ID numbers are returned
+    std::vector<size_t> ids = graphReachableVertices(VertexTraversal(g, root));
+    std::string got;
+    BOOST_FOREACH (size_t id, ids)
+        got += g.findVertex(id)->value();
+    ASSERT_always_require2(got==reachableAnswer, "got="+got+"\n  reachableAnswer="+reachableAnswer);
+
+    ids = graphAllVertices<VertexTraversal>(g);
+    got = "";
+    BOOST_FOREACH (size_t id, ids)
+        got += g.findVertex(id)->value();
+    ASSERT_always_require2(got==allAnswer, "got="+got+"\n  allAnswer="+allAnswer);
+}
+
+// Helper for functorTraversals
+template<class EdgeTraversal, class Graph>
+static void
+testEdges(const std::string &traversalName,
+          Graph &g, typename Sawyer::Container::GraphTraits<Graph>::EdgeIterator root,
+          const std::string &reachableAnswer, const std::string &allAnswer) {
+    using namespace Sawyer::Container;
+    using namespace Sawyer::Container::Algorithm;
+    std::cout <<"  " <<traversalName <<"\n";
+
+    // Test using a global function as a functor
+    std::cout <<"    reachable edges:\n";
+    EdgeTraversal(g, root).mapEdges(edgePrinter);
+    std::cout <<"    all edges:\n";
+    graphTraverseAllEdges(EdgeTraversal(g), edgePrinter2);
+
+    // Test reachability using a non-const class as a functor
+    EdgeVisitor v1;
+    EdgeTraversal(g, root).mapEdges(v1);
+    ASSERT_always_require2(v1.hits == reachableAnswer, "v1.hits="+v1.hits+"\n  reachableAnswer="+reachableAnswer);
+
+    EdgeVisitor v2;
+    graphTraverseAllEdges(EdgeTraversal(g), v2);
+    ASSERT_always_require2(v2.hits == allAnswer, "v2.hits="+v2.hits+"\n  allAnswer="+allAnswer);
+
+    // Test reachability using a lambda function. This doesn't actually have to do anything but compile.
+#if __cplusplus == 201103L
+    EdgeTraversal(g, root).mapEdges([](typename GraphTraits<Graph>::EdgeIterator) {});
+    graphTraverseAllEdges(EdgeTraversal(g),  [](typename GraphTraits<Graph>::EdgeIterator,
+                                                typename GraphTraits<Graph>::EdgeIterator) {});
+#endif
+
+    // Test that ID numbers are returned
+    std::vector<size_t> ids = graphReachableEdges(EdgeTraversal(g, root));
+    std::string got;
+    BOOST_FOREACH (size_t id, ids)
+        got += g.findEdge(id)->value();
+    ASSERT_always_require2(got==reachableAnswer, "got="+got+"\n  reachableAnswer="+reachableAnswer);
+
+    ids = graphAllEdges<EdgeTraversal>(g);
+    got = "";
+    BOOST_FOREACH (size_t id, ids)
+        got += g.findEdge(id)->value();
+    ASSERT_always_require2(got==allAnswer, "got="+got+"\n  allAnswer="+allAnswer);
+}
+
+// Test that the traverseVertices and traverseAllVertices functions work.
+static void
+functorTraversals() {
+    std::cout <<"functorTraversals\n";
+
+    using namespace Sawyer::Container::Algorithm;
+    typedef Sawyer::Container::Graph<std::string, std::string> Graph;
+    typedef Graph::VertexIterator Vertex;
+    typedef Graph::EdgeIterator Edge;
+
+    Graph g;                                            //      A  <--.      E <--,  //
+    Vertex va = g.insertVertex("A");                    //    /   \    \         g|  //
+    Vertex vb = g.insertVertex("B");                    //  a/    b\    :    .->  G  //
+    Vertex vc = g.insertVertex("C");                    //  v       v   |    |f      //
+    Vertex vd = g.insertVertex("D");                    //  B       C   |    F       //
+    Edge ea = g.insertEdge(va, vb, "a");                //   \     /    |            //
+    g.insertEdge(va, vc, "b");                          //   c\  d/     :            //
+    g.insertEdge(vb, vd, "c");                          //     v v     /             //
+    g.insertEdge(vc, vd, "d");                          //      D    e/              //
+    g.insertEdge(vd, va, "e");                          //       \___/               //
+    Vertex ve = g.insertVertex("E");
+    Vertex vf = g.insertVertex("F");
+    Vertex vg = g.insertVertex("G");
+    g.insertEdge(vf, vg, "f");
+    g.insertEdge(vg, ve, "g");
+
+    testVertices<DepthFirstForwardVertexTraversal  <Graph> >("DepthFirstForwardVertexTraversal",   g, va, "ABDC", "ABDCEFG");
+    testVertices<DepthFirstReverseVertexTraversal  <Graph> >("DepthFirstReverseVertexTraversal",   g, va, "ADBC", "ADBCEGF");
+    testVertices<BreadthFirstForwardVertexTraversal<Graph> >("BreadthFirstForwardVertexTraversal", g, va, "ABCD", "ABCDEFG");
+    testVertices<BreadthFirstReverseVertexTraversal<Graph> >("BreadthFirstReverseVertexTraversal", g, va, "ADBC", "ADBCEGF");
+
+    testEdges<DepthFirstForwardEdgeTraversal  <Graph> >("DepthFirstForwardEdgeTraversal",   g, ea, "acebd", "acebdfg");
+    testEdges<DepthFirstReverseEdgeTraversal  <Graph> >("DepthFirstReverseEdgeTraversal",   g, ea, "aecdb", "aecdbfg");
+    testEdges<BreadthFirstForwardEdgeTraversal<Graph> >("BreadthFirstForwardEdgeTraversal", g, ea, "acebd", "acebdfg");
+    testEdges<BreadthFirstReverseEdgeTraversal<Graph> >("BreadthFirstReverseEdgeTraversal", g, ea, "aecdb", "aecdbfg");
+}
+
+template<class Graph>
+static void
+checkDominators(Graph &g, typename Sawyer::Container::GraphTraits<Graph>::VertexIterator root,
+                const std::map<std::string, std::string> &ans) {
+    std::cout <<"  pre-dominators\n";
+    typedef typename Sawyer::Container::GraphTraits<Graph>::VertexIterator VertexIterator;
+    std::vector<VertexIterator> idoms = Sawyer::Container::Algorithm::graphDominators(g, root);
+    ASSERT_always_require(idoms.size() == g.nVertices());
+    for (size_t i=0; i<idoms.size(); ++i) {
+        VertexIterator vertex = g.findVertex(i);
+        std::string idom = g.isValidVertex(idoms[i]) ? idoms[i]->value() : "none";
+        std::cout <<"    idom(" <<vertex->value() <<") = " <<idom <<"\n";
+        std::map<std::string, std::string>::const_iterator found = ans.find(vertex->value());
+        ASSERT_always_require2(found != ans.end(), "FIXME[Robb P Matzke 2017-06-23]: answer is incomplete");
+        ASSERT_always_require2(found->second == idom, "ans=" + found->second);
+    }
+}
+
+template<class Graph>
+static void
+checkPostDominators(Graph &g, typename Sawyer::Container::GraphTraits<Graph>::VertexIterator exit,
+                    const std::map<std::string, std::string> &ans) {
+    std::cout <<"  post-dominators\n";
+    typedef typename Sawyer::Container::GraphTraits<Graph>::VertexIterator VertexIterator;
+    std::vector<VertexIterator> idoms = Sawyer::Container::Algorithm::graphPostDominators(g, exit);
+    ASSERT_always_require(idoms.size() == g.nVertices());
+    for (size_t i=0; i<idoms.size(); ++i) {
+        VertexIterator vertex = g.findVertex(i);
+        std::string idom = g.isValidVertex(idoms[i]) ? idoms[i]->value() : "none";
+        std::cout <<"    idom(" <<vertex->value() <<") = " <<idom <<"\n";
+        std::map<std::string, std::string>::const_iterator found = ans.find(vertex->value());
+        ASSERT_always_require2(found != ans.end(), "FIXME[Robb P Matzke 2017-06-23]: answer is incomplete");
+        ASSERT_always_require2(found->second == idom, "ans=" + found->second);
+    }
+}
+
+static void
+graphDominators01() {
+    std::cout <<"graph dominators (back edges 1)\n";
+
+    typedef Sawyer::Container::Graph<std::string> Graph;
+    typedef Graph::VertexIterator Vertex;
+
+    Graph g;                                            //////////////////////////
+    Vertex va = g.insertVertex("A");                    //        A             //
+    Vertex vb = g.insertVertex("B");                    //      /  \            //
+    Vertex vc = g.insertVertex("C");                    //     B -> C           //
+    g.insertEdge(va, vb);                               //////////////////////////
+    g.insertEdge(va, vc);
+    g.insertEdge(vb, vc);
+
+    std::map<std::string, std::string> answer;
+    answer["A"] = "none";
+    answer["B"] = "A";
+    answer["C"] = "A";
+    checkDominators(g, va, answer);
+
+    answer.clear();
+    answer["A"] = "C";
+    answer["B"] = "C";
+    answer["C"] = "none";
+    checkPostDominators(g, vc, answer);
+
+    // Now flip the edge, changing which one is the back edge
+    std::cout <<"graph dominators (back edges 2)\n";
+    g.clear();                                          //////////////////////////
+    va = g.insertVertex("A");                           //        A             //
+    vb = g.insertVertex("B");                           //      /  \            //
+    vc = g.insertVertex("C");                           //     B <- C           //
+    g.insertEdge(va, vb);                               //////////////////////////
+    g.insertEdge(va, vc);
+    g.insertEdge(vc, vb);
+
+    answer.clear();
+    answer["A"] = "none";
+    answer["B"] = "A";
+    answer["C"] = "A";
+    checkDominators(g, va, answer);
+
+    answer.clear();
+    answer["A"] = "C";
+    answer["B"] = "none";
+    answer["C"] = "none";
+    checkPostDominators(g, vc, answer);
+};
+
+static void
+graphDominators02() {
+    std::cout <<"graph dominators (full)\n";
+
+    typedef Sawyer::Container::Graph<std::string> Graph;
+    typedef Graph::VertexIterator Vertex;
+
+    Graph g;                                            //////////////////////////////////////////////////
+    Vertex va = g.insertVertex("A");                    //           A                                  //
+    Vertex vb = g.insertVertex("B");                    //           |                                  //
+    Vertex vc = g.insertVertex("C");                    //           B                                  //
+    Vertex vd = g.insertVertex("D");                    //         /  \                                 //
+    Vertex ve = g.insertVertex("E");                    //        /    \                                //
+    /*vf*/      g.insertVertex("F");                    //       /      \                               //
+    Vertex vg = g.insertVertex("G");                    //      C    D   E   F     (F is not connected) //
+    Vertex vh = g.insertVertex("H");                    //     / \  | \ / \                             //
+    Vertex vi = g.insertVertex("I");                    //    G  H  |  I  J <.     (J has a self edge)  //
+    Vertex vj = g.insertVertex("J");                    //    \ /   |    / \_/                          //
+    Vertex vk = g.insertVertex("K");                    //     K    L   |                               //
+    Vertex vl = g.insertVertex("L");                    //      \   |   /                               //
+    Vertex vm = g.insertVertex("M");                    //       \  |  /                                //
+                                                        //        \ | /                                 //
+    g.insertEdge(va, vb);                               //          M                                   //
+    g.insertEdge(vb, vc);                               //////////////////////////////////////////////////
+    g.insertEdge(vb, ve);
+    g.insertEdge(vc, vg);
+    g.insertEdge(vc, vh);
+    g.insertEdge(vd, vl);
+    g.insertEdge(vd, vi);
+    g.insertEdge(ve, vi);
+    g.insertEdge(ve, vj);
+    g.insertEdge(vg, vk);
+    g.insertEdge(vh, vk);
+    g.insertEdge(vj, vj);
+    g.insertEdge(vk, vm);
+    g.insertEdge(vl, vm);
+    g.insertEdge(vj, vm);
+
+    std::map<std::string, std::string> answer;
+    answer["A"] = "none";
+    answer["B"] = "A";
+    answer["C"] = "B";
+    answer["D"] = "none";
+    answer["E"] = "B";
+    answer["F"] = "none";
+    answer["G"] = "C";
+    answer["H"] = "C";
+    answer["I"] = "E";
+    answer["J"] = "E";
+    answer["K"] = "C";
+    answer["L"] = "none";
+    answer["M"] = "B";
+
+    checkDominators(g, va, answer);
+
+    answer.clear();
+    answer["A"] = "B";
+    answer["B"] = "M";
+    answer["C"] = "K";
+    answer["D"] = "L";
+    answer["E"] = "J";
+    answer["F"] = "none";
+    answer["G"] = "K";
+    answer["H"] = "K";
+    answer["I"] = "none";
+    answer["J"] = "M";
+    answer["K"] = "M";
+    answer["L"] = "M";
+    answer["M"] = "none";
+
+    checkPostDominators(g, vm, answer);
+}
+
+static void
+graphDominators03() {
+    std::cout <<"graph dominators (complete)\n";
+
+    typedef Sawyer::Container::Graph<std::string> Graph;
+    typedef Graph::VertexIterator Vertex;
+
+    Graph g;
+    Vertex va = g.insertVertex("A");
+    Vertex vb = g.insertVertex("B");
+    Vertex vc = g.insertVertex("C");
+    Vertex vd = g.insertVertex("D");
+    Vertex ve = g.insertVertex("E");
+
+    g.insertEdge(va, vb);
+    g.insertEdge(va, vc);
+    g.insertEdge(va, vd);
+    g.insertEdge(va, ve);
+
+    g.insertEdge(vb, va);
+    g.insertEdge(vb, vc);
+    g.insertEdge(vb, vd);
+    g.insertEdge(vb, ve);
+
+    g.insertEdge(vc, va);
+    g.insertEdge(vc, vb);
+    g.insertEdge(vc, vd);
+    g.insertEdge(vc, ve);
+
+    g.insertEdge(vd, va);
+    g.insertEdge(vd, vb);
+    g.insertEdge(vd, vc);
+    g.insertEdge(vd, ve);
+
+    g.insertEdge(ve, va);
+    g.insertEdge(ve, vb);
+    g.insertEdge(ve, vc);
+    g.insertEdge(ve, vd);
+
+    std::map<std::string, std::string> answer;
+    answer["A"] = "none";
+    answer["B"] = "A";
+    answer["C"] = "A";
+    answer["D"] = "A";
+    answer["E"] = "A";
+
+    checkDominators(g, va, answer);
+}
+
 int main() {
     Sawyer::initializeLibrary();
     typedef Sawyer::Container::Graph<std::string, std::string> G1;
@@ -1112,4 +1496,8 @@ int main() {
     compileTraversals();
     traversals();
     breakCycles();
+    functorTraversals();
+    graphDominators01();
+    graphDominators02();
+    graphDominators03();
 }

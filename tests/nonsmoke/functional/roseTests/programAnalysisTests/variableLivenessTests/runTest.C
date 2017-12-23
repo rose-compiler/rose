@@ -14,18 +14,18 @@
 #include "stringify.h"
 #endif
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 static bool
 is_type_node(SgNode *node) {
     return isSgType(node)!=NULL;
 }
 
-void testOneFunction( std::string funcParamName,
-		      vector<string> argvList,
-		      bool debug, int nrOfNodes,
-		      multimap <int, vector<string> >  resultsIn,
-		      multimap <int, vector<string> > resultsOut) {
+void testOneFunction( std::string funcParamName, // function in question
+        vector<string> argvList,
+        bool debug, int nrOfNodes, // number of CFG nodes
+        multimap <int, vector<string> >  resultsIn, // expected live-in set
+        multimap <int, vector<string> > resultsOut) {
   cout << " \n\n------------------------------------------\nrunning (variable)... " << argvList[1] << endl;
 
   // Build the AST used by ROSE
@@ -40,9 +40,8 @@ void testOneFunction( std::string funcParamName,
   if (debug==false)
     defuse->dfaToDOT();
 
-
   LivenessAnalysis* liv = new LivenessAnalysis(debug,(DefUseAnalysis*)defuse);
-
+  // iterate all function definitions
   std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
   NodeQuerySynthesizedAttributeType vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
   NodeQuerySynthesizedAttributeType::const_iterator i = vars.begin();
@@ -58,7 +57,7 @@ void testOneFunction( std::string funcParamName,
     FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
     if (abortme)
       break;
-    if (funcName!=funcParamName) {
+    if (funcName!=funcParamName) { // skip function definition which does not match the specified name
       if (debug)
         cerr << "    .. skipping live analysis check for func : " << funcName << endl;
       continue;
@@ -86,13 +85,15 @@ void testOneFunction( std::string funcParamName,
       exit(1);
     } else {
       if (debug)
-    	cerr << "Investigating nodes : " << nodes.size() << endl;
+        cerr << "Investigating total number of nodes : " << nodes.size() << endl;
     }
+    // For nodes, except for type nodes, we do the check for in and out sets.
     NodeQuerySynthesizedAttributeType::const_iterator nodesIt = nodes.begin();
     for (; nodesIt!=nodes.end();++nodesIt) {
       SgNode* node = *nodesIt;
       ROSE_ASSERT(node);
-      int tableNr = defuse->getIntForSgNode(node);
+      int curNodeId = defuse->getIntForSgNode(node); // the Unique ID for the current node
+      // obtain in and out variables
       std::vector<SgInitializedName*> in = liv->getIn(node);
       std::vector<SgInitializedName*> out = liv->getOut(node);
 
@@ -100,114 +101,131 @@ void testOneFunction( std::string funcParamName,
       std::vector<string> outName;
       std::vector<SgInitializedName*>::const_iterator itv = in.begin();
       for (;itv!=in.end();++itv) {
-	SgInitializedName* init = *itv;
-	string name = init->get_name();
-	inName.push_back(name);
+        SgInitializedName* init = *itv;
+        string name = init->get_name();
+        inName.push_back(name);
       }
       itv = out.begin();
       for (;itv!=out.end();++itv) {
-	SgInitializedName* init = *itv;
-	string name = init->get_name();
-	outName.push_back(name);
+        SgInitializedName* init = *itv;
+        string name = init->get_name();
+        outName.push_back(name);
       }
       std::sort(inName.begin(), inName.end());
       std::sort(outName.begin(), outName.end());
 
+      // compare reference IN set with generated In set
       multimap <int, vector<string> >::const_iterator k =resultsIn.begin();
+      if (debug)
+        cerr << "------------------------------------------------ \nCompare to expected results for IN set:"
+          << " for SgNode: " << node->class_name() <<endl;
+
       for (;k!=resultsIn.end();++k) {
-	int resNr = k->first;
-	vector<string> results = k->second;
-	if (debug)
-      	  cerr << "   ... containing nodes : " << results.size() << " node: " << node->class_name()
-               << "   tableNr : " << tableNr
-               << "  resNr : " << resNr << endl;
-	if (tableNr==resNr) {
-	  std::sort(results.begin(), results.end());
-	  if (results==inName) {
-	    if (debug)
-	      cerr <<"Contents in IN vector is correct! " << endl;
-	  } else {
-	    if (debug) {
-	      cerr << " >>>>>>>>>> Problem with contents for IN ! " << endl;
-	      cerr << " >>>>>>>>>> RESULT ... " << endl;
-	    }
-	    std::vector<string>::const_iterator itv = inName.begin();
-	    for (;itv!=inName.end();++itv) {
-	      string name = *itv;
-	      if (debug)		cerr << name << " " ;
-	    }
-	    if (debug) {
-	      cerr << endl;
-	      cerr << " >>>>>>>>>> USER ... " << endl;
-	    }
-	    itv = results.begin();
-	    for (;itv!=results.end();++itv) {
-	      string name = *itv;
-	      if (debug)	cerr << name << " " ;
-	    }
-	    if (debug) {
-	      cerr << endl;
-	    }
-	    exit(1);
-	  }
-	  if (results.size()==in.size()) {
-	    hitIn++;
-	  }
-	  if (debug)
-	    cout << " nodeNr: " << tableNr << ".  ResultSize IN should be:" << results.size()
-                 << " -  resultSize is: " << in.size()
-                 << "  foundMatches == : " << hitIn << "/" << resultsIn.size() << endl;
+        int expectedId = k->first; // expected ID for
+        vector<string> results = k->second;
+        if (debug)
+          cerr     << "Expected ID: " << expectedId 
+          << " expected variable count = " << results.size() <<endl;
+        if (curNodeId==expectedId) {
+          std::sort(results.begin(), results.end());
+          // compare the whole two sets
+          if (results==inName) {
+            if (debug)
+              cerr <<"Contents in IN vector is correct! " << endl;
+          } 
+          else 
+          {
+            if (debug) {
+              cerr << " >>>>>>>>>> Problem with contents for IN set of " <<node <<" "<< node->class_name() << " with ID "<< curNodeId << endl;
+              cerr << " >>>>>>>>>> Analysis Generated Results ... " << endl;
+            }
+
+            // generated IN set
+            std::vector<string>::const_iterator itv = inName.begin();
+            for (;itv!=inName.end();++itv) {
+              string name = *itv;
+              if (debug)
+                cerr << name << " " ;
+            }
+            if (debug) {
+              cerr << endl;
+              cerr << " >>>>>>>>>> Expected Results ... " << endl;
+            }
+            itv = results.begin();
+
+            for (;itv!=results.end();++itv) {
+              string name = *itv;
+              if (debug) cerr << name << " " ;
+            }
+            if (debug) {
+              cerr << endl;
+            }
+            exit(1);
+          }
+
+          if (results.size()==in.size()) {
+            hitIn++;
+          }
+          if (debug)
+            cout << " nodeNr: " << curNodeId << ".  ResultSize IN should be:" << results.size()
+              << " -  resultSize is: " << in.size()
+              << "  foundMatches == : " << hitIn << "/" << resultsIn.size() << endl;
         }
       }
+
+      // compare reference IN set with generated In set
+      if (debug)
+        cerr << "------------------------------------------------ \nCompare to expected results for OUT set: "
+          << " for SgNode: " << node->class_name() <<endl;
       k =resultsOut.begin();
       for (;k!=resultsOut.end();++k) {
-	int resNr = k->first;
-	vector<string> results = k->second;
-	//    	  cerr << "   ... containing nodes : " << results.size() << "   tableNr : " << tableNr <<
-	//			  "  resNr : " << resNr << endl;
-	if (tableNr==resNr) {
-	  std::sort(results.begin(), results.end());
-	  if (results==outName) {
-	    if (debug)
-	      cerr <<"Contents in OUT vector is correct! " << endl;
-	  } 	     else {
-	    if (debug) {
-	      cerr << " >>>>>>>>>> Problem with contents for OUT ! " << endl;
-	      cerr << " >>>>>>>>>> RESULT ... " << endl;
-	    }
-	    std::vector<string>::const_iterator itv = outName.begin();
-	    for (;itv!=outName.end();++itv) {
-	      string name = *itv;
-	      if (debug)		cerr << name << " " ;
-	    }
-	    if (debug) {
-	      cerr << endl;
-	      cerr << " >>>>>>>>>> USER ... " << endl;
-	    }
-	    itv = results.begin();
-	    for (;itv!=results.end();++itv) {
-	      string name = *itv;
-	      if (debug)					
-		cerr << name << " " ;
-	    }
-	    if (debug)
-	      cerr << endl;
-	    exit(1);
-	  }
+        int expectedId = k->first;
+        vector<string> results = k->second;
+        if (debug)
+          cerr<< " expected variable count = " << resultsOut.size()<<endl;
+        if (curNodeId==expectedId) {
+          std::sort(results.begin(), results.end());
+          // compare the whole two tests
+          if (results==outName) {
+            if (debug)
+              cerr <<"Contents in OUT vector is correct! " << endl;
+          }
+          else {
 
-	  if (results.size()==out.size()) {
-	    hitOut++;
-	  }
-	  if (debug)
-	    cout << " nodeNr: " << tableNr << ".  ResultSize OUT should be:" << results.size()
-                 << " -  resultSize is: " << out.size()
-                 << "  foundMatches == : " << hitOut << "/" << resultsOut.size() << endl;
+            if (debug) 
+            {
+              cerr << " >>>>>>>>>> Problem with contents for OUT ! " <<node << " " << node->class_name() << " with ID "<< curNodeId << endl;
+              cerr << " >>>>>>>>>> Analysis generated results... " << endl;
+              // for each generated OUT variables
+              std::vector<string>::const_iterator itv = outName.begin();
+              for (;itv!=outName.end();++itv) {
+                string name = *itv;
+                cerr << name << " " ;
+              }
+              cerr << endl;
+              cerr << " >>>>>>>>>> Expected results ... " << endl;
+              itv = results.begin();
+              for (;itv!=results.end();++itv) {
+                string name = *itv;
+                cerr << name << " " ;
+              }
+              cerr << endl;
+            }
+            exit(1);
+          }
+          if (results.size()==out.size()) {
+            hitOut++;
+          }
+          if (debug)
+            cout << " nodeNr: " << curNodeId << ".  ResultSize OUT should be:" << results.size()
+              << " -  resultSize is: " << out.size()
+              << "  foundMatches == : " << hitOut << "/" << resultsOut.size() << endl;
         }
       }
       if (hitIn==0 && hitOut==0) {
-	if (debug)
-	  cout << " nodeNr: " << tableNr << " IN: " << hitIn << "/" << resultsIn.size() <<
-	    "        Out:" << hitOut << "/" << resultsOut.size() << endl;
+        if (debug)
+          cout << " nodeNr: " << curNodeId << " IN: " << hitIn << "/" << resultsIn.size() <<
+            "        Out:" << hitOut << "/" << resultsOut.size() << endl;
       }
     }
     if (hitIn!=(int)resultsIn.size() || hitOut!=(int)resultsOut.size()) {
@@ -220,7 +238,7 @@ void testOneFunction( std::string funcParamName,
     cerr << "Writing out to var.dot... " << endl;
   std::ofstream f2("var.dot");
   dfaToDot(f2, string("var"), dfaFunctions,
-           (DefUseAnalysis*)defuse, liv);
+      (DefUseAnalysis*)defuse, liv);
   f2.close();
 
   if (abortme) {
@@ -249,7 +267,7 @@ void testOneFunction( std::string funcParamName,
     cerr << "Writing out to varFix.dot... " << endl;
   std::ofstream f3("varFix.dot");
   dfaToDot(f3, string("varFix"), dfaFunctions2,
-           (DefUseAnalysis*)defuse, liv);
+      (DefUseAnalysis*)defuse, liv);
   f3.close();
 
   if (debug)
@@ -301,7 +319,7 @@ void runCurrentFile(vector<string> &argvList, bool debug, bool debug_map) {
 
   std::ofstream f2("var.dot");
   dfaToDot(f2, string("var"), dfaFunctions,
-           (DefUseAnalysis*)defuse, liv);
+      (DefUseAnalysis*)defuse, liv);
   f2.close();
   if (abortme) {
     cerr<<"ABORTING ." << endl;
@@ -315,7 +333,7 @@ void runCurrentFile(vector<string> &argvList, bool debug, bool debug_map) {
 
 void usage() {
   cout << " Usage: " << endl;
-  cout << "   runTest all [startNr]   --- to test all testcases" << endl;
+  cout << "   runTest all [startNr] [stopNr]  --- to test all buildin testcases, need SRCDIR env variable set to find them" << endl;
   cout << "   runTest [file]          --- to test one file" << endl;
   exit(1);
 }
@@ -356,10 +374,10 @@ int main( int argc, char * argv[] )
     size_t startNr = 0;
     size_t stopNr = (size_t)(-1);
     if (argc>2) {
-        startNr = strtol(argv[2], NULL, 0);
-        if (argc>3) {
-            stopNr = strtol(argv[3], NULL, 0);
-        }
+      startNr = strtol(argv[2], NULL, 0);
+      if (argc>3) {
+        stopNr = strtol(argv[3], NULL, 0);
+      }
     }
 
     argvList.resize(2);
@@ -368,7 +386,11 @@ int main( int argc, char * argv[] )
     multimap <int,  vector<string> > outputResults;
 
     char* srcdirVar = getenv("SRCDIR");
-    ROSE_ASSERT (srcdirVar);
+    if (!srcdirVar)
+    {
+      cerr<<"buildin tests need to know the full path to the test files. \nPlease set SRCDIR env variable to the path of buildin input tests files. \n for example export SRCDIR=/path/to/rose/tests/nonsmoke/functional/roseTests/programAnalysisTests/variableLivenessTests/tests"<<endl;
+      ROSE_ASSERT (srcdirVar);
+    }
     std::string srcdir = srcdirVar;
     srcdir += "/";
 
@@ -458,12 +480,13 @@ int main( int argc, char * argv[] )
       std::cout <<"------------------------------ TESTCASE 6 -----------------------------------------\n";
       argvList[1]=srcdir+"tests/test6.C";
       results.clear();  outputResults.clear();
+      // test IN set for variable z:  ID 22 node should have z as IN set
       string in22[] = {"z"};
       vector<string> in22v(in22,in22+1);
-      results.insert(pair<int,  vector<string> >( make_pair(22, in22v )));
+      results.insert(pair<int,  vector<string> >( make_pair(26, in22v )));
+      // Empty Out set 
       vector<string> out22;
-      outputResults.insert(pair<int,  vector<string> >( make_pair(22, out22 )));
-
+      outputResults.insert(pair<int,  vector<string> >( make_pair(26, out22 )));
       testOneFunction("::foo", argvList, debug, 26, results,outputResults);
     }
 

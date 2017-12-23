@@ -15,7 +15,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # if you are building ROSE translators, remember to set include path and libraries.
 #AM_CPPFLAGS = $(ROSE_INCLUDES)
-#LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#AM_LDFLAGS = $(ROSE_RPATHS)
+#LDADD    = $(ROSE_LIBS)
 
 # Forward declarations so we can use make's "+=" operator.  We use "noinst_PROGRAMS" instead of "bin_PROGRAMS" because
 # we generally don't want checkers used in testing to be installed by "make install".  The "TEST_TARGETS" variable
@@ -117,8 +118,12 @@ noInputs.passed: noInputs
 # specimens can be easily changed, although in such a small example it might be clearer to list all three tests
 # explicitly.
 
+# DQ (3/12/2017): Interestingly, this test will detect if the CXX variable was specficied with "clang" or "clang++".
+# With "clang++" specified on the configure command-line for ROSE this works fine.
+# if !USING_CLANG_COMPILER
 noinst_PROGRAMS += parser
 parser_SOURCES = parser.C
+# endif
 
 # The explicit list of specimens. If you have specimens coming from multiple specimen directories you'll have to
 # include the directory name and make special provisions below to prevent conflicts in the test target names.
@@ -246,10 +251,6 @@ check-runAlgorithm: $(runAlgorithm_targets)
 #
 # All testing makefiles have the following stuff, although it might vary a little.
 
-# We need a target that says how "make check-smoke" and "make check-nonsmoke" should work in this directory. We only
-# need one or the other depending on whether we're in the "smoke" or "nonsmoke" side of the testing.  If you're writing
-# a makefile for a ROSE *project*, you might have a single makefile with both smoke and non-smoke tests, in which case
-# you'd probably have $(SMOKE_TEST_TARGETS) and $(NONSMOKE_TEST_TARGETS), and define both check-smoke-local and
-# check-nonsmoke-local rules.
-
-check-nonsmoke-local: $(TEST_TARGETS)
+clean-local:
+	rm -f $(MOSTLYCLEANFILES)
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)

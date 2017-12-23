@@ -6,7 +6,8 @@ TEST_TARGETS =
 EXTRA_DIST =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 ###############################################################################################################################
 # AstAttributeMechanism
@@ -106,4 +107,4 @@ testRangeMap.passed: $(top_srcdir)/scripts/test_exit_status testRangeMap
 # Boilerplate
 ###############################################################################################################################
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)

@@ -7,9 +7,9 @@
 #include <TraceSemantics2.h>
 #include <integerOps.h>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace SourceAstSemantics {
@@ -131,7 +131,7 @@ RiscOperators::substitute(const BaseSemantics::SValuePtr &expression) {
 
 // C global variable name for a register.
 std::string
-RiscOperators::registerVariableName(const RegisterDescriptor &reg) {
+RiscOperators::registerVariableName(RegisterDescriptor reg) {
     using namespace StringUtility;
     const RegisterDictionary *registers = currentState()->registerState()->get_register_dictionary();
     std::string name = registers->lookup(reg);
@@ -467,13 +467,19 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt);
     return substitute(retval);
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
+    BaseSemantics::SValuePtr retval = Super::peekRegister(reg, dflt);
+    return substitute(retval);
+}
+
 void
-RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) {
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
    RegisterState::BitRange wantLocation = RegisterState::BitRange::baseSize(reg.get_offset(), reg.get_nbits());
    RegisterState::RegPairs regpairs = registers->overlappingRegisters(reg);
@@ -514,7 +520,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
    
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
     ASSERT_require2(dflt->get_width() % 8 == 0, "readMemory size must be a multiple of a byte");
     size_t nBytes = dflt->get_width() >> 3;
@@ -541,7 +547,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
     ASSERT_require2(value->get_width() % 8 == 0, "writeMemory size must be a multiple of a byte");
     size_t nBytes = value->get_width() >> 3;

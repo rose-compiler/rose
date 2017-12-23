@@ -8,7 +8,7 @@
 
 #include "BaseSemantics2.h"
 #include "Cxx_GrammarSerialization.h"
-#include "SMTSolver.h"
+#include "BinarySmtSolver.h"
 #include "BinarySymbolicExpr.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
@@ -22,7 +22,7 @@
 #include <map>
 #include <vector>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -185,6 +185,9 @@ public:
  *  because its set of defining instructions is non-empty ({I2}).
  */
 class SValue: public BaseSemantics::SValue {
+public:
+    typedef BaseSemantics::SValue Super;
+
 protected:
     /** The symbolic expression for this value.  Symbolic expressions are reference counted. */
     ExprPtr expr;
@@ -202,8 +205,9 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         roseAstSerializationRegistration(s);            // "defs" has SgAsmInstruction ASTs
-        s & boost::serialization::base_object<BaseSemantics::SValue>(*this);
-        s & expr & defs;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(expr);
+        s & BOOST_SERIALIZATION_NVP(defs);
     }
 #endif
     
@@ -275,7 +279,7 @@ public:
     }
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
-                        SMTSolver*) const ROSE_OVERRIDE;
+                        SmtSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -290,8 +294,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
@@ -356,7 +360,9 @@ public:
     /** Changes the expression stored in the value.
      * @{ */
     virtual void set_expression(const ExprPtr &new_expr) {
+        ASSERT_not_null(new_expr);
         expr = new_expr;
+        width = new_expr->nBits();
     }
     virtual void set_expression(const SValuePtr &source) {
         set_expression(source->get_expression());
@@ -442,6 +448,8 @@ typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
  *  @sa MemoryMapState */
 class MemoryListState: public BaseSemantics::MemoryCellList {
 public:
+    typedef BaseSemantics::MemoryCellList Super;
+
     /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
     struct CellCompressor {
         virtual ~CellCompressor() {}
@@ -499,7 +507,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::MemoryCellList>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
 
@@ -550,7 +558,7 @@ public:
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const ROSE_OVERRIDE {
         return instance(protocell);
     }
 
@@ -623,6 +631,9 @@ typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
  *
  *  @sa MemoryListState */
 class MemoryMapState: public BaseSemantics::MemoryCellMap {
+public:
+    typedef BaseSemantics::MemoryCellMap Super;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -631,7 +642,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::MemoryCellMap>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
 
@@ -764,6 +775,9 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  * @endcode
  */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    typedef BaseSemantics::RiscOperators Super;
+
 protected:
     bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
     DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
@@ -779,12 +793,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::RiscOperators>(*this);
-        s & omit_cur_insn;
-        s & computingDefiners_;
-        s & computingMemoryWriters_;
-        s & computingRegisterWriters_;
-        s & trimThreshold_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(omit_cur_insn);
+        s & BOOST_SERIALIZATION_NVP(computingDefiners_);
+        s & BOOST_SERIALIZATION_NVP(computingMemoryWriters_);
+        s & BOOST_SERIALIZATION_NVP(computingRegisterWriters_);
+        s & BOOST_SERIALIZATION_NVP(trimThreshold_);
     }
 #endif
 
@@ -795,14 +809,14 @@ protected:
         : omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS), computingMemoryWriters_(TRACK_LATEST_WRITER),
           computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {}
 
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         name("Symbolic");
@@ -814,7 +828,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      * SymbolicSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryListState::instance(protoval, protoval);
@@ -824,13 +838,13 @@ public:
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
      *  second argument for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
      *  for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -838,12 +852,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -861,14 +875,14 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inherited methods for constructing values.
 public:
-    virtual BaseSemantics::SValuePtr boolean_(bool b) {
+    virtual BaseSemantics::SValuePtr boolean_(bool b) ROSE_OVERRIDE {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(currentInstruction());
         return retval;
     }
 
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(currentInstruction());
@@ -1131,7 +1145,7 @@ public:
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/);
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
                                                   const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
@@ -1145,14 +1159,16 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
-    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
-    virtual void writeMemory(const RegisterDescriptor &segreg,
+    virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
@@ -1164,10 +1180,10 @@ public:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
 #endif
 
 #endif

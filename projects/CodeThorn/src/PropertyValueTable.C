@@ -2,6 +2,8 @@
 #include "CodeThornException.h"
 #include "Miscellaneous2.h"
 
+#include "rose_config.h"
+
 // basic file operations
 #include <iostream>
 #include <fstream>
@@ -360,6 +362,7 @@ void PropertyValueTable::printResultsStatistics() {
       <<endl;
 }
 
+#ifdef HAVE_SPOT
 string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations) {
   stringstream propertiesSpinSyntax;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
@@ -384,6 +387,8 @@ string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnot
   }
   return propertiesSpinSyntax.str();
 }
+#endif
+
 string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotations) {
   stringstream propertiesRersFormat;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {

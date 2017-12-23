@@ -12,7 +12,15 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
+
+########################################################################################################################
+# A checker taking no specimens and which does not even depend on librose. It's only purpose is to see if it can be
+# compiled and link; we never actually need to run it. (Don't remove this example -- it's a real test.)
+
+noinst_PROGRAMS += basicLinkTest
+basicLinkTest_SOURCES = basicLinkTest.C
 
 
 ########################################################################################################################
@@ -37,9 +45,7 @@ $(runAlgorithm_targets): runAlgorithm_%.passed: runAlgorithm
 .PHONY: check-runAlgorithm
 check-runAlgorithm: $(runAlgorithm_targets)
 
-
-
 ########################################################################################################################
 # Boilerplate.
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)

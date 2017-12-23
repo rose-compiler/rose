@@ -8,10 +8,10 @@
 #include "stringify.h"
 #include <boost/foreach.hpp>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-using namespace rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -2151,7 +2151,7 @@ struct IP_mac: P {
         // Load the accumulator
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[3]);
         ASSERT_not_null2(rre, "fourth operand must be a MAC accumulator register");
-        const RegisterDescriptor &macAccReg = rre->get_descriptor();
+        RegisterDescriptor macAccReg = rre->get_descriptor();
         ASSERT_require2(macAccReg.get_major()==m68k_regclass_mac, "fourth operand must be a MAC accumulator register");
         ASSERT_require2(macAccReg.get_nbits()==32, "MAC accumulator register must be 32 bits");
         RegisterDescriptor macExtReg;
@@ -3913,5 +3913,5 @@ DispatcherM68k::adjustFpConditionCodes(const SValuePtr &result, SgAsmFloatType *
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
 #endif

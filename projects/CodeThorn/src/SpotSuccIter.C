@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "SpotSuccIter.h"
 
 using namespace CodeThorn;
@@ -42,7 +45,7 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   bdd transCond = bddtrue;
   const EState* myTarget=t.target;
 
-  // MS: resolved merge conflict 
+  ROSE_ASSERT(myTarget);
   InputOutput io =myTarget->io; 
   if (io.isStdErrIO() || io.isFailedAssertIO()) { // Error states are ignored and are treated as dead ends. 
                                                   // They do not contain LTL specific behavior and no states follow them.
@@ -54,8 +57,8 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
     exit(1);
   }
 
-  AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
-
+  AbstractValue myIOVal=myTarget->determineUniqueIOValue();
+  ROSE_ASSERT(myIOVal.isConstInt());
   // check if there exists a single input or output value (remove for support of symbolic analysis)
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
     if(!myIOVal.isConstInt()) {
@@ -67,6 +70,7 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   //determine possible input / output values at target state
   //cout << "DEBUG: generateSpotTransition. target state's label: " << myTarget->label() << "   target state's InputOutput operator: " << myTarget->io.op << endl;
   int ioValAtTarget = myIOVal.getIntValue();
+
 #if 1
   //convert the single input/output value into set representations (for future symbolic analysis mode)
   std::set<int> possibleInputValues, possibleOutputValues;
@@ -114,3 +118,5 @@ bdd SpotSuccIter::conjunctivePredicate(std::set<int> nonNegated, std::set<int> a
   }	
   return result;
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

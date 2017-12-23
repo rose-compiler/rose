@@ -7,11 +7,12 @@
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 #include <SymbolicSemantics2.h>
+#include <sstream>
 
 using namespace Sawyer::Container;
 using namespace Sawyer::Container::Algorithm;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace DataFlow {
@@ -248,25 +249,28 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
         if (0 == vertex.id())
             out <<" style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
 
-        out <<" label=";
+        out <<" label=<Vertex " <<vertex.id() <<"<br/>";
         switch (vertex.value().type()) {
             case DfCfgVertex::BBLOCK:
-                out <<"\"" <<vertex.value().bblock()->printableName() <<"\"";
+                out <<GraphViz::htmlEscape(vertex.value().bblock()->printableName()) <<">";
                 break;
             case DfCfgVertex::FAKED_CALL:
                 if (Function::Ptr callee = vertex.value().callee()) {
-                    out <<"<fake call to " <<GraphViz::htmlEscape(vertex.value().callee()->printableName()) <<">";
+                    out <<"fake call to<br/>function " <<StringUtility::addrToString(callee->address());
+                    if (!callee->demangledName().empty())
+                        out <<"<br/>" <<GraphViz::htmlEscape(callee->demangledName());
+                    out <<">";
                 } else {
-                    out <<"\"fake call to indeterminate function\"";
+                    out <<"fake call to<br/>indeterminate function>";
                     out <<" style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
                 }
                 break;
             case DfCfgVertex::FUNCRET:
-                out <<"\"function return\"";
+                out <<"function return>";
                 out <<" style=filled fillcolor=\"" <<returnColor.toHtml() <<"\"";
                 break;
             case DfCfgVertex::INDET:
-                out <<"\"indeterminate\" style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
+                out <<"indeterminate> style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
                 break;
         }
 
@@ -283,9 +287,9 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
-isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
-               const BaseSemantics::SValuePtr &initialStackPointer, SMTSolver *solver) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
+               const BaseSemantics::SValuePtr &initialStackPointer, SmtSolver *solver) {
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
@@ -319,12 +323,12 @@ isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
 StackVariables
 findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
     BaseSemantics::StatePtr state = ops->currentState();
     ASSERT_not_null(state);
-    SMTSolver *solver = ops->solver();                  // might be null
+    SmtSolver *solver = ops->solver();                  // might be null
 
     // What is the word size for this architecture?  We'll assume the word size is the same as the width of the stack pointer,
     // whose value we have in initialStackPointer.
@@ -494,9 +498,9 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     ASSERT_require(vertex != dfCfg.vertices().end());
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
         Function::Ptr callee = vertex->value().callee();
-        bool isStackPtrFixed = false;
         BaseSemantics::RegisterStateGenericPtr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
+        BaseSemantics::SValuePtr origStackPtr = ops->readRegister(STACK_POINTER_REG);
 
         BaseSemantics::SValuePtr stackDelta;            // non-null if a stack delta is known for the callee
         if (callee)
@@ -504,25 +508,26 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 
         // Clobber registers that are modified by the callee. The extra calls to updateWriteProperties is because most
         // RiscOperators implementation won't do that if they don't have a current instruction (which we don't).
-        if (callee && callee->callingConventionAnalysis().hasResults()) {
+        if (callee && callee->callingConventionAnalysis().didConverge()) {
+#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
+            std::cerr <<"ROBB: clobbering output registers according to calling convention analysis\n";
+#endif
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
-            BOOST_FOREACH (const RegisterDescriptor &reg, ccAnalysis.outputRegisters().listAll(regDict)) {
+            BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
                 ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
                 if (genericRegState)
                     genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
             }
-            if (ccAnalysis.stackDelta()) {
-                ops->writeRegister(STACK_POINTER_REG,
-                                   ops->add(ops->readRegister(STACK_POINTER_REG),
-                                            ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta())));
-                if (genericRegState)
-                    genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
-                isStackPtrFixed = true;
-            }
+            if (ccAnalysis.stackDelta())
+                stackDelta = ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta());
+
         } else if (defaultCallingConvention_) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
+#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
+            std::cerr <<"ROBB: clobbering output registers according to default calling convention\n";
+#endif
             BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
                     ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().get_nbits()));
@@ -530,55 +535,44 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
                 }
             }
-            BOOST_FOREACH (const RegisterDescriptor &reg, defaultCallingConvention_->scratchRegisters()) {
+            BOOST_FOREACH (RegisterDescriptor reg, defaultCallingConvention_->scratchRegisters()) {
                 if (reg != STACK_POINTER_REG) {
                     ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
                 }
             }
-            if (!stackDelta && // don't fix it here if we'll fix it below with more accurate information
-                defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER &&
-                defaultCallingConvention_->nonParameterStackSize() != 0) {
-                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-                BaseSemantics::SValuePtr delta =
-                    ops->number_(oldStack->get_width(), defaultCallingConvention_->nonParameterStackSize());
-                if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
-                    delta = ops->negate(delta);
-                BaseSemantics::SValuePtr newStack = ops->add(oldStack, delta);
-                ops->writeRegister(STACK_POINTER_REG, newStack);
-                if (genericRegState)
-                    genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
-                isStackPtrFixed = true;
+
+            // Use the stack delta from the default calling convention only if we don't already know the stack delta from a
+            // stack delta analysis, and only if the default CC is caller-cleanup.
+            if (!stackDelta || !stackDelta->is_number() || stackDelta->get_width() > 64) {
+                if (defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
+                    stackDelta = ops->number_(origStackPtr->get_width(), defaultCallingConvention_->nonParameterStackSize());
+                    if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
+                        stackDelta = ops->negate(stackDelta);
+                }
             }
+
         } else {
             // We have not performed a calling convention analysis and we don't have a default calling convention definition. A
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
+#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
+            std::cerr <<"ROBB: no register clobbering\n";
+#endif
         }
 
-        // Adjust the stack pointer if we haven't already.
-        if (!isStackPtrFixed) {
-            BaseSemantics::SValuePtr newStack, delta;
-            if (callee)
-                delta = callee->stackDelta();
-            if (delta) {
-                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-                newStack = ops->add(oldStack, delta);
-            } else if (false) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
-                // We don't know the callee's delta, so assume that the callee pops only its return address. This is usually
-                // the correct for caller-cleanup ABIs common on Unix/Linux, but not usually correct for callee-cleanup ABIs
-                // common on Microsoft systems.
-                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-                newStack = ops->add(oldStack, callRetAdjustment_);
-            } else {
-                // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
-                newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
-            }
-            ASSERT_not_null(newStack);
-            ops->writeRegister(STACK_POINTER_REG, newStack);
-            if (genericRegState)
-                genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
+        // Adjust the stack pointer (regardless of whether we also did something to it above)
+        BaseSemantics::SValuePtr newStack;
+        if (stackDelta && stackDelta->is_number() && stackDelta->get_width() <= 64) {
+            newStack = ops->add(origStackPtr, stackDelta);
+        } else {
+            // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
+            newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
         }
+        ASSERT_not_null(newStack);
+        ops->writeRegister(STACK_POINTER_REG, newStack);
+        if (genericRegState)
+            genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
 
     } else if (DfCfgVertex::FUNCRET == vertex->value().type()) {
         // Identity semantics; this vertex just merges all the various return blocks in the function.
@@ -595,6 +589,15 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             cpu_->processInstruction(insn);
     }
     return retval;
+}
+
+std::string
+TransferFunction::printState(const BaseSemantics::StatePtr &state) {
+    if (!state)
+        return "null state";
+    std::ostringstream ss;
+    ss <<*state;
+    return ss.str();
 }
 
 } // namespace

@@ -5,6 +5,7 @@ add_library(midend_binary OBJECT
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
+  BinaryDemangler.C
   BinaryDominance.C
   BinaryFeasiblePath.C
   BinaryFunctionCall.C
@@ -12,34 +13,25 @@ add_library(midend_binary OBJECT
   BinaryMagic.C
   BinaryNoOperation.C
   BinaryPointerDetection.C
+  BinaryReachability.C
   BinaryReturnValueUsed.C
+  BinarySmtSolver.C
+  BinarySmtlibSolver.C
   BinaryStackDelta.C
   BinaryString.C
   BinarySymbolicExpr.C
   BinarySymbolicExprParser.C
   BinaryTaintedFlow.C
   BinaryToSource.C
+  BinaryYicesSolver.C
+  BinaryZ3Solver.C
   DwarfLineMapper.C
-  GraphAlgorithms.C
-  RoseBin_CallGraphAnalysis.cpp
-  RoseBin_CompareAnalysis.cpp
-  RoseBin_ControlFlowAnalysis.cpp
-  RoseBin_DataFlowAnalysis.cpp
-  RoseBin_FlowAnalysis.cpp
-  RoseBin_printInstructions.cpp
-  dataflowanalyses/InterruptAnalysis.cpp
-  dataflowanalyses/RoseBin_DataFlowAbstract.cpp
-  dataflowanalyses/RoseBin_DefUseAnalysis.cpp
-  dataflowanalyses/RoseBin_Emulate.cpp
-  dataflowanalyses/RoseBin_VariableAnalysis.cpp
   instructionSemantics/BaseSemantics2.C
   instructionSemantics/ConcreteSemantics2.C
   instructionSemantics/DataFlowSemantics2.C
   instructionSemantics/DispatcherM68k.C
   instructionSemantics/DispatcherPowerpc.C
   instructionSemantics/DispatcherX86.C
-  instructionSemantics/FindRegisterDefs.C
-  instructionSemantics/IntervalSemantics.C
   instructionSemantics/IntervalSemantics2.C
   instructionSemantics/LlvmSemantics2.C
   instructionSemantics/MemoryCell.C
@@ -48,17 +40,13 @@ add_library(midend_binary OBJECT
   instructionSemantics/MemoryCellState.C
   instructionSemantics/MultiSemantics2.C
   instructionSemantics/NullSemantics2.C
-  instructionSemantics/PartialSymbolicSemantics.C
   instructionSemantics/PartialSymbolicSemantics2.C
   instructionSemantics/RegisterStateGeneric.C
-  instructionSemantics/SMTSolver.C
   instructionSemantics/SourceAstSemantics2.C
   instructionSemantics/StaticSemantics2.C
   instructionSemantics/SymbolicMemory2.C
-  instructionSemantics/SymbolicSemantics.C
   instructionSemantics/SymbolicSemantics2.C
-  instructionSemantics/TraceSemantics2.C
-  instructionSemantics/YicesSolver.C)
+  instructionSemantics/TraceSemantics2.C)
 else()
 add_library(midend_binary OBJECT
   dummyBinaryMidend.C
@@ -76,13 +64,19 @@ install(
     BinaryCallingConvention.h
     BinaryControlFlow.h
     BinaryDataFlow.h
+    BinaryDemangler.h
     BinaryDominance.h
     BinaryFeasiblePath.h
     BinaryFunctionCall.h
     BinaryFunctionSimilarity.h
     BinaryMagic.h
+    BinaryMatrix.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryReachability.h
+    BinaryReturnValueUsed.h
+    BinarySmtSolver.h
+    BinarySmtlibSolver.h
     BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
@@ -90,54 +84,31 @@ install(
     BinarySymbolicExprParser.h
     BinaryTaintedFlow.h
     BinaryToSource.h
+    BinaryYicesSolver.h
+    BinaryZ3Solver.h
     DwarfLineMapper.h
-    GraphAlgorithms.h
-    RoseBin_CallGraphAnalysis.h
-    RoseBin_CompareAnalysis.h
-    RoseBin_ControlFlowAnalysis.h
-    RoseBin_DataFlowAnalysis.h
-    RoseBin_FlowAnalysis.h
-    RoseBin_printInstructions.h
-    dataflowanalyses/InterruptAnalysis.h
-    dataflowanalyses/RoseBin_DataFlowAbstract.h
-    dataflowanalyses/RoseBin_DefUseAnalysis.h
-    dataflowanalyses/RoseBin_Emulate.h
-    dataflowanalyses/RoseBin_VariableAnalysis.h
     ether.h
-    instructionSemantics/BaseSemantics.h
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/ConcreteSemantics2.h
     instructionSemantics/DataFlowSemantics2.h
     instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
-    instructionSemantics/FindRegisterDefs.h
-    instructionSemantics/InsnSemanticsExpr.h
-    instructionSemantics/IntervalSemantics.h
     instructionSemantics/IntervalSemantics2.h
     instructionSemantics/MemoryCell.h
     instructionSemantics/MemoryCellList.h
     instructionSemantics/MemoryCellMap.h
     instructionSemantics/MemoryCellState.h
-    instructionSemantics/MultiSemantics.h
     instructionSemantics/MultiSemantics2.h
-    instructionSemantics/NullSemantics.h
     instructionSemantics/NullSemantics2.h
-    instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/PartialSymbolicSemantics2.h
-    instructionSemantics/ReadWriteRegisterFragment.h
     instructionSemantics/RegisterStateGeneric.h
-    instructionSemantics/SMTSolver.h
     instructionSemantics/SourceAstSemantics2.h
     instructionSemantics/StaticSemantics2.h
     instructionSemantics/SymbolicMemory2.h
-    instructionSemantics/SymbolicSemantics.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/TestSemantics2.h
     instructionSemantics/TraceSemantics2.h
-    instructionSemantics/YicesSolver.h
-    instructionSemantics/flowEquations.h
-    instructionSemantics/x86InstructionSemantics.h
     libraryIdentification/functionIdentification.h
     libraryIdentification/libraryIdentification.h
   DESTINATION include)

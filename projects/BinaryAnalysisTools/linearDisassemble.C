@@ -13,11 +13,11 @@
 #include <Sawyer/Message.h>
 #include <string>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 
@@ -89,7 +89,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 int main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line
     P2::Engine engine;
@@ -97,30 +97,30 @@ int main(int argc, char *argv[])
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
 
     // Load the speciem as raw data or an ELF or PE container
-    MemoryMap map = engine.loadSpecimens(specimenNames);
-    map.dump(::mlog[INFO]);
-    map.dump(std::cout);
+    MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
+    map->dump(::mlog[INFO]);
+    map->dump(std::cout);
     Disassembler *disassembler = engine.obtainDisassembler();
 
     // Obtain an unparser suitable for this disassembler
     AsmUnparser unparser;
-    unparser.set_registers(disassembler->get_registers());
+    unparser.set_registers(disassembler->registerDictionary());
 
     // Build semantics framework; only used when settings.runSemantics is set
     BaseSemantics::DispatcherPtr dispatcher;
     if (settings.runSemantics) {
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
+        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
         ops = TraceSemantics::RiscOperators::instance(ops);
-        dispatcher = DispatcherM68k::instance(ops, disassembler->get_wordsize()*8);
+        dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8);
         dispatcher->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);
     }
 
     // Disassemble at each valid address, and show disassembly errors
     rose_addr_t va = settings.startVa;
-    while (map.atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
+    while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
         va = alignUp(va, settings.alignment);
         try {
-            SgAsmInstruction *insn = disassembler->disassembleOne(&map, va);
+            SgAsmInstruction *insn = disassembler->disassembleOne(map, va);
             ASSERT_not_null(insn);
             unparser.unparse(std::cout, insn);
 

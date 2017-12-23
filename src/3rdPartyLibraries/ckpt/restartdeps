@@ -1,1 +1,0 @@
-close.o longjmp.o read.o syscall.o libc-cancellation.o __longjmp.o jmp-unwind.o sigprocmask.o sysdep.o errno.o errno-loc.o herrno-loc.o herrno.o

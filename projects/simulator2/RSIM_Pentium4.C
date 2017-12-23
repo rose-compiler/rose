@@ -6,8 +6,9 @@
 #include "RSIM_Pentium4.h"
 #include <Partitioner2/Engine.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Pentium4::init() {}
@@ -19,7 +20,7 @@ RSIM_Pentium4::updateExecutablePath() {
 
 SgAsmInterpretation*
 RSIM_Pentium4::parseMainExecutable(RSIM_Process *process) {
-    namespace P2 = rose::BinaryAnalysis::Partitioner2;
+    namespace P2 = Rose::BinaryAnalysis::Partitioner2;
     using namespace Sawyer::CommandLine;
 
     // This is raw hardware, so assume that all the arguments are for loading the specimen.
@@ -51,9 +52,9 @@ RSIM_Pentium4::parseMainExecutable(RSIM_Process *process) {
 
     std::vector<std::string> resources = parser.with(pentium4).parse(exeArgs()).apply().unreachedArgs();
     engine.isaName("i386");
-    MemoryMap map = engine.loadSpecimens(resources);
+    MemoryMap::Ptr map = engine.loadSpecimens(resources);
     process->mem_transaction_start("specimen main memory");
-    process->get_memory() = map;                        // shallow copy, new segments point to same old data
+    *process->get_memory() = *map;                      // shallow copy, new segments point to same old data
 
     // The initial program counter is stored at address 4, the second entry in the interrupt vector.
     process->entryPointOriginalVa(initialEip_);
@@ -81,7 +82,7 @@ RSIM_Pentium4::initialRegistersArch(RSIM_Process *process) {
 }
 
 void
-RSIM_Pentium4::loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*, int existingPid) {
+RSIM_Pentium4::loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler*, int existingPid) {
     ASSERT_not_reachable("native loading not possible for naked hardware");
 }
 

@@ -1,0 +1,2 @@
+#pragma omp threadprivate (x,y,z)
+#pragma omp parallel  copyin(x,y,z)

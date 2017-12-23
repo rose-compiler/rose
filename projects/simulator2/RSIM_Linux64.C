@@ -20,9 +20,9 @@
 #include <sys/vfs.h>                                    // for the statfs syscalls
 #include <sys/wait.h>                                   // for the wait4 syscall
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Linux64::init() {
@@ -169,17 +169,17 @@ RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
         FileSystem::Path name = path / "vsyscall-amd64";
         if (FileSystem::isFile(name)) {
             found = FileSystem::toString(name);
-            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            loaded = process->get_memory()->insertFile(":0xffffffffff600000+0x1000=rx::" + found);
             break;
         } else if (FileSystem::isFile(path)) {
             found = FileSystem::toString(name);
-            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            loaded = process->get_memory()->insertFile(":0xffffffffff600000+0x1000=rx::" + found);
             break;
         }
     }
 
     // Change the name from just a file name to "[vsyscall] ..."
-    BOOST_FOREACH (MemoryMap::Segment &segment, process->get_memory().within(loaded).segments())
+    BOOST_FOREACH (MemoryMap::Segment &segment, process->get_memory()->within(loaded).segments())
         segment.name("[vsyscall] " + found);
 }
 
@@ -193,9 +193,9 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
         debugger.attach(exeArgs());
     }
 
-    process->get_memory().insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
+    process->get_memory()->insertProcess(debugger.isAttached(), MemoryMap::Attach::NO);
 
-    const RegisterDictionary *regs = disassembler->get_registers();
+    const RegisterDictionary *regs = disassembler->registerDictionary();
     initialRegs_.ax = debugger.readRegister(*regs->lookup("rax")).toInteger();
     initialRegs_.bx = debugger.readRegister(*regs->lookup("rbx")).toInteger();
     initialRegs_.cx = debugger.readRegister(*regs->lookup("rcx")).toInteger();

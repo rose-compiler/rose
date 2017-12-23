@@ -2,11 +2,11 @@
 #include "Registers.h"
 #include "RegisterParts.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void
-RegisterParts::erase(const RegisterDescriptor &reg) {
+RegisterParts::erase(RegisterDescriptor reg) {
     if (map_.exists(reg)) {
         BitSet &bits = map_[reg];
         bits.erase(bitRange(reg));
@@ -47,14 +47,15 @@ RegisterParts::operator|(const RegisterParts &other) const {
 
 RegisterParts&
 RegisterParts::operator&=(const RegisterParts &other) {
-    BOOST_FOREACH (const Map::Node &node, other.map_.nodes()) {
-        if (map_.exists(node.key())) {
-            BitSet &set = map_[node.key()];
-            set.eraseMultiple(node.value());
-            if (set.isEmpty())
-                map_.erase(node.key());
+    Map newmap;
+    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+        if (other.map_.exists(node.key())) {
+            BitSet intersection = node.value() & other.map_[node.key()];
+            if (!intersection.isEmpty())
+                newmap.insert(node.key(), intersection);
         }
     }
+    map_ = newmap;
     return *this;
 }
 
@@ -75,7 +76,7 @@ RegisterParts::extract(const RegisterDictionary *regDict, bool extractAll) {
         BOOST_FOREACH (const RegisterDictionary::Entries::value_type &pair, regDict->get_registers())
             allRegs.push_back(pair.second);
         std::sort(allRegs.begin(), allRegs.end(), RegisterDictionary::SortBySize(RegisterDictionary::SortBySize::DESCENDING));
-        BOOST_FOREACH (const RegisterDescriptor &reg, allRegs) {
+        BOOST_FOREACH (RegisterDescriptor reg, allRegs) {
             if (existsAll(reg)) {
                 retval.push_back(reg);
                 erase(reg);

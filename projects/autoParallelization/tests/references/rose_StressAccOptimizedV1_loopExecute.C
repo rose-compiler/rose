@@ -39,7 +39,7 @@ void StressAccOptimizedV1::loopExecute()
   double sxx_t[2048];
   double sxy_t[2048];
   
-#pragma omp parallel for private (i,jj) firstprivate (ii_ub)
+#pragma omp parallel for private (i,jj) firstprivate (nb,ii_ub)
   for (int ii = lb; ii <= ii_ub - 1; ii += nb) {
     int i_ub = ii + nb;
 // Must have this loop to trigger the bug

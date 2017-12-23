@@ -569,8 +569,8 @@ list<SgClassDeclaration*> SgNodeHelper::classDeclarationNestingSequence(SgDeclar
 // MS: TODO: this implementation is complicated and needs to be structured better
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   if(!(isSgVarRefExp(node)||isSgVariableDeclaration(node)||isSgVariableSymbol(node))) {
-    cerr<< "WARNING: :uniqueLongVariableName: unsupported node type: "<<node->class_name()<<endl;
-    return "non-variable-name";
+    string s="Error: uniqueVariableName: unsupported node type: "+node->class_name();
+    throw SPRAY::Exception(s);
   }
   SgSymbol* sym=0;
   bool found=false;
@@ -637,7 +637,7 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   } // end of FunctionParameter-check
   if(found) {
     if(sym==0) {
-      throw SPRAY::Exception("SgNodeHelper::uniqueLongVariableName: sym==0.");
+      throw SPRAY::Exception("SgNodeHelper::uniqueVariableName: sym==0.");
     }
 
     // NOTE: in case of a function parameter varDecl is represented by the function declaration
@@ -655,7 +655,7 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
     string longName=string("$")+filename+string("$")+funName+"$"+scopeLevel+"/"+scopesequencenumber+"$"+classnestingname+"$"+name;
     return longName;
   } else {
-    throw SPRAY::Exception("SgNodeHelper::uniqueLongVariableName: improper node operation ("+node->class_name());
+    throw SPRAY::Exception("SgNodeHelper::uniqueVariableName: improper node operation ("+node->class_name());
   }
 }
 
@@ -1080,7 +1080,7 @@ std::pair<SgVarRefExp*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchExprStmtA
   * \author Markus Schordan
   * \date 2012.
  */
-set<SgNode*> SgNodeHelper::LoopRelevantBreakStmtNodes(SgNode* node) {
+set<SgNode*> SgNodeHelper::loopRelevantBreakStmtNodes(SgNode* node) {
   set<SgNode*> breakNodes;
   RoseAst ast(node);
   RoseAst::iterator i=ast.begin();
@@ -1095,6 +1095,24 @@ set<SgNode*> SgNodeHelper::LoopRelevantBreakStmtNodes(SgNode* node) {
   return breakNodes;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2017.
+ */
+set<SgContinueStmt*> SgNodeHelper::loopRelevantContinueStmtNodes(SgNode* node) {
+  set<SgContinueStmt*> continueNodes;
+  RoseAst ast(node);
+  RoseAst::iterator i=ast.begin();
+  ++i; // go to first child
+  while(i!=ast.end()) {
+    if(SgContinueStmt* cs=isSgContinueStmt(*i))
+      continueNodes.insert(cs);
+    if(isSgForStatement(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)||isSgSwitchStatement(*i))
+      i.skipChildrenOnForward();
+    ++i;
+  }
+  return continueNodes;
+}
 
 /*! 
   * \author Markus Schordan
@@ -1145,6 +1163,9 @@ bool SgNodeHelper::isLoopStmt(SgNode* node) {
  */
 bool SgNodeHelper::isCond(SgNode* node) {
   SgNode* parent=node->get_parent();
+  if(isSgExprStatement(parent)) {
+    parent=parent->get_parent();
+  }
   if(isCondStmtOrExpr(parent))
     return SgNodeHelper::getCond(parent)==node && node!=0;
   else

@@ -10,7 +10,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -45,8 +45,8 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<MemoryCellState>(*this);
-        s & cells;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryCellState);
+        s & BOOST_SERIALIZATION_NVP(cells);
     }
 #endif
     
@@ -119,7 +119,7 @@ public:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);
 #endif
 
 #endif

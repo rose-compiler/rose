@@ -9,7 +9,7 @@
 
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -159,6 +159,12 @@ namespace Modules {
  *
  * @sa ModulesPe::systemFunctionName and possibly other OS-specific formatters. */
 std::string canonicalFunctionName(const std::string&);
+
+/** Demangle all function names.
+ *
+ *  Run the name demangler on all functions that have a non-empty name and no demangled name. Assign the result as each
+ *  function's demangled name if it's different than the true name. */
+void demangleFunctionNames(const Partitioner&);
 
 /** Follow basic block ghost edges.
  *
@@ -342,7 +348,8 @@ public:
  *  each interval.
  *
  *  If @p threshold is zero or the @p leaveAtFront and @p leaveAtBack sum to at least @p threshold then nothing happens. */
-AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront=16, size_t leaveAtBack=1);
+AddressIntervalSet deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold,
+                                  size_t leaveAtFront=16, size_t leaveAtBack=1);
 
 /** Give labels to addresses that are symbols.
  *

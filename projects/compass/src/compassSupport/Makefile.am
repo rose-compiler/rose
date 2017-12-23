@@ -16,6 +16,7 @@ include_HEADERS = compass.h
 
 libCompass_la_SOURCES = compass.C
 
+AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
 
 if ROSE_USE_GCC_OMP
@@ -29,6 +30,15 @@ compassEmptyMain_LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
 
 BUILT_SOURCES = prerequisites.h instantiate_prerequisites.h 
 
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
 prerequisites.h: $(compass_prereqs_dir)
 	find $(compass_prereqs_dir) -name "*.h" | awk -F/ '{print "#include \"" $$NF "\""}' > $@
 
@@ -36,7 +46,8 @@ instantiate_prerequisites.h: $(compass_prereqs_dir)
 	cat $(compass_prereqs_dir)/*.h | grep "^extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $$1 " Compass::" $$2}' > $@
 
 test: compassEmptyMain 
-	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassEmptyMain $(compass_test_dir)/exampleTest_1.C
+#	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassEmptyMain $(compass_test_dir)/exampleTest_1.C
+	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters $(VALGRIND) ./compassEmptyMain $(compass_test_dir)/exampleTest_1.C
 
 check-local:
 	@$(MAKE) test

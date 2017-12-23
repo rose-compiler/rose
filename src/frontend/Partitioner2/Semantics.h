@@ -9,7 +9,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Semantics {
@@ -18,7 +18,7 @@ typedef InstructionSemantics2::SymbolicSemantics::SValue SValue;
 typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr;
 
 typedef InstructionSemantics2::BaseSemantics::RegisterStateGeneric RegisterState;
-typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
+typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 
 typedef InstructionSemantics2::BaseSemantics::State State;
 typedef InstructionSemantics2::BaseSemantics::StatePtr StatePtr;
@@ -40,7 +40,7 @@ public:
     typedef boost::shared_ptr<MemoryState> Ptr;
 
 private:
-    const MemoryMap *map_;
+    MemoryMap::Ptr map_;
     std::vector<SValuePtr> addressesRead_;
     bool enabled_;
 
@@ -50,22 +50,23 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Super>(*this);
-        s & map_;
-        s & addressesRead_;
-        s & enabled_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(map_);
+        s & BOOST_SERIALIZATION_NVP(addressesRead_);
+        s & BOOST_SERIALIZATION_NVP(enabled_);
     }
 #endif
 
 protected:
     MemoryState()                                       // for serialization
-        : map_(NULL), enabled_(true) {}
+        : enabled_(true) {}
 
     explicit MemoryState(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell)
-        : Super(protocell), map_(NULL), enabled_(true) {}
+        : Super(protocell), enabled_(true) {}
+
     MemoryState(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
                 const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval)
-        : Super(addrProtoval, valProtoval), map_(NULL), enabled_(true) {}
+        : Super(addrProtoval, valProtoval), enabled_(true) {}
 
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
@@ -132,8 +133,8 @@ public:
      *  warnings and no operation to be performed.
      *
      *  @{ */
-    const MemoryMap* memoryMap() const;
-    void memoryMap(const MemoryMap *map) { map_=map; }
+    MemoryMap::Ptr memoryMap() const { return map_; }
+    void memoryMap(const MemoryMap::Ptr &map) { map_ = map; }
     /** @} */
 
     /** Property: concrete virtual addresses that were read.
@@ -178,6 +179,9 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  Most operations are delegated to the symbolic state. The return value from the symbolic state is replaced with an unknown
  *  if the expression grows beyond a certain complexity. */
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
+public:
+    typedef InstructionSemantics2::SymbolicSemantics::RiscOperators Super;
+
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;
 
@@ -189,7 +193,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<InstructionSemantics2::SymbolicSemantics::RiscOperators>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
 
@@ -198,14 +202,14 @@ private:
 protected:
     RiscOperators() {}                                  // for serialization
 
-    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver) {
         name("PartitionerSemantics");
         (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 
-    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver) {
         name("PartitionerSemantics");
         (void)SValue::promote(state->protoval());
@@ -216,7 +220,7 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiate a new RiscOperators object and configure it using default values. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL,
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL,
                                      SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY) {
         InstructionSemantics2::BaseSemantics::SValuePtr protoval = SValue::instance();
         InstructionSemantics2::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
@@ -235,13 +239,13 @@ public:
 
     /** Instantiate a new RiscOperators object with specified prototypical values. */
     static RiscOperatorsPtr
-    instance(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    instance(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiate a new RiscOperators with specified state. */
     static RiscOperatorsPtr
-    instance(const InstructionSemantics2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    instance(const InstructionSemantics2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -250,13 +254,13 @@ public:
 public:
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::StatePtr &state,
-           SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -281,12 +285,6 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-template<class Super>
-const MemoryMap*
-MemoryState<Super>::memoryMap() const {
-    return map_;
-}
 
 template<class Super>
 InstructionSemantics2::BaseSemantics::SValuePtr
@@ -339,9 +337,9 @@ MemoryState<Super>::writeMemory(const InstructionSemantics2::BaseSemantics::SVal
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
 #endif
 
 #endif

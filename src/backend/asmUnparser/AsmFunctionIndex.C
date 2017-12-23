@@ -10,9 +10,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void
@@ -310,10 +310,11 @@ bool
 AsmFunctionIndex::CallingConventionCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled) {
-        if (const CallingConvention::Definition *ccdef = args.func->get_callingConvention()) {
-            args.output <<data_prefix <<std::setw(width) <<ccdef->name();
-        } else {
+        std::string ccDefName = args.func->get_callingConvention();
+        if (ccDefName.empty()) {
             args.output <<data_prefix <<std::setw(width) <<"unknown";
+        } else {
+            args.output <<data_prefix <<std::setw(width) <<ccDefName;
         }
     }
     return enabled;

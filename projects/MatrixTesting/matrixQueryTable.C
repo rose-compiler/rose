@@ -8,7 +8,7 @@
 #include <Sawyer/Set.h>
 #include <SqlDatabase.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {
@@ -102,7 +102,7 @@ displayTableHeader(const std::vector<std::string> &keysSelected, const std::vect
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);

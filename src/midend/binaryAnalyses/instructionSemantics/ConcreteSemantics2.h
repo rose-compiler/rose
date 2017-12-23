@@ -11,7 +11,7 @@
 #include "RegisterStateGeneric.h"
 #include <Sawyer/BitVector.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -98,7 +98,7 @@ public:
         return retval;
     }
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SmtSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -113,10 +113,10 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
 
-    virtual void set_width(size_t nbits);
+    virtual void set_width(size_t nbits) ROSE_OVERRIDE;
 
     virtual bool isBottom() const ROSE_OVERRIDE {
         return false;
@@ -162,7 +162,7 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *  This class represents an entire state of memory via MemoryMap, allocating new memory in units of pages (the size of a page
  *  is configurable. */
 class MemoryState: public BaseSemantics::MemoryState {
-    MemoryMap map_;
+    MemoryMap::Ptr map_;
     rose_addr_t pageSize_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,8 +176,10 @@ protected:
 
     MemoryState(const MemoryState &other)
         : BaseSemantics::MemoryState(other), map_(other.map_), pageSize_(other.pageSize_) {
-        BOOST_FOREACH (MemoryMap::Segment &segment, map_.values())
-            segment.buffer()->copyOnWrite(true);
+        if (map_) {
+            BOOST_FOREACH (MemoryMap::Segment &segment, map_->values())
+                segment.buffer()->copyOnWrite(true);
+        }
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,11 +235,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() {
-        map_.clear();
+    virtual void clear() ROSE_OVERRIDE {
+        map_ = MemoryMap::Ptr();
     }
 
-    virtual void print(std::ostream&, Formatter&) const;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
@@ -253,14 +255,14 @@ public:
     // Methods first declared in this class
 public:
     /** Returns the memory map. */
-    const MemoryMap& memoryMap() const { return map_; }
+    const MemoryMap::Ptr memoryMap() const { return map_; }
 
     /** Set memory map.
      *
      *  If the specified map's areas are not in units of pages then padding segments will be added to this memory state. The
      *  padding segments will either have the accessibility specified by @p padAccess, or will have the same accessibility as
      *  the memory region being padded.  All padding segments will be named "padding". */
-    void memoryMap(const MemoryMap&, Sawyer::Optional<unsigned> padAccess = Sawyer::Nothing());
+    void memoryMap(const MemoryMap::Ptr&, Sawyer::Optional<unsigned> padAccess = Sawyer::Nothing());
 
     /** Size of each page of memory.
      *
@@ -317,13 +319,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
+    RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver) {
         name("Concrete");
         (void) SValue::promote(protoval); // make sure its dynamic type is a ConcreteSemantics::SValue
     }
 
-    RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
+    RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
         name("Concrete");
         (void) SValue::promote(state->protoval());      // values must have ConcreteSemantics::SValue dynamic type
@@ -334,7 +336,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      * ConcreteSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -345,13 +347,13 @@ public:
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
      *  second argument because the base class expects one, but it is not used for concrete semantics. See @ref solver for
      *  details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
      *  because the base class expects one, but it is not used for concrete semantics. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -359,12 +361,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -435,7 +437,7 @@ public:
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/);
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
                                                   const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
@@ -461,11 +463,11 @@ public:
                                                 SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType*) ROSE_OVERRIDE;
 
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
-    virtual void writeMemory(const RegisterDescriptor &segreg,
+    virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;

@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "rosePublicConfig.h"
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
 
@@ -23,7 +23,7 @@
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -145,7 +145,7 @@ public:
     }
 
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other,const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
+    createOptionalMerge(const BaseSemantics::SValuePtr &other,const BaseSemantics::MergerPtr&, SmtSolver*) const ROSE_OVERRIDE;
     
     /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
     virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
@@ -171,8 +171,8 @@ public:
         offset &= IntegerOps::genMask<uint64_t>(nbits);
     }
 
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
@@ -303,17 +303,17 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** Defines RISC operators for this semantic domain. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
-    const MemoryMap *map;
+    MemoryMap::Ptr map;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
+        : BaseSemantics::RiscOperators(protoval, solver) {
         name("PartialSymbolic");
     }
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), map(NULL) {
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
+        : BaseSemantics::RiscOperators(state, solver) {
         name("PartialSymbolic");
     }
 
@@ -325,12 +325,12 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict);
 
     /** Instantiates a new RiscOperators object with specified prototypical values. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators with specified state. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -338,12 +338,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -365,8 +365,8 @@ public:
      *  would initialize the memory map to contain all the non-writable addresses.  The byte-order property of the memory
      *  map is used when reading the value.
      * @{ */
-    const MemoryMap *get_memory_map() const { return map; }
-    void set_memory_map(const MemoryMap *m) { map = m; }
+    const MemoryMap::Ptr get_memory_map() const { return map; }
+    void set_memory_map(const MemoryMap::Ptr &m) { map = m; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,7 +406,7 @@ public:
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/);
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
                                                   const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
@@ -420,11 +420,11 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
-    virtual void writeMemory(const RegisterDescriptor &segreg,
+    virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
@@ -789,8 +789,8 @@ protected:
             bool
             Policy<State, SValue>::SHA1(unsigned char digest[20]) const
             {
-#ifdef ROSE_HAVE_GCRYPT_H
-                // libgcrypt should have been initialized by rose::initialize already.
+#ifdef ROSE_HAVE_LIBGCRYPT
+                // libgcrypt should have been initialized by Rose::initialize already.
                 std::stringstream s;
                 RenameMap rmap;
                 print_diff(s, &rmap);

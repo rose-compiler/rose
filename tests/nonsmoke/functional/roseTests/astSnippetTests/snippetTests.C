@@ -1,7 +1,7 @@
 #include "snippetTests.h"
 #include <boost/foreach.hpp>
 
-using namespace rose;
+using namespace Rose;
 
 namespace SnippetTests {
 

@@ -13,7 +13,7 @@
 SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 std::list<SgInterfaceStatement*> astInterfaceStack;
 
@@ -527,10 +527,13 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct() != NULL);
      ROSE_ASSERT(sourceLocatedNode->get_endOfConstruct() != NULL);
 
+  // DQ (3/19/2017): Commented out to cleanup output spew.
      if (sourceLocatedNode->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
         {
           printf ("WARNING: resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+#if 0
           sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
+#endif
         }
   // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
 
@@ -538,9 +541,11 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      if (sourceLocatedNode->get_startOfConstruct()->get_line() == 0)
         {
           printf ("WARNING: resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+#if 0
           sourceLocatedNode->get_startOfConstruct()->display("get_line() == 0: debug");
+#endif
         }
-  // DQ (3/4/2013): We can't assert this since ti fails to some test codes (e.g. test2010_120.f90).
+  // DQ (3/4/2013): We can't assert this since it fails to some test codes (e.g. test2010_120.f90).
   // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_line() != 0);
 
   // Remove the existing Sg_File_Info objects, they will be reset below
@@ -678,11 +683,28 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
         {
        // printf ("Resetting the ending line number from %d to %d \n",oldLineNumber,newLineNumber);
           targetLocatedNode->get_endOfConstruct()->set_line(newLineNumber);
-          // this  fails if file info is compiler generated or transformation generated. (get_line() always return zero )
-          ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_line () == newLineNumber);
+       // this  fails if file info is compiler generated or transformation generated. (get_line() always return zero )
 
        // If this is a different filename then change the filename as well.
           string currentFilename = getCurrentFilename();
+#if 0
+       // DQ (3/19/2017): Debugging new support to have undefined value (0) returned for frontend specific file info IR nodes.
+          if (targetLocatedNode->get_endOfConstruct()->get_line () != newLineNumber)
+             {
+#if 1
+               printf ("##### currentFilename = %s \n",currentFilename.c_str());
+               printf ("##### targetLocatedNode->get_endOfConstruct()->get_filenameString() = %s \n",targetLocatedNode->get_endOfConstruct()->get_filenameString().c_str());
+#endif
+               printf ("In resetEndingSourcePosition(): targetLocatedNode = %p = %s \n",targetLocatedNode,targetLocatedNode->class_name().c_str());
+               printf ("In resetEndingSourcePosition(): newLineNumber = %d \n",newLineNumber);
+               targetLocatedNode->get_startOfConstruct()->display("targetLocatedNode->get_startOfConstruct()->get_line () != newLineNumber: debug");
+               targetLocatedNode->get_endOfConstruct()->display("targetLocatedNode->get_endOfConstruct()->get_line () != newLineNumber: debug");
+             }
+#endif
+       // DQ (3/19/2017): Only check the raw position due to new support to have undefined value (0) returned for frontend specific file info IR nodes.
+       // ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_line () == newLineNumber);
+          ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_raw_line () == newLineNumber);
+
           if (targetLocatedNode->get_endOfConstruct()->get_filenameString() != currentFilename)
              {
 #if 0
@@ -696,6 +718,18 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
                ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_filenameString() == currentFilename);
              }
         }
+
+  // DQ (3/19/2017): Added debugging code to catch where isSourcePositionUnavailableInFrontend() == true after calling set_line() and set_filenameString() functions.
+     if (targetLocatedNode->get_startOfConstruct()->isSourcePositionUnavailableInFrontend() == true)
+        {
+          targetLocatedNode->get_startOfConstruct()->display("targetLocatedNode->get_startOfConstruct()->get_line () != newLineNumber: debug");
+        }
+     if (targetLocatedNode->get_endOfConstruct()->isSourcePositionUnavailableInFrontend() == true)
+        {
+          targetLocatedNode->get_endOfConstruct()->display("targetLocatedNode->get_endOfConstruct()->get_line () != newLineNumber: debug");
+        }
+     ROSE_ASSERT(targetLocatedNode->get_endOfConstruct()->isSourcePositionUnavailableInFrontend() == false);
+     ROSE_ASSERT(targetLocatedNode->get_startOfConstruct()->isSourcePositionUnavailableInFrontend() == false);
 
   // DQ (10/10/2010): See example test2007_17.f90 of if statment on a single line for were we can't enforce this.
   // ROSE_ASSERT(targetLocatedNode->get_endOfConstruct()->get_line() != targetLocatedNode->get_startOfConstruct()->get_line());

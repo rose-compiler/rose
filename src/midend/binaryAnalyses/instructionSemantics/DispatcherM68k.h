@@ -8,7 +8,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -16,6 +16,9 @@ namespace InstructionSemantics2 {
 typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 
 class DispatcherM68k: public BaseSemantics::Dispatcher {
+public:
+    typedef BaseSemantics::Dispatcher Super;
+
 public:
     /** Cached register.
      *
@@ -41,12 +44,12 @@ private:
 
     template<class S>
     void save(S &s, const unsigned version) const {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     };
 
     template<class S>
     void load(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::Dispatcher>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         regcache_init();
         iproc_init();
         memory_init();
@@ -135,7 +138,7 @@ public:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
 #endif
 
 #endif

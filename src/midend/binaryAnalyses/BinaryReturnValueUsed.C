@@ -1,265 +1,433 @@
-#include "sage3basic.h"
-#include "BinaryReturnValueUsed.h"
-#include "BinaryControlFlow.h"
-#include "DispatcherX86.h"
-#include "MemoryCellList.h"
-#include "NullSemantics2.h"
-#include "WorkLists.h"
+#include <sage3basic.h>
+#include <BinaryReturnValueUsed.h>
+#include <Partitioner2/DataFlow.h>
+#include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Semantics.h>
+#if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
+#include <AsmUnparser_compat.h>
+#endif
 
-#include <boost/algorithm/string/erase.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace ReturnValueUsed {
 
-// FIXME[Robb P. Matzke 2014-02-18]: Remove this when all of BinaryAnalsis is inside of "rose"
-using namespace InstructionSemantics2;
+Sawyer::Message::Facility mlog;
 
-// FIXME[Robb P. Matzke 2014-02-18]: These should all be template parameters
-typedef ControlFlow::BlockGraph Cfg;
-typedef boost::graph_traits<Cfg>::vertex_descriptor CfgVertex;
-typedef boost::graph_traits<Cfg>::vertex_iterator CfgVertexIterator;
-typedef boost::graph_traits<Cfg>::edge_descriptor CfgEdge;
-typedef boost::graph_traits<Cfg>::edge_iterator CfgEdgeIterator;
-typedef boost::graph_traits<Cfg>::out_edge_iterator CfgOutEdgeIterator;
-typedef std::pair<SgAsmBlock*, SgAsmBlock*> BlockPair;
-typedef std::pair<SgAsmFunction*, SgAsmFunction*> FunctionPair;
-
-// FIXME[Robb P. Matzke 2014-02-18]: Make this a member of rose::BinaryAnalysis::BinaryControlFlow
-// Returns the basic blocks for an edge.
-static BlockPair edgeBlocks(const Cfg &cfg, CfgEdge edge) {
-    SgAsmBlock *src_blk = get_ast_node(cfg, source(edge, cfg));
-    SgAsmBlock *dst_blk = get_ast_node(cfg, target(edge, cfg));
-    return std::make_pair(src_blk, dst_blk);
+void
+initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::ReturnValueUsed");
+    }
 }
 
-// FIXME[Robb P. Matzke 2014-02-18]: Make this a member of rose::BinaryAnalysis::BinaryControlFlow
-// Returns functions for an edge
-static FunctionPair edgeFunctions(const Cfg &cfg, CfgEdge edge) {
-    BlockPair blocks = edgeBlocks(cfg, edge);
-    SgAsmFunction *src_func = SageInterface::getEnclosingNode<SgAsmFunction>(blocks.first);
-    SgAsmFunction *dst_func = SageInterface::getEnclosingNode<SgAsmFunction>(blocks.second);
-    return std::make_pair(src_func, dst_func);
+static std::string
+locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
+    std::vector<std::string> retval;
+    RegisterNames regNames(regdict);
+    BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(regdict))
+        retval.push_back(regNames(reg));
+    return boost::join(retval, ", ");
 }
-
-// FIXME[Robb P. Matzke 2014-02-18]: Make this a member of rose::BinaryAnalysis::BinaryControlFlow
-// Returns true if this edge represents a function call.
-static bool isFunctionCall(const Cfg &cfg, CfgEdge edge) {
-    FunctionPair funcs = edgeFunctions(cfg, edge);
-    return funcs.first!=NULL && funcs.second!=NULL && funcs.first!=funcs.second;
-}
-
-// FIXME[Robb P. Matzke 2014-02-18]: Make this a member of rose::BinaryAnalysis::BinaryControlFlow
-// Returns true if this edge is an intra-function edge (not a call)
-static bool isIntraFunctionEdge(const Cfg &cfg, CfgEdge edge) {
-    FunctionPair funcs = edgeFunctions(cfg, edge);
-    return funcs.first!=NULL && funcs.second!=NULL && funcs.first==funcs.second;
-}
-
-// FIXME[Robb P. Matzke 2014-02-18]: Make this a member of rose::BinaryAnalysis::BinaryControlFlow
-// Return true if a call edge also has a return edge.  We're assuming that fixup_fcall_fret() has not been called for this
-// graph.  In other words, if there's a function call edge for a function that returns, then the source vertex will also have
-// an edge to another vertex in the caller function.
-static bool callReturns(const Cfg &cfg, CfgEdge callEdge) {
-    assert(isFunctionCall(cfg, callEdge));
-    CfgVertex callerVertex = source(callEdge, cfg);
-    CfgOutEdgeIterator ei, ei_end;
-    for (boost::tie(ei, ei_end)=out_edges(callerVertex, cfg); ei!=ei_end; ++ei) {
-        if (isIntraFunctionEdge(cfg, *ei))
-            return true;
-    }
-    return false;
-}
-
-// FIXME[Robb P. Matzke 2014-02-18]: Make this a member of rose::BinaryAnalysis::BinaryControlFlow
-// Given a function call edge for a function that returns, return the vertex for the function return point.  If there's more
-// than one such vertex return just the first one.
-static CfgVertex firstReturnVertex(const Cfg &cfg, CfgEdge callEdge) {
-    assert(isFunctionCall(cfg, callEdge));
-    assert(callReturns(cfg, callEdge));
-    CfgVertex callerVertex = source(callEdge, cfg);
-    CfgOutEdgeIterator ei, ei_end;
-    for (boost::tie(ei, ei_end)=out_edges(callerVertex, cfg); ei!=ei_end; ++ei) {
-        if (isIntraFunctionEdge(cfg, *ei))
-            return target(*ei, cfg);
-    }
-    abort();                                            // not reachable
-}
-
-// Register state for the analysis. All we're interested in is whether the register that typically holds return values has
-// be read before it was written, indicating that the called function probably returned a value that was used.
-typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
-class RegisterState: public BaseSemantics::RegisterState {
-    bool wroteValue_;                                   // wrote a value to eax
-    bool readUninitialized_;                            // read eax without first writing to eax
-protected:
-    RegisterState(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict)
-        : BaseSemantics::RegisterState(protoval, regdict), wroteValue_(false), readUninitialized_(false) {}
-    RegisterState(const RegisterState &other)
-        : BaseSemantics::RegisterState(other), wroteValue_(other.wroteValue_), readUninitialized_(other.readUninitialized_) {}
-public:
-    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict) {
-        return RegisterStatePtr(new RegisterState(protoval, regdict));
-    }
-    virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const RegisterDictionary *regdict) const ROSE_OVERRIDE {
-        return instance(protoval, regdict);
-    }
-    virtual BaseSemantics::RegisterStatePtr clone() const ROSE_OVERRIDE {
-        return RegisterStatePtr(new RegisterState(*this));
-    }
-    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
-        throw BaseSemantics::NotImplemented("ReturnValueUsed semantics is not suitable for dataflow", NULL);
-    }
-    virtual void clear()ROSE_OVERRIDE {
-        wroteValue_ = readUninitialized_ = false;
-    }
-    virtual void zero()ROSE_OVERRIDE {
-        wroteValue_ = readUninitialized_ = false;
-    }
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
-                                                  const BaseSemantics::SValuePtr &dflt,
-                                                  BaseSemantics::RiscOperators*) ROSE_OVERRIDE {
-        if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !wroteValue_)
-            readUninitialized_ = true;
-        return protoval()->undefined_(reg.get_nbits());
-    }
-    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr&,
-                               BaseSemantics::RiscOperators*)ROSE_OVERRIDE {
-        if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax)
-            wroteValue_ = true;
-    }
-    virtual void print(std::ostream &o, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
-        if (readUninitialized_) {
-            o <<"readUninitialized\n";
-        } else if (wroteValue_) {
-            o <<"wrote to EAX\n";
-        } else {
-            o <<"initial state\n";
-        }
-    }
-    bool readUninitialized() {
-        return readUninitialized_;
-    }
-
-};
     
-// The actual analysis for a function call starting at a function call return point and terminating each path whenever we reach
-// another function call.  Try to figure out if we ever read from EAX without first writing to it and return true if we do.
-static bool returnValueUsed(const Cfg &cfg, CfgVertex startVertex, const RegisterDictionary *regdict) {
-    BaseSemantics::SValuePtr protoval = NullSemantics::SValue::instance();
-    RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
-    BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
-    BaseSemantics::RiscOperatorsPtr ops = NullSemantics::RiscOperators::instance(state);
-    size_t addrWidth = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp).get_nbits();
-    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, addrWidth);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Instruction Semantics
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    WorkList<CfgVertex> worklist(true);
-    Map<CfgVertex, size_t> seen;
-    worklist.push(startVertex);
-    while (!worklist.empty()) {
-        CfgVertex v = worklist.pop();
-        seen[v] = 1;
-        SgAsmBlock *bb = get_ast_node(cfg, v);
-        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(bb);
+// We use mostly the Partitioner2 semantics because (1) they're symbolic-based, (2) they have a built-in size limiter to
+// prevent expressions from becoming too big and are therefore fast but less precise, (3) the memory state knows about the
+// concrete values of initialized memory, (4) it can use list- or map-based memory states.
+typedef P2::Semantics::SValue SValue;
+typedef P2::Semantics::SValuePtr SValuePtr;
+typedef P2::Semantics::RegisterState RegisterState;
+typedef P2::Semantics::RegisterStatePtr RegisterStatePtr;
+typedef P2::Semantics::MemoryMapState MemoryState;
+typedef P2::Semantics::MemoryMapStatePtr MemoryStatePtr;
+typedef P2::Semantics::State State;
+typedef P2::Semantics::StatePtr StatePtr;
 
-        // "Run" the basic block
-        bool failed = false;
-        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-            try {
-                dispatcher->processInstruction(insn);
-                if (registers->readUninitialized())
-                    return true;
-            } catch (...) {
-                failed = true;
-                break;
+typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
+
+// Extend the Partitioner2 RISC operators so that register and memory I/O looks for reading of callee output values before
+// those locations are written.
+class RiscOperators: public P2::Semantics::RiscOperators {
+    RegisterParts calleeOutputRegisters_;
+    StackVariables calleeOutputParameters_;
+    CallSiteResults *results_;
+    const RegisterDictionary *registerDictionary_;
+
+public:
+    typedef P2::Semantics::RiscOperators Super;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(calleeOutputRegisters_);
+        s & BOOST_SERIALIZATION_NVP(calleeOutputParameters_);
+        s & BOOST_SERIALIZATION_NVP(results_);
+        s & BOOST_SERIALIZATION_NVP(registerDictionary_);
+    }
+#endif
+
+protected:
+    explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
+        : Super(protoval, solver), results_(NULL), registerDictionary_(NULL) {}
+
+    explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
+        : Super(state, solver), results_(NULL), registerDictionary_(NULL) {}
+
+public:
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
+        SValuePtr protoval = SValue::instance();
+        RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+        MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+        StatePtr state = State::instance(registers, memory);
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    }
+
+    static RiscOperatorsPtr instance(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
+    }
+    
+    static RiscOperatorsPtr instance(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    }
+    
+public:
+    virtual S2::BaseSemantics::RiscOperatorsPtr
+    create(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+        return instance(protoval, solver);
+    }
+
+    virtual S2::BaseSemantics::RiscOperatorsPtr
+    create(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+        return instance(state, solver);
+    }
+
+public:
+    static RiscOperatorsPtr promote(const S2::BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        ASSERT_not_null(retval);
+        return retval;
+    }
+
+public:
+    // Sets the list of registers and stack locations that a callee uses as return value locations
+    void insertOutputs(const RegisterParts &regs, const StackVariables &params) {
+        calleeOutputRegisters_ = regs;
+        calleeOutputParameters_ = params;
+    }
+
+    // Register outputs that haven't been referenced during the instruction semntics phase.
+    const RegisterParts& unreferencedRegisterOutputs() const {
+        return calleeOutputRegisters_;
+    }
+
+    // Stack parameter locations that haven't been referenced during the instruction semantics phase.
+    const StackVariables& unreferencedStackOutputs() const {
+        return calleeOutputParameters_;
+    }
+    
+    // True if a callee has return values
+    bool hasOutputs() const {
+        return !calleeOutputRegisters_.isEmpty() || !calleeOutputParameters_.empty();
+    }
+
+    // Set reference to the object that holds the analysis results for a call site.  These results are updated as instructions
+    // are processed.
+    void callSiteResults(CallSiteResults *results) {
+        results_ = results;
+    }
+
+    /** Property: Register dictionary for debugging.
+     *
+     *  The register dictionary is optional, and used only to convert register descriptors to register names in diagnostic
+     *  output.
+     *
+     * @{ */
+    const RegisterDictionary* registerDictionary() const { return registerDictionary_; }
+    void registerDictionary(const RegisterDictionary *rd) { registerDictionary_ = rd; }
+    /** @} */
+
+public:
+    virtual S2::BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
+                                                      const S2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
+        // Reading from a register that's still listed as an output means that it's definitely a used return value.
+        RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
+        if (!found.isEmpty()) {
+            ASSERT_not_null(results_);
+            SAWYER_MESG(mlog[DEBUG]) <<"  in readRegister:  used   return locations: " // extra spaces intentional
+                                     <<locationNames(found, registerDictionary_) <<"\n";
+            results_->returnRegistersUsed() |= found;
+            calleeOutputRegisters_ -= found;
+        }
+        return Super::readRegister(reg, dflt);
+    }
+
+    virtual void writeRegister(RegisterDescriptor reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
+        // Writing to a register means that the callee's return value is definitely not used.
+        RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
+        if (!found.isEmpty()) {
+            ASSERT_not_null(results_);
+            SAWYER_MESG(mlog[DEBUG]) <<"  in writeRegister: unused return locations: "
+                                     <<locationNames(found, registerDictionary_) <<"\n";
+            results_->returnRegistersUnused() |= found;
+            calleeOutputRegisters_ -= found;
+        }
+        Super::writeRegister(reg, value);
+    }
+
+    virtual S2::BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
+                                                    const S2::BaseSemantics::SValuePtr &dflt,
+                                                    const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        // TODO
+        return Super::readMemory(segreg, addr, dflt, cond);
+    }
+
+    virtual void writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
+                             const S2::BaseSemantics::SValuePtr &value, const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        // TODO
+        Super::writeMemory(segreg, addr, value, cond);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Analysis methods
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+Analysis::clearResults() {
+    callSites_.clear();
+}
+
+std::vector<P2::Function::Ptr>
+Analysis::findCallees(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+    std::vector<P2::Function::Ptr> callees;
+    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, callSite->outEdges()) {
+        if (edge.value().type() == P2::E_FUNCTION_CALL) {
+            BOOST_FOREACH (const P2::Function::Ptr &f, partitioner.functionsOwningBasicBlock(edge.target()))
+                P2::insertUnique(callees, f, P2::sortFunctionsByAddress);
+        }
+    }
+    return callees;
+}
+
+std::vector<P2::ControlFlowGraph::ConstVertexIterator>
+Analysis::findReturnTargets(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+    std::vector<P2::ControlFlowGraph::ConstVertexIterator> returnVertices;
+    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, callSite->outEdges()) {
+        if (edge.value().type() == P2::E_CALL_RETURN)
+            returnVertices.push_back(edge.target());
+    }
+    return returnVertices;
+}
+    
+CallSiteResults
+Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+    ASSERT_require(partitioner.cfg().isValidVertex(callSite));
+    CallSiteResults retval;
+
+    SAWYER_MESG(mlog[DEBUG]) <<"analyzing " <<partitioner.vertexName(callSite) <<"\n";
+
+    // Find callers, callees, and return points in the CFG
+    std::vector<P2::Function::Ptr> callers = partitioner.functionsOwningBasicBlock(callSite);
+    retval.callees(findCallees(partitioner, callSite));
+    std::vector<P2::ControlFlowGraph::ConstVertexIterator> returnTargets = findReturnTargets(partitioner, callSite);
+
+    // FIXME[Robb P Matzke 2017-03-03]: To simplify things for now, handle only the case where the call site is owned by a
+    // single function, a single callee is called, and it returns to a single point in the caller.
+    if (callers.size() > 1) {
+        mlog[ERROR] <<"multiple callers not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+    if (retval.callees().size() > 1) {
+        mlog[ERROR] <<retval.callees().size() <<"-call not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+    if (returnTargets.size() > 1) {
+        mlog[ERROR] <<returnTargets.size() <<"-return not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+
+    // Handle the no-op cases.
+    if (callers.empty()) {
+        mlog[WARN] <<"no caller at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+    if (retval.callees().empty()) {
+        mlog[WARN] <<"no callee at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+    if (returnTargets.empty()) {
+        mlog[WARN] <<"no return target at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+
+    // Simplified version assumes one caller owning the call site, one callee, and one return target.
+    P2::Function::Ptr caller = callers[0];
+    P2::Function::Ptr callee = retval.callees()[0];
+    P2::ControlFlowGraph::ConstVertexIterator returnTarget = returnTargets[0];
+
+    // Get cached calling convention properties for the callee; avoid doing a calling convention analysis here -- the user
+    // should have already done that.
+    const CallingConvention::Analysis &calleeBehavior = callee->callingConventionAnalysis();
+    if (!calleeBehavior.hasResults() || !calleeBehavior.didConverge()) {
+        mlog[WARN] <<"no calling convention behavior for " <<callee->printableName()
+                   <<" called at vertex " <<partitioner.vertexName(callSite) <<"\n";
+    }
+    const CallingConvention::Definition::Ptr calleeDefinition = callee->callingConventionDefinition();
+    if (!calleeDefinition) {
+        mlog[ERROR] <<"no calling convention definition for " <<callee->printableName()
+                    <<" called at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+    
+    // Find the intersection of the calling convention definition's return value locations and the outputs based on callee
+    // behavior.  This takes care of two issues: (1) some behavior-based outputs are only scratch locations according to the
+    // definition, and (2) some return locations according to the definition might not have been outputs according to the
+    // callee behavior.
+    RegisterParts calleeReturnRegs = calleeDefinition->outputRegisterParts();
+    if (calleeBehavior.hasResults() && calleeBehavior.didConverge())
+        calleeReturnRegs &= calleeBehavior.outputRegisters();
+    calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
+    StackVariables calleeReturnMem;
+    BOOST_FOREACH (const CallingConvention::ParameterLocation &location, calleeDefinition->outputParameters()) {
+        // FIXME[Robb P Matzke 2017-03-20]: todo
+    }
+    
+    // Build the instruction semantics that will look for which of the callee's return values are used by the caller. "Used"
+    // means (1) the caller reads the callee output location without first writing to it, or (2) the caller calls a second
+    // function whose input is one of the original callee outputs with no intervening write, or (3) one of the caller's own
+    // return values is one of the calle's return values with no intervening write.
+    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    ASSERT_not_null(regdict);
+    SmtSolver *solver = NULL;
+    RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+    ops->registerDictionary(regdict);
+    ops->insertOutputs(calleeReturnRegs, calleeReturnMem);
+    if (!ops->hasOutputs())
+        return retval;
+    S2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+    if (!cpu) {
+        mlog[ERROR] <<"no instruction semantics for this architecture\n";
+        return retval;
+    }
+
+    // Build a CFG to analyze. We use a data-flow CFG even though we're not doing a true data flow, because it's convenient.
+    P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), returnTarget);
+    if (mlog[DEBUG]) {
+        boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/ReturnValueUsed";
+        boost::filesystem::create_directories(debugDir);
+        boost::filesystem::path fileName = debugDir /
+                                           ("B_" + StringUtility::addrToString(callSite->value().address()).substr(2) + ".dot");
+        std::ofstream f(fileName.string().c_str());
+        P2::DataFlow::dumpDfCfg(f, dfCfg);
+        mlog[DEBUG] <<"  dfCfg (" <<StringUtility::plural(dfCfg.nVertices(), "vertices", "vertex") <<")"
+                    <<" saved in " <<fileName <<"\n";
+    }
+
+    // Build the state transfer function
+    P2::DataFlow::TransferFunction xfer(cpu);
+    xfer.defaultCallingConvention(defaultCallingConvention_);
+
+    // Build the input state for the call return vertex and allocate space for the rest. The rest are filled in during the
+    // traversal.
+    std::vector<StatePtr> inputStates(dfCfg.nVertices());
+    inputStates[0] = xfer.initialState();
+    
+    // Do a depth first-traversal of the CFG to visit all vertices reachable from the return target exactly one time each.
+    ops->callSiteResults(&retval);
+    typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<const P2::DataFlow::DfCfg> Traversal;
+    for (Traversal t(dfCfg, dfCfg.findVertex(0)); t; ++t) {
+        StatePtr inputState = inputStates[t.vertex()->id()];
+        ASSERT_not_null(inputState);
+        if (mlog[DEBUG]) {
+            std::ostringstream ss;
+            ss <<*inputState;
+            mlog[DEBUG] <<"  incoming state for vertex #" <<t.vertex()->id() <<"\n"
+                        <<"    unresolved locations:    " <<locationNames(ops->unreferencedRegisterOutputs(), regdict) <<"\n"
+                        <<"    used   return locations: " <<locationNames(retval.returnRegistersUsed(), regdict) <<"\n"
+                        <<"    unused return locations: " <<locationNames(retval.returnRegistersUnused(), regdict) <<"\n"
+                        <<StringUtility::prefixLines(ss.str(), "    ");
+        }
+
+        StatePtr outputState;
+        try {
+            outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
+        } catch (const S2::BaseSemantics::Exception &e) {
+            mlog[WARN] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
+            retval.didConverge(false);
+            return retval;
+        }
+        
+        if (mlog[DEBUG]) {
+            std::ostringstream ss;
+            ss <<*outputState;
+            mlog[DEBUG] <<"  outgoing state for vertex #" <<t.vertex()->id() <<"\n"
+                        <<"    unresolved locations:    " <<locationNames(ops->unreferencedRegisterOutputs(), regdict) <<"\n"
+                        <<"    used   return locations: " <<locationNames(retval.returnRegistersUsed(), regdict) <<"\n"
+                        <<"    unused return locations: " <<locationNames(retval.returnRegistersUnused(), regdict) <<"\n"
+                        <<StringUtility::prefixLines(ss.str(), "    ");
+        }
+
+        // Forward output state to the input states for vertices we have yet to traverse.
+        BOOST_FOREACH (const P2::DataFlow::DfCfg::Edge &edge, t.vertex()->outEdges()) {
+            if (!inputStates[edge.target()->id()])
+                inputStates[edge.target()->id()] = outputState;
+        }
+    }
+
+    // If the caller has outputs, then read them. This is to handle situations where the caller implicitly uses the callee's
+    // return value by virtue of the caller returning it. For example:
+    //   callee: push ebp
+    //           mov ebp, esp
+    //           mov eax, 1    ; the return value
+    //           leave
+    //           ret
+    //
+    //   caller: push ebp
+    //           mov ebp, esp
+    //           call callee
+    //           leave
+    //           ret
+    //
+    // If caller's calling convention returns a value in EAX, then callee's return value (also in EAX) is implicitly used.
+    if (assumeCallerReturnsValue_) {
+        mlog[DEBUG] <<"  marking (reading) callee returns implicitly returned by caller\n";
+        P2::DataFlow::DfCfg::ConstVertexIterator returnVertex = P2::DataFlow::findReturnVertex(dfCfg);
+        if (dfCfg.isValidVertex(returnVertex)) {
+            StatePtr returnState = inputStates[returnVertex->id()];
+            ASSERT_always_not_null(returnState);
+            ops->currentState(returnState);
+            BOOST_FOREACH (const P2::Function::Ptr caller, callers) {
+                const CallingConvention::Analysis &callerBehavior = caller->callingConventionAnalysis();
+                if (callerBehavior.didConverge()) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
+                                             <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
+                    BOOST_FOREACH (RegisterDescriptor reg, callerBehavior.outputRegisters().listAll(regdict))
+                        (void) ops->readRegister(reg, ops->undefined_(reg.get_nbits()));
+                }
             }
         }
-        if (failed)
-            continue;
-
-        // Add new vertices to the work list, but only if none of the outgoing edges are function calls.
-        bool isCall = false;
-        CfgOutEdgeIterator ei, ei_end;
-        for (boost::tie(ei, ei_end)=out_edges(v, cfg); ei!=ei_end && !isCall; ++ei)
-            isCall = isFunctionCall(cfg, *ei);
-        if (!isCall) {
-            for (boost::tie(ei, ei_end)=out_edges(v, cfg); ei!=ei_end && !isCall; ++ei) {
-                if (!seen.exists(v))
-                    worklist.push(v);
-            }
-        }
-    }
-    return false;
-}
-
-void UsageCounts::update(bool used) {
-    if (used) {
-        ++nUsed;
-    } else {
-        ++nUnused;
-    }
-}
-
-UsageCounts& UsageCounts::operator+=(const UsageCounts &other) {
-    nUsed += other.nUsed;
-    nUnused += other.nUnused;
-    return *this;
-}
-
-static std::string canonicalName(SgAsmFunction *func) {
-    std::string name = func->get_name();
-    if (boost::ends_with(name, "@plt"))
-        boost::erase_last(name, "@plt");
-    return name;
-}
-
-// Create a new results by computing sums for equivalent names ("foo" and "foo@plt").
-static Results combineLikeNames(SgAsmInterpretation *interp, const Results &separate) {
-
-    // Index of functions by canonical name
-    std::vector<SgAsmFunction*> funcList = SageInterface::querySubTree<SgAsmFunction>(interp);
-    Map<std::string, std::vector<SgAsmFunction*> > funcMap;
-    BOOST_FOREACH (SgAsmFunction *func, funcList)
-        funcMap[canonicalName(func)].push_back(func);
-
-    // Scan through the analysis results and sum by canonical function name
-    Map<std::string, UsageCounts> byName;
-    for (Results::const_iterator ri=separate.begin(); ri!=separate.end(); ++ri)
-        byName[canonicalName(ri->first)] += ri->second;
-
-    // Create a new return value for all the functions.
-    Results retval;
-    for (Map<std::string, UsageCounts>::iterator i=byName.begin(); i!=byName.end(); ++i) {
-        BOOST_FOREACH (SgAsmFunction *func, funcMap[i->first])
-            retval[func] = i->second;
     }
 
+    SAWYER_MESG(mlog[DEBUG]) <<"  final unused return locations: "
+                             <<locationNames(retval.returnRegistersUnused(), regdict) <<"\n";
+    
+    // Assume all unresolved return locations of the callee(s) are unused return values.
+    retval.returnRegistersUnused() |= ops->unreferencedRegisterOutputs();
+
+    retval.didConverge(true);
     return retval;
-}
-
-Results analyze(SgAsmInterpretation *interp) {
-    assert(interp!=NULL);
-    Results results;
-
-    Cfg cfg = ControlFlow().build_block_cfg_from_ast<Cfg>(interp);
-    CfgEdgeIterator ei, ei_end;
-    for (boost::tie(ei, ei_end)=edges(cfg); ei!=ei_end; ++ei) {
-        SgAsmBlock *src_blk = get_ast_node(cfg, source(*ei, cfg));
-        SgAsmBlock *dst_blk = get_ast_node(cfg, target(*ei, cfg));
-        SgAsmFunction *src_func = SageInterface::getEnclosingNode<SgAsmFunction>(src_blk);
-        SgAsmFunction *dst_func = SageInterface::getEnclosingNode<SgAsmFunction>(dst_blk);
-        if (!src_func || !dst_func)
-            continue;
-        if (src_func != dst_func && callReturns(cfg, *ei))
-            results[dst_func].update(returnValueUsed(cfg, firstReturnVertex(cfg, *ei), interp->get_registers()));
-    }
-
-    results = combineLikeNames(interp, results);        // optional
-    return results;
 }
 
 } // namespace

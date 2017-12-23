@@ -17,8 +17,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace CloneDetection {
 
@@ -909,9 +909,9 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
         AddressInterval textInterval = AddressInterval::hull(textExtent.first(), textExtent.last());
         if (textInterval.isOverlapping(exclusion_area)) {
             std::cerr <<argv0 <<": specimen is a shared object; remapping it to a higher virtual address\n";
-            MemoryMap *map = interp->get_map();
+            MemoryMap::Ptr map = interp->get_map();
             if (!map)
-                interp->set_map(map = new MemoryMap);
+                interp->set_map(map = MemoryMap::instance());
             map->insert(exclusion_area,
                         MemoryMap::Segment::anonymousInstance(exclusion_area.size(), 0, "temporary exclusion area"));
             added_exclusion_area = true;
@@ -979,8 +979,8 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
     assert(interp->get_map()!=NULL);
     if (added_exclusion_area)
         interp->get_map()->erase(exclusion_area);
-    MemoryMap map = *interp->get_map();
-    link_builtins(spec_header, builtin_header, &map);
+    MemoryMap::Ptr map = interp->get_map()->shallowCopy();
+    link_builtins(spec_header, builtin_header, map);
 
     // Figure out what to disassemble.  If we did dynamic linking then we can mark the .got and .got.plt sections as read-only
     // because we've already filled them in with the addresses of the dynamically linked entities.  This will allow the
@@ -995,9 +995,9 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             sections.insert(sections.end(), s3.begin(), s3.end());
             for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
                 if ((*si)->is_mapped()) {
-                    map.at((*si)->get_mapped_actual_va())
-                       .limit((*si)->get_mapped_size())
-                       .changeAccess(MemoryMap::READABLE, ~MemoryMap::READABLE);
+                    map->at((*si)->get_mapped_actual_va())
+                        .limit((*si)->get_mapped_size())
+                        .changeAccess(MemoryMap::READABLE, ~MemoryMap::READABLE);
                 }
             }
         }
@@ -1012,7 +1012,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
         // command-line switches.
 #endif
         Partitioner *partitioner = new Partitioner();
-        SgAsmBlock *gblk = partitioner->partition(interp, disassembler, &map);
+        SgAsmBlock *gblk = partitioner->partition(interp, disassembler, map);
         interp->set_global_block(gblk);
         gblk->set_parent(interp);
     } else {
@@ -1023,7 +1023,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
 }
 
 void
-link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_header, MemoryMap *map)
+link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_header, const MemoryMap::Ptr &map)
 {
     using namespace StringUtility;
 
@@ -1065,10 +1065,10 @@ link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_he
         SgAsmGenericHeader *imports_header;
         SgAsmElfSymbolPtrList imports;
         const Exports &exports;
-        MemoryMap *map;
+        MemoryMap::Ptr map;
         BinaryLoaderElf loader;
         SgAsmElfSymbolSection *symsec;
-        Fixup(SgAsmGenericHeader *imports_header, const Exports &exports, MemoryMap *map)
+        Fixup(SgAsmGenericHeader *imports_header, const Exports &exports, const MemoryMap::Ptr &map)
             : imports_header(imports_header), exports(exports), map(map) {
             if ((symsec = isSgAsmElfSymbolSection(imports_header->get_section_by_name(".dynsym")))) {
                 imports = symsec->get_symbols()->get_symbols();

@@ -20,11 +20,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Sawyer/ProgressBar.h>
 #include <TraceSemantics2.h>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Sawyer::Message::Facility mlog;
 
@@ -113,7 +113,7 @@ public:
     
 public:
     // Reads a register from the subordinate process, unless we've already written to that register.
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg) ROSE_OVERRIDE {
         using namespace Sawyer::Container;
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         if (regs->is_partly_stored(reg))
@@ -129,7 +129,7 @@ public:
 
 public:
     // Reads memory from the subordinate process.
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
@@ -261,7 +261,7 @@ public:
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;
@@ -276,7 +276,7 @@ main(int argc, char *argv[]) {
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
     size_t addrWidth = disassembler->stackPointerRegister().get_nbits();
-    const RegisterDictionary *registerDictionary = disassembler->get_registers();
+    const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
     InstructionMap insns;
 

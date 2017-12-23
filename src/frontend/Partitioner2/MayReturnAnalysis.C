@@ -4,9 +4,9 @@
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -474,7 +474,10 @@ Partitioner::allFunctionMayReturn() const {
                     ASSERT_require(t.event() == LEAVE_VERTEX);
                     functionOptionalMayReturn(t.vertex()->value());
                     visited[t.vertex()->id()] = true;
+
+                    // Update progress reports
                     ++progress;
+                    updateProgress("may-return", progress.ratio());
                 }
             }
         }

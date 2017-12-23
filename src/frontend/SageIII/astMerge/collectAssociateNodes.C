@@ -917,8 +917,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
                          if (variableDeclaration != NULL)
                             {
-                              bool scopesMatch = initializedName->get_scope() == variableDeclaration->get_scope();
 #if 0
+                              bool scopesMatch = initializedName->get_scope() == variableDeclaration->get_scope();
                            // DQ (10/22/2016): Suppress this output because it is a moderate issue in the mergeAST_tests directory.
                               printf ("No symbol found for initializedName = %s in SgVariableDeclaration = %s \n",initializedName->get_name().str(),scopesMatch ? "true" : "false");
 #endif
@@ -1792,7 +1792,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgOmpFirstprivateClause: 
           case V_SgOmpFlushStatement    : 
           case V_SgOmpForStatement      : 
-          case V_SgOmpIfClause  : 
+          case V_SgOmpForSimdStatement  : 
+          case V_SgOmpIfClause          : 
+          case V_SgOmpFinalClause       :  
+          case V_SgOmpPriorityClause    :  
           case V_SgOmpLastprivateClause:  
           case V_SgOmpMasterStatement  :  
           case V_SgOmpNowaitClause     :  
@@ -1802,16 +1805,19 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgOmpParallelStatement:  
           case V_SgOmpPrivateClause    :  
           case V_SgOmpReductionClause  :  
+          case V_SgOmpDependClause     :  
           case V_SgOmpScheduleClause   :  
           case V_SgOmpSectionsStatement:  
           case V_SgOmpSectionStatement :  
           case V_SgOmpSharedClause     :  
           case V_SgOmpSingleStatement  :  
+          case V_SgOmpDeclareSimdStatement  :  
           case V_SgOmpSimdStatement  :  
           case V_SgOmpTaskStatement    :  
           case V_SgOmpTaskwaitStatement : 
           case V_SgOmpThreadprivateStatement :    
           case V_SgOmpUntiedClause      : 
+          case V_SgOmpMergeableClause      : 
           case V_SgOmpVariablesClause   : 
           case V_SgOmpWorkshareStatement:
             {
@@ -2133,6 +2139,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
           case V_SgMatlabForStatement:
 
+       // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
+          case V_SgDeclarationScope:
+
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:
           case V_SgBasicBlock:
@@ -2286,7 +2295,13 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
            }
 #endif
 
-  
+       // Rasmussen 6/14/2017: Ignore SgUntyped nodes for now.  Untyped nodes are currently used in
+       // parsing Fortran as a temporary conversion mechanism to store node information before complete
+       // type resolution has been done.
+          case V_SgUntypedProgramHeaderDeclaration:
+             {
+               break;
+             }
 
           default:
              {

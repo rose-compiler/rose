@@ -6,7 +6,7 @@
 #include <Sawyer/Message.h>
 #include <SqlDatabase.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {
@@ -52,7 +52,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
     mlog[INFO].enable();
 
     Settings settings;

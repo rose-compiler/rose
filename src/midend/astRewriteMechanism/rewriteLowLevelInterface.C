@@ -7,7 +7,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // ************************************************
 //         Published Interface functions
@@ -309,8 +309,8 @@ insertStatementUsingDependenceInformation (
                     ROSE_ASSERT (declarationStatement != NULL);
 #if 0
                     printf ("declarationStatementString located at line = %d of file = %s \n",
-                         rose::getLineNumber(declarationStatement),
-                         rose::getFileName(declarationStatement));
+                         Rose::getLineNumber(declarationStatement),
+                         Rose::getFileName(declarationStatement));
                     string declarationStatementString = declarationStatement->unparseToString();
                     printf ("declarationStatementString = %s \n",declarationStatementString.c_str());
 #endif
@@ -1234,7 +1234,7 @@ appendPrependTreeFragment (
      ROSE_ASSERT (targetStatement->get_file_info() != NULL);
      ROSE_ASSERT (targetStatement->get_file_info()->get_filename() != NULL);
 
-  // char* filenameOfTargetStatement = rose::getFileName(targetStatement);
+  // char* filenameOfTargetStatement = Rose::getFileName(targetStatement);
      char* filenameOfTargetStatement = targetStatement->get_file_info()->get_filename();
      ROSE_ASSERT (filenameOfTargetStatement != NULL);
 

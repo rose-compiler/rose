@@ -4,6 +4,8 @@ AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 
+AM_LDFLAGS = $(ROSE_RPATHS)
+
 MOVE_TOOL = $(top_builddir)/tools/moveDeclarationToInnermostScope
 
 $(MOVE_TOOL):
@@ -53,15 +55,16 @@ MOVE_DECLS_TESTCODES_FAILING = \
 
 MOVE_DECLS_TESTCODES_CURRENTLY_FAILING =
 
-MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
+MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v1_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
 #MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
 MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
 #MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
 MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v3_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
-iSSING_MOVE_DECLS_TESTCODES_RESULTS = \
-   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)                                                                                                                                                                                             
+PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
+   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
+
 #   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)                                                                                                                                                                                        
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.                                                                                                                                                        
 MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
@@ -305,15 +308,15 @@ DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
-	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 $(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation with merge by diff ..."; \
-	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 $(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES):$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation with merge and token unparsing by diff ..."; \
-	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 # DQ (6/28/2015): Added additional test using new option: -rose:merge_decl_assign
 $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_tokenunparsing_%=%) $(MOVE_TOOL) 
@@ -354,8 +357,8 @@ move_merge_decls_diff_check: $(MOVE_MERGE_DECLS_DIFF_FILES)
 move_merge_decls_no_var_norm_diff_check: $(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES)
 
 # rules for declaration moving tests
-$(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) $(MOVE_TOOL) 
-	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
+$(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v1_%=%) $(MOVE_TOOL) 
+	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_v1_%=%) -rose:output $@
 
 $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) $(MOVE_TOOL) 
 	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
@@ -366,10 +369,80 @@ $(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@
 
 
 # move_decls_diff_check move_merge_decls_diff_check
-check-local: move_diff_check
-	@echo "*****************************************************************************************************"
+# check-local: move_diff_check
+check-local:
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+if ROSE_USE_EDG_VERSION_4_9
+	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
+#	@echo "moveDeclarationTool tests using EDG 4.9 and GNU version 4.9 backend compiler are disabled."
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "moveDeclarationTool tests using EDG 4.9: GNU 4.9 backend compiler NOT allowed with the EDG 4.9 frontend (reconfigure with EDG 4.12)."
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "moveDeclarationTool tests using EDG 4.9 and GNU version 4.8 backend compiler are allowed."
+	@$(MAKE) move_diff_check
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+# Exclude these tests on GNU 4.9 and later compilers).
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
+endif # ROSE_USING_GCC_VERSION_LATER_4_8
+else  # NOT USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+	@echo "moveDeclarationTool tests using EDG 4.9: Clang backend compiler are NOT allowed with the EDG 4.9 frontend."
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+	@echo "moveDeclarationTool tests using EDG 4.9 Intel backend compiler are allowed."
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+if USING_GNU_COMPILER
+if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "moveDeclarationTool tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
+	@echo "moveDeclarationTool tests using EDG 4.12 and any supported backend compiler are allowed."
+	@$(MAKE) move_diff_check
+endif # ROSE_USING_GCC_VERSION_LATER_4_8
+else
+	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+	@echo "moveDeclarationTool tests using EDG 4.12: Clang backend compiler using EDG 4.12 frontend."
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+	@echo "moveDeclarationTool tests using EDG 4.12 Intel backend compiler are allowed."
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+endif # ROSE_USE_EDG_VERSION_4_9
+	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/moveDeclarationTool: make check rule complete (terminated normally)"
-	@echo "*****************************************************************************************************"
+	@echo "*********************************************************************************************************"
 
 clean-local:
 	rm -f *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS) $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)

@@ -24,7 +24,7 @@ typedef std::string VariableName;
   * \date 2012.
  */
 class VariableIdMapping {
-  /* TODO: possible workaround: because the AST implementation is not completed for the following cases:
+  /* NOTE: cases where the symbol is in the ROSE AST:
      1) SgInitializedName in forward declaration (symbol=0)
      2) CtorInitializerList (symbol=0)
      the symbol is missing in both cases, a VariableId can be assign to the passed SgInitializedName pointer.
@@ -32,25 +32,30 @@ class VariableIdMapping {
 
  public:
   VariableIdMapping();
-  //typedef boost::unordered_set<VariableId> VariableIdSet;
   typedef std::set<VariableId> VariableIdSet;
 
-  // the computation of the ROSE-based variable-symbol mapping
-  // creates a mapping of variableNames and its computed UniqueVariableSymbol
+  /*
+    create the mapping between symbols in the AST and associated
+    variable-ids. Each variable in the project is assigned one
+    variable-id (including global variables, local variables,
+    class/struct/union data members)
+  */    
   void computeVariableSymbolMapping(SgProject* project);
 
-  /* create a new unique variable symbol (should be used together with deleteUniqueVariableSymbol)
-     this is useful if additional (e.g. temporary) variables are introduced in an analysis
-     this function does NOT insert this new symbol in any symbol table
+  /* create a new unique variable symbol (should be used together with
+     deleteUniqueVariableSymbol) this is useful if additional
+     (e.g. temporary) variables are introduced in an analysis this
+     function does NOT insert this new symbol in any symbol table
    */
   VariableId createUniqueTemporaryVariableId(std::string name);
+  bool isTemporaryVariableId(VariableId varId);
+  bool isHeapMemoryRegionId(VariableId varId);
 
   // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
   void deleteUniqueTemporaryVariableId(VariableId uniqueVarSym);
 
   class UniqueTemporaryVariableSymbol : public SgVariableSymbol {
   public:
-    // Constructor: we only allow this single constructor
     UniqueTemporaryVariableSymbol(std::string name);
     // Destructor: default is sufficient
     
@@ -77,20 +82,26 @@ class VariableIdMapping {
   bool hasFloatingPointType(VariableId varId);
   bool hasPointerType(VariableId varId);
   bool hasArrayType(VariableId varId);
-  bool isConstantArray(VariableId varId);
+  bool hasClassType(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
-  bool isTemporaryVariableId(VariableId varId);
   // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
   bool isVariableIdValid(VariableId varId);
   std::string variableName(VariableId varId);
-  std::string uniqueLongVariableName(VariableId varId);
-  std::string uniqueShortVariableName(VariableId varId);
+  std::string uniqueVariableName(VariableId varId);
 
-  // set the size of a data structure represented by this variable-id. Currently only arrays are supported.
-  void setSize(VariableId variableId, size_t size);
-  // get the size of a data structure represented by this variable-id. Currently only arrays are supported.
-  size_t getSize(VariableId variableId);
+  // set number of elements of the memory region determined by this variableid
+  void setNumberOfElements(VariableId variableId, size_t size);
+  // get number of elements of the memory region determined by this variableid
+  size_t getNumberOfElements(VariableId variableId);
 
+  // set the size of an element of the memory region determined by this variableid
+  void setElementSize(VariableId variableId, size_t size);
+  // get the size of an element of the memory region determined by this variableid
+  size_t getElementSize(VariableId variableId);
+
+  SgSymbol* createAndRegisterNewSymbol(std::string name);
+  SPRAY::VariableId createAndRegisterNewVariableId(std::string name);
+  SPRAY::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
   void registerNewSymbol(SgSymbol* sym);
   void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(std::ostream& os);
@@ -121,9 +132,11 @@ class VariableIdMapping {
   typedef std::set<PairOfVarIdAndVarName> TemporaryVariableIdMapping;
   TemporaryVariableIdMapping temporaryVariableIdMapping;
   VariableId addNewSymbol(SgSymbol* sym);
+
   // used for mapping in both directions
   std::vector<SgSymbol*> mappingVarIdToSym;
-  std::map<size_t,size_t> mappingVarIdToSize;
+  std::map<size_t,size_t> mappingVarIdToNumberOfElements;
+  std::map<size_t,size_t> mappingVarIdToElementSize;
   std::map<SgSymbol*,size_t> mappingSymToVarId;
   bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
@@ -144,21 +157,22 @@ class VariableId {
   VariableId();
   std::string toString() const;
   std::string toString(VariableIdMapping& vid) const;
+  //std::string toUniqueString() const;
+  std::string toUniqueString(VariableIdMapping& vid) const;
+
+  /* if VariableIdMapping is a valid pointer a variable name is returned
+     otherwise toString() is called and a generic name (V..) is returned.
+  */
+  std::string toString(VariableIdMapping* vid) const;
+  std::string toUniqueString(VariableIdMapping* vid) const;
+
   int getIdCode() const { return _id; }
-  // we intentionally do not provide a constructor for int because this would clash 
-  // with overloaded functions that are using ConstIntLattice (which has an implicit 
-  // type conversion for int)
   void setIdCode(int id) {_id=id;}
-  //std::string variableName() const;
-  //std::string longVariableName() const;
-  //VariableId(SgSymbol* sym);
   bool isValid() const { return _id!=-1; }
   static const char * const idKindIndicator;
  public:
-  //SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
 
  private: 
-  //SgSymbol* sym;
   int _id;
 };
 

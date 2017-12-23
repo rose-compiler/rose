@@ -5,7 +5,7 @@
 #include <Sawyer/BitVector.h>
 
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace IntervalSemantics {
@@ -17,7 +17,7 @@ static const size_t maxComplexity = 50;                 // arbitrary max interva
  *******************************************************************************************************************************/
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SMTSolver*) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SmtSolver*) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     BaseSemantics::SValuePtr retval;
@@ -86,7 +86,7 @@ SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
@@ -98,7 +98,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
@@ -795,7 +795,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg,
+RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt,
                           const BaseSemantics::SValuePtr &condition)
@@ -804,7 +804,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg,
+RiscOperators::writeMemory(RegisterDescriptor segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition) {

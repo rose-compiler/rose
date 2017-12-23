@@ -10,7 +10,7 @@
 #include <Sawyer/Message.h>
 #include <SqlDatabase.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 enum OutputMode {
@@ -165,7 +165,7 @@ showRandomPoint(const Settings &settings, const Dependencies &dependencies) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     Settings settings;
     parseCommandLine(argc, argv, settings);

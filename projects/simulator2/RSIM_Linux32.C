@@ -42,9 +42,9 @@
 #include <sys/socket.h>
 #include <grp.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Linux32::init()
@@ -2416,11 +2416,11 @@ sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
     int result = -ENOSYS;
 
     do {
-        if (!t->get_process()->get_memory().at(shmaddr_va).exists()) {
+        if (!t->get_process()->get_memory()->at(shmaddr_va).exists()) {
             result = -EINVAL;
             break;
         }
-        const MemoryMap::Node &me = *(t->get_process()->get_memory().find(shmaddr_va));
+        const MemoryMap::Node &me = *(t->get_process()->get_memory()->find(shmaddr_va));
         if (me.key().least()!=shmaddr_va ||
             me.value().offset()!=0 ||
             NULL==me.value().buffer()->data()) {
@@ -2641,8 +2641,8 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
 
     do {
         if (0==shmaddr) {
-            const MemoryMap &mm = t->get_process()->get_memory();
-            AddressInterval freeArea = mm.unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
+            MemoryMap::Ptr mm = t->get_process()->get_memory();
+            AddressInterval freeArea = mm->unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
             assert(!freeArea.isEmpty());
             shmaddr = freeArea.least();
         } else if (shmflg & SHM_RND) {
@@ -2674,7 +2674,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
 
         MemoryMap::Buffer::Ptr buffer = MemoryMap::StaticBuffer::instance(buf, ds.shm_segsz);
         MemoryMap::Segment sgmt(buffer, 0, perms, "shmat("+StringUtility::numberToString(shmid)+")");
-        t->get_process()->get_memory().insert(AddressInterval::baseSize(shmaddr, ds.shm_segsz), sgmt);
+        t->get_process()->get_memory()->insert(AddressInterval::baseSize(shmaddr, ds.shm_segsz), sgmt);
 
         /* Return values */
         if (4!=t->get_process()->mem_write(&shmaddr, result_va, 4)) {
@@ -2900,7 +2900,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
 
 #if 1 // DEBUGGING [Robb P. Matzke 2015-02-09]
         if (isChild && 0 == access("./x86sim-stop-at-fork", F_OK)) {
-            p->get_memory().dump(std::cerr, "childmem: ");
+            p->get_memory()->dump(std::cerr, "childmem: ");
             std::cerr <<"simulator: new process " <<childTid32 <<" stopped immediately after creation\n";
             raise(SIGSTOP);
         }

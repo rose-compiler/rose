@@ -13,7 +13,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {
@@ -174,7 +174,7 @@ getTester() {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     Settings settings;
     std::vector<std::string> kvlist = parseCommandLine(argc, argv, settings);

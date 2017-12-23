@@ -1,7 +1,7 @@
 #ifndef ROSE_SageBuilderAsm_H
 #define ROSE_SageBuilderAsm_H
 
-namespace rose {
+namespace Rose {
 
 /** Functions to build binary analysis ASTs. */
 namespace SageBuilderAsm {
@@ -32,6 +32,8 @@ SgBinaryComposite* buildBinaryComposite(const std::string &fileName);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build data types
+//
+// These data type builders always return the same IR node and are thread-safe.
 
 // Generic data types
 SgAsmIntegerType* buildTypeU1();                        /**< 1-bit unsigned (Boolean) */
@@ -73,13 +75,13 @@ SgAsmVectorType*  buildAsmTypeDoubleQuadWord() ROSE_DEPRECATED("use buildTypeX86
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build registers. Deprecated because ROSE doesn't have architecture-specific registers anymore. [Robb P. Matzke 2014-07-21]
 // Use the SgAsmDirectRegisterExpression constructor instead.
-SgAsmDirectRegisterExpression* buildSgAsmx86RegisterReferenceExpression(const RegisterDescriptor&)
+SgAsmDirectRegisterExpression* buildSgAsmx86RegisterReferenceExpression(RegisterDescriptor)
     ROSE_DEPRECATED("use SgAsmDirectRegisterExpression constructor");
-SgAsmDirectRegisterExpression* buildSgAsmArmRegisterReferenceExpression(const RegisterDescriptor&)
+SgAsmDirectRegisterExpression* buildSgAsmArmRegisterReferenceExpression(RegisterDescriptor)
     ROSE_DEPRECATED("use SgAsmDirectRegisterExpression constructor");
-SgAsmDirectRegisterExpression* buildSgAsmMipsRegisterReferenceExpression(const RegisterDescriptor&)
+SgAsmDirectRegisterExpression* buildSgAsmMipsRegisterReferenceExpression(RegisterDescriptor)
     ROSE_DEPRECATED("use SgAsmDirectRegisterExpression constructor");
-SgAsmDirectRegisterExpression* buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor&)
+SgAsmDirectRegisterExpression* buildSgAsmPowerpcRegisterReferenceExpression(RegisterDescriptor)
     ROSE_DEPRECATED("use SgAsmDirectRegisterExpression constructor");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,7 +4,8 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
-#include "Partitioner.h"
+
+using namespace Rose::BinaryAnalysis;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmExecutableFileFormat
@@ -50,7 +51,7 @@ std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return s
 unsigned SgAsmInstruction::get_anyKind() const { return 0; }
 
 std::set<rose_addr_t>
-SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
     return std::set<rose_addr_t>();
 }
 
@@ -66,6 +67,7 @@ bool SgAsmArmInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmArmInstruction::isUnknown() const { return false; }
 std::set<rose_addr_t> SgAsmArmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>(); }
 unsigned SgAsmArmInstruction::get_anyKind() const { return 0; }
+std::string SgAsmArmInstruction::description() const { return ""; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmM68kInstruction
@@ -79,9 +81,10 @@ bool SgAsmM68kInstruction::isUnknown() const { return false; }
 bool SgAsmM68kInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmM68kInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 unsigned SgAsmM68kInstruction::get_anyKind() const { return 0; }
+std::string SgAsmM68kInstruction::description() const { return ""; }
 
 std::set<rose_addr_t>
-SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
     return std::set<rose_addr_t>();
 }
 
@@ -97,6 +100,7 @@ bool SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstructi
 bool SgAsmMipsInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmMipsInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 unsigned SgAsmMipsInstruction::get_anyKind() const { return 0; }
+std::string SgAsmMipsInstruction::description() const { return ""; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPowerpcInstruction
@@ -105,6 +109,7 @@ bool SgAsmPowerpcInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmPowerpcInstruction::isUnknown() const { return false; } 
 std::set<rose_addr_t> SgAsmPowerpcInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 unsigned SgAsmPowerpcInstruction::get_anyKind() const { return 0; }
+std::string SgAsmPowerpcInstruction::description() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmX86Instruction
@@ -120,7 +125,7 @@ unsigned SgAsmX86Instruction::get_anyKind() const { return 0; }
 std::set<rose_addr_t> SgAsmX86Instruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 
 std::set<rose_addr_t>
-SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
     return std::set<rose_addr_t>();
 }
 
@@ -169,21 +174,11 @@ SgAsmType* SgAsmVectorType::get_elmtType() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Disassembler
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis{
 void Disassembler::initDiagnostics() {}
 } // namespace
 } // namespace
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Partitioner
-
-namespace rose {
-namespace BinaryAnalysis{
-void Partitioner::initDiagnostics() {}
-} // namespace
-} // namespace
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBlock
@@ -198,3 +193,12 @@ SgAsmBlock::has_instructions() const
     }
     return false;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterDescriptor
+void RegisterDescriptor::majorNumber(unsigned) { abort(); }
+void RegisterDescriptor::minorNumber(unsigned) { abort(); }
+void RegisterDescriptor::offset(size_t) { abort(); }
+void RegisterDescriptor::nBits(size_t) { abort(); }
+void RegisterDescriptor::setOffsetWidth(size_t, size_t) { abort(); }
+std::iostream& operator<<(std::ostream, RegisterDescriptor) { abort(); }

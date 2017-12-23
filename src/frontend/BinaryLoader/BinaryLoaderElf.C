@@ -8,8 +8,10 @@
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 
-using namespace rose;
 using namespace Sawyer::Message;
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 std::ostream& operator<<(std::ostream &o, const BinaryLoaderElf::VersionedSymbol &x) { x.print(o); return o; }
 
@@ -57,7 +59,7 @@ BinaryLoaderElf::get_remap_sections(SgAsmGenericHeader *header)
 
 /* For any given file header, start mapping at a particular location in the address space. */
 rose_addr_t
-BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
+BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
 {
     static const size_t maximum_alignment = 8192;
     AddressInterval mappableArea = AddressInterval::whole();
@@ -98,23 +100,44 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
 }
 
 BinaryLoader::MappingContribution
-BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
+BinaryLoaderElf::align_values(SgAsmGenericSection *_section, const MemoryMap::Ptr &map,
                               rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                               rose_addr_t *va_p, rose_addr_t *mem_size_p,
                               rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
                               rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                               ConflictResolution *resolve_p)
 {
+    ASSERT_not_null(_section);
+    ASSERT_not_null(map);
+    ASSERT_not_null(malign_lo_p);
+    ASSERT_not_null(malign_hi_p);
+    ASSERT_not_null(va_p);
+    ASSERT_not_null(mem_size_p);
+    ASSERT_not_null(offset_p);
+    ASSERT_not_null(file_size_p);
+    ASSERT_not_null(map_private_p);
+    ASSERT_not_null(va_offset_p);
+    ASSERT_not_null(anon_lo_p);
+    ASSERT_not_null(anon_hi_p);
+    ASSERT_not_null(resolve_p);
+
     SgAsmElfSection *section = isSgAsmElfSection(_section);
     ASSERT_not_null(section); /* This method is only for ELF files. */
 
+    // Maximum alignment seems to be 4k regardless of what the ELF file says.  You can see this by running:
+    //   $ x86_64 -R /bin/cat /proc/self/maps
+    // and noticing that the /bin/cat segments are mapped at '4000, 'b000, and 'c000 even though the ELF file says the memory
+    // alignment constraint is 0x200000.
+    if (*malign_lo_p > 4096)
+        *malign_lo_p = 4096;
+    if (*malign_hi_p > 4096)
+        *malign_hi_p = 4096;
+
     /* ELF Segments are aligned using the superclass, but when the section has a low- or high-padding area we'll use file
      * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
-     * this header's sections and sections previously mapped from other headers.  Therefore, any conflicts are within a single
-     * header and are resolved by over-mapping. */
+     * this header's sections and sections previously mapped from other headers.  Any conflicts are within a single header and
+     * are resolved by moving the segment to a free area. */
     if (section->get_segment_entry()) {
-
-
         MappingContribution retval = BinaryLoader::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
                                                                 mem_size_p, offset_p, file_size_p, map_private_p, va_offset_p,
                                                                 anon_lo_p, anon_hi_p, resolve_p);
@@ -374,7 +397,7 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
                 elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
                 /* TODO: handle .tbss correctly */
             } else if (retval != NULL) {
-                using namespace rose::StringUtility;
+                using namespace Rose::StringUtility;
                 mlog[ERROR] <<"find_section_by_preferred_va: multiple sections match " <<addrToString(va) <<"\n";
                 mlog[ERROR] <<"  section at " <<addrToString(retval->get_mapped_actual_va())
                             <<" + " <<addrToString(retval->get_mapped_size())
@@ -930,7 +953,8 @@ BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSectio
 }
 
 rose_addr_t
-BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, MemoryMap *memmap, size_t nbytes)
+BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, const MemoryMap::Ptr &memmap,
+                                   size_t nbytes)
 {
     Stream trace(mlog[TRACE]);
 
@@ -979,7 +1003,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
 
 rose_addr_t
 BinaryLoaderElf::fixup_info_expr(const std::string &expression, SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
-                                 MemoryMap *memmap, rose_addr_t *target_va_p)
+                                 const MemoryMap::Ptr &memmap, rose_addr_t *target_va_p)
 {
     std::vector<rose_addr_t> stack;
     SgAsmElfSymbol *symbol = NULL;                      /* Defining symbol for relocation */
@@ -1037,7 +1061,7 @@ BinaryLoaderElf::fixup_info_expr(const std::string &expression, SgAsmElfRelocEnt
  *======================================================================================================================== */
 
 void
-BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, MemoryMap *memmap,
+BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const MemoryMap::Ptr &memmap,
                              rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/)
 {
     Stream trace(mlog[TRACE]);
@@ -1081,7 +1105,8 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
 
     
 void
-BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
+BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
+                                         const MemoryMap::Ptr &memmap)
 {
     Stream trace(mlog[TRACE]);
     SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
@@ -1178,7 +1203,8 @@ Thus, we're performing
 
 
 void
-BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
+BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
+                                   const MemoryMap::Ptr &memmap)
 {
     Stream trace(mlog[TRACE]);
     ASSERT_not_null2(reloc, "ELF relocation entry");
@@ -1303,7 +1329,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
 }
 
 void
-BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, MemoryMap *memmap)
+BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryMap::Ptr &memmap)
 {
     SymverResolver resolver(elfHeader);
     SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
@@ -1830,3 +1856,6 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, MemoryMap *me
 //
 // */
 //
+
+} // namespace
+} // namespace

@@ -31,13 +31,14 @@
 #include <map>
 namespace AutoParallelization
 {
-  //Handle annotation, debugging flags
-  void autopar_command_processing(std::vector<std::string>&argvList);
+  //Handle annotation, debugging flags, no longer used, replaced by using Sawyer command line processing
+  //  void autopar_command_processing(std::vector<std::string>&argvList);
 
   // Required analysis and their initialization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
   extern bool enable_debug; 
+  extern bool keep_going; 
   extern bool no_aliasing;  // assuming aliasing or not
   extern bool enable_patch; // an option to control the generation of patch files
   extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.
@@ -104,6 +105,9 @@ namespace AutoParallelization
   //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
   //TODO: move to SageInterface when ready
   bool differentMemoryLocation(SgExpression* e1, SgExpression* e2);
+
+  //! Check if a loop has any unsupported language features so we can skip them for now
+  bool useUnsupportedLanguageFeatures(SgNode* loop, VariantT* blackConstruct);
 
 } //end namespace
 

@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = statements
 
@@ -11,8 +12,7 @@ statements_SOURCES = statements.C
 # DQ (8/14/2004) Developer's Note:
 # This permits the use of the pair of libraries -lrose -ledg OR the longer 
 # list of libraries (the later option is much faster for development work).
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 # Turn on GNU Coverage Tool (gcov)
 # CXX += -fprofile-arcs -ftest-coverage
@@ -154,7 +154,6 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
-test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
@@ -217,13 +216,11 @@ test2004_139.C \
 test2004_140.C \
 test2004_141.C \
 test2004_142.C \
-test2004_143.C \
 test2004_144.C \
 test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
-test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -263,21 +260,17 @@ test2005_24.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
-test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
 test2005_32.C \
 test2005_33.C \
 test2005_34.C \
-test2005_35.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
-test2005_39.C \
 test2005_40.C \
 test2005_41.C \
-test2005_42.C \
 test2005_43.C \
 test2005_44.C \
 test2005_45.C \
@@ -329,7 +322,6 @@ test2005_94.C \
 test2005_95.C \
 test2005_96.C \
 test2005_97.C \
-test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
@@ -359,11 +351,6 @@ test2005_125.C \
 test2005_126.C \
 test2005_127.C \
 test2005_128.C \
-test2005_129.C \
-test2005_130.C \
-test2005_131.C \
-test2005_132.C \
-test2005_133.C \
 test2005_134.C \
 test2005_135.C \
 test2005_136.C \
@@ -372,7 +359,6 @@ test2005_138.C \
 test2005_139.C \
 test2005_140.C \
 test2005_141.C \
-test2005_142.C \
 test2005_143.C \
 test2005_144.C \
 test2005_145.C \
@@ -408,7 +394,6 @@ test2005_177.C \
 test2005_178.C \
 test2005_179.C \
 test2005_180.C \
-test2005_181.C \
 test2005_182.C \
 test2005_183.C \
 test2005_184.C \
@@ -438,7 +423,6 @@ test2006_04.C \
 test2006_05.C \
 test2006_06.C \
 test2006_07.C \
-test2006_08.C \
 test2006_10.C \
 test2006_12.C \
 test2006_13.C \
@@ -447,14 +431,12 @@ test2006_16.C \
 test2006_17.C \
 test2006_18.C \
 test2006_19.C \
-test2006_20.C \
 test2006_22.C \
 test2006_23.C \
 test2006_25.C \
 test2006_26.C \
 test2006_28.C \
 test2006_34.C \
-test2006_37.C \
 test2006_38.C \
 test2006_39.C \
 test2006_40.C \
@@ -487,7 +469,6 @@ test2006_75.C \
 test2006_76.C \
 test2006_77.C \
 test2006_78.C \
-test2006_79.C \
 test2006_80.C \
 test2006_81.C \
 test2006_82.C \
@@ -529,7 +510,6 @@ test2006_120.C \
 test2006_121.C \
 test2006_122.C \
 test2006_123.C \
-test2006_124.C \
 test2006_125.C \
 test2006_126.C \
 test2006_129.C \
@@ -569,6 +549,150 @@ test_wchars.C \
 lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C
+
+# DQ (11/17/2017): Added test2006_08.C to be excluded from Intel testing (look into this later).
+if !USING_INTEL_COMPILER
+TESTCODES_REQUIRED_TO_PASS += \
+   test2006_08.C \
+   test2006_37.C 
+endif
+
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+if ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+# Exclude these tests on GNU 4.9 and later compilers).
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+TESTCODES_REQUIRED_TO_PASS += \
+   test2004_77.C \
+   test2004_143.C \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_35.C \
+   test2005_39.C \
+   test2005_42.C \
+   test2005_98.C \
+   test2005_129.C \
+   test2005_130.C \
+   test2005_131.C \
+   test2005_132.C \
+   test2005_133.C \
+   test2005_142.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_124.C 
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+TESTCODES_REQUIRED_TO_PASS += \
+   test2004_77.C \
+   test2004_143.C \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_35.C \
+   test2005_39.C \
+   test2005_42.C \
+   test2005_98.C \
+   test2005_129.C \
+   test2005_130.C \
+   test2005_131.C \
+   test2005_132.C \
+   test2005_133.C \
+   test2005_142.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_124.C 
+endif # ROSE_USE_EDG_VERSION_4_9
+
+# DQ (2/19/2017): OLD VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+if ROSE_USE_EDG_VERSION_4_9
+if !ROSE_USING_GCC_VERSION_LATER_4_9
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+else
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+else
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+OLD_TESTCODES_REQUIRED_TO_PASS = \
+   test2004_77.C \
+   test2004_143.C \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_35.C \
+   test2005_39.C \
+   test2005_42.C \
+   test2005_98.C \
+   test2005_129.C \
+   test2005_130.C \
+   test2005_131.C \
+   test2005_132.C \
+   test2005_133.C \
+   test2005_142.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_124.C 
+else
+# This is the GNU 6.1 or later compiler (so skip this list of files).
+endif
+
+endif
+
+endif
+
+else
+# Using EDG 4.12 or later (independent of the compiler).
+OLD_TESTCODES_REQUIRED_TO_PASS = \
+   test2004_77.C \
+   test2004_143.C \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_35.C \
+   test2005_39.C \
+   test2005_42.C \
+   test2005_98.C \
+   test2005_129.C \
+   test2005_130.C \
+   test2005_131.C \
+   test2005_132.C \
+   test2005_133.C \
+   test2005_142.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_124.C 
+endif
+
 
 else
 
@@ -676,10 +800,68 @@ $(TEST_Objects): statements
 
 check-local:
 	@echo "Tests the source position information held within the AST."
+#	@$(MAKE) $(PASSING_TEST_Objects)
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+if ROSE_USE_EDG_VERSION_4_9
+	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+	@echo "source position tests using GNU version 4.8 and earlier backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***********************************************************************************************************"
+endif # ROSE_USING_GCC_VERSION_LATER_4_8
+else  # NOT USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
+	@echo "source position tests using GNU version 4.8 backend compiler."
+	@$(MAKE) $(PASSING_TEST_Objects)
+else  # NOT USING_GNU_COMPILER
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+# DQ (2/28/2017): Skipping these tests for now.
+#	@$(MAKE) $(PASSING_TEST_Objects)
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+	@$(MAKE) $(PASSING_TEST_Objects)
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+endif # ROSE_USE_EDG_VERSION_4_9
+	@echo "******************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/sourcePosition_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************"
+	@echo "******************************************************************************************************************************"
 
 distclean-local:
 	rm -rf Makefile 

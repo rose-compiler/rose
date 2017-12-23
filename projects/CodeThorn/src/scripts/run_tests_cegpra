@@ -6,9 +6,7 @@
 SRCDIR=$1
 BUILDDIR=$2
 
-P1="Problem1401"
-P2="Problem1402"
-P3="Problem1403"
+P1="Problem1403"
 
 MAKE_CHECK="_make_check"
 
@@ -23,12 +21,17 @@ TEMP_DIR="make_check_log_cegpra_"${CURRENT_TIME}
 mkdir ${2}/${TEMP_DIR}
 echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
 
-for i in {1..3} #test all systems listed as P1,P2,... above
+for i in 1 #test all systems listed as P1,P2,... above
 do
-  for p in 0 1 46 67 79 84 95 96 #test different properties
+  for p in 0 1 46 67 79 #test different properties
   do
     #run cegpra and generate the results (do not keep error states as part of the model)
     eval ${SRCDIR}/scripts/test_cases_cegpra \${P${i}} ${p} ${1} ${2} ${2}/${TEMP_DIR}
+
+    if [ ! $? -eq 0 ] 
+    then 
+      exit 1 
+    fi
 
     #compare LTL results with RERS'14 solutions
     eval $SRCDIR/scripts/check_consistency ${2}/${TEMP_DIR}/\${P${i}}_ltl_results_make_check.csv $SRCDIR/regressiondata2/\${P${i}}_ltl_solutions.csv 2>&1

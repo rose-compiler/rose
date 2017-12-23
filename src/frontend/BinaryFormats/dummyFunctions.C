@@ -1,5 +1,7 @@
 #include "sage3basic.h"
 
+using namespace Rose::BinaryAnalysis;
+
 // This file contains the function definitions required within ROSE if Binary Analysis 
 // support is NOT enabled.  In each case I can't eliminate the function (usually the 
 // reason why I can't eliminate them is provides at the top of each list of associated 
@@ -69,7 +71,6 @@ bool SgAsmPEImportSection::reallocate() { return false; }
 void SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
-void MemoryMap::dump(FILE *f, const char *prefix) const {}
 void SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const {}
@@ -88,6 +89,12 @@ void SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
+
+namespace Rose {
+namespace BinaryAnalysis {
+void MemoryMap::dump(FILE *f, const char *prefix) const {}
+} // namespace
+} // namespace
 
 // These are needed because they are virtual functions and need to be defined
 // so that the associated classes can be used.
@@ -162,23 +169,19 @@ void SgAsmCoffStrtab::unparse(std::ostream &f) const {}
 void SgAsmPESectionTable::unparse(std::ostream &f) const {}
 void SgAsmNESection::unparse(std::ostream &f) const {}
 
-// These are needed because there is no SOURCE block for ROSETTA to put the function definitions 
-// as a result the constructor for these class are in the header file and the call the "ctor()"
-// function directly.  This might be work fixing longer term.
-void SgAsmInterpretation::ctor() {}
-void SgAsmGenericFile::ctor() {}
 
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iref_type    & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iord_type    & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iname_type   & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::osfixup_type & x ) { return os; }
-std::ostream & operator<< ( std::ostream & os, const RegisterDescriptor & x ) { return os; }
+std::ostream & operator<< ( std::ostream & os, RegisterDescriptor ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const rose_rva_t & x ) { return os; }
 std::ostream& operator<<(std::ostream &os, const AddressIntervalSet&) { return os; }
 
 bool SgAsmDOSFileHeader::reallocate() { return false; }
 void SgAsmPEStringSection::set_size(rose_addr_t) {}
 void SgAsmGenericSection::set_mapped_size(rose_addr_t) {}
+SgAsmGenericSection* SgAsmGenericSection::parse() { return NULL; }
 bool SgAsmElfStringSection::reallocate() { return false; }
 bool SgAsmElfNoteSection::reallocate() { return false; }
 void SgAsmElfStrtab::rebind(SgAsmStringStorage*, rose_addr_t) {}
@@ -245,6 +248,9 @@ void SgAsmGenericSection::set_size(rose_addr_t) {}
 SgAsmGenericString* SgAsmElfNoteEntry::get_name() const { return NULL; }
 SgAsmGenericString* SgAsmGenericSymbol::get_name() const { return NULL; }
 
+const char* SgAsmElfFileHeader::format_name() const { return NULL; }
+
+
 rose_rva_t::rose_rva_t() {
     addr = 0;
     section = NULL;
@@ -274,179 +280,88 @@ rose_rva_t::get_rva() const
 }
 
 void
-SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
-{}
+SgAsmGenericFile::shift_extend(SgAsmGenericSection*, rose_addr_t sa, rose_addr_t sn, AddressSpace, Elasticity) {}
 
-void
-SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn, AddressSpace space, Elasticity elasticity)
-{}
-
-
-void
-SgAsmGenericHeader::ctor()
-{}
-
-void
-SgAsmPEFileHeader::ctor()
-{}
-
-void
-SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
-{}
-
-
-void
-SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
-{}
-
-void
-SgAsmDOSFileHeader::ctor()
-{}
-
-void
-SgAsmElfFileHeader::ctor()
-{}
-
-void SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *s)
-{}
-
-void
-SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *s1,SgAsmElfSection *s2)
-{}
-
-void SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *s)
-{}
-
-void
-SgAsmElfNoteSection::ctor()
-{}
-
-void
-SgAsmElfEHFrameSection::ctor()
-{}
-
-void
-SgAsmElfSymverSection::ctor()
-{}
-
-void SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *s)
-{}
-
-void SgAsmElfSymverNeededSection::ctor(SgAsmElfStringSection *s)
-{}
-
-void
-SgAsmElfSectionTable::ctor()
-{}
-
-void
-SgAsmElfSegmentTable::ctor()
-{}
-
-void SgAsmPEImportSection::ctor()
-{}
-
-void SgAsmPEExportSection::ctor()
-{}
-
-void SgAsmPEStringSection::ctor()
-{}
-
-void SgAsmPESectionTable::ctor()
-{}
-
-void SgAsmDOSExtendedHeader::ctor()
-{}
-
-void
-SgAsmCoffSymbolTable::ctor()
-{}
-
-void SgAsmNESectionTable::ctor()
-{}
-
-void SgAsmNENameTable::ctor(rose_addr_t i)
-{}
-
-void SgAsmNEModuleTable::ctor(rose_addr_t i1, rose_addr_t i2)
-{}
-
-void SgAsmNEStringTable::ctor(rose_addr_t i1, rose_addr_t i2)
-{}
-
-void SgAsmNEEntryTable::ctor(rose_addr_t i1, rose_addr_t i2)
-{}
-
-void SgAsmNERelocTable::ctor(SgAsmNESection *s)
-{}
-
-void SgAsmLESectionTable::ctor(rose_addr_t i1, rose_addr_t i2)
-{}
-
-void SgAsmLENameTable::ctor(rose_addr_t i)
-{}
-
-void SgAsmLEPageTable::ctor(rose_addr_t i1, rose_addr_t i2)
-{}
-
-void SgAsmLEEntryTable::ctor(rose_addr_t i)
-{}
-
-void SgAsmLERelocTable::ctor(rose_addr_t i)
-{}
-
-void SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *s)
-{}
-
-void SgAsmElfStrtab::ctor()
-{}
-
-void SgAsmBasicString::ctor()
-{}
-
-void SgAsmStoredString::ctor(SgAsmGenericStrtab *s,rose_addr_t i,bool b)
-{}
-void SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, const std::string &s)
-{}
-void SgAsmStoredString::ctor(SgAsmStringStorage *storage)
-{}
-
-void SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *s)
-{}
-
-void SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr, SgAsmGenericString *forwarder)
-{}
-
+// Constructor helpers
+void SgAsmInterpretation::ctor() {}
+void SgAsmGenericFile::ctor() {}
+void SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie) {}
+void SgAsmGenericHeader::ctor() {}
+void SgAsmPEFileHeader::ctor() {}
+void SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset) {}
+void SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset) {}
+void SgAsmDOSFileHeader::ctor() {}
+void SgAsmElfFileHeader::ctor() {}
+void SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *s) {}
+void SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *s1,SgAsmElfSection *s2) {}
+void SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *s) {}
+void SgAsmElfNoteSection::ctor() {}
+void SgAsmElfEHFrameSection::ctor() {}
+void SgAsmElfSymverSection::ctor() {}
+void SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *s) {}
+void SgAsmElfSymverNeededSection::ctor(SgAsmElfStringSection *s) {}
+void SgAsmElfSectionTable::ctor() {}
+void SgAsmElfSegmentTable::ctor() {}
+void SgAsmPEImportSection::ctor() {}
+void SgAsmPEExportSection::ctor() {}
+void SgAsmPEStringSection::ctor() {}
+void SgAsmPESectionTable::ctor() {}
+void SgAsmDOSExtendedHeader::ctor() {}
+void SgAsmCoffSymbolTable::ctor() {}
+void SgAsmNESectionTable::ctor() {}
+void SgAsmNENameTable::ctor(rose_addr_t i) {}
+void SgAsmNEModuleTable::ctor(rose_addr_t i1, rose_addr_t i2) {}
+void SgAsmNEStringTable::ctor(rose_addr_t i1, rose_addr_t i2) {}
+void SgAsmNEEntryTable::ctor(rose_addr_t i1, rose_addr_t i2) {}
+void SgAsmNERelocTable::ctor(SgAsmNESection *s) {}
+void SgAsmLESectionTable::ctor(rose_addr_t i1, rose_addr_t i2) {}
+void SgAsmLENameTable::ctor(rose_addr_t i) {}
+void SgAsmLEPageTable::ctor(rose_addr_t i1, rose_addr_t i2) {}
+void SgAsmLEEntryTable::ctor(rose_addr_t i) {}
+void SgAsmLERelocTable::ctor(rose_addr_t i) {}
+void SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *s) {}
+void SgAsmElfStrtab::ctor() {}
+void SgAsmBasicString::ctor() {}
+void SgAsmStoredString::ctor(SgAsmGenericStrtab *s,rose_addr_t i,bool b) {}
+void SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, const std::string &s) {}
+void SgAsmStoredString::ctor(SgAsmStringStorage *storage) {}
+void SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *s) {}
+void SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr, SgAsmGenericString *forwarder) {}
 void SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *s){}
-
 void SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *s){}
-
 void SgAsmElfSymverEntry::ctor(SgAsmElfSymverSection *s){}
-
 void SgAsmElfSymverDefinedEntry::ctor(SgAsmElfSymverDefinedSection *s){}
-
 void SgAsmElfSymverDefinedAux::ctor(SgAsmElfSymverDefinedEntry* entry, SgAsmElfSymverDefinedSection* symver){}
-
 void SgAsmElfSymverNeededEntry::ctor(SgAsmElfSymverNeededSection *s){}
-
 void SgAsmElfSymverNeededAux::ctor(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNeededSection* symver){}
-
 void SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &dll_name){}
-
 void SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section){}
-
 void SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk){}
-
 void SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size){}
-
 void SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe){}
-
 void SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent){}
 void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir){}
 void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, const std::string &name, unsigned hint){}
 void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal){}
+void SgAsmElfStringSection::ctor() {}
+void SgAsmElfStringSection::ctor(SgAsmElfSectionTable*) {}
+void SgAsmElfSection::ctor() {}
+void SgAsmGenericSymbol::ctor() {}
+void SgAsmGenericSection::ctor(SgAsmGenericFile*, SgAsmGenericHeader*) {}
+void SgAsmGenericDLL::ctor() {}
 
 size_t SgAsmPEImportSection::mesg_nprinted = 0;
 rose_addr_t rose_rva_t::get_va() const { return 0; }
-std::string SgAsmGenericSection::read_content_str(const MemoryMap*, rose_addr_t, bool) { return ""; }
+std::string SgAsmGenericSection::read_content_str(const MemoryMap::Ptr&, rose_addr_t, bool) { return ""; }
 std::string SgAsmGenericSection::read_content_str(rose_addr_t, bool) { return ""; }
+
+SgAsmGenericString* SgAsmGenericDLL::get_name() const { return NULL; }
+void SgAsmGenericDLL::set_name(SgAsmGenericString*) {}
+void SgAsmElfNoteEntry::set_name(SgAsmGenericString*) {}
+void SgAsmGenericSymbol::set_name(SgAsmGenericString*) {}
+void SgAsmPEExportEntry::set_forwarder(SgAsmGenericString*) {}
+void SgAsmPEExportEntry::set_name(SgAsmGenericString*) {}
+void SgAsmElfDynamicEntry::set_name(SgAsmGenericString*) {}
+void SgAsmElfSection::set_linked_section(SgAsmElfSection*) {}
+const char* SgAsmGenericHeader::format_name() const { return NULL; }
+rose_addr_t SgAsmGenericFile::get_current_size() const { return 0; }

@@ -58,7 +58,7 @@ int main ( int argc, char *argv[] )
   double e0;
   double *force;
   int i;
-  int id;
+  //int id;
   double kinetic;
   double mass = 1.0;
   int nd = 3;

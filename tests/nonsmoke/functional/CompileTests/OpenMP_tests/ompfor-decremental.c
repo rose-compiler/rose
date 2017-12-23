@@ -6,7 +6,7 @@
 #include <omp.h>
 #endif 
 
-int foo(int lower, int upper, int stride)
+void foo(int lower, int upper, int stride)
 {
   int i;
 #pragma omp for

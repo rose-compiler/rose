@@ -6,16 +6,17 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
+#include <BinaryYicesSolver.h>
+#include <BinaryZ3Solver.h>
 #include <SymbolicSemantics2.h>
-#include <YicesSolver.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
-#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have Yices
+#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have an SMT solver
 static void
 test_yices_linkage() {
-    if (unsigned avail = YicesSolver::available_linkage()) {
+    if (unsigned avail = YicesSolver::availableLinkage()) {
         std::cout <<"Yices is available as";
         if (avail & YicesSolver::LM_EXECUTABLE)
             std::cout <<" an executable";
@@ -27,7 +28,7 @@ test_yices_linkage() {
     }
     
     YicesSolver yices1;
-    switch (yices1.get_linkage()) {
+    switch (yices1.linkage()) {
         case YicesSolver::LM_NONE:
             std::cout <<"Yices is not available.\n";
             break;
@@ -41,10 +42,10 @@ test_yices_linkage() {
             ASSERT_not_reachable("invalid yices linkage");
     }
 
-    if ((YicesSolver::available_linkage() & YicesSolver::LM_LIBRARY) != 0) {
+    if ((YicesSolver::availableLinkage() & YicesSolver::LM_LIBRARY) != 0) {
         YicesSolver yices2;
-        yices2.set_linkage(YicesSolver::LM_LIBRARY);
-        switch (yices2.get_linkage()) {
+        yices2.linkage(YicesSolver::LM_LIBRARY);
+        switch (yices2.linkage()) {
             case YicesSolver::LM_NONE:
                 std::cout <<"Yices is not available.\n";
                 break;

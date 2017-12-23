@@ -98,9 +98,9 @@ namespace SageInterface
 
         };
 
-  // DQ (4/3/2014): This constucts a data structure that holds analysis information about
-  // the AST that is seperate from the AST.  This is intended to be a general mechanism 
-  // to support analysis information without constantly modifing the IR.
+  // DQ (4/3/2014): This constructs a data structure that holds analysis information about
+  // the AST that is separate from the AST.  This is intended to be a general mechanism 
+  // to support analysis information without constantly modifying the IR.
      DeclarationSets* buildDeclarationSets(SgNode*);
 
 //! An internal counter for generating unique SgName
@@ -589,8 +589,8 @@ class StatementGenerator {
 //! Return the left hand, right hand expressions and if the left hand variable is also being read
   bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
 
-//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
-ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current);
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. For Dot and Arrow Expressions, their lhs is used to obtain SgInitializedName (coarse grain) by default. Otherwise, fine-grain rhs is used. 
+ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current, bool coarseGrain=true);
 
 //! Build an abstract handle from an AST node, reuse previously built handle when possible
 ROSE_DLL_API AbstractHandle::abstract_handle* buildAbstractHandle(SgNode*);
@@ -813,7 +813,7 @@ void setSourcePositionPointersToNull(SgNode *node);
   ROSE_DLL_API void setSourcePositionForTransformation (SgNode * root);
 
 //! Set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
-  ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
+//  ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
 
 //! Check if a node is from a system header file
   ROSE_DLL_API bool insideSystemHeader (SgLocatedNode* node);
@@ -2003,14 +2003,14 @@ ROSE_DLL_API void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, Sg
 ROSE_DLL_API bool
 collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse=false);
 
-//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars);
+//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default. 
+ROSE_DLL_API bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars, bool coarseGrain=true);
 
-//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars);
+//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default.
+ROSE_DLL_API void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars, bool coarseGrain=true);
 
-//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols);
+//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default.
+ROSE_DLL_API void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols, bool coarseGrain=true);
 
 //! Check if a variable reference is used by its address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
 ROSE_DLL_API bool isUseByAddressVariableRef(SgVarRefExp* ref);
@@ -2143,8 +2143,8 @@ bool isBodyStatement (SgStatement* s);
 //! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
 void changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody = true);
 
-//! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
-void changeAllLoopBodiesToBlocks(SgNode* top);
+// The same as changeAllBodiesToBlocks(SgNode* top). Phased out.
+//void changeAllLoopBodiesToBlocks(SgNode* top);
 
 //! Make a single statement body to be a basic block. Its parent is if, while, catch, or upc_forall etc.
 SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
@@ -2503,7 +2503,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       SgType *  UnderlyingType(SgType *type);
 
 // DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
-   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
+//   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
 
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );

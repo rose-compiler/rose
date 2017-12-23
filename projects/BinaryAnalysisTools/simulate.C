@@ -5,10 +5,10 @@
 #include <Partitioner2/Engine.h>
 #include <ConcreteSemantics2.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Diagnostics::Facility mlog;
 
@@ -59,7 +59,7 @@ parseCommandLine(int argc, char *argv[], Partitioner2::Engine &engine)
 
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line
     Partitioner2::Engine engine;
@@ -68,12 +68,12 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("no specimen specified; see --help");
 
     // Load specimen into memory
-    MemoryMap map = engine.loadSpecimens(specimenNames);
+    MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
 
     // Configure instruction semantics
     Partitioner2::Partitioner partitioner = engine.createPartitioner();
     Disassembler *disassembler = engine.obtainDisassembler();
-    const RegisterDictionary *regdict = disassembler->get_registers();
+    const RegisterDictionary *regdict = disassembler->registerDictionary();
     if (disassembler->dispatcher() == NULL)
         throw std::runtime_error("no instruction semantics for this architecture");    
     BaseSemantics::RiscOperatorsPtr ops = InstructionSemantics2::ConcreteSemantics::RiscOperators::instance(regdict);
@@ -87,19 +87,19 @@ int main(int argc, char *argv[]) {
     } else if (engine.isaName() == "coldfire") {
         // Use the interrupt vector to initialize the stack pointer and instruction pointer.
         uint32_t sp, ip;
-        if (4 != map.at(0).limit(4).read((uint8_t*)&sp).size())
+        if (4 != map->at(0).limit(4).read((uint8_t*)&sp).size())
             throw std::runtime_error("cannot read stack pointer at address 0x00000000");
         ops->writeRegister(disassembler->stackPointerRegister(), ops->number_(32, ByteOrder::be_to_host(sp)));
-        if (4 != map.at(4).limit(4).read((uint8_t*)&ip).size())
+        if (4 != map->at(4).limit(4).read((uint8_t*)&ip).size())
             throw std::runtime_error("cannot read instruction pointer at address 0x00000004");
         va = ByteOrder::be_to_host(ip);
-    } else if (!map.atOrAfter(0).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
+    } else if (!map->atOrAfter(0).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
         throw std::runtime_error("no starting address specified and none marked executable");
     }
     ops->writeRegister(disassembler->instructionPointerRegister(), ops->number_(32, va));
 
     // Execute
-    map.dump(::mlog[INFO]);
+    map->dump(::mlog[INFO]);
     while (1) {
         va = ops->readRegister(disassembler->instructionPointerRegister())->get_number();
         SgAsmInstruction *insn = partitioner.instructionProvider()[va];

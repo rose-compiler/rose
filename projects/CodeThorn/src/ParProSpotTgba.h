@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #ifndef PAR_PRO_SPOT_TGBA_HH
 #define PAR_PRO_SPOT_TGBA_HH
 
@@ -6,7 +9,7 @@
 //CodeThorn includes
 #include "ParProSpotState.h"
 #include "ParProSpotSuccIter.h"
-#include "StateRepresentations.h"
+#include "ParProEState.h"
 
 // BOOST includes
 #include "boost/unordered_set.hpp"
@@ -23,7 +26,12 @@
 using namespace std;
 
 namespace CodeThorn {
-  // An adapter which takes a CodeThorn ParProTransitionGraph and adheres to SPOT's TGBA interface
+  /*! 
+   * \brief An adapter which takes a CodeThorn ParProTransitionGraph and adheres 
+   to SPOT's TGBA interface (see SpotConnection).
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParProSpotTgba : public spot::tgba {
   public:
     ParProSpotTgba(ParProTransitionGraph& ctstg, const spot::ltl::atomic_prop_set& sap, 
@@ -64,3 +72,5 @@ namespace CodeThorn {
 }  //end of namespace CodeThorn
 
 #endif
+
+#endif // end of "#ifdef HAVE_SPOT"

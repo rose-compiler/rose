@@ -1,9 +1,9 @@
 #include "sage3basic.h"
 #include "Registers.h"
 
-// These are here temporarily until the classes in this file can be moved into rose::BinaryAnalysis
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+// These are here temporarily until the classes in this file can be moved into Rose::BinaryAnalysis
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 std::ostream&
 operator<<(std::ostream &o, const RegisterDictionary &dict)
@@ -12,49 +12,13 @@ operator<<(std::ostream &o, const RegisterDictionary &dict)
     return o;
 }
 
-std::ostream&
-operator<<(std::ostream &o, const RegisterDescriptor &reg)
-{
-    reg.print(o);
-    return o;
-}
-
-
-/*******************************************************************************************************************************
- *                                      RegisterDescriptor
- *******************************************************************************************************************************/
-
-bool
-RegisterDescriptor::operator==(const RegisterDescriptor &other) const 
-{
-    return majr==other.majr && minr==other.minr && offset==other.offset && nbits==other.nbits;
-}
-
-bool
-RegisterDescriptor::operator!=(const RegisterDescriptor &other) const
-{
-    return !(*this==other);
-}
-
-bool
-RegisterDescriptor::operator<(const RegisterDescriptor &other) const
-{
-    if (majr!=other.majr)
-        return majr < other.majr;
-    if (minr!=other.minr)
-        return minr < other.minr;
-    if (offset!=other.offset)
-        return offset < other.offset;
-    return nbits < other.nbits;
-}
-
 
 /*******************************************************************************************************************************
  *                                      RegisterNames
  *******************************************************************************************************************************/
 
 std::string
-RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDictionary *dict_/*=NULL*/) const
+RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *dict_/*=NULL*/) const
 {
     if (!rdesc.is_valid())
         return prefix + (prefix==""?"":"_") + "NONE";
@@ -70,7 +34,7 @@ RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDiction
     ss <<prefix <<rdesc.get_major() <<"." <<rdesc.get_minor();
     if (show_offset>0 || (show_offset<0 && rdesc.get_offset()!=0))
         ss <<offset_prefix <<rdesc.get_offset() <<offset_suffix;
-    if (show_size)
+    if (show_size>0 || (show_size<0 && rdesc.get_offset()!=0))
         ss <<size_prefix <<rdesc.get_nbits() <<size_suffix;
     ss <<suffix;
     return ss.str();
@@ -81,24 +45,12 @@ RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDiction
  *                                      RegisterDictionary
  *******************************************************************************************************************************/
 
-
-/* class method */
-uint64_t
-RegisterDictionary::hash(const RegisterDescriptor &d)
-{
-    uint64_t h = d.get_major() << 24;
-    h ^= d.get_minor() << 16;
-    h ^= d.get_offset() << 8;
-    h ^= d.get_nbits();
-    return h;
-}
-
 void
-RegisterDictionary::insert(const std::string &name, const RegisterDescriptor &rdesc) {
+RegisterDictionary::insert(const std::string &name, RegisterDescriptor rdesc) {
     /* Erase the name from the reverse lookup map, indexed by the old descriptor. */
     Entries::iterator fi = forward.find(name);
     if (fi!=forward.end()) {
-        Reverse::iterator ri = reverse.find(hash(fi->second));
+        Reverse::iterator ri = reverse.find(fi->second);
         ROSE_ASSERT(ri!=reverse.end());
         std::vector<std::string>::iterator vi=std::find(ri->second.begin(), ri->second.end(), name);
         ROSE_ASSERT(vi!=ri->second.end());
@@ -107,7 +59,7 @@ RegisterDictionary::insert(const std::string &name, const RegisterDescriptor &rd
 
     /* Insert or replace old descriptor with a new one and insert reverse lookup info. */
     forward[name] = rdesc;
-    reverse[hash(rdesc)].push_back(name);
+    reverse[rdesc].push_back(name);
 }
 
 void
@@ -137,8 +89,8 @@ RegisterDictionary::lookup(const std::string &name) const {
 }
 
 const std::string &
-RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
-    Reverse::const_iterator ri = reverse.find(hash(rdesc));
+RegisterDictionary::lookup(RegisterDescriptor rdesc) const {
+    Reverse::const_iterator ri = reverse.find(rdesc);
     if (ri!=reverse.end()) {
         for (size_t i=ri->second.size(); i>0; --i) {
             const std::string &name = ri->second[i-1];
@@ -153,11 +105,19 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
     return empty;
 }
 
+const RegisterDescriptor*
+RegisterDictionary::exists(RegisterDescriptor rdesc) const {
+    Reverse::const_iterator found = reverse.find(rdesc);
+    if (found == reverse.end())
+        return NULL;
+    return &found->first;
+}
+
 RegisterDescriptor
 RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
     RegisterDescriptor retval;
     for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
-        const RegisterDescriptor &reg = iter->second;
+        RegisterDescriptor reg = iter->second;
         if (major == reg.get_major() && minor == reg.get_minor()) {
             if (maxWidth > 0 && reg.get_nbits() > maxWidth) {
                 // ignore
@@ -263,10 +223,10 @@ void
 RegisterDictionary::print(std::ostream &o) const {
     o <<"RegisterDictionary \"" <<name <<"\" contains " <<forward.size() <<" " <<(1==forward.size()?"entry":"entries") <<"\n";
     for (Entries::const_iterator ri=forward.begin(); ri!=forward.end(); ++ri)
-        o <<"  \"" <<ri->first <<"\" " <<StringUtility::addrToString(hash(ri->second)) <<" " <<ri->second <<"\n";
+        o <<"  \"" <<ri->first <<"\" " <<ri->second <<"\n";
 
     for (Reverse::const_iterator ri=reverse.begin(); ri!=reverse.end(); ++ri) {
-        o <<"  " <<StringUtility::addrToString(ri->first);
+        o <<"  " <<ri->first;
         for (std::vector<std::string>::const_iterator vi=ri->second.begin(); vi!=ri->second.end(); ++vi) {
             o <<" " <<*vi;
         }
@@ -320,15 +280,6 @@ RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp)
     return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
 }
 
-/** Intel 8086 registers.
- *
- *  The Intel 8086 has fourteen 16-bit registers. Four of them (AX, BX, CX, DX) are general registers (although each may have
- *  an additional purpose; for example only CX can be used as a counter with the loop instruction). Each can be accessed as two
- *  separate bytes (thus BX's high byte can be accessed as BH and low byte as BL). Four segment registers (CS, DS, SS and ES)
- *  are used to form a memory address. There are two pointer registers. SP points to the bottom of the stack and BP which is
- *  used to point at some other place in the stack or the memory(Offset).  Two registers (SI and DI) are for array
- *  indexing. The FLAGS register contains flags such as carry flag, overflow flag and zero flag. Finally, the instruction
- *  pointer (IP) points to the next instruction that will be fetched from memory and then executed. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i8086() {
     static RegisterDictionary *regs = NULL;
@@ -399,9 +350,6 @@ RegisterDictionary::dictionary_i8086() {
     return regs;
 }
 
-/** Intel 8088 registers.
- *
- *  Intel 8088 has the same set of registers as Intel 8086. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i8088()
 {
@@ -413,9 +361,6 @@ RegisterDictionary::dictionary_i8088()
     return regs;
 }
 
-/** Intel 80286 registers.
- *
- *  The 80286 has the same registers as the 8086 but adds two new flags to the "flags" register. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i286()
 {
@@ -429,12 +374,6 @@ RegisterDictionary::dictionary_i286()
     return regs;
 }
 
-/** Intel 80386 registers.
- *
- *  The 80386 has the same registers as the 80286 but extends the general-purpose registers, base registers, index registers,
- *  instruction pointer, and flags register to 32 bits.  Register names from the 80286 refer to the same offsets and sizes while
- *  the full 32 bits are accessed by names prefixed with "e" as in "eax" (the "e" means "extended"). Two new segment registers
- *  (FS and GS) were added and all segment registers remain 16 bits. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i386()
 {
@@ -486,7 +425,6 @@ RegisterDictionary::dictionary_i386()
     return regs;
 }
 
-/** Intel 80386 with 80387 math co-processor. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i386_387()
 {
@@ -554,9 +492,6 @@ RegisterDictionary::dictionary_i386_387()
 }
         
 
-/** Intel 80486 registers.
- *
- *  The 80486 has the same registers as the 80386 with '387 co-processor but adds a new flag to the "eflags" register. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i486()
 {
@@ -569,9 +504,6 @@ RegisterDictionary::dictionary_i486()
     return regs;
 }
 
-/** Intel Pentium registers.
- *
- *  The Pentium has the same registers as the 80486 but adds a few flags to the "eflags" register and MMX registers. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentium()
 {
@@ -601,10 +533,6 @@ RegisterDictionary::dictionary_pentium()
     return regs;
 }
 
-/** Intel Pentium III registers.
- *
- *  The Pentium III has the same register set as the Pentium but adds the xmm0 through xmm7 registers for the SSE instruction
- *  set. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentiumiii()
 {
@@ -642,7 +570,6 @@ RegisterDictionary::dictionary_pentiumiii()
     return regs;
 }
 
-/** Intel Pentium 4 registers. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentium4()
 {
@@ -654,16 +581,6 @@ RegisterDictionary::dictionary_pentium4()
     return regs;
 }
 
-/** Amd64 registers.
- *
- *  The AMD64 architecture increases the size of the general purpose registers, base registers, index registers, instruction
- *  pointer, and flags register to 64-bits.  Most register names from the Pentium architecture still exist and refer to 32-bit
- *  quantities, while the AMD64 adds new names that start with "r" rather than "e" (such as "rax" for the 64-bit register and
- *  "eax" for the 32 low-order bits of the same register).  It also adds eight additional 64-bit general purpose registers
- *  named "r8" through "r15" along with "b", "w", and "d" suffixes for the low-order 8, 16, and 32 bits, respectively.
- *
- *  The only registers that are not retained are the control registers cr0-cr4, which are replaced by 64-bit registers of the
- *  same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_amd64()
 {
@@ -720,17 +637,6 @@ RegisterDictionary::dictionary_amd64()
     return regs;
 }
 
-/** ARM7 registers.
- *
- * The CPU has a total of 37 registers, each 32 bits wide: 31 general purpose registers named and six status registers named.
- * At most 16 (8 in Thumb mode) general purpose registers are visible at a time depending on the mode of operation. They have
- * names rN where N is an integer between 0 and 15, inclusive and are mapped onto a subset of the 31 physical general purpose
- * registers. Register r13 and r14 are, by convention, a stack pointer and link register (the link register holds the return
- * address for a function call). Register r15 is the instruction pointer.  Also, at most two status registers are available at
- * a time.
- *
- * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The minor
- * number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_arm7() {
     /* Documentation of the Nintendo GameBoy Advance is pretty decent. It's located here:
@@ -773,7 +679,6 @@ RegisterDictionary::dictionary_arm7() {
     return regs;
 }
 
-/** PowerPC registers. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_powerpc()
 {
@@ -881,9 +786,6 @@ RegisterDictionary::dictionary_powerpc()
     return regs;
 }
 
-/** MIPS32 Release 1.
- *
- * Release 1 of MIPS32 supports only a 32-bit FPU (support for 64-bit FPU was added in MIPS32 Release 2). */
 const RegisterDictionary *
 RegisterDictionary::dictionary_mips32()
 {
@@ -962,12 +864,6 @@ RegisterDictionary::dictionary_mips32()
     return regs;
 }
 
-/** MIPS32 Release 1 with special register names.
- *
- * This is the same dictionary as dictionary_mips32(), except additional names are supplied for the general purpose registers
- * (e.g., "zero" for r0, "at" for r1, "gp" for r28, "sp" for r29, "fp" for r30, "ra" for r31, etc.).  This is intended mostly
- * for the AsmUnparser; any layer that looks up registers by name should probably use the standard names rather than relying on
- * these alternate names.  */ 
 const RegisterDictionary *
 RegisterDictionary::dictionary_mips32_altnames()
 {
@@ -1014,7 +910,6 @@ RegisterDictionary::dictionary_mips32_altnames()
     return regs;
 }
 
-/** Motorola M68330 register names */
 const RegisterDictionary *
 RegisterDictionary::dictionary_m68000() 
 {

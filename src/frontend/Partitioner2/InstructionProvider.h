@@ -10,7 +10,7 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Provides and caches instructions.
@@ -35,7 +35,7 @@ public:
 
 private:
     Disassembler *disassembler_;
-    MemoryMap memMap_;
+    MemoryMap::Ptr memMap_;
     mutable InsnMap insnMap_;                           // this is a cache
     bool useDisassembler_;
 
@@ -47,10 +47,13 @@ private:
     void save(S &s, const unsigned version) const {
         roseAstSerializationRegistration(s);            // so we can save instructions through SgAsmInstruction base ptrs
         bool hasDisassembler = disassembler_ != NULL;
-        s <<hasDisassembler <<useDisassembler_ <<memMap_ <<insnMap_;
+        s <<BOOST_SERIALIZATION_NVP(hasDisassembler);
+        s <<BOOST_SERIALIZATION_NVP(useDisassembler_);
+        s <<BOOST_SERIALIZATION_NVP(memMap_);
+        s <<BOOST_SERIALIZATION_NVP(insnMap_);
         if (hasDisassembler) {
             std::string disName = disassembler_->name();
-            s <<disName;
+            s <<BOOST_SERIALIZATION_NVP(disName);
         }
     }
 
@@ -58,10 +61,13 @@ private:
     void load(S &s, const unsigned version) {
         roseAstSerializationRegistration(s);
         bool hasDisassembler = false;
-        s >>hasDisassembler >>useDisassembler_ >>memMap_ >>insnMap_;
+        s >>BOOST_SERIALIZATION_NVP(hasDisassembler);
+        s >>BOOST_SERIALIZATION_NVP(useDisassembler_);
+        s >>BOOST_SERIALIZATION_NVP(memMap_);
+        s >>BOOST_SERIALIZATION_NVP(insnMap_);
         if (hasDisassembler) {
             std::string disName;
-            s >>disName;
+            s >>BOOST_SERIALIZATION_NVP(disName);
             disassembler_ = Disassembler::lookup(disName);
             ASSERT_not_null2(disassembler_, "disassembler name=" + disName);
         }
@@ -74,7 +80,7 @@ protected:
     InstructionProvider()
         : disassembler_(NULL), useDisassembler_(false) {}
 
-    InstructionProvider(Disassembler *disassembler, const MemoryMap &map)
+    InstructionProvider(Disassembler *disassembler, const MemoryMap::Ptr &map)
         : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
         ASSERT_not_null(disassembler);
     }
@@ -90,7 +96,7 @@ public:
      *
      *  The disassembler is owned by the caller and should not be freed until after the instruction provider is destroyed.  The
      *  memory map is copied into the instruction provider. */
-    static Ptr instance(Disassembler *disassembler, const MemoryMap &map) {
+    static Ptr instance(Disassembler *disassembler, const MemoryMap::Ptr &map) {
         return Ptr(new InstructionProvider(disassembler, map));
     }
 
@@ -141,7 +147,7 @@ public:
     size_t nCached() const { return insnMap_.size(); }
 
     /** Returns the register dictionary. */
-    const RegisterDictionary* registerDictionary() const { return disassembler_->get_registers(); }
+    const RegisterDictionary* registerDictionary() const { return disassembler_->registerDictionary(); }
 
     /** Returns the calling convention dictionary. */
     const CallingConvention::Dictionary& callingConventions() const { return disassembler_->callingConventions(); }
@@ -158,7 +164,7 @@ public:
     RegisterDescriptor stackSegmentRegister() const { return disassembler_->stackSegmentRegister(); }
 
     /** Default memory byte order. */
-    ByteOrder::Endianness defaultByteOrder() const { return disassembler_->get_sex(); }
+    ByteOrder::Endianness defaultByteOrder() const { return disassembler_->byteOrder(); }
 
     /** Instruction dispatcher.
      *

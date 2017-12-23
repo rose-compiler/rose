@@ -11,13 +11,13 @@
 #include "cmdline.h"
 #include "keep_going.h"
 #include "FileUtility.h"
-#include "Diagnostics.h"                                // rose::Diagnostics
+#include "Diagnostics.h"                                // Rose::Diagnostics
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <Sawyer/CommandLine.h>
 
-using namespace rose;                                   // temporary, until this file lives in namespace rose
+using namespace Rose;                                   // temporary, until this file lives in namespace Rose
 
 #include <inttypes.h> /* for %" PRIuPTR " vs. %Iu handling */
 
@@ -257,7 +257,9 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
                bool returnValue = false;
 
             // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
-
+#if 0
+               printf ("In CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s \n",name.c_str());
+#endif
             // Open file for reading
                if ( boost::filesystem::exists(name.c_str()) )
                   {
@@ -314,7 +316,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
           argument == "-rose:verbose" ||                    // Used to specify output of internal information about ROSE phases
-          argument == "-rose:log" ||                        // Used to conntrol rose::Diagnostics
+          argument == "-rose:log" ||                        // Used to conntrol Rose::Diagnostics
           argument == "-rose:assert" ||                     // Controls behavior of failed assertions
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
@@ -693,7 +695,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
   // Default
           cout << version_message() << endl;
-       // rose::usage(0);
+       // Rose::usage(0);
           SgFile::usage(0);
           exit(0);
         }
@@ -712,7 +714,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("option --help found \n");
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
        // version();
-       // rose::usage(0);
+       // Rose::usage(0);
           cout << version_message() << endl;
           SgFile::usage(0);
           exit(0);
@@ -1316,9 +1318,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           unsigned int length = argv[i].size();
 
        // printf ("assemble compiler command line option: argv[%d] = %s length = %d \n",i,argv[i],length);
-       // printf ("rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
-       //     rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
-       // ROSE_ASSERT (rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
+       // printf ("Rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
+       //     Rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
+       // ROSE_ASSERT (Rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
 
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
@@ -1448,10 +1450,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                   bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
                   if (false == is_directory)
                   {
-                      std::cout  << "[WARN] "
+                 // DQ (3/15/2017): Fixed to use mlog message logging.
+                    if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
+                       {
+                         std::cout  << "[WARN] "
                               << "Invalid argument to -I; path does not exist: "
                               << "'" << include_path_no_quotes << "'"
                               << std::endl;
+                       }
                   }
               } catch (const boost::filesystem::filesystem_error& ex) {
                   std::cout  << "[ERROR] "
@@ -1573,10 +1579,14 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
           bool is_directory = boost::filesystem::is_directory(arg);
           if (false == is_directory)
           {
-              std::cout  << "[WARN] "
+          // DQ (3/15/2017): Fixed to use mlog message logging.
+             if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
+                {
+                  std::cout  << "[WARN] "
                         << "Invalid argument to -I; path does not exist: "
                         << "'" << arg << "'"
                         << std::endl;
+                }
           }
 #ifdef _MSC_VER
           // ensure that the path is quoted on Windows.
@@ -2466,6 +2476,9 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
           source,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
+// DQ (3/25/2017): Eliminate warning of unused variable via a trivial use.
+   ROSE_ASSERT(has_java_source == true || has_java_source == false);
+
   // Default
   //if (has_java_source == false)
   //{
@@ -3235,6 +3248,18 @@ SgFile::usage ( int status )
 "     -rose:skipAstConsistancyTests\n"
 "                             skip AST consitancy testing (for better performance)\n"
 "\n"
+"Plugin Mode:\n"
+"     -rose:plugin_lib <shared_lib_filename>\n"
+"                             Specify the file path to a shared library built from plugin source files \n"
+"                             This option can repeat multiple times to load multiple libraries \n"
+"     -rose:plugin_action <act_name>\n"
+"                             Specify the plugin action to be executed\n"
+"                             This option can repeat multiple times to execute multiple actions \n"
+"                             in the order shown up in command line \n"
+"     -rose:plugin_arg_<act_name>  <option>\n"
+"                             Specify one option to be passed to a plugin named act_name\n"
+"                             This option can repeat multiple times to provide multiple options to a plugin \n"
+"\n"
 "GNU g++ options recognized:\n"
 "     -ansi                   equivalent to -rose:strict\n"
 "     -fno-implicit-templates disable output of template instantiations in\n"
@@ -3267,7 +3292,7 @@ SgFile::usage ( int status )
 "     -rose:assert HOW\n"
 "                             Determines how a failed assertion is handled. The value\n"
 "                             for HOW should be 'abort', 'exit' with non-zero status, or\n"
-"                             'throw' a rose::Diagnostics::FailedAssertion exception. Only\n"
+"                             'throw' a Rose::Diagnostics::FailedAssertion exception. Only\n"
 "                             assertions that use the Sawyer mechanism are affected.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
@@ -3529,7 +3554,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // rose::usage(0);
+       // Rose::usage(0);
           cout << version_message() << endl;
           usage(0);
        // exit(0);
@@ -3552,7 +3577,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
   // specifically the part about being able to return an array of values.
   //
-     rose::initialize(NULL);
+     Rose::initialize(NULL);
      static const std::string removalString = "(--REMOVE_ME--)";
      for (size_t i=0; i<argv.size(); ++i) {
          if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {
@@ -3585,15 +3610,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              std::string switchValue = argv[i+1];
              Sawyer::Assert::AssertFailureHandler handler = NULL;
              if (switchValue == "abort") {
-                 handler = rose::abortOnFailedAssertion;
+                 handler = Rose::abortOnFailedAssertion;
              } else if (switchValue == "exit") {
-                 handler = rose::exitOnFailedAssertion;
+                 handler = Rose::exitOnFailedAssertion;
              } else if (switchValue == "throw") {
-                 handler = rose::throwOnFailedAssertion;
+                 handler = Rose::throwOnFailedAssertion;
              }
              if (handler != NULL) {
                  argv[i] = argv[i+1] = removalString;
-                 rose::failedAssertionBehavior(handler);
+                 Rose::failedAssertionBehavior(handler);
              }
          }
      }
@@ -4258,99 +4283,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 #endif
 
-// #ifdef __INTEL_COMPILER
-#ifdef BACKEND_CXX_IS_INTEL_COMPILER
-  // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
-#if 0
-     printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
-#endif
-
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("Intel compiler being used: Cxx11 mode ON \n");
-
-#if 0     
-     printf ("After detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("After detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
-
-  // DQ (10/7/2015): The file was already determined to be C or C++, or the associated command line option was used to specify it explicitly.
-     if (get_C_only() == true)
-        {
-       // This is the case of a C file.
-          ROSE_ASSERT(get_Cxx_only() == false);
-
-          set_Cxx11_only(false);
-          set_Cxx11_gnu_only(false);
-
-       // Set gnu specific level of C99 support to false.
-       // set_Cxx11_gnu_only(false);
-
-       // DQ (7/31/2013): If we turn on C99, then turn off C89.
-          set_C89_only(false);
-          set_C89_gnu_only(false);
-
-       // DQ (10/7/2015): I think that Intel compiler is trying to be consitant with C99.
-          set_C99_only(true);
-          set_C99_gnu_only(false);
-
-       // DQ (10/7/2015): I don't think that the Intel compiler for C code is C11.
-       // printf ("Is the Intel icc compiler for C code really C11? \n");
-
-          set_C11_only(false);
-          set_C11_gnu_only(false);
-
-          ROSE_ASSERT(get_C_only() == true);
-        }
-       else
-        {
-       // This is the case of a C++ file.
-          set_Cxx11_only(true);
-          set_Cxx11_gnu_only(false);
-
-       // Set gnu specific level of C99 support to false.
-       // set_Cxx11_gnu_only(false);
-
-       // DQ (7/31/2013): If we turn on C99, then turn off C89.
-          set_C89_only(false);
-          set_C89_gnu_only(false);
-          set_C99_only(false);
-          set_C99_gnu_only(false);
-          set_C11_only(false);
-          set_C11_gnu_only(false);
-
-          ROSE_ASSERT(get_C_only() == false);
-
-       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
-       // set_C_only(false);
-
-          ROSE_ASSERT(get_Cxx11_only() == true);
-        }
-#endif
-
-// DQ (1/16/2017): Make C++11 the default when using Clang.
-#ifdef BACKEND_CXX_IS_CLANG_COMPILER
-     if (get_C_only() == true)
-        {
-       // printf ("For Clang as the backend compiler the default C mode is C11 \n");
-          set_C11_only(true);
-        }
-       else
-        {
-       // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
-          set_Cxx11_only(true);
-        }
-#endif
-
-#if 0
-     printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
-#endif
-
   //
   // C11 only option (turns on EDG c11 options (using the edg --c11 option).
   //
@@ -4540,6 +4472,120 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
         }
 
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+#if 0
+     printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
+#endif
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("Intel compiler being used: Cxx11 mode ON \n");
+
+#if 0
+     printf ("After detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+     printf ("--- C++11 = %s \n",get_Cxx11_only() ? "true" : "false");
+     printf ("--- C++14 = %s \n",get_Cxx14_only() ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // DQ (10/7/2015): The file was already determined to be C or C++, or the associated command line option was used to specify it explicitly.
+     if (get_C_only() == true)
+        {
+       // This is the case of a C file.
+          ROSE_ASSERT(get_Cxx_only() == false);
+
+          set_Cxx11_only(false);
+          set_Cxx11_gnu_only(false);
+
+       // Set gnu specific level of C99 support to false.
+       // set_Cxx11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+
+       // DQ (10/7/2015): I think that Intel compiler is trying to be consitant with C99.
+          set_C99_only(true);
+          set_C99_gnu_only(false);
+
+       // DQ (10/7/2015): I don't think that the Intel compiler for C code is C11.
+       // printf ("Is the Intel icc compiler for C code really C11? \n");
+
+          set_C11_only(false);
+          set_C11_gnu_only(false);
+
+          ROSE_ASSERT(get_C_only() == true);
+        }
+       else
+        {
+       // DQ (3/17/2017): This could be a fortran file and we don't want to blindly turn on C++11 mode.
+          if (get_Cxx_only() == true)
+             {
+            // This is the case of a C++ file.
+
+            // DQ (2/21/2017): If C++14 was not specified explicitly then let the default be C++11 for this compiler.
+               if (get_Cxx14_only() == false && get_Cxx14_gnu_only() == false)
+                  {
+                    set_Cxx11_only(true);
+                    set_Cxx11_gnu_only(false);
+                  }
+            // Set gnu specific level of C99 support to false.
+            // set_Cxx11_gnu_only(false);
+
+            // DQ (7/31/2013): If we turn on C99, then turn off C89.
+               set_C89_only(false);
+               set_C89_gnu_only(false);
+               set_C99_only(false);
+               set_C99_gnu_only(false);
+               set_C11_only(false);
+               set_C11_gnu_only(false);
+
+               ROSE_ASSERT(get_C_only() == false);
+
+            // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+            // set_C_only(false);
+
+            // DQ (2/21/2017): Modified this assertion.
+            // ROSE_ASSERT(get_Cxx11_only() == true);
+               ROSE_ASSERT(get_Cxx11_only() == true || get_Cxx14_only() == true);
+             }
+        }
+#endif
+
+// DQ (1/16/2017): Make C++11 the default when using Clang.
+#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+     if (get_C_only() == true)
+        {
+       // printf ("For Clang as the backend compiler the default C mode is C11 \n");
+          set_C11_only(true);
+        }
+       else
+        {
+       // DQ (3/17/2017): This could be a fortran file and we don't want to blindly turn on C++11 mode.
+          if (get_Cxx_only() == true)
+             {
+            // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
+               set_Cxx11_only(true);
+             }
+        }
+#endif
+
+#if 0
+     printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (2/5/2009): We now have one at the SgProject and the SgFile levels.
   // DQ (2/4/2009): Moved to SgProject.
   // DQ (12/27/2007): Allow defaults to be set based on filename extension.
@@ -4582,6 +4628,86 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("Warning, Non Python source file name specificed with explicit -rose:python Python language option! \n");
                set_Python_only(false);
              }
+        }
+
+  // DQ (28/8/17): Csharp support
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(cs|csharp|Csharp)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Csharp only mode ON \n");
+          set_Csharp_only(true);
+          if (get_sourceFileUsesCsharpFileExtension() == false)
+             {
+               printf ("Warning, Non Csharp source file name specificed with explicit -rose:csharp Csharp language option! \n");
+               set_Csharp_only(false);
+             }
+
+       // DQ (30/8/2017): For Csharp we need to only compile and not link (as best I understand csharp presently).
+          printf ("NOTE: For Csharp support disable link step, since it is not a part of the languages the way it is with C/C++ (calling set_compileOnly(true)). \n");
+
+          set_compileOnly(true);
+
+          ROSE_ASSERT(get_compileOnly() == true);
+        }
+
+  // DQ (28/8/17): Ada support
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(ada|Ada)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Ada only mode ON \n");
+          set_Ada_only(true);
+          if (get_sourceFileUsesAdaFileExtension() == false)
+             {
+               printf ("Warning, Non Ada source file name specificed with explicit -rose:ada Ada language option! \n");
+               set_Ada_only(false);
+             }
+
+       // DQ (30/8/2017): For Ada we need to only compile and not link (at least while debugging initial support).
+          printf ("NOTE: For Ada support disable link step, at least while debugging initial support \n");
+
+          set_compileOnly(true);
+
+          ROSE_ASSERT(get_compileOnly() == true);
+        }
+
+  // DQ (28/8/17): Jovial support
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(jovial|Jovial)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Jovial only mode ON \n");
+          set_Jovial_only(true);
+          if (get_sourceFileUsesJovialFileExtension() == false)
+             {
+               printf ("Warning, Non Jovial source file name specificed with explicit -rose:jovial Jovial language option! \n");
+               set_Jovial_only(false);
+             }
+
+       // DQ (30/8/2017): For Jovial we need to only compile and not link (at least while debugging initial support).
+          printf ("NOTE: For Jovial support disable link step, at least while debugging initial support \n");
+
+          set_compileOnly(true);
+
+          ROSE_ASSERT(get_compileOnly() == true);
+        }
+
+  // DQ (28/8/17): Cobol support
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(cobol|Cobol)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Cobol only mode ON \n");
+          set_Cobol_only(true);
+          if (get_sourceFileUsesCobolFileExtension() == false)
+             {
+               printf ("Warning, Non Cobol source file name specificed with explicit -rose:cobol Cobol language option! \n");
+               set_Cobol_only(false);
+             }
+
+       // DQ (30/8/2017): For Cobol we need to only compile and not link (at least while debugging initial support).
+          printf ("NOTE: For Cobol support disable link step, at least while debugging initial support \n");
+
+          set_compileOnly(true);
+
+          ROSE_ASSERT(get_compileOnly() == true);
         }
 
   // DQ (12/27/2007): Allow defaults to be set based on filename extension.
@@ -5067,33 +5193,37 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Use the C language code generator (unparser) \n");
-          set_outputLanguage(SgFile::e_C_output_language);
+          set_outputLanguage(SgFile::e_C_language);
         }
      if ( CommandlineProcessing::isOption(argv,"-rose:","Cxx_output_language",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Use the C++ language code generator (unparser) \n");
-          set_outputLanguage(SgFile::e_Cxx_output_language);
+          set_outputLanguage(SgFile::e_Cxx_language);
         }
      if ( CommandlineProcessing::isOption(argv,"-rose:","Fortran_output_language",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Use the Fortran language code generator (unparser) \n");
-          set_outputLanguage(SgFile::e_Fortran_output_language);
+          set_outputLanguage(SgFile::e_Fortran_language);
         }
      if ( CommandlineProcessing::isOption(argv,"-rose:","Promela_output_language",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Use the Promela language code generator (unparser) \n");
-          set_outputLanguage(SgFile::e_Promela_output_language);
+          set_outputLanguage(SgFile::e_Promela_language);
         }
      if ( CommandlineProcessing::isOption(argv,"-rose:","PHP_output_language",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Use the PHP language code generator (unparser) \n");
-          set_outputLanguage(SgFile::e_PHP_output_language);
+          set_outputLanguage(SgFile::e_PHP_language);
         }
 
+#if 0
+  // DQ (29/8/2017): Add a note to fix this.
+     printf ("In cmdline.cpp: Need to add support for other languages here! \n");
+#endif
 
   //
   // unparse_includes option
@@ -5231,45 +5361,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // printf ("option -rose:skip_unparse_asm_commands found \n");
           set_skip_unparse_asm_commands(true);
         }
-
-  // RPM (12/29/2009): Disassembler aggressiveness.
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-         try {
-             unsigned heuristics = get_disassemblerSearchHeuristics();
-             heuristics = rose::BinaryAnalysis::Disassembler::parse_switches(stringParameter, heuristics);
-             set_disassemblerSearchHeuristics(heuristics);
-         } catch(const rose::BinaryAnalysis::Disassembler::Exception &e) {
-             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
-             ROSE_ASSERT(!"error parsing -rose:disassembler_search");
-         }
-#else
-         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-         ROSE_ASSERT(false);
-#endif
-     }
-
-  // RPM (1/4/2010): Partitioner function search methods
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-         try {
-             unsigned heuristics = get_partitionerSearchHeuristics();
-             heuristics = rose::BinaryAnalysis::Partitioner::parse_switches(stringParameter, heuristics);
-             set_partitionerSearchHeuristics(heuristics);
-         } catch(const std::string &e) {
-             fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
-             ROSE_ASSERT(!"error parsing -rose:partitioner_search");
-         }
-#else
-         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-         ROSE_ASSERT(false);
-#endif
-     }
-
-  // RPM (6/9/2010): Partitioner configuration
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
-         set_partitionerConfigurationFileName(stringParameter);
-     }
 
   // DQ (6/7/2013): Added support for alternatively calling the experimental fortran frontend.
      set_experimental_fortran_frontend(false);
@@ -5816,6 +5907,18 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
      optionCount = sla(argv, "-rose:", "($)", "unparseTemplateDeclarationsFromAST",1);
 
+  // DQ (30/8/2017): Removing option to specify Csharp language support.
+     optionCount = sla(argv, "-rose:", "($)", "(cs|cs_only)",1);
+
+  // DQ (30/8/2017): Removing option to specify Ada language support.
+     optionCount = sla(argv, "-rose:", "($)", "(ada|ada_only)",1);
+
+  // DQ (30/8/2017): Removing option to specify Jovial language support.
+     optionCount = sla(argv, "-rose:", "($)", "(joval|jovial_only)",1);
+
+  // DQ (30/8/2017): Removing option to specify Cobol language support.
+     optionCount = sla(argv, "-rose:", "($)", "(cobol|cobol_only)",1);
+
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
 
@@ -6316,11 +6419,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if 0
   // DQ (8/18/2014): Supress this output, I think we do want to include the rose_edg_required_macros_and_functions.h 
   // (but we might want to use it to specify different or additional builtin functions in the future).
-     printf ("Note for advance microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+     printf ("Note for advanced microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
 #endif
   // commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
      commandLine.push_back("--preinclude");
      commandLine.push_back("rose_edg_required_macros_and_functions.h");
+
+  // DQ (4/23/2017): Add something to permit use to detect when Microsoft extensions are being supported.
+     commandLine.push_back("-DROSE_USE_MICROSOFT_EXTENSIONS");
 #endif
 
   // DQ (5/24/2015): Adding support for specification of optimization to trigger use of __OPTIMIZE__ macro (required for compatability with GNU gcc API).
@@ -6714,9 +6820,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   {
                     if (get_Cxx14_only() == true)
                        {
+#if 0
+                      // DQ (2/21/2017): Not is is going into place, so we don't need this assertion.
                          printf ("C++14 support for Intel compiler not implemented in ROSE yet! \n");
                          ROSE_ASSERT(false);
-
+#endif
                          commandLine.push_back("-D__cplusplus=201400L");
                        }
                       else
@@ -7180,6 +7288,29 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Note: this is where options such as "--no_warnings --restrict" are added.
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"--",edgOptionList);
 
+
+  // DQ (3/6/2017): Adding support to read the ROSE options data structure to trigger suppression of warnings.
+  // printf ("In build_EDG_CommandLine(): get_output_warnings() = %s \n",get_output_warnings() ? "true" : "false");
+     if (Rose::global_options.get_frontend_warnings())
+        {
+       // The EDG default is to output warnings (so we need not do anything to adjust the command line).
+          set_output_warnings(true);
+        }
+       else
+        {
+       // Turn off all warnings.
+          inputCommandLine.push_back("--no_warnings");
+        }
+
+#if 0
+     std::string tmp0_argString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+     printf ("In build_EDG_CommandLine(): Input Command Line Arguments: \n%s \n",tmp0_argString.c_str());
+
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+
   // DQ (7/3/2013): Where are we in the command line.
   // inputCommandLine.push_back("--DDD");
 
@@ -7567,6 +7698,326 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
 #endif
 
+#if 1
+  // DQ (29/8/2017): Newer version of code to support multiple languges.
+
+  // For now let's enforce this, for internal testing, but translators will fail for this assertion in the future.
+     if (get_inputLanguage() != get_outputLanguage())
+        {
+          printf ("Error: In buildCompilerCommandLineOptions(): get_inputLanguage() = %d get_outputLanguage() = %d \n",get_inputLanguage(),get_outputLanguage());
+          printf ("Error: In buildCompilerCommandLineOptions(): get_inputLanguage() = %s get_outputLanguage() = %s \n",
+               get_outputLanguageOptionName(get_inputLanguage()).c_str(),get_outputLanguageOptionName(get_outputLanguage()).c_str());
+        }
+     ROSE_ASSERT(get_inputLanguage() == get_outputLanguage());
+
+#if 0
+     printf ("In buildCompilerCommandLineOptions(): before switch: get_outputLanguage() = %s \n",get_outputLanguageOptionName(get_outputLanguage()).c_str());
+#endif
+
+     switch (get_outputLanguage())
+        {
+          case SgFile::e_error_language:
+             {
+               printf ("Error: SgFile::e_error_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+               ROSE_ASSERT(false);
+             }
+
+          case SgFile::e_default_language:
+             {
+#if 0
+            // DQ (11/13/2017): This fails for the case of binaries.
+               printf ("Error: SgFile::e_default_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+          case SgFile::e_C_language:
+             {
+               compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
+#if 0
+               printf ("In buildCompilerCommandLineOptions(): get_C99_only() = %s \n",get_C99_only() ? "true" : "false");
+#endif
+            // DQ (6/4/2008): Added support to trigger use of C99 for older
+            //                versions of GNU that don't use use C99 as the default.
+               if (get_C99_only() == true)
+                  {
+                 // DQ (8/30/2013): We need to distinguish the usage of c99 vs gnu99.
+#if 0
+                    printf ("In buildCompilerCommandLineOptions(): get_C99_gnu_only() = %s \n",get_C99_gnu_only() ? "true" : "false");
+#endif
+                 // compilerNameString.push_back("-std=gnu99");
+                    if (get_C99_gnu_only() == true)
+                       {
+                         compilerNameString.push_back("-std=gnu99");
+                       }
+                      else
+                       {
+                         compilerNameString.push_back("-std=c99");
+                       }
+                  }
+                 else
+                  {
+                 // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+                    if (get_C11_only() == true)
+                       {
+                      // compilerNameString.push_back("-std=c11");
+                         if (get_C11_gnu_only() == true)
+                            {
+                              compilerNameString.push_back("-std=gnu11");
+                            }
+                           else
+                            {
+                              compilerNameString.push_back("-std=c11");
+                            }
+                       }
+                      else
+                       {
+                      // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+                         if (get_C14_only() == true)
+                            {
+                           // compilerNameString.push_back("-std=c14");
+                              if (get_C14_gnu_only() == true)
+                                 {
+                                   compilerNameString.push_back("-std=gnu14");
+                                 }
+                                else
+                                 {
+                                   compilerNameString.push_back("-std=c14");
+                                 }
+                            }
+                           else
+                            {
+                           // The default is to not specify anything using the "-std=" option.
+                            }
+                       }
+                  }
+
+               if (get_Cuda_only() || get_OpenCL_only()) 
+                  {
+                    std::cerr << "[WARN] No backend compiler for CUDA and OpenCL." << std::endl;
+                  }
+
+               break;
+             }
+
+          case SgFile::e_Cxx_language:
+             {
+#if 0
+               printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in SgFile::buildCompilerCommandLineOptions() (unparser not implemented, unparsing ignored) \n");
+#endif
+               compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+
+            // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+               if (get_Cxx11_only() == true)
+                  {
+                 // compilerNameString.push_back("-std=c++11");
+                    if (get_Cxx11_gnu_only() == true)
+                       {
+                         compilerNameString.push_back("-std=gnu++11");
+                       }
+                      else
+                       {
+                         compilerNameString.push_back("-std=c++11");
+                       }
+                  }
+                 else
+                  {
+                 // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+                    if (get_Cxx14_only() == true)
+                       {
+                      // DQ (7/27/2014): These options are not available in GNU g++ yet.
+#if 1
+                         compilerNameString.push_back("-std=c++14");
+#else
+                      // DQ (7/27/2014): This function (get_Cxx14_gnu_only()) is not available in ROSE yet.
+                         if (get_Cxx14_gnu_only() == true)
+                            {
+                              compilerNameString.push_back("-std=gnu++14");
+                            }
+                           else
+                            {
+                              compilerNameString.push_back("-std=c++14");
+                            }
+#endif
+                       }
+                      else
+                       {
+                      // The default is to not specify anything using the "-std=" option.
+                       }
+                  }
+
+               break;
+             }
+
+       // DQ (11/15/2017): Added case to support binary handling, but there is no tool that we run the output code through for a binary that is disassembled (I think).
+          case SgFile::e_Binary_language:
+             {
+            // DQ (11/15/2017): Perhaps we should run the output through the gnu assembler?
+#if 0
+               printf ("SgFile::e_Binary_language detected in SgFile::buildCompilerCommandLineOptions(): nothing to do here! \n");
+#endif
+               break;
+             }
+
+          case SgFile::e_Fortran_language:
+             {
+#if 0
+               printf ("Error: SgFile::e_Fortran_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+#endif
+               compilerNameString[0] = ROSE_GFORTRAN_PATH;
+
+               if (get_backendCompileFormat() == e_fixed_form_output_format)
+                  {
+                 // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
+                 // compilerNameString += "-ffixed-form ";
+                 // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
+                    compilerNameString.push_back("-ffixed-line-length-none");
+                  }
+                 else
+                  {
+                    if (get_backendCompileFormat() == e_free_form_output_format)
+                       {
+                      // If backend compilation is specificed to be free form, then
+                      // allow any line length (to simplify code generation for now)
+                      // compilerNameString += "-ffree-form ";
+                      // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
+                      // compilerNameString.push_back("-ffree-line-length-none");
+#if USE_GFORTRAN_IN_ROSE
+                      // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
+                         if ((BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1))
+                            {
+                              compilerNameString.push_back("-ffree-line-length-none");
+                            }
+#endif
+                       }
+                      else
+                       {
+                      // Do nothing (don't specify any option to control compilation of a specific format, assume defaults)
+
+                      // Make this the default
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("Compiling generated code using gfortran -ffixed-line-length-none to avoid 72 column limit in code generation\n");
+                            }
+
+                         compilerNameString.push_back("-ffixed-line-length-none");
+                       }
+                  }
+
+               break;
+             }
+
+          case SgFile::e_Java_language:
+             {
+               printf ("Error: SgFile::e_Java_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+
+               compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+               break;
+             }
+          case SgFile::e_X10_language:
+             {
+               printf ("Error: SgFile::e_X10_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+
+               compilerNameString[0] = BACKEND_X10_COMPILER_NAME_WITH_PATH;
+               break;
+             }
+
+          case SgFile::e_Promela_language:
+             {
+               printf ("Error: SgFile::e_Promela_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case SgFile::e_PHP_language:
+             {
+               printf ("Error: SgFile::e_PHP_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case SgFile::e_Python_language:
+             {
+               printf ("Error: SgFile::e_Python_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+
+               compilerNameString[0] = BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH;
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case SgFile::e_Csharp_language:
+             {
+               printf ("Error: SgFile::e_Csharp_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+
+            // Rasmussen (11/14/2017): Added check to ensure that C# is configured
+#ifdef ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+               compilerNameString[0] = BACKEND_CSHARP_COMPILER_NAME_WITH_PATH;
+#else
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case SgFile::e_Ada_language:
+             {
+               printf ("Error: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+
+            // Rasmussen (11/14/2017): Added check to ensure that Ada is configured
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+               compilerNameString[0] = BACKEND_ADA_COMPILER_NAME_WITH_PATH;
+
+            // DQ (9/12/2017): We need to add the "compile" option to the "gnat" command line ahead of the rest of the command line.
+               compilerNameString.push_back("compile");
+#else
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case SgFile::e_Jovial_language:
+             {
+            // Rasmussen (11/14/2017): Added check to ensure that JOVIAL is configured
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+               compilerNameString[0] = BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH;
+#else
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case SgFile::e_Cobol_language:
+             {
+               printf ("Error: SgFile::e_Cobol_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+
+            // Rasmussen (11/14/2017): Added check to ensure that COBOL is configured
+#ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+               compilerNameString[0] = BACKEND_COBOL_COMPILER_NAME_WITH_PATH;
+#else
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case SgFile::e_last_language:
+             {
+               printf ("Error: SgFile::e_last_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached in SgFile::buildCompilerCommandLineOptions() (unknown output language specified) \n");
+
+               std::cerr << "[FATAL] Unknown backend compiler '" << compilerName << "', or not implemented." << std::endl;
+
+               ROSE_ASSERT(! "Unknown backend compiler");
+               break;
+             }
+        }
+#else
+  // DQ (29/8/2017): Older version of code to support multiple languges.
+
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with
   // paths so that we can assemble the final commandline to compile the generated
   // code within ROSE.
@@ -7575,7 +8026,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // case the -rose:C_only option is used.
   // if (get_C_only() == true || get_C99_only() == true)
      if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
-     {
+        {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
 #if 0
@@ -7635,9 +8086,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        }
                   }
              }
-     }
-     else if (get_Cxx_only())
-     {
+        }
+       else 
+        if (get_Cxx_only())
+        {
        compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
 
     // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
@@ -7761,25 +8213,50 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             << std::endl;
         ROSE_ASSERT(! "Unknown backend compiler");
     }
+#endif
 
   // printf ("compilerName       = %s \n",compilerName);
   // printf ("compilerNameString = %s \n",compilerNameString.c_str());
 
+  // DQ (3/15/2017): This is the wrong way to handl this since the compiler name can be anything.
+  // Note: ROSE Matrix Testing using "icpc-16.03" instead of "icpc" (and so was a problem for this code below).
   // tps (28 Aug 2008) : changed this so it does not pick up mpicc for icc
-     string name = StringUtility::stripPathFromFileName(compilerNameString[0]);
-     //     if (compilerNameString[0].find("icc") != string::npos)
-     if (name == "icc")
-        {
+  // string name = StringUtility::stripPathFromFileName(compilerNameString[0]);
+  // if (name == "icc")
+  //    {
        // This is the Intel C compiler: icc, we need to add the -restrict option
-          compilerNameString.push_back("-restrict");
-        }
+  //      compilerNameString.push_back("-restrict");
+  //    }
 
-     //     if (compilerNameString[0].find("icpc") != string::npos)
-     if (name == "icpc")
-        {
+  // if (name == "icpc")
+  //    {
        // This is the Intel C++ compiler: icc, we need to add the -restrict option
+  //      compilerNameString.push_back("-restrict");
+  //    }
+
+  // DQ (3/15/2017): This is the correct way to handle compiler vendor specific details within ROSE.
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
+  // Nothing is required for restrict pointer handling on the GNU compiler command line.
+#endif
+#if defined(BACKEND_CXX_IS_CLANG_COMPILER)
+  // Nothing is required for restrict pointer handling on the Clang compiler command line.
+#endif
+#if defined(BACKEND_CXX_IS_INTEL_COMPILER)
+  // DQ (3/16/2017): Only turn this on for C and C++ modes (not for Fortran (or anything else).
+  // DQ (3/15/2017): The intel compiler requires the use of the "-restrict" option to support the "restrict" keyword.
+     if (get_C_only() == true || get_Cxx_only() == true)
+        {
           compilerNameString.push_back("-restrict");
         }
+       else
+        {
+       // DQ (3/17/2017): It was a problem that C++11 was turned on for Fortran when using the Intel and Clang compilers (this code checks this).
+          ROSE_ASSERT(get_C11_only() == false);
+          ROSE_ASSERT(get_C14_only() == false);
+          ROSE_ASSERT(get_Cxx11_only() == false);
+          ROSE_ASSERT(get_Cxx14_only() == false);
+        }
+#endif
 
   // DQ (9/24/2006): Not clear if we want this, if we just skip stripping it out then it will be passed to the backend directly!
   // But we have to add it in the case of "-rose:strict", so we have to add it uniformally and strip it from the input.
@@ -7936,6 +8413,42 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // ROSE_ASSERT(false);
 #endif
 
+  // DQ (3/6/2017): Adding support to read the ROSE options data structure to trigger suppression of warnings.
+  // printf ("In build_EDG_CommandLine(): get_output_warnings() = %s \n",get_output_warnings() ? "true" : "false");
+     if (Rose::global_options.get_backend_warnings())
+        {
+       // The EDG default is to output warnings (so we need not do anything to adjust the command line).
+       // set_output_warnings(true);
+        }
+       else
+        {
+       // Turn off all warnings.
+#if 0
+          printf ("Build -w option for some backend language compilers \n");
+#endif
+       // DQ (9/7/2017): Avoid use of "-w" on other language compilers as well.
+       // DQ (3/7/2017): Avoid use of "-w" on X10 compiler.
+       // if (get_X10_only() == false)
+          if (get_X10_only() == false && get_Csharp_only() == false && get_Ada_only() == false && get_Jovial_only() == false && get_Cobol_only() == false)
+             {
+            // This is a portable way to turn off warnings in the backend compilers (GNU, Intel, Clang).
+               argcArgvList.push_back("-w");
+             }
+            else
+             {
+            // X10 command line generation using "-w" will cause X10 compiler to fail.
+             }
+        }
+
+#if 0
+     printf ("In buildCompilerCommandLineOptions(): After adding options from Rose::global_options: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",
+          argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#endif
+#if 0
+     printf ("Exitng as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      bool  objectNameSpecified = false;
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
         {
@@ -8044,7 +8557,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif             
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: After processing executable specification: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
 #endif
@@ -8174,8 +8687,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-     std::string oldFileNamePathOnly = rose::getPathFromFileName(sourceFileName.c_str());
-     std::string oldFileName         = rose::utility_stripPathFromFileName(sourceFileName.c_str());
+     std::string oldFileNamePathOnly = Rose::getPathFromFileName(sourceFileName.c_str());
+     std::string oldFileName         = Rose::utility_stripPathFromFileName(sourceFileName.c_str());
 
 #if 0
      printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());
@@ -8443,7 +8956,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("At base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if 0
@@ -8462,4 +8975,3 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      return compilerNameString;
    } // end of SgFile::buildCompilerCommandLineOptions()
-

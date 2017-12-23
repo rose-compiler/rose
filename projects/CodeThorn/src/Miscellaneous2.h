@@ -38,6 +38,8 @@ namespace SPRAY {
    int whitespaces(std::istream& is);
    std::set<int> integerSet(std::string intSet);
    std::list<int> integerList(std::string intList);
+   std::list<std::set<int> > integerSetList(std::string intSetList);
+   std::vector<std::string> commandLineArgs(std::string commandLine);
  }
 
 } // end of namespace SPRAY

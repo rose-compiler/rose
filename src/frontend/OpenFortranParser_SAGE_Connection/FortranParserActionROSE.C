@@ -10,7 +10,7 @@
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // ********************************************************************
 // ********************************************************************
@@ -16366,7 +16366,7 @@ void c_action_label(Token_t * lbl)
         outputState("At TOP of R1109 c_action_use_stmt()");
 #endif
 
-        // This could be the first stament in a program.
+        // This could be the first statement in a program.
         build_implicit_program_statement_if_required();
 
         ROSE_ASSERT(id != NULL);

@@ -5,6 +5,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include "rose.h"
+#include "Disassembler.h"
 
 #include <signal.h>
 #include <time.h>
@@ -21,7 +22,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define NEW_API 2
 
 #include "DispatcherX86.h"
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
@@ -77,7 +78,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #error "Invalid semantic domain"
 #endif
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 static const unsigned timeout = 60;      // approximate maximum time for test to run.
 static volatile int had_alarm = 0;

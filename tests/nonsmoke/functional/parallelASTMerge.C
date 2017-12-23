@@ -93,7 +93,7 @@ class AstStorage
         using namespace boost::filesystem;
         if (exists(output))
             remove(output);
-        rose::FileSystem::copyFile(astFiles_.top() + ".binary", output);
+        Rose::FileSystem::copyFile(astFiles_.top() + ".binary", output);
         Clear();
 #endif
     }

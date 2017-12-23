@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryDemangler.h>
 #include <BinaryString.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
@@ -13,9 +14,9 @@
 #include <Sawyer/CommandLine.h>
 #include <stringify.h>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Modules {
@@ -32,6 +33,34 @@ canonicalFunctionName(const std::string &name) {
         return function + "@" + library;
     }
     return name;
+}
+
+void
+demangleFunctionNames(const Partitioner &p) {
+    // The demangler is most efficient if we give it all the names at once.
+    std::vector<std::string> mangledNames;
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName())
+            mangledNames.push_back(f->name());
+    }
+
+    // Demangle everything that possible to demangle.  An exception probably means that c++filt is not available or doesn't
+    // work.
+    Demangler demangler;
+    try {
+        demangler.fillCache(mangledNames);
+    } catch (const std::runtime_error &e) {
+        mlog[WARN] <<"name demangler failed: " <<e.what() <<"\n";
+        return;
+    }
+
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName()) { // same condition as above
+            std::string demangled = demangler.demangle(f->name());
+            if (demangled != f->name())
+                f->demangledName(demangled);
+        }
+    }
 }
 
 bool
@@ -315,11 +344,11 @@ HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
         fmt.prefix = "    ";                            // prefix before each line
 
         rose_addr_t va = settings_.what.least();
-        while (AddressInterval avail = args.partitioner->memoryMap().atOrAfter(va).singleSegment().available()) {
+        while (AddressInterval avail = args.partitioner->memoryMap()->atOrAfter(va).singleSegment().available()) {
             if (avail.least() > settings_.what.greatest())
                 break;
             const size_t nPrint = std::min(settings_.what.greatest()+1-avail.least(), avail.size());
-            const MemoryMap::Node &node = *args.partitioner->memoryMap().find(avail.least());
+            const MemoryMap::Node &node = *args.partitioner->memoryMap()->find(avail.least());
             const MemoryMap::Segment &segment = node.value();
             const AddressInterval segmentInterval = node.key();
             size_t offsetWithinSegment = avail.least() - segmentInterval.least();
@@ -403,14 +432,15 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
 }
 
 AddressIntervalSet
-deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
+deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
+    ASSERT_not_null(map);
     AddressIntervalSet changes;
     if (leaveAtFront + leaveAtBack >= threshold)
         return changes;
-    rose_addr_t va = map.hull().least();
+    rose_addr_t va = map->hull().least();
     AddressInterval zeros;
     uint8_t buf[4096];
-    while (AddressInterval accessed = map.atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
+    while (AddressInterval accessed = map->atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
         size_t nRead = accessed.size();
         size_t firstZero = 0;
         while (firstZero < nRead) {
@@ -427,7 +457,7 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                     if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
                         AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront,
                                                                          zeros.greatest()-leaveAtBack);
-                        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+                        map->within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
                         changes.insert(affected);
                     }
                     zeros = AddressInterval::baseSize(va+firstZero, nZeros);
@@ -436,13 +466,13 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 firstZero += nZeros+1;
             }
         }
-        if (accessed.greatest() == map.greatest())
+        if (accessed.greatest() == map->greatest())
             break;                                      // avoid possible overflow in next statement
         va = accessed.greatest() + 1;
     }
     if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
         AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
-        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+        map->within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
         changes.insert(affected);
     }
     return changes;
@@ -473,13 +503,13 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
-                    if (partitioner.memoryMap().at(va).exists())
+                    if (partitioner.memoryMap()->at(va).exists())
                         partitioner.addressName(va, name);
 
                     // Sometimes weak symbol values are offsets w.r.t. their linked section.
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
                         va = value + section->get_mapped_actual_va();
-                        if (partitioner.memoryMap().at(va).exists())
+                        if (partitioner.memoryMap()->at(va).exists())
                             partitioner.addressName(va, name);
                     }
                 }
@@ -514,7 +544,7 @@ nameStrings(const Partitioner &partitioner) {
                         ival->set_comment(label);
                     } else if (partitioner.instructionsOverlapping(va).empty()) {
                         stringFinder.reset();
-                        stringFinder.find(partitioner.memoryMap().at(va));
+                        stringFinder.find(partitioner.memoryMap()->at(va));
                         if (!stringFinder.strings().empty()) {
                             ASSERT_require(stringFinder.strings().front().address() == va);
                             std::string str = stringFinder.strings().front().narrow(); // front is the longest string
@@ -743,7 +773,7 @@ SgAsmBlock*
 buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings &settings) {
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
-    size_t nRead = partitioner.memoryMap().at(dblock->address()).read(rawBytes).size();
+    size_t nRead = partitioner.memoryMap()->at(dblock->address()).read(rawBytes).size();
     ASSERT_always_require(nRead==dblock->size());
     SgAsmStaticData *datum = SageBuilderAsm::buildStaticData(dblock->address(), rawBytes);
 
@@ -822,15 +852,11 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
 
-    // Function's calling convention. For now, we just set the function's calling convention to the best one on a local
-    // basis. A separate pass later can choose the globally best conventions.  Don't run the analysis if it hasn't been run
-    // already (sometimes users request that we skip this expensive analysis).
-    const CallingConvention::Definition *bestCallingConvention = NULL;
-    if (function->callingConventionAnalysis().hasResults()) {
-        CallingConvention::Dictionary conventions = partitioner.functionCallingConventionDefinitions(function);
-        if (!conventions.empty())
-            bestCallingConvention = new CallingConvention::Definition(conventions.front());
-    }
+    // Function's calling convention. The AST holds the name of the best calling convention, or the empty string if no calling
+    // convention has been assigned.
+    std::string bestCallingConvention;
+    if (CallingConvention::Definition::Ptr ccdef = function->callingConventionDefinition())
+        bestCallingConvention = ccdef->name();
     
     // Build the AST
     SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
@@ -961,8 +987,9 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
         const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
         if (!ccAnalysis.hasResults())
             continue;                                   // don't run analysis if not run already
-        BOOST_FOREACH (const CallingConvention::Definition &ccDef, partitioner.functionCallingConventionDefinitions(function))
-            ++totals.insertMaybe(ccDef.name(), 0);
+        CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs)
+            ++totals.insertMaybe(ccDef->name(), 0);
     }
 
     // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
@@ -974,18 +1001,18 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
             if (!ccAnalysis.hasResults())
                 continue;                               // don't run analysis if not run already
             CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
-            const CallingConvention::Definition *ccBest = NULL;
-            BOOST_FOREACH (const CallingConvention::Definition &ccDef, ccDefs) {
+            CallingConvention::Definition::Ptr ccBest;
+            BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs) {
                 if (NULL==ccBest) {
-                    ccBest = &ccDef;
-                } else if (totals.getOrElse(ccDef.name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
-                    ccBest = &ccDef;
+                    ccBest = ccDef;
+                } else if (totals.getOrElse(ccDef->name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
+                    ccBest = ccDef;
                 }
             }
             if (ccBest) {
                 // We cannot delete previously stored calling conventions because there's no clear rule about whether they need
                 // to be allocated on the heap, and if so, who owns them or what allocator was used.
-                astFunction->set_callingConvention(new CallingConvention::Definition(*ccBest));
+                astFunction->set_callingConvention(ccBest->name());
             }
         }
     }

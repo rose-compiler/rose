@@ -3,8 +3,9 @@
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 /* The __attribute__ mechanism is only supported by GNU compilers */
 #ifndef __GNUC__
@@ -12,8 +13,6 @@ using namespace rose::Diagnostics;
 #define  __attribute(x)    /*NOTHING*/
 #endif
 
-/** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()
- * because it returns a section name rather than an enum name. */
 std::string
 SgAsmPEFileHeader::rvasize_pair_name(PairPurpose idx, const char **short_name)
 {
@@ -82,9 +81,6 @@ SgAsmPEFileHeader::ctor()
     p_e_nt_hdr_size = sizeof(PE32OptHeader_disk);
 }
 
-/** Return true if the file looks like it might be a PE file according to the magic number.  The file must contain what
- *  appears to be a DOS File Header at address zero, and what appears to be a PE File Header at a file offset specified in
- *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
 SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
 {
@@ -119,8 +115,8 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
     return true;
 }
 
-/** Initialize the header with information parsed from the file and construct and parse everything that's reachable from the
- *  header. The PE File Header should have been constructed such that SgAsmPEFileHeader::ctor() was called. */
+/* Initialize the header with information parsed from the file and construct and parse everything that's reachable from the
+ * header. The PE File Header should have been constructed such that SgAsmPEFileHeader::ctor() was called. */
 SgAsmPEFileHeader*
 SgAsmPEFileHeader::parse()
 {
@@ -456,7 +452,6 @@ SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk) const
     return disk;
 }
 
-/** Define an RVA/Size pair in the PE file header. */
 void
 SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
 {
@@ -464,8 +459,27 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
     ROSE_ASSERT(section->get_parent()!=NULL);
     ROSE_ASSERT(isSgAsmPEFileHeader(section->get_header())!=NULL);
 
-    if (idx>=16)
-        mlog[WARN] <<"SgAsmPEFileHeader::set_rvasize_pair: index " <<idx <<" exceeds specification limit\n";
+    switch (idx) {
+        case PAIR_EXPORTS:
+        case PAIR_IMPORTS:
+        case PAIR_RESOURCES:
+        case PAIR_EXCEPTIONS:
+        case PAIR_CERTIFICATES:
+        case PAIR_BASERELOCS:
+        case PAIR_DEBUG:
+        case PAIR_ARCHITECTURE:
+        case PAIR_GLOBALPTR:
+        case PAIR_TLS:
+        case PAIR_LOADCONFIG:
+        case PAIR_BOUNDIMPORT:
+        case PAIR_IAT:
+        case PAIR_DELAYIMPORT:
+        case PAIR_CLRRUNTIME:
+        case PAIR_RESERVED15:
+            break;
+        default:
+            mlog[WARN] <<"SgAsmPEFileHeader::set_rvasize_pair: index " <<idx <<" exceeds specification limit\n";
+    }
 
     /* Extend array of rva/size pairs if necessary */
     if ((size_t)idx>=get_rvasize_pairs()->get_pairs().size()) {
@@ -493,7 +507,6 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
     }
 }
 
-/** Update all the RVA/Size pair info from the section to which it points. */
 void
 SgAsmPEFileHeader::update_rvasize_pairs()
 {
@@ -551,7 +564,7 @@ SgAsmPEFileHeader::create_table_sections()
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
          *        data via the same MemoryMap that we use here, everything should be fine. [RPM 2009-08-17] */
         rose_addr_t pair_va = get_base_va() + pair->get_e_rva();
-        MemoryMap *map = get_loader_map();
+        MemoryMap::Ptr map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
         if (!map->baseSize(pair_va, pair->get_e_size()).exists(Sawyer::Container::MATCH_WHOLE)) {
             mlog[WARN] <<"SgAsmPEFileHeader::create_table_sections: pair-" <<i
@@ -636,6 +649,12 @@ SgAsmPEFileHeader::create_table_sections()
 bool
 SgAsmPEFileHeader::reallocate()
 {
+    struct Resources {
+        unsigned char *oh;
+        Resources(): oh(NULL) {}
+        ~Resources() { delete[] oh; }
+    } r;
+
     bool reallocated = SgAsmGenericHeader::reallocate();
     
     /* Resize if necessary */
@@ -746,17 +765,16 @@ SgAsmPEFileHeader::reallocate()
     } else {
         throw FormatError("unsupported PE word size");
     }
-    unsigned char *oh = new unsigned char[oh_size];
+    r.oh = new unsigned char[oh_size];
     if (4==get_word_size()) {
-        encode((PE32OptHeader_disk*)oh);
+        encode((PE32OptHeader_disk*)r.oh);
     } else if (8==get_word_size()) {
-        encode((PE64OptHeader_disk*)oh);
+        encode((PE64OptHeader_disk*)r.oh);
     } else {
-        delete[] oh;
         throw FormatError("unsupported PE word size");
     }
     while (oh_size>p_e_nt_hdr_size) {
-        if (0!=oh[oh_size-1]) break;
+        if (0!=r.oh[oh_size-1]) break;
         --oh_size;
     }
     set_e_nt_hdr_size(oh_size);
@@ -767,6 +785,12 @@ SgAsmPEFileHeader::reallocate()
 void
 SgAsmPEFileHeader::unparse(std::ostream &f) const
 {
+    struct Resources {
+        unsigned char *oh;
+        Resources(): oh(NULL) {}
+        ~Resources() { delete[] oh; }
+    } r;
+
     /* Write unreferenced areas back to the file before anything else. */
     unparse_holes(f);
     
@@ -799,22 +823,22 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     } else {
         throw FormatError("unsupported PE word size");
     }
-    unsigned char *oh = new unsigned char[oh_size];
+    r.oh = new unsigned char[oh_size];
     if (4==get_word_size()) {
-        encode((PE32OptHeader_disk*)oh);
+        encode((PE32OptHeader_disk*)r.oh);
         rvasize_offset = sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
-        encode((PE64OptHeader_disk*)oh);
+        encode((PE64OptHeader_disk*)r.oh);
         rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
         throw FormatError("unsupported PE word size");
     }
     for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++, rvasize_offset+=sizeof(SgAsmPERVASizePair::RVASizePair_disk)) {
-        SgAsmPERVASizePair::RVASizePair_disk *rvasize_disk = (SgAsmPERVASizePair::RVASizePair_disk*)(oh+rvasize_offset);
+        SgAsmPERVASizePair::RVASizePair_disk *rvasize_disk = (SgAsmPERVASizePair::RVASizePair_disk*)(r.oh+rvasize_offset);
         p_rvasize_pairs->get_pairs()[i]->encode(rvasize_disk);
     }
     while (oh_size>p_e_nt_hdr_size) {
-        if (0!=oh[oh_size-1]) break;
+        if (0!=r.oh[oh_size-1]) break;
         --oh_size;
     }
     ROSE_ASSERT(p_e_nt_hdr_size==oh_size); /*set in reallocate()*/
@@ -825,7 +849,7 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     rose_addr_t spos = write(f, 0, sizeof fh, &fh);
 
     /* Write the following "NT Optional Header" */
-    spos = write(f, spos, oh_size, oh);
+    spos = write(f, spos, oh_size, r.oh);
 }
     
 /* Print some debugging information */
@@ -909,7 +933,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 
     /* Show the simulated loader memory map */
-    const MemoryMap *map = get_loader_map();
+    const MemoryMap::Ptr map = get_loader_map();
     if (map) {
         map->dump(f, (std::string(p)+"loader_map: ").c_str());
     } else {

@@ -244,6 +244,36 @@ graphCopySubgraph(const Graph &g, const std::vector<size_t> &vertexIdVector) {
     return retval;
 }
 
+/** Erase parallel edges.
+ *
+ *  Given a graph, erase all but one parallel edge between any two vertices. Parallel edges are defined as any two edges where
+ *  both have the same source vertex, and both have the same target vertex, and both have equal values. Edge values must be
+ *  equality comparable but need not be less-than comparable. */
+template<class Graph>
+void
+graphEraseParallelEdges(Graph &g) {
+    BOOST_FOREACH (const typename Graph::Vertex &src, g.vertices()) {
+        if (src.nOutEdges() > 1) {
+            Map<typename Graph::ConstVertexIterator /*target*/, std::vector<typename Graph::ConstEdgeIterator> > edgesByTarget;
+            typename Graph::ConstEdgeIterator nextEdge = src.outEdges().begin();
+            while (nextEdge != src.outEdges().end()) {
+                typename Graph::ConstEdgeIterator curEdge = nextEdge++;
+                std::vector<typename Graph::ConstEdgeIterator> &prevEdges = edgesByTarget.insertMaybeDefault(curEdge->target());
+                bool erased = false;
+                BOOST_FOREACH (typename Graph::ConstEdgeIterator prevEdge, prevEdges) {
+                    if (curEdge->value() == prevEdge->value()) {
+                        g.eraseEdge(curEdge);
+                        erased = true;
+                        break;
+                    }
+                }
+                if (!erased)
+                    prevEdges.push_back(curEdge);
+            }
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Common subgraph isomorphism (CSI)
 // Loosely based on the algorithm presented by Evgeny B. Krissinel and Kim Henrick
@@ -539,7 +569,7 @@ public:
      *  g2. The solver additionally constrains the two sugraphs of any solution to have the same number of edges (that's the
      *  essence of subgraph isomorphism and cannot be overridden by the vertex isomorphism predicate). */
     CommonSubgraphIsomorphism(const Graph &g1, const Graph &g2,
-                              SolutionProcessor solutionProcessor = SolutionProcessor(), 
+                              SolutionProcessor solutionProcessor = SolutionProcessor(),
                               EquivalenceP equivalenceP = EquivalenceP())
         : g1(g1), g2(g2), v(g1.nVertices()), w(g2.nVertices()), vNotX(g1.nVertices()), solutionProcessor_(solutionProcessor),
           equivalenceP_(equivalenceP), minimumSolutionSize_(1), maximumSolutionSize_(-1), monotonicallyIncreasing_(false),
@@ -674,7 +704,7 @@ public:
         y.clear();
         vNotX.insertAll();
     }
-    
+
 private:
     // Maximum value+1 or zero.
     template<typename Container>
@@ -686,7 +716,7 @@ private:
             retval = std::max(retval, val);
         return retval+1;
     }
-    
+
     // Initialize VAM so to indicate which source vertices (v of g1) map to which target vertices (w of g2) based only on the
     // vertex comparator.  We also handle self edges here.
     Vam initializeVam() {
@@ -770,7 +800,7 @@ private:
         y.pop_back();
         vNotX.insert(i);
     }
-    
+
     // Find all edges that have the specified source and target vertices.  This is usually zero or one edge, but can be more if
     // the graph contains parallel edges.
     void
@@ -1041,6 +1071,165 @@ findMaximumCommonIsomorphicSubgraphs(const Graph &g1, const Graph &g2, Equivalen
     return csi.solutionProcessor().solutions();
 }
 /** @} */
+
+/** Find immediate pre- or post-dominators.
+ *
+ *  Given a graph, find the immediate pre- or post-dominator of each vertex, if any, and return them as a vector. The vector,
+ *  indexed by vertex ID, contains either a pointer (vertex iterator) to the dominator vertex, or no pointer (end vertex
+ *  iterator) if the vertex has no dominator.
+ *
+ *  The algorithm employed here is loosely based on an algorithm from Rice University known to be O(n^2) where n is the number
+ *  of vertices in the control flow subgraph connected to the start vertex.  According to the Rice paper, their algorithm
+ *  outperforms Lengauer-Tarjan on typicall control flow graphs even though asymptotically, Lengauer-Tarjan is better.  The
+ *  Rice algorithm is also much simpler.
+ *
+ *  I've added a few minor optimizations:
+ *  @li Reverse post-order depth-first search is calculated once rather than each time through the loop.  Rice's analysis
+ *      indicates that they also made this optimization, although their listed algorithm does not show it.
+ *  @li The first processed predecessor of the vertex under consideration is determined in the same loop that processes
+ *      the other predecessors, while in the listed algorithm this was a separate operation.
+ *  @li Self loops in the control flow graph are not processed, since they don't contribute to the dominance relation.
+ *  @li Undefined state for <code>idom(x)</code> is represented by <code>idom(x)==x</code>.
+ *  @li Nodes are labeled in reverse order from Rice, but traversed in the same order.  This simplifies the code a bit
+ *      because the vertices are traversed according to the "flowlist" vector, and the index into the "flowlist" vector
+ *      can serve as the node label.
+ *  @li Back edges in the flowlist are ignored since their dominator must be along a forward edge.
+ *
+ *  The set of dominators of vertex @em v, namely <em>dom(v)</em>, is represented as a linked list stored as an array indexed
+ *  by vertex number. That is
+ *
+ * @code
+ *  dom(v) = { v, idom(v), idom(idom(v)), ..., start }
+ * @endcode
+ *
+ *  is stored in the @c idom array as:
+ *
+ * @code
+ *  dom(v) = { v, idom[v], idom[idom[v]], ..., start }
+ * @endcode
+ *
+ * This representation, combined with the fact that: <em>a ELEMENT_OF dom(v) implies dom(a) SUBSET_OF dom(v)</em>
+ *
+ * allows us to perform intersection by simply walking the two sorted lists until we find an element in common, and including
+ * that element an all subsequent elements in the intersection result.  The @c idom array uses the flow-list vertex numbering
+ * produced by a post-order visitor of a depth-first search, and the nodes are processed from highest to lowest. */
+template<class Direction, class Graph>
+std::vector<typename GraphTraits<Graph>::VertexIterator>
+graphDirectedDominators(Graph &g, typename GraphTraits<Graph>::VertexIterator root) {
+    typedef typename GraphTraits<Graph>::VertexIterator VertexIterator;
+    typedef typename GraphTraits<Graph>::EdgeIterator EdgeIterator;
+    typedef typename GraphTraits<Graph>::Edge Edge;
+    static const size_t NO_ID = (size_t)(-1);
+
+    ASSERT_require(g.isValidVertex(root));
+
+    // List of vertex IDs in the best order for data-flow. I.e., the reverse of the post-fix, depth-first traversal following
+    // forwared or reverse edges (depending on the Direction template argument).  A useful fact is that disregarding back
+    // edges, the predecessors of the vertex represented by flowlist[i] all appear earlier in flowlist.
+    GraphTraversal<Graph, DepthFirstTraversalTag, Direction> traversal(g, LEAVE_VERTEX);
+    traversal.start(root);
+    std::vector<size_t> flowlist = graphReachableVertices(traversal);
+    std::reverse(flowlist.begin(), flowlist.end());
+
+    // The inverse mapping of the flowlist. I.e.., since flowlist maps an index to a vertex ID, rflowlist maps a vertex ID back
+    // to the flowlist index. If vertex v is not reachable from the root, then rflowlist[v] == NO_ID.
+    std::vector<size_t> rflowlist(g.nVertices(), NO_ID);
+    for (size_t i=0; i<flowlist.size(); ++i)
+        rflowlist[flowlist[i]] = i;
+
+    // Initialize the idom vector. idom[i]==i implies idom[i] is unknown
+    std::vector<size_t> idom(flowlist.size());
+    for (size_t i=0; i<flowlist.size(); ++i)
+        idom[i] = i;
+
+    bool changed = true;
+    while (changed) {
+        changed = false;                                // assume no change, prove otherwise
+        for (size_t vertex_i=0; vertex_i < flowlist.size(); ++vertex_i) {
+            VertexIterator vertex = g.findVertex(flowlist[vertex_i]);
+
+            // Test idom invariant
+#ifndef SAWYER_NDEBUG
+            for (size_t i=0; i<idom.size(); ++i)
+                ASSERT_require(idom[i] <= i);
+#endif
+
+            // The root vertex has no immediate dominator.
+            // FIXME[Robb P Matzke 2017-06-23]: why not just start iterating with vertex_i=1?
+            if (vertex == root)
+                continue;
+
+            // Try to choose a new idom for this vertex by processing each of its predecessors. The dominator of the current
+            // vertex is a function of the dominators of its predecessors.
+            size_t newIdom = idom[vertex_i];
+
+            boost::iterator_range<EdgeIterator> edges = previousEdges<EdgeIterator>(vertex, Direction());
+            for (EdgeIterator edge=edges.begin(); edge!=edges.end(); ++edge) {
+                VertexIterator predecessor = previousVertex<VertexIterator>(edge, Direction());
+                size_t predecessor_i = rflowlist[predecessor->id()];
+                if (NO_ID == predecessor_i)
+                    continue;                           // predecessor is not reachable from root, so does't contribute
+                if (predecessor_i == vertex_i)
+                    continue;                           // ignore self edges: V cannot be its own immediate dominator
+                if (predecessor_i > vertex_i)
+                    continue;                           // ignore back edges; the idom will also be found along a forward edge
+
+                // The predecessor might be our dominator, so merge it with what we already have
+                if (newIdom == vertex_i) {
+                    newIdom = predecessor_i;
+                } else {
+                    size_t tmpIdom = predecessor_i;
+                    while (newIdom != tmpIdom) {
+                        while (newIdom > tmpIdom)
+                            newIdom = idom[newIdom];
+                        while (tmpIdom > newIdom)
+                            tmpIdom = idom[tmpIdom];
+                    }
+                }
+            }
+
+            if (idom[vertex_i] != newIdom) {
+                idom[vertex_i] = newIdom;
+                changed = true;
+            }
+        }
+    }
+
+    // Build the result relation
+    std::vector<VertexIterator> retval;
+    retval.resize(g.nVertices(), g.vertices().end());
+    for (size_t i=0; i<flowlist.size(); ++i) {
+        if (idom[i] != i)
+            retval[flowlist[i]] = g.findVertex(flowlist[idom[i]]);
+    }
+    return retval;
+}
+
+/** Find immediate pre-dominators.
+ *
+ *  Given a graph, find the immediate pre-dominator of each vertex, if any, and return them as a vector. The vector,
+ *  indexed by vertex ID, contains either a pointer (vertex iterator) to the dominator vertex, or no pointer (end vertex
+ *  iterator) if the vertex has no dominator.
+ *
+ *  See also, @ref graphPostDominators and @ref graphDirectedDominators. */
+template<class Graph>
+std::vector<typename GraphTraits<Graph>::VertexIterator>
+graphDominators(Graph &g, typename GraphTraits<Graph>::VertexIterator root) {
+    return graphDirectedDominators<ForwardTraversalTag>(g, root);
+}
+
+/** Find immediate post-dominators.
+ *
+ *  Given a graph, find the immediate post-dominator of each vertex, if any, and return them as a vector. The vector,
+ *  indexed by vertex ID, contains either a pointer (vertex iterator) to the dominator vertex, or no pointer (end vertex
+ *  iterator) if the vertex has no dominator.
+ *
+ *  See also, @ref graphDominators and @ref graphDirectedDominators. */
+template<class Graph>
+std::vector<typename GraphTraits<Graph>::VertexIterator>
+graphPostDominators(Graph &g, typename GraphTraits<Graph>::VertexIterator root) {
+    return graphDirectedDominators<ReverseTraversalTag>(g, root);
+}
 
 } // namespace
 } // namespace

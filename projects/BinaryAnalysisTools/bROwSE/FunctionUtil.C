@@ -9,8 +9,8 @@
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 namespace bROwSE {
 
@@ -312,7 +312,7 @@ functionMayReturn(P2::Partitioner &partitioner, const P2::Function::Ptr &functio
 // Obtain stack delta or the special value SgAsmInstruction::INVALID_STACK_DELTA if unknown or not computed
 int64_t
 functionStackDelta(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
     int64_t result = SgAsmInstruction::INVALID_STACK_DELTA;
     if (function && !function->optionalAttribute<int64_t>(ATTR_StackDelta).assignTo(result)) {
         SValuePtr delta = partitioner.functionStackDelta(function);
@@ -345,8 +345,8 @@ struct MaxInterproceduralDepth: P2::DataFlow::InterproceduralPredicate {
 // Perform a data-flow analysis on a function.
 FunctionDataFlow
 functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    using namespace rose::BinaryAnalysis;
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     FunctionDataFlow result;
     if (function && !function->optionalAttribute<FunctionDataFlow>(ATTR_DataFlow).assignTo(result)) {
@@ -391,19 +391,20 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
 }
 
 // Retrieve calling convention analysis on a function.
-const rose::BinaryAnalysis::CallingConvention::Definition*
+Rose::BinaryAnalysis::CallingConvention::Definition::Ptr
 functionCallingConvention(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    using namespace rose::BinaryAnalysis;
+    using namespace Rose::BinaryAnalysis;
+    CallingConvention::Definition::Ptr ccdef;
 
     if (function==NULL || !function->callingConventionAnalysis().hasResults())
-        return NULL;                                    // analysis was never run and is too expensive to run here.
+        return ccdef;                                   // analysis was never run and is too expensive to run here.
 
-    const CallingConvention::Definition *ccdef = NULL;
+
     if (NULL == (ccdef = function->attributeOrElse(ATTR_CallConvDef, ccdef))) {
         const CallingConvention::Dictionary &archConventions = partitioner.instructionProvider().callingConventions();
         CallingConvention::Dictionary conventions = function->callingConventionAnalysis().match(archConventions);
         if (!conventions.empty()) {
-            ccdef = new CallingConvention::Definition(conventions.front());
+            ccdef = conventions.front();
             function->setAttribute(ATTR_CallConvDef, ccdef);
         }
     }

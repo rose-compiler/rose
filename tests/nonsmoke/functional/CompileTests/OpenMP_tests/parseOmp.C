@@ -4,12 +4,14 @@ by Liao, 9/17/2008
 Last Modified: 9/19/2008
 */
 #include "rose.h"
+#include "RoseAst.h"
 #include <iostream>
 #include <string>
 #include "OmpAttribute.h"
 using namespace std;
 using namespace OmpSupport;
 
+#if 0  
 class visitorTraversal : public AstSimpleProcessing
 {
   protected: 
@@ -23,11 +25,10 @@ void visitorTraversal::visit(SgNode* node)
   OmpAttributeList* attributelist = getOmpAttributeList(node);
   if (attributelist)
   {
-    cout<<"Found att attached to "<<node<<" "<<node->class_name()<<" at line "
-      <<node->get_file_info()->get_line()<<endl;
-    attributelist->print();//debug only for now
+//    cout<<"Found att attached to "<<node<<" "<<node->class_name()<<" at line "
+//      <<node->get_file_info()->get_line()<<endl;
+//    attributelist->print();//debug only for now
   }
-#if 1  
   // Show OpenMP nodes also for -rose:openmp:ast_only
   if (SageInterface::isOmpStatement(node))
   {
@@ -39,18 +40,34 @@ void visitorTraversal::visit(SgNode* node)
 // We now enforce OmpStatement nodes to have real file info objecs.
     ROSE_ASSERT(isSgStatement(node)->get_file_info()->isTransformation()==false);
   }
-#endif  
 }
+#endif  
 
-// must have argc and argv here!!
 int main(int argc, char * argv[])
 {
   SgProject *project = frontend (argc, argv);
 
   AstTests::runAllTests(project);
 
-  visitorTraversal myvisitor;
-  myvisitor.traverseInputFiles(project,preorder);
-  
+//  visitorTraversal myvisitor;
+//  myvisitor.traverseInputFiles(project,preorder);
+
+#if 0
+  RoseAst ast(project);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgNode* node = *i; //cout<<"We are here:"<<(*i)->class_name()<<endl;
+    if (SageInterface::isOmpStatement(node))
+    {
+      SgStatement* stmt = isSgStatement(node);
+      string stmtstr= stmt->unparseToString();
+      istringstream istr(stmtstr); 
+
+      char firstline[512]; 
+      istr.getline(firstline, 512, '\n');
+      cout<<firstline<<endl;
+    }
+
+  }
+#endif  
   return backend(project);
 }

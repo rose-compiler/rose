@@ -9,7 +9,8 @@ bin_PROGRAMS =
 
 # Use variables set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(JAVA_JVM_INCLUDE)
-LDADD    = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS)
 
 clean-local:
 	rm -fr rose-* ecj-classes-* javac-*
@@ -17,11 +18,19 @@ clean-local:
 	rm -f hs_err_pid*
 
 check-local:
+if USING_GNU_COMPILER
+# DQ (2/20/2017): Don't use thiese tests on later versions of CNG 4.9 or later.
+if !ROSE_USING_GCC_VERSION_LATER_4_9
 	@$(MAKE) $(UNIT_TESTS)
+endif
+endif
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
+if USING_GNU_COMPILER
+# DQ (2/20/2017): Don't use thiese tests on later versions of CNG 4.9 or later.
+if !ROSE_USING_GCC_VERSION_LATER_4_9
 UNIT_TESTS = \
 	test_addJavaAssignmentStmt \
 	test_addJavaExpression \
@@ -84,3 +93,7 @@ addJavaVariableDeclaration_SOURCES = addJavaVariableDeclaration.cpp
 test_addJavaVariableDeclaration: addJavaVariableDeclaration
 	./$< $(CLASSPATH) $(ROSE_VERBOSE) "$(srcdir)/$<Testcode.java"
 
+endif
+else
+# DQ (2/20/2017): Disabling unit tests for non-GNU compilers.
+endif

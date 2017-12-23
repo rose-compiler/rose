@@ -13,7 +13,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 // Bit flags (low-order 16 bits are reserved for ROSE, so don't use them)
 static const unsigned UNDEFINED = 0x00010000;
@@ -91,7 +91,7 @@ testNewExprRule() {
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == 0);
 
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_BV_XOR, e1, e1);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_XOR, e1, e1);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == 0);
 }

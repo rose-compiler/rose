@@ -11,7 +11,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -34,9 +34,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & dblock_;
-        s & functions_;
-        s & bblocks_;
+        s & BOOST_SERIALIZATION_NVP(dblock_);
+        s & BOOST_SERIALIZATION_NVP(functions_);
+        s & BOOST_SERIALIZATION_NVP(bblocks_);
     }
 #endif
 

@@ -1,7 +1,7 @@
 #ifndef TRANSITION_GRAPH
 #define TRANSITION_GRAPH
 
-#include "StateRepresentations.h"
+#include "EState.h"
 
 namespace CodeThorn {
   /*! 
@@ -59,7 +59,7 @@ namespace CodeThorn {
     EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
     EStatePtrSet estateSetOfLabel(Label lab);
     EStatePtrSet estateSet();
-    long numberOfObservableStates(bool inlcudeIn=true, bool includeOut=true, bool includeErr=true);
+    long numberOfObservableStates(bool includeIn=true, bool includeOut=true, bool includeErr=true);
     void add(Transition trans);
     string toString() const;
     LabelSet labelSetOfIoOperations(InputOutput::OpType op);
@@ -93,10 +93,13 @@ namespace CodeThorn {
     void setIsComplete(bool v);
     bool isPrecise();
     bool isComplete();
+    void setForceQuitExploration(bool v);
     size_t memorySize() const;
     void setAnalyzer(Analyzer* analyzer) {
-      ROSE_ASSERT(getModeLTLDriven());
       _analyzer=analyzer;
+    }
+    Analyzer* getAnalyzer() {
+      return _analyzer;
     }
  private:
     Label _startLabel;
@@ -107,11 +110,12 @@ namespace CodeThorn {
     bool _preciseSTG;
     bool _completeSTG;
     bool _modeLTLDriven;
+    bool _forceQuitExploration;
 
     // only used by ltl-driven mode in function succ
-    Analyzer* _analyzer;
+    Analyzer* _analyzer = nullptr;
     // only used by ltl-driven mode in function succ
-    const EState* _startEState;
+    const EState* _startEState = nullptr;
   };
 }
 #endif

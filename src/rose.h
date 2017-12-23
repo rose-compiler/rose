@@ -114,52 +114,6 @@ namespace ELF{
 // DQ (1/25/2008): Added cfgToDot.h as suggested by Jeremiah
 #include "cfgToDot.h"
 
-// DQ (1/24/2008): Add these here to permit simple and uniform support of binaries.
-// File in src/frontend/BinaryDisassembly
-#include "RoseBin_support.h"
-#ifdef HASH_ROSE_USE_BINARYSQL
-  #include "RoseBin.h"
-#endif
-
-
-#include "DataConversion.h"
-// Files in src/frontend/ExecFormats
-#include "MemoryMap.h"
-
-#include "RoseBin_abstract.h"
-#include "RoseFile.h"
-#include "RoseObj.h"
-
-#include "RoseBin_DotGraph.h"
-#include "RoseBin_GmlGraph.h"
-#include "RoseBin_ControlFlowAnalysis.h"
-#include "RoseBin_DataFlowAnalysis.h"
-#include "RoseBin_CallGraphAnalysis.h"
-
-#include "AST_BIN_Traversal.h"
-
-#include "InstructionEnumsX86.h"
-#include "x86InstructionProperties.h"
-#include "armInstructionEnum.h"
-#include "powerpcInstructionEnum.h"
-#include "powerpcInstructionProperties.h"
-
-// Files in src/frontend/Disassemblers
-#include "Disassembler.h"
-#include "DisassemblerArm.h"
-#include "DisassemblerPowerpc.h"
-#include "DisassemblerX86.h"
-#include "Partitioner.h"
-#include "Assembler.h"
-#include "AssemblerX86.h"
-
-// Files in src/backend/asmUnparser
-#include "AsmUnparser.h"
-#include "AsmUnparser_compat.h"  /*backward compatibility functions once in unparseAsm.h*/
-
-
-
-
 // ABI struct layout and similar helpers in src/frontend/SageIII/sageInterface
 #include "abiStuff.h"
 
@@ -198,7 +152,7 @@ namespace ELF{
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 #define COMPILE_DEBUG_STATEMENTS 1
 
-#include "initialize.h" // Defines rose::initialize
+#include "initialize.h" // Defines Rose::initialize
 
 /******************************************************************************************************************************
  *                            THIS CHECK SHOULD BE THE LAST THING IN THIS FILE!

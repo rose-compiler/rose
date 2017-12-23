@@ -2,15 +2,16 @@
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <x86InstructionProperties.h>
 
 #include <boost/foreach.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesElf {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 size_t
 findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {

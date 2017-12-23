@@ -12,7 +12,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
@@ -58,8 +58,8 @@ private:
         // Most of the data members don't need to be saved because we'll only save/restore disassemblers that are between
         // instructions (we never save one while it's processing an instruction). Therefore, most of the data members can be
         // constructed in their initial state by a combination of default constructor and init().
-        s & boost::serialization::base_object<Disassembler>(*this);
-        s & wordSize;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+        s & BOOST_SERIALIZATION_NVP(wordSize);
     }
 
     template<class S>
@@ -107,17 +107,14 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** See Disassembler::can_disassemble */
-    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
 
-    virtual Unparser::BasePtr unparser() const;
+    virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
 
-    /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va,
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL) ROSE_OVERRIDE;
 
-    /** Make an unknown instruction from an exception. */
-    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) ROSE_OVERRIDE;
 
 
     /*========================================================================================================================
@@ -464,7 +461,7 @@ private:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerX86);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerX86);
 #endif
 
 #endif

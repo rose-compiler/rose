@@ -12,10 +12,20 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 endif
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS)
+
+# put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
+TESTCODE_CURRENTLY_FAILING = \
+	ompfor7.c \
+	macroCalls.c \
+	data-member-access.cpp \
+	define-directive2.cpp \
+	define-directive.c
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
+	affinity.c \
 	jacobi.c \
 	jacobi-collapse.c \
 	alignment.c \
@@ -23,6 +33,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	array_init_2.c \
 	atomic.c \
 	atoms-2.c \
+	atomic-3.c \
 	barrier.c \
 	collapse.c \
 	copyin.c \
@@ -54,7 +65,6 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	hello-2.c \
 	hello-ordered.c \
 	include_header_only.c \
-	init.c \
 	lastprivate0.c \
 	lastprivate.c \
 	lastprivateOrphaned.c \
@@ -79,6 +89,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor4.c \
 	ompfor5.c \
 	ompfor6.c \
+	ompfor8.c \
 	ompfor-default.c \
 	ompfor-decremental.c \
 	ompfor-static.c \
@@ -93,6 +104,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	parallel-numthreads.c \
 	parallel-reduction.c \
 	parallel-reduction2.c \
+	parallel_pragma.c \
 	parallelfor.c \
 	parallelfor2.c \
 	parallelsections.c \
@@ -110,6 +122,8 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	section1.c \
 	set_num_threads.c \
 	shared.c \
+	simd.c \
+	simd2.c \
 	single.c \
 	single2.c \
 	single_copyprivate.c \
@@ -120,9 +134,16 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	subteam.c \
 	task_array.c \
 	task_array2.c \
+	task_dep1.c \
+	task_dep2.c \
+	task_dep3.c \
+	task_dep.load.compute.c \
+	task_final.c \
 	task_largenumber.c \
+	task_mergeable.c \
 	task_orphaned.c \
 	task_outlining.c \
+	task_priority.c \
 	task_untied.c \
 	task_untied2.c \
 	task_untied3.c \
@@ -136,20 +157,43 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	threadprivate.c \
 	threadProcessor.c \
 	upperCase.c \
-	variables.c 
+	variables.c
 
+# removed experimental test cases	
+removed_Experimental_TEST = \
+	axpy_ompacc_mpi.c \
+	axpy_ompacc4.c \
+	axpy_ompacc_parseonly.c 
+
+
+
+# DQ (2/19/2017): This logic has not yet been updated to reflect the new logic for GNU, Clang, Intel compilers.
+# It might be that it need not be updated since it is sufficently portable as it is (if not then it will be updated).
 if USING_CLANG_COMPILER
 C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c
+
+CXX_TESTCODES_REQUIRED_TO_PASS = \
+        jacobi-ompacc2.cpp \
+	classMember.cpp \
+	hello1.cpp \
+	helloNested.cpp \
+	memberFunction.cpp \
+	memberFunction2.cpp \
+	objectPrivate.cpp \
+	objectFirstPrivate.cpp \
+	objectLastprivate.cpp \
+	orphanedAtomic.cpp \
+	preprocessingInfo2.cpp \
+	task_link.cpp \
+	task_link2.cpp \
+	task_tree.cpp 
 else
 C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c \
 	axpy_ompacc3.c \
-	axpy_ompacc4.c \
-	axpy_ompacc_parseonly.c \
-	axpy_ompacc_mpi.c \
 	matrixmultiply-ompacc.c \
 	matrixmultiply-ompacc2.c \
 	jacobi-ompacc.c \
@@ -157,7 +201,6 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 	jacobi-ompacc-opt1.c \
 	jacobi-ompacc-opt2.c \
 	jacobi-ompacc-multiGPU.c
-endif
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp \
@@ -175,32 +218,47 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	task_link2.cpp \
 	task_tree.cpp \
 	referenceType.cpp
+endif
 
-# put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
-TESTCODE_CURRENTLY_FAILING = \
-	ompfor7.c \
-	macroCalls.c 
+if !USING_INTEL_COMPILER
+C_TESTCODES_REQUIRED_TO_PASS += \
+	init.c 
+endif
+
+#C_OMP_ACC_TEST_RESULTS = $(C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.o)
+# we only care about unparsing for ACC input, not the object file generation
+C_OMP_ACC_TEST_Unparsed = $(addprefix rose_,${C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS})
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
-PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
+PASSING_C_TEST_RESULTS = $(addprefix rose_,${C_TESTCODES_REQUIRED_TO_PASS})
+PASSING_CXX_TEST_RESULTS = $(addprefix rose_,${CXX_TESTCODES_REQUIRED_TO_PASS})
 
-PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
+PASSING_C_CXX_TEST_RESULTS = $(PASSING_C_TEST_RESULTS) $(PASSING_CXX_TEST_RESULTS) 
 
-#C_OMP_ACC_TEST_Objects = $(C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.o)
-# we only care about unparsing for ACC input, not the object file generation
-C_OMP_ACC_TEST_Unparsed = $(addprefix rose_,${C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS})
+PASSING_C_CXX_ACC_TEST_RESULTS=$(PASSING_C_CXX_TEST_RESULTS) $(C_OMP_ACC_TEST_Unparsed) rose_bonds-2.c rose_macroIds.c
 
-$(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
-	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+PASSING_C_CXX_ACC_TEST_OUTPUT=$(addsuffix .output, $(PASSING_C_CXX_ACC_TEST_RESULTS))
 
-$(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp parseOmp
-	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $<
+$(PASSING_C_CXX_TEST_RESULTS): $(srcdir)/$(@:rose_%=%) parseOmp
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:rose_%=%) 
 
-check-c:$(PASSING_C_TEST_Objects) 
-check-cxx:$(PASSING_CXX_TEST_Objects)
+$(PASSING_C_CXX_ACC_TEST_OUTPUT): %.output:% 
+	grep "pragma omp" $(@:%.output=%) > $@ || exit 0;
+
+PASSING_C_CXX_ACC_TEST_OUTPUT_DIFF=$(addsuffix .diff, $(PASSING_C_CXX_ACC_TEST_OUTPUT))
+
+REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/referenceResults
+
+$(PASSING_C_CXX_ACC_TEST_OUTPUT_DIFF): %.diff:%
+	if diff $(@:.output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+
+gen-output: $(PASSING_C_CXX_ACC_TEST_OUTPUT)
+
+check-c:$(PASSING_C_TEST_RESULTS) 
+check-cxx:$(PASSING_CXX_TEST_RESULTS)
 
 ALL_TESTCODES = \
 $(C_TESTCODES_REQUIRED_TO_PASS) \
@@ -211,10 +269,10 @@ $(TESTCODE_CURRENTLY_FAILING)
 # Liao 11/18/2009
 # Test for a bug which happens when more than two source files show in the command line
 # the translator should now be able to avoid duplicated processing of pragma statements
-bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
+rose_bonds-2.c: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
 
-macroIds.o: $(srcdir)/macroIds.c parseOmp
+rose_macroIds.c: $(srcdir)/macroIds.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:collectAllCommentsAndDirectives $(srcdir)/macroIds.c
 
 # we now experiment with multi gpu and MPI support, test parse_only without OpenMP-specific AST creation for now. Liao10/28/2015
@@ -226,18 +284,87 @@ $(C_OMP_ACC_TEST_Unparsed): $(srcdir)/$(@:rose_%=%) parseOmp
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 conditional-check-local:
 	@echo "Test for ROSE OpenMP Parser."
-	@$(MAKE) $(PASSING_C_TEST_Objects) 
-	@$(MAKE) $(PASSING_CXX_TEST_Objects)
-	@$(MAKE) bonds-2.o macroIds.o $(C_OMP_ACC_TEST_Unparsed)
-	@echo "***********************************************************************************************************"
+#	@$(MAKE) $(PASSING_C_TEST_RESULTS) 
+#	@$(MAKE) $(PASSING_CXX_TEST_RESULTS)
+#	@$(MAKE) bonds-2.o macroIds.o $(C_OMP_ACC_TEST_Unparsed)
+##	@$(MAKE) $(PASSING_TEST_RESULTS)
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+if ROSE_USE_EDG_VERSION_4_9
+	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+	@echo "OpenMP tests using EDG 4.9 and GNU version 4.9 backend compiler are disabled."
+# Exclude these tests on GNU 4.9 and later compilers).
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+	@$(MAKE) $(PASSING_C_CXX_ACC_TEST_OUTPUT_DIFF)
+endif # ROSE_USING_GCC_VERSION_LATER_4_8
+else  # NOT USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+	@echo "OpenMP tests using EDG 4.9: Clang backend compiler are NOT allowed with the EDG 4.9 frontend."
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+	@echo "OpenMP tests using EDG 4.9 Intel backend compiler are allowed."
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+if USING_GNU_COMPILER
+if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "OpenMP tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
+	@echo "OpenMP tests using EDG 4.12 and any supported backend compiler are allowed."
+	@$(MAKE) $(PASSING_C_CXX_ACC_TEST_OUTPUT_DIFF)
+endif # ROSE_USING_GCC_VERSION_LATER_4_8
+else
+	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+	@echo "OpenMP tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
+	@$(MAKE) $(PASSING_C_CXX_ACC_TEST_OUTPUT_DIFF)
+# DQ (2/28/2017): Skip these files with Clang for now and come back to them later (when we understand the limits of portability better).
+#	@$(MAKE) $(PASSING_TEST_RESULTS)
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+	@echo "OpenMP tests using EDG 4.12 Intel backend compiler are allowed."
+	@$(MAKE) $(PASSING_C_CXX_ACC_TEST_OUTPUT_DIFF)
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+endif # ROSE_USE_EDG_VERSION_4_9
+	@echo "**********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************"
+	@echo "**********************************************************************************************************************"
 else
 conditional-check-local:
 	@echo "Test for ROSE OpenMP Parser."
-	@echo "***********************************************************************************************************"
+	@echo "*******************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/OpenMP_tests: make check rule for C/C++ skipped (terminated normally) ******"
-	@echo "***********************************************************************************************************"
+	@echo "*******************************************************************************************************************************"
 endif
 
 EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c \

@@ -187,9 +187,13 @@ insert into dependencies values ('yaml',         '0.5.2',            0);
 insert into dependencies values ('yaml',         '0.5.3',            0);
 
 -- Yices SMT solver version or "system" or "none"
-insert into dependencies values ('yices',        'no',               1);
+insert into dependencies values ('yices',        'none',             1);
 insert into dependencies values ('yices',        '1.0.28',           0);
-insert into dependencies values ('yices',        '1.0.34',           1);
+insert into dependencies values ('yices',        '1.0.34',           0);
+
+-- Z3 SMT solver version or "none"
+insert into dependencies values ('z3',           'none',             1);
+insert into dependencies values ('z3',           '4.5.0',            1);
 
 
 --
@@ -251,6 +255,7 @@ create table test_results (
     rmc_wt              varchar(64) default 'unknown',
     rmc_yaml            varchar(64) default 'unknown',
     rmc_yices           varchar(64) default 'unknown',
+    rmc_z3              varchar(64) default 'unknown',
 
     -- Test disposition.  This is a word that says where the test failed. Rather than simply "passed"
     -- or "failed", we have a lattice of dispositions. A simple example is a lattice with a single path:
@@ -294,4 +299,35 @@ create table errors (
     mtime int default 0                                 -- time that commentary was added/changed (unix)
 );
 
+--
+-- Table for tracking progress compiling applications
+--
+create table application_results (
+    id serial primary key,
+    enabled boolean default true,			-- can be set to false to prevent test from showing in browser
+
+    -- who did the testing and reporting
+    reporting_user integer references auth_users(id),	-- user making this report
+    reporting_time integer,	      			-- when report was made (unix time)
+    tester varchar(256),				-- who did the testing (e.g., a Jenkins slave name)
+    os varchar(64),					-- operating system information
+
+    -- what version of ROSE did the testing
+    rose varchar(64) not null,				-- SHA1 of the ROSE version that was compiling
+    rose_date integer,					-- time at which version was created if known (unix time)
+
+    -- what application was compiled
+    application varchar(64) not null,			-- name of the application
+    application_version varchar(64),			-- version string or other identifying information
+    application_date integer,				-- application version date if known (unix time)
+
+    -- status of the test
+    nfiles integer,					-- total number of files processed by ROSE, failing or not
+    npass integer,					-- number of files which were compiled successfully
+    duration integer,					-- length of compilation in seconds if known
+    noutput integer,					-- number of lines of stdout + stderr produced by ROSE
+    nwarnings integer					-- number or warnings produced by ROSE
+);
+    
+    
 commit;

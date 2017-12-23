@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {
@@ -125,7 +125,7 @@ readFileOrDie(const std::string &fileName) {
 
 static std::string
 titleForFile(const std::string &fileName, const Settings &settings) {
-    using namespace rose::FileSystem;
+    using namespace Rose::FileSystem;
     if (!settings.title.empty())
         return settings.title;
     return Path(fileName).filename().native();
@@ -134,7 +134,7 @@ titleForFile(const std::string &fileName, const Settings &settings) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);

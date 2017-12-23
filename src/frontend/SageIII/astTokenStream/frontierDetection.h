@@ -120,7 +120,9 @@ class FrontierDetectionForTokenStreamMappingAttribute : public AstAttribute
   // be unparsed vs. unparsing directly from the AST (e.g. for transformations).
 
      private:
-          SgNode* node;
+       // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+       // SgNode* node;
+
           std::string name;
           std::string options;
 
@@ -138,6 +140,9 @@ class FrontierDetectionForTokenStreamMappingAttribute : public AstAttribute
        // Support for the coping of AST and associated attributes on each IR node (required for attributes 
        // derived from AstAttribute, else just the base class AstAttribute will be copied).
           virtual AstAttribute* copy() const;
+
+       // DQ (6/11/2017): Added virtual function now required to eliminate warning at runtime.
+          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE; // { return CONTAINER_OWNERSHIP; }
    };
 
 #endif
