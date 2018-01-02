@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) GlobalVarAnalysis.cpp DefUseAnalysis.cpp DefUseAnalysis_perFunction.cpp dfaToDot.cpp \
+    LivenessAnalysis.cpp DefUseAnalysisAbstract.cpp
+
+run $(public_header) DefUseAnalysis.h BottomUpTraversalLiveness.h DefUseAnalysis_perFunction.h DFAFilter.h \
+    DFAnalysis.h dfaToDot.h GlobalVarAnalysis.h support.h LivenessAnalysis.h DefUseAnalysisAbstract.h

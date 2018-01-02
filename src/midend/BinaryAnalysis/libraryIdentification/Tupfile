@@ -1,0 +1,7 @@
+include_rules
+
+ifneq (@(WITH_SQLITE),no)
+    run $(librose_compile) libraryIdentification_reader.C libraryIdentification_writer.C functionIdentification.C
+endif
+
+run $(public_header) functionIdentification.h libraryIdentification.h

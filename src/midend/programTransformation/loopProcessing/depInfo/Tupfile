@@ -1,0 +1,6 @@
+include_rules
+
+run $(librose_compile) DepEDD.C DepInfoAnal.C ReuseAnalysis.C DepInfo.C DepInfoSet.C DepRel.C DomainInfo.C StmtDepAnal.C
+
+run $(public_header) DepEDD.h DepInfo.h DepInfoUpdate.h DomainInfo.h DepInfoAnal.h DepInfoSet.h DepRel.h DomainInfoUpdate.h \
+    ReuseAnalysis.h StmtDepAnal.h

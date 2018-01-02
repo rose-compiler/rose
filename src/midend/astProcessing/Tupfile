@@ -1,0 +1,16 @@
+include_rules
+
+run $(librose_compile) AstNodeVisitMapping.C AstTextAttributesHandling.C AstDOTGeneration.C AstProcessing.C plugin.C \
+    AstSimpleProcessing.C AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C AstReverseSimpleProcessing.C \
+    AstClearVisitFlags.C AstTraversal.C AstCombinedSimpleProcessing.C AstSharedMemoryParallelSimpleProcessing.C \
+    AstPDFGeneration.C AstRestructure.C
+
+run $(public_header) AstPDFGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h AstTextAttributesHandling.h \
+    AstDOTGeneration.h AstProcessing.h plugin.h AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h \
+    AstSuccessorsSelectors.h AstReverseProcessing.h AstReverseSimpleProcessing.h AstRestructure.h AstClearVisitFlags.h \
+    AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h AstCombinedSimpleProcessing.h StackFrameVector.h \
+    AstSharedMemoryParallelProcessing.h AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h \
+    graphProcessing.h graphProcessingSgIncGraph.h graphTemplate.h SgGraphTemplate.h
+
+# Strange name for a header file even though it does have templates!
+run $(public_header) AstDOTGenerationImpl.C
