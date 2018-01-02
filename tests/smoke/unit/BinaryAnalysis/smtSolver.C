@@ -46,7 +46,8 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&mlog, "tool");
     parseCommandLine(argc, argv);
 
-    if (CommandlineProcessing::genericSwitchArgs.smtSolver == "") {
+    if (CommandlineProcessing::genericSwitchArgs.smtSolver == "" ||
+        CommandlineProcessing::genericSwitchArgs.smtSolver == "none") {
         BOOST_FOREACH (const SmtSolver::Availability::value_type &node, SmtSolver::availability())
             testSolver(SmtSolver::instance(node.first));
     } else {
