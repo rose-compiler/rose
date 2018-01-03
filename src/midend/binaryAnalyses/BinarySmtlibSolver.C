@@ -388,7 +388,6 @@ SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<Symb
 
         SExprTypePair et = outputExpression(cse);
         ASSERT_not_null(et.first);
-        ASSERT_require(BIT_VECTOR == et.second || MEM_STATE == et.second);
 
         o <<"(define-fun " <<termName <<" " <<typeName(cse) <<" " <<*et.first <<")\n";
         termNames_.insert(cse, StringTypePair(termName, et.second));

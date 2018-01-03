@@ -362,7 +362,8 @@ Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
             // string, but only a decimal representation (give it anything else and it fails silently).  Converting from ROSE
             // binary representation to decimal string back to z3 binary representation is going to involve division and
             // multiplication.
-            z3::expr z3expr = ctx_->bv_val(("#x" + leaf->bits().toHex()).c_str(), leaf->nBits());
+            std::string hexStr = "#x" + leaf->bits().toHex();
+            z3::expr z3expr = ctx_->bv_val(hexStr.c_str(), leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
 #else
             static bool called;
