@@ -482,7 +482,17 @@ NEW_2017_TESTS = \
    test2017_93.C \
    test2017_94.C \
    test2017_95.C \
-   test2017_96.C 
+   test2017_96.C \
+   test2017_97.C \
+   test2017_98.C \
+   test2017_100.C \
+   test2017_101.C \
+   test2017_102.C \
+   test2017_103.C \
+   test2017_104.C \
+   test2017_105.C \
+   test2017_106.C \
+   test2017_107.C 
 
 
 # DQ (12/18/2017): These are perhaps not valid C++ code (might be C code using GNU extensions).
@@ -491,6 +501,10 @@ FAILING_2017_TESTS = \
    test2017_67.C \
    test2017_70.C \
    test2017_71.C 
+
+# DQ (1/2/2018): This is a translator test code that should not be in the regression tests.
+TRANSLATOR_TEST_CODE = \
+   test2017_99.C 
 
 # DQ (12/18/2017): These parse using EDG, but fail to parse using GNU g++ (illegal code).
 FAILING_2017_ILLEGAL_CODE = \

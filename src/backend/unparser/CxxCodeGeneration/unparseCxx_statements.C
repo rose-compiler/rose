@@ -8838,6 +8838,10 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
         }
 
+  // DQ (1/3/2018): Put back this original behavior, because the case option statment must be a compound statement 
+  // (just like a label statement, see test2017_20.c).
+  // DQ (12/20/2017): Comment this out to experiment with alternative support for switch (part of new duff's device support).
+  // At the very least, commenting this out permis the cases to be adjusted to have defined bodies later (if that ultimately makes sense).
 #if 1
   // if(case_stmt->get_body())
   // if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
@@ -8845,6 +8849,8 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
           unparseStatement(case_stmt->get_body(), info);
         }
+#else
+     printf ("In unparseCaseStmt(): Modified to skip unparsing the body! \n");
 #endif
 #if 0
      printf ("Leaving unparseCaseStmt() \n");
@@ -8933,10 +8939,17 @@ Unparse_ExprStmt::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (default_stmt, default_body, e_token_subsequence_start, e_leading_whitespace_start);
         }
 
+  // DQ (1/3/2018): Put back this original behavior, because the case option statment must be a compound statement 
+  // (just like a label statement, see test2017_20.c).
+  // DQ (12/20/2017): Comment this out to experiment with alternative support for switch (part of new duff's device support).
+  // At the very least, commenting this out permis the cases to be adjusted to have defined bodies later (if that ultimately makes sense).
+#if 1
   // if(default_stmt->get_body()) 
      if ( (default_stmt->get_body() != NULL) && !info.SkipBasicBlock())
+        {
           unparseStatement(default_stmt->get_body(), info);
-
+        }
+#endif
 #if 0
      printf ("Leaving unparseDefaultStmt() \n");
      curprint("/* Leaving unparseDefaultStmt() */ ");

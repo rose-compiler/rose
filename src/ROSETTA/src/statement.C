@@ -2460,8 +2460,16 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (1/3/2018): Restored the original behavior (case options statment MUST be a compound statement, see test2017_20.c).
+  // DQ (12/23/2017): Removing body from AST for case statement. This is part of a minor design change to address 
+  // the required flexability to support duff's devices and more complex switch statements.
+  // CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
+  //                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
+  //                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (1/6/2006): Added support for GNU case label ranges (e.g. "case 2 ... 5:" in switch statements; see test2005_202.C)
      CaseOptionStmt.setDataPrototype ( "SgExpression*", "key_range_end", " = NULL",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2509,6 +2517,14 @@ Grammar::setUpStatements ()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DefaultOptionStmt.setFunctionPrototype ( "HEADER_DEFAULT_OPTION_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (1/3/2018): Restored the original behavior (case options statment MUST be a compound statement, see test2017_20.c).
+  // DQ (12/23/2017): Removing body from AST for case statement. This is part of a minor design change to address 
+  // the required flexability to support duff's devices and more complex switch statements.
+  // DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
+  //                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
+  //                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
