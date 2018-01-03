@@ -150,8 +150,16 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
 
 
   // Default log files for keep_going option
-  Rose::KeepGoing::report_filename__fail = boost::filesystem::path(getenv("HOME")).native()+"/autoPar-failed-files.txt";
-  Rose::KeepGoing::report_filename__pass = boost::filesystem::path(getenv("HOME")).native()+"/autoPar-passed-files.txt";
+  // There is no home directory if called by a web server account. 
+  const char* logdir = "/tmp";
+  char* hdir = getenv("HOME");
+  if (hdir != NULL){
+    logdir = hdir;
+  }
+  ROSE_ASSERT (logdir !=NULL); 
+  string log_path = boost::filesystem::path(logdir).native();   
+  Rose::KeepGoing::report_filename__fail = log_path +"/autoPar-failed-files.txt";
+  Rose::KeepGoing::report_filename__pass = log_path +"/autoPar-passed-files.txt";
 
 
   SwitchGroup switches("autoPar's switches");
