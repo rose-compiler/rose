@@ -78,6 +78,91 @@ echo "Testing value of FC = $FC"
       echo "default back-end java compiler for generated translators to use: $BACKEND_JAVA_COMPILER"
     ])
 
+# DQ (29/8/2017): Added option to specify backend Csharp compiler
+  AC_ARG_WITH(alternate_backend_csharp_compiler,
+    [  --with-alternate_backend_csharp_compiler=<compiler name>
+                                Specify an alternative csharp back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_CSHARP_COMPILER=$with_alternate_backend_csharp_compiler
+      AC_SUBST(BACKEND_CSHARP_COMPILER)
+      echo "alternative back-end csharp compiler specified for generated translators to use: $BACKEND_CSHARP_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified Mono csharp compiler
+	   BACKEND_CSHARP_COMPILER="mcs"
+      echo "default back-end csharp compiler for generated translators to use: $BACKEND_CSHARP_COMPILER"
+    ])
+
+# DQ (29/8/2017): Added option to specify backend Ada compiler
+  AC_ARG_WITH(alternate_backend_ada_compiler,
+    [  --with-alternate_backend_ada_compiler=<compiler name>
+                                Specify an alternative ada back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_ADA_COMPILER=$with_alternate_backend_ada_compiler
+      AC_SUBST(BACKEND_ADA_COMPILER)
+      echo "alternative back-end ada compiler specified for generated translators to use: $BACKEND_ADA_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified GNAT Ada compiler
+
+    # DQ (9/12/2017): Note that the command needs to be "gnat" and the "compile" option 
+    # must be added into the generated command line for the backend compiler.
+    # BACKEND_ADA_COMPILER="gnat compile"
+      BACKEND_ADA_COMPILER="gnat"
+      echo "default back-end ada compiler for generated translators to use: $BACKEND_ADA_COMPILER"
+    ])
+
+# DQ (29/8/2017): Added option to specify backend Jovial compiler
+  AC_ARG_WITH(alternate_backend_jovial_compiler,
+    [  --with-alternate_backend_jovial_compiler=<compiler name>
+                                Specify an alternative jovial back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_ADA_COMPILER=$with_alternate_backend_jovial_compiler
+      AC_SUBST(BACKEND_JOVIAL_COMPILER)
+      echo "alternative back-end jovial compiler specified for generated translators to use: $BACKEND_JOVIAL_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified Jovial compiler
+	   BACKEND_JOVIAL_COMPILER="default_jovial_compiler"
+      echo "default back-end jovial compiler for generated translators to use: $BACKEND_JOVIAL_COMPILER"
+    ])
+
+# DQ (29/8/2017): Added option to specify backend Cobol compiler
+  AC_ARG_WITH(alternate_backend_cobol_compiler,
+    [  --with-alternate_backend_cobol_compiler=<compiler name>
+                                Specify an alternative cobol back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_COBOL_COMPILER=$with_alternate_backend_cobol_compiler
+      AC_SUBST(BACKEND_COBOL_COMPILER)
+      echo "alternative back-end cobol compiler specified for generated translators to use: $BACKEND_COBOL_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified GNU Cobol compiler
+    # Rasmussen (10/30/2017): Changed name of GNU Cobol compiler to cobc
+           BACKEND_COBOL_COMPILER="cobc"
+      echo "default back-end cobol compiler for generated translators to use: $BACKEND_COBOL_COMPILER"
+    ])
+
+# Rasmussen (10/30/2017): Added option to specify backend MATLAB compiler
+  AC_ARG_WITH(alternate_backend_matlab_compiler,
+    [  --with-alternate_backend_matlab_compiler=<compiler name>
+                                Specify an alternative MATLAB back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_MATLAB_COMPILER=$with_alternate_backend_matlab_compiler
+      AC_SUBST(BACKEND_MATLAB_COMPILER)
+      echo "alternative back-end MATLAB compiler specified for generated translators to use: $BACKEND_MATLAB_COMPILER"
+    ] ,
+    [
+    # Alternatively use the specified GNU MATLAB compiler
+	   BACKEND_MATLAB_COMPILER="octave"
+      echo "default back-end MATLAB compiler for generated translators to use: $BACKEND_MATLAB_COMPILER"
+    ])
+
 # DQ (8/29/2005): Added support for version numbering of backend compiler
 # BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
 # BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
@@ -116,93 +201,116 @@ echo "Testing value of FC = $FC"
       #
       # Tnerefore, grep -Po usage has been replaced by shell scripts.
 
+      IS_APPLE_GCC=`g++ --version | grep -ci "Apple LLVM"`
+      echo "IS_APPLE_GCC = $IS_APPLE_GCC"
+      if test $IS_APPLE_GCC -ne 0; then
         BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
         BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
 
         echo "     (g++ but really clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
         echo "     (g++ but really clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
 
-      # On an OSX system, the version of Clang is not clear since the "--version" option will report the 
-      # version number of XCode (not clang).  So either we map from the version of the OS to the version 
-      # of Clang used in it's version of XCode, or we map from the version of XCode (defined by the current 
-      # values of (CXX_VERSION_MAJOR,CXX_VERSION_MINOR, and CXX_VERSION_PATCH).  Below I have used the 
-      # version of the OS, but I'm not certain that is the best solution.  Perhaps we can asset that
-      # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
-      # of Clang version number, or take it directly from the XCode version number if that is a better solution.
 
-        XCODE_VERSION_MAJOR=$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER
-        XCODE_VERSION_MINOR=$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
-        XCODE_VERSION_PATCH=$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER
+        # On an OSX system, the version of Clang is not clear since the "--version" option will report the 
+        # version number of XCode (not clang).  So either we map from the version of the OS to the version 
+        # of Clang used in it's version of XCode, or we map from the version of XCode (defined by the current 
+        # values of (CXX_VERSION_MAJOR,CXX_VERSION_MINOR, and CXX_VERSION_PATCH).  Below I have used the 
+        # version of the OS, but I'm not certain that is the best solution.  Perhaps we can asset that
+        # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
+        # of Clang version number, or take it directly from the XCode version number if that is a better solution.
 
-      # I think the clang versions all have patch level equal to zero.
-        BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+          XCODE_VERSION_MAJOR=$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER
+          XCODE_VERSION_MINOR=$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
+          XCODE_VERSION_PATCH=$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER
 
-        if test $XCODE_VERSION_MAJOR -eq 7; then
+        # I think the clang versions all have patch level equal to zero.
+          BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
 
-          # The versions of clang all depend upon the minor version number of XCode (for major version number equal to 7).
-            BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-            case "$XCODE_VERSION_MINOR" in
-                0)
-                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=7
-                    ;;
-                3)
-                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-                    ;;
-                *)
-                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                    exit 1;
-                    ;;
-            esac
-        elif test $XCODE_VERSION_MAJOR -eq 8; then
-            BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-          # DQ (3/3//2017): Added latest version information from Craig.
-            case "$XCODE_VERSION_MINOR" in
-                0|1)
-                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-                    ;;
-                *)
-                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                    exit 1;
-                    ;;
-            esac
-        else
-            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
-            exit 1
-        fi
+          if test $XCODE_VERSION_MAJOR -eq 7; then
 
-#      # Note "build_os" is a variable determined by autoconf.
-#        case $build_os in
-#            darwin13*)
-#              # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
-#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=6
-#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-#                ;;
-#            darwin14*)
-#              # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
-#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-#                ;;
-#            darwin15*)
-#              # This is Mac OSX version 10.11
-#                BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-#                BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-#                BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-#                ;;
-#            *)
-#                echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
-#                exit 1;
-#        esac
+            # The versions of clang all depend upon the minor version number of XCode (for major version number equal to 7).
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+              case "$XCODE_VERSION_MINOR" in
+                  0)
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=7
+                      ;;
+                  3)
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                      ;;
+                  *)
+                      echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                      exit 1;
+                      ;;
+              esac
+          elif test $XCODE_VERSION_MAJOR -eq 8; then
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+            # DQ (3/3//2017): Added latest version information from Craig.
+              case "$XCODE_VERSION_MINOR" in
+                  0|1)
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                      ;;
+                  *)
+                      echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                      exit 1;
+                      ;;
+              esac
+          elif test $XCODE_VERSION_MAJOR -eq 9; then
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+            # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
+            # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
+              case "$XCODE_VERSION_MINOR" in
+                  0)
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=9
+                      ;;
+                  *)
+                      echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                      exit 1;
+                      ;;
+              esac
+          else
+              echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
+              exit 1
+          fi
 
-      # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
-        echo "compilerVendorName = $compilerVendorName"
-        echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
-        echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
-        echo "BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER = $BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER"
+#        # Note "build_os" is a variable determined by autoconf.
+#          case $build_os in
+#              darwin13*)
+#                # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
+#                  BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                  BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=6
+#                  BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                  ;;
+#              darwin14*)
+#                # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
+#                  BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                  BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+#                  BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                  ;;
+#              darwin15*)
+#                # This is Mac OSX version 10.11
+#                  BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+#                  BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+#                  BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+#                  ;;
+#              *)
+#                  echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
+#                  exit 1;
+#          esac
 
-      # echo "Detected use of GNU backend compiler name on Mac OSX system"
-      # exit 1
+        # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
+          echo "compilerVendorName = $compilerVendorName"
+          echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+          echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+          echo "BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER = $BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER"
+
+        # echo "Detected use of GNU backend compiler name on Mac OSX system"
+        # exit 1
+
+      else
+        echo "Detected using MacPorts GCC backend compiler"
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+      fi
 
     else
         echo "Else case not using Clang (choose backend compiler)"
@@ -509,6 +617,7 @@ echo "Testing value of FC = $FC"
 # We use the name of the backend C++ compiler to generate a compiler name that will be used
 # elsewhere (CXX_ID might be a better name to use, instead we use basename to strip the path).
 # compilerName=`basename $BACKEND_CXX_COMPILER`
+  C_COMPILER_NAME=`basename $BACKEND_C_COMPILER`
   COMPILER_NAME=`basename $BACKEND_CXX_COMPILER`
 # echo "default back-end compiler for generated preprocessors will be: $BACKEND_CXX_COMPILER"
 # export BACKEND_CXX_COMPILER
@@ -543,6 +652,9 @@ echo "Testing value of FC = $FC"
   export COMPILER_NAME
   AC_DEFINE_UNQUOTED([BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH],"$COMPILER_NAME",[Name of backend C++ compiler excluding path (used to select code generation options).])
 
+  export C_COMPILER_NAME
+  AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_NAME_WITHOUT_PATH],"$C_COMPILER_NAME",[Name of backend C compiler excluding path (used to select code generation options).])
+
 # This will be called to execute the backend compiler (for C++)
   export BACKEND_CXX_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_CXX_COMPILER_NAME_WITH_PATH],"$BACKEND_CXX_COMPILER",[Name of backend C++ compiler including path (may or may not explicit include path; used to call backend).])
@@ -559,6 +671,33 @@ echo "Testing value of FC = $FC"
 # This will be called to execute the backend compiler (for Java)
   export BACKEND_JAVA_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_JAVA_COMPILER_NAME_WITH_PATH],"$BACKEND_JAVA_COMPILER",[Name of backend Java compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_CSHARP_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_CSHARP_COMPILER_NAME_WITH_PATH],"$BACKEND_CSHARP_COMPILER",[Name of backend Csharp compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_ADA_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_ADA_COMPILER_NAME_WITH_PATH],"$BACKEND_ADA_COMPILER",[Name of backend Ada compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_JOVIAL_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH],"$BACKEND_JOVIAL_COMPILER",[Name of backend Jovial compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_COBOL_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_COBOL_COMPILER_NAME_WITH_PATH],"$BACKEND_COBOL_COMPILER",[Name of backend Cobol compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (30/8/2017): Testing the new language support.
+  echo "BACKEND_CXX_COMPILER     = $BACKEND_CXX_COMPILER"
+  echo "BACKEND_C_COMPILER       = $BACKEND_C_COMPILER"
+  echo "BACKEND_FORTRAN_COMPILER = $BACKEND_FORTRAN_COMPILER"
+  echo "BACKEND_JAVA_COMPILER    = $BACKEND_JAVA_COMPILER"
+  echo "BACKEND_CSHARP_COMPILER  = $BACKEND_CSHARP_COMPILER"
+  echo "BACKEND_ADA_COMPILER     = $BACKEND_ADA_COMPILER"
+  echo "BACKEND_JOVIAL_COMPILER  = $BACKEND_JOVIAL_COMPILER"
+  echo "BACKEND_COBOL_COMPILER   = $BACKEND_COBOL_COMPILER"
+# exit 1
 
 # These are useful in handling differences between different versions of the backend compiler
 # we assume that the C and C++ compiler version number match and only record version information 

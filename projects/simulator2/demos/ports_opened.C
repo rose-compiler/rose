@@ -19,9 +19,9 @@
 #include <RSIM_Linux64.h>                               // Simulator architecture: Linux-amd64
 #include <Sawyer/Map.h>                                 // Sawyer maps distributed with ROSE
 
-using namespace rose;
+using namespace Rose;
 using namespace StringUtility;
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;

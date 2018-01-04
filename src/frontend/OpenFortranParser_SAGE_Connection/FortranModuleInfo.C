@@ -86,7 +86,7 @@ FortranModuleInfo::set_inputDirs(SgProject* project) {
           } else 
              {
             // DQ (3/15/2017): Fixed to use mlog message logging.
-               if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+               if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
                   {
                     cout << "WARNING: the input directory does not exist (rose): " << rmodDir<< endl;
                   }

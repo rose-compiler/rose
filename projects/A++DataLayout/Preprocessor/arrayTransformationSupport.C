@@ -1,6 +1,6 @@
 #include "arrayPreprocessor.h"
 
-using namespace rose;
+using namespace Rose;
 using namespace SageBuilder;
 using namespace SageInterface;
 
@@ -687,7 +687,7 @@ string ArrayTransformationSupport::buildOperandSpecificVariableInitialization(
 		// printf ("Test 5: localOperandDataTemplate    = %s \n",localOperandDataTemplate.c_str());
 
 		// Build of the final string by concatination of the string build within each iteration of the loop
-		// variableData = rose::stringConcatinate (variableData,localOperandDataTemplate);
+		// variableData = Rose::stringConcatinate (variableData,localOperandDataTemplate);
 		variableData += localOperandDataTemplate;
 
 		counter++;
@@ -809,7 +809,7 @@ string ArrayTransformationSupport::buildOperandVariableInitializationMacro(SgExp
 		const ArrayOperandDataBase & arrayOperandDataBase, int operandIndex, string dim) {
 	// We don't need the variableName since we return $VARIABLE_NAME instead which is substituted by
 	// the calling function this may be a poor design however.
-	// char* variableName = rose::stringDuplicate(operandNameString.c_str());
+	// char* variableName = Rose::stringDuplicate(operandNameString.c_str());
 
 	// declare the return string
 	string operandDataSetupMacroString;
@@ -922,7 +922,7 @@ string ArrayTransformationSupport::buildOperandSubscriptMacro(SgExprStatement* e
 	// with the array dimension for each array dimension from 1 to 'arrayDimension')
 	string macroOffsetArgumentList = buildChainedString(arrayDimension, "x1", ",x$DIM");
 
-	// char* macroTemplateString = rose::stringDuplicate("#define SC$VARIABLE_IDENTIFIER($OFFSET_VARIABLE_ARGS) $SUBSCRIPT_COMPUTATION");
+	// char* macroTemplateString = Rose::stringDuplicate("#define SC$VARIABLE_IDENTIFIER($OFFSET_VARIABLE_ARGS) $SUBSCRIPT_COMPUTATION");
 	string macroTemplateString = "#define SC" + uniqueIdentifierString + "("
 			+ macroOffsetArgumentList + ") $SUBSCRIPT_COMPUTATION";
 	// ROSE_ASSERT (macroTemplateString != NULL);
@@ -1084,10 +1084,10 @@ string ArrayTransformationSupport::buildOperandSubscriptMacro(SgExprStatement* e
 	string returnString;
 
 	// Now process it so that the string can be unparsed as a macro by the unparser
-	// if (rose::isSameName(subscriptComputationMacroString,"") == TRUE)
+	// if (Rose::isSameName(subscriptComputationMacroString,"") == TRUE)
 	if (subscriptComputationMacroString == "") {
 		// Don't turn empty strings into macros
-		// returnString = rose::stringDuplicate("");
+		// returnString = Rose::stringDuplicate("");
 	} else {
 		// Turn any non-empty string into a string literal with a coded prefix
 		// that will be unparsed as a macro.  (A Temporary Hack in the ROSE unparser.)
@@ -1119,7 +1119,7 @@ string ArrayTransformationSupport::buildChainedString(int arrayDimension,
 	int i = 0;
 	for (i = 2; i <= arrayDimension; i++) {
 		// Build the multidimensional case
-		// subscriptMacroString = rose::stringConcatinate (subscriptMacroString,nextDimensionString);
+		// subscriptMacroString = Rose::stringConcatinate (subscriptMacroString,nextDimensionString);
 		subscriptMacroString = subscriptMacroString + nextDimensionString;
 
 		// Generate a string representing the index into the list of operands

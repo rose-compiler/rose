@@ -4,7 +4,7 @@ int main() {
     int A[1] = {1};
 #pragma omp task
     {
-        A[0];
+        A[0]=1;
     }
-    return 0;
+    return A[0];
 }

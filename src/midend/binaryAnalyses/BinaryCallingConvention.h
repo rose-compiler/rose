@@ -13,7 +13,7 @@
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 // Forwards
@@ -124,11 +124,11 @@ public:
         : type_(NO_LOCATION), offset_(0) {}
 
     /** Constructs a parameter in a register location. */
-    explicit ParameterLocation(const RegisterDescriptor &reg)
+    explicit ParameterLocation(RegisterDescriptor reg)
         : type_(REGISTER), reg_(reg), offset_(0) {}
 
     /** Constructs a parameter at a register-relative memory address. */
-    ParameterLocation(const RegisterDescriptor &reg, int64_t offset)
+    ParameterLocation(RegisterDescriptor reg, int64_t offset)
         : type_(STACK), reg_(reg), offset_(offset) {}
 
     /** Constructs a parameter at a fixed memory address. */
@@ -150,7 +150,7 @@ public:
      *  Returns the register where the parameter is stored (for register parameters) or the register holding the base
      *  address for register-relative memory parameters.  Returns an invalid (default constructed) register descriptor when
      *  invoked on a default constructed location or a fixed memory addresses. */
-    const RegisterDescriptor& reg() const {
+    RegisterDescriptor reg() const {
         return reg_;
     }
 
@@ -384,10 +384,10 @@ public:
      *
      * @{ */
     void appendInputParameter(const ParameterLocation&);
-    void appendInputParameter(const RegisterDescriptor &reg) {
+    void appendInputParameter(RegisterDescriptor reg) {
         appendInputParameter(ParameterLocation(reg));
     }
-    void appendInputParameter(const RegisterDescriptor &reg, int64_t offset) {
+    void appendInputParameter(RegisterDescriptor reg, int64_t offset) {
         appendInputParameter(ParameterLocation(reg, offset));
     }
     void appendInputParameter(rose_addr_t va) {
@@ -419,10 +419,10 @@ public:
      *
      * @{ */
     void appendOutputParameter(const ParameterLocation&);
-    void appendOutputParameter(const RegisterDescriptor &reg) {
+    void appendOutputParameter(RegisterDescriptor reg) {
         appendOutputParameter(ParameterLocation(reg));
     }
-    void appendOutputParameter(const RegisterDescriptor &reg, int64_t offset) {
+    void appendOutputParameter(RegisterDescriptor reg, int64_t offset) {
         appendOutputParameter(ParameterLocation(reg, offset));
     }
     void appendOutputParameter(rose_addr_t va) {
@@ -452,7 +452,7 @@ public:
      *
      * @{ */
     const RegisterDescriptor stackPointerRegister() const { return stackPointerRegister_; }
-    void stackPointerRegister(const RegisterDescriptor &r) { stackPointerRegister_ = r; }
+    void stackPointerRegister(RegisterDescriptor r) { stackPointerRegister_ = r; }
     /** @} */
 
     /** Property: Size of non-parameter stack area.
@@ -518,10 +518,10 @@ public:
      * @{ */
     const ParameterLocation& thisParameter() const { return thisParameter_; }
     void thisParameter(const ParameterLocation &x) { thisParameter_ = x; }
-    void thisParameter(const RegisterDescriptor &reg) {
+    void thisParameter(RegisterDescriptor reg) {
         thisParameter(ParameterLocation(reg));
     }
-    void thisParameter(const RegisterDescriptor &reg, int64_t offset) {
+    void thisParameter(RegisterDescriptor reg, int64_t offset) {
         thisParameter(ParameterLocation(reg, offset));
     }
     void thisParameter(rose_addr_t va) {
@@ -649,11 +649,6 @@ public:
     // We can't set the location type independent of the location.
     //void set_this_location(ThisPointerLocation loc) ROSE_DEPRECATED("use thisParameter property instead") {
 
-    const RegisterDescriptor* get_this_register() const ROSE_DEPRECATED("use thisParameter property instead") {
-        if (thisParameter().type() != ParameterLocation::REGISTER)
-            return NULL;
-        return &thisParameter().reg();
-    }
     void set_this_register(const RegisterDescriptor *reg) ROSE_DEPRECATED("use thisParameter property instead") {
         if (NULL == reg) {
             thisParameter(ParameterLocation());         // no location
@@ -684,13 +679,6 @@ public:
     // We can't set the return value location type independent of the location.
     // void set_retval_location(ReturnValueLocation loc) ROSE_DEPRECATED("use appendOutputParameter instead");
 
-    const RegisterDescriptor* get_retval_register() const ROSE_DEPRECATED("use outputParameters property instead") {
-        if (outputParameters().empty())
-            return NULL;
-        if (outputParameters().front().type() != ParameterLocation::REGISTER)
-            return NULL;
-        return &outputParameters().front().reg();
-    }
     void set_retval_register(const RegisterDescriptor *reg) ROSE_DEPRECATED("use appendOutputParameter instead") {
         clearOutputParameters();
         if (NULL != reg)

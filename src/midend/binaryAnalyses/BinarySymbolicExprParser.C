@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 static boost::regex hexLiteralRe, signedDecimalLiteralRe;
@@ -409,28 +409,16 @@ protected:
 
         ops_.insert("and",          SymbolicExpr::OP_AND);
         doc += "@named{and}"
-               "{Boolean AND operation. All operands (one or more) are Boolean values, such as relational operators. For "
-               "bit-wise AND use the \"bv-and\" operator.}";
+               "{Conjunction operation. All operands (one or more) must be the same width. Boolean values are 1 bit.}";
 
         ops_.insert("asr",          SymbolicExpr::OP_ASR);
         doc += "@named{asr}"
                "{Arithmetic shift right. The second operand is interpreted as a signed value which is shifted right by "
                "the unsigned first argument. The result has the same width as the second operand.}";
 
-        ops_.insert("bv-and",       SymbolicExpr::OP_BV_AND);
-        doc += "@named{bv-and}"
-               "{Bit-wise AND operation. All operands (one or more) must be the same width, which is also the width of "
-               "the result.}";
-
-        ops_.insert("bv-or",        SymbolicExpr::OP_BV_OR);
-        doc += "@named{bv-or}"
-               "{Bit-wise OR operation. All operands (one or more) must be the same width, which is also the width of "
-               "the result.}";
-
-        ops_.insert("bv-xor",       SymbolicExpr::OP_BV_XOR);
-        doc += "@named{bv-xor}"
-               "{Bit-wise XOR operation. All operands (one or more) must be the same width, which is also the width of "
-               "the result.}";
+        ops_.insert("bv-and",       SymbolicExpr::OP_AND); // [Robb Matzke 2017-11-14]: deprecated; use "and" instead.
+        ops_.insert("bv-or",        SymbolicExpr::OP_OR); // [Robb Matzke 2017-11-14]: deprecated; use "or" instead.
+        ops_.insert("bv-xor",       SymbolicExpr::OP_XOR); // [Robb Matzke 2017-11-14]: deprecated; use "xor" instead
 
         ops_.insert("concat",       SymbolicExpr::OP_CONCAT);
         doc += "@named{concat}"
@@ -452,8 +440,9 @@ protected:
         ops_.insert("invert",       SymbolicExpr::OP_INVERT);
         doc += "@named{invert}"
                "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
-               "each bit flipped.}";
-
+               "each bit flipped. Since ROSE Boolean values are 1-bit vectors, use \"invert\"; 2's complement negation "
+               "of a 1-bit value is a no-op. See also \"not\" and \"!\".}";
+        
         ops_.insert("ite",          SymbolicExpr::OP_ITE);
         doc += "@named{ite}"
                "{If-then-else.  Takes a Boolean condition (first operand) and two alternatives (second and third operands). "
@@ -480,10 +469,13 @@ protected:
         doc += "@named{negate}"
                "{Evauates to the two's complement of the single operand. The result is the same width as the operand.}";
 
+        ops_.insert("not",       SymbolicExpr::OP_INVERT);
+        doc += "@named{not}"
+               "{Bit-wise invert. This is an alias for \"invert\".}";
+        
         ops_.insert("or",           SymbolicExpr::OP_OR);
         doc += "@named{or}"
-               "{Boolean OR operation. All operands (one or more) are Boolean values, such as relational operators. For "
-               "bit-wise OR use the \"bv-or\" operator.}";
+               "{Disjunction operation. All operands (one or more) must be the same width. Boolean values are 1 bit.}";
                
         ops_.insert("read",         SymbolicExpr::OP_READ);
         doc += "@named{read}"
@@ -618,6 +610,11 @@ protected:
                "same width as the memory state's domain, and the value must have the same width as the memory state's range "
                "(usually eight). The result of this expression is a new memory state.}";
 
+        ops_.insert("xor",       SymbolicExpr::OP_XOR);
+        doc += "@named{xor}"
+               "{Exclusive disjunction operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result. Booleans are 1 bit.}";
+
         ops_.insert("zerop",        SymbolicExpr::OP_ZEROP);
         doc += "@named{zerop}"
                "{Equal to zero.  The result is a Boolean value that is true when the single operand is equal to zero and "
@@ -652,23 +649,18 @@ protected:
 
         ops_.insert("&&",       SymbolicExpr::OP_AND);
         doc += "@named{&&}"
-               "{Boolean AND operation. All operands (one or more) are Boolean values, such as relational operators. For "
-               "bit-wise AND use the \"bv-and\" operator.}";
+               "{Conjunction operation. All operands (one or more) must be the same width. Note that ROSE does not "
+               "distinguish between Boolean types and 1-bit vectors, therefore \"&&\" and \"&\" are the same thing.}";
 
-        ops_.insert("&",        SymbolicExpr::OP_BV_AND);
+        ops_.insert("&",        SymbolicExpr::OP_AND);
         doc += "@named{&}"
-               "{Bit-wise AND operation. All operands (one or more) must be the same width, which is also the width of "
-               "the result.}";
+               "{Conjunction operation. All operands (one or more) must be the same width. Note that ROSE does not "
+               "distinguish between Boolean types and 1-bit vectors, therefore \"&&\" and \"&\" are the same thing.}";
 
-        ops_.insert("|",        SymbolicExpr::OP_BV_OR);
-        doc += "@named{|}"
-               "{Bit-wise OR operation. All operands (one or more) must be the same width, which is also the width of "
-               "the result.}";
-
-        ops_.insert("^",        SymbolicExpr::OP_BV_XOR);
+        ops_.insert("^",        SymbolicExpr::OP_XOR);
         doc += "@named{^}"
-               "{Bit-wise XOR operation. All operands (one or more) must be the same width, which is also the width of "
-               "the result.}";
+               "{Exclusive disjunction operation. All operands (one or more) must be the same width, which is also the width "
+               "of the result. Note that ROSE does not distinguish between Boolean types and 1-bit vectors.}";
 
         ops_.insert("==",       SymbolicExpr::OP_EQ);
         doc += "@named{==}"
@@ -677,7 +669,14 @@ protected:
         ops_.insert("~",        SymbolicExpr::OP_INVERT);
         doc += "@named{~}"
                "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
-               "each bit flipped.}";
+               "each bit flipped. Since ROSE does not distinguish between Boolean and 1-bit vectors, the \"~\" and \"!\" "
+               "operators do the same thing.}";
+
+        ops_.insert("!",        SymbolicExpr::OP_INVERT);
+        doc += "@named{~}"
+               "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
+               "each bit flipped. Since ROSE does not distinguish between Boolean and 1-bit vectors, the \"~\" and \"!\" "
+               "operators do the same thing.}";
 
         ops_.insert("?",        SymbolicExpr::OP_ITE);
         doc += "@named{?}"
@@ -695,9 +694,16 @@ protected:
 
         ops_.insert("||",       SymbolicExpr::OP_OR);
         doc += "@named{||}"
-               "{Boolean OR operation. All operands (one or more) are Boolean values, such as relational operators. For "
-               "bit-wise OR use the \"bv-or\" operator.}";
+               "{Disjunction operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result. Note that ROSE does not distinguish between Boolean types and 1-bit vectors, therefore "
+               "\"||\" and \"|\" are the same thing.}";
                
+        ops_.insert("|",        SymbolicExpr::OP_OR);
+        doc += "@named{|}"
+               "{Disjunction operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result. Note that ROSE does not distinguish between Boolean types and 1-bit vectors, therefore "
+               "\"||\" and \"|\" are the same thing.}";
+
         ops_.insert("<<",       SymbolicExpr::OP_SHL0); // requires escapes since '<' introduces a comment
         doc += "@named{<<}"
                "{Shift left introducing zeros.  Shifts the bits of the second operand left by the amount specified in the "

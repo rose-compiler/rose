@@ -6,7 +6,7 @@ namespace PathFinder {
 
 Settings settings;
 
-rose::Diagnostics::Facility mlog;
+Rose::Diagnostics::Facility mlog;
 
 } // namespace
 

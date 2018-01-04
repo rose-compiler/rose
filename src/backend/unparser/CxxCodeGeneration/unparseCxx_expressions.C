@@ -16,7 +16,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_HIDDEN_LIST_DATA 0
@@ -209,6 +209,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
           case LAMBDA_EXP:              { unparseLambdaExpression(expr, info); break; }
 
+       // DQ (11/21/2017): Adding support for GNU C/C++ extension for computed goto 
+       // (and using what was previously only a Fortran IR node to support this).
+          case LABEL_REF:              { unparseLabelRefExpression(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -226,6 +230,25 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+   }
+
+
+void
+Unparse_ExprStmt::unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // DQ (11/21/2017): Adding support for GNU C extension for computed goto.
+
+     SgLabelRefExp* labelRefExp = isSgLabelRefExp(expr);
+     ROSE_ASSERT(labelRefExp != NULL);
+
+     ROSE_ASSERT(labelRefExp->get_symbol() != NULL);
+
+     SgName name = labelRefExp->get_symbol()->get_name();
+
+  // curprint("/* Output label reference expression */ ");
+
+     curprint("&&");
+     curprint(name);
    }
 
 
@@ -720,7 +743,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                }
 
 #if 0
-               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s explicitlySpecified = %s \n",(*i)->class_name().c_str(),((*i)->get_explicitlySpecified() == true) ? "true" : "false");
+               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s explicitlySpecified = %s \n",*i,(*i)->class_name().c_str(),((*i)->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 #if 0
                unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
@@ -733,7 +756,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                // When to output , ?  the argument must not be the last one.
                if (i != templateArgListPtr.end())
                   {
-                    // check if if is a class type for C++ 11 lambda function
+                    // check if this is a class type for C++ 11 lambda function
                     bool hasLambdaFollowed = false;
                     SgTemplateArgument* arg = *i; 
                     if (arg != NULL) 
@@ -749,6 +772,10 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                         }
                       }
                     }
+
+#if 0
+               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s hasLambdaFollowed = %s \n",*i,(*i)->class_name().c_str(), hasLambdaFollowed ? "true" : "false");
+#endif
                // When to skip , ?
                // condition 1: next item is a lambda function
               //  Or condition 2:  next item is an ending parameter pack argument (parameter pack argument in the middle should have , )
@@ -1225,6 +1252,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // (documented in the Unparse_ExprStmt::generateNameQualifier() member function.
   // newInfo.set_forceQualifiedNames();
 
+#if 0
+     printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length()     = %d \n",templateArgument->get_name_qualification_length());
+     printf ("In unparseTemplateArgument(): templateArgument->get_global_qualification_required() = %s \n",(templateArgument->get_global_qualification_required() == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): templateArgument->get_type_elaboration_required()     = %s \n",(templateArgument->get_type_elaboration_required() == true) ? "true" : "false");
+#endif
+
   // DQ (5/14/2011): Added support for newer name qualification implementation.
   // printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
      newInfo.set_name_qualification_length(templateArgument->get_name_qualification_length());
@@ -1270,7 +1303,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
                SgType* templateArgumentType = templateArgument->get_type();
 #if 0
-               printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgumentType->class_name().c_str());
+               printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: templateArgument->get_type() = %s \n",templateArgumentType->class_name().c_str());
             // curprint ( "\n /* templateArgument->get_type() */ \n");
 #endif
             // DQ (1/9/2017): If the result of get_type() was identified as containing parts with non public access then we want to use an alternative type alias.
@@ -1368,10 +1401,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     curprint(nameQualifier);
 #else
 #if 1
-            // newInfo.display("In unparseTemplateArgument(): newInfo.display()");
+                 // newInfo.display("In unparseTemplateArgument(): newInfo.display()");
 
-            // DQ (5/5/2013): Refactored code used here and in the unparseFunctionParameterDeclaration().
-               unp->u_type->outputType<SgTemplateArgument>(templateArgument,templateArgumentType,newInfo);
+                 // DQ (5/5/2013): Refactored code used here and in the unparseFunctionParameterDeclaration().
+                    unp->u_type->outputType<SgTemplateArgument>(templateArgument,templateArgumentType,newInfo);
 #else
             // DQ (5/4/2013): This code was copied from the function argument processing which does handle the types properly.
             // So this code needs to be refactored.
@@ -1510,11 +1543,21 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     printf ("In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); (second part) templateArgument->get_type() = %p = %s \n",templateArgument->get_type(),templateArgument->get_type()->class_name().c_str());
                     curprint ( "\n /* second part of type */ \n");
 #endif
+#if 0
+                    printf ("In unparseTemplateArgument(): Before calling unparseType: newInfo.SkipClassDefinition() = %s \n",(newInfo.SkipClassDefinition() == true) ? "true" : "false");
+                    printf ("In unparseTemplateArgument(): Before calling unparseType: newInfo.SkipEnumDefinition()  = %s \n",(newInfo.SkipEnumDefinition()  == true) ? "true" : "false");
+#endif
                  // unp->u_type->unparseType(templateArgument->get_type(),newInfo);
                     unp->u_type->unparseType(templateArgumentType,newInfo);
 #if 0
                     printf ("DONE: In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); \n");
+#endif
+#if 0
                     curprint ( "\n /* end of type */ \n");
+#endif
+#if 0
+                    printf ("In unparseTemplateArgument(): After calling unparseType: newInfo.SkipClassDefinition() = %s \n",(newInfo.SkipClassDefinition() == true) ? "true" : "false");
+                    printf ("In unparseTemplateArgument(): After calling unparseType: newInfo.SkipEnumDefinition()  = %s \n",(newInfo.SkipEnumDefinition()  == true) ? "true" : "false");
 #endif
                   }
 
@@ -1547,7 +1590,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                if (templateArgument->get_expression() != NULL)
                   {
 #if 0
-                    printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
+                    printf ("In unparseTemplateArgument(): case SgTemplateArgument::nontype_argument: templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
 #endif
 #if OUTPUT_DEBUGGING_INFORMATION
                     printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
@@ -1596,7 +1639,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
             // unparseTemplateName(templateArgument->xxx,newInfo);
                ROSE_ASSERT(templateArgument->get_templateDeclaration() != NULL);
 #if 0
-               printf ("In unparseTemplateArgument(): template_template_argument: templateArgument->get_templateDeclaration()->get_template_name() = %s \n",templateArgument->get_templateDeclaration()->get_template_name().str());
+               printf ("In unparseTemplateArgument(): case SgTemplateArgument::template_template_argument: templateArgument->get_templateDeclaration()->get_template_name() = %s \n",
+                    templateArgument->get_templateDeclaration()->get_template_name().str());
 #endif
             // curprint ( "\n /* SgTemplateArgument::template_template_argument */ \n");
 
@@ -1620,7 +1664,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
             // Using an expression for now, but we might need something else.
                ROSE_ASSERT (templateArgument->get_expression() != NULL);
 #if 0
-               printf ("In unparseTemplateArgument(): Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
+               printf ("In unparseTemplateArgument(): case SgTemplateArgument::start_of_pack_expansion_argument: Template argument = %p = %s \n",
+                    templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
 #endif
             // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
 
@@ -1657,6 +1702,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #if 0
      printf ("Leaving unparseTemplateArgument(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("Leaving unparseTemplateArgument(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
+
+#if 0
+  // Note that newInfo is what was actually used in the case of outputing a type (above).
+     printf ("Leaving unparseTemplateArgument(): newInfo.SkipClassDefinition() = %s \n",(newInfo.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("Leaving unparseTemplateArgument(): newInfo.SkipEnumDefinition()  = %s \n",(newInfo.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
 
   // DQ (9/9/2016): These should have been setup to be the same.

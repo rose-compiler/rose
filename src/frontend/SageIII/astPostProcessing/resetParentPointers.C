@@ -19,7 +19,7 @@ using namespace std;
 
 // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
 #undef mprintf
-#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
 
 // [DQ]
 // Declaration matching static member data

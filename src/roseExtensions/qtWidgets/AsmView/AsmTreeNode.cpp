@@ -14,7 +14,7 @@
 
 #include <QDebug>
 
-using namespace rose;
+using namespace Rose;
 
 // ---------------------- Root Node ------------------------------
 

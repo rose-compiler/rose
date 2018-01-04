@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2016.
 
 #ifndef PROMELA_CODE_GENERATOR_H
 #define PROMELA_CODE_GENERATOR_H
@@ -24,7 +23,11 @@
 
 namespace SPRAY {
 
-  // Generates PROMELA code that implements the synchronsized product of the given automata
+  /*! 
+   * \brief Generates PROMELA code that implements synchronized process graphs.
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class PromelaCodeGenerator {
   public:
     // parse the CFG contained in the "filename" .dot-file and return a Flow CFG.

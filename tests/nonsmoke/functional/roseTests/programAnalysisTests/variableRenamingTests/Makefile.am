@@ -33,7 +33,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS += testVariableRenaming
 testVariableRenaming_SOURCES = testVariableRenaming.C
 testVariableRenaming_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)
-testVariableRenaming_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+testVariableRenaming_LDFLAGS = $(ROSE_RPATHS)
+testVariableRenaming_LDADD = $(ROSE_LIBS)
 
 ###############################################################################################################################
 # The individual tests: the test executable run against each individual input specimen.

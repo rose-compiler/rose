@@ -4,12 +4,12 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 #include "RSIM_Linux32.h"
+#include "BinaryYicesSolver.h"
 #include "SymbolicSemantics.h"
-#include "YicesSolver.h"
 #include "BinaryPointerDetection.h"
 
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 // If this symbol is undefined then the simulator will not forward its own signals to the specimen, making it easier to kill
 // the specimen in some cases.  See its use in main().
@@ -41,8 +41,8 @@ public:
         : SymbolicSemantics::ValueType<nBits>(node) {}
     ValueType(const PartialSymbolicSemantics::ValueType<nBits> &other, std::string comment="") {
         set_expression(other.is_known() ?
-                       rose::BinaryAnalysis::SymbolicExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
-                       rose::BinaryAnalysis::SymbolicExpr::LeafNode::create_variable(nBits, comment));
+                       Rose::BinaryAnalysis::SymbolicExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
+                       Rose::BinaryAnalysis::SymbolicExpr::LeafNode::create_variable(nBits, comment));
     }
 };
 
@@ -51,7 +51,7 @@ public:
  ******************************************************************************************************************************/
 
 
-typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process, ValueType> PointerDetector;
+typedef Rose::BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process, ValueType> PointerDetector;
 
 /******************************************************************************************************************************
  *                                              Memory Oracle Analysis
@@ -264,7 +264,7 @@ public:
                 }
 
                 // Do one pointer analysis
-                rose::BinaryAnalysis::SMTSolver *solver = NULL;
+                Rose::BinaryAnalysis::SmtSolver *solver = NULL;
                 PointerDetector ptr_detector(args.thread->get_process(), solver);
                 ptr_detector.analyze(analysis_addr, addrspc);
                 const PointerDetector::Pointers &pointers = ptr_detector.get_pointers();
@@ -272,9 +272,9 @@ public:
                 for (PointerDetector::Pointers::const_iterator pi=pointers.begin();
                      pi!=pointers.end(); ++pi) {
                     const PointerDetector::Pointer &pointer = *pi;
-                    if (pointer.type & rose::BinaryAnalysis::PointerAnalysis::DATA_PTR)
+                    if (pointer.type & Rose::BinaryAnalysis::PointerAnalysis::DATA_PTR)
                         std::cout <<"data ";
-                    if (pointer.type & rose::BinaryAnalysis::PointerAnalysis::CODE_PTR)
+                    if (pointer.type & Rose::BinaryAnalysis::PointerAnalysis::CODE_PTR)
                         std::cout << "code ";
                     std::cout <<"pointer at " <<pointer.address <<"\n";
                 }

@@ -9,6 +9,12 @@
 #include <cstdlib>
 #include "SprayException.h"
 
+#include "boost/algorithm/string.hpp"
+#include "boost/algorithm/string/trim.hpp"
+#include "boost/algorithm/string/regex.hpp"
+#include "boost/regex.hpp"
+#include "boost/lexical_cast.hpp"
+
 using namespace std;
 
 string SPRAY::replace_string(string toModify, string toReplace, string with) {
@@ -137,6 +143,30 @@ SPRAY::Parse::integerList(string liststring) {
     return intList;
 }
 
+list<set<int> >
+SPRAY::Parse::integerSetList(string liststring) {
+  list<set<int> > intList;
+      stringstream ss(liststring);
+    if(ss.peek()=='[')
+      ss.ignore();
+    else
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
+    string set;
+    while(ss>>set) {
+      //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
+      intList.push_back(integerSet(set));
+      if(ss.peek()==','||ss.peek()==' ')
+        ss.ignore();
+    }
+#if 0
+    if(ss.peek()==']')
+      ss.ignore();
+    else
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
+#endif
+    return intList;
+}
+
 set<int>
 SPRAY::Parse::integerSet(string setstring) {
   set<int> intSet;
@@ -201,3 +231,9 @@ list<int> SPRAY::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
   return result;
 }
 
+std::vector<std::string> SPRAY::Parse::commandLineArgs(std::string commandLine) {
+  vector<std::string> v; 		
+  boost::split_regex(v, commandLine, boost::regex("( )+"));
+  cout<<"Parsing command line: found "<<v.size()<<" arguments."<<endl;
+  return v;
+}

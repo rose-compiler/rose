@@ -12,7 +12,8 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 ########################################################################################################################
 # A checker taking no specimens and which does not even depend on librose. It's only purpose is to see if it can be
@@ -47,4 +48,4 @@ check-runAlgorithm: $(runAlgorithm_targets)
 ########################################################################################################################
 # Boilerplate.
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)

@@ -20,9 +20,9 @@
 #include <sys/vfs.h>                                    // for the statfs syscalls
 #include <sys/wait.h>                                   // for the wait4 syscall
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Linux64::init() {
@@ -193,9 +193,9 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
         debugger.attach(exeArgs());
     }
 
-    process->get_memory()->insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
+    process->get_memory()->insertProcess(debugger.isAttached(), MemoryMap::Attach::NO);
 
-    const RegisterDictionary *regs = disassembler->get_registers();
+    const RegisterDictionary *regs = disassembler->registerDictionary();
     initialRegs_.ax = debugger.readRegister(*regs->lookup("rax")).toInteger();
     initialRegs_.bx = debugger.readRegister(*regs->lookup("rbx")).toInteger();
     initialRegs_.cx = debugger.readRegister(*regs->lookup("rcx")).toInteger();

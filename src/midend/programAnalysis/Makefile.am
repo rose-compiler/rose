@@ -42,7 +42,6 @@ include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
 include $(srcdir)/genericDataflow/Makefile_variables
-include $(srcdir)/graphAnalysis/Makefile_variables
 include $(srcdir)/OAWrap/Makefile_variables
 include $(srcdir)/pointerAnal/Makefile_variables
 include $(srcdir)/sideEffectAnalysis/Makefile_variables
@@ -61,7 +60,6 @@ mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
 mpaGenericDataflowPath=$(srcdir)/genericDataflow#
-mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
 mpaOAWrapPath=$(srcdir)/OAWrap#
 mpaPointerAnalPath=$(srcdir)/pointerAnal#
 mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
@@ -118,7 +116,6 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaBitvectorDataflow_la_sources) \
 	$(mpaVirtualFunctionAnalysis_la_sources) \
 	$(mpaDefUseAnalysis_la_sources) \
-	$(mpaGraphAnalysis_la_sources) \
 	$(mpaGenericDataflow_la_sources) \
 	$(mpaOAWrap_la_sources) \
 	$(mpaPointerAnal_la_sources) \
@@ -153,7 +150,6 @@ pkginclude_HEADERS=\
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
 	$(mpaDominanceAnalysis_includeHeaders) \
 	$(mpaGenericDataflow_includeHeaders) \
-	$(mpaGraphAnalysis_includeHeaders) \
 	$(mpaOAWrap_includeHeaders) \
 	$(mpaPointerAnal_includeHeaders) \
 	$(mpaSideEffectAnalysis_includeHeaders) \
@@ -180,7 +176,6 @@ EXTRA_DIST=\
 	$(mpaDistributedMemoryAnalysis_extraDist) \
 	$(mpaDominanceAnalysis_extraDist) \
 	$(mpaGenericDataflow_extraDist) \
-	$(mpaGraphAnalysis_extraDist) \
 	$(mpaOAWrap_extraDist) \
 	$(mpaPointerAnal_extraDist) \
 	$(mpaSideEffectAnalysis_extraDist) \
@@ -200,7 +195,6 @@ clean-local:
 	$(mpaDefUseAnalysis_cleanLocal)
 	$(mpaDominanceAnalysis_cleanLocal)
 	$(mpaGenericDataflow_cleanLocal)
-	$(mpaGraphAnalysis_cleanLocal)
 	$(mpaOAWrap_cleanLocal)
 	$(mpaPointerAnal_cleanLocal)
 	$(mpaStaticInterproceduralSlicing_cleanLocal)
@@ -218,7 +212,6 @@ distclean-local:
 	$(mpaDefUseAnalysis_distCleanLocal)
 	$(mpaDominanceAnalysis_distCleanLocal)
 	$(mpaGenericDataflow_distCleanLocal)
-	$(mpaGraphAnalysis_distCleanLocal)
 	$(mpaOAWrap_distCleanLocal)
 	$(mpaPointerAnal_distCleanLocal)
 	$(mpaStaticInterproceduralSlicing_distCleanLocal)

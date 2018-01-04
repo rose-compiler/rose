@@ -19,6 +19,7 @@ PState::PState() {
 void PState::toStream(ostream& os) const {
   os<<toString();
 }
+
 string PState::toString() const {
   stringstream ss;
   //ss << "PState=";
@@ -26,12 +27,9 @@ string PState::toString() const {
   for(PState::const_iterator j=begin();j!=end();++j) {
     if(j!=begin()) ss<<",";
     ss<<"(";
+    ss<<"@";
     ss <<(*j).first.toString();
-#if 0
-    ss<<"->";
-#else
-    ss<<",";
-#endif
+    ss<<":";
     ss<<varValueToString((*j).first);
     ss<<")";
   }
@@ -44,16 +42,14 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   //ss << "PState=";
   ss<< "{";
   for(PState::const_iterator j=begin();j!=end();++j) {
-    if(j!=begin()) ss<<", ";
-    ss<<"(";
+    if(j!=begin()) 
+      ss<<", ";
+    //ss<<"(";
+    ss<<"@";
     ss <<((*j).first).toString(variableIdMapping);
-#if 0
-    ss<<"->";
-#else
-    ss<<",";
-#endif
+    ss<<":";
     ss<<(((*j).second).toString(variableIdMapping)); // ss<<varValueToString((*j).first);
-    ss<<")";
+    //ss<<")";
   }
   ss<<"}";
   return ss.str();
@@ -74,7 +70,7 @@ long EState::memorySize() const {
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::deleteVar(VarAbstractValue varId) {
+void PState::deleteVar(AbstractValue varId) {
   PState::iterator i=begin();
   while(i!=end()) {
     if((*i).first==varId)
@@ -88,7 +84,7 @@ void PState::deleteVar(VarAbstractValue varId) {
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::varExists(VarAbstractValue varId) const {
+bool PState::varExists(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   return !(i==end());
 }
@@ -97,10 +93,10 @@ bool PState::varExists(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::varIsConst(VarAbstractValue varId) const {
+bool PState::varIsConst(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
-    AValue val=(*i).second;
+    AbstractValue val=(*i).second;
     return val.isConstInt();
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
@@ -108,10 +104,10 @@ bool PState::varIsConst(VarAbstractValue varId) const {
     return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }
-bool PState::varIsTop(VarAbstractValue varId) const {
+bool PState::varIsTop(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
-    AValue val=(*i).second;
+    AbstractValue val=(*i).second;
     return val.isTop();
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
@@ -123,9 +119,9 @@ bool PState::varIsTop(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-string PState::varValueToString(VarAbstractValue varId) const {
+string PState::varValueToString(AbstractValue varId) const {
   stringstream ss;
-  AValue val=varValue(varId);
+  AbstractValue val=varValue(varId);
   return val.toString();
 }
 
@@ -133,8 +129,8 @@ string PState::varValueToString(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2014.
  */
-AValue PState::varValue(VarAbstractValue varId) const {
-  AValue val=((*(const_cast<PState*>(this)))[varId]);
+AbstractValue PState::varValue(AbstractValue varId) const {
+  AbstractValue val=((*(const_cast<PState*>(this)))[varId]);
   return val;
 }
 
@@ -142,35 +138,31 @@ AValue PState::varValue(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::setAllVariablesToTop() {
-  CodeThorn::AValue val=CodeThorn::Top();
-  setAllVariablesToValue(val);
+void PState::writeTopToAllMemoryLocations() {
+  CodeThorn::AbstractValue val=CodeThorn::Top();
+  writeValueToAllMemoryLocations(val);
 }
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::setAllVariablesToValue(CodeThorn::AValue val) {
+void PState::writeValueToAllMemoryLocations(CodeThorn::AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
-    VarAbstractValue varId=(*i).first;
-    setVariableToValue(varId,val);
+    AbstractValue varId=(*i).first;
+    writeToMemoryLocation(varId,val);
   }
 }
 
-void PState::setVariableToTop(VarAbstractValue varId) {
-  CodeThorn::AValue val=CodeThorn::Top();
-  setVariableToValue(varId, val);
+void PState::writeTopToMemoryLocation(AbstractValue varId) {
+  CodeThorn::AbstractValue val=CodeThorn::Top();
+  writeToMemoryLocation(varId, val);
 }
 
-void PState::setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val) {
-  operator[](varId)=val;
-}
-
-VarAbstractValueSet PState::getVariableIds() const {
-  VarAbstractValueSet varIdSet;
+AbstractValueSet PState::getVariableIds() const {
+  AbstractValueSet varIdSet;
   for(PState::const_iterator i=begin();i!=end();++i) {
-    VarAbstractValue varId=(*i).first;
+    AbstractValue varId=(*i).first;
     varIdSet.insert(varId);
   }
   return varIdSet;
@@ -236,10 +228,9 @@ ostream& CodeThorn::operator<<(ostream& os, const PState& pState) {
   return os;
 }
 
-#ifdef USER_DEFINED_PSTATE_COMP
 bool CodeThorn::operator<(const PState& s1, const PState& s2) {
-  if(s1.size()!=s2.size())
-    return s1.size()<s2.size();
+  if(s1.stateSize()!=s2.stateSize())
+    return s1.stateSize()<s2.stateSize();
   PState::const_iterator i=s1.begin();
   PState::const_iterator j=s2.begin();
   while(i!=s1.end() && j!=s2.end()) {
@@ -252,9 +243,9 @@ bool CodeThorn::operator<(const PState& s1, const PState& s2) {
   assert(i==s1.end() && j==s2.end());
   return false; // both are equal
 }
-#if 0
+
 bool CodeThorn::operator==(const PState& c1, const PState& c2) {
-  if(c1.size()==c2.size()) {
+  if(c1.stateSize()==c2.stateSize()) {
     PState::const_iterator i=c1.begin();
     PState::const_iterator j=c2.begin();
     while(i!=c1.end()) {
@@ -273,5 +264,40 @@ bool CodeThorn::operator==(const PState& c1, const PState& c2) {
 bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
   return !(c1==c2);
 }
-#endif
-#endif
+
+AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const {
+  if(abstractMemLoc.isTop()) {
+    // result can be any value
+    return AbstractValue(CodeThorn::Top());
+  }
+  return this->varValue(abstractMemLoc);
+}
+
+void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
+                                   AbstractValue abstractValue) {
+  if(abstractValue.isBot()) {
+    //cout<<"INFO: writing bot to memory (bot->top conversion)."<<endl;
+    abstractValue=AbstractValue(CodeThorn::Top());
+  }
+  operator[](abstractMemLoc)=abstractValue;
+}
+
+size_t PState::stateSize() const {
+  return this->size();
+}
+
+PState::iterator PState::begin() {
+  return map<AbstractValue,CodeThorn::AbstractValue>::begin();
+}
+
+PState::iterator PState::end() {
+  return map<AbstractValue,CodeThorn::AbstractValue>::end();
+}
+
+PState::const_iterator PState::begin() const {
+  return map<AbstractValue,CodeThorn::AbstractValue>::begin();
+}
+
+PState::const_iterator PState::end() const {
+  return map<AbstractValue,CodeThorn::AbstractValue>::end();
+}

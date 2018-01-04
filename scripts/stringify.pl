@@ -256,7 +256,7 @@ sub parse_namespace {
   if ('{' eq $ns_name) {
     push @name_stack, [undef, &$lexer('location')];
   } elsif ($ns_name =~ /^[a-z_A-Z]\w*$/ && '{' eq &$lexer()) {
-    if ($ns_name eq 'rose') {
+    if ($ns_name eq 'Rose') {
       push @name_stack, [undef, &$lexer('location')];
     } else {
       push @name_stack, [$ns_name, &$lexer('location')];
@@ -384,7 +384,7 @@ sub output_decl {
 
 #include <string>
 
-namespace rose {
+namespace Rose {
 
 /** Shortens names of long stringifiers.
  *
@@ -447,7 +447,7 @@ sub output_defn {
     print OUTPUT "#include <cstring>\n";
     print OUTPUT "#include <sstream>\n";
     print OUTPUT "\n";
-    print OUTPUT "namespace rose {\n";
+    print OUTPUT "namespace Rose {\n";
   } else {
     *OUTPUT = *STDOUT;
   }

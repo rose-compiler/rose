@@ -5,7 +5,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // This function is local to this file
 string
@@ -301,6 +301,17 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          key = generateUniqueName(functionDeclaration,true);
                          ROSE_ASSERT(key.empty() == false);
                        }
+                    break;
+                  }
+
+            // Generate a name for SgDeclarationScope
+               case V_SgDeclarationScope:
+                  {
+                    key = "__declaration_scope_";
+
+                 // Make the key unique for each declaration scope!
+                    const SgDeclarationScope* declarationScope = isSgDeclarationScope(statement);
+                    key = key + StringUtility::numberToString(declarationScope);
                     break;
                   }
 

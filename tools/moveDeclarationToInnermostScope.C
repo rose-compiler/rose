@@ -109,7 +109,7 @@ static const char *description =
     "As a result, less variables need to be shared.";
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 
 class Scope_Node;
@@ -1740,7 +1740,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
        bottom_scope = bottom_scope->get_scope();
        if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
        {
-         cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+       //  cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
 #if 0
       // DQ (12/26/2014): commented out to avoid overly verbose output.
          cout<<"The declaration in question has the following file info:"<<endl;

@@ -12,8 +12,13 @@
 #include "AstAnnotator.h"
 #include "AbstractValue.h"
 #include "Miscellaneous2.h"
+
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+// SPOT includes
 #include "tgba/succiter.hh"
 #include "tgba/state.hh"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -147,6 +152,10 @@ void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
   // define a color scheme
   int numColors = 16;
@@ -191,16 +200,16 @@ string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
 string Visualizer::pstateToString(const PState* pstate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
-  if((tg1&&boolOptions["tg1-pstate-address"])||(tg2&&boolOptions["tg2-pstate-address"])) {
+  if((tg1&&args.getBool("tg1-pstate-address"))||(tg2&&args.getBool("tg2-pstate-address"))) {
     ss<<"@"<<pstate;
     pstateAddressSeparator=true;
   }    
-  if((tg1&&boolOptions["tg1-pstate-id"])||(tg2&&boolOptions["tg2-pstate-id"])) {
+  if((tg1&&args.getBool("tg1-pstate-id"))||(tg2&&args.getBool("tg2-pstate-id"))) {
     if(pstateAddressSeparator)
       ss<<":";
     ss<<"S"<<pstateSet->pstateId(pstate);
   }
-  if((tg1&&boolOptions["tg1-pstate-properties"])||(tg2&&boolOptions["tg2-pstate-properties"])) {
+  if((tg1&&args.getBool("tg1-pstate-properties"))||(tg2&&args.getBool("tg2-pstate-properties"))) {
     ss<<pstate->toString(variableIdMapping);
   } 
   return ss.str();
@@ -209,20 +218,20 @@ string Visualizer::pstateToString(const PState* pstate) {
 string Visualizer::estateToString(const EState* estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
-  if((tg1&&boolOptions["tg1-estate-address"])||(tg2&&boolOptions["tg2-estate-address"])) {
+  if((tg1&&args.getBool("tg1-estate-address"))||(tg2&&args.getBool("tg2-estate-address"))) {
     ss<<"@"<<estate;
     pstateAddressSeparator=true;
   }    
-  if((tg1&&boolOptions["tg1-estate-id"])||(tg2&&boolOptions["tg2-estate-id"])) {
+  if((tg1&&args.getBool("tg1-estate-id"))||(tg2&&args.getBool("tg2-estate-id"))) {
     if(pstateAddressSeparator) {
       ss<<":";
     }
     ss<<estateIdStringWithTemporaries(estate);
   }
-  if((tg1&&boolOptions["tg1-estate-properties"])||(tg2&&boolOptions["tg2-estate-properties"])) {
+  if((tg1&&args.getBool("tg1-estate-properties"))||(tg2&&args.getBool("tg2-estate-properties"))) {
     ss<<estate->toString(variableIdMapping);
   } 
-  if((tg1&&boolOptions["tg1-estate-predicate"])||(tg2&&boolOptions["tg2-estate-predicate"])) {
+  if((tg1&&args.getBool("tg1-estate-predicate"))||(tg2&&args.getBool("tg2-estate-predicate"))) {
     string s=estate->predicateToString(variableIdMapping);
     // replace ASCII with HTML characters
     s=SPRAY::replace_string(s,",","&and;");
@@ -289,6 +298,10 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph) {
   EStateTransitionMap* outEdgesMap = parProTransitionGraph->getOutEdgesMap();
   stringstream ss;
@@ -326,6 +339,10 @@ string Visualizer::transitionGraphToDot() {
   return ss.str();
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2014, 2015.
+ */
 string Visualizer::abstractTransitionGraphToDot() {
   stringstream ss;
   string result;
@@ -340,7 +357,7 @@ string Visualizer::abstractTransitionGraphToDot() {
       concreteEStates.insert(*i);
     } 
   }
-  ss << transitionGraphWithIOToDot(concreteEStates, true, boolOptions["keep-error-states"], false);
+  ss << transitionGraphWithIOToDot(concreteEStates, true, args.getBool("keep-error-states"), false);
   ss << "subgraph cluster_abstractStates {" << endl;
   ss << transitionGraphWithIOToDot(abstractEStates, true, false, true);
   ss << "}" << endl;
@@ -380,7 +397,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     if (displayCurrentState) {
       // generate number which is used in IO operation
       string name="\"";
-      if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
+      if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
         if(!number.isTop() && !number.isBot()) {
           // convert number to letter
           int num=number.getIntValue();
@@ -499,7 +516,7 @@ string Visualizer::transitionGraphWithIOToDot() {
 #endif
     // generate number which is used in IO operation
     AbstractValue number=(*i)->determineUniqueIOValue();
-    if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
+    if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter
         int num=number.getIntValue();
@@ -565,6 +582,10 @@ string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
   return ss.str();
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
 					      ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					      bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings) {
@@ -587,7 +608,11 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	      node_shape = "[label = \"R/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
 	      edge_color = "red";
 	    } else {
-	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      if (arrayElementsAsPoints) {
+		node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      } else {
+		node_shape = "[shape = rectangle, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      }
 	      edge_color = "blue";	      
 	    }
 	  } else {
@@ -608,7 +633,7 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	  } else {
 	    string clusterstring;
 	    if (useClusters) {
-	      string clusterstring = "subgraph cluster_" + varName + " { \n";
+	      clusterstring = "subgraph cluster_" + varName + " { \n";
 	    }
 	    clusterstring += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
 	    clusters[varName] = clusterstring;
@@ -622,7 +647,11 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	      node_shape = "[label = \"R/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
 	      edge_color = "red";
 	    } else {
-	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      if (arrayElementsAsPoints) {
+		node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      } else {
+		node_shape = "[shape = rectangle, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      }
 	      edge_color = "\"#47A11D\"";	      
 	    }
 	  } else if (writeWriteRaces.find(*i) != writeWriteRaces.end()) {
@@ -630,7 +659,11 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	      node_shape = "[label = \"W/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
 	      edge_color = "red";
 	    } else {
-	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      if (arrayElementsAsPoints) {
+		node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      } else {
+		node_shape = "[shape = rectangle, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      }
 	      edge_color = "\"#47A11D\"";	      
 	    }
 	  } else {
@@ -651,7 +684,7 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	  } else {
 	    string clusterstring;
 	    if (useClusters) {
-	      string clusterstring = "subgraph cluster_" + varName + " { \n";
+	      clusterstring = "subgraph cluster_" + varName + " { \n";
 	    }
 	    clusterstring += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
 	    clusters[varName] = clusterstring;
@@ -704,6 +737,7 @@ string Visualizer::foldedTransitionGraphToDot() {
   return ss.str();
 }
 
+#ifdef HAVE_SPOT
 struct spot_state_compare {
   bool operator() (spot::state* const& lhs, spot::state* const& rhs) const {
     if (lhs->compare(rhs) < 0) {
@@ -714,6 +748,10 @@ struct spot_state_compare {
   }
 };
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
   stringstream ss;
   ss << "digraph G {" << endl;
@@ -743,6 +781,7 @@ string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
   ss << "}" << endl;
   return ss.str();
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END OF VISUALIZER

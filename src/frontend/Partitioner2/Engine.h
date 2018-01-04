@@ -2,14 +2,16 @@
 #define ROSE_Partitioner2_Engine_H
 
 #include <BinaryLoader.h>
+#include <boost/noncopyable.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <Progress.h>
 #include <Sawyer/DistinctList.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -59,8 +61,8 @@ namespace Partitioner2 {
  *  @code
  *   #include <rose.h>
  *   #include <Partitioner2/Engine.h>
- *   using namespace rose;
- *   namespace P2 = rose::BinaryAnalysis::Partitioner2;
+ *   using namespace Rose;
+ *   namespace P2 = Rose::BinaryAnalysis::Partitioner2;
  *
  *   int main(int argc, char *argv[]) {
  *       std::string purpose = "disassembles a binary specimen";
@@ -96,7 +98,7 @@ namespace Partitioner2 {
  *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
  *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
  */
-class ROSE_DLL_API Engine {
+class ROSE_DLL_API Engine: private boost::noncopyable {
 public:
     /** Settings for the engine.
      *
@@ -191,6 +193,7 @@ private:
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
+    Progress::Ptr progress_;                            // optional progress reporting
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -198,17 +201,18 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)),
+        progress_(Progress::instance()) {
         init();
     }
 
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
-        : settings_(settings),
-          interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
+        : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        basicBlockWorkList_(BasicBlockWorkList::instance(this)), progress_(Progress::instance()) {
         init();
     }
-
+    
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -891,11 +895,10 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Build AST
-    //
-    // top-level: buildAst
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    // no helpers necessary since this is implemented in the Modules
+    // Used internally by ROSE's ::frontend disassemble instructions to build the AST that goes under each SgAsmInterpretation.
+    static void disassembleForRoseFrontend(SgAsmInterpretation*);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -922,6 +925,15 @@ public:
      * @{ */
     bool exitOnError() const /*final*/ { return settings_.engine.exitOnError; }
     virtual void exitOnError(bool b) { settings_.engine.exitOnError = b; }
+    /** @} */
+
+    /** Property: progress reporting.
+     *
+     *  The optional object to receive progress reports.
+     *
+     * @{ */
+    Progress::Ptr progress() const /*final*/ { return progress_; }
+    virtual void progress(const Progress::Ptr &progress) { progress_ = progress; }
     /** @} */
 
     /** Property: interpretation

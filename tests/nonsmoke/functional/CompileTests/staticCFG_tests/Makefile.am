@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 bin_PROGRAMS = generateStaticCFG
 
 generateStaticCFG_SOURCES = generateStaticCFG.C
@@ -10,7 +11,7 @@ noinst_PROGRAMS = testStaticCFG testInterproceduralCFG
 testStaticCFG_SOURCES = generateStaticCFG.C #testStaticCFG.C
 testInterproceduralCFG_SOURCES = testInterproceduralCFG.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 # Import list of C++ test cases that should pass:
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS

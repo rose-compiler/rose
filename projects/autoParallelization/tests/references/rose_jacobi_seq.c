@@ -80,13 +80,15 @@ void initialize()
   
 #pragma omp parallel for private (xx,yy,i,j) firstprivate (n,m)
   for (i = 0; i <= n - 1; i += 1) {
+    
+#pragma omp parallel for private (xx,yy,j) firstprivate (alpha,dx,dy)
     for (j = 0; j <= m - 1; j += 1) {
 /* -1 < x < 1 */
       xx = ((int )(- 1.0 + dx * (i - 1)));
 /* -1 < y < 1 */
       yy = ((int )(- 1.0 + dy * (j - 1)));
       u[i][j] = 0.0;
-      f[i][0] = - 1.0 * alpha * (1.0 - (xx * xx)) * (1.0 - (yy * yy)) - 2.0 * (1.0 - (xx * xx)) - 2.0 * (1.0 - (yy * yy));
+      f[i][j] = - 1.0 * alpha * (1.0 - (xx * xx)) * (1.0 - (yy * yy)) - 2.0 * (1.0 - (xx * xx)) - 2.0 * (1.0 - (yy * yy));
     }
   }
 }

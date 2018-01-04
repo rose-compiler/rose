@@ -6,13 +6,14 @@
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
 #include "FileSystem.h"
+#include "x86InstructionProperties.h"
 
 #include <Sawyer/MappedBuffer.h>
 
 #include <errno.h>
 #include <fcntl.h>
 
-using namespace rose;
+using namespace Rose;
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
@@ -27,7 +28,6 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
         variant = e->variantT();
     switch (variant) {
         case V_SgAsmExpression: {
-            fprintf(f, ",\n%sreplacement=\"%s\"", prefix.c_str(), e->get_replacement().c_str());
             fprintf(f, ",\n%scomment=\"%s\"", prefix.c_str(), e->get_comment().c_str());
             break;
         }
@@ -1761,8 +1761,8 @@ SgUnsignedCharList
 AssemblerX86::assembleProgram(const std::string &source)
 {
 #if BOOST_VERSION < 104700
-#warning "rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0"
-    ASSERT_not_reachable("rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0");
+#warning "Rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0"
+    ASSERT_not_reachable("Rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0");
 #else
     struct Resources {
         FileSystem::Path srcFileName, dstFileName;

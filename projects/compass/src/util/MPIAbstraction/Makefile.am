@@ -7,6 +7,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../../compassSupport \
            $(ROSE_INCLUDES)
 
+AM_LDFLAGS = $(ROSE_RPATHS)
+
 #==========================================================================
 # Auxiliary library.
 
@@ -23,8 +25,6 @@ noinst_PROGRAMS = testMPIAbstraction
 # this problem still need to be solved in the future
 LDADD = $(ROSE_LIBS_WITH_PATH) \
     libMPIAbstraction.la ../C-API/libC-API.la 
-#LDADD = libMPIAbstraction.la ../C-API/libC-API.la \
-#  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 testMPIAbstraction_SOURCES = testMPIAbstraction.C
 

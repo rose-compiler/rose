@@ -11,7 +11,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for Motorola M68k-based instruction set architectures. */
@@ -103,10 +103,10 @@ public:
         init();
     }
     virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) ROSE_OVERRIDE;
     virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
@@ -194,7 +194,7 @@ public:
     SgAsmRegisterReferenceExpression *makeFPRegister(unsigned regnum);
 
     /** Generic ways to make a register. */
-    SgAsmRegisterReferenceExpression *makeRegister(const RegisterDescriptor&);
+    SgAsmRegisterReferenceExpression *makeRegister(RegisterDescriptor);
 
     /** Create an integer expression from a specified value. */
     SgAsmIntegerValueExpression *makeImmediateValue(M68kDataFormat fmt, unsigned value);
@@ -241,7 +241,7 @@ private:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerM68k);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerM68k);
 #endif
 
 #endif

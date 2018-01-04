@@ -9,7 +9,7 @@
 #define P 4
 void foo(int iend, int ist)
 {
-  int i;
+  int i=0;
   i= i+P;
 #pragma omp parallel
   {

@@ -1,0 +1,2 @@
+!$omp parallel  private(NTHREADS,TID)
+!$omp end parallel 

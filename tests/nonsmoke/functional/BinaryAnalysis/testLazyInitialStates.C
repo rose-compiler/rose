@@ -15,11 +15,11 @@ static const char *description =
 #include <Partitioner2/Engine.h>
 #include <SymbolicSemantics2.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Diagnostics::Facility mlog;
 
@@ -155,7 +155,7 @@ public:                                                 // new methods
     }
 
 public:                                                 // overrides
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt,
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt,
                                                   BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
         BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt, ops);
         if (isInitialState_) {
@@ -188,7 +188,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
     const std::string REG_NAME = RegisterNames(regdict)(REG);
-    const RegisterDescriptor REG2(999, 999, 0, REG.get_nbits());
+    const RegisterDescriptor REG2(15, 1023, 0, REG.get_nbits());
     BaseSemantics::RiscOperatorsPtr ops;
     {
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();

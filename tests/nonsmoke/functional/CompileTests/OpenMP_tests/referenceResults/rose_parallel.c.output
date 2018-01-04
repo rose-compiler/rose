@@ -1,0 +1,2 @@
+#pragma omp parallel  firstprivate(i)
+#pragma omp parallel  private(i)

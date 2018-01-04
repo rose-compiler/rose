@@ -7,11 +7,11 @@
 #include <AsmUnparser_compat.h>
 #endif
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
-namespace S2 = rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace ReturnValueUsed {
 
@@ -22,7 +22,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::ReturnValueUsed");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::ReturnValueUsed");
     }
 }
 
@@ -30,7 +30,7 @@ static std::string
 locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
     std::vector<std::string> retval;
     RegisterNames regNames(regdict);
-    BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(regdict))
+    BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(regdict))
         retval.push_back(regNames(reg));
     return boost::join(retval, ", ");
 }
@@ -79,14 +79,14 @@ private:
 #endif
 
 protected:
-    explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
         : Super(protoval, solver), results_(NULL), registerDictionary_(NULL) {}
 
-    explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
         : Super(state, solver), results_(NULL), registerDictionary_(NULL) {}
 
 public:
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
         SValuePtr protoval = SValue::instance();
         RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -94,22 +94,22 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    static RiscOperatorsPtr instance(const S2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
     
-    static RiscOperatorsPtr instance(const S2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
     
 public:
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -159,7 +159,7 @@ public:
     /** @} */
 
 public:
-    virtual S2::BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual S2::BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                       const S2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
         // Reading from a register that's still listed as an output means that it's definitely a used return value.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
@@ -173,7 +173,7 @@ public:
         return Super::readRegister(reg, dflt);
     }
 
-    virtual void writeRegister(const RegisterDescriptor &reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
+    virtual void writeRegister(RegisterDescriptor reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         // Writing to a register means that the callee's return value is definitely not used.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
@@ -186,14 +186,14 @@ public:
         Super::writeRegister(reg, value);
     }
 
-    virtual S2::BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const S2::BaseSemantics::SValuePtr &addr,
+    virtual S2::BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
                                                     const S2::BaseSemantics::SValuePtr &dflt,
                                                     const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         // TODO
         return Super::readMemory(segreg, addr, dflt, cond);
     }
 
-    virtual void writeMemory(const RegisterDescriptor &segreg, const S2::BaseSemantics::SValuePtr &addr,
+    virtual void writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
                              const S2::BaseSemantics::SValuePtr &value, const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         // TODO
         Super::writeMemory(segreg, addr, value, cond);
@@ -310,7 +310,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // return values is one of the calle's return values with no intervening write.
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     ASSERT_not_null(regdict);
-    SMTSolver *solver = NULL;
+    SmtSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
     ops->registerDictionary(regdict);
     ops->insertOutputs(calleeReturnRegs, calleeReturnMem);
@@ -413,7 +413,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                 if (callerBehavior.didConverge()) {
                     SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
                                              <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
-                    BOOST_FOREACH (const RegisterDescriptor &reg, callerBehavior.outputRegisters().listAll(regdict))
+                    BOOST_FOREACH (RegisterDescriptor reg, callerBehavior.outputRegisters().listAll(regdict))
                         (void) ops->readRegister(reg, ops->undefined_(reg.get_nbits()));
                 }
             }

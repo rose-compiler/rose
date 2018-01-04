@@ -21,7 +21,6 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 ##copyExample_SOURCES = copyExample.C
 ##copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 #
-#LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 #
 #TESTCODES_REQUIRED_TO_PASS = test_preinclude.C
 #

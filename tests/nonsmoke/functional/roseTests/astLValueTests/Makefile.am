@@ -11,7 +11,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS += testLValues
 testLValues_SOURCES = runTest.C
 testLValues_CPPFLAGS = $(ROSE_INCLUDES)
-testLValues_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testLValues_LDFLAGS = $(ROSE_RPATHS)
+testLValues_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testLValues_1.passed
 EXTRA_DIST += test_astLValues.C

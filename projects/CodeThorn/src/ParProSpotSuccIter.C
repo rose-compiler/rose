@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "ParProSpotSuccIter.h"
 
 using namespace CodeThorn;
@@ -8,7 +11,7 @@ ParProSpotSuccIter::ParProSpotSuccIter(ParProTransitionGraph& tg, const ParProES
 				       const boost::unordered_map<string, int>& p2d) 
                                       : _source(state), stg(tg), propName2DictNum(p2d) {
   _outEdges = stg.succ(&state);
-  if (stg.isComplete()) {
+  if (stg.isComplete() && !stg.isPrecise()) {
     _needToAddSelfLoop = true;
     _upcomingSelfLoop = true;
   } else {
@@ -128,3 +131,5 @@ string ParProSpotSuccIter::generateFormattedSpotTransition(const ParProTransitio
   }
   return ss.str();
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

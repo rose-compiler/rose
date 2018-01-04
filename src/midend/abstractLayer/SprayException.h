@@ -2,6 +2,7 @@
 #define SPRAY_EXCEPTION
 
 #include <exception>
+#include <string>
 
 namespace SPRAY {
   class Exception : public std::exception {

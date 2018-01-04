@@ -20,7 +20,8 @@ endif
 ## and not the execution!)
 ## Include the path to A++ and the transformation specification
 ## AM_CPPFLAGS = -I. -I../.. -I$(top_srcdir)/TESTS/CompileTests/A++Tests -I$(top_srcdir)/include -I$(top_srcdir)/ExamplePreprocessors/A++Preprocessor1999/ArrayTransformationGrammar
-AM_CPPFLAGS = -I. -I../.. -I$(top_srcdir)/TESTS/CompileTests/A++Tests -I$(top_srcdir)/include 
+AM_CPPFLAGS = -I. -I../.. -I$(top_srcdir)/TESTS/CompileTests/A++Tests -I$(top_srcdir)/include
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 ## libTestSource_a_SOURCES = $(TESTCODES)
 

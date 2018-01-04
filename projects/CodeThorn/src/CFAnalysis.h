@@ -70,12 +70,12 @@ class CFAnalysis {
   static SgStatement* getLastStmtInBlock(SgBasicBlock* block);
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
+  static bool isLoopConstructRootNode(SgNode* node);
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   SPRAY::Labeler* labeler;
   bool _createLocalEdge;
-  bool isLoopConstructRootNode(SgNode* node);
   SgNode* correspondingLoopConstruct(SgNode* node);
 };    
 

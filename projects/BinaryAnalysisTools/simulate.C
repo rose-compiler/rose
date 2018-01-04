@@ -5,10 +5,10 @@
 #include <Partitioner2/Engine.h>
 #include <ConcreteSemantics2.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Diagnostics::Facility mlog;
 
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     // Configure instruction semantics
     Partitioner2::Partitioner partitioner = engine.createPartitioner();
     Disassembler *disassembler = engine.obtainDisassembler();
-    const RegisterDictionary *regdict = disassembler->get_registers();
+    const RegisterDictionary *regdict = disassembler->registerDictionary();
     if (disassembler->dispatcher() == NULL)
         throw std::runtime_error("no instruction semantics for this architecture");    
     BaseSemantics::RiscOperatorsPtr ops = InstructionSemantics2::ConcreteSemantics::RiscOperators::instance(regdict);

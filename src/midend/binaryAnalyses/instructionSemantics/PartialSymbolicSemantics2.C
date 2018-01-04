@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
@@ -25,14 +25,14 @@ Formatter::rename(uint64_t orig_name)
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
-                            SMTSolver *solver) const {
+                            SmtSolver *solver) const {
     if (must_equal(other_, solver))
         return Sawyer::Nothing();
     return bottom_(get_width());
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const 
 {
     SValuePtr other = promote(other_);
     if (must_equal(other, solver))
@@ -41,7 +41,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
 {
     SValuePtr other = promote(other_);
     return (this->name==other->name &&
@@ -127,7 +127,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     memory->byteRestricted(false); // because extracting bytes from a word results in new variables for this domain
     BaseSemantics::StatePtr state = State::instance(registers, memory);
-    SMTSolver *solver = NULL;
+    SmtSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));
     return ops;
 }
@@ -547,7 +547,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg,
+RiscOperators::writeMemory(RegisterDescriptor segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition)
@@ -565,7 +565,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 }
     
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg,
+RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt_,
                           const BaseSemantics::SValuePtr &condition)

@@ -52,13 +52,19 @@ if ROSE_USE_SQLITE_DATABASE
    ROSE_SIDEEFFECT_INCLUDE						 = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
 endif
 
-if USE_Z3
+if ROSE_HAVE_LIBZ3
   Z3_LIB_NAME = z3
   Z3_LIB_FILE = lib$(Z3_LIB_NAME).so
   Z3_LIBS = -l$(Z3_LIB_NAME)
 
   Z3_INCLUDES = -I$(Z3_PREFIX)/include
   Z3_LIB_INCLUDES = -L$(Z3_PREFIX)/lib
+
+  # The previous "Z3_*" variables should have been named "ROSE_Z3_*" following the pattern in the rest of this
+  # makefile. I don't want to break code that uses the wrong names, so I'll just add the correct ones. [Matzke 2017-10-17]
+  ROSE_Z3_INCLUDES = -I@ROSE_Z3_PREFIX@/include
+  ROSE_Z3_LIBS = -lz3
+  ROSE_Z3_LIBS_WITH_PATH = -L@ROSE_Z3_PREFIX@/lib -lz3
 endif
 
 # This is properly handled by automake even when specified in an include file
@@ -124,6 +130,13 @@ if ROSE_HAVE_LIBMAGIC
   ROSE_LIBMAGIC_LIBS_WITH_PATH = -L@ROSE_LIBMAGIC_PREFIX@/lib -lmagic
 endif
 
+# PostgreSQL C++ API
+if ROSE_HAVE_LIBPQXX
+  ROSE_LIBPQXX_INCLUDES = -I@ROSE_LIBPQXX_PREFIX@/include
+  ROSE_LIBPQXX_LIBS = -lpqxx -lpq
+  ROSE_LIBPQXX_LIBS_WITH_PATH = -L@ROSE_LIBPQXX_PREFIX@/lib -lpqxx -lpq
+endif
+
 # Math algorithms from http://dlib.net. This is a headers-only library neede by some binary analyses.
 if ROSE_HAVE_DLIB
   ROSE_DLIB_INCLUDES = -I@DLIB_PREFIX@
@@ -140,13 +153,20 @@ NON_RTH_ADDRESS_SANITIZER_OPTIONS = ASAN_OPTIONS=symbolize=1:detect_leaks=0 ASAN
 
 GLUT_LIBS = ${glut_path}
 
+if ROSE_HAVE_LIBELF
+  ROSE_ELF_INCLUDES = @LIBELF_CPPFLAGS@
+  ROSE_ELF_LIBS_WITH_PATH = @LIBELF_LDFLAGS@
+endif
+
+# ROSE gcrypt support (for things like md5, sha1, etc)
+if ROSE_HAVE_LIBGCRYPT
+  ROSE_GCRYPT_INCLUDES = @LIBGCRYPT_CPPFLAGS@
+  ROSE_GCRYPT_LIBS_WITH_PATH = @LIBGCRYPT_LDFLAGS@
+endif
+
 # ROSE-DWARF libdwarf support
 if ROSE_HAVE_LIBDWARF
-  ROSE_DWARF_INCLUDES = $(LIBDWARF_CPPFLAGS)
-
-# DQ (3/13/2009): These do not appear to be used anywhere.
-# ROSE_DWARF_LIBS = -ldwarf
-# ROSE_DWARF_LIB_FILE = libdwarf.a
+  ROSE_DWARF_INCLUDES = @LIBDWARF_CPPFLAGS@
 
 if ROSE_USE_INTEL_PIN
 # DQ (3/13/2009):
@@ -158,17 +178,10 @@ if ROSE_USE_INTEL_PIN
 # and the static libdwarf.a moved out (renamed) so that it will not be used.
 # Note that this will also cause librose.so to use the shared library for 
 # dwarf when used with Intel Pin.
-# ROSE_DWARF_LIBS_WITH_PATH = $(INTEL_PIN_PATH)/intel64/lib-ext/libdwarf.a -lelf
-# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(INTEL_PIN_PATH)/intel64/lib-ext -L$(INTEL_PIN_PATH)/intel64/lib-ext -ldwarf -lelf
   ROSE_DWARF_LIBS_WITH_PATH = -L$(INTEL_PIN_PATH)/intel64/lib-ext -ldwarf -lelf
 # DQ (3/14/2009): This factors the lib paths.
   INTEL_PIN_WITH_DWARF_LIBS_PATH = $(INTEL_PIN_LIB_PATHS) -lpin -lxed -ldl $(ROSE_DWARF_LIBS_WITH_PATH)
 else
-# DQ (3/15/2009): Use the usual static linking when not using Intel Pin (what we used to do).
-# DQ (3/13/2009): Fixup libdwarf support in ROSE to always use the dynamic (shared) library.
-# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(LIBDWARF_PREFIX/lib) -L$(LIBDWARF_PREFIX/lib) -ldwarf -lelf
-# DQ (6/5/2010): Fixed to use the value set in the configure step (requires the dynamic library).
-# ROSE_DWARF_LIBS_WITH_PATH = $(LIBDWARF_PREFIX)/lib/libdwarf.a -lelf
   ROSE_DWARF_LIBS_WITH_PATH = @LIBDWARF_LDFLAGS@
 endif
 endif
@@ -239,14 +252,29 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal -lexperimentalRoseFortran
 
 # DQ (1/26/2017): This is not built in the new way that Craig and I are working together on the new OFP.
-    ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
+    ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(abs_top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = 
+endif
+
+# DQ (5/9/2017): Adding Ada library support.
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+# ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
+  ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
+  ROSE_ADA_LIBS = -ldot_asis
+  ROSE_ADA_LIBS_WITH_PATH = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib/libdot_asis.so
+endif
+
+# RASMUSSEN (10/24/2017): Adding the GnuCOBOL parse-tree library support.
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+  ROSE_COBOL_PT_LIBS_WITH_PATH = -L$(COBPT_LIBRARY_PATH) -lcob -lcobpt
 endif
 
 # DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
 if USING_INTEL_COMPILER
 #  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
-ROSE_INTEL_COMPILER_MATH_LIBS =
+# DQ (11/16/2017): We need to link in these Intel specific required libraries to avoid: error hidden symbol `__intel_cpu_features_init_x'
+# ROSE_INTEL_COMPILER_MATH_LIBS =
+ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lirng -lintlc -lsvml
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
 endif
@@ -282,7 +310,6 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I"$(JAVA_HOME)/include" \
-     -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/Disassemblers \
@@ -295,6 +322,8 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -341,7 +370,6 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
       $(ROSE_CLANG_FRONTEND_INCLUDE) \
      -I$(top_srcdir)/src/frontend/PythonFrontend \
-     -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/Disassemblers \
@@ -355,6 +383,8 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -402,7 +432,6 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/programAnalysis/defUseAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/distributedMemoryAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
-     -I$(top_srcdir)/src/midend/programAnalysis/graphAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
      -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
      -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
@@ -432,10 +461,14 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_PHP_INCLUDES) \
      $(ROSE_PYTHON_INCLUDES) \
      $(ROSE_YICES_INCLUDES) \
+     $(ROSE_Z3_INCLUDES) \
      $(ROSE_YAML_INCLUDES) \
+     $(ROSE_LIBPQXX_INCLUDES) \
      $(ROSE_READLINE_INCLUDES) \
      $(ROSE_LIBMAGIC_INCLUDES) \
      $(ROSE_DLIB_INCLUDES) \
+     $(ROSE_GCRYPT_INCLUDES) \
+     $(ROSE_ELF_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
      $(ROSE_WINE_INCLUDES) \
      $(VALGRIND_CFLAGS) \
@@ -445,6 +478,10 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(INTEL_PIN_INCLUDE_PATHS) \
      $(ROSE_ETHER_INCLUDE) \
      $(ROSE_ATERM_INCLUDE) \
+     $(ROSE_CSHARP_INCLUDES) \
+     $(ROSE_ADA_INCLUDES) \
+     $(ROSE_JOVIAL_INCLUDES) \
+     $(ROSE_COBOL_INCLUDES) \
      $(BOOST_CPPFLAGS)
 endif
 
@@ -495,32 +532,87 @@ ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 
 # MS 10/19/2015: added ROSE_BOOST_LIBS variable to share exact same
 # boost libs list in ROSE an in the ROSTTA Makefiles.
-ROSE_BOOST_LIBS=$(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+ROSE_BOOST_LIBS=$(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_CHRONO_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
-  $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
+  $(BOOST_RANDOM_LIB) $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
   $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
 
 ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
   $(SQLITE_DATABASE_LIBS) $(QT_LIBS) $(ROSE_BOOST_LIBS) \
-  $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
-  $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
+  $(SQLITE3_LDFLAGS)  $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_Z3_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) \
+  $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_ELF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS) \
   $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
-  $(ROSE_DLIB_LIBS_WITH_PATH)
+  $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) $(ROSE_LIBPQXX_LIBS_WITH_PATH) \
+  $(ROSE_ADA_LIBS_WITH_PATH) $(ROSE_COBOL_PT_LIBS_WITH_PATH)
 
-# DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
-# (this is because it has been moved from being linked statically to being linked dynamically).
-# $(ROSE_DWARF_LIBS_WITH_PATH)
-# AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
+#========================================================================================================================
+# These are the "-R directory" switches that need to be passed to libtool running in link mode to make sure that ROSE
+# executables have rpath properties that point to the directories containing the libraries we're using. Do not add
+# system directories (or at least not at the front of this list) because that will cause the system-installed version of
+# a library to be used rather than some user-specific version.
+#
+# Here's the motivation for using rpath instead of LD_LIBRARY_PATH: Consider what happens if some ROSE tool, call it
+# myTranslator, is compiled and linked against a custom, user-installed version of libz.so (perhaps because myTranslator
+# is using a custom version of some graphics library, like libgraphicsmagick.so, that needs a newer libz.so than what's
+# installed on the system).  If I then set LD_LIBRARY_PATH to point to the directory with my libz.so I'll be able to run
+# myTranslator, however I probably won't be able any system installed tool that uses libz.so. This includes not being
+# able to run /usr/bin/as, which might be called indirectly when myTranslator invokes the backend compiler (because
+# LD_LIBRARY_PATH overrides the rpath built into /usr/bin/as).  Run-time linking with the wrong dynamic library at best
+# produces an error message from the linker, but more often just results in a fault of some sort.
+#
+# How does rpath fix this problem? It encodes into each executable the list of directories that should be searched when
+# the executable is run, similar to LD_LIBRARY_PATH but on a per-executable basis.
+#
+# The filter-out is removing specific libraries (-lwhatever), the GCC's POSIX thread switch (-pthread), static libraries
+# (whatever.a), and various system directories that might have the wrong library versions and which are searched
+# automatically anyway. The outer patsubst is changing "-Ldirectory" to just "directory", and the addprefix is changing
+# each directory to "-R directory" which is libtool's switch for adding an rpath to an executable.
+#
+# The inner-most patsubst needs more explanation: Although most low-level libraries like libz, libpng, etc. are normally
+# installed in well-known system-wide locations (like /usr/lib), when testing ROSE in matrix testing using RMC, these
+# libraries are often compiled and installed locally in such ways that they're not binary compatible with the
+# system-installed versions. However, ROSE doesn't have configuration or cmake options for all these libraries because
+# there could eventually be far too many. Therefore, we use the fact that RMC has already chosen the correct library
+# directories and added their names to various environment variables. The lines of the form
+#     $(subst :, ,# $(whatever_LIBDIRS))
+# split the named environment variable into individual directory names.  If there's a ROSE configure option to specify
+# the library location, then DO NOT list an environment variable here--use the directory from configure instead (which
+# goes into ROSE_LIBS above).
+
+ROSE_RPATHS =										\
+	$(addprefix -R ,								\
+	  $(filter-out -l% -pthread %.a %.la /lib% /usr/lib% /usr/local/lib% /var/lib%,	\
+	    $(patsubst -L%,%,								\
+	      $(ROSE_LIBS)								\
+	      $(subst :, , $(GNU_COMPILERS_LIBDIRS))					\
+	      $(subst :, , $(LIBBZ2_LIBDIRS))						\
+	      $(subst :, , $(LIBGRAPHICSMAGICK_LIBDIRS))				\
+	      $(subst :, , $(LIBJPEG_LIBDIRS))						\
+	      $(subst :, , $(LIBLCMS_LIBDIRS))						\
+	      $(subst :, , $(LIBLZMA_LIBDIRS))						\
+	      $(subst :, , $(LIBPNG_LIBDIRS))						\
+	      $(subst :, , $(LIBTIFF_LIBDIRS))						\
+	      $(subst :, , $(PYTHON_LIBDIRS))						\
+	      $(subst :, , $(SPOT_LIBDIRS))						\
+	      $(subst :, , $(ZLIB_LIBDIRS))						\
+	      $(subst :, , $(INTEL_COMPILER_RPATHS))					\
+	    )										\
+	  )										\
+	)
+
+show-rpaths:
+	@echo "ROSE_LIBS = $(ROSE_LIBS)"
+	@echo "ROSE_RPATHS = $(ROSE_RPATHS)"
+
+INTEL_COMPILER_RPATHS = $(shell $(top_srcdir)/scripts/intel-compiler-rpaths.sh)
 
 # DQ (3/8/2009): This fails when I try to include it (fails in rose/src/testSharedRoseLib).
 #  $(INTEL_PIN_LIB_PATHS) $(INTEL_PIN_LIBS)
 
 # DQ (3/14/2009): It is cleaner to just required that Intel Pin support require setting
 # the LD_LIBRARYPATH to include: $(INTEL_PIN_PATH)/intel64/lib-ext
-# DQ (3/14/2009): Need to add rpath to LDFLAGS instead of LDADD (to follow libtool rules).
-# LDFLAGS += $(ROSE_DWARF_LIBS_WITH_PATH)
 
 
 # This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
@@ -530,17 +622,6 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
 # instead of just the individual shared library.
 # JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
 ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
-## ROSE_SEPARATE_LIBS = \
-##    $(top_builddir)/src/librose.la \
-##    $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) \
-##    $(ROSE_SQLITE_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) \
-##    $(LIB_QT) $(JAVA_JVM_LIB) \
-##    $(RT_LIBS) \
-##    $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
-##    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-##    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS) 
-#   $(LIB_QT) $(JAVA_JVM_LIB) 
-
 
 # QY (11/2/04): removed -lastoutlining from ROSE_SEPARATE_LIBS 
 
@@ -556,48 +637,21 @@ RTH_RUN_FLAGS_V_0 =
 RTH_RUN_FLAGS_V_1 = --immediate-output
 RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
 
+# Default timeout that you can override on the "make" commandline. Valid values
+# are integers followed by "s" (seconds), "m" (minutes), "h" (hours), or the
+# word "never".  See scripts/rth_run.pl for detailed documentation.
+RTH_TIMEOUT = 15m
+
 RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
 	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
-	VALGRIND=$(VALGRIND)
+	VALGRIND=$(VALGRIND) TIMEOUT=$(RTH_TIMEOUT)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 
 # DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES 
 # (depreicated in automake and for which many warnings are generated).
 CPPFLAGS = $(AM_CPPFLAGS)
-
-# Temporary workaround for lack of AM_EXTRA_RECURSIVE_TARGETS in automake 1.11 and 1.12 [Matzke, 2016-09-14]
-# The check for "." is because $ROSE/tests adds "." to SUBDIRS which would otherwise result in infinite recursion.
-# The checks for other names are because we don't want to recurse into some directories that don't include this
-# file and therefore don't have this rule (but that means these names can't be test subdirecties elsewhere either).
-check-smoke check-nonsmoke check-all:
-	@for subdir in $(SUBDIRS); do						\
-		if [ "$$subdir" != .						\
-			-a "$$subdir" != libltdl				\
-			-a "$$subdir" != config					\
-			-a "$$subdir" != EDG					\
-			-a "$$subdir" != DLX					\
-			-a "$$subdir" != MFB					\
-			-a "$$subdir" != MDCG					\
-			-a "$$subdir" != KLT					\
-			-a "$$subdir" != 3rdPartyLibraries			\
-			-a "$$subdir" != roseHPCToolkit				\
-			-a "$$subdir" != projects				\
-			-a "$$subdir" != docs					\
-			-a "$$subdir" != tools ]; then				\
-			echo "Making $@ in $$subdir";				\
-			$(MAKE) $(AM_MAKEFLAGS) -C "$$subdir" $@ || exit 1;	\
-		fi;								\
-	done
-	$(MAKE) $(AM_MAKEFLAGS) $@-local
-
-check-smoke-local check-nonsmoke-local:
-check-all-local: check-smoke-local check-nonsmoke-local
-
-# Temporary until Jenkins and the Matrix are fixed to run "make check-all" isntead of "make check".  The correct version
-# should be that check-local depends only on check-smoke-local. [Matzke, 2016-09-21].
-check-local: check-smoke-local check-nonsmoke-local
 
 clean-test-targets:
 	rm -f $(TEST_TARGETS)
@@ -607,4 +661,4 @@ clean-test-targets:
 
 clean-local: clean-test-targets
 
-.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local clean-test-targets
+.PHONY: clean-test-targets

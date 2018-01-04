@@ -10,10 +10,10 @@
 #include "TraceSemantics2.h"
 #endif
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 namespace RSIM_Semantics {
 
@@ -78,7 +78,7 @@ createDispatcher(RSIM_Thread *owningThread) {
         TODO("architecture not supported");
     }
 
-    const RegisterDictionary *regs = disassembler->get_registers();
+    const RegisterDictionary *regs = disassembler->registerDictionary();
     RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs, NULL);
     size_t wordSize = disassembler->instructionPointerRegister().get_nbits();
     ASSERT_require(wordSize == 32 || wordSize == 64);
@@ -186,7 +186,7 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 void
-RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) {
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
     Super::writeRegister(reg, value);
     if (ARCH_X86 == architecture_ && reg.get_major() == x86_regclass_segment) {
         ASSERT_require2(0 == value->get_number() || 3 == (value->get_number() & 7), "GDT and privilege level 3");
@@ -195,7 +195,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
@@ -261,7 +261,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();

@@ -5,7 +5,7 @@
 #include <Wt/WTableView>
 #include <Wt/WText>
 
-using namespace rose;
+using namespace Rose;
 
 namespace bROwSE {
 

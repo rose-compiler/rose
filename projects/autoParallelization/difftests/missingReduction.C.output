@@ -1,0 +1,8 @@
+User vs. AutoPar @11
+< #pragma omp parallel for
+---
+> #pragma omp parallel for private (i,j) reduction (+:total) firstprivate (N)
+User vs. AutoPar @13
+< 
+---
+> #pragma omp parallel for private (i) reduction (+:total)

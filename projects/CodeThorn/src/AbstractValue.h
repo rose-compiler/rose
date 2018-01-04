@@ -12,6 +12,8 @@
 #include <sstream>
 #include "BoolLattice.h"
 #include "VariableIdMapping.h"
+#include <cstdint>
+#include "SgTypeSizeMapping.h"
 
 using std::string;
 using std::istream;
@@ -19,10 +21,12 @@ using std::ostream;
 
 namespace CodeThorn {
 
- class AbstractValue;
 
- bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
- bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
+  
+  class AbstractValue;
+
+  bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
+  bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
 
 /*!
   \brief Implements semantic functions of an integer lattice.
@@ -32,9 +36,10 @@ namespace CodeThorn {
  */
 class AbstractValue {
  public:
+  typedef uint16_t TypeSize;
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, CONSTINT, PTR, RAW_PTR, TOP};
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP};
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -52,7 +57,14 @@ class AbstractValue {
   AbstractValue(unsigned long int x);
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
+  AbstractValue(float x);
+  AbstractValue(double x);
+  AbstractValue(long double x);
   AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
+  void initInteger(SPRAY::BuiltInType btype, long long int ival);
+  void initFloat(SPRAY::BuiltInType btype, long double fval);
+  static AbstractValue createIntegerValue(SPRAY::BuiltInType btype, long long int ival);
+  TypeSize calculateTypeSize(SPRAY::BuiltInType btype);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -85,6 +97,7 @@ class AbstractValue {
   static AbstractValue operatorDiv(AbstractValue& a,AbstractValue& b);
   static AbstractValue operatorMod(AbstractValue& a,AbstractValue& b);
 
+  static AbstractValue createAddressOfVariable(SPRAY::VariableId varId);
   static AbstractValue createAddressOfArray(SPRAY::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, AbstractValue Index);
   // strict weak ordering (required for sorted STL data structures if
@@ -99,6 +112,7 @@ class AbstractValue {
   string toString(SPRAY::VariableIdMapping* vim) const;
   string toLhsString(SPRAY::VariableIdMapping* vim) const;
   string toRhsString(SPRAY::VariableIdMapping* vim) const;
+  string arrayVariableNameToString(SPRAY::VariableIdMapping* vim) const;
   
   friend ostream& operator<<(ostream& os, const AbstractValue& value);
   friend istream& operator>>(istream& os, AbstractValue& value);
@@ -106,16 +120,29 @@ class AbstractValue {
 
   ValueType getValueType() const;
   int getIntValue() const;
+  std::string getFloatValueString() const;
   int getIndexIntValue() const;
   SPRAY::VariableId getVariableId() const;
-
-  int intLength();   // returns length of integer dependent on valueType
+  // sets value according to type size (truncates if necessary)
+  void setValue(long long int ival);
+  void setValue(long double fval);
   long hash() const;
   std::string valueTypeToString() const;
+
+  // deprecated (use getTypeSize() instead)
+  TypeSize getValueSize() const; 
+  TypeSize getTypeSize() const;
+  void setTypeSize(TypeSize valueSize);
+  static void setTypeSizeMapping(SPRAY::SgTypeSizeMapping* typeSizeMapping);
+  static SPRAY::SgTypeSizeMapping* getTypeSizeMapping();
  private:
   ValueType valueType;
   SPRAY::VariableId variableId;
-  int intValue;
+  // union required
+  long long int intValue=0;
+  double floatValue=0.0;
+  TypeSize typeSize=0; // size of value in bytes
+  static SPRAY::SgTypeSizeMapping* _typeSizeMapping;
 };
 
 // arithmetic operators
@@ -136,13 +163,8 @@ class AbstractValue {
     bool operator()(const AbstractValue& c1, const AbstractValue& c2) const;
   };
 
-typedef AbstractValue AValue; 
-typedef AbstractValueCmp AValueCmp; 
-
- typedef AbstractValue VarAbstractValue;
- typedef std::set<AbstractValue> AbstractValueSet;
- typedef AbstractValueSet VarAbstractValueSet;
- AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
+  typedef std::set<AbstractValue> AbstractValueSet;
+  AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
 }
 
 #endif

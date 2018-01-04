@@ -4,7 +4,7 @@
 
 #include <Sawyer/CommandLine.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
@@ -87,6 +87,7 @@ struct Settings {
 
 // Forward declarations.
 class Base;
+class State;
 typedef Sawyer::SharedPointer<Base> BasePtr;
 
 /** Command-line switches for unparser settings. */

@@ -61,7 +61,7 @@ TypeChangeTraversal::visit ( SgNode* node )
 int
 main ( int argc, char * argv[] )
    {
-  // Initialize and check compatibility. See rose::initialize
+  // Initialize and check compatibility. See Rose::initialize
      ROSE_INITIALIZE;
 
   // Build ROSE AST

@@ -26,9 +26,9 @@ Visitor::visit(SgNode* n)
           printf ("symbol->get_size()      = %" PRIu64 " \n",symbol->get_size());
           printf ("symbol->get_value()     = %" PRIu64 " \n",symbol->get_value());
 
-          std::string typeStr = rose::stringifySgAsmGenericSymbolSymbolType(symbol->get_type());
-          std::string bindingStr = rose::stringifySgAsmGenericSymbolSymbolBinding(symbol->get_binding());
-          std::string stateStr = rose::stringifySgAsmGenericSymbolSymbolDefState(symbol->get_def_state());
+          std::string typeStr = Rose::stringifySgAsmGenericSymbolSymbolType(symbol->get_type());
+          std::string bindingStr = Rose::stringifySgAsmGenericSymbolSymbolBinding(symbol->get_binding());
+          std::string stateStr = Rose::stringifySgAsmGenericSymbolSymbolDefState(symbol->get_def_state());
 
           printf ("symbol->get_type()      = %u = %s\n", symbol->get_type(), typeStr.c_str());
           printf ("symbol->get_binding()   = %u = %s\n", symbol->get_binding(), bindingStr.c_str());
@@ -72,7 +72,7 @@ Visitor::visit(SgNode* n)
 int
 main( int argc, char * argv[] )
    {
-  // Initialize and check compatibility. See rose::initialize
+  // Initialize and check compatibility. See Rose::initialize
      ROSE_INITIALIZE;
 
      SgProject* project = frontend(argc,argv);

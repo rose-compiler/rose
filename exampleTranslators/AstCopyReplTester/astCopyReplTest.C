@@ -111,7 +111,7 @@ int main ( int argc, char * argv[] )
      if (argc == 1)
         {
        // Print usage and exit with exit status == 1
-          rose::usage (1);
+          Rose::usage (1);
         }
 
      SgProject sageProject (argc,argv);

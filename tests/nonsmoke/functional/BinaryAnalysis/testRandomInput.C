@@ -7,16 +7,17 @@ static const char *description =
 #include <rose.h>
 
 #include <Diagnostics.h>
+#include <Disassembler.h>
 #include <LinearCongruentialGenerator.h>
 #include <MemoryMap.h>
 #include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/CommandLine.h>
 #include <SymbolicSemantics2.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace S2 = rose::BinaryAnalysis::InstructionSemantics2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
 Facility mlog;
 
@@ -95,7 +96,8 @@ main(int argc, char *argv[]) {
     // Obtain an instruction semantics dispatcher if possible.
     S2::BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
     if (cpu) {
-        S2::BaseSemantics::RiscOperatorsPtr ops = S2::SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
+        S2::BaseSemantics::RiscOperatorsPtr ops =
+            S2::SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
         cpu = cpu->create(ops);
         mlog[INFO] <<"using symbolic semantics\n";
     } else {

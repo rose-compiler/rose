@@ -20,7 +20,7 @@ int main()
   for (i=1; i<= upper; i++){
     sum = sum + i;
   }
-  printf("sum from 1 to %d is %d\n", upper, sum);
+  printf("sum from 1 to %d is %ld\n", upper, sum);
   assert (sum==5050);
   return 0;
 }

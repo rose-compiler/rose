@@ -3,7 +3,7 @@
 
 class ValFindBase : public SymbolicVisitor
 {
-  SymbolicVal target, cur;  // target is the variable we want to find (like i), cur is the expression using var somehow , like i+2
+  SymbolicVal target, cur;
   bool result;
 
   virtual void Default() { result = (target == cur); }
@@ -26,7 +26,7 @@ class ValFindBase : public SymbolicVisitor
        }
   void VisitExpr( const SymbolicExpr &v) 
        { 
-         if (target.GetValType() == VAL_EXPR && cur == target) // cur is i, target is also i, found and return
+         if (target.GetValType() == VAL_EXPR && cur == target)
               result = true;
          else {
            for (SymbolicExpr::OpdIterator iter = v.GetOpdIterator();

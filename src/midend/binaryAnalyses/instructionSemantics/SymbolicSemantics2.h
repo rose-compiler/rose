@@ -8,7 +8,7 @@
 
 #include "BaseSemantics2.h"
 #include "Cxx_GrammarSerialization.h"
-#include "SMTSolver.h"
+#include "BinarySmtSolver.h"
 #include "BinarySymbolicExpr.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
@@ -22,7 +22,7 @@
 #include <map>
 #include <vector>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -279,7 +279,7 @@ public:
     }
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
-                        SMTSolver*) const ROSE_OVERRIDE;
+                        SmtSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -294,8 +294,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
@@ -360,7 +360,9 @@ public:
     /** Changes the expression stored in the value.
      * @{ */
     virtual void set_expression(const ExprPtr &new_expr) {
+        ASSERT_not_null(new_expr);
         expr = new_expr;
+        width = new_expr->nBits();
     }
     virtual void set_expression(const SValuePtr &source) {
         set_expression(source->get_expression());
@@ -807,14 +809,14 @@ protected:
         : omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS), computingMemoryWriters_(TRACK_LATEST_WRITER),
           computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {}
 
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         name("Symbolic");
@@ -826,7 +828,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      * SymbolicSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryListState::instance(protoval, protoval);
@@ -836,13 +838,13 @@ public:
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
      *  second argument for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
      *  for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -850,12 +852,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -1157,16 +1159,16 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr peekRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
-    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
-    virtual void writeMemory(const RegisterDescriptor &segreg,
+    virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
@@ -1178,10 +1180,10 @@ public:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
 #endif
 
 #endif

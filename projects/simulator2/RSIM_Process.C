@@ -3,7 +3,8 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
-#include "Diagnostics.h"
+#include <Diagnostics.h>
+#include <Partitioner2/Engine.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
@@ -14,9 +15,9 @@
 #include <sys/types.h>
 #include <sys/user.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 RSIM_Process::~RSIM_Process() {
     delete futexes;
@@ -196,7 +197,6 @@ RSIM_Process::load(int existingPid /*=-1*/) {
     if (!disassembler_) {
         disassembler_ = Disassembler::lookup(interpretation_)->clone();
         ASSERT_not_null(disassembler_);
-        disassembler_->set_progress_reporting(-1); /* turn off progress reporting */
     }
     wordSize_ = disassembler_->instructionPointerRegister().get_nbits();
 
@@ -661,7 +661,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
     /* Use a cached instruction if possible. */
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-        Disassembler::InstructionMap::iterator found = icache.find(va);
+        InstructionMap::iterator found = icache.find(va);
         insn = found!=icache.end() ? found->second : NULL;
     }
 
@@ -1313,42 +1313,48 @@ SgAsmBlock *
 RSIM_Process::disassemble(bool fast, MemoryMap::Ptr map/*=null*/)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock()); // while using the memory map
+    if (!map)
+        map = get_memory();
     SgAsmBlock *block = NULL;
-    Disassembler::InstructionMap insns;
-    MemoryMap::Ptr allocated_map;
+
     if (fast) {
-        if (!map) {
-            map = allocated_map = MemoryMap::instance();
-            *map = *get_memory();                       // shallow copy: new segments point to same old data
-            map->require(MemoryMap::EXECUTABLE).keep();
+        // Disassemble all instructions in executable memory
+        rose_addr_t va = 0;
+        while (AddressInterval interval = map->atOrAfter(va).require(MemoryMap::EXECUTABLE).available()) {
+            SgAsmInstruction *insn = NULL;
+            try {
+                insn = disassembler_->disassembleOne(map, interval.least());
+            } catch (const Disassembler::Exception &e) {
+                insn = disassembler_->makeUnknownInstruction(e);
+                ASSERT_not_null(insn);
+                uint8_t byte;
+                if (1==map->at(interval.least()).limit(1).read(&byte).size())
+                    insn->set_raw_bytes(SgUnsignedCharList(1, byte));
+                ASSERT_require(insn->get_address()==va);
+                ASSERT_require(insn->get_size()==1);
+            }
+            icache.insert(std::make_pair(insn->get_address(), insn));
         }
-        rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
-        unsigned search = disassembler_->get_search();
-        disassembler_->set_search(search | Disassembler::SEARCH_UNUSED);
-        Disassembler::AddressSet successors;
-        Disassembler::BadMap bad;
-        insns = disassembler_->disassembleBuffer(map, start_va, &successors, &bad);
-        disassembler_->set_search(search);
-    } else {
-        if (!map) {
-            map = allocated_map = MemoryMap::instance();
-            *map = *get_memory();                       // shallow copy: new segments point to same old data
-            map->require(MemoryMap::READABLE).keep();   // keep only readable memory; probably includes all executable too
-        }
-        Partitioner partitioner;
-        block = partitioner.partition(interpretation_, disassembler_, map);
-        insns = partitioner.get_instructions();
-    }
 
-    /* Add new instructions to cache */
-    icache.insert(insns.begin(), insns.end());
-
-    /* Fast disassembly puts all the instructions in a single SgAsmBlock */
-    if (!block) {
+        // Fast disassembly puts all the instructions in a single SgAsmBlock
         block = new SgAsmBlock;
-        for (Disassembler::InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
+        for (InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
             block->get_statementList().push_back(ii->second);
+
+    } else {
+        // Disassembly driven by partitioner.
+        namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+        P2::Engine engine;
+        engine.memoryMap(map->shallowCopy());           // copied so we can make changes
+        engine.adjustMemoryMap();
+        engine.interpretation(interpretation_);
+        engine.disassembler(disassembler_);
+        block = engine.buildAst();
+        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block);
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+            icache.insert(std::make_pair(insn->get_address(), insn));
     }
+
     return block;
 }
 

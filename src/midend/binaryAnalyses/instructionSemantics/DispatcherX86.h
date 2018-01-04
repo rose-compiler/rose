@@ -8,7 +8,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -177,13 +177,13 @@ public:
     /** Architecture-specific read from register.
      *
      *  Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&, AccessMode mode = READ_REGISTER);
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor, AccessMode mode = READ_REGISTER);
 
     /** Architecture-specific write to register.
      *
      *  Similar to RiscOperators::writeRegister, but might do additional architecture-specific things. For instance, writing to
      *  a 32-bit GPR such as "eax" on x86-64 will write zeros to the upper half of "rax". */
-    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr &result);
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &result);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);
@@ -308,7 +308,7 @@ public:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
 #endif
 
 #endif

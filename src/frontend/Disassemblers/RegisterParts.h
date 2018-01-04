@@ -5,7 +5,7 @@
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Holds a set of registers without regard for register boundaries.
@@ -49,7 +49,7 @@ private:
     public:
         MajorMinor(): majr_(0), minr_(0) {}
 
-        MajorMinor(const RegisterDescriptor &reg) /*implicit*/
+        MajorMinor(RegisterDescriptor reg) /*implicit*/
             : majr_(reg.get_major()), minr_(reg.get_minor()) {}
 
         bool operator<(const MajorMinor &other) const {
@@ -91,7 +91,7 @@ public:
     /** Constructor to insert a register.
      *
      *  This is the same as default-constructing an instance and inserting the specified register. */
-    explicit RegisterParts(const RegisterDescriptor &reg) {
+    explicit RegisterParts(RegisterDescriptor reg) {
         insert(reg);
     }
 
@@ -106,7 +106,7 @@ public:
      *
      *  Returns true if any part of @p reg is present in this container. The @p reg need not be entirely present. See also @ref
      *  existsAll. */
-    bool existsAny(const RegisterDescriptor &reg) const {
+    bool existsAny(RegisterDescriptor reg) const {
         return map_.exists(reg) && map_[reg].isOverlapping(bitRange(reg));
     }
 
@@ -114,7 +114,7 @@ public:
      *
      *  Returns true if all of @p reg is present in this container. It is not sufficient for just part of @p reg to be
      *  present. See also @ref existsAny. */
-    bool existsAll(const RegisterDescriptor &reg) const {
+    bool existsAll(RegisterDescriptor reg) const {
         return map_.exists(reg) && map_[reg].contains(bitRange(reg));
     }
 
@@ -122,7 +122,7 @@ public:
      *
      *  Inserts @p reg into this container. After inserting, @ref existsAll and @ref existsAny will both return true for @p
      *  reg. Nothing happens if @p reg is already fully present in this container. */
-    void insert(const RegisterDescriptor &reg) {
+    void insert(RegisterDescriptor reg) {
         map_.insertMaybeDefault(reg).insert(bitRange(reg));
     }
 
@@ -130,7 +130,7 @@ public:
      *
      *  Removes all of @p reg from this container.  After erasing, @ref existsAll and @ref existsAny will both return false for
      *  @p reg.  Nothing happens if @p reg is already fully absent from this container. */
-    void erase(const RegisterDescriptor &reg);
+    void erase(RegisterDescriptor reg);
 
     /** Erase everything.
      *
@@ -196,7 +196,7 @@ public:
 
 
 private:
-    static BitRange bitRange(const RegisterDescriptor &reg) {
+    static BitRange bitRange(RegisterDescriptor reg) {
         ASSERT_require(reg.is_valid());
         return BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     }

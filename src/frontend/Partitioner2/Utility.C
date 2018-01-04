@@ -6,7 +6,7 @@
 #include <Partitioner2/Partitioner.h>
 
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -17,7 +17,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::Partitioner2");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Partitioner2");
     }
 }
 

@@ -17,6 +17,7 @@ endif
 AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) 
 #	        -I$(top_srcdir)/src/frontend/SageIII/sageInterface
+AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD =  $(ROSE_LIBS)
 
 noinst_PROGRAMS = \

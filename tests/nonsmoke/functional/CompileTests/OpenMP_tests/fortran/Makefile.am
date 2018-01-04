@@ -83,14 +83,33 @@ ROSE_FLAGS = -rose:openmp:ast_only
 
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
-PASSING_F77_TEST_OBJECTS = $(F77_TESTCODES_TO_PASS:.f=.o)
-PASSING_F90_TEST_OBJECTS = $(F90_TESTCODES_TO_PASS:.f90=.o)
 
-$(PASSING_F77_TEST_OBJECTS): %.o:$(srcdir)/%.f ../parseOmp
-	$(ADDRESS_SANITIZER) ../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+PASSING_F77_TEST_RESULTS = $(addprefix rose_,${F77_TESTCODES_TO_PASS})
+PASSING_F90_TEST_RESULTS = $(addprefix rose_,${F90_TESTCODES_TO_PASS})
 
-$(PASSING_F90_TEST_OBJECTS): %.o:$(srcdir)/%.f90 ../parseOmp
-	$(ADDRESS_SANITIZER) ../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+$(PASSING_F77_TEST_RESULTS): $(srcdir)/$(@:rose_%=%) ../parseOmp
+	$(ADDRESS_SANITIZER) ../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:rose_%=%)
+
+$(PASSING_F90_TEST_RESULTS): $(srcdir)/$(@:rose_%=%) ../parseOmp
+	$(ADDRESS_SANITIZER) ../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:rose_%=%)
+
+
+PASSING_F77_F90_TEST_RESULTS=$(PASSING_F77_TEST_RESULTS) $(PASSING_F90_TEST_RESULTS)
+
+PASSING_F77_F90_TEST_RESULTS_OUTPUT=$(addsuffix .output, $(PASSING_F77_F90_TEST_RESULTS))
+
+$(PASSING_F77_F90_TEST_RESULTS_OUTPUT): %.output:%
+	grep "\!\$$omp" $(@:%.output=%) > $@ || exit 0;
+
+PASSING_F77_F90_TEST_RESULTS_OUTPUT_DIFF=$(addsuffix .diff, $(PASSING_F77_F90_TEST_RESULTS_OUTPUT))
+
+REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/referenceResults
+
+$(PASSING_F77_F90_TEST_RESULTS_OUTPUT_DIFF): %.diff:%
+	if diff $(@:.output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+
+
+gen-output: $(PASSING_F77_F90_TEST_RESULTS_OUTPUT)
 
 ../parseOmp:
 	$(MAKE) -C ../. parseOmp
@@ -112,8 +131,8 @@ if ROSE_USE_SSL_SUPPORT
 else	
 conditional-check-local:
 	@echo "Fortran tests for ROSE OpenMP parser"
-	@$(MAKE) $(PASSING_F77_TEST_OBJECTS)
-	@$(MAKE) $(PASSING_F90_TEST_OBJECTS)
+	@$(MAKE) $(PASSING_F77_F90_TEST_RESULTS)
+	@$(MAKE) $(PASSING_F77_F90_TEST_RESULTS_OUTPUT_DIFF)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule completes (terminated normally) *******" 
 	@echo "***********************************************************************************************************"

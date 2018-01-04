@@ -21,6 +21,10 @@
 #   include "unparseFortran_modfile.h"
 #endif
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#   include <Partitioner2/Engine.h>
+#endif
+
 #include <algorithm>
 
 #include <boost/algorithm/string/join.hpp>
@@ -44,7 +48,7 @@ operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bo
 
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
@@ -880,7 +884,10 @@ cout.flush();
                file->set_sourceFileUsesFortranFileExtension(true);
 
             // Use the filename suffix as a default means to set this value
-               file->set_outputLanguage(SgFile::e_Fortran_output_language);
+               file->set_outputLanguage(SgFile::e_Fortran_language);
+
+            // DQ (29/8/2017): Set the input language as well.
+               file->set_inputLanguage(SgFile::e_Fortran_language);
 
                file->set_Fortran_only(true);
 
@@ -1009,7 +1016,10 @@ cout.flush();
 
                     file->set_sourceFileUsesPHPFileExtension(true);
 
-                    file->set_outputLanguage(SgFile::e_PHP_output_language);
+                    file->set_outputLanguage(SgFile::e_PHP_language);
+
+                 // DQ (29/8/2017): Set the input language as well.
+                    file->set_inputLanguage(SgFile::e_PHP_language);
 
                     file->set_PHP_only(true);
 
@@ -1037,7 +1047,10 @@ cout.flush();
                          file->set_sourceFileUsesCppFileExtension(true);
 
                       // Use the filename suffix as a default means to set this value
-                         file->set_outputLanguage(SgFile::e_Cxx_output_language);
+                         file->set_outputLanguage(SgFile::e_Cxx_language);
+
+                      // DQ (29/8/2017): Set the input language as well.
+                         file->set_inputLanguage(SgFile::e_Cxx_language);
 
                          file->set_Cxx_only(true);
 
@@ -1060,7 +1073,10 @@ cout.flush();
                               file->set_sourceFileUsesCppFileExtension(false);
 
                            // Use the filename suffix as a default means to set this value
-                              file->set_outputLanguage(SgFile::e_C_output_language);
+                              file->set_outputLanguage(SgFile::e_C_language);
+
+                           // DQ (8/29/2017): Set the input language as well.
+                              file->set_inputLanguage(SgFile::e_C_language);
 
                               file->set_C_only(true);
 
@@ -1095,7 +1111,10 @@ cout.flush();
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
 
-                                   file->set_outputLanguage(SgFile::e_Cxx_output_language);
+                                   file->set_outputLanguage(SgFile::e_Cxx_language);
+
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_Cxx_language);
 
                                    file->set_Cuda_only(true);
 
@@ -1132,7 +1151,10 @@ cout.flush();
                                 // code from the AST, but this is a temporary solution.  The only correct setting is to use
                                 // the ongoing support within the Java specific unparser.
                                 // file->set_outputLanguage(SgFile::e_C_output_language);
-                                   file->set_outputLanguage(SgFile::e_Java_output_language);
+                                   file->set_outputLanguage(SgFile::e_Java_language);
+
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_Java_language);
 
                                    file->set_Java_only(true);
 
@@ -1158,7 +1180,10 @@ cout.flush();
                                 // code from the AST, but this is a temporary solution.  The only correct setting is to use
                                 // the ongoing support within the Java specific unparser.
                                 // file->set_outputLanguage(SgFile::e_C_output_language);
-                                   file->set_outputLanguage(SgFile::e_X10_output_language);
+                                   file->set_outputLanguage(SgFile::e_X10_language);
+
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_X10_language);
 
                                    file->set_X10_only(true);
 
@@ -1174,18 +1199,102 @@ cout.flush();
                                 }
                                else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
                                 {
-                                  // file = new SgSourceFile ( argv,  project );
-                                  SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                                  file = sourceFile;
+                                // file = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
 
-                                  file->set_sourceFileUsesPythonFileExtension(true);
-                                  file->set_outputLanguage(SgFile::e_Python_output_language);
-                                  file->set_Python_only(true);
+                                   file->set_sourceFileUsesPythonFileExtension(true);
+                                   file->set_outputLanguage(SgFile::e_Python_language);
 
-                                  // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                  // Note that file->get_requires_C_preprocessor() should be false.
-                                  ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                                  sourceFile->initializeGlobalScope();
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_Python_language);
+
+                                   file->set_Python_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
+                                }
+                            // DQ (28/8/2017): Adding language support.
+                               else if (CommandlineProcessing::isCsharpFileNameSuffix(filenameExtension) == true)
+                                {
+                                // file = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
+
+                                   file->set_sourceFileUsesCsharpFileExtension(true);
+                                   file->set_outputLanguage(SgFile::e_Csharp_language);
+
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_Csharp_language);
+
+                                   file->set_Csharp_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
+                                }
+                            // DQ (28/8/2017): Adding language support.
+                               else if (CommandlineProcessing::isAdaFileNameSuffix(filenameExtension) == true)
+                                {
+                                // file = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
+
+                                   file->set_sourceFileUsesAdaFileExtension(true);
+                                   file->set_outputLanguage(SgFile::e_Ada_language);
+
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_Ada_language);
+
+                                   file->set_Ada_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
+                                }
+                            // DQ (28/8/2017): Adding language support.
+                               else if (CommandlineProcessing::isJovialFileNameSuffix(filenameExtension) == true)
+                                {
+                                // file = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
+
+                                   file->set_sourceFileUsesJovialFileExtension(true);
+                                   file->set_outputLanguage(SgFile::e_Jovial_language);
+
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_Jovial_language);
+
+                                   file->set_Jovial_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
+                                }
+                            // DQ (28/8/2017): Adding language support.
+                               else if (CommandlineProcessing::isCobolFileNameSuffix(filenameExtension) == true)
+                                {
+                                // file = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
+
+                                   file->set_sourceFileUsesCobolFileExtension(true);
+                                   file->set_outputLanguage(SgFile::e_Cobol_language);
+
+                                // DQ (29/8/2017): Set the input language as well.
+                                   file->set_inputLanguage(SgFile::e_Cobol_language);
+
+                                   file->set_Cobol_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
                                 }
                                 else
                                  {
@@ -1213,6 +1322,14 @@ cout.flush();
                                      // file->initializeSourcePosition();
 
                                         file->set_sourceFileUsesBinaryFileExtension(true);
+
+                                     // DQ (11/15/2017): This this convention of setting the output file type.
+                                     // file->set_sourceFileUsesCobolFileExtension(true);
+                                     // file->set_outputLanguage(SgFile::e_Cobol_language);
+                                        file->set_outputLanguage(SgFile::e_Binary_language);
+
+                                     // DQ (11/15/2017): Set the input language as well.
+                                        file->set_inputLanguage(SgFile::e_Binary_language);
 
                                      // If this is an object file being processed for binary analysis then mark it as an object
                                      // file so that we can trigger analysis to mar the sections that will be disassembled.
@@ -1689,8 +1806,8 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
 
      using namespace Sawyer::CommandLine;
 
-     using namespace rose;                   // the ROSE team is migrating everything to this namespace
-     using namespace rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
+     using namespace Rose;                   // the ROSE team is migrating everything to this namespace
+     using namespace Rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
   // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
   // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
@@ -2538,7 +2655,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
   // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
   // tps: 08/18/2010, This should call StringUtility for WINDOWS- there are two implementations of this?
-  // set_sourceFileNameWithoutPath( rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+  // set_sourceFileNameWithoutPath( Rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
      set_sourceFileNameWithoutPath( StringUtility::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
      initializeSourcePosition(sourceFilename);
@@ -2798,7 +2915,7 @@ SgFile::callFrontEnd()
       // should be "disable_edg" instead of "disable_edg_backend".
           get_disable_edg_backend() == false && get_new_frontend() == true)
         {
-       // rose::new_frontend = true;
+       // Rose::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging)
        // or the EDG frontend that is included in SAGE III (currently EDG 3.3).
@@ -2820,7 +2937,7 @@ SgFile::callFrontEnd()
 
       // Use the current version of the EDG frontend from EDG (or any other version)
       // abort();
-         printf ("rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
+         printf ("Rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
          std::string frontEndCommandLineString;
          if ( get_KCC_frontend() == true )
@@ -3497,13 +3614,13 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string preprocessFilename = (abs_dir / boost::filesystem::unique_path(base.string() + "-%%%%%%%%.F90")).string();
 
           // The Sawyer::FileSystem::TemporaryFile d'tor will delete the file. We close the file after it's created because
-          // rose::FileSystem::copyFile will reopen it in binary mode anyway.
+          // Rose::FileSystem::copyFile will reopen it in binary mode anyway.
           Sawyer::FileSystem::TemporaryFile tempFile(preprocessFilename);
           tempFile.stream().close();
 
           // copy source file to pseudonym file
           try {
-              rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
+              Rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
           } catch(exception &e) {
               cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
                    << " (" << e.what() << ")" << endl;
@@ -4077,8 +4194,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // as coming from an command shell command line (where the calling program is always argument zero).
           experimentalFrontEndCommandLine.push_back("dummyArg_0");
 
-          string parseTableOption = "--parseTable";
-          experimentalFrontEndCommandLine.push_back(parseTableOption);
+       // Rasmussen (11/13/2017): Removed usage of --parseTable command-line option (from next few lines below). This information is better known by the individual language support files.
+       // string parseTableOption = "--parseTable";
+       // experimentalFrontEndCommandLine.push_back(parseTableOption);
 
        // DQ (1/26/2017): We want to put the Fortran.tbl into /nfs/casc/overture/ROSE/aterm_for_rose_bin so that Craig and I can work togehter.
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
@@ -4089,17 +4207,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // Rasmussen (2/22/2017): OFP_BIN_PATH is the path to the Fortran parse table and other
        // binaries used in transforming an OFP parse tree to an SgUntypedNode ATerm representation.
 #ifndef USE_CMAKE
-          std::string path_to_table = OFP_BIN_PATH;
+       // std::string path_to_table = OFP_BIN_PATH;
 #else
-          std::string path_to_table = "";
+       // std::string path_to_table = "";
 #endif
-          path_to_table += "/Fortran.tbl";
-
-          experimentalFrontEndCommandLine.push_back(path_to_table);
+       // path_to_table += "/Fortran.tbl";
+       // experimentalFrontEndCommandLine.push_back(path_to_table);
 
           experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
-
-       // experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithoutPath());
 
           int experimental_openFortranParser_argc    = 0;
           char** experimental_openFortranParser_argv = NULL;
@@ -5085,6 +5200,7 @@ SgSourceFile::processCppLinemarkers()
 #endif
    }
 
+
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
@@ -5175,6 +5291,7 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      return frontendErrorLevel;
    }
 
+
 int
 SgSourceFile::build_PHP_AST()
    {
@@ -5201,6 +5318,7 @@ SgSourceFile::build_PHP_AST()
      return frontendErrorLevel;
    }
 
+
 int
 SgSourceFile::build_Python_AST()
    {
@@ -5218,6 +5336,204 @@ SgSourceFile::build_Python_AST()
 #endif
      return frontendErrorLevel;
    }
+
+
+int
+SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+     std::string frontEndCommandLineString;
+     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+
+     if ( get_verbose() > 1 )
+        {
+          printf ("In build_Csharp_AST(): Before calling csharp_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
+
+     int frontendErrorLevel = 0;
+     int csharp_argc = 0;
+     char **csharp_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, csharp_argc, csharp_argv);
+
+     string sourceFileNameWithPath = this->get_sourceFileNameWithPath();
+     printf ("In SgSourceFile::build_Csharp_AST(): sourceFileNameWithPath = %s \n",sourceFileNameWithPath.c_str());
+
+  // Prototype declaration.
+     int csharp_main(int argc, char** argv, string sourceFileNameWithPath);
+
+  // Rasmussen (10/9/2017) Added compile time check to build if not configured for C#
+#ifdef ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+  // int frontendErrorLevel = csharp_main (c_cxx_argc, c_cxx_argv, *this);
+     frontendErrorLevel = csharp_main (csharp_argc, csharp_argv, sourceFileNameWithPath);
+#else
+     printf ("ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
+
+#if 1
+     printf ("Exiting after parsing Csharp input... \n");
+     exit(0);
+#endif
+
+#if 0
+  // If this was selected as an option then we can stop here (rather than call OFP again).
+  // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
+     if (get_exit_after_parser() == true)
+        {
+          printf ("Exiting after parsing... \n");
+          exit(0);
+        }
+#endif
+
+     return frontendErrorLevel;
+   }
+
+
+int
+SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // Note that to avoid the const_cast we could pass in a pointer to the SgSourceFile.
+
+  // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+     std::string frontEndCommandLineString;
+     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+
+     if ( get_verbose() > 1 )
+        {
+          printf ("In build_Ada_AST(): Before calling ada_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
+
+     int frontendErrorLevel = 0;
+     int ada_argc = 0;
+     char **ada_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, ada_argc, ada_argv);
+
+  // Prototype declaration.
+     int ada_main(int argc, char** argv, SgSourceFile* file);
+
+  // int frontendErrorLevel = ada_main (ada_argc, ada_argv);
+     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(nonconst_file != NULL);
+
+  // Rasmussen (10/9/2017) Added compile time check to build if not configured for Ada
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+     frontendErrorLevel = ada_main (ada_argc, ada_argv, nonconst_file);
+#else
+     printf ("ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
+
+  // printf ("Exiting after parsing Ada input... \n");
+  // exit(0);
+
+     if ( get_verbose() > 1 )
+        {
+          printf ("In build_Ada_AST(): After calling ada_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
+
+     return frontendErrorLevel;
+   }
+
+
+int
+SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+     std::string frontEndCommandLineString;
+     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+
+     if ( get_verbose() > 1 )
+        {
+          printf ("In build_Jovial_AST(): Before calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
+
+     int frontendErrorLevel;
+     int jovial_argc = 0;
+     char **jovial_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);
+
+  // Prototype declaration.
+  // Rasmussen (10/16/2017): Added SgSourceFile parameter
+     int jovial_main(int argc, char** argv, SgSourceFile* file);
+
+     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(nonconst_file != NULL);
+
+  // Rasmussen (10/21/2017) Added compile time check to build if not configured for Jovial
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+     frontendErrorLevel = jovial_main (jovial_argc, jovial_argv, nonconst_file);
+#else
+     printf ("ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
+
+     if ( get_verbose() > 1 )
+        {
+          printf ("In build_Jovial_AST(): After calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
+
+#if 0
+     printf ("Exiting after parsing Jovial input... \n");
+     exit(0);
+#endif
+
+     return frontendErrorLevel;
+   }
+
+
+int
+SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+     std::string frontEndCommandLineString;
+     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+
+     if ( get_verbose() > 1 )
+        {
+          printf ("In build_Cobol_AST(): Before calling cobol_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
+
+     int frontendErrorLevel = 0;
+     int cobol_argc = 0;
+     char **cobol_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, cobol_argc, cobol_argv);
+
+  // Prototype declaration.
+  // Rasmussen (10/31/2017): Added SgSourceFile parameter
+     int cobol_main(int argc, char** argv, SgSourceFile* file);
+
+     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(nonconst_file != NULL);
+
+  // Rasmussen (10/9/2017) Added compile time check to build if not configured for Cobol
+#ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+     frontendErrorLevel = cobol_main (cobol_argc, cobol_argv, nonconst_file);
+#else
+     printf ("ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
+
+     if ( get_verbose() > 1 )
+        {
+          printf ("In build_Cobol_AST(): After calling cobol_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
+
+#if 1
+     printf ("Exiting after parsing Cobol input... \n");
+     exit(0);
+#endif
+
+     return frontendErrorLevel;
+   }
+
 
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
@@ -5296,12 +5612,12 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         BinaryAnalysis::BinaryLoader::load(this, get_read_executable_file_format_only());
     }
 
-    /* Disassemble each interpretation */
+    // Disassemble each interpretation
     if (!get_read_executable_file_format_only()) {
+        namespace P2 = Rose::BinaryAnalysis::Partitioner2;
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            rose::BinaryAnalysis::Partitioner::disassembleInterpretation(interps[i]);
-        }
+        for (size_t i=0; i<interps.size(); i++)
+            Rose::BinaryAnalysis::Partitioner2::Engine::disassembleForRoseFrontend(interps[i]);
     }
 
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
@@ -5451,45 +5767,81 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   }
                  else
                   {
-                      if ( get_Python_only() == true )
-                         {
+                    if ( get_Python_only() == true )
+                       {
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
-                             frontendErrorLevel = build_Python_AST();
-                             frontend_failed = (frontendErrorLevel > 0);
+                         frontendErrorLevel = build_Python_AST();
+                         frontend_failed = (frontendErrorLevel > 0);
 #else
-                          // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
-                             ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Python] "
-                                            "error: ROSE was not configured to support the Python frontend.");
+                      // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
+                         ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Python] error: ROSE was not configured to support the Python frontend.");
 #endif
-
-                         }
+                       }
                       else
-                      {
-                          if (get_X10_only() == true)
-                          {
-                              #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+                       {
+                         if (get_X10_only() == true)
+                            {
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
                                    frontendErrorLevel = build_X10_AST(argv);
                                    frontend_failed = (frontendErrorLevel > 0);
-                              #else
-                                // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
-                                   ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [X10] "
-                                                  "error: ROSE was not configured to support the X10 frontend.");
-                              #endif
-                          }
-                          else
-                          {
-                             frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
-
-                             // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-                             // Any non-zero value indicates an error.
-                             frontend_failed = (frontendErrorLevel != 0);
 #else
-                             // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
-                             frontend_failed = (frontendErrorLevel > 3);
+                                // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
+                                   ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [X10] error: ROSE was not configured to support the X10 frontend.");
 #endif
-                          }
-                      }
+                            }
+                           else
+                            {
+                           // DQ (8/25/2017): Added new langauge support.
+                              if (get_Csharp_only() == true)
+                                 {
+                                   frontendErrorLevel = build_Csharp_AST(argv,inputCommandLine);
+                                   frontend_failed = (frontendErrorLevel > 0);
+                                 }
+                                else
+                                 {
+                                // DQ (8/25/2017): Added new langauge support.
+                                   if (get_Ada_only() == true)
+                                      {
+                                        frontendErrorLevel = build_Ada_AST(argv,inputCommandLine);
+                                        frontend_failed = (frontendErrorLevel > 0);
+                                      }
+                                     else
+                                      {
+                                     // DQ (8/25/2017): Added new langauge support.
+                                        if (get_Jovial_only() == true)
+                                           {
+                                             frontendErrorLevel = build_Jovial_AST(argv,inputCommandLine);
+                                             frontend_failed = (frontendErrorLevel > 0);
+                                          // Rasmussen (11/21/2017): No Jovial compiler for now
+                                             set_skipfinalCompileStep(true);
+                                           }
+                                          else
+                                           {
+                                          // DQ (8/25/2017): Added new langauge support.
+                                             if (get_Cobol_only() == true)
+                                                {
+                                                  frontendErrorLevel = build_Cobol_AST(argv,inputCommandLine);
+                                                  frontend_failed = (frontendErrorLevel > 0);
+                                                }
+                                               else
+                                                {
+                                               // This is the C/C++ case (default).
+                                                  frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+
+                                               // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+                                               // Any non-zero value indicates an error.
+                                                  frontend_failed = (frontendErrorLevel != 0);
+#else
+                                               // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
+                                                  frontend_failed = (frontendErrorLevel > 3);
+#endif
+                                                }
+                                           }
+                                      }
+                                 }
+                            }
+                       }
                   }
              }
         }
@@ -5617,7 +5969,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argc,argv);
   // ROSE_ASSERT (fileList.size() == 1);
   // p_sourceFileNameWithPath    = *(fileList.begin());
-  // p_sourceFileNameWithoutPath = rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
+  // p_sourceFileNameWithoutPath = Rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
 
 #if 1
   // ROSE_ASSERT (get_unparse_output_filename().empty() == true);
@@ -5652,7 +6004,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
-                    outputFilename = rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+                    outputFilename = Rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
                     printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 
@@ -5721,7 +6073,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #if 1
                     printf ("NOTE: keep_going option supporting direct copy of original input file to overwrite the unparsed file \n");
 #endif
-                    rose::FileSystem::copyFile(original_file, unparsed_file);
+                    Rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }
 
@@ -5779,13 +6131,43 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf("End of command line for backend compiler\n");
 
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
-               printf ("SgFile::compileOutput(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+               printf ("SgFile::compileOutput(): get_skipfinalCompileStep() == false: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
-
+#if 0
+          printf ("In SgFile::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
+#endif
        // DQ (4/18/2015): Adding support to add compile only mode to the processing of each file when multiple files are processed.
           if (get_compileOnly() == true)
              {
                bool addCompileOnlyFlag = true;
+
+            // DQ (30/8/2017): If this is Csharp then don't use the "-c" flag (does not exist for the mono compiler)
+               if (get_Csharp_only() == true)
+                  {
+                    addCompileOnlyFlag = false;
+                  }
+
+            // DQ (31/8/2017): If this is Ada then don't use the "-c" flag (not clear what steps are required for linking within Ada)
+               if (get_Ada_only() == true)
+                  {
+                    addCompileOnlyFlag = false;
+#if 0
+                    printf ("In SgFile::compileOutput(): get_compileOnly() == true: addCompileOnlyFlag = %s \n",addCompileOnlyFlag ? "true" : "false");
+#endif
+                  }
+
+            // DQ (31/8/2017): If this is Jovial then don't use the "-c" flag (not clear what steps are required for linking within Jovial)
+               if (get_Jovial_only() == true)
+                  {
+                    addCompileOnlyFlag = false;
+                  }
+
+            // DQ (31/8/2017): If this is Cobol then don't use the "-c" flag (not clear what steps are required for linking within Cobol)
+               if (get_Cobol_only() == true)
+                  {
+                    addCompileOnlyFlag = false;
+                  }
+
                for (size_t i = 0; i < compilerCmdLine.size(); ++i)
                   {
                     if (compilerCmdLine[i] == "-c")
@@ -5801,9 +6183,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                  // We might want to check if "-c" is already present so we don't add it redundantly.
                     compilerCmdLine.push_back("-c");
                   }
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
-               printf ("SgFile::compileOutput(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
+               printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
+
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -5828,9 +6212,17 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
+          printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+#endif
+
        // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine
           returnValueForCompiler = systemFromVector (compilerCmdLine);
+
+#if 0
+          printf ("In SgFile::compileOutput(): Calling systemFromVector(): returnValueForCompiler = %d \n",returnValueForCompiler);
+#endif
 
        // TOO1 (05/14/2013): Handling for -rose:keep_going
        //
@@ -6113,6 +6505,11 @@ SgProject::compileOutput()
 #define DEBUG_PROJECT_COMPILE_COMMAND_LINE 0
 
 #if 0
+     vector<string> tmp_argv = get_originalCommandLineArgumentList();
+     printf ("In SgProject::compileOutput(): listToString(originalCommandLine) = %s \n",StringUtility::listToString(tmp_argv).c_str());
+#endif
+
+#if 0
      display("In SgProject::compileOutput(): debugging");
 #endif
 
@@ -6172,6 +6569,7 @@ SgProject::compileOutput()
 #if 0
      printf ("In SgProject::compileOutput(): get_C_PreprocessorOnly() = %s \n",get_C_PreprocessorOnly() ? "true" : "false");
 #endif
+
   // case 1: preprocessing only
      if (get_C_PreprocessorOnly() == true)
         {
@@ -6390,9 +6788,20 @@ SgProject::compileOutput()
           printf ("In SgProject::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
 #endif
 
+#if 0
+          printf ("In SgProject::compileOutput(): errorCode = %d \n",errorCode);
+#endif
        // case 3: linking at the project level
-          if (! (get_Java_only() || get_Python_only() || get_X10_only()) )
+
+       // DQ (1/9/2017): Only proceed with linking step if the compilation step finished without error.
+       // DQ (30/8/2017): Note that Csharp does not use linking the same way that C/C++ does (as I understand it).
+       // if (! (get_Java_only() || get_Python_only() || get_X10_only()) )
+       // if (! (get_Java_only() || get_Python_only() || get_X10_only() || get_Csharp_only() ) )
+          if ( (errorCode == 0) && (! (get_Java_only() || get_Python_only() || get_X10_only() || get_Csharp_only() ) ) )
              {
+
+            // ROSE_ASSERT(get_compileOnly() == true);
+
             // Liao, 11/19/2009, 
             // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
             // and have both compilation and linking finished at the same time, just as the original command line does.
@@ -6431,8 +6840,8 @@ SgProject::compileOutput()
                          printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == false: Linking as a seperate step is not required when multifile_support_compile_only_flag == false \n");
 #endif
                        }
-#endif 
-                       // Liao 5/1/2015
+#endif
+                   // Liao 5/1/2015
                       linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                   }
                  else
@@ -6492,6 +6901,23 @@ SgFile::isPrelinkPhase() const
 // int SgProject::link ()
 int SgProject::link ( std::string linkerName )
    {
+#if 0
+     printf ("In SgProject::link(): linkerName = %s \n",linkerName.c_str());
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // DQ (30/8/2017): Csharp does not include a concept of linking, as I understand it presently.
+  // if (get_Csharp_only() == true)
+     if (get_Csharp_only() == true || get_Ada_only() == true || get_Jovial_only() == true || get_Cobol_only() == true)
+        {
+          printf ("WARNING: In SgProject::link(): New language support is skipping the linking step (for now) \n");
+          return 0;
+        }
+
   // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
   // or perhaps define a more simple function to use more directly.
   // Liao, 11/20/2009
@@ -7515,7 +7941,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
 
             // DQ (3/15/2017): Fixed to use mlog message logging.
-               if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+               if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
                   {
                     functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
                   }

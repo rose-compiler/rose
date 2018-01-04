@@ -6,6 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/../colorAST_tests
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # This is a shorted list that tests more quickly.
 TESTCODES_REQUIRED_TO_PASS = \
@@ -205,7 +206,7 @@ TESTCODES_CURRENTLY_FAILING = \
 bin_PROGRAMS = testMerge
 testMerge_SOURCES = testMerge.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 testMerge_single: testMerge
 	./testMerge -c $(srcdir)/inputCode_merge.C

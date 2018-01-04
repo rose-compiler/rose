@@ -20,6 +20,10 @@ int main( int argc, char* argv[] )
 
      // Liao, 10/23/2009, enable command options to change internal behaviors of the dot graph generator
      vector<string>  argvList (argv, argv+ argc);
+
+     // Liao, 5/3/2017. We have thousands of builtin functions in AST now. 
+     // We must skip them so the dot graph is small enough.
+     argvList.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
 //     generateGraphOfAST_initFilters(argvList);
      CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags = new CustomMemoryPoolDOTGeneration::s_Filter_Flags(argvList);
 
@@ -33,26 +37,31 @@ int main( int argc, char* argv[] )
      string filename = SageInterface::generateProjectName(project);
 
      int numberOfASTnodesBeforeMerge = numberOfNodes();
-     printf ("numberOfASTnodesBeforeMerge = %d MAX_NUMBER_OF_IR_NODES_TO_GRAPH = %d MAX_NUMBER_OF_IR_NODES_TO_GRAPH = %d \n",
+     if (project->get_verbose()>0)
+       printf ("numberOfASTnodesBeforeMerge = %d MAX_NUMBER_OF_IR_NODES_TO_GRAPH = %d MAX_NUMBER_OF_IR_NODES_TO_GRAPH = %d \n",
           numberOfASTnodesBeforeMerge,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_TREE_GRAPH);
+
      if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH)
         {
-       // default generated graphof whole AST excludes front-end specific IR node (e.g. builtin functions)
+       // default generated graph of whole AST excludes front-end specific IR node (e.g. builtin functions)
           generateWholeGraphOfAST(filename+"_WholeAST", filter_flags);
 
        // The call to generateWholeGraphOfAST is the same as the following:
        // set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
        // generateWholeGraphOfAST(filename+"_WholeAST_skipped_nodes",skippedNodeSet);
 
+#if 0
        // generate the AST whole graph by providing an empty set to a similar function
           set<SgNode*> emptySet;
           generateWholeGraphOfAST(filename+"_WholeAST_with_builtin_functions",emptySet);
+#endif
         }
        else
         {
           printf ("AST too large to output as a graph (non-tree) and layout using GraphViz, so output skipped \n");
         }
 
+#if 0
   // Alternative approach to output the AST as a graph
      if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_TREE_GRAPH)
         {
@@ -65,6 +74,6 @@ int main( int argc, char* argv[] )
         {
           printf ("AST too large to output as a tree and layout using GraphViz, so output skipped\n");
         }
-
+#endif
      return 0;
    }

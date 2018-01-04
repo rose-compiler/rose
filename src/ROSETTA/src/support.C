@@ -537,11 +537,14 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("int","nestingLevel","= 0",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (29/8/2017): changed the language enum name so that we could use it for both input and output language specifications.
   // DQ (9/15/2012): Added support to specify the language directly (required to unparse SgBoolVal in some cases where 
   // they are used in SgTemplateParameters in a SgTemplateInstantiation which would be constrcuted before having its
   // parent set (thus not allowing the unparseBoolVal() to call TransformationSupport::getFile(expr) and find the 
   // associated SgFile IR node). This is only an issue during AST construction.
-     Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
+  // Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Unparse_Info.setDataPrototype("SgFile::languageOption_enum","language","= SgFile::e_default_language",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
   // DQ (1/10/2015): We need to save a pointer to the SgSourceFile to support the token based unparsing efficiently.
@@ -915,11 +918,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Java_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     // X10 support
+  // X10 support
      File.setDataPrototype         ( "bool", "X10_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     // PHP support
+  // PHP support
      File.setDataPrototype         ( "bool", "PHP_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -932,6 +935,26 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // TV (05/17/2010) OpenCL support
      File.setDataPrototype         ( "bool", "OpenCL_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Csharp support
+     File.setDataPrototype         ( "bool", "Csharp_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Ada support
+     File.setDataPrototype         ( "bool", "Ada_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Jovial support
+     File.setDataPrototype         ( "bool", "Jovial_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Cobol support
+     File.setDataPrototype         ( "bool", "Cobol_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
@@ -1045,9 +1068,15 @@ Grammar::setUpSupport ()
   // shared between C/C++ and Fortran (for example).  This is also how the Promela support should be
   // provided, though this work only handles C (not C++, or Fortran) and only a subset of C, plus
   // numerous translations are required (See Christian Iwainsky's thesis).
-     File.setDataPrototype         ( "SgFile::outputLanguageOption_enum", "outputLanguage", "= SgFile::e_default_output_language",
+  // File.setDataPrototype         ( "SgFile::outputLanguageOption_enum", "outputLanguage", "= SgFile::e_default_output_language",
+  //                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "SgFile::languageOption_enum", "outputLanguage", "= SgFile::e_default_language",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (29/8/2017): Specification of input language (we will want to get this to match all of the get_Cxx_only flags and 
+  // likely reimplement those functions to use this single enum). This is general work to support more languages.
+     File.setDataPrototype         ( "SgFile::languageOption_enum", "inputLanguage", "= SgFile::e_default_language",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Internal data
   // File.setDataPrototype         ( "int"    , "numberOfSourceFileNames", "= -1",
@@ -1248,6 +1277,16 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileUsesX10FileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (28/8/2017): Adding language support.
+     File.setDataPrototype         ( "bool", "sourceFileUsesCsharpFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesAdaFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesJovialFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesCobolFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (9/26/2011): Added support to detect dangling pointers in ROSE translators.
   // This is not an expensive test, but it fails for isolated parts of ROSE currently 
   // so it should be made optional at this early stage (before it is made a default 
@@ -1328,22 +1367,6 @@ Grammar::setUpSupport ()
 
   // DQ (2/5/2009): added boolean data member to record if this is an object file being processed for binary analysis.
      File.setDataPrototype         ( "bool", "isObjectFile", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // RPM (12/29/2009): Switch to control how aggressive the disassembler is. It takes a list of words based loosely
-  // on the constants in the Disassembler::SearchHeuristic enum.
-     File.setDataPrototype("unsigned", "disassemblerSearchHeuristics", "= rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
-  // on the constants in the SgAsmFunction::FunctionReason enum.
-     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunction::FUNC_DEFAULT",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
-  // DQ (11/20/2010): This should maybe have an initializer of "= \"\"" instead of just "" so that 
-  // it will be properly reset to an empty string in the generated destructor.
-     File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/20/2010): Unparse using tokens were possible instead of from the AST.  This is possible
@@ -1959,9 +1982,9 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::list<std::string>", "Java_sourcepath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype("std::string", "Java_destdir", "= rose::getWorkingDirectory()",
+     Project.setDataPrototype("std::string", "Java_destdir", "= Rose::getWorkingDirectory()",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype("std::string", "Java_source_destdir", "= rose::getWorkingDirectory()",
+     Project.setDataPrototype("std::string", "Java_source_destdir", "= Rose::getWorkingDirectory()",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ("std::string", "Java_s", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

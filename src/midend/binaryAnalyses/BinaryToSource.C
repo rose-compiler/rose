@@ -4,8 +4,8 @@
 #include <AsmUnparser_compat.h>
 #include <BinaryToSource.h>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 typedef SourceAstSemantics::SValue SValue;
 typedef SourceAstSemantics::SValuePtr SValuePtr;
@@ -18,13 +18,13 @@ typedef SourceAstSemantics::StatePtr StatePtr;
 typedef SourceAstSemantics::RiscOperators RiscOperators;
 typedef SourceAstSemantics::RiscOperatorsPtr RiscOperatorsPtr;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void
 BinaryToSource::init(const P2::Partitioner &partitioner) {
     disassembler_ = partitioner.instructionProvider().disassembler();
-    const RegisterDictionary *regDict = disassembler_->get_registers();
+    const RegisterDictionary *regDict = disassembler_->registerDictionary();
     raisingOps_ = RiscOperators::instance(regDict, NULL);
     BaseSemantics::DispatcherPtr protoCpu = disassembler_->dispatcher();
     if (!protoCpu)
@@ -287,7 +287,7 @@ BinaryToSource::emitMain(std::ostream &out) {
     // Initialize call frame
     {
         static const rose_addr_t magic = 0xfffffffffffffeull ; // arbitrary
-        size_t bytesPerWord = disassembler_->get_wordsize();
+        size_t bytesPerWord = disassembler_->wordSizeBytes();
         std::string sp = raisingOps_->registerVariableName(disassembler_->stackPointerRegister());
         for (size_t i=0; i<bytesPerWord; ++i)
             out <<"    mem[--" <<sp <<"] = " <<((magic>>(8*i)) & 0xff) <<"; /* arbitrary */\n";

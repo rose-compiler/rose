@@ -1,6 +1,7 @@
 #ifndef RSIM_CloneDetection_H
 #define RSIM_CloneDetection_H
 
+#include "BinarySmtSolver.h"
 #include "Disassembler.h"
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
@@ -9,7 +10,6 @@
 #include "Combinatorics.h"
 #include "Map.h"
 #include "SymbolicSemantics.h"
-#include "SMTSolver.h"
 
 #include "compute_signature_vector.h"
 
@@ -22,15 +22,15 @@ namespace CloneDetection {
 
 extern const char *schema; /**< Contents of Schema.sql file, initialized in CloneDetectionSchema.C */
 
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 typedef std::map<int, SgAsmFunction*> IdFunctionMap;
 typedef std::map<rose_addr_t, int> AddressIdMap;
 typedef Map<std::string, rose_addr_t> NameAddress;
-typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
+typedef Rose::BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 enum FollowCalls { CALL_NONE, CALL_ALL, CALL_BUILTIN };
@@ -935,19 +935,19 @@ public:
 
 #if 0 // [Robb Matzke 2015-10-21]
 // This API is no longer available since it used the old instruction semantics API which is no longer supported.
-typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
+typedef Rose::BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
 #else
 // Stub replacement. It would be quite hard to use the new pointer detection with the old semantics API, so just assume that
 // nothing is a pointer.
 class PointerDetector {
 public:
     struct State {
-        rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<SymbolicSemantics::ValueType> registers;
+        Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<SymbolicSemantics::ValueType> registers;
     };
 
     State state_;
 
-    PointerDetector(const InstructionProvidor*, rose::BinaryAnalysis::SMTSolver*) {}
+    PointerDetector(const InstructionProvidor*, Rose::BinaryAnalysis::SmtSolver*) {}
 
     bool is_pointer(const SymbolicSemantics::ValueType<32>& addr) const {
         return false;
@@ -1292,7 +1292,7 @@ public:
             if (verbosity>=EFFUSIVE) {
                 std::cerr <<"output for ax = " <<ValueType<32>(v2);
                 if (v1!=v2)
-                    std::cerr <<" (hash of string at " <<rose::StringUtility::addrToString(v1) <<")";
+                    std::cerr <<" (hash of string at " <<Rose::StringUtility::addrToString(v1) <<")";
                 std::cerr <<"\n";
             }
             outputs.insert_retval(v2);
@@ -1316,9 +1316,9 @@ public:
                     int nbytes = v1==v2 ? (int)mval.first_of_n : 4;
                     char buf[32];
                     snprintf(buf, sizeof buf, "%0*"PRIx64, 2*nbytes, (uint64_t)v2);
-                    std::cerr <<"output for mem[" <<rose::StringUtility::addrToString(addr) <<"] = " <<buf;
+                    std::cerr <<"output for mem[" <<Rose::StringUtility::addrToString(addr) <<"] = " <<buf;
                     if (v1!=v2)
-                        std::cerr <<" (hash of string at " <<rose::StringUtility::addrToString(v1) <<")";
+                        std::cerr <<" (hash of string at " <<Rose::StringUtility::addrToString(v1) <<")";
                     std::cerr <<"\n";
                 }
                 outputs.insert_value(v2, addr);
@@ -1345,7 +1345,7 @@ public:
                 o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
             }
-            o <<"    mem[" <<rose::StringUtility::addrToString(addr) <<"] = " <<rose::StringUtility::addrToString(mval.val, 8);
+            o <<"    mem[" <<Rose::StringUtility::addrToString(addr) <<"] = " <<Rose::StringUtility::addrToString(mval.val, 8);
             if (mval.first_of_n) {
                 o <<" 1/" <<mval.first_of_n;
             } else {
@@ -1461,7 +1461,7 @@ public:
     Tracer &tracer;                                     // Responsible for emitting rows for semantic_fio_trace
     bool uses_stdcall;                                  // True if this executable uses the stdcall calling convention
     StackFrames stack_frames;                           // Stack frames ordered by decreasing entry_esp values
-    rose::BinaryAnalysis::Disassembler::AddressSet whitelist_exports; // Dynamic funcs that can be called for CALL_BUILTIN
+    Rose::BinaryAnalysis::Disassembler::AddressSet whitelist_exports; // Dynamic funcs that can be called for CALL_BUILTIN
     FuncAnalyses &funcinfo;                             // Partial results of various kinds of function analyses
     InsnCoverage &insn_coverage;                        // Information about which instructions were executed
     DynamicCallGraph &dynamic_cg;                       // Information about function calls
@@ -1494,7 +1494,7 @@ public:
             retval = ValueType<nBits>(address_hasher(addr));
             if (params.verbosity>=EFFUSIVE) {
                 std::cerr <<"CloneDetection: using " <<InputGroup::queue_name(qn)
-                          <<" addr " <<rose::StringUtility::addrToString(addr) <<": " <<retval <<"\n";
+                          <<" addr " <<Rose::StringUtility::addrToString(addr) <<": " <<retval <<"\n";
             }
         } else {
             retval = ValueType<nBits>(inputs->queue(qn).next());
@@ -1519,7 +1519,7 @@ public:
     // Sets up the machine state to start the analysis of one function.
     void reset(SgAsmInterpretation *interp, SgAsmFunction *func, InputGroup *inputs, const InstructionProvidor *insns,
                const PointerDetector *pointers/*=NULL*/,
-               const rose::BinaryAnalysis::Disassembler::AddressSet &whitelist_exports) {
+               const Rose::BinaryAnalysis::Disassembler::AddressSet &whitelist_exports) {
         inputs->reset();
         this->inputs = inputs;
         this->insns = insns;
@@ -1621,7 +1621,7 @@ public:
                 stack_frame.stdcall_args_va = state.registers.gpr[x86_gpr_sp].known_value();
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: stdcall args start at "
-                              <<rose::StringUtility::addrToString(stack_frame.stdcall_args_va) <<"\n";
+                              <<Rose::StringUtility::addrToString(stack_frame.stdcall_args_va) <<"\n";
             }
         }
     }
@@ -1750,11 +1750,11 @@ public:
             if (!funcname.empty())
                 funcname = " <" + funcname + ">";
             std::cerr <<"CloneDetection: " <<std::string(80, '-') <<"\n"
-                      <<"CloneDetection: in function " <<rose::StringUtility::addrToString(func->get_entry_va()) <<funcname
+                      <<"CloneDetection: in function " <<Rose::StringUtility::addrToString(func->get_entry_va()) <<funcname
                       <<" at level " <<stack_frames.size() <<"\n"
-                      <<"CloneDetection: stack ptr: " <<rose::StringUtility::addrToString(stack_frame.entry_esp)
-                      <<" - " <<rose::StringUtility::signedToHex2(stack_frame.entry_esp-esp, 32)
-                      <<" = " <<rose::StringUtility::addrToString(esp) <<"\n";
+                      <<"CloneDetection: stack ptr: " <<Rose::StringUtility::addrToString(stack_frame.entry_esp)
+                      <<" - " <<Rose::StringUtility::signedToHex2(stack_frame.entry_esp-esp, 32)
+                      <<" = " <<Rose::StringUtility::addrToString(esp) <<"\n";
         }
 
         // Decide whether this function is allowed to call (via CALL, JMP, fall-through, etc) other functions.
@@ -1795,8 +1795,8 @@ public:
                 state.register_rw_state.gpr[x86_gpr_bx].state |= HAS_BEEN_INITIALIZED;
                 if (params.verbosity>=EFFUSIVE) {
                     std::cerr <<"CloneDetection: special handling for thunk"
-                              <<" at " <<rose::StringUtility::addrToString(insn->get_address())
-                              <<": set EBX = " <<rose::StringUtility::addrToString(gotplt->get_mapped_actual_va()) <<"\n";
+                              <<" at " <<Rose::StringUtility::addrToString(insn->get_address())
+                              <<": set EBX = " <<Rose::StringUtility::addrToString(gotplt->get_mapped_actual_va()) <<"\n";
                 }
             }
         }
@@ -1885,8 +1885,8 @@ public:
                         sf.stdcall_args_va = esp;
                         if (params.verbosity>=EFFUSIVE) {
                             std::cerr <<"CloneDetection: adjusted function "
-                                      <<rose::StringUtility::addrToString(sf.func->get_entry_va()) <<" stdcall args start to "
-                                      <<rose::StringUtility::addrToString(sf.stdcall_args_va) <<"\n";
+                                      <<Rose::StringUtility::addrToString(sf.func->get_entry_va()) <<" stdcall args start to "
+                                      <<Rose::StringUtility::addrToString(sf.stdcall_args_va) <<"\n";
                         }
                     }
                 }
@@ -2098,7 +2098,7 @@ public:
                 std::cerr <<"CloneDetection: potential output value mem[" <<a0 <<"]=" <<data <<"\n";
                 rose_addr_t v2 = state.hash_if_string(data.known_value(), interp->get_map());
                 if (v2!=data.known_value())
-                    std::cerr <<"CloneDetection: output value is a string pointer; hash="<<rose::StringUtility::addrToString(v2)<<"\n";
+                    std::cerr <<"CloneDetection: output value is a string pointer; hash="<<Rose::StringUtility::addrToString(v2)<<"\n";
             }
             tracer.emit(this->get_insn()->get_address(), EV_MEM_WRITE, a0.known_value(), data.known_value());
         }
@@ -2107,12 +2107,12 @@ public:
     // Track register access
     template<size_t nBits>
     ValueType<nBits> readRegister(const char *regname) {
-        const RegisterDescriptor &reg = this->findRegister(regname, nBits);
+        RegisterDescriptor reg = this->findRegister(regname, nBits);
         return this->template readRegister<nBits>(reg);
     }
 
     template<size_t nBits>
-    ValueType<nBits> readRegister(const RegisterDescriptor &reg) {
+    ValueType<nBits> readRegister(RegisterDescriptor reg) {
         // If we're reading the EAX register since the last return from a function call and before we write to EAX, then
         // that function must have returned a value.
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !stack_frames.empty()) {
@@ -2122,7 +2122,7 @@ public:
                     ++funcinfo[found->second].nretused;
                     if (params.verbosity>=EFFUSIVE) {
                         std::cerr <<"CloneDetection: function #" <<found->second
-                                  <<" " <<rose::StringUtility::addrToString(last_call->get_entry_va())
+                                  <<" " <<Rose::StringUtility::addrToString(last_call->get_entry_va())
                                   <<" <" <<last_call->get_name() <<"> returns a value\n";
                     }
                 }
@@ -2342,12 +2342,12 @@ public:
 
     template<size_t nBits>
     void writeRegister(const char *regname, const ValueType<nBits> &value) {
-        const RegisterDescriptor &reg = this->findRegister(regname, nBits);
+        RegisterDescriptor reg = this->findRegister(regname, nBits);
         this->template writeRegister(reg, value);
     }
 
     template<size_t nBits>
-    void writeRegister(const RegisterDescriptor &reg, ValueType<nBits> value, unsigned update_access=HAS_BEEN_WRITTEN) {
+    void writeRegister(RegisterDescriptor reg, ValueType<nBits> value, unsigned update_access=HAS_BEEN_WRITTEN) {
         // Some operations produce undefined values according to the x86 ISA specification. For example, certain flag bits are
         // sometimes unspecified, as is the result of certain kinds of shift operations when the shift amount is large. In
         // order to stay in the concrete domain, we always choose a value of zero when this happens.

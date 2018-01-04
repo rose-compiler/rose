@@ -1,12 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = sharedMemoryDSL
 
 sharedMemoryDSL_SOURCES = sharedMemoryDSL.C sharedMemoryTypeTraversal.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 
 #####################################################################################

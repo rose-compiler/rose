@@ -40,10 +40,10 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Message logging mechanism.
 Sawyer::Message::Facility TestChildPointersInMemoryPool::mlog;
@@ -4779,6 +4779,13 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
           ROSE_ASSERT(symbol->get_parent() != NULL);
         }
 
+  // DQ (10/16/2017): Skip parent pointer checking for the untyped IR nodes.
+     if (isSgUntypedNode(locatedNode) != NULL)
+        {
+          printf ("TestParentPointersInMemoryPool::visit(): Skipping SgUntypedNode IR Node \n");
+          return;
+        }
+
 #if 0
      if (isSgExpression(locatedNode) != NULL)
         {
@@ -5072,7 +5079,7 @@ void TestChildPointersInMemoryPool::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(&mlog, "rose::TestChildPointersInMemoryPool");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::TestChildPointersInMemoryPool");
         }
    }
 

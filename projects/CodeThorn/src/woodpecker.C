@@ -18,7 +18,7 @@
 #include "TrivialInlining.h"
 #include "Threadification.h"
 #include "RewriteSystem.h"
-#include "Normalization.h"
+#include "Lowering.h"
 
 #include <vector>
 #include <set>
@@ -71,7 +71,7 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   VariableConstInfo vci(&variableIdMapping, &map);
   for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
     VariableId varId=(*i).first;
-    //string variableName=variableIdMapping.uniqueShortVariableName(varId);
+    //string variableName=variableIdMapping.uniqueVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
     set<AbstractValue> valueSet=(*i).second;
     stringstream setstr;
@@ -124,12 +124,12 @@ void printCodeStatistics(SgNode* root) {
 int main(int argc, char* argv[]) {
   ROSE_INITIALIZE;
 
-  rose::Diagnostics::mprefix->showProgramName(false);
-  rose::Diagnostics::mprefix->showThreadId(false);
-  rose::Diagnostics::mprefix->showElapsedTime(false);
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
+  Rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
 
   try {
     if(argc==1) {
@@ -161,19 +161,19 @@ int main(int argc, char* argv[]) {
     ("rose-help", "show help for compiler frontend options.")
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
-    ("normalize", po::value< string >(), "normalize code (eliminate compound assignment operators).")
-    ("normalize2", po::value< string >(), "normalize code (normalize for-statements).")
-    ("inline",po::value< string >(), "perform inlining ([yes]|no).")
-    ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
-    ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
-    ("csv-const-result",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
-    ("generate-transformed-code",po::value< string >(), "generate transformed code with prefix rose_ ([yes]|no).")
-    ("verbose",po::value< string >(), "print detailed output during analysis and transformation (yes|[no]).")
+    ("normalize", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (eliminate compound assignment operators).")
+    ("normalize2", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (normalize for-statements).")
+    ("inline", po::value< bool >()->default_value(true)->implicit_value(true), "perform inlining.")
+    ("eliminate-empty-if", po::value< bool >()->default_value(true)->implicit_value(true), "eliminate if-statements with empty branches in main function.")
+    ("eliminate-dead-code", po::value< bool >()->default_value(true)->implicit_value(true), "eliminate dead code (variables and expressions).")
+    ("csv-const-result",po::value< string >(), "generate csv-file <arg> with const-analysis data.")
+    ("generate-transformed-code",po::value< bool >()->default_value(true)->implicit_value(true), "generate transformed code with prefix \"rose_\".")
+    ("verbose", po::value< bool >()->default_value(false)->implicit_value(true), "print detailed output during analysis and transformation.")
     ("generate-conversion-functions","generate code for conversion functions between variable names and variable addresses.")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
-    ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
+    ("enable-multi-const-analysis", po::value< bool >()->default_value(false)->implicit_value(true), "enable multi-const analysis.")
     ("transform-thread-variable", "transform code to use additional thread variable.")
-    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|debug)).")
     ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -203,23 +203,7 @@ int main(int argc, char* argv[]) {
     csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
   }
 
-  boolOptions.init(argc,argv);
-  // temporary fake optinos
-  boolOptions.registerOption("arith-top",false); // temporary
-  boolOptions.registerOption("semantic-fold",false); // temporary
-  boolOptions.registerOption("post-semantic-fold",false); // temporary
-  // regular options
-  boolOptions.registerOption("normalize",false);
-  boolOptions.registerOption("normalize2",false);
-  boolOptions.registerOption("inline",true);
-  boolOptions.registerOption("eliminate-empty-if",true);
-  boolOptions.registerOption("eliminate-dead-code",true);
-  boolOptions.registerOption("generate-transformed-code",true);
-  boolOptions.registerOption("enable-multi-const-analysis",false);
-  boolOptions.registerOption("verbose",false);
-  boolOptions.processOptions();
-
-  if(boolOptions["verbose"])
+  if(args.getBool("verbose"))
     detailedOutput=1;
 
   mfacilities.control(args["log-level"].as<string>());
@@ -237,7 +221,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  global_option_multiconstanalysis=boolOptions["enable-multi-const-analysis"];
+  global_option_multiconstanalysis=args.getBool("enable-multi-const-analysis");
 #if 0
   if(global_option_multiconstanalysis) {
     cout<<"INFO: Using flow-insensitive multi-const-analysis."<<endl;
@@ -257,6 +241,15 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
+  if(args.getBool("normalize2")) {
+    logger[TRACE] <<"STATUS: Lowering started."<<endl;
+    SPRAY::Lowering lowering;
+    lowering.lowerAst(root);
+    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
+    root->unparse(0,0);
+    exit(0);
+  }
+
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
 
@@ -270,7 +263,7 @@ int main(int argc, char* argv[]) {
   }
 
   SgFunctionDefinition* mainFunctionRoot=0;
-  if(boolOptions["inline"]) {
+  if(args.getBool("inline")) {
     logger[TRACE] <<"STATUS: eliminating non-called trivial functions."<<endl;
     // inline functions
     TrivialInlining tin;
@@ -284,7 +277,7 @@ int main(int argc, char* argv[]) {
     logger[INFO] <<"Inlining: turned off."<<endl;
   }
 
-  if(boolOptions["eliminate-empty-if"]) {
+  if(args.getBool("eliminate-empty-if")) {
     DeadCodeElimination dce;
     logger[TRACE] <<"STATUS: Eliminating empty if-statements."<<endl;
     size_t num=0;
@@ -297,18 +290,12 @@ int main(int argc, char* argv[]) {
     logger[TRACE] <<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
   }
 
-  if(boolOptions["normalize"]) {
-    logger[TRACE] <<"STATUS: Normalization started."<<endl;
+  if(args.getBool("normalize")) {
+    logger[TRACE] <<"STATUS: Lowering started."<<endl;
     RewriteSystem rewriteSystem;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
-    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
-  }
-
-  if(boolOptions["normalize2"]) {
-    logger[TRACE] <<"STATUS: Normalization started."<<endl;
-    SPRAY::Normalization::normalizeAst(root);
-    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
+    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
   }
 
   logger[TRACE] <<"STATUS: performing flow-insensitive const analysis."<<endl;
@@ -360,7 +347,7 @@ int main(int argc, char* argv[]) {
 
   VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
   DeadCodeElimination dce;
-  if(boolOptions["eliminate-dead-code"]) {
+  if(args.getBool("eliminate-dead-code")) {
     logger[TRACE]<<"STATUS: performing dead code elimination."<<endl;
     dce.setDetailedOutput(detailedOutput);
     dce.setVariablesOfInterest(variablesOfInterest);
@@ -392,7 +379,7 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->run();
 #endif
   logger[INFO]<< "Remaining functions in program: "<<numberOfFunctions(root)<<endl;
-  if(boolOptions["generate-transformed-code"]) {
+  if(args.getBool("generate-transformed-code")) {
     logger[TRACE]<< "STATUS: generating transformed source code."<<endl;
     root->unparse(0,0);
   }

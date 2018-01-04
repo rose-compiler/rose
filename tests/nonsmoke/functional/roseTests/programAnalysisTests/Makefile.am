@@ -22,13 +22,15 @@ SUBDIRS += staticInterproceduralSlicingTests   \
 endif
 
 # ROSE Test Harness scripts
-CHECK_ANSWER = $(top_srcdir)/scripts/test_against_answer
+#CHECK_ANSWER = $(top_srcdir)/scripts/test_against_answer
+CHECK_ANSWER = $(top_srcdir)/scripts/test_with_answer
 CHECK_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/bitvectorDataflow -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
 #-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -41,42 +43,42 @@ CFGTest_SOURCES =
 if !ROSE_USING_ROSE_CODE_GENERATION
      CFGTest_SOURCES += CFGTest.C
 endif
-CFGTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+CFGTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += DataFlowTest
 DataFlowTest_SOURCES = DataFlowTest.C
-DataFlowTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+DataFlowTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += StmtRefTest
 StmtRefTest_SOURCES = StmtRefTest.C
-StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+StmtRefTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += PtrAnalTest
 PtrAnalTest_SOURCES = PtrAnalTest.C
-PtrAnalTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+PtrAnalTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += steensgaardTest1
 steensgaardTest1_SOURCES = steensgaardTest1.C
-steensgaardTest1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+steensgaardTest1_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += steensgaardTest2
 steensgaardTest2_SOURCES = steensgaardTest2.C
-steensgaardTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+steensgaardTest2_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += VirtualFunctionAnalysisTest
 VirtualFunctionAnalysisTest_SOURCES = VirtualFunctionAnalysisTest.C
-VirtualFunctionAnalysisTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+VirtualFunctionAnalysisTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += ReachingDefinitionFacadeTest
 ReachingDefinitionFacadeTest_SOURCES = ReachingDefinitionFacadeTest.C
-ReachingDefinitionFacadeTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+ReachingDefinitionFacadeTest_LDADD = $(ROSE_LIBS)
 
 #-------------------------------------------------------------------------------------------------------------------------------
 # VirtualFunctionAnalysisTest tests using a variety of specimens from the CompileTests/Cxx_tests directory.
@@ -127,8 +129,8 @@ clean-vfa:
 
 # DQ (8/23/2013): The Makefiles have an error that preventing this from running on my system.
 # This needs to be discussed.
-# EXTRA_TEST_NAMES = ptr_01 cfg_01 cfg_02 cfg_03 df_01 df_02 df_03 df_04 sr_01 sr_02 sr_03 vf_01 vf_02 vf_03 vf_04 vf_05
-EXTRA_TEST_NAMES = 
+EXTRA_TEST_NAMES = ptr_01 cfg_01 cfg_02 cfg_03 df_01 df_02 df_03 df_04 sr_01 sr_02 sr_03 vf_01 vf_02 vf_03 vf_04 vf_05
+#EXTRA_TEST_NAMES = 
 EXTRA_TEST_TARGETS = $(addsuffix .passed, $(EXTRA_TEST_NAMES))
 
 .PHONY: check-extra
@@ -136,33 +138,33 @@ check-extra: $(EXTRA_TEST_TARGETS)
 
 # Pointer analysis tests
 ptr_01.passed: $(CHECK_ANSWER) PtrAnalTest $(srcdir)/testPtr2.C $(srcdir)/PtrAnalTest.out2
-	@$(RTH_RUN) CMD="./PtrAnalTest $(srcdir)/testPtr2.C" ANSWER=$(srcdir)/PtrAnalTest.out2 $< $@
+	@$(RTH_RUN) CMD="./PtrAnalTest $(srcdir)/testPtr2.C" ANS=$(srcdir)/PtrAnalTest.out2 $< $@
 
 # Control flow graph tests
 cfg_01.passed: $(CHECK_ANSWER) CFGTest $(srcdir)/testfile1.c $(srcdir)/testfile1.c.cfg
-	@$(RTH_RUN) CMD="./CFGTest -I$(srcdir) $(srcdir)/testfile1.c" ANSWER=$(srcdir)/testfile1.c.cfg $< $@
+	@$(RTH_RUN) CMD="./CFGTest -I$(srcdir) $(srcdir)/testfile1.c" ANS=$(srcdir)/testfile1.c.cfg $< $@
 cfg_02.passed: $(CHECK_ANSWER) CFGTest $(srcdir)/testfile2.c $(srcdir)/testfile2.c.cfg
-	@$(RTH_RUN) CMD="./CFGTest -I$(srcdir) $(srcdir)/testfile2.c" ANSWER=$(srcdir)/testfile2.c.cfg $< $@
+	@$(RTH_RUN) CMD="./CFGTest -I$(srcdir) $(srcdir)/testfile2.c" ANS=$(srcdir)/testfile2.c.cfg $< $@
 cfg_03.passed: $(CHECK_ANSWER) CFGTest $(srcdir)/testfile3.c $(srcdir)/testfile3.c.cfg
-	@$(RTH_RUN) CMD="./CFGTest -I$(srcdir) $(srcdir)/testfile3.c" ANSWER=$(srcdir)/testfile3.c.cfg $< $@
+	@$(RTH_RUN) CMD="./CFGTest -I$(srcdir) $(srcdir)/testfile3.c" ANS=$(srcdir)/testfile3.c.cfg $< $@
 
 # Data flow tests
 df_01.passed: $(CHECK_ANSWER) DataFlowTest $(srcdir)/testfile1.c $(srcdir)/testfile1.c.du
-	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile1.c" ANSWER=$(srcdir)/testfile1.c.du $< $@
+	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile1.c" ANS=$(srcdir)/testfile1.c.du $< $@
 df_02.passed: $(CHECK_ANSWER) DataFlowTest $(srcdir)/testfile2.c $(srcdir)/testfile2.c.du
-	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile2.c" ANSWER=$(srcdir)/testfile2.c.du $< $@
+	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile2.c" ANS=$(srcdir)/testfile2.c.du $< $@
 df_03.passed: $(CHECK_ANSWER) DataFlowTest $(srcdir)/testfile3.c $(srcdir)/testfile3.c.du
-	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile3.c" ANSWER=$(srcdir)/testfile3.c.du $< $@
+	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile3.c" ANS=$(srcdir)/testfile3.c.du $< $@
 df_04.passed: $(CHECK_ANSWER) DataFlowTest $(srcdir)/testfile4.c $(srcdir)/testfile4.c.du
-	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile4.c" ANSWER=$(srcdir)/testfile4.c.du $< $@
+	@$(RTH_RUN) CMD="./DataFlowTest -I$(srcdir) $(srcdir)/testfile4.c" ANS=$(srcdir)/testfile4.c.du $< $@
 
 # Statement ref tests
 sr_01.passed: $(CHECK_ANSWER) StmtRefTest $(srcdir)/testfile1.c $(srcdir)/testfile1.c.ref
-	@$(RTH_RUN) CMD="./StmtRefTest -I$(srcdir) $(srcdir)/testfile1.c" ANSWER=$(srcdir)/testfile1.c.ref $< $@
+	@$(RTH_RUN) CMD="./StmtRefTest -I$(srcdir) $(srcdir)/testfile1.c" ANS=$(srcdir)/testfile1.c.ref $< $@
 sr_02.passed: $(CHECK_ANSWER) StmtRefTest $(srcdir)/testfile2.c $(srcdir)/testfile2.c.ref
-	@$(RTH_RUN) CMD="./StmtRefTest -I$(srcdir) $(srcdir)/testfile2.c" ANSWER=$(srcdir)/testfile2.c.ref $< $@
+	@$(RTH_RUN) CMD="./StmtRefTest -I$(srcdir) $(srcdir)/testfile2.c" ANS=$(srcdir)/testfile2.c.ref $< $@
 sr_03.passed: $(CHECK_ANSWER) StmtRefTest $(srcdir)/testfile3.c $(srcdir)/testfile3.c.ref
-	@$(RTH_RUN) CMD="./StmtRefTest -I$(srcdir) $(srcdir)/testfile3.c" ANSWER=$(srcdir)/testfile3.c.ref $< $@
+	@$(RTH_RUN) CMD="./StmtRefTest -I$(srcdir) $(srcdir)/testfile3.c" ANS=$(srcdir)/testfile3.c.ref $< $@
 
 # Virtual function analysis tests (these are only tested for their exit status)
 MOSTLYCLEANFILES += call_graph.dot full_call_graph.dot init_call_graph.dot test_vfa[0-5].ti

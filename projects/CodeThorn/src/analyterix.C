@@ -142,7 +142,7 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
               cerr<<"Internal error: determined array variable, but it is not registered as array variable."<<endl;
               exit(1);
             }
-            size_t arraySize=variableIdMapping->getSize(arrayVarId);
+            size_t arraySize=variableIdMapping->getNumberOfElements(arrayVarId);
             if(intervalPropertyState->variableExists(indexVarId)) {
               NumberIntervalLattice indexVariableInterval=intervalPropertyState->getVariable(indexVarId);
               if(indexVariableInterval.isTop()
@@ -170,7 +170,7 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
             }
           } else {
             //cerr<<"WARNING: Unsupported array access expression: ";
-            //cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
+            //cerr<<AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
           }
         }
       }
@@ -411,7 +411,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         }
       }
       else {
-        cout << "ERROR: No declaration for " << variableIdMapping.uniqueShortVariableName(*idIter) << " available." << endl;
+        cout << "ERROR: No declaration for " << variableIdMapping.uniqueVariableName(*idIter) << " available." << endl;
         ROSE_ASSERT(false);
       }
     }
@@ -896,8 +896,6 @@ int main(int argc, char* argv[]) {
     }
 
     cout << "INIT: Parsing and creating AST."<<endl;
-    boolOptions.registerOption("semantic-fold",false); // temporary
-    boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
 
     if(option_trace) {

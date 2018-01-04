@@ -10,7 +10,7 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Provides and caches instructions.
@@ -147,7 +147,7 @@ public:
     size_t nCached() const { return insnMap_.size(); }
 
     /** Returns the register dictionary. */
-    const RegisterDictionary* registerDictionary() const { return disassembler_->get_registers(); }
+    const RegisterDictionary* registerDictionary() const { return disassembler_->registerDictionary(); }
 
     /** Returns the calling convention dictionary. */
     const CallingConvention::Dictionary& callingConventions() const { return disassembler_->callingConventions(); }
@@ -164,7 +164,7 @@ public:
     RegisterDescriptor stackSegmentRegister() const { return disassembler_->stackSegmentRegister(); }
 
     /** Default memory byte order. */
-    ByteOrder::Endianness defaultByteOrder() const { return disassembler_->get_sex(); }
+    ByteOrder::Endianness defaultByteOrder() const { return disassembler_->byteOrder(); }
 
     /** Instruction dispatcher.
      *

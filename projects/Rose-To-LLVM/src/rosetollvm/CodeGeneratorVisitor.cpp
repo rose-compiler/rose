@@ -119,7 +119,6 @@ public:
         else if (isSgUnsignedShortVal(valExp)) {
             subtreeVal.setIntValue(isSgUnsignedShortVal(valExp) -> get_value());
         }
-
         else if (isSgFloatVal(valExp)) {
             subtreeVal.setDoubleValue(isSgFloatVal(valExp) -> get_value());
         }
@@ -128,6 +127,16 @@ public:
         }
         else if (isSgStringVal(valExp)) {
             subtreeVal.setStringValue(isSgStringVal(valExp));
+        }
+        else if (isSgBoolValExp(valExp)) {
+// TODO: Remove this !!!
+/*		
+cout << "*** The value of this boolean is: "
+     << isSgBoolValExp(valExp) -> get_value()
+  << endl;
+cout.flush();
+*/
+            subtreeVal.setIntValue(isSgBoolValExp(valExp) -> get_value() != 0 ? 1 : 0);
         }
         else {
             cout << "*** Not yet able to process constant value of type " << valExp -> class_name() << endl;
@@ -176,7 +185,7 @@ public:
                                           : ((StringAstAttribute *) var_type -> getAttribute(Control::LLVM_TYPE)) -> getValue());
 
                 // For an array, take the address of the array's first element.
-                val.setOtherExpression(ref, "getelementptr (" + type_name + "* " + var_name + ", i32 0, i32 0)");
+                val.setOtherExpression(ref, "getelementptr inbounds (" + type_name + "," + type_name + "* " + var_name + ", i32 0, i32 0)");
             }
             else if (isSgClassType(var_type)) {
                 // This case is necessary in case the address of a
@@ -298,7 +307,7 @@ public:
                         value.setOtherExpression(node, ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue());
                     }
                     else if (isSgArrayType(operand_type)) {
-                        value.setOtherExpression(node, "getelementptr (i8* "
+                        value.setOtherExpression(node, "getelementptr inbounds (i8, i8* "
                                                        + synList.at(0).getCode() // ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue()
                                                        + ")");
                     }
@@ -413,7 +422,7 @@ public:
                 string name = ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_GLOBAL_CONSTANT_NAME)) -> getValue();
                 string type_name = ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_TYPE)) -> getValue(); 
 
-                value.setOtherExpression(node, "getelementptr inbounds (" + type_name + "* " + name + indexes_string + ")");
+/**/                value.setOtherExpression(node, "getelementptr inbounds (" + type_name + ", " + type_name + "* " + name + indexes_string + ")");
             }
 
             else {
@@ -548,7 +557,17 @@ public:
                 }
                 ROSE2LLVM_ASSERT(generator -> isIntegerType(rhs_type));
                 string rhs_type_name = ((StringAstAttribute*)rhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                value.setOtherExpression(node, "getelementptr (" + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " " + rhs_name + (! isSgAddressOfOp(n -> get_parent()) ? ", i32 0)" : ")"));
+
+                ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
+     << "; the pointer is: " << lhs_type_name
+     << endl;
+cout.flush();
+*/
+                value.setOtherExpression(node, "getelementptr inbounds (" + lhs_type_name.substr(0, lhs_type_name.length() - 1) + "," + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " " + rhs_name + (! isSgAddressOfOp(n -> get_parent()) ? ", i32 0)" : ")"));
+
             }
             else if (isSgAddOp(node)) {
                 //
@@ -596,7 +615,16 @@ public:
                     }
                     ROSE2LLVM_ASSERT(generator -> isIntegerType(rhs_type));
                     string rhs_type_name = ((StringAstAttribute *) rhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    value.setOtherExpression(node, "getelementptr (" + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " " + rhs_name + ")");
+
+                    ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
+     << "; the pointer is: " << lhs_type_name
+     << endl;
+cout.flush();
+*/
+                    value.setOtherExpression(node, "getelementptr inbounds (" + lhs_type_name.substr(0, lhs_type_name.length() - 1) + ", " + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " " + rhs_name + ")");
                 }
             }
             else if (isSgSubtractOp(node)) {
@@ -637,7 +665,16 @@ public:
                     }
                     ROSE2LLVM_ASSERT(generator -> isIntegerType(rhs_type));
                     string rhs_type_name = ((StringAstAttribute *) rhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    value.setOtherExpression(node, "getelementptr (" + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " -" + rhs_name + ")");
+
+                    ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
+     << "; the pointer is: " << lhs_type_name
+     << endl;
+cout.flush();
+*/
+                    value.setOtherExpression(node, "getelementptr inbounds (" + lhs_type_name.substr(0, lhs_type_name.length() - 1) + ", " + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " -" + rhs_name + ")");
                 }
             }
             else if (isSgArrowExp(node) || isSgDotExp(node)) {
@@ -713,11 +750,20 @@ public:
                 }
                 else {
                     int index = ((IntAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_CLASS_MEMBER)) -> getValue();
-                    out = "getelementptr (" + lhs_type_name + " " + lhs_name + ", i32 0, i32 " + Control::IntToString(index) + ")";
+
+                    ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
+     << "; the pointer is: " << lhs_type_name
+     << endl;
+cout.flush();
+*/
+                    out = "getelementptr inbounds (" + lhs_type_name.substr(0, lhs_type_name.length() - 1) + ", " + lhs_type_name + " " + lhs_name + ", i32 0, i32 " + Control::IntToString(index) + ")";
                 }
 
                 if ((! isSgAddressOfOp(n -> get_parent())) && (! isSgCastExp(n -> get_parent())) && isSgArrayType(result_type)) {
-                    out = "getelementptr (" + result_type_name + "* " + out + ", i32 0, i32 0)";
+                    out = "getelementptr inbounds (" + result_type_name + ", " + result_type_name + "* " + out + ", i32 0, i32 0)";
                 }
 
                 value.setOtherExpression(node, out);
@@ -849,7 +895,10 @@ void CodeGeneratorVisitor::generateGlobals() {
     /* Add minimal target data layout. This is required for alias analysis to work
      * properly 
      */
-    (*codeOut) << "target datalayout = \"e\"" << endl;
+    //
+    // TODO: Removed because it's causing problem in LLVM-4.1 ...  To be reviewed
+    //
+  //    (*codeOut) << "target datalayout = \"e\"" << endl;
 
     /**
      * Generate global declarations for string constants
@@ -1315,7 +1364,16 @@ void CodeGeneratorVisitor::genAddOrSubtractOperation(SgBinaryOp *node, string op
                  }
                  rhs_name = negation_name;
              }
-             (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << lhs_type_name << " " <<  lhs_name << ", " << rhs_type_name << " " << rhs_name << debug_md << endl;
+
+             ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
+     << "; the pointer is: " << lhs_type_name
+     << endl;
+cout.flush();
+*/
+             (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << lhs_type_name.substr(0, lhs_type_name.length() - 1) << ", " << lhs_type_name << " " <<  lhs_name << ", " << rhs_type_name << " " << rhs_name << debug_md << endl;
          }
      }
      /**
@@ -1325,7 +1383,16 @@ void CodeGeneratorVisitor::genAddOrSubtractOperation(SgBinaryOp *node, string op
          ROSE2LLVM_ASSERT(! rhs_operand -> attributeExists(Control::LLVM_ARRAY_TO_POINTER_CONVERSION));
          string lhs_type_name = ((StringAstAttribute *) lhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
                 rhs_type_name = ((StringAstAttribute *) rhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-         (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << rhs_type_name << " " << rhs_name << ", " << lhs_type_name << " " <<  lhs_name << debug_md << endl;
+
+         ROSE2LLVM_ASSERT(rhs_type_name.length() > 1 && rhs_type_name[rhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The rhs_type_name is: " << rhs_type_name.substr(0, rhs_type_name.length() - 1)
+     << "; the pointer is: " << rhs_type_name
+     << endl;
+cout.flush();
+*/
+         (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << rhs_type_name.substr(0, rhs_type_name.length() - 1) << ", " << rhs_type_name << " " << rhs_name << ", " << lhs_type_name << " " <<  lhs_name << debug_md << endl;
      }
      else {
          string type_name = ((StringAstAttribute *) attributes -> getExpressionType(node) -> getAttribute(Control::LLVM_TYPE)) -> getValue();
@@ -1413,7 +1480,16 @@ void CodeGeneratorVisitor::genBasicBinaryOperationAndAssign(SgBinaryOp *node, st
              }
              rhs_name = negation_name;
          }
-         (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << lhs_type_name << " " <<  lhs_name << ", " << rhs_type_name << " " << rhs_name << debug_md << endl;
+
+         ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
+     << "; the pointer is: " << lhs_type_name
+     << endl;
+cout.flush();
+*/
+         (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << lhs_type_name.substr(0, lhs_type_name.length() - 1) << ", " << lhs_type_name << " " <<  lhs_name << ", " << rhs_type_name << " " << rhs_name << debug_md << endl;
      }
      else if (isSgPointerType(rhs_type) || isSgArrayType(rhs_type)) {
          ROSE2LLVM_ASSERT(! "This is not supposed to happen !!!");
@@ -2709,14 +2785,14 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                      string subtype_name = ((StringAstAttribute *) sub_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
                      int size = ((IntAstAttribute *) var_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
                      (*codeOut) << CodeEmitter::indent() << target_bit_name << " = bitcast " << aggregate_type_name << "* " << var_name << " to " << subtype_name << "*" <<  debug_md << endl;
-                     (*codeOut) << CodeEmitter::indent() << "call void @llvm.memcpy.p0i8.p0i8.i64(i8* " << target_bit_name << ", i8* getelementptr inbounds (" 
-                                                         << aggregate_type_name << "* " << global_constant_name <<  ", i32 0, i32 0, i32 0), i64 " << size << ", i32 1, i1 false)" << debug_md << endl;
+/**/                     (*codeOut) << CodeEmitter::indent() << "call void @llvm.memcpy.p0i8.p0i8.i64(i8* " << target_bit_name << ", i8* getelementptr inbounds (" 
+                                                         << aggregate_type_name << ", " << aggregate_type_name << "* " << global_constant_name <<  ", i32 0, i32 0, i32 0), i64 " << size << ", i32 1, i1 false)" << debug_md << endl;
                  }
                  else if (isSgClassType(attributes -> getSourceType(var_type))) {
                      int size = ((IntAstAttribute *) var_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
                      (*codeOut) << CodeEmitter::indent() << target_bit_name << " = bitcast " << type_name << "* " << var_name << " to i8*" << debug_md << endl;
-                     (*codeOut) << CodeEmitter::indent() << "call void @llvm.memcpy.p0i8.p0i8.i64(i8* " << target_bit_name << ", i8* getelementptr inbounds ("
-                                                         <<  type_name << "* " << global_constant_name <<  ", i32 0, i32 0, i32 0), i64 " << size << ", i32 4, i1 false)" << debug_md << endl;
+/**/                     (*codeOut) << CodeEmitter::indent() << "call void @llvm.memcpy.p0i8.p0i8.i64(i8* " << target_bit_name << ", i8* getelementptr inbounds ("
+                                    << type_name <<  ", " << type_name << "* " << global_constant_name <<  ", i32 0, i32 0, i32 0), i64 " << size << ", i32 4, i1 false)" << debug_md << endl;
                  }
              }
              else if (init != NULL){
@@ -2744,7 +2820,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                  revisitAttributes.push_back(attributes);
              }
              else {
-               attributes->generateMetadataNodes();
+                 attributes->generateMetadataNodes();
              }
          }
      }
@@ -3010,7 +3086,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                                 cast_return_name = attributes -> getTemp(LLVMAstAttributes::TEMP_INT),
                                 cast_type_name = out.str();
                          (*codeOut) << CodeEmitter::indent() << cast_name << " = bitcast " << type_name << "* " << "%.retval to " << cast_type_name << "*" << debug_md << endl;
-                         (*codeOut) << CodeEmitter::indent() << cast_return_name << " = load " << cast_type_name << "* " << cast_name << ", align 1" << debug_md << endl;
+                         (*codeOut) << CodeEmitter::indent() << cast_return_name << " = load " << cast_type_name << ", " << cast_type_name << "* " << cast_name << ", align 1" << debug_md << endl;
                          type_name = cast_type_name;
                          return_name = cast_return_name;
                      }
@@ -3020,7 +3096,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                      }
                  }
                  else {
-                     (*codeOut) << CodeEmitter::indent() << return_name << " = load " << type_name << "* " << "%.retval" << debug_md << endl;
+		   (*codeOut) << CodeEmitter::indent() << return_name << " = load " << type_name << ", " << type_name << "* " << "%.retval" << debug_md << endl;
                  }
                  (*codeOut) << CodeEmitter::indent() << "ret " << type_name << " " << return_name << debug_md << endl;
              }
@@ -3321,10 +3397,10 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                string alignment = attributes->addVectorAlignment(node);
                string bundle_md = attributes->addBundleMetadata(node);
                if (isSgArrayType(n->get_type())) {
-                   (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << result_type_name << "* " << operand_name << ", i32 0, i32 0" << debug_md << endl;
+                   (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << result_type_name << ", " << result_type_name << "* " << operand_name << ", i32 0, i32 0" << debug_md << endl;
                }
                else {
-                   (*codeOut) << CodeEmitter::indent() << result_name << " = load " << result_type_name << "* " << operand_name << alignment << debug_md << bundle_md << endl;
+                   (*codeOut) << CodeEmitter::indent() << result_name << " = load " << result_type_name << ", " << result_type_name << "* " << operand_name << alignment << debug_md << bundle_md << endl;
                }
              }
          }
@@ -3344,7 +3420,16 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          string debug_md = attributes->addDebugMetadata(node, current_function_decls);
          if (isSgPointerType(attributes -> getSourceType(attributes -> getExpressionType(n -> get_operand()))) ||
              isSgArrayType(attributes -> getSourceType(attributes -> getExpressionType(n -> get_operand())))) {
-             (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << type_name << " " <<  name << ", i32 -1" << debug_md << endl;
+
+             ROSE2LLVM_ASSERT(type_name.length() > 1 && type_name[type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The type_name is: " << type_name.substr(0, type_name.length() - 1)
+     << "; the pointer is: " << type_name
+     << endl;
+cout.flush();
+*/
+             (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << type_name.substr(0, type_name.length() - 1) << ", " << type_name << " " <<  name << ", i32 -1" << debug_md << endl;
          }
          else {
              (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(n -> get_type()) ? "fsub " : "sub ") << type_name << " " << name << ", 1" << debug_md << endl;
@@ -3361,7 +3446,16 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          string debug_md = attributes->addDebugMetadata(node, current_function_decls);
          if (isSgPointerType(attributes -> getSourceType(attributes -> getExpressionType(n -> get_operand()))) ||
              isSgArrayType(attributes -> getSourceType(attributes -> getExpressionType(n -> get_operand())))) {
-             (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << type_name << " " <<  name << ", i32 1" << debug_md << endl;
+
+             ROSE2LLVM_ASSERT(type_name.length() > 1 && type_name[type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The type_name is: " << type_name.substr(0, type_name.length() - 1)
+     << "; the pointer is: " << type_name
+     << endl;
+cout.flush();
+*/
+             (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << type_name.substr(0, type_name.length() - 1) << ", " << type_name << " " <<  name << ", i32 1" << debug_md << endl;
          }
          else {
              (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(n -> get_type()) ? "fadd " : "add ") << type_name << " " << name << ", 1" << debug_md << endl;
@@ -3568,7 +3662,16 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          }
          else {
              int index = ((IntAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_CLASS_MEMBER)) -> getValue();
-             (*codeOut) << CodeEmitter::indent() << reference_name << " = getelementptr " << lhs_type_name << " " << lhs_name << ", i32 0, i32 " << index << debug_md << endl;
+
+             ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
+// TODO: Remove this !!!
+/*		
+cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
+     << "; the pointer is: " << lhs_type_name
+     << endl;
+cout.flush();
+*/
+             (*codeOut) << CodeEmitter::indent() << reference_name << " = getelementptr inbounds" << lhs_type_name.substr(0, lhs_type_name.length() - 1) << ", " << lhs_type_name << " " << lhs_name << ", i32 0, i32 " << index << debug_md << endl;
          }
 
          if (! n -> attributeExists(Control::LLVM_REFERENCE_ONLY)) {
@@ -3577,10 +3680,10 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                  (*codeOut) << CodeEmitter::indent() << result_name << " = bitcast " << result_type_name << "* " << reference_name << " to i8*" << debug_md << endl;
              }
              else if (n -> attributeExists(Control::LLVM_AGGREGATE)) {
-                 (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << result_type_name << "* " << reference_name << ", i32 0, i32 0" << debug_md << endl;
+                 (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << result_type_name << ", " << result_type_name << "* " << reference_name << ", i32 0, i32 0" << debug_md << endl;
              }
              else {
-                 (*codeOut) << CodeEmitter::indent() << result_name << " = load " << result_type_name << "* " << reference_name << debug_md << endl;
+                 (*codeOut) << CodeEmitter::indent() << result_name << " = load " << result_type_name << ", " << result_type_name << "* " << reference_name << debug_md << endl;
              }
          }
      }
@@ -3721,7 +3824,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
           * Say something !
           */
          string debug_md = attributes->addDebugMetadata(node, current_function_decls);
-         (*codeOut) << CodeEmitter::indent() << reference_name << " = getelementptr " << aggregate_type_name << "* " << lhs_name << ", "
+         (*codeOut) << CodeEmitter::indent() << reference_name << " = getelementptr inbounds " << aggregate_type_name << ", " << aggregate_type_name << "* " << lhs_name << ", "
                     << rhs_type_name << " " << rhs_name << debug_md << endl;
 
          /**
@@ -3729,14 +3832,14 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
           */
          if (! n -> attributeExists(Control::LLVM_REFERENCE_ONLY)) {
              if ( /* n -> attributeExists(Control::LLVM_AGGREGATE) && */ isSgArrayType(n -> get_type())) { // TODO: just added array test!  Not too sure of myself here!
-                 (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << aggregate_type_name << "* " << reference_name << ", i32 0, i32 0" << debug_md << endl;
+                 (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << aggregate_type_name << ", " << aggregate_type_name << "* " << reference_name << ", i32 0, i32 0" << debug_md << endl;
              }
              else {
                  if (dynamic_cast<SgClassType *> (attributes -> getSourceType(n -> get_type()))) {
                      (*codeOut) << CodeEmitter::indent() << result_name << " = bitcast " << result_type_name << "* " << reference_name << " to i8*" << debug_md << endl;
                  }
                  else {
-                     (*codeOut) << CodeEmitter::indent() << result_name << " = load " << result_type_name << "* " << reference_name << alignment << debug_md << bundle_md << endl;
+                     (*codeOut) << CodeEmitter::indent() << result_name << " = load " << result_type_name << ", " << result_type_name << "* " << reference_name << alignment << debug_md << bundle_md << endl;
                  }
              }
          }
@@ -3846,7 +3949,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
               * If we are dealing with an array aggregate, we need to load its address.
               */
              if (decl -> attributeExists(Control::LLVM_AGGREGATE) && isSgArrayType(n -> get_type())) {
-                 (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr " << type_name << "* " << var_name << ", i32 0";
+                 (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << type_name << ", " << type_name << "* " << var_name << ", i32 0";
                  if (!isSgAddressOfOp(n->get_parent())) {
                      (*codeOut) << ", i32 0";
                  }
@@ -3857,7 +3960,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                      (*codeOut) << CodeEmitter::indent() << result_name << " = bitcast " << type_name << "* " << var_name << " to i8*" << debug_md << endl;
                  }
                  else {
-                     (*codeOut) << CodeEmitter::indent() << result_name << " = load " << type_name << "* " << var_name << alignment << debug_md << endl;
+                     (*codeOut) << CodeEmitter::indent() << result_name << " = load " << type_name << ", " << type_name << "* " << var_name << alignment << debug_md << endl;
                  }
              }
          }
@@ -4111,13 +4214,15 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
               *     if (function_type -> get_has_ellipses() || function_type -> attributeExists(Control::LLVM_COMPILER_GENERATED) ||
               */
               //*** BUG FIX
-              SgFunctionDeclaration *function_declaration = n -> getAssociatedFunctionDeclaration();
-              vector <SgInitializedName *> &args = function_declaration -> get_args();
-              bool has_ellipses = (args.size() > 0 && isSgTypeEllipse(args[args.size() - 1] -> get_type()));
-              if (has_ellipses || function_type -> attributeExists(Control::LLVM_COMPILER_GENERATED) ||
+             SgFunctionDeclaration *function_declaration = n -> getAssociatedFunctionDeclaration();
+             vector <SgInitializedName *> &args = function_declaration -> get_args();
+             bool has_ellipses = (args.size() > 0 && isSgTypeEllipse(args[args.size() - 1] -> get_type()));
+             if (has_ellipses || function_type -> attributeExists(Control::LLVM_COMPILER_GENERATED) ||
               //*** BUG FIX
                  (pointer_return_type && isSgFunctionType(attributes -> getSourceType(pointer_return_type -> get_base_type())))) {   // function returns a pointer to a function?
-                   (*codeOut) << function_type_name << "* ";
+                   (*codeOut) << function_type_name
+			      // << "* " // Not needed starting with LLVM 4.0
+		              ;
              }
              else {
                  (*codeOut) << return_type_name;

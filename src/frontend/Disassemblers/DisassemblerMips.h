@@ -6,7 +6,7 @@
 #include "InstructionEnumsMips.h"
 #include "sageBuilderAsm.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 class DisassemblerMips: public Disassembler {
@@ -17,10 +17,10 @@ public:
     explicit DisassemblerMips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB) { init(sex); }
 
     virtual DisassemblerMips *clone() const ROSE_OVERRIDE { return new DisassemblerMips(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) ROSE_OVERRIDE;
     virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
 
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related

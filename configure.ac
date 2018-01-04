@@ -4,7 +4,7 @@ dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 dnl The version number in the AC_INIT expression has been placed there automatically by the "build" script. We cannot
 dnl do the replacement here in the configure file because AC_INIT's second argument must be a literal string, not a
 dnl shell variable.
-AC_INIT([ROSE], [0.9.9.13])
+AC_INIT([ROSE], [0.9.9.169])
 AC_PREREQ([2.59])
 
 dnl +--------------------------------------------------------------------------+
@@ -48,10 +48,6 @@ AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([foreign tar-pax 1.11])
 
 AM_CONFIG_HEADER([rose_config.h])
-
-# This is only supported in automake 1.13 and later, release Jan 2013.  The workaround is to create rules for these
-# targets in Makefile.for.ROSE.includes.and.libs.
-#AM_EXTRA_RECURSIVE_TARGETS([check-smoke check-nonsmoke check-all])
 
 # TOO1 (9/23/2013): Use the builtin verbose mechanism of Automake:
 #
@@ -132,7 +128,7 @@ if echo "$BOOST_CPPFLAGS" |grep -- -pthread >/dev/null; then
    ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN pthread"
 fi
 AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
-    [Encapsulates some important configuration details for rose::initialize])
+    [Encapsulates some important configuration details for Rose::initialize])
 
 dnl Fail gracefully for blacklisted dependencies and other situations
 ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])

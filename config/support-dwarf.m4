@@ -17,7 +17,7 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
 		     [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
 		      ROSE_HAVE_LIBDWARF=yes
 		      LIBDWARF_CPPFLAGS=
-		      LIBDWARF_LDFLAGS="-ldwarf -lelf"])
+		      LIBDWARF_LDFLAGS="-ldwarf"])
     elif test -n "$with_dwarf" -a "$with_dwarf" != no; then
         LIBDWARF_PREFIX="$with_dwarf"
 	# ROSE requires the use of a shared library for libdwarf
@@ -25,7 +25,7 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
 		      [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
 		       ROSE_HAVE_LIBDWARF=yes
 		       LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
-		       LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib -ldwarf -lelf"
+		       LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib -ldwarf"
 		       ])
     fi
 
@@ -33,8 +33,13 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
     if test "$with_dwarf" != no -a -z "$ROSE_HAVE_LIBDWARF"; then
         AC_MSG_ERROR([did not find libdwarf but --with-dwarf was specified])
     fi
+    if test "$with_dwarf" != no -a "$ROSE_HAVE_LIBDWARF" = yes -a "$ROSE_HAVE_LIBELF" != yes; then
+        AC_MSG_ERROR([libdwarf depends on libelf, so you must specify --with-libelf also])
+    fi
+    
 
     # Results
+    #    ROSE_HAVE_LIBDWARF -- shell variable, non-empty when libdwarf is available
     #    ROSE_HAVE_LIBDWARF -- automake conditional, true when libdwarf is available
     #    ROSE_HAVE_LIBDWARF -- CPP symbol defined when libdwarf is available (see above)
     #    LIBDWARF_PREFIX    -- name of the directory where dwarf library and headers are installed

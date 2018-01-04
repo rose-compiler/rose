@@ -10,12 +10,12 @@
 #include <Partitioner2/Function.h>                      // Fast function data structures
 #include <Sawyer/ProgressBar.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace CallingConvention {
 
@@ -26,7 +26,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::CallingConvention");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::CallingConvention");
     }
 }
 
@@ -471,7 +471,7 @@ Definition::inputRegisterParts() const {
 RegisterParts
 Definition::scratchRegisterParts() const {
     RegisterParts retval;
-    BOOST_FOREACH (const RegisterDescriptor &reg, scratchRegisters_)
+    BOOST_FOREACH (RegisterDescriptor reg, scratchRegisters_)
         retval.insert(reg);
     return retval;
 }
@@ -479,7 +479,7 @@ Definition::scratchRegisterParts() const {
 RegisterParts
 Definition::calleeSavedRegisterParts() const {
     RegisterParts retval;
-    BOOST_FOREACH (const RegisterDescriptor &reg, calleeSavedRegisters_)
+    BOOST_FOREACH (RegisterDescriptor reg, calleeSavedRegisters_)
         retval.insert(reg);
     return retval;
 }
@@ -564,14 +564,14 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
 
     if (!scratchRegisters_.empty()) {
         out <<", scratch={";
-        BOOST_FOREACH (const RegisterDescriptor &loc, scratchRegisters_)
+        BOOST_FOREACH (RegisterDescriptor loc, scratchRegisters_)
             out <<" " <<regNames(loc);
         out <<" }";
     }
     
     if (!calleeSavedRegisters_.empty()) {
         out <<", saved={";
-        BOOST_FOREACH (const RegisterDescriptor &loc, calleeSavedRegisters_)
+        BOOST_FOREACH (RegisterDescriptor loc, calleeSavedRegisters_)
             out <<" " <<regNames(loc);
         out <<" }";
     }
@@ -591,11 +591,11 @@ operator<<(std::ostream &out, const Definition &x) {
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->get_registers();
+        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SMTSolver *solver = NULL;
+        SmtSolver *solver = NULL;
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
@@ -734,7 +734,7 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     InputOutputPropertySet props;
     props.insert(IO_READ_BEFORE_WRITE);
     props.insert(IO_WRITE);
-    BOOST_FOREACH (const RegisterDescriptor &reg, finalRegs->findProperties(props)) {
+    BOOST_FOREACH (RegisterDescriptor reg, finalRegs->findProperties(props)) {
         SValuePtr initialValue = initialRegs->readRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
         SValuePtr finalValue = finalRegs->readRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
         SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
@@ -748,7 +748,7 @@ void
 Analysis::updateInputRegisters(const StatePtr &state) {
     inputRegisters_.clear();
     RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->registerState());
-    BOOST_FOREACH (const RegisterDescriptor &reg, regs->findProperties(IO_READ_BEFORE_WRITE))
+    BOOST_FOREACH (RegisterDescriptor reg, regs->findProperties(IO_READ_BEFORE_WRITE))
         inputRegisters_.insert(reg);
     inputRegisters_ -= restoredRegisters_;
 }
@@ -757,7 +757,7 @@ void
 Analysis::updateOutputRegisters(const StatePtr &state) {
     outputRegisters_.clear();
     RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->registerState());
-    BOOST_FOREACH (const RegisterDescriptor &reg, regs->findProperties(IO_WRITE))
+    BOOST_FOREACH (RegisterDescriptor reg, regs->findProperties(IO_WRITE))
         outputRegisters_.insert(reg);
     outputRegisters_ -= restoredRegisters_;
 }
@@ -805,7 +805,7 @@ Analysis::print(std::ostream &out, bool multiLine) const {
     if (!inputRegisters_.isEmpty() || !inputStackParameters_.empty()) {
         out <<separator <<"inputs={";
         if (!inputRegisters_.isEmpty()) {
-            BOOST_FOREACH (const RegisterDescriptor &reg, inputRegisters_.listAll(regDict_))
+            BOOST_FOREACH (RegisterDescriptor reg, inputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
         if (!inputStackParameters_.empty()) {
@@ -819,7 +819,7 @@ Analysis::print(std::ostream &out, bool multiLine) const {
     if (!outputRegisters_.isEmpty() || !outputStackParameters_.empty()) {
         out <<separator <<"outputs={";
         if (!outputRegisters_.isEmpty()) {
-            BOOST_FOREACH (const RegisterDescriptor &reg, outputRegisters_.listAll(regDict_))
+            BOOST_FOREACH (RegisterDescriptor reg, outputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
         if (!outputStackParameters_.empty()) {
@@ -832,7 +832,7 @@ Analysis::print(std::ostream &out, bool multiLine) const {
 
     if (!restoredRegisters_.isEmpty()) {
         out <<separator <<"saved={";
-        BOOST_FOREACH (const RegisterDescriptor &reg, restoredRegisters_.listAll(regDict_))
+        BOOST_FOREACH (RegisterDescriptor reg, restoredRegisters_.listAll(regDict_))
             out <<" " <<regName(reg);
         out <<" }";
         separator = multiLine ? "\n" : ", ";
@@ -924,7 +924,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             RegisterNames regName(registerDictionary());
             debug <<"  mismatch: actual outputs are not defined outputs or scratch registers: ";
             RegisterParts parts = outputRegisters_ - ccOutputRegisters;
-            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
+            BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
         }
@@ -937,7 +937,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             RegisterNames regName(registerDictionary());
             debug <<"  mismatch: actual inputs are not defined inputs or \"this\" register: ";
             RegisterParts parts = inputRegisters_ - ccInputRegisters;
-            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
+            BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
         }
@@ -950,7 +950,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             debug <<"  mismatch: restored registers that are not defined as callee-saved:";
             RegisterParts parts = restoredRegisters_ - cc->calleeSavedRegisterParts();
             RegisterNames regName(registerDictionary());
-            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
+            BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
         }

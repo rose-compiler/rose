@@ -10,7 +10,7 @@
 #include "rose.h"
 //#include <algorithm>
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace VirtualCFG;
 
 int main(int argc, char *argv[]) 

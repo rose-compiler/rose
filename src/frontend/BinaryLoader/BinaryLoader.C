@@ -11,9 +11,9 @@
 #include "Disassembler.h"
 #include "dwarfSupport.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 Sawyer::Message::Facility BinaryLoader::mlog;
@@ -46,7 +46,7 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::BinaryLoader");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::BinaryLoader");
     }
 }
 
@@ -329,7 +329,8 @@ BinaryLoader::remap(SgAsmInterpretation* interp)
 {
     /* Make sure we have a valid memory map. It is permissible for the caller to have reserved some space already. */
     MemoryMap::Ptr map = interp->get_map();
-    if (!map) interp->set_map(map = MemoryMap::instance());
+    if (!map)
+        interp->set_map(map = MemoryMap::instance());
 
     /* Process each file header in the order it appears in the AST. This is also the order that the link() method parsed
      * dependencies (usually by a breadth-first search). */
@@ -388,8 +389,16 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
                       <<StringUtility::addrToString(section->get_file_alignment()) <<"\n";
             }
 
+            // Initial guesses
+            rose_addr_t malign_lo = std::max(section->get_mapped_alignment(), (rose_addr_t)1);
+            rose_addr_t malign_hi = std::min(std::max(section->get_mapped_alignment(), (rose_addr_t)1), (rose_addr_t)4096);
+            rose_addr_t va        = header->get_base_va() + section->get_mapped_preferred_rva();
+            rose_addr_t mem_size  = section->get_mapped_size();
+            rose_addr_t offset    = section->get_offset();
+            rose_addr_t file_size = section->get_size();
+
             /* Figure out alignment, etc. */
-            rose_addr_t malign_lo=1, malign_hi=1, va=0, mem_size=0, offset=0, file_size=0, va_offset=0;
+            rose_addr_t va_offset=0;
             bool anon_lo=true, anon_hi=true, map_private=false;
             ConflictResolution resolve = RESOLVE_THROW;
             MappingContribution contrib = align_values(section, map,                      /* inputs */
@@ -458,17 +467,11 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
                 continue;
             }
 
-            /* Resolve mapping conflicts.  The new mapping may have multiple parts, so we test whether all those parts can be
-             * mapped by first mapping a region and then removing it.  In this way we can perform the test atomically rather
-             * than trying to undo the parts that had been successful. Allocating a large region does not actually allocate any
-             * memory. */
-            try {
-                map->insert(AddressInterval::baseSize(va, mem_size), MemoryMap::Segment::nullInstance(mem_size));
-                map->erase(AddressInterval::baseSize(va, mem_size));
-            } catch (const MemoryMap::Exception&) {
+            // Resole mapping conflicts
+            if (map->within(AddressInterval::baseSize(va, mem_size)).exists()) {
                 switch (resolve) {
                     case RESOLVE_THROW:
-                        throw;
+                        throw MemoryMap::NotMapped("cannot map segment", map, va);
                     case RESOLVE_OVERMAP:
                         trace <<"    Conflict: resolved by making a hole\n";
                         map->erase(AddressInterval::baseSize(va, mem_size));
@@ -745,18 +748,28 @@ BinaryLoader::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &m
 {
     ASSERT_not_null(section);
     ASSERT_require2(section->is_mapped(), "section must be mapped to virtual memory");
+    ASSERT_not_null(malign_lo_p);
+    ASSERT_not_null(malign_hi_p);
+    ASSERT_not_null(va_p);
+    ASSERT_not_null(mem_size_p);
+    ASSERT_not_null(offset_p);
+    ASSERT_not_null(file_size_p);
+    ASSERT_not_null(anon_lo_p);
+    ASSERT_not_null(anon_hi_p);
+    ASSERT_not_null(resolve_p);
+
     SgAsmGenericHeader *header = isSgAsmGenericHeader(section);
     if (!header) header = section->get_header();
     ASSERT_not_null(header);
     
     /* Initial guesses */
-    rose_addr_t malign_lo = std::max(section->get_mapped_alignment(), (rose_addr_t)1);
-    rose_addr_t malign_hi = std::min(std::max(section->get_mapped_alignment(), (rose_addr_t)1), (rose_addr_t)4096);
-    rose_addr_t va        = header->get_base_va() + section->get_mapped_preferred_rva();
-    rose_addr_t mem_size  = section->get_mapped_size();
+    rose_addr_t malign_lo = *malign_lo_p;
+    rose_addr_t malign_hi = *malign_hi_p;
+    rose_addr_t va = *va_p;
+    rose_addr_t mem_size = *mem_size_p;
+    rose_addr_t offset = *offset_p;
     rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
-    rose_addr_t offset    = section->get_offset();
-    rose_addr_t file_size = section->get_size();
+    rose_addr_t file_size = *file_size_p;
 
     /* Align lower end of mapped region to satisfy both memory and file alignment constraints. */
     rose_addr_t va_offset = bialign(va, malign_lo, offset, falign_lo);
