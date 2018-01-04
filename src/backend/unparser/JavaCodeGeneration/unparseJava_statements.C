@@ -350,9 +350,9 @@ Unparse_Java::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
 #if 1
                     << currentStatement->get_file_info()->displayString()
 #else
-                    << rose::getLineNumber(currentStatement)
+                    << Rose::getLineNumber(currentStatement)
                     << " getFileName(currentStatement) = " 
-                    << rose::getFileName(currentStatement)
+                    << Rose::getFileName(currentStatement)
 #endif
                     << " unp->cur_index = " 
                     << unp->cur_index

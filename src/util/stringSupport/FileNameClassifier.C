@@ -42,10 +42,10 @@
 #endif
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // DQ (2/8/2010): I don't like namespaces used to define functions (too unclear).
-// namespace rose {
+// namespace Rose {
 // namespace StringUtility {
 
     namespace
@@ -318,7 +318,7 @@ using namespace rose;
                 return false;
             }
 
-        rose::StringUtility::FileNameLibrary
+        Rose::StringUtility::FileNameLibrary
             classifyLibrary(const string& fileName)
             {
 #ifndef CXX_IS_ROSE_CODE_GENERATION
@@ -326,25 +326,25 @@ using namespace rose;
 
                 if (charListMatches(LINUX_INCLUDES, "include/", fileName))
                 {
-                    return rose::StringUtility::FILENAME_LIBRARY_LINUX;
+                    return Rose::StringUtility::FILENAME_LIBRARY_LINUX;
                 }
                 if (charListMatches(GLIBC_INCLUDES, "include/", fileName))
                 {
-                    return rose::StringUtility::FILENAME_LIBRARY_C;
+                    return Rose::StringUtility::FILENAME_LIBRARY_C;
                 }
                 if (fileName.find("lib/gcc") != string::npos)
                 {
-                    return rose::StringUtility::FILENAME_LIBRARY_GCC;
+                    return Rose::StringUtility::FILENAME_LIBRARY_GCC;
                 }
                 if (fileName.find("boost") != string::npos)
                 {
-                    return rose::StringUtility::FILENAME_LIBRARY_BOOST;
+                    return Rose::StringUtility::FILENAME_LIBRARY_BOOST;
                 }
                 if (fileName.find("rose.h") != string::npos ||
                         fileName.find("include-staging/g++_HEADERS") != string::npos ||
                         fileName.find("include-staging/gcc_HEADERS") != string::npos)
                 {
-                    return rose::StringUtility::FILENAME_LIBRARY_ROSE;
+                    return Rose::StringUtility::FILENAME_LIBRARY_ROSE;
                 }
 
                 // the path of C++ header files does not have to contain "c++"
@@ -354,7 +354,7 @@ using namespace rose;
                     while (*substr != NULL)
                     {
                         if (endsWith(fileName, *substr))
-                            return rose::StringUtility::FILENAME_LIBRARY_STL;
+                            return Rose::StringUtility::FILENAME_LIBRARY_STL;
                         ++substr;
                     }
                 }
@@ -364,7 +364,7 @@ using namespace rose;
                 {
                     p = p.branch_path();
                     if(exists(p / path("rose.h")))
-                        return rose::StringUtility::FILENAME_LIBRARY_ROSE;
+                        return Rose::StringUtility::FILENAME_LIBRARY_ROSE;
 
                     const char ** substr = GLIBCXX_INCLUDES;
                     bool isCxxHeader = true;
@@ -378,7 +378,7 @@ using namespace rose;
                         ++substr;
                     }
                     if(isCxxHeader)
-                        return rose::StringUtility::FILENAME_LIBRARY_STDCXX;
+                        return Rose::StringUtility::FILENAME_LIBRARY_STDCXX;
                 }
 
                 /* 
@@ -394,12 +394,12 @@ using namespace rose;
                 }
                 */
 #endif
-                return rose::StringUtility::FILENAME_LIBRARY_UNKNOWN;
+                return Rose::StringUtility::FILENAME_LIBRARY_UNKNOWN;
             }
     } // end unnamed namespace for file location definitions
 
     int
-        rose::StringUtility::directoryDistance(const string& left, const string& right)
+        Rose::StringUtility::directoryDistance(const string& left, const string& right)
         {
             vector<string> lvec;
             splitStringIntoStrings(left, '/', lvec);
@@ -422,8 +422,8 @@ using namespace rose;
             return distance(l, lvec.end()) + distance(r, rvec.end());
         }
 
-rose::StringUtility::OSType
-rose::StringUtility::getOSType()
+Rose::StringUtility::OSType
+Rose::StringUtility::getOSType()
     {
 #if ROSE_MICROSOFT_OS
     OSVERSIONINFO osvi;
@@ -466,7 +466,7 @@ rose::StringUtility::getOSType()
         }
 
     void
-rose::StringUtility::homeDir(string& dir)
+Rose::StringUtility::homeDir(string& dir)
     {
         const char* home = getenv("HOME");
 #ifdef _MSC_VER
@@ -478,23 +478,23 @@ rose::StringUtility::homeDir(string& dir)
 
     // Update FileNameInfo class with details about where the
     // file comes from and what library it might be a part of
-    rose::StringUtility::FileNameClassification
-        rose::StringUtility::classifyFileName(const string& fileName,
+    Rose::StringUtility::FileNameClassification
+        Rose::StringUtility::classifyFileName(const string& fileName,
                 const string& appPath)
         {
             return classifyFileName(fileName, appPath, std::map<string, string>(), getOSType());
         }
 
-    rose::StringUtility::FileNameClassification
-        rose::StringUtility::classifyFileName(const string& fileName,
+    Rose::StringUtility::FileNameClassification
+        Rose::StringUtility::classifyFileName(const string& fileName,
                 const string& appPath,
                 OSType os)
         {
             return classifyFileName(fileName, appPath, std::map<string, string>(), os);
         }
 
-    rose::StringUtility::FileNameClassification
-        rose::StringUtility::classifyFileName(const string& filename,
+    Rose::StringUtility::FileNameClassification
+        Rose::StringUtility::classifyFileName(const string& filename,
                 const string& appPath,
                 const std::map<string, string>& libPathCollection)
         {
@@ -503,8 +503,8 @@ rose::StringUtility::homeDir(string& dir)
 
     // Internal function to above public interface, this version
     // is exposed just for testing purposes 
-    rose::StringUtility::FileNameClassification
-        rose::StringUtility::classifyFileName(const string& fileName,
+    Rose::StringUtility::FileNameClassification
+        Rose::StringUtility::classifyFileName(const string& fileName,
                 const string& appPathConst,
                 const std::map<string, string>& libPathCollection,
                 OSType os)
@@ -571,7 +571,7 @@ rose::StringUtility::homeDir(string& dir)
             }
 
             FileNameLibrary filenameLib = classifyLibrary(fileName);
-            if (filenameLib != rose::StringUtility::FILENAME_LIBRARY_UNKNOWN)
+            if (filenameLib != Rose::StringUtility::FILENAME_LIBRARY_UNKNOWN)
             {
                 return FileNameClassification(FILENAME_LOCATION_LIBRARY,
                         filenameLib,
@@ -640,7 +640,7 @@ StringUtility::FileNameClassification::getLibraryName() const
 */
 
 const string
-rose::StringUtility::stripDotsFromHeaderFileName(const string& name)
+Rose::StringUtility::stripDotsFromHeaderFileName(const string& name)
    {
      if (name.empty() || (name[0] != '.' && name[0] != ' '))
           return name;

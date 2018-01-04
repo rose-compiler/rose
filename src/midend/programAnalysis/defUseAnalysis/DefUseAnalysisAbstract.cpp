@@ -65,11 +65,11 @@ bool DefUseAnalysisAbstract::searchMulti(const multitype* multi, SgInitializedNa
 
 
 /**********************************************************
- *  check if two multimaps are equal
+ *  check if two multimaps are equal , not equal? changed or not. true if changed.
  *********************************************************/
-bool DefUseAnalysisAbstract::checkElementsForEquality(const multitype* t1, const multitype* t2) {
+bool DefUseAnalysisAbstract::checkElementsForChange(const multitype* t1, const multitype* t2) {
   // if every element of t2 is contained in t1, then no change
-  // occured in the map
+  // occurred in the map
   
   typedef set<pair<SgInitializedName*, SgNode*> > st;
   st s1(t1->begin(), t1->end());
@@ -78,7 +78,14 @@ bool DefUseAnalysisAbstract::checkElementsForEquality(const multitype* t1, const
 
   //  if (s2.size() != t2->size())
   //    printMultiMap(t2);
-  assert (s2.size() == t2->size());
+  if (s2.size() != t2->size())
+  {
+    cerr<<"s2.size()="<< s2.size() <<endl;
+    cerr<<"t2.size()="<< t2->size() <<endl;
+    dfa->printMultiMap (t2);
+    assert(s2.size() == t2->size());
+  }
+
   return s1 != s2;
   /*
 
@@ -109,7 +116,7 @@ bool DefUseAnalysisAbstract::checkElementsForEquality(const multitype* t1, const
  * return the initializedName
  * we need this if we have a VarRefExp on the left hand
  * side of an assignment. We want to know which variable it is.
- * The variable may be hiding down the hirarchy in e.g. an array
+ * The variable may be hiding down the hierarchy in e.g. an array
  *********************************************************/
 SgInitializedName* DefUseAnalysisAbstract::getInitName(SgNode* l_expr) {
   SgInitializedName* retName = NULL;
@@ -135,7 +142,7 @@ SgInitializedName* DefUseAnalysisAbstract::getInitName(SgNode* l_expr) {
     } 
   } else {
     if (DEBUG_MODE)
-      cout << " GETINITNAME:: could not resolve initName " << l_expr->class_name() << endl;
+      cout << " DefUseAnalysisAbstract::getInitName() could not resolve initName from " << l_expr->class_name() << endl;
   }
   return retName;
 }

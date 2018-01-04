@@ -10,7 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-namespace rose {
+namespace Rose {
 
 /** Shared-ownership pointer to a SnippetFile object.  See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class SnippetFile> SnippetFilePtr;

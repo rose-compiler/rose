@@ -64,7 +64,7 @@ AC_DEFUN([ROSE_SUPPORT_ATERM],
   ROSE_ARG_WITH(
     [aterm],
     [for an installation of the Aterm library],
-    [support the Aterm library],
+    [specify the path to the ATerm installation],
     []
   )
   if test "x$CONFIG_HAS_ROSE_WITH_ATERM" != "xno"; then

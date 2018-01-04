@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // DQ (10/31/2015): Need to define this in a single location instead of in the header file included by multiple source files.
 MangledNameSupport::setType MangledNameSupport::visitedTemplateDefinitions;
@@ -294,8 +294,16 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                            // MangledNameSupport::visitedTemplateDeclarations.insert(it,nonconst_templateInstantiationDefinition);
                               MangledNameSupport::visitedTemplateDefinitions.insert(it,nonconst_def);
                             }
+
 #if 0
+                      // DQ (7/24/2017): This will allow us to see when there is infinit recursion that ends in a stack overflow for test2017_57.C.
                          printf ("In manglingSupport.C: mangleQualifiersToString(): Calling def->get_mangled_name(): def = %p = %s \n",def,def->class_name().c_str());
+#endif
+#if 0
+                         printf ("In manglingSupport.C: mangleQualifiersToString(): def = %p = %s \n",def,def->class_name().c_str());
+                         SgScopeStatement* tmp_scope = def->get_scope();
+                         ROSE_ASSERT(tmp_scope != NULL);
+                         printf ("In manglingSupport.C: mangleQualifiersToString(): tmp_scope = %p = %s \n",tmp_scope,tmp_scope->class_name().c_str());
 #endif
                          mangled_name = def->get_mangled_name().getString();
 #if 0
@@ -422,14 +430,26 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                   }
 #endif
 
+            // DQ (7/24/2017): Added support for new scope used to hold classes constructed from template parameters in the rare cases where this is done.
+               case V_SgDeclarationScope: // The declaration scope has an 'empty' name
+                  {
+                 // I think there is nothing to do for this case.
+                    break;
+                  }
+
             // DQ (3/14/2012): I think that defaults should be resurced for errors, and not proper handling of unexpected cases.
                default: // Embed the class name for subsequent debugging.
                   {
+                 // DQ (7/24/2017): I think it is a mistake to supress this comment.
+#if 0
                  // DQ (3/19/2014): Supress this output, but permit it with verbose level == 1.
                     if (SgProject::get_verbose() > 0)
                        {
                          printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): case of scope = %p = %s not handled (default reached) \n",scope,scope->class_name().c_str());
                        }
+#else
+                    printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): case of scope = %p = %s not handled (default reached) \n",scope,scope->class_name().c_str());
+#endif
 
                  // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
                     ROSE_ASSERT(scope->class_name() != "SgNode");
@@ -494,6 +514,20 @@ mangleQualifiers( const SgScopeStatement* scope )
   // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
      ROSE_ASSERT(scope->class_name() != "SgNode");
 
+#if 0
+#if 0
+     if (isSgDeclarationScope(scope) != NULL)
+        {
+          printf ("In manglingSupport.C: scope = %p = %s \n",scope,scope->class_name().c_str());
+        }
+#else
+     printf ("In manglingSupport.C: scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+#endif
+
+  // DQ (7/20/2017): Assert that this is not a dangling pointer.
+     ROSE_ASSERT(scope->class_name() != "SgLocatedNode");
+
   // DQ (2/17/2014): Adding debugging code (issue with new options to gnunet).
   // DQ (1/12/13): Added assertion.
      if (scope->get_scope() == NULL)
@@ -508,6 +542,10 @@ mangleQualifiers( const SgScopeStatement* scope )
           return SgName("");
         }
      ROSE_ASSERT(scope->get_scope() != NULL);
+
+#if 0
+     printf ("In manglingSupport.C: scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
 
      string s = mangleQualifiersToString(scope);
 

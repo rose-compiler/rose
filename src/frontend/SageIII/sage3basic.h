@@ -437,7 +437,6 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // example).  The current work is an incremental solution.
 #define USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST 0
 
-#include "RoseBin_support.h"
 // DQ (7/6/2005): Added to support performance analysis of ROSE.
 // This is located in ROSE/src/midend/astDiagnostics
 #include "AstPerformance.h"
@@ -472,7 +471,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // endif for ifndef ROSE_USE_SWIG_SUPPORT
 // #endif
 
-#include <initialize.h>                                 // defines rose::initialize
+#include <initialize.h>                                 // defines Rose::initialize
 
 #endif
 

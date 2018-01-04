@@ -13,17 +13,17 @@ namespace Sawyer {
 namespace Container {
 
 LineVector::LineVector(const boost::filesystem::path &path)
-    : charBuf_(NULL), nextCharToScan_(0) {
+    : charBuf_(NULL), bufSize_(0), nextCharToScan_(0) {
     load(path);
 }
 
 LineVector::LineVector(const Buffer<size_t, char>::Ptr &buffer)
-    : charBuf_(NULL), nextCharToScan_(0) {
+    : charBuf_(NULL), bufSize_(0), nextCharToScan_(0) {
     load(buffer);
 }
 
 LineVector::LineVector(size_t nBytes, const char *buf)
-    : charBuf_(NULL), nextCharToScan_(0) {
+    : charBuf_(NULL), bufSize_(0), nextCharToScan_(0) {
     load(nBytes, buf);
 }
 
@@ -32,7 +32,8 @@ LineVector::load(const boost::filesystem::path &path) {
     clear();
     buffer_ = MappedBuffer<size_t, char>::instance(path);
     charBuf_ = buffer_->data();
-    ASSERT_require(charBuf_ != NULL || buffer_->size() == 0);
+    bufSize_ = buffer_->size();
+    ASSERT_require(charBuf_ != NULL || bufSize_ == 0);
 }
 
 void
@@ -41,7 +42,8 @@ LineVector::load(const Buffer<size_t, char>::Ptr &buffer) {
     ASSERT_not_null(buffer);
     buffer_ = buffer;
     charBuf_ = buffer->data();
-    ASSERT_require(charBuf_ != NULL || buffer_->size() == 0);
+    bufSize_ = buffer_->size();
+    ASSERT_require(charBuf_ != NULL || bufSize_ == 0);
 }
 
 void
@@ -49,17 +51,18 @@ LineVector::load(size_t nBytes, const char *buf) {
     clear();
     buffer_ = StaticBuffer<size_t, char>::instance(buf, nBytes);
     charBuf_ = buffer_->data();
-    ASSERT_require(charBuf_ != NULL || buffer_->size() == 0);
+    bufSize_ = buffer_->size();
+    ASSERT_require(charBuf_ != NULL || bufSize_ == 0);
 }
 
 bool
 LineVector::isEmpty() const {
-    return 0 == buffer_->size();
+    return 0 == bufSize_;
 }
 
 bool
 LineVector::isLastLineTerminated() const {
-    size_t n = buffer_->size();
+    size_t n = bufSize_;
     return n>0 && '\n' == charBuf_[n-1];
 }
 
@@ -67,11 +70,6 @@ size_t
 LineVector::nLines() const {
     cacheLines((size_t)(-1));                           // cache to end of file
     return lineFeeds_.size() + (!isEmpty() && !isLastLineTerminated() ? 1 : 0);
-}
-
-size_t
-LineVector::nCharacters() const {
-    return buffer_->size();
 }
 
 size_t
@@ -113,11 +111,6 @@ LineVector::cacheCharacters(size_t nChars) const {
         ++i;
     }
     nextCharToScan_ = i;
-}
-
-int
-LineVector::character(size_t charIdx) const {
-    return charIdx >= nCharacters() ? EOF : (int)charBuf_[charIdx];
 }
 
 int

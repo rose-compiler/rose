@@ -33,6 +33,7 @@ libroseutil_la_SOURCES =			\
 	FileSystem.C				\
 	LinearCongruentialGenerator.C		\
 	processSupport.C			\
+	Progress.C				\
 	rose_getline.C				\
 	rose_strtoull.C
 nodist_libroseutil_la_SOURCES = rose_paths.C
@@ -57,8 +58,11 @@ pkginclude_HEADERS =				\
 	GraphUtility.h				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
+	timing.h				\
 	ParallelSort.h				\
 	processSupport.h			\
+	Progress.h				\
+	RecursionCounter.h			\
 	rose_isnan.h				\
 	rose_getline.h				\
 	rose_override.h				\

@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
 rose_addr_t
 SgAsmBlock::get_fallthrough_va()

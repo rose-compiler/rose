@@ -17,7 +17,7 @@
 
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
 // Test codes in the tests/nonsmoke/functional/roseTests/astTokenStreamTests directory turn on this 
@@ -1374,6 +1374,16 @@ FrontierDetectionForTokenStreamMappingAttribute::copy() const
      return NULL;
 #endif
    }
+
+// DQ (11/14/2017): This addition is not portable, should not be specified outside of the class definition, 
+// and fails for C++11 mode on the GNU 4.8.5 compiler and the llvm (some version that Craig used).
+// DQ (6/11/2017): Added virtual function now required to eliminate warning at runtime.
+AstAttribute::OwnershipPolicy
+FrontierDetectionForTokenStreamMappingAttribute::getOwnershipPolicy() const // ROSE_OVERRIDE 
+   {
+     return CONTAINER_OWNERSHIP;
+   }
+
 
 #if 0
 void

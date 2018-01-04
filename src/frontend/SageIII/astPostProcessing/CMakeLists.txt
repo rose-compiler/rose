@@ -38,7 +38,8 @@ set(astPostProcessingSources
   fixupDeclarationScope.C
   checkPhysicalSourcePosition.C
   fixupFileInfoFlags.C
-  fixupTemplateArguments.C)
+  fixupTemplateArguments.C
+  addPrototypesForTemplateInstantiations.C)
 
 if(NOT enable-c)
   set(astPostProcessingSources ${astPostProcessingSources} dummy.C)
@@ -73,6 +74,7 @@ install(FILES  astPostProcessing.h       fixupDefiningAndNondefiningDeclarations
     fixupSelfReferentialMacros.h fixupTypeReferences.h
     fixupFileInfoFlags.h
     fixupTemplateArguments.h
+    addPrototypesForTemplateInstantiations.h
 
     DESTINATION ${INCLUDE_INSTALL_DIR})
 

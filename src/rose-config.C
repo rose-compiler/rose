@@ -265,7 +265,7 @@ makeLibrarySearchPaths(const std::string &str) {
         ASSERT_require2(quoted=='\0', "mismatched quotes");
     }
 
-    //Turn them all into a color-seperated string
+    //Turn them all into a colon-seperated string
     std::string retval;
     for (size_t i=0; i<args.size(); ++i) {
       retval += (retval.empty()?"":":") + args[i];
@@ -293,11 +293,11 @@ main(int argc, char *argv[]) {
     Configuration::const_iterator found = config.find(key);
     if (found != config.end()) {
       if (key == "libdirs") { //Special case for libdirs, which is stored space seperated in the file, but returns as colon seperated
-            std::cout <<makefileEscape(makeLibrarySearchPaths(found->second)) <<"\n";
-        } else {
-            std::cout <<makefileEscape(found->second) <<"\n";
-        }
-        exit(0);
+	std::cout <<makefileEscape(makeLibrarySearchPaths(found->second)) <<"\n";
+      } else {
+	std::cout <<makefileEscape(found->second) <<"\n";
+      }
+      exit(0);
     }
 
     // Errors

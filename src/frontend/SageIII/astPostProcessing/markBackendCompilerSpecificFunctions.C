@@ -4,7 +4,7 @@
 #include "FileUtility.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 void
 markBackendSpecificFunctionsAsCompilerGenerated( SgNode* node )
