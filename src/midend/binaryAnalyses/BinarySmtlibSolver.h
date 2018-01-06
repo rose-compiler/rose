@@ -16,6 +16,8 @@ private:
 
 protected:
     ExprExprMap evidence;
+    typedef Sawyer::Container::Map<SymbolicExpr::Hash, ExprExprMap> MemoizedEvidence;
+    MemoizedEvidence memoizedEvidence;
 
 public:
     /** Construct a solver using the specified program.
@@ -42,6 +44,7 @@ public:
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual void clearEvidence() ROSE_OVERRIDE;
+    virtual void clearMemoization() ROSE_OVERRIDE;
 
 protected:
     /** Specify variable to use for OP_SET.

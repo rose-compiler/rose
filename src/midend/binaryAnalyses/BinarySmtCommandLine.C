@@ -9,6 +9,7 @@ bool
 listSmtSolverNames(std::ostream &out) {
     BinaryAnalysis::SmtSolver::Availability solvers = BinaryAnalysis::SmtSolver::availability();
     bool foundSolver = false;
+    out <<"solver \"none\" is available\n";
     BOOST_FOREACH (BinaryAnalysis::SmtSolver::Availability::value_type &node, solvers) {
         out <<"solver \"" <<node.first <<"\" is " <<(node.second?"":"not ") <<"available\n";
         if (node.second)
@@ -89,9 +90,12 @@ smtSolverDocumentationString(const std::string &dfltValue) {
 
     docstr += " The default is \"" + dfltValue + "\"";
     if ("best" == dfltValue) {
-        SmtSolver *solver = SmtSolver::bestAvailable();
-        docstr += ", which currently means \"" + solver->name() + "\".";
-        delete solver;
+        if (SmtSolver *solver = SmtSolver::bestAvailable()) {
+            docstr += ", which currently means \"" + solver->name() + "\".";
+            delete solver;
+        } else {
+            docstr += ", which currently mean \"none\".";
+        }
     } else {
         docstr += ".";
     }

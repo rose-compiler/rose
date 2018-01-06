@@ -66,10 +66,11 @@ public:
 
     /** SMT solver statistics. */
     struct Stats {
-        Stats(): ncalls(0), input_size(0), output_size(0) {}
+        Stats(): ncalls(0), input_size(0), output_size(0), memoizationHits(0) {}
         size_t ncalls;                                  /**< Number of times satisfiable() was called. */
         size_t input_size;                              /**< Bytes of input generated for satisfiable(). */
         size_t output_size;                             /**< Amount of output produced by the SMT solver. */
+        size_t memoizationHits;                         /**< Number of times memoization supplied a result. */
     };
 
     /** Set of variables. */
@@ -99,6 +100,8 @@ public:
 
     typedef std::pair<SExpr::Ptr, Type> SExprTypePair;
 
+    typedef Sawyer::Container::Map<SymbolicExpr::Hash, Satisfiable> Memoization;
+
 private:
     std::string name_;
     std::vector<std::vector<SymbolicExpr::Ptr> > stack_;
@@ -108,7 +111,9 @@ protected:
     std::string outputText_;                            /**< Additional output obtained by satisfiable(). */
     std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
-
+    Memoization memoization_;                           // cached of previously computed results
+    bool doMemoization_;                                // use the memoization_ table?
+    SymbolicExpr::Hash latestMemoizationId_;            // key for last found or inserted memoization, or zero
 
     // Statistics
     static boost::mutex classStatsMutex;
@@ -131,6 +136,9 @@ private:
         // termNames_           -- not serialized
         // outputText_          -- not serialized
         // parsedOutput_        -- not serialized
+        // termNames_           -- not serialized
+        // memoization_         -- not serialized
+        // doMemoization_       -- not serialized
         // classStatsMutex      -- not serialized
         // classStats           -- not serialized
         // stats                -- not serialized
@@ -148,7 +156,7 @@ protected:
      *  situation by reading the @p linkage property, or just wait for one of the other methods to throw an @ref
      *  SmtSolver::Exception. */
     SmtSolver(const std::string &name, unsigned linkages)
-        : name_(name), linkage_(LM_NONE) {
+        : name_(name), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
         init(linkages);
     }
 
@@ -206,7 +214,29 @@ public:
      *  "Best" is defined as that with the best performance, which is usually direct calls to the solver's API. */
     static LinkMode bestLinkage(unsigned linkages);
 
+    /** Property: Perform memoization.
+     *
+     *  If set, then perform memoization by caching all previous results.
+     *
+     * @{ */
+    bool memoization() const { return doMemoization_; }
+    void memoization(bool b) {
+        doMemoization_ = b;
+        if (!b)
+            clearMemoization();
+    }
+    /** @} */
 
+    /** Id for latest memoized result, or zero. */
+    SymbolicExpr::Hash latestMemoizationId() const {
+        return latestMemoizationId_;
+    }
+    
+    /** Clear memoization table. */
+    virtual void clearMemoization() {
+        memoization_.clear();
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // High-level abstraction for testing satisfiability.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

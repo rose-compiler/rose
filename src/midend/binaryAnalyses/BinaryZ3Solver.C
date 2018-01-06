@@ -101,13 +101,6 @@ Z3Solver::checkLib() {
     ASSERT_not_null(ctx_);
     ASSERT_not_null(solver_);
 
-    // Keep track of how often we call the SMT solver.
-    ++stats.ncalls;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        ++classStats.ncalls;
-    }
-
     std::vector<SymbolicExpr::Ptr> allExprs = assertions();
     ctxVarDecls_.clear();
     ctxCses_.clear();
@@ -361,8 +354,24 @@ Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
             z3::expr z3expr = ctx_->bv_val((unsigned long long)leaf->toInt(), (unsigned)leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
         } else {
+#if 0 // [Robb Matzke 2018-01-04]: This fails silently with z3 4.5.0 and 4.6.0
+            // FIXME[Robb Matzke 2018-01-04]: Our bit vector (leaf->bits()) is an array of unsigned ints and it would be nice
+            // if we could pass it directly into Z3 to get a z3::expr bit vector. Second approach is if Z3 could accept a
+            // string representing in binary, octal, hexadecimal, or some other power-of-two radix. Neither of these approaches
+            // seems possible with the C or C++ APIs in z3-4.5.0 or 4.6.0. There is a z3::context::bv_val function that takes a
+            // string, but only a decimal representation (give it anything else and it fails silently).  Converting from ROSE
+            // binary representation to decimal string back to z3 binary representation is going to involve division and
+            // multiplication.
             z3::expr z3expr = ctx_->bv_val(("#x" + leaf->bits().toHex()).c_str(), leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
+#else
+            static bool called;
+            if (!called) {
+                mlog[WARN] <<"FIXME: Z3 interface does not support bit vector constants wider than 64 bits\n";
+                called = true;
+            }
+            throw Exception("z3 interface does not support bit vector constants wider than 64 bits");
+#endif
         }
     } else if (leaf->isVariable()) {
         z3::func_decl decl = ctxVarDecls_.get(leaf);
@@ -962,6 +971,17 @@ Z3Solver::parseEvidence() {
         return SmtlibSolver::parseEvidence();
 
 #ifdef ROSE_HAVE_Z3
+    // If memoization is being used and we have a previous result, then use the previous result.
+    SymbolicExpr::Hash memoId = latestMemoizationId();
+    if (memoId > 0) {
+        MemoizedEvidence::NodeIterator found = memoizedEvidence.find(memoId);
+        if (found != memoizedEvidence.nodes().end()) {
+            evidence = found->value();
+            return;
+        }
+    }
+
+    // Parse the evidence
     ASSERT_not_null(solver_);
     z3::model model = solver_->get_model();
     for (size_t i=0; i<model.size(); ++i) {
@@ -1001,6 +1021,10 @@ Z3Solver::parseEvidence() {
         ASSERT_not_null(val);
         evidence.insert(var, val);
     }
+
+    // Cache the evidence
+    if (memoId > 0)
+        memoizedEvidence.insert(memoId, evidence);
 
 #else
     ASSERT_not_reachable("z3 not enabled");

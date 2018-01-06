@@ -24,6 +24,12 @@ SmtlibSolver::clearEvidence() {
     evidence.clear();
 }
 
+void
+SmtlibSolver::clearMemoization() {
+    SmtSolver::clearMemoization();
+    memoizedEvidence.clear();
+}
+
 std::string
 SmtlibSolver::getCommand(const std::string &configName) {
     std::string exe = executable_.empty() ? std::string("/bin/false") : executable_.string();
@@ -1184,6 +1190,17 @@ SmtlibSolver::parseEvidence() {
     requireLinkage(LM_EXECUTABLE);
     boost::regex varNameRe("v\\d+");
 
+    // If memoization is being used and we have a previous result, then use the previous result.
+    SymbolicExpr::Hash memoId = latestMemoizationId();
+    if (memoId > 0) {
+        MemoizedEvidence::NodeIterator found = memoizedEvidence.find(memoId);
+        if (found != memoizedEvidence.nodes().end()) {
+            evidence = found->value();
+            return;
+        }
+    }
+
+    // Parse the evidence
     BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
         if (sexpr->children().size() > 0 && sexpr->children()[0]->name() == "model") {
             for (size_t i = 1; i < sexpr->children().size(); ++i) {
@@ -1235,6 +1252,10 @@ SmtlibSolver::parseEvidence() {
             }
         }
     }
+
+    // Cache the evidence
+    if (memoId > 0)
+        memoizedEvidence.insert(memoId, evidence);
 }
 
 SymbolicExpr::Ptr

@@ -66,6 +66,7 @@ SmtSolver::reset() {
     stack_.clear();
     push();
     clearEvidence();
+    latestMemoizationId_ = 0;
     // stats not cleared
 }
 
@@ -243,7 +244,12 @@ SmtSolver::insert(const std::vector<SymbolicExpr::Ptr> &exprs) {
 
 SmtSolver::Satisfiable
 SmtSolver::checkTrivial() {
+    // Empty set of assertions is YES
     std::vector<SymbolicExpr::Ptr> exprs = assertions();
+    if (exprs.empty())
+        return SAT_YES;
+
+    // If any assertion is a constant zero, then NO
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
         if (expr->isNumber()) {
             ASSERT_require(1 == expr->nBits());
@@ -251,26 +257,59 @@ SmtSolver::checkTrivial() {
                 return SAT_NO;
         }
     }
-    return exprs.empty() ? SAT_YES : SAT_UNKNOWN;
+
+    return SAT_UNKNOWN;
 }
 
 SmtSolver::Satisfiable
 SmtSolver::check() {
-    clearEvidence();
-    Satisfiable t = checkTrivial();
-    if (t != SAT_UNKNOWN)
-        return t;
+    ++stats.ncalls;
+    {
+        boost::lock_guard<boost::mutex> lock(classStatsMutex);
+        ++classStats.ncalls;
+    }
 
+    latestMemoizationId_ = 0;
+    clearEvidence();
+    Satisfiable retval = checkTrivial();
+    if (retval != SAT_UNKNOWN)
+        return retval;
+
+    // Have we seen this before?
+    SymbolicExpr::Hash h = 0;
+    if (doMemoization_) {
+        h = SymbolicExpr::hash(assertions());
+        if (memoization_.getOptional(h).assignTo(retval)) {
+            latestMemoizationId_ = h;
+            ++stats.memoizationHits;
+            {
+                boost::lock_guard<boost::mutex> lock(classStatsMutex);
+                ++classStats.memoizationHits;
+            }
+            return retval;
+        }
+    }
+    
+    // Do the real work
     switch (linkage_) {
         case LM_EXECUTABLE:
-            return checkExe();
+            retval = checkExe();
+            break;
         case LM_LIBRARY:
-            return checkLib();
+            retval = checkLib();
+            break;
         case LM_NONE:
             throw Exception("no linkage for " + name_ + " solver");
         default:
             ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
     }
+
+    // Cache the result
+    if (doMemoization_) {
+        memoization_.insert(h, retval);
+        latestMemoizationId_ = h;
+    }
+    return retval;
 }
 
 SmtSolver::Satisfiable
@@ -301,12 +340,6 @@ SmtSolver::checkExe() {
     return SAT_UNKNOWN;
 #else
 
-    // Keep track of how often we call the SMT solver.
-    ++stats.ncalls;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        ++classStats.ncalls;
-    }
     outputText_ = "";
 
     /* Generate the input file for the solver. */
@@ -347,13 +380,13 @@ SmtSolver::checkExe() {
     ssize_t nread;
     mlog[DEBUG] <<"solver standard output:\n";
     while ((nread = rose_getline(&r.line, &lineAlloc, r.output)) >0 ) {
-        mlog[DEBUG] <<(boost::format("%5u") % ++lineNum).str() <<": " <<r.line <<"\n";
-        stats.output_size += nread;
-        {
-            boost::lock_guard<boost::mutex> lock(classStatsMutex);
-            classStats.output_size += nread;
-        }
+        SAWYER_MESG(mlog[DEBUG]) <<(boost::format("%5u") % ++lineNum).str() <<": " <<r.line <<"\n";
         outputText_ += std::string(r.line);
+    }
+    stats.output_size += nread;
+    {
+        boost::lock_guard<boost::mutex> lock(classStatsMutex);
+        classStats.output_size += nread;
     }
     status = pclose(r.output); r.output = NULL;
     mlog[DEBUG] <<"solver took " <<timer <<" seconds\n";
@@ -692,6 +725,11 @@ SmtSolver::selfTest() {
     exprs.push_back(makeNe(a1, makeZerop(b1)));
     exprs.push_back(makeIte(a1, makeZerop(a1), b1));
 
+    // Wide multiply
+    exprs.push_back(makeEq(makeExtract(makeInteger(8, 0), makeInteger(8, 128),
+                                       makeMul(makeVariable(128), makeInteger(128, 2))),
+                           makeInteger(128, 16)));
+
     // Run the solver
     for (size_t i=0; i<exprs.size(); ++i) {
         const E &expr = exprs[i];
@@ -715,7 +753,8 @@ SmtSolver::selfTest() {
                     break;
             }
         } catch (const Exception &e) {
-            if (boost::contains(e.what(), "not implemented")) {
+            if (boost::contains(e.what(), "not implemented") ||
+                boost::contains(e.what(), "z3 interface does not support")) {
                 mlog[WARN] <<e.what() <<"\n";
             } else {
                 throw;                                  // an error we don't expect

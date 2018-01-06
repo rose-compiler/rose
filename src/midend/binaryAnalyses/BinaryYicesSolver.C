@@ -61,12 +61,6 @@ YicesSolver::checkLib() {
     requireLinkage(LM_LIBRARY);
 
 #ifdef ROSE_HAVE_LIBYICES
-    ++stats.ncalls;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        ++classStats.ncalls;
-    }
-
     if (!context) {
         context = yices_mk_context();
         ASSERT_not_null(context);

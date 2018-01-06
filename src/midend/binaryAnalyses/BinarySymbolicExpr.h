@@ -1157,6 +1157,12 @@ std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 /** Convert a set to an ite expression. */
 Ptr setToIte(const Ptr&, const LeafPtr &var = LeafPtr());
 
+/**  Hash zero or more expressions.
+ *
+ *   Computes the hash for each expression, then returns a single has which is a function of the individual hashes. The
+ *   order of the expressions does not affect the returned hash. */
+Hash hash(const std::vector<Ptr>&);
+
 /** Counts the number of nodes.
  *
  *  Counts the total number of nodes in multiple expressions.  The return value is a saturated sum, returning MAX_NNODES if an
