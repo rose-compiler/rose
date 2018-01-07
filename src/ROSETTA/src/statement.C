@@ -2336,6 +2336,8 @@ Grammar::setUpStatements ()
      LabelStatement.setDataPrototype     ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/6/2018): This should be handled as a compound statement, meaning that the statement in 
+  // the label should not be NULL and that it should be traversed.
   // DQ (10/14/2007): Since this is also in the parent's list of statments it would be an error to 
   // traverse this.  The reason why it is not currently an error is that this data member's value 
   // is always NULL.  Because of the specification in the Grammar, it does make since to have this
@@ -2345,8 +2347,11 @@ Grammar::setUpStatements ()
   // I think we want to later make this a constructor parameter.
   // LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      LabelStatement.setDataPrototype     ( "bool", "gnu_extension_unused", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

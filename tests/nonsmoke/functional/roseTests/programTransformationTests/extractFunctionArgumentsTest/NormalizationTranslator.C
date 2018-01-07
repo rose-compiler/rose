@@ -22,8 +22,10 @@ int main(int argc, char** argv)
      // Check IsNormalized()
         std::cout << "\n e.IsNormalized:" << e.IsNormalized(function);
 #endif
+     // DQ (1/4/2018): Comment out to isolate the bug in test2018_04.C.
      // Normalize now...
         e.NormalizeTree(function);
+     // printf ("Commented out call to NormalizeTree(); \n");
 
      // Also call GetTemporariesIntroduced
         e.GetTemporariesIntroduced();
@@ -37,7 +39,10 @@ int main(int argc, char** argv)
 #endif
       }
 
-	SageInterface::fixVariableReferences(project);
+     // DQ (1/4/2018): Comment out to isolate the bug in test2018_04.C.
+        SageInterface::fixVariableReferences(project);
+     // printf ("Commented out call to SageInterface::fixVariableReferences(project); \n");
+
 	AstTests::runAllTests(project);
 	return backend(project);
 }

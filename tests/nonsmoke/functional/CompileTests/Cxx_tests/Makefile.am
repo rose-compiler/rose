@@ -492,7 +492,16 @@ NEW_2017_TESTS = \
    test2017_104.C \
    test2017_105.C \
    test2017_106.C \
-   test2017_107.C 
+   test2017_107.C \
+   test2018_01.C \
+   test2018_02.C \
+   test2018_03.C \
+   test2018_04.C \
+   test2018_05.C \
+   test2018_06.C \
+   test2018_07.C \
+   test2018_08.C \
+   test2018_09.C
 
 
 # DQ (12/18/2017): These are perhaps not valid C++ code (might be C code using GNU extensions).
