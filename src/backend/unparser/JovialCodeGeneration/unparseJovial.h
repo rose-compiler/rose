@@ -48,6 +48,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 #endif
 
        // Expressions
+          virtual void unparseUnaryOperator  (SgExpression* expr, const char* op, SgUnparse_Info& info);
+          virtual void unparseBinaryOperator (SgExpression* expr, const char* op, SgUnparse_Info& info);
+
        // virtual void unparseExpression     (SgExpression* expr, SgUnparse_Info& info);
        // virtual void unparseUnaryExpr      (SgExpression* expr, SgUnparse_Info& info);
        // virtual void unparseBinaryExpr     (SgExpression* expr, SgUnparse_Info& info);
@@ -220,6 +223,3 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
    };
 
 #endif
-
-
-
