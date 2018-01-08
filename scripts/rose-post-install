@@ -25,8 +25,8 @@ $mkinstaller_ver_minor = "1";
 $mkinstaller_ver_build = "2";
 $mkinstaller_ver_patch = "";
 $mkinstaller_ver_name  = "1.1.2";
-$mkinstaller_ver_time  = " 1Dec2017 04:40:42z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.2 -  1Dec2017 04:40:42z";
+$mkinstaller_ver_time  = "22Dec2017 17:39:59z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.2 - 22Dec2017 17:39:59z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-18 James Frederick Reus\n"
