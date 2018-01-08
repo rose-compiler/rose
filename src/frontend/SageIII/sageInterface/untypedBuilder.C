@@ -106,6 +106,12 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
                  break;
                }
+             case SgUntypedType::e_bit:
+               {
+                 type = new SgUntypedType("B",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                 break;
+               }
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildType: unimplemented for Jovial type_enum %d \n", type_enum);

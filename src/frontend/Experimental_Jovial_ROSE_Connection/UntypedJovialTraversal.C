@@ -129,6 +129,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
          SgExpressionPtrList children(childAttrs);
 
          sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children, currentScope);
+         delete ut_expr;
       }
    else if ( isSgUntypedAssignmentStatement(n) != NULL )
       {
@@ -136,6 +137,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
          SgExpressionPtrList children(childAttrs);
 
          pConverter->convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
+         delete ut_stmt;
       }
    else if ( isSgUntypedExpressionStatement(n) != NULL )
       {
@@ -143,16 +145,19 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
          SgExpressionPtrList children(childAttrs);
 
          pConverter->convertSgUntypedExpressionStatement(ut_stmt, children, currentScope);
+         delete ut_stmt;
       }
    else if ( isSgUntypedOtherStatement(n) != NULL )
       {
          SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(n);
          pConverter->convertSgUntypedOtherStatement(ut_stmt, currentScope);
+         delete ut_stmt;
       }
    else
       {
 #if DEBUG_UNTYPED_TRAVERSAL
          printf ("Up   traverse: found a node of type ... %s\n", n->class_name().c_str());
+         delete n;
 #endif
       }
 

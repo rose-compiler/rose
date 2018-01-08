@@ -342,7 +342,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
 
    if (traverse_IntegerItemDescription(term, type)) {
       // MATCHED IntegerItemDescription
+//   FloatingItemDescription
+//   FixedItemDescription
+   }
+   else if (traverse_BitItemDescription(term, type)) {
+      // MATCHED IntegerItemDescription
    } else return ATfalse;
+//   CharacterItemDescription
+//   StatusItemDescription
+//   PointerItemDescription
 
    return ATtrue;
 }
@@ -358,6 +366,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
 
    ATerm t_round_or_truncate, t_size;
    bool has_round_or_truncate, has_size;
+   SgUntypedExpression* size;
 
    if (ATmatch(term, "IntegerItemDescription (<term>,<term>)", &t_round_or_truncate,&t_size)) {
       *type = UntypedBuilder::buildType(SgUntypedType::e_int);
@@ -371,21 +380,33 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
       // MATCHED OptRoundOrTruncate
    } else return ATfalse;
 
-   if (traverse_OptIntegerSize(t_size, &has_size)) {
-      // MATCHED OptIntegerSize
+   if (traverse_OptItemSize(t_size, &has_size, &size)) {
+      (*type)->set_has_kind(has_size);
+      (*type)->set_type_kind(size);
    } else return ATfalse;
 
    return ATtrue;
 }
 
- ATbool ATermToUntypedJovialTraversal::traverse_OptIntegerSize(ATerm term, bool* has_size /*TODO - return type */)
+ATbool ATermToUntypedJovialTraversal::traverse_OptItemSize(ATerm term, bool* has_size, SgUntypedExpression** size)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_OptIntegerSize: %s\n", ATwriteToString(term));
+   printf("... traverse_OptItemSize: %s\n", ATwriteToString(term));
 #endif
 
-   if (ATmatch(term, "no-integer-size()")) {
-      *has_size = false;
+   ATerm t_size;
+
+   *size = NULL;
+   *has_size = false;
+
+   if (ATmatch(term, "no-item-size()")) {
+     // MATCHED no-item-size
+   }
+   else if (ATmatch(term, "ItemSize(<term>)", &t_size)) {
+      if (traverse_IntegerFormula(t_size, size)) {
+        // MATCHED IntegerFormula
+      } else return ATfalse;
+      *has_size = true;
    }
    else return ATfalse;
 
@@ -395,7 +416,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
 //========================================================================================
 // 2.1.1.2 FLOATING TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-
 
 ATbool ATermToUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bool* has_round_or_truncate /*TODO - return type */)
 {
@@ -407,6 +427,31 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bo
       *has_round_or_truncate = false;
    }
    else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.1.1.4 BIT TYPE DESCRIPTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_BitItemDescription(ATerm term, SgUntypedType** type)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BitItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_size;
+   bool has_size;
+   SgUntypedExpression* size;
+
+   if (ATmatch(term, "BitItemDescription(<term>)", &t_size)) {
+       *type = UntypedBuilder::buildType(SgUntypedType::e_bit);
+   } else return ATfalse;
+
+   if (traverse_OptItemSize(t_size, &has_size, &size)) {
+      (*type)->set_has_kind(has_size);
+      (*type)->set_type_kind(size);
+   } else return ATfalse;
 
    return ATtrue;
 }
@@ -622,30 +667,46 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUnty
          // MATCHED IntegerTerm
       } else return ATfalse;
 
-      std::cout << "INTEGER FORMULA: TODO: add optional unary operator for sign\n";
-      // TODO - check op_enum to see if we need to add unary operator to the expression
-      // expr = new SgUntypedExpression()
-
+      if (op_enum == Jovial_ROSE_Translation::e_unaryMinusOperator) {
+        std::cout << "INTEGER FORMULA: TODO: check optional unary operator for MINUS sign\n";
+        *expr = new SgUntypedUnaryOperator(op_enum, "-", *expr);
+        setSourcePosition(*expr, t_sign);
+      }
+      else if (op_enum == Jovial_ROSE_Translation::e_unaryPlusOperator) {
+        std::cout << "INTEGER FORMULA: TODO: check optional unary operator for PLUS sign\n";
+        *expr = new SgUntypedUnaryOperator(op_enum, "+", *expr);
+        setSourcePosition(*expr, t_sign);
+      }
    }
 
    else if (ATmatch(term, "IntegerFormula(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
 
       // IntegerFormula PlusOrMinus IntegerTerm -> IntegerFormula
 
-      if (traverse_IntegerFormula(t_lhs, expr)) {
+      std::string op_name;
+      Jovial_ROSE_Translation::ExpressionKind op_enum;
+      SgUntypedExpression * lhs, * rhs;
+
+      if (traverse_IntegerFormula(t_lhs, &lhs)) {
          // MATCHED IntegerFormula
       } else return ATfalse;
 
-      if (ATmatch(t_op, "+")) {
+      if (ATmatch(t_op, "PLUS()")) {
+         op_enum = Jovial_ROSE_Translation::e_plusOperator;
+         op_name = "+";
       }
-      else if (ATmatch(t_op, "-")) {
+      else if (ATmatch(t_op, "MINUS()")) {
+         op_enum = Jovial_ROSE_Translation::e_minusOperator;
+         op_name = "-";
       } else return ATfalse;
 
-      // TODO - binary operator PlusOrMinus
-
-      if (traverse_IntegerTerm(t_rhs, expr)) {
+      if (traverse_IntegerTerm(t_rhs, &rhs)) {
          // MATCHED IntegerTerm
       } else return ATfalse;
+
+      *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
+      std::cout << "BINARY OPERATOR " << op_name << "\n";
+      setSourcePosition(*expr, term);
    }
 
    else return ATfalse;
@@ -690,10 +751,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptSign(ATerm term, Jovial_ROSE_T
    if (ATmatch(term, "no-sign()")) {
       op_enum = Jovial_ROSE_Translation::e_notAnOperator;
    }
-   else if (ATmatch(term, "+")) {
+   else if (ATmatch(term, "PLUS()")) {
       op_enum = Jovial_ROSE_Translation::e_unaryPlusOperator;
    }
-   else if (ATmatch(term, "-")) {
+   else if (ATmatch(term, "MINUS()")) {
       op_enum = Jovial_ROSE_Translation::e_unaryMinusOperator;
    }
    else return ATfalse;

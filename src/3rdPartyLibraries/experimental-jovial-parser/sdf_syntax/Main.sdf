@@ -645,10 +645,10 @@ context-free syntax
   'U' OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescriptionU")}
 
-  CompileTimeIntegerFormula   -> IntegerSize             {cons("IntegerSize")}
+  CompileTimeIntegerFormula   -> IntegerSize             {cons("ItemSize")}
 
   IntegerSize                 -> OptIntegerSize
-  % empty %                   -> OptIntegerSize          {cons("no-integer-size")}
+  % empty %                   -> OptIntegerSize          {cons("no-item-size")}
 
   ItemTypeName                -> IntegerTypeName         {cons("IntegerTypeName")}
 
@@ -701,10 +701,10 @@ context-free syntax
 
   'B' OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
 
-  CompileTimeIntegerFormula   -> BitSize
+  CompileTimeIntegerFormula   -> BitSize                  {cons("ItemSize")}
 
   BitSize                     -> OptBitSize
-  % empty %                   -> OptBitSize               {cons("no-bit-size")}
+  % empty %                   -> OptBitSize               {cons("no-item-size")}
 
   ItemTypeName                -> BitTypeName
 
@@ -717,10 +717,10 @@ context-free syntax
 
   'C' OptCharacterSize        -> CharacterItemDescription  {cons("CharacterItemDescription")}
 
-  CompileTimeIntegerFormula   -> CharacterSize             {cons("CharacterSize")}
+  CompileTimeIntegerFormula   -> CharacterSize             {cons("ItemSize")}
 
   CharacterSize               -> OptCharacterSize
-  % empty %                   -> OptCharacterSize          {cons("no-character-size")}
+  % empty %                   -> OptCharacterSize          {cons("no-item-size")}
 
   ItemTypeName                -> CharacterTypeName
 
@@ -756,10 +756,10 @@ context-free syntax
 
   ItemTypeName               -> StatusTypeName
 
-  CompileTimeIntegerFormula  -> StatusSize
+  CompileTimeIntegerFormula  -> StatusSize             {cons("ItemSize")}
 
   StatusSize                 -> OptStatusSize
-  % empty %                  -> OptStatusSize          {cons("no-status-size")}
+  % empty %                  -> OptStatusSize          {cons("no-item-size")}
 
 %% 2.1.1.7 POINTER TYPE DESCRIPTIONS
 %%

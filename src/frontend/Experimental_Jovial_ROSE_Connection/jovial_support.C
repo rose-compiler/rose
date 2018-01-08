@@ -90,7 +90,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      std::cout << "\nSUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
 
   // Rasmussen (11/9/17): Create a dot file.  This is temporary or should
-  // at least be an rose option.
+  // at least be a rose option.
      SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
      generateDOT(global_scope, filenameWithoutPath + "_ut");
 
