@@ -1234,7 +1234,7 @@ void SgLocatedNode::directives(ostream& os)
         {
           p_file_info->output(os);
         }
-     output_pragma(os); 
+     output_pragma(os);
 
 #if MEIDEBUG 
      SgExpression *e=isSgExpression(this);
