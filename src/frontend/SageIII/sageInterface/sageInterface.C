@@ -18321,6 +18321,9 @@ bool isLambdaFunction (SgFunctionDeclaration* func)
 bool isLambdaCapturedVariable (SgVarRefExp* varRef)
 {
   bool rt = false;
+#ifdef  _MSC_VER
+  #pragma message ("WARNING: MSVC does not handle isLambdaCapturedVariable() properly.")
+#else  
   ROSE_ASSERT (varRef!= NULL);
   SgNode* parent = varRef->get_parent();
   if (SgArrowExp *p = isSgArrowExp(parent))
@@ -18341,6 +18344,7 @@ bool isLambdaCapturedVariable (SgVarRefExp* varRef)
       }
     }
   }
+#endif  
   return rt; 
 }
 
