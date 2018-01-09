@@ -157,8 +157,8 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
       {
 #if DEBUG_UNTYPED_TRAVERSAL
          printf ("Up   traverse: found a node of type ... %s\n", n->class_name().c_str());
-         delete n;
 #endif
+         delete n;
       }
 
    return sg_expr;

@@ -668,12 +668,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUnty
       } else return ATfalse;
 
       if (op_enum == Jovial_ROSE_Translation::e_unaryMinusOperator) {
-        std::cout << "INTEGER FORMULA: TODO: check optional unary operator for MINUS sign\n";
         *expr = new SgUntypedUnaryOperator(op_enum, "-", *expr);
         setSourcePosition(*expr, t_sign);
       }
       else if (op_enum == Jovial_ROSE_Translation::e_unaryPlusOperator) {
-        std::cout << "INTEGER FORMULA: TODO: check optional unary operator for PLUS sign\n";
         *expr = new SgUntypedUnaryOperator(op_enum, "+", *expr);
         setSourcePosition(*expr, t_sign);
       }
@@ -705,7 +703,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUnty
       } else return ATfalse;
 
       *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
-      std::cout << "BINARY OPERATOR " << op_name << "\n";
       setSourcePosition(*expr, term);
    }
 

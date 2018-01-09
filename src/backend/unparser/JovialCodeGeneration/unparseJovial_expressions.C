@@ -56,7 +56,6 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgUnaryAddOp:         unparseUnaryOperator(expr, "+", info);    break;
           case V_SgMinusOp:            unparseUnaryOperator(expr, "-", info);    break;
 
-
 #if 0
                 case V_SgAndOp:
                 case V_SgAssignOp:

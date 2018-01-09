@@ -444,15 +444,6 @@ SgInitializedName*
 UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
 {
    SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type, sg_init);
-// SageBuilder builds FileInfo for the variable declaration
-   if (sg_name->get_startOfConstruct() != NULL) {
-      delete sg_name->get_startOfConstruct();
-      sg_name->set_startOfConstruct(NULL);
-   }
-   if (sg_name->get_endOfConstruct() != NULL) {
-      delete sg_name->get_endOfConstruct();
-      sg_name->set_endOfConstruct(NULL);
-   }
    setSourcePositionFrom(sg_name, ut_name);
 
 #if DEBUG_UNTYPED_CONVERTER
@@ -1027,9 +1018,9 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             ROSE_ASSERT(children.size() == 2);
             SgBinaryOp* sg_operator = convertSgUntypedBinaryOperator(op, children[0], children[1]);
             sg_expr = sg_operator;
-//#if DEBUG_UNTYPED_CONVERTER
+#if DEBUG_UNTYPED_CONVERTER
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
-//#endif
+#endif
          }
       if ( isSgUntypedUnaryOperator(ut_expr) != NULL )
          {
@@ -1037,9 +1028,9 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             ROSE_ASSERT(children.size() == 1);
             SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, children[0]);
             sg_expr = sg_operator;
-//#if DEBUG_UNTYPED_CONVERTER
+#if DEBUG_UNTYPED_CONVERTER
             printf ("  - unary operator       ==>   %s\n", op->get_operator_name().c_str());
-//#endif
+#endif
          }
       else if ( isSgUntypedValueExpression(ut_expr) != NULL )
          {
@@ -1054,19 +1045,8 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             SgUntypedReferenceExpression* expr = dynamic_cast<SgUntypedReferenceExpression*>(ut_expr);
             SgVarRefExp* varRef = SageBuilder::buildVarRefExp(expr->get_name(), NULL);
             ROSE_ASSERT(varRef != NULL);
-            sg_expr = varRef;
 
-         // SageBuilder builds FileInfo for the variable reference
-            if (sg_expr->get_startOfConstruct() != NULL)
-               {
-                  delete sg_expr->get_startOfConstruct();
-                  sg_expr->set_startOfConstruct(NULL);
-               }
-            if (sg_expr->get_endOfConstruct() != NULL)
-               {
-                  delete sg_expr->get_endOfConstruct();
-                  sg_expr->set_endOfConstruct(NULL);
-               }
+            sg_expr = varRef;
             setSourcePositionFrom(sg_expr, ut_expr);
 
             //#if DEBUG_UNTYPED_CONVERTER
