@@ -114,17 +114,18 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
 }
 
 //----------------------------------------
-
-
 namespace ArithemeticIntensityMeasurement
 {
   running_mode_enum running_mode = e_analysis_and_instrument;
+
   std::map <SgNode*, bool> FPVisitMAP; // record if a flop operation is counted or not
+
   //we have to be more specific, if a variable is processed and the variable is within a inner loops
   //then we skip it's counting in outer loop for load/store
   //The best case is we have access to all variable references, in addition to SgInitializedName for Side Effect Analysis
   std::map <SgNode*, std::set<SgInitializedName*> > LoopLoadVariables; // record processed read variables for a loop
   std::map <SgNode*, std::set<SgInitializedName*> > LoopStoreVariables; // record processed write variables for a loop
+
   // helper array to conver to string
   const char* FPOpKindNameList[] =
   {
@@ -166,9 +167,9 @@ namespace ArithemeticIntensityMeasurement
   } 
   bool debug;
   int algorithm_version = 1;
+
   // default file name to store the report
   string report_filename = "ai_tool_report.txt";
-  string report_option ="-report-file";
 
   int loop_id = 0;
 
@@ -191,18 +192,18 @@ namespace ArithemeticIntensityMeasurement
       }
     }
     return rt;
-
   }
 
   string FPCounters::toString(std::string comment)
   {
     stringstream ss; 
-    ss<<"----------Floating Point Operation Counts---------------------"<<endl;
-    ss<<comment<<endl;
-    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
+    ss<<"/////////////////////////////////////////////"<<endl;
+  //  ss<<"Floating Point Operation Counts:"<<endl;
+    if (comment.size()!=0) 
+      ss<<comment<<endl;
     if (node != NULL)
     {
-      ss<<node->class_name() <<"@" <<endl;
+      ss<<node->class_name() <<"@";
       //debugging
      // if (!isSgForStatement(node))
      //   ROSE_ASSERT (false); // we cannot assert this. we pass loop body to the counting function. The body can be any types of statements
@@ -211,46 +212,33 @@ namespace ArithemeticIntensityMeasurement
     }
     else
       ss<< "NULL node"<<endl;
-    ss<<"\tfp_plus:"<< plus_count<<endl;
-    ss<<"\tfp_minus:"<< minus_count<<endl;
-    ss<<"\tfp_multiply:"<< multiply_count<<endl;
-    ss<<"\tfp_divide:"<< divide_count<<endl;
-    ss<<"\tfp_total:"<< getTotalCount()<<endl;
 
-    ss<<"----------Memory Operation Counts---------------------"<<endl;
-    ss<<comment<<endl;
+    ss<<"\tFP_plus:"<< plus_count<<endl;
+    ss<<"\tFP_minus:"<< minus_count<<endl;
+    ss<<"\tFP_multiply:"<< multiply_count<<endl;
+    ss<<"\tFP_divide:"<< divide_count<<endl;
+    ss<<"\tFP_total:"<< getTotalCount()<<endl;
+
+//    ss<<"Memory Operation Counts:"<<endl;
     if (load_bytes== NULL)
-      ss<<"\tLoads: NULL "<<endl;
+      ss<<"\tMem Load Byte Count Formula: NULL "<<endl;
     else
-      ss<<"\tLoads:"<< load_bytes->unparseToString()<<endl;
-    ss<<"\tLoads int: "<<load_bytes_int<<endl;
+      ss<<"\tMem Load Byte Count Formula:"<< load_bytes->unparseToString()<<endl;
+    ss<<"\tMem Loads Byte Count Value: "<<load_bytes_int<<endl;
+
     if (store_bytes== NULL)
-      ss<<"\tStores: NULL "<<endl;
+      ss<<"\tMem Stores Byte Count Formula: NULL "<<endl;
     else
-      ss<<"\tStores:"<< store_bytes->unparseToString()<<endl;
-    ss<<"\tStore int: "<<store_bytes_int<<endl;
-    ss<<"----------Arithmetic Intensity---------------------"<<endl;
-    ss <<"AI="<<intensity<<endl;
+      ss<<"\tMem Stores Byte Count Formula:"<< store_bytes->unparseToString()<<endl;
+    ss<<"\tMem Store Byte Count Value: "<<store_bytes_int<<endl;
+    ss<<"Arithmetic Intensity="<<intensity<<endl;
 
     return ss.str();
   }
 
   void FPCounters::printInfo(std::string comment/* ="" */)
   {
-#if 0   
-    cout<<"----------Floating Point Operation Counts---------------------"<<endl;
-    cout<<comment<<endl;
-    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
-    cout<<node->class_name() <<"@" <<endl;
-    cout<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
-    cout<<"\tfp_plus:"<< plus_count<<endl;
-    cout<<"\tfp_minus:"<< minus_count<<endl;
-    cout<<"\tfp_multiply:"<< multiply_count<<endl;
-    cout<<"\tfp_divide:"<< divide_count<<endl;
-    cout<<"\tfp_total:"<< getTotalCount()<<endl;
-#else
     cout<<toString(comment);
-#endif
   }
 
   // a transformation to instrument loops to obtain loop iteration counts at runtime
@@ -736,7 +724,7 @@ namespace ArithemeticIntensityMeasurement
     {
       SgPntrArrRefExp* current = *iter;
       // lhs is another array, skip
-      if (SgPntrArrRefExp* lhs = isSgPntrArrRefExp (current->get_lhs_operand_i()))
+      if (isSgPntrArrRefExp (current->get_lhs_operand_i()))
         continue;
       else
         bottom_arrays.push_back(current);
@@ -795,7 +783,7 @@ namespace ArithemeticIntensityMeasurement
   //    2.  Group accesses based on the types (same type?  increment the same counter to shorten expression length)
   //    4.  Iterate on the results to generate expression like  2*sizeof(float) + 5* sizeof(double)
   // As an approximate, we use simple analysis here assuming no function calls.
-  std::pair <SgExpression*, SgExpression*> CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars /* = true */, bool includeIntType /* = true */)
+  std::pair <SgExpression*, SgExpression*> CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars /* = false */, bool includeIntType /* = false */)
   {
     std::pair <SgExpression*, SgExpression*> result; 
     assert (input != NULL);
@@ -831,7 +819,8 @@ namespace ArithemeticIntensityMeasurement
     ROSE_ASSERT (scope!= NULL);
     if (success!= true)
     {
-      cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
+      if (debug)
+        cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
     }
 
     std::set<SgInitializedName*>::iterator it;
@@ -862,7 +851,7 @@ namespace ArithemeticIntensityMeasurement
   }
 
   // count memory load/store operations, store into attribute FPCounters
-  void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= true*/, bool includeIntType /*= true*/)
+  void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= false*/, bool includeIntType /*= false */)
   {
     ROSE_ASSERT (input != NULL);
     std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (input, includeScalars, includeIntType);
@@ -886,6 +875,7 @@ namespace ArithemeticIntensityMeasurement
   //! Count floating point operations seen in a subtree
   void CountFPOperations(SgLocatedNode* input)
   {
+    // find all binary operations
     Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(input, V_SgBinaryOp);
     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
     {
@@ -927,13 +917,18 @@ namespace ArithemeticIntensityMeasurement
         // Using a map to avoid double counting an operation when it is enclosed in multiple loops
         //
         // For static counting only mode, this is a less concern.
-        if (!FPVisitMAP[bop]) 
+        if (running_mode == e_static_counting)
+        {
+          addFPCount (input, op_kind);
+        }
+        else if (!FPVisitMAP[bop]) // dynamic accumulation mode, must avoid duplicated counting
         {
           addFPCount (input, op_kind);
           FPVisitMAP[bop] = true;
         }
       }	
     }  // end for
+
     //Must update the total counter here
     FPCounters* fp_counters = getFPCounters (input); 
     fp_counters->updateTotal ();
@@ -1168,8 +1163,9 @@ namespace ArithemeticIntensityMeasurement
 
     // Obtain per-iteration load/store bytes calculation expressions
     // excluding scalar types to match the manual version
-    //CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
+    //CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = false, bool includeIntType = false);
     std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (loop_body, false, true);
+
     // chstores=chstores+chiterations*8
     if (load_store_count_pair.second!= NULL)
     {
@@ -1279,7 +1275,8 @@ namespace ArithemeticIntensityMeasurement
       else if (SgFunctionRefExp* func_ref = isSgFunctionRefExp (n))
       {
         // TODO: interprocedural synthesize analysis, until reaching a fixed point 
-        cout<<"Warning: encountering a function call "<< func_ref->get_symbol()->get_name()<<"(), assuming 0 FLOPS for now."  <<endl;
+        if (debug)
+          cout<<"Warning: encountering a function call "<< func_ref->get_symbol()->get_name()<<"(), assuming 0 FLOPS for now."  <<endl;
         hasHandled = true; 
       }
       else if (SgConditionalExp * conditional_exp = isSgConditionalExp(n))

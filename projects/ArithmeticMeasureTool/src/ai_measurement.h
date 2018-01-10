@@ -8,9 +8,14 @@
 namespace ArithemeticIntensityMeasurement
 {
   extern bool debug;
+  // the version of the counting algorithm: 
+  // value 1: flow-insensitive (default), treating all statements as straightline statements  
+  //       2: flow-sensitive (under development), considering if branches, loop iteration counts, etc. 
   extern int algorithm_version;
-  extern std::string report_option;
+
+  //file name to store the report
   extern std::string report_filename;
+
   extern int loop_id; // roughly assign a unique id for each loop, at least within the context of a single function
 
   // we support different execution modes
@@ -19,6 +24,7 @@ namespace ArithemeticIntensityMeasurement
     e_analysis_and_instrument,  // recognize special chiterations = .., do the counting based instrumentation
     e_static_counting // recognize #pragma aitool and do the counting, writing to a report file
   };
+
   enum fp_operation_kind_enum {
     e_unknown = 0,
     e_total =1 ,
@@ -35,7 +41,6 @@ namespace ArithemeticIntensityMeasurement
   //! Estimate the byte size of types
   int getSizeOf(SgType* t);
 
-
   //Data structure to store the information for an associated node, mostly a loop 
   // The counters are for a single iteration, not considering iteration count.
   //Using AstAttribute to enable propagation
@@ -46,16 +51,19 @@ namespace ArithemeticIntensityMeasurement
       int getTotalCount () { assert (total_count == plus_count + minus_count + multiply_count + divide_count);  return total_count; }
       int getCount (fp_operation_kind_enum c_type);
       void  addCount(fp_operation_kind_enum c_type, int i =1);
+
       // Directly set counters. Use this carefully. Designed to support storing info. parsed from pragmas
       void  setCount(fp_operation_kind_enum c_type, int i =1);
       void updateTotal() { // if (total_count == 0 ) 
                           total_count = plus_count + minus_count + multiply_count + divide_count ; }
+
       void printInfo(std::string comment="");
       // convert the counter information to a string
       std::string toString(std::string comment="");
 
       SgLocatedNode* getNode () {return node; }
       void  setNode (SgLocatedNode* n) {node=n; }
+
       // compare the values of this object with a reference FPCounters object(often obtained from Pragma)
       // Consistent is defined as if a non-zero value is provided by the reference object, this object's corresponding value must be the same.
       bool consistentWithReference(FPCounters* refCounters);
@@ -111,17 +119,23 @@ namespace ArithemeticIntensityMeasurement
 
     private:
       SgLocatedNode* node ; //associated AST node
+
+      // Floating point operation counters
       int plus_count;
       int minus_count;
       int multiply_count;
       int divide_count;
       int total_count;
 
-      // extensions to store load and store bytes
-      //type sizes are machine dependent, we only generate expressions with sizeof() terms.
+      // Store load and store bytes
+      // Type sizes are machine dependent, we first generate expressions with sizeof() terms.
       SgExpression* load_bytes;
       SgExpression* store_bytes; 
+
+      // Using a typical 64-bit Intel machine, evaluate the load/store byte expressions to obtain estimated sizes
+      // Evaluated integer result of the load_bytes expression
       int load_bytes_int; 
+      // Evaluated integer result of the store_bytes expression
       int store_bytes_int; 
 
       float intensity; // the final intensity
@@ -165,10 +179,11 @@ namespace ArithemeticIntensityMeasurement
   void CountFPOperations(SgLocatedNode* input);
   void printFPCount (SgLocatedNode* n);
 
-  // Obtain the kind of FP operation from a binary operation
+  //! Obtain the kind of FP operation from a binary operation
   fp_operation_kind_enum getFPOpKind (SgBinaryOp* bop);
-  // count memory load/store operations, store into attribute FPCounters
-  void CountMemOperations(SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
+
+  //! Count memory load/store operations, store into attribute FPCounters
+  void CountMemOperations(SgLocatedNode* input, bool includeScalars = false, bool includeIntType = false);
 
   FPCounters * getFPCounters (SgLocatedNode* n);
   int getFPCount (SgLocatedNode* n, fp_operation_kind_enum c_type);
@@ -179,7 +194,7 @@ namespace ArithemeticIntensityMeasurement
   FPCounters* parse_aitool_pragma (SgPragmaDeclaration* pragmaDecl);
 
   std::pair <SgExpression*, SgExpression*> 
-     CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
+     CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = false, bool includeIntType = false);
   // Create load/store = loads + iteration * load/store_count_per_iteration
   // lhs_exp = lhs_exp + iter_count_exp * per_iter_bytecount_exp
   SgExprStatement* buildByteCalculationStmt(SgVariableSymbol * lhs_sym, SgVariableSymbol* iter_count_sym, SgExpression* per_iter_bytecount_exp);
@@ -193,10 +208,10 @@ namespace ArithemeticIntensityMeasurement
   // This function supports both C/C++ for loops and Fortran Do loops
   SgStatement* instrumentLoopForCounting(SgStatement* loop);
   
-  //process a source file, add instrumentation to collect loop iteration counts, return the number of 
+  //! Process a source file, add instrumentation to collect loop iteration counts, return the number of 
   int instrumentLoopIterationCount(SgSourceFile* sfile);
 
- //! if a statement is an assignment statement to a variable
+ //! Check If a statement is an assignment statement to a variable
   bool isAssignmentStmtOf (SgStatement* stmt, SgInitializedName* init_name);
 
   int get_int_value(SgValueExp * sg_value_exp);

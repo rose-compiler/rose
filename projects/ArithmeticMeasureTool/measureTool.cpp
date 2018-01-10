@@ -6,7 +6,6 @@
 #include <ArrayAnnot.h>
 #include <ArrayRewrite.h>
 
-//#define USE_Algorithm_V2 1 // testing algorithm 2 for static counting
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -194,6 +193,8 @@ int main (int argc, char** argv)
 {
   // Build the AST used by ROSE
   vector <string> argvList (argv, argv + argc);
+  // The command option to accept report file name
+  string report_option="-report-file";
 
   if (CommandlineProcessing::isOption(argvList,"-help","", false))
   {
