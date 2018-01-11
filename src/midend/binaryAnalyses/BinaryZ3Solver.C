@@ -51,47 +51,56 @@ Z3Solver::clearEvidence() {
 }
 
 void
-Z3Solver::push() {
-    SmtlibSolver::push();
-#ifdef ROSE_HAVE_Z3
-    if (linkage() == LM_LIBRARY) {
-        ASSERT_not_null(ctx_);
-        ASSERT_not_null(solver_);
-        solver_->push();
-        z3Stack_.push_back(std::vector<z3::expr>());
-    }
-#endif
-}
-
-void
 Z3Solver::pop() {
     SmtlibSolver::pop();
 #ifdef ROSE_HAVE_Z3
-    if (linkage() == LM_LIBRARY) {
-        ASSERT_not_null(ctx_);
-        ASSERT_not_null(solver_);
+    if (nLevels() < z3Stack_.size()) {
+        ASSERT_require(nLevels() + 1 == z3Stack_.size());
         solver_->pop();
         z3Stack_.pop_back();
-        if (z3Stack_.empty())
-            z3Stack_.push_back(std::vector<z3::expr>());
     }
 #endif
 }
 
 void
-Z3Solver::insert(const SymbolicExpr::Ptr &expr) {
-    SmtlibSolver::insert(expr);
+Z3Solver::z3Update() {
 #ifdef ROSE_HAVE_Z3
     if (linkage() == LM_LIBRARY) {
         ASSERT_not_null(ctx_);
         ASSERT_not_null(solver_);
+        ASSERT_forbid(z3Stack_.empty());
+        ASSERT_require(z3Stack_.size() <= nLevels());
 
-        VariableSet vars = findVariables(expr);
-        ctxVariableDeclarations(vars);
-        ctxCommonSubexpressions(expr);
-        z3::expr z3expr = ctxCast(ctxExpression(expr), BOOLEAN).first;
-        solver_->add(z3expr);
-        z3Stack_.back().push_back(z3expr);
+        while (z3Stack_.size() < nLevels() || z3Stack_.back().size() < assertions(nLevels()-1).size()) {
+
+            // Push z3 expressions onto the top of the z3 stack
+            size_t level = z3Stack_.size() - 1;
+            std::vector<SymbolicExpr::Ptr> exprs = assertions(level);
+            while (z3Stack_.back().size() < exprs.size()) {
+                size_t i = z3Stack_[level].size();
+                SymbolicExpr::Ptr expr = exprs[i];
+
+                // Create the Z3 expression for this ROSE expression
+                VariableSet vars = findVariables(expr);
+                ctxVariableDeclarations(vars);
+                ctxCommonSubexpressions(expr);
+                z3::expr z3expr = ctxCast(ctxExpression(expr), BOOLEAN).first;
+                solver_->add(z3expr);
+                z3Stack_.back().push_back(z3expr);
+            }
+            
+            // Push another level onto the z3 stack
+            if (z3Stack_.size() < nLevels()) {
+                solver_->push();
+                z3Stack_.push_back(std::vector<z3::expr>());
+            }
+        }
+
+#ifndef NDEBUG
+        ASSERT_require(z3Stack_.size() == nLevels());
+        for (size_t i=0; i<nLevels(); ++i)
+            ASSERT_require(z3Stack_[i].size() == assertions(i).size());
+#endif
     }
 #endif
 }
@@ -101,26 +110,7 @@ Z3Solver::checkLib() {
     requireLinkage(LM_LIBRARY);
     
 #ifdef ROSE_HAVE_Z3
-    ASSERT_not_null(ctx_);
-    ASSERT_not_null(solver_);
-
-    std::vector<SymbolicExpr::Ptr> allExprs = assertions();
-    ctxVarDecls_.clear();
-    ctxCses_.clear();
-    
-    for (size_t level = 0; level < nLevels(); ++level) {
-        if (level > 0)
-            solver_->push();
-
-        std::vector<SymbolicExpr::Ptr> exprs = assertions(level);
-        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
-            VariableSet vars = findVariables(expr);
-            ctxVariableDeclarations(vars);
-            ctxCommonSubexpressions(expr);
-            solver_->add(ctxCast(ctxExpression(expr), BOOLEAN).first);
-        }
-    }
-
+    z3Update();
     switch (solver_->check()) {
         case z3::unsat:
             return SAT_NO;

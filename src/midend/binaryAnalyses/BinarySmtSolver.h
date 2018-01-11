@@ -296,8 +296,8 @@ public:
 
     /** Pop a backtracking point.
      *
-     *  Pops the top set of assertions from the solver stack. The stack always contains one set of assertions, so popping the
-     *  last set will cause a new, empty set to be created.
+     *  Pops the top set of assertions from the solver stack. It is not legal to call @ref pop when the assertion stack is only
+     *  one level deep; use @ref reset in that case instead.
      *
      *  See also, @ref push and @ref reset. */
     virtual void pop();
@@ -308,6 +308,11 @@ public:
      *  valued is always positive. */
     virtual size_t nLevels() const { return stack_.size(); }
 
+    /** Number of assertions at a specific backtracking level.
+     *
+     *  Backtracking levels are numbered starting at zero up to one less than the value returned by @ref nLevels. */
+    virtual size_t nAssertions(size_t backtrackingLevel);
+    
     /** Insert assertions.
      *
      *  Inserts assertions into the set of assertions at the top of the backtracking stack.

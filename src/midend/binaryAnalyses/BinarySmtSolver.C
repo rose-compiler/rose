@@ -215,10 +215,16 @@ SmtSolver::push() {
 void
 SmtSolver::pop() {
     clearEvidence();
-    ASSERT_forbid(stack_.empty());
+    if (stack_.size() == 1)
+        throw Exception("tried to pop the initial level; use reset instead");
+    ASSERT_require(stack_.size() > 1);                  // you should have clalled reset instead
     stack_.pop_back();
-    if (stack_.empty())
-        push();
+}
+
+size_t
+SmtSolver::nAssertions(size_t level) {
+    ASSERT_require(level < stack_.size());
+    return stack_[level].size();
 }
 
 std::vector<SymbolicExpr::Ptr>
