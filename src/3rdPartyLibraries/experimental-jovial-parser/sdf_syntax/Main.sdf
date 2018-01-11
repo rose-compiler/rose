@@ -2160,7 +2160,7 @@ context-free syntax
   FloatingLiteral            -> NumericLiteral
   FixedLiteral               -> NumericLiteral
 
-  Number                     -> IntegerLiteral
+  Number                     -> IntegerLiteral        {cons("IntegerLiteral")}
   Icon                       -> Number
 
   RealLiteral                -> FloatingLiteral

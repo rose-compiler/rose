@@ -34,7 +34,8 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseExprStmt               (SgStatement* stmt, SgUnparse_Info& info);
 
        // Types
-          virtual void unparseType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseType        (SgType* type,  SgUnparse_Info& info);
+          virtual void unparseTypeSize    (SgType* expr,  SgUnparse_Info& info);
 #if 0
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
 
