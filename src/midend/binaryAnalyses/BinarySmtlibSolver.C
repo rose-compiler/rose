@@ -7,6 +7,9 @@
 #include <Diagnostics.h>
 #include <stringify.h>
 
+// Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
+#define NO_SOLVER NULL
+
 using namespace Sawyer::Message::Common;
 
 namespace Rose {
@@ -825,7 +828,7 @@ SmtlibSolver::outputSet(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(inode->nChildren() >= 2);
     SymbolicExpr::LeafPtr var = varForSet(inode);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, NO_SOLVER, var);
     ite->comment(inode->comment());
     return outputExpression(ite);
 }
@@ -840,7 +843,7 @@ SmtlibSolver::outputRotateRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa, NO_SOLVER);
 
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -865,7 +868,7 @@ SmtlibSolver::outputRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa, NO_SOLVER);
 
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -894,7 +897,7 @@ SmtlibSolver::outputLogicalShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa); // widen sa same as expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa, NO_SOLVER); // widen sa same as expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHR1;
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -928,7 +931,7 @@ SmtlibSolver::outputShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa); // widen sa same as expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa, NO_SOLVER); // widen sa same as expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -967,7 +970,7 @@ SmtlibSolver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode)
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t width = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, width), sa); //  widen same as expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, width), sa, NO_SOLVER); //  widen same as expr
 
     SExprTypePair shiftee = outputExpression(expr);
     ASSERT_require(BIT_VECTOR == shiftee.second);
@@ -1031,12 +1034,12 @@ SmtlibSolver::outputMultiply(const SymbolicExpr::InteriorPtr &inode) {
 
     SymbolicExpr::Ptr aExtended, bExtended;
     if (inode->getOperator() == SymbolicExpr::OP_SMUL) {
-        aExtended = SymbolicExpr::makeSignExtend(resultSize, a);
-        bExtended = SymbolicExpr::makeSignExtend(resultSize, b);
+        aExtended = SymbolicExpr::makeSignExtend(resultSize, a, NO_SOLVER);
+        bExtended = SymbolicExpr::makeSignExtend(resultSize, b, NO_SOLVER);
     } else {
         ASSERT_require(inode->getOperator() == SymbolicExpr::OP_UMUL);
-        aExtended = SymbolicExpr::makeExtend(resultSize, a);
-        bExtended = SymbolicExpr::makeExtend(resultSize, b);
+        aExtended = SymbolicExpr::makeExtend(resultSize, a, NO_SOLVER);
+        bExtended = SymbolicExpr::makeExtend(resultSize, b, NO_SOLVER);
     }
 
     SExpr::Ptr retval =
@@ -1056,8 +1059,8 @@ SmtlibSolver::outputUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0), NO_SOLVER);
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1), NO_SOLVER);
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance(SExpr::instance("_"),
@@ -1080,8 +1083,8 @@ SmtlibSolver::outputUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0), NO_SOLVER);
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1), NO_SOLVER);
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance(SExpr::instance("_"),

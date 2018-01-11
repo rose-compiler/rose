@@ -230,6 +230,12 @@ public:
 
     /** Virtual base class for expanding operators. */
     class OperatorExpansion: public Expansion {
+    protected:
+        SmtSolver *solver;                              // may be null
+
+        explicit OperatorExpansion(SmtSolver *solver)
+            : solver(solver) {}
+
     public:
         virtual ~OperatorExpansion() {}
 
@@ -251,11 +257,17 @@ public:
 private:
     AtomTable atomTable_;
     OperatorTable operatorTable_;
+    SmtSolver *solver_;                                 // optional solver for simplifications
 
 public:
     /** Default constructor. */
-    SymbolicExprParser() { init(); }
+    SymbolicExprParser(): solver_(NULL) { init(); }
 
+    /** Parser using a specific SMT solver for simplifications.
+     *
+     *  The solver may be null in which case ROSE's default simplifications are the only ones used. */
+    explicit SymbolicExprParser(SmtSolver *solver): solver_(solver) { init(); }
+    
     /** Create a symbolic expression by parsing a string.
      *
      *  Parses the string and returns the first expression in the string. Throws a @ref SyntaxError if problems are

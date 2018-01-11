@@ -372,9 +372,13 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 
 // Throws an exception for functions named "..."
 class AbbreviatedOperator: public SymbolicExprParser::OperatorExpansion {
+protected:
+    explicit AbbreviatedOperator(SmtSolver *solver)
+        : SymbolicExprParser::OperatorExpansion(solver) {}
+
 public:
-    static Ptr instance() {
-        return Ptr(new AbbreviatedOperator);            // undocumented
+    static Ptr instance(SmtSolver *solver) {
+        return Ptr(new AbbreviatedOperator(solver));            // undocumented
     }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
         if (op.lexeme() == "...")
@@ -401,7 +405,8 @@ class SmtOperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    SmtOperators() {
+    explicit SmtOperators(SmtSolver *solver)
+        : SymbolicExprParser::OperatorExpansion(solver) {
         std::string doc;
         ops_.insert("add",          SymbolicExpr::OP_ADD);
         doc += "@named{add}"
@@ -625,14 +630,14 @@ protected:
     }
 
 public:
-    static Ptr instance() {
-        return Ptr(new SmtOperators);
+    static Ptr instance(SmtSolver *solver) {
+        return Ptr(new SmtOperators(solver));
     }
 
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args);
+        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -641,7 +646,8 @@ class COperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    COperators() {
+    explicit COperators(SmtSolver *solver)
+        : SymbolicExprParser::OperatorExpansion(solver) {
         std::string doc;
         ops_.insert("+",        SymbolicExpr::OP_ADD);
         doc += "@named{+}"
@@ -756,14 +762,14 @@ protected:
     }
         
 public:
-    static Ptr instance() {
-        return Ptr(new COperators);
+    static Ptr instance(SmtSolver *solver) {
+        return Ptr(new COperators(solver));
     }
 
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args);
+        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -808,9 +814,9 @@ public:
 
 void
 SymbolicExprParser::init() {
-    appendOperatorExpansion(AbbreviatedOperator::instance());
-    appendOperatorExpansion(SmtOperators::instance());
-    appendOperatorExpansion(COperators::instance());
+    appendOperatorExpansion(AbbreviatedOperator::instance(solver_));
+    appendOperatorExpansion(SmtOperators::instance(solver_));
+    appendOperatorExpansion(COperators::instance(solver_));
 
     appendAtomExpansion(AbbreviatedAtom::instance());
     appendAtomExpansion(CanonicalVariable::instance());

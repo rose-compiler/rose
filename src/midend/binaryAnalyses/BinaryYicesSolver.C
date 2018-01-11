@@ -13,6 +13,9 @@
 #define strtoull _strtoui64
 #endif
 
+// Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
+#define NO_SOLVER NULL
+
 using namespace Sawyer::Message::Common;
 
 namespace Rose {
@@ -666,7 +669,7 @@ YicesSolver::out_set(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(in->nChildren() >= 2);
     SymbolicExpr::LeafPtr var = varForSet(in);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in, var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in, NO_SOLVER, var);
     ite->comment(in->comment());
     return out_expr(ite);
 }

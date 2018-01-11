@@ -66,11 +66,13 @@ public:
 
     /** SMT solver statistics. */
     struct Stats {
-        Stats(): ncalls(0), input_size(0), output_size(0), memoizationHits(0) {}
         size_t ncalls;                                  /**< Number of times satisfiable() was called. */
         size_t input_size;                              /**< Bytes of input generated for satisfiable(). */
         size_t output_size;                             /**< Amount of output produced by the SMT solver. */
         size_t memoizationHits;                         /**< Number of times memoization supplied a result. */
+        size_t nSolversCreated;                         /**< Number of solvers created. Only for class statistics. */
+
+        Stats(): ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0) {}
     };
 
     /** Set of variables. */
@@ -236,6 +238,12 @@ public:
     virtual void clearMemoization() {
         memoization_.clear();
     }
+
+    /** Size of memoization table. */
+    virtual size_t memoizationNEntries() const {
+        return memoization_.size();
+    }
+
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // High-level abstraction for testing satisfiability.

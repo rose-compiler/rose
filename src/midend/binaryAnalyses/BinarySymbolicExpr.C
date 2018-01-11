@@ -137,7 +137,7 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
 }
 
 Ptr
-setToIte(const Ptr &set, const LeafPtr &var) {
+setToIte(const Ptr &set, SmtSolver *solver, const LeafPtr &var) {
     ASSERT_not_null(set);
     InteriorPtr iset = set->isInteriorNode();
     if (!iset || iset->getOperator() != OP_SET)
@@ -150,8 +150,8 @@ setToIte(const Ptr &set, const LeafPtr &var) {
         if (!retval) {
             retval = member;
         } else {
-            Ptr cond = makeEq(condVar, makeInteger(32, i));
-            retval = makeIte(cond, member, retval);
+            Ptr cond = makeEq(condVar, makeInteger(32, i), solver);
+            retval = makeIte(cond, member, retval, solver);
         }
     }
     return retval;
@@ -174,8 +174,12 @@ Ptr
 Node::newFlags(unsigned newFlags) {
     if (newFlags == flags_)
         return sharedFromThis();
-    if (InteriorPtr inode = isInteriorNode())
-        return Interior::create(0, inode->getOperator(), inode->children(), comment(), newFlags);
+    if (InteriorPtr inode = isInteriorNode()) {
+        // No SMT solver is necessary since changing the flags won't cause the new expression to simplify any differently than
+        // it already is. In fact, it there might be a faster way to create the new expression given this fact.
+        SmtSolver *solver = NULL;
+        return Interior::create(0, inode->getOperator(), inode->children(), solver, comment(), newFlags);
+    }
     LeafPtr lnode = isLeafNode();
     ASSERT_not_null(lnode);
     if (lnode->isNumber())
@@ -703,7 +707,7 @@ Interior::mustEqual(const Ptr &other_, SmtSolver *solver/*NULL*/) {
         // is not available.
         retval = true;
     } else if (solver) {
-        Ptr assertion = makeNe(sharedFromThis(), other_);
+        Ptr assertion = makeNe(sharedFromThis(), other_, solver);
         retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
     }
     return retval;
@@ -719,7 +723,7 @@ Interior::mayEqual(const Ptr &other, SmtSolver *solver/*NULL*/) {
         // is not available.
         retval = true;
     } else if (solver) {
-        Ptr assertion = makeEq(sharedFromThis(), other);
+        Ptr assertion = makeEq(sharedFromThis(), other, solver);
         retval = SmtSolver::SAT_YES==solver->satisfiable(assertion);
     }
     return retval;
@@ -790,7 +794,7 @@ Interior::isEquivalentTo(const Ptr &other_) {
 }
 
 Ptr
-Interior::substitute(const Ptr &from, const Ptr &to) {
+Interior::substitute(const Ptr &from, const Ptr &to, SmtSolver *solver) {
     ASSERT_require(from!=NULL && to!=NULL && from->nBits()==to->nBits());
     if (isEquivalentTo(from))
         return to;
@@ -801,14 +805,14 @@ Interior::substitute(const Ptr &from, const Ptr &to) {
             newnodes.push_back(to);
             substituted = true;
         } else {
-            newnodes.push_back(children_[i]->substitute(from, to));
+            newnodes.push_back(children_[i]->substitute(from, to, solver));
             if (newnodes.back()!=children_[i])
                 substituted = true;
         }
     }
     if (!substituted)
         return sharedFromThis();
-    return Interior::create(0, getOperator(), newnodes, comment());
+    return Interior::create(0, getOperator(), newnodes, solver, comment());
 }
 
 VisitAction
@@ -948,7 +952,7 @@ Interior::involutary() {
 //   (shift a (shift b x)) ==> (shift (add a b) x)
 // making sure a and b are extended to the same width
 Ptr
-Interior::additiveNesting() {
+Interior::additiveNesting(SmtSolver *solver) {
     InteriorPtr nested = child(1)->isInteriorNode();
     if (nested!=NULL && nested->getOperator()==getOperator()) {
         ASSERT_require(nested->nChildren()==nChildren());
@@ -958,19 +962,19 @@ Interior::additiveNesting() {
         // The two addends must be the same width, so zero-extend them if necessary (or should we sign extend?)
         // Note that the first argument (new width) of the UEXTEND operator is not actually used.
         Ptr a = child(0)->nBits()==additive_nbits ? child(0) :
-                makeExtend(makeInteger(8, additive_nbits), child(0));
+                makeExtend(makeInteger(8, additive_nbits), child(0), solver);
         Ptr b = nested->child(0)->nBits()==additive_nbits ? nested->child(0) :
-                makeExtend(makeInteger(8, additive_nbits), nested->child(0));
+                makeExtend(makeInteger(8, additive_nbits), nested->child(0), solver);
         
         // construct the new node but don't simplify it yet (i.e., don't use Interior::create())
-        Interior *inode = new Interior(nBits(), getOperator(), makeAdd(a, b), nested->child(1), comment());
+        Interior *inode = new Interior(nBits(), getOperator(), makeAdd(a, b, solver), nested->child(1), comment());
         return InteriorPtr(inode);
     }
     return isInteriorNode();
 }
 
 Ptr
-Interior::identity(uint64_t ident) {
+Interior::identity(uint64_t ident, SmtSolver *solver) {
     Nodes args;
     bool modified = false;
     for (Nodes::const_iterator ci=children_.begin(); ci!=children_.end(); ++ci) {
@@ -993,7 +997,7 @@ Interior::identity(uint64_t ident) {
         return makeInteger(nBits(), ident, comment());
     if (1==args.size()) {
         if (args.front()->nBits()!=nBits())
-            return makeExtend(makeInteger(8, nBits()), args.front());
+            return makeExtend(makeInteger(8, nBits()), args.front(), solver);
         return args.front();
     }
 
@@ -1012,8 +1016,8 @@ Interior::unaryNoOp() {
 }
 
 Ptr
-Interior::rewrite(const Simplifier &simplifier) {
-    if (Ptr simplified = simplifier.rewrite(this))
+Interior::rewrite(const Simplifier &simplifier, SmtSolver *solver) {
+    if (Ptr simplified = simplifier.rewrite(this, solver))
         return simplified;
     return sharedFromThis();
 }
@@ -1060,7 +1064,7 @@ AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-AddSimplifier::rewrite(Interior *inode) const {
+AddSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // A and B are duals if they have one of the following forms:
     //    (1) A = x           AND  B = (negate x)
     //    (2) A = x           AND  B = (invert x)   [adjust constant]
@@ -1108,7 +1112,7 @@ AddSimplifier::rewrite(Interior *inode) const {
 
     // Rewrite (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
     struct distributeNegations {
-        Ptr operator()(Interior *add) {
+        Ptr operator()(Interior *add, SmtSolver *solver) {
             Nodes children;
             bool distributed = false;
             for (size_t i=0; i<add->nChildren(); ++i) {
@@ -1118,7 +1122,7 @@ AddSimplifier::rewrite(Interior *inode) const {
                     if (InteriorPtr negateArg = addArg->child(0)->isInteriorNode()) {
                         if (negateArg && negateArg->getOperator()==OP_ADD && negateArg->nChildren()>0) {
                             for (size_t j=0; j<negateArg->nChildren(); ++j)
-                                children.push_back(makeNegate(negateArg->child(j)));
+                                children.push_back(makeNegate(negateArg->child(j), solver));
                             pushed = distributed = true;
                         }
                     }
@@ -1128,7 +1132,7 @@ AddSimplifier::rewrite(Interior *inode) const {
             }
             if (!distributed)
                 return Ptr();
-            return Interior::create(0, OP_ADD, children, add->comment());
+            return Interior::create(0, OP_ADD, children, solver, add->comment());
         }
     };
 
@@ -1152,7 +1156,7 @@ AddSimplifier::rewrite(Interior *inode) const {
     // Otherwise distribute negations across adds:
     //   (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
     if (!had_duals) {
-        if (Ptr distributed = distributeNegations()(inode))
+        if (Ptr distributed = distributeNegations()(inode, solver))
             return distributed;
         return Ptr();
     }
@@ -1165,7 +1169,7 @@ AddSimplifier::rewrite(Interior *inode) const {
         return makeInteger(inode->nBits(), 0, inode->comment());
     if (children.size()==1)
         return children[0];
-    return Interior::create(0, OP_ADD, children, inode->comment());
+    return Interior::create(0, OP_ADD, children, solver, inode->comment());
 }
 
 Ptr
@@ -1180,7 +1184,7 @@ AndSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-AndSimplifier::rewrite(Interior *inode) const {
+AndSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Result is zero if any argument is zero
     for (size_t i=0; i<inode->nChildren(); ++i) {
         LeafPtr child = inode->child(i)->isLeafNode();
@@ -1212,7 +1216,7 @@ OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
 }
 
 Ptr
-OrSimplifier::rewrite(Interior *inode) const {
+OrSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Result has all bits set if any argument has all bits set
     for (size_t i=0; i<inode->nChildren(); ++i) {
         LeafPtr child = inode->child(i)->isLeafNode();
@@ -1234,9 +1238,7 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-XorSimplifier::rewrite(Interior *inode) const {
-    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-
+XorSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
     std::vector<bool> removed(inode->nChildren(), false);
     bool modified = false;
@@ -1259,7 +1261,7 @@ XorSimplifier::rewrite(Interior *inode) const {
     }
     if (newargs.empty())
         return makeInteger(inode->nBits(), 0, inode->comment());
-    return Interior::create(0, inode->getOperator(), newargs, inode->comment());
+    return Interior::create(0, inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
@@ -1321,9 +1323,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
 }
 
 Ptr
-ConcatSimplifier::rewrite(Interior *inode) const {
-    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-
+ConcatSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // If all the concatenated expressions are extract expressions, all extracting bits from the same expression and
     // in the correct order, then we can simplify this to that expression.  For instance:
     //   (concat[32]
@@ -1368,7 +1368,7 @@ ConcatSimplifier::rewrite(Interior *inode) const {
         // Can this argument be joined with the previous one?
         if (isPrevExtract && isCurExtract && curHiOffset==prevLoOffset &&
             isPrevExtract->child(2)->mustEqual(isCurExtract->child(2), solver)) {
-            newArgs.back() = makeExtract(isCurExtract->child(0), isPrevExtract->child(1), isCurExtract->child(2));
+            newArgs.back() = makeExtract(isCurExtract->child(0), isPrevExtract->child(1), isCurExtract->child(2), solver);
             isPrevExtract = newArgs.back()->isInteriorNode(); // merged arg is still a valid extract expression
         } else {
             newArgs.push_back(inode->child(argno));
@@ -1382,11 +1382,11 @@ ConcatSimplifier::rewrite(Interior *inode) const {
         return newArgs[0]->newFlags(inode->flags());    // (concat X) => X, flags from both
     if (newArgs.size() == inode->nChildren())
         return Ptr();                                   // no simplification possible
-    return Interior::create(inode->nBits(), inode->getOperator(), newArgs, inode->comment(), inode->flags());
+    return Interior::create(inode->nBits(), inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
 }
 
 Ptr
-ExtractSimplifier::rewrite(Interior *inode) const {
+ExtractSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     LeafPtr from_node = inode->child(0)->isLeafNode();
     LeafPtr to_node   = inode->child(1)->isLeafNode();
     Ptr operand   = inode->child(2);
@@ -1431,21 +1431,21 @@ ExtractSimplifier::rewrite(Interior *inode) const {
             } else if (partAt < from && partEnd > to) {
                 // We need the middle of this part, and then we're done
                 size_t need = to-from;                  // number of bits we need
-                newChildren.push_back(makeExtract(makeInteger(32, from-partAt), makeInteger(32, to-partAt), part));
+                newChildren.push_back(makeExtract(makeInteger(32, from-partAt), makeInteger(32, to-partAt), part, solver));
                 partAt = partEnd;
                 from += need;
             } else if (partAt < from) {
                 // We need the end of the part
                 ASSERT_require(partEnd <= to);
                 size_t need = partEnd - from;
-                newChildren.push_back(makeExtract(makeInteger(32, from-partAt), makeInteger(32, part->nBits()), part));
+                newChildren.push_back(makeExtract(makeInteger(32, from-partAt), makeInteger(32, part->nBits()), part, solver));
                 partAt = partEnd;
                 from += need;
             } else if (partEnd > to) {
                 // We need the beginning of the part
                 ASSERT_require(partAt == from);
                 size_t need = to-from;
-                newChildren.push_back(makeExtract(makeInteger(32, 0), makeInteger(32, need), part));
+                newChildren.push_back(makeExtract(makeInteger(32, 0), makeInteger(32, need), part, solver));
                 break;
             } else {
                 // We need the whole part
@@ -1459,7 +1459,7 @@ ExtractSimplifier::rewrite(Interior *inode) const {
         // Concatenate all the parts.
         if (newChildren.size() > 1) {
             std::reverse(newChildren.begin(), newChildren.end());// high bits must be first
-            return Interior::create(0, OP_CONCAT, newChildren, inode->comment());
+            return Interior::create(0, OP_CONCAT, newChildren, solver, inode->comment());
         }
         newChildren[0]->comment(inode->comment());
         return newChildren[0];
@@ -1472,7 +1472,8 @@ ExtractSimplifier::rewrite(Interior *inode) const {
         LeafPtr to2_node = ioperand->child(1)->isLeafNode();
         if (from2_node && to2_node && from2_node->isNumber() && to2_node->isNumber()) {
             size_t from2 = from2_node->toInt();
-            return makeExtract(makeInteger(32, from2+from), makeInteger(32, from2+to), ioperand->child(2), inode->comment());
+            return makeExtract(makeInteger(32, from2+from), makeInteger(32, from2+to), ioperand->child(2),
+                               solver, inode->comment());
         }
     }
 
@@ -1489,7 +1490,7 @@ ExtractSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-AsrSimplifier::rewrite(Interior *inode) const {
+AsrSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     ASSERT_require(2==inode->nChildren());
 
     // Constant folding
@@ -1505,7 +1506,7 @@ AsrSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-InvertSimplifier::rewrite(Interior *inode) const {
+InvertSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr operand_node = inode->child(0)->isLeafNode();
     if (operand_node==NULL || !operand_node->isNumber())
@@ -1516,7 +1517,7 @@ InvertSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-NegateSimplifier::rewrite(Interior *inode) const {
+NegateSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr operand_node = inode->child(0)->isLeafNode();
     if (operand_node==NULL || !operand_node->isNumber())
@@ -1527,7 +1528,7 @@ NegateSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-IteSimplifier::rewrite(Interior *inode) const {
+IteSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Is the condition known?
     LeafPtr cond_node = inode->child(0)->isLeafNode();
     if (cond_node!=NULL && cond_node->isNumber()) {
@@ -1544,7 +1545,7 @@ IteSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-NoopSimplifier::rewrite(Interior *inode) const {
+NoopSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     if (1==inode->nChildren())
         return inode->child(0);
     return Ptr();
@@ -1561,7 +1562,7 @@ isPowerOfTwo(T n) {
 }
 
 Ptr
-RolSimplifier::rewrite(Interior *inode) const {
+RolSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
 
@@ -1602,13 +1603,13 @@ RolSimplifier::rewrite(Interior *inode) const {
                                 makeInteger(inode->child(0)->nBits(), *sa % inode->nBits(),
                                                inode->child(0)->comment(), inode->child(0)->flags()),
                                 inode->child(1),
-                                inode->comment(), inode->flags());
+                                solver, inode->comment(), inode->flags());
     }
 
     return Ptr();
 }
 Ptr
-RorSimplifier::rewrite(Interior *inode) const {
+RorSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
 
@@ -1649,14 +1650,14 @@ RorSimplifier::rewrite(Interior *inode) const {
                                 makeInteger(inode->child(0)->nBits(), *sa % inode->nBits(),
                                                inode->child(0)->comment(), inode->child(0)->flags()),
                                 inode->child(1),
-                                inode->comment(), inode->flags());
+                                solver, inode->comment(), inode->flags());
     }
 
     return Ptr();
 }
 
 Ptr
-UextendSimplifier::rewrite(Interior *inode) const {
+UextendSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Noop case
     size_t oldsize = inode->child(1)->nBits();
     size_t newsize = inode->nBits();
@@ -1673,14 +1674,14 @@ UextendSimplifier::rewrite(Interior *inode) const {
 
     // If the new size is smaller than the old size, use OP_EXTRACT instead.
     if (newsize<oldsize) {
-        return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), inode->comment());
+        return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), solver, inode->comment());
     }
 
     return Ptr();
 }
 
 Ptr
-SextendSimplifier::rewrite(Interior *inode) const {
+SextendSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Noop case
     size_t oldsize = inode->child(1)->nBits();
     size_t newsize = inode->nBits();
@@ -1697,14 +1698,14 @@ SextendSimplifier::rewrite(Interior *inode) const {
 
     // Downsizing should be represented as an extract operation
     if (newsize < oldsize) {
-        return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), inode->comment());
+        return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), solver, inode->comment());
     }
 
     return Ptr();
 }
 
 Ptr
-EqSimplifier::rewrite(Interior *inode) const {
+EqSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1721,7 +1722,7 @@ EqSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-SgeSimplifier::rewrite(Interior *inode) const {
+SgeSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1738,7 +1739,7 @@ SgeSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-SgtSimplifier::rewrite(Interior *inode) const {
+SgtSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1751,7 +1752,7 @@ SgtSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-SleSimplifier::rewrite(Interior *inode) const {
+SleSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1768,7 +1769,7 @@ SleSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-SltSimplifier::rewrite(Interior *inode) const {
+SltSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1781,7 +1782,7 @@ SltSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-UgeSimplifier::rewrite(Interior *inode) const {
+UgeSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1798,7 +1799,7 @@ UgeSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-UgtSimplifier::rewrite(Interior *inode) const {
+UgtSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1811,7 +1812,7 @@ UgtSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-UleSimplifier::rewrite(Interior *inode) const {
+UleSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1828,7 +1829,7 @@ UleSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-UltSimplifier::rewrite(Interior *inode) const {
+UltSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1841,7 +1842,7 @@ UltSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-ZeropSimplifier::rewrite(Interior *inode) const {
+ZeropSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->isNumber())
@@ -1851,7 +1852,7 @@ ZeropSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-SdivSimplifier::rewrite(Interior *inode) const {
+SdivSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1869,7 +1870,7 @@ SdivSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-SmodSimplifier::rewrite(Interior *inode) const {
+SmodSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1888,7 +1889,7 @@ SmodSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-UdivSimplifier::rewrite(Interior *inode) const {
+UdivSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1907,7 +1908,7 @@ UdivSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-UmodSimplifier::rewrite(Interior *inode) const {
+UmodSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
@@ -1926,7 +1927,7 @@ UmodSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_width) const {
+ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_width, SmtSolver *solver) const {
     if (!strength1 || !strength2)
         return Ptr();
 
@@ -1947,15 +1948,15 @@ ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_wi
     // Zero-extend the strengths if they're not as wide as the sum.  This is because the ADD operator requires that its
     // operands are the same width, and the result will also be that width.
     if (strength1->nBits() < sum_width)
-        strength1 = makeExtend(makeInteger(32, sum_width), strength1);
+        strength1 = makeExtend(makeInteger(32, sum_width), strength1, solver);
     if (strength2->nBits() < sum_width)
-        strength2 = makeExtend(makeInteger(32, sum_width), strength2);
-
-    return makeAdd(strength1, strength2);
+        strength2 = makeExtend(makeInteger(32, sum_width), strength2, solver);
+    
+    return makeAdd(strength1, strength2, solver);
 }
 
 Ptr
-ShlSimplifier::rewrite(Interior *inode) const {
+ShlSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
 
@@ -1989,8 +1990,8 @@ ShlSimplifier::rewrite(Interior *inode) const {
     // (shl AMT1 (shl AMT2 X)) ==> (shl (add AMT1 AMT2) X)
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
-        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits())) {
-            return Interior::create(0, inode->getOperator(), strength, val_inode->child(1));
+        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
+            return Interior::create(0, inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
@@ -2010,16 +2011,16 @@ ShlSimplifier::rewrite(Interior *inode) const {
     if (sa) {
         ASSERT_require(*sa > 0 && *sa < inode->nBits());// handled above
         size_t nHiBits = inode->nBits() - *sa;
-        Ptr hiBits = makeExtract(makeInteger(32, 0), makeInteger(32, nHiBits), inode->child(1));
+        Ptr hiBits = makeExtract(makeInteger(32, 0), makeInteger(32, nHiBits), inode->child(1), solver);
         Ptr loBits = makeInteger(*sa, newbits?uint64_t(-1):uint64_t(0));
-        return makeConcat(hiBits, loBits);
+        return makeConcat(hiBits, loBits, solver);
     }
 
     return Ptr();
 }
 
 Ptr
-ShrSimplifier::rewrite(Interior *inode) const {
+ShrSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     LeafPtr sa_leaf = inode->child(0)->isLeafNode();
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
 
@@ -2053,8 +2054,8 @@ ShrSimplifier::rewrite(Interior *inode) const {
     //   (shr0 AMT1 (shr0 AMT2 X)) ==> (shr0 (add AMT1 AMT2) X)
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
-        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits())) {
-            return Interior::create(0, inode->getOperator(), strength, val_inode->child(1));
+        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
+            return Interior::create(0, inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
@@ -2073,16 +2074,16 @@ ShrSimplifier::rewrite(Interior *inode) const {
     // (shr1[N] AMT X) ==> (concat -1[AMT] (extract AMT N X))
     if (sa) {
         ASSERT_require(*sa > 0 && *sa < inode->nBits());// handled above
-        Ptr loBits = makeExtract(makeInteger(32, *sa), makeInteger(32, inode->nBits()), inode->child(1));
+        Ptr loBits = makeExtract(makeInteger(32, *sa), makeInteger(32, inode->nBits()), inode->child(1), solver);
         Ptr hiBits = makeInteger(*sa, newbits?uint64_t(-1):uint64_t(0));
-        return makeConcat(hiBits, loBits);
+        return makeConcat(hiBits, loBits, solver);
     }
 
     return Ptr();
 }
 
 Ptr
-LssbSimplifier::rewrite(Interior *inode) const {
+LssbSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->isNumber()) {
@@ -2095,7 +2096,7 @@ LssbSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-MssbSimplifier::rewrite(Interior *inode) const {
+MssbSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->isNumber()) {
@@ -2108,9 +2109,7 @@ MssbSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
-SetSimplifier::rewrite(Interior *inode) const {
-    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-
+SetSimplifier::rewrite(Interior *inode, SmtSolver *solver) const {
     // (set x) => x
     if (1 == inode->nChildren())
         return inode->child(0);
@@ -2136,67 +2135,67 @@ SetSimplifier::rewrite(Interior *inode) const {
         return Ptr();
     if (1==elements.size())
         return elements[0];
-    return Interior::create(0, inode->getOperator(), elements, inode->comment());
+    return Interior::create(0, inode->getOperator(), elements, solver, inode->comment());
 }
 
 Ptr
-Interior::simplifyTop() {
+Interior::simplifyTop(SmtSolver *solver) {
     Ptr node = sharedFromThis();
     while (InteriorPtr inode = node->isInteriorNode()) {
         Ptr newnode = node;
         switch (inode->getOperator()) {
             case OP_ADD:
-                newnode = inode->rewrite(AddSimplifier());
+                newnode = inode->rewrite(AddSimplifier(), solver);
                 if (newnode==node)
-                    newnode = inode->associative()->commutative()->identity(0);
+                    newnode = inode->associative()->commutative()->identity(0, solver);
                 if (newnode==node)
                     newnode = inode->unaryNoOp();
                 if (newnode==node)
                     newnode = inode->foldConstants(AddSimplifier());
                 break;
             case OP_AND:
-                newnode = inode->associative()->commutative()->identity((uint64_t)-1);
+                newnode = inode->associative()->commutative()->identity((uint64_t)-1, solver);
                 if (newnode==node)
                     newnode = inode->foldConstants(AndSimplifier());
                 if (newnode==node)
-                    newnode = inode->rewrite(AndSimplifier());
+                    newnode = inode->rewrite(AndSimplifier(), solver);
                 break;
             case OP_ASR:
-                newnode = inode->additiveNesting();
+                newnode = inode->additiveNesting(solver);
                 if (newnode==node)
-                    newnode = inode->rewrite(AsrSimplifier());
+                    newnode = inode->rewrite(AsrSimplifier(), solver);
                 break;
             case OP_XOR:
                 newnode = inode->associative()->commutative()->foldConstants(XorSimplifier());
                 if (newnode==node)
-                    newnode = inode->rewrite(XorSimplifier());
+                    newnode = inode->rewrite(XorSimplifier(), solver);
                 break;
             case OP_CONCAT:
                 newnode = inode->associative()->foldConstants(ConcatSimplifier());
                 if (newnode==node)
-                    newnode = inode->rewrite(ConcatSimplifier());
+                    newnode = inode->rewrite(ConcatSimplifier(), solver);
                 break;
             case OP_EQ:
                 newnode = inode->commutative();
                 if (newnode==node)
-                    newnode = inode->rewrite(EqSimplifier());
+                    newnode = inode->rewrite(EqSimplifier(), solver);
                 break;
             case OP_EXTRACT:
-                newnode = inode->rewrite(ExtractSimplifier());
+                newnode = inode->rewrite(ExtractSimplifier(), solver);
                 break;
             case OP_INVERT:
                 newnode = inode->involutary();
                 if (newnode==node)
-                    newnode = inode->rewrite(InvertSimplifier());
+                    newnode = inode->rewrite(InvertSimplifier(), solver);
                 break;
             case OP_ITE:
-                newnode = inode->rewrite(IteSimplifier());
+                newnode = inode->rewrite(IteSimplifier(), solver);
                 break;
             case OP_LSSB:
-                newnode = inode->rewrite(LssbSimplifier());
+                newnode = inode->rewrite(LssbSimplifier(), solver);
                 break;
             case OP_MSSB:
-                newnode = inode->rewrite(MssbSimplifier());
+                newnode = inode->rewrite(MssbSimplifier(), solver);
                 break;
             case OP_NE:
                 newnode = inode->commutative();
@@ -2204,99 +2203,99 @@ Interior::simplifyTop() {
             case OP_NEGATE:
                 newnode = inode->involutary();
                 if (newnode==node)
-                    newnode = inode->rewrite(NegateSimplifier());
+                    newnode = inode->rewrite(NegateSimplifier(), solver);
                 break;
             case OP_NOOP:
-                newnode = inode->rewrite(NoopSimplifier());
+                newnode = inode->rewrite(NoopSimplifier(), solver);
                 break;
             case OP_OR:
-                newnode = inode->associative()->commutative()->identity(0);
+                newnode = inode->associative()->commutative()->identity(0, solver);
                 if (newnode==node)
                     newnode = inode->foldConstants(OrSimplifier());
                 if (newnode==node)
-                    newnode = inode->rewrite(OrSimplifier());
+                    newnode = inode->rewrite(OrSimplifier(), solver);
                 break;
             case OP_READ:
                 // no simplifications
                 break;
             case OP_ROL:
-                newnode = inode->rewrite(RolSimplifier());
+                newnode = inode->rewrite(RolSimplifier(), solver);
                 break;
             case OP_ROR:
-                newnode = inode->rewrite(RorSimplifier());
+                newnode = inode->rewrite(RorSimplifier(), solver);
                 break;
             case OP_SDIV:
-                newnode = inode->rewrite(SdivSimplifier());
+                newnode = inode->rewrite(SdivSimplifier(), solver);
                 break;
             case OP_SET:
                 newnode = inode->associative()->commutative();
                 if (newnode==node)
-                    newnode = inode->rewrite(SetSimplifier());
+                    newnode = inode->rewrite(SetSimplifier(), solver);
                 break;
             case OP_SEXTEND:
-                newnode = inode->rewrite(SextendSimplifier());
+                newnode = inode->rewrite(SextendSimplifier(), solver);
                 break;
             case OP_SGE:
-                newnode = inode->rewrite(SgeSimplifier());
+                newnode = inode->rewrite(SgeSimplifier(), solver);
                 break;
             case OP_SGT:
-                newnode = inode->rewrite(SgtSimplifier());
+                newnode = inode->rewrite(SgtSimplifier(), solver);
                 break;
             case OP_SHL0:
-                newnode = inode->additiveNesting();
+                newnode = inode->additiveNesting(solver);
                 if (newnode==node)
-                    newnode = inode->rewrite(ShlSimplifier(false));
+                    newnode = inode->rewrite(ShlSimplifier(false), solver);
                 break;
             case OP_SHL1:
-                newnode = inode->additiveNesting();
+                newnode = inode->additiveNesting(solver);
                 if (newnode==node)
-                    newnode = inode->rewrite(ShlSimplifier(true));
+                    newnode = inode->rewrite(ShlSimplifier(true), solver);
                 break;
             case OP_SHR0:
-                newnode = inode->additiveNesting();
+                newnode = inode->additiveNesting(solver);
                 if (newnode==node)
-                    newnode = inode->rewrite(ShrSimplifier(false));
+                    newnode = inode->rewrite(ShrSimplifier(false), solver);
                 break;
             case OP_SHR1:
-                newnode = inode->additiveNesting();
+                newnode = inode->additiveNesting(solver);
                 if (newnode==node)
-                    newnode = inode->rewrite(ShrSimplifier(true));
+                    newnode = inode->rewrite(ShrSimplifier(true), solver);
                 break;
             case OP_SLE:
-                newnode = inode->rewrite(SleSimplifier());
+                newnode = inode->rewrite(SleSimplifier(), solver);
                 break;
             case OP_SLT:
-                newnode = inode->rewrite(SltSimplifier());
+                newnode = inode->rewrite(SltSimplifier(), solver);
                 break;
             case OP_SMOD:
-                newnode = inode->rewrite(SmodSimplifier());
+                newnode = inode->rewrite(SmodSimplifier(), solver);
                 break;
             case OP_SMUL:
                 newnode = inode->associative()->commutative()->foldConstants(SmulSimplifier());
                 break;
             case OP_UDIV:
-                newnode = inode->rewrite(UdivSimplifier());
+                newnode = inode->rewrite(UdivSimplifier(), solver);
                 break;
             case OP_UEXTEND:
-                newnode = inode->rewrite(UextendSimplifier());
+                newnode = inode->rewrite(UextendSimplifier(), solver);
                 break;
             case OP_UGE:
-                newnode = inode->rewrite(UgeSimplifier());
+                newnode = inode->rewrite(UgeSimplifier(), solver);
                 break;
             case OP_UGT:
-                newnode = inode->rewrite(UgtSimplifier());
+                newnode = inode->rewrite(UgtSimplifier(), solver);
                 break;
             case OP_ULE:
-                newnode = inode->rewrite(UleSimplifier());
+                newnode = inode->rewrite(UleSimplifier(), solver);
                 break;
             case OP_ULT:
-                newnode = inode->rewrite(UltSimplifier());
+                newnode = inode->rewrite(UltSimplifier(), solver);
                 break;
             case OP_UMOD:
-                newnode = inode->rewrite(UmodSimplifier());
+                newnode = inode->rewrite(UmodSimplifier(), solver);
                 break;
             case OP_UMUL:
-                newnode = inode->associative()->commutative()->identity(1);
+                newnode = inode->associative()->commutative()->identity(1, solver);
                 if (newnode==node)
                     newnode = inode->foldConstants(UmulSimplifier());
                 break;
@@ -2304,7 +2303,7 @@ Interior::simplifyTop() {
                 // no simplifications
                 break;
             case OP_ZEROP:
-                newnode = inode->rewrite(ZeropSimplifier());
+                newnode = inode->rewrite(ZeropSimplifier(), solver);
                 break;
         }
         if (newnode==node)
@@ -2565,7 +2564,7 @@ Leaf::mustEqual(const Ptr &other_, SmtSolver *solver) {
     } else if (other==NULL) {
         // We need an SMT solver to figure this out.  This handles things like "x mustEqual (not (not x))" which is true.
         if (solver) {
-            Ptr assertion = makeNe(sharedFromThis(), other_);
+            Ptr assertion = makeNe(sharedFromThis(), other_, solver);
             retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
         }
     } else if (isNumber()) {
@@ -2585,7 +2584,7 @@ Leaf::mayEqual(const Ptr &other_, SmtSolver *solver) {
     } else if (other==NULL) {
         // We need an SMT solver to figure out things like "x mayEqual (add y 1))", which is true.
         if (solver) {
-            Ptr assertion = makeEq(sharedFromThis(), other_);
+            Ptr assertion = makeEq(sharedFromThis(), other_, solver);
             retval = SmtSolver::SAT_YES == solver->satisfiable(assertion);
         }
     } else if (!isNumber() || !other->isNumber() || 0==bits_.compare(other->bits_)) {
@@ -2630,7 +2629,7 @@ Leaf::isEquivalentTo(const Ptr &other_) {
 }
 
 Ptr
-Leaf::substitute(const Ptr &from, const Ptr &to) {
+Leaf::substitute(const Ptr &from, const Ptr &to, SmtSolver *solver) {
     ASSERT_require(from!=NULL && to!=NULL && from->nBits()==to->nBits());
     if (isEquivalentTo(from))
         return to;
@@ -2669,6 +2668,62 @@ std::vector<Ptr>
 findCommonSubexpressions(const std::vector<Ptr> &exprs) {
     return findCommonSubexpressions(exprs.begin(), exprs.end());
 }
+
+struct RenameVariables {
+    Sawyer::Container::Map<Ptr, Ptr> &index;
+    size_t &nextVariableId;
+    SmtSolver *solver;                                  // may be null
+
+    RenameVariables(Sawyer::Container::Map<Ptr, Ptr> &index, size_t &nextVariableId, SmtSolver *solver)
+        : index(index), nextVariableId(nextVariableId), solver(solver) {}
+    
+    Ptr rename(const Ptr &input) {
+        ASSERT_not_null(input);
+        Ptr retval;
+        if (InteriorPtr inode = input->isInteriorNode()) {
+            bool anyChildRenamed = false;
+            Nodes newChildren;
+            newChildren.reserve(inode->nChildren());
+            BOOST_FOREACH (const Ptr &child, inode->children()) {
+                Ptr newChild = rename(child);
+                if (newChild != child)
+                    anyChildRenamed = true;
+                newChildren.push_back(newChild);
+            }
+            if (!anyChildRenamed) {
+                retval = input;
+            } else {
+                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+            }
+        } else {
+            LeafPtr leaf = input->isLeafNode();
+            ASSERT_not_null(leaf);
+            if (leaf->isVariable()) {
+                if (!index.getOptional(input).assignTo(retval)) {
+                    retval = makeExistingVariable(leaf->nBits(), nextVariableId++, leaf->comment(), leaf->flags());
+                    index.insert(input, retval);
+                }
+            } else if (leaf->isMemory()) {
+                if (!index.getOptional(input).assignTo(retval)) {
+                    retval = makeExistingMemory(leaf->domainWidth(), leaf->nBits(), nextVariableId++, leaf->comment(),
+                                                leaf->flags());
+                    index.insert(input, retval);
+                }
+            }
+        }
+        ASSERT_not_null(retval);
+        return retval;
+    }
+};
+
+Ptr
+renameVariables(const Ptr &input, Sawyer::Container::Map<Ptr, Ptr> &index /*in,out*/, size_t &nextVariableId,
+                SmtSolver *solver) {
+    ASSERT_not_null(input);
+    RenameVariables renamer(index, nextVariableId, solver);
+    return renamer.rename(input);
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2711,218 +2766,218 @@ makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const st
 }
 
 Ptr
-makeAdd(const Ptr&a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ADD, a, b, comment, flags);
+makeAdd(const Ptr&a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ADD, a, b, solver, comment, flags);
 }
 
 Ptr
-makeBooleanAnd(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_AND, a, b, comment, flags);
+makeBooleanAnd(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_AND, a, b, solver, comment, flags);
 }
 
 Ptr
-makeAsr(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ASR, sa, a, comment, flags);
+makeAsr(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ASR, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeAnd(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_AND, a, b, comment, flags);
+makeAnd(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_AND, a, b, solver, comment, flags);
 }
 
 Ptr
-makeOr(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_OR, a, b, comment, flags);
+makeOr(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_OR, a, b, solver, comment, flags);
 }
 
 Ptr
-makeXor(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_XOR, a, b, comment, flags);
+makeXor(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_XOR, a, b, solver, comment, flags);
 }
     
 Ptr
-makeConcat(const Ptr &hi, const Ptr &lo, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_CONCAT, hi, lo, comment, flags);
+makeConcat(const Ptr &hi, const Ptr &lo, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_CONCAT, hi, lo, solver, comment, flags);
 }
 
 Ptr
-makeEq(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_EQ, a, b, comment, flags);
+makeEq(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_EQ, a, b, solver, comment, flags);
 }
 
 Ptr
-makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_EXTRACT, begin, end, a, comment, flags);
+makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_EXTRACT, begin, end, a, solver, comment, flags);
 }
 
 Ptr
-makeInvert(const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_INVERT, a, comment, flags);
+makeInvert(const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_INVERT, a, solver, comment, flags);
 }
 
 Ptr
-makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ITE, cond, a, b, comment, flags);
+makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ITE, cond, a, b, solver, comment, flags);
 }
 
 Ptr
-makeLssb(const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_LSSB, a, comment, flags);
+makeLssb(const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_LSSB, a, solver, comment, flags);
 }
 
 Ptr
-makeMssb(const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_MSSB, a, comment, flags);
+makeMssb(const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_MSSB, a, solver, comment, flags);
 }
 
 Ptr
-makeNe(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_NE, a, b, comment, flags);
+makeNe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_NE, a, b, solver, comment, flags);
 }
 
 Ptr
-makeNegate(const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_NEGATE, a, comment, flags);
+makeNegate(const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_NEGATE, a, solver, comment, flags);
 }
 
 Ptr
-makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_OR, a, b, comment, flags);
+makeBooleanOr(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_OR, a, b, solver, comment, flags);
 }
 
 Ptr
-makeRead(const Ptr &mem, const Ptr &addr, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_READ, mem, addr, comment, flags);
+makeRead(const Ptr &mem, const Ptr &addr, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_READ, mem, addr, solver, comment, flags);
 }
 
 Ptr
-makeRol(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ROL, sa, a, comment, flags);
+makeRol(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ROL, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeRor(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ROR, sa, a, comment, flags);
+makeRor(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ROR, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeSet(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SET, a, b, comment, flags);
+makeSet(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SET, a, b, solver, comment, flags);
 }
 
 Ptr
-makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SET, a, b, c, comment, flags);
+makeSet(const Ptr &a, const Ptr &b, const Ptr &c, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SET, a, b, c, solver, comment, flags);
 }
 
 Ptr
-makeSignedDiv(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SDIV, a, b, comment, flags);
+makeSignedDiv(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SDIV, a, b, solver, comment, flags);
 }
 
 Ptr
-makeSignExtend(const Ptr &newSize, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SEXTEND, newSize, a, comment, flags);
+makeSignExtend(const Ptr &newSize, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SEXTEND, newSize, a, solver, comment, flags);
 }
 
 Ptr
-makeSignedGe(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SGE, a, b, comment, flags);
+makeSignedGe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SGE, a, b, solver, comment, flags);
 }
 
 Ptr
-makeSignedGt(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SGT, a, b, comment, flags);
+makeSignedGt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SGT, a, b, solver, comment, flags);
 }
 
 Ptr
-makeShl0(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHL0, sa, a, comment, flags);
+makeShl0(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SHL0, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeShl1(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHL1, sa, a, comment, flags);
+makeShl1(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SHL1, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeShr0(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHR0, sa, a, comment, flags);
+makeShr0(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SHR0, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeShr1(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHR1, sa, a, comment, flags);
+makeShr1(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SHR1, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeSignedLe(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SLE, a, b, comment, flags);
+makeSignedLe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SLE, a, b, solver, comment, flags);
 }
 
 Ptr
-makeSignedLt(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SLT, a, b, comment, flags);
+makeSignedLt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SLT, a, b, solver, comment, flags);
 }
 
 Ptr
-makeSignedMod(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SMOD, a, b, comment, flags);
+makeSignedMod(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SMOD, a, b, solver, comment, flags);
 }
 
 Ptr
-makeSignedMul(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SMUL, a, b, comment, flags);
+makeSignedMul(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SMUL, a, b, solver, comment, flags);
 }
 
 Ptr
-makeDiv(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UDIV, a, b, comment, flags);
+makeDiv(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_UDIV, a, b, solver, comment, flags);
 }
 
 Ptr
-makeExtend(const Ptr &newSize, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UEXTEND, newSize, a, comment, flags);
+makeExtend(const Ptr &newSize, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_UEXTEND, newSize, a, solver, comment, flags);
 }
 
 Ptr
-makeGe(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UGE, a, b, comment, flags);
+makeGe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_UGE, a, b, solver, comment, flags);
 }
 
 Ptr
-makeGt(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UGT, a, b, comment, flags);
+makeGt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_UGT, a, b, solver, comment, flags);
 }
 
 Ptr
-makeLe(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ULE, a, b, comment, flags);
+makeLe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ULE, a, b, solver, comment, flags);
 }
 
 Ptr
-makeLt(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ULT, a, b, comment, flags);
+makeLt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ULT, a, b, solver, comment, flags);
 }
 
 Ptr
-makeMod(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UMOD, a, b, comment, flags);
+makeMod(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_UMOD, a, b, solver, comment, flags);
 }
 
 Ptr
-makeMul(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UMUL, a, b, comment, flags);
+makeMul(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_UMUL, a, b, solver, comment, flags);
 }
 
 Ptr
-makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_WRITE, mem, addr, a, comment, flags);
+makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_WRITE, mem, addr, a, solver, comment, flags);
 }
 
 Ptr
-makeZerop(const Ptr &a, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ZEROP, a, comment, flags);
+makeZerop(const Ptr &a, SmtSolver *solver, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_ZEROP, a, solver, comment, flags);
 }
 
 } // namespace

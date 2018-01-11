@@ -10,6 +10,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <BinaryZ3Solver.h>
 #include <SymbolicSemantics2.h>
 
+#define NO_SOLVER NULL
+
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
@@ -65,18 +67,18 @@ test_yices_linkage() {
 static void
 test_add_simplifications() {
     SymbolicExpr::Ptr reg = SymbolicExpr::Leaf::createVariable(32, "esp_0");
-    SymbolicExpr::Ptr nreg = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, reg);
+    SymbolicExpr::Ptr nreg = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, reg, NO_SOLVER);
     SymbolicExpr::Ptr number = SymbolicExpr::Leaf::createInteger(32, 0xfffffffc);
-    SymbolicExpr::Ptr t1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, reg, nreg, number);
+    SymbolicExpr::Ptr t1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, reg, nreg, number, NO_SOLVER);
     std::cout <<"(add esp_0 (negate esp_0) 0xfffffffc) = " <<*t1 <<"\n";
 
     SymbolicExpr::Ptr n1 = SymbolicExpr::Leaf::createVariable(32, "esp_0");
     SymbolicExpr::Ptr n2 = SymbolicExpr::Leaf::createInteger(32, 4);
     SymbolicExpr::Ptr n3 = SymbolicExpr::Leaf::createInteger(32, 8);
-    SymbolicExpr::Ptr n4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n1, n2);
-    SymbolicExpr::Ptr n5 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n4, n3);
-    SymbolicExpr::Ptr n6 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, n1);
-    SymbolicExpr::Ptr n7 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n5, n6);
+    SymbolicExpr::Ptr n4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n1, n2, NO_SOLVER);
+    SymbolicExpr::Ptr n5 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n4, n3, NO_SOLVER);
+    SymbolicExpr::Ptr n6 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, n1, NO_SOLVER);
+    SymbolicExpr::Ptr n7 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, n5, n6, NO_SOLVER);
     std::cout <<"(add esp_0 4 8 (negate esp_0)) = " <<*n7 <<"\n";
 }
 

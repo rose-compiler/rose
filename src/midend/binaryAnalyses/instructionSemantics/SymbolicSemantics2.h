@@ -324,8 +324,9 @@ public:
      *  For example, if this value is "(add esp_0, -12)" and we substitute "esp_0" with "(add stack_frame 4)", this method
      *  would return "(add stack_frame -8)".  It is also possible for the @p from value to be a more complicated
      *  expression. This method attempts to match @p from at all nodes of this expression and substitutes at eac node that
-     *  matches.  The @p from and @p to must have the same width. */
-    virtual SValuePtr substitute(const SValuePtr &from, const SValuePtr &to) const;
+     *  matches.  The @p from and @p to must have the same width. The @p solver is optional and used during simplification of
+     *  the result. */
+    virtual SValuePtr substitute(const SValuePtr &from, const SValuePtr &to, SmtSolver *solver) const;
 
     /** Adds instructions to the list of defining instructions.
      *

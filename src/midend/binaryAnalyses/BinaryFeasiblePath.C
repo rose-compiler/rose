@@ -663,9 +663,11 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, SmtSolver &solver, const s
         } else if (hasVirtualAddress(pathEdge->target())) {
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression(),
+                                                                &solver);
             constraint->comment("cfg edge " + partitioner_->edgeName(pathEdge));
-            SAWYER_MESG(mlog[DEBUG]) <<prefix <<"constraint at edge " <<partitioner_->edgeName(pathEdge) <<": " <<*constraint <<"\n";
+            SAWYER_MESG(mlog[DEBUG]) <<prefix <<"constraint at edge " <<partitioner_->edgeName(pathEdge)
+                                     <<": " <<*constraint <<"\n";
             pathConstraints.push_back(constraint);
         }
     }

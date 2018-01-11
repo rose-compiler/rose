@@ -875,7 +875,7 @@ class MemoryExpansion: public SymbolicExprParser::OperatorExpansion {
     BaseSemantics::RiscOperatorsPtr ops_;
 protected:
     MemoryExpansion(const BaseSemantics::RiscOperatorsPtr &ops)
-        : ops_(ops) {}
+        : SymbolicExprParser::OperatorExpansion(ops->solver()), ops_(ops) {}
 public:
     static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
         Ptr functor = Ptr(new MemoryExpansion(ops));
@@ -983,7 +983,8 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
         } else if (hasVirtualAddress(pathEdge->target())) {
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression(),
+                                                                &solver);
             pathConstraints.push_back(constraint);
         }
     }
@@ -1338,7 +1339,8 @@ singleThreadBfsWorker(BfsContext *ctx) {
         if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), pathsEdge->target()->value().address());
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression(),
+                                                                &solver);
             bfsVertex->value().constraint = constraint;
             SAWYER_MESG(debug) <<"  path edge has constraint expression\n";
         }
@@ -1583,7 +1585,8 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->memoryState());
     SymbolicExpr::Ptr memExpr1 = s1mem->expression();
     SymbolicExpr::Ptr memExpr2 = s2mem->expression();
-    SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2);
+    SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2,
+                                                         ops->solver());
     BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
     mergedMem->expression(mergedExpr);
 

@@ -18,6 +18,9 @@
 #include <Sawyer/LineVector.h>
 #include <Sawyer/Stopwatch.h>
 
+// Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
+#define NO_SOLVER NULL
+
 using namespace Rose::Diagnostics;
 
 namespace Rose {
@@ -58,6 +61,14 @@ SmtSolver::init(unsigned linkages) {
         name_ = std::string(name_.empty()?"noname":name_) + "-lib";
     } else if (linkage_ == LM_EXECUTABLE) {
         name_ = std::string(name_.empty()?"noname":name_) + "-exe";
+    }
+
+    {
+        boost::lock_guard<boost::mutex> lock(classStatsMutex);
+        ++classStats.nSolversCreated;
+#if 1 // DEBUGGING [Robb Matzke 2018-01-10]
+        std::cerr <<"ROBB: new SMT solver\n";
+#endif
     }
 }
 
@@ -654,81 +665,82 @@ SmtSolver::selfTest() {
 
     // Comparisons
     std::vector<E> exprs;
-    exprs.push_back(makeZerop(a8, "zerop"));
-    exprs.push_back(makeEq(a8, z8, "equal"));
-    exprs.push_back(makeNe(a8, z8, "not equal"));
-    exprs.push_back(makeLt(a8, z8, "unsigned less than"));
-    exprs.push_back(makeLe(a8, z8, "unsigned less than or equal"));
-    exprs.push_back(makeGt(a8, z8, "unsigned greater than"));
-    exprs.push_back(makeGe(a8, z8, "unsigned greater than or equal"));
-    exprs.push_back(makeSignedLt(a8, z8, "signed less than"));
-    exprs.push_back(makeSignedLe(a8, z8, "signed less than or equal"));
-    exprs.push_back(makeSignedGt(a8, z8, "signed greater than"));
-    exprs.push_back(makeSignedGe(a8, z8, "signed greather than or equal"));
+    exprs.push_back(makeZerop(a8, NO_SOLVER, "zerop"));
+    exprs.push_back(makeEq(a8, z8, NO_SOLVER, "equal"));
+    exprs.push_back(makeNe(a8, z8, NO_SOLVER, "not equal"));
+    exprs.push_back(makeLt(a8, z8, NO_SOLVER, "unsigned less than"));
+    exprs.push_back(makeLe(a8, z8, NO_SOLVER, "unsigned less than or equal"));
+    exprs.push_back(makeGt(a8, z8, NO_SOLVER, "unsigned greater than"));
+    exprs.push_back(makeGe(a8, z8, NO_SOLVER, "unsigned greater than or equal"));
+    exprs.push_back(makeSignedLt(a8, z8, NO_SOLVER, "signed less than"));
+    exprs.push_back(makeSignedLe(a8, z8, NO_SOLVER, "signed less than or equal"));
+    exprs.push_back(makeSignedGt(a8, z8, NO_SOLVER, "signed greater than"));
+    exprs.push_back(makeSignedGe(a8, z8, NO_SOLVER, "signed greather than or equal"));
 
     // Boolean operations
-    exprs.push_back(makeEq(makeIte(makeZerop(a8), z8, b8), b8, "if-then-else"));
-    exprs.push_back(makeAnd(makeZerop(a8), makeZerop(c8), "Boolean conjunction"));
-    exprs.push_back(makeOr(makeZerop(a8), makeZerop(c8), "Boolean disjunction"));
-    exprs.push_back(makeXor(makeZerop(a8), makeZerop(c8), "Boolean exclusive disjunction"));
+    exprs.push_back(makeEq(makeIte(makeZerop(a8, NO_SOLVER), z8, b8, NO_SOLVER), b8, NO_SOLVER, "if-then-else"));
+    exprs.push_back(makeAnd(makeZerop(a8, NO_SOLVER), makeZerop(c8, NO_SOLVER), NO_SOLVER, "Boolean conjunction"));
+    exprs.push_back(makeOr(makeZerop(a8, NO_SOLVER), makeZerop(c8, NO_SOLVER), NO_SOLVER, "Boolean disjunction"));
+    exprs.push_back(makeXor(makeZerop(a8, NO_SOLVER), makeZerop(c8, NO_SOLVER), NO_SOLVER, "Boolean exclusive disjunction"));
 
     // Bit operations
-    exprs.push_back(makeZerop(makeAnd(a8, b8), "bit-wise conjunction"));
-    exprs.push_back(makeZerop(makeAsr(makeInteger(2, 3), a8), "arithmetic shift right 3 bits"));
-    exprs.push_back(makeZerop(makeOr(a8, b8), "bit-wise disjunction"));
-    exprs.push_back(makeZerop(makeXor(a8, b8), "bit-wise exclusive disjunction"));
-    exprs.push_back(makeZerop(makeConcat(a8, b8), "concatenation"));
-    exprs.push_back(makeZerop(makeExtract(makeInteger(2, 3), makeInteger(4, 8), a8), "extract bits [3..7]"));
-    exprs.push_back(makeZerop(makeInvert(a8), "bit-wise not"));
+    exprs.push_back(makeZerop(makeAnd(a8, b8, NO_SOLVER), NO_SOLVER, "bit-wise conjunction"));
+    exprs.push_back(makeZerop(makeAsr(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "arithmetic shift right 3 bits"));
+    exprs.push_back(makeZerop(makeOr(a8, b8, NO_SOLVER), NO_SOLVER, "bit-wise disjunction"));
+    exprs.push_back(makeZerop(makeXor(a8, b8, NO_SOLVER), NO_SOLVER, "bit-wise exclusive disjunction"));
+    exprs.push_back(makeZerop(makeConcat(a8, b8, NO_SOLVER), NO_SOLVER, "concatenation"));
+    exprs.push_back(makeZerop(makeExtract(makeInteger(2, 3), makeInteger(4, 8), a8, NO_SOLVER), NO_SOLVER,
+                              "extract bits [3..7]"));
+    exprs.push_back(makeZerop(makeInvert(a8, NO_SOLVER), NO_SOLVER, "bit-wise not"));
 #if 0 // FIXME[Robb Matzke 2017-10-24]: not implemented yet
-    exprs.push_back(makeZerop(makeLssb(a8), "least significant set bit"));
-    exprs.push_back(makeZerop(makeMssb(a8), "most significant set bit"));
+    exprs.push_back(makeZerop(makeLssb(a8, NO_SOLVER), NO_SOLVER, "least significant set bit"));
+    exprs.push_back(makeZerop(makeMssb(a8, NO_SOLVER), NO_SOLVER, "most significant set bit"));
 #endif
-    exprs.push_back(makeZerop(makeRol(makeInteger(2, 3), a8), "rotate left three bits"));
-    exprs.push_back(makeZerop(makeRor(makeInteger(2, 3), a8), "rotate right three bits"));
-    exprs.push_back(makeZerop(makeSignExtend(makeInteger(6, 32), a8), "sign extend to 32 bits"));
-    exprs.push_back(makeZerop(makeShl0(makeInteger(2, 3), a8), "shift left inserting three zeros"));
-    exprs.push_back(makeZerop(makeShl1(makeInteger(2, 3), a8), "shift left inserting three ones"));
-    exprs.push_back(makeZerop(makeShr0(makeInteger(2, 3), a8), "shift right inserting three zeros"));
-    exprs.push_back(makeZerop(makeShr1(makeInteger(2, 3), a8), "shift right inserting three ones"));
-    exprs.push_back(makeZerop(makeExtend(makeInteger(2, 3), a8), "truncate to three bits"));
-    exprs.push_back(makeZerop(makeExtend(makeInteger(6, 32), a8), "extend to 32 bits"));
+    exprs.push_back(makeZerop(makeRol(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "rotate left three bits"));
+    exprs.push_back(makeZerop(makeRor(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "rotate right three bits"));
+    exprs.push_back(makeZerop(makeSignExtend(makeInteger(6, 32), a8, NO_SOLVER), NO_SOLVER, "sign extend to 32 bits"));
+    exprs.push_back(makeZerop(makeShl0(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "shift left inserting three zeros"));
+    exprs.push_back(makeZerop(makeShl1(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "shift left inserting three ones"));
+    exprs.push_back(makeZerop(makeShr0(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "shift right inserting three zeros"));
+    exprs.push_back(makeZerop(makeShr1(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "shift right inserting three ones"));
+    exprs.push_back(makeZerop(makeExtend(makeInteger(2, 3), a8, NO_SOLVER), NO_SOLVER, "truncate to three bits"));
+    exprs.push_back(makeZerop(makeExtend(makeInteger(6, 32), a8, NO_SOLVER), NO_SOLVER, "extend to 32 bits"));
 
     // Arithmetic operations
-    exprs.push_back(makeZerop(makeAdd(a8, b8), "addition"));
-    exprs.push_back(makeZerop(makeNegate(a8), "negation"));
+    exprs.push_back(makeZerop(makeAdd(a8, b8, NO_SOLVER), NO_SOLVER, "addition"));
+    exprs.push_back(makeZerop(makeNegate(a8, NO_SOLVER), NO_SOLVER, "negation"));
 #if 0 // FIXME[Robb Matzke 2017-10-24]: not implemented yet
-    exprs.push_back(makeZerop(makeSignedDiv(a8, b4), "signed ratio"));
-    exprs.push_back(makeZerop(makeSignedMod(a8, b4), "signed remainder"));
+    exprs.push_back(makeZerop(makeSignedDiv(a8, b4, NO_SOLVER), NO_SOLVER, "signed ratio"));
+    exprs.push_back(makeZerop(makeSignedMod(a8, b4, NO_SOLVER), NO_SOLVER, "signed remainder"));
 #endif
-    exprs.push_back(makeZerop(makeSignedMul(a8, b4), "signed multiply"));
-    exprs.push_back(makeZerop(makeDiv(a8, b4), "unsigned ratio"));
-    exprs.push_back(makeZerop(makeMod(a8, b4), "unsigned remainder"));
-    exprs.push_back(makeZerop(makeMul(a8, b4), "unsigned multiply"));
+    exprs.push_back(makeZerop(makeSignedMul(a8, b4, NO_SOLVER), NO_SOLVER, "signed multiply"));
+    exprs.push_back(makeZerop(makeDiv(a8, b4, NO_SOLVER), NO_SOLVER, "unsigned ratio"));
+    exprs.push_back(makeZerop(makeMod(a8, b4, NO_SOLVER), NO_SOLVER, "unsigned remainder"));
+    exprs.push_back(makeZerop(makeMul(a8, b4, NO_SOLVER), NO_SOLVER, "unsigned multiply"));
 
     // Memory operations
     E mem = makeMemory(32, 8, "memory");
     E addr = makeInteger(32, 12345, "address");
-    exprs.push_back(makeZerop(makeRead(mem, addr), "read from memory"));
-    exprs.push_back(makeEq(makeRead(makeWrite(mem, addr, a8), addr), a8, "write to memory"));
+    exprs.push_back(makeZerop(makeRead(mem, addr, NO_SOLVER), NO_SOLVER, "read from memory"));
+    exprs.push_back(makeEq(makeRead(makeWrite(mem, addr, a8, NO_SOLVER), addr, NO_SOLVER), a8, NO_SOLVER, "write to memory"));
 
     // Miscellaneous operations
-    exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
+    exprs.push_back(makeEq(makeSet(a8, b8, c8, NO_SOLVER), b8, NO_SOLVER, "set"));
 
     // Mixing 1-bit values used as bit vectors and Booleans should be allowed.
-    exprs.push_back(makeAnd(makeAdd(a1, b1) /*bit-vector*/, makeZerop(b1) /*Boolean*/));
+    exprs.push_back(makeAnd(makeAdd(a1, b1, NO_SOLVER) /*bit-vector*/, makeZerop(b1, NO_SOLVER) /*Boolean*/, NO_SOLVER));
 
     // Some operations should work on bit vectors (tested above) or Booleans.  In ROSE, a Boolean is just a 1-bit vector, but
     // SMT solvers usually distinguish between 1-bit vector type and Boolean type and don't allow them to be mixed.
-    exprs.push_back(makeEq(makeZerop(a1), b1));
-    exprs.push_back(makeXor(makeZerop(a1), b1));
-    exprs.push_back(makeNe(a1, makeZerop(b1)));
-    exprs.push_back(makeIte(a1, makeZerop(a1), b1));
+    exprs.push_back(makeEq(makeZerop(a1, NO_SOLVER), b1, NO_SOLVER));
+    exprs.push_back(makeXor(makeZerop(a1, NO_SOLVER), b1, NO_SOLVER));
+    exprs.push_back(makeNe(a1, makeZerop(b1, NO_SOLVER), NO_SOLVER));
+    exprs.push_back(makeIte(a1, makeZerop(a1, NO_SOLVER), b1, NO_SOLVER));
 
     // Wide multiply
     exprs.push_back(makeEq(makeExtract(makeInteger(8, 0), makeInteger(8, 128),
-                                       makeMul(makeVariable(128), makeInteger(128, 2))),
-                           makeInteger(128, 16)));
+                                       makeMul(makeVariable(128), makeInteger(128, 2), NO_SOLVER), NO_SOLVER),
+                           makeInteger(128, 16), NO_SOLVER));
 
     // Run the solver
     for (size_t i=0; i<exprs.size(); ++i) {

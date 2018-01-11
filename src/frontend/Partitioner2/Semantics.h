@@ -309,7 +309,7 @@ MemoryState<Super>::readMemory(const InstructionSemantics2::BaseSemantics::SValu
                 SymbolicExpr::Ptr expr = SymbolicExpr::makeInteger(8, byte);
                 if (isModifiable) {
                     SymbolicExpr::Ptr indet = SymbolicExpr::makeVariable(8);
-                    expr = SymbolicExpr::makeSet(expr, indet);
+                    expr = SymbolicExpr::makeSet(expr, indet, valOps->solver());
                 }
                 SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
                 val->set_expression(expr);
