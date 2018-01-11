@@ -66,9 +66,6 @@ SmtSolver::init(unsigned linkages) {
     {
         boost::lock_guard<boost::mutex> lock(classStatsMutex);
         ++classStats.nSolversCreated;
-#if 1 // DEBUGGING [Robb Matzke 2018-01-10]
-        std::cerr <<"ROBB: new SMT solver\n";
-#endif
     }
 }
 
@@ -290,7 +287,9 @@ SmtSolver::check() {
     SymbolicExpr::Hash h = 0;
     if (doMemoization_) {
         h = SymbolicExpr::hash(assertions());
-        if (memoization_.getOptional(h).assignTo(retval)) {
+        Memoization::iterator found = memoization_.find(h);
+        if (found != memoization_.end()) {
+            retval = found->second;
             latestMemoizationId_ = h;
             ++stats.memoizationHits;
             {
@@ -317,7 +316,7 @@ SmtSolver::check() {
 
     // Cache the result
     if (doMemoization_) {
-        memoization_.insert(h, retval);
+        memoization_[h] = retval;
         latestMemoizationId_ = h;
     }
     return retval;

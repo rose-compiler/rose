@@ -978,9 +978,9 @@ Z3Solver::parseEvidence() {
     // If memoization is being used and we have a previous result, then use the previous result.
     SymbolicExpr::Hash memoId = latestMemoizationId();
     if (memoId > 0) {
-        MemoizedEvidence::NodeIterator found = memoizedEvidence.find(memoId);
-        if (found != memoizedEvidence.nodes().end()) {
-            evidence = found->value();
+        MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
+        if (found != memoizedEvidence.end()) {
+            evidence = found->second;
             return;
         }
     }
@@ -1028,7 +1028,7 @@ Z3Solver::parseEvidence() {
 
     // Cache the evidence
     if (memoId > 0)
-        memoizedEvidence.insert(memoId, evidence);
+        memoizedEvidence[memoId] = evidence;
 
 #else
     ASSERT_not_reachable("z3 not enabled");

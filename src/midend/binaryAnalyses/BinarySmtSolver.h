@@ -9,6 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/unordered_map.hpp>
 #include <inttypes.h>
 
 namespace Rose {
@@ -102,7 +103,7 @@ public:
 
     typedef std::pair<SExpr::Ptr, Type> SExprTypePair;
 
-    typedef Sawyer::Container::Map<SymbolicExpr::Hash, Satisfiable> Memoization;
+    typedef boost::unordered_map<SymbolicExpr::Hash, Satisfiable> Memoization;
 
 private:
     std::string name_;

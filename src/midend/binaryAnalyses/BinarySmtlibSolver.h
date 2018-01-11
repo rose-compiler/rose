@@ -3,6 +3,7 @@
 
 #include <BinarySmtSolver.h>
 #include <boost/filesystem.hpp>
+#include <boost/unordered_map.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -16,7 +17,7 @@ private:
 
 protected:
     ExprExprMap evidence;
-    typedef Sawyer::Container::Map<SymbolicExpr::Hash, ExprExprMap> MemoizedEvidence;
+    typedef boost::unordered_map<SymbolicExpr::Hash, ExprExprMap> MemoizedEvidence;
     MemoizedEvidence memoizedEvidence;
 
 public:
