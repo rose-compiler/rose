@@ -717,19 +717,26 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUnty
    printf("... traverse_IntegerPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   char* literal;
+   char *literal, *name;
    SgUntypedType* type;
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_TYPE;
+   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
-   if (ATmatch(term, "<str>", &literal)) {
+   if (ATmatch(term, "IntegerLiteral(<str>)", &literal)) {
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
-      *expr = new SgUntypedValueExpression(keyword,literal,type);
+      expr_enum = Jovial_ROSE_Translation::e_literalExpression;
+      *expr = new SgUntypedValueExpression(expr_enum,literal,type);
       std::cout << "INTEGER LITERAL is " << literal << "\n";
+      setSourcePosition(*expr, term);
+   }
+   //  IntegerMachineParameter     -> IntegerPrimary
+   //  IntegerVariable             -> IntegerPrimary
+   else if (ATmatch(term, "<str>" , &name)) {
+      std::cout << "VARIABLE " << name << "\n";
+      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+      *expr = new SgUntypedReferenceExpression(expr_enum, name);
       setSourcePosition(*expr, term);
    } else return ATfalse;
 
-   //  IntegerMachineParameter     -> IntegerPrimary
-   //  IntegerVariable             -> IntegerPrimary
    //  NamedIntegerConstant        -> IntegerPrimary
    //  IntegerFunctionCall         -> IntegerPrimary
    //  '(' IntegerFormula ')'      -> IntegerPrimary         {cons("IntegerPrimary")}
@@ -784,7 +791,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntyped
       } else return ATfalse;
 
       *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
-      std::cout << "BINARY OPERATOR " << op_name << "\n";
       setSourcePosition(*expr, term);
    }
    else if (traverse_IntegerFactor(term, expr)) {

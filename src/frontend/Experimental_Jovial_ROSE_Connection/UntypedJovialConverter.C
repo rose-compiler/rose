@@ -469,29 +469,6 @@ UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, S
    return sg_scope;
 }
 
-void
-UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
-{
-   if (scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition)
-      {
-         if ( ! ut_list->get_func_list().empty() )
-            {
-               // Need to add a contains statement to the current scope as it currently
-               // doesn't exist in OFP's Fortran AST (FAST) design (part of concrete syntax only)
-               SgContainsStatement* containsStatement = new SgContainsStatement();
-               UntypedConverter::setSourcePositionUnknown(containsStatement);
-//TODO - maybe ok
-            // ROSE_ASSERT(0);
-
-               containsStatement->set_definingDeclaration(containsStatement);
-
-               scope->append_statement(containsStatement);
-               ROSE_ASSERT(containsStatement->get_parent() != NULL);
-            }
-      }
-}
-
-
 SgModuleStatement*
 UntypedConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
 {
@@ -605,8 +582,6 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
    SgFunctionType* type = new SgFunctionType(SgTypeVoid::createType(), false);
 
    SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName, type, NULL);
-
-   printf("........ program decl is %p \n", programDeclaration);
 
 // TODO:
 // A Fortran program has no non-defining declaration (is this checked internally but not Jovial?)
@@ -1036,9 +1011,9 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
          {
             SgUntypedValueExpression* expr = dynamic_cast<SgUntypedValueExpression*>(ut_expr);
             sg_expr = convertSgUntypedValueExpression(expr);
-            //#if DEBUG_UNTYPED_CONVERTER
+#if DEBUG_UNTYPED_CONVERTER
             printf ("  - value expression     ==>   %s\n", expr->get_value_string().c_str());
-            //#endif
+#endif
          }
       else if ( isSgUntypedReferenceExpression(ut_expr) != NULL )
          {
@@ -1049,9 +1024,9 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             sg_expr = varRef;
             setSourcePositionFrom(sg_expr, ut_expr);
 
-            //#if DEBUG_UNTYPED_CONVERTER
+#if DEBUG_UNTYPED_CONVERTER
             printf ("  - reference expression ==>   %s\n", expr->get_name().c_str());
-            //#endif
+#endif
          }
       else if ( isSgUntypedOtherExpression(ut_expr) != NULL )
          {

@@ -18,9 +18,9 @@ class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, 
   {
     public:
 
-      virtual InheritedAttribute   evaluateInheritedAttribute   (SgNode* n, InheritedAttribute inheritedAttribute );
-      virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute
-                                                                          , SynthesizedAttributesList childAttrs  );
+      virtual InheritedAttribute   evaluateInheritedAttribute   (SgNode* node, InheritedAttribute inheritedAttribute );
+      virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* node, InheritedAttribute inheritedAttribute
+                                                                             , SynthesizedAttributesList childAttrs  );
 
       virtual ~UntypedTraversal();
 

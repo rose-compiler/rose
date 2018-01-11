@@ -2,37 +2,61 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
 
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
-
 AM_CPPFLAGS = $(ROSE_INCLUDES) 
 AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
-TEST_JOVIAL_Objects = ${JOVIAL_TESTCODES:.jovial=.o}
-TEST_F90_Sources = ${JOVIAL_TESTCODES:.jovial=.jovial.passed}
+JOVIAL_TESTCODES = \
+ 1_2_3_main-program-module_a.jov        \
+ 1_2_3_program-body_b.jov               \
+ 1_2_3_program-body_c.jov               \
+ 5_1_1_integer-primary.jov
+
+JOVIAL_TESTCODES_WORKING_ON = \
+ tiny.jov                               \
+ 1_2_2_non-nested-subroutine_a.jov      \
+ 1_2_2_non-nested-subroutine_b.jov      \
+ 1_2_2_procedure-module_a.jov           \
+ 1_2_2_procedure-module_b.jov           \
+ 1_2_2_procedure_module_c.jov           \
+ 1_2_2_procedure_module_d.jov           \
+ 1_2_2_procedure_module_e.jov           \
+ 1_2_2_procedure_module_f.jov           \
+ 1_2_2_procedure_module_g.jov           \
+ 1_2_3_main-program-module_b.jov        \
+ 1_2_3_main-program-module_c.jov        \
+ 1_2_3_main-program-module_d.jov        \
+ 1_2_3_program-body_a.jov               \
+ 1_2_3_program-body_d.jov               \
+ 1_2_3_program-body_e.jov               \
+ 1_2_3_program-body_f.jov               \
+ 1_2_3_program-body_g.jov               \
+ 1_2_3_program-body_h.jov               \
+ 5_1_1_integer-factor.jov               \
+ 5_1_1_integer-formula.jov              \
+ 5_1_1_integer-precedence.jov           \
+ 5_1_1_integer-term.jov
+
+TEST_JOVIAL_Objects = ${JOVIAL_TESTCODES:.jov=.aterm}
+TEST_JOVIAL_Sources = ${JOVIAL_TESTCODES:.jov=.jov.passed}
 
 PASSING_TEST_Objects = $(TEST_JOVIAL_Objects)
 
-# Go back and build the translator we are using to test Fortran (in case make check 
+# Go back and build the translator we are using to test Jovial (in case make check
 # is run directly in this directory before make has been run from the root of the 
-# ROSE directory structure).  This does not appear to work!
-../../testTranslator:
-	cd ../..; $(MAKE) testTranslator
+# ROSE directory structure).
+../../testParser:
+	cd ../..; $(MAKE) testParser
 
-testTranslator: ../../testTranslator
+testParser: ../../testParser
 
-$(TEST_JOVIAL_Objects): ../../testTranslator
+$(TEST_JOVIAL_Objects): ../../testParser
 if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
-	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:jovial -c $(srcdir)/$(@:.o=.jovial)
+	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.jov)
 endif
 
-test: $(srcdir)/tiny.jovial
-	../../testTranslator -rose:verbose 0 -rose:jovial $(srcdir)/tiny.jovial
-
 clean-local:
-	rm -f rose_*.* *.o *.exe
+	rm -f rose_*.* *.aterm *.dot
 
 check-local:
 	@echo "Tests for experimental Jovial frontend."
@@ -46,4 +70,3 @@ else
 	@echo "***** Skipping tests of experimental Jovial frontend (must be configured explicitly) *****"
 	@echo "******************************************************************************************"
 endif
-
