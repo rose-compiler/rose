@@ -33,6 +33,7 @@ static const char *description =
   "subdirectories (among others) where the ROSE library and its headers are installed.}";
 
 #include <rose.h>                                       // POLICY_OK -- this is not a ROSE library source file
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <rose_getline.h>
 
@@ -83,10 +84,10 @@ static std::string
 parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
   using namespace Sawyer::CommandLine;
 
-  Parser parser = CommandlineProcessing::createEmptyParser(purpose, description);
-  parser.errorStream(mlog[FATAL]);
-  parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{variable}");
-  parser.with(CommandlineProcessing::genericSwitches());
+    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
+    parser.errorStream(mlog[FATAL]);
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{variable}");
+    parser.with(Rose::CommandLine::genericSwitches());
 
   SwitchGroup tool("Tool-specific switches");
   tool.insert(Switch("config")
