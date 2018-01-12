@@ -21,8 +21,9 @@
 #include "rose_config.h" // obtain macros defining backend compiler names, etc.
 #include "keep_going.h" // enable logging files which cannot be processed by AutoPar due to various reasons
 // all kinds of analyses needed
-#include "autoParSupport.h" 
+#include "autoParSupport.h"
 #include <string> 
+#include <CommandLine.h> // Commandline support in librose
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool automatically inserts OpenMP directives into sequential codes.";
 static const char* description =
