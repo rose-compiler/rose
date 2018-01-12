@@ -532,7 +532,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                     ASSERT_require(BIT_VECTOR == type);
                     z3expr = children[0].first;
                     for (size_t i = 1; i < children.size(); ++i)
-                        z3expr = children[i].first;
+                        z3expr = z3expr | children[i].first;
                 }
                 return Z3ExprTypePair(z3expr, type);
             }
