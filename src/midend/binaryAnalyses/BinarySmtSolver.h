@@ -7,6 +7,7 @@
 
 #include <BinarySymbolicExpr.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/unordered_map.hpp>
@@ -18,7 +19,7 @@ namespace BinaryAnalysis {
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. */
-class SmtSolver {
+class SmtSolver: private boost::noncopyable {
 public:
     /** Solver availability map. */
     typedef std::map<std::string, bool> Availability;
@@ -65,15 +66,23 @@ public:
                        SAT_UNKNOWN                      /**< Could not be proved satisfiable or unsatisfiable. */
     };
 
-    /** SMT solver statistics. */
+    /** SMT solver statistics.
+     *
+     *  Solver statistics get accumulted into the class statistics only when the solver is destroyed or the solver's @ref
+     *  resetStatistics method is invoked. */
     struct Stats {
         size_t ncalls;                                  /**< Number of times satisfiable() was called. */
         size_t input_size;                              /**< Bytes of input generated for satisfiable(). */
         size_t output_size;                             /**< Amount of output produced by the SMT solver. */
         size_t memoizationHits;                         /**< Number of times memoization supplied a result. */
         size_t nSolversCreated;                         /**< Number of solvers created. Only for class statistics. */
+        size_t nSolversDestroyed;                       /**< Number of solvers destroyed. Only for class statistics. */
+        double prepareTime;                             /**< Time spent creating assertions before solving. */
+        double solveTime;                               /**< Seconds spent in solver's solve function. */
 
-        Stats(): ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0) {}
+        Stats()
+            : ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0), nSolversDestroyed(0),
+              prepareTime(0.0), solveTime(0.0) {}
     };
 
     /** Set of variables. */
@@ -162,6 +171,9 @@ protected:
         : name_(name), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
         init(linkages);
     }
+    
+public:
+    virtual ~SmtSolver();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,8 +199,6 @@ public:
      *
      *  Returns a new solver, an instance of the best available solver. If no solver is possible then returns null. */
     static SmtSolver* bestAvailable();
-
-    virtual ~SmtSolver() {}
 
     /** Property: Name of solver for debugging.
      *
@@ -423,11 +433,14 @@ public:
 
     /** Property: Statistics across all solvers.
      *
+     *  The class statistics are updated whenever a solver is destroyed or its @ref resetStatistics method is invoked. However,
+     *  the nSolversCreated member is updated as soon as a solver is created.
+     *
      *  The statistics are not reset by this call, but continue to accumulate. */
     static Stats classStatistics();
 
     /** Resets statistics for this solver. */
-    void resetStatistics() { stats = Stats(); }
+    void resetStatistics();
 
     /** Resets statistics for the class.
      *

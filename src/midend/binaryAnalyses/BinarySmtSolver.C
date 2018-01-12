@@ -69,6 +69,12 @@ SmtSolver::init(unsigned linkages) {
     }
 }
 
+SmtSolver::~SmtSolver() {
+    resetStatistics();
+    boost::lock_guard<boost::mutex> lock(classStatsMutex);
+    ++classStats.nSolversDestroyed;
+}
+    
 void
 SmtSolver::reset() {
     stack_.clear();
@@ -179,6 +185,18 @@ SmtSolver::resetClassStatistics() {
     classStats = Stats();
 }
 
+void
+SmtSolver::resetStatistics() {
+    boost::lock_guard<boost::mutex> lock(classStatsMutex);
+    classStats.ncalls += stats.ncalls;
+    classStats.input_size += stats.input_size;
+    classStats.output_size += stats.output_size;
+    classStats.memoizationHits += stats.memoizationHits;
+    classStats.prepareTime += stats.prepareTime;
+    classStats.solveTime += stats.solveTime;
+    stats = Stats();
+}
+
 SmtSolver::Satisfiable
 SmtSolver::triviallySatisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
     reset();
@@ -278,10 +296,6 @@ SmtSolver::checkTrivial() {
 SmtSolver::Satisfiable
 SmtSolver::check() {
     ++stats.ncalls;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        ++classStats.ncalls;
-    }
 
     latestMemoizationId_ = 0;
     clearEvidence();
@@ -298,10 +312,6 @@ SmtSolver::check() {
             retval = found->second;
             latestMemoizationId_ = h;
             ++stats.memoizationHits;
-            {
-                boost::lock_guard<boost::mutex> lock(classStatsMutex);
-                ++classStats.memoizationHits;
-            }
             return retval;
         }
     }
@@ -359,6 +369,7 @@ SmtSolver::checkExe() {
     outputText_ = "";
 
     /* Generate the input file for the solver. */
+    Sawyer::Stopwatch prepareTimer;
     std::vector<SymbolicExpr::Ptr> exprs = assertions();
     Sawyer::FileSystem::TemporaryFile tmpfile;
     Definitions defns;
@@ -368,10 +379,7 @@ SmtSolver::checkExe() {
     int status __attribute__((unused)) = stat(tmpfile.name().string().c_str(), &sb);
     ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        classStats.input_size += sb.st_size;
-    }
+    stats.prepareTime += prepareTimer.stop();
 
     /* Show solver input */
     if (mlog[DEBUG]) {
@@ -386,7 +394,7 @@ SmtSolver::checkExe() {
     }
 
     // Run the solver and slurp up all its standard output
-    Sawyer::Stopwatch timer;
+    Sawyer::Stopwatch solveTimer;
     std::string cmd = getCommand(tmpfile.name().string());
     SAWYER_MESG(mlog[DEBUG]) <<"command: \"" <<StringUtility::cEscape(cmd) <<"\"\n";
     r.output = popen(cmd.c_str(), "r");
@@ -399,13 +407,10 @@ SmtSolver::checkExe() {
         SAWYER_MESG(mlog[DEBUG]) <<(boost::format("%5u") % ++lineNum).str() <<": " <<r.line <<"\n";
         outputText_ += std::string(r.line);
     }
-    stats.output_size += nread;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        classStats.output_size += nread;
-    }
     status = pclose(r.output); r.output = NULL;
-    mlog[DEBUG] <<"solver took " <<timer <<" seconds\n";
+    stats.output_size += nread;
+    stats.solveTime += solveTimer.stop();
+    mlog[DEBUG] <<"solver took " <<solveTimer <<" seconds\n";
     mlog[DEBUG] <<"solver exit status = " <<status <<"\n";
     parsedOutput_ = parseSExpressions(outputText_);
 

@@ -8,6 +8,7 @@
 #include <boost/regex.hpp>
 #include <boost/thread/locks.hpp>
 #include <errno.h>
+#include <Sawyer/Stopwatch.h>
 
 #ifdef _MSC_VER
 #define strtoull _strtoui64
@@ -75,6 +76,7 @@ YicesSolver::checkLib() {
     yices_enable_type_checker(true);
 #endif
 
+    Sawyer::Stopwatch prepareTimer;
     std::vector<SymbolicExpr::Ptr> exprs = assertions();
     Definitions defns;
     termExprs.clear();
@@ -82,10 +84,19 @@ YicesSolver::checkLib() {
     ctx_common_subexpressions(exprs);
     for (std::vector<SymbolicExpr::Ptr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
         ctx_assert(*ei);
+    stats.prepareTime += prepareTimer.stop();
+
+    Sawyer::Stopwatch timer;
     switch (yices_check(context)) {
-        case l_false: return SAT_NO;
-        case l_true:  return SAT_YES;
-        case l_undef: return SAT_UNKNOWN;
+        case l_false:
+            stats.solveTime += timer.stop();
+            return SAT_NO;
+        case l_true:
+            stats.solveTime += timer.stop();
+            return SAT_YES;
+        case l_undef:
+            stats.solveTime += timer.stop();
+            return SAT_UNKNOWN;
     }
     ASSERT_not_reachable("switch statement is incomplete");
 #else

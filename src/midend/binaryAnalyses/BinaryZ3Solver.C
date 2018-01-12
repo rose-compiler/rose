@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 #include <BinaryZ3Solver.h>
 #include <stringify.h>
+#include <Sawyer/Stopwatch.h>
 
 // Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
 #define NO_SOLVER NULL
@@ -70,6 +71,7 @@ Z3Solver::z3Update() {
         ASSERT_not_null(solver_);
         ASSERT_forbid(z3Stack_.empty());
         ASSERT_require(z3Stack_.size() <= nLevels());
+        Sawyer::Stopwatch prepareTimer;
 
         while (z3Stack_.size() < nLevels() || z3Stack_.back().size() < assertions(nLevels()-1).size()) {
 
@@ -101,6 +103,8 @@ Z3Solver::z3Update() {
         for (size_t i=0; i<nLevels(); ++i)
             ASSERT_require(z3Stack_[i].size() == assertions(i).size());
 #endif
+
+        stats.prepareTime += prepareTimer.stop();
     }
 #endif
 }
@@ -111,7 +115,12 @@ Z3Solver::checkLib() {
     
 #ifdef ROSE_HAVE_Z3
     z3Update();
-    switch (solver_->check()) {
+
+    Sawyer::Stopwatch timer;
+    z3::check_result result = solver_->check();
+    stats.solveTime += timer.stop();
+    
+    switch (result) {
         case z3::unsat:
             return SAT_NO;
         case z3::sat:
