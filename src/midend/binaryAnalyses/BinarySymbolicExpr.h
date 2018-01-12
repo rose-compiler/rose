@@ -1171,8 +1171,10 @@ std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
  *  Given an expression, use the specified index to rewrite variables. The index uses expression hashes to look up the
  *  replacement expression, so you can actually provide any replacement value. If the traversal finds a variable which
  *  is not in the index then a new variable is created. The new variable has the same type as the original variable, but
- *  it's name is generated starting at @p nextVariableId and incrementing after each replacement is generated. */
-Ptr renameVariables(const Ptr&, Sawyer::Container::Map<Hash, Ptr> &index /*in,out*/, size_t &nextVariableId /*in,out*/);
+ *  it's name is generated starting at @p nextVariableId and incrementing after each replacement is generated. The optional
+ *  solver is used during the simplification process and may be null. */
+Ptr renameVariables(const Ptr&, Sawyer::Container::Map<Ptr, Ptr> &index /*in,out*/, size_t &nextVariableId /*in,out*/,
+                    SmtSolver *solver);
 
 /** Convert a set to an ite expression. */
 Ptr setToIte(const Ptr&, SmtSolver *solver, const LeafPtr &var = LeafPtr());

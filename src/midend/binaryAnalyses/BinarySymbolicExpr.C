@@ -2698,7 +2698,9 @@ struct RenameVariables {
         } else {
             LeafPtr leaf = input->isLeafNode();
             ASSERT_not_null(leaf);
-            if (leaf->isVariable()) {
+            if (leaf->isNumber()) {
+                retval = leaf;
+            } else if (leaf->isVariable()) {
                 if (!index.getOptional(input).assignTo(retval)) {
                     retval = makeExistingVariable(leaf->nBits(), nextVariableId++, leaf->comment(), leaf->flags());
                     index.insert(input, retval);
