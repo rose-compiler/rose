@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryUnparserBase.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
 #include <stringify.h>
@@ -251,7 +252,8 @@ Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
-
+    using namespace Rose::CommandLine;
+    
     SwitchGroup sg("Unparsing switches");
     sg.name("out");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "

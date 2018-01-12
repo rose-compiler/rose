@@ -1,5 +1,6 @@
 #include <rose.h>
 
+#include <CommandLine.h>                                // ROSE
 #include "integerOps.h"
 
 #include <iostream>
@@ -28,7 +29,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "Generates a program, written in C, on standard output, that has a certain structure specified by the "
              "command-line switches described here.");
 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
     gen.insert(Switch("tree-depth", 't')
                .argument("n", nonNegativeIntegerParser(settings.binaryTreeDepth))
                .doc("Width in bits of the 'if' tree."));

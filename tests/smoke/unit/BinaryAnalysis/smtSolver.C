@@ -6,6 +6,7 @@ static const char *description =
 #include <BinarySmtlibSolver.h>
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 
 using namespace Rose;
@@ -17,11 +18,11 @@ Sawyer::Message::Facility mlog;
 void
 parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
-    Parser p = CommandlineProcessing::createEmptyParser(purpose, description);
+    Parser p = Rose::CommandLine::createEmptyParser(purpose, description);
     p.errorStream(mlog[FATAL]);
     p.doc("Synopsis", "@prop{programName} [@v{switches}]");
 
-    SwitchGroup switches = CommandlineProcessing::genericSwitches();
+    SwitchGroup switches = Rose::CommandLine::genericSwitches();
     switches.name("");
 
     if (!p.with(switches).parse(argc, argv).apply().unreachedArgs().empty()) {
@@ -46,11 +47,11 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&mlog, "tool");
     parseCommandLine(argc, argv);
 
-    if (CommandlineProcessing::genericSwitchArgs.smtSolver == "" ||
-        CommandlineProcessing::genericSwitchArgs.smtSolver == "none") {
+    if (Rose::CommandLine::genericSwitchArgs.smtSolver == "" ||
+        Rose::CommandLine::genericSwitchArgs.smtSolver == "none") {
         BOOST_FOREACH (const SmtSolver::Availability::value_type &node, SmtSolver::availability())
             testSolver(SmtSolver::instance(node.first));
     } else {
-        testSolver(SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver));
+        testSolver(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver));
     }
 }

@@ -4,6 +4,7 @@
 #include "AsmUnparser_compat.h"
 #include "BinaryDebugger.h"
 #include "BinaryLoader.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DisassemblerM68k.h"
 #include "DisassemblerX86.h"
@@ -549,7 +550,7 @@ Engine::partitionerSwitches() {
 Sawyer::CommandLine::SwitchGroup
 Engine::engineSwitches() {
     using namespace Sawyer::CommandLine;
-    SwitchGroup sg = CommandlineProcessing::genericSwitches();
+    SwitchGroup sg = Rose::CommandLine::genericSwitches();
 
     sg.insert(Switch("config")
               .argument("names", listParser(anyParser(settings_.engine.configurationNames), ":"))
@@ -680,8 +681,7 @@ Sawyer::CommandLine::Parser
 Engine::commandLineParser(const std::string &purpose, const std::string &description) {
     using namespace Sawyer::CommandLine;
     Parser parser =
-        CommandlineProcessing::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose,
-                                                 description);
+        CommandLine::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose, description);
     parser.groupNameSeparator("-");                     // ROSE defaults to ":", which is sort of ugly
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen_names}");
     parser.doc("Specimens", specimenNameDocumentation());

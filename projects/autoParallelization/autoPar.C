@@ -220,12 +220,12 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
 static std::vector<std::string> commandline_processing(std::vector< std::string > & argvList)
 {
   using namespace Sawyer::CommandLine;
-  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+  Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);
   p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
   p.longPrefix("-");
 
 // initialize generic Sawyer switches: assertion, logging, threads, etc.
-  p.with(CommandlineProcessing::genericSwitches()); 
+  p.with(Rose::CommandLine::genericSwitches()); 
 
 // initialize this tool's switches
   p.with(commandLineSwitches());  

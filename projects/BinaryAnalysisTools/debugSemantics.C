@@ -5,6 +5,7 @@
 #include <BinaryNoOperation.h>
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
+#include <CommandLine.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
@@ -249,7 +250,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
 static SmtSolver *
 makeSolver(const Settings &settings) {
-    return SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver);
+    return SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 }
 
 static BaseSemantics::SValuePtr

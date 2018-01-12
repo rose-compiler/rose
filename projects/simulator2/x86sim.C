@@ -7,6 +7,7 @@
 #include <RSIM_Private.h>
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
+#include <CommandLine.h>                                // ROSE command-line
 #include <RSIM_Debugger.h>                              // Interactive debugger for the simulator
 #include <RSIM_ColdFire.h>                              // FreeScale ColdFire/m68k naked hardware simulator
 #include <RSIM_Linux32.h>                               // Operating system simulation for Linux-x86
@@ -151,7 +152,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     return parser
         .errorStream(::mlog[FATAL])
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .with(sg)                                       // tool-specific
         .with(RSIM_Simulator::commandLineSwitches(settings.simSettings))
         .parse(argc, argv).apply().unreachedArgs();

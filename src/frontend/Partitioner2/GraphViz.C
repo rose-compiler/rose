@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
@@ -180,7 +181,7 @@ CfgEmitter::init() {
 
     // Instance initialization
     if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
-        SmtSolver *solver = SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver);
+        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
         size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);

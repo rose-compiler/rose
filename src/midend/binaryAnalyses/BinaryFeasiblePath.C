@@ -3,6 +3,7 @@
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
 #include <BinaryYicesSolver.h>
+#include <CommandLine.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -437,7 +438,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
     }
 
     // Create the RiscOperators and Dispatcher.
-    SmtSolver *solver = SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver);
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, settings_.searchMode, solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);

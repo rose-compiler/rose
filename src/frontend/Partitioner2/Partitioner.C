@@ -8,9 +8,10 @@
 
 #include "AsmUnparser_compat.h"
 #include "BinaryUnparserBase.h"
-#include "SymbolicSemantics2.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
 #include "RecursionCounter.h"
+#include "SymbolicSemantics2.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
@@ -29,14 +30,14 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 Partitioner::Partitioner()
-    : solver_(SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
       assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
       progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);
 }
 
 Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
-    : memoryMap_(map), solver_(SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver)),
+    : memoryMap_(map), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
       autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
       semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(disassembler, map);
@@ -2216,7 +2217,7 @@ struct CallingConventionWorker {
 
 void
 Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
