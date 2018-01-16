@@ -57,6 +57,8 @@ namespace ArithemeticIntensityMeasurement
       void updateTotal() { // if (total_count == 0 ) 
                           total_count = plus_count + minus_count + multiply_count + divide_count ; }
 
+      void  setErrorCode(int i) {error_code = i; };
+
       void printInfo(std::string comment="");
       // convert the counter information to a string
       std::string toString(std::string comment="");
@@ -80,6 +82,7 @@ namespace ArithemeticIntensityMeasurement
       // default constructor required
       FPCounters(SgLocatedNode *n=NULL): node(n)
     {
+      error_code = 0;
       plus_count = 0;
       minus_count = 0;
       multiply_count = 0;
@@ -119,6 +122,9 @@ namespace ArithemeticIntensityMeasurement
 
     private:
       SgLocatedNode* node ; //associated AST node
+
+       //0 means no error, 1 means side effect analysis failed, mostly due to function call
+      int error_code;  // It is possible our analysis fails to estimate the numbers
 
       // Floating point operation counters
       int plus_count;
@@ -193,8 +199,12 @@ namespace ArithemeticIntensityMeasurement
   bool parse_fp_counter_clause(fp_operation_kind_enum* fp_op_kind, int *op_count);
   FPCounters* parse_aitool_pragma (SgPragmaDeclaration* pragmaDecl);
 
-  std::pair <SgExpression*, SgExpression*> 
-     CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = false, bool includeIntType = false);
+
+  // Count the load and store bytes of the code rooted at input node. If fails , return false. 
+  // Otherwise return true and the two expressions calculating save load/store bytes.
+  bool CountLoadStoreBytes (SgLocatedNode* input,  std::pair <SgExpression*, SgExpression*> & result, 
+      bool includeScalars = false, bool includeIntType = false); 
+
   // Create load/store = loads + iteration * load/store_count_per_iteration
   // lhs_exp = lhs_exp + iter_count_exp * per_iter_bytecount_exp
   SgExprStatement* buildByteCalculationStmt(SgVariableSymbol * lhs_sym, SgVariableSymbol* iter_count_sym, SgExpression* per_iter_bytecount_exp);

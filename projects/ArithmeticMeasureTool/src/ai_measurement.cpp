@@ -212,6 +212,9 @@ namespace ArithemeticIntensityMeasurement
     }
     else
       ss<< "NULL node"<<endl;
+   // if non-zero, send out error code   
+    if (error_code!=0)
+      ss<<"Error Code:"<<error_code<<endl;
 
     ss<<"\tFP_plus:"<< plus_count<<endl;
     ss<<"\tFP_minus:"<< minus_count<<endl;
@@ -375,9 +378,12 @@ namespace ArithemeticIntensityMeasurement
     load_bytes_int = a1.newValue;
     store_bytes_int = a2.newValue;
     int total_bytes = load_bytes_int + store_bytes_int;
+
     if (total_bytes !=0)
        intensity = (float)total_count/total_bytes;
-    else
+    else if (total_count ==0 )
+       intensity = 0.0 ;  
+    else  //  non-zero_FP operations divided by zero mem access bytes
        intensity = 99999.9;  //max value
     return intensity;
   }
@@ -484,6 +490,10 @@ namespace ArithemeticIntensityMeasurement
   {
     int rt =0; 
     assert (t!=NULL);
+
+    // strip off typedefs, reference, modifiers
+    t = t->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+
     // Fortran allow type_kind for types, read this first
     if (SgExpression* kind_exp =t->get_type_kind() )
     {
@@ -783,9 +793,12 @@ namespace ArithemeticIntensityMeasurement
   //    2.  Group accesses based on the types (same type?  increment the same counter to shorten expression length)
   //    4.  Iterate on the results to generate expression like  2*sizeof(float) + 5* sizeof(double)
   // As an approximate, we use simple analysis here assuming no function calls.
-  std::pair <SgExpression*, SgExpression*> CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars /* = false */, bool includeIntType /* = false */)
+  //
+  // Return false if side effect analysis fails.
+  bool CountLoadStoreBytes (SgLocatedNode* input, 
+      std::pair <SgExpression*, SgExpression*>& result,
+    bool includeScalars /* = false */, bool includeIntType /* = false */)
   {
-    std::pair <SgExpression*, SgExpression*> result; 
     assert (input != NULL);
 
     // the input is essentially the loop body, a statement
@@ -821,6 +834,7 @@ namespace ArithemeticIntensityMeasurement
     {
       if (debug)
         cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
+      return false;
     }
 
     std::set<SgInitializedName*>::iterator it;
@@ -847,19 +861,27 @@ namespace ArithemeticIntensityMeasurement
       writeVars =  filterVariables (writeVars, scope);
     result.first =  calculateBytes (readVars, lbody, true);
     result.second =  calculateBytes (writeVars, lbody, false);
-    return result;
+
+    return true;
   }
 
   // count memory load/store operations, store into attribute FPCounters
   void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= false*/, bool includeIntType /*= false */)
   {
     ROSE_ASSERT (input != NULL);
-    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (input, includeScalars, includeIntType);
-    FPCounters* mycounters = getFPCounters (input); 
-    mycounters->setLoadBytes (load_store_count_pair.first);
-    mycounters->setStoreBytes (load_store_count_pair.second);
-  }
+    std::pair <SgExpression*, SgExpression*> load_store_count_pair; 
+    bool success = CountLoadStoreBytes (input, load_store_count_pair, includeScalars, includeIntType);
 
+    // retrieve the attribute attached to input, creating one if it does not exist
+    FPCounters* mycounters = getFPCounters (input); 
+    if (!success)
+      mycounters->setErrorCode(1);
+    else
+    {
+      mycounters->setLoadBytes (load_store_count_pair.first);
+      mycounters->setStoreBytes (load_store_count_pair.second);
+    }
+  }
  
   FPCounters*  calculateArithmeticIntensity(SgLocatedNode* body, bool includeScalars /*= false */, bool includeIntType /*= false */)
   {
@@ -1164,7 +1186,9 @@ namespace ArithemeticIntensityMeasurement
     // Obtain per-iteration load/store bytes calculation expressions
     // excluding scalar types to match the manual version
     //CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = false, bool includeIntType = false);
-    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (loop_body, false, true);
+    std::pair <SgExpression*, SgExpression*> load_store_count_pair ; 
+
+    CountLoadStoreBytes (loop_body, load_store_count_pair, false, true);
 
     // chstores=chstores+chiterations*8
     if (load_store_count_pair.second!= NULL)
@@ -1173,6 +1197,7 @@ namespace ArithemeticIntensityMeasurement
       insertStatementAfter (loop, store_byte_stmt);
       attachComment(store_byte_stmt,"      aitool generated Stores counting statement ...");
     }
+
     // handle loads stmt 2nd so it can be inserted as the first after the loop
     // build  chloads=chloads+chiterations*2*8
     if (load_store_count_pair.first != NULL)
