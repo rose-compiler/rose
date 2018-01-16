@@ -293,6 +293,27 @@ SmtSolver::checkTrivial() {
     return SAT_UNKNOWN;
 }
 
+std::vector<SymbolicExpr::Ptr>
+SmtSolver::normalizeVariables(const std::vector<SymbolicExpr::Ptr> &exprs, SymbolicExpr::ExprExprHashMap &index /*out*/) {
+    index.clear();
+    size_t varCounter = 0;
+    std::vector<SymbolicExpr::Ptr> retval;
+    retval.reserve(exprs.size());
+    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+        retval.push_back(expr->renameVariables(index /*in,out*/, varCounter /*in,out*/, NO_SOLVER));
+    return retval;
+}
+
+std::vector<SymbolicExpr::Ptr>
+SmtSolver::undoNormalization(const std::vector<SymbolicExpr::Ptr> &exprs, const SymbolicExpr::ExprExprHashMap &norm) {
+    SymbolicExpr::ExprExprHashMap denorm = norm.invert();
+    std::vector<SymbolicExpr::Ptr> retval;
+    retval.reserve(exprs.size());
+    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+        retval.push_back(expr->substituteMultiple(denorm, NO_SOLVER));
+    return retval;
+}
+
 SmtSolver::Satisfiable
 SmtSolver::check() {
     ++stats.ncalls;
@@ -305,8 +326,13 @@ SmtSolver::check() {
 
     // Have we seen this before?
     SymbolicExpr::Hash h = 0;
+    latestMemoizationRewrite_.clear();
+    latestMemoizationId_ = 0;
     if (doMemoization_) {
-        h = SymbolicExpr::hash(assertions());
+        // Normalize the expressions by renumbering all variables. The renumbering is saved in the latestMemoizationRewrites_
+        // data member so the mapping can be reversed when parsing evidence.
+        std::vector<SymbolicExpr::Ptr> rewritten = normalizeVariables(assertions(), latestMemoizationRewrite_/*out*/);
+        h = SymbolicExpr::hash(rewritten);
         Memoization::iterator found = memoization_.find(h);
         if (found != memoization_.end()) {
             retval = found->second;
@@ -782,6 +808,38 @@ SmtSolver::selfTest() {
                 throw;                                  // an error we don't expect
             }
         }
+    }
+
+    // Test that memoization works, including the ability to obtain the evidence afterward.
+    if (memoization()) {
+        E var1 = makeVariable(8);
+        E var2 = makeVariable(8);
+        ASSERT_always_forbid(var1->isEquivalentTo(var2));
+        E expr1 = makeEq(var1, makeInteger(8, 123), NO_SOLVER);
+        E expr2 = makeEq(var2, makeInteger(8, 123), NO_SOLVER);
+        ASSERT_always_forbid(expr1->isEquivalentTo(expr2));
+
+        Satisfiable sat = satisfiable(expr1);
+        ASSERT_always_require(SAT_YES == sat);
+        std::vector<std::string> evid1names = evidenceNames();
+        ASSERT_always_require(evid1names.size() == 1);
+        ASSERT_always_require(evid1names[0] == var1->isLeafNode()->toString());
+        E evid1 = evidenceForName(evid1names[0]);
+        ASSERT_always_not_null(evid1);
+        ASSERT_always_require(evid1->isLeafNode());
+        ASSERT_always_require(evid1->isLeafNode()->isNumber());
+        ASSERT_always_require(evid1->isLeafNode()->toInt() == 123);
+
+        sat = satisfiable(expr2);
+        ASSERT_always_require(SAT_YES == sat);
+        std::vector<std::string> evid2names = evidenceNames();
+        ASSERT_always_require(evid2names.size() == 1);
+        ASSERT_always_require(evid2names[0] == var2->isLeafNode()->toString());
+        E evid2 = evidenceForName(evid2names[0]);
+        ASSERT_always_not_null(evid2);
+        ASSERT_always_require(evid2->isLeafNode());
+        ASSERT_always_require(evid2->isLeafNode()->isNumber());
+        ASSERT_always_require(evid2->isLeafNode()->toInt() == 123);
     }
 }
 

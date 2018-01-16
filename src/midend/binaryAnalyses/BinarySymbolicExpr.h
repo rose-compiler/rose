@@ -14,6 +14,7 @@
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/unordered_map.hpp>
 #include <cassert>
 #include <inttypes.h>
 #include <Sawyer/Attribute.h>
@@ -103,6 +104,7 @@ std::string toStr(Operator);
 class Node;
 class Interior;
 class Leaf;
+class ExprExprHashMap;
 
 /** Shared-ownership pointer to an expression @ref Node. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<Node> Ptr;
@@ -311,6 +313,24 @@ public:
      *  expression is returned. The matching of @p from to sub-parts of this expression uses structural equivalence, the
      *  @ref isEquivalentTo predicate. The @p from and @p to expressions must have the same width. */
     virtual Ptr substitute(const Ptr &from, const Ptr &to, SmtSolver*) = 0;
+
+    /** Rewrite expression by substituting subexpressions.
+     *
+     *  This expression is rewritten by doing a depth-first traversal. At each step of the traversal, the subexpression is
+     *  looked up by hash in the supplied substitutions table. If found, a new expression is created using the value found in
+     *  the table and the traversal does not descend into the new expression.  If no substitutions were performed then @p this
+     *  expression is returned, otherwise a new expression is returned. An optional solver, which may be null, is used during
+     *  the simplification step. */
+    Ptr substituteMultiple(const ExprExprHashMap &substitutions, SmtSolver *solver);
+
+    /** Rewrite using lowest numbered variable names.
+     *
+     *  Given an expression, use the specified index to rewrite variables. The index uses expression hashes to look up the
+     *  replacement expression. If the traversal finds a variable which is not in the index then a new variable is created. The
+     *  new variable has the same type as the original variable, but it's name is generated starting at @p nextVariableId and
+     *  incrementing after each replacement is generated. The optional solver is used during the simplification process and may
+     *  be null. */
+    Ptr renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId /*in,out*/, SmtSolver *solver);
 
     /** Returns true if the expression is a known numeric value.
      *
@@ -568,11 +588,29 @@ public:
     }
 };
 
+struct ExprExprHashMapHasher {
+     size_t operator()(const Ptr &expr) const {
+        return expr->hash();
+    }
+};
+
+struct ExprExprHashMapCompare {
+    bool operator()(const Ptr &a, const Ptr &b) const {
+        return a->isEquivalentTo(b);
+    }
+};
 
 /** Compare two expressions for STL containers. */
 class ExpressionLessp {
 public:
     bool operator()(const Ptr &a, const Ptr &b);
+};
+
+/** Mapping from hash to expression. */
+class ExprExprHashMap: public boost::unordered_map<SymbolicExpr::Ptr, SymbolicExpr::Ptr,
+                                                   ExprExprHashMapHasher, ExprExprHashMapCompare> {
+public:
+    ExprExprHashMap invert() const;
 };
 
 /** Set of expressions. */
@@ -1165,16 +1203,6 @@ Ptr makeZerop(const Ptr &a, SmtSolver *solver, const std::string &comment="", un
 
 std::ostream& operator<<(std::ostream &o, Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
-
-/** Rewrite using lowest numbered variable names.
- *
- *  Given an expression, use the specified index to rewrite variables. The index uses expression hashes to look up the
- *  replacement expression, so you can actually provide any replacement value. If the traversal finds a variable which
- *  is not in the index then a new variable is created. The new variable has the same type as the original variable, but
- *  it's name is generated starting at @p nextVariableId and incrementing after each replacement is generated. The optional
- *  solver is used during the simplification process and may be null. */
-Ptr renameVariables(const Ptr&, Sawyer::Container::Map<Ptr, Ptr> &index /*in,out*/, size_t &nextVariableId /*in,out*/,
-                    SmtSolver *solver);
 
 /** Convert a set to an ite expression. */
 Ptr setToIte(const Ptr&, SmtSolver *solver, const LeafPtr &var = LeafPtr());

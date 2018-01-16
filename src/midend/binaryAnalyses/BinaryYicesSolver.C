@@ -63,6 +63,7 @@ YicesSolver::available_linkage() {
 SmtSolver::Satisfiable
 YicesSolver::checkLib() {
     requireLinkage(LM_LIBRARY);
+    ASSERT_forbid(memoization());
 
 #ifdef ROSE_HAVE_LIBYICES
     if (!context) {
@@ -120,6 +121,7 @@ void
 YicesSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns)
 {
     requireLinkage(LM_EXECUTABLE);
+    ASSERT_forbid(memoization());
     Definitions *allocated = NULL;
     if (!defns)
         defns = allocated = new Definitions;
@@ -160,6 +162,7 @@ YicesSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> 
 
 void
 YicesSolver::parseEvidence() {
+    ASSERT_forbid(memoization);
     boost::regex varNameRe("v\\d+");
     boost::regex memNameRe("m\\d+");
     boost::regex binaryConstantRe("0b[01]+");

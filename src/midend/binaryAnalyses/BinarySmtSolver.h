@@ -126,6 +126,7 @@ protected:
     Memoization memoization_;                           // cached of previously computed results
     bool doMemoization_;                                // use the memoization_ table?
     SymbolicExpr::Hash latestMemoizationId_;            // key for last found or inserted memoization, or zero
+    SymbolicExpr::ExprExprHashMap latestMemoizationRewrite_; // variables rewritten, need to be undone when parsing evidence
 
     // Statistics
     static boost::mutex classStatsMutex;
@@ -144,17 +145,19 @@ private:
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(stack_);
-        // linkage_             -- not serialized
-        // termNames_           -- not serialized
-        // outputText_          -- not serialized
-        // parsedOutput_        -- not serialized
-        // termNames_           -- not serialized
-        // memoization_         -- not serialized
-        // doMemoization_       -- not serialized
-        // classStatsMutex      -- not serialized
-        // classStats           -- not serialized
-        // stats                -- not serialized
-        // mlog                 -- not serialized
+        // linkage_                  -- not serialized
+        // termNames_                -- not serialized
+        // outputText_               -- not serialized
+        // parsedOutput_             -- not serialized
+        // termNames_                -- not serialized
+        // memoization_              -- not serialized
+        // doMemoization_            -- not serialized
+        // latestMemoizationId_      -- not serialized
+        // latestMemoizationRewrite_ -- not serialized
+        // classStatsMutex           -- not serialized
+        // classStats                -- not serialized
+        // stats                     -- not serialized
+        // mlog                      -- not serialized
     }
 #endif
 
@@ -490,6 +493,25 @@ protected:
     /** Parses evidence of satisfiability.  Some solvers can emit information about what variable bindings satisfy the
      *  expression.  This information is parsed by this function and added to a mapping of variable to value. */
     virtual void parseEvidence() {};
+
+    /** Normalize expressions by renaming variables.
+     *
+     *  This is used during memoization to rename all the variables. It performs a depth-first search and renames each variable
+     *  it encounters. The variables are renumbered starting at zero.  The return value is a vector new new expressions, some
+     *  of which may be the unmodified original expressions if there were no variables.  The @p index is also a return value
+     *  which indicates how original variables were mapped to new variables. */
+    static std::vector<SymbolicExpr::Ptr> normalizeVariables(const std::vector<SymbolicExpr::Ptr>&,
+                                                             SymbolicExpr::ExprExprHashMap &index /*out*/);
+
+    /** Undo the normalizations that were performed earlier.
+     *
+     *  Each of the specified expressions are rewritten by undoing the variable renaming that was done by @ref
+     *  normalizeVariables. The @p index is the same index as returned by @ref normalizeVariables, although the input
+     *  expressions need not be those same expressions. For each input expression, the expression is rewritten by substituting
+     *  the inverse of the index. That is, a depth first search is performed on the expression and if the subexpression matches
+     *  a value of the index, then it's replaced by the corresponding key. */
+    static std::vector<SymbolicExpr::Ptr> undoNormalization(const std::vector<SymbolicExpr::Ptr>&,
+                                                            const SymbolicExpr::ExprExprHashMap &index);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1192,12 +1192,19 @@ SmtlibSolver::parseEvidence() {
     requireLinkage(LM_EXECUTABLE);
     boost::regex varNameRe("v\\d+");
 
-    // If memoization is being used and we have a previous result, then use the previous result.
+    // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
+    // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
+    // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
+    // caller.
     SymbolicExpr::Hash memoId = latestMemoizationId();
     if (memoId > 0) {
         MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
         if (found != memoizedEvidence.end()) {
-            evidence = found->second;
+            SymbolicExpr::ExprExprHashMap denorm = latestMemoizationRewrite_.invert();
+            evidence.clear();
+            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
+                evidence.insert(node.key()->substituteMultiple(denorm, NO_SOLVER),
+                                node.value()->substituteMultiple(denorm, NO_SOLVER));
             return;
         }
     }
@@ -1255,9 +1262,14 @@ SmtlibSolver::parseEvidence() {
         }
     }
 
-    // Cache the evidence
-    if (memoId > 0)
-        memoizedEvidence[memoId] = evidence;
+    // Cache the evidence. We must cache using the normalized form of expressions.
+    if (memoId > 0) {
+        ExprExprMap &me = memoizedEvidence[memoId];
+        BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
+            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER),
+                      node.value()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER));
+        }
+    }
 }
 
 SymbolicExpr::Ptr

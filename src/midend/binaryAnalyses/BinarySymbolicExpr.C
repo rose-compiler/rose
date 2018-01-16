@@ -165,6 +165,96 @@ hash(const std::vector<Ptr> &exprs) {
     return retval;
 }
 
+struct VariableRenamer {
+    ExprExprHashMap &index;
+    size_t &nextVariableId;
+    SmtSolver *solver;                                  // may be null
+
+    VariableRenamer(ExprExprHashMap &index, size_t &nextVariableId, SmtSolver *solver)
+        : index(index), nextVariableId(nextVariableId), solver(solver) {}
+    
+    Ptr rename(const Ptr &input) {
+        ASSERT_not_null(input);
+        Ptr retval;
+        if (InteriorPtr inode = input->isInteriorNode()) {
+            bool anyChildRenamed = false;
+            Nodes newChildren;
+            newChildren.reserve(inode->nChildren());
+            BOOST_FOREACH (const Ptr &child, inode->children()) {
+                Ptr newChild = rename(child);
+                if (newChild != child)
+                    anyChildRenamed = true;
+                newChildren.push_back(newChild);
+            }
+            if (!anyChildRenamed) {
+                retval = input;
+            } else {
+                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+            }
+        } else {
+            LeafPtr leaf = input->isLeafNode();
+            ASSERT_not_null(leaf);
+            if (leaf->isNumber()) {
+                retval = leaf;
+            } else if (leaf->isVariable()) {
+                ExprExprHashMap::iterator found = index.find(input);
+                if (found != index.end()) {
+                    retval = found->second;
+                } else {
+                    retval = makeExistingVariable(leaf->nBits(), nextVariableId++, leaf->comment(), leaf->flags());
+                    index[input] = retval;
+                }
+            } else if (leaf->isMemory()) {
+                ExprExprHashMap::iterator found = index.find(input);
+                if (found != index.end()) {
+                    retval = found->second;
+                } else {
+                    retval = makeExistingMemory(leaf->domainWidth(), leaf->nBits(), nextVariableId++, leaf->comment(),
+                                                leaf->flags());
+                    index[input] = retval;
+                }
+            }
+        }
+        ASSERT_not_null(retval);
+        return retval;
+    }
+};
+
+struct Substituter {
+    const ExprExprHashMap &substitutions;
+    SmtSolver *solver;
+
+    Substituter(const ExprExprHashMap &substitutions, SmtSolver *solver)
+        : substitutions(substitutions), solver(solver) {}
+
+    Ptr substitute(const Ptr &input) {
+        ASSERT_not_null(input);
+        Ptr retval;
+        ExprExprHashMap::const_iterator found = substitutions.find(input);
+        if (found != substitutions.end()) {
+            retval = found->second;
+        } else if (InteriorPtr inode = input->isInteriorNode()) {
+            bool anyChildChanged = false;
+            Nodes newChildren;
+            newChildren.reserve(inode->nChildren());
+            BOOST_FOREACH (const Ptr &child, inode->children()) {
+                Ptr newChild = substitute(child);
+                if (newChild != child)
+                    anyChildChanged = true;
+                newChildren.push_back(newChild);
+            }
+            if (!anyChildChanged) {
+                retval = input;
+            } else {
+                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+            }
+        } else {
+            retval = input;
+        }
+        ASSERT_not_null(retval);
+        return retval;
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base node
@@ -207,6 +297,18 @@ Node::getVariables() {
     } t1;
     depthFirstTraversal(t1);
     return t1.vars;
+}
+
+Ptr
+Node::renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId, SmtSolver *solver) {
+    VariableRenamer renamer(index, nextVariableId, solver);
+    return renamer.rename(this->sharedFromThis());
+}
+
+Ptr
+Node::substituteMultiple(const ExprExprHashMap &substitutions, SmtSolver *solver) {
+    Substituter substituter(substitutions, solver);
+    return substituter.substitute(this->sharedFromThis());
 }
 
 struct Hasher: Visitor {
@@ -2645,6 +2747,18 @@ Leaf::depthFirstTraversal(Visitor &v) {
     return retval;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      ExprExprHashMap
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ExprExprHashMap
+ExprExprHashMap::invert() const {
+    ExprExprHashMap retval;
+    BOOST_FOREACH (const ExprExprHashMap::value_type &node, *this)
+        retval[node.second] = node.first;
+    return retval;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Free functions of the API
@@ -2668,65 +2782,6 @@ std::vector<Ptr>
 findCommonSubexpressions(const std::vector<Ptr> &exprs) {
     return findCommonSubexpressions(exprs.begin(), exprs.end());
 }
-
-struct RenameVariables {
-    Sawyer::Container::Map<Ptr, Ptr> &index;
-    size_t &nextVariableId;
-    SmtSolver *solver;                                  // may be null
-
-    RenameVariables(Sawyer::Container::Map<Ptr, Ptr> &index, size_t &nextVariableId, SmtSolver *solver)
-        : index(index), nextVariableId(nextVariableId), solver(solver) {}
-    
-    Ptr rename(const Ptr &input) {
-        ASSERT_not_null(input);
-        Ptr retval;
-        if (InteriorPtr inode = input->isInteriorNode()) {
-            bool anyChildRenamed = false;
-            Nodes newChildren;
-            newChildren.reserve(inode->nChildren());
-            BOOST_FOREACH (const Ptr &child, inode->children()) {
-                Ptr newChild = rename(child);
-                if (newChild != child)
-                    anyChildRenamed = true;
-                newChildren.push_back(newChild);
-            }
-            if (!anyChildRenamed) {
-                retval = input;
-            } else {
-                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
-            }
-        } else {
-            LeafPtr leaf = input->isLeafNode();
-            ASSERT_not_null(leaf);
-            if (leaf->isNumber()) {
-                retval = leaf;
-            } else if (leaf->isVariable()) {
-                if (!index.getOptional(input).assignTo(retval)) {
-                    retval = makeExistingVariable(leaf->nBits(), nextVariableId++, leaf->comment(), leaf->flags());
-                    index.insert(input, retval);
-                }
-            } else if (leaf->isMemory()) {
-                if (!index.getOptional(input).assignTo(retval)) {
-                    retval = makeExistingMemory(leaf->domainWidth(), leaf->nBits(), nextVariableId++, leaf->comment(),
-                                                leaf->flags());
-                    index.insert(input, retval);
-                }
-            }
-        }
-        ASSERT_not_null(retval);
-        return retval;
-    }
-};
-
-Ptr
-renameVariables(const Ptr &input, Sawyer::Container::Map<Ptr, Ptr> &index /*in,out*/, size_t &nextVariableId,
-                SmtSolver *solver) {
-    ASSERT_not_null(input);
-    RenameVariables renamer(index, nextVariableId, solver);
-    return renamer.rename(input);
-}
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Factory functions

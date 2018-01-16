@@ -49,6 +49,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
         // ctx_         -- not serialized
         // solver_      -- not serialized
+        // z3Stack_     -- not serialized
         // ctxCses_     -- not serialized
         // ctxVarDecls_ -- not serialized
     }

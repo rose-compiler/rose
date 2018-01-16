@@ -974,12 +974,20 @@ Z3Solver::parseEvidence() {
         return SmtlibSolver::parseEvidence();
 
 #ifdef ROSE_HAVE_Z3
-    // If memoization is being used and we have a previous result, then use the previous result.
+    // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
+    // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
+    // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
+    // caller.
     SymbolicExpr::Hash memoId = latestMemoizationId();
     if (memoId > 0) {
         MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
         if (found != memoizedEvidence.end()) {
-            evidence = found->second;
+            evidence.clear();
+            SymbolicExpr::ExprExprHashMap undo = latestMemoizationRewrite_.invert();
+            evidence.clear();
+            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
+                evidence.insert(node.key()->substituteMultiple(undo, NO_SOLVER),
+                                node.value()->substituteMultiple(undo, NO_SOLVER));
             return;
         }
     }
@@ -1019,16 +1027,20 @@ Z3Solver::parseEvidence() {
             mlog[WARN] <<"cannot parse evidence expression for " <<*var <<"\n";
             continue;
         }
-        
+
         ASSERT_not_null(var);
         ASSERT_not_null(val);
         evidence.insert(var, val);
     }
 
-    // Cache the evidence
-    if (memoId > 0)
-        memoizedEvidence[memoId] = evidence;
-
+    // Cache the evidence. We need to cache the evidence in terms of the normalized variable names.
+    if (memoId > 0) {
+        ExprExprMap &me = memoizedEvidence[memoId];
+        BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
+            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER),
+                      node.value()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER));
+        }
+    }
 #else
     ASSERT_not_reachable("z3 not enabled");
 #endif
