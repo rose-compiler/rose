@@ -18613,7 +18613,8 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   // Actual side effect analysis
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
-    cerr<<"Warning: failed in side effect analysis within SageInterface::collectReadWriteRefs()!"<<endl;
+    if(getProject()->get_verbose()>1)
+     cerr<<"Warning: failed in side effect analysis within SageInterface::collectReadWriteRefs()!"<<endl;
     //ROSE_ASSERT (false);
     return false;
   }
