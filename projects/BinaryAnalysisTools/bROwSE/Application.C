@@ -15,6 +15,7 @@
 #include <bROwSE/WSplash.h>
 #include <bROwSE/WStatus.h>
 #include <bROwSE/WStrings.h>
+#include <CommandLine.h>                                // ROSE
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
 #include <Partitioner2/Modules.h>                       // ROSE
@@ -52,7 +53,7 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
     using namespace Sawyer::CommandLine;
 
     // Generic switches
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
     gen.insert(Switch("config")
                .argument("names", listParser(anyParser(settings.configurationNames), ":"))
                .whichValue(SAVE_ALL)

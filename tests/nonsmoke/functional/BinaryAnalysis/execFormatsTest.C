@@ -71,13 +71,46 @@ struct AstChecker: public AstPrePostProcessing {
     }
 };
 
+class UnparseFileName: public AstSimpleProcessing {
+    std::string name;
+
+public:
+    explicit UnparseFileName(const std::string &name)
+        : name(name) {}
+
+    void visit(SgNode *node) {
+        if (SgFile *file = isSgFile(node))
+            file->set_unparse_output_filename(name);
+        if (SgAsmGenericFile *asmfile = isSgAsmGenericFile(node))
+            asmfile->set_name(name);
+    }
+};
+
+void
+setUnparseFileName(SgProject *project, const std::string &unparseFileName) {
+    UnparseFileName visitor(unparseFileName);
+    visitor.traverse(project, preorder);
+}
 
 int
 main(int argc, char *argv[])
 {
-
+    std::string unparseFileName;
+    for (int i=1; i<argc; ++i) {
+        if (strcmp(argv[i], "-o") == 0 && i+1 < argc) {
+            unparseFileName = argv[i+1];
+            memcpy(argv+i, argv+i+2, (argc-(i+1))*sizeof(argv[0]));// don't forget to move argv[argc]
+            argc -= 2;
+            break;
+        }
+    }
+    
     SgProject *project= frontend(argc,argv);
 
+    if (!unparseFileName.empty()) {
+        setUnparseFileName(project, unparseFileName);
+    }
+    
     // Check AST parent/child consistency straight out of the parser
     {
         std::ostringstream ss;

@@ -59,7 +59,7 @@ public:
      *  The solver will be named "Yices" (see @ref name property) and will use the library linkage if the Yices library
      *  is present, otherwise the executable linkage. If neither is available then an @c SmtSolver::Exception is thrown. */
     explicit YicesSolver(unsigned linkages = LM_ANY)
-        : SmtSolver("Yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {}
+        : SmtSolver("yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {}
 
     /** Returns a bit vector of linkage capabilities.
      *

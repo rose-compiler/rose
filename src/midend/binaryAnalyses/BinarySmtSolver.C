@@ -55,9 +55,9 @@ SmtSolver::init(unsigned linkages) {
     stack_.push_back(std::vector<SymbolicExpr::Ptr>());
 
     if (linkage_ == LM_LIBRARY) {
-        name_ = name_ + std::string(name_.empty() ? "" : " ") + "library";
+        name_ = std::string(name_.empty()?"noname":name_) + "-lib";
     } else if (linkage_ == LM_EXECUTABLE) {
-        name_ = name_ + std::string(name_.empty() ? "" : " ") + "executable";
+        name_ = std::string(name_.empty()?"noname":name_) + "-exe";
     }
 }
 
@@ -74,6 +74,35 @@ SmtSolver::clearEvidence() {
     outputText_ = "";
     parsedOutput_.clear();
     termNames_.clear();
+}
+
+// class method
+SmtSolver::Availability
+SmtSolver::availability() {
+    SmtSolver::Availability retval;
+    retval.insert(std::make_pair(std::string("z3-lib"), (Z3Solver::availableLinkages() & LM_LIBRARY) != 0));
+    retval.insert(std::make_pair(std::string("z3-exe"), (Z3Solver::availableLinkages() & LM_EXECUTABLE) != 0));
+    retval.insert(std::make_pair(std::string("yices-lib"), (YicesSolver::availableLinkages() & LM_LIBRARY) != 0));
+    retval.insert(std::make_pair(std::string("yices-exe"), (YicesSolver::availableLinkages() & LM_EXECUTABLE) != 0));
+    return retval;
+}
+
+// class methd
+SmtSolver*
+SmtSolver::instance(const std::string &name) {
+    if ("" == name || "none" == name)
+        return NULL;
+    if ("best" == name)
+        return bestAvailable();
+    if ("z3-lib" == name)
+        return new Z3Solver(LM_LIBRARY);
+    if ("z3-exe" == name)
+        return new Z3Solver(LM_EXECUTABLE);
+    if ("yices-lib" == name)
+        return new YicesSolver(LM_LIBRARY);
+    if ("yices-exe" == name)
+        return new YicesSolver(LM_EXECUTABLE);
+    throw Exception("unrecognized SMT solver name \"" + StringUtility::cEscape(name) + "\"");
 }
 
 // class method

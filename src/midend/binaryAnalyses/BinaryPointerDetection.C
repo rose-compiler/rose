@@ -3,6 +3,7 @@
 
 #include <AsmUnparser_compat.h>
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <MemoryCellList.h>
@@ -46,7 +47,7 @@ Analysis::init(Disassembler *disassembler) {
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SmtSolver *solver = NULL;
+        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);

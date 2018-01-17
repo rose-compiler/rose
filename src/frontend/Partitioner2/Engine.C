@@ -4,6 +4,7 @@
 #include "AsmUnparser_compat.h"
 #include "BinaryDebugger.h"
 #include "BinaryLoader.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DisassemblerM68k.h"
 #include "DisassemblerX86.h"
@@ -233,9 +234,10 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.base.usingSemantics)
               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
-                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is "
-                   "to " +
-                   std::string(settings_.partitioner.base.usingSemantics?"":"not ") + "use semantics."));
+                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. Furthermore, "
+                   "instruction semantics will use an SMT solver if one is specified, which can make the analysis even "
+                   "slower. The default is to " + std::string(settings_.partitioner.base.usingSemantics?"":"not ") +
+                   "use semantics."));
     sg.insert(Switch("no-use-semantics")
               .key("use-semantics")
               .intrinsicValue(false, settings_.partitioner.base.usingSemantics)
@@ -548,7 +550,7 @@ Engine::partitionerSwitches() {
 Sawyer::CommandLine::SwitchGroup
 Engine::engineSwitches() {
     using namespace Sawyer::CommandLine;
-    SwitchGroup sg = CommandlineProcessing::genericSwitches();
+    SwitchGroup sg = Rose::CommandLine::genericSwitches();
 
     sg.insert(Switch("config")
               .argument("names", listParser(anyParser(settings_.engine.configurationNames), ":"))
@@ -679,8 +681,7 @@ Sawyer::CommandLine::Parser
 Engine::commandLineParser(const std::string &purpose, const std::string &description) {
     using namespace Sawyer::CommandLine;
     Parser parser =
-        CommandlineProcessing::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose,
-                                                 description);
+        CommandLine::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose, description);
     parser.groupNameSeparator("-");                     // ROSE defaults to ":", which is sort of ugly
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen_names}");
     parser.doc("Specimens", specimenNameDocumentation());
@@ -2025,40 +2026,97 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
         ASSERT_not_null(bb);
         ASSERT_require(bb->nInstructions() > 0);
 
-        if (args.bblock->finalState() == NULL)
-            return true;
-        BaseSemantics::RiscOperatorsPtr ops = args.bblock->dispatcher()->get_operators();
-
-        // Should we add an indeterminate CFG edge from this basic block?  For instance, a "JMP [ADDR]" instruction should get
-        // an indeterminate edge if ADDR is a writable region of memory. There are two situations: ADDR is non-writable, in
-        // which case RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR
-        // is writable but its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case
-        // RiscOperators::readMemory would have returned the value stored there but also marked the value as being
-        // INDETERMINATE.  The SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along
-        // so that things like "MOV EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
-        bool addIndeterminateEdge = false;
-        size_t addrWidth = 0;
-        BOOST_FOREACH (const BasicBlock::Successor &successor, args.partitioner.basicBlockSuccessors(args.bblock)) {
-            if (!successor.expr()->is_number()) {       // BB already has an indeterminate successor?
-                addIndeterminateEdge = false;
-                break;
-            } else if (!addIndeterminateEdge &&
-                       (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
-                addIndeterminateEdge = true;
-                addrWidth = successor.expr()->get_width();
-            }
-        }
-
-        // Add an edge
-        if (addIndeterminateEdge) {
-            ASSERT_require(addrWidth != 0);
-            BaseSemantics::SValuePtr addr = ops->undefined_(addrWidth);
-            args.bblock->insertSuccessor(addr);
-            SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()
-                                     <<": added indeterminate successor for initialized, non-constant memory read\n";
-        }
+        fixFunctionReturnEdge(args);
+        fixFunctionCallEdges(args);
+        addPossibleIndeterminateEdge(args);
     }
     return chain;
+}
+
+// If the block is a function return (e.g., ends with an x86 RET instruction) to an indeterminate location, then that successor
+// type should be E_FUNCTION_RETURN instead of E_NORMAL.
+void
+Engine::BasicBlockFinalizer::fixFunctionReturnEdge(const Args &args) {
+    if (args.partitioner.basicBlockIsFunctionReturn(args.bblock)) {
+        bool hadCorrectEdge = false, edgeModified = false;
+        BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
+        for (size_t i = 0; i < successors.size(); ++i) {
+            if (!successors[i].expr()->is_number() ||
+                (successors[i].expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                if (successors[i].type() == E_FUNCTION_RETURN) {
+                    hadCorrectEdge = true;
+                    break;
+                } else if (successors[i].type() == E_NORMAL && !edgeModified) {
+                    successors[i].type(E_FUNCTION_RETURN);
+                    edgeModified = true;
+                }
+            }
+        }
+        if (!hadCorrectEdge && edgeModified) {
+            args.bblock->clearSuccessors();
+            args.bblock->successors(successors);
+            SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName() <<": fixed function return edge type\n";
+        }
+    }
+}
+
+// If the block is a function call (e.g., ends with an x86 CALL instruction) then change all E_NORMAL edges to E_FUNCTION_CALL
+// edges.
+void
+Engine::BasicBlockFinalizer::fixFunctionCallEdges(const Args &args) {
+    if (args.partitioner.basicBlockIsFunctionCall(args.bblock)) {
+        BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
+        bool changed = false;
+        BOOST_FOREACH (BasicBlock::Successor &successor, successors) {
+            if (successor.type() == E_NORMAL) {
+                successor.type(E_FUNCTION_CALL);
+                changed = true;
+            }
+        }
+        if (changed) {
+            args.bblock->clearSuccessors();
+            args.bblock->successors(successors);
+            SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName() <<": fixed function call edge(s) type\n";
+        }
+    }
+}
+
+// Should we add an indeterminate CFG edge from this basic block?  For instance, a "JMP [ADDR]" instruction should get an
+// indeterminate edge if ADDR is a writable region of memory. There are two situations: ADDR is non-writable, in which case
+// RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR is writable but
+// its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case RiscOperators::readMemory
+// would have returned the value stored there but also marked the value as being INDETERMINATE.  The
+// SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV EAX,
+// [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
+void
+Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
+    if (args.bblock->finalState() == NULL)
+        return;
+    BaseSemantics::RiscOperatorsPtr ops = args.bblock->dispatcher()->get_operators();
+    ASSERT_not_null(ops);
+
+    bool addIndeterminateEdge = false;
+    size_t addrWidth = 0;
+    BOOST_FOREACH (const BasicBlock::Successor &successor, args.partitioner.basicBlockSuccessors(args.bblock)) {
+        if (!successor.expr()->is_number()) {       // BB already has an indeterminate successor?
+            addIndeterminateEdge = false;
+            break;
+        } else if (!addIndeterminateEdge &&
+                   (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+            addIndeterminateEdge = true;
+            addrWidth = successor.expr()->get_width();
+        }
+    }
+
+    // Add an edge
+    if (addIndeterminateEdge) {
+        ASSERT_require(addrWidth != 0);
+        BaseSemantics::SValuePtr addr = ops->undefined_(addrWidth);
+        EdgeType type = args.partitioner.basicBlockIsFunctionReturn(args.bblock) ? E_FUNCTION_RETURN : E_NORMAL;
+        args.bblock->insertSuccessor(addr, type);
+        SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()
+                                 <<": added indeterminate successor for initialized, non-constant memory read\n";
+    }
 }
 
 // Add basic block to worklist(s)

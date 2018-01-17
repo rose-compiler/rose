@@ -8,7 +8,10 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "rose.h"
 #include "SymbolicSemantics2.h"
+#include <BinarySmtSolver.h>
+#include <CommandLine.h>
 
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 
@@ -174,7 +177,7 @@ int main()
     // Build the RiscOperators.  Since we're wanting to use our shiny new classes, we need to build the lattice manually.
     // Refer to SymbolicSemantics::RiscOperators::instance() to see what parts are required, and substitute our class names
     // where appropriate.
-    Rose::BinaryAnalysis::SmtSolver *solver = NULL;
+    Rose::BinaryAnalysis::SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
     BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
     BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);

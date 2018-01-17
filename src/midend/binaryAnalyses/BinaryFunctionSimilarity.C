@@ -2,6 +2,7 @@
 #include <rose_isnan.h>
 
 #include <BinaryFunctionSimilarity.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <EditDistance/LinearEditDistance.h>
 #include <Partitioner2/Partitioner.h>
@@ -330,7 +331,7 @@ const double ComparisonFunctor::dfltCompare = 0.0;
 std::vector<FunctionSimilarity::FunctionDistancePair>
 FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std::vector<P2::Function::Ptr> &others) const {
     ASSERT_not_null(needle);
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
 
@@ -379,7 +380,7 @@ FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std:
 std::vector<std::vector<double> >
 FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list1,
                                       const std::vector<P2::Function::Ptr> &list2) const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
 
@@ -429,7 +430,7 @@ FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list
 FunctionSimilarity::DistanceMatrix
 FunctionSimilarity::compareManyToManyMatrix(const std::vector<P2::Function::Ptr> &list1,
                                             const std::vector<P2::Function::Ptr> &list2) const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
 

@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
+#include <CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <BinarySymbolicExprParser.h>
 
@@ -52,7 +53,7 @@ parseCommandLine(int argc, char *argv[], bool &testSerialization /*in,out*/) {
              "Parses symbolic expressions from standard input and prints the resulting expression trees. These trees "
              "undergo basic simplifications in ROSE before they're printed.")
         .doc("Symbolic expression syntax", symbolicParser().docString())
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .with(tool);
 
     if (!parser.parse(argc, argv).apply().unreachedArgs().empty())
