@@ -5,6 +5,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Diagnostics.h>
+#include <Sawyer/Stopwatch.h>
 #include <stringify.h>
 
 // Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
@@ -58,7 +59,7 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
           <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
         outputVariableDeclarations(o, vars);
     }
-    
+
     o <<"\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
       <<"; Common subexpressions\n"
@@ -376,7 +377,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
         expr->depthFirstTraversal(t1);
 }
-                        
+
 void
 SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
@@ -809,7 +810,7 @@ SmtlibSolver::outputSignExtend(const SymbolicExpr::InteriorPtr &inode) {
                                                         SExpr::instance(signBitIdx)),
                                         expr),
                         SExpr::instance("#b1"));
-    
+
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance("concat"),
                         SExpr::instance(SExpr::instance("ite"), isNegative, ones, zeros),
@@ -920,7 +921,7 @@ SmtlibSolver::outputLogicalShiftRight(const SymbolicExpr::InteriorPtr &inode) {
 // For left shifts:
 // ROSE (rose-left-shift-op amount expr) =>
 // SMT-LIB ((_ extract [2*expr.size-1] expr.size) (bvshl (concat expr zeros_or_ones) extended_amount))
-// 
+//
 // Where extended_amount is the ROSE "amount" widened (or truncated) to the same width as "expr",
 // and where "zeros_or_ones" is a constant with all bits set or clear and the same width as "expr"
 SmtSolver::SExprTypePair
@@ -1190,6 +1191,7 @@ SmtlibSolver::outputWrite(const SymbolicExpr::InteriorPtr &inode) {
 void
 SmtlibSolver::parseEvidence() {
     requireLinkage(LM_EXECUTABLE);
+    Sawyer::Stopwatch evidenceTimer;
     boost::regex varNameRe("v\\d+");
 
     // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
@@ -1205,6 +1207,7 @@ SmtlibSolver::parseEvidence() {
             BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
                 evidence.insert(node.key()->substituteMultiple(denorm, NO_SOLVER),
                                 node.value()->substituteMultiple(denorm, NO_SOLVER));
+            stats.evidenceTime += evidenceTimer.stop();
             return;
         }
     }
@@ -1270,6 +1273,8 @@ SmtlibSolver::parseEvidence() {
                       node.value()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER));
         }
     }
+
+    stats.evidenceTime += evidenceTimer.stop();
 }
 
 SymbolicExpr::Ptr

@@ -974,6 +974,8 @@ Z3Solver::parseEvidence() {
         return SmtlibSolver::parseEvidence();
 
 #ifdef ROSE_HAVE_Z3
+    Sawyer::Stopwatch evidenceTimer;
+
     // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
     // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
     // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
@@ -988,6 +990,7 @@ Z3Solver::parseEvidence() {
             BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
                 evidence.insert(node.key()->substituteMultiple(undo, NO_SOLVER),
                                 node.value()->substituteMultiple(undo, NO_SOLVER));
+            stats.evidenceTime += evidenceTimer.stop();
             return;
         }
     }
@@ -1041,6 +1044,8 @@ Z3Solver::parseEvidence() {
                       node.value()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER));
         }
     }
+
+    stats.evidenceTime += evidenceTimer.stop();
 #else
     ASSERT_not_reachable("z3 not enabled");
 #endif

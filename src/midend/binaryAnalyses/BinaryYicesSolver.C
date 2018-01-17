@@ -163,6 +163,7 @@ YicesSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> 
 void
 YicesSolver::parseEvidence() {
     ASSERT_forbid(memoization);
+    Sawyer::Stopwatch evidenceTimer;
     boost::regex varNameRe("v\\d+");
     boost::regex memNameRe("m\\d+");
     boost::regex binaryConstantRe("0b[01]+");
@@ -202,6 +203,7 @@ YicesSolver::parseEvidence() {
             mlog[ERROR] <<"\n";
         }
     }
+    stats.evidenceTime += evidenceTimer.stop();
 }
 
 std::vector<std::string>

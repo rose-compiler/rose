@@ -194,6 +194,7 @@ SmtSolver::resetStatistics() {
     classStats.memoizationHits += stats.memoizationHits;
     classStats.prepareTime += stats.prepareTime;
     classStats.solveTime += stats.solveTime;
+    classStats.evidenceTime += stats.evidenceTime;
     stats = Stats();
 }
 
