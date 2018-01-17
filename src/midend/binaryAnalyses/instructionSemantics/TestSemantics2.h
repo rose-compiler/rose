@@ -3,6 +3,7 @@
 #define Rose_TestSemantics2_H
 
 #include "BaseSemantics2.h"
+#include "CommandLine.h"
 
 namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
@@ -123,7 +124,7 @@ public:
         const RegisterDescriptor *segreg_ = regdict->lookup("ss");
         require(segreg_!=NULL, "segreg lookup");
         const RegisterDescriptor segreg = *segreg_;
-        SmtSolver *solver = NULL;
+        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // SValue

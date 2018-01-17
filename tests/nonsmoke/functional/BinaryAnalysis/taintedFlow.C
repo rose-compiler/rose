@@ -72,6 +72,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "BinaryTaintedFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinarySmtSolver.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DispatcherX86.h"
 #include "SymbolicSemantics2.h"
@@ -233,7 +234,7 @@ int main(int argc, char *argv[])
 
     // Describe the command-line
     using namespace Sawyer::CommandLine;
-    SwitchGroup generic = CommandlineProcessing::genericSwitches();
+    SwitchGroup generic = Rose::CommandLine::genericSwitches();
     SwitchGroup switches("Tainted flow switches");
     std::vector<rose_addr_t> functionAddresses;
     switches.insert(Switch("address")

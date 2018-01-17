@@ -1,5 +1,6 @@
 #include <rose.h>
 
+#include <CommandLine.h>
 #include <FileSystem.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
@@ -25,7 +26,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
         .purpose("applies ROSE patches on the fly")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .doc("Synopsis",
              "@prop{programName} --identity=@v{directory} --translated=@v{directory} --top=@v{directory} "
              "-- @v{compiler_arguments}")

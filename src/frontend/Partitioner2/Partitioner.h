@@ -374,7 +374,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(cfg_);
         // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
         s & BOOST_SERIALIZATION_NVP(aum_);
-        s & BOOST_SERIALIZATION_NVP(solver_);
+        // s & BOOST_SERIALIZATION_NVP(solver_); -- not saved/restored in order to override from command-line
         s & BOOST_SERIALIZATION_NVP(functions_);
         s & BOOST_SERIALIZATION_NVP(autoAddCallReturnEdges_);
         s & BOOST_SERIALIZATION_NVP(assumeFunctionsReturn_);
