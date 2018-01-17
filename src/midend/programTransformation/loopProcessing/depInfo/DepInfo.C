@@ -105,7 +105,7 @@ std::string DepInfo :: toString() const
   if (is_precise()) 
       out << " Is precise ";
   else
-      out<<  " Not precise";
+      out<<  " Not precise ";
   out << AstInterface::AstToString(SrcRef())<<AstInterface::getAstLocation(SrcRef())<<"->" << AstInterface::AstToString(SnkRef())<<AstInterface::getAstLocation(SnkRef())<<"\n"; 
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {

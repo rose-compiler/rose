@@ -36,6 +36,7 @@ firstprivate3.c \
 foo.c \
 for-i-j.c \
 functionCall.c \
+globalArrays.c \
 ifAndFor.c \
 indirectIndex.c \
 jacobi_seq.c \
