@@ -1477,10 +1477,11 @@ Grammar::setUpNodes ()
      ROSE_ASSERT(InitializedName.associatedGrammar != NULL);
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar() != NULL);
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() != NULL);
-     printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
-          (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
-               "ROOT GRAMMAR" :
-               InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
+     if (verbose)
+         printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
+                 (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
+                 "ROOT GRAMMAR" :
+                 InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
 #if 0
      if (InitializedName.associatedGrammar->isRootGrammar() == false)
         {
