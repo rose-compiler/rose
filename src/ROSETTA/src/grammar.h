@@ -51,6 +51,9 @@
 
 // using namespace std;
 
+// Switch to control whether CxxGrammarMetaProgram is noisy on standard output.
+extern bool verbose;
+
 class SgProject;
 
 /*
