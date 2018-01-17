@@ -16,6 +16,7 @@ HEADER_NODE_PREDECLARATION_START
 #include <boost/serialization/vector.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Interval.h>
 #include <Sawyer/IntervalSet.h>
 

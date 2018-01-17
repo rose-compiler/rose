@@ -188,7 +188,7 @@ template<typename T>
 class MultiInstanceTls {
     // The implementation needs to handle the case when this object is created on one thread and used in another thread. The
     // constructor, running in thread A, creates a thread-local repo which doesn't exist in thread B using this object.
-    // 
+    //
     // This is a pointer to avoid lack of thread-local dynamic initialization prior to C++11, and to avoid lack of well defined
     // order when initializing and destroying global variables in C++.
     typedef Container::Map<uintptr_t, T> Repo;
