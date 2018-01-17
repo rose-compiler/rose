@@ -89,6 +89,7 @@
 */
 
 #include "rose.h"
+#include <CommandLine.h>
 #include "wholeAST_API.h"
 #include "transformationTracking.h"
 #include <iostream>
@@ -653,12 +654,12 @@ static std::vector<std::string> parseCommandLine(std::vector< std::string > & ar
 //static std::vector<std::string> parseCommandLine(int argc, char* argv[]) 
 {
   using namespace Sawyer::CommandLine;
-  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+  Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);
   p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
   p.longPrefix("-");
 
 // initialize generic Sawyer switches: assertion, logging, threads, etc.
-  p.with(CommandlineProcessing::genericSwitches()); 
+  p.with(Rose::CommandLine::genericSwitches()); 
 
 // initialize tool switches
   p.with(commandLineSwitches());  
