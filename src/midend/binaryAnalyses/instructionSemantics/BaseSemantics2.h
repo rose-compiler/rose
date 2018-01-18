@@ -1207,6 +1207,13 @@ public:
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
+    /** Read a value from memory without side effects.
+     *
+     *  This is similar to @ref readMemory except there are no side effects. The memory state is not modified by this
+     *  function. */
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) = 0;
+
     /** Write a value to memory.
      *
      *  Consults the memory represented by this MemoryState object and possibly inserts the specified value.  The details of
@@ -1431,6 +1438,13 @@ public:
      *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state.  See
      *  BaseSemantics::RiscOperators::readMemory() for details.  */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps);
+
+    /** Read from memory without side effects.
+     *
+     *  The BaseSemantics::peekMemory() implementation simply delegates to the memory state member of this state.  See
+     *  BaseSemantics::RiscOperators::peekMemory() for details.  */
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps);
 
     /** Write a value to memory.
@@ -2219,17 +2233,11 @@ public:
     virtual void writeMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &data,
                              const SValuePtr &cond) = 0;
 
-#if 0 // [Robb Matzke 2018-01-17]
-    /** Reads a value from memory without side effects.
+    /** Read memory without side effects.
      *
-     *  This is a lower-level operation than @ref readMemory in that it doesn't cause the memory to be marked as having been
-     *  read. It is typically used in situations where the memory is being read for analysis purposes rather than as a part of
-     *  an instruction emulation.
-     *
-     *  This function reads a single byte of memory. If the current memory state holds a value for the specified address then
-     *  that value is returned. */
-    virtual SValuePtr peekMemory(const SValuePtr &addr);
-#endif
+     *  This is a lower-level operation than @ref readMemory in that it doesn't cause any side effects in the memory state. In
+     *  all other respects, it's similar to @ref readMemory. */
+    virtual SValuePtr peekMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &dflt) = 0;
 };
 
 

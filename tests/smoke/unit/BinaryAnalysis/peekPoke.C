@@ -44,10 +44,14 @@ main(int argc, char *argv[]) {
     const RegisterDescriptor EAX = *registers->lookup("eax");
     SmtSolver *solver = NULL;
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registers, solver);
+    ops->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_LSB);
 
     // Initialize the machine state with some writes and get the string representation.
     BaseSemantics::SValuePtr eax = ops->number_(32, 1234);
     ops->writeRegister(EAX, eax);
+    BaseSemantics::SValuePtr addr0 = ops->number_(32, 0x1000);
+    BaseSemantics::SValuePtr mem0 = ops->number_(8, 123);
+    ops->writeMemory(RegisterDescriptor(), addr0, mem0, ops->boolean_(true));
     std::ostringstream s0;
     s0 <<*ops;
     
@@ -55,6 +59,9 @@ main(int argc, char *argv[]) {
     BaseSemantics::SValuePtr v1 = ops->peekRegister(EAX, ops->undefined_(32));
     ASSERT_always_not_null(v1);
     ASSERT_always_require(v1->must_equal(eax, solver));
+    BaseSemantics::SValuePtr mem1 = ops->peekMemory(RegisterDescriptor(), addr0, ops->undefined_(8));
+    ASSERT_always_not_null(mem1);
+    ASSERT_always_require(mem1->must_equal(mem0, solver));
     std::ostringstream s1;
     s1 <<*ops;
     ASSERT_always_require2(s0.str() == s1.str(), s1.str());
@@ -65,6 +72,11 @@ main(int argc, char *argv[]) {
     BaseSemantics::SValuePtr v2 = ops->peekRegister(EBX, ebx);
     ASSERT_always_not_null(v2);
     ASSERT_always_require(v2->must_equal(ebx, solver));
+    BaseSemantics::SValuePtr addr2 = ops->number_(32, 0x2000);
+    BaseSemantics::SValuePtr mem2init = ops->undefined_(8);
+    BaseSemantics::SValuePtr mem2 = ops->peekMemory(RegisterDescriptor(), addr2, mem2init);
+    ASSERT_always_not_null(mem2);
+    ASSERT_always_require(mem2->must_equal(mem2init, solver));
     std::ostringstream s2;
     s2 <<*ops;
     ASSERT_always_require2(s0.str() == s2.str(), s2.str());
@@ -75,6 +87,11 @@ main(int argc, char *argv[]) {
     BaseSemantics::SValuePtr v3 = ops->peekRegister(RAX, zero64);
     ASSERT_always_not_null(v3);
     ASSERT_always_require(v3->must_equal(ops->number_(64, 1234), solver));
+    BaseSemantics::SValuePtr zero32 = ops->number_(32, 0);
+    BaseSemantics::SValuePtr mem3ans = ops->number_(32, 123);
+    BaseSemantics::SValuePtr mem3 = ops->peekMemory(RegisterDescriptor(), addr0, zero32);
+    ASSERT_always_not_null(mem3);
+    ASSERT_always_require(mem3->must_equal(mem3ans, solver));
     std::ostringstream s3;
     s3 <<*ops;
     ASSERT_always_require2(s0.str() == s3.str(), s3.str());

@@ -360,6 +360,15 @@ public:
 #endif
     }
     
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
+        ASSERT_not_reachable("peekMemory is not possible for this semantic domain");
+#ifdef _MSC_VER
+        return BaseSemantics::SValuePtr();
+#endif
+    }
+    
     virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
@@ -464,14 +473,18 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond) {
-    if (cond->is_number() && !cond->get_number())
-        return dflt_;
+RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
+                                const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond,
+                                bool allowSideEffects) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
     MultiSemantics::SValuePtr dflt = MultiSemantics::SValue::promote(dflt_);
-    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
+    MultiSemantics::SValuePtr result;
+    if (allowSideEffects) {
+        result = MultiSemantics::SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
+    } else {
+        result = MultiSemantics::SValue::promote(Super::peekMemory(segreg, addr, dflt));
+    }
 
     size_t addrWidth = addr->get_width();
     size_t valueWidth = dflt->get_width();
@@ -488,6 +501,20 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     }
     result->set_subvalue(innerDomainId_, definers);
     return result;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+    if (cond->is_number() && !cond->get_number())
+        return dflt;
+    return readOrPeekMemory(segreg, addr, dflt, cond, true /*allow side effects*/);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt) {
+    return readOrPeekMemory(segreg, addr, dflt, undefined_(1), false /*noside effects allowed*/);
 }
 
 void

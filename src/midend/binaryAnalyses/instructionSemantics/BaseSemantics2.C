@@ -685,6 +685,15 @@ State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
     return memory_->readMemory(address, dflt, addrOps, valOps);
 }
 
+SValuePtr
+State::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(address);
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    return memory_->peekMemory(address, dflt, addrOps, valOps);
+}
+    
 void
 State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(addr);
