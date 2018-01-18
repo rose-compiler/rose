@@ -731,6 +731,8 @@ SgUntypedBinaryOperator
 SgUntypedValueExpression
 SgUntypedArrayReferenceExpression
 SgUntypedOtherExpression
+SgUntypedNullExpression
+SgUntypedExprListExpression
 SgUntypedFunctionCallOrArrayReferenceExpression
 SgUntypedStatement
 SgUntypedNamedStatement
