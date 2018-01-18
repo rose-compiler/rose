@@ -10,7 +10,7 @@ noinst_LTLIBRARIES = libexperimentalRoseFortran.la
 
 # if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-  libexperimentalRoseFortran_la_SOURCES = fortran_support.C ATtoUntypedTraversal.C UntypedTraversal.C UntypedConverter.C
+  libexperimentalRoseFortran_la_SOURCES = fortran_support.C ATermToUntypedFortranTraversal.C UntypedTraversal.C UntypedConverter.C
 else
 # Compile using a function that represents the API of the Open Fortran Parser
   libexperimentalRoseFortran_la_SOURCES = dummy_openFortranParser_main.C
@@ -18,7 +18,7 @@ endif
 
 OFP_DIR = $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser
 
-pkginclude_HEADERS = fortran_support.h ATtoUntypedTraversal.h UntypedTraversal.h UntypedConverter.h
+pkginclude_HEADERS = fortran_support.h ATermToUntypedFortranTraversal.h UntypedTraversal.h UntypedConverter.h
 
 OFP_SOURCE_FILES =
 

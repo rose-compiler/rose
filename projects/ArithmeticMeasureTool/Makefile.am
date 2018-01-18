@@ -112,6 +112,8 @@ bt-iter-count.log:rose_bt_single.out
 	./rose_bt_single.out
 ftest: $(F_TESTCODE_RESULTS)
 
+check-static: $(C_Analysis_TESTCODE_RESULTS)
+
 check: rose_rajaloop.cpp $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS) bt-iter-count.log
 clean:
 	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out *.log *.trs ai_tool_report.txt bt-loop-count.log bt-iter-count.log instrumentor_lib.a
