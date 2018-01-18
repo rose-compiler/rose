@@ -977,7 +977,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
 
                 // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false), SmtSolverPtr())) {
+                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
                     allCalleesPopWithoutReturning = false;
                     break;
                 }

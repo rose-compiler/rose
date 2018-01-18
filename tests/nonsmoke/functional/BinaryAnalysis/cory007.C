@@ -44,7 +44,7 @@ main() {
     // Make a symbolic expression to which we can attach some attributes.
     SymbolicExpr::Ptr a = SymbolicExpr::makeVariable(32, "a");
     SymbolicExpr::Ptr b = SymbolicExpr::makeInteger(32, 4);
-    SymbolicExpr::Ptr c = SymbolicExpr::makeAdd(a, b, SmtSolverPtr());
+    SymbolicExpr::Ptr c = SymbolicExpr::makeAdd(a, b);
 
     // Every expression has a hash value. Save it for comparison later.
     uint64_t hash1 = c->hash();
