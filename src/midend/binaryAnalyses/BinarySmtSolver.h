@@ -19,6 +19,9 @@ namespace BinaryAnalysis {
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. */
 class SmtSolver {
 public:
+    /** Solver availability map. */
+    typedef std::map<std::string, bool> Availability;
+
     /** Bit flags to indicate the kind of solver interface. */
     enum LinkMode {
         LM_NONE       = 0x0000,                         /**< No available linkage. */
@@ -112,7 +115,8 @@ protected:
     static Stats classStats;                            // all access must be protected by classStatsMutex
     Stats stats;
 
-    // Debugging
+public:
+    /** Diagnostic facility. */
     static Sawyer::Message::Facility mlog;
 
 private:
@@ -153,6 +157,20 @@ protected:
     // Methods for creating solvers.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+
+    /** Availability of all known solvers.
+     *
+     *  Returns a map whose keys are the names of the SMT solver APIs and whose value is true if the solver is avilable or
+     *  false if not available. */
+    static Availability availability();
+
+    /** Allocate a new solver by name.
+     *
+     *  Create a new solver using one of the names returned by @ref availability. The special name "" means no solver (return
+     *  null) and "best" means return @ref bestAvailable (which might also be null). It may be possible to create solvers by
+     *  name that are not available, but attempting to use such a solver will fail loudly by calling @ref requireLinkage. If an
+     *  invalid name is supplied then an @ref SmtSolver::Exception is thrown. */
+    static SmtSolver* instance(const std::string &name);
 
     /** Best available solver.
      *

@@ -42,6 +42,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
         // ctx_         -- not serialized
         // solver_      -- not serialized
         // ctxCses_     -- not serialized
@@ -55,7 +56,7 @@ public:
      *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE
      *   configuration script. */
     explicit Z3Solver(unsigned linkages = LM_ANY)
-        : SmtlibSolver("Z3", ROSE_Z3, "", linkages & availableLinkages())
+        : SmtlibSolver("z3", ROSE_Z3, "", linkages & availableLinkages())
 #ifdef ROSE_HAVE_Z3
         , ctx_(NULL), solver_(NULL)
 #endif
@@ -158,5 +159,9 @@ protected:
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Z3Solver);
+#endif
 
 #endif

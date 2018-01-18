@@ -4,6 +4,7 @@
 
 #include "BinarySmtSolver.h"
 #include "BinarySymbolicExpr.h"
+#include "CommandLine.h"
 #include "stringify.h"
 #include "integerOps.h"
 #include "Combinatorics.h"
@@ -1225,7 +1226,7 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 
 Ptr
 XorSimplifier::rewrite(Interior *inode) const {
-    SmtSolver *solver = NULL;   // FIXME
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
     std::vector<bool> removed(inode->nChildren(), false);
@@ -1312,7 +1313,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
 
 Ptr
 ConcatSimplifier::rewrite(Interior *inode) const {
-    SmtSolver *solver = NULL; // FIXME
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
     // If all the concatenated expressions are extract expressions, all extracting bits from the same expression and
     // in the correct order, then we can simplify this to that expression.  For instance:
@@ -2099,7 +2100,7 @@ MssbSimplifier::rewrite(Interior *inode) const {
 
 Ptr
 SetSimplifier::rewrite(Interior *inode) const {
-    SmtSolver *solver = NULL;                           // FIXME[Robb Matzke 2015-11-03]
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
     // (set x) => x
     if (1 == inode->nChildren())

@@ -1090,3 +1090,7 @@ Z3Solver::selfTest() {
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Z3Solver);
+#endif

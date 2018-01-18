@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+#include <CommandLine.h>
 #include <BinaryReturnValueUsed.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
@@ -310,7 +311,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // return values is one of the calle's return values with no intervening write.
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     ASSERT_not_null(regdict);
-    SmtSolver *solver = NULL;
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
     ops->registerDictionary(regdict);
     ops->insertOutputs(calleeReturnRegs, calleeReturnMem);

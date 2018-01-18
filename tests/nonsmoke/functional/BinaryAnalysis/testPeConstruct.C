@@ -8,10 +8,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 int
-main() 
+main(int argc, char *argv[]) 
 {
     /* See testElfConstruct.C for additional commentary. */
-
+    const char *outputName = argc > 1 ? argv[1] : "a.out";
+    
     /* The SgAsmGenericFile is the root of a tree describing a binary file (executable, shared lib, object, core dump). */
     SgAsmGenericFile *ef = new SgAsmGenericFile;
 
@@ -237,7 +238,7 @@ main()
 #endif
 
     /* Unparse the AST to generate an executable. */
-    std::ofstream f("a.out");
+    std::ofstream f(outputName);
     ef->unparse(f);
 
     return 0;
