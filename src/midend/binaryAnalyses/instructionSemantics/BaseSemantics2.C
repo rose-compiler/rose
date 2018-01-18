@@ -197,6 +197,11 @@ RegisterStateX86::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, Ri
 }
 
 SValuePtr
+RegisterStateX86::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
+    return readRegister(reg, dflt, ops);                // readRegister has no side effects in this class
+}
+
+SValuePtr
 RegisterStateX86::readRegisterGpr(RegisterDescriptor reg, RiscOperators *ops)
 {
     using namespace StringUtility;
@@ -655,6 +660,14 @@ State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperator
     return registers_->readRegister(desc, dflt, ops);
 }
 
+SValuePtr
+State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
+    ASSERT_require(desc.is_valid());
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(ops);
+    return registers_->peekRegister(desc, dflt, ops);
+}
+
 void
 State::writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops) {
     ASSERT_require(desc.is_valid());
@@ -938,11 +951,6 @@ RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
 
 SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
-    return peekRegister(reg, dflt_);
-}
-
-SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
     SValuePtr dflt = dflt_;
     ASSERT_not_null(currentState_);
     ASSERT_not_null(dflt);
@@ -952,6 +960,14 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
         dflt = initialState()->readRegister(reg, dflt, this);
 
     return currentState_->readRegister(reg, dflt, this);
+}
+
+SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
+    SValuePtr dflt = dflt_;
+    ASSERT_not_null(currentState_);
+    ASSERT_not_null(dflt);
+    return currentState_->peekRegister(reg, dflt, this);
 }
 
 /*******************************************************************************************************************************

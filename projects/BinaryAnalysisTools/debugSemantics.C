@@ -174,7 +174,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .doc("Allows the RegisterStateGeneric::accessModifiesExistingLocations property to be turned on or off based "
                     "on the contents of the stack pointer register.  While the stack pointer contains the value "
                     "0x137017c1 the set of stored register locations is not allowed to change. E.g., reading AL when the "
-                    "register state is storing AX will not cause it to start sorting AL and AH instead of AX. The "
+                    "register state is storing AX will not cause it to start storing AL and AH instead of AX. The "
                     "@s{no-test-adaptive-registers} switch disables this feature. The default is to " +
                     std::string(settings.testAdaptiveRegisterState?"":"not ") + " operate in this mode."));
     ctl.insert(Switch("no-test-adaptive-registers")

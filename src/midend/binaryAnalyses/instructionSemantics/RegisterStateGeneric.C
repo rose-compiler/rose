@@ -180,7 +180,7 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     // Fast case: the state does not store this register or any register that might overlap with this register.
     if (!registers_.exists(reg)) {
         if (!accessCreatesLocations_)
-            throw RegisterNotPresent(reg);
+            return dflt;
         SValuePtr newval = dflt->copy();
         std::string regname = regdict->lookup(reg);
         if (!regname.empty() && newval->get_comment().empty())
@@ -188,16 +188,6 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
         registers_.insertMaybeDefault(reg).push_back(RegPair(reg, newval));
         assertStorageConditions("at end of read", reg);
         return newval;
-    }
-
-    // Check that we're allowed to add storage locations if necessary.
-    if (!accessCreatesLocations_) {
-        size_t nBitsFound = 0;
-        BOOST_FOREACH (const RegPair &regpair, registers_.getOrDefault(reg))
-            nBitsFound += (regpair.location() & accessedLocation).size();
-        ASSERT_require(nBitsFound <= accessedLocation.size());
-        if (nBitsFound < accessedLocation.size())
-            throw RegisterNotPresent(reg);
     }
 
     // Iterate over the storage/value pairs to figure out what parts of the register are already in existing storage locations,
@@ -215,17 +205,13 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
 
     // Create values for the parts of the accessed register that weren't stored in the state, but don't store them yet.
     RegPairs newParts;
-    if (accessCreatesLocations_) {
-        BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
-            RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), newLocation.least(), newLocation.size());
-            ASSERT_require(newLocation.least() >= reg.get_offset());
-            SValuePtr newval = ops->extract(dflt,
-                                            newLocation.least()-reg.get_offset(),
-                                            newLocation.greatest()+1-reg.get_offset());
-            newParts.push_back(RegPair(subreg, newval));
-        }
-    } else {
-        ASSERT_require(newLocations.isEmpty());         // should have thrown a RegisterNotPresent exception already
+    BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
+        RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), newLocation.least(), newLocation.size());
+        ASSERT_require(newLocation.least() >= reg.get_offset());
+        SValuePtr newval = ops->extract(dflt,
+                                        newLocation.least()-reg.get_offset(),
+                                        newLocation.greatest()+1-reg.get_offset());
+        newParts.push_back(RegPair(subreg, newval));
     }
 
     // Construct the return value by combining all the parts we found or created.
@@ -239,19 +225,46 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
 
     // Update the register state -- write parts that didn't exist and maybe combine or split some locations.
     if (adjustLocations) {
-        // Combine all the accessed locations into a single location corresponding exactly to the return value, and split those
-        // previously existing locations that partly overlap the returned location.
+        // Remove parts of the pair list we're about to replace.
         pairList.erase(std::remove_if(pairList.begin(), pairList.end(), has_null_value), pairList.end());
-        pairList.insert(pairList.end(), preservedParts.begin(), preservedParts.end());
-        pairList.push_back(RegPair(reg, retval));
-    } else {
-        // Since this is a registerRead operation, the only thing we need to write back to the state are those parts of the
-        // return value that had no locations allocated originally.
+        pairList.insert(pairList.end(), preservedParts.begin(), preservedParts.end()); // re-insert preserved parts
+        if (accessCreatesLocations_) {
+            // Combine all the accessed locations (just removed above) into a single location corresponding exactly to the
+            // return value.
+            pairList.push_back(RegPair(reg, retval));
+        } else {
+            // Add back the parts that were originally present and which we accessed, but not any new parts. They're added back
+            // in as large chunks as possible.
+            std::sort(accessedParts.begin(), accessedParts.end(), sortByOffset);
+            for (size_t i = 0; i<accessedParts.size(); ++i /*also incremented in body*/) {
+                // Find largest contiguous value starting at i.
+                SValuePtr part = accessedParts[i].value;
+                size_t firstOffset = accessedParts[i].desc.get_offset();
+                size_t nextOffset = firstOffset + accessedParts[i].desc.get_nbits();
+                while (i+1 < accessedParts.size() && accessedParts[i+1].desc.get_offset() == nextOffset) {
+                    ++i;
+                    nextOffset += accessedParts[i].desc.get_nbits();
+                    part = ops->concat(part, accessedParts[i].value);
+                }
+                RegisterDescriptor tmpReg(reg.get_major(), reg.get_minor(), firstOffset, nextOffset-firstOffset);
+                ASSERT_require(tmpReg.get_nbits() == part->get_width());
+                pairList.push_back(RegPair(tmpReg, part));
+            }
+        }
+    } else if (accessCreatesLocations_) {
+        // Don't adjust existing locations, just add locations that were not existing.
         pairList.insert(pairList.end(), newParts.begin(), newParts.end());
     }
 
     assertStorageConditions("at end of read", reg);
     return retval;
+}
+
+BaseSemantics::SValuePtr
+RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
+    AccessModifiesExistingLocationsGuard amelGuard(this, false);
+    AccessCreatesLocationsGuard aclGuard(this, false);
+    return readRegister(reg, dflt, ops);
 }
 
 void

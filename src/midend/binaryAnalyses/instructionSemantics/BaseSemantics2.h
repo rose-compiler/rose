@@ -885,6 +885,11 @@ public:
      *  See @ref RiscOperators::readRegister for more details. */
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
+    /** Read a register without side effects.
+     *
+     *  This is similar to @ref readRegister except it doesn't modify the register state in any way. */
+    virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
+
     /** Write a value to a register.
      *
      *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
@@ -1017,6 +1022,7 @@ public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
@@ -1407,6 +1413,12 @@ public:
      *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
      *  @ref BaseSemantics::RiscOperators::readRegister for details. */
     virtual SValuePtr readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
+
+    /** Read register without side effects.
+     *
+     *  The @ref BaseSemantics::peekRegister implementation simply delegates to the register state member of this state.  See
+     *  @ref BaseSemantics::RiscOperators::peekRegister for details. */
+    virtual SValuePtr peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
 
     /** Write a value to a register.
      *
@@ -2162,6 +2174,13 @@ public:
         currentState_->writeRegister(reg, a, this);
     }
 
+    /** Obtain a register value without side effects.
+     *
+     *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
+     *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
+     *  part of an instruction emulation. */
+    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
+
     /** Reads a value from memory.
      *
      *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
@@ -2200,12 +2219,17 @@ public:
     virtual void writeMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &data,
                              const SValuePtr &cond) = 0;
 
-    /** Obtain a register value without side effects.
+#if 0 // [Robb Matzke 2018-01-17]
+    /** Reads a value from memory without side effects.
      *
-     *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
-     *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
-     *  part of an instruction emulation. */
-    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
+     *  This is a lower-level operation than @ref readMemory in that it doesn't cause the memory to be marked as having been
+     *  read. It is typically used in situations where the memory is being read for analysis purposes rather than as a part of
+     *  an instruction emulation.
+     *
+     *  This function reads a single byte of memory. If the current memory state holds a value for the specified address then
+     *  that value is returned. */
+    virtual SValuePtr peekMemory(const SValuePtr &addr);
+#endif
 };
 
 
