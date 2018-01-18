@@ -114,17 +114,18 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
 }
 
 //----------------------------------------
-
-
 namespace ArithemeticIntensityMeasurement
 {
   running_mode_enum running_mode = e_analysis_and_instrument;
+
   std::map <SgNode*, bool> FPVisitMAP; // record if a flop operation is counted or not
+
   //we have to be more specific, if a variable is processed and the variable is within a inner loops
   //then we skip it's counting in outer loop for load/store
   //The best case is we have access to all variable references, in addition to SgInitializedName for Side Effect Analysis
   std::map <SgNode*, std::set<SgInitializedName*> > LoopLoadVariables; // record processed read variables for a loop
   std::map <SgNode*, std::set<SgInitializedName*> > LoopStoreVariables; // record processed write variables for a loop
+
   // helper array to conver to string
   const char* FPOpKindNameList[] =
   {
@@ -166,9 +167,9 @@ namespace ArithemeticIntensityMeasurement
   } 
   bool debug;
   int algorithm_version = 1;
+
   // default file name to store the report
   string report_filename = "ai_tool_report.txt";
-  string report_option ="-report-file";
 
   int loop_id = 0;
 
@@ -191,18 +192,18 @@ namespace ArithemeticIntensityMeasurement
       }
     }
     return rt;
-
   }
 
   string FPCounters::toString(std::string comment)
   {
     stringstream ss; 
-    ss<<"----------Floating Point Operation Counts---------------------"<<endl;
-    ss<<comment<<endl;
-    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
+    ss<<"/////////////////////////////////////////////"<<endl;
+  //  ss<<"Floating Point Operation Counts:"<<endl;
+    if (comment.size()!=0) 
+      ss<<comment<<endl;
     if (node != NULL)
     {
-      ss<<node->class_name() <<"@" <<endl;
+      ss<<node->class_name() <<"@";
       //debugging
      // if (!isSgForStatement(node))
      //   ROSE_ASSERT (false); // we cannot assert this. we pass loop body to the counting function. The body can be any types of statements
@@ -211,46 +212,36 @@ namespace ArithemeticIntensityMeasurement
     }
     else
       ss<< "NULL node"<<endl;
-    ss<<"\tfp_plus:"<< plus_count<<endl;
-    ss<<"\tfp_minus:"<< minus_count<<endl;
-    ss<<"\tfp_multiply:"<< multiply_count<<endl;
-    ss<<"\tfp_divide:"<< divide_count<<endl;
-    ss<<"\tfp_total:"<< getTotalCount()<<endl;
+   // if non-zero, send out error code   
+    if (error_code!=0)
+      ss<<"Error Code:"<<error_code<<endl;
 
-    ss<<"----------Memory Operation Counts---------------------"<<endl;
-    ss<<comment<<endl;
+    ss<<"\tFP_plus:"<< plus_count<<endl;
+    ss<<"\tFP_minus:"<< minus_count<<endl;
+    ss<<"\tFP_multiply:"<< multiply_count<<endl;
+    ss<<"\tFP_divide:"<< divide_count<<endl;
+    ss<<"\tFP_total:"<< getTotalCount()<<endl;
+
+//    ss<<"Memory Operation Counts:"<<endl;
     if (load_bytes== NULL)
-      ss<<"\tLoads: NULL "<<endl;
+      ss<<"\tMem Load Byte Count Formula: NULL "<<endl;
     else
-      ss<<"\tLoads:"<< load_bytes->unparseToString()<<endl;
-    ss<<"\tLoads int: "<<load_bytes_int<<endl;
+      ss<<"\tMem Load Byte Count Formula:"<< load_bytes->unparseToString()<<endl;
+    ss<<"\tMem Loads Byte Count Value: "<<load_bytes_int<<endl;
+
     if (store_bytes== NULL)
-      ss<<"\tStores: NULL "<<endl;
+      ss<<"\tMem Stores Byte Count Formula: NULL "<<endl;
     else
-      ss<<"\tStores:"<< store_bytes->unparseToString()<<endl;
-    ss<<"\tStore int: "<<store_bytes_int<<endl;
-    ss<<"----------Arithmetic Intensity---------------------"<<endl;
-    ss <<"AI="<<intensity<<endl;
+      ss<<"\tMem Stores Byte Count Formula:"<< store_bytes->unparseToString()<<endl;
+    ss<<"\tMem Store Byte Count Value: "<<store_bytes_int<<endl;
+    ss<<"Arithmetic Intensity="<<intensity<<endl;
 
     return ss.str();
   }
 
   void FPCounters::printInfo(std::string comment/* ="" */)
   {
-#if 0   
-    cout<<"----------Floating Point Operation Counts---------------------"<<endl;
-    cout<<comment<<endl;
-    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
-    cout<<node->class_name() <<"@" <<endl;
-    cout<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
-    cout<<"\tfp_plus:"<< plus_count<<endl;
-    cout<<"\tfp_minus:"<< minus_count<<endl;
-    cout<<"\tfp_multiply:"<< multiply_count<<endl;
-    cout<<"\tfp_divide:"<< divide_count<<endl;
-    cout<<"\tfp_total:"<< getTotalCount()<<endl;
-#else
     cout<<toString(comment);
-#endif
   }
 
   // a transformation to instrument loops to obtain loop iteration counts at runtime
@@ -387,10 +378,13 @@ namespace ArithemeticIntensityMeasurement
     load_bytes_int = a1.newValue;
     store_bytes_int = a2.newValue;
     int total_bytes = load_bytes_int + store_bytes_int;
+
     if (total_bytes !=0)
        intensity = (float)total_count/total_bytes;
-    else
-       intensity = 9999.9;  //max value
+    else if (total_count ==0 )
+       intensity = 0.0 ;  
+    else  //  non-zero_FP operations divided by zero mem access bytes
+       intensity = 99999.9;  //max value
     return intensity;
   }
 
@@ -496,6 +490,10 @@ namespace ArithemeticIntensityMeasurement
   {
     int rt =0; 
     assert (t!=NULL);
+
+    // strip off typedefs, reference, modifiers
+    t = t->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+
     // Fortran allow type_kind for types, read this first
     if (SgExpression* kind_exp =t->get_type_kind() )
     {
@@ -589,8 +587,10 @@ namespace ArithemeticIntensityMeasurement
       loop = doloop;
     else
     {
-      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< lbody->class_name()<<endl;
-      assert(false);
+      //support RAJA::forall loop, which may be a function definition only
+      loop = lbody->get_scope();
+//      cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< lbody->class_name()<<endl;
+//      assert(false);
     }   
 
     std::map<SgType* , int> type_based_counters; 
@@ -643,7 +643,14 @@ namespace ArithemeticIntensityMeasurement
           base_type = isSgArrayType(base_type)->get_base_type(); 
         } while (isSgArrayType (base_type));
       }
-      else 
+      else if (isSgPointerType (stripped_type)) // we now allow pointer types used as arrays like double *a..,;  a[i]= ..
+      {
+        base_type = stripped_type;
+        do {
+          base_type = isSgPointerType(base_type)->get_base_type(); 
+        } while (isSgPointerType (base_type));
+      }
+      else
       {
         cerr<<"Error in calculateBytes(). Unhandled stripped type:"<<stripped_type->class_name()<<endl;
         assert (false);
@@ -707,17 +714,65 @@ namespace ArithemeticIntensityMeasurement
   }  
 
 
+  //! check if a pointer is ever used as an array
+  // Check if there is a SgVarRefExp of this init. And the SgVarRefExp shows up as part of lhs operator of SgPntrArrRefExp. 
+  // We cannot just compare lhs, since sometimes there is this->a  involved. 
+  // TODO: put into SageInterface
+  // We pass a scope parameter to narrow down the search scope. Otherwise we have to search all member function declarations within a class definition
+  bool pointerUsedAsArray (SgInitializedName* iname, SgScopeStatement* scope)
+  {
+    bool rt = false;
+//    SgScopeStatement* scope = iname->get_scope();
+    ROSE_ASSERT (scope != NULL);
+    // find all SgPntrArrRefExp, find all lhs operators
+    // This cannot penetrate nested member function declarations within a scope of type SgClassDefinition
+    vector<SgPntrArrRefExp* > array_vec = querySubTree<SgPntrArrRefExp> (scope);
+
+    // filter out SgPntrArrRefExp which is not the bottom SgPntrArrRefExp of a multi dimensional array
+    vector<SgPntrArrRefExp*> bottom_arrays; 
+    for (vector<SgPntrArrRefExp* >::iterator iter = array_vec.begin(); iter != array_vec.end(); iter++)
+    {
+      SgPntrArrRefExp* current = *iter;
+      // lhs is another array, skip
+      if (isSgPntrArrRefExp (current->get_lhs_operand_i()))
+        continue;
+      else
+        bottom_arrays.push_back(current);
+    }
+
+    // Now for each bottom arrayRefExp, search its lhs for SgVarRefExp which points to the iname
+    for (vector<SgPntrArrRefExp* >::iterator iter = bottom_arrays.begin(); iter != bottom_arrays.end(); iter++)
+    {
+      SgPntrArrRefExp* current = *iter;
+      vector<SgVarRefExp* > refs = querySubTree<SgVarRefExp> (current->get_lhs_operand_i());
+      for (vector<SgVarRefExp* >::iterator iter2 = refs.begin(); iter2!= refs.end(); iter2 ++)
+      {
+        SgVarRefExp* cref = *iter2; 
+        if (cref->get_symbol()->get_declaration()== iname)
+        {
+          return true;
+        }
+      }
+    }
+
+    return rt; 
+  }
+
+
   // Only keep desired types
-  std::set<SgInitializedName* > filterVariables(const std::set<SgInitializedName* > & input)
+  // Sometimes pointer typed variables are used as array, such as double* a = new ..., later a[i] = xx, etc
+  // provide the search scope, otherwise we have to penetrate member function declarations within a class definition, which is the scope of iname
+  std::set<SgInitializedName* > filterVariables(const std::set<SgInitializedName* > & input, SgScopeStatement* scope)
   {
     std::set<SgInitializedName* > result; 
     std::set<SgInitializedName*>::iterator it;
+    ROSE_ASSERT (scope != NULL);
 
     for (it=input.begin(); it!=input.end(); it++)
     {
       SgInitializedName* iname = (*it);
       if (iname ==NULL) continue; // this pointer of a class has NO SgInitializedName associated !!
-      if (isSgArrayType (iname->get_type()))
+      if (isSgArrayType (iname->get_type()) || pointerUsedAsArray (iname, scope) )
         result.insert(iname);
       //    cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
@@ -738,9 +793,12 @@ namespace ArithemeticIntensityMeasurement
   //    2.  Group accesses based on the types (same type?  increment the same counter to shorten expression length)
   //    4.  Iterate on the results to generate expression like  2*sizeof(float) + 5* sizeof(double)
   // As an approximate, we use simple analysis here assuming no function calls.
-  std::pair <SgExpression*, SgExpression*> CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars /* = true */, bool includeIntType /* = true */)
+  //
+  // Return false if side effect analysis fails.
+  bool CountLoadStoreBytes (SgLocatedNode* input, 
+      std::pair <SgExpression*, SgExpression*>& result,
+    bool includeScalars /* = false */, bool includeIntType /* = false */)
   {
-    std::pair <SgExpression*, SgExpression*> result; 
     assert (input != NULL);
 
     // the input is essentially the loop body, a statement
@@ -770,9 +828,13 @@ namespace ArithemeticIntensityMeasurement
     std::set<SgInitializedName*> writeVars;
 
     bool success = SageInterface::collectReadWriteVariables (isSgStatement(input), readVars, writeVars);
+    SgScopeStatement* scope = getEnclosingFunctionDefinition(input);
+    ROSE_ASSERT (scope!= NULL);
     if (success!= true)
     {
-      cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
+      if (debug)
+        cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
+      return false;
     }
 
     std::set<SgInitializedName*>::iterator it;
@@ -786,7 +848,7 @@ namespace ArithemeticIntensityMeasurement
     }
 
     if (!includeScalars )
-      readVars =  filterVariables (readVars);
+      readVars =  filterVariables (readVars, scope);
     if (debug)
       cout<<"debug: found write variables (SgInitializedName) count = "<<writeVars.size()<<endl;
     for (it=writeVars.begin(); it!=writeVars.end(); it++)
@@ -796,22 +858,30 @@ namespace ArithemeticIntensityMeasurement
         cout<<scalar_or_array(iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
     if (!includeScalars )
-      writeVars =  filterVariables (writeVars);
+      writeVars =  filterVariables (writeVars, scope);
     result.first =  calculateBytes (readVars, lbody, true);
     result.second =  calculateBytes (writeVars, lbody, false);
-    return result;
+
+    return true;
   }
 
   // count memory load/store operations, store into attribute FPCounters
-  void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= true*/, bool includeIntType /*= true*/)
+  void CountMemOperations(SgLocatedNode* input, bool includeScalars /*= false*/, bool includeIntType /*= false */)
   {
     ROSE_ASSERT (input != NULL);
-    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (input, includeScalars, includeIntType);
-    FPCounters* mycounters = getFPCounters (input); 
-    mycounters->setLoadBytes (load_store_count_pair.first);
-    mycounters->setStoreBytes (load_store_count_pair.second);
-  }
+    std::pair <SgExpression*, SgExpression*> load_store_count_pair; 
+    bool success = CountLoadStoreBytes (input, load_store_count_pair, includeScalars, includeIntType);
 
+    // retrieve the attribute attached to input, creating one if it does not exist
+    FPCounters* mycounters = getFPCounters (input); 
+    if (!success)
+      mycounters->setErrorCode(1);
+    else
+    {
+      mycounters->setLoadBytes (load_store_count_pair.first);
+      mycounters->setStoreBytes (load_store_count_pair.second);
+    }
+  }
  
   FPCounters*  calculateArithmeticIntensity(SgLocatedNode* body, bool includeScalars /*= false */, bool includeIntType /*= false */)
   {
@@ -827,6 +897,7 @@ namespace ArithemeticIntensityMeasurement
   //! Count floating point operations seen in a subtree
   void CountFPOperations(SgLocatedNode* input)
   {
+    // find all binary operations
     Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(input, V_SgBinaryOp);
     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
     {
@@ -868,13 +939,18 @@ namespace ArithemeticIntensityMeasurement
         // Using a map to avoid double counting an operation when it is enclosed in multiple loops
         //
         // For static counting only mode, this is a less concern.
-        if (!FPVisitMAP[bop]) 
+        if (running_mode == e_static_counting)
+        {
+          addFPCount (input, op_kind);
+        }
+        else if (!FPVisitMAP[bop]) // dynamic accumulation mode, must avoid duplicated counting
         {
           addFPCount (input, op_kind);
           FPVisitMAP[bop] = true;
         }
       }	
     }  // end for
+
     //Must update the total counter here
     FPCounters* fp_counters = getFPCounters (input); 
     fp_counters->updateTotal ();
@@ -1109,8 +1185,11 @@ namespace ArithemeticIntensityMeasurement
 
     // Obtain per-iteration load/store bytes calculation expressions
     // excluding scalar types to match the manual version
-    //CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
-    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (loop_body, false, true);
+    //CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = false, bool includeIntType = false);
+    std::pair <SgExpression*, SgExpression*> load_store_count_pair ; 
+
+    CountLoadStoreBytes (loop_body, load_store_count_pair, false, true);
+
     // chstores=chstores+chiterations*8
     if (load_store_count_pair.second!= NULL)
     {
@@ -1118,6 +1197,7 @@ namespace ArithemeticIntensityMeasurement
       insertStatementAfter (loop, store_byte_stmt);
       attachComment(store_byte_stmt,"      aitool generated Stores counting statement ...");
     }
+
     // handle loads stmt 2nd so it can be inserted as the first after the loop
     // build  chloads=chloads+chiterations*2*8
     if (load_store_count_pair.first != NULL)
@@ -1220,7 +1300,8 @@ namespace ArithemeticIntensityMeasurement
       else if (SgFunctionRefExp* func_ref = isSgFunctionRefExp (n))
       {
         // TODO: interprocedural synthesize analysis, until reaching a fixed point 
-        cout<<"Warning: encountering a function call "<< func_ref->get_symbol()->get_name()<<"(), assuming 0 FLOPS for now."  <<endl;
+        if (debug)
+          cout<<"Warning: encountering a function call "<< func_ref->get_symbol()->get_name()<<"(), assuming 0 FLOPS for now."  <<endl;
         hasHandled = true; 
       }
       else if (SgConditionalExp * conditional_exp = isSgConditionalExp(n))

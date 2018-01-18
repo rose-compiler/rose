@@ -1,5 +1,27 @@
 // Liao 9/1/2016
 // A complete example showing the generated code
+/*
+expected results are
+Debugging: a RAJA::forall loop:122----------Floating Point Operation Counts---------------------
+
+SgBasicBlock@
+/home/liao6/workspace/ExReDi/ai_tool/sourcetree/projects/ArithmeticMeasureTool/test/rajaloop.cpp:122:18
+        fp_plus:0
+        fp_minus:0
+        fp_multiply:1
+        fp_divide:0
+        fp_total:1
+----------Memory Operation Counts---------------------
+
+        Loads:1 * sizeof(double )
+        Loads int: 8
+        Stores:1 * sizeof(double )
+        Store int: 8
+----------Arithmetic Intensity---------------------
+AI=0.0625
+
+ *
+ * */
 #include <stdlib.h>
 
 // Simplest input and output code for as example
@@ -129,4 +151,5 @@ int main()
 
 // g++ -c -std=c++11 
 // identityTranslator -rose:Cxx11_only
+
 
