@@ -598,6 +598,11 @@ class SgUntypedTokenPair;
 typedef Rose_STL_Container<SgUntypedTokenPair*> SgUntypedTokenPairPtrList;
 typedef SgUntypedTokenPairPtrList*              SgUntypedTokenPairPtrListPtr;
 
+// Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+class SgUntypedExpression;
+typedef Rose_STL_Container<SgUntypedExpression*> SgUntypedExpressionPtrList;
+typedef SgUntypedExpressionPtrList*              SgUntypedExpressionPtrListPtr;
+
 class SgUntypedStatement;
 typedef Rose_STL_Container<SgUntypedStatement*> SgUntypedStatementPtrList;
 typedef SgUntypedStatementPtrList*              SgUntypedStatementPtrListPtr;

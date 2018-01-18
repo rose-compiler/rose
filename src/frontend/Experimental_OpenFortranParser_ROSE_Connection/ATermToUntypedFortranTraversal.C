@@ -1,9 +1,10 @@
 #include "sage3basic.h"
 
-#include "ATtoUntypedTraversal.h"
+#include "ATermToUntypedFortranTraversal.h"
+#include "untypedBuilder.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 0
+#define PRINT_ATERM_TRAVERSAL 1
 #define PRINT_SOURCE_POSITION 0
 
 using namespace OFP;
@@ -27,7 +28,7 @@ fixupLocation(FAST::PosInfo & loc)
 }
 
 FAST::PosInfo
-ATtoUntypedTraversal::getLocation(ATerm term)
+ATermToUntypedFortranTraversal::getLocation(ATerm term)
 {
    FAST::PosInfo pinfo;
 
@@ -48,14 +49,14 @@ ATtoUntypedTraversal::getLocation(ATerm term)
 }
 
 void
-ATtoUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, ATerm term )
+ATermToUntypedFortranTraversal::setSourcePosition( SgLocatedNode* locatedNode, ATerm term )
 {
    FAST::PosInfo pos = getLocation(term);
    return setSourcePosition(locatedNode, pos);
 }
 
 void
-ATtoUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
+ATermToUntypedFortranTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
 {
    FAST::PosInfo pos;
 
@@ -68,7 +69,7 @@ ATtoUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocat
 }
 
 void
-ATtoUntypedTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
+ATermToUntypedFortranTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
 {
    FAST::PosInfo pos = getLocation(startTerm);
    FAST::PosInfo end = getLocation(endTerm);
@@ -80,7 +81,7 @@ ATtoUntypedTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode
 }
 
 void
-ATtoUntypedTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
+ATermToUntypedFortranTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
 {
    FAST::PosInfo pos = getLocation(startTerm);
    FAST::PosInfo end = getLocation(endTerm);
@@ -92,7 +93,7 @@ ATtoUntypedTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedNode
 }
 
 void
-ATtoUntypedTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode )
+ATermToUntypedFortranTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode )
 {
    FAST::PosInfo pos = getLocation(startTerm);
 
@@ -103,7 +104,7 @@ ATtoUntypedTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedNode
 }
 
 void
-ATtoUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, FAST::PosInfo & pos )
+ATermToUntypedFortranTraversal::setSourcePosition( SgLocatedNode* locatedNode, FAST::PosInfo & pos )
 {
      ROSE_ASSERT(locatedNode != NULL);
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
@@ -129,7 +130,7 @@ ATtoUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, FAST::PosIn
 //--------------------------------- above should be refactored/moved ---------------------------
 
 // These should probably go in UntypedBuilder class
-SgUntypedType* ATtoUntypedTraversal::buildType(SgUntypedType::type_enum type_enum)
+SgUntypedType* ATermToUntypedFortranTraversal::buildType(SgUntypedType::type_enum type_enum)
 {
    SgUntypedExpression* type_kind = NULL;
    bool has_kind = false;
@@ -178,7 +179,7 @@ SgUntypedType* ATtoUntypedTraversal::buildType(SgUntypedType::type_enum type_enu
        }
       default:
        {
-          fprintf(stderr, "ATtoUntypedTraversal::buildType: unimplemented for type_enum %d \n", type_enum);
+          fprintf(stderr, "ATermToUntypedFortranTraversal::buildType: unimplemented for type_enum %d \n", type_enum);
           ROSE_ASSERT(0);  // NOT IMPLEMENTED
        }
     }
@@ -187,8 +188,10 @@ SgUntypedType* ATtoUntypedTraversal::buildType(SgUntypedType::type_enum type_enu
 }
 
 
-ATtoUntypedTraversal::ATtoUntypedTraversal(SgSourceFile* source)
+ATermToUntypedFortranTraversal::ATermToUntypedFortranTraversal(SgSourceFile* source)
 {
+   UntypedBuilder::set_language(SgFile::e_Fortran_language);
+
    SgUntypedDeclarationStatementList* sg_decls = new SgUntypedDeclarationStatementList();
    SgUntypedStatementList*            sg_stmts = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  sg_funcs = new SgUntypedFunctionDeclarationList();
@@ -205,13 +208,13 @@ ATtoUntypedTraversal::ATtoUntypedTraversal(SgSourceFile* source)
 //TODO     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
 }
 
-ATtoUntypedTraversal::~ATtoUntypedTraversal()
+ATermToUntypedFortranTraversal::~ATermToUntypedFortranTraversal()
 {
    delete pUntypedFile;
 }
 
 void
-ATtoUntypedTraversal::setSourcePositionUnknown(SgLocatedNode* locatedNode)
+ATermToUntypedFortranTraversal::setSourcePositionUnknown(SgLocatedNode* locatedNode)
 {
   // This function sets the source position to be marked as not available (since we don't have token information)
   // These nodes WILL be unparsed in the code generation phase.
@@ -374,7 +377,7 @@ ATbool traverse_OptCommaList(ATerm term, FuncType & convert_item)
 //========================================================================================
 // Program (R201)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_Program(ATerm term)
+ATbool ATermToUntypedFortranTraversal::traverse_Program(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Program: %s\n", ATwriteToString(term));
@@ -402,7 +405,7 @@ ATbool ATtoUntypedTraversal::traverse_Program(ATerm term)
 //========================================================================================
 // ProgramUnitList (R202)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ProgramUnitList(ATerm term, SgUntypedGlobalScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_ProgramUnitList(ATerm term, SgUntypedGlobalScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProgramUnitList: %s\n", ATwriteToString(term));
@@ -443,7 +446,7 @@ ATbool ATtoUntypedTraversal::traverse_ProgramUnitList(ATerm term, SgUntypedGloba
 //========================================================================================
 // InternalSubprogramPart (R210)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptInternalSubprogramPart(ATerm term, SgUntypedOtherStatement** contains_stmt, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_OptInternalSubprogramPart(ATerm term, SgUntypedOtherStatement** contains_stmt, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptInternalSubprogramPart: %s\n", ATwriteToString(term));
@@ -469,7 +472,7 @@ ATbool ATtoUntypedTraversal::traverse_OptInternalSubprogramPart(ATerm term, SgUn
 //========================================================================================
 // InternalSubprogram (R211)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_InternalSubprogramList(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_InternalSubprogramList(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_InternalSubprogramList: %s\n", ATwriteToString(term));
@@ -495,7 +498,7 @@ ATbool ATtoUntypedTraversal::traverse_InternalSubprogramList(ATerm term, SgUntyp
 // StartCommentBlock
 //  - this is optional
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_StartCommentBlock(ATerm term, std::string & var_StartCommentBlock)
+ATbool ATermToUntypedFortranTraversal::traverse_StartCommentBlock(ATerm term, std::string & var_StartCommentBlock)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StartCommentBlock: %s\n", ATwriteToString(term));
@@ -518,7 +521,7 @@ ATbool ATtoUntypedTraversal::traverse_StartCommentBlock(ATerm term, std::string 
 //========================================================================================
 // OptLabel
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptLabel(ATerm term, std::string & var_OptLabel)
+ATbool ATermToUntypedFortranTraversal::traverse_OptLabel(ATerm term, std::string & var_OptLabel)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptLabel: %s\n", ATwriteToString(term));
@@ -540,7 +543,7 @@ ATbool ATtoUntypedTraversal::traverse_OptLabel(ATerm term, std::string & var_Opt
 //========================================================================================
 // Name
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_Name(ATerm term, std::string & name)
+ATbool ATermToUntypedFortranTraversal::traverse_Name(ATerm term, std::string & name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Name: %s\n", ATwriteToString(term));
@@ -559,7 +562,7 @@ ATbool ATtoUntypedTraversal::traverse_Name(ATerm term, std::string & name)
 //========================================================================================
 // OptName
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptName(ATerm term, std::string & name)
+ATbool ATermToUntypedFortranTraversal::traverse_OptName(ATerm term, std::string & name)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptName: %s\n", ATwriteToString(term));
@@ -581,7 +584,7 @@ ATbool ATtoUntypedTraversal::traverse_OptName(ATerm term, std::string & name)
 //========================================================================================
 // NameList
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_NameList(ATerm term, SgUntypedNameList* name_list)
+ATbool ATermToUntypedFortranTraversal::traverse_NameList(ATerm term, SgUntypedNameList* name_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_NameList: %s\n", ATwriteToString(term));
@@ -607,7 +610,7 @@ ATbool ATtoUntypedTraversal::traverse_NameList(ATerm term, SgUntypedNameList* na
 //========================================================================================
 // eos
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_eos(ATerm term, std::string & var_eos)
+ATbool ATermToUntypedFortranTraversal::traverse_eos(ATerm term, std::string & var_eos)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_eos: %s\n", ATwriteToString(term));
@@ -629,7 +632,7 @@ ATbool ATtoUntypedTraversal::traverse_eos(ATerm term, std::string & var_eos)
 //========================================================================================
 // InitialSpecPart
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_InitialSpecPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_InitialSpecPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_InitialSpecPart: %s\n", ATwriteToString(term));
@@ -653,7 +656,7 @@ ATbool ATtoUntypedTraversal::traverse_InitialSpecPart(ATerm term, SgUntypedDecla
 //========================================================================================
 // defined-operator (R310)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_DefinedOperator(ATerm term, std::string & name)
+ATbool ATermToUntypedFortranTraversal::traverse_DefinedOperator(ATerm term, std::string & name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DefinedOperator: %s\n", ATwriteToString(term));
@@ -674,7 +677,7 @@ ATbool ATtoUntypedTraversal::traverse_DefinedOperator(ATerm term, std::string & 
 //========================================================================================
 // specification-part (R204)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_SpecificationPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_SpecificationPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecificationPart: %s\n", ATwriteToString(term));
@@ -706,7 +709,7 @@ ATbool ATtoUntypedTraversal::traverse_SpecificationPart(ATerm term, SgUntypedDec
 //========================================================================================
 // SpecAndExecPart
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_SpecAndExecPart(ATerm term, SgUntypedDeclarationStatementList* decl_list,
+ATbool ATermToUntypedFortranTraversal::traverse_SpecAndExecPart(ATerm term, SgUntypedDeclarationStatementList* decl_list,
                                                                   SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -749,7 +752,7 @@ ATbool ATtoUntypedTraversal::traverse_SpecAndExecPart(ATerm term, SgUntypedDecla
 //========================================================================================
 // implicit-part (R205)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptImplicitPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_OptImplicitPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptImplicitPart: %s\n", ATwriteToString(term));
@@ -769,7 +772,7 @@ ATbool ATtoUntypedTraversal::traverse_OptImplicitPart(ATerm term, SgUntypedDecla
 //========================================================================================
 // implicit-part-stmt (R206)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ImplicitPartStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ImplicitPartStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ImplicitPartStmtList: %s\n", ATwriteToString(term));
@@ -807,7 +810,7 @@ ATbool ATtoUntypedTraversal::traverse_ImplicitPartStmtList(ATerm term, SgUntyped
 //========================================================================================
 // declaration-construct (R207)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_DeclarationConstruct(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_DeclarationConstruct(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DeclarationConstruct: %s\n", ATwriteToString(term));
@@ -856,7 +859,7 @@ ATbool ATtoUntypedTraversal::traverse_DeclarationConstruct(ATerm term, SgUntyped
 //========================================================================================
 // DeclarationConstructList
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_DeclarationConstructList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_DeclarationConstructList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DeclarationConstructList: %s\n", ATwriteToString(term));
@@ -879,7 +882,7 @@ ATbool ATtoUntypedTraversal::traverse_DeclarationConstructList(ATerm term, SgUnt
 //========================================================================================
 // execution-part-construct (R209)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ExecutionPartConstruct(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ExecutionPartConstruct(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ExecutionPartConstruct: %s\n", ATwriteToString(term));
@@ -919,7 +922,7 @@ ATbool ATtoUntypedTraversal::traverse_ExecutionPartConstruct(ATerm term, SgUntyp
 //========================================================================================
 // Traverse specification statements
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_SpecStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_SpecStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecStmt: %s\n", ATwriteToString(term));
@@ -944,7 +947,7 @@ ATbool ATtoUntypedTraversal::traverse_SpecStmt(ATerm term, SgUntypedDeclarationS
 //========================================================================================
 // Traverse executable statements
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ExecStmt(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ExecStmt: %s\n", ATwriteToString(term));
@@ -1008,7 +1011,7 @@ class LetterSpecMatch
 class ImplicitSpecMatch
 {
  public:
-   ImplicitSpecMatch(ATtoUntypedTraversal* traversal, std::vector<FAST::ImplicitSpec>* list)
+   ImplicitSpecMatch(ATermToUntypedFortranTraversal* traversal, std::vector<FAST::ImplicitSpec>* list)
       : pTraversal(traversal), pImplicitSpecList(list)
       {
       }
@@ -1033,14 +1036,14 @@ class ImplicitSpecMatch
          return ATtrue;
       }
  protected:
-   ATtoUntypedTraversal* pTraversal;
+   ATermToUntypedFortranTraversal* pTraversal;
    std::vector<FAST::ImplicitSpec>* pImplicitSpecList;
 };
 
 //========================================================================================
 // DeclarationTypeSpec
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_DeclarationTypeSpec(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedFortranTraversal::traverse_DeclarationTypeSpec(ATerm term, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DeclarationTypeSpec: %s\n", ATwriteToString(term));
@@ -1062,7 +1065,7 @@ ATbool ATtoUntypedTraversal::traverse_DeclarationTypeSpec(ATerm term, SgUntypedT
 //========================================================================================
 // IntrinsicTypeSpec
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntrinsicTypeSpec: %s\n", ATwriteToString(term));
@@ -1091,7 +1094,7 @@ ATbool ATtoUntypedTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgUntypedTyp
 //========================================================================================
 // R305 literal-constant
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_LiteralConstant(ATerm term, SgUntypedExpression** var_expr)
+ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUntypedExpression** var_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LiteralConstant: %s\n", ATwriteToString(term));
@@ -1128,7 +1131,7 @@ ATbool ATtoUntypedTraversal::traverse_LiteralConstant(ATerm term, SgUntypedExpre
 //========================================================================================
 // R309 intrinsic-operator
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_Operator(ATerm term, SgUntypedExpression** var_expr)
+ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedExpression** var_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Operator: %s\n", ATwriteToString(term));
@@ -1205,7 +1208,7 @@ ATbool ATtoUntypedTraversal::traverse_Operator(ATerm term, SgUntypedExpression**
 //========================================================================================
 // R422 char-length (optional only for now)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptCharLength(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedFortranTraversal::traverse_OptCharLength(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptCharLength: %s\n", ATwriteToString(term));
@@ -1226,7 +1229,7 @@ ATbool ATtoUntypedTraversal::traverse_OptCharLength(ATerm term, SgUntypedExpress
 //========================================================================================
 // R501 type-declaration-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TypeDeclarationStmt: %s\n", ATwriteToString(term));
@@ -1279,7 +1282,7 @@ ATbool ATtoUntypedTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedD
 //========================================================================================
 // R502 attr-spec
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptAttrSpecList(ATerm term, SgUntypedTokenList* attr_list)
+ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUntypedTokenList* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptAttrSpecList: %s\n", ATwriteToString(term));
@@ -1368,7 +1371,7 @@ ATbool ATtoUntypedTraversal::traverse_OptAttrSpecList(ATerm term, SgUntypedToken
 //========================================================================================
 // R503 entity-decl
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EntityDecl(ATerm term, SgUntypedType* declared_type, SgUntypedInitializedNameList* name_list)
+ATbool ATermToUntypedFortranTraversal::traverse_EntityDecl(ATerm term, SgUntypedType* declared_type, SgUntypedInitializedNameList* name_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EntityDecl: %s\n", ATwriteToString(term));
@@ -1379,6 +1382,7 @@ ATbool ATtoUntypedTraversal::traverse_EntityDecl(ATerm term, SgUntypedType* decl
 
    SgUntypedType* initialized_type = NULL;
    SgUntypedInitializedName* initialized_name = NULL;
+   SgUntypedExprListExpression* dim_info = NULL;
    SgUntypedExpression* char_length = NULL;
    SgUntypedExpression* initialization = NULL;
 
@@ -1434,7 +1438,7 @@ ATbool ATtoUntypedTraversal::traverse_EntityDecl(ATerm term, SgUntypedType* decl
 // entity-decl-list
 //  - this is a bare list (without a cons name)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EntityDeclList(ATerm term, SgUntypedType* declared_type, SgUntypedInitializedNameList* name_list)
+ATbool ATermToUntypedFortranTraversal::traverse_EntityDeclList(ATerm term, SgUntypedType* declared_type, SgUntypedInitializedNameList* name_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EntityDeclList: %s\n", ATwriteToString(term));
@@ -1456,7 +1460,7 @@ ATbool ATtoUntypedTraversal::traverse_EntityDeclList(ATerm term, SgUntypedType* 
 //========================================================================================
 // R505 initialization (optional only for now)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptInitialization(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedFortranTraversal::traverse_OptInitialization(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Initialization: %s\n", ATwriteToString(term));
@@ -1476,7 +1480,7 @@ ATbool ATtoUntypedTraversal::traverse_OptInitialization(ATerm term, SgUntypedExp
 //========================================================================================
 // R509 coarray-spec (optional only for now)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* declared_type, SgUntypedType** initialized_type)
+ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* declared_type, SgUntypedType** initialized_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptCoarraySpec: %s\n", ATwriteToString(term));
@@ -1494,21 +1498,152 @@ ATbool ATtoUntypedTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* 
 }
 
 //========================================================================================
-// R515 array-spec (optional only for now)
+// R515 array-spec
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* declared_type, SgUntypedType** initialized_type)
+ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* declared_type, SgUntypedType** initialized_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptArraySpec: %s\n", ATwriteToString(term));
 #endif
 
+   ATerm t_array_spec_arg;
+   SgUntypedExprListExpression* dim_info;
+   SgUntypedExpression *lower_bound, *upper_bound;
+
    if (ATmatch(term, "no-list()")) {
+      // MATCHED no-list()
+   }
+   else if (ATmatch(term, "ArraySpec(<term>)", &t_array_spec_arg)) {
+      // check for non-list array-spec term first
+      // 
+      if (traverse_AssumedOrImpliedSpec(t_array_spec_arg, &lower_bound)) {
+         SgUntypedExprListExpression* range = new SgUntypedExprListExpression();
+
+      // assumed and implied shape arrays have rank 1, e.g., dimension A(*)
+         int rank = 1;
+
+         upper_bound = new SgUntypedOtherExpression(5); /* TODO - assumed_or_implied_enum, 5 for now */
+         range->get_expressions().push_back(lower_bound);
+         range->get_expressions().push_back(upper_bound);
+
+         dim_info = new SgUntypedExprListExpression(0); /* TODO - WHAT is 0 */
+         dim_info->get_expressions().push_back(range);
+
+      // TODO: The builder should probably be based on the declared type
+         SgUntypedArrayType* array_type = UntypedBuilder::buildArrayType(declared_type->get_type_enum_id(),dim_info,rank);
+
+         *initialized_type = array_type;
+
+         std::cout << "-----------FOUND assumed-spec of implied-spec --------------\n\n";
+        return ATtrue;
+      }
+#if 0
+      if (traverse_AssumedSize(t_array_spec_arg)) {
+           // TODO - need SgUntypedExprListExpression
+         return ATtrue;
+      }
+#endif
+
+      // this is a list of array-spec terms
+      ATermList tail = (ATermList) ATmake("<term>", t_array_spec_arg);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_ExplicitShape(head, &lower_bound, &upper_bound)) {
+           // TODO - append to SgUntypedExprListExpression
+         }
+         else if (traverse_AssumedShape(head, &lower_bound)) {
+           // TODO - append to SgUntypedExprListExpression
+         }
+        else {
+           std::cerr << "traverse_OptArraySpec: ERROR in ArraySpec list" << std::endl;
+           return ATfalse;
+        }
+      }
    }
    else {
-      //TODO - implement ArraySpec  
-      std::cerr << "...TODO... implement OptArraySpec" << std::endl;
       return ATfalse;
    }
+
+   std::cout << "\n---------------------------------------------------\n";
+   return ATtrue;
+}
+
+//========================================================================================
+// R516 explicit-shape-spec
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShape(ATerm term, SgUntypedExpression** lower_bound, SgUntypedExpression** upper_bound)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ExplicitShape: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_lower_bound, t_upper_bound;
+
+   *lower_bound = NULL;
+   *upper_bound = NULL;
+
+   if (ATmatch(term, "ExplicitShape(<term>,<term>)", &t_lower_bound, &t_upper_bound)) {
+      if (ATmatch(t_lower_bound, "no-lower-bound()")) {
+         *lower_bound = new SgUntypedNullExpression();
+      }
+      else if (traverse_Expression(t_lower_bound, lower_bound)) {
+      } else return ATfalse;
+      
+      if (traverse_Expression(t_upper_bound, upper_bound)) {
+      } else return ATfalse;
+      
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R519 assumed-shape-spec
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_AssumedShape(ATerm term, SgUntypedExpression** lower_bound)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AssumedShape: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_lower_bound;
+
+   *lower_bound = NULL;
+
+   if (ATmatch(term, "AssumedShape(<term>)", &t_lower_bound)) {
+      if (ATmatch(t_lower_bound, "no-lower-bound()")) {
+         *lower_bound = new SgUntypedNullExpression();
+      }
+      else if (traverse_Expression(t_lower_bound, lower_bound)) {
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R522 assumed-spec or implied-spec
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_AssumedOrImpliedSpec(ATerm term, SgUntypedExpression** lower_bound)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AssumedOrImpliedSpec: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_lower_bound;
+
+   *lower_bound = NULL;
+
+   if (ATmatch(term, "AssumedOrImpliedSpec(<term>)", &t_lower_bound)) {
+      if (ATmatch(t_lower_bound, "no-lower-bound()")) {
+         *lower_bound = new SgUntypedOtherExpression(SgToken::FORTRAN_NULL);
+      }
+      else if (traverse_Expression(t_lower_bound, lower_bound)) {
+      } else return ATfalse;
+      
+   } else return ATfalse;
 
    return ATtrue;
 }
@@ -1516,7 +1651,7 @@ ATbool ATtoUntypedTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* de
 //========================================================================================
 // R560 implicit-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ImplicitStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ImplicitStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ImplicitStmt: %s\n", ATwriteToString(term));
@@ -1569,7 +1704,7 @@ ATbool ATtoUntypedTraversal::traverse_ImplicitStmt(ATerm term, SgUntypedDeclarat
 //========================================================================================
 // R611 data-ref
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_DataRef(ATerm term, SgUntypedExpression** var_expr)
+ATbool ATermToUntypedFortranTraversal::traverse_DataRef(ATerm term, SgUntypedExpression** var_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_DataRef: %s\n", ATwriteToString(term));
@@ -1597,7 +1732,7 @@ ATbool ATtoUntypedTraversal::traverse_DataRef(ATerm term, SgUntypedExpression** 
 //========================================================================================
 // R612 part-ref
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_PartRef(ATerm term, SgUntypedExpression** var_expr)
+ATbool ATermToUntypedFortranTraversal::traverse_PartRef(ATerm term, SgUntypedExpression** var_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_PartRef: %s\n", ATwriteToString(term));
@@ -1633,7 +1768,7 @@ ATbool ATtoUntypedTraversal::traverse_PartRef(ATerm term, SgUntypedExpression** 
 //========================================================================================
 // R620 section-subscript
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptSectionSubscripts(ATerm term)
+ATbool ATermToUntypedFortranTraversal::traverse_OptSectionSubscripts(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptSectionSubscripts: %s\n", ATwriteToString(term));
@@ -1657,7 +1792,7 @@ ATbool ATtoUntypedTraversal::traverse_OptSectionSubscripts(ATerm term)
 //========================================================================================
 // R624 image-selector
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptImageSelector(ATerm term)
+ATbool ATermToUntypedFortranTraversal::traverse_OptImageSelector(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptImageSelector: %s\n", ATwriteToString(term));
@@ -1679,7 +1814,7 @@ ATbool ATtoUntypedTraversal::traverse_OptImageSelector(ATerm term)
 //========================================================================================
 // R722 expr
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_Expression(ATerm term, SgUntypedExpression** var_expr)
+ATbool ATermToUntypedFortranTraversal::traverse_Expression(ATerm term, SgUntypedExpression** var_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_Expression: %s\n", ATwriteToString(term));
@@ -1700,7 +1835,7 @@ ATbool ATtoUntypedTraversal::traverse_Expression(ATerm term, SgUntypedExpression
   return ATtrue;
 }
 
-ATbool ATtoUntypedTraversal::traverse_OptExpr( ATerm term, SgUntypedExpression** expr )
+ATbool ATermToUntypedFortranTraversal::traverse_OptExpr( ATerm term, SgUntypedExpression** expr )
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptExpr: %s\n", ATwriteToString(term));
@@ -1725,7 +1860,7 @@ ATbool ATtoUntypedTraversal::traverse_OptExpr( ATerm term, SgUntypedExpression**
 //========================================================================================
 // R732 assignment-statement
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedFortranTraversal::traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_AssignmentStmt: %s\n", ATwriteToString(term));
@@ -1764,7 +1899,7 @@ ATbool ATtoUntypedTraversal::traverse_AssignmentStmt(ATerm term, SgUntypedStatem
 //========================================================================================
 // R854 continue-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ContinueStmt(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ContinueStmt(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ContinueStmt: %s\n", ATwriteToString(term));
@@ -1797,7 +1932,7 @@ ATbool ATtoUntypedTraversal::traverse_ContinueStmt(ATerm term, SgUntypedStatemen
 //========================================================================================
 // R855 stop-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_StopStmt(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedFortranTraversal::traverse_StopStmt(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_StopStmt: %s\n", ATwriteToString(term));
@@ -1834,7 +1969,7 @@ ATbool ATtoUntypedTraversal::traverse_StopStmt(ATerm term, SgUntypedStatementLis
 //========================================================================================
 // R856 error-stop-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ErrorStopStmt(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ErrorStopStmt(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ErrorStopStmt: %s\n", ATwriteToString(term));
@@ -1868,7 +2003,7 @@ ATbool ATtoUntypedTraversal::traverse_ErrorStopStmt(ATerm term, SgUntypedStateme
    return ATtrue;
 }
 
-ATbool ATtoUntypedTraversal::traverse_OptStopCode(ATerm term, SgUntypedExpression** stop_code)
+ATbool ATermToUntypedFortranTraversal::traverse_OptStopCode(ATerm term, SgUntypedExpression** stop_code)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptStopStmt: %s\n", ATwriteToString(term));
@@ -1890,7 +2025,7 @@ ATbool ATtoUntypedTraversal::traverse_OptStopCode(ATerm term, SgUntypedExpressio
 //========================================================================================
 // MainProgram (R1101)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_MainProgram: %s\n", ATwriteToString(term));
@@ -1977,7 +2112,7 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
 //========================================================================================
 // R1102 program-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptProgramStmt(ATerm term, SgUntypedNamedStatement** program_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_OptProgramStmt(ATerm term, SgUntypedNamedStatement** program_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptProgramStmt: %s\n", ATwriteToString(term));
@@ -2019,7 +2154,7 @@ ATbool ATtoUntypedTraversal::traverse_OptProgramStmt(ATerm term, SgUntypedNamedS
 //========================================================================================
 // EndProgramStmt (R1103)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndProgramStmt(ATerm term, SgUntypedNamedStatement** end_program_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndProgramStmt(ATerm term, SgUntypedNamedStatement** end_program_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndProgramStmt: %s\n", ATwriteToString(term));
@@ -2054,7 +2189,7 @@ ATbool ATtoUntypedTraversal::traverse_EndProgramStmt(ATerm term, SgUntypedNamedS
 //========================================================================================
 // Module (R1104)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Module: %s\n", ATwriteToString(term));
@@ -2119,7 +2254,7 @@ ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
 //========================================================================================
 // module-stmt (R1105)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ModuleStmt(ATerm term, SgUntypedNamedStatement** module_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_ModuleStmt(ATerm term, SgUntypedNamedStatement** module_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ModuleStmt: %s\n", ATwriteToString(term));
@@ -2155,7 +2290,7 @@ ATbool ATtoUntypedTraversal::traverse_ModuleStmt(ATerm term, SgUntypedNamedState
 //========================================================================================
 // end-module-stmt (R1106)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndModuleStmt(ATerm term, SgUntypedNamedStatement** end_module_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndModuleStmt(ATerm term, SgUntypedNamedStatement** end_module_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndModuleStmt: %s\n", ATwriteToString(term));
@@ -2189,7 +2324,7 @@ ATbool ATtoUntypedTraversal::traverse_EndModuleStmt(ATerm term, SgUntypedNamedSt
 //========================================================================================
 // module-subprogram-part (R1107)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptModuleSubprogramPart(ATerm term, SgUntypedOtherStatement** contains_stmt, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_OptModuleSubprogramPart(ATerm term, SgUntypedOtherStatement** contains_stmt, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptModuleSubprogramPart: %s\n", ATwriteToString(term));
@@ -2215,7 +2350,7 @@ ATbool ATtoUntypedTraversal::traverse_OptModuleSubprogramPart(ATerm term, SgUnty
 //========================================================================================
 // module-subprogram (R1108)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ModuleSubprogramList(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_ModuleSubprogramList(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ModuleSubprogramList: %s\n", ATwriteToString(term));
@@ -2243,7 +2378,7 @@ ATbool ATtoUntypedTraversal::traverse_ModuleSubprogramList(ATerm term, SgUntyped
 //========================================================================================
 // use-stmt (R1109)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_UseStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_UseStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_UseStmt: %s\n", ATwriteToString(term));
@@ -2301,7 +2436,7 @@ ATbool ATtoUntypedTraversal::traverse_UseStmt(ATerm term, SgUntypedDeclarationSt
 //========================================================================================
 // use-stmt-list
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_UseStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_UseStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_UseStmtList: %s\n", ATwriteToString(term));
@@ -2322,7 +2457,7 @@ ATbool ATtoUntypedTraversal::traverse_UseStmtList(ATerm term, SgUntypedDeclarati
 //========================================================================================
 // module-nature (R1110)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptModuleNature(ATerm term, SgToken::ROSE_Fortran_Keywords & module_nature)
+ATbool ATermToUntypedFortranTraversal::traverse_OptModuleNature(ATerm term, SgToken::ROSE_Fortran_Keywords & module_nature)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptModuleNature: %s\n", ATwriteToString(term));
@@ -2353,7 +2488,7 @@ ATbool ATtoUntypedTraversal::traverse_OptModuleNature(ATerm term, SgToken::ROSE_
 //========================================================================================
 // rename (R1111), only (R1112)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_RenameOrOnlyList(ATerm term, bool isOnlyList, SgUntypedTokenPairList* rename_or_only_list)
+ATbool ATermToUntypedFortranTraversal::traverse_RenameOrOnlyList(ATerm term, bool isOnlyList, SgUntypedTokenPairList* rename_or_only_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_RenameOrOnlyList: %s\n", ATwriteToString(term));
@@ -2446,7 +2581,7 @@ ATbool ATtoUntypedTraversal::traverse_RenameOrOnlyList(ATerm term, bool isOnlyLi
 //========================================================================================
 // submodule (R1116)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Submodule: %s\n", ATwriteToString(term));
@@ -2515,7 +2650,7 @@ ATbool ATtoUntypedTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scop
 //========================================================================================
 // submodule-stmt (R1117)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_SubmoduleStmt(ATerm term, SgUntypedNamedStatement** submodule_stmt,
+ATbool ATermToUntypedFortranTraversal::traverse_SubmoduleStmt(ATerm term, SgUntypedNamedStatement** submodule_stmt,
                                                     std::string & ancestor, std::string & parent)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -2553,7 +2688,7 @@ ATbool ATtoUntypedTraversal::traverse_SubmoduleStmt(ATerm term, SgUntypedNamedSt
 //========================================================================================
 // parent-identifier (R1118)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ParentIdentifier(ATerm term, std::string & ancestor, std::string & parent)
+ATbool ATermToUntypedFortranTraversal::traverse_ParentIdentifier(ATerm term, std::string & ancestor, std::string & parent)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ParentIdentifier: %s\n", ATwriteToString(term));
@@ -2577,7 +2712,7 @@ ATbool ATtoUntypedTraversal::traverse_ParentIdentifier(ATerm term, std::string &
 //========================================================================================
 // end-module-stmt (R1119)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndSubmoduleStmt(ATerm term, SgUntypedNamedStatement** end_submodule_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndSubmoduleStmt(ATerm term, SgUntypedNamedStatement** end_submodule_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndSubmoduleStmt: %s\n", ATwriteToString(term));
@@ -2611,7 +2746,7 @@ ATbool ATtoUntypedTraversal::traverse_EndSubmoduleStmt(ATerm term, SgUntypedName
 //========================================================================================
 // BlockData (R1120)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockData: %s\n", ATwriteToString(term));
@@ -2662,7 +2797,7 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
 //========================================================================================
 // block-data-stmt (R1121)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_BlockDataStmt(ATerm term, SgUntypedNamedStatement** block_data_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_BlockDataStmt(ATerm term, SgUntypedNamedStatement** block_data_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockDataStmt: %s\n", ATwriteToString(term));
@@ -2698,7 +2833,7 @@ ATbool ATtoUntypedTraversal::traverse_BlockDataStmt(ATerm term, SgUntypedNamedSt
 //========================================================================================
 // end-block-data-stmt (R1122)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndBlockDataStmt(ATerm term, SgUntypedNamedStatement** end_block_data_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndBlockDataStmt(ATerm term, SgUntypedNamedStatement** end_block_data_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndBlockDataStmt: %s\n", ATwriteToString(term));
@@ -2732,7 +2867,7 @@ ATbool ATtoUntypedTraversal::traverse_EndBlockDataStmt(ATerm term, SgUntypedName
 //========================================================================================
 // interface-block (R1201)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_InterfaceBlock(ATerm term, SgUntypedDeclarationStatementList* parent_decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_InterfaceBlock(ATerm term, SgUntypedDeclarationStatementList* parent_decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_InterfaceBlock: %s\n", ATwriteToString(term));
@@ -2784,7 +2919,7 @@ ATbool ATtoUntypedTraversal::traverse_InterfaceBlock(ATerm term, SgUntypedDeclar
 //========================================================================================
 // interface-specification (R1202)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_InterfaceSpecificationList(ATerm term, SgUntypedFunctionDeclarationList* func_list)
+ATbool ATermToUntypedFortranTraversal::traverse_InterfaceSpecificationList(ATerm term, SgUntypedFunctionDeclarationList* func_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_InterfaceSpecificationList: %s\n", ATwriteToString(term));
@@ -2810,7 +2945,7 @@ ATbool ATtoUntypedTraversal::traverse_InterfaceSpecificationList(ATerm term, SgU
 //========================================================================================
 // interface-stmt (R1203)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_InterfaceStmt(ATerm term, SgUntypedInterfaceDeclaration** interface_decl)
+ATbool ATermToUntypedFortranTraversal::traverse_InterfaceStmt(ATerm term, SgUntypedInterfaceDeclaration** interface_decl)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_InterfaceStmt: %s\n", ATwriteToString(term));
@@ -2873,7 +3008,7 @@ ATbool ATtoUntypedTraversal::traverse_InterfaceStmt(ATerm term, SgUntypedInterfa
 //========================================================================================
 // end-interface-stmt (R1204)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndInterfaceStmt(ATerm term, SgUntypedNamedStatement** end_interface_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndInterfaceStmt(ATerm term, SgUntypedNamedStatement** end_interface_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndInterfaceStmt: %s\n", ATwriteToString(term));
@@ -2917,7 +3052,7 @@ ATbool ATtoUntypedTraversal::traverse_EndInterfaceStmt(ATerm term, SgUntypedName
 //========================================================================================
 // interface-body (R1205)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_InterfaceBody(ATerm term, SgUntypedFunctionDeclarationList* func_list)
+ATbool ATermToUntypedFortranTraversal::traverse_InterfaceBody(ATerm term, SgUntypedFunctionDeclarationList* func_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_InterfaceBody: %s\n", ATwriteToString(term));
@@ -2929,7 +3064,7 @@ ATbool ATtoUntypedTraversal::traverse_InterfaceBody(ATerm term, SgUntypedFunctio
 //========================================================================================
 // procedure-stmt (R1206)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ProcedureStmt(ATerm term, SgUntypedFunctionDeclarationList* func_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ProcedureStmt(ATerm term, SgUntypedFunctionDeclarationList* func_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProcedureStmt: %s\n", ATwriteToString(term));
@@ -2941,7 +3076,7 @@ ATbool ATtoUntypedTraversal::traverse_ProcedureStmt(ATerm term, SgUntypedFunctio
 //========================================================================================
 // generic-spec (R1207)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptGenericSpec(ATerm term, std::string & name, SgUntypedToken** generic_spec)
+ATbool ATermToUntypedFortranTraversal::traverse_OptGenericSpec(ATerm term, std::string & name, SgUntypedToken** generic_spec)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptGenericSpec: %s\n", ATwriteToString(term));
@@ -2997,7 +3132,7 @@ ATbool ATtoUntypedTraversal::traverse_OptGenericSpec(ATerm term, std::string & n
 //========================================================================================
 // ImportStmt (R1209)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ImportStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ImportStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ImportStmt: %s\n", ATwriteToString(term));
@@ -3039,7 +3174,7 @@ ATbool ATtoUntypedTraversal::traverse_ImportStmt(ATerm term, SgUntypedDeclaratio
 //========================================================================================
 // ImportStmtList
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ImportStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ImportStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ImportStmtList: %s\n", ATwriteToString(term));
@@ -3060,7 +3195,7 @@ ATbool ATtoUntypedTraversal::traverse_ImportStmtList(ATerm term, SgUntypedDeclar
 //========================================================================================
 // ExternalStmt (R1210)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ExternalStmt: %s\n", ATwriteToString(term));
@@ -3102,7 +3237,7 @@ ATbool ATtoUntypedTraversal::traverse_ExternalStmt(ATerm term, SgUntypedDeclarat
 //========================================================================================
 // Prefix (R1225)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptPrefix(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type)
+ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptPrefix: %s\n", ATwriteToString(term));
@@ -3154,7 +3289,7 @@ ATbool ATtoUntypedTraversal::traverse_OptPrefix(ATerm term, SgUntypedTokenList* 
 //========================================================================================
 // FunctionSubprogram (R1227)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FunctionSubprogram: %s\n", ATwriteToString(term));
@@ -3264,7 +3399,7 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
 //========================================================================================
 // ProcLanguageBindingSpec (R1229)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptProcLanguageBindingSpec(ATerm term)
+ATbool ATermToUntypedFortranTraversal::traverse_OptProcLanguageBindingSpec(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptProcLanguageBindingSpec: %s\n", ATwriteToString(term));
@@ -3283,7 +3418,7 @@ ATbool ATtoUntypedTraversal::traverse_OptProcLanguageBindingSpec(ATerm term)
 //========================================================================================
 // Suffix (R1231)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptSuffix(ATerm term)
+ATbool ATermToUntypedFortranTraversal::traverse_OptSuffix(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Suffix: %s\n", ATwriteToString(term));
@@ -3302,7 +3437,7 @@ ATbool ATtoUntypedTraversal::traverse_OptSuffix(ATerm term)
 //========================================================================================
 // EndFunctiontmt (R1232)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndFunctionStmt(ATerm term, SgUntypedNamedStatement** end_function_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndFunctionStmt(ATerm term, SgUntypedNamedStatement** end_function_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndFunctionStmt: %s\n", ATwriteToString(term));
@@ -3336,7 +3471,7 @@ ATbool ATtoUntypedTraversal::traverse_EndFunctionStmt(ATerm term, SgUntypedNamed
 //========================================================================================
 // SubroutineSubprogram (R1233)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SubroutineSubprogram: %s\n", ATwriteToString(term));
@@ -3441,7 +3576,7 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
 //========================================================================================
 // DummyArgList (R1235)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptDummyArgList(ATerm term, SgUntypedInitializedNameList* param_list)
+ATbool ATermToUntypedFortranTraversal::traverse_OptDummyArgList(ATerm term, SgUntypedInitializedNameList* param_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptDummyArgList: %s\n", ATwriteToString(term));
@@ -3472,7 +3607,7 @@ ATbool ATtoUntypedTraversal::traverse_OptDummyArgList(ATerm term, SgUntypedIniti
 //========================================================================================
 // EndSubroutineStmt (R1236)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndSubroutineStmt(ATerm term, SgUntypedNamedStatement** end_subroutine_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndSubroutineStmt(ATerm term, SgUntypedNamedStatement** end_subroutine_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndSubroutineStmt: %s\n", ATwriteToString(term));
@@ -3506,7 +3641,7 @@ ATbool ATtoUntypedTraversal::traverse_EndSubroutineStmt(ATerm term, SgUntypedNam
 //========================================================================================
 // separate-module-subprogram (R1237)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedFortranTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SeparateModuleSubprogram: %s\n", ATwriteToString(term));
@@ -3583,7 +3718,7 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
 //========================================================================================
 // R1238 mp-subprogram-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_MpSubprogramStmt(ATerm term, SgUntypedNamedStatement** mp_subprogram_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_MpSubprogramStmt(ATerm term, SgUntypedNamedStatement** mp_subprogram_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptMpSubprogramStmt: %s\n", ATwriteToString(term));
@@ -3619,7 +3754,7 @@ ATbool ATtoUntypedTraversal::traverse_MpSubprogramStmt(ATerm term, SgUntypedName
 //========================================================================================
 // R1239 end-mp-subprogram-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_EndMpSubprogramStmt(ATerm term, SgUntypedNamedStatement** end_mp_subprogram_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_EndMpSubprogramStmt(ATerm term, SgUntypedNamedStatement** end_mp_subprogram_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EndMpSubprogramStmt: %s\n", ATwriteToString(term));
@@ -3658,7 +3793,7 @@ ATbool ATtoUntypedTraversal::traverse_EndMpSubprogramStmt(ATerm term, SgUntypedN
 //========================================================================================
 // R1241 return-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ReturnStmt(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedFortranTraversal::traverse_ReturnStmt(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ReturnStmt: %s\n", ATwriteToString(term));
@@ -3695,7 +3830,7 @@ ATbool ATtoUntypedTraversal::traverse_ReturnStmt(ATerm term, SgUntypedStatementL
 //========================================================================================
 // R1242 contains-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ContainsStmt(ATerm term, SgUntypedOtherStatement** contains_stmt)
+ATbool ATermToUntypedFortranTraversal::traverse_ContainsStmt(ATerm term, SgUntypedOtherStatement** contains_stmt)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ContainsStmt: %s\n", ATwriteToString(term));

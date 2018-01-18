@@ -1450,6 +1450,12 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
                goto done;
              }
 
+          if (typenameString == "SgUntypedExpressionPtrList")
+             {
+               returnString = "SgUntypedExpression";
+               goto done;
+             }
+
           if (typenameString == "SgExpressionPtrList")
              {
                returnString = "SgExpression";
@@ -1839,6 +1845,12 @@ GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
           if (typenameString == "SgUntypedTokenPairPtrList")
              {
                // returnString = "SgUntypedTokenPair";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedExpressionPtrList")
+             {
+                // returnString = "SgUntypedExpression";
                goto done;
              }
 
