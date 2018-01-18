@@ -55,11 +55,8 @@ private:
     }
 #endif
 
-public:
-    /**  Construct Z3 solver preferring library linkage.
-     *
-     *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE
-     *   configuration script. */
+protected:
+    // Reference counted object. Use instance or create instead.
     explicit Z3Solver(unsigned linkages = LM_ANY)
         : SmtlibSolver("z3", ROSE_Z3, "", linkages & availableLinkages())
 #ifdef ROSE_HAVE_Z3
@@ -71,6 +68,22 @@ public:
         solver_ = new z3::solver(*ctx_);
         z3Stack_.push_back(std::vector<z3::expr>());
 #endif
+    }
+
+public:
+    /**  Construct Z3 solver preferring library linkage.
+     *
+     *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE
+     *   configuration script. */
+    static Ptr instance(unsigned linkages = LM_ANY) {
+        return Ptr(new Z3Solver(linkages));
+    }
+
+    /** Virtual constructor.
+     *
+     *  Create a new solver just like this one. */
+    virtual Ptr create() const {
+        return Ptr(instance(linkage()));
     }
 
     /** Construct Z3 solver using a specified executable.

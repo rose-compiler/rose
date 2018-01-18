@@ -121,7 +121,8 @@ public:
         return retval;
     }
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, SmtSolver*) const ROSE_OVERRIDE {
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&,
+                        const SmtSolverPtr&) const ROSE_OVERRIDE {
         throw BaseSemantics::NotImplemented("SourceAstSemantics is not suitable for dataflow analysis", NULL);
     }
 
@@ -135,11 +136,13 @@ public:
 
 public:
     // These are not needed since this domain never tries to compare semantic values.
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
     }
 
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
     }
     
@@ -250,13 +253,13 @@ private:
     bool executionHalted_;                              // Stop adding inputs and outputs?
 
 protected:
-    RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver)
+    RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver)
         : BaseSemantics::RiscOperators(protoval, solver), executionHalted_(false) {
         name("SourceAstSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SourceAstSemantics::SValue
     }
 
-    RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver)
+    RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver)
         : BaseSemantics::RiscOperators(state, solver), executionHalted_(false) {
         name("SourceAstSemantics");
         (void) SValue::promote(state->protoval());      // values must have SourceAstSemantics::SValue dynamic type
@@ -265,7 +268,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      *  SourceAstSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -278,13 +281,13 @@ public:
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
      *  second argument because the base class expects one, but it is not used for this semantic domain. See @ref solver for
      *  details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
      *  because the base class expects one, but it is not used for this semantic domain. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -292,12 +295,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 

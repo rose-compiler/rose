@@ -231,13 +231,12 @@ public:
     /** Virtual base class for expanding operators. */
     class OperatorExpansion: public Expansion {
     protected:
-        SmtSolver *solver;                              // may be null
+        SmtSolverPtr solver;                            // may be null
 
-        explicit OperatorExpansion(SmtSolver *solver)
-            : solver(solver) {}
+        explicit OperatorExpansion(const SmtSolverPtr &solver);
 
     public:
-        virtual ~OperatorExpansion() {}
+        virtual ~OperatorExpansion();
 
         /** Shared-ownership pointer to an @ref OperatorExpansion. See @ref heap_object_shared_ownership. */
         typedef Sawyer::SharedPointer<OperatorExpansion> Ptr;
@@ -257,16 +256,18 @@ public:
 private:
     AtomTable atomTable_;
     OperatorTable operatorTable_;
-    SmtSolver *solver_;                                 // optional solver for simplifications
+    SmtSolverPtr solver_;                               // optional solver for simplifications
 
 public:
     /** Default constructor. */
-    SymbolicExprParser(): solver_(NULL) { init(); }
+    SymbolicExprParser();
 
     /** Parser using a specific SMT solver for simplifications.
      *
      *  The solver may be null in which case ROSE's default simplifications are the only ones used. */
-    explicit SymbolicExprParser(SmtSolver *solver): solver_(solver) { init(); }
+    explicit SymbolicExprParser(const SmtSolverPtr &solver);
+
+    ~SymbolicExprParser();
     
     /** Create a symbolic expression by parsing a string.
      *

@@ -19,7 +19,7 @@
 #include <Sawyer/Stopwatch.h>
 
 // Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
-#define NO_SOLVER NULL
+#define NO_SOLVER SmtSolverPtr()
 
 using namespace Rose::Diagnostics;
 
@@ -103,39 +103,39 @@ SmtSolver::availability() {
 }
 
 // class methd
-SmtSolver*
+SmtSolver::Ptr
 SmtSolver::instance(const std::string &name) {
     if ("" == name || "none" == name)
-        return NULL;
+        return Ptr();
     if ("best" == name)
         return bestAvailable();
     if ("z3-lib" == name)
-        return new Z3Solver(LM_LIBRARY);
+        return Z3Solver::instance(LM_LIBRARY);
     if ("z3-exe" == name)
-        return new Z3Solver(LM_EXECUTABLE);
+        return Z3Solver::instance(LM_EXECUTABLE);
     if ("yices-lib" == name)
-        return new YicesSolver(LM_LIBRARY);
+        return YicesSolver::instance(LM_LIBRARY);
     if ("yices-exe" == name)
-        return new YicesSolver(LM_EXECUTABLE);
+        return YicesSolver::instance(LM_EXECUTABLE);
     throw Exception("unrecognized SMT solver name \"" + StringUtility::cEscape(name) + "\"");
 }
 
 // class method
-SmtSolver*
+SmtSolver::Ptr
 SmtSolver::bestAvailable() {
     // Binary APIs are faster, so prefer them
     if ((Z3Solver::availableLinkages() & LM_LIBRARY) != 0)
-        return new Z3Solver(LM_LIBRARY);
+        return Z3Solver::instance(LM_LIBRARY);
     if ((YicesSolver::availableLinkages() & LM_LIBRARY) != 0)
-        return new YicesSolver(LM_LIBRARY);
+        return YicesSolver::instance(LM_LIBRARY);
 
     // Next try text-based APIs
     if ((Z3Solver::availableLinkages() & LM_EXECUTABLE) != 0)
-        return new Z3Solver(LM_EXECUTABLE);
+        return Z3Solver::instance(LM_EXECUTABLE);
     if ((YicesSolver::availableLinkages() & LM_EXECUTABLE) != 0)
-        return new YicesSolver(LM_EXECUTABLE);
+        return YicesSolver::instance(LM_EXECUTABLE);
 
-    return NULL;
+    return Ptr();
 }
 
 SmtSolver::LinkMode

@@ -599,7 +599,7 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         }
     }
 
-    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+    SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, myRegs, solver);
 
     return partitioner.instructionProvider().dispatcher()->create(ops);
@@ -699,17 +699,17 @@ processVertex(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGrap
 }
 
 static void
-showPathEvidence(SmtSolver &solver, const RiscOperatorsPtr &ops) {
+showPathEvidence(const SmtSolverPtr &solver, const RiscOperatorsPtr &ops) {
     std::cout <<"  Inputs sufficient to cause path to be taken:\n";
-    std::vector<std::string> enames = solver.evidenceNames();
+    std::vector<std::string> enames = solver->evidenceNames();
     if (enames.empty()) {
         std::cout <<"    not available (or none necessary)\n";
     } else {
         BOOST_FOREACH (const std::string &ename, enames) {
             if (ename.substr(0, 2) == "0x") {
-                std::cout <<"    memory[" <<ename <<"] == " <<*solver.evidenceForName(ename) <<"\n";
+                std::cout <<"    memory[" <<ename <<"] == " <<*solver->evidenceForName(ename) <<"\n";
             } else {
-                std::cout <<"    " <<ename <<" == " <<*solver.evidenceForName(ename) <<"\n";
+                std::cout <<"    " <<ename <<" == " <<*solver->evidenceForName(ename) <<"\n";
             }
             std::string varComment = ops->varComment(ename);
             if (!varComment.empty())
@@ -767,7 +767,7 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
 
 static void
 printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pathsGraph, const P2::CfgPath &path,
-             size_t pathNumber, const std::vector<SymbolicExpr::Ptr> &pathConstraints, SmtSolver &solver,
+             size_t pathNumber, const std::vector<SymbolicExpr::Ptr> &pathConstraints, const SmtSolverPtr &solver,
              const RiscOperatorsPtr &ops) {
     std::cout <<"Found feasible path #" <<pathNumber
               <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
@@ -961,7 +961,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
         info <<"  saved as \"" <<StringUtility::cEscape(graphVizFileName) <<"\"\n";
     }
 
-    YicesSolver solver;
+    SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
@@ -984,7 +984,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
-                                                                &solver);
+                                                                solver);
             pathConstraints.push_back(constraint);
         }
     }
@@ -993,7 +993,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
 
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
     SmtSolver::Satisfiable isSatisfied = SmtSolver::SAT_UNKNOWN;
-    isSatisfied = solver.satisfiable(pathConstraints);
+    isSatisfied = solver->satisfiable(pathConstraints);
 
     if (!atEndOfPath)
         return isSatisfied;
@@ -1287,7 +1287,7 @@ struct BfsContext {
 // Runs in a separate thread.
 static void
 singleThreadBfsWorker(BfsContext *ctx) {
-    YicesSolver solver;
+    SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
@@ -1340,7 +1340,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), pathsEdge->target()->value().address());
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
-                                                                &solver);
+                                                                solver);
             bfsVertex->value().constraint = constraint;
             SAWYER_MESG(debug) <<"  path edge has constraint expression\n";
         }
@@ -1363,7 +1363,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
             if (atEndOfPath)
                 incorporatePostConditions(ops, pathConstraints /*out*/);
             SAWYER_MESG(debug) <<"  solving " <<StringUtility::plural(pathConstraints.size(), "path constraints") <<"\n";
-            isFeasible = solver.satisfiable(pathConstraints);
+            isFeasible = solver->satisfiable(pathConstraints);
             if (SmtSolver::SAT_NO == isFeasible)
                 abandonPrefix = true;
             SAWYER_MESG(debug) <<"  solver returned "

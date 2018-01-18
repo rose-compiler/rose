@@ -12,15 +12,24 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/unordered_map.hpp>
 #include <inttypes.h>
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** Reference-counting pointer for SMT solvers. */
+typedef Sawyer::SharedPointer<class SmtSolver> SmtSolverPtr;
+
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
- *  The purpose of an SMT solver is to determine if an expression is satisfiable. */
-class SmtSolver: private boost::noncopyable {
+ *  The purpose of an SMT solver is to determine if an expression is satisfiable. Solvers are reference counted objects that
+ *  are allocated with @c instance static methods or @c create virtual constructors and should not be explicitly deleted. */
+class SmtSolver: public Sawyer::SharedObject, private boost::noncopyable {
 public:
+    /** Reference counting pointer for SMT solvers. */
+    typedef Sawyer::SharedPointer<SmtSolver> Ptr;
+
     /** Solver availability map. */
     typedef std::map<std::string, bool> Availability;
 
@@ -179,6 +188,10 @@ protected:
     }
     
 public:
+    /** Virtual constructor. */
+    virtual Ptr create() const = 0;
+
+    // Solvers are reference counted and should not be explicitly deleted.
     virtual ~SmtSolver();
 
 
@@ -199,12 +212,12 @@ public:
      *  null) and "best" means return @ref bestAvailable (which might also be null). It may be possible to create solvers by
      *  name that are not available, but attempting to use such a solver will fail loudly by calling @ref requireLinkage. If an
      *  invalid name is supplied then an @ref SmtSolver::Exception is thrown. */
-    static SmtSolver* instance(const std::string &name);
+    static Ptr instance(const std::string &name);
 
     /** Best available solver.
      *
      *  Returns a new solver, an instance of the best available solver. If no solver is possible then returns null. */
-    static SmtSolver* bestAvailable();
+    static Ptr bestAvailable();
 
     /** Property: Name of solver for debugging.
      *

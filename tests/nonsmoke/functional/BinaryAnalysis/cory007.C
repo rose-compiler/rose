@@ -12,8 +12,6 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <sageBuilderAsm.h>
 #include <sstream>
 
-#define NO_SOLVER NULL
-
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
@@ -46,7 +44,7 @@ main() {
     // Make a symbolic expression to which we can attach some attributes.
     SymbolicExpr::Ptr a = SymbolicExpr::makeVariable(32, "a");
     SymbolicExpr::Ptr b = SymbolicExpr::makeInteger(32, 4);
-    SymbolicExpr::Ptr c = SymbolicExpr::makeAdd(a, b, NO_SOLVER);
+    SymbolicExpr::Ptr c = SymbolicExpr::makeAdd(a, b, SmtSolverPtr());
 
     // Every expression has a hash value. Save it for comparison later.
     uint64_t hash1 = c->hash();

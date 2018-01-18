@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <BinarySymbolicExprParser.h>
+#include <BinarySmtSolver.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Map.h>
 #include <integerOps.h>
@@ -370,14 +371,19 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 //                                      SymbolicExprParser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SymbolicExprParser::OperatorExpansion::OperatorExpansion(const SmtSolverPtr &solver)
+    : solver(solver) {}
+
+SymbolicExprParser::OperatorExpansion::~OperatorExpansion() {}
+
 // Throws an exception for functions named "..."
 class AbbreviatedOperator: public SymbolicExprParser::OperatorExpansion {
 protected:
-    explicit AbbreviatedOperator(SmtSolver *solver)
+    explicit AbbreviatedOperator(const SmtSolverPtr &solver)
         : SymbolicExprParser::OperatorExpansion(solver) {}
 
 public:
-    static Ptr instance(SmtSolver *solver) {
+    static Ptr instance(const SmtSolverPtr &solver) {
         return Ptr(new AbbreviatedOperator(solver));            // undocumented
     }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
@@ -405,7 +411,7 @@ class SmtOperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    explicit SmtOperators(SmtSolver *solver)
+    explicit SmtOperators(const SmtSolverPtr &solver)
         : SymbolicExprParser::OperatorExpansion(solver) {
         std::string doc;
         ops_.insert("add",          SymbolicExpr::OP_ADD);
@@ -630,7 +636,7 @@ protected:
     }
 
 public:
-    static Ptr instance(SmtSolver *solver) {
+    static Ptr instance(const SmtSolverPtr &solver) {
         return Ptr(new SmtOperators(solver));
     }
 
@@ -646,7 +652,7 @@ class COperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    explicit COperators(SmtSolver *solver)
+    explicit COperators(const SmtSolverPtr &solver)
         : SymbolicExprParser::OperatorExpansion(solver) {
         std::string doc;
         ops_.insert("+",        SymbolicExpr::OP_ADD);
@@ -762,7 +768,7 @@ protected:
     }
         
 public:
-    static Ptr instance(SmtSolver *solver) {
+    static Ptr instance(const SmtSolverPtr &solver) {
         return Ptr(new COperators(solver));
     }
 
@@ -811,6 +817,16 @@ public:
     }
 };
 
+SymbolicExprParser::SymbolicExprParser() {
+    init();
+}
+
+SymbolicExprParser::SymbolicExprParser(const SmtSolverPtr &solver)
+    : solver_(solver) {
+    init();
+}
+
+SymbolicExprParser::~SymbolicExprParser() {}
 
 void
 SymbolicExprParser::init() {

@@ -28,6 +28,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 class SmtSolver;
+typedef Sawyer::SharedPointer<SmtSolver> SmtSolverPtr;
 
 /** Namespace supplying types and functions for symbolic expressions.
  *
@@ -268,21 +269,11 @@ public:
      *  If an SMT solver is specified then that solver is used to answer this question, otherwise equality is established by
      *  looking only at the structure of the two expressions. Two expressions can be equal without being the same width (e.g.,
      *  a 32-bit constant zero is equal to a 16-bit constant zero). */
-    virtual bool mustEqual(const Ptr &other, SmtSolver*) = 0;
-
-    // [Robb P. Matzke 2015-10-08]: deprecated
-    bool must_equal(const Ptr& other, SmtSolver *solver) ROSE_DEPRECATED("use mustEqual instead") {
-        return mustEqual(other, solver);
-    }
+    virtual bool mustEqual(const Ptr &other, const SmtSolverPtr&) = 0;
 
     /** Returns true if two expressions might be equal, but not necessarily be equal. */
-    virtual bool mayEqual(const Ptr &other, SmtSolver*) = 0;
+    virtual bool mayEqual(const Ptr &other, const SmtSolverPtr&) = 0;
 
-    // [Robb P. Matzke 2015-10-08]: deprecated
-    bool may_equal(const Ptr &other, SmtSolver *solver) ROSE_DEPRECATED("use mayEqual instead") {
-        return mayEqual(other, solver);
-    }
-    
     /** Tests two expressions for structural equivalence.
      *
      *  Two leaf nodes are equivalent if they are the same width and have equal values or are the same variable. Two interior
@@ -290,11 +281,6 @@ public:
      *  children are all pairwise equivalent. */
     virtual bool isEquivalentTo(const Ptr &other) = 0;
 
-    // [Robb P. Matzke 2015-10-08]: deprecated
-    bool equivalent_to(const Ptr& other) ROSE_DEPRECATED("use isEquivalentTo instead") {
-        return isEquivalentTo(other);
-    }
-    
     /** Compare two expressions structurally for sorting.
      *
      *  Returns -1 if @p this is less than @p other, 0 if they are structurally equal, and 1 if @p this is greater than @p
@@ -302,17 +288,12 @@ public:
      *  much faster since it uses hashing. */
     virtual int compareStructure(const Ptr &other) = 0;
 
-    // [Robb P. Matzke 2015-10-08]: deprecated
-    int structural_compare(const Ptr& other) ROSE_DEPRECATED("use compareStructure instead") {
-        return compareStructure(other);
-    }
-    
     /** Substitute one value for another.
      *
      *  Finds all occurrances of @p from in this expression and replace them with @p to. If a substitution occurs, then a new
      *  expression is returned. The matching of @p from to sub-parts of this expression uses structural equivalence, the
      *  @ref isEquivalentTo predicate. The @p from and @p to expressions must have the same width. */
-    virtual Ptr substitute(const Ptr &from, const Ptr &to, SmtSolver*) = 0;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr&) = 0;
 
     /** Rewrite expression by substituting subexpressions.
      *
@@ -321,7 +302,7 @@ public:
      *  the table and the traversal does not descend into the new expression.  If no substitutions were performed then @p this
      *  expression is returned, otherwise a new expression is returned. An optional solver, which may be null, is used during
      *  the simplification step. */
-    Ptr substituteMultiple(const ExprExprHashMap &substitutions, SmtSolver *solver);
+    Ptr substituteMultiple(const ExprExprHashMap &substitutions, const SmtSolverPtr &solver);
 
     /** Rewrite using lowest numbered variable names.
      *
@@ -330,7 +311,8 @@ public:
      *  new variable has the same type as the original variable, but it's name is generated starting at @p nextVariableId and
      *  incrementing after each replacement is generated. The optional solver is used during the simplification process and may
      *  be null. */
-    Ptr renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId /*in,out*/, SmtSolver *solver);
+    Ptr renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId /*in,out*/,
+                        const SmtSolverPtr &solver);
 
     /** Returns true if the expression is a known numeric value.
      *
@@ -583,7 +565,7 @@ public:
 
     /** Rewrite the entire expression to something simpler. Returns the new node if the node can be simplified, otherwise
      *  returns null. */
-    virtual Ptr rewrite(Interior*, SmtSolver*) const {
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const {
         return Ptr();
     }
 };
@@ -623,19 +605,19 @@ typedef Sawyer::Container::Set<Ptr, ExpressionLessp> ExpressionSet;
 
 struct AddSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct AndSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct OrSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct XorSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SmulSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
@@ -645,101 +627,101 @@ struct UmulSimplifier: Simplifier {
 };
 struct ConcatSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct ExtractSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct AsrSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct InvertSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct NegateSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct IteSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct NoopSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct RolSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct RorSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct UextendSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SextendSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct EqSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SgeSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SgtSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SleSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SltSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct UgeSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct UgtSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct UleSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct UltSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct ZeropSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SdivSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SmodSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct UdivSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct UmodSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct ShiftSimplifier: Simplifier {
     bool newbits;
     ShiftSimplifier(bool newbits): newbits(newbits) {}
-    Ptr combine_strengths(Ptr strength1, Ptr strength2, size_t value_width, SmtSolver *solver) const;
+    Ptr combine_strengths(Ptr strength1, Ptr strength2, size_t value_width, const SmtSolverPtr &solver) const;
 };
 struct ShlSimplifier: ShiftSimplifier {
     ShlSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct ShrSimplifier: ShiftSimplifier {
     ShrSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct LssbSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct MssbSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct SetSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, SmtSolver*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 
 
@@ -793,33 +775,33 @@ public:
      *
      *  @{ */
     static Ptr create(size_t nbits, Operator op, const Ptr &a,
-                      SmtSolver *solver, const std::string &comment="", unsigned flags=0) {
+                      const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, a, comment, flags));
         return retval->simplifyTop(solver);
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
-                      SmtSolver *solver, const std::string &comment="", unsigned flags=0) {
+                      const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, a, b, comment, flags));
         return retval->simplifyTop(solver);
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                      SmtSolver *solver, const std::string &comment="", unsigned flags=0) {
+                      const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, a, b, c, comment, flags));
         return retval->simplifyTop(solver);
     }
     static Ptr create(size_t nbits, Operator op, const Nodes &children,
-                      SmtSolver *solver, const std::string &comment="", unsigned flags=0) {
+                      const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, children, comment, flags));
         return retval->simplifyTop(solver);
     }
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual bool mustEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
+    virtual bool mustEqual(const Ptr &other, const SmtSolverPtr&) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, const SmtSolverPtr&) ROSE_OVERRIDE;
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
-    virtual Ptr substitute(const Ptr &from, const Ptr &to, SmtSolver *solver) ROSE_OVERRIDE;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver) ROSE_OVERRIDE;
     virtual bool isNumber() ROSE_OVERRIDE {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
@@ -859,7 +841,7 @@ public:
     /** Simplifies the specified interior node.
      *
      *  Returns a new node if necessary, otherwise returns this. The SMT solver is optional and my be the null pointer. */
-    Ptr simplifyTop(SmtSolver *solver);
+    Ptr simplifyTop(const SmtSolverPtr &solver);
 
     /** Perform constant folding.  This method returns either a new expression (if changes were mde) or the original
      *  expression. The simplifier is specific to the kind of operation at the node being simplified. */
@@ -895,16 +877,12 @@ public:
     /** Simplifies nested shift-like operators.
      *
      *  Simplifies (shift AMT1 (shift AMT2 X)) to (shift (add AMT1 AMT2) X). The SMT solver may be null. */
-    Ptr additiveNesting(SmtSolver*);
-
-    Ptr additive_nesting() ROSE_DEPRECATED("use additiveNesting instead") {
-        return additiveNesting(NULL);
-    }
+    Ptr additiveNesting(const SmtSolverPtr&);
 
     /** Removes identity arguments.
      *
      *  Returns either a new expression or the original expression. The solver may be a null pointer. */
-    Ptr identity(uint64_t ident, SmtSolver *solver);
+    Ptr identity(uint64_t ident, const SmtSolverPtr &solver);
 
     /** Replaces a binary operator with its only argument. Returns either a new expression or the original expression. */
     Ptr unaryNoOp();
@@ -912,7 +890,7 @@ public:
     /** Simplify an interior node. Returns a new node if this node could be simplified, otherwise returns this node. When
      *  the simplification could result in a leaf node, we return an OP_NOOP interior node instead. The SMT solver is optional
      *  and may be the null pointer. */
-    Ptr rewrite(const Simplifier &simplifier, SmtSolver*);
+    Ptr rewrite(const Simplifier &simplifier, const SmtSolverPtr&);
 
     virtual void print(std::ostream&, Formatter&) ROSE_OVERRIDE;
 
@@ -1048,11 +1026,11 @@ public:
     // from base class
     virtual bool isNumber() ROSE_OVERRIDE;
     virtual uint64_t toInt() ROSE_OVERRIDE;
-    virtual bool mustEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
+    virtual bool mustEqual(const Ptr &other, const SmtSolverPtr&) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, const SmtSolverPtr&) ROSE_OVERRIDE;
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
-    virtual Ptr substitute(const Ptr &from, const Ptr &to, SmtSolver*) ROSE_OVERRIDE;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr&) ROSE_OVERRIDE;
     virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
     virtual uint64_t nNodes() ROSE_OVERRIDE { return 1; }
 
@@ -1148,51 +1126,56 @@ Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, cons
  *  interprets its operands as unsigned values unless the method has "Signed" in its name.
  *
  * @{ */
-Ptr makeAdd(const Ptr&a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanAnd(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0)
+Ptr makeAdd(const Ptr&a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanAnd(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0)
     ROSE_DEPRECATED("use makeAnd instead");             // [Robb Matzke 2017-11-21]: deprecated
-Ptr makeAsr(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeAnd(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeOr(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeXor(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeConcat(const Ptr &hi, const Ptr &lo, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeEq(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeInvert(const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeLssb(const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeMssb(const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeNe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeNegate(const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanOr(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0)
+Ptr makeAsr(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeAnd(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeOr(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeXor(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeConcat(const Ptr &hi, const Ptr &lo, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeEq(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const SmtSolverPtr &solver,
+                const std::string &comment="", unsigned flags=0);
+Ptr makeInvert(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="",
+            unsigned flags=0);
+Ptr makeLssb(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeMssb(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeNe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeNegate(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0)
     ROSE_DEPRECATED("use makeOr instead");              // [Robb Matzke 2017-11-21]: deprecated
-Ptr makeRead(const Ptr &mem, const Ptr &addr, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeRol(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeRor(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSet(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSet(const Ptr &a, const Ptr &b, const Ptr &c, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignedDiv(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignExtend(const Ptr &newSize, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignedGe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignedGt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeShl0(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeShl1(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeShr0(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeShr1(const Ptr &sa, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignedLe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignedLt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignedMod(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeSignedMul(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeDiv(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeExtend(const Ptr &newSize, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeGe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeGt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeLe(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeLt(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeMod(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeMul(const Ptr &a, const Ptr &b, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
-Ptr makeZerop(const Ptr &a, SmtSolver *solver, const std::string &comment="", unsigned flags=0);
+Ptr makeRead(const Ptr &mem, const Ptr &addr, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeRol(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeRor(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSet(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment="",
+            unsigned flags=0);
+Ptr makeSignedDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSignExtend(const Ptr &newSize, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="",
+                   unsigned flags=0);
+Ptr makeSignedGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeShl0(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeShl1(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeShr0(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeShr1(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeExtend(const Ptr &newSize, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
+Ptr makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="",
+              unsigned flags=0);
+Ptr makeZerop(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment="", unsigned flags=0);
 /** @} */
 
 
@@ -1205,7 +1188,7 @@ std::ostream& operator<<(std::ostream &o, Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
 /** Convert a set to an ite expression. */
-Ptr setToIte(const Ptr&, SmtSolver *solver, const LeafPtr &var = LeafPtr());
+Ptr setToIte(const Ptr&, const SmtSolverPtr &solver, const LeafPtr &var = LeafPtr());
 
 /**  Hash zero or more expressions.
  *

@@ -50,7 +50,7 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
 // after a while.
 Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+    : autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
       progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);                             // initialize just like default
     *this = other;                                      // then delegate to the assignment operator
@@ -977,7 +977,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
 
                 // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false), NULL)) {
+                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false), SmtSolverPtr())) {
                     allCalleesPopWithoutReturning = false;
                     break;
                 }

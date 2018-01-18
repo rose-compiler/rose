@@ -18,7 +18,8 @@ namespace ConcreteSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SmtSolver*) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&,
+                            const SmtSolverPtr&) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
 }
@@ -31,12 +32,12 @@ SValue::bits(const Sawyer::Container::BitVector &newBits) {
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
+SValue::may_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr&) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
+SValue::must_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr&) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 

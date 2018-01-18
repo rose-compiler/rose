@@ -13,8 +13,6 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
 
-#define NO_SOLVER NULL
-
 using namespace Rose::BinaryAnalysis;
 
 // Bit flags (low-order 16 bits are reserved for ROSE, so don't use them)
@@ -51,7 +49,7 @@ testInternal() {
     std::cout <<"test internal internal nodes:\n";
     SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1", UNDEFINED);
     SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createVariable(32, "e2", INVALID);
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2, NO_SOLVER);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2, SmtSolverPtr());
     ASSERT_always_require(e3->flags() == (UNDEFINED|INVALID));
 }
 
@@ -61,7 +59,7 @@ testPrinting() {
     std::cout <<"test printing flags:\n";
     SymbolicExpr::Ptr b = SymbolicExpr::Leaf::createVariable(32, "b", INVALID);
     SymbolicExpr::Ptr a = SymbolicExpr::Leaf::createVariable(32, "a", UNDEFINED);
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, a, b, NO_SOLVER);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, a, b, SmtSolverPtr());
     std::cout <<"  e1 = " <<*e1 <<"\n";
 }
 
@@ -70,9 +68,9 @@ static void
 testDiscardRule() {
     std::cout <<"test simplification discard rule:\n";
     SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1", UNDEFINED);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, e1, NO_SOLVER);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, e1, SmtSolverPtr());
     SymbolicExpr::Ptr e3 = SymbolicExpr::Leaf::createVariable(32, "e3", INVALID);
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2, e3, NO_SOLVER);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2, e3, SmtSolverPtr());
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == INVALID);
 
@@ -85,19 +83,19 @@ testNewExprRule() {
     SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1", UNDEFINED);
     SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1,
                                                           SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, e1,
-                                                                                         NO_SOLVER),
-                                                          NO_SOLVER);
+                                                                                         SmtSolverPtr()),
+                                                          SmtSolverPtr());
     std::cout <<"  e2 = " <<*e2 <<"\n";
     ASSERT_always_require(e2->flags() == 0);
 
     SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1,
                                                           SymbolicExpr::Interior::create(32, SymbolicExpr::OP_INVERT, e1,
-                                                                                         NO_SOLVER),
-                                                          NO_SOLVER);
+                                                                                         SmtSolverPtr()),
+                                                          SmtSolverPtr());
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == 0);
 
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_XOR, e1, e1, NO_SOLVER);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_XOR, e1, e1, SmtSolverPtr());
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == 0);
 }
@@ -109,7 +107,7 @@ testFoldingRule() {
     std::cout <<"test simplification folding rule:\n";
     SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createInteger(32, 7, "e1", UNDEFINED);
     SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createInteger(32, 8, "e2", INVALID);
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2, NO_SOLVER);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2, SmtSolverPtr());
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == (UNDEFINED|INVALID));
 }
@@ -131,16 +129,16 @@ testRelationalFolding() {
     SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createInteger(32, 7, "e1", UNDEFINED);
     SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createInteger(32, 8, "e2", INVALID);
 
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_ULT, e1, e2, NO_SOLVER);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_ULT, e1, e2, SmtSolverPtr());
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == (UNDEFINED|INVALID));
 
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_ULT, e2, e1, NO_SOLVER);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_ULT, e2, e1, SmtSolverPtr());
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == (UNDEFINED|INVALID));
 
     SymbolicExpr::Ptr e5 = SymbolicExpr::Leaf::createVariable(32, "e5", UNDEFINED);
-    SymbolicExpr::Ptr e6 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_EQ, e5, e5, NO_SOLVER);
+    SymbolicExpr::Ptr e6 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_EQ, e5, e5, SmtSolverPtr());
     std::cout <<"  e6 = " <<*e6 <<"\n";
     ASSERT_always_require(e6->flags() == UNDEFINED);
 }

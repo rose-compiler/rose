@@ -35,7 +35,7 @@ SValue::isBottom() const {
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
-                            SmtSolver *solver) const {
+                            const SmtSolverPtr &solver) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     MergerPtr merger = merger_.dynamicCast<Merger>();
@@ -94,7 +94,7 @@ SValue::get_number() const
 }
 
 SValuePtr
-SValue::substitute(const SValuePtr &from, const SValuePtr &to, SmtSolver *solver) const
+SValue::substitute(const SValuePtr &from, const SValuePtr &to, const SmtSolverPtr &solver) const
 {
     SValuePtr retval = SValue::promote(copy());
     retval->set_expression(retval->get_expression()->substitute(from->get_expression(), to->get_expression(), solver));
@@ -132,7 +132,7 @@ SValue::set_defining_instructions(SgAsmInstruction *insn)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const 
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const 
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
@@ -142,7 +142,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
@@ -304,8 +304,8 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
     // Substitute in registers
     struct RegSubst: RegisterState::Visitor {
         SValuePtr from, to;
-        SmtSolver *solver;
-        RegSubst(const SValuePtr &from, const SValuePtr &to, SmtSolver *solver)
+        SmtSolverPtr solver;
+        RegSubst(const SValuePtr &from, const SValuePtr &to, const SmtSolverPtr &solver)
             : from(from), to(to), solver(solver) {}
         virtual BaseSemantics::SValuePtr operator()(RegisterDescriptor reg, const BaseSemantics::SValuePtr &val_) {
             SValuePtr val = SValue::promote(val_);
@@ -317,8 +317,8 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
     // Substitute in memory
     struct MemSubst: BaseSemantics::MemoryCell::Visitor {
         SValuePtr from, to;
-        SmtSolver *solver;
-        MemSubst(const SValuePtr &from, const SValuePtr &to, SmtSolver *solver)
+        SmtSolverPtr solver;
+        MemSubst(const SValuePtr &from, const SValuePtr &to, const SmtSolverPtr &solver)
             : from(from), to(to), solver(solver) {}
         virtual void operator()(BaseSemantics::MemoryCellPtr &cell) {
             SValuePtr addr = SValue::promote(cell->get_address());

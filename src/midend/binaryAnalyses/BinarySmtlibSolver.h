@@ -20,6 +20,12 @@ protected:
     typedef boost::unordered_map<SymbolicExpr::Hash, ExprExprMap> MemoizedEvidence;
     MemoizedEvidence memoizedEvidence;
 
+protected:
+    // Reference counted. Use instance() or create() instead.
+    explicit SmtlibSolver(const std::string &name, const boost::filesystem::path &executable, const std::string &shellArgs = "",
+                          unsigned linkages = LM_EXECUTABLE)
+        : SmtSolver(name, linkages), executable_(executable), shellArgs_(shellArgs) {}
+
 public:
     /** Construct a solver using the specified program.
      *
@@ -32,10 +38,18 @@ public:
      *  shellArgs are the list of extra arguments to pass to the solver. WARNING: the entire command is pass to @c popen, which
      *  will invoke a shell to process the executable name and arguments; appropriate escaping of shell meta characters is the
      *  responsibility of the caller. */
-    explicit SmtlibSolver(const std::string &name, const boost::filesystem::path &executable, const std::string &shellArgs = "",
-                          unsigned linkages = LM_EXECUTABLE)
-        : SmtSolver(name, linkages), executable_(executable), shellArgs_(shellArgs) {}
+    static Ptr instance(const std::string &name, const boost::filesystem::path &executable, const std::string &shellArgs = "",
+                        unsigned linkages = LM_EXECUTABLE) {
+        return Ptr(new SmtlibSolver(name, executable, shellArgs, linkages));
+    }
 
+    /** Virtual constructor.
+     *
+     *  Creates a new solver like this one. */
+    virtual Ptr create() const {
+        return instance(name(), executable_, shellArgs_, linkage());
+    }
+    
 public:
     virtual void reset() ROSE_OVERRIDE;
     virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;

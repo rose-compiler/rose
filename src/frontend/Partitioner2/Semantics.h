@@ -202,14 +202,16 @@ private:
 protected:
     RiscOperators() {}                                  // for serialization
 
-    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
+    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+                           const SmtSolverPtr &solver = SmtSolverPtr())
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver) {
         name("PartitionerSemantics");
         (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 
-    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
+    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state,
+                           const SmtSolverPtr &solver = SmtSolverPtr())
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver) {
         name("PartitionerSemantics");
         (void)SValue::promote(state->protoval());
@@ -220,7 +222,7 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiate a new RiscOperators object and configure it using default values. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL,
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
                                      SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY) {
         InstructionSemantics2::BaseSemantics::SValuePtr protoval = SValue::instance();
         InstructionSemantics2::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
@@ -239,13 +241,13 @@ public:
 
     /** Instantiate a new RiscOperators object with specified prototypical values. */
     static RiscOperatorsPtr
-    instance(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
+    instance(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiate a new RiscOperators with specified state. */
     static RiscOperatorsPtr
-    instance(const InstructionSemantics2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
+    instance(const InstructionSemantics2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -254,13 +256,13 @@ public:
 public:
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::StatePtr &state,
-           SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 

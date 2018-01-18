@@ -29,10 +29,8 @@ validateSmtSolverName(const std::string &name) {
 std::string
 bestSmtSolverName() {
     std::string name;
-    if (BinaryAnalysis::SmtSolver *solver = BinaryAnalysis::SmtSolver::bestAvailable()) {
+    if (const BinaryAnalysis::SmtSolverPtr &solver = BinaryAnalysis::SmtSolver::bestAvailable())
         name = solver->name();
-        delete solver;
-    }
     return name;
 }
 
@@ -90,9 +88,8 @@ smtSolverDocumentationString(const std::string &dfltValue) {
 
     docstr += " The default is \"" + dfltValue + "\"";
     if ("best" == dfltValue) {
-        if (SmtSolver *solver = SmtSolver::bestAvailable()) {
+        if (SmtSolverPtr solver = SmtSolver::bestAvailable()) {
             docstr += ", which currently means \"" + solver->name() + "\".";
-            delete solver;
         } else {
             docstr += ", which currently mean \"none\".";
         }

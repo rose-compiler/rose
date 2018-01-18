@@ -8,9 +8,6 @@
 #include <Sawyer/Stopwatch.h>
 #include <stringify.h>
 
-// Many of the expression-creating calls pass NO_SOLVER in order to not invoke the solver recursively.
-#define NO_SOLVER NULL
-
 using namespace Sawyer::Message::Common;
 
 namespace Rose {
@@ -829,7 +826,7 @@ SmtlibSolver::outputSet(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(inode->nChildren() >= 2);
     SymbolicExpr::LeafPtr var = varForSet(inode);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, NO_SOLVER, var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, SmtSolverPtr(), var);
     ite->comment(inode->comment());
     return outputExpression(ite);
 }
@@ -844,7 +841,7 @@ SmtlibSolver::outputRotateRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa, NO_SOLVER);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa, SmtSolverPtr());
 
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -869,7 +866,7 @@ SmtlibSolver::outputRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa, NO_SOLVER);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa, SmtSolverPtr());
 
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -898,7 +895,7 @@ SmtlibSolver::outputLogicalShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa, NO_SOLVER); // widen sa same as expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa, SmtSolverPtr()); // widen sa same as expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHR1;
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -932,7 +929,7 @@ SmtlibSolver::outputShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa, NO_SOLVER); // widen sa same as expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa, SmtSolverPtr()); // widen sa same as expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -971,7 +968,7 @@ SmtlibSolver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode)
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t width = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, width), sa, NO_SOLVER); //  widen same as expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, width), sa, SmtSolverPtr()); //  widen same as expr
 
     SExprTypePair shiftee = outputExpression(expr);
     ASSERT_require(BIT_VECTOR == shiftee.second);
@@ -1035,12 +1032,12 @@ SmtlibSolver::outputMultiply(const SymbolicExpr::InteriorPtr &inode) {
 
     SymbolicExpr::Ptr aExtended, bExtended;
     if (inode->getOperator() == SymbolicExpr::OP_SMUL) {
-        aExtended = SymbolicExpr::makeSignExtend(resultSize, a, NO_SOLVER);
-        bExtended = SymbolicExpr::makeSignExtend(resultSize, b, NO_SOLVER);
+        aExtended = SymbolicExpr::makeSignExtend(resultSize, a, SmtSolverPtr());
+        bExtended = SymbolicExpr::makeSignExtend(resultSize, b, SmtSolverPtr());
     } else {
         ASSERT_require(inode->getOperator() == SymbolicExpr::OP_UMUL);
-        aExtended = SymbolicExpr::makeExtend(resultSize, a, NO_SOLVER);
-        bExtended = SymbolicExpr::makeExtend(resultSize, b, NO_SOLVER);
+        aExtended = SymbolicExpr::makeExtend(resultSize, a, SmtSolverPtr());
+        bExtended = SymbolicExpr::makeExtend(resultSize, b, SmtSolverPtr());
     }
 
     SExpr::Ptr retval =
@@ -1060,8 +1057,8 @@ SmtlibSolver::outputUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0), NO_SOLVER);
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1), NO_SOLVER);
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0), SmtSolverPtr());
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1), SmtSolverPtr());
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance(SExpr::instance("_"),
@@ -1084,8 +1081,8 @@ SmtlibSolver::outputUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0), NO_SOLVER);
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1), NO_SOLVER);
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0), SmtSolverPtr());
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1), SmtSolverPtr());
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance(SExpr::instance("_"),
@@ -1205,8 +1202,8 @@ SmtlibSolver::parseEvidence() {
             SymbolicExpr::ExprExprHashMap denorm = latestMemoizationRewrite_.invert();
             evidence.clear();
             BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
-                evidence.insert(node.key()->substituteMultiple(denorm, NO_SOLVER),
-                                node.value()->substituteMultiple(denorm, NO_SOLVER));
+                evidence.insert(node.key()->substituteMultiple(denorm, SmtSolverPtr()),
+                                node.value()->substituteMultiple(denorm, SmtSolverPtr()));
             stats.evidenceTime += evidenceTimer.stop();
             return;
         }
@@ -1269,8 +1266,8 @@ SmtlibSolver::parseEvidence() {
     if (memoId > 0) {
         ExprExprMap &me = memoizedEvidence[memoId];
         BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
-            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER),
-                      node.value()->substituteMultiple(latestMemoizationRewrite_, NO_SOLVER));
+            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_, SmtSolverPtr()),
+                      node.value()->substituteMultiple(latestMemoizationRewrite_, SmtSolverPtr()));
         }
     }
 
