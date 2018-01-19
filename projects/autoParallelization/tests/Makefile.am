@@ -36,6 +36,7 @@ firstprivate3.c \
 foo.c \
 for-i-j.c \
 functionCall.c \
+globalArrays.c \
 ifAndFor.c \
 indirectIndex.c \
 jacobi_seq.c \
@@ -91,6 +92,16 @@ slowInput.c \
 Stress-1.c
 endif
 endif
+
+# a list of c tests for default use of autoPar: without passing any special commond options
+#
+C_TESTCODE_TO_PASS_DEFAULT = \
+  $(C_TESTCODES_REQUIRED_TO_PASS)
+
+# rose_v1_input.c
+C_TESTCODE_TO_PASS_DEFAULT_RESULTS = $(addprefix rose_v1_, ${C_TESTCODE_TO_PASS_DEFAULT})
+# rose_v1_input.c.diff
+C_TESTCODE_TO_PASS_DEFAULT_RESULTS_DIFF=$(C_TESTCODE_TO_PASS_DEFAULT_RESULTS:.c=.c.diff)
 
 # current failing if no aliasing cannot be assumed.
 # StressWork_setup.C // need to assume no pointer aliasing
@@ -148,6 +159,11 @@ CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 ../autoPar:
 	$(MAKE) -C ../. autoPar
 
+# rules for testing the default use of autoPar 
+# rose_v1_input.C
+$(C_TESTCODE_TO_PASS_DEFAULT_RESULTS): $(srcdir)/$(@:rose_v1_%=%) ../autoPar
+	$(VALGRIND) ../autoPar -c $(srcdir)/$(@:rose_v1_%=%) -rose:output $@
+
 # we want to use diff to compare generated files with reference files
 # Pending test cases: TODO
 # TODO: diff patches is a better choice.  Tolerate other differences introduced by ROSE.
@@ -177,11 +193,19 @@ $(C_TEST_Generated_Files):../autoPar
 # TODO not good enough, we want to depend on individual generated file here
 $(C_TEST_DIFF_FILES): $(C_TEST_Generated_Files) 
 	echo "Verifying autoPar translation by using diff ..."; \
-	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test failed"; cat $@; rm -rf $@; exit 1; fi
+	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Full Option C Test Passed" ; else echo "Files differ; test failed"; cat $@; rm -rf $@; exit 1; fi
 
 $(CXX_TEST_DIFF_FILES): $(CXX_TEST_Generated_Files) 
 	echo "Verifying autoPar translation by using diff ..."; \
-	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Full Option C++ Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+
+# diff of default tests
+$(C_TESTCODE_TO_PASS_DEFAULT_RESULTS_DIFF):$(C_TESTCODE_TO_PASS_DEFAULT_RESULTS)
+	echo "Verifying autoPar's default use by diff ..."; \
+	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Default option C Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+
+# a shortcut to test default use
+check-default: $(C_TESTCODE_TO_PASS_DEFAULT_RESULTS_DIFF)
 
 # special file to debug dep graph information
 probe.o: ../autoPar $(@:.o=.c)
@@ -219,7 +243,7 @@ inner_only.out: ../autoPar inner_only.c
 rose_inner_only.c.diff: inner_only.out
 	echo "Verifying autoPar translation by using diff ..."; \
 	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test failed"; cat $@; rm -rf $@; exit 1; fi
-            
+
 check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)
@@ -231,7 +255,7 @@ check-local:
 	@$(MAKE) test_diff.out
 	@$(MAKE) rose_inner_only.c.diff
 	@$(MAKE) doall_2.out
-	@$(MAKE) $(C_TEST_DIFF_FILES) $(CXX_TEST_DIFF_FILES)
+	@$(MAKE) $(C_TEST_DIFF_FILES) $(CXX_TEST_DIFF_FILES) $(C_TESTCODE_TO_PASS_DEFAULT_RESULTS_DIFF)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"

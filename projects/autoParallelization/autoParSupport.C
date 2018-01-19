@@ -1004,6 +1004,35 @@ namespace AutoParallelization
     result.erase(new_end,result.end());
   }
 
+  //! Check if a reference is an array reference of statically declared arrays
+  // SgPntrArrRefExp -> lhs_operand_i() → SgVarRefExp -> SgVariableSymbol -> SgInitializedName → typeptr → SgArrayType 
+  static bool isStaticArrayRef (SgNode* ref)
+  {
+    bool ret = false; 
+    ROSE_ASSERT (ref !=NULL);
+    
+    if (SgPntrArrRefExp* aref = isSgPntrArrRefExp(ref))
+    {
+      // for multidimensional array references, getting the nested child SgPntrArrRef
+      if (SgPntrArrRefExp* nestRef = isSgPntrArrRefExp(aref->get_lhs_operand_i()))
+        return isStaticArrayRef (nestRef);
+
+      SgVarRefExp* lhs = isSgVarRefExp (aref->get_lhs_operand_i());
+      if (lhs != NULL)
+      {
+        SgVariableSymbol * varSym = isSgVariableSymbol (lhs->get_symbol());
+        if (varSym!=NULL)
+        {
+          SgInitializedName * iname = varSym->get_declaration();
+          if (isSgArrayType (iname->get_type()))
+            ret = true; 
+        }
+      }
+    }
+
+    return ret;
+  }
+
   // Algorithm, eliminate the following dependencies
   // *  caused by locally declared variables: already private to each iteration
   // *  commonlevel ==0, no common enclosing loops
@@ -1037,8 +1066,9 @@ namespace AutoParallelization
         for (; !edges.ReachEnd(); ++edges) 
         { 
           LoopTreeDepGraph::Edge *e= *edges;
-          // cout<<"Debug: dependence edge: "<<e->toString()<<endl;
           DepInfo info =e->GetInfo();
+          if (enable_debug)
+           cout<<"-------------->>> Considering a new dependence edge's info:\n"<<info.toString()<<endl;
 
           SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
           SgScopeStatement* varscope =NULL;
@@ -1047,6 +1077,7 @@ namespace AutoParallelization
           // two variables will be set if source or snk nodes are variable references nodes
           SgVarRefExp* src_var_ref = NULL; 
           SgVarRefExp* snk_var_ref = NULL; 
+
           // x. Ignore dependence caused by locally declared variables: declared within the loop    
           if (src_node)
           {
@@ -1096,6 +1127,9 @@ namespace AutoParallelization
             } //end if(var_ref)
           } // end if (snk_node)
 #endif
+          if (enable_debug)
+            cout<<"Neither source nor sink node is locally decalared variables."<<endl;
+
           //x. Eliminate a dependence if it is empty entry
           // -----------------------------------------------
           // Ignore possible empty depInfo entry
@@ -1108,6 +1142,9 @@ namespace AutoParallelization
             }
             continue;
           }
+
+          if (enable_debug)
+            cout<<"Neither source nor sink node is empty entry."<<endl;
 
 #if 1
           //x. Eliminate a dependence if scalar type dependence involving array references.
@@ -1134,6 +1171,7 @@ namespace AutoParallelization
             LoopTransformInterface::set_astInterface(fa);
             LoopTransformInterface::set_arrayInfo(array_interface);
             LoopTransformInterface::set_sideEffectInfo(annot);
+
             isArray1= LoopTransformInterface::IsArrayAccess(info.SrcRef());
             isArray2= LoopTransformInterface::IsArrayAccess(info.SnkRef());
           }
@@ -1146,10 +1184,17 @@ namespace AutoParallelization
           //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
           if (isArray1 || isArray2)
           {
+            if (enable_debug)
+              cout<<"Either source or sink reference is an array reference..."<<endl;
+
             if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
             {
+              if (enable_debug)
+                cout<<"\t Dep type is scalar or backscalar "<<endl;
               if (src_var_ref || snk_var_ref) // at least one is a scalar: we have scalar vs. array
               {
+               if (enable_debug)
+                 cout<<"Either source or sink reference is a scalar reference..."<<endl;
                 // we have to check the type of the scalar: 
                 //  integer type? skip
                 //  pointer type, skip if no-aliasing is specified
@@ -1172,6 +1217,8 @@ namespace AutoParallelization
               }
               else // both are arrays
               {
+                if (enable_debug)
+                  cout<<"\t both are arrray references "<<endl;
                 if (AutoParallelization::no_aliasing) 
                 {
                   if (enable_debug)
@@ -1181,10 +1228,21 @@ namespace AutoParallelization
                   }
                   continue;
                 }
-              }  
+                // both are arrays and both are statically allocated ones
+                else if (isStaticArrayRef (src_node) && isStaticArrayRef (snk_node))
+                {
+                  if (enable_debug)
+                  {
+                    cout<<"Eliminating a dep relation due to both references are references to static allocated arrays "<<endl; 
+                    info.Dump();
+                  }
+                  continue; 
+                }
+              } // end both are arrays  
             }
           }
 #endif
+
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1281,6 +1339,8 @@ namespace AutoParallelization
             continue;
           }
           // Save the rest dependences which can not be ruled out 
+          if (enable_debug)
+            cout<<"\t this dep relation cannot be eliminated. saved into remaining depedence set."<<endl;
           remainings.push_back(info); 
         } //end iterator edges for a node
       } // end if has edge
