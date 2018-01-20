@@ -10,6 +10,8 @@
 
 using namespace std;
 
+#define DEBUG_VIRTUAL_CFG 0
+
 namespace VirtualCFG {
 
 #if !CXX_IS_ROSE_CODE_GENERATION
@@ -33,6 +35,7 @@ namespace VirtualCFG {
     if (node && (index > node->cfgIndexForEnd())) {
       warnx ("created CFGNode with illegal index:");
       cout<<"index = " << index <<" while max index is:"<< node->cfgIndexForEnd() <<endl;
+      printf ("Error: node = %p = %s \n",node,node->class_name().c_str());
       SageInterface::dumpInfo(node);
       assert (false);
     }
@@ -95,9 +98,25 @@ namespace VirtualCFG {
 
   string CFGEdge::toStringForDebugging() const {
     ostringstream s;
-    // s << src.id() << " -> " << tgt.id();
+
+#if DEBUG_VIRTUAL_CFG
+ // s << src.id() << " -> " << tgt.id();
+ // std::cout << "In CFGEdge::toStringForDebugging() " << std::endl;
+    std::cout << "In CFGEdge::toStringForDebugging() src.id() -> tgt.id() = " << src.id() << " -> " << tgt.id() << std::endl;
+#endif
+
     bool anyNonEmpty = false;
+
+#if DEBUG_VIRTUAL_CFG
+    printf ("In CFGEdge::toStringForDebugging(): Calling condition() \n");
+#endif
+
     EdgeConditionKind cond = condition();
+
+#if DEBUG_VIRTUAL_CFG
+    printf ("In CFGEdge::toStringForDebugging(): DONE: Calling condition() \n");
+#endif
+
     if (cond != eckUnconditional) {
       if (anyNonEmpty) s << " "; // For consistency
       s << "key(";
@@ -138,9 +157,14 @@ namespace VirtualCFG {
         case eckArithmeticIfGreater:
           s << "greater";
           break;
-    case eckInterprocedural:
+        case eckInterprocedural:
           s << "interprocedural";
           break;
+
+        case eckError:
+          s << "error (debugging)";
+          break;
+
         default:
           s << "unknown";
           break;
@@ -260,129 +284,269 @@ namespace VirtualCFG {
     return NULL;
   }
 
-  EdgeConditionKind CFGEdge::condition() const {
-    SgNode* srcNode = src.getNode();
-    unsigned int srcIndex = src.getIndex();
-    SgNode* tgtNode = tgt.getNode();
-    unsigned int tgtIndex = tgt.getIndex();
-    if (isSgIfStmt(srcNode) && srcIndex == 1) {
-      SgIfStmt* ifs = isSgIfStmt(srcNode);
-      if (ifs->get_true_body() == tgtNode) {
-        return eckTrue;
-      } else if (tgtNode != NULL && ifs->get_false_body() == tgtNode) {
-        return eckFalse;
-      } else if (ifs->get_false_body() == NULL && tgtNode == ifs && tgtIndex == 2) {
-        return eckFalse;
-      } else ROSE_ASSERT (!"Bad successor in if statement");
-    } else if (isSgArithmeticIfStatement(srcNode) && srcIndex == 1) {
-      SgArithmeticIfStatement* aif = isSgArithmeticIfStatement(srcNode);
-      if (getCFGTargetOfFortranLabelRef(aif->get_less_label()) == tgt) {
-        return eckArithmeticIfLess;
-      } else if (getCFGTargetOfFortranLabelRef(aif->get_equal_label()) == tgt) {
-        return eckArithmeticIfEqual;
-      } else if (getCFGTargetOfFortranLabelRef(aif->get_greater_label()) == tgt) {
-        return eckArithmeticIfGreater;
-      } else ROSE_ASSERT (!"Bad successor in arithmetic if statement");
-    } else if (isSgWhileStmt(srcNode) && srcIndex == 1) {
-      if (srcNode == tgtNode) {
-        // False case for while test
-        return eckFalse;
-      } else {
-        return eckTrue;
-      }
-    } else if (isSgDoWhileStmt(srcNode) && srcIndex == 2) {
-      // tgtIndex values are 0 for true branch and 3 for false branch
-      if (tgtIndex == 0) {
-        return eckTrue;
-      } else {
-        return eckFalse;
-      }
-    } else if (isSgForStatement(srcNode) && srcIndex == 2) {
-      if (srcNode == tgtNode) {
-        // False case for test
-        return eckFalse;
-      } else {
-        return eckTrue;
-      }
-    } else if (isSgFortranDo(srcNode) && srcIndex == 3) {
-      if (tgtIndex == 4) {
-        return eckDoConditionPassed;
-      } else if (tgtIndex == 6) {
-        return eckDoConditionFailed;
-      } else ROSE_ASSERT (!"Bad successor in do loop");
-    } else if (isSgForAllStatement(srcNode) && srcIndex == 1) {
-      if (tgtIndex == 2) {
-        return eckForallIndicesInRange;
-      } else if (tgtIndex == 7) {
-        return eckForallIndicesNotInRange;
-      } else ROSE_ASSERT (!"Bad successor in forall loop");
-    } else if (isSgForAllStatement(srcNode) && srcIndex == 3) {
-      if (SageInterface::forallMaskExpression(isSgForAllStatement(srcNode))) {
-        if (tgtIndex == 4) {
-          return eckTrue;
-        } else if (tgtIndex == 6) {
-          return eckFalse;
-        } else ROSE_ASSERT (!"Bad successor in forall loop");
-      } else {
-        return eckUnconditional;
-      }
-    } else if (isSgSwitchStatement(srcNode) && isSgCaseOptionStmt(tgtNode)) {
-      return eckCaseLabel;
-    } else if (isSgSwitchStatement(srcNode) && isSgDefaultOptionStmt(tgtNode)){
-      return eckDefault;
-    } else if (isSgComputedGotoStatement(srcNode) && srcIndex == 1) {
-      if (tgtNode == srcNode) {
-        return eckDefault;
-      } else {
-        return eckCaseLabel;
-      }
-    } else if (isSgConditionalExp(srcNode) && srcIndex == 1) {
-      SgConditionalExp* ce = isSgConditionalExp(srcNode);
-      if (ce->get_true_exp() == tgtNode) {
-        return eckTrue;
-      } else if (ce->get_false_exp() == tgtNode) {
-        return eckFalse;
-      } else ROSE_ASSERT (!"Bad successor in conditional expression");
-    } else if (isSgAndOp(srcNode) && srcIndex == 1) {
-      if (srcNode == tgtNode) {
-        // Short-circuited false case
-        return eckFalse;
-      } else {
-        return eckTrue;
-      }
-    } else if (isSgOrOp(srcNode) && srcIndex == 1) {
-      if (srcNode == tgtNode) {
-        // Short-circuited true case
-        return eckTrue;
-      } else {
-        return eckFalse;
-      }
-    } else if (isSgFunctionCallExp(srcNode) &&
-               srcIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX &&
-               !isSgFunctionCallExp(tgtNode)) {
-        return eckInterprocedural;
-    } else if (isSgFunctionCallExp(tgtNode) &&
-               tgtIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX+1 &&
-               !isSgFunctionCallExp(srcNode)) {
-        return eckInterprocedural;
-    } else if (isSgConstructorInitializer(srcNode) &&
-               srcIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX &&
-               !isSgConstructorInitializer(tgtNode)) {
-        return eckInterprocedural;
-    } else if (isSgConstructorInitializer(tgtNode) &&
-               tgtIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX+1 &&
-               !isSgConstructorInitializer(srcNode)) {
-        return eckInterprocedural;
-    } else {
-      // No key
-      return eckUnconditional;
-    }
+EdgeConditionKind CFGEdge::condition() const 
+   {
+     SgNode* srcNode = src.getNode();
+     unsigned int srcIndex = src.getIndex();
+     SgNode* tgtNode = tgt.getNode();
+     unsigned int tgtIndex = tgt.getIndex();
 
- // DQ (11/29/2009): It should be an error to reach this point in the function.
-    ROSE_ASSERT(false);
- // DQ (11/29/2009): Avoid MSVC warning.
-    return eckFalse;
-  }
+     if (isSgIfStmt(srcNode) && srcIndex == 1) 
+        {
+          SgIfStmt* ifs = isSgIfStmt(srcNode);
+          if (ifs->get_true_body() == tgtNode) 
+             {
+               return eckTrue;
+             } 
+            else 
+               if (tgtNode != NULL && ifs->get_false_body() == tgtNode)
+                  {
+                    return eckFalse;
+                  }
+               else
+                  if (ifs->get_false_body() == NULL && tgtNode == ifs && tgtIndex == 2)
+                     {
+                       return eckFalse;
+                     }
+                    else
+                       ROSE_ASSERT (!"Bad successor in if statement");
+
+        }
+       else 
+          if (isSgArithmeticIfStatement(srcNode) && srcIndex == 1) 
+             {
+               SgArithmeticIfStatement* aif = isSgArithmeticIfStatement(srcNode);
+               if (getCFGTargetOfFortranLabelRef(aif->get_less_label()) == tgt)
+                  {
+#if DEBUG_VIRTUAL_CFG
+                    printf ("############## return eckArithmeticIfLess \n");
+#endif
+                    return eckArithmeticIfLess;
+                  }
+                 else
+                    if (getCFGTargetOfFortranLabelRef(aif->get_equal_label()) == tgt)
+                       {
+#if DEBUG_VIRTUAL_CFG
+                         printf ("############## return eckArithmeticIfEqual \n");
+#endif
+                         return eckArithmeticIfEqual;
+                       } 
+                      else 
+                         if (getCFGTargetOfFortranLabelRef(aif->get_greater_label()) == tgt)
+                            {
+#if DEBUG_VIRTUAL_CFG
+                              printf ("############## return eckArithmeticIfGreater \n");
+#endif
+                              return eckArithmeticIfGreater;
+                            } 
+                           else 
+                            {
+                              ROSE_ASSERT(srcNode != NULL);
+#if DEBUG_VIRTUAL_CFG
+                              printf ("############## ERROR: srcNode = %p = %s \n",srcNode,srcNode->class_name().c_str());
+#endif
+                              ROSE_ASSERT(tgtNode != NULL);
+#if DEBUG_VIRTUAL_CFG
+                              printf ("############## ERROR: tgtNode = %p = %s \n",tgtNode,tgtNode->class_name().c_str());
+#endif
+#if 1
+                           // DQ (1/19/2018): This is an error for Fortran (test2007_151.f) when the CFG graph is outputing 
+                           // the inEdges (must be turned on explicit in the souce code: filteredCFGImpl.h.
+                              ROSE_ASSERT (!"Bad successor in arithmetic if statement");
+#else
+                              printf ("############## ERROR: CFGEdge::condition(): Using eckError value to get past error and at least vizualize the problem \n");
+                           // return eckArithmeticIfLess;
+                              return eckError;
+#endif
+                            } 
+             }
+            else 
+               if (isSgWhileStmt(srcNode) && srcIndex == 1)
+                  {
+                    if (srcNode == tgtNode)
+                       {
+                      // False case for while test
+                         return eckFalse;
+                       } 
+                      else 
+                       {
+                         return eckTrue;
+                       }
+                  } 
+                 else 
+                    if (isSgDoWhileStmt(srcNode) && srcIndex == 2)
+                       {
+                      // tgtIndex values are 0 for true branch and 3 for false branch
+                         if (tgtIndex == 0) 
+                            {
+                              return eckTrue;
+                            } 
+                           else
+                            {
+                              return eckFalse;
+                            }
+                       } 
+                      else 
+                         if (isSgForStatement(srcNode) && srcIndex == 2)
+                            {
+                              if (srcNode == tgtNode)
+                                 {
+                                // False case for test
+                                   return eckFalse;
+                                 } 
+                                else
+                                 {
+                                   return eckTrue;
+                                 }
+                            } 
+                           else
+                              if (isSgFortranDo(srcNode) && srcIndex == 3)
+                                 {
+                                   if (tgtIndex == 4)
+                                      {
+                                        return eckDoConditionPassed;
+                                      } 
+                                     else 
+                                        if (tgtIndex == 6)
+                                           {
+                                             return eckDoConditionFailed;
+                                           } 
+                                          else 
+                                             ROSE_ASSERT (!"Bad successor in do loop");
+                                } 
+                               else 
+                                  if (isSgForAllStatement(srcNode) && srcIndex == 1)
+                                     {
+                                       if (tgtIndex == 2)
+                                          {
+                                            return eckForallIndicesInRange;
+                                          } 
+                                         else 
+                                            if (tgtIndex == 7)
+                                               {
+                                                 return eckForallIndicesNotInRange;
+                                               }
+                                              else
+                                                 ROSE_ASSERT (!"Bad successor in forall loop");
+                                     }
+                                    else
+                                       if (isSgForAllStatement(srcNode) && srcIndex == 3)
+                                          {
+                                            if (SageInterface::forallMaskExpression(isSgForAllStatement(srcNode)))
+                                               {
+                                                 if (tgtIndex == 4)
+                                                    {
+                                                      return eckTrue;
+                                                    } 
+                                                   else 
+                                                      if (tgtIndex == 6)
+                                                         {
+                                                           return eckFalse;
+                                                         }
+                                                        else
+                                                           ROSE_ASSERT (!"Bad successor in forall loop");
+                                               }
+                                              else
+                                               {
+                                                 return eckUnconditional;
+                                               }
+                                          }
+                                         else
+                                            if (isSgSwitchStatement(srcNode) && isSgCaseOptionStmt(tgtNode))
+                                               {
+                                                 return eckCaseLabel;
+                                               }
+                                              else
+                                                 if (isSgSwitchStatement(srcNode) && isSgDefaultOptionStmt(tgtNode))
+                                                    {
+                                                      return eckDefault;
+                                                    }
+                                                   else
+                                                      if (isSgComputedGotoStatement(srcNode) && srcIndex == 1)
+                                                         {
+                                                           if (tgtNode == srcNode)
+                                                              {
+                                                                return eckDefault;
+                                                              } 
+                                                             else 
+                                                              {
+                                                                return eckCaseLabel;
+                                                              }
+                                                         }
+                                                        else 
+                                                           if (isSgConditionalExp(srcNode) && srcIndex == 1) 
+                                                              {
+                                                                SgConditionalExp* ce = isSgConditionalExp(srcNode);
+                                                                if (ce->get_true_exp() == tgtNode)
+                                                                   {
+                                                                     return eckTrue;
+                                                                   }
+                                                                  else
+                                                                     if (ce->get_false_exp() == tgtNode)
+                                                                        {
+                                                                          return eckFalse;
+                                                                        } 
+                                                                       else
+                                                                          ROSE_ASSERT (!"Bad successor in conditional expression");
+                                                              }
+                                                             else 
+                                                                if (isSgAndOp(srcNode) && srcIndex == 1)
+                                                                   {
+                                                                     if (srcNode == tgtNode) 
+                                                                        {
+                                                                       // Short-circuited false case
+                                                                          return eckFalse;
+                                                                        }
+                                                                       else
+                                                                        {
+                                                                          return eckTrue;
+                                                                        }
+                                                                   }
+                                                                  else
+                                                                     if (isSgOrOp(srcNode) && srcIndex == 1)
+                                                                        {
+                                                                          if (srcNode == tgtNode)
+                                                                             {
+                                                                            // Short-circuited true case
+                                                                               return eckTrue;
+                                                                             }
+                                                                            else
+                                                                             {
+                                                                               return eckFalse;
+                                                                             }
+                                                                        }
+                                                                       else
+                                                                          if (isSgFunctionCallExp(srcNode) && srcIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX && !isSgFunctionCallExp(tgtNode))
+                                                                             {
+                                                                               return eckInterprocedural;
+                                                                             }
+                                                                            else
+                                                                               if (isSgFunctionCallExp(tgtNode) && tgtIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX+1 && !isSgFunctionCallExp(srcNode))
+                                                                                  {
+                                                                                    return eckInterprocedural;
+                                                                                  } 
+                                                                                 else 
+                                                                                    if (isSgConstructorInitializer(srcNode) && srcIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX && !isSgConstructorInitializer(tgtNode)) 
+                                                                                       {
+                                                                                         return eckInterprocedural;
+                                                                                       }
+                                                                                      else
+                                                                                         if (isSgConstructorInitializer(tgtNode) && tgtIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX+1 && !isSgConstructorInitializer(srcNode)) 
+                                                                                            {
+                                                                                              return eckInterprocedural;
+                                                                                            } 
+                                                                                           else
+                                                                                            {
+                                                                                           // No key
+                                                                                              return eckUnconditional;
+                                                                                            }
+
+  // DQ (11/29/2009): It should be an error to reach this point in the function.
+     ROSE_ASSERT(false);
+  // DQ (11/29/2009): Avoid MSVC warning.
+     return eckFalse;
+   }
+
 
   SgExpression* CFGEdge::caseLabel() const {
     SgNode* srcNode = src.getNode();
@@ -633,13 +797,21 @@ namespace VirtualCFG {
 
   vector<CFGEdge> CFGNode::outEdges() const {
     ROSE_ASSERT (node);
+
+ // printf ("In CFGNode::outEdges(): index = %u node = %p = %s \n",index,node,node->class_name().c_str());
+
     vector<CFGEdge> result = node->cfgOutEdges(index);
+
+ // printf ("In CFGNode::outEdges(): result.size() = %zu \n",result.size());
+
     for ( vector<CFGEdge>::const_iterator i = result.begin(); i!= result.end(); i++)
    {
       CFGEdge e = *i;
       assert (e.source().getNode() != NULL && e.target().getNode() != NULL);
     }
     
+ // printf ("Leaving CFGNode::outEdges() \n");
+
     return result;
    // return node->cfgOutEdges(index);
   }
@@ -725,30 +897,56 @@ namespace VirtualCFG {
     return makeClosure(n.inEdges(), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed);
   }
 
-  CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym) {
-    SgStatement* st = sym->get_fortran_statement();
-    ROSE_ASSERT (st);
-    switch (sym->get_label_type()) {
-      case SgLabelSymbol::e_non_numeric_label_type: return st->cfgForBeginning();
-      case SgLabelSymbol::e_start_label_type: return st->cfgForBeginning();
-      case SgLabelSymbol::e_else_label_type: {
-        SgIfStmt* ifs = isSgIfStmt(st);
-        ROSE_ASSERT (ifs);
-        ROSE_ASSERT (ifs->get_false_body() != NULL);
-        return ifs->get_false_body()->cfgForBeginning();
-      }
-      case SgLabelSymbol::e_end_label_type: {
-        if (isSgProgramHeaderStatement(st)) {
-          return isSgProgramHeaderStatement(st)->get_definition()->cfgForEnd();
-        } else if (isSgProcedureHeaderStatement(st)) {
-          return isSgProcedureHeaderStatement(st)->get_definition()->cfgForEnd();
-        } else {
-          return st->cfgForEnd();
-        }
-      }
+CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym) 
+   {
+     SgStatement* st = sym->get_fortran_statement();
+     ROSE_ASSERT (st);
+
+#if DEBUG_VIRTUAL_CFG
+     printf ("In getCFGTargetOfFortranLabelSymbol(): sym = %p sym->get_label_type() = %d \n",sym,sym->get_label_type());
+#endif
+
+     switch (sym->get_label_type())
+        {
+          case SgLabelSymbol::e_non_numeric_label_type: 
+               return st->cfgForBeginning();
+
+          case SgLabelSymbol::e_start_label_type:
+             {
+#if DEBUG_VIRTUAL_CFG
+               printf ("In getCFGTargetOfFortranLabelSymbol(): case SgLabelSymbol::e_start_label_type: st = %p = %s \n",st,st->class_name().c_str());
+#endif
+               return st->cfgForBeginning();
+             }
+
+          case SgLabelSymbol::e_else_label_type: 
+             {
+               SgIfStmt* ifs = isSgIfStmt(st);
+               ROSE_ASSERT (ifs);
+               ROSE_ASSERT (ifs->get_false_body() != NULL);
+               return ifs->get_false_body()->cfgForBeginning();
+             }
+
+          case SgLabelSymbol::e_end_label_type: 
+             {
+               if (isSgProgramHeaderStatement(st))
+                  {
+                    return isSgProgramHeaderStatement(st)->get_definition()->cfgForEnd();
+                  } 
+                 else
+                    if (isSgProcedureHeaderStatement(st)) 
+                       {
+                         return isSgProcedureHeaderStatement(st)->get_definition()->cfgForEnd();
+                       }
+                      else
+                       {
+                         return st->cfgForEnd();
+                       }
+             }
+
           default: { ROSE_ASSERT (!"Invalid Fortran label type"); /* avoid MSVC warning of no return stmt */ return st->cfgForEnd(); }
-    }
-  }
+        }
+   }
 
   CFGNode getCFGTargetOfFortranLabelRef(SgLabelRefExp* lRef) {
     ROSE_ASSERT (lRef);
