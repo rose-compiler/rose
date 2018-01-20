@@ -532,7 +532,7 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_while2.java \
      cave3_while3.java \
      cave3_while4.java
-     
+
 # Not yet fully supported in java frontend:
 #	  cave3_import0.java \
 #	  cave3_import1.java \

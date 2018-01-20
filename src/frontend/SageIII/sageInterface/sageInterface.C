@@ -10738,23 +10738,29 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
 }
 
 
-  void SageInterface::removeConsecutiveLabels(SgNode* top) {
-   Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
-   for (size_t i = 0; i < gotos.size(); ++i) {
-     SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
-     SgLabelStatement* ls = gs->get_label();
-     SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
-     if (!lsParent) continue;
-     SgStatementPtrList& bbStatements = lsParent->get_statements();
-     size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls)
-  - bbStatements.begin();
-     ROSE_ASSERT (j != bbStatements.size());     while (j <
-  bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1])) {
-     ++j;
-     }
-     gs->set_label(isSgLabelStatement(bbStatements[j]));
+void
+SageInterface::removeConsecutiveLabels(SgNode* top)
+   {
+     Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
+     for (size_t i = 0; i < gotos.size(); ++i)
+        {
+          SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
+          SgLabelStatement* ls = gs->get_label();
+          SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
+          if (!lsParent) continue;
+          SgStatementPtrList& bbStatements = lsParent->get_statements();
+
+          size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls) - bbStatements.begin();
+
+          ROSE_ASSERT (j != bbStatements.size());
+
+          while (j < bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1]))
+             {
+               ++j;
+             }
+          gs->set_label(isSgLabelStatement(bbStatements[j]));
+        }
    }
-  }
 
 bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
 {

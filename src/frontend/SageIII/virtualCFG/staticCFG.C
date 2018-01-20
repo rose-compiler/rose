@@ -7,6 +7,17 @@
 namespace StaticCFG
 {
 
+  // DQ (1/8/2018): Moved here from header file.
+  // CFG(SgNode* node, bool is_filtered = false)
+CFG::CFG(SgNode* node, bool is_filtered)
+   : graph_(NULL), start_(node), entry_(NULL), exit_(NULL), is_filtered_(is_filtered)
+   { 
+     printf ("Inside of CFG(SgNode.bool) constructor \n");
+
+     buildCFG();
+
+     printf ("Leaving CFG(SgNode.bool) constructor \n");
+   }
 
 void CFG::clearNodesAndEdges()
 {
@@ -172,12 +183,16 @@ void CFG::buildCFG(CFGNode n)
 
 template <class NodeT, class EdgeT>
 void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored)
-{
+   {
+    printf ("Inside of CFG::buildCFG() \n");
+
     ROSE_ASSERT(n.getNode());
 
     if (explored.count(n) > 0)
         return;
     explored.insert(n);
+
+    printf ("In CFG::buildCFG(): test 1 \n");
 
     SgGraphNode* from = NULL;
     if (all_nodes.count(n) > 0)
@@ -186,12 +201,16 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
     }
     else
     {
+         printf ("In CFG::buildCFG(): test 2 \n");
+
         from = new SgGraphNode;
         from->set_SgNode(n.getNode());
         unsigned int index = n.getIndex();
         from->addNewAttribute("info", new CFGNodeAttribute(index, graph_));
         all_nodes[n] = from;
         graph_->addNode(from);
+
+         printf ("In CFG::buildCFG(): test 3 \n");
 
         // Here we check if the new node is the entry or exit.
         if (isSgFunctionDefinition(n.getNode()))
@@ -203,16 +222,24 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         }
     }
 
+    printf ("In CFG::buildCFG(): loop 1: n = %p = %s \n",n.getNode(),n.getNode()->class_name().c_str());
+
     std::vector<EdgeT> outEdges = n.outEdges();
+
+    printf ("In CFG::buildCFG(): loop 1.1 \n");
+
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
+
+        printf ("In CFG::buildCFG(): loop 1: A \n");
 
         SgGraphNode* to = NULL;
         if (all_nodes.count(tar) > 0)
             to = all_nodes[tar];
         else
         {
+            printf ("In CFG::buildCFG(): loop 1: B \n");
             to = new SgGraphNode;
             to->set_SgNode(tar.getNode());
             unsigned int index = tar.getIndex();
@@ -228,12 +255,19 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
                 else if (index == 3)
                     exit_ = to;
             }
+            printf ("In CFG::buildCFG(): loop 1: C \n");
         }
+
+        printf ("In CFG::buildCFG(): loop 1: D \n");
 
         SgDirectedGraphEdge* new_edge = new SgDirectedGraphEdge(from, to);
         new_edge->addNewAttribute("info", new CFGEdgeAttribute<EdgeT>(edge));
         graph_->addDirectedEdge(new_edge);
+
+        printf ("In CFG::buildCFG(): loop 1: E \n");
     }
+
+    printf ("In CFG::buildCFG(): loop 2 \n");
 
     foreach (const EdgeT& edge, outEdges)
     {
@@ -241,12 +275,16 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         buildCFG<NodeT, EdgeT>(edge.target(), all_nodes, explored);
     }
 
+    printf ("In CFG::buildCFG(): loop 3 \n");
+
     std::vector<EdgeT> inEdges = n.inEdges();
     foreach (const EdgeT& edge, inEdges)
     {
         ROSE_ASSERT(edge.target() == n);
         buildCFG<NodeT, EdgeT>(edge.source(), all_nodes, explored);
     }
+
+    printf ("Leaving CFG::buildCFG() \n");
 }
 
 VirtualCFG::CFGNode CFG::toCFGNode(SgGraphNode* node)
@@ -366,9 +404,15 @@ void CFG::printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge)
 
 std::vector<SgDirectedGraphEdge*> outEdges(SgGraphNode* node)
 {
+    printf ("In StaticCFG::outEdges() \n");
+
+
     CFGNodeAttribute* info = dynamic_cast<CFGNodeAttribute*>(node->getAttribute("info"));
     ROSE_ASSERT(info);
     std::set<SgDirectedGraphEdge*> edges = info->getGraph()->computeEdgeSetOut(node);
+
+    printf ("Leaving StaticCFG::outEdges() \n");
+
     return std::vector<SgDirectedGraphEdge*>(edges.begin(), edges.end());
 }
 
