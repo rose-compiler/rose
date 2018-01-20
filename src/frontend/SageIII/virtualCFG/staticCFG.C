@@ -12,11 +12,15 @@ namespace StaticCFG
 CFG::CFG(SgNode* node, bool is_filtered)
    : graph_(NULL), start_(node), entry_(NULL), exit_(NULL), is_filtered_(is_filtered)
    { 
+#if 0
      printf ("Inside of CFG(SgNode.bool) constructor \n");
+#endif
 
      buildCFG();
 
+#if 0
      printf ("Leaving CFG(SgNode.bool) constructor \n");
+#endif
    }
 
 void CFG::clearNodesAndEdges()
@@ -184,7 +188,9 @@ void CFG::buildCFG(CFGNode n)
 template <class NodeT, class EdgeT>
 void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored)
    {
+#if 0
     printf ("Inside of CFG::buildCFG() \n");
+#endif
 
     ROSE_ASSERT(n.getNode());
 
@@ -192,7 +198,9 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         return;
     explored.insert(n);
 
+#if 0
     printf ("In CFG::buildCFG(): test 1 \n");
+#endif
 
     SgGraphNode* from = NULL;
     if (all_nodes.count(n) > 0)
@@ -201,17 +209,18 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
     }
     else
     {
+#if 0
          printf ("In CFG::buildCFG(): test 2 \n");
-
+#endif
         from = new SgGraphNode;
         from->set_SgNode(n.getNode());
         unsigned int index = n.getIndex();
         from->addNewAttribute("info", new CFGNodeAttribute(index, graph_));
         all_nodes[n] = from;
         graph_->addNode(from);
-
+#if 0
          printf ("In CFG::buildCFG(): test 3 \n");
-
+#endif
         // Here we check if the new node is the entry or exit.
         if (isSgFunctionDefinition(n.getNode()))
         {
@@ -222,24 +231,31 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         }
     }
 
+#if 0
     printf ("In CFG::buildCFG(): loop 1: n = %p = %s \n",n.getNode(),n.getNode()->class_name().c_str());
+#endif
 
     std::vector<EdgeT> outEdges = n.outEdges();
 
+#if 0
     printf ("In CFG::buildCFG(): loop 1.1 \n");
+#endif
 
     foreach (const EdgeT& edge, outEdges)
     {
         NodeT tar = edge.target();
-
+#if 0
         printf ("In CFG::buildCFG(): loop 1: A \n");
+#endif
 
         SgGraphNode* to = NULL;
         if (all_nodes.count(tar) > 0)
             to = all_nodes[tar];
         else
         {
+#if 0
             printf ("In CFG::buildCFG(): loop 1: B \n");
+#endif
             to = new SgGraphNode;
             to->set_SgNode(tar.getNode());
             unsigned int index = tar.getIndex();
@@ -255,19 +271,27 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
                 else if (index == 3)
                     exit_ = to;
             }
+#if 0
             printf ("In CFG::buildCFG(): loop 1: C \n");
+#endif
         }
 
+#if 0
         printf ("In CFG::buildCFG(): loop 1: D \n");
+#endif
 
         SgDirectedGraphEdge* new_edge = new SgDirectedGraphEdge(from, to);
         new_edge->addNewAttribute("info", new CFGEdgeAttribute<EdgeT>(edge));
         graph_->addDirectedEdge(new_edge);
 
+#if 0
         printf ("In CFG::buildCFG(): loop 1: E \n");
+#endif
     }
 
+#if 0
     printf ("In CFG::buildCFG(): loop 2 \n");
+#endif
 
     foreach (const EdgeT& edge, outEdges)
     {
@@ -275,7 +299,9 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         buildCFG<NodeT, EdgeT>(edge.target(), all_nodes, explored);
     }
 
+#if 0
     printf ("In CFG::buildCFG(): loop 3 \n");
+#endif
 
     std::vector<EdgeT> inEdges = n.inEdges();
     foreach (const EdgeT& edge, inEdges)
@@ -284,7 +310,9 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         buildCFG<NodeT, EdgeT>(edge.source(), all_nodes, explored);
     }
 
+#if 0
     printf ("Leaving CFG::buildCFG() \n");
+#endif
 }
 
 VirtualCFG::CFGNode CFG::toCFGNode(SgGraphNode* node)
@@ -404,14 +432,17 @@ void CFG::printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge)
 
 std::vector<SgDirectedGraphEdge*> outEdges(SgGraphNode* node)
 {
+#if 0
     printf ("In StaticCFG::outEdges() \n");
-
+#endif
 
     CFGNodeAttribute* info = dynamic_cast<CFGNodeAttribute*>(node->getAttribute("info"));
     ROSE_ASSERT(info);
     std::set<SgDirectedGraphEdge*> edges = info->getGraph()->computeEdgeSetOut(node);
 
+#if 0
     printf ("Leaving StaticCFG::outEdges() \n");
+#endif
 
     return std::vector<SgDirectedGraphEdge*>(edges.begin(), edges.end());
 }
