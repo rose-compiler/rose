@@ -18,17 +18,19 @@ namespace BinaryAnalysis {
 
 /** Interface to the Z3 SMT solver.
  *
- *  This interface has to modes: it can either talk to a "z3" executable using the SMT-LIB2 format, or it can connect directly
+ *  This interface has two modes: it can either talk to a "z3" executable using the SMT-LIB2 format, or it can connect directly
  *  to the z3 shared library. The former is easier to debug, but the latter is much faster since it avoids translating to an
  *  intermediate text representation both when sending data to the solver and when getting data from the solver.  The mode is
  *  selected at runtime with the @ref linkage property. */
 class Z3Solver: public SmtlibSolver {
-private:
 #ifdef ROSE_HAVE_Z3
+public:
+    typedef std::pair<z3::expr, Type> Z3ExprTypePair;
+private:
     z3::context *ctx_;
     z3::solver *solver_;
     std::vector<std::vector<z3::expr> > z3Stack_;       // parallel with parent class' "stack_" data member
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, z3::expr> CommonSubexpressions;
+    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, Z3ExprTypePair> CommonSubexpressions;
     CommonSubexpressions ctxCses_; // common subexpressions
     typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, z3::func_decl> VariableDeclarations;
     VariableDeclarations ctxVarDecls_;
@@ -40,6 +42,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
         // ctx_         -- not serialized
         // solver_      -- not serialized
         // ctxCses_     -- not serialized
@@ -53,7 +56,7 @@ public:
      *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE
      *   configuration script. */
     explicit Z3Solver(unsigned linkages = LM_ANY)
-        : SmtlibSolver("Z3", ROSE_Z3, "", linkages & availableLinkages())
+        : SmtlibSolver("z3", ROSE_Z3, "", linkages & availableLinkages())
 #ifdef ROSE_HAVE_Z3
         , ctx_(NULL), solver_(NULL)
 #endif
@@ -104,6 +107,10 @@ public:
     /** @} */
 #endif
 
+protected:
+    SExprTypePair outputList(const std::string &name, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    SExprTypePair outputList(const std::string &name, const std::vector<SExprTypePair>&, Type rettype = NO_TYPE);
+
     // Overrides
 public:
     virtual Satisfiable checkLib() ROSE_OVERRIDE;
@@ -118,33 +125,43 @@ public:
 protected:
     virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
-    virtual void outputExpression(std::ostream&, const SymbolicExpr::Ptr&, Type need) ROSE_OVERRIDE;
-    virtual void outputArithmeticShiftRight(std::ostream&, const SymbolicExpr::InteriorPtr&) ROSE_OVERRIDE;
+    virtual SExprTypePair outputExpression(const SymbolicExpr::Ptr&) ROSE_OVERRIDE;
+    virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr&) ROSE_OVERRIDE;
 
 #ifdef ROSE_HAVE_Z3
 protected:
-    z3::expr ctxExpression(const SymbolicExpr::Ptr&, Type need);
+    virtual Type mostType(const std::vector<Z3ExprTypePair>&);
+    using SmtlibSolver::mostType;
+    Z3ExprTypePair ctxCast(const Z3ExprTypePair&, Type toType);
+    std::vector<Z3Solver::Z3ExprTypePair> ctxCast(const std::vector<Z3ExprTypePair>&, Type toType);
+    Z3ExprTypePair ctxLeaf(const SymbolicExpr::LeafPtr&);
+    Z3ExprTypePair ctxExpression(const SymbolicExpr::Ptr&);
+    std::vector<Z3Solver::Z3ExprTypePair> ctxExpressions(const std::vector<SymbolicExpr::Ptr>&);
     void ctxVariableDeclarations(const VariableSet&);
     void ctxCommonSubexpressions(const SymbolicExpr::Ptr&);
-    z3::expr ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxExtract(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxRead(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxRotateLeft(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxRotateRight(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxSet(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxSignExtend(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxShiftLeft(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxShiftRight(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxMultiply(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxUnsignedDivide(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxUnsignedExtend(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxUnsignedModulo(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxWrite(const SymbolicExpr::InteriorPtr&);
-    z3::expr ctxZerop(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxExtract(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxRead(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxRotateLeft(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxRotateRight(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxSet(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxSignExtend(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxShiftLeft(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxShiftRight(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxMultiply(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxUnsignedDivide(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxUnsignedExtend(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxUnsignedModulo(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxWrite(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxZerop(const SymbolicExpr::InteriorPtr&);
 #endif
 };
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Z3Solver);
+#endif
 
 #endif

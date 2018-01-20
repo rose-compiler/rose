@@ -1,0 +1,759 @@
+#!/usr/bin/perl
+$Interpreter ||= "/usr/bin/perl";
+#-------------------------------------------------------------------------------
+#
+#   Copyright 1985-99,2000-18 James Frederick Reus
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#-------------------------------------------------------------------------------
+
+# MyUniqueFileId: 05bfd522-45a2-4dfa-ca27-420e6c630546
+
+$mkinstaller_ver_major = "1";
+$mkinstaller_ver_minor = "1";
+$mkinstaller_ver_build = "2";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "1.1.2";
+$mkinstaller_ver_time  = "22Dec2017 17:39:59z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.2 - 22Dec2017 17:39:59z";
+
+@defaultCopyrightOwners
+  = ( "Copyright 1985-99,2000-18 James Frederick Reus\n"
+    );
+
+@defaultCopyrightStatement
+  = ( "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+    , "you may not use this file except in compliance with the License.\n"
+    , "You may obtain a copy of the License at\n"
+    , "\n"
+    , "    http://www.apache.org/licenses/LICENSE-2.0\n"
+    , "\n"
+    , "Unless required by applicable law or agreed to in writing, software\n"
+    , "distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+    , "WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+    , "See the License for the specific language governing permissions and\n"
+    , "limitations under the License.\n"
+    );
+
+# MyUniqueFileId: 08a2697c-7a76-48bf-fe94-1d68e212b462
+$rawCommand   = $0;
+$theCommand   = $rawCommand;
+$theCommand   =~ tr/\\/\//;
+$foundInDir   = "";
+
+$debugging    = 0;
+if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
+   $debugging = 1;
+   print "tbg-pre-install: DEBUG_tbg_pre_install exists, debugging enabled\n" if $debugging;
+}
+
+{
+   #----------------------------------------------------------------------------
+   #
+   #  Initialization...
+   #
+   #  Note that much of this isn't really needed.
+   #
+   #----------------------------------------------------------------------------
+
+   print "tbg-pre-install: initialization...\n" if $debugging;
+   my $dir_include    = "";
+   my $dir_lib        = "";
+   my $dir_prefix     = "";
+   my $here           = getWorkingDirectory();
+   my $inputPathname  = "";
+   my $outputPathname = "";
+   my $prefix_include = "";
+   my $prefix_lib     = "";
+   my $qdir_include   = "";
+   my $qdir_lib       = "";
+   my $qdir_prefix    = "";
+   my $verbosityLevel = 0;
+   print "tbg-pre-install: ...done\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  Process command line...
+   #
+   #  First take stuff from OPTS_tbg_pre_install
+   #  environment variable and put it at the
+   #  start of the command line...
+   #
+   #----------------------------------------------------------------------------
+
+   if ( exists $ENV{'OPTS_tbg_pre_install'} ) {
+      print "tbg-pre-install: deal with OPTS_tbg_pre_install...\n" if $debugging;
+      my $tmp = $ENV{'OPTS_tbg_pre_install'};
+      if ($tmp ne "") {
+         my @tmp = split /\s/, $tmp;
+         my $i;
+         for ($i=$#tmp; 0<=$i; $i-=1) {
+            unshift @ARGV, $tmp[$i];
+         }
+      }
+      print "tbg-pre-install: ...done\n" if $debugging;
+   }
+
+   #---------------------------------------
+   #
+   #  Then step through the command line...
+   #
+   #  Note that much of this isn't really needed.
+   #
+   #---------------------------------------
+
+   print "tbg-pre-install: process command line...\n" if $debugging;
+   {
+      my $i;
+      for ($i=0; $i<=$#ARGV; $i+=1) {
+         my $opt = $ARGV[$i];
+         print "tbg-pre-install: ...found \"$opt\"\n" if $debugging;
+         $_      = $opt;
+         parseArgs: {
+                       #---------------------------------------
+                       #
+                       #  Non-standard options...
+                       #
+                       #---------------------------------------
+
+                       /^--prefix-include=?$/
+
+                          && do {
+                             print STDERR "tbg-pre-install: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^--prefix-include=(.+)$/
+
+                          && do {
+                             if ($prefix_include ne "") {
+                                print STDERR "tbg-pre-install: unexpected $opt\n";
+                                exit 1;
+                             }
+                             $prefix_include = $1;
+                             print "tbg-pre-install:    headers under \"$prefix_include\"\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--prefix-lib=?$/
+
+                          && do {
+                             print STDERR "tbg-pre-install: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^--prefix-lib=(.+)$/
+
+                          && do {
+                             if ($prefix_lib ne "") {
+                                print STDERR "tbg-pre-install: unexpected $opt\n";
+                                exit 1;
+                             }
+                             $prefix_lib     = $1;
+                             print "tbg-pre-install:    libraries under \"$prefix_lib\"\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--prefix-[a-zA-Z0-9_]+=(.+)$/
+
+                          && do {
+                             my $ignored     = $1;
+                             print "tbg-pre-install:    ignoring \"$ignored\"\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--prefix=?$/
+
+                          && do {
+                             print STDERR "tbg-pre-install: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^--prefix=(.+)$/
+
+                          && do {
+                             if (($prefix_include ne "") || ($prefix_lib ne "")) {
+                                print STDERR "tbg-pre-install: unexpected $opt\n";
+                                exit 1;
+                             }
+                             my $collective  = $1;
+                             $prefix_include = $collective."/include";
+                             $prefix_lib     = $collective."/lib";
+                             print "tbg-pre-install:    headers under \"$prefix_include\"\n" if $debugging;
+                             print "tbg-pre-install:    libraries under \"$prefix_lib\"\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       #---------------------------------------
+                       #
+                       #  "Semi-standard" options...
+                       #
+                       #---------------------------------------
+
+                       /^((-d)|(--debug))$/
+
+                          && do {
+                             if ( ! $debugging) {
+                                $debugging = 1;
+                                print "tbg-pre-install: $opt supplied, debugging enabled\n" if $debugging;
+                             }
+                             last parseArgs;
+                          };
+
+                       /^-v$/
+
+                          && do {
+                             $verbosityLevel += 1;
+                             print "tbg-pre-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^-v0$/
+
+                          && do {
+                             $verbosityLevel  = 0;
+                             print "tbg-pre-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^-v([1-9][0-9]*)$/
+
+                          && do {
+                             $verbosityLevel += $1;
+                             print "tbg-pre-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--verbose$/
+
+                          && do {
+                             $verbosityLevel += 1;
+                             print "tbg-pre-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--verbose0$/
+
+                          && do {
+                             $verbosityLevel  = 0;
+                             print "tbg-pre-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--verbose([1-9][0-9]*)$/
+
+                          && do {
+                             $verbosityLevel += $1;
+                             print "tbg-pre-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       #---------------------------------------
+                       #
+                       #  Unknown options...
+                       #
+                       #---------------------------------------
+
+                       /^--(.*)$/
+
+                          && do {
+                             print STDERR "tbg-pre-install: unknown option \"".$opt."\"\n";
+                             my $optName = $1;
+                             if (length($optName) == 1) {
+                                print STDERR "tbg-pre-install: ...did you mean -".$optName." or \"./".$opt."\"\n";
+                             }
+                             elsif (1 <= length($opt)) {
+                                print STDERR "tbg-pre-install: ...did you mean \"./".$opt."\"\n";
+                             }
+                             exit 1;
+                          };
+
+                       /^-(.*)$/
+
+                          && do {
+                             print STDERR "tbg-pre-install: unknown option \"".$opt."\"\n";
+                             my $optName = $1;
+                             if (2 <= length($optName)) {
+                                print STDERR "tbg-pre-install: ...did you mean --".$optName." or \"./".$opt."\"\n";
+                             }
+                             elsif (1 <= length($opt)) {
+                                print STDERR "tbg-pre-install: ...did you mean \"./".$opt."\"\n";
+                             }
+                             exit 1;
+                          };
+
+                       #---------------------------------------
+                       #
+                       #  Parameters...
+                       #
+                       #---------------------------------------
+
+                       /^.+$/
+
+                          && do {
+                             print STDERR "tbg-pre-install: unexpected parameter \"".$opt."\"\n";
+                             exit 1;
+                          };
+
+                       /^$/
+
+                          && do {
+                             print STDERR "tbg-pre-install: zero-length parameter\n";
+                             exit 1;
+                          };
+                    }
+      }
+   }
+   print "tbg-pre-install: ...done\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  Consider what was given...
+   #
+   #     A prefix for the include directory and for the lib directory must
+   #     be supplied. Now strip any enclosing quotes. Establish the names of
+   #     both the include and lib directories.
+   #
+   #     Note that much of this isn't really needed.
+   #
+   #----------------------------------------------------------------------------
+
+   my $ok = 1;
+   if ($prefix_include eq "") {
+      print STDERR "tbg-pre-install: error -- prefix for headers was not specified\n";
+      $ok = 0;
+   }
+   if ($prefix_include eq "") {
+      print STDERR "tbg-pre-install: error -- prefix for libraries was not specified\n";
+      $ok = 0;
+   }
+   if ( ! $ok) {
+      exit 1;
+   }
+   if ($prefix_include =~ /^"(.*)"$/) {
+      $prefix_include = $1;
+      print "tbg-pre-install: stripped double-quotes from include prefix\n" if $debugging;
+   }
+   elsif ($prefix_include =~ /^'(.*)'$/) {
+      $prefix_include = $1;
+      print "tbg-pre-install: stripped single-quotes from include prefix\n" if $debugging;
+   }
+   if ($prefix_lib =~ /^"(.*)"$/) {
+      $prefix_lib     = $1;
+      print "tbg-pre-install: stripped double-quotes from lib prefix\n" if $debugging;
+   }
+   elsif ($prefix_lib =~ /^'(.*)'$/) {
+      $prefix_lib     = $1;
+      print "tbg-pre-install: stripped single-quotes from lib prefix\n" if $debugging;
+   }
+   if ($prefix_include ne $prefix_lib) {
+      print STDERR "tbg-pre-install: warning -- the prefix for headers(=\"$prefix_include\")\n";
+      print STDERR "tbg-pre-install: ...is not the same as prefix for libraries(=\"$prefix_lib\")\n";
+   }
+   $prefix            = $prefix_lib;
+
+   $dir_include       = $prefix_include."/include";
+   if ($dir_include =~ /\s/) {
+      $qdir_include   = "\"".$dir_include."\"";
+   }
+   else {
+      $qdir_include   = $dir_include;
+   }
+   $dir_lib           = $prefix_lib."/lib";
+   if ($dir_lib =~ /\s/) {
+      $qdir_lib       = "\"".$dir_lib."\"";
+   }
+   else {
+      $qdir_lib       = $dir_lib;
+   }
+   $dir_prefix        = $prefix;
+   if ($dir_prefix =~ /\s/) {
+      $qdir_prefix    = "\"".$dir_prefix."\"";
+   }
+   else {
+      $qdir_prefix    = $dir_prefix;
+   }
+
+   #----------------------------------------------------------------------------
+   #
+   #  Note that tbg-pre-install shares version info with mkinstaller
+   #
+   #----------------------------------------------------------------------------
+
+   print STDERR "tbg-pre-install: $mkinstaller_ver_name rev. $mkinstaller_ver_time\n" if (1 <= $verbosityLevel);
+
+   #----------------------------------------------------------------------------
+   #
+   #  Show command-line stuff if verbose...
+   #
+   #----------------------------------------------------------------------------
+
+   if (1 <= $verbosityLevel) {
+      print "tbg-pre-install: (re)announce command line contents...\n" if $debugging;
+      print "tbg-pre-install: given:\n";
+      my $i;
+      for ($i=0; $i<=$#ARGV; $i+=1) {
+         my $opt = $ARGV[$i];
+         if ($i == 0) {
+            print "tbg-pre-install: ...";
+         }
+         else {
+            print "tbg-pre-install:    ";
+         }
+         print $i.": [".$opt."]\n";
+      }
+      print "tbg-pre-install: ...done\n" if $debugging;
+   }
+
+   print "tbg-pre-install: ...all done\n" if $debugging;
+   exit 0;
+}
+# MyUniqueFileId: c58e95af-7811-46b9-ba94-c63e6b2ed7ee
+#-------------------------------------------------------------------------------
+#
+#  Decide where to place tempfiles.
+#
+#  0) Try the pathname in in the environment variable that
+#     was passed as the single parameter.
+#  1) Try the pathname in TMPDIR
+#  2) Try the pathname in TMP
+#  3) Try the pathname in TEMP
+#  4) Try ~/tmp (tmp under home directory)
+#  5) Try c:<usrProf>\AppData\Local\temp directory
+#  6) Try /tmp
+#  7) Try /var/tmp
+#  8) Try c:\Temp
+#  9) Try c:\Windows\Temp
+#  10) Try .
+#
+#  Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+#
+#  This function uses: findHomeDirectory(),
+#                      getOSclass()
+#
+#  see: totebag/src/perl-lib/findTempDir.psub
+#
+#-------------------------------------------------------------------------------
+
+sub findTempDir {
+   my $envVarName = shift;
+   my $tmpdir     = "";
+
+   #---------------------------------------
+   #
+   #  First try the given environment variable...
+   #
+   if ($tmpdir eq "") {
+      if ($envVarName ne "") {
+         if ( exists $ENV{$envVarName}) {
+            my $trydir = $ENV{$envVarName};
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try TMPDIR environment variable...
+   #
+   if ($tmpdir eq "") {
+      if ( exists $ENV{'TMPDIR'}) {
+         my $trydir = $ENV{'TMPDIR'};
+         if ( -d $trydir) {
+            if ( -w $trydir) {
+               $tmpdir = $trydir;
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try TMP environment variable...
+   #
+   if ($tmpdir eq "") {
+      if ( exists $ENV{'TMP'}) {
+         my $trydir = $ENV{'TMP'};
+         if ( -d $trydir) {
+            if ( -w $trydir) {
+               $tmpdir = $trydir;
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try TEMP environment variable...
+   #
+   if ($tmpdir eq "") {
+      if ( exists $ENV{'TEMP'}) {
+         my $trydir = $ENV{'TEMP'};
+         if ( -d $trydir) {
+            if ( -w $trydir) {
+               $tmpdir = $trydir;
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try tmp subdirectory of the
+   #     user's home directory...
+   #
+   if ($tmpdir eq "") {
+      #---------------------------------------
+      #
+      #  Find the user's home directory
+      #
+      my $theHomeDir = findHomeDirectory();
+      if ($theHomeDir ne "") {
+         if ( -d $theHomeDir) {
+            my $trydir = $theHomeDir."/tmp";
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+      }
+   }
+
+   if ($tmpdir eq "") {
+      if (getOSclass() eq "Windows-like") {
+
+         #---------------------------------
+         #
+         #  ...then try "c:<usrProf>\AppData\Local\Temp"
+         #     directory...
+         #
+         if ( exists $ENV{'USERPROFILE'} ) {
+            my $usrProf   = $ENV{'USERPROFILE'};
+            if ($usrProf ne "") {
+               my $trydir = "$usrProf\\AppData\\Local\\Temp";
+               if ( -d $trydir) {
+                  if ( -w $trydir) {
+                     $tmpdir = $trydir;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try "/tmp" directory...
+   #
+   if ($tmpdir eq "") {
+      my $trydir = "/tmp";
+      if ( -d $trydir) {
+         if ( -w $trydir) {
+            $tmpdir = $trydir;
+         }
+      }
+   }
+
+   if ($tmpdir eq "") {
+      if (getOSclass() eq "Windows-like") {
+
+         #---------------------------------
+         #
+         #  ...then try "c:\Temp" directory...
+         #
+         if ($tmpdir eq "") {
+            my $trydir = "c:\\Temp";
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+
+         #---------------------------------
+         #
+         #  ...then try "c:\Windows\Temp" directory...
+         #
+         if ($tmpdir eq "") {
+            my $trydir = "c:\\Windows\\Temp";
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...finally try "." directory...
+   #
+   if ($tmpdir eq "") {
+      my $trydir = ".";
+      if ( -w $trydir) {
+         $tmpdir = $trydir;
+      }
+   }
+
+   return $tmpdir;
+}
+
+# MyUniqueFileId: 14888b4a-e281-4663-9f7c-63017caea3ca
+#-------------------------------------------------------------------------------
+#
+#  Get the OS class.
+#
+#  This function is used to determine the OS class of of the host system.
+#
+#  Returns: Any of:
+#
+#              "UNIX-like"
+#              "Windows-like"
+#              "unknown" (failure)
+#
+#  see: totebag/src/perl-lib/getOSclass.psub
+#
+#-------------------------------------------------------------------------------
+
+sub getOSclass {
+   my $result;
+   #---------------------------------------
+   #
+   #  First try to use a (fast) direct
+   #  method...
+   #
+   my $theOSname = $^O;
+   if ($theOSname =~ /^linux$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^MSWin32$/) {
+      $result = "Windows-like";
+   }
+   elsif ($theOSname =~ /^darwin$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^freebsd$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^solaris$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^aix$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^dec_osf$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^hpux$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^irix$/) {
+      $result = "UNIX-like";
+   }
+   else {
+      #---------------------------------------
+      #
+      #  The hard way...
+      #
+      #  If it isn't directly known, try to
+      #  figure it out the hard way. UNIX-like
+      #  hosts use colons (:) as the separator
+      #  in PATH, but Windows-like hosts use
+      #  semicolons (;).
+      #
+      #  Note: Must check for semicolons first
+      #        (Windows) as Windows may have
+      #        colons too as drive letter
+      #        separators.
+      #
+      if ( defined $ENV{'PATH'} ) {
+         my $tmpPath = $ENV{'PATH'};
+         if ($tmpPath =~ /;/) {
+            $result = "Windows-like";
+         }
+         elsif ($tmpPath =~ /:/) {
+            $result = "UNIX-like";
+         }
+         else {
+            $result = "unknown";
+         }
+      }
+      else {
+         $result = "unknown";
+      }
+   }
+   return $result;
+}
+
+# MyUniqueFileId: c01f73fc-3153-477a-c68b-cbb74bc9526f
+#-------------------------------------------------------------------------------
+#
+#  Get the current working directory.
+#
+#  This function is used to determine the current working directory. Note
+#  that this sort of thing is generally supplied by a standard module but
+#  Perl installations have been sometimes found to lack this (rarely but...).
+#  Note that this does this operation the hard way.
+#
+#  This function uses: findHomeDirectory(),
+#                      findTempDir(),
+#                      getOSclass(),
+#
+#  see: totebag/src/perl-lib/getWorkingDirectory.psub
+#
+#-------------------------------------------------------------------------------
+
+sub getWorkingDirectory {
+   my $callerIs = shift;
+   print STDERR "getWorkingDirectory[ starting...\n" if $debugging;
+   my $exitCode;
+   my $gives;
+   my $tmpdir   = findTempDir("");
+   my $osClass  = getOSclass();
+   if ($osClass eq "UNIX-like") {
+      print STDERR "getWorkingDirectory: ...UNIX-like\n" if $debugging;
+      my $tmpFile = "$tmpdir/pwd-$$.tmp";;
+      print STDERR "getWorkingDirectory: ...run: [pwd 2>$tmpFile]\n" if $debugging;
+      $gives      = `pwd 2>$tmpFile`;
+      $exitCode   = $? + 0;
+      chomp $gives;
+      unlink $tmpFile if -f $tmpFile;
+   }
+   elsif ($osClass eq "Windows-like") {
+      print STDERR "getWorkingDirectory: ...Windows-like\n" if $debugging;
+      my $tmpFile = "$tmpdir\\pwd-$$.tmp";
+      $gives      = `cd 2>$tmpFile`;
+      print STDERR "getWorkingDirectory: ...run: [cd 2>$tmpFile]\n" if $debugging;
+      $exitCode   = $? + 0;
+      chomp $gives;
+      unlink $tmpFile if -f $tmpFile;
+   }
+   else {
+      $gives    = "";
+      $exitCode = 1;
+   }
+   if ($exitCode != 0) {
+      print STDERR "$callerIscan't determine current working directory\n";
+      $gives = "";
+   }
+   print STDERR "getWorkingDirectory] ...done(=\"".$gives."\")\n" if $debugging;
+   return $gives;
+}
+

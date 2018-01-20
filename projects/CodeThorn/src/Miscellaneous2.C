@@ -9,6 +9,12 @@
 #include <cstdlib>
 #include "SprayException.h"
 
+#include "boost/algorithm/string.hpp"
+#include "boost/algorithm/string/trim.hpp"
+#include "boost/algorithm/string/regex.hpp"
+#include "boost/regex.hpp"
+#include "boost/lexical_cast.hpp"
+
 using namespace std;
 
 string SPRAY::replace_string(string toModify, string toReplace, string with) {
@@ -225,3 +231,9 @@ list<int> SPRAY::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
   return result;
 }
 
+std::vector<std::string> SPRAY::Parse::commandLineArgs(std::string commandLine) {
+  vector<std::string> v; 		
+  boost::split_regex(v, commandLine, boost::regex("( )+"));
+  cout<<"Parsing command line: found "<<v.size()<<" arguments."<<endl;
+  return v;
+}

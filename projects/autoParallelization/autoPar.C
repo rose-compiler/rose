@@ -21,8 +21,9 @@
 #include "rose_config.h" // obtain macros defining backend compiler names, etc.
 #include "keep_going.h" // enable logging files which cannot be processed by AutoPar due to various reasons
 // all kinds of analyses needed
-#include "autoParSupport.h" 
+#include "autoParSupport.h"
 #include <string> 
+#include <CommandLine.h> // Commandline support in librose
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool automatically inserts OpenMP directives into sequential codes.";
 static const char* description =
@@ -150,8 +151,16 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
 
 
   // Default log files for keep_going option
-  Rose::KeepGoing::report_filename__fail = boost::filesystem::path(getenv("HOME")).native()+"/autoPar-failed-files.txt";
-  Rose::KeepGoing::report_filename__pass = boost::filesystem::path(getenv("HOME")).native()+"/autoPar-passed-files.txt";
+  // There is no home directory if called by a web server account. 
+  const char* logdir = "/tmp";
+  char* hdir = getenv("HOME");
+  if (hdir != NULL){
+    logdir = hdir;
+  }
+  ROSE_ASSERT (logdir !=NULL); 
+  string log_path = boost::filesystem::path(logdir).native();   
+  Rose::KeepGoing::report_filename__fail = log_path +"/autoPar-failed-files.txt";
+  Rose::KeepGoing::report_filename__pass = log_path +"/autoPar-passed-files.txt";
 
 
   SwitchGroup switches("autoPar's switches");
@@ -212,12 +221,12 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
 static std::vector<std::string> commandline_processing(std::vector< std::string > & argvList)
 {
   using namespace Sawyer::CommandLine;
-  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+  Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);
   p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
   p.longPrefix("-");
 
 // initialize generic Sawyer switches: assertion, logging, threads, etc.
-  p.with(CommandlineProcessing::genericSwitches()); 
+  p.with(Rose::CommandLine::genericSwitches()); 
 
 // initialize this tool's switches
   p.with(commandLineSwitches());  

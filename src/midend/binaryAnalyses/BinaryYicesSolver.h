@@ -59,7 +59,7 @@ public:
      *  The solver will be named "Yices" (see @ref name property) and will use the library linkage if the Yices library
      *  is present, otherwise the executable linkage. If neither is available then an @c SmtSolver::Exception is thrown. */
     explicit YicesSolver(unsigned linkages = LM_ANY)
-        : SmtSolver("Yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {}
+        : SmtSolver("yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {}
 
     /** Returns a bit vector of linkage capabilities.
      *
@@ -95,33 +95,38 @@ public:
     // Convert a SymbolicExpr into Yices text input
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
+    Type most_type(const std::vector<SExprTypePair>&);
+    std::vector<SExprTypePair> out_exprs(const std::vector<SymbolicExpr::Ptr>&);
+    std::vector<SExprTypePair> out_cast(const std::vector<SExprTypePair>&, Type toType);
     void out_comments(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     void out_common_subexpressions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     void out_define(std::ostream&, const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void out_assert(std::ostream&, const SymbolicExpr::Ptr&);
     void out_number(std::ostream&, const SymbolicExpr::Ptr&);
-    void out_expr(std::ostream&, const SymbolicExpr::Ptr&, Type needType);
-    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
-    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
-    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&, Type needType);
-    void out_set(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
-    void out_extract(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_sext(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_uext(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_shift(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool newbits);
-    void out_asr(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_zerop(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_mult(std::ostream &o, const SymbolicExpr::InteriorPtr&);
-    void out_read(std::ostream &o, const SymbolicExpr::InteriorPtr&);
-    void out_write(std::ostream &o, const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_cast(const SExprTypePair&, Type toType);
+    SExprTypePair out_expr(const SymbolicExpr::Ptr&);
+    SExprTypePair out_unary(const char *opname, const SExprTypePair&, Type rettype = NO_TYPE);
+    SExprTypePair out_binary(const char *opname, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    SExprTypePair out_ite(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_set(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_la(const char *opname, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    SExprTypePair out_la(const char *opname, const std::vector<SExprTypePair>&, Type rettype = NO_TYPE);
+    SExprTypePair out_extract(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_sext(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_uext(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_shift(const char *opname, const SymbolicExpr::InteriorPtr&, bool newbits);
+    SExprTypePair out_asr(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_zerop(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_mult(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_read(const SymbolicExpr::InteriorPtr&);
+    SExprTypePair out_write(const SymbolicExpr::InteriorPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convert a SymbolicExpr to Yices IR using the Yices API
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ROSE_HAVE_LIBYICES
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, yices_expr> TermExprs;
+    typedef std::pair<yices_expr, Type> YExprTypePair;
+    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, YExprTypePair> TermExprs;
     TermExprs termExprs;                                // for common subexpressions
 
     /* These ctx_*() functions build a Yices context object if Yices is linked into this executable. */
@@ -130,26 +135,31 @@ protected:
     typedef yices_expr (*NaryAPI)(yices_context, yices_expr *operands, unsigned n_operands);
     typedef yices_expr (*ShiftAPI)(yices_context, yices_expr, unsigned amount);
 
+    Type most_type(const std::vector<YExprTypePair>&);
     void ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr>&);
     void ctx_define(const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void ctx_assert(const SymbolicExpr::Ptr&);
-    yices_expr ctx_expr(const SymbolicExpr::Ptr&, Type needType);
-    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
-    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
-    yices_expr ctx_ite(const SymbolicExpr::InteriorPtr&, Type needType);
-    yices_expr ctx_set(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
-    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
-    yices_expr ctx_extract(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_sext(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_uext(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_shift(ShiftAPI, const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_asr(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_zerop(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_mult(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_read(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_write(const SymbolicExpr::InteriorPtr&);
+    std::vector<YExprTypePair> ctx_exprs(const std::vector<SymbolicExpr::Ptr>&);
+    YExprTypePair ctx_cast(const YExprTypePair&, Type toType);
+    std::vector<YExprTypePair> ctx_cast(const std::vector<YExprTypePair>&, Type toType);
+    YExprTypePair ctx_expr(const SymbolicExpr::Ptr&);
+    YExprTypePair ctx_unary(UnaryAPI, const YExprTypePair&, Type rettype = NO_TYPE);
+    YExprTypePair ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    YExprTypePair ctx_ite(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_set(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    YExprTypePair ctx_la(BinaryAPI, const std::vector<YExprTypePair>&, Type rettype = NO_TYPE);
+    YExprTypePair ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    YExprTypePair ctx_la(NaryAPI, const std::vector<YExprTypePair>&, Type rettype = NO_TYPE);
+    YExprTypePair ctx_extract(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_sext(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_uext(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_shift(ShiftAPI, const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_asr(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_zerop(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_mult(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_read(const SymbolicExpr::InteriorPtr&);
+    YExprTypePair ctx_write(const SymbolicExpr::InteriorPtr&);
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

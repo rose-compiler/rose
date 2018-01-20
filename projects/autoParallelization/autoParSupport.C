@@ -1004,6 +1004,35 @@ namespace AutoParallelization
     result.erase(new_end,result.end());
   }
 
+  //! Check if a reference is an array reference of statically declared arrays
+  // SgPntrArrRefExp -> lhs_operand_i() → SgVarRefExp -> SgVariableSymbol -> SgInitializedName → typeptr → SgArrayType 
+  static bool isStaticArrayRef (SgNode* ref)
+  {
+    bool ret = false; 
+    ROSE_ASSERT (ref !=NULL);
+    
+    if (SgPntrArrRefExp* aref = isSgPntrArrRefExp(ref))
+    {
+      // for multidimensional array references, getting the nested child SgPntrArrRef
+      if (SgPntrArrRefExp* nestRef = isSgPntrArrRefExp(aref->get_lhs_operand_i()))
+        return isStaticArrayRef (nestRef);
+
+      SgVarRefExp* lhs = isSgVarRefExp (aref->get_lhs_operand_i());
+      if (lhs != NULL)
+      {
+        SgVariableSymbol * varSym = isSgVariableSymbol (lhs->get_symbol());
+        if (varSym!=NULL)
+        {
+          SgInitializedName * iname = varSym->get_declaration();
+          if (isSgArrayType (iname->get_type()))
+            ret = true; 
+        }
+      }
+    }
+
+    return ret;
+  }
+
   // Algorithm, eliminate the following dependencies
   // *  caused by locally declared variables: already private to each iteration
   // *  commonlevel ==0, no common enclosing loops
@@ -1037,19 +1066,25 @@ namespace AutoParallelization
         for (; !edges.ReachEnd(); ++edges) 
         { 
           LoopTreeDepGraph::Edge *e= *edges;
-          // cout<<"Debug: dependence edge: "<<e->toString()<<endl;
           DepInfo info =e->GetInfo();
+          if (enable_debug)
+           cout<<"-------------->>> Considering a new dependence edge's info:\n"<<info.toString()<<endl;
 
           SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
+          // two variables will be set if source or snk nodes are variable references nodes
+          SgVarRefExp* src_var_ref = NULL; 
+          SgVarRefExp* snk_var_ref = NULL; 
+
           // x. Ignore dependence caused by locally declared variables: declared within the loop    
           if (src_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(src_node);
             if (var_ref)
             {  
+	      src_var_ref = var_ref; 
               varscope= var_ref->get_symbol()->get_scope();
               src_name = var_ref->get_symbol()->get_declaration();
               if (SageInterface::isAncestor(currentscope,varscope))
@@ -1075,6 +1110,7 @@ namespace AutoParallelization
           if (snk_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(snk_node);
+	    snk_var_ref = var_ref; 
             if (var_ref)
             {  
               varscope= var_ref->get_symbol()->get_scope();
@@ -1091,6 +1127,9 @@ namespace AutoParallelization
             } //end if(var_ref)
           } // end if (snk_node)
 #endif
+          if (enable_debug)
+            cout<<"Neither source nor sink node is locally decalared variables."<<endl;
+
           //x. Eliminate a dependence if it is empty entry
           // -----------------------------------------------
           // Ignore possible empty depInfo entry
@@ -1103,6 +1142,9 @@ namespace AutoParallelization
             }
             continue;
           }
+
+          if (enable_debug)
+            cout<<"Neither source nor sink node is empty entry."<<endl;
 
 #if 1
           //x. Eliminate a dependence if scalar type dependence involving array references.
@@ -1129,6 +1171,7 @@ namespace AutoParallelization
             LoopTransformInterface::set_astInterface(fa);
             LoopTransformInterface::set_arrayInfo(array_interface);
             LoopTransformInterface::set_sideEffectInfo(annot);
+
             isArray1= LoopTransformInterface::IsArrayAccess(info.SrcRef());
             isArray2= LoopTransformInterface::IsArrayAccess(info.SnkRef());
           }
@@ -1138,23 +1181,68 @@ namespace AutoParallelization
             isArray2= fa.IsArrayAccess(info.SnkRef());
           }
 
-          if (AutoParallelization::no_aliasing) 
+          //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
+          if (isArray1 || isArray2)
           {
-            //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
-            if (isArray1 || isArray2)
+            if (enable_debug)
+              cout<<"Either source or sink reference is an array reference..."<<endl;
+
+            if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
             {
-              if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
+              if (enable_debug)
+                cout<<"\t Dep type is scalar or backscalar "<<endl;
+              if (src_var_ref || snk_var_ref) // at least one is a scalar: we have scalar vs. array
+              {
+               if (enable_debug)
+                 cout<<"Either source or sink reference is a scalar reference..."<<endl;
+                // we have to check the type of the scalar: 
+                //  integer type? skip
+                //  pointer type, skip if no-aliasing is specified
+                SgVarRefExp* one_var= src_var_ref?src_var_ref:snk_var_ref;
+
+                // non-pointer type or pointertype && no_aliasing, we skip it
+                if (!isPointerType(one_var->get_type()) ||AutoParallelization::no_aliasing )
+                {
+                  if (enable_debug)
+                  {
+                    if (AutoParallelization::no_aliasing)
+                      cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
+                    else
+                      cout<<"Found a non-pointer scalar, eliminating a dep relation due to the scalar dep type between a scalar and an array"<<endl; 
+                    info.Dump();
+                  }
+
+                  continue;
+                }
+              }
+              else // both are arrays
               {
                 if (enable_debug)
+                  cout<<"\t both are arrray references "<<endl;
+                if (AutoParallelization::no_aliasing) 
                 {
-                  cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
-                  info.Dump();
+                  if (enable_debug)
+                  {
+                    cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
+                    info.Dump();
+                  }
+                  continue;
                 }
-                continue;
-              }
+                // both are arrays and both are statically allocated ones
+                else if (isStaticArrayRef (src_node) && isStaticArrayRef (snk_node))
+                {
+                  if (enable_debug)
+                  {
+                    cout<<"Eliminating a dep relation due to both references are references to static allocated arrays "<<endl; 
+                    info.Dump();
+                  }
+                  continue; 
+                }
+              } // end both are arrays  
             }
           }
 #endif
+
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1251,6 +1339,8 @@ namespace AutoParallelization
             continue;
           }
           // Save the rest dependences which can not be ruled out 
+          if (enable_debug)
+            cout<<"\t this dep relation cannot be eliminated. saved into remaining depedence set."<<endl;
           remainings.push_back(info); 
         } //end iterator edges for a node
       } // end if has edge
@@ -1279,13 +1369,16 @@ namespace AutoParallelization
 
   Cases of multiple dimensions, multiple levels of indirections are also handled.  
 
-  We uniform them into a single form (Form 2) to simplify later recognition of indirect indexed array refs
+  We uniform them into a single form (Form 1) to simplify later recognition of indirect indexed array refs
+
    For Form 2: if the rhs operand is a variable
       find the reaching definition of the index based on data flow analysis
         case 1: if it is the current loop's index variable, nothing to do further. stop
+                what if it is another loop's index variable??
         case 2: outside the current loop's scope: for example higher level loop's index. stop
         case 3: the definition is within the  current loop ?  
                  replace the rhs operand with its reaching definition's right hand value.
+                    if rhs is another array references??
                 one assignment to another array with the current  (?? higher level is considered at its own level) loop index
  
 Algorithm: Replace the index variable with its right hand value of its reaching definition,
@@ -1294,6 +1387,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
 */
  static void uniformIndirectIndexedArrayRefs (SgForStatement* for_loop)
  {
+   if (enable_debug)
+     cout<<"Entering uniformIndirectIndexedArrayRefs() ..."<<endl;
    ROSE_ASSERT (for_loop != NULL);
    ROSE_ASSERT (for_loop->get_loop_body() != NULL);
    SgInitializedName * loop_index_name = NULL;
@@ -1303,21 +1398,23 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
    // prepare def/use analysis, it should already exist as part of initialize_analysis()
    //SgProject * project = getProject();
    ROSE_ASSERT (defuse != NULL);  
+
+   // For each array reference:
    Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(for_loop->get_loop_body(), V_SgPntrArrRefExp);
    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
    {
-     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i));
+     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i)); 
      ROSE_ASSERT (aRef != NULL); 
      SgExpression* rhs = aRef-> get_rhs_operand_i();
      switch (rhs->variantT())
      {
-       case V_SgVarRefExp:
+       case V_SgVarRefExp: // the index of the array is a variable reference
          {
            // SgVarRefExp * varRef = isSgVarRefExp(rhs);
            // trace back to the 'root' value of rhs according to def/use analysis
            // Initialize the end value to the current rhs of the array reference expression
            SgExpression * the_end_value = rhs; 
-           while (isSgVarRefExp(the_end_value))
+           while (isSgVarRefExp(the_end_value)) // the applications we care only have one level of value transfer.
            {
              SgVarRefExp * varRef = isSgVarRefExp(the_end_value);
              SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
@@ -1368,8 +1465,12 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
                break;
              }
            } // end while() to trace down to root definition expression
-           //replace rhs with its root value if rhs != end_value
-           if (rhs != the_end_value)
+
+           //Replace rhs with its root value if rhs != end_value
+           // We should only do the replacement if the end value is array reference!
+           // Otherwise, an inner loop variable j's initialization value 0 will be used to replace j in the array reference!
+           // Liao, 12/20/2017
+           if (isSgPntrArrRefExp (the_end_value) && rhs != the_end_value)
            {
              SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
              //TODO use replaceExpression() instead

@@ -20,7 +20,7 @@ using namespace Rose;
 
 #define DEBUG_ROSE_EXPERIMENTAL 0
 
-#include "ATtoUntypedTraversal.h"
+#include "ATermToUntypedFortranTraversal.h"
 
 int
 experimental_openFortranParser_main(int argc, char **argv)
@@ -29,7 +29,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      int i, status;
      string parse_table;
-     OFP::ATtoUntypedTraversal* ofp_traversal = NULL;
+     OFP::ATermToUntypedFortranTraversal* aterm_traversal = NULL;
 
   // Rasmussen (11/13/2017): Moved parse table to ROSE 3rdPartyLibraries (no longer set by caller).
      if (argc < 2)
@@ -109,17 +109,17 @@ experimental_openFortranParser_main(int argc, char **argv)
   // Initialize the ATerm library
      ATinitialize(argc, argv);
 
-     filenameWithoutPath += ".aterm";
+     string aterm_filename = filenameWithoutPath + ".aterm";
 
 #if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): Opening aterm file filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+     printf ("In experimental_openFortranParser_main(): Opening aterm file = %s \n", aterm_filename.c_str());
 #endif
 
   // Read the ATerm file that was created by the parser
-     FILE * file = fopen(filenameWithoutPath.c_str(), "r");
+     FILE * file = fopen(aterm_filename.c_str(), "r");
      if (file == NULL)
         {
-           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to open file %s\n\n", filenameWithoutPath.c_str());
+           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to open file %s\n\n", aterm_filename.c_str());
            return 1;
         }
 
@@ -135,11 +135,11 @@ experimental_openFortranParser_main(int argc, char **argv)
 //----------------------------------------------------------------------
 
   // Create object to traverse the ATerm file
-     ofp_traversal  = new OFP::ATtoUntypedTraversal(OpenFortranParser_globalFilePointer);
+     aterm_traversal = new OFP::ATermToUntypedFortranTraversal(OpenFortranParser_globalFilePointer);
 
-     if (ofp_traversal->traverse_Program(program_term) != ATtrue)
+     if (aterm_traversal->traverse_Program(program_term) != ATtrue)
         {
-           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to traverse file %s\n\n", filenameWithoutPath.c_str());
+           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to traverse file %s\n\n", aterm_filename.c_str());
            return 1;
         }
 
@@ -157,9 +157,12 @@ experimental_openFortranParser_main(int argc, char **argv)
      Fortran::Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
-     sg_traversal.traverse(ofp_traversal->get_file(), scope);
+     sg_traversal.traverse(aterm_traversal->get_file(), scope);
 
-     if (ofp_traversal)  delete ofp_traversal;
+  // Generate dot file for Sage nodes.
+     generateDOT(SageBuilder::getGlobalScopeFromScopeStack(), filenameWithoutPath);
+
+     if (aterm_traversal)  delete aterm_traversal;
 
      return 0;
   }

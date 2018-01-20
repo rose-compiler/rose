@@ -6,7 +6,6 @@
 #include <ArrayAnnot.h>
 #include <ArrayRewrite.h>
 
-//#define USE_Algorithm_V2 1 // testing algorithm 2 for static counting
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -194,6 +193,8 @@ int main (int argc, char** argv)
 {
   // Build the AST used by ROSE
   vector <string> argvList (argv, argv + argc);
+  // The command option to accept report file name
+  string report_option="-report-file";
 
   if (CommandlineProcessing::isOption(argvList,"-help","", false))
   {
@@ -203,6 +204,12 @@ int main (int argc, char** argv)
     cout<<endl;
     cout<<"The optional "<<report_option<<" option is provided for users to specify where to save the results"<<endl;
     cout<<"By default, the results will be saved into a file named report.txt"<<endl;
+    cout<<"  -static-counting-only  enable a static estimation of arithmetic intensity of loop bodies"<<endl;
+    cout<<"  -debug                 enable a verbose debugging mode "<<endl;
+    cout<<"  -support_raja_loops    support RAJA loops"<<endl;
+    cout<<"  -report-file           specify a customized output file name, instead of the default file ai_tool_report.txt"<<endl;
+    cout<<"  -annot  annot_file     accept user specified function side effect annotations"<<endl;
+    cout<<"  -use-algorithm-v2      enable flow-sensitive counting of FP operations for static counting, still a new feature under development."<<endl;
     cout<<"Detailed instructions: https://en.wikibooks.org/wiki/ROSE_Compiler_Framework/Arithmetic_intensity_measuring_tool "<<endl;
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }

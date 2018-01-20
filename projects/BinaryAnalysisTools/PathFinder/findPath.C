@@ -10,6 +10,7 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <DwarfLineMapper.h>
 #include <Partitioner2/CfgPath.h>
@@ -598,8 +599,7 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         }
     }
 
-    // We could use an SMT solver here also, but it seems to slow things down more than speed them up.
-    SmtSolver *solver = NULL;
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, myRegs, solver);
 
     return partitioner.instructionProvider().dispatcher()->create(ops);

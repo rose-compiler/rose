@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
+#include "CommandLine.h"
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -127,7 +128,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     memory->byteRestricted(false); // because extracting bytes from a word results in new variables for this domain
     BaseSemantics::StatePtr state = State::instance(registers, memory);
-    SmtSolver *solver = NULL;
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));
     return ops;
 }

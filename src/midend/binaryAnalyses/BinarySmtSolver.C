@@ -7,7 +7,9 @@
 #include "BinaryYicesSolver.h"
 #include "BinaryZ3Solver.h"
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -34,9 +36,14 @@ SmtSolver::initDiagnostics() {
 }
 
 std::ostream&
-operator<<(std::ostream &o, const SmtSolver::Exception &e)
-{
+operator<<(std::ostream &o, const SmtSolver::Exception &e) {
     return o <<"SMT solver: " <<e.what();
+}
+
+std::ostream&
+operator<<(std::ostream &o, const SmtSolver::SExpr &e) {
+    e.print(o);
+    return o;
 }
 
 SmtSolver::Stats SmtSolver::classStats;
@@ -48,9 +55,9 @@ SmtSolver::init(unsigned linkages) {
     stack_.push_back(std::vector<SymbolicExpr::Ptr>());
 
     if (linkage_ == LM_LIBRARY) {
-        name_ = name_ + std::string(name_.empty() ? "" : " ") + "library";
+        name_ = std::string(name_.empty()?"noname":name_) + "-lib";
     } else if (linkage_ == LM_EXECUTABLE) {
-        name_ = name_ + std::string(name_.empty() ? "" : " ") + "executable";
+        name_ = std::string(name_.empty()?"noname":name_) + "-exe";
     }
 }
 
@@ -67,6 +74,35 @@ SmtSolver::clearEvidence() {
     outputText_ = "";
     parsedOutput_.clear();
     termNames_.clear();
+}
+
+// class method
+SmtSolver::Availability
+SmtSolver::availability() {
+    SmtSolver::Availability retval;
+    retval.insert(std::make_pair(std::string("z3-lib"), (Z3Solver::availableLinkages() & LM_LIBRARY) != 0));
+    retval.insert(std::make_pair(std::string("z3-exe"), (Z3Solver::availableLinkages() & LM_EXECUTABLE) != 0));
+    retval.insert(std::make_pair(std::string("yices-lib"), (YicesSolver::availableLinkages() & LM_LIBRARY) != 0));
+    retval.insert(std::make_pair(std::string("yices-exe"), (YicesSolver::availableLinkages() & LM_EXECUTABLE) != 0));
+    return retval;
+}
+
+// class methd
+SmtSolver*
+SmtSolver::instance(const std::string &name) {
+    if ("" == name || "none" == name)
+        return NULL;
+    if ("best" == name)
+        return bestAvailable();
+    if ("z3-lib" == name)
+        return new Z3Solver(LM_LIBRARY);
+    if ("z3-exe" == name)
+        return new Z3Solver(LM_EXECUTABLE);
+    if ("yices-lib" == name)
+        return new YicesSolver(LM_LIBRARY);
+    if ("yices-exe" == name)
+        return new YicesSolver(LM_EXECUTABLE);
+    throw Exception("unrecognized SMT solver name \"" + StringUtility::cEscape(name) + "\"");
 }
 
 // class method
@@ -361,14 +397,65 @@ SmtSolver::getErrorMessage(int exitStatus) {
 
 // class method
 SmtSolver::SExpr::Ptr
-SmtSolver::SExpr::instance() {
-    return Ptr(new SExpr(""));
+SmtSolver::SExpr::instance(const Ptr &a, const Ptr &b, const Ptr &c, const Ptr &d) {
+    SExpr *retval = new SExpr("");
+    if (a) {
+        retval->children_.push_back(a);
+        if (b) {
+            retval->children_.push_back(b);
+            if (c) {
+                retval->children_.push_back(c);
+                if (d)
+                    retval->children_.push_back(d);
+            } else {
+                ASSERT_require(NULL == d);
+            }
+        } else {
+            ASSERT_require(NULL == c);
+            ASSERT_require(NULL == d);
+        }
+    } else {
+        ASSERT_require(NULL == b);
+        ASSERT_require(NULL == c);
+        ASSERT_require(NULL == d);
+    }
+    return Ptr(retval);
 }
 
 // class method
 SmtSolver::SExpr::Ptr
 SmtSolver::SExpr::instance(const std::string &content) {
     return Ptr(new SExpr(content));
+}
+
+// class method
+SmtSolver::SExpr::Ptr
+SmtSolver::SExpr::instance(size_t n) {
+    return instance(boost::lexical_cast<std::string>(n));
+}
+
+void
+SmtSolver::SExpr::append(const std::vector<Ptr> &exprs) {
+    ASSERT_require(content_.empty());
+    children_.insert(children_.end(), exprs.begin(), exprs.end());
+}
+
+void
+SmtSolver::SExpr::print(std::ostream &o) const {
+    if (!name().empty()) {
+        ASSERT_require(children().size() == 0);
+        o <<name();
+    } else {
+        o <<"(";
+        for (size_t i = 0; i < children().size(); ++i) {
+            if (i > 0)
+                o <<" ";
+            const SExpr::Ptr &child = children()[i];
+            ASSERT_not_null(child);
+            child->print(o);
+        }
+        o <<")";
+    }
 }
 
 // The input stream of characters reinterpretted as a stream of tokens.  No look-ahead is necessary during parser, which makes
@@ -397,7 +484,7 @@ public:
     std::pair<size_t /*line*/, size_t /*col*/> location() {
         return input_.location(nextTokenOffset_);
     }
-    
+
 private:
     // Get token starting at specified position, after skipping white space, comments, etc. Returns token lexeme and offset to
     // first character after end of the token.
@@ -409,7 +496,7 @@ private:
                 ch = input_.character(++offset);
             if (EOF == ch)
                 return std::make_pair(std::string(), offset);
-                                      
+
             if ('(' == ch) {
                 return std::make_pair(std::string("("), offset + 1);
             } else if (')' == ch) {
@@ -476,17 +563,8 @@ void
 SmtSolver::printSExpression(std::ostream &o, const SExpr::Ptr &sexpr) {
     if (sexpr == NULL) {
         o <<"nil";
-    } else if (!sexpr->name().empty()) {
-        ASSERT_require(sexpr->children().size() == 0);
-        o <<sexpr->name();
     } else {
-        o <<"(";
-        for (size_t i = 0; i < sexpr->children().size(); ++i) {
-            if (i > 0)
-                o <<" ";
-            printSExpression(o, sexpr->children()[i]);
-        }
-        o <<")";
+        o <<*sexpr;
     }
 }
 
@@ -524,7 +602,7 @@ SmtSolver::selfTest() {
     ASSERT_require(sexprs[4]->children()[1]->name() == "");
     ASSERT_require(sexprs[4]->children()[1]->children().size() == 1);
     ASSERT_require(sexprs[4]->children()[1]->children()[0]->name() == "y");
-    
+
     // Create some variables and constants
     E a1 = makeVariable(1, "a1");
     E a8 = makeVariable(8, "a8");
@@ -532,6 +610,7 @@ SmtSolver::selfTest() {
     E a256 = makeVariable(256, "a256");
 
     E z8 = makeInteger(8, 0);
+    E b1 = makeVariable(1, "b1");
     E b4 = makeInteger(4, 10);
     E b8 = makeInteger(8, 0xf0);
     E c8 = makeVariable(8);
@@ -555,9 +634,10 @@ SmtSolver::selfTest() {
     exprs.push_back(makeSignedGe(a8, z8, "signed greather than or equal"));
 
     // Boolean operations
-    exprs.push_back(makeBooleanAnd(makeZerop(a8), makeZerop(c8), "Boolean conjunction"));
     exprs.push_back(makeEq(makeIte(makeZerop(a8), z8, b8), b8, "if-then-else"));
-    exprs.push_back(makeBooleanOr(makeZerop(a8), makeZerop(c8), "Boolean disjunction"));
+    exprs.push_back(makeAnd(makeZerop(a8), makeZerop(c8), "Boolean conjunction"));
+    exprs.push_back(makeOr(makeZerop(a8), makeZerop(c8), "Boolean disjunction"));
+    exprs.push_back(makeXor(makeZerop(a8), makeZerop(c8), "Boolean exclusive disjunction"));
 
     // Bit operations
     exprs.push_back(makeZerop(makeAnd(a8, b8), "bit-wise conjunction"));
@@ -580,7 +660,7 @@ SmtSolver::selfTest() {
     exprs.push_back(makeZerop(makeShr1(makeInteger(2, 3), a8), "shift right inserting three ones"));
     exprs.push_back(makeZerop(makeExtend(makeInteger(2, 3), a8), "truncate to three bits"));
     exprs.push_back(makeZerop(makeExtend(makeInteger(6, 32), a8), "extend to 32 bits"));
-    
+
     // Arithmetic operations
     exprs.push_back(makeZerop(makeAdd(a8, b8), "addition"));
     exprs.push_back(makeZerop(makeNegate(a8), "negation"));
@@ -601,6 +681,16 @@ SmtSolver::selfTest() {
 
     // Miscellaneous operations
     exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
+
+    // Mixing 1-bit values used as bit vectors and Booleans should be allowed.
+    exprs.push_back(makeAnd(makeAdd(a1, b1) /*bit-vector*/, makeZerop(b1) /*Boolean*/));
+
+    // Some operations should work on bit vectors (tested above) or Booleans.  In ROSE, a Boolean is just a 1-bit vector, but
+    // SMT solvers usually distinguish between 1-bit vector type and Boolean type and don't allow them to be mixed.
+    exprs.push_back(makeEq(makeZerop(a1), b1));
+    exprs.push_back(makeXor(makeZerop(a1), b1));
+    exprs.push_back(makeNe(a1, makeZerop(b1)));
+    exprs.push_back(makeIte(a1, makeZerop(a1), b1));
 
     // Run the solver
     for (size_t i=0; i<exprs.size(); ++i) {

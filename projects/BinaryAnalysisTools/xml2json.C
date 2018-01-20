@@ -4,6 +4,7 @@ static const char *description =
     "by the ROSE binary analysis state serialization.";
 
 #include <rose.h>                                       // Must be first ROSE include file
+#include <CommandLine.h>
 #include <Diagnostics.h>                                // ROSE
 
 #include <boost/algorithm/string/classification.hpp>
@@ -39,15 +40,15 @@ parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
     Settings retval;
 
-    Parser p = /*Rose*/::CommandlineProcessing::createEmptyParser(purpose, description);
-    p.with(/*Rose*/::CommandlineProcessing::genericSwitches());
+    Parser p = Rose::CommandLine::createEmptyParser(purpose, description);
+    p.with(Rose::CommandLine::genericSwitches());
     p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{xml_input_file} @v{json_output_file}");
     p.errorStream(mlog[FATAL]);
     SwitchGroup tool("Tool-specific switches");
     tool.name("tool");
 
 #ifdef XML2JSON_SUPPORT_CHECK
-    /*Rose*/::CommandlineProcessing::insertBooleanSwitch(tool, "check", retval.check, "Perform extra input checking.");
+    Rose::CommandLine::insertBooleanSwitch(tool, "check", retval.check, "Perform extra input checking.");
 #endif
 
     tool.insert(Switch("delete")

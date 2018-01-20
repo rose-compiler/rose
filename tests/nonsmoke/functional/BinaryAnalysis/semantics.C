@@ -368,6 +368,8 @@ public:
 };
 
 int main(int argc, char *argv[]) {
+    ROSE_INITIALIZE;
+
     std::vector<std::string> args(argv, argv+argc);
     for (size_t argno=1; argno<args.size(); ++argno) {
         if (0==args[argno].compare("--trace")) {
@@ -388,6 +390,8 @@ int main(int argc, char *argv[]) {
         } else if (0==args[argno].compare("--no-usedef")) {
             do_usedef = false;
             args[argno] = "";
+        } else if (0==args[argno].compare("--debug-solver")) {
+            Rose::Diagnostics::mfacilities.control("Rose::BinaryAnalysis::SmtSolver(all)");
         }
     }
     args.erase(std::remove(args.begin(), args.end(), ""), args.end());

@@ -1,6 +1,9 @@
 # we define various list of files to be used for testing OpenMP support
 
-
+# removed experimental dist_data, mpi examples
+#    axpy_ompacc_parseonly.c
+#    axpy_ompacc_mpi.c
+#    axpy_ompacc4.c 
 # this is the all set of OpenMP C input tests
 # all other C test lists can be a subset of this one
 nonsmoke_specimens_openmp_c = \
@@ -12,10 +15,7 @@ nonsmoke_specimens_openmp_c = \
     atoms-2.c \
     axpy_ompacc2.c \
     axpy_ompacc3.c \
-    axpy_ompacc4.c \
     axpy_ompacc.c \
-    axpy_ompacc_mpi.c \
-    axpy_ompacc_parseonly.c \
     barrier.c \
     bonds-2.c \
     collapse_2.c \
@@ -159,10 +159,7 @@ nonsmoke_getDataSharingAttribute_c = \
     atoms-2.c \
     axpy_ompacc2.c \
     axpy_ompacc3.c \
-    axpy_ompacc4.c \
     axpy_ompacc.c \
-    axpy_ompacc_mpi.c \
-    axpy_ompacc_parseonly.c \
     barrier.c \
     bonds-2.c \
     collapse_2.c \
@@ -300,10 +297,7 @@ nonsmoke_getDataSharingAttribute_c_verify = \
     atoms-2.c \
     axpy_ompacc2.c \
     axpy_ompacc3.c \
-    axpy_ompacc4.c \
     axpy_ompacc.c \
-    axpy_ompacc_mpi.c \
-    axpy_ompacc_parseonly.c \
     barrier.c \
     bonds-2.c \
     collapse_2.c \

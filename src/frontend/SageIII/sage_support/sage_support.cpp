@@ -14,6 +14,7 @@
 #include "failSafePragma.h"
 #include "cmdline.h"
 #include "FileSystem.h"
+#include <CommandLine.h>
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #   include "FortranModuleInfo.h"
@@ -1809,11 +1810,11 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
      using namespace Rose;                   // the ROSE team is migrating everything to this namespace
      using namespace Rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
-  // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
+  // Use Rose::CommandLine to create a consistent parser among all tools.  If you want a tool's parser to be different
   // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
   // creates a parser that assumes all unrecognized switches are intended for a later stage. If there are no later stages
   // then use createEmptyParser instead or else users will never see error messages for misspelled switches.
-     Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+     Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);
      p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
 #if 1
   // DEBUGGING [Robb P Matzke 2016-09-27]
@@ -1829,7 +1830,7 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
   // Sawyer::CommandLine::SwitchGroup, which this tool could extend by adding additional switches.  This could have been done
   // inside createParser, but it turns out that many tools like to extend or re-order this group of switches, which is
   // simpler this way.
-     p.with(CommandlineProcessing::genericSwitches());
+     p.with(Rose::CommandLine::genericSwitches());
 
   // Eventually, if we change frontend so we can query what switches it knows about, we could insert them into our parser at
   // this point.  The frontend could report all known switches (sort of how things are organized one) or we could query only
@@ -1860,8 +1861,8 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
   // Helper function that adds "--old-outliner" and "--no-old-outliner" to the tool switch group, and causes
   // settings.useOldParser to be set to true or false. It also appends some additional documentation to say what the default
   // value is. We could have done this by hand with Sawyer, but having a helper encourages consistency.
-     CommandlineProcessing::insertBooleanSwitch(tool, "old-commandline-handling", rose_settings.useOldCommandlineParser, 
-                                               "Call the old ROSE frontend command line parser in addition to its new Sawyer parser.");
+     Rose::CommandLine::insertBooleanSwitch(tool, "old-commandline-handling", rose_settings.useOldCommandlineParser, 
+                                            "Call the old ROSE frontend command line parser in addition to its new Sawyer parser.");
 
   // We want the "--rose:help" switch to appear in the Sawyer documentation but we have to pass it to the next stage also. We
   // could do this two different ways. The older way (that still works) is to have Sawyer process the switch and then we
@@ -5478,7 +5479,7 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
           printf ("In build_Jovial_AST(): After calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
-#if 1
+#if 0
      printf ("Exiting after parsing Jovial input... \n");
      exit(0);
 #endif
@@ -5812,6 +5813,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                            {
                                              frontendErrorLevel = build_Jovial_AST(argv,inputCommandLine);
                                              frontend_failed = (frontendErrorLevel > 0);
+                                          // Rasmussen (11/21/2017): No Jovial compiler for now
+                                             set_skipfinalCompileStep(true);
                                            }
                                           else
                                            {
