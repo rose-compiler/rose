@@ -306,6 +306,7 @@ MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES=$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES
 
 DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
+# rose_v1_input.C
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
