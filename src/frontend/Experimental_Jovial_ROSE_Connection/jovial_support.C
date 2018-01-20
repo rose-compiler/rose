@@ -12,122 +12,49 @@
 #include <string>
 
 #include "jovial_support.h"
-#include "ATtoUntypedJovialTraversal.h"
+#include "ATermToUntypedJovialTraversal.h"
+#include "UntypedJovialTraversal.h"
 
 int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
-     int i;
-     int status = 1;
+     int status;
      std::string parse_table;
-
-     printf ("\n WARNING: Call to Jovial frontend not yet fully implemented! \n\n");
 
      assert(sg_source_file != NULL);
 
-  // Rasmussen (9/28/2017): A start at implementing (see fortran_support.C).
-  // Need to:
-  //   1. Process command line args for filename ...
-  //   2. Form command to call SDF parser for input file (creating filename.jov.aterm)
-  //   3. Read filename.jov.aterm
-  //   4. Traverse filename.jov.aterm creating Sage untyped nodes
-  //   5. Traverse the Sage untyped nodes to complete the Sage IR
-
-  // TODO!!!
-  // std::string stratego_bin_path = STRATEGO_BIN_PATH;
-     std::string stratego_bin_path = "/nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/strategoxt-0.17.1/bin";
+     std::string stratego_bin_path = STRATEGO_BIN_PATH;
      assert (stratego_bin_path.empty() == false);
 
-  // TODO!!! - could be from ROSE build tree
-  // std::string jovial_bin_path = JOVIAL_BIN_PATH;
-     std::string jovial_bin_path = "/nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/jovial-sdf-0.5/bin";
-     assert (jovial_bin_path.empty() == false);
-
-     std::string commandString = stratego_bin_path + "/sglri";
-     std::cout << "COMMAND: " << commandString << "\n";
-
-  // DQ (9/29/2017): Added ifdef to ignore this when ROSE is not configured to use STRATEGO.
-  // #ifdef USE_ROSE_STRATEGO_SUPPORT
-
-  // Step 1
+  // Step 1 - Parse the input file
   // ------
+     std::string commandString = stratego_bin_path + "/sglri";
 
-  // Filename can be obtained from the source-file object
+  // Filename is obtained from the source-file object
      std::string filenameWithPath = sg_source_file->getFileName();
      std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(filenameWithPath);
+     commandString += " -i " + filenameWithPath;
 
-  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
-     for (i = 1; i < argc; i++)
-        {
-          std::cout << "ARG " << i << " is " << argv[i] << "\n";
-          if (strncmp(argv[i], "--parseTable", 12) == 0)
-             {
-            // TODO
-            // commandString += " -p ";
-            // commandString += argv[i+1];
-            // commandString += " ";
-
-               parse_table = std::string(argv[i+1]);
-               std::cout << "FOUND --parseTable argument: " + parse_table;
-               i += 1;
-             }
-          else
-             {
-            // This skips over commands line arguments that begin with "--" (this does not appears to be meaningful).
-               if (strncmp(argv[i], "--", 2) == 0) 
-                  {
-                 // skip args that are not files
-                    i += 1;
-                    continue;
-                  }
-               else
-                  {
-                 // This only skips over the options that begin with "-I" but not "-I <path>" (where the "-I" and the path are seperated by a space).
-                    if (strncmp(argv[i], "-I", 2) == 0)
-                       {
-                      // Skip the include dir stuff; it's handled by the lexer.
-                      // TODO - not currently true, so skip arg for now? 
-                         i += 1;
-                         continue;
-                       }
-                    else
-                       {
-                      // All other options are ignored.
-                       }
-                  }
-             }
-        }
-
-  // Finished processing command line arguments, make sure there is a parse table
-     if (parse_table.empty() == true)
-        {
-          fprintf(stderr, "fortran_parser: no parse table provided, use option --parseTable\n");
-       // TODO
-       // return status;
-        }
-
-  // Step 2
-  // ------
-
-  // Add path to the parse table
-     commandString += " -p " + jovial_bin_path + "/Jovial.tbl";
-     std::cout << "COMMAND: " << commandString << "\n";
+  // Add path to the parse table (located in the source tree)
+     std::string parse_table_path = "src/3rdPartyLibraries/experimental-jovial-parser/bin/Jovial.tbl";
+     parse_table = findRoseSupportPathFromSource(parse_table_path, "bin");
+     commandString += " -p " + parse_table;
 
   // Add source code location information to output
      commandString += " --preserve-locations";
-     std::cout << "COMMAND: " << commandString << "\n";
-
-     commandString += " -i " + filenameWithPath;
-     std::cout << "COMMAND: " << commandString << "\n";
 
   // Output the transformed aterm file
      commandString += " -o " + filenameWithoutPath + ".aterm";
-     std::cout << "COMMAND: " << commandString << "\n";
+     std::cout << "PARSER command: " << commandString << "\n";
 
   // Make system call to run parser and output ATerm parse-tree file
      status = system(commandString.c_str());
-     std::cout << "COMMAND status = " << status << "\n";
+     if (status != 0)
+        {
+           fprintf(stderr, "\nFAILED: in jovial_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
+           return status;
+        }
 
-  // Step 3
+  // Step 2 - Traverse the ATerm parse tree and convert into Untyped nodes
   // ------
 
   // Initialize the ATerm library
@@ -142,7 +69,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      if (file == NULL)
         {
            fprintf(stderr, "\nFAILED: in jovial_main(), unable to open file %s\n\n", aterm_filename.c_str());
-           return status;
+           return 1;
         }
 
      ATerm module_term = ATreadFromTextFile(file);
@@ -150,47 +77,38 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
      std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
 
-  // Step 4
-  // ------
+     ATermSupport::ATermToUntypedJovialTraversal* aterm_traversal = NULL;
 
-     ATermSupport::ATtoUntypedJovialTraversal* aterm_traversal = NULL;
-
-     aterm_traversal = new ATermSupport::ATtoUntypedJovialTraversal(sg_source_file);
+     aterm_traversal = new ATermSupport::ATermToUntypedJovialTraversal(sg_source_file);
 
      if (aterm_traversal->traverse_Module(module_term) != ATtrue)
         {
-           return status;
+           fprintf(stderr, "\nFAILED: in jovial_main(), unable to traverse ATerm file %s\n\n", aterm_filename.c_str());
+           return 1;
         }
 
      std::cout << "\nSUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
 
   // Rasmussen (11/9/17): Create a dot file.  This is temporary or should
-  // at least be an rose option.
+  // at least be a rose option.
      SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
-     generateDOT(global_scope, filenameWithoutPath);
+     generateDOT(global_scope, filenameWithoutPath + "_ut");
 
-//----------------------------------------------------------------------
-//  Traverse the SgUntypedFile object and convert to regular sage nodes
-//----------------------------------------------------------------------
-
-  // Step 5
+  // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
   // ------
 
-#if 0
-  // Build the traversal object
-     Jovial::Untyped::UntypedTraversal sg_traversal(globalFilePointer);
+  // Build the ATerm traversal object
+
+     Jovial::Untyped::UntypedTraversal sg_traversal(sg_source_file);
      Jovial::Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
-     sg_traversal.traverse(ofp_traversal->get_file(),scope);
+     sg_traversal.traverse(aterm_traversal->get_file(),scope);
 
-     if (ofp_traversal)  delete ofp_traversal;
-#endif
+  // Generate dot file for Sage nodes.
+     generateDOT(SageBuilder::getGlobalScopeFromScopeStack(), filenameWithoutPath);
 
-     assert (status == 0);
+     if (aterm_traversal)  delete aterm_traversal;
 
-     return status;
+     return 0;
    }
-
-
-

@@ -53,9 +53,9 @@ $theCommand   =~ tr/\\/\//;
 $foundInDir   = "";
 
 $debugging    = 0;
-if ( exists $ENV{"DEBUG_rose_post_install"}) {
+if ( exists $ENV{"DEBUG_tbg_post_install"}) {
    $debugging = 1;
-   print "rose-post-install: DEBUG_rose_post_install exists, debugging enabled\n" if $debugging;
+   print "tbg-post-install: DEBUG_tbg_post_install exists, debugging enabled\n" if $debugging;
 }
 
 {
@@ -63,10 +63,11 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
    #
    #  Initialization...
    #
+   #  Note that much of this isn't really needed.
+   #
    #----------------------------------------------------------------------------
 
-   print "rose-post-install: initialization...\n" if $debugging;
-   my $backupPathname = "";
+   print "tbg-post-install: initialization...\n" if $debugging;
    my $dir_include    = "";
    my $dir_lib        = "";
    my $dir_prefix     = "";
@@ -79,21 +80,21 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
    my $qdir_lib       = "";
    my $qdir_prefix    = "";
    my $verbosityLevel = 0;
-   print "rose-post-install: ...done\n" if $debugging;
+   print "tbg-post-install: ...done\n" if $debugging;
 
    #----------------------------------------------------------------------------
    #
    #  Process command line...
    #
-   #  First take stuff from OPTS_rose_post_install
+   #  First take stuff from OPTS_tbg_post_install
    #  environment variable and put it at the
    #  start of the command line...
    #
    #----------------------------------------------------------------------------
 
-   if ( exists $ENV{'OPTS_rose_post_install'} ) {
-      print "rose-post-install: deal with OPTS_rose_post_install...\n" if $debugging;
-      my $tmp = $ENV{'OPTS_rose_post_install'};
+   if ( exists $ENV{'OPTS_tbg_post_install'} ) {
+      print "tbg-post-install: deal with OPTS_tbg_post_install...\n" if $debugging;
+      my $tmp = $ENV{'OPTS_tbg_post_install'};
       if ($tmp ne "") {
          my @tmp = split /\s/, $tmp;
          my $i;
@@ -101,21 +102,23 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
             unshift @ARGV, $tmp[$i];
          }
       }
-      print "rose-post-install: ...done\n" if $debugging;
+      print "tbg-post-install: ...done\n" if $debugging;
    }
 
    #---------------------------------------
    #
    #  Then step through the command line...
    #
+   #  Note that much of this isn't really needed.
+   #
    #---------------------------------------
 
-   print "rose-post-install: process command line...\n" if $debugging;
+   print "tbg-post-install: process command line...\n" if $debugging;
    {
       my $i;
       for ($i=0; $i<=$#ARGV; $i+=1) {
          my $opt = $ARGV[$i];
-         print "rose-post-install: ...found \"$opt\"\n" if $debugging;
+         print "tbg-post-install: ...found \"$opt\"\n" if $debugging;
          $_      = $opt;
          parseArgs: {
                        #---------------------------------------
@@ -127,7 +130,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                        /^--prefix-include=?$/
 
                           && do {
-                             print STDERR "rose-post-install: missing or zero-length argument to $opt option\n";
+                             print STDERR "tbg-post-install: missing or zero-length argument to $opt option\n";
                              exit 1;
                           };
 
@@ -135,18 +138,18 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              if ($prefix_include ne "") {
-                                print STDERR "rose-post-install: unexpected $opt\n";
+                                print STDERR "tbg-post-install: unexpected $opt\n";
                                 exit 1;
                              }
                              $prefix_include = $1;
-                             print "rose-post-install:    headers under \"$prefix_include\"\n" if $debugging;
+                             print "tbg-post-install:    headers under \"$prefix_include\"\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--prefix-lib=?$/
 
                           && do {
-                             print STDERR "rose-post-install: missing or zero-length argument to $opt option\n";
+                             print STDERR "tbg-post-install: missing or zero-length argument to $opt option\n";
                              exit 1;
                           };
 
@@ -154,11 +157,11 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              if ($prefix_lib ne "") {
-                                print STDERR "rose-post-install: unexpected $opt\n";
+                                print STDERR "tbg-post-install: unexpected $opt\n";
                                 exit 1;
                              }
                              $prefix_lib     = $1;
-                             print "rose-post-install:    libraries under \"$prefix_lib\"\n" if $debugging;
+                             print "tbg-post-install:    libraries under \"$prefix_lib\"\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -166,14 +169,14 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              my $ignored     = $1;
-                             print "rose-post-install:    ignoring \"$ignored\"\n" if $debugging;
+                             print "tbg-post-install:    ignoring \"$ignored\"\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--prefix=?$/
 
                           && do {
-                             print STDERR "rose-post-install: missing or zero-length argument to $opt option\n";
+                             print STDERR "tbg-post-install: missing or zero-length argument to $opt option\n";
                              exit 1;
                           };
 
@@ -181,14 +184,14 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              if (($prefix_include ne "") || ($prefix_lib ne "")) {
-                                print STDERR "rose-post-install: unexpected $opt\n";
+                                print STDERR "tbg-post-install: unexpected $opt\n";
                                 exit 1;
                              }
                              my $collective  = $1;
                              $prefix_include = $collective."/include";
                              $prefix_lib     = $collective."/lib";
-                             print "rose-post-install:    headers under \"$prefix_include\"\n" if $debugging;
-                             print "rose-post-install:    libraries under \"$prefix_lib\"\n" if $debugging;
+                             print "tbg-post-install:    headers under \"$prefix_include\"\n" if $debugging;
+                             print "tbg-post-install:    libraries under \"$prefix_lib\"\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -203,7 +206,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                           && do {
                              if ( ! $debugging) {
                                 $debugging = 1;
-                                print "rose-post-install: $opt supplied, debugging enabled\n" if $debugging;
+                                print "tbg-post-install: $opt supplied, debugging enabled\n" if $debugging;
                              }
                              last parseArgs;
                           };
@@ -212,7 +215,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              $verbosityLevel += 1;
-                             print "rose-post-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             print "tbg-post-install:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -220,7 +223,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              $verbosityLevel  = 0;
-                             print "rose-post-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             print "tbg-post-install:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -228,7 +231,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              $verbosityLevel += $1;
-                             print "rose-post-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             print "tbg-post-install:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -236,7 +239,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              $verbosityLevel += 1;
-                             print "rose-post-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             print "tbg-post-install:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -244,7 +247,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              $verbosityLevel  = 0;
-                             print "rose-post-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             print "tbg-post-install:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -252,7 +255,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
                           && do {
                              $verbosityLevel += $1;
-                             print "rose-post-install:    ...level is now $verbosityLevel\n" if $debugging;
+                             print "tbg-post-install:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -265,13 +268,13 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                        /^--(.*)$/
 
                           && do {
-                             print STDERR "rose-post-install: unknown option \"".$opt."\"\n";
+                             print STDERR "tbg-post-install: unknown option \"".$opt."\"\n";
                              my $optName = $1;
                              if (length($optName) == 1) {
-                                print STDERR "rose-post-install: ...did you mean -".$optName." or \"./".$opt."\"\n";
+                                print STDERR "tbg-post-install: ...did you mean -".$optName." or \"./".$opt."\"\n";
                              }
                              elsif (1 <= length($opt)) {
-                                print STDERR "rose-post-install: ...did you mean \"./".$opt."\"\n";
+                                print STDERR "tbg-post-install: ...did you mean \"./".$opt."\"\n";
                              }
                              exit 1;
                           };
@@ -279,13 +282,13 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                        /^-(.*)$/
 
                           && do {
-                             print STDERR "rose-post-install: unknown option \"".$opt."\"\n";
+                             print STDERR "tbg-post-install: unknown option \"".$opt."\"\n";
                              my $optName = $1;
                              if (2 <= length($optName)) {
-                                print STDERR "rose-post-install: ...did you mean --".$optName." or \"./".$opt."\"\n";
+                                print STDERR "tbg-post-install: ...did you mean --".$optName." or \"./".$opt."\"\n";
                              }
                              elsif (1 <= length($opt)) {
-                                print STDERR "rose-post-install: ...did you mean \"./".$opt."\"\n";
+                                print STDERR "tbg-post-install: ...did you mean \"./".$opt."\"\n";
                              }
                              exit 1;
                           };
@@ -299,20 +302,20 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                        /^.+$/
 
                           && do {
-                             print STDERR "rose-post-install: unexpected parameter \"".$opt."\"\n";
+                             print STDERR "tbg-post-install: unexpected parameter \"".$opt."\"\n";
                              exit 1;
                           };
 
                        /^$/
 
                           && do {
-                             print STDERR "rose-post-install: zero-length parameter\n";
+                             print STDERR "tbg-post-install: zero-length parameter\n";
                              exit 1;
                           };
                     }
       }
    }
-   print "rose-post-install: ...done\n" if $debugging;
+   print "tbg-post-install: ...done\n" if $debugging;
 
    #----------------------------------------------------------------------------
    #
@@ -322,15 +325,17 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
    #     be supplied. Now strip any enclosing quotes. Establish the names of
    #     both the include and lib directories.
    #
+   #     Note that much of this isn't really needed.
+   #
    #----------------------------------------------------------------------------
 
    my $ok = 1;
    if ($prefix_include eq "") {
-      print STDERR "rose-post-install: error -- prefix for headers was not specified\n";
+      print STDERR "tbg-post-install: error -- prefix for headers was not specified\n";
       $ok = 0;
    }
    if ($prefix_include eq "") {
-      print STDERR "rose-post-install: error -- prefix for libraries was not specified\n";
+      print STDERR "tbg-post-install: error -- prefix for libraries was not specified\n";
       $ok = 0;
    }
    if ( ! $ok) {
@@ -338,23 +343,23 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
    }
    if ($prefix_include =~ /^"(.*)"$/) {
       $prefix_include = $1;
-      print "rose-post-install: stripped double-quotes from include prefix\n" if $debugging;
+      print "tbg-post-install: stripped double-quotes from include prefix\n" if $debugging;
    }
    elsif ($prefix_include =~ /^'(.*)'$/) {
       $prefix_include = $1;
-      print "rose-post-install: stripped single-quotes from include prefix\n" if $debugging;
+      print "tbg-post-install: stripped single-quotes from include prefix\n" if $debugging;
    }
    if ($prefix_lib =~ /^"(.*)"$/) {
       $prefix_lib     = $1;
-      print "rose-post-install: stripped double-quotes from lib prefix\n" if $debugging;
+      print "tbg-post-install: stripped double-quotes from lib prefix\n" if $debugging;
    }
    elsif ($prefix_lib =~ /^'(.*)'$/) {
       $prefix_lib     = $1;
-      print "rose-post-install: stripped single-quotes from lib prefix\n" if $debugging;
+      print "tbg-post-install: stripped single-quotes from lib prefix\n" if $debugging;
    }
    if ($prefix_include ne $prefix_lib) {
-      print STDERR "rose-post-install: warning -- the prefix for headers(=\"$prefix_include\")\n";
-      print STDERR "rose-post-install: ...is not the same as prefix for libraries(=\"$prefix_lib\")\n";
+      print STDERR "tbg-post-install: warning -- the prefix for headers(=\"$prefix_include\")\n";
+      print STDERR "tbg-post-install: ...is not the same as prefix for libraries(=\"$prefix_lib\")\n";
    }
    $prefix            = $prefix_lib;
 
@@ -382,257 +387,36 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
    #----------------------------------------------------------------------------
    #
-   #  Note that rose-post-install shares version info with mkinstaller
+   #  Note that tbg-post-install shares version info with mkinstaller
    #
    #----------------------------------------------------------------------------
 
-   print STDERR "rose-post-install: $mkinstaller_ver_name rev. $mkinstaller_ver_time\n" if (1 <= $verbosityLevel);
+   print STDERR "tbg-post-install: $mkinstaller_ver_name rev. $mkinstaller_ver_time\n" if (1 <= $verbosityLevel);
 
    #----------------------------------------------------------------------------
    #
-   #  Locate the rose-config.cfg file (to edit)...
+   #  Show command-line stuff if verbose...
    #
    #----------------------------------------------------------------------------
 
-   print "rose-post-install: locate \"rose-config.cfg\"...\n" if $debugging;
-   {
-      my $lookFor = $dir_lib."/rose-config.cfg";
-      print STDERR "rose-post-install: find \"rose-config.cfg\"\n" if (1 <= $verbosityLevel);
-      if ( -f $lookFor) {
-         $inputPathname  = $lookFor;
-         $outputPathname = $lookFor.".new";
-         $backupPathname = $inputPathname.".bak";
-         print "rose-post-install: ...found \"$inputPathname\"\n" if $debugging;
-         print STDERR "rose-post-install: ...found \"$inputPathname\"\n" if (1 <= $verbosityLevel);
-      }
-      else {
-         print STDERR "rose-post-install: can't find \"$lookFor\"\n";
-         exit 1;
-      }
-   }
-   print "rose-post-install: ...done\n" if $debugging;
-
-   #----------------------------------------------------------------------------
-   #
-   #  Read the rose-config.cfg file translating to rose-config.cfg.new
-   #
-   #----------------------------------------------------------------------------
-
-   print "rose-post-install: scan \"$inputPathname\"...\n" if $debugging;
-   {
-      print STDERR "rose-post-install: read from \"$inputPathname\"\n" if (1 <= $verbosityLevel);
-      if ( ! open(INPUT,"< $inputPathname")) {
-         print STDERR "rose-post-install: can't read \"$inputPathname\"\n";
-         exit 1;
-      }
-      print STDERR "rose-post-install: ...write to \"$outputPathname\"\n" if (1 <= $verbosityLevel);
-      if ( ! open(OUTPUT,"> $outputPathname")) {
-         print STDERR "rose-post-install: can't create/write \"$outputPathname\"\n";
-         close(INPUT);
-         exit 1;
-      }
-      my $lineNumber = 0;
-      while (<INPUT>) {
-         chomp;
-         my $theLineOfText = $_;
-         $lineNumber    += 1;
-         print "rose-post-install:    $lineNumber: [$theLineOfText]\n" if $debugging;
-         if ($theLineOfText =~ /^(\s*cc\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"cc\" line,       L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            print "rose-post-install:    ...output[$left=$right]\n" if $debugging;
-            print OUTPUT $left."=".$right."\n";
-         }
-         elsif ($theLineOfText =~ /^(\s*cxx\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"cxx\" line,      L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            print "rose-post-install:    ...output[$left=$right]\n" if $debugging;
-            print OUTPUT $left."=".$right."\n";
-         }
-         elsif ($theLineOfText =~ /^(\s*cppflags\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"cppflags\" line, L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            $right =~ s/-I"[^"]+"/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/g;
-            $right =~ s/-I\S+/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/g;
-            $right =~ s/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/-I$qdir_include/g;
-            print "rose-post-install:    ...output[$left=$right]\n" if $debugging;
-            print OUTPUT $left."=".$right."\n";
-         }
-         elsif ($theLineOfText =~ /^(\s*cflags\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"cflags\" line,   L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            $right =~ s/-I"[^"]+"/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/g;
-            $right =~ s/-I\S+/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/g;
-            $right =~ s/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/-I$qdir_include/g;
-            $right =~ s/-L"[^"]+"/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/g;
-            $right =~ s/-L\S+/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/g;
-            $right =~ s/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/-L$qdir_lib/g;
-            print OUTPUT $left."=".$right."\n";
-         }
-         elsif ($theLineOfText =~ /^(\s*cxxflags\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"cxxflags\" line, L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            $right =~ s/-I"[^"]+"/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/g;
-            $right =~ s/-I\S+/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/g;
-            $right =~ s/{I550cf20a-ae0b-4167-c6c0-3b60c8e51b25}/-I$qdir_include/g;
-            $right =~ s/-L"[^"]+"/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/g;
-            $right =~ s/-L\S+/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/g;
-            $right =~ s/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/-L$qdir_lib/g;
-            print OUTPUT $left."=".$right."\n";
-         }
-         elsif ($theLineOfText =~ /^(\s*ldflags\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"ldflags\" line,  L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            $right =~ s/-L"[^"]+"/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/g;
-            $right =~ s/-L\S+/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/g;
-            $right =~ s/{L4ea9950f-9f7d-4af4-dbde-3c5463f1caba}/-L$qdir_lib/g;
-            print "rose-post-install:    ...output[$left=$right]\n" if $debugging;
-            print OUTPUT $left."=".$right."\n";
-         }
-         elsif ($theLineOfText =~ /^(\s*libdirs\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"libdirs\" line,  L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            my $right = " ".$qdir_lib;
-            print OUTPUT $left."=".$right."\n";
-         }
-         elsif ($theLineOfText =~ /^(\s*prefix\s*)=(.*)$/) {
-            my $left  = $1;
-            my $right = $2;
-            print "rose-post-install:    ...a \"prefix\" line,   L = [$left]\n" if $debugging;
-            print "rose-post-install:                          R = [$right]\n" if $debugging;
-            $right    = " ".$qdir_prefix;
-            print OUTPUT $left."=".$right."\n";
+   if (1 <= $verbosityLevel) {
+      print "tbg-post-install: (re)announce command line contents...\n" if $debugging;
+      print "tbg-post-install: given:\n";
+      my $i;
+      for ($i=0; $i<=$#ARGV; $i+=1) {
+         my $opt = $ARGV[$i];
+         if ($i == 0) {
+            print "tbg-post-install: ...";
          }
          else {
-            print "rose-post-install:    ...some other line\n" if $debugging;
-            print "rose-post-install:    ...output[$theLineOfText]\n" if $debugging;
-            print OUTPUT $theLineOfText."\n";
+            print "tbg-post-install:    ";
          }
+         print $i.": [".$opt."]\n";
       }
-      close(OUTPUT);
-      close(INPUT);
-      print STDERR "rose-post-install: ...done\n" if (1 <= $verbosityLevel);
+      print "tbg-post-install: ...done\n" if $debugging;
    }
-   print "rose-post-install: ...done\n" if $debugging;
 
-   #----------------------------------------------------------------------------
-   #
-   #  Rename the input rose-config.cfg file as rose-config.cfg.bak then rename
-   #  the output rose-config.cfg.new file as rose-config.cfg
-   #
-   #----------------------------------------------------------------------------
-
-   print "rose-post-install: rename files...\n" if $debugging;
-   {
-      if ( -f $inputPathname) {
-         print "rose-post-install: ...found \"$inputPathname\"\n" if $debugging;
-         if ( -f $outputPathname) {
-            print "rose-post-install:      and \"$outputPathname\"\n" if $debugging;
-            #---------------------------------------
-            #
-            #  First eliminate existing rose-config.cfg.bak
-            #  file...
-            #
-            #---------------------------------------
-            print "rose-post-install: ...use \"$backupPathname\" for a backup\n" if $debugging;
-            if ( -f $backupPathname) {
-               print STDERR "rose-post-install: delete existing \"$backupPathname\"\n" if (1 <= $verbosityLevel);
-               print "rose-post-install:    eliminate existing \"$backupPathname\" file\n" if $debugging;
-               if ( ! unlink($backupPathname)) {
-                  print STDERR "rose-post-install: error -- can't delete existing \"$backupPathname\"\n";
-                  exit 1;
-               }
-               if ( -f $backupPathname) {
-                  print STDERR "rose-post-install: error -- did't delete existing \"$backupPathname\"\n";
-                  exit 1;
-               }
-               print "rose-post-install:    ...done\n" if $debugging;
-               print "rose-post-install: ...done\n" if (2 <= $verbosityLevel);
-            }
-            #---------------------------------------
-            #
-            #  Then rename given rose-config.cfg file
-            #  as rose-config.cfg.bak (preserving it)...
-            #
-            #---------------------------------------
-            print "rose-post-install: ...rename original \"$inputPathname\" as \"$backupPathname\"\n" if $debugging;
-            {
-               print "rose-post-install: rename \"$inputPathname\"\n" if (1 <= $verbosityLevel);
-               print "rose-post-install:     as \"$backupPathname\"\n" if (1 <= $verbosityLevel);
-               if ( ! rename($inputPathname,$backupPathname)) {
-                  print STDERR "rose-post-install: error -- can't rename \"$inputPathname\" as \"$backupPathname\"\n";
-                  exit 1;
-               }
-               if ( -f $inputPathname) {
-                  print STDERR "rose-post-install: error -- did't rename \"$inputPathname\" as \"$backupPathname\"\n";
-                  print STDERR "rose-post-install: ...\"$inputPathname\" is still there\n";
-                  exit 1;
-               }
-               if ( ! -f $backupPathname) {
-                  print STDERR "rose-post-install: error -- did't rename \"$inputPathname\" as \"$backupPathname\"\n";
-                  print STDERR "rose-post-install: ...\"$backupPathname\" isn't there\n";
-                  exit 1;
-               }
-               print "rose-post-install: ...done\n" if (2 <= $verbosityLevel);
-            }
-            print "rose-post-install:    done\n" if $debugging;
-            #---------------------------------------
-            #
-            #  Then rename generated rose-config.cfg.new
-            #  file as rose-config.cfg (preserving it)...
-            #
-            #---------------------------------------
-            print "rose-post-install: ...rename new \"$outputPathname\" as \"$inputPathname\"\n" if $debugging;
-            {
-               print "rose-post-install: rename \"$outputPathname\"\n" if (1 <= $verbosityLevel);
-               print "rose-post-install:     as \"$inputPathname\"\n" if (1 <= $verbosityLevel);
-               if ( ! rename($outputPathname,$inputPathname)) {
-                  print STDERR "rose-post-install: error -- can't rename \"$outputPathname\" as \"$inputPathname\"\n";
-                  exit 1;
-               }
-               if ( -f $outputPathname) {
-                  print STDERR "rose-post-install: error -- did't rename \"$outputPathname\" as \"$inputPathname\"\n";
-                  print STDERR "rose-post-install: ...\"$outputPathname\" is still there\n";
-                  exit 1;
-               }
-               if ( ! -f $inputPathname) {
-                  print STDERR "rose-post-install: error -- did't rename \"$outputPathname\" as \"$inputPathname\"\n";
-                  print STDERR "rose-post-install: ...\"$inputPathname\" isn't there\n";
-                  exit 1;
-               }
-               print "rose-post-install: ...done\n" if (2 <= $verbosityLevel);
-            }
-            print "rose-post-install:    done\n" if $debugging;
-         }
-      }
-   }
-   if ( -f $inputPathname) {
-      print STDERR "rose-post-install: found: \"$inputPathname\"\n" if (1 <= $verbosityLevel);
-   }
-   else {
-      print STDERR "rose-post-install: can't find \"$inputPathname\"\n";
-   }
-   if ( -f $backupPathname) {
-      print STDERR "rose-post-install:    and \"$backupPathname\"\n" if (1 <= $verbosityLevel);
-   }
-   else {
-      print STDERR "rose-post-install: can't find \"$backupPathname\"\n";
-   }
-   print "rose-post-install: ...done\n" if $debugging;
+   print "tbg-post-install: ...all done\n" if $debugging;
    exit 0;
 }
 # MyUniqueFileId: c58e95af-7811-46b9-ba94-c63e6b2ed7ee
