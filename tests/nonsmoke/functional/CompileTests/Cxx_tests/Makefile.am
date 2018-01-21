@@ -459,7 +459,6 @@ NEW_2017_TESTS = \
    test2017_65.C \
    test2017_66.C \
    test2017_68.C \
-   test2017_69.C \
    test2017_72.C \
    test2017_73.C \
    test2017_74.C \
@@ -504,6 +503,7 @@ NEW_2017_TESTS = \
    test2018_09.C
 
 
+
 # DQ (12/18/2017): These are perhaps not valid C++ code (might be C code using GNU extensions).
 FAILING_2017_TESTS = \
    test2017_59.C \
@@ -543,7 +543,8 @@ NEW_2017_TESTS += \
    test2017_32.C \
    test2017_44.C \
    test2017_46.C \
-   test2017_47.C 
+   test2017_47.C \
+   test2017_69.C 
 endif
 
 STILL_FAILING = \
