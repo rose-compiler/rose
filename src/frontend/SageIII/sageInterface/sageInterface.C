@@ -1581,6 +1581,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+       // DQ (1/21/2018): Added case for C++11 SgStaticAssertionDeclaration
+          case V_SgStaticAssertionDeclaration:
+             {
+               name = "_static_assertion_declaration_stmt_";
+               const SgStaticAssertionDeclaration* statement = isSgStaticAssertionDeclaration(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgStaticAssertionDeclaration*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";

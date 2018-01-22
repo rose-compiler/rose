@@ -135,6 +135,9 @@ test2017_20.C \
 test2017_21.C \
 test2017_22.C \
 test2017_23.C \
+test2018_04.C \
+test2018_05.C \
+test2018_06.C \
 last.C
 
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
