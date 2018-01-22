@@ -102,7 +102,6 @@ test2001_10.C \
 test2001_11.C \
 test2001_12.C \
 test2001_13.C \
-test2001_14.C \
 test2001_15.C \
 test2001_16.C \
 test2001_17.C \
@@ -148,8 +147,8 @@ test2003_28.C \
 test2003_29.C \
 test2003_30.C \
 test2003_31.C \
-test2003_32.C \
-test2003_35.C \
+   test2003_32.C \
+   test2003_35.C \
 test2003_37.C \
 test2003_38.C \
 test2004_01.C \
@@ -164,7 +163,7 @@ test2004_10.C \
 test2004_12.C \
 test2004_13.C \
 test2004_14.C \
-test2004_15.C \
+   test2004_15.C \
 test2004_16.C \
 test2004_17.C \
 test2004_19.C \
@@ -303,7 +302,7 @@ test2005_23.C \
 test2005_24.C \
 test2005_25.C \
 test2005_26.C \
-test2005_27.C \
+   test2005_27.C \
 test2005_30.C \
 test2005_31.C \
 test2005_32.C \
@@ -416,7 +415,6 @@ test2005_196.C \
 test2005_197.C \
 test2005_198.C \
 test2005_199.C \
-test2005_202.C \
 test2005_203.C \
 test2005_206.C \
 test2005_207.C \
@@ -449,7 +447,7 @@ test2006_41.C \
 test2006_42.C \
 test2006_44.C \
 test2006_46.C \
-test2006_50.C \
+   test2006_50.C \
 test2006_52.C \
 test2006_53.C \
 test2006_55.C \
@@ -488,7 +486,6 @@ test2006_96.C \
 test2006_98.C \
 test2006_99.C \
 test2006_101.C \
-test2006_102.C \
 test2006_103.C \
 test2006_104.C \
 test2006_105.C \
@@ -536,7 +533,7 @@ test2006_162.C \
 test2006_163.C \
 test2006_164.C \
 test2006_166.C \
-test2006_180.C \
+   test2006_180.C \
 test2006_181.C \
 test2006_183.C \
 test2006_185.C \
@@ -645,7 +642,21 @@ test_wchars.C \
 lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
-X.C
+X.C 
+
+# DQ (1/15/2018): These tests fail under the new switch statment support and label statement support.
+FAILING_TEST = \
+   test2001_14.C 
+
+# DQ (1/19/2018): These now work fine.
+#  test2004_15.C 
+#  test2006_50.C 
+#  test2006_180.C 
+
+# DQ (1/15/2018): These tests fail under the new switch statment support and label statement support.
+FAILING_TEST_2 = \
+   test2006_102.C \
+   test2005_202.C 
 
 
 # DQ (1/19/2017): These is a problem for GNU 5.1.

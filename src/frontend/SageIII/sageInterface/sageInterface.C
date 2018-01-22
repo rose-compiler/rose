@@ -1581,6 +1581,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+       // DQ (1/21/2018): Added case for C++11 SgStaticAssertionDeclaration
+          case V_SgStaticAssertionDeclaration:
+             {
+               name = "_static_assertion_declaration_stmt_";
+               const SgStaticAssertionDeclaration* statement = isSgStaticAssertionDeclaration(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgStaticAssertionDeclaration*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -10738,23 +10749,29 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
 }
 
 
-  void SageInterface::removeConsecutiveLabels(SgNode* top) {
-   Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
-   for (size_t i = 0; i < gotos.size(); ++i) {
-     SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
-     SgLabelStatement* ls = gs->get_label();
-     SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
-     if (!lsParent) continue;
-     SgStatementPtrList& bbStatements = lsParent->get_statements();
-     size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls)
-  - bbStatements.begin();
-     ROSE_ASSERT (j != bbStatements.size());     while (j <
-  bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1])) {
-     ++j;
-     }
-     gs->set_label(isSgLabelStatement(bbStatements[j]));
+void
+SageInterface::removeConsecutiveLabels(SgNode* top)
+   {
+     Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
+     for (size_t i = 0; i < gotos.size(); ++i)
+        {
+          SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
+          SgLabelStatement* ls = gs->get_label();
+          SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
+          if (!lsParent) continue;
+          SgStatementPtrList& bbStatements = lsParent->get_statements();
+
+          size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls) - bbStatements.begin();
+
+          ROSE_ASSERT (j != bbStatements.size());
+
+          while (j < bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1]))
+             {
+               ++j;
+             }
+          gs->set_label(isSgLabelStatement(bbStatements[j]));
+        }
    }
-  }
 
 bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
 {

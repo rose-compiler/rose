@@ -722,7 +722,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
      if (!templateArgListPtr.empty())
         {
 #if 0
-          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
+          printf ("In unparseTemplateArgumentList(): templateArgListPtr.empty() NOT EMPTY: templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -748,34 +748,87 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #if 0
                unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
-           // unparseTemplateArgument(*i,info);
+            // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
                i++;
-
 
                // When to output , ?  the argument must not be the last one.
                if (i != templateArgListPtr.end())
                   {
-                    // check if this is a class type for C++ 11 lambda function
+                 // check if this is a class type for C++ 11 lambda function
                     bool hasLambdaFollowed = false;
                     SgTemplateArgument* arg = *i; 
                     if (arg != NULL) 
-                    {
-                      if (SgClassType * ctype = isSgClassType (arg->get_type()))
-                      {
-                        if (SgNode* pnode = ctype->get_declaration()->get_parent())
-                        {
-                          if (isSgLambdaExp(pnode))
-                          {
-                            hasLambdaFollowed = true; 
-                          }
-                        }
-                      }
-                    }
+                       {
+                         if (SgClassType * ctype = isSgClassType (arg->get_type()))
+                            {
+                              if (SgNode* pnode = ctype->get_declaration()->get_parent())
+                                 {
+                                   if (isSgLambdaExp(pnode))
+                                      {
+                                        hasLambdaFollowed = true; 
+                                      }
+                                 }
+
+                           // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
+                              bool isAnonymous = isAnonymousClass(ctype);
+                              if (isAnonymous == true)
+                                 {
+                                // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
+                                // which checks for a trailing lambda function.  So we should fix this up later.
+                                   hasLambdaFollowed = true; 
+                                 }
+#if 0
+                                else
+                                 {
+                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(ctype->get_declaration());
+                                   if (classDeclaration != NULL)
+                                      {
+                                        printf ("In unparseTemplateArgumentList(): last template argument: classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                                      }
+                                 }
+#endif
+                            }
+#if 0
+                           else
+                            {
+                              ROSE_ASSERT(arg->get_type() != NULL);
+                              printf ("arg->get_type() = %p = %s \n",arg->get_type(),arg->get_type()->class_name().c_str());
+                            }
+#endif
+                       }
 
 #if 0
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s hasLambdaFollowed = %s \n",*i,(*i)->class_name().c_str(), hasLambdaFollowed ? "true" : "false");
+               printf ("In unparseTemplateArgumentList(): explicitlySpecified = %s \n",(*i)->get_explicitlySpecified() ? "true" : "false");
 #endif
+
+#if 0
+             // DQ (1/21/2018): I think this needs to be turned off to handle test2014_04.C, but turned on for test2018_04.C.
+               if ((*i)->get_explicitlySpecified() == false)
+                  {
+#if 1
+                    printf ("In unparseTemplateArgumentList(): Found (*i)->get_explicitlySpecified() == false: set hasLambdaFollowed = true \n");
+#endif
+                 // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
+                 // which checks for a trailing lambda function.  So we should fix this up later.
+                    hasLambdaFollowed = true; 
+                  }
+#endif
+#if 0
+            // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
+               if (SgClassType * ctype = isSgClassType (arg->get_type()))
+                  {
+                    bool isAnonymous = isAnonymousClass(ctype);
+                    if (isAnonymous == true)
+                       {
+                      // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
+                      // which checks for a trailing lambda function.  So we should fix this up later.
+                         hasLambdaFollowed = true; 
+                       }
+                  }
+#endif
+
                // When to skip , ?
                // condition 1: next item is a lambda function
               //  Or condition 2:  next item is an ending parameter pack argument (parameter pack argument in the middle should have , )
@@ -785,8 +838,15 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
               if (!(hasLambdaFollowed  || 
                   ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument 
                     && ((i+1)== templateArgListPtr.end())  )) )
-                 unp->u_exprStmt->curprint(" , ");
-
+                  {
+                    unp->u_exprStmt->curprint(" , ");
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In unparseTemplateArgumentList(): Skipping output of a specific template argument \n");
+#endif
+                  }
 #if 0
                  // unp->u_exprStmt->curprint(" , ");
                  // Now the argument is in the middle. It's next argument must not be start_of_pack_expansion_argument
@@ -1208,6 +1268,31 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
 
 
+bool
+Unparse_ExprStmt::isAnonymousClass(SgType* templateArgumentType)
+   {
+     bool returnValue = false;
+
+     SgClassType* classType = isSgClassType(templateArgumentType);
+     if (classType != NULL)
+        {
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+#if 0
+          printf ("In isAnonymousClass(): case SgTemplateArgument::type_argument: classDeclaration = %p = %s classDeclaration->get_name() = %s \n",
+               classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+          bool isUnnamed = (string(classDeclaration->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+          if (isUnnamed == true)
+             {
+               printf ("In isAnonymousClass(): case SgTemplateArgument::type_argument: isUnnamed = %s \n",isUnnamed ? "true" : "false");
+             }
+#endif
+          returnValue = isUnnamed;
+        }
+
+     return returnValue;
+   }
 
 void
 Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
@@ -1215,7 +1300,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      ROSE_ASSERT(templateArgument != NULL);
 
 #if 0
-     printf ("In unparseTemplateArgument() = %p \n",templateArgument);
+     printf ("In unparseTemplateArgument() = %p (explicitlySpecified = %s) \n",templateArgument,(templateArgument->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -1239,6 +1324,20 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
+#if 0
+  // DQ (1/21/2018): Using the logic set in EDG/ROSE connection to control output of template arguments.
+  // I have tried this previously, and I think it got hung up on details of default template arguments, but
+  // since it impacts the support for lambda functions and compiler generated classes holding capture 
+  // variables it is worth another try to use this logic.
+     if (templateArgument->get_explicitlySpecified() == false)
+        {
+#if 0
+          printf ("In unparseTemplateArgument(): Found templateArgument->get_explicitlySpecified() == false \n");
+#endif
+          return;
+        }
+#endif
 
      SgUnparse_Info newInfo(info);
 
@@ -1306,12 +1405,22 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: templateArgument->get_type() = %s \n",templateArgumentType->class_name().c_str());
             // curprint ( "\n /* templateArgument->get_type() */ \n");
 #endif
+            // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
+               bool isAnonymous = isAnonymousClass(templateArgumentType);
+               if (isAnonymous == true)
+                  {
+#if 0
+                    printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: found anonymous class (returning) \n");
+#endif
+                    return;
+                  }
+
             // DQ (1/9/2017): If the result of get_type() was identified as containing parts with non public access then we want to use an alternative type alias.
             // The test for this is done on the whole of the AST within the ast post processing.
             // Note that this fix also requires that the name qualification support be computed using the unparsable_type_alias.
                if (templateArgument->get_unparsable_type_alias() != NULL)
                   {
-#if 0
+#if 1
                     printf ("In unparseTemplateArgument(): selected an alternative type to unparse to work waround a bug in EDG (this is likely the original type specified in the source code) \n");
 #endif
                     templateArgumentType = templateArgument->get_unparsable_type_alias();
@@ -1696,6 +1805,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
 #if 0
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
+#endif
+#if 0
      curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
 
@@ -1713,7 +1824,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( string("\n/* Bottom of unparseTemplateArgument */ \n"));
 #endif
