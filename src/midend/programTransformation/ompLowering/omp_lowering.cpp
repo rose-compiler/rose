@@ -218,7 +218,8 @@ namespace OmpSupport
   //    2.15.1 Data-sharing Attribute Rules
   omp_construct_enum getDataSharingAttribute (SgSymbol* sym, SgNode* anchor_node)
   {
-    omp_construct_enum rt_val = e_shared; // shared by default for now  TODO: if default() is present, we have to change this. 
+    omp_construct_enum rt_val = e_shared; // shared by default for now  
+    //TODO: if default() is present, we have to change this. 
     ROSE_ASSERT (sym != NULL);
     ROSE_ASSERT (anchor_node!= NULL);
     SgStatement* anchor_stmt = getEnclosingStatement (anchor_node);
@@ -290,19 +291,20 @@ namespace OmpSupport
             //cerr<<"found a loop index, but enclosing body statement is not omp for. "<<endl;
           }
         }
-#if 1 // no this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
+
+        // no this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
         // another case is parallel region + single region, we need to get the parallel region's attribute 
         /*
-#pragma omp parallel private(i,j)
-  {
-    for (i = 0; i < LOOPCOUNT; i++)
-      {
-#pragma omp single copyprivate(j)
-        {
-          nr_iterations++;
-          j = i;   // i should be private, based on enclosing parallel region's info.
-        }
-   }   
+          #pragma omp parallel private(i,j)
+            {
+              for (i = 0; i < LOOPCOUNT; i++)
+                {
+          #pragma omp single copyprivate(j)
+                  {
+                    nr_iterations++;
+                    j = i;   // i should be private, based on enclosing parallel region's info.
+                  }
+             }   
          */
         // If implicit rules do not apply at this level (worksharing regions like single), Go to find higher level: most omp parallel
         if  (SgOmpClauseBodyStatement * parent_clause_body_stmt = findEnclosingOmpClauseBodyStatement (getEnclosingStatement(omp_clause_body_stmt->get_parent())))
@@ -316,11 +318,10 @@ namespace OmpSupport
             return rt_val;
           }
         } 
-#endif
-/*
-TODO: If an array section is a list item in a map clause on the target construct and the array section is
-derived from a variable for which the type is pointer then that variable is firstprivate.
-*/
+     /*
+     TODO: If an array section is a list item in a map clause on the target construct and the array section is
+     derived from a variable for which the type is pointer then that variable is firstprivate.
+     */
      } // end explicit unknown
     // the rest is shared by default  
     // TODO Objects with dynamic storage duration are shared.
@@ -330,6 +331,7 @@ derived from a variable for which the type is pointer then that variable is firs
     else //orphaned code segments
     {
 /*
+    For the data race detection project, we choose to inline everything. So the implementation of orphaned segs is lower priority.
   //TODO: handle more cases as needed. 
   Variables with static storage duration that are declared in called routines in the region are shared.
 
@@ -369,6 +371,7 @@ derived from a variable for which the type is pointer then that variable is firs
         }
       }
     } // end of orphaned code segments
+
     return  rt_val; 
   } 
 
