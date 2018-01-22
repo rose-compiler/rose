@@ -159,7 +159,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // The Rose::BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
     TaintedFlow taintAnalysis(cpu);
     taintAnalysis.approximation(approximation);
-    if (SmtSolver *solver = SmtSolver::bestAvailable()) {
+    if (SmtSolverPtr solver = SmtSolver::bestAvailable()) {
         taintAnalysis.smtSolver(solver);
     } else {
         ::mlog[WARN] <<"not using an SMT solver (none available)\n";
