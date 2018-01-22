@@ -679,6 +679,7 @@ WARN_LOGFILE           =
 
 INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/docs/Rose/Installation \
+			 @top_srcdir@/docs/Rose/ToolDevelopment \
 			 @top_srcdir@/docs/Rose/LibraryGeneralPrinciples.dox \
 			 @top_srcdir@/docs/Rose/BinaryTutorial.dox \
 			 @top_srcdir@/docs/Rose/Tools \
@@ -740,6 +741,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \
                          @top_srcdir@/src/backend/unparser/FortranCodeGeneration/documentation.docs \
+			 @top_srcdir@/src/util \
                          @top_srcdir@/src/util/FormatRestorer.h \
                          @top_srcdir@/src/util/Sawyer \
                          @top_srcdir@/src/util/utilDocumentation.docs \
@@ -1330,9 +1332,8 @@ SEARCHENGINE           = YES
 SERVER_BASED_SEARCH    = YES
 
 # The following needs doxygen 1.8.3 or later. [Matzke 2015-09-14]
-# Fixme: This needs to change to http://rosecompiler.org/doxysearch.cgi eventually.
 EXTERNAL_SEARCH = YES
-SEARCHENGINE_URL = https://hoosierfocus.com/ROSE/doxysearch.cgi
+SEARCHENGINE_URL = http://rosecompiler.org/cgi-bin/doxysearch.cfg
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output

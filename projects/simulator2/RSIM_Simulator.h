@@ -719,8 +719,8 @@ public:
     /** Property: Register that stores a syscall return value.
      *
      * @{ */
-    const RegisterDescriptor& syscallReturnRegister() const { return syscallRetReg_; }
-    void syscallReturnRegister(const RegisterDescriptor &r) { syscallRetReg_ = r; }
+    RegisterDescriptor syscallReturnRegister() const { return syscallRetReg_; }
+    void syscallReturnRegister(RegisterDescriptor r) { syscallRetReg_ = r; }
     /** @} */
 
     /** Property: System call argument registers.

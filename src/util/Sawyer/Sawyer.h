@@ -17,7 +17,7 @@
  *
  *  %Sawyer is a library for library writers. It's used by software such as [ROSE](http://rosecompiler.org) and part of %Sawyer
  *  is distributed with ROSE. The complete, canonical documentation for %Sawyer is located
- *  [here](https://www.hoosierfocus.com/~matzke/sawyer). %Sawyer is a library that provides the following:
+ *  [here](https://www.hoosierfocus.com/sawyer). %Sawyer is a library that provides the following:
  *
  *  @li Conditionally enable streams for program diagnostics.  These are C++ <code>std::ostreams</code> organized by software
  *      component and message importance and which can be enabled/disabled with a simple language. A complete plumbing system

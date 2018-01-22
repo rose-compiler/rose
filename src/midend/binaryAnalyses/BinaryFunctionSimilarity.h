@@ -1,12 +1,13 @@
 #ifndef ROSE_BinaryAnalysis_FunctionSimilarity_H
 #define ROSE_BinaryAnalysis_FunctionSimilarity_H
 
+#include <BinaryMatrix.h>
 #include <Partitioner2/Function.h>
+#include <Progress.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
 #ifdef ROSE_HAVE_DLIB
-    #include <dlib/matrix.h>
     #include <dlib/optimization.h>
 #endif
 
@@ -93,32 +94,7 @@ public:
     static Sawyer::Message::Facility mlog;
 
     /** Square matrix representing distances. */
-    class DistanceMatrix {
-#ifdef ROSE_HAVE_DLIB
-    private:
-        dlib::matrix<double> data_;
-    public:
-        explicit DistanceMatrix(size_t n): data_(n, n) {}
-        long nr() const { return data_.nr(); }
-        long nc() const { return data_.nc(); }
-        double& operator()(long i, long j) { return data_(i, j); }
-        double operator()(long i, long j) const { return data_(i, j); }
-        const dlib::matrix<double>& dlib() const { return data_; }
-#else
-    private:
-        std::vector<std::vector<double> > data_;
-    public:
-        explicit DistanceMatrix(size_t n): data_(n, std::vector<double>(n, 0.0)) {}
-        long nr() const { return data_.size(); }
-        long nc() const { return data_.empty() ? (size_t)0 : data_[0].size(); }
-        double& operator()(long i, long j) { return data_[i][j]; }
-        double operator()(long i, long j) const { return data_[i][j]; }
-        // dlib::matrix<double> &dlib() -- cannot do this here since there's no dlib
-#endif
-    public:
-        long size() const { return nr()*nc(); }
-    };
-
+    typedef Matrix<double> DistanceMatrix;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Private types and data members
@@ -157,13 +133,22 @@ private:
     // How to combine category distances to obtain a function distance
     Statistic categoryAccumulatorType_;
 
+    Progress::Ptr progress_;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     FunctionSimilarity()
-        : categoryAccumulatorType_(AVERAGE) {}
+        : categoryAccumulatorType_(AVERAGE), progress_(Progress::instance()) {}
 
+    void clear() {
+        categories_.clear();
+        categoryNames_.clear();
+        functions_.clear();
+        categoryAccumulatorType_ = AVERAGE;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,6 +164,8 @@ public:
     void categoryAccumulatorType(Statistic s) { categoryAccumulatorType_ = s; }
     /** @} */
 
+    /** Property: Object to which progress reports are made. */
+    Rose::Progress::Ptr progress() const { return progress_; }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Category declarations
@@ -453,13 +440,13 @@ public:
      *  a vector V such that V[i] = j maps rows i to columns j.
      *
      *  This function will only work if ROSE has been compiled with dlib support. Otherwise it throws an @ref Exception. */
-    static std::vector<long> findMinimumAssignment(const DistanceMatrix&);
+    static std::vector<size_t> findMinimumAssignment(const DistanceMatrix&);
 
     /** Total cost of a mapping.
      *
      *  Given a square matrix and a 1:1 mapping from rows to columns, return the total cost of the mapping. The @p assignment
      *  is like the value returned by @ref findMinimumAssignment. */
-    static double totalAssignmentCost(const DistanceMatrix&, const std::vector<long> &assignment);
+    static double totalAssignmentCost(const DistanceMatrix&, const std::vector<size_t> &assignment);
 
     /** Maximum value in the distance matrix. */
     static double maximumDistance(const DistanceMatrix&);

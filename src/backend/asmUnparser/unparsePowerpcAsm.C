@@ -14,8 +14,7 @@ using namespace Rose::BinaryAnalysis;
 /****************************************************
  * resolve expression
  ****************************************************/
-static std::string unparsePowerpcRegister(SgAsmInstruction *insn, const RegisterDescriptor &rdesc,
-                                          const RegisterDictionary *registers)
+static std::string unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, const RegisterDictionary *registers)
 {
     if (!registers)
         registers = RegisterDictionary::dictionary_powerpc();

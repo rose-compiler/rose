@@ -8,8 +8,23 @@ noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
 
 CLEANFILES = 
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib $(Z3_LIB_INCLUDES)
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include $(Z3_INCLUDES) -g -rdynamic
+if USE_Z3
+Z3_INCLUDES = -I$(Z3_INCLUDE_PATH)
+Z3_LIB_INCLUDES = -L$(Z3_LIBRARY_PATH)
+Z3_LINK = -lz3
+else
+Z3_INCLUDES =
+Z3_LIB_INCLUDES = 
+Z3_LINK =
+endif
+
+if ROSE_WITH_SPOT
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_LIBRARY_PATH) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_INCLUDE_PATH)/spot -I$(SPOT_INCLUDE_PATH) $(Z3_INCLUDES) -g -rdynamic
+else
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp $(Z3_LIB_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src $(Z3_INCLUDES) -g -rdynamic
+endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
@@ -40,7 +55,7 @@ libspray_la_SOURCES=\
  LVTransferFunctions.h \
  LanguageRestrictor.h \
  Miscellaneous2.h \
- Normalization.h \
+ Lowering.h \
  NumberIntervalLattice.h \
  ParallelAutomataGenerator.h \
  PASolver1.h \
@@ -51,6 +66,8 @@ libspray_la_SOURCES=\
  RDTransferFunctions.h \
  SprayException.h \
  WorkListSeq.h \
+ TypeSizeMapping.h \
+ SgTypeSizeMapping.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AbstractValue.C \
@@ -76,7 +93,7 @@ libspray_la_SOURCES=\
  LVLattice.C \
  LVTransferFunctions.C \
  Miscellaneous2.C \
- Normalization.C \
+ Lowering.C \
  NumberIntervalLattice.C \
  ParallelAutomataGenerator.C \
  PASolver1.C \
@@ -92,6 +109,8 @@ libspray_la_SOURCES=\
  ProgramAbstractionLayer.C \
  addressTakenAnalysis.C \
  defUseQuery.C \
+ TypeSizeMapping.C \
+ SgTypeSizeMapping.C \
  Timer.h \
  Timer.cpp
 
@@ -99,14 +118,21 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
 codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lspray
+
 #codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
-codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
+if ROSE_WITH_SPOT
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd $(Z3_LINK)
+codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+endif
 
 codethorn_SOURCES = \
+  AnalysisParameters.h             \
   Analyzer.C                       \
   Analyzer.h                       \
-  AnalyzerSolvers.C                \
+  IOAnalyzer.C                     \
+  IOAnalyzer.h 			   \
   AstNodeInfo.h \
   AstNodeInfo.C \
   CodeThornException.h \
@@ -121,6 +147,13 @@ codethorn_SOURCES = \
   CommandLineOptions.h             \
   ConstraintRepresentation.C       \
   ConstraintRepresentation.h       \
+  CounterexampleGenerator.h	   \
+  CounterexampleGenerator.C	   \
+  ExecutionTrace.h		   \
+  RersCounterexample.h		   \
+  RersCounterexample.C		   \
+  SvcompWitness.h		   \
+  SvcompWitness.C		   \
   CounterexampleAnalyzer.C \
   CounterexampleAnalyzer.h \
   CPAstAttribute.h CPAstAttribute.C \
@@ -140,6 +173,8 @@ codethorn_SOURCES = \
   HashFun.h                        \
   InternalChecks.C                 \
   InternalChecks.h                 \
+  ContNodeAttribute.h \
+  ContNodeAttribute.C \
   LTL.h                            \
   LTLParser.y++                    \
   LtsminConnection.h		   \
@@ -150,17 +185,43 @@ codethorn_SOURCES = \
   LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
+  PhiAttribute.h \
+  PhiAttribute.C \
+  PhiStatement.h \
+  PhiStatement.C \
   PragmaHandler.h \
   PragmaHandler.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
   ReachabilityAnalysis.h ReachabilityAnalysis.C \
-  RefinementConstraints.C \
-  RefinementConstraints.h \
+  ReachabilityAnalyzerZ3.h \
+  ReachabilityAnalyzerZ3.C \
+  ReadWriteAnalyzer.h \
+  ReadWriteAnalyzer.C \
+  ReadWriteHistory.h \
+  ReadWriteHistory.C \
   RERS_empty_specialization.C      \
+  RewriteStatistics.C \
+  RewriteStatistics.h \
   RewriteSystem.C \
   RewriteSystem.h \
+  RWState.h \
+  RWState.C \
   SetAlgo.h \
+  Solver.h \
+  Solver.C \
+  IOSolver.h \
+  IOSolver.C \
+  Solver5.h \
+  Solver5.C \
+  Solver8.h \
+  Solver8.C \
+  Solver10.h \
+  Solver10.C \
+  Solver11.h \
+  Solver11.C \
+  Solver12.h \
+  Solver12.C \
   Specialization.h \
   Specialization.C \
   SpotConnection.C \
@@ -175,6 +236,8 @@ codethorn_SOURCES = \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
+  SSAGenerator.h \
+  SSAGenerator.C \
   ParProSpotTgba.C \
   ParProSpotTgba.h \
   ParProSpotState.C \
@@ -196,16 +259,17 @@ codethorn_SOURCES = \
   Timer.h                          \
   TransitionGraph.h                \
   TransitionGraph.C                \
+  TransitionGraphReducer.h	   \
+  TransitionGraphReducer.C	   \
   ParProTransitionGraph.h          \
   ParProTransitionGraph.C          \
   VariableValueMonitor.h \
   VariableValueMonitor.C \
   Visualizer.C                     \
   Visualizer.h                     \
-  AnalyzerTools.C                  \
-  AnalyzerTools.h                  \
   codethorn.h \
-  codethorn.C
+  codethorn.C 
+
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
@@ -220,16 +284,6 @@ addressTakenAnalysis_DEPENDENCIES=libspray.la
 # workaround to intentionally fool policy
 faketarget:
 	RersSpecialization.h
-	RERS_Problem10_specialization.C
-	RERS_Problem1_specialization.C
-	RERS_Problem2_specialization.C
-	RERS_Problem3_specialization.C
-	RERS_Problem4_specialization.C
-	RERS_Problem5_specialization.C
-	RERS_Problem6_specialization.C
-	RERS_Problem7_specialization.C
-	RERS_Problem8_specialization.C
-	RERS_Problem9_specialization.C
 	rers_cpp_forward_decls.C
 	RDLattice.h
 	RDLattice.C
@@ -390,9 +444,13 @@ REGRESSION_DATA_DIR=regressiondata
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
 woodpecker_DEPENDENCIES=libspray.la
+if ROSE_WITH_SPOT
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
+woodpecker_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
+else
 woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
-woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize -DSPOT_NOT_AVAILABLE
-woodpecker_LDFLAGS = -L$(SPOT_PREFIX)/lib
+endif
+woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -416,8 +474,14 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   ReachabilityAnalysis.h \
   ConversionFunctionsGenerator.h \
   ConversionFunctionsGenerator.C \
+  RewriteStatistics.h \
+  RewriteStatistics.C \
   RewriteSystem.h \
   RewriteSystem.C \
+  SpotMiscellaneous.h \
+  SpotMiscellaneous.C \
+  SpotRenameVisitor.h \
+  SpotRenameVisitor.C \
   Timer.h \
   Timer.cpp \
   woodpecker.C
@@ -427,7 +491,12 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 #  DFAnalysisBase.h
 
 analyterix_DEPENDENCIES=libspray.la
+if ROSE_WITH_SPOT
 analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
+analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
+else
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+endif
 analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
@@ -533,7 +602,11 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 # check-flow-insenstive
-check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-ltl check-ltl-driven
+if ROSE_WITH_SPOT
+check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-svcomp-witness check-ltl check-ltl-driven
+else
+check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-svcomp-witness
+endif
 
 check-svcomp:
 	@echo ================================================================
@@ -556,16 +629,17 @@ check-domain:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
+	@./codethorn $(srcdir)/tests/arraytest7.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
 	@echo RUNNING DATA RACE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12
-	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
+	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12
+	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
-check-flow-insenstive:
+check-flow-insensitive:
 	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
@@ -586,7 +660,7 @@ check-ltl:
 	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
 	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
 	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
-	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+#	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
 	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
 	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
@@ -598,15 +672,26 @@ check-array-bounds: ./codethorn
 	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
 
 check-ltl-driven:
-	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --status --ltl-driven --log-level=trace
+	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=no
+
+check-svcomp-witness:
+	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
 check-equivalence-checking:
-@echo ================================================================
+	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
-	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
+	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no
+#	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm -f tmp.nsdump
+
+check-commandline-options: ./codethorn
+	@echo ================================================================
+	@echo RUNNING COMMAND LINE OPTION TESTS
+	@echo ================================================================
+	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+
 
 
 # MS: 1-6 is reasonable for V1.2
@@ -638,6 +723,8 @@ clean-local:
 	rm -f tmp.nsdump
 	rm -f rose_Problem1401_opt.pp.c
 	rm -f Problem1401_assert_results_forcedtop_1000_n_bf.csv 
+	rm -f transitiongraph1.pdf
+	rm -f transitiongraph2.pdf
 
 distclean-local: clean
 	rm -f *.tgz

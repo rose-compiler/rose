@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
@@ -49,7 +50,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .argument("uri", anyParser(settings.databaseUri))
               .doc("URI specifying which database to use." + SqlDatabase::uriDocumentation()));
 
-    return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 typedef Sawyer::Container::Map<std::string /*key*/, std::string /*colname*/> DependencyNames;

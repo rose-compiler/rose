@@ -343,6 +343,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (3/29/2015): Added support for GNU C language extension typeof.
           case V_SgTypeOfType:
 
+       // DQ (1/21/2018): Added support for C++11 language type.
+          case V_SgRvalueReferenceType:
+
        // These are primative types
           case V_SgJavaWildcardType:
           case V_SgTypeBool:
@@ -1793,7 +1796,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgOmpFlushStatement    : 
           case V_SgOmpForStatement      : 
           case V_SgOmpForSimdStatement  : 
-          case V_SgOmpIfClause  : 
+          case V_SgOmpIfClause          : 
+          case V_SgOmpFinalClause       :  
+          case V_SgOmpPriorityClause    :  
           case V_SgOmpLastprivateClause:  
           case V_SgOmpMasterStatement  :  
           case V_SgOmpNowaitClause     :  
@@ -1803,6 +1808,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgOmpParallelStatement:  
           case V_SgOmpPrivateClause    :  
           case V_SgOmpReductionClause  :  
+          case V_SgOmpDependClause     :  
           case V_SgOmpScheduleClause   :  
           case V_SgOmpSectionsStatement:  
           case V_SgOmpSectionStatement :  
@@ -1814,6 +1820,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgOmpTaskwaitStatement : 
           case V_SgOmpThreadprivateStatement :    
           case V_SgOmpUntiedClause      : 
+          case V_SgOmpMergeableClause      : 
           case V_SgOmpVariablesClause   : 
           case V_SgOmpWorkshareStatement:
             {
@@ -2016,6 +2023,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (1/21/2018): Added C++11 support
+          case V_SgStaticAssertionDeclaration:
+
        // DQ (8/22/2007): Added Fortran support
           case V_SgImplicitStatement:
           case V_SgWhereStatement:
@@ -2134,6 +2144,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgNullifyStatement:
 
           case V_SgMatlabForStatement:
+
+       // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
+          case V_SgDeclarationScope:
 
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:

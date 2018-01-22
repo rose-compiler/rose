@@ -2,8 +2,9 @@
 
 #include "sage3basic.h"
 
+#include "BinarySmtSolver.h"
 #include "BinarySymbolicExpr.h"
-#include "SMTSolver.h"
+#include "CommandLine.h"
 #include "stringify.h"
 #include "integerOps.h"
 #include "Combinatorics.h"
@@ -136,13 +137,13 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
 }
 
 Ptr
-setToIte(const Ptr &set) {
+setToIte(const Ptr &set, const LeafPtr &var) {
     ASSERT_not_null(set);
     InteriorPtr iset = set->isInteriorNode();
     if (!iset || iset->getOperator() != OP_SET)
         return set;
     ASSERT_require(iset->nChildren() >= 1);
-    Ptr condVar = makeVariable(32);
+    LeafPtr condVar = var==NULL ? makeVariable(32)->isLeafNode() : var;
     Ptr retval;
     for (size_t i=iset->nChildren(); i>0; --i) {
         Ptr member = iset->child(i-1);
@@ -652,9 +653,9 @@ Interior::print(std::ostream &o, Formatter &fmt) {
                     }
                     break;
 
-                case OP_BV_AND:
-                case OP_BV_OR:
-                case OP_BV_XOR:
+                case OP_AND:
+                case OP_OR:
+                case OP_XOR:
                 case OP_CONCAT:
                 case OP_UDIV:
                 case OP_UGE:
@@ -684,7 +685,7 @@ Interior::print(std::ostream &o, Formatter &fmt) {
 }
 
 bool
-Interior::mustEqual(const Ptr &other_, SMTSolver *solver/*NULL*/) {
+Interior::mustEqual(const Ptr &other_, SmtSolver *solver/*NULL*/) {
     bool retval = false;
     if (this==getRawPointer(other_)) {
         retval = true;
@@ -694,13 +695,13 @@ Interior::mustEqual(const Ptr &other_, SMTSolver *solver/*NULL*/) {
         retval = true;
     } else if (solver) {
         Ptr assertion = makeNe(sharedFromThis(), other_);
-        retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
+        retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
     }
     return retval;
 }
 
 bool
-Interior::mayEqual(const Ptr &other, SMTSolver *solver/*NULL*/) {
+Interior::mayEqual(const Ptr &other, SmtSolver *solver/*NULL*/) {
     bool retval = false;
     if (this==getRawPointer(other)) {
         return true;
@@ -710,7 +711,7 @@ Interior::mayEqual(const Ptr &other, SMTSolver *solver/*NULL*/) {
         retval = true;
     } else if (solver) {
         Ptr assertion = makeEq(sharedFromThis(), other);
-        retval = SMTSolver::SAT_YES==solver->satisfiable(assertion);
+        retval = SmtSolver::SAT_YES==solver->satisfiable(assertion);
     }
     return retval;
 }
@@ -1225,7 +1226,7 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 
 Ptr
 XorSimplifier::rewrite(Interior *inode) const {
-    SMTSolver *solver = NULL;   // FIXME
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
     std::vector<bool> removed(inode->nChildren(), false);
@@ -1312,7 +1313,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
 
 Ptr
 ConcatSimplifier::rewrite(Interior *inode) const {
-    SMTSolver *solver = NULL; // FIXME
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
     // If all the concatenated expressions are extract expressions, all extracting bits from the same expression and
     // in the correct order, then we can simplify this to that expression.  For instance:
@@ -2099,7 +2100,7 @@ MssbSimplifier::rewrite(Interior *inode) const {
 
 Ptr
 SetSimplifier::rewrite(Interior *inode) const {
-    SMTSolver *solver = NULL;                           // FIXME[Robb Matzke 2015-11-03]
+    SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
     // (set x) => x
     if (1 == inode->nChildren())
@@ -2140,10 +2141,11 @@ Interior::simplifyTop() {
                 if (newnode==node)
                     newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
+                    newnode = inode->unaryNoOp();
+                if (newnode==node)
                     newnode = inode->foldConstants(AddSimplifier());
                 break;
             case OP_AND:
-            case OP_BV_AND:
                 newnode = inode->associative()->commutative()->identity((uint64_t)-1);
                 if (newnode==node)
                     newnode = inode->foldConstants(AndSimplifier());
@@ -2155,7 +2157,7 @@ Interior::simplifyTop() {
                 if (newnode==node)
                     newnode = inode->rewrite(AsrSimplifier());
                 break;
-            case OP_BV_XOR:
+            case OP_XOR:
                 newnode = inode->associative()->commutative()->foldConstants(XorSimplifier());
                 if (newnode==node)
                     newnode = inode->rewrite(XorSimplifier());
@@ -2199,7 +2201,6 @@ Interior::simplifyTop() {
                 newnode = inode->rewrite(NoopSimplifier());
                 break;
             case OP_OR:
-            case OP_BV_OR:
                 newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->foldConstants(OrSimplifier());
@@ -2545,7 +2546,7 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) {
 }
 
 bool
-Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) {
+Leaf::mustEqual(const Ptr &other_, SmtSolver *solver) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
@@ -2556,7 +2557,7 @@ Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) {
         // We need an SMT solver to figure this out.  This handles things like "x mustEqual (not (not x))" which is true.
         if (solver) {
             Ptr assertion = makeNe(sharedFromThis(), other_);
-            retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
+            retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
         }
     } else if (isNumber()) {
         retval = other->isNumber() && 0==bits_.compare(other->bits_);
@@ -2567,7 +2568,7 @@ Leaf::mustEqual(const Ptr &other_, SMTSolver *solver) {
 }
 
 bool
-Leaf::mayEqual(const Ptr &other_, SMTSolver *solver) {
+Leaf::mayEqual(const Ptr &other_, SmtSolver *solver) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
@@ -2576,7 +2577,7 @@ Leaf::mayEqual(const Ptr &other_, SMTSolver *solver) {
         // We need an SMT solver to figure out things like "x mayEqual (add y 1))", which is true.
         if (solver) {
             Ptr assertion = makeEq(sharedFromThis(), other_);
-            retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
+            retval = SmtSolver::SAT_YES == solver->satisfiable(assertion);
         }
     } else if (!isNumber() || !other->isNumber() || 0==bits_.compare(other->bits_)) {
         retval = true;
@@ -2717,17 +2718,17 @@ makeAsr(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags)
 
 Ptr
 makeAnd(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_AND, a, b, comment, flags);
+    return Interior::create(0, OP_AND, a, b, comment, flags);
 }
 
 Ptr
 makeOr(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_OR, a, b, comment, flags);
+    return Interior::create(0, OP_OR, a, b, comment, flags);
 }
 
 Ptr
 makeXor(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_XOR, a, b, comment, flags);
+    return Interior::create(0, OP_XOR, a, b, comment, flags);
 }
     
 Ptr

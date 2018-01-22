@@ -11,6 +11,7 @@
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // Rose::BinaryAnalysis::BinaryLoader
 #include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
+#include "BinarySmtSolver.h"                            // Rose::BinaryAnalysis::SmtSolver
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
@@ -118,6 +119,7 @@ void initialize() {
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();
+        BinaryAnalysis::SmtSolver::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();

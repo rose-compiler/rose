@@ -23,6 +23,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+
+using namespace std; 
+using namespace boost::interprocess; 
 
 namespace Rose {
 namespace KeepGoing {
@@ -511,6 +515,8 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       std::string filename = file->getFileName();
       filename = StripPrefix(path_prefix, filename);
 
+      std::stringstream ss;
+      ss <<"Processed File: With Errors " <<  filename << endl; // Help diagnosis , output full file name, even command lines may have partial file paths
       if (verbose)
       {
         std::cout
@@ -521,8 +527,6 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       }
 
       // <file> <frontend> <unparser> <backend>
-      std::stringstream ss;
-      // ss << filename << " "; // no need to output filename again, part of command line already.
       // Keep all info. of one file into one line. Users can easily count the total failures. 
       if (file->get_frontendErrorCode())
         ss << "\t Frontend Error Code:" << file->get_frontendErrorCode() ;
@@ -570,7 +574,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       std::string filename = StripPrefix(path_prefix, full_filename);
 
       // output file full path first
-      AppendToFile(report_filename__pass, full_filename+"\n");
+      AppendToFile(report_filename__pass, "Processed File: Without Errors:"+full_filename+"\n");
       if (verbose)
       {
         std::cout
@@ -594,7 +598,8 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   //Sometimes even for files failed on backend stage, some analysis results are generated. 
   //we still want to output such results.
   // If exists, output the analysis results associated with each file
-  if (files_with_errors.size()>0 && report_filename__pass.size()>0)
+  // Only merge the results into the pass log file if the fail log file is not specified!!
+  if (files_with_errors.size()>0 && report_filename__pass.size()>0 && report_filename__fail.empty())
   {
     bool runonce = false; 
     // add time stamp in the beginning
@@ -619,7 +624,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           runonce = true; 
         }
 
-        AppendToFile(report_filename__pass, filename+"\n");
+        AppendToFile(report_filename__pass, "Processed File: With Backend Errors:"+filename+"\n");
         AppendToFile(report_filename__pass, oss.str());
       }
     }
@@ -820,54 +825,39 @@ Rose::KeepGoing::AppendToFile(const std::string& filename, const std::string& ms
   // if filename is NULL, no action is needed. 
   if (filename.size()==0)
     return; 
-
+ // use a separated file for the file lock
+  string lock_file_name = filename+".lock"; 
   touch(filename);
+  touch(lock_file_name); //this lock file must exist. Or later flock() will fail.
 
-  boost::interprocess::file_lock flock;
-  try
+  boost::interprocess::file_lock flock (lock_file_name.c_str());
+  // introduce a scope to use the scoped lock, which automatically unlock when existing the scope
   {
-      boost::interprocess::file_lock* flock_tmp =
-          new boost::interprocess::file_lock(filename.c_str());
-      flock.swap(*flock_tmp);
-      delete flock_tmp;
-      flock.lock();
-  }
-  catch (boost::interprocess::interprocess_exception &ex)
-  {
-      std::cout << ex.what() << std::endl;
-
+    scoped_lock<file_lock> e_lock(flock);
+    std::ofstream fout(filename.c_str(), std::ios::app);
+    if(!fout.is_open())
+    {
       std::cerr
-          << "[FATAL] "
-          << "Couldn't lock "
-          << "'" << filename << "'"
-          << std::endl;
-
-      exit(1);
-  }
-
-  std::ofstream fout(filename.c_str(), std::ios::app);
-
-  if(!fout.is_open())
-  {
-      std::cerr
-          << "[FATAL] "
-          << "Couldn't open "
-          << "'" << filename << "'"
-          << std::endl;
-      flock.unlock();
-      exit(1);
-  }
-
+        << "[FATAL] "
+        << "Couldn't open "
+        << "'" << filename << "'"
+        << std::endl;
+    }
+    else
+    {  
 #if 0
-  fout
-      << GetTimestamp()  << " "
-      << getpid() << " "
-      << msg
-      << std::endl;
+      fout
+        << GetTimestamp()  << " "
+        << getpid() << " "
+        << msg
+        << std::endl;
 #endif
-  fout<<msg; 
-  fout.close();
-  flock.unlock();
+      fout<<msg; 
+      fout.flush();
+      fout.close();
+    }
+  } // end scope for the scoped lock
+  boost::filesystem::remove (lock_file_name);
 }
 
 std::map<std::string, std::string>

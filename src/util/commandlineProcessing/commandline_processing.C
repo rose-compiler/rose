@@ -1,9 +1,5 @@
-// #ifdef HAVE_CONFIG_H
-// This avoids requiring the user to use rose_config.h and follows 
-// the automake manual request that we use <> instead of ""
 #include <rose_config.h>
 #include <rosePublicConfig.h>
-// #endif
 
 #include "StringUtility.h"
 #include <string.h>
@@ -25,161 +21,14 @@
 #endif
 
 
-// DQ (12/31/2005): This is allowed in C files where it can not 
+// DQ (12/31/2005): This is allowed in C files where it can not
 // effect the users application (just not in header files).
 using namespace std;
 using namespace Rose;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
-// A version string function that doesn't depend on the rest of librose.
-static std::string
-utilVersionString() {
-    std::string s = std::string("ROSE-") + VERSION + " id " + ROSE_SCM_VERSION_ID;
-#ifdef _MSC_VER
-    s += " timestamp=" + boost::lexical_cast<std::string>(ROSE_SCM_VERSION_UNIX_DATE);
-#else
-    time_t t = ROSE_SCM_VERSION_UNIX_DATE;
-    struct tm *tm = localtime(&t);
-    char buf[256];
-    sprintf(buf, " %04d-%02d-%02d %02d:%02d:%02d %s",
-            tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-            tm->tm_hour, tm->tm_min, tm->tm_sec, tm->tm_zone);
-    s += buf;
-#endif
-    return s;
-}
-
-// Adjust the behavior for failed assertions based on the command-line
-class FailedAssertionBehaviorAdjuster: public Sawyer::CommandLine::SwitchAction {
-protected:
-    FailedAssertionBehaviorAdjuster() {}
-public:
-    typedef Sawyer::SharedPointer<FailedAssertionBehaviorAdjuster> Ptr;
-    enum Behavior { ABORT_ON_FAILURE, EXIT_ON_FAILURE, THROW_ON_FAILURE };
-    static Ptr instance() {
-        return Ptr(new FailedAssertionBehaviorAdjuster);
-    }
-protected:
-    void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
-        ASSERT_require(cmdline.have("assert"));
-        Sawyer::Assert::AssertFailureHandler handler = NULL;
-        switch (cmdline.parsed("assert", 0).as<Behavior>()) {
-            case ABORT_ON_FAILURE: handler = abortOnFailedAssertion; break;
-            case EXIT_ON_FAILURE:  handler = exitOnFailedAssertion; break;
-            case THROW_ON_FAILURE: handler = throwOnFailedAssertion; break;
-        }
-        failedAssertionBehavior(handler);
-    }
-};
-
-Sawyer::CommandLine::Parser
-CommandlineProcessing::createEmptyParser(const std::string &purpose, const std::string &description) {
-    Sawyer::CommandLine::Parser parser;
-    parser.purpose(purpose);
-    if (!description.empty())
-        parser.doc("Description", description);
-    parser.chapter(1, "ROSE Command-line Tools");
-#if defined(ROSE_PACKAGE_VERSION)
-    std::string v = ROSE_PACKAGE_VERSION;
-#elif defined(PACKAGE_VERSION)
-    std::string v = PACKAGE_VERSION;
-#else
-    std::string v = std::string(ROSE_SCM_VERSION_ID).substr(0, 8);
-#endif
-    parser.version(v, ROSE_CONFIGURE_DATE);
-    parser.groupNameSeparator(":");                     // ROSE's style is "--rose:help" rather than "--rose-help"
-    return parser;
-}
-
-Sawyer::CommandLine::Parser
-CommandlineProcessing::createEmptyParserStage(const std::string &purpose, const std::string &description) {
-    return createEmptyParser(purpose, description).skippingNonSwitches(true).skippingUnknownSwitches(true);
-}
-
-// Global place to store result of parsing genericSwitches.
-CommandlineProcessing::GenericSwitchArgs CommandlineProcessing::genericSwitchArgs;
-
-// Returns command-line description for switches that should be always available.
-// Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
-// See header file for more documentation including examples.
-Sawyer::CommandLine::SwitchGroup
-CommandlineProcessing::genericSwitches() {
-    using namespace Sawyer::CommandLine;
-    SwitchGroup gen("General switches");
-
-    gen.insert(Switch("help", 'h')
-               .doc("Show this documentation.")
-               .action(showHelpAndExit(0)));
-
-    gen.insert(Switch("log")
-               .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
-               .argument("config")
-               .whichValue(SAVE_ALL)
-               .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
-
-    // Since CommandlineProcessing::genericSwitches is inside src/util we cannot depend on functions in higher levels of
-    // librose being available.  In particular, ::version_message, which is defined in src/roseSupport/utility_functions.C.
-    // Therefore we'll have to use our own version string function.
-    gen.insert(Switch("version-long")
-               .action(showVersionAndExit(utilVersionString(), 0))
-               .doc("Shows version information for ROSE and various dependencies and then exits. The shorter @s{version} "
-                    "switch shows only the dotted quad of the ROSE library itself."));
-    gen.insert(Switch("version", 'V')
-#if defined(ROSE_PACKAGE_VERSION)
-               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
-#elif defined(PACKAGE_VERSION)
-               .action(showVersionAndExit(PACKAGE_VERSION, 0))
-#else
-               .action(showVersionAndExit("unknown", 0))
-#endif
-               .doc("Shows the dotted quad ROSE version and then exits.  See also @s{version-long}, which prints much more "
-                    "information."));
-
-    // Control how a failing assertion acts. It could abort, exit with non-zero, or throw Rose::Diagnostics::FailedAssertion.
-    gen.insert(Switch("assert")
-               .action(FailedAssertionBehaviorAdjuster::instance())
-               .argument("how", enumParser<FailedAssertionBehaviorAdjuster::Behavior>()
-                         ->with("exit", FailedAssertionBehaviorAdjuster::EXIT_ON_FAILURE)
-                         ->with("abort", FailedAssertionBehaviorAdjuster::ABORT_ON_FAILURE)
-                         ->with("throw", FailedAssertionBehaviorAdjuster::THROW_ON_FAILURE))
-               .doc("Determines how a failed assertion behaves.  The choices are \"abort\", \"exit\" with a non-zero value, "
-                    "or \"throw\" a Rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
-                    "was configured."));
-
-    // Number of threads to use for algorithms that support multi-threading.  NOTE: we should really have a Settings struct for
-    // these switches, but we don't yet. Users will therefore need to query the ParserResult object to get the switch's
-    // argument.
-    gen.insert(Switch("threads")
-               .argument("n", nonNegativeIntegerParser(genericSwitchArgs.threads))
-               .doc("Number of threads to use for algorithms that support multi-threading.  The default is " +
-                    StringUtility::numberToString(genericSwitchArgs.threads) + ". A value of zero means use the "
-                    "same number of threads as there is hardware concurrency (or one thread if the hardware "
-                    "concurrency can't be determined)."));
-
-    return gen;
-}
-
-void
-CommandlineProcessing::insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &switchName,
-                                           bool &storageLocation, const std::string &documentation) {
-    using namespace Sawyer::CommandLine;
-
-    ASSERT_forbid2(boost::starts_with(switchName, "-"), "specify only the name, not the prefix");
-
-    std::string defaults = " This can be disabled with @s{no-" + switchName + "}. The default is " +
-                           (storageLocation ? "yes" : "no") + ".";
-
-    sg.insert(Switch(switchName)
-              .intrinsicValue(true, storageLocation)
-              .doc(documentation + defaults));
-    sg.insert(Switch("no-"+switchName)
-              .key(switchName)
-              .intrinsicValue(false, storageLocation)
-              .hidden(true));
-}
-
-// DQ (7/8/2005): 
+// DQ (7/8/2005):
 Rose_STL_Container<string>
 CommandlineProcessing::generateArgListFromString ( string commandline )
    {
@@ -218,7 +67,7 @@ CommandlineProcessing::generateArgListFromString ( string commandline )
 // std::string CommandlineProcessing::generateStringFromArgList( Rose_STL_Container<std::string> & argList)
 std::string CommandlineProcessing::generateStringFromArgList( const Rose_STL_Container<std::string> & argList)
 {
-  string result; 
+  string result;
   Rose_STL_Container<std::string>::const_iterator iter;
   for (iter = argList.begin(); iter != argList.end(); iter ++)
   {
@@ -226,7 +75,7 @@ std::string CommandlineProcessing::generateStringFromArgList( const Rose_STL_Con
       result += " ";
     result += *iter;
   }
-  return result;  
+  return result;
 }
 
 Rose_STL_Container<string>
@@ -256,7 +105,7 @@ CommandlineProcessing::generateStringFromArgList ( Rose_STL_Container<string> ar
                string suffix = "";
          if (arg.length() > 2) suffix = arg.substr(arg.size() - 2);
          if (suffix == ".C" || arg.find("--edg:definition_list_file") == 0) {
-                 // DQ (5/13/2004): It was not a great idea to put this filter into this function 
+                 // DQ (5/13/2004): It was not a great idea to put this filter into this function
                  // remove it and handle the filtering of definition_list_file better ...  later!
            continue;
              }
@@ -279,7 +128,7 @@ CommandlineProcessing::generateArgcArgvFromList ( Rose_STL_Container<string> arg
            printf ("Error: argv input shoud be NULL! \n");
            ROSE_ABORT();
         }
-      
+
 #ifdef _MSC_VER
 #define __builtin_constant_p(exp) (0)
 #endif
@@ -382,7 +231,7 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
      printf ("In removeAllFileNamesExcept (at top): filenameList = \n%s \n",StringUtility::listToString(filenameList).c_str());
 #endif
 
-#if 0 // Liao 11/15/2012. this code is confusing. 
+#if 0 // Liao 11/15/2012. this code is confusing.
      for (unsigned int i=0; i < argv.size(); i++)
         {
           string argString = argv[i];
@@ -425,7 +274,7 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
     while (argv_iter != argv.end())
     {
       string argString = *(argv_iter);
-      bool shouldDelete = false; 
+      bool shouldDelete = false;
 
       Rose_STL_Container<std::string>::iterator filenameIterator = filenameList.begin();
       while (filenameIterator != filenameList.end())
@@ -447,7 +296,7 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
       if (shouldDelete)
       {
         //vector::erase() return a random access iterator pointing to the new location of the element that followed the last element erased by the function call
-        //Essentially, it returns an iterator points to next element. 
+        //Essentially, it returns an iterator points to next element.
         argv_iter = argv.erase (argv_iter);
       }
       else
@@ -462,7 +311,7 @@ CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_ST
 Rose_STL_Container<string>
 CommandlineProcessing::generateOptionList (const Rose_STL_Container<string> & argList, string inputPrefix )
    {
-  // This function returns a list of options using the inputPrefix (with the 
+  // This function returns a list of options using the inputPrefix (with the
   // inputPrefix stripped off). It does NOT modify the argList passed as a reference.
      Rose_STL_Container<string> optionList;
      unsigned int prefixLength = inputPrefix.length();
@@ -481,7 +330,7 @@ CommandlineProcessing::generateOptionList (const Rose_STL_Container<string> & ar
 Rose_STL_Container<string>
 CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<string> & argList, string inputPrefix , string newPrefix )
    {
-  // This function returns a list of options using the inputPrefix (with the 
+  // This function returns a list of options using the inputPrefix (with the
   // inputPrefix stripped off and replaced if new Prefix is provided.
   // It also modified the input argList to remove matched options.
 
@@ -595,8 +444,8 @@ CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string pre
      printf ("In addListToCommandLine(): prefix = %s \n",prefix.c_str());
 #endif
   // bool outputPrefix = false;
-  // for (unsigned int i = 0; i < argList.size(); ++i) 
-     for (size_t i = 0; i < argList.size(); ++i) 
+  // for (unsigned int i = 0; i < argList.size(); ++i)
+     for (size_t i = 0; i < argList.size(); ++i)
         {
 #if 1
        // DQ (1/25/2017): Original version of code (required for C test codes to pass, see C_tests directory).
@@ -647,10 +496,10 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
      int counter = 0;
      while ( i != argList.end() )
         {
-       // Count up the number of filenames (if it is ZERO then this is likely a 
-       // link line called using the compiler (required for template processing 
-       // in C++ with most compilers)) if there is at least ONE then this is the 
-       // source file.  Currently their can be up to maxFileNames = 256 files 
+       // Count up the number of filenames (if it is ZERO then this is likely a
+       // link line called using the compiler (required for template processing
+       // in C++ with most compilers)) if there is at least ONE then this is the
+       // source file.  Currently their can be up to maxFileNames = 256 files
        // specified.
 
        // most options appear as -<option>
@@ -764,7 +613,7 @@ CommandlineProcessing::addCppSourceFileSuffix ( const string &suffix )
    }
 
 
-//Rama 
+//Rama
 //Also refer to the code in functions isCppFileNameSuffix  Dan and I added in StringUtility
 //For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
 #ifndef CASE_SENSITIVE_SYSTEM
@@ -793,9 +642,9 @@ CommandlineProcessing::isCppFileNameSuffix ( const std::string & suffix )
    {
   // Returns true only if this is a valid C++ source file name extension (suffix)
 
-  // C++ source files conventionally use one of the suffixes .C, .cc, .cpp, .CPP, .c++, .cp, or .cxx; 
-  // C++ header files often use .hh or .H; and preprocessed C++ files use the suffix .ii.  GCC 
-  // recognizes files with these names and compiles them as C++ programs even if you call the compiler 
+  // C++ source files conventionally use one of the suffixes .C, .cc, .cpp, .CPP, .c++, .cp, or .cxx;
+  // C++ header files often use .hh or .H; and preprocessed C++ files use the suffix .ii.  GCC
+  // recognizes files with these names and compiles them as C++ programs even if you call the compiler
   // the same way as for compiling C programs (usually with the name gcc).
 
      bool returnValue = false;
@@ -813,10 +662,10 @@ CommandlineProcessing::isCppFileNameSuffix ( const std::string & suffix )
 //However, it does not look like GNU-g++ accepts them.
 //So, I am commenting them out
              /*
-             || suffix == "CC"  
-             || suffix == "CPP" 
-             || suffix == "C++" 
-             || suffix == "CP"  
+             || suffix == "CC"
+             || suffix == "CPP"
+             || suffix == "C++"
+             || suffix == "CP"
              || suffix == "CXX"
              */
              )
@@ -838,9 +687,9 @@ CommandlineProcessing::isCppFileNameSuffix ( const std::string & suffix )
      if(find(extraCppSourceFileSuffixes.begin(), extraCppSourceFileSuffixes.end(),suffix) != extraCppSourceFileSuffixes.end())
      {
        returnValue = true;
-     } 
+     }
 
-     
+
      return returnValue;
    }
 
@@ -863,7 +712,7 @@ CommandlineProcessing::isFortranFileNameSuffix ( const std::string & suffix )
          || suffix == "caf"
       // For Fortran, upper case is used to indicate that CPP preprocessing is required.
          || suffix == "F"
-         || suffix == "F77" 
+         || suffix == "F77"
          || suffix == "F90"
          || suffix == "F95"
          || suffix == "F03"
@@ -905,7 +754,7 @@ CommandlineProcessing::isFortranFileNameSuffixRequiringCPP ( const std::string &
 #if(CASE_SENSITIVE_SYSTEM == 1)
   // For Fortran, upper case is used to indicate that CPP preprocessing is required.
      if (   suffix == "f"
-         || suffix == "f77" 
+         || suffix == "f77"
          || suffix == "f90"
          || suffix == "f95"
          || suffix == "f03"
@@ -1125,7 +974,92 @@ CommandlineProcessing::isPythonFileNameSuffix ( const std::string & suffix )
 
      return returnValue;
    }
-   
+
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isCsharpFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "cs" )
+#else //It is a case insensitive system
+     if ( suffix == "cs" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+  // Note that the filename extension is not defined as part of the Ada standard,
+  // but GNAT (Gnu Ada) is using "ads" (for the spec) and "adb" (for the body).
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "ads" || suffix == "adb")
+#else //It is a case insensitive system
+     if ( suffix == "ads" || suffix == "adb")
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isJovialFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+  // Rasmussen (11/08/2017): Changed Jovial file extension to reflect usage found on web
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
+#else //It is a case insensitive system
+     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isCobolFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+  // Rasmussen (11/08/2017): Changed Cobol file extension to reflect usage found on web
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
+#else //It is a case insensitive system
+     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 // TV (05/17/2010) Support for CUDA
 bool
 CommandlineProcessing::isCudaFileNameSuffix ( const std::string & suffix )
@@ -1245,7 +1179,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
        // FMZ 5/28/2008
           validSourceFileSuffixes.push_back(".rmod");
 
-       // Liao (6/6/2008)  Support for UPC   
+       // Liao (6/6/2008)  Support for UPC
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
 
@@ -1261,7 +1195,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
 
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");
-#else 
+#else
        // it is a case insensitive system
           validSourceFileSuffixes.push_back(".c");
           validSourceFileSuffixes.push_back(".cc");

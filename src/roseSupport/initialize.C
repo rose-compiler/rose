@@ -3,11 +3,12 @@
 #include <rose_config.h>                                // needed for VERSION with cmake
 #include <initialize.h>
 
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
 #include <Diagnostics.h>
 #include <Sawyer/Synchronization.h>
+#include <boost/lexical_cast.hpp>
 
 namespace Rose {
 
@@ -38,7 +39,7 @@ public:
 
         Sawyer::initializeLibrary();
 
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
         gcry_check_version(NULL);
 #endif
 
@@ -108,8 +109,10 @@ checkVersionNumber(const std::string &need) {
 #endif
 
     for (size_t i=0; i < needParts.size() && i < haveParts.size(); ++i) {
-        if (needParts[i] != haveParts[i])
-            return needParts[i] < haveParts[i];
+        unsigned need = boost::lexical_cast<unsigned>(needParts[i]);
+        unsigned have = boost::lexical_cast<unsigned>(haveParts[i]);
+        if (need != have)
+            return need < have;
     }
 
     // E.g., need = "1.2" and have = "1.2.x", or vice versa

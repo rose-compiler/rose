@@ -2,18 +2,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 
-# DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
-# SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-# SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
 # This was something that was discussed in email previously with the group.  Thei point is to have the
 # first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
-# SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
 
@@ -47,7 +43,7 @@ endif
 # all:
 #	@echo "**********************************************************************************************"
 #	@echo "**********************************************************************************************"
-#	@echo "Skipping tests in tutorial, exampleTranslators, docs, tools, scripts, and demo directories for"
+#	@echo "Skipping tests in tutorial, exampleTranslators, docs, tools, scripts, and directories for"
 #	@echo "GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
 #	@echo "**********************************************************************************************"
 #	@echo "**********************************************************************************************"
@@ -58,10 +54,6 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
    SUBDIRS += tutorial exampleTranslators docs 
 endif
 SUBDIRS += tools scripts 
-if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
- # If we can't process the tutorial directory then we can't run demos
-   SUBDIRS += demo
-endif
 
 # endif for excluding tests using GNU 4.8 and C++11 mode together.
 endif
@@ -110,6 +102,60 @@ install-rose-library: install-data-local
 	$(MAKE) -C $(top_builddir)/src install
 	cp rosePublicConfig.h $(pkgincludedir)
 
+# Build a binary release of the ROSE library.  This assumes that you're running in the RMC-2 environment because it uses
+# some "make" variables that are initialized from shell exported variables. Other build environments will need other targets.
+#
+# It installs whatever is in the ROSE installation prefix, but at least the ROSE library and supporting header files.
+#
+# We cannot distribute Oracle Java because it requires the user to agree to a license. The user must download it themselves.
+#
+# We cannot distribute CXX_ROOT or C_ROOT because it might be pointing to an Intel compiler, which needs to be purchased
+# by the user.
+#
+# We cannot distribute Yices because it requires the user to agree to a license. The user must download it themselves.
+#
+# We should not distribute /usr or /usr/local as these are general locations with lots of other software.
+rose-installer-rmc2: install-rose-library
+	rm -rf $@.tmp
+	mkdir  $@.tmp
+	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller					\
+		--create="$@"								\
+		--cc="$(C_VENDOR) $(C_VERSION)"						\
+		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"					\
+		--contact="http://rosecompiler.org"					\
+		--os="$(RMC_OS_NAME)"							\
+		--prjnam=ROSE								\
+		--prjver=$(PACKAGE_VERSION)						\
+		--postinstall-perl=$(top_srcdir)/scripts/rose-post-install		\
+		$(prefix)/*								\
+		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
+		    $(BOOST_ROOT)							\
+		    $(CMAKE_ROOT)							\
+		    $(DLIB_ROOT)							\
+		    $(GNU_COMPILERS_ROOT)						\
+		    $(LIBBZ2_ROOT)							\
+		    $(LIBGCRYPT_ROOT)							\
+		    $(LIBGPG_ERROR_ROOT)						\
+		    $(LIBGRAPHICSMAGICK_ROOT)						\
+		    $(LIBJPEG_ROOT)							\
+		    $(LIBLCMS_ROOT)							\
+		    $(LIBLZMA_ROOT)							\
+		    $(LIBPNG_ROOT)							\
+		    $(LIBTIFF_ROOT)							\
+		    $(PYTHON_ROOT)							\
+		    $(SPOT_ROOT)							\
+		    $(WT_ROOT)								\
+		    $(YAMLCPP_ROOT)							\
+		    $(ZLIB_ROOT)							\
+		))
+	rm -rf $@.tmp
+
+check-rose-installer-rmc2: rose-installer-rmc2
+	rm -rf $@.tmp installed installed-binary
+	mkdir  $@.tmp
+	TMPDIR=$@.tmp ./rose-installer-rmc2 --prefix=installed-binary
+	LD_LIBRARY_PATH=installed-binary/lib ./installed-binary/bin/rose-config --version
+	rm -rf $@.tmp installed-binary
 
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
@@ -454,8 +500,6 @@ NumberOfMakefiles:
 	@du -a $(srcdir)/tutorial | $(FILTER_MAKEFILES)| wc -l
 	@echo "Number of Makefile.am files in docs directory: "
 	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
-	@echo "Number of Makefile.am files in demo directory: "
-	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in tools directory: "
 	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in config directory: "

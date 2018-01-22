@@ -40,7 +40,7 @@ void Fortran_to_C::translateFileName(SgFile* sourceFile)
   }
   // set the output filename
   sourceFile->set_unparse_output_filename(outputFilename);
-  sourceFile->set_outputLanguage(SgFile::e_C_output_language);
+  sourceFile->set_outputLanguage(SgFile::e_C_language);
   sourceFile->set_C_only(true);
 }
 

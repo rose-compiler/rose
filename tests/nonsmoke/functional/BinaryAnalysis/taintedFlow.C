@@ -71,11 +71,12 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "AsmUnparser.h"
 #include "BinaryTaintedFlow.h"
 #include "BinaryFunctionCall.h"
+#include "BinarySmtSolver.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DispatcherX86.h"
 #include "SymbolicSemantics2.h"
 #include "WorkLists.h"
-#include "YicesSolver.h"
 
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/foreach.hpp>
@@ -158,12 +159,11 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // The Rose::BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
     TaintedFlow taintAnalysis(cpu);
     taintAnalysis.approximation(approximation);
-#if defined(ROSE_HAVE_LIBYICES) || defined(ROSE_YICES)
-    YicesSolver solver;
-    taintAnalysis.smtSolver(&solver);
-#else
-    ::mlog[WARN] <<"not using an SMT solver (none available)\n";
-#endif
+    if (SmtSolver *solver = SmtSolver::bestAvailable()) {
+        taintAnalysis.smtSolver(solver);
+    } else {
+        ::mlog[WARN] <<"not using an SMT solver (none available)\n";
+    }
 
     // Analyze the specimen in order to discover what variables are referenced and the control flow between those variables for
     // each basic block.
@@ -224,7 +224,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     }
     std::cout <<"\n\n";
 }
-    
+
 int main(int argc, char *argv[])
 {
     // Configure diagnostic output
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 
     // Describe the command-line
     using namespace Sawyer::CommandLine;
-    SwitchGroup generic = CommandlineProcessing::genericSwitches();
+    SwitchGroup generic = Rose::CommandLine::genericSwitches();
     SwitchGroup switches("Tainted flow switches");
     std::vector<rose_addr_t> functionAddresses;
     switches.insert(Switch("address")
@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
 
     // Parse the command line.
     ParserResult cmdline = cmdline_parser.with(generic).with(switches).parse(argc, argv).apply();
-    
+
     // Parse the binary container (ELF, PE, etc) and disassemble instructions using the default disassembler.  Organize
     // (partition) the instructions into basic blocks and functions using the default partitioner.  The disassembler and
     // partitioner can be controled to some extent with ROSE command-line switches.  Since librose doesn't describe its

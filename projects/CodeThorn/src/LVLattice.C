@@ -26,7 +26,7 @@ void SPRAY::LVLattice::toStream(ostream& os, VariableIdMapping* vim) {
       if(i!=begin())
         os<<",";
       if(vim)
-        os<<vim->uniqueShortVariableName(*i);
+        os<<vim->uniqueVariableName(*i);
       else
         os<<(*i).toString();
     }

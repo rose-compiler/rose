@@ -843,12 +843,18 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAttributeSpecificationStatement::attribute_spec_enum" ) ||
                  ( varTypeString == "SgDataStatementValue::data_statement_value_enum" ) ||
                  ( varTypeString == "SgFile::outputFormatOption_enum" ) ||
-                 ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
+
+              // DQ (29/8/2017): Added generalization of language specifications so we can use 
+              // a single language enum for specification of both input and output languges.
+              // ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
+                 ( varTypeString == "SgFile::languageOption_enum" ) ||
+
                  ( varTypeString == "SgOmpClause::omp_default_option_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_proc_bind_policy_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_atomic_clause_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_schedule_kind_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_dependence_type_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_operator_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_dist_data_enum" ) ||
                  ( varTypeString == "SgProcedureHeaderStatement::subprogram_kind_enum" ) ||

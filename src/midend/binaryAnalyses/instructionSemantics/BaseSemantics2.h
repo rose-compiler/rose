@@ -1,10 +1,10 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H 
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
 
+#include "BinarySmtSolver.h"
 #include "Diagnostics.h"
 #include "Registers.h"
 #include "FormatRestorer.h"
-#include "SMTSolver.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -644,7 +644,7 @@ public:
      *  If you always want a copy regardless of whether the merge is necessary, then use the @ref createMerged convenience
      *  function instead. */
     virtual Sawyer::Optional<SValuePtr>
-    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const = 0;
+    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, SmtSolver *solver) const = 0;
 
     /** Create a new value by merging two existing values.
      *
@@ -652,7 +652,7 @@ public:
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary one can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerge. */
-    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const /*final*/ {
+    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SmtSolver *solver) const /*final*/ {
         return createOptionalMerge(other, merger, solver).orElse(copy());
     }
 
@@ -689,10 +689,10 @@ public:
     /** @} */
 
     /** Returns true if two values could be equal. The SMT solver is optional for many subclasses. */
-    virtual bool may_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
+    virtual bool may_equal(const SValuePtr &other, SmtSolver *solver=NULL) const = 0;
 
     /** Returns true if two values must be equal.  The SMT solver is optional for many subclasses. */
-    virtual bool must_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
+    virtual bool must_equal(const SValuePtr &other, SmtSolver *solver=NULL) const = 0;
 
     /** Returns true if concrete non-zero. This is not virtual since it can be implemented in terms of @ref is_number and @ref
      *  get_number. */
@@ -883,7 +883,7 @@ public:
      *  registers are already initialized.
      *
      *  See @ref RiscOperators::readRegister for more details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
+    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
     /** Write a value to a register.
      *
@@ -891,7 +891,7 @@ public:
      *  "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to different parts of that
      *  register). The RISC operations are provided so that they can be used to insert the @p value bits into a wider the
      *  hardware register if necessary. See @ref RiscOperators::readRegister for more details. */
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) = 0;
+    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.
      *  @{ */
@@ -1016,8 +1016,8 @@ public:
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
 
@@ -1025,25 +1025,25 @@ public:
     // Methods first declared at this level of the class hierarchy
 protected:
     // helpers for readRegister()
-    virtual SValuePtr readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterXmm(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterGpr(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterFlag(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterSeg(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterIp(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterSt(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterXmm(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterFpStatus(RegisterDescriptor reg, RiscOperators *ops);
 
     // helpers for writeRegister()
-    virtual void writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterXmm(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterGpr(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterFlag(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterSeg(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterIp(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterSt(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterXmm(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterFpStatus(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
 
     // Generate a name for initial values.
-    virtual std::string initialValueName(const RegisterDescriptor&) const;
+    virtual std::string initialValueName(RegisterDescriptor) const;
 };
 
 
@@ -1406,13 +1406,13 @@ public:
      *
      *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
      *  @ref BaseSemantics::RiscOperators::readRegister for details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &desc, const SValuePtr &dflt, RiscOperators *ops);
+    virtual SValuePtr readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
 
     /** Write a value to a register.
      *
      *  The @ref BaseSemantics::writeRegister implementation simply delegates to the register state member of this state.  See
      *  @ref BaseSemantics::RiscOperators::writeRegister for details. */
-    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops);
 
     /** Read a value from memory.
      *
@@ -1532,7 +1532,7 @@ class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
     StatePtr currentState_;                             // State upon which RISC operators operate
     StatePtr initialState_;                             // Lazily updated initial state; see readMemory
-    SMTSolver *solver_;                                 // Optional SMT solver
+    SmtSolver *solver_;                                 // Optional SMT solver
     SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
     size_t nInsns_;                                     // Number of instructions processed
     std::string name_;                                  // Name to use for debugging
@@ -1562,12 +1562,12 @@ protected:
     RiscOperators()
         : solver_(NULL), currentInsn_(NULL), nInsns_(0) {}
 
-    explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const SValuePtr &protoval, SmtSolver *solver=NULL)
         : protoval_(protoval), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(protoval_);
     }
 
-    explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const StatePtr &state, SmtSolver *solver=NULL)
         : currentState_(state), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(state);
         protoval_ = state->protoval();
@@ -1590,13 +1590,13 @@ public:
     /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
      *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
      *  set by modifying the  @ref currentState property. An optional SMT solver may be specified (see @ref solver). */
-    virtual RiscOperatorsPtr create(const SValuePtr &protoval, SMTSolver *solver=NULL) const = 0;
+    virtual RiscOperatorsPtr create(const SValuePtr &protoval, SmtSolver *solver=NULL) const = 0;
 
     /** Virtual allocating constructor.  The supplied @p state is that upon which the RISC operations operate and is also used
      *  to define the prototypical semantic value. Other states can be supplied by setting @ref currentState. The prototypical
      *  semantic value is used as a factory to create additional values as necessary via its virtual constructors. An optional
      *  SMT solver may be specified (see @ref solver). */
-    virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
+    virtual RiscOperatorsPtr create(const StatePtr &state, SmtSolver *solver=NULL) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts.  No-op since this is the base class.
@@ -1627,13 +1627,13 @@ public:
      *  at whether the values are identical).
      *
      * @{ */
-    virtual SMTSolver* solver() const { return solver_; }
-    virtual void solver(SMTSolver *s) { solver_ = s; }
+    virtual SmtSolver* solver() const { return solver_; }
+    virtual void solver(SmtSolver *s) { solver_ = s; }
     /** @} */
 
     // [Robb Matzke 2016-01-22]: deprecated
-    virtual void set_solver(SMTSolver *s) ROSE_DEPRECATED("use solver instead") { solver(s); }
-    virtual SMTSolver *get_solver() const ROSE_DEPRECATED("use solver instead") { return solver(); }
+    virtual void set_solver(SmtSolver *s) ROSE_DEPRECATED("use solver instead") { solver(s); }
+    virtual SmtSolver *get_solver() const ROSE_DEPRECATED("use solver instead") { return solver(); }
 
     /** Property: Current semantic state.
      *
@@ -2146,10 +2146,10 @@ public:
      *  which layer should invoke the @ref extract or @ref concat (or whatever other RISC operations might be necessary).
      *
      *  @{ */
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg) { // old subclasses can still override this if they want,
-        return readRegister(reg, undefined_(reg.get_nbits()));      // but new subclasses should not override this method.
+    virtual SValuePtr readRegister(RegisterDescriptor reg) {   // old subclasses can still override this if they want,
+        return readRegister(reg, undefined_(reg.get_nbits())); // but new subclasses should not override this method.
     }
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt); // new subclasses override this
+    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt); // new subclasses override this
     /** @} */
 
     /** Writes a value to a register.
@@ -2161,7 +2161,7 @@ public:
      *  task of writing a value to the specified register when the underlying register state doesn't actually store a value for
      *  that specific register. The RiscOperations object is passed along for that purpose.  See @ref readRegister for more
      *  details. */
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
+    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &a) {
         ASSERT_not_null(currentState_);
         currentState_->writeRegister(reg, a, this);
     }
@@ -2188,7 +2188,7 @@ public:
      *
      *  The @p dflt argument determines the size of the value to be read. This argument is also passed along to the lower
      *  layers so that they can, if they desire, use it to initialize memory that has never been read or written before. */
-    virtual SValuePtr readMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &dflt,
+    virtual SValuePtr readMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &dflt,
                                  const SValuePtr &cond) = 0;
 
     /** Writes a value to memory.
@@ -2201,7 +2201,7 @@ public:
      *
      *  The @p cond argument is a Boolean value that indicates whether this is a true write operation. If @p cond can be proved
      *  to be false then writeMemory is a no-op. */
-    virtual void writeMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &data,
+    virtual void writeMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &data,
                              const SValuePtr &cond) = 0;
 
     /** Obtain a register value without side effects.
@@ -2209,7 +2209,7 @@ public:
      *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
      *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
      *  part of an instruction emulation. */
-    virtual SValuePtr peekRegister(const RegisterDescriptor&, const SValuePtr &dflt);
+    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
 };
 
 
@@ -2411,7 +2411,7 @@ public:
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
      *  register cannot be found then either an exception is thrown or an invalid register is returned depending on whether
      *  @p allowMissing is false or true, respectively. */
-    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false) const;
+    virtual RegisterDescriptor findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false) const;
 
     /** Property: Width of memory addresses.
      *

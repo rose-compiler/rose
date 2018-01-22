@@ -133,7 +133,6 @@ void initialize( )
             u[i][j] = 0.0;                       
           }
 
-
 #pragma aitool fp_minus(6) fp_multiply(5) 
        for (i=0;i<n;i++)
          for (j=0;j<m;j++)      

@@ -18,7 +18,7 @@ namespace ConcreteSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SMTSolver*) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SmtSolver*) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
 }
@@ -31,12 +31,12 @@ SValue::bits(const Sawyer::Container::BitVector &newBits) {
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other, SMTSolver*) const {
+SValue::may_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other, SMTSolver*) const {
+SValue::must_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
@@ -80,7 +80,7 @@ MemoryState::allocatePage(rose_addr_t va) {
         map_ = MemoryMap::instance();
     rose_addr_t pageVa = alignDown(va, pageSize_);
     unsigned acc = MemoryMap::READABLE | MemoryMap::WRITABLE;
-    map_->insert(AddressInterval::baseSize(pageVa, pageSize_),
+    map_->insert(AddressInterval::hull(pageVa, pageVa+pageSize_-1),
                  MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
                                     0, acc, "ConcreteSemantics demand allocated"));
 }
@@ -530,7 +530,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
@@ -570,7 +570,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
     ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
     if (cond->is_number() && !cond->get_number())

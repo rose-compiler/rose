@@ -109,14 +109,14 @@ public:
 protected:
     RiscOperators(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
     RiscOperators(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
@@ -125,32 +125,32 @@ public:
     static RiscOperatorsPtr
     instance(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
              const RegisterDictionary *regdict,
-             Rose::BinaryAnalysis::SMTSolver *solver=NULL);
+             Rose::BinaryAnalysis::SmtSolver *solver=NULL);
 
     static RiscOperatorsPtr
     instance(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
              const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-             Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+             Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, protoval, solver));
     }
 
     static RiscOperatorsPtr
     instance(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
              const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-             Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+             Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
     }
 
 public:
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, protoval, solver);
     }
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, state, solver);
     }
 
@@ -181,7 +181,7 @@ public:
 private:
     /** Create a comment to describe a variable stored in a register. */
     std::string
-    commentForVariable(const RegisterDescriptor&, const std::string &accessMode) const;
+    commentForVariable(RegisterDescriptor, const std::string &accessMode) const;
 
     /** Create a comment to describe a memory address if possible. The nBytes will be non-zero when we're describing
      *  an address as opposed to a value stored across some addresses. */
@@ -197,21 +197,21 @@ public:
     finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(const RegisterDescriptor &reg,
+    readRegister(RegisterDescriptor reg,
                  const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
     virtual void
-    writeRegister(const RegisterDescriptor &reg,
+    writeRegister(RegisterDescriptor reg,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(const RegisterDescriptor &segreg,
+    readMemory(RegisterDescriptor segreg,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt_,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
     virtual void
-    writeMemory(const RegisterDescriptor &segreg,
+    writeMemory(RegisterDescriptor segreg,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;

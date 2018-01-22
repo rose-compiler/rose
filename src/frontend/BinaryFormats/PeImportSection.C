@@ -46,12 +46,20 @@ SgAsmPEImportSection::parse()
     ROSE_ASSERT(is_mapped());
     rose_addr_t idir_va = get_mapped_actual_va();
 
+    // Some compilers don't actually terminate the Import Directory list with an all-zero entry as specified in Microsoft's PE
+    // format documenttion. Instead, they apparently assume that that loader uses the size of the import section to calculate
+    // the length of the list and that it never actually reads the final entry which is normally all zero.  These compilers
+    // seem to have garbage in the last entry.
+    rose_addr_t nBytes = get_size();
+    ASSERT_require(nBytes > 0);
+    size_t nEntries = nBytes / sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
+
     /* Parse each Import Directory. The list of directories is terminated with a zero-filled entry, which is not added to this
      * import section. */
-    for (size_t i = 0; 1; i++) {
+    for (size_t i = 0; i < nEntries; i++) {
         /* Import directory entry */
         SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this);
-        if (NULL==idir->parse(idir_va)) {
+        if (NULL==idir->parse(idir_va, i+1 == nEntries)) {
             /* We've reached the zero entry. Remove this directory from the section and delete it. */
             remove_import_directory(idir);
             SageInterface::deleteAST(idir);

@@ -7,10 +7,11 @@
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
-// #include "wholeAST.h"
 
 #ifdef _MSC_VER
 #include <direct.h>     // getcwd
+#else
+#include "plugin.h"  // dlopen() is not available on Windows
 #endif
 
 #include <time.h>
@@ -34,6 +35,9 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
+
+// DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+#include<signal.h>
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -466,9 +470,18 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
   // printf ("In frontend(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
 
+  // We parse plugin related command line options before calling project();
+     std::vector<std::string> argv2= argv;  // workaround const argv
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::processPluginCommandLine () ...\n");
+#else
+     Rose::processPluginCommandLine(argv2);
+#endif
+
   // Error code checks and reporting are done in SgProject constructor
   // return new SgProject (argc,argv);
-     SgProject* project = new SgProject (argv,frontendConstantFolding);
+     SgProject* project = new SgProject (argv2,frontendConstantFolding);
      ROSE_ASSERT (project != NULL);
 
   // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
@@ -485,9 +498,18 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // checkIsModifiedFlag(project);
      unsetNodesMarkedAsModified(project);
 
+   
   // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
+
+  // Connect to Ast Plugin Mechanism
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::obtainAndExecuteActions ()\n");
+#else  
+     Rose::obtainAndExecuteActions(project);
+#endif
      return project;
    }
 
@@ -599,6 +621,23 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
      int finalCombinedExitStatus = 0;
 
+     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+        {
+          printf ("Inside of backend(SgProject*) \n");
+        }
+
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+  // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+  // signal(SIG_DFL,NULL);
+     signal(SIGABRT,SIG_DFL);
+#endif
+
+#if 0
+  // DQ (9/8/2017): Debugging ROSE_ASSERT.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      if (project->get_binary_only() == true)
         {
           ROSE_ASSERT(project != NULL);
@@ -609,9 +648,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
           project->skipfinalCompileStep(true);
         }
-
-     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-          printf ("Inside of backend(SgProject*) \n");
 
   // printf ("   project->get_useBackendOnly() = %s \n",project->get_useBackendOnly() ? "true" : "false");
      if (project->get_useBackendOnly() == false)
@@ -961,6 +997,25 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
                printf ("In generateDOT(): AST graph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
         }
    }
+
+
+void
+generateDOT ( SgNode* node, std::string filename )
+   {
+  // DQ (9/22/2017): This function is being provided to support the generation of a dot file from any subtree.
+  // The more imediate use for this function is to support generation of dot files from trees built using the ROSE Untyped nodes.
+
+  // DQ (6/14/2007): Added support for timing of the generateDOT() function.
+     TimingPerformance timer ("ROSE generateDOT():");
+
+     AstDOTGeneration astdotgen;
+
+  // This used to be the default, but it would output too much data (from include files).
+  // std::string filenamePostfix = ".dot";
+     std::string filenamePostfix = "";
+     astdotgen.generate(node, filename, DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP, filenamePostfix);
+   }
+
 
 void
 generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfix )

@@ -4,9 +4,13 @@
 
 #include <map>
 #include <sstream>
+#include "AstTerm.h"
 
 using namespace std;
 using namespace SPRAY;
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility Specialization::logger;
 
 ConstReporter::~ConstReporter() {
 }
@@ -68,22 +72,17 @@ int PStateConstReporter::getConstInt() {
   return varIntValue;
 }
 
-int Specialization::numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping) {
-  int checkParLoopNum=0;
-  for(LoopInfoSet::iterator i=loopInfoSet.begin();i!=loopInfoSet.end();++i) {
-    if((*i).iterationVarType==ITERVAR_PAR) {
-      checkParLoopNum++;
-      //cout<<"DEBUG: PAR-VAR:"<<variableIdMapping->variableName((*i).iterationVarId)<<endl;
-    }
-  }
-  return checkParLoopNum;
+Specialization::Specialization():
+  _specializedFunctionRootNode(0) {
 }
 
-Specialization::Specialization():
-  _specializedFunctionRootNode(0),
-  _checkAllLoops(false),
-  _visualizeReadWriteAccesses(false),
-  _maxNumberOfExtractedUpdates(-1) {
+void Specialization::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::Specialization", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
 }
 
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
@@ -161,7 +160,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
        if(arrayIndexExpr) {
          // avoid substituting a constant by a constant
          if(!isSgIntVal(arrayIndexExpr)) {
-           list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evalConstInt(arrayIndexExpr,*estate,true);
+           list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evaluateExpression(arrayIndexExpr,*estate,true);
            // only when we get exactly one result it is considered for substitution
            // there can be multiple const-results which do not allow to replace it with a single const
            if(evalResultList.size()==1) {
@@ -218,12 +217,6 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
      SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
    return (int)substitutionList.size();
- }
-
-
- bool Specialization::isAtMarker(Label lab, const EState* estate) {
-   Label elab=estate->label();
-   return elab==lab;
  }
 
 void Specialization::extractArrayUpdateOperations(Analyzer* ana,
@@ -302,7 +295,11 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        rewriteSystem.rewriteCompoundAssignments(p_expCopy,variableIdMapping);
      } else {
        rewriteSystem.getRewriteStatisticsPtr()->numVariableElim+=substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
+       // turn disable commutative sort when eliminating variables, but restore setting afterwards
+       bool comm=rewriteSystem.getRuleCommutativeSort();
+       rewriteSystem.setRuleCommutativeSort(false);
        rewriteSystem.rewriteAst(p_expCopy, variableIdMapping);
+       rewriteSystem.setRuleCommutativeSort(comm);
      }
 #endif
      SgExpression* p_expCopy2=isSgExpression(p_expCopy);
@@ -391,7 +388,7 @@ void Specialization::createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, Vari
         ROSE_ASSERT(useRef);
         j.skipChildrenOnForward();
         VariableId varId=variableIdMapping->variableId(useRef);
-        string useName=variableIdMapping->uniqueShortVariableName(varId);
+        string useName=variableIdMapping->uniqueVariableName(varId);
         AstAttribute* attr=new NumberAstAttribute(defVarNumbers[useName]); // default creates 0 int (which is exactly what we need)
         if(attr) {
           useRef->setAttribute("Number",attr);
@@ -410,7 +407,7 @@ void Specialization::createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, Vari
       toAnnotate=arr;
     } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
       VariableId varId=variableIdMapping->variableId(var);
-      name=variableIdMapping->uniqueShortVariableName(varId);
+      name=variableIdMapping->uniqueVariableName(varId);
       toAnnotate=var;
     } else {
       cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
@@ -442,7 +439,7 @@ void Specialization::attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates
       toAnnotate=arr;
     } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
       VariableId varId=variableIdMapping->variableId(var);
-      name=variableIdMapping->uniqueShortVariableName(varId);
+      name=variableIdMapping->uniqueVariableName(varId);
       toAnnotate=var;
     } else {
       cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
@@ -460,7 +457,7 @@ void Specialization::attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates
 }
 
 // this function has become superfluous for SSA numbering (but for substituting uses with rhs of defs it is still necessary (2/2)
-void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode) {
+void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem) {
   if(arrayUpdates.size()==0)
     return;
   ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
@@ -486,6 +483,7 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
             SgNodeHelper::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            rewriteSystem.getRewriteStatisticsPtr()->numSSAVarReplace++;
             break;
           }
           case SAR_SSA: {
@@ -513,6 +511,7 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
             SgNodeHelper::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            rewriteSystem.getRewriteStatisticsPtr()->numSSAVarReplace++;
             break;
           }
           case SAR_SSA: {
@@ -529,6 +528,33 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
       }
     }
   }
+  // normalization phase
+  //RewriteSystem rewriteSystem2;
+  //int updSequPos=1;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    SgNode* node=exp;
+    bool ruleAddReorder=false;
+    bool ruleAlgebraic=true;
+    // only nodes that have not been replaced need to be rewritten
+    if(!(*i).mark) {
+      //cout<<"DEBUG: Rewrite phase 2 (not marked):"<<updSequPos++<<":"<<exp->unparseToString()<<endl;
+      rewriteSystem.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic);
+    }
+  }
+#if 0
+  std::ofstream fout;
+  fout.open("rewrite.dot");    // create new file/overwrite existing file
+  fout<<"digraph Rewrite {\n"<<endl;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    fout<<"//"<<exp->unparseToString()<<endl;
+    fout<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
+    //fout<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+  }
+  fout<<"}\n";
+  fout.close();    // close. Will be used with append.
+#endif
 }
 
 void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
@@ -553,289 +579,6 @@ string Specialization::iterVarsToString(IterationVariables iterationVars, Variab
     }
   }
   return ss.str();
-}
-
-ArrayElementAccessDataSet intersection(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSet& set2) {
-  ArrayElementAccessDataSet result;
-  for(ArrayElementAccessDataSet::iterator i=set1.begin();i!=set1.end();++i) {
-    if(set2.find(*i)!=set2.end())
-      result.insert(*i);
-  }
-  return result;
-}
-
-std::string arrayElementAccessDataSetToString(ArrayElementAccessDataSet& ds, VariableIdMapping* vim) {
-  std::stringstream ss;
-  for(ArrayElementAccessDataSet::iterator i=ds.begin();i!=ds.end();++i) {
-    if(i!=ds.begin())
-      ss<<", ";
-    ss<<(*i).toString(vim);
-  }
-  return ss.str();
-}
-
-std::string indexVectorToString(IndexVector iv) {
-  std::stringstream ss;
-  for(IndexVector::iterator i=iv.begin();i!=iv.end();++i) {
-    if(i!=iv.begin())
-      ss<<", ";
-    ss<<(*i);
-  }
-  return ss.str();
-}
-
-void Specialization::setCheckAllLoops(bool val) {
-  _checkAllLoops=val;
-}
-void Specialization::setCheckAllDataRaces(bool val) {
-  _checkAllDataRaces=val;
-}
-
-void Specialization::setVisualizeReadWriteAccesses(bool val) {
-  _visualizeReadWriteAccesses=val;
-}
-
-// returns the number of race conditions detected (0 or 1 as of now)
-int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
-  int cnt=0;
-  int errorCount=0;
-  stringstream ss;
-  cout<<"STATUS: checking race conditions."<<endl;
-  cout<<"INFO: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
-  
-  VariableIdSet allIterVars;
-  for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
-    allIterVars.insert((*lis).iterationVarId);
-  }
-  for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
-    if((*lis).iterationVarType==ITERVAR_PAR || _checkAllLoops) {
-      VariableId parVariable;
-      parVariable=(*lis).iterationVarId;
-      if(_checkAllLoops) {
-        cout<<"INFO: checking loop: "<<variableIdMapping->variableName(parVariable)<<endl;
-      } else {
-        cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
-      }
-
-      // race check
-      // intersect w-set_i = empty
-      // w-set_i intersect r-set_j = empty, i!=j.
-
-      IndexToReadWriteDataMap indexToReadWriteDataMap;
-      for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-        const EState* estate=(*i).first;
-        const PState* pstate=estate->pstate();
-        SgExpression* exp=(*i).second;
-        IndexVector index;
-        // use all vars for indexing or only outer+par loop variables
-#ifdef USE_ALL_ITER_VARS
-        for(VariableIdSet::iterator ol=allIterVars.begin();ol!=allIterVars.end();++ol) {
-          VariableId otherVarId=*ol;
-          ROSE_ASSERT(otherVarId.isValid());
-          if(!pstate->varValue(otherVarId).isTop()) {
-            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
-            index.push_back(otherIntVal);
-          }
-        }
-#else
-        for(VariableIdSet::iterator ol=(*lis).outerLoopsVarIds.begin();ol!=(*lis).outerLoopsVarIds.end();++ol) {
-          VariableId otherVarId=*ol;
-          ROSE_ASSERT(otherVarId.isValid());
-          if(!pstate->varValue(otherVarId).isTop()&&pstate->varValue(otherVarId).isConstInt()) {
-            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
-            index.push_back(otherIntVal);
-          }
-        }
-        if(!pstate->varValue(parVariable).isTop()&&pstate->varValue(parVariable).isConstInt()) {
-          int parIntVal=pstate->varValue(parVariable).getIntValue();
-          index.push_back(parIntVal);
-        }
-#endif
-        if((*lis).isInAssociatedLoop(estate)) {
-          SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
-          SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-          ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
-        
-          //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
-          // read-set
-          RoseAst rhsast(rhs);
-          for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
-            if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
-              j.skipChildrenOnForward();
-              ArrayElementAccessData access(useRef,variableIdMapping);
-              indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
-            } else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
-              ROSE_ASSERT(useRef);
-              j.skipChildrenOnForward();
-              VariableId varId=variableIdMapping->variableId(useRef);
-              indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
-            } else {
-              //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
-            }
-          }
-          if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
-            ArrayElementAccessData access(arr,variableIdMapping);
-            indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
-          } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
-            VariableId varId=variableIdMapping->variableId(var);
-            indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
-          } else {
-            cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
-            exit(1);
-          }
-        
-          ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
-          ++cnt;
-        }
-      } // array sequence iter
-
-      // to be utilized later for more detailed output
-#if 0
-      cout<<"DEBUG: indexToReadWriteDataMap size: "<<indexToReadWriteDataMap.size()<<endl;
-      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
-          imap!=indexToReadWriteDataMap.end();
-          ++imap) {
-        //        cout<<"DEBUG: INDEX: "<<(*imap).first<<" R-SET: ";
-        IndexVector index=(*imap).first;
-
-        cout<<"DEBUG: INDEX: ";
-        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
-          if(iv!=index.begin())
-            cout<<",";
-          cout<<*iv;
-        }
-        cout<<" R-SET: ";
-        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].readArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].readArrayAccessSet.end();++i) {
-          cout<<(*i).toString(variableIdMapping)<<" ";
-        }
-        cout<<endl;
-        cout<<"DEBUG: INDEX: ";
-        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
-          if(iv!=index.begin())
-            cout<<",";
-          cout<<*iv;
-        }
-        cout<<" W-SET: ";
-        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].writeArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].writeArrayAccessSet.end();++i) {
-          cout<<(*i).toString(variableIdMapping)<<" ";
-        }
-        cout<<endl;
-        cout<<"DEBUG: read-array-access:"<<indexToReadWriteDataMap[index].readArrayAccessSet.size()<<" read-var-access:"<<indexToReadWriteDataMap[index].readVarIdSet.size()<<endl;
-        cout<<"DEBUG: write-array-access:"<<indexToReadWriteDataMap[index].writeArrayAccessSet.size()<<" write-var-access:"<<indexToReadWriteDataMap[index].writeVarIdSet.size()<<endl;
-      } // imap
-#endif
-
-      // perform the check now
-      // 1) compute vector of index-vectors for each outer-var-vector
-      // 2) check each index-vector. For each iteration of each par-loop iteration then.
-      
-      //typedef set<int> ParVariableValueSet;
-      //ParVariableValueSet parVariableValueSet;
-      // MAP: par-variable-val -> vector of IndexVectors with this par-variable-val
-      typedef vector<IndexVector> ThreadVector;
-      typedef map<IndexVector,ThreadVector > CheckMapType;
-      CheckMapType checkMap;
-      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
-          imap!=indexToReadWriteDataMap.end();
-          ++imap) {
-        IndexVector index=(*imap).first;
-        IndexVector outVarIndex;
-        // if index.size()==0, it will analyze the loop independet of outer loops
-        if(index.size()>0) {
-          ROSE_ASSERT(index.size()>0);
-          for(size_t iv1=0;iv1<index.size()-1;iv1++) {
-            outVarIndex.push_back(index[iv1]);
-          }
-          ROSE_ASSERT(outVarIndex.size()<index.size());
-        } else {
-          // nothing to check
-          continue;
-        }
-        // last index of index of par-variable
-        //int parVariableValue=index[index.size()-1];
-        checkMap[outVarIndex].push_back(index);
-      }
-      //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
-      // perform the check now
-      ArrayElementAccessDataSet readWriteRaces;
-      ArrayElementAccessDataSet writeWriteRaces;
-      bool drdebug=false;
-      if(drdebug) cout<<"DEBUG: checkMap size: "<<checkMap.size()<<endl;
-      int parallelLoopIdx = 0;
-      for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
-        IndexVector outerVarIndexVector=(*miter).first;
-        if(drdebug) cout<<"DEBUG: outerVarIndexVector: "<<indexVectorToString(outerVarIndexVector)<<endl;
-        ThreadVector threadVectorToCheck=(*miter).second;
-        if(drdebug) cout<<"DEBUG: vector size to check: "<<threadVectorToCheck.size()<<endl;
-        for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
-          if(drdebug) cout<<"DEBUG: thread-vectors: tv1:"<<"["<<indexVectorToString(*tv1)<<"]"<<endl;
-          ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
-          if(drdebug) cout<<"DEBUG: tv1-wset:"<<wset.size()<<": "<<arrayElementAccessDataSetToString(wset,variableIdMapping)<<endl;
-          //for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
-          for(ThreadVector::iterator tv2=threadVectorToCheck.begin();tv2!=threadVectorToCheck.end();++tv2) {
-            if(tv2!=tv1) {
-            ThreadVector::iterator tv2b=tv2;
-            //++tv2b;
-            if(tv2b!=threadVectorToCheck.end()) {
-              if(drdebug) cout<<"thread-vectors: tv2b:"<<"["<<indexVectorToString(*tv2b)<<"]"<<endl;
-              ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
-              ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
-              // check intersect(rset,wset)
-              if(drdebug) cout<<"DEBUG: rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
-              if(drdebug) cout<<"DEBUG: wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
-	      ArrayElementAccessDataSet intersect = intersection(wset, rset2);
-              if(!intersect.empty()) {
-                // verification failed
-		readWriteRaces.insert(intersect.begin(), intersect.end());
-                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
-                errorCount++;
-		if (!_checkAllDataRaces) {
-		  if(_checkAllLoops) {
-		    goto continueCheck;
-		  } else {
-		    return errorCount;
-		  }
-		}
-              }
-	      intersect = intersection(wset, wset2); 
-              if(!intersect.empty()) {
-                // verification failed
-		writeWriteRaces.insert(intersect.begin(), intersect.end());
-                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
-                errorCount++;
-		if (!_checkAllDataRaces) {
-		  if(_checkAllLoops) {
-                    goto continueCheck;
-                  } else {
-                    return errorCount;
-                  }
-	        }
-              }
-            }
-            } // same-iter check
-          }
-          if(drdebug) cout<<"DEBUG: ------------------------"<<endl;
-        }
-      }
-      // a dot graph for visualizing reads and writes (including data races)
-      if (_visualizeReadWriteAccesses) {
-	string filename = "readWriteSetGraph" + boost::lexical_cast<string>(parallelLoopIdx) + ".dot";
-	Visualizer visualizer;
-	string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
-								readWriteRaces, writeWriteRaces, true, false, false);
-	write_file(filename, dotGraph);
-	cout << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
-      }
-      parallelLoopIdx++;
-    } // if parallel loop
-  continueCheck:;
-  } // foreach loop
-  if (errorCount == 0) {
-    cout<<"DATA RACE CHECK: PASS."<<endl;
-  } else {
-    cout<<"DATA RACE CHECK: FAIL."<<endl;
-  }
-  return errorCount;
 }
 
 void Specialization::writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {

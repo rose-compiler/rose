@@ -8,7 +8,6 @@ struct s
 
 int main()
 {
-  int i;
   int N;
   int d;
   struct s a;

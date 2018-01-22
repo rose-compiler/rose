@@ -3,6 +3,9 @@
 #include <rose.h>
 
 #include <BinaryNoOperation.h>
+#include <BinaryYicesSolver.h>
+#include <BinaryZ3Solver.h>
+#include <CommandLine.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
@@ -15,7 +18,6 @@
 #include <SymbolicSemantics2.h>
 #include <TestSemantics2.h>
 #include <TraceSemantics2.h>
-#include <YicesSolver.h>
 
 //=============================================================================================================================
 //                                      User-contributed semantics
@@ -64,7 +66,6 @@ struct Settings {
     std::string rstateClassName;                        // name of register state class, abbreviated
     std::string mstateClassName;                        // name of memory state class, abbreviated
     std::string opsClassName;                           // name of RiscOperators class, abbreviated
-    std::string solverName;                             // name of SMT solver
     bool trace;                                         // use TraceSemantics?
     bool showInitialValues;                             // show initial values in register states?
     bool showStates;                                    // show register and memory state after each instruction?
@@ -130,11 +131,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     ctl.name("ctl");
     ctl.doc("These switches control various operational characteristics of the instruction semantics framework. The "
             "applicability of some of these switches depends on the classes used to construct the framework.");
-
-    ctl.insert(Switch("solver")
-               .argument("name", anyParser(settings.solverName))
-               .doc("Enables use of an SMT solver of the specified class.  See \"@s{solver} list\" for the list of "
-                    "recognized names.\n"));
 
     ctl.insert(Switch("trace")
                .intrinsicValue(true, settings.trace)
@@ -252,21 +248,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     return parser.with(sem).with(ctl).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
-static SMTSolver *
+static SmtSolver *
 makeSolver(const Settings &settings) {
-    if (settings.solverName == "list") {
-        std::cout <<"SMT solver names:\n"
-                  <<"  yices            Rose::BinaryAnalysis::YicesSolver\n";
-        return NULL;
-    } else if (settings.solverName == "") {
-        return NULL;                                    // solvers are optional
-    } else if (settings.solverName == "yices") {
-        YicesSolver *solver = new YicesSolver;
-        solver->set_linkage(YicesSolver::LM_LIBRARY);
-        return solver;
-    } else {
-        throw std::runtime_error("unrecognized SMT solver name \"" + settings.solverName + "\"; see --solver=list\n");
-    }
+    return SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 }
 
 static BaseSemantics::SValuePtr
@@ -415,7 +399,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     if (className.empty())
         throw std::runtime_error("--semantics switch is required");
     
-    SMTSolver *solver = makeSolver(settings);
+    SmtSolver *solver = makeSolver(settings);
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
@@ -659,10 +643,6 @@ main(int argc, char *argv[]) {
 
     // Perhaps the user is only asking us to list available values for some switches
     bool listAndExit = false;
-    if (settings.solverName == "list") {
-        (void) makeSolver(settings);
-        listAndExit = true;
-    }
     if (settings.valueClassName == "list") {
         (void) makeProtoVal(settings);
         listAndExit = true;

@@ -69,7 +69,7 @@ RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, cons
 }
 
 std::string
-RiscOperators::register_name(const RegisterDescriptor &a) 
+RiscOperators::register_name(RegisterDescriptor a) 
 {
     BaseSemantics::StatePtr state = subdomain_->currentState();
     BaseSemantics::RegisterStatePtr regstate;
@@ -88,7 +88,7 @@ RiscOperators::before(const std::string &operator_name)
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const RegisterDescriptor &a)
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a)
 {
     checkSubdomain();
     linePrefix();
@@ -96,7 +96,7 @@ RiscOperators::before(const std::string &operator_name, const RegisterDescriptor
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
 {
     checkSubdomain();
     linePrefix();
@@ -104,7 +104,7 @@ RiscOperators::before(const std::string &operator_name, const RegisterDescriptor
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b,
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
                       const BaseSemantics::SValuePtr &c, size_t d)
 {
     checkSubdomain();
@@ -113,7 +113,7 @@ RiscOperators::before(const std::string &operator_name, const RegisterDescriptor
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b,
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
                       const BaseSemantics::SValuePtr &c, const BaseSemantics::SValuePtr &d)
 {
     checkSubdomain();
@@ -264,13 +264,13 @@ RiscOperators::protoval() const
 }
 
 void
-RiscOperators::solver(SMTSolver *s)
+RiscOperators::solver(SmtSolver *s)
 {
     checkSubdomain();
     subdomain_->solver(s);
 }
 
-SMTSolver *
+SmtSolver *
 RiscOperators::solver() const
 {
     checkSubdomain();
@@ -1149,7 +1149,7 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
+RiscOperators::readRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
 {
     before("readRegister", a, b);
     try {
@@ -1164,7 +1164,7 @@ RiscOperators::readRegister(const RegisterDescriptor &a, const BaseSemantics::SV
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::peekRegister(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
+RiscOperators::peekRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
 {
     before("peekRegister", a, b);
     try {
@@ -1179,7 +1179,7 @@ RiscOperators::peekRegister(const RegisterDescriptor &a, const BaseSemantics::SV
 }
 
 void
-RiscOperators::writeRegister(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
+RiscOperators::writeRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
 {
     before("writeRegister", a, b);
     try {
@@ -1195,7 +1195,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &a, const BaseSemantics::S
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
+RiscOperators::readMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
                           const BaseSemantics::SValuePtr &d)
 {
     before("readMemory", a, b, c, d);
@@ -1211,7 +1211,7 @@ RiscOperators::readMemory(const RegisterDescriptor &a, const BaseSemantics::SVal
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
+RiscOperators::writeMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
                            const BaseSemantics::SValuePtr &d)
 {
     before("writeMemory", a, b, c, d);

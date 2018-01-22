@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# Use git-blame to count how many lines are modified by each author, and
+# print the results in a table.
+
+arg0="${0#**/}"
+
+usage() {
+    echo "usage: $arg0 FILES_OR_DIRS..."
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+	-h|--help)
+	    usage
+	    exit 0
+	    ;;
+	-*)
+	    echo "$arg0: unrecognized switch: $1" >&2
+	    usage >&2
+	    exit 1
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+if [ "$#" -eq 0 ]; then
+    usage >&2
+    exit 1
+fi
+
+# Author emails and names both change over time or location,
+# such as <dquinlan@llnl.gov> vs. <quinlan1@llnl.gov>, and
+# "Robb Matzke" vs. "Robb P. Matzke". It's easier to parse
+# emails, so we use them instead of names.  The domain part
+# of the email is dropped because it varies too much.
+email_to_name() {
+    while read email; do
+	case "$email" in
+	    # email addresses       ---  Name (at most two words)
+	    too1|justin|doubleotoo) echo "Justin Too" ;;
+	    schordan*)              echo "Markus Schordan" ;;
+	    lin32|phlin|peihung*)   echo "Pei-Hung Lin" ;;
+	    *quinlan*)  	    echo "Dan Quinlan" ;;
+	    *matzke*)   	    echo "Robb Matzke" ;;
+	    liao*|chunhualiao)      echo "Chunhua Liao" ;;
+	    rasmus*)   	     	    echo "Craig Rasmussen" ;;
+	    peter|peterp|*pirkelb*) echo "Peter Pirkelbauer" ;;
+	    willcock*) 	     	    echo "Initial-commit (willcock)" ;;
+	    *vulov*)                echo "George Vulov" ;;
+	    *saebjornsen*|*saebjoernsen*) echo "Andreas Saebjornsen" ;;
+	    *vanderbrug*)           echo "Tristan Vanderbruggen" ;;
+	    panas*)                 echo "Thomas Panas" ;;
+	    *hoffman*)              echo "Bill Hoffman" ;;
+	    *galbreath*)            echo "Zach Galbreath" ;;
+	    horie)                  echo "Michihiro Horie" ;;
+	    cfc)                    echo "Cory Cohen" ;;
+	    hudson-rose)            echo "hudson-rose (bot)" ;;
+	    # This must be last
+	    *)                      echo "$email" ;;
+	esac
+    done
+}
+
+nlines=$(git ls-tree -r --name-only -z HEAD "$@" |xargs -0 cat |wc -l)
+echo "total lines: $nlines" >&2
+
+git ls-tree -r --name-only -z HEAD "$@" |\
+    xargs -0 -n1 -r git blame --line-porcelain |\
+    sed -n '/^author-mail/ s/.*<\(.*\)>.*/\1/p' |\
+    cut -d@ -f1 |\
+    email_to_name |\
+    sort |\
+    uniq -c |\
+    sort -nr |\
+    awk -v nlines=$nlines 'START {rank=0} {printf "#%-3d %6.2f%% %8d %s %s\n", ++rank, 100*$1/nlines, $1, $2, $3}'
+

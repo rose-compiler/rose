@@ -1,6 +1,7 @@
 #ifndef RSIM_CloneDetection_H
 #define RSIM_CloneDetection_H
 
+#include "BinarySmtSolver.h"
 #include "Disassembler.h"
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
@@ -9,7 +10,6 @@
 #include "Combinatorics.h"
 #include "Map.h"
 #include "SymbolicSemantics.h"
-#include "SMTSolver.h"
 
 #include "compute_signature_vector.h"
 
@@ -947,7 +947,7 @@ public:
 
     State state_;
 
-    PointerDetector(const InstructionProvidor*, Rose::BinaryAnalysis::SMTSolver*) {}
+    PointerDetector(const InstructionProvidor*, Rose::BinaryAnalysis::SmtSolver*) {}
 
     bool is_pointer(const SymbolicSemantics::ValueType<32>& addr) const {
         return false;
@@ -2107,12 +2107,12 @@ public:
     // Track register access
     template<size_t nBits>
     ValueType<nBits> readRegister(const char *regname) {
-        const RegisterDescriptor &reg = this->findRegister(regname, nBits);
+        RegisterDescriptor reg = this->findRegister(regname, nBits);
         return this->template readRegister<nBits>(reg);
     }
 
     template<size_t nBits>
-    ValueType<nBits> readRegister(const RegisterDescriptor &reg) {
+    ValueType<nBits> readRegister(RegisterDescriptor reg) {
         // If we're reading the EAX register since the last return from a function call and before we write to EAX, then
         // that function must have returned a value.
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !stack_frames.empty()) {
@@ -2342,12 +2342,12 @@ public:
 
     template<size_t nBits>
     void writeRegister(const char *regname, const ValueType<nBits> &value) {
-        const RegisterDescriptor &reg = this->findRegister(regname, nBits);
+        RegisterDescriptor reg = this->findRegister(regname, nBits);
         this->template writeRegister(reg, value);
     }
 
     template<size_t nBits>
-    void writeRegister(const RegisterDescriptor &reg, ValueType<nBits> value, unsigned update_access=HAS_BEEN_WRITTEN) {
+    void writeRegister(RegisterDescriptor reg, ValueType<nBits> value, unsigned update_access=HAS_BEEN_WRITTEN) {
         // Some operations produce undefined values according to the x86 ISA specification. For example, certain flag bits are
         // sometimes unspecified, as is the result of certain kinds of shift operations when the shift amount is large. In
         // order to stay in the concrete domain, we always choose a value of zero when this happens.

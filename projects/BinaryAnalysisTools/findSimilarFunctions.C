@@ -1,5 +1,6 @@
 #include <rose.h>
 
+#include <CommandLine.h>
 #include <Disassembler.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <EditDistance/LinearEditDistance.h>
@@ -418,9 +419,9 @@ main(int argc, char *argv[]) {
     // Parse command-line
     P2::Engine engine;
     Settings settings;
-    CommandlineProcessing::genericSwitchArgs.threads = 0; // we want multi-threading by default
+    Rose::CommandLine::genericSwitchArgs.threads = 0; // we want multi-threading by default
     std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, engine, settings);
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
     

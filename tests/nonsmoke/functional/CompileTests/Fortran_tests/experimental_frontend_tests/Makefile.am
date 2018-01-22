@@ -11,7 +11,6 @@ VALGRIND =
 # bin_PROGRAMS = traverse
 # traverse_SOURCES = traverse.cpp
 
-# ATERM_ROOT = /home/dquinlan/bin/aterm-2.5-install-64bit
 ATERM_ROOT = $(ATERM_INSTALL_PATH)
 ATERM_INCLUDE = -I$(ATERM_ROOT)/include
 AM_CPPFLAGS = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse $(ROSE_INCLUDES) $(ATERM_INCLUDE)
@@ -22,22 +21,29 @@ LDADD    = $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran
 # F90_TESTCODES = main_program_2008_01.f90 main_program_2014_01.f90
 # F90_TESTCODES = test2014_02.f90
 F90_TESTCODES = \
- R1101c.f90
-
-F90_TESTCODES_WORKING_ON = \
+ tiny.f90   \
  R1101a.f90 \
  R1101b.f90 \
+ R1101c.f90 \
  R1101d.f90 \
  R1101e.f90 \
  R1101f.f90 \
  R1101g.f90 \
+ R1120a.f90 \
+ R854.f90   \
+ R856.f90   \
+ test2014_02.f90
+
+F2015_TESTCODES_WORKING_ON = \
+ R507-F2015-N2007.f90 \
+ R511-F2015-N2007.f90
+
+F90_TESTCODES_WORKING_ON = \
  R404.f90   \
- test2014_02.f90 \
- tiny.f90 \
  R1001.f90 \
  R1109.f90 \
  R1111.f90 \
- R1120a.f90 \
+ R1120b.f90 \
  R1201.f90 \
  R1203.f90 \
  R1204.f90 \
@@ -78,8 +84,6 @@ F90_TESTCODES_WORKING_ON = \
  R851.f90 \
  R852.f90 \
  R853.f90 \
- R854.f90 \
- R856.f90 \
  R902.f90 \
  R904.f90 \
  R905.f90 \
@@ -103,6 +107,7 @@ FAILING_TESTS = \
 
 NON_FORTRAN_FAILING_TESTS = \
    R1116.fxx \
+   R1118.fxx \
    R1220.fxx \
    R1237.fxx \
    R426.fxx \

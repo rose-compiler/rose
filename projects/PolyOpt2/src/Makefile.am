@@ -37,6 +37,9 @@ INCLUDES		=						\
 	-I$(POCC_INSTALL)/math/install-piplib-hybrid/include		\
 	-I$(POCC_INSTALL)/math/install-piplib/include			\
 	-I$(POCC_INSTALL)/math/install-polylib/include			\
+	-I$(POCC_INSTALL)/math/install-isl/include			\
+	-I$(POCC_INSTALL)/math/install-barvinok/include			\
+	-I$(POCC_INSTALL)/math/install-ntl-6.2.0/include		\
 	-I$(POCC_INSTALL)/math/install-fm/include			\
 	-I$(top_srcdir)							\
 	-I$(top_srcdir)/polyopt/include					\
@@ -66,6 +69,9 @@ INCLUDES		=						\
 	-I$(top_srcdir)/pocc/math/install-piplib-hybrid/include		\
 	-I$(top_srcdir)/pocc/math/install-piplib/include		\
 	-I$(top_srcdir)/pocc/math/install-polylib/include		\
+	-I$(top_srcdir)/pocc/math/install-isl/include			\
+	-I$(top_srcdir)/pocc/math/install-barvinok/include		\
+	-I$(top_srcdir)/pocc/math/install-ntl-6.2.0/include		\
 	-I$(top_srcdir)/pocc/math/install-fm/include			\
 	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 

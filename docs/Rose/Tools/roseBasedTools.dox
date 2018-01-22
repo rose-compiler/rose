@@ -208,6 +208,10 @@
  *     <td>A low-level tool that reports addresses of functions. This is part of a work flow to find the best address at which
  *     to map non-PIC code.
  *
+ * <tr><td>xml2json                     <td>ROSE
+ *     <td>Translates the XML produced by @c boost::serialization to JSON and is able to handle XML inputs that are many
+ *     gigabytes.
+ *
  * </table>
  *
  *  This page is generated from $ROSE/docs/Rose/Tools/roseBasedTools.dox */

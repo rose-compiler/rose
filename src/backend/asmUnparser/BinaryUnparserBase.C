@@ -1,7 +1,9 @@
 #include <sage3basic.h>
 #include <BinaryUnparserBase.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
+#include <stringify.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -250,7 +252,8 @@ Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
-
+    using namespace Rose::CommandLine;
+    
     SwitchGroup sg("Unparsing switches");
     sg.name("out");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
@@ -819,8 +822,16 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
         if (current != functions.end())
             functions.erase(current);
         BOOST_FOREACH (P2::Function::Ptr function, functions)
-            out <<"\t;; block owned by " <<function->printableName() <<"\n";
+            out <<"\t;; block also owned by " <<function->printableName() <<"\n";
     }
+}
+
+static std::string
+edgeTypeName(const P2::EdgeType &edgeType) {
+    std::string retval = stringifyBinaryAnalysisPartitioner2EdgeType(edgeType, "E_");
+    BOOST_FOREACH (char &ch, retval)
+        ch = '_' == ch ? ' ' : tolower(ch);
+    return retval;
 }
 
 void
@@ -841,17 +852,17 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
                         rose_addr_t insnVa = pred->value().bblock()->instructions().back()->get_address();
                         std::string s = "instruction " + StringUtility::addrToString(insnVa) +
                                         " from " + pred->value().bblock()->printableName();
-                        preds.insert(insnVa, s);
+                        preds.insert(insnVa, edgeTypeName(edge.value().type()) + " edge from " + s);
                     } else {
                         std::ostringstream ss;
                         state.frontUnparser().emitAddress(ss, pred->value().address(), state);
-                        preds.insert(pred->value().address(), ss.str());
+                        preds.insert(pred->value().address(), edgeTypeName(edge.value().type()) + " edge from " + ss.str());
                     }
                     break;
                 case P2::V_USER_DEFINED: {
                     std::ostringstream ss;
                     state.frontUnparser().emitAddress(ss, pred->value().address(), state);
-                    preds.insert(pred->value().address(), ss.str());
+                    preds.insert(pred->value().address(), edgeTypeName(edge.value().type()) + " edge from " + ss.str());
                     break;
                 }
                 case P2::V_NONEXISTING:
@@ -878,16 +889,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
 
         // Real successors
         BOOST_FOREACH (const P2::BasicBlock::Successor &succ, succs) {
-            std::string s;
-            switch (succ.type()) {
-                case P2::E_CALL_RETURN:     s = "call return to ";  break;
-                case P2::E_FUNCTION_CALL:   s = "call to ";         break;
-                case P2::E_FUNCTION_XFER:   s = "xfer to ";         break;
-                case P2::E_FUNCTION_RETURN: s = "return to ";       break;
-                case P2::E_NORMAL:                                  break;
-                case P2::E_USER_DEFINED:    s = "user-defined to "; break;
-                default: ASSERT_not_implemented("basic block successor type");
-            }
+            std::string s = edgeTypeName(succ.type()) + " edge to ";
             ASSERT_not_null(succ.expr());
             SymbolicExpr::Ptr expr = succ.expr()->get_expression();
             if (expr->isNumber() && expr->nBits() <= 64) {
@@ -1320,7 +1322,7 @@ Base::emitUnsignedInteger(std::ostream &out, const Sawyer::Container::BitVector 
 }
 
 void
-Base::emitRegister(std::ostream &out, const RegisterDescriptor &reg, State &state) const {
+Base::emitRegister(std::ostream &out, RegisterDescriptor reg, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitRegister(out, reg, state);
     } else {

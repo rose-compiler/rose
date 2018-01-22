@@ -288,7 +288,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
 isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
-               const BaseSemantics::SValuePtr &initialStackPointer, SMTSolver *solver) {
+               const BaseSemantics::SValuePtr &initialStackPointer, SmtSolver *solver) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     if (!initialStackPointer)
@@ -328,7 +328,7 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     ASSERT_not_null(initialStackPointer);
     BaseSemantics::StatePtr state = ops->currentState();
     ASSERT_not_null(state);
-    SMTSolver *solver = ops->solver();                  // might be null
+    SmtSolver *solver = ops->solver();                  // might be null
 
     // What is the word size for this architecture?  We'll assume the word size is the same as the width of the stack pointer,
     // whose value we have in initialStackPointer.
@@ -514,7 +514,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 #endif
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
-            BOOST_FOREACH (const RegisterDescriptor &reg, ccAnalysis.outputRegisters().listAll(regDict)) {
+            BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
                 ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
                 if (genericRegState)
                     genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
@@ -535,7 +535,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
                 }
             }
-            BOOST_FOREACH (const RegisterDescriptor &reg, defaultCallingConvention_->scratchRegisters()) {
+            BOOST_FOREACH (RegisterDescriptor reg, defaultCallingConvention_->scratchRegisters()) {
                 if (reg != STACK_POINTER_REG) {
                     ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
                     if (genericRegState)

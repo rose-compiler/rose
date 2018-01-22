@@ -9,12 +9,37 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += CxxFrontend
 endif
 
+# Rasmussen (01/21/2018): Adding general support for experimental languages
+if ROSE_BUILD_ATERM_SUPPORT
+   SUBDIRS += Experimental_General_Language_Support
+endif
+
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += OpenFortranParser_SAGE_Connection
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    SUBDIRS += Experimental_OpenFortranParser_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+   SUBDIRS += Experimental_Csharp_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+   SUBDIRS += Experimental_Ada_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+   SUBDIRS += Experimental_Jovial_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+   SUBDIRS += Experimental_Cobol_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+   SUBDIRS += Experimental_Matlab_ROSE_Connection
 endif
 
 
@@ -29,10 +54,6 @@ endif
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
 endif
-
-# if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-#    SUBDIRS += MatlabFrontend
-# endif
 
 SUBDIRS += DLX
 

@@ -1,0 +1,9 @@
+ * unless #pragma omp taskwait is used in the end
+#pragma omp critical 
+#pragma omp task 
+#pragma omp task 
+//#pragma omp taskwait     
+//#pragma omp parallel  
+//#pragma omp parallel sections
+#pragma omp parallel 
+#pragma omp single 

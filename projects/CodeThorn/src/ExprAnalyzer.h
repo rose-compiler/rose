@@ -65,7 +65,7 @@ class ExprAnalyzer {
   //! true-case the other one representing the false-case.
   //! When the option useConstraints is set to false constraints are not used when determining the
   //! values of top-variables. 
-  list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, bool useConstraints);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
 
   void setSkipSelectedFunctionCalls(bool skip);
@@ -200,6 +200,9 @@ class ExprAnalyzer {
                                             SingleEvalResultConstInt operandResult, 
                                             EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalDereferenceOp(SgPointerDerefExp* node, 
+                                                   SingleEvalResultConstInt operandResult, 
+                                                   EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 

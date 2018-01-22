@@ -4,8 +4,8 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 #include "RSIM_Linux32.h"
+#include "BinaryYicesSolver.h"
 #include "SymbolicSemantics.h"
-#include "YicesSolver.h"
 #include "BinaryPointerDetection.h"
 
 using namespace Rose::BinaryAnalysis;
@@ -264,7 +264,7 @@ public:
                 }
 
                 // Do one pointer analysis
-                Rose::BinaryAnalysis::SMTSolver *solver = NULL;
+                Rose::BinaryAnalysis::SmtSolver *solver = NULL;
                 PointerDetector ptr_detector(args.thread->get_process(), solver);
                 ptr_detector.analyze(analysis_addr, addrspc);
                 const PointerDetector::Pointers &pointers = ptr_detector.get_pointers();

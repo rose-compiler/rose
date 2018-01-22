@@ -6,6 +6,7 @@
 #include "AsmUnparser_compat.h"
 #include "SymbolicSemantics2.h"
 #include "PartialSymbolicSemantics2.h"
+#include "CommandLine.h"
 #include "DispatcherX86.h"
 #include "Disassembler.h"
 #include "Diagnostics.h"
@@ -114,7 +115,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
@@ -173,7 +174,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         using namespace Rose::BinaryAnalysis;
         using namespace Rose::BinaryAnalysis::InstructionSemantics2;
         using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(insns.front());
         ASSERT_not_null(x86insn);
 #if 1 // [Robb P. Matzke 2015-03-03]: FIXME[Robb P. Matzke 2015-03-03]: not ready yet; x86-64 semantics still under construction

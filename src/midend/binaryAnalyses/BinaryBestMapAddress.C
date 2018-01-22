@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <BinaryBestMapAddress.h>
+#include <CommandLine.h>
 #include <integerOps.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/ProgressBar.h>
@@ -87,10 +88,11 @@ struct Task {
 // Describes *how* the worker does its job
 struct Worker {
     BestMapAddress *self;
-    Sawyer::ProgressBar<size_t> &progress;
+    Progress::Ptr progress;
+    Sawyer::ProgressBar<size_t> &progressBar;
 
-    Worker(BestMapAddress *self, Sawyer::ProgressBar<size_t> &progress)
-        : self(self), progress(progress) {}
+    Worker(BestMapAddress *self, const Progress::Ptr &progress, Sawyer::ProgressBar<size_t> &progressBar)
+        : self(self), progress(progress), progressBar(progressBar) {}
 
     void operator()(size_t taskId, const Task &task) {
         const rose_addr_t mask = IntegerOps::genMask<rose_addr_t>(self->nBits());
@@ -100,7 +102,9 @@ struct Worker {
                 ++nMatches;
         }
         task.result = nMatches;
-        ++progress;
+        ++progressBar;
+        if (progress)
+            progress->update(progressBar.ratio());
     }
 };
 
@@ -127,8 +131,8 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
     Sawyer::Container::Graph<Task> tasks;
     for (size_t i=0; i<deltas.size(); ++i)
         tasks.insertVertex(Task(deltas[i], nMatches[i]));
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, Worker(this, progress));
+    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH]);
+    Sawyer::workInParallel(tasks, Rose::CommandLine::genericSwitchArgs.threads, Worker(this, progress_, progressBar));
 
     // Sort and cache the results by number of matches.
     upToDate_ = false;

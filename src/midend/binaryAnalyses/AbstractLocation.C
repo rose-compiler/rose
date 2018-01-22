@@ -5,7 +5,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 bool
-AbstractLocation::mayAlias(const AbstractLocation &other, SMTSolver *solver) const {
+AbstractLocation::mayAlias(const AbstractLocation &other, SmtSolver *solver) const {
     if (isRegister() && other.isRegister()) {
         return reg_ == other.reg_;
     } else if (isAddress() && other.isAddress()) {
@@ -18,7 +18,7 @@ AbstractLocation::mayAlias(const AbstractLocation &other, SMTSolver *solver) con
 }
 
 bool
-AbstractLocation::mustAlias(const AbstractLocation &other, SMTSolver *solver) const {
+AbstractLocation::mustAlias(const AbstractLocation &other, SmtSolver *solver) const {
     if (isRegister() && other.isRegister()) {
         return reg_ == other.reg_;
     } else if (isAddress() && other.isAddress()) {

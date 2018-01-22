@@ -28,7 +28,7 @@
 #include <rose.h>
 
 #include <polyopt/PolyRoseOptions.hpp>
-
+#include <polyopt/PolyOptISLRepresentation.hpp>
 
 
 /******************************************************************************/
@@ -49,6 +49,30 @@ int PolyOptOptimizeProject(SgProject* project, PolyRoseOptions& polyoptions);
  */
 int PolyOptOptimizeSubTree(SgNode* root, PolyRoseOptions& polyoptions);
 
+/**
+ * Recognize if a sub-tree meets polyhedral restrictions.
+ *
+ *
+ */
+std::vector<std::pair<SgNode*,scoplib_scop_p> >
+PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions);
+
+
+/**
+ * Translate a SCoP into ISL format.
+ *
+ *
+ */
+PolyOptISLRepresentation
+PolyOptConvertScopToISL(scoplib_scop_p scop);
+
+/**
+ * Cleans the function (n, or the one enclosing n) from useless variable 
+ * declarations.
+ *
+ */
+void
+PolyOptCleanUselessVariableDeclarations(SgNode* n);
 
 
 

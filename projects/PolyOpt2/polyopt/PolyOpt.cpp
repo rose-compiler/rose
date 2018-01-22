@@ -67,6 +67,7 @@
 #include <polyopt/PolyRoseOptions.hpp>
 #include <polyopt/SageNodeAnnotation.hpp>
 #include <polyopt/PastToSageGeneric.hpp>
+#include <polyopt/PolyOptISLRepresentation.hpp>
 
 
 void optimizeSingleScop(scoplib_scop_p scoplibScop,
@@ -185,7 +186,7 @@ static void cleanOutlineOutput(std::vector<SgFunctionDeclaration*>& vecDecl)
 		      (isSgExpression(*j), SageBuilder::buildVarRefExp(decl), true);
 		}
 	    }
-	  
+
 	  // 3- insert copy-out *s = _s at the end of the function.
 	  SgStatement* stmt =
 	    SageBuilder::buildAssignStatement
@@ -462,6 +463,53 @@ int PolyOptOptimizeSubTree(SgNode* root, PolyRoseOptions& polyoptions)
 
 
   return EXIT_SUCCESS;
+}
+
+
+
+/**
+ * Transform a sub-tree using Polyhedral techniques.
+ *
+ *
+ */
+std::vector<std::pair<SgNode*,scoplib_scop_p> >
+PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions)
+{
+  if (polyoptions.isVerbose())
+    std::cout <<
+      "[PolyOpt] INFO: pass-thru compilation, no optimization enabled\n";
+
+  // 1- Extract Scops from source tree.
+  ScopExtractor extractor (polyoptions);
+  extractor.extractScops(root);
+  std::vector<scoplib_scop_p> scops = extractor.getScoplibs();
+
+  if (! polyoptions.getQuiet())
+    std::cout << "[PolyOpt] Number of SCoPs: " << scops.size() << std::endl;
+  std::vector<scoplib_scop_p>::const_iterator sage_scop_iterator;
+  // 2- Iterate on each scop, form the result.
+  std::vector<std::pair<SgNode*, scoplib_scop_p> > ret;
+  for (sage_scop_iterator = scops.begin (); sage_scop_iterator != scops.end ();
+       ++sage_scop_iterator)
+    ret.push_back (std::pair<SgNode*,scoplib_scop_p>
+		   ((SgNode*)((*sage_scop_iterator)->usr), *sage_scop_iterator));
+
+  return ret;
+}
+
+
+/**
+ * Transform a sub-tree using Polyhedral techniques.
+ *
+ *
+ */
+PolyOptISLRepresentation
+PolyOptConvertScopToISL(scoplib_scop_p scop)
+{
+  PolyOptISLRepresentation ret;
+  ret.convertScoplibToISL (scop);
+
+  return ret;
 }
 
 
@@ -1030,6 +1078,45 @@ erasePlutoFiles()
 }
 
 /**
+ * Cleans the function (n, or the one enclosing n) from useless variable 
+ * declarations.
+ *
+ */
+void
+PolyOptCleanUselessVariableDeclarations(SgNode* n)
+{
+  if (! isSgFunctionDeclaration(n))
+    n = SageInterface::getEnclosingNode<SgFunctionDeclaration>(n);
+  ROSE_ASSERT(n);
+  std::vector<SgNode*> vardecls =
+    NodeQuery::querySubTree(n, V_SgVariableDeclaration);
+  std::vector<SgNode*> varrefs =
+    NodeQuery::querySubTree(n, V_SgVarRefExp);
+
+  std::set<SgName> allsymbs;
+  for (std::vector<SgNode*>::iterator i = varrefs.begin();
+       i != varrefs.end(); ++i)
+    {
+      SgVarRefExp* ref = isSgVarRefExp(*i);
+      allsymbs.insert(ref->get_symbol()->get_name());
+    }
+  
+  for (std::vector<SgNode*>::iterator i = vardecls.begin();
+       i != vardecls.end(); ++i)
+    {
+      SgVariableDeclaration* vd = isSgVariableDeclaration(*i);
+      SgName name = vd->get_definition()->get_vardefn()->get_qualified_name();
+      std::set<SgName>::iterator j;
+      for (j = allsymbs.begin(); j != allsymbs.end(); ++j)
+	if (! strcmp ((*j).str(), name.str()))
+	  break;
+      if (j == allsymbs.end())
+	SageInterface::removeStatement(isSgStatement(*i));
+    }
+}
+
+
+/**
  * Helper. Process a single scop with PoCC.
  *
  */
@@ -1095,7 +1182,7 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
 	    SageInterface::getEnclosingNode<SgFunctionDeclaration> (scopRoot);
 	  std::string basefuncname = fundecl->get_name();
 	  std::ostringstream ss;
-	  ss << scopId;	  
+	  ss << scopId;
 	  std::string fname_orig = basefuncname + "scop_" + ss.str()
 	    + std::string("_orig");
 	  std::string fname_transfo = basefuncname + "scop_" + ss.str()
@@ -1136,7 +1223,7 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
 	    std::cout << "[PolyOpt] Created new file " << newfilename
 	  	      << " with functions " << fname_orig << "() and " << fname_transfo
 	  	      << "()" << std::endl;
-	  
+
 	  // Be clean.
 	  past_deep_free (pastRoot);
 	}
@@ -1144,6 +1231,7 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
 	{
 	  // Default mode, replace the original AST by the transformed one.
 	  SageInterface::replaceStatement(scopRoot, sageScop.getBasicBlock(), true);
+	  PolyOptCleanUselessVariableDeclarations(sageScop.getBasicBlock());
 	  past_deep_free (pastRoot);
 	}
 
@@ -1176,7 +1264,7 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
 
 int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int tileArg3)
 {
-  
+
   ROSE_ASSERT(forStmt);
   FILE* tileFile;
   tileFile = fopen("tile.sizes", "w");

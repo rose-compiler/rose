@@ -34,7 +34,7 @@ endif
 
 endif
 
-# DQ (10/21/2016): Change order of tests (Utility directory tess shuld go after langauge tests).
+# DQ (10/21/2016): Change order of tests (Utility directory test should go after language tests).
 ########################################################################################################################
 # Utility functions
 
@@ -176,8 +176,17 @@ endif
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 # AM_CPPFLAGS = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) --Wl,--no-undefined
+# AM_LDFLAGS  = $(ROSE_RPATHS)
+# AM_LDFLAGS  = $(ROSE_RPATHS) --Wl,--no-undefined
+
+# DQ (11/15/2017): Mac OSX can't take the -Wl,--no-undefined as a linker option.
+# AM_LDFLAGS  = $(ROSE_RPATHS) -Wl,--no-undefined
 AM_LDFLAGS  = $(ROSE_RPATHS)
+
 LDADD       = $(ROSE_LIBS)
+# LDADD       = $(ROSE_LIBS) --Wl,--no-undefined
+# LDADD       = $(ROSE_LIBS) --no-undefined
 
 testAtermGraphGeneration_LDADD = $(ROSE_LIBS)
 

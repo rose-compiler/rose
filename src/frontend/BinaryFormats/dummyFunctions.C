@@ -174,7 +174,7 @@ std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iref_typ
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iord_type    & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iname_type   & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::osfixup_type & x ) { return os; }
-std::ostream & operator<< ( std::ostream & os, const RegisterDescriptor & x ) { return os; }
+std::ostream & operator<< ( std::ostream & os, RegisterDescriptor ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const rose_rva_t & x ) { return os; }
 std::ostream& operator<<(std::ostream &os, const AddressIntervalSet&) { return os; }
 

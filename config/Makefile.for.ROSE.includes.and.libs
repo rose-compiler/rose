@@ -52,13 +52,19 @@ if ROSE_USE_SQLITE_DATABASE
    ROSE_SIDEEFFECT_INCLUDE						 = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
 endif
 
-if USE_Z3
+if ROSE_HAVE_LIBZ3
   Z3_LIB_NAME = z3
   Z3_LIB_FILE = lib$(Z3_LIB_NAME).so
   Z3_LIBS = -l$(Z3_LIB_NAME)
 
   Z3_INCLUDES = -I$(Z3_PREFIX)/include
   Z3_LIB_INCLUDES = -L$(Z3_PREFIX)/lib
+
+  # The previous "Z3_*" variables should have been named "ROSE_Z3_*" following the pattern in the rest of this
+  # makefile. I don't want to break code that uses the wrong names, so I'll just add the correct ones. [Matzke 2017-10-17]
+  ROSE_Z3_INCLUDES = -I@ROSE_Z3_PREFIX@/include
+  ROSE_Z3_LIBS = -lz3
+  ROSE_Z3_LIBS_WITH_PATH = -L@ROSE_Z3_PREFIX@/lib -lz3
 endif
 
 # This is properly handled by automake even when specified in an include file
@@ -124,6 +130,13 @@ if ROSE_HAVE_LIBMAGIC
   ROSE_LIBMAGIC_LIBS_WITH_PATH = -L@ROSE_LIBMAGIC_PREFIX@/lib -lmagic
 endif
 
+# PostgreSQL C++ API
+if ROSE_HAVE_LIBPQXX
+  ROSE_LIBPQXX_INCLUDES = -I@ROSE_LIBPQXX_PREFIX@/include
+  ROSE_LIBPQXX_LIBS = -lpqxx -lpq
+  ROSE_LIBPQXX_LIBS_WITH_PATH = -L@ROSE_LIBPQXX_PREFIX@/lib -lpqxx -lpq
+endif
+
 # Math algorithms from http://dlib.net. This is a headers-only library neede by some binary analyses.
 if ROSE_HAVE_DLIB
   ROSE_DLIB_INCLUDES = -I@DLIB_PREFIX@
@@ -143,6 +156,12 @@ GLUT_LIBS = ${glut_path}
 if ROSE_HAVE_LIBELF
   ROSE_ELF_INCLUDES = @LIBELF_CPPFLAGS@
   ROSE_ELF_LIBS_WITH_PATH = @LIBELF_LDFLAGS@
+endif
+
+# ROSE gcrypt support (for things like md5, sha1, etc)
+if ROSE_HAVE_LIBGCRYPT
+  ROSE_GCRYPT_INCLUDES = @LIBGCRYPT_CPPFLAGS@
+  ROSE_GCRYPT_LIBS_WITH_PATH = @LIBGCRYPT_LDFLAGS@
 endif
 
 # ROSE-DWARF libdwarf support
@@ -237,10 +256,25 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = 
 endif
 
+# DQ (5/9/2017): Adding Ada library support.
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+# ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
+  ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
+  ROSE_ADA_LIBS = -ldot_asis
+  ROSE_ADA_LIBS_WITH_PATH = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib/libdot_asis.so
+endif
+
+# RASMUSSEN (10/24/2017): Adding the GnuCOBOL parse-tree library support.
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+  ROSE_COBOL_PT_LIBS_WITH_PATH = -L$(COBPT_LIBRARY_PATH) -lcob -lcobpt
+endif
+
 # DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
 if USING_INTEL_COMPILER
 #  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
-ROSE_INTEL_COMPILER_MATH_LIBS =
+# DQ (11/16/2017): We need to link in these Intel specific required libraries to avoid: error hidden symbol `__intel_cpu_features_init_x'
+# ROSE_INTEL_COMPILER_MATH_LIBS =
+ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lirng -lintlc -lsvml
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
 endif
@@ -288,6 +322,8 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -347,6 +383,8 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -423,10 +461,13 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_PHP_INCLUDES) \
      $(ROSE_PYTHON_INCLUDES) \
      $(ROSE_YICES_INCLUDES) \
+     $(ROSE_Z3_INCLUDES) \
      $(ROSE_YAML_INCLUDES) \
+     $(ROSE_LIBPQXX_INCLUDES) \
      $(ROSE_READLINE_INCLUDES) \
      $(ROSE_LIBMAGIC_INCLUDES) \
      $(ROSE_DLIB_INCLUDES) \
+     $(ROSE_GCRYPT_INCLUDES) \
      $(ROSE_ELF_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
      $(ROSE_WINE_INCLUDES) \
@@ -437,6 +478,10 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(INTEL_PIN_INCLUDE_PATHS) \
      $(ROSE_ETHER_INCLUDE) \
      $(ROSE_ATERM_INCLUDE) \
+     $(ROSE_CSHARP_INCLUDES) \
+     $(ROSE_ADA_INCLUDES) \
+     $(ROSE_JOVIAL_INCLUDES) \
+     $(ROSE_COBOL_INCLUDES) \
      $(BOOST_CPPFLAGS)
 endif
 
@@ -489,18 +534,20 @@ ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 # boost libs list in ROSE an in the ROSTTA Makefiles.
 ROSE_BOOST_LIBS=$(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_CHRONO_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
-  $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
+  $(BOOST_RANDOM_LIB) $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
   $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
 
 ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
   $(SQLITE_DATABASE_LIBS) $(QT_LIBS) $(ROSE_BOOST_LIBS) \
-  $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
-  $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_ELF_LIBS_WITH_PATH) \
+  $(SQLITE3_LDFLAGS)  $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_Z3_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) \
+  $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_ELF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS) \
   $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
-  $(ROSE_DLIB_LIBS_WITH_PATH)
+  $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) $(ROSE_LIBPQXX_LIBS_WITH_PATH) \
+  $(ROSE_ADA_LIBS_WITH_PATH) $(ROSE_COBOL_PT_LIBS_WITH_PATH)
 
+#========================================================================================================================
 # These are the "-R directory" switches that need to be passed to libtool running in link mode to make sure that ROSE
 # executables have rpath properties that point to the directories containing the libraries we're using. Do not add
 # system directories (or at least not at the front of this list) because that will cause the system-installed version of
@@ -541,8 +588,6 @@ ROSE_RPATHS =										\
 	      $(ROSE_LIBS)								\
 	      $(subst :, , $(GNU_COMPILERS_LIBDIRS))					\
 	      $(subst :, , $(LIBBZ2_LIBDIRS))						\
-	      $(subst :, , $(LIBGCRYPT_LIBDIRS))					\
-	      $(subst :, , $(LIBGPG_ERROR_LIBDIRS))					\
 	      $(subst :, , $(LIBGRAPHICSMAGICK_LIBDIRS))				\
 	      $(subst :, , $(LIBJPEG_LIBDIRS))						\
 	      $(subst :, , $(LIBLCMS_LIBDIRS))						\
@@ -552,6 +597,7 @@ ROSE_RPATHS =										\
 	      $(subst :, , $(PYTHON_LIBDIRS))						\
 	      $(subst :, , $(SPOT_LIBDIRS))						\
 	      $(subst :, , $(ZLIB_LIBDIRS))						\
+	      $(subst :, , $(INTEL_COMPILER_RPATHS))					\
 	    )										\
 	  )										\
 	)
@@ -560,6 +606,7 @@ show-rpaths:
 	@echo "ROSE_LIBS = $(ROSE_LIBS)"
 	@echo "ROSE_RPATHS = $(ROSE_RPATHS)"
 
+INTEL_COMPILER_RPATHS = $(shell $(top_srcdir)/scripts/intel-compiler-rpaths.sh)
 
 # DQ (3/8/2009): This fails when I try to include it (fails in rose/src/testSharedRoseLib).
 #  $(INTEL_PIN_LIB_PATHS) $(INTEL_PIN_LIBS)
@@ -590,10 +637,15 @@ RTH_RUN_FLAGS_V_0 =
 RTH_RUN_FLAGS_V_1 = --immediate-output
 RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
 
+# Default timeout that you can override on the "make" commandline. Valid values
+# are integers followed by "s" (seconds), "m" (minutes), "h" (hours), or the
+# word "never".  See scripts/rth_run.pl for detailed documentation.
+RTH_TIMEOUT = 15m
+
 RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
 	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
-	VALGRIND=$(VALGRIND)
+	VALGRIND=$(VALGRIND) TIMEOUT=$(RTH_TIMEOUT)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 

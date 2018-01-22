@@ -552,11 +552,42 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2016_13.c \
      test2016_14.c \
      test2016_15.c \
+     test2017_01.c \
+     test2017_04.c \
+     test2017_06.c \
+     test2017_07.c \
+     test2017_08.c \
+     test2017_09.c \
+     test2017_10.c \
+     test2017_11.c \
+     test2017_12.c \
+     test2017_13.c \
+     test2017_14.c \
+     test2017_15.c \
+     test2017_17.c \
+     test2017_18.c \
+     test2017_19.c \
+     test2017_20.c \
+     test2017_21.c \
+     test2017_22.c \
+     test2017_23.c \
+     test2017_24.c \
+     test2017_25.c \
+     test2018_01.c \
+     test2018_02.c \
+     test2018_03.c \
+     test2018_04.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+FAILING_2017_TESTS = \
+     test2017_02.c \
+     test2017_03.c \
+     test2017_05.c \
+     test2017_16.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
-TESTCODES_REQUIRED_TO_PASS = \
+TESTCODES_REQUIRED_TO_PASS += \
      test2010_12.c \
      test2012_14.c \
      test2012_25.c \
@@ -952,7 +983,7 @@ endif
 
 # DQ (9/23/2013): Added better control to run tests more cleanly (command-line and any output put into *.passed file, or generates similar *.failed file is testing is unsuccessful).
 $(TEST_Source_passed): %.passed: ../../testTranslator $(top_srcdir)/scripts/test_exit_status
-	@$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+	$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 # This is a redundant test with it also being in the list TESTCODES_REQUIRED_TO_PASS (above).
 # test2005_168.o: $(srcdir)/test2005_168.c
@@ -1149,6 +1180,12 @@ check-pthread.passed: needs_reentrant.c $(testTranslator)
 		CMD="$(testTranslator) -pthread -c $(srcdir)/needs_reentrant.c"	\
 		USE_SUBDIR=no							\
 		$(top_srcdir)/scripts/test_exit_status $@
+
+print:
+	@echo "Output Makefile variables:"
+	@echo "PASSING_TEST_Objects = $(PASSING_TEST_Objects)"
+	@echo "TEST_Source_passed   = $(TEST_Source_passed)"
+	@echo "TEST_Objects_passed  = $(TEST_Objects_passed)"
 
 check-local: check-pthread.passed
 	@echo "Tests for C."

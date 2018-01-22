@@ -30,14 +30,23 @@ main(int argc, char * argv[]) {
     }
     SgProject* project = frontend(argc, argv);
 
+    printf ("Build the call graph \n");
+
     CallGraphBuilder builder(project);
     builder.buildCallGraph();
+
+    printf ("DONE: Build the call graph \n");
+
     // Generate call graph in dot format
     AstDOTGeneration dotgen;
     dotgen.writeIncidenceGraphToDOTFile(builder.getGraph(), "full_call_graph.dot");
 
 
+    printf ("Calling SageInterface::changeAllBodiesToBlocks() \n");
+
     SageInterface::changeAllBodiesToBlocks(project);
+
+    printf ("DONE: Calling SageInterface::changeAllBodiesToBlocks() \n");
 
     SgFunctionDeclaration *mainDecl = SageInterface::findMain(project);
     if(mainDecl == NULL) {
@@ -45,9 +54,15 @@ main(int argc, char * argv[]) {
             return 0;
      }
     
-    VirtualFunctionAnalysis *anal = new VirtualFunctionAnalysis(project);
-    anal->run();
+     printf ("Calling VirtualFunctionAnalysis() \n");
+
+     VirtualFunctionAnalysis *anal = new VirtualFunctionAnalysis(project);
+
+     printf ("Calling VirtualFunctionAnalysis(): run \n");
+
+     anal->run();
     
+     printf ("Calling VirtualFunctionAnalysis(): pruneCallGraph \n");
     
      anal->pruneCallGraph(builder);
      
@@ -57,15 +72,16 @@ main(int argc, char * argv[]) {
      filename = filename + ".callGraph.dot";
 #endif
      
+     printf ("Calling VirtualFunctionAnalysis(): writeIncidenceGraphToDOTFile \n");
+
      AstDOTGeneration dotgen2;
      dotgen2.writeIncidenceGraphToDOTFile(builder.getGraph(), "call_graph.dot");
-
     
+     printf ("Calling VirtualFunctionAnalysis(): delete \n");
 
+     delete anal;
     
-
-    delete anal;
-    
+     printf ("DONE: Calling VirtualFunctionAnalysis(): delete \n");
     
     return 0;
 }
