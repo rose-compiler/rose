@@ -82,6 +82,15 @@ HEADER_OMP_CLAUSE_START
             e_omp_reduction_last
         };
 
+        enum omp_dependence_type_enum
+        {
+            e_omp_depend_unknown,
+            e_omp_depend_in,
+            e_omp_depend_out,
+            e_omp_depend_inout,
+            e_omp_depend_last
+        };
+       
         // Liao 1/22/2012: experimental support for OpenMP Accelerator model 
         enum omp_map_operator_enum
         {
@@ -5475,19 +5484,25 @@ HEADER_APPLICATION_FILE_START
                      This is also a way to play with some language translation ideas, but most useful one 
                      will require a specialized tranlator to be built.
         */
-          enum outputLanguageOption_enum 
+       // enum outputLanguageOption_enum
+          enum languageOption_enum 
              {
-               e_error_output_language,   /*!< error value (uses filename extension to determine the output format, f77: fixed, F90 and later: free) */
-               e_default_output_language, /*!< default value (uses filename extension to determine the output format, f77: fixed, F90 and later: free) */
-               e_C_output_language,       /*!< value used to specify output of C (for testing C unparser) */
-               e_Cxx_output_language,     /*!< value used to specify output of C++ (for testing C++ unparser) */
-               e_Fortran_output_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser from C) */
-               e_Java_output_language,    /*!< value used to specify output of Java (for testing Java unparser) */
-               e_X10_output_language,     /*!< value used to specify output of X10 (for testing X10 unparser) */
-               e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
-               e_PHP_output_language,     /*!< value used to specify output of PHP */
-               e_Python_output_language,  /*!< value used to specify output of Python */
-               e_last_output_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
+               e_error_language,   /*!< error value (uses filename extension to determine the output format, f77: fixed, F90 and later: free) */
+               e_default_language, /*!< default value (uses filename extension to determine the output format, f77: fixed, F90 and later: free) */
+               e_C_language,       /*!< value used to specify output of C (for testing C unparser) */
+               e_Cxx_language,     /*!< value used to specify output of C++ (for testing C++ unparser) */
+               e_Binary_language,  /*!< value used to specify output of Binary ISA */
+               e_Fortran_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser) */
+               e_Java_language,    /*!< value used to specify output of Java (for testing Java unparser) */
+               e_X10_language,     /*!< value used to specify output of X10 (for testing X10 unparser) */
+               e_Promela_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
+               e_PHP_language,     /*!< value used to specify output of PHP    */
+               e_Python_language,  /*!< value used to specify output of Python */
+               e_Csharp_language,  /*!< value used to specify output of Csharp */
+               e_Ada_language,     /*!< value used to specify output of Ada    */
+               e_Jovial_language,  /*!< value used to specify output of Jovial */
+               e_Cobol_language,   /*!< value used to specify output of Cobol  */
+               e_last_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
 
       //! The only useful constructor (the argc and argv are the user's command line inputs and the
@@ -5685,7 +5700,8 @@ HEADER_APPLICATION_FILE_START
 #endif
 
        // DQ (9/24/2013): Added function to output the name of the language for the generated code.
-          static std::string get_outputLanguageOptionName ( outputLanguageOption_enum lang );
+       // static std::string get_outputLanguageOptionName ( outputLanguageOption_enum lang );
+          static std::string get_outputLanguageOptionName ( languageOption_enum lang );
 
        // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented 
        // as a static member variable instead of non-static member variable.  See test2015_141.c 
@@ -5730,6 +5746,13 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_PHP_AST();
           int build_Python_AST();
           int build_X10_AST(const std::vector<std::string>& p_argv);
+
+       // DQ (8/25/2017): Adding multiple langauge support (function definitions in src/frontend/SageIII/sage_support/sage_support.cpp).
+          int build_Csharp_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          int build_Ada_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          int build_Jovial_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          int build_Cobol_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) $ROSE_OVERRIDE;
 
        // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers (this is specific to Fortran).
@@ -6089,6 +6112,22 @@ HEADER_APPLICATION_PROJECT_START
 
           bool get_X10_only (void) const;
           void set_X10_only (bool value);
+
+       // DQ (8/25/2017): Added more language support.
+          bool get_Csharp_only (void) const;
+          void set_Csharp_only (bool value);
+
+       // DQ (8/25/2017): Added more language support.
+          bool get_Ada_only (void) const;
+          void set_Ada_only (bool value);
+
+       // DQ (8/25/2017): Added more language support.
+          bool get_Jovial_only (void) const;
+          void set_Jovial_only (bool value);
+
+       // DQ (8/25/2017): Added more language support.
+          bool get_Cobol_only (void) const;
+          void set_Cobol_only (bool value);
 
        // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
        // bool get_binary_only (void) const;
@@ -13556,6 +13595,7 @@ Sg_File_Info::Sg_File_Info()
 // away from C style strings to C++ style strings.
 Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
    : p_line(line), p_col(col),
+     p_classificationBitField(0),
      p_physical_file_id(NULL_FILE_ID),
      p_physical_line(0),
      p_source_sequence_number(0)
@@ -14853,36 +14893,29 @@ SOURCE_APPLICATION_FILE_START
 // DQ (5/23/2015): Add static data member declaration.
 bool SgFile::p_skip_unparse_asm_commands = false;
 
+// std::string SgFile::get_outputLanguageOptionName ( SgFile::outputLanguageOption_enum lang )
 std::string
-SgFile::get_outputLanguageOptionName ( SgFile::outputLanguageOption_enum lang )
+SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
    {
      string s;
      switch (lang)
         {
-#if 1
-          case SgFile::e_error_output_language:   s = "error";   break;
-          case SgFile::e_default_output_language: s = "default"; break;
-          case SgFile::e_C_output_language:       s = "C";       break;
-          case SgFile::e_Cxx_output_language:     s = "C++";     break;
-          case SgFile::e_Fortran_output_language: s = "Fortran"; break;
-          case SgFile::e_Java_output_language:    s = "Java";    break;
-          case SgFile::e_X10_output_language:     s = "X10";     break;
-          case SgFile::e_PHP_output_language:     s = "PHP";     break;
-          case SgFile::e_Python_output_language:  s = "Python";  break;
-          case SgFile::e_Promela_output_language: s = "Promela"; break;
-#else
-          case e_error_output_language:   s = "error_output_language";   break;
-          case e_default_output_language: s = "default_output_language"; break;
-          case e_C_output_language:       s = "C_output_language";       break;
-          case e_Cxx_output_language:     s = "Cxx_output_language";     break;
-          case e_Fortran_output_language: s = "Fortran_output_language"; break;
-          case e_Java_output_language:    s = "Java_output_language";    break;
-          case e_X10_output_language:     s = "X10_output_language";     break;
-          case e_Promela_output_language: s = "Promela_output_language"; break;
-          case e_PHP_output_language:     s = "PHP_output_language";     break;
-          case e_Python_output_language:  s = "Python_output_language";  break;
-          case e_last_output_language:    s = "last_output_language";    break;
-#endif
+          case SgFile::e_error_language:   s = "error";   break;
+          case SgFile::e_default_language: s = "default"; break;
+          case SgFile::e_C_language:       s = "C";       break;
+          case SgFile::e_Cxx_language:     s = "C++";     break;
+          case SgFile::e_Binary_language:  s = "Binary";  break;
+          case SgFile::e_Fortran_language: s = "Fortran"; break;
+          case SgFile::e_Java_language:    s = "Java";    break;
+          case SgFile::e_X10_language:     s = "X10";     break;
+          case SgFile::e_PHP_language:     s = "PHP";     break;
+          case SgFile::e_Python_language:  s = "Python";  break;
+          case SgFile::e_Csharp_language:  s = "Csharp";  break;
+          case SgFile::e_Ada_language:     s = "Ada";     break;
+          case SgFile::e_Jovial_language:  s = "Jovial";  break;
+          case SgFile::e_Cobol_language:   s = "Cobol";   break;
+          case SgFile::e_Promela_language: s = "Promela"; break;
+
           default:
              {
                printf ("In SgFile::outputLanguageOption(): lang = %" PRIuPTR " \n",(size_t)lang);
@@ -15119,6 +15152,12 @@ SgFile::initialization()
 
      p_Python_only             = false;
 
+  // DQ (8/25/2017): Added more language support.
+     p_Csharp_only             = false;
+     p_Ada_only                = false;
+     p_Jovial_only             = false;
+     p_Cobol_only              = false;
+
      p_requires_C_preprocessor = false;
 
   // DQ (2/5/2009): Putting this back now, so we have one at the SgProject and one at the SgFile.
@@ -15183,7 +15222,7 @@ SgFile::initialization()
      p_unparse_binary_file_format    = true;
 
   // DQ (8/27/2007): Support for alternative langauge code generation (unparsing), useful for testing specific language unparsers.
-     p_outputLanguage          = SgFile::e_default_output_language;
+     p_outputLanguage          = SgFile::e_default_language;
 
 #if 0
 // Order of data member entries in support.C, matched against the 
@@ -15860,6 +15899,12 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_PHP_only()                           = %s \n",(p_PHP_only == true) ? "true" : "false");
      printf ("     p_Python_only()                        = %s \n",(p_Python_only == true) ? "true" : "false");
 
+  // DQ (8/25/2017): Added more language support.
+     printf ("     p_Csharp_only()                        = %s \n",(p_Csharp_only == true) ? "true" : "false");
+     printf ("     p_Ada_only()                           = %s \n",(p_Ada_only == true) ? "true" : "false");
+     printf ("     p_Jovial_only()                        = %s \n",(p_Jovial_only == true) ? "true" : "false");
+     printf ("     p_Cobol_only()                         = %s \n",(p_Cobol_only == true) ? "true" : "false");
+
      printf ("     p_requires_C_preprocessor              = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
 
   // DQ (2/5/2009): Putting this back now, so we have one at the SgProject and one at the SgFile.
@@ -15938,30 +15983,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_unparse_raw_memory_contents          = %s \n",(p_unparse_raw_memory_contents          == true) ? "true" : "false");
      printf ("     p_unparse_binary_file_format           = %s \n",(p_unparse_binary_file_format           == true) ? "true" : "false");
 
-#if 1
      string outputLanguageName = get_outputLanguageOptionName(p_outputLanguage);
-#else
-  // string outputLanguageName;
-     switch(p_outputLanguage)
-        {
-          case SgFile::e_error_output_language:   outputLanguageName = "error";   break;
-          case SgFile::e_default_output_language: outputLanguageName = "default"; break;
-          case SgFile::e_C_output_language:       outputLanguageName = "C";       break;
-          case SgFile::e_Cxx_output_language:     outputLanguageName = "C++";     break;
-          case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
-          case SgFile::e_Java_output_language:    outputLanguageName = "Java";    break;
-          case SgFile::e_X10_output_language:     outputLanguageName = "X10";     break;
-          case SgFile::e_PHP_output_language:     outputLanguageName = "PHP";     break;
-          case SgFile::e_Python_output_language:  outputLanguageName = "Python";  break;
-          case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
-
-          default:
-             {
-               printf ("Error: default reached p_outputFormat = %d \n",p_outputFormat);
-               assert(false);
-             }
-        }
-#endif
 
      printf ("     p_outputLanguage                       = %s output language \n",outputLanguageName.c_str());
 
@@ -17429,6 +17451,66 @@ SgProject::get_Java_source_destdir (void) const
     }
     return p_Java_source_destdir;
   }
+
+bool
+SgProject::get_Csharp_only (void) const
+   {
+  // DQ (8/25/2017): Added more language support.
+
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Csharp_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Ada_only (void) const
+   {
+  // DQ (8/25/2017): Added more language support.
+
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Ada_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Jovial_only (void) const
+   {
+  // DQ (8/25/2017): Added more language support.
+
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Jovial_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cobol_only (void) const
+   {
+  // DQ (8/25/2017): Added more language support.
+
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cobol_only();
+        }
+     return result;
+   }
 
 #if 0
 // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.

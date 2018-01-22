@@ -501,6 +501,18 @@ if (enable-x10)
   set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
 endif()
 
+option(enable-ada "Enable Ada language support in ROSE." OFF)
+if (enable-ada)
+  # TODO:
+  set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
+endif()
+
+option(enable-jovial "Enable Jovial language support in ROSE." OFF)
+if (enable-jovial)
+  # TODO:
+  set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
+endif()
+
 # Other configuration options
 
 option(disable-binary-analysis-tests
@@ -615,6 +627,9 @@ if(enable-scoplib)
   find_path(with-scoplib "include/scolib.h"
     DOC "Path to a valid ScopLib installation")
 endif()
+
+option(enable-poet
+  "Enable POET support" OFF)
 
 option(enable-yices "Use the Yices Satisfiability Modulo Theories (SMT)")
 if(enable-yices)
@@ -1013,6 +1028,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/AdaCodeGeneration
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JovialCodeGeneration
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 
@@ -1070,11 +1087,15 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets  
-     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET
      ${ROSE_TOP_SRC_DIR}/projects/dataBase 
      ${ROSE_TOP_SRC_DIR}/src/util/graphs 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface )
+
+if(enable-poet)
+set( ROSE_INCLUDES ${ROSE_INCLUDES}
+     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
+endif()
 
 IF(WIN32) 
 set( ROSE_INCLUDES ${ROSE_INCLUDES}
@@ -1153,7 +1174,6 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
 
 add_subdirectory(config)
 add_subdirectory(src)
-add_subdirectory(demo)
 add_subdirectory(exampleTranslators)
 add_subdirectory(scripts)
 add_subdirectory(tools)

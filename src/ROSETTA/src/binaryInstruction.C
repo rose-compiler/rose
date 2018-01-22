@@ -1756,8 +1756,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "stride" referred to in the documentation for this class.  This is not an actual register.
          *
          * @{ */
-        const RegisterDescriptor& get_stride() const;
-        void set_stride(const RegisterDescriptor&);
+        RegisterDescriptor get_stride() const;
+        void set_stride(RegisterDescriptor);
         /** @} */
 #else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
@@ -1770,8 +1770,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "offset" referred to in the documentation for this class.
          *
          * @{ */
-        const RegisterDescriptor& get_offset() const;
-        void set_offset(const RegisterDescriptor&);
+        RegisterDescriptor get_offset() const;
+        void set_offset(RegisterDescriptor);
         /** @} */
 #else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
@@ -1849,8 +1849,8 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Descriptor for accessed register.
          *
          *  @{ */
-        const RegisterDescriptor& get_descriptor() const;
-        void set_descriptor(const RegisterDescriptor&);
+        RegisterDescriptor get_descriptor() const;
+        void set_descriptor(RegisterDescriptor);
         /** @} */
 #else
         AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
@@ -4032,13 +4032,37 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmStatement);
 
 #ifdef DOCUMENTATION
+    /** Base class for statement-like subclasses.
+     *
+     *  This is a base class for those binary analysis entities, such as instructions and basic blocks, that have a starting
+     *  address in the virtual address space. */
     class SgAsmStatement: public SgAsmNode {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Starting virtual address.
+         *
+         *  Virtual address of first byte of instruction, block, or whatever, depending on subclass.
+         *
+         *  @{ */
+        rose_addr_t get_address() const;
+        void set_address(rose_addr_t);
+        /** @} */
+#else
         AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Commentary.
+         *
+         *  @{ */
+        const std::string& get_comment() const;
+        void set_comment(const std::string&);
+        /** @} */
+#else
         AsmStatement.setDataPrototype("std::string", "comment", "= \"\"",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
@@ -9033,7 +9057,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_e_last_page_size);
             s & BOOST_SERIALIZATION_NVP(p_e_total_pages);
             s & BOOST_SERIALIZATION_NVP(p_e_nrelocs);
@@ -10732,8 +10756,8 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  The import directory is parsed from the specified virtual address via the PE header's loader map. Return value is
          *  this directory entry on success, or the null pointer if the entry is all zero (which marks the end of the directory
-         *  list). */
-        SgAsmPEImportDirectory *parse(rose_addr_t va);
+         *  list). The @p isLastEntry is true if the caller thinks this should be an all-zero entry. */
+        SgAsmPEImportDirectory *parse(rose_addr_t va, bool isLastEntry);
 
         /** Allocates space for this import directory's name, import lookup table, and import address table.
          *

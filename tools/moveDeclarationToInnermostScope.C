@@ -89,6 +89,7 @@
 */
 
 #include "rose.h"
+#include <CommandLine.h>
 #include "wholeAST_API.h"
 #include "transformationTracking.h"
 #include <iostream>
@@ -653,12 +654,12 @@ static std::vector<std::string> parseCommandLine(std::vector< std::string > & ar
 //static std::vector<std::string> parseCommandLine(int argc, char* argv[]) 
 {
   using namespace Sawyer::CommandLine;
-  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+  Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);
   p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
   p.longPrefix("-");
 
 // initialize generic Sawyer switches: assertion, logging, threads, etc.
-  p.with(CommandlineProcessing::genericSwitches()); 
+  p.with(Rose::CommandLine::genericSwitches()); 
 
 // initialize tool switches
   p.with(commandLineSwitches());  
@@ -1740,7 +1741,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
        bottom_scope = bottom_scope->get_scope();
        if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
        {
-         cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+       //  cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
 #if 0
       // DQ (12/26/2014): commented out to avoid overly verbose output.
          cout<<"The declaration in question has the following file info:"<<endl;

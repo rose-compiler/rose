@@ -1,11 +1,22 @@
 #include "sage3basic.h"
 #include <algorithm>
 #include "VirtualFunctionAnalysis.h"
-void VirtualFunctionAnalysis::run(){
-    
+void VirtualFunctionAnalysis::run()
+   {
+
+     printf ("In VirtualFunctionAnalysis::run() \n");
+
         vector<SgExpression*> callSites = SageInterface::querySubTree<SgExpression> (project, V_SgFunctionCallExp);
+
+     printf ("In VirtualFunctionAnalysis::run(): after querySubTree on V_SgFunctionCallExp \n");
+
         vector<SgExpression*> constrs = SageInterface::querySubTree<SgExpression> (project, V_SgConstructorInitializer);
+
+     printf ("In VirtualFunctionAnalysis::run(): callSites.insert() \n");
+
         callSites.insert(callSites.end(), constrs.begin(), constrs.end());
+
+     printf ("DONE: VirtualFunctionAnalysis::run(): callSites.insert() \n");
 
         // Not all SgFunctionCallExp or SgConstructorInitialize nodes appear in functions--some are also in templates (for
         // classes or functions) and we don't want to process those. Templates are not really part of a control flow graph or
@@ -15,35 +26,56 @@ void VirtualFunctionAnalysis::run(){
                 if (isSgTemplateMemberFunctionDeclaration(fdecl) || isSgTemplateFunctionDeclaration(fdecl))
                     *csi = NULL;
             }
+
+          printf ("In VirtualFunctionAnalysis::run(): loop 1 \n");
+
         }
+
+          printf ("In VirtualFunctionAnalysis::run(): erase \n");
+
         callSites.erase(std::remove(callSites.begin(), callSites.end(), (SgExpression*)NULL), callSites.end());
         
+          printf ("DONE: VirtualFunctionAnalysis::run(): erase \n");
 
         unsigned int index;
         resolver.clear();
+
+          printf ("DONE: VirtualFunctionAnalysis::run(): clear \n");
+
         for(index = 0; index < callSites.size(); index++) {
             std::vector<SgFunctionDeclaration *> funcs;
             
+          printf ("In VirtualFunctionAnalysis::run(): getPropertiesForExpression() \n");
+
             CallTargetSet::getPropertiesForExpression(callSites[index], classHierarchy, funcs);
             
             //Virtual Function
             if(isSgFunctionCallExp(callSites[index]) && funcs.size() > 1 )
                 funcs.clear();
             resolver[callSites[index]] = funcs;
+
+          printf ("In VirtualFunctionAnalysis::run(): loop 2 \n");
         }
         
+          printf ("In VirtualFunctionAnalysis::run(): PtrAliasAnalysis::run() \n");
+
         PtrAliasAnalysis::run();
         
+          printf ("DONE: VirtualFunctionAnalysis::run(): PtrAliasAnalysis::run() \n");
+
         for(index = 0; index < callSites.size(); index++) {
             if(resolver.at(callSites[index]).size() == 0  ) {
                 std::vector<SgFunctionDeclaration *> funcs;
                 CallTargetSet::getPropertiesForExpression(callSites[index], classHierarchy, funcs);
                 resolver[callSites[index]] = funcs;
             }
+
+          printf ("In VirtualFunctionAnalysis::run(): loop 3 \n");
         }
         isExecuted = true;
-       
- }
+
+     printf ("Leaving VirtualFunctionAnalysis::run() \n");
+   }
 
 void VirtualFunctionAnalysis::resolveFunctionCall(SgExpression *call_exp, std::vector<SgFunctionDeclaration*> &functions) {
      if(isExecuted == false)

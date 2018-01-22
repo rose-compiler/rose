@@ -8452,6 +8452,10 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      ROSE_ASSERT(statementList != NULL);
 
+#if 0
+     printf ("In unparseLabelStmt(): statementList->size() = %zu \n",statementList->size());
+#endif
+
   // Find the label in the parent scope
      SgStatementPtrList::iterator positionOfLabel = find(statementList->begin(),statementList->end(),label_stmt);
 
@@ -8459,9 +8463,12 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
   // ROSE_ASSERT(positionOfLabel != SgStatementPtrList::npos);
      if (positionOfLabel == statementList->end())
         {
+#if 0
+       // DQ (1/6/2018): I think this is no longer an error in the new design that treats lables as compound statements.
           printf ("ERROR: Found label = %p = %s at end of scope! \n",label_stmt,label_stmt->get_label().str());
           label_stmt->get_startOfConstruct()->display("positionOfLabel == statementList.end()");
           ROSE_ASSERT(positionOfLabel != statementList->end());
+#endif
         }
        else
         {
@@ -8510,7 +8517,9 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
   // SgLabelStatements in general, so it makes more sense (and is consistant with ROSE based on EDG 3.3) to not unparse the associated 
   // statement here.  Even though we do not correctly reference the label's associated statement correctly in this version of ROSE based on EDG 4.x).
 
-#if 0
+#if 1
+  // DQ (1/6/2018): Turn this back on since we handled labels as compound statements now, at
+  // least where they are processed in switch statements (which will have to be made uniform).
   // DQ (10/27/2012): Unparse the associated statement to the label.
   // Note that in the edg33 version of ROSE this was always a SgNullStatement, this is corrected in the design with the edg4x work.
      if (label_stmt->get_statement() != NULL)
@@ -8838,6 +8847,10 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
         }
 
+  // DQ (1/3/2018): Put back this original behavior, because the case option statment must be a compound statement 
+  // (just like a label statement, see test2017_20.c).
+  // DQ (12/20/2017): Comment this out to experiment with alternative support for switch (part of new duff's device support).
+  // At the very least, commenting this out permis the cases to be adjusted to have defined bodies later (if that ultimately makes sense).
 #if 1
   // if(case_stmt->get_body())
   // if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
@@ -8845,6 +8858,8 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
           unparseStatement(case_stmt->get_body(), info);
         }
+#else
+     printf ("In unparseCaseStmt(): Modified to skip unparsing the body! \n");
 #endif
 #if 0
      printf ("Leaving unparseCaseStmt() \n");
@@ -8933,10 +8948,17 @@ Unparse_ExprStmt::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (default_stmt, default_body, e_token_subsequence_start, e_leading_whitespace_start);
         }
 
+  // DQ (1/3/2018): Put back this original behavior, because the case option statment must be a compound statement 
+  // (just like a label statement, see test2017_20.c).
+  // DQ (12/20/2017): Comment this out to experiment with alternative support for switch (part of new duff's device support).
+  // At the very least, commenting this out permis the cases to be adjusted to have defined bodies later (if that ultimately makes sense).
+#if 1
   // if(default_stmt->get_body()) 
      if ( (default_stmt->get_body() != NULL) && !info.SkipBasicBlock())
+        {
           unparseStatement(default_stmt->get_body(), info);
-
+        }
+#endif
 #if 0
      printf ("Leaving unparseDefaultStmt() \n");
      curprint("/* Leaving unparseDefaultStmt() */ ");
@@ -8992,13 +9014,34 @@ Unparse_ExprStmt::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) {
-  SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
-  ROSE_ASSERT(goto_stmt != NULL);
+Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) 
+   {
+     SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
+     ROSE_ASSERT(goto_stmt != NULL);
 
-  curprint ( string("goto " ) + goto_stmt->get_label()->get_label().str());
-  if (!info.SkipSemiColon()) { curprint ( string(";")); }
-}
+     if (goto_stmt->get_label() != NULL)
+        {
+       // DQ (11/22/2017): Original code.
+          curprint ( string("goto " ) + goto_stmt->get_label()->get_label().str());
+
+        }
+       else
+        {
+       // DQ (11/22/2017): Added suport for GNU extension for computed goto.
+          curprint ("goto *");
+          SgExpression* selector_expression = goto_stmt->get_selector_expression();
+          ROSE_ASSERT(selector_expression != NULL);
+
+          SgUnparse_Info ninfo(info);
+          unparseExpression(selector_expression,ninfo);
+        }
+
+     if (!info.SkipSemiColon())
+        {
+          curprint ( string(";")); 
+        }
+   }
+
 
 static bool
 isOutputAsmOperand(SgAsmOp* asmOp)

@@ -1,0 +1,14 @@
+unparseAdaCodeGeneration_la_sources=\
+	$(AdaCodeGenerationPath)/unparseAda_expressions.C \
+	$(AdaCodeGenerationPath)/unparseAda_statements.C \
+	$(AdaCodeGenerationPath)/unparseAda_types.C
+
+unparseAdaCodeGeneration_includeHeaders=\
+	$(AdaCodeGenerationPath)/unparseAda.h
+
+unparseAdaCodeGeneration_extraDist=\
+	$(AdaCodeGenerationPath)/CMakeLists.txt
+
+unparseAdaCodeGeneration_cleanLocal=
+#	rm -rf $(AdaCodeGenerationPath)/core
+

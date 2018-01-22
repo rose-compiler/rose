@@ -103,6 +103,7 @@ class UnparseFormat
 
           int current_line() const { return currentLine; }
           int current_col() const { return chars_on_line; }
+          int current_indent() const { return currentIndent; }
           bool line_is_empty() const { return currentIndent == chars_on_line; }
 
        // DQ (2/16/2004): Make this part of the public interface (to control old-style K&R C function definitions)

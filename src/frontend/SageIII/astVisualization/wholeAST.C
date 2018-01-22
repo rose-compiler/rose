@@ -2164,6 +2164,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                             }
                        }
 
+                 // DQ (1/21/2018): Add debugging information to output in each graph node.
+                    typeString += string("\\n explicitlySpecified = ") +  ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + "  ";
+
                     labelWithSourceCode = string("\\n  ") + typeString + 
                                           string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
                     break;

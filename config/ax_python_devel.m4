@@ -68,232 +68,214 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-#serial 8
-
 AU_ALIAS([AC_PYTHON_DEVEL], [AX_PYTHON_DEVEL])
 AC_DEFUN([AX_PYTHON_DEVEL],[
-	#
-	# Allow the use of a (user set) custom python version
-	#
+    #
+    # Allow the use of a (user set) custom python version
+    #
     AC_ARG_WITH(python,
-        [  --with-python=PATH	Specify the path to the Python interpreter])
+        [  --with-python=PATH   Specify the path to the Python interpreter])
 
-    if test -z "$with_python"; then
-	    AC_PATH_PROG([PYTHON],[python])
-        AC_MSG_NOTICE([No path to Python interpreter specified. From PATH, using: $PYTHON])
+    if test "$with_python" = "no"; then
+        # User does not want us to use python even if it's available.
+        PYTHON=
+    elif test "$with_python" = "yes"; then
+        # User wants python, but we should find it ourselves
+        AC_PATH_PROG([PYTHON], [python])
+        if test "$PYTHON" = ""; then
+            AC_MSG_ERROR(["python" executable not found but "--with-python=yes" was specified])
+        fi
+    elif test "$with_python" = ""; then
+        # User doesn't care if we use python or not
+        AC_PATH_PROG([PYTHON], [python])
     else
-        AC_SUBST([PYTHON],$with_python)
+        # User is telling us where to find the python interpreter
+        PYTHON="$with_python"
     fi
 
-	if test -z "$PYTHON"; then
-	   AC_MSG_ERROR([Cannot find python in your system path])
-	fi
 
-    #
-    # determine if python is the right version
-    #
-	AC_MSG_CHECKING([for a version of Python >= $1, < $2])
-	ac_python_version=`$PYTHON -c "import sys; print(sys.version.split()[[0]])"`
-	ac_supports_python_ver=`$PYTHON -c "print ('$1' <= '$ac_python_version' < '$2')"`
-	if test "$ac_supports_python_ver" = "True"; then
-        AC_MSG_RESULT([yes ($ac_python_version)])
-        AC_DEFINE([PYTHON_VERSION], ($ac_python_version), "Version of Python selected when building ROSE.")
-	else
-        AC_MSG_RESULT([no ($ac_python_version)])
-		AC_MSG_ERROR([this package requires Python >= $1 and < $2.
+    if test "$PYTHON" != ""; then
+        AC_SUBST([PYTHON], $PYTHON)
+
+        #
+        # determine if python is the right version
+        #
+        AC_MSG_CHECKING([for a version of Python >= $1, < $2])
+        ac_python_version=`$PYTHON -c "import sys; print(sys.version.split()[[0]])"`
+        ac_supports_python_ver=`$PYTHON -c "print ('$1' <= '$ac_python_version' < '$2')"`
+        if test "$ac_supports_python_ver" = "True"; then
+            AC_MSG_RESULT([yes ($ac_python_version)])
+            AC_DEFINE([PYTHON_VERSION], ($ac_python_version), "Version of Python selected when building ROSE.")
+        else
+            AC_MSG_RESULT([no ($ac_python_version)])
+            AC_MSG_ERROR([this package requires Python >= $1 and < $2.
 If you have it installed, but it isn't the default Python
 interpreter in your system path, please configure --with-python=PATH to
 select the correct interpreter. See ``configure --help'' for reference.
 ])
-    fi
+        fi
 
-	#
-	# Check if you have distutils, else fail
-	#
-	AC_MSG_CHECKING([for the distutils Python package])
-	ac_distutils_result=`$PYTHON -c "import distutils" 2>&1`
-	if test -z "$ac_distutils_result"; then
-		AC_MSG_RESULT([yes])
-	else
-		AC_MSG_RESULT([no])
-		AC_MSG_ERROR([cannot import Python module "distutils".
+        #
+        # Check if you have distutils, else fail
+        #
+        AC_MSG_CHECKING([for the distutils Python package])
+        ac_distutils_result=`$PYTHON -c "import distutils" 2>&1`
+        if test -z "$ac_distutils_result"; then
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_RESULT([no])
+            AC_MSG_ERROR([cannot import Python module "distutils".
 Please check your Python installation. The error was:
 $ac_distutils_result])
-	fi
+        fi
 
-	#
-	# Check for Python include path
-	#
-	AC_MSG_CHECKING([for Python include path])
-	if test -z "$PYTHON_CPPFLAGS"; then
-		python_path=`$PYTHON -c "import distutils.sysconfig; \
-			print (distutils.sysconfig.get_python_inc ());"`
-		if test -n "${python_path}"; then
-			python_path="-I$python_path"
-		fi
-		PYTHON_CPPFLAGS=$python_path
-	fi
-	AC_MSG_RESULT([$PYTHON_CPPFLAGS])
-	AC_SUBST([PYTHON_CPPFLAGS])
+        #
+        # Check for Python include path
+        #
+        AC_MSG_CHECKING([for Python include path])
+        if test -z "$PYTHON_CPPFLAGS"; then
+            python_path=`$PYTHON -c "import distutils.sysconfig; \
+                print (distutils.sysconfig.get_python_inc ());"`
+            if test -n "${python_path}"; then
+                python_path="-I$python_path"
+            fi
+            PYTHON_CPPFLAGS=$python_path
+        fi
+        AC_MSG_RESULT([$PYTHON_CPPFLAGS])
+        AC_SUBST([PYTHON_CPPFLAGS])
 
-	#
-	# Check for Python library path
-	#
-	AC_MSG_CHECKING([for Python library path])
-	if test -z "$PYTHON_LDFLAGS"; then
-		# (makes two attempts to ensure we've got a version number
-		# from the interpreter)
-		ac_python_version=`cat<<EOD | $PYTHON -
+        #
+        # Check for Python library path
+        #
+        AC_MSG_CHECKING([for Python library path])
+        if test -z "$PYTHON_LDFLAGS"; then
+            # (makes two attempts to ensure we've got a version number from the interpreter)
+            ac_python_version=`cat<<EOD | $PYTHON -
 
 # join all versioning strings, on some systems
 # major/minor numbers could be in different list elements
 from distutils.sysconfig import *
 ret = ''
 for e in get_config_vars ('VERSION'):
-	if (e != None):
-		ret += e
+        if (e != None):
+                ret += e
 print (ret)
 EOD`
 
-		if test -z "$ac_python_version"; then
-		#	if test -n "$PYTHON_VERSION"; then
-		#		ac_python_version=$PYTHON_VERSION
-		#	else
-				ac_python_version=`$PYTHON -c "import sys; \
-					print (sys.version[[:3]])"`
-		#	fi
-		fi
+            if test -z "$ac_python_version"; then
+                ac_python_version=`$PYTHON -c "import sys; \
+                    print (sys.version[[:3]])"`
+            fi
 
-		# Make the versioning information available to the compiler
-		AC_DEFINE_UNQUOTED([HAVE_PYTHON], ["$ac_python_version"],
-                                   [If available, contains the Python version number currently in use.])
+            # Make the versioning information available to the compiler
+            AC_DEFINE_UNQUOTED([HAVE_PYTHON], ["$ac_python_version"],
+                               [If available, contains the Python version number currently in use.])
 
-		# First, the library directory:
-		ac_python_libdir=`cat<<EOD | $PYTHON -
+            # First, the library directory:
+            ac_python_libdir=`cat<<EOD | $PYTHON -
 
 # There should be only one
 import distutils.sysconfig
 for e in distutils.sysconfig.get_config_vars ('LIBDIR'):
-	if e != None:
-		print (e)
-		break
+    if e != None:
+        print (e)
+        break
 EOD`
 
-		# Before checking for libpythonX.Y, we need to know
-		# the extension the OS we're on uses for libraries
-		# (we take the first one, if there's more than one fix me!):
-		ac_python_soext=`$PYTHON -c \
-		  "import distutils.sysconfig; \
-		  print (distutils.sysconfig.get_config_vars('SO')[[0]])"`
+            # Before checking for libpythonX.Y, we need to know
+            # the extension the OS we're on uses for libraries
+            # (we take the first one, if there's more than one fix me!):
+            ac_python_soext=`$PYTHON -c \
+              "import distutils.sysconfig; \
+               print (distutils.sysconfig.get_config_vars('SO')[[0]])"`
 
-		# Now, for the library:
-		ac_python_soname=`$PYTHON -c \
-		  "import distutils.sysconfig; \
-		  print (distutils.sysconfig.get_config_vars('LDLIBRARY')[[0]])"`
+            # Now, for the library:
+            ac_python_soname=`$PYTHON -c \
+                "import distutils.sysconfig; \
+                 print (distutils.sysconfig.get_config_vars('LDLIBRARY')[[0]])"`
 
-		# Strip away extension from the end to canonicalize its name:
-		ac_python_library=`echo "$ac_python_soname" | sed "s/${ac_python_soext}$//"`
+            # Strip away extension from the end to canonicalize its name:
+            ac_python_library=`echo "$ac_python_soname" | sed "s/${ac_python_soext}$//"`
 
-		# This small piece shamelessly adapted from PostgreSQL python macro;
-		# credits goes to momjian, I think. I'd like to put the right name
-		# in the credits, if someone can point me in the right direction... ?
-		#
-		if test -n "$ac_python_libdir" -a -n "$ac_python_library" \
-			-a x"$ac_python_library" != x"$ac_python_soname"
-		then
-			# use the official shared library
-			ac_python_library=`echo "$ac_python_library" | sed "s/^lib//"`
-			PYTHON_LDFLAGS="-L$ac_python_libdir -l$ac_python_library"
-		else
-			# old way: use libpython from python_configdir
-			ac_python_libdir=`$PYTHON -c \
-			  "from distutils.sysconfig import get_python_lib as f; \
-			  import os; \
-			  print (os.path.join(f(plat_specific=1, standard_lib=1), 'config'));"`
-			PYTHON_LDFLAGS="-L$ac_python_libdir -lpython$ac_python_version"
-		fi
+            # This small piece shamelessly adapted from PostgreSQL python macro;
+            # credits goes to momjian, I think. I'd like to put the right name
+            # in the credits, if someone can point me in the right direction... ?
+            if test -n "$ac_python_libdir" -a -n "$ac_python_library" -a x"$ac_python_library" != x"$ac_python_soname"; then
+                # use the official shared library
+                ac_python_library=`echo "$ac_python_library" | sed "s/^lib//"`
+                PYTHON_LDFLAGS="-L$ac_python_libdir -l$ac_python_library"
+            else
+                # old way: use libpython from python_configdir
+                ac_python_libdir=`$PYTHON -c \
+                    "from distutils.sysconfig import get_python_lib as f; \
+                     import os; \
+                     print (os.path.join(f(plat_specific=1, standard_lib=1), 'config'));"`
+                PYTHON_LDFLAGS="-L$ac_python_libdir -lpython$ac_python_version"
+            fi
 
-		if test -z "PYTHON_LDFLAGS"; then
-			AC_MSG_ERROR([
-  Cannot determine location of your Python DSO. Please check it was installed with
-  dynamic libraries enabled, or try setting PYTHON_LDFLAGS by hand.
-			])
-		fi
-	fi
-	AC_MSG_RESULT([$PYTHON_LDFLAGS])
-	AC_SUBST([PYTHON_LDFLAGS])
+            if test -z "PYTHON_LDFLAGS"; then
+                AC_MSG_ERROR([Cannot determine location of your Python DSO. Please check it was installed with
+                              dynamic libraries enabled, or try setting PYTHON_LDFLAGS by hand.])
+            fi
+        fi
+        AC_MSG_RESULT([$PYTHON_LDFLAGS])
+        AC_SUBST([PYTHON_LDFLAGS])
 
-	#
-	# Check for site packages
-	#
-	AC_MSG_CHECKING([for Python site-packages path])
-	if test -z "$PYTHON_SITE_PKG"; then
-		PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
-			print (distutils.sysconfig.get_python_lib(0,0));"`
-	fi
-	AC_MSG_RESULT([$PYTHON_SITE_PKG])
-	AC_SUBST([PYTHON_SITE_PKG])
+        #
+        # Check for site packages
+        #
+        AC_MSG_CHECKING([for Python site-packages path])
+        if test -z "$PYTHON_SITE_PKG"; then
+            PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
+                print (distutils.sysconfig.get_python_lib(0,0));"`
+        fi
+        AC_MSG_RESULT([$PYTHON_SITE_PKG])
+        AC_SUBST([PYTHON_SITE_PKG])
 
-	#
-	# libraries which must be linked in when embedding
-	#
-	AC_MSG_CHECKING(python extra libraries)
-	if test -z "$PYTHON_EXTRA_LIBS"; then
-	   PYTHON_EXTRA_LIBS=`$PYTHON -c "import distutils.sysconfig; \
+        #
+        # libraries which must be linked in when embedding
+        #
+        AC_MSG_CHECKING(python extra libraries)
+        if test -z "$PYTHON_EXTRA_LIBS"; then
+           PYTHON_EXTRA_LIBS=`$PYTHON -c "import distutils.sysconfig; \
+               conf = distutils.sysconfig.get_config_var; \
+               print (conf('LOCALMODLIBS') + ' ' + conf('LIBS'))"`
+        fi
+        AC_MSG_RESULT([$PYTHON_EXTRA_LIBS])
+        AC_SUBST(PYTHON_EXTRA_LIBS)
+
+        #
+        # linking flags needed when embedding
+        #
+        AC_MSG_CHECKING(python extra linking flags)
+        if test -z "$PYTHON_EXTRA_LDFLAGS"; then
+            PYTHON_EXTRA_LDFLAGS=`$PYTHON -c "import distutils.sysconfig; \
                 conf = distutils.sysconfig.get_config_var; \
-                print (conf('LOCALMODLIBS') + ' ' + conf('LIBS'))"`
-	fi
-	AC_MSG_RESULT([$PYTHON_EXTRA_LIBS])
-	AC_SUBST(PYTHON_EXTRA_LIBS)
+                print (conf('LINKFORSHARED'))"`
+        fi
+        AC_MSG_RESULT([$PYTHON_EXTRA_LDFLAGS])
+        AC_SUBST(PYTHON_EXTRA_LDFLAGS)
 
-	#
-	# linking flags needed when embedding
-	#
-	AC_MSG_CHECKING(python extra linking flags)
-	if test -z "$PYTHON_EXTRA_LDFLAGS"; then
-		PYTHON_EXTRA_LDFLAGS=`$PYTHON -c "import distutils.sysconfig; \
-			conf = distutils.sysconfig.get_config_var; \
-			print (conf('LINKFORSHARED'))"`
-	fi
-	AC_MSG_RESULT([$PYTHON_EXTRA_LDFLAGS])
-	AC_SUBST(PYTHON_EXTRA_LDFLAGS)
+        #
+        # final check to see if everything compiles alright
+        #
+        AC_MSG_CHECKING([consistency of all components of python development environment])
+        # save current global flags
+        ac_save_LIBS="$LIBS"
+        ac_save_CPPFLAGS="$CPPFLAGS"
+        LIBS="$ac_save_LIBS $PYTHON_LDFLAGS $PYTHON_EXTRA_LDFLAGS $PYTHON_EXTRA_LIBS"
+        CPPFLAGS="$ac_save_CPPFLAGS $PYTHON_CPPFLAGS"
+        AC_LANG_PUSH([C])
+        AC_LINK_IFELSE([
+            AC_LANG_PROGRAM([[#include <Python.h>]],
+                            [[Py_Initialize();]])],
+            [pythonexists=yes],
+            [pythonexists=no])
+        AC_LANG_POP([C])
+        # turn back to default flags
+        CPPFLAGS="$ac_save_CPPFLAGS"
+        LIBS="$ac_save_LIBS"
 
-	#
-	# final check to see if everything compiles alright
-	#
-	AC_MSG_CHECKING([consistency of all components of python development environment])
-	# save current global flags
-	ac_save_LIBS="$LIBS"
-	ac_save_CPPFLAGS="$CPPFLAGS"
-	LIBS="$ac_save_LIBS $PYTHON_LDFLAGS $PYTHON_EXTRA_LDFLAGS $PYTHON_EXTRA_LIBS"
-	CPPFLAGS="$ac_save_CPPFLAGS $PYTHON_CPPFLAGS"
-	AC_LANG_PUSH([C])
-	AC_LINK_IFELSE([
-		AC_LANG_PROGRAM([[#include <Python.h>]],
-				[[Py_Initialize();]])
-		],[pythonexists=yes],[pythonexists=no])
-	AC_LANG_POP([C])
-	# turn back to default flags
-	CPPFLAGS="$ac_save_CPPFLAGS"
-	LIBS="$ac_save_LIBS"
-
-	AC_MSG_RESULT([$pythonexists])
-
-#        if test ! "x$pythonexists" = "xyes"; then
-#	   AC_MSG_FAILURE([
-#  Could not link test program to Python. Maybe the main Python library has been
-#  installed in some non-standard library path. If so, pass it to configure,
-#  via the LDFLAGS environment variable.
-#  Example: ./configure LDFLAGS="-L/usr/non-standard-path/python/lib"
-#  ============================================================================
-#   ERROR!
-#   You probably have to install the development version of the Python package
-#   for your distribution.  The exact name of this package varies among them.
-#  ============================================================================
-#	   ])
-#	fi
-
-	#
-	# all done!
-	#
+        AC_MSG_RESULT([$pythonexists])
+    fi
 ])

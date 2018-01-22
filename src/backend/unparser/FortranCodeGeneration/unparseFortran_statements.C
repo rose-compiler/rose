@@ -2892,10 +2892,14 @@ FortranCodeGeneration_locatedNode::unparseStopOrPauseStmt(SgStatement* stmt, SgU
      if (kind == SgStopOrPauseStatement::e_stop)
         {
           curprint("STOP ");
-       // curprint(sp_stmt->get_code().str());
           unparseExpression(sp_stmt->get_code(), info);
         }
-       else
+     else if (kind == SgStopOrPauseStatement::e_error_stop)
+        {
+          curprint("ERROR STOP ");
+          unparseExpression(sp_stmt->get_code(), info);
+        }
+     else
         {
           ROSE_ASSERT(kind == SgStopOrPauseStatement::e_pause);
           curprint("PAUSE ");
@@ -4291,17 +4295,17 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
        // Code generation support for "pure" attribute
           if (procedureHeader->get_functionModifier().isPure() == true)
              {
-               curprint("pure ");
+               curprint("PURE ");
              }
 
           if (procedureHeader->get_functionModifier().isElemental() == true)
              {
-               curprint("elemental ");
+               curprint("ELEMENTAL ");
              }
 
           if (procedureHeader->get_functionModifier().isRecursive() == true)
              {
-               curprint("recursive ");
+               curprint("RECURSIVE ");
              }
 
        // Output the forward declaration only
