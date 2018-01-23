@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+#include <CommandLine.h>
 #include <BinaryReturnValueUsed.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
@@ -79,14 +80,14 @@ private:
 #endif
 
 protected:
-    explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
+    explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : Super(protoval, solver), results_(NULL), registerDictionary_(NULL) {}
 
-    explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
+    explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : Super(state, solver), results_(NULL), registerDictionary_(NULL) {}
 
 public:
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
         SValuePtr protoval = SValue::instance();
         RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -94,22 +95,23 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    static RiscOperatorsPtr instance(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const S2::BaseSemantics::SValuePtr &protoval,
+                                     const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
     
-    static RiscOperatorsPtr instance(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
     
 public:
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -310,7 +312,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // return values is one of the calle's return values with no intervening write.
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     ASSERT_not_null(regdict);
-    SmtSolver *solver = NULL;
+    SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
     ops->registerDictionary(regdict);
     ops->insertOutputs(calleeReturnRegs, calleeReturnMem);

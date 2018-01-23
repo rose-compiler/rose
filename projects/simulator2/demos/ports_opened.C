@@ -13,6 +13,7 @@
 // The following stuff is mostly cut-n-pasted from x86sim.C with minor modifications to the documentation.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <CommandLine.h>                                // ROSE command-line
 #include <Diagnostics.h>                                // ROSE diagnostics
 #include <RSIM_Debugger.h>                              // Simulator interactive debugger
 #include <RSIM_Linux32.h>                               // Simulator architecture: Linux-x86
@@ -148,7 +149,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     return parser
         .errorStream(::mlog[FATAL])
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .with(sg)                                       // tool-specific
         .with(RSIM_Simulator::commandLineSwitches(settings.simSettings))
         .parse(argc, argv).apply().unreachedArgs();

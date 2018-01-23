@@ -1581,6 +1581,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+       // DQ (1/21/2018): Added case for C++11 SgStaticAssertionDeclaration
+          case V_SgStaticAssertionDeclaration:
+             {
+               name = "_static_assertion_declaration_stmt_";
+               const SgStaticAssertionDeclaration* statement = isSgStaticAssertionDeclaration(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgStaticAssertionDeclaration*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -7322,7 +7333,7 @@ SageInterface::getScope( const SgNode* astNode )
 
 
 // from outliner, ASTtools
-// ========================================================================
+// ------------------------------------------------
 
 /*!
  *  \brief Return an existing variable symbol for the given
@@ -10738,23 +10749,29 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
 }
 
 
-  void SageInterface::removeConsecutiveLabels(SgNode* top) {
-   Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
-   for (size_t i = 0; i < gotos.size(); ++i) {
-     SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
-     SgLabelStatement* ls = gs->get_label();
-     SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
-     if (!lsParent) continue;
-     SgStatementPtrList& bbStatements = lsParent->get_statements();
-     size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls)
-  - bbStatements.begin();
-     ROSE_ASSERT (j != bbStatements.size());     while (j <
-  bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1])) {
-     ++j;
-     }
-     gs->set_label(isSgLabelStatement(bbStatements[j]));
+void
+SageInterface::removeConsecutiveLabels(SgNode* top)
+   {
+     Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
+     for (size_t i = 0; i < gotos.size(); ++i)
+        {
+          SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
+          SgLabelStatement* ls = gs->get_label();
+          SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
+          if (!lsParent) continue;
+          SgStatementPtrList& bbStatements = lsParent->get_statements();
+
+          size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls) - bbStatements.begin();
+
+          ROSE_ASSERT (j != bbStatements.size());
+
+          while (j < bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1]))
+             {
+               ++j;
+             }
+          gs->set_label(isSgLabelStatement(bbStatements[j]));
+        }
    }
-  }
 
 bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
 {
@@ -18300,7 +18317,56 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
    }
 
 
-//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. For dot and arrow expressions, a top level SgInitializedName.
+//! Check if a function declaration is a C++11 lambda function
+// TODO, expose to SageInterface namespace
+bool isLambdaFunction (SgFunctionDeclaration* func)
+{
+  bool rt = false;
+  ROSE_ASSERT (func != NULL);
+  SgNode* p = func->get_parent();
+  ROSE_ASSERT (p != NULL);
+  SgLambdaExp* le = isSgLambdaExp (p);
+  if (le && le->get_lambda_function() == func)
+    rt = true; 
+  return rt;   
+}
+
+// check if a variable reference is this->a[i] inside of a lambda function
+// SgArrowExp <SgThisExp,  SgVarRefExp>, both are compiler generated nodes
+// class symbol of ThisExp 's declaration is AutonomousDeclaration SgClassDeclaration
+// its parent is SgLambdaExp, and lambda_closure_class points back to this class declaration
+bool isLambdaCapturedVariable (SgVarRefExp* varRef)
+{
+  bool rt = false;
+#ifdef  _MSC_VER
+  #pragma message ("WARNING: MSVC does not handle isLambdaCapturedVariable() properly.")
+#else  
+  ROSE_ASSERT (varRef!= NULL);
+  SgNode* parent = varRef->get_parent();
+  if (SgArrowExp *p = isSgArrowExp(parent))
+  {
+    SgThisExp* te = isSgThisExp(p->get_lhs_operand_i());
+    if (te != NULL)
+    {
+      SgClassSymbol* csym = te->get_class_symbol();
+      ROSE_ASSERT (csym!= NULL);
+      SgClassDeclaration* cdecl = isSgClassDeclaration(csym->get_declaration());
+      // each this exp should have a class decl
+      ROSE_ASSERT (cdecl != NULL); 
+      SgLambdaExp* le = isSgLambdaExp(cdecl->get_parent());
+      if (le != NULL)
+      {
+        if (le->get_lambda_closure_class() == cdecl ) // the class is a lambda closure class
+          rt = true; 
+      }
+    }
+  }
+#endif  
+  return rt; 
+}
+
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
+//! For dot and arrow expressions, a top level SgInitializedName.
 //TODO consult  AstInterface::IsVarRef() for more cases
 SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, bool coarseGrain/*=true*/)
 {
@@ -18323,14 +18389,15 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   {
     if (coarseGrain)
     {
-      // Outliner needs coarse grain mem objects to work. Always returning fine grain objects will cause problems.
+     // Outliner needs coarse grain mem objects to work. Always returning fine grain objects will cause problems.
       SgNode* parent = current->get_parent();
       if (isSgDotExp(parent))
       {
         if (isSgDotExp(parent)->get_rhs_operand() == current)
           return convertRefToInitializedName(parent, coarseGrain);
       }
-      else if(isSgArrowExp(parent))
+      // avoid backtracking to parent if this is part of lambda function 
+      else if(isSgArrowExp(parent) && ! isLambdaCapturedVariable ( isSgVarRefExp(current) ) )
       {
         if (isSgArrowExp(parent)->get_rhs_operand() == current)
           return convertRefToInitializedName(parent, coarseGrain);
@@ -18353,11 +18420,27 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   {
     SgExpression* child = NULL; 
     if (coarseGrain)
+    {
       child = isSgArrowExp(current)->get_lhs_operand();
+      SgExpression* lhs = isSgArrowExp(current)->get_lhs_operand();
+      ROSE_ASSERT(lhs);
+      // Liao 9/12/2016, special handling for variables inside of C++11 lambda functions
+      // They capture variables outside of the lambda function. 
+      // They are represented as a class variable of an anonymous class, this->a[i]
+      // So, we have to recognize this pattern, and pass the rhs variable to obtain initialized name.
+      // has to resolve this recursively
+      SgFunctionDeclaration* efunc =  getEnclosingFunctionDeclaration (current);
+
+      if (isLambdaFunction (efunc) )
+        child= isSgArrowExp(current)->get_rhs_operand();
+      else
+        child = lhs; 
+    }
     else
       child = isSgArrowExp(current)->get_rhs_operand();
     ROSE_ASSERT(child);
      // has to resolve this recursively
+  
     return convertRefToInitializedName(child, coarseGrain);
   } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp
   else if (isSgThisExp(current))
@@ -18547,7 +18630,9 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   // Actual side effect analysis
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
-//    cerr<<"error in side effect analysis!"<<endl;
+    if(getProject()->get_verbose()>1)
+     cerr<<"Warning: failed in side effect analysis within SageInterface::collectReadWriteRefs()!"<<endl;
+    //ROSE_ASSERT (false);
     return false;
   }
 
@@ -18606,6 +18691,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
     SgNode* current = *iter;
     //if (skipSomeRefs(current)) continue;
 
+    ROSE_ASSERT (current != NULL);
     SgInitializedName* name= convertRefToInitializedName(current, coarseGrain);
     //ROSE_ASSERT (name); // this pointer will return NULL 
     if (!name) continue;
@@ -18618,6 +18704,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
   for (; iterw!=writeRefs.end();iterw++)
   {
     SgNode* current = *iterw;
+    ROSE_ASSERT (current != NULL);
    // if (skipSomeRefs(current)) continue;
     SgInitializedName* name = convertRefToInitializedName(current, coarseGrain);
     if (!name) continue;

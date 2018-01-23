@@ -323,6 +323,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -383,6 +384,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -635,10 +637,15 @@ RTH_RUN_FLAGS_V_0 =
 RTH_RUN_FLAGS_V_1 = --immediate-output
 RTH_RUN_FLAGS = $(RTH_RUN_FLAGS_V_$(V))
 
+# Default timeout that you can override on the "make" commandline. Valid values
+# are integers followed by "s" (seconds), "m" (minutes), "h" (hours), or the
+# word "never".  See scripts/rth_run.pl for detailed documentation.
+RTH_TIMEOUT = 15m
+
 RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	srcdir=$(abspath $(srcdir)) top_srcdir=$(abspath $(top_srcdir)) \
 	blddir=$$(pwd) top_blddir=$(abspath $(top_builddir)) \
-	VALGRIND=$(VALGRIND)
+	VALGRIND=$(VALGRIND) TIMEOUT=$(RTH_TIMEOUT)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 

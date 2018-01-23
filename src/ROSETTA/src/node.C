@@ -145,6 +145,8 @@ Grammar::setUpNodes ()
   // Additional IR nodes that we expect to require for expressions:
      NEW_TERMINAL_MACRO (UntypedUnaryOperator,            "UntypedUnaryOperator",            "TEMP_UntypedUnaryOperator" );
      NEW_TERMINAL_MACRO (UntypedBinaryOperator,           "UntypedBinaryOperator",           "TEMP_UntypedBinaryOperator" );
+     NEW_TERMINAL_MACRO (UntypedExprListExpression,       "UntypedExprListExpression",       "TEMP_UntypedExprListExpression" );
+     NEW_TERMINAL_MACRO (UntypedNullExpression,           "UntypedNullExpression",           "TEMP_UntypedNullExpression" );
      NEW_TERMINAL_MACRO (UntypedValueExpression,          "UntypedValueExpression",          "TEMP_UntypedValueExpression" );
      NEW_TERMINAL_MACRO (UntypedArrayReferenceExpression, "UntypedArrayReferenceExpression", "TEMP_UntypedArrayReferenceExpression" );
      NEW_TERMINAL_MACRO (UntypedOtherExpression,          "UntypedOtherExpression",          "TEMP_UntypedOtherExpression" );
@@ -156,9 +158,12 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (UntypedExpression, UntypedUnaryOperator | UntypedBinaryOperator | UntypedValueExpression | 
   //     UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression | 
   //     UntypedReferenceExpression, "UntypedExpression", "UntypedExpressionTag", false);
-     NEW_NONTERMINAL_MACRO (UntypedExpression, UntypedUnaryOperator | UntypedBinaryOperator | UntypedValueExpression | 
-         UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression | 
-         UntypedReferenceExpression, "UntypedExpression", "UntypedExpressionTag", true);
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression and SgUntypedNullExpression
+     NEW_NONTERMINAL_MACRO (UntypedExpression,
+         UntypedUnaryOperator            | UntypedBinaryOperator  | UntypedExprListExpression  | UntypedValueExpression |
+         UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression       |
+         UntypedReferenceExpression      | UntypedNullExpression,
+         "UntypedExpression", "UntypedExpressionTag", true);
 
      NEW_TERMINAL_MACRO (UntypedNameListDeclaration,      "UntypedNameListDeclaration",      "TEMP_UntypedNameListDeclaration" );
      NEW_TERMINAL_MACRO (UntypedImplicitDeclaration,      "UntypedImplicitDeclaration",      "TEMP_UntypedImplicitDeclaration" );
@@ -208,6 +213,9 @@ Grammar::setUpNodes ()
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
      NEW_TERMINAL_MACRO (UntypedSubmoduleDeclaration,     "UntypedSubmoduleDeclaration",     "TEMP_UntypedSubmoduleDeclaration" );
 
+  // Rasmussen (8/17/2017): Added new IR node to represent a Fortran block-data program unit
+     NEW_TERMINAL_MACRO (UntypedBlockDataDeclaration,     "UntypedBlockDataDeclaration",     "TEMP_UntypedBlockDataDeclaration" );
+
   // DQ (9/29/2017): Added new IR node for untyped representation of package declarations (Ada).
      NEW_TERMINAL_MACRO (UntypedPackageDeclaration,          "UntypedPackageDeclaration",          "TEMP_UntypedPackageDeclaration" );
      NEW_TERMINAL_MACRO (UntypedTaskDeclaration,             "UntypedTaskDeclaration",             "TEMP_UntypedTaskDeclaration" );
@@ -220,12 +228,12 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
   //     UntypedFunctionDeclaration | UntypedModuleDeclaration,
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
-  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration
+  // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration, UntypedBlockDataDeclaration
      NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedNameListDeclaration | UntypedUseStatement |
          UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration |
-         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedPackageDeclaration  | 
-         UntypedStructureDeclaration | UntypedExceptionDeclaration | UntypedExceptionHandlerDeclaration |
-         UntypedTaskDeclaration      | UntypedUnitDeclaration,
+         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration |
+         UntypedPackageDeclaration   | UntypedStructureDeclaration | UntypedExceptionHandlerDeclaration |
+         UntypedExceptionDeclaration | UntypedTaskDeclaration      | UntypedUnitDeclaration,
          "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
@@ -619,7 +627,13 @@ Grammar::setUpNodes ()
      UntypedBinaryOperator.setDataPrototype     ( "SgUntypedExpression*", "rhs_operand", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     UntypedValueExpression.setFunctionPrototype          ( "HEADER_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression and SgUntypedNullExpression
+     UntypedExprListExpression.setFunctionPrototype ( "HEADER_UNTYPED_EXPR_LIST_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedExprListExpression.setDataPrototype     ("SgUntypedExpressionPtrList", "expressions", "",
+                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedNullExpression.setFunctionPrototype     ( "HEADER_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
+
+     UntypedValueExpression.setFunctionPrototype ( "HEADER_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
   // Save this as a string so that we can reproduce the exact value for floating point numbers.
      UntypedValueExpression.setDataPrototype     ( "std::string", "value_string", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -819,6 +833,17 @@ Grammar::setUpNodes ()
      UntypedSubmoduleDeclaration.setDataPrototype       ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (8/17/2017): Added UntypedBlockDataDeclaration
+     UntypedBlockDataDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_BLOCK_DATA_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedBlockDataDeclaration.setDataPrototype       ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedBlockDataDeclaration.setDataPrototype       ( "bool", "has_name", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedBlockDataDeclaration.setDataPrototype       ( "SgUntypedDeclarationStatementList*", "declaration_list", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedBlockDataDeclaration.setDataPrototype       ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (10/2/2017): Adding general language neutral exception declaration support (e.g. for Ada).
      UntypedExceptionDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_EXCEPTION_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedExceptionDeclaration.setDataPrototype          ( "SgUntypedStatement*", "statement", "= NULL",
@@ -937,10 +962,11 @@ Grammar::setUpNodes ()
      UntypedArrayType.setFunctionPrototype ( "HEADER_UNTYPED_ARRAY_TYPE", "../Grammar/LocatedNode.code");
 
   // DQ (12/9/2015): Added array length expression.
-     UntypedArrayType.setDataPrototype     ( "SgUntypedExpression*", "array_length_expression", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
+  // Rasmussen (12/20/2017): Making SgUntypedArrayType better able to carry information to SgArrayType (removed array_length_expression)
+     UntypedArrayType.setDataPrototype ("SgUntypedExprListExpression*", "dim_info" , "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     UntypedArrayType.setDataPrototype ("int", "rank" , "= 0",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      RenamePair.setFunctionPrototype ( "HEADER_RENAME_PAIR", "../Grammar/LocatedNode.code");
@@ -1336,17 +1362,20 @@ Grammar::setUpNodes ()
   // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
   // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
+  // Rasmussen (12/20/2017): Adding SgUntypedExprListExpression
 
-     UntypedNode.setFunctionSource       ( "SOURCE_UNTYPED_NODE", "../Grammar/LocatedNode.code");
+     UntypedNode.setFunctionSource                  ( "SOURCE_UNTYPED_NODE", "../Grammar/LocatedNode.code");
 
-     UntypedExpression.setFunctionSource ( "SOURCE_UNTYPED_EXPRESSION", "../Grammar/LocatedNode.code");
-     UntypedUnaryOperator.setFunctionSource        ( "SOURCE_UNTYPED_UNARY_OPERATOR", "../Grammar/LocatedNode.code");
-     UntypedBinaryOperator.setFunctionSource           ( "SOURCE_UNTYPED_BINARY_OPERATOR", "../Grammar/LocatedNode.code");
-     UntypedValueExpression.setFunctionSource          ( "SOURCE_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedExpression.setFunctionSource            ( "SOURCE_UNTYPED_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedUnaryOperator.setFunctionSource         ( "SOURCE_UNTYPED_UNARY_OPERATOR", "../Grammar/LocatedNode.code");
+     UntypedBinaryOperator.setFunctionSource        ( "SOURCE_UNTYPED_BINARY_OPERATOR", "../Grammar/LocatedNode.code");
+     UntypedExprListExpression.setFunctionSource    ( "SOURCE_UNTYPED_EXPR_LIST_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedValueExpression.setFunctionSource       ( "SOURCE_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedOtherExpression.setFunctionSource       ( "SOURCE_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedNullExpression.setFunctionSource        ( "SOURCE_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedReferenceExpression.setFunctionSource   ( "SOURCE_UNTYPED_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
-     UntypedOtherExpression.setFunctionSource          ( "SOURCE_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedFunctionCallOrArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_OR_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
-     UntypedReferenceExpression.setFunctionSource      ( "SOURCE_UNTYPED_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
 
      UntypedStatement.setFunctionSource             ( "SOURCE_UNTYPED_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedAssignmentStatement.setFunctionSource   ( "SOURCE_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
@@ -1401,6 +1430,9 @@ Grammar::setUpNodes ()
 
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
      UntypedSubmoduleDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_SUBMODULE_DECLARATION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (8/17/2017): Added new IR node to represent a Fortran block-data program unit
+     UntypedBlockDataDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_BLOCK_DATA_DECLARATION", "../Grammar/LocatedNode.code");
 
      UntypedScope.setFunctionSource         ( "SOURCE_UNTYPED_SCOPE", "../Grammar/LocatedNode.code");
      UntypedFunctionScope.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_SCOPE", "../Grammar/LocatedNode.code");

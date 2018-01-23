@@ -947,7 +947,7 @@ public:
 
     State state_;
 
-    PointerDetector(const InstructionProvidor*, Rose::BinaryAnalysis::SmtSolver*) {}
+    PointerDetector(const InstructionProvidor*, const Rose::BinaryAnalysis::SmtSolverPtr&) {}
 
     bool is_pointer(const SymbolicSemantics::ValueType<32>& addr) const {
         return false;

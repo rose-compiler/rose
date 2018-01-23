@@ -67,13 +67,29 @@ void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(NodeT n) {
   }
 }
 #endif
+
 template <typename NodeT, typename EdgeT, bool Debug>
 void printNodePlusEdges(ostream& o, NodeT n) {
+
+#if 1
+  printf ("In printNodePlusEdges(): n.getNode() = %p = %s \n",n.getNode(),n.getNode()->class_name().c_str());
+#endif
+
   printNode<NodeT, Debug>(o, n);
   vector<EdgeT> outEdges = n.outEdges();
   for (unsigned int i = 0; i < outEdges.size(); ++i) {
+
+#if 1
+    printf ("In printNodePlusEdges(): edges: i = %u \n",i);
+#endif
+
     printEdge<EdgeT, Debug>(o, outEdges[i], false);
+
+#if 1
+    printf ("In printNodePlusEdges(): DONE: edges: i = %u \n",i);
+#endif
   }
+
   if (Debug) {
     vector<EdgeT> inEdges = n.inEdges();
     for (unsigned int i = 0; i < inEdges.size(); ++i) {
@@ -145,10 +161,22 @@ ostream& cfgToDot(ostream& o, string graphName, InterestingNode start) {
 }
 
 ostream& cfgToDotForDebugging(ostream& o, string graphName, CFGNode start) {
+
+#if 0
+  printf ("\n\n*********************************************************** \n");
+  printf ("In interestingCfgToDot(): start = %p = %s \n",start.getNode(),start.getNode()->class_name().c_str());
+#endif
+
   o << "digraph " << graphName << " {\n";
   CfgToDotImpl<CFGNode, CFGEdge, true> impl(o);
   impl.processNodes(start);
   o << "}\n";
+
+#if 0
+  printf ("In interestingCfgToDot(): start = %p = %s \n",start.getNode(),start.getNode()->class_name().c_str());
+  printf ("*********************************************************** \n\n\n");
+#endif
+
   return o;
 }
 

@@ -8,6 +8,7 @@
 // the integer order of visit).
 
 #include <rose.h>
+#include <CommandLine.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stopwatch.h>
@@ -29,7 +30,7 @@ using namespace Rose;
 Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
     SwitchGroup tool = toolCommandLineSwitches(settings);
 
     Parser parser;

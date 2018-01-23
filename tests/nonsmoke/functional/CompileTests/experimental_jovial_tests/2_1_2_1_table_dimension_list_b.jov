@@ -1,0 +1,7 @@
+START
+PROGRAM main ;
+BEGIN
+  TABLE aTable(1:3,*) S ;
+  ;
+END
+TERM

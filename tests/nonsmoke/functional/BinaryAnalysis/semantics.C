@@ -31,26 +31,26 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
     #include "BinarySmtSolver.h"
-    Rose::BinaryAnalysis::SmtSolver *make_solver() { return NULL; }
+    Rose::BinaryAnalysis::SmtSolverPtr make_solver() { return Rose::BinaryAnalysis::SmtSolverPtr(); }
 #elif SMT_SOLVER == YICES_LIB
     #include "BinaryYicesSolver.h"
-    Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        return new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
+    Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
+        return Rose::BinaryAnalysis::YicesSolver::instance(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
     }
 #elif SMT_SOLVER == YICES_EXE
     #include "BinaryYicesSolver.h"
-    Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        return new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
+    Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
+        return Rose::BinaryAnalysis::YicesSolver::instance(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
 #elif SMT_SOLVER == Z3_LIB
     #include "BinaryZ3Solver.h"
-    Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
+    Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
+        return Rose::BinaryAnalysis::Z3Solver::instance(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
     }
 #elif SMT_SOLVER == Z3_EXE
     #include "BinaryZ3Solver.h"
-    Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
+    Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
+        return Rose::BinaryAnalysis::Z3Solver::instance(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
 #else
 #   error "invalid value for SMT_SOLVER"
@@ -368,6 +368,8 @@ public:
 };
 
 int main(int argc, char *argv[]) {
+    ROSE_INITIALIZE;
+
     std::vector<std::string> args(argv, argv+argc);
     for (size_t argno=1; argno<args.size(); ++argno) {
         if (0==args[argno].compare("--trace")) {
@@ -388,6 +390,8 @@ int main(int argc, char *argv[]) {
         } else if (0==args[argno].compare("--no-usedef")) {
             do_usedef = false;
             args[argno] = "";
+        } else if (0==args[argno].compare("--debug-solver")) {
+            Rose::Diagnostics::mfacilities.control("Rose::BinaryAnalysis::SmtSolver(all)");
         }
     }
     args.erase(std::remove(args.begin(), args.end(), ""), args.end());

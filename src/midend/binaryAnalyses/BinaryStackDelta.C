@@ -3,6 +3,7 @@
 
 #include <BaseSemantics2.h>
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
 #include <RegisterStateGeneric.h>
@@ -36,7 +37,7 @@ Analysis::init(Disassembler *disassembler) {
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SmtSolver *solver = NULL;
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = NullSemantics::MemoryState::instance(protoval, protoval);

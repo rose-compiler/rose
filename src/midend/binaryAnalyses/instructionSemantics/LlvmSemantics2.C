@@ -23,7 +23,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
         return dflt;
     size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
-    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemory(addr->get_width(), nbits), addr->get_expression()));
+    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemory(addr->get_width(), nbits), addr->get_expression(),
+                                              solver()));
 }
 
 void
@@ -35,7 +36,8 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
     SValuePtr addr = SValue::promote(addr_);
     SValuePtr data = SValue::promote(data_);
     mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemory(addr->get_width(), data->get_width()),
-                                                 addr->get_expression(), data->get_expression())->isInteriorNode());
+                                                 addr->get_expression(), data->get_expression(), solver())
+                         ->isInteriorNode());
 }
 
 void
@@ -690,7 +692,9 @@ RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const ExpressionPt
     size_t width = std::max(value->nBits(), amount->nBits());
     ExpressionPtr ones = SymbolicExpr::makeAdd(SymbolicExpr::makeInteger(width, value->nBits()),
                                                SymbolicExpr::makeNegate(SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(8, width),
-                                                                                                 amount)));
+                                                                                                 amount, solver()),
+                                                                        solver()),
+                                               solver());
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -1115,13 +1119,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 ASSERT_require(2==operands.size());
                 operator_result = emit_arithmetic_right_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                operator_result = emit_left_associative(o, "and", operands);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                operator_result = emit_left_associative(o, "or", operands);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
+            case SymbolicExpr::OP_XOR:
                 operator_result = emit_left_associative(o, "xor", operands);
                 break;
             case SymbolicExpr::OP_CONCAT:

@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Demo of AutoPar</title>
+  </head>
+
+ <body>
+
+<form action="/cgi-bin/autoPar.sh" method="post">
+
+Please provide the following information to run autoPar:<br>
+
+Step 1/2. 
+Input source code<br>
+<script src="autosize.js"></script>
+<textarea rows="20" cols="80" name="filecontent">
+/*a test C program. You can replace this content with yours. */
+/* Only the inner loop should be parallelized
+ */
+void foo()
+{
+  int n=100, m=100;
+  double b[n][m];
+  int i,j;
+  for (i=0;i<n;i++)
+    for (j=0;j<m;j++)
+      b[i][j]=b[i-1][j-1];
+}
+
+</textarea><br>
+
+Step 2/2: Select suffix of the source code <br>
+.c   <input type="radio" name="suffix" value="c" checked></input><br>
+.cpp <input type="radio" name="suffix" value="cpp"></input><br>
+
+<input type="submit" name="sub" value="Submit"></input>
+</form>
+
+ </body>
+</html>
+

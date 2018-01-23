@@ -3,7 +3,10 @@
 #include <rosePublicConfig.h>
 #include <BinarySmtlibSolver.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/lexical_cast.hpp>
 #include <Diagnostics.h>
+#include <Sawyer/Stopwatch.h>
+#include <stringify.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -22,6 +25,12 @@ SmtlibSolver::clearEvidence() {
     evidence.clear();
 }
 
+void
+SmtlibSolver::clearMemoization() {
+    SmtSolver::clearMemoization();
+    memoizedEvidence.clear();
+}
+
 std::string
 SmtlibSolver::getCommand(const std::string &configName) {
     std::string exe = executable_.empty() ? std::string("/bin/false") : executable_.string();
@@ -31,21 +40,23 @@ SmtlibSolver::getCommand(const std::string &configName) {
 void
 SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) {
     requireLinkage(LM_EXECUTABLE);
-    
 
+    // Find all variables
     VariableSet vars;
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
         VariableSet tmp = findVariables(expr);
         BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, tmp.values())
             vars.insert(var);
     }
+
+    // Output variable declarations
     if (!vars.isEmpty()) {
         o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
           <<"; Uninterpreted variables\n"
           <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
         outputVariableDeclarations(o, vars);
     }
-    
+
     o <<"\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
       <<"; Common subexpressions\n"
@@ -132,7 +143,8 @@ SmtlibSolver::outputAssertion(std::ostream &o, const SymbolicExpr::Ptr &expr) {
             o <<"false";
         }
     } else {
-        outputExpression(o, expr, BOOLEAN);
+        SExpr::Ptr smtExpr = outputCast(outputExpression(expr), BOOLEAN).first;
+        o <<*smtExpr;
     }
     o <<")\n";
 }
@@ -251,7 +263,7 @@ SmtlibSolver::outputBvxorFunctions(std::ostream &o, const std::vector<SymbolicEx
 
         SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
             if (SymbolicExpr::InteriorPtr inode = node->isInteriorNode()) {
-                if (inode->getOperator() == SymbolicExpr::OP_BV_XOR && widths.insert(inode->nBits()).second) {
+                if (inode->getOperator() == SymbolicExpr::OP_XOR && widths.insert(inode->nBits()).second) {
                     size_t w = inode->nBits();
                     o <<"(define-fun bvxor" <<w
                       <<" ((a (_ BitVec " <<w <<")) (b (_ BitVec " <<w <<")))"
@@ -362,7 +374,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
         expr->depthFirstTraversal(t1);
 }
-                        
+
 void
 SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
@@ -374,256 +386,272 @@ SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<Symb
         o <<"; effective size = " <<StringUtility::plural(cse->nNodes(), "nodes")
           <<", actual size = " <<StringUtility::plural(cse->nNodesUnique(), "nodes") <<"\n";
         std::string termName = "cse_" + StringUtility::numberToString(++cseId);
-        o <<"(define-fun " <<termName <<" " <<typeName(cse) <<" ";
-        if (cse->isLeafNode() && cse->isLeafNode()->isMemory()) {
-            outputExpression(o, cse, MEM_STATE);
-        } else {
-            outputExpression(o, cse, BIT_VECTOR);
-        }
-        o <<")\n";
-        termNames_.insert(cse, termName);
+
+        SExprTypePair et = outputExpression(cse);
+        ASSERT_not_null(et.first);
+
+        o <<"(define-fun " <<termName <<" " <<typeName(cse) <<" " <<*et.first <<")\n";
+        termNames_.insert(cse, StringTypePair(termName, et.second));
     }
 }
 
-void
-SmtlibSolver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type needType) {
+SmtSolver::Type
+SmtlibSolver::mostType(const std::vector<SExprTypePair> &ets) {
+    typedef Sawyer::Container::Map<Type, size_t> Histogram;
+    Histogram histogram;
+    BOOST_FOREACH (const SExprTypePair &et, ets)
+        ++histogram.insertMaybe(et.second, 0);
+    Type bestType = NO_TYPE;
+    size_t bestCount = 0;
+    BOOST_FOREACH (const Histogram::Node &node, histogram.nodes()) {
+        if (node.value() > bestCount) {
+            bestType = node.key();
+            bestCount = node.value();
+        }
+    }
+    return bestType;
+}
+
+SmtSolver::SExprTypePair
+SmtlibSolver::outputCast(const SExprTypePair &et, Type toType) {
+    SExpr::Ptr retval;
+    Type fromType = et.second;
+    if (fromType == toType) {
+        retval = et.first;
+    } else if (BOOLEAN == fromType && BIT_VECTOR == toType) {
+        retval = SExpr::instance(SExpr::instance("ite"), et.first, SExpr::instance("#b1"), SExpr::instance("#b0"));
+    } else if (BIT_VECTOR == fromType && BOOLEAN == toType) {
+        retval = SExpr::instance(SExpr::instance("="), et.first, SExpr::instance("#b1"));
+    } else {
+        Stringifier string(stringifyBinaryAnalysisSmtSolverType);
+        ASSERT_not_reachable("invalid cast from " + string(et.second) + " to " + string(toType));
+    }
+    return SExprTypePair(retval, toType);
+}
+
+std::vector<SmtSolver::SExprTypePair>
+SmtlibSolver::outputCast(const std::vector<SExprTypePair> &ets, Type toType) {
+    std::vector<SExprTypePair> retval;
+    retval.reserve(ets.size());
+    BOOST_FOREACH (const SExprTypePair &et, ets)
+        retval.push_back(outputCast(et, toType));
+    return retval;
+}
+
+std::vector<SmtSolver::SExprTypePair>
+SmtlibSolver::outputExpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
+    std::vector<SExprTypePair> retval;
+    retval.reserve(exprs.size());
+    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+        retval.push_back(outputExpression(expr));
+    return retval;
+}
+
+SmtSolver::SExprTypePair
+SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
+    ASSERT_not_null(expr);
+    typedef std::vector<SExprTypePair> Etv;
+    SExprTypePair retval;
+
     SymbolicExpr::LeafPtr leaf = expr->isLeafNode();
     SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
 
-    std::string subExprName;
-    if (termNames_.getOptional(expr).assignTo(subExprName)) {
-        if (BOOLEAN == needType) {
-            o <<"(= " <<subExprName <<" #b1)";
-        } else {
-            o <<subExprName; // bit vector or memory state
-        }
+    // If we previously found a common subexpression, then use its name rather than re-emitting the same expression again. This
+    // can drastically reduce the size of the output file.
+    StringTypePair st;
+    if (termNames_.getOptional(expr).assignTo(st)) {
+        return SExprTypePair(SExpr::instance(st.first), st.second);
     } else if (leaf) {
-        outputLeaf(o, leaf, needType);
+        retval = outputLeaf(leaf);
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
             case SymbolicExpr::OP_ADD:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLeftAssoc(o, "bvadd", inode, BIT_VECTOR);
+                retval = outputLeftAssoc("bvadd", inode);
                 break;
-            case SymbolicExpr::OP_AND:
-                ASSERT_require(BOOLEAN == needType);
-                outputLeftAssoc(o, "and", inode, BOOLEAN);
+            case SymbolicExpr::OP_AND: {
+                Etv children = outputExpressions(inode->children());
+                Type type = mostType(children);
+                children = outputCast(children, type);
+                if (BOOLEAN == type) {
+                    retval = outputLeftAssoc("and", children);
+                } else {
+                    ASSERT_require(BIT_VECTOR == type);
+                    retval = outputLeftAssoc("bvand", children);
+                }
                 break;
+            }
             case SymbolicExpr::OP_ASR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputArithmeticShiftRight(o, inode);
+                retval = outputArithmeticShiftRight(inode);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLeftAssoc(o, "bvand", inode, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLeftAssoc(o, "bvor",  inode, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputXor(o, inode);
+            case SymbolicExpr::OP_XOR:
+                retval = outputXor(inode);
                 break;
             case SymbolicExpr::OP_EQ:
-                ASSERT_require(BOOLEAN == needType);
-                outputBinary(o, "=", inode, BIT_VECTOR);
+                retval = outputBinary("=", inode, BOOLEAN);
                 break;
-            case SymbolicExpr::OP_CONCAT:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLeftAssoc(o, "concat", inode, BIT_VECTOR);
+            case SymbolicExpr::OP_CONCAT: {
+                Etv children = outputCast(outputExpressions(inode->children()), BIT_VECTOR);
+                retval = outputLeftAssoc("concat", children);
                 break;
+            }
             case SymbolicExpr::OP_EXTRACT:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputExtract(o, inode);
+                retval = outputExtract(inode);
                 break;
-            case SymbolicExpr::OP_INVERT:
-                outputUnary(o, (BOOLEAN==needType?"not":"bvnot"), inode, needType);
+            case SymbolicExpr::OP_INVERT: {
+                ASSERT_require(inode->nChildren() == 1);
+                SExprTypePair child = outputExpression(inode->child(0));
+                retval = outputUnary((BOOLEAN==child.second?"not":"bvnot"), child);
                 break;
+            }
             case SymbolicExpr::OP_ITE:
-                outputIte(o, inode, needType);
+                retval = outputIte(inode);
                 break;
             case SymbolicExpr::OP_LSSB:
                 throw Exception("OP_LSSB not implemented");
             case SymbolicExpr::OP_MSSB:
                 throw Exception("OP_MSSB not implemented");
             case SymbolicExpr::OP_NE:
-                ASSERT_require(BOOLEAN == needType);
-                outputNotEqual(o, inode);
+                retval = outputNotEqual(inode);
                 break;
-            case SymbolicExpr::OP_NEGATE:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputUnary(o, "bvneg", inode, BIT_VECTOR);
+            case SymbolicExpr::OP_NEGATE: {
+                ASSERT_require(inode->nChildren() == 1);
+                SExprTypePair child = outputCast(outputExpression(inode->child(0)), BIT_VECTOR);
+                retval = outputUnary("bvneg", child);
                 break;
+            }
             case SymbolicExpr::OP_NOOP:
-                outputExpression(o, SymbolicExpr::makeInteger(inode->nBits(), 0), needType);
+                retval = outputExpression(SymbolicExpr::makeInteger(inode->nBits(), 0));
                 break;
-            case SymbolicExpr::OP_OR:
-                ASSERT_require(BOOLEAN == needType);
-                outputLeftAssoc(o, "or", inode, BOOLEAN);
+            case SymbolicExpr::OP_OR: {
+                Etv children = outputExpressions(inode->children());
+                Type type = mostType(children);
+                children = outputCast(children, type);
+                if (BOOLEAN == type) {
+                    retval = outputLeftAssoc("or", children);
+                } else {
+                    ASSERT_require(BIT_VECTOR == type);
+                    retval = outputLeftAssoc("bvor", children);
+                }
                 break;
+            }
             case SymbolicExpr::OP_READ:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputRead(o, inode);
+                retval = outputRead(inode);
                 break;
             case SymbolicExpr::OP_ROL:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputRotateLeft(o, inode);
+                retval = outputRotateLeft(inode);
                 break;
             case SymbolicExpr::OP_ROR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputRotateRight(o, inode);
+                retval = outputRotateRight(inode);
                 break;
             case SymbolicExpr::OP_SDIV:
                 throw Exception("OP_SDIV not implemented");
             case SymbolicExpr::OP_SET:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputSet(o, inode);
+                retval = outputSet(inode);
                 break;
             case SymbolicExpr::OP_SEXTEND:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputSignExtend(o, inode);
+                retval = outputSignExtend(inode);
                 break;
             case SymbolicExpr::OP_SLT:
-                ASSERT_require(BOOLEAN == needType);
-                outputSignedCompare(o, inode);
+                retval = outputSignedCompare(inode);
                 break;
             case SymbolicExpr::OP_SLE:
-                ASSERT_require(BOOLEAN == needType);
-                outputSignedCompare(o, inode);
+                retval = outputSignedCompare(inode);
                 break;
             case SymbolicExpr::OP_SHL0:
-                ASSERT_require(BOOLEAN == needType);
-                outputShiftLeft(o, inode);
+                retval = outputShiftLeft(inode);
                 break;
             case SymbolicExpr::OP_SHL1:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputShiftLeft(o, inode);
+                retval = outputShiftLeft(inode);
                 break;
             case SymbolicExpr::OP_SHR0:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLogicalShiftRight(o, inode);
+                retval = outputLogicalShiftRight(inode);
                 break;
             case SymbolicExpr::OP_SHR1:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLogicalShiftRight(o, inode);
+                retval = outputLogicalShiftRight(inode);
                 break;
             case SymbolicExpr::OP_SGE:
-                ASSERT_require(BOOLEAN == needType);
-                outputSignedCompare(o, inode);
+                retval = outputSignedCompare(inode);
                 break;
             case SymbolicExpr::OP_SGT:
-                ASSERT_require(BOOLEAN == needType);
-                outputSignedCompare(o, inode);
+                retval = outputSignedCompare(inode);
                 break;
             case SymbolicExpr::OP_SMOD:
                 throw Exception("OP_SMOD not implemented");
             case SymbolicExpr::OP_SMUL:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputMultiply(o, inode);
+                retval = outputMultiply(inode);
                 break;
             case SymbolicExpr::OP_UDIV:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputUnsignedDivide(o, inode);
+                retval = outputUnsignedDivide(inode);
                 break;
             case SymbolicExpr::OP_UEXTEND:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputUnsignedExtend(o, inode);
+                retval = outputUnsignedExtend(inode);
                 break;
             case SymbolicExpr::OP_UGE:
-                ASSERT_require(BOOLEAN == needType);
-                outputUnsignedCompare(o, inode);
+                retval = outputUnsignedCompare(inode);
                 break;
             case SymbolicExpr::OP_UGT:
-                ASSERT_require(BOOLEAN == needType);
-                outputUnsignedCompare(o, inode);
+                retval = outputUnsignedCompare(inode);
                 break;
             case SymbolicExpr::OP_ULE:
-                ASSERT_require(BOOLEAN == needType);
-                outputUnsignedCompare(o, inode);
+                retval = outputUnsignedCompare(inode);
                 break;
             case SymbolicExpr::OP_ULT:
-                ASSERT_require(BOOLEAN == needType);
-                outputUnsignedCompare(o, inode);
+                retval = outputUnsignedCompare(inode);
                 break;
             case SymbolicExpr::OP_UMOD:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputUnsignedModulo(o, inode);
+                retval = outputUnsignedModulo(inode);
                 break;
             case SymbolicExpr::OP_UMUL:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputMultiply(o, inode);
+                retval = outputMultiply(inode);
                 break;
             case SymbolicExpr::OP_WRITE:
-                ASSERT_require(MEM_STATE == needType);
-                outputWrite(o, inode);
+                retval = outputWrite(inode);
                 break;
             case SymbolicExpr::OP_ZEROP:
-                ASSERT_require(BOOLEAN == needType);
-                outputZerop(o, inode);
+                retval = outputZerop(inode);
                 break;
         }
     }
+    ASSERT_not_null(retval.first);
+    ASSERT_forbid(retval.second == NO_TYPE);
+    return retval;
 }
 
-void
-SmtlibSolver::outputLeaf(std::ostream &o, const SymbolicExpr::LeafPtr &leaf, Type needType) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputLeaf(const SymbolicExpr::LeafPtr &leaf) {
+    SExprTypePair retval;
     if (leaf->isNumber()) {
-        if (BOOLEAN == needType) {
-            ASSERT_require(leaf->nBits() == 1);
-            o <<(leaf->toInt() ? "#b1" : "#b0");
-        } else if (leaf->nBits() % 4 == 0) {
-            ASSERT_require(BIT_VECTOR == needType);
-            o <<"#x" <<leaf->bits().toHex();
+        retval.second = BIT_VECTOR;
+        if (leaf->nBits() % 4 == 0) {
+            retval.first = SExpr::instance("#x" + leaf->bits().toHex());
         } else {
-            ASSERT_require(BIT_VECTOR == needType);
-            o <<"#b" <<leaf->bits().toBinary();
+            retval.first = SExpr::instance("#b" + leaf->bits().toBinary());
         }
     } else if (leaf->isVariable()) {
-        if (BOOLEAN == needType) {
-            ASSERT_require(leaf->nBits() == 1);
-            o <<"(= " <<leaf->toString() <<" #b1)";
-        } else {
-            o <<leaf->toString();
-        }
+        retval.second = BIT_VECTOR;
+        retval.first = SExpr::instance(leaf->toString());
     } else {
         ASSERT_require(leaf->isMemory());
-        ASSERT_require(MEM_STATE == needType);
-        o <<leaf->toString();
+        retval.second = MEM_STATE;
+        retval.first = SExpr::instance(leaf->toString());
     }
-}
-
-// ROSE (rose-operator exprs...) => SMT-LIB (smtlib-operator exprs...); one or more expression
-void
-SmtlibSolver::outputList(std::ostream &o, const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type type) {
-    ASSERT_require(!name.empty());
-    ASSERT_not_null(inode);
-    ASSERT_require(inode->nChildren() >= 1);
-    o <<"(" <<name;
-    BOOST_FOREACH (const SymbolicExpr::Ptr &child, inode->children()) {
-        o <<" ";
-        outputExpression(o, child, type);
-    }
-    o <<")";
+    return retval;
 }
 
 // ROSE (rose-operator expr) => SMT-LIB (smtlib-operator expr)
-void
-SmtlibSolver::outputUnary(std::ostream &o, const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type type) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputUnary(const std::string &name, const SExprTypePair &child) {
     ASSERT_require(!name.empty());
-    ASSERT_not_null(inode);
-    ASSERT_require(inode->nChildren() == 1);
-    outputList(o, name, inode, type);
+    SExpr::Ptr retval = SExpr::instance(SExpr::instance(name), child.first);
+    return SExprTypePair(retval, child.second);
 }
 
 // ROSE (rose-operator a b) => SMT-LIB (smtlib-operator a b)
-void
-SmtlibSolver::outputBinary(std::ostream &o, const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type type) {
-    ASSERT_require(!name.empty());
-    ASSERT_not_null(inode);
+SmtSolver::SExprTypePair
+SmtlibSolver::outputBinary(const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type rettype) {
     ASSERT_require(inode->nChildren() == 2);
-    outputList(o, name, inode, type);
+    return outputLeftAssoc(name, inode, rettype);
 }
 
 // ROSE (rose-operator a b)     => SMT-LIB (smtlib-operator a b)
@@ -631,37 +659,50 @@ SmtlibSolver::outputBinary(std::ostream &o, const std::string &name, const Symbo
 // ROSE (rose-operator a b c d) => SMT-LIB (smtlib-operator (smtlib-operator (smtlib-operator a b) c) d)
 // etc.
 // where "identity" is all zeros or all ones and the same width as "a".
-void
-SmtlibSolver::outputLeftAssoc(std::ostream &o, const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type type) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputLeftAssoc(const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type rettype) {
     ASSERT_require(!name.empty());
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() > 1);
 
-    for (size_t i = 1; i < inode->nChildren(); ++i)
-        o <<"(" <<name <<" ";
-    outputExpression(o, inode->child(0), type);
+    std::vector<SExprTypePair> children = outputExpressions(inode->children());
+    return outputLeftAssoc(name, children, rettype);
+}
 
-    for (size_t i = 1; i < inode->nChildren(); ++i) {
-        o <<" ";
-        outputExpression(o, inode->child(i), type);
-        o <<")";
+SmtSolver::SExprTypePair
+SmtlibSolver::outputLeftAssoc(const std::string &name, const std::vector<SExprTypePair> &children, Type rettype) {
+    Type childType = mostType(children);
+    SExpr::Ptr retval = outputCast(children[0], childType).first;
+    for (size_t i=1; i<children.size(); ++i) {
+        SExpr::Ptr child = outputCast(children[i], childType).first;
+        retval = SExpr::instance(SExpr::instance(name), retval, child);
     }
+    if (NO_TYPE == rettype)
+        rettype = childType;
+    return SExprTypePair(retval, rettype);
 }
 
 // SMT-LIB doesn't have a bit-wise XOR function, but we should have by now generated our own "bvxorN" functions where N is the
 // width of the operands.
-void
-SmtlibSolver::outputXor(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputXor(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() > 1);
 
-    std::string name = "bvxor" + boost::lexical_cast<std::string>(inode->nBits());
-    outputLeftAssoc(o, name, inode, BIT_VECTOR);
+    std::vector<SExprTypePair> children = outputExpressions(inode->children());
+    Type type = mostType(children);
+    children = outputCast(children, type);
+    if (BOOLEAN == type) {
+        return outputLeftAssoc("xor", children);
+    } else {
+        ASSERT_require(BIT_VECTOR == type);
+        return outputLeftAssoc("bvxor" + boost::lexical_cast<std::string>(inode->nBits()), children);
+    }
 }
 
 // ROSE (extract lo hi expr) => SMT-LIB ((_ extract hi lo) expr); lo and hi are inclusive
-void
-SmtlibSolver::outputExtract(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputExtract(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 3);
     ASSERT_require(inode->child(0)->isNumber());
@@ -670,37 +711,44 @@ SmtlibSolver::outputExtract(std::ostream &o, const SymbolicExpr::InteriorPtr &in
     size_t end = inode->child(1)->toInt();              // high, exclusive
     ASSERT_require(end > begin);
     ASSERT_require(end <= inode->child(2)->nBits());
-    o <<"((_ extract " <<(end-1) <<" " <<begin <<") ";
-    outputExpression(o, inode->child(2), BIT_VECTOR);
-    o <<")";
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(end-1),
+                                        SExpr::instance(begin)),
+                        outputCast(outputExpression(inode->child(2)), BIT_VECTOR).first);
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (ite boolean-expr a b) => SMT-LIB (ite boolean-expr a b); a and b same size, condition is Boolean not bit vector
-void
-SmtlibSolver::outputIte(std::ostream &o, const SymbolicExpr::InteriorPtr &inode, Type type) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputIte(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_ITE);
     ASSERT_require(inode->nChildren() == 3);
-    o <<"(ite ";
-    outputExpression(o, inode->child(0), BOOLEAN);
-    o <<" ";
-    outputExpression(o, inode->child(1), type);
-    o <<" ";
-    outputExpression(o, inode->child(2), type);
-    o <<")";
+
+    SExpr::Ptr cond = outputCast(outputExpression(inode->child(0)), BOOLEAN).first;
+    std::vector<SExprTypePair> alternatives;
+    alternatives.push_back(outputExpression(inode->child(1)));
+    alternatives.push_back(outputExpression(inode->child(2)));
+    Type type = mostType(alternatives);
+    alternatives = outputCast(alternatives, type);
+    SExpr::Ptr retval = SExpr::instance(SExpr::instance("ite"), cond, alternatives[0].first, alternatives[1].first);
+    return SExprTypePair(retval, type);
 }
 
 // ROSE (!= a b) => SMT-LIB (not (= a b))
-void
-SmtlibSolver::outputNotEqual(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputNotEqual(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->nBits() == inode->child(1)->nBits());
-    o <<"(not (= ";
-    outputExpression(o, inode->child(0), BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<"))";
+    std::vector<SExprTypePair> children = outputExpressions(inode->children());
+    children = outputCast(children, mostType(children));
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance("not"),
+                        SExpr::instance(SExpr::instance("="), children[0].first, children[1].first));
+    return SExprTypePair(retval, BOOLEAN);
 }
 
 // ROSE (uextend size expr) =>
@@ -708,21 +756,25 @@ SmtlibSolver::outputNotEqual(std::ostream &o, const SymbolicExpr::InteriorPtr &i
 //
 // Where "zeros" is a bit vector of all clear bits with width size-expr.size. Due to ROSE symbolic simplifications that have
 // already occurred by this point, "size" is guaranteed to be greater than expr.size.
-void
-SmtlibSolver::outputUnsignedExtend(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->isNumber());
     ASSERT_require(inode->child(0)->toInt() > inode->child(1)->nBits());
     size_t newWidth = inode->child(0)->toInt();
     size_t needBits = newWidth - inode->child(1)->nBits();
-    SymbolicExpr::Ptr zeros = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(needBits, false));
 
-    o <<"(concat ";
-    outputExpression(o, zeros, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<")";
+    SExpr::Ptr zeros =
+        outputCast(outputExpression(SymbolicExpr::makeConstant(Sawyer::Container::BitVector(needBits, false))),
+                   BIT_VECTOR).first;
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance("concat"),
+                        zeros,
+                        outputCast(outputExpression(inode->child(1)), BIT_VECTOR).first);
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (sextend size expr) =>
@@ -733,85 +785,100 @@ SmtlibSolver::outputUnsignedExtend(std::ostream &o, const SymbolicExpr::Interior
 //
 //  where "zeros" is a bit vector of size size-expr.size with all bits clear.
 //  The "size" > expr.size due to sextend simplifications that would have kicked in otherwise.
-void
-SmtlibSolver::outputSignExtend(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputSignExtend(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->isNumber());
     ASSERT_require(inode->child(0)->toInt() > inode->child(1)->nBits());
     SymbolicExpr::Ptr newSize = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    size_t signBitIdx = inode->child(1)->nBits() - 1;
+    size_t growth = newSize->toInt() - inode->child(1)->nBits();
 
-    size_t signBitIdx = expr->nBits() - 1;
-    size_t growth = newSize->toInt() - expr->nBits();
-    SymbolicExpr::Ptr zeros = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(growth, false));
+    SExpr::Ptr expr = outputCast(outputExpression(inode->child(1)), BIT_VECTOR).first;
+    SExpr::Ptr zeros = outputExpression(SymbolicExpr::makeConstant(Sawyer::Container::BitVector(growth, false))).first;
+    SExpr::Ptr ones = SExpr::instance(SExpr::instance("bvnot"), zeros);
 
-    o <<"(concat (ite (= ((_ extract " <<signBitIdx <<" " <<signBitIdx <<") ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<") #b1) (bvnot ";
-    outputExpression(o, zeros, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, zeros, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<")";
+    SExpr::Ptr isNegative =
+        SExpr::instance(SExpr::instance("="),
+                        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                                        SExpr::instance("extract"),
+                                                        SExpr::instance(signBitIdx),
+                                                        SExpr::instance(signBitIdx)),
+                                        expr),
+                        SExpr::instance("#b1"));
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance("concat"),
+                        SExpr::instance(SExpr::instance("ite"), isNegative, ones, zeros),
+                        expr);
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (set a b ...) =>
 // SMT-LIB (ite v1 (ite v2 ... b) a)
 //
 // where v1, v2, ... are new variables
-void
-SmtlibSolver::outputSet(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputSet(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(inode->nChildren() >= 2);
     SymbolicExpr::LeafPtr var = varForSet(inode);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, SmtSolverPtr(), var);
     ite->comment(inode->comment());
-    outputExpression(o, ite, BIT_VECTOR);
+    return outputExpression(ite);
 }
 
 // ROSE (ror amount expr) =>
 // SMT-LIB ((_ extract [expr.size-1] 0) (bvlshr (concat expr expr) extended_amount))
 // where extended_amount is numerically equal to amount but extended to be 2*expr.nbits in width.
-void
-SmtlibSolver::outputRotateRight(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputRotateRight(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa);
-    o <<"((_ extract " <<(w-1) <<" 0) (bvlshr (concat ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, sa, BIT_VECTOR);
-    o <<"))";
+
+    SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(w-1),
+                                        SExpr::instance(0)),
+                        SExpr::instance(SExpr::instance("bvlshr"),
+                                        SExpr::instance(SExpr::instance("concat"), shiftee, shiftee),
+                                        outputCast(outputExpression(sa), BIT_VECTOR).first));
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (rol amount expr) =>
 // SMT-LIB (_ extract [2*expr.size-1] [expr.size] (bvshl (concat expr expr) extended_amount))
 // where extended_amount is numerically equal to amount but extended to be 2*expr.nbits in width.
-void
-SmtlibSolver::outputRotateLeft(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa);
-    o <<"((_ extract " <<(2*w-1) <<" " <<w <<") (bvshl (concat ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, sa, BIT_VECTOR);
-    o <<"))";
+
+    SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(2*w-1),
+                                        SExpr::instance(w)),
+                        SExpr::instance(SExpr::instance("bvshl"),
+                                        SExpr::instance(SExpr::instance("concat"), shiftee, shiftee),
+                                        outputCast(outputExpression(sa), BIT_VECTOR).first));
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // For logical right shifts:
@@ -820,8 +887,8 @@ SmtlibSolver::outputRotateLeft(std::ostream &o, const SymbolicExpr::InteriorPtr 
 //
 // Where extended_amount is the ROSE "amount" widened (or truncated) to the same width as "expr",
 // and where "zeros_or_ones" is a constant with all bits set or clear and the same width as "expr"
-void
-SmtlibSolver::outputLogicalShiftRight(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputLogicalShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR0 || inode->getOperator() == SymbolicExpr::OP_SHR1);
     ASSERT_require(inode->nChildren() == 2);
@@ -830,25 +897,32 @@ SmtlibSolver::outputLogicalShiftRight(std::ostream &o, const SymbolicExpr::Inter
 
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa); // widen sa same as expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHR1;
-    SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
+    SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
-    o <<"((_ extract " <<(expr->nBits()-1) <<" 0) (bvlshr (concat ";
-    outputExpression(o, zerosOrOnes, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, sa, BIT_VECTOR);
-    o <<"))";
+    SExpr::Ptr zerosOrOnes =
+        outputCast(outputExpression(SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits))),
+                   BIT_VECTOR).first;
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(expr->nBits()-1),
+                                        SExpr::instance(0)),
+                        SExpr::instance(SExpr::instance("bvlshr"),
+                                        SExpr::instance(SExpr::instance("concat"), zerosOrOnes, shiftee),
+                                        outputCast(outputExpression(sa), BIT_VECTOR).first));
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // For left shifts:
 // ROSE (rose-left-shift-op amount expr) =>
 // SMT-LIB ((_ extract [2*expr.size-1] expr.size) (bvshl (concat expr zeros_or_ones) extended_amount))
-// 
+//
 // Where extended_amount is the ROSE "amount" widened (or truncated) to the same width as "expr",
 // and where "zeros_or_ones" is a constant with all bits set or clear and the same width as "expr"
-void
-SmtlibSolver::outputShiftLeft(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL0 || inode->getOperator() == SymbolicExpr::OP_SHL1);
     ASSERT_require(inode->nChildren() == 2);
@@ -857,15 +931,22 @@ SmtlibSolver::outputShiftLeft(std::ostream &o, const SymbolicExpr::InteriorPtr &
 
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa); // widen sa same as expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
-    SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
+    SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
-    o <<"((_ extract " <<(2*expr->nBits()-1) <<" " <<expr->nBits() <<") (bvshl (concat ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, zerosOrOnes, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, sa, BIT_VECTOR);
-    o <<"))";
+    SExpr::Ptr zerosOrOnes =
+        outputCast(outputExpression(SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits))),
+                   BIT_VECTOR).first;
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(2*expr->nBits()-1),
+                                        SExpr::instance(expr->nBits())),
+                        SExpr::instance(SExpr::instance("bvshl"),
+                                        SExpr::instance(SExpr::instance("concat"), shiftee, zerosOrOnes),
+                                        outputCast(outputExpression(sa), BIT_VECTOR).first));
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (asr amount expr) =>
@@ -880,42 +961,60 @@ SmtlibSolver::outputShiftLeft(std::ostream &o, const SymbolicExpr::InteriorPtr &
 //
 // where "extended_amount" is the shift amount signe extended to the same width as 2 * expr.nBits.
 // where zeros is a constant containing all clear bits the same width as expr.
-void
-SmtlibSolver::outputArithmeticShiftRight(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t width = expr->nBits();
-    SymbolicExpr::Ptr zeros = SymbolicExpr::makeInteger(width, 0);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, width), sa); //  widen same as expr
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*width), sa);
-    o <<"((_ extract " <<(width-1) <<" 0) (bvlshr (concat (ite (= ((_ extract " <<(width-1) <<" " <<(width-1) <<") ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<") #b1) (bvnot ";
-    outputExpression(o, zeros, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, zeros, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, expr, BIT_VECTOR);
-    o <<") ";
-    outputExpression(o, sa, BIT_VECTOR);
-    o <<"))";
+    SExprTypePair shiftee = outputExpression(expr);
+    ASSERT_require(BIT_VECTOR == shiftee.second);
+
+    SExpr::Ptr isNegative =
+        SExpr::instance(SExpr::instance("="),
+                        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                                        SExpr::instance("extract"),
+                                                        SExpr::instance(width-1),
+                                                        SExpr::instance(width-1)),
+                                        shiftee.first),
+                        SExpr::instance("#b1"));
+
+    SExpr::Ptr zeros = outputExpression(SymbolicExpr::makeInteger(width, 0)).first;
+    SExpr::Ptr ones = SExpr::instance(SExpr::instance("bvnot"), zeros);
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(width-1),
+                                        SExpr::instance(0)),
+                        SExpr::instance(SExpr::instance("bvlshr"),
+                                        SExpr::instance(SExpr::instance("concat"),
+                                                        SExpr::instance(SExpr::instance("ite"),
+                                                                        isNegative, ones, zeros),
+                                                        shiftee.first),
+                                        outputCast(outputExpression(sa), BIT_VECTOR).first));
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (zerop expr) => SMT-LIB (= expr zeros)
 // where "zeros" is a bit vector of all zeros the same size as "expr".
-void
-SmtlibSolver::outputZerop(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputZerop(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 1);
 
     SymbolicExpr::Ptr zeros = SymbolicExpr::makeInteger(inode->child(0)->nBits(), 0);
-    o <<"(= ";
-    outputExpression(o, inode->child(0), BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, zeros, BIT_VECTOR);
-    o <<")";
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance("="),
+                        outputCast(outputExpression(inode->child(0)), BIT_VECTOR).first,
+                        outputCast(outputExpression(zeros), BIT_VECTOR).first);
+
+    return SExprTypePair(retval, BOOLEAN);
 }
 
 // ROSE (rose-multiply a b) =>
@@ -923,8 +1022,8 @@ SmtlibSolver::outputZerop(std::ostream &o, const SymbolicExpr::InteriorPtr &inod
 //
 // where "a_extended" and "b_extended" are extended (signed or unsigned) to the width a.size+b.size before being
 // multiplied.
-void
-SmtlibSolver::outputMultiply(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputMultiply(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr a = inode->child(0);
@@ -941,136 +1040,176 @@ SmtlibSolver::outputMultiply(std::ostream &o, const SymbolicExpr::InteriorPtr &i
         bExtended = SymbolicExpr::makeExtend(resultSize, b);
     }
 
-    o <<"(bvmul ";
-    outputExpression(o, aExtended, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, bExtended, BIT_VECTOR);
-    o <<")";
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance("bvmul"),
+                        outputCast(outputExpression(aExtended), BIT_VECTOR).first,
+                        outputCast(outputExpression(bExtended), BIT_VECTOR).first);
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (udiv a b) =>
 // SMT-LIB ((_ extract [a.size-1] 0) (bvudiv a_extended b_extended))
 //
 // where a_extended and b_extended are zero extended to have the width max(a.size,b.size).
-void
-SmtlibSolver::outputUnsignedDivide(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
     SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
     SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
-    o <<"((_ extract " <<(inode->child(0)->nBits()-1) <<" 0) (bvudiv ";
-    outputExpression(o, aExtended, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, bExtended, BIT_VECTOR);
-    o <<"))";
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(inode->child(0)->nBits()-1),
+                                        SExpr::instance(0)),
+                        SExpr::instance(SExpr::instance("bvudiv"),
+                                        outputCast(outputExpression(aExtended), BIT_VECTOR).first,
+                                        outputCast(outputExpression(bExtended), BIT_VECTOR).first));
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (umod a b) =>
 // SMT-LIB ((_ extract [b.size-1] 0) (bvurem a_extended b_extended))
 //
 // where a_extended and b_extended are zero extended to have the width max(a.size,b.size).
-void
-SmtlibSolver::outputUnsignedModulo(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
     SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
     SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
-    o <<"((_ extract " <<(inode->child(1)->nBits()-1) <<" 0) (bvurem ";
-    outputExpression(o, aExtended, BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, bExtended, BIT_VECTOR);
-    o <<"))";
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                        SExpr::instance("extract"),
+                                        SExpr::instance(inode->child(1)->nBits()-1),
+                                        SExpr::instance(0)),
+                        SExpr::instance(SExpr::instance("bvurem"),
+                                        outputCast(outputExpression(aExtended), BIT_VECTOR).first,
+                                        outputCast(outputExpression(bExtended), BIT_VECTOR).first));
+
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (rose-sign-compare-op a b) =>
 // SMT-LIB (...)
-void
-SmtlibSolver::outputSignedCompare(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputSignedCompare(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->nBits() == inode->child(1)->nBits());
 
+    std::string func;
     switch (inode->getOperator()) {
-        case SymbolicExpr::OP_SLT: o <<"(bvslt"; break;
-        case SymbolicExpr::OP_SLE: o <<"(bvsle"; break;
-        case SymbolicExpr::OP_SGT: o <<"(bvsgt"; break;
-        case SymbolicExpr::OP_SGE: o <<"(bvsge"; break;
+        case SymbolicExpr::OP_SLT: func = "bvslt"; break;
+        case SymbolicExpr::OP_SLE: func = "bvsle"; break;
+        case SymbolicExpr::OP_SGT: func = "bvsgt"; break;
+        case SymbolicExpr::OP_SGE: func = "bvsge"; break;
         default:
             ASSERT_not_reachable("unhandled signed comparison operation");
     }
-    o <<inode->child(0)->nBits() <<" ";
-    outputExpression(o, inode->child(0), BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<")";
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(func),
+                        outputCast(outputExpression(inode->child(0)), BIT_VECTOR).first,
+                        outputCast(outputExpression(inode->child(1)), BIT_VECTOR).first);
+
+    return SExprTypePair(retval, BOOLEAN);
 }
 
 // ROSE (rose-unsigned-compare-op a b) =>
 // SMT-LIB (...)
-void
-SmtlibSolver::outputUnsignedCompare(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputUnsignedCompare(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->nBits() == inode->child(1)->nBits());
 
+    std::string func;
     switch (inode->getOperator()) {
         case SymbolicExpr::OP_ULT:
-            o <<"(bvult";
+            func = "bvult";
             break;
         case SymbolicExpr::OP_ULE:
-            o <<"(bvule" <<inode->child(0)->nBits();
+            func = "bvule" + boost::lexical_cast<std::string>(inode->child(0)->nBits());
             break;
         case SymbolicExpr::OP_UGT:
-            o <<"(bvugt" <<inode->child(0)->nBits();
+            func = "bvugt" + boost::lexical_cast<std::string>(inode->child(0)->nBits());
             break;
         case SymbolicExpr::OP_UGE:
-            o <<"(bvuge" <<inode->child(0)->nBits();
+            func = "bvuge" + boost::lexical_cast<std::string>(inode->child(0)->nBits());
             break;
         default:
             ASSERT_not_reachable("unhandled unsigned comparison operation");
     }
-    o <<" ";
-    outputExpression(o, inode->child(0), BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<")";
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance(func),
+                        outputCast(outputExpression(inode->child(0)), BIT_VECTOR).first,
+                        outputCast(outputExpression(inode->child(1)), BIT_VECTOR).first);
+
+    return SExprTypePair(retval, BOOLEAN);
 }
 
 // ROSE (read mem addr) =>
 // SMT-LIB (select mem addr)
-void
-SmtlibSolver::outputRead(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputRead(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    o <<"(select ";
-    outputExpression(o, inode->child(0), MEM_STATE);
-    o <<" ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<")";
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance("select"),
+                        outputCast(outputExpression(inode->child(0)), MEM_STATE).first,
+                        outputCast(outputExpression(inode->child(1)), BIT_VECTOR).first);
+    return SExprTypePair(retval, BIT_VECTOR);
 }
 
 // ROSE (write mem addr value) =>
 // SMT-LIB (store mem addr value)
-void
-SmtlibSolver::outputWrite(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtSolver::SExprTypePair
+SmtlibSolver::outputWrite(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 3);
-    o <<"(store ";
-    outputExpression(o, inode->child(0), MEM_STATE);
-    o <<" ";
-    outputExpression(o, inode->child(1), BIT_VECTOR);
-    o <<" ";
-    outputExpression(o, inode->child(2), BIT_VECTOR);
-    o <<")";
+
+    SExpr::Ptr retval =
+        SExpr::instance(SExpr::instance("store"),
+                        outputCast(outputExpression(inode->child(0)), MEM_STATE).first,
+                        outputCast(outputExpression(inode->child(1)), BIT_VECTOR).first,
+                        outputCast(outputExpression(inode->child(2)), BIT_VECTOR).first);
+
+    return SExprTypePair(retval, MEM_STATE);
 }
 
 void
 SmtlibSolver::parseEvidence() {
     requireLinkage(LM_EXECUTABLE);
+    Sawyer::Stopwatch evidenceTimer;
     boost::regex varNameRe("v\\d+");
 
+    // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
+    // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
+    // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
+    // caller.
+    SymbolicExpr::Hash memoId = latestMemoizationId();
+    if (memoId > 0) {
+        MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
+        if (found != memoizedEvidence.end()) {
+            SymbolicExpr::ExprExprHashMap denorm = latestMemoizationRewrite_.invert();
+            evidence.clear();
+            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
+                evidence.insert(node.key()->substituteMultiple(denorm),
+                                node.value()->substituteMultiple(denorm));
+            stats.evidenceTime += evidenceTimer.stop();
+            return;
+        }
+    }
+
+    // Parse the evidence
     BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
         if (sexpr->children().size() > 0 && sexpr->children()[0]->name() == "model") {
             for (size_t i = 1; i < sexpr->children().size(); ++i) {
@@ -1114,14 +1253,25 @@ SmtlibSolver::parseEvidence() {
                     SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
                     evidence.insert(var, val);
 
-                } else if (mlog[ERROR]) {
-                    mlog[ERROR] <<"malformed model element: ";
-                    printSExpression(mlog[ERROR], elmt);
-                    mlog[ERROR] <<"\n";
+                } else if (mlog[WARN]) {
+                    mlog[WARN] <<"malformed model element ignored: ";
+                    printSExpression(mlog[WARN], elmt);
+                    mlog[WARN] <<"\n";
                 }
             }
         }
     }
+
+    // Cache the evidence. We must cache using the normalized form of expressions.
+    if (memoId > 0) {
+        ExprExprMap &me = memoizedEvidence[memoId];
+        BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
+            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
+                      node.value()->substituteMultiple(latestMemoizationRewrite_));
+        }
+    }
+
+    stats.evidenceTime += evidenceTimer.stop();
 }
 
 SymbolicExpr::Ptr

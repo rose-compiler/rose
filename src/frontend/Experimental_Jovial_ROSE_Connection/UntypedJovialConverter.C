@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "UntypedJovialConverter.h"
+#include "Jovial_to_ROSE_translation.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
 
@@ -45,8 +46,16 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
    Sg_File_Info*   end = fromNode->get_endOfConstruct();
 
    ROSE_ASSERT(start != NULL && end != NULL);
-   ROSE_ASSERT(toNode->get_startOfConstruct() == NULL);
-   ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
+
+// SageBuilder may have built FileInfo for the node
+   if (toNode->get_startOfConstruct() != NULL) {
+      delete toNode->get_startOfConstruct();
+      toNode->set_startOfConstruct(NULL);
+   }
+   if (toNode->get_endOfConstruct() != NULL) {
+      delete toNode->get_endOfConstruct();
+      toNode->set_endOfConstruct(NULL);
+   }
 
 #if DEBUG_UNTYPED_CONVERTER
    std::cout << "UntypedConverter::setSourcePositionFrom: ";
@@ -385,6 +394,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
       {
         case SgUntypedType::e_void:           sg_type = SageBuilder::buildVoidType();              break;
         case SgUntypedType::e_int:            sg_type = SgTypeInt::createType(0, kindExpression);  break;
+        case SgUntypedType::e_uint:           sg_type = SgTypeUnsignedInt::createType(kindExpression); break;
         case SgUntypedType::e_float:          sg_type = SgTypeFloat::createType(kindExpression);   break;
         case SgUntypedType::e_double:         sg_type = SageBuilder::buildDoubleType();            break;
 
@@ -392,7 +402,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
         case SgUntypedType::e_complex:        sg_type = SgTypeComplex::createType(SgTypeFloat::createType(kindExpression), kindExpression); break;
         case SgUntypedType::e_double_complex: sg_type = SgTypeComplex::createType(SgTypeDouble::createType());                              break;
 
-        case SgUntypedType::e_bool:           sg_type = SgTypeBool::createType(kindExpression);    break;
+        case SgUntypedType::e_bit:            sg_type = SgTypeBool::createType(kindExpression);    break;
 
      // character and string types
         case SgUntypedType::e_char:
@@ -434,15 +444,6 @@ SgInitializedName*
 UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
 {
    SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type, sg_init);
-// SageBuilder builds FileInfo for the variable declaration
-   if (sg_name->get_startOfConstruct() != NULL) {
-      delete sg_name->get_startOfConstruct();
-      sg_name->set_startOfConstruct(NULL);
-   }
-   if (sg_name->get_endOfConstruct() != NULL) {
-      delete sg_name->get_endOfConstruct();
-      sg_name->set_endOfConstruct(NULL);
-   }
    setSourcePositionFrom(sg_name, ut_name);
 
 #if DEBUG_UNTYPED_CONVERTER
@@ -467,29 +468,6 @@ UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, S
 
    return sg_scope;
 }
-
-void
-UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
-{
-   if (scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition)
-      {
-         if ( ! ut_list->get_func_list().empty() )
-            {
-               // Need to add a contains statement to the current scope as it currently
-               // doesn't exist in OFP's Fortran AST (FAST) design (part of concrete syntax only)
-               SgContainsStatement* containsStatement = new SgContainsStatement();
-               UntypedConverter::setSourcePositionUnknown(containsStatement);
-//TODO - maybe ok
-            // ROSE_ASSERT(0);
-
-               containsStatement->set_definingDeclaration(containsStatement);
-
-               scope->append_statement(containsStatement);
-               ROSE_ASSERT(containsStatement->get_parent() != NULL);
-            }
-      }
-}
-
 
 SgModuleStatement*
 UntypedConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
@@ -605,8 +583,10 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
 
    SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName, type, NULL);
 
-// A Fortran program has no non-defining declaration
+// TODO:
+// A Fortran program has no non-defining declaration (is this checked internally but not Jovial?)
    programDeclaration->set_definingDeclaration(programDeclaration);
+// programDeclaration->set_firstNondefiningDeclaration(programDeclaration);
 
    programDeclaration->set_scope(scope);
    programDeclaration->set_parent(scope);
@@ -755,9 +735,6 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
    return functionDeclaration;
 }
 
-
-//TODO-WARNING: This needs help!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
 SgVariableDeclaration*
 UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
 {
@@ -766,104 +743,16 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    SgUntypedType* ut_base_type = ut_decl->get_type();
    SgType*        sg_base_type = convertSgUntypedType(ut_base_type, scope);
 
-   SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
-   SgUntypedInitializedNamePtrList::const_iterator it;
+// Apparently Jovial can only have one variable per declaration statement
+   ROSE_ASSERT(ut_decl->get_variables()->get_name_list().size() == 1);
 
-// Declare the first variable
-#if 0
-//TODO - not sure this is correct and is ackward anyway as it would be nice to create a variable declaration
-// without any variables and then add them all later.
-   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration((*i)->get_name(), sg_type, /*sg_init*/NULL, scope);
+   SgName name = ut_decl->get_variables()->get_name_list().front()->get_name();
 
-// SageBuilder builds FileInfo for the variable declaration
-   if (sg_decl->get_startOfConstruct() != NULL) {
-      delete sg_decl->get_startOfConstruct();
-      sg_decl->set_startOfConstruct(NULL);
-   }
-   if (sg_decl->get_endOfConstruct() != NULL) {
-      delete sg_decl->get_endOfConstruct();
-      sg_decl->set_endOfConstruct(NULL);
-   }
-#endif
-
-#if 1
-   SgVariableDeclaration* sg_decl = new SgVariableDeclaration();
+   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration_nfi(name, sg_base_type, /*sg_init*/NULL, scope);
    setSourcePositionFrom(sg_decl, ut_decl);
-
-   sg_decl->set_parent(scope);
-   sg_decl->set_definingDeclaration(sg_decl);
-   setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
-#endif
-
-// add variables
-   for (it = ut_vars.begin(); it != ut_vars.end(); it++)
-   {
-         // TODO
-         //   1. initializer
-         //   2. CharLength: SgTypeString::createType(charLenExpr, typeKind)
-         //   3. ArraySpec: buildArrayType
-         //   4. CoarraySpec: buildArrayType with coarray attribute
-         //   5. Pointers: new SgPointerType(sg_type)
-         //   7. Dan warned me about sharing types but it looks like the base type is shared in inames
-      SgInitializedName* initializedName = UntypedConverter::convertSgUntypedInitializedName((*it), sg_base_type, /*sg_init*/NULL);
-      SgName variableName = initializedName->get_name();
-
-      initializedName->set_declptr(sg_decl);
-      sg_decl->append_variable(initializedName, /*sg_init*/NULL);
-
-      SgVariableSymbol* variableSymbol = NULL;
-      SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(scope);
-      if (functionDefinition != NULL)
-      {
-      // Check in the function definition for an existing symbol
-         variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
-         if (variableSymbol != NULL)
-         {
-            std::cout << "--- but variable symbol is _NOT_ NULL for " << variableName << std::endl;
-
-         // This variable symbol has already been placed into the function definition's symbol table
-         // Link the SgInitializedName in the variable declaration with its entry in the function parameter list.
-            initializedName->set_prev_decl_item(variableSymbol->get_declaration());
-         // Set the referenced type in the function parameter to be the same as that in the declaration being processed.
-            variableSymbol->get_declaration()->set_type(initializedName->get_type());
-         // Function parameters are in the scope of the function definition (same for C/C++)
-            initializedName->set_scope(functionDefinition);
-         }
-      }
-
-      if (variableSymbol == NULL)
-      {
-      // Check the current scope
-         variableSymbol = scope->lookup_variable_symbol(variableName);
-
-         initializedName->set_scope(scope);
-         if (variableSymbol == NULL)
-         {
-            variableSymbol = new SgVariableSymbol(initializedName);
-            scope->insert_symbol(variableName,variableSymbol);
-            ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
-         }
-      }
-      ROSE_ASSERT(variableSymbol != NULL);
-      ROSE_ASSERT(initializedName->get_scope() != NULL);
-   }
 
    scope->append_statement(sg_decl);
    convertLabel(ut_decl, sg_decl);
-
-   //        SgInitializedNamePtrList& varList = varDecl->get_variables ();
-   //        SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
-   //        SgInitializedName* lastInitializedNameForSourcePosition = varList.back();
-   //        ROSE_ASSERT(DeclAttributes.getDeclaration()->get_startOfConstruct() != NULL);
-   //        ROSE_ASSERT(firstInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
-   //        ROSE_ASSERT(lastInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
-   //        *(DeclAttributes.getDeclaration()->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
-   //        *(DeclAttributes.getDeclaration()->get_endOfConstruct()) = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
-   //        DeclAttributes.reset();
-
-#if DEBUG_UNTYPED_CONVERTER
-   printf("--- finished converting type-declaration-stmt %s\n", sg_decl->class_name().c_str());
-#endif
 
    return sg_decl;
 }
@@ -1108,6 +997,16 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
 #endif
          }
+      if ( isSgUntypedUnaryOperator(ut_expr) != NULL )
+         {
+            SgUntypedUnaryOperator* op = dynamic_cast<SgUntypedUnaryOperator*>(ut_expr);
+            ROSE_ASSERT(children.size() == 1);
+            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, children[0]);
+            sg_expr = sg_operator;
+#if DEBUG_UNTYPED_CONVERTER
+            printf ("  - unary operator       ==>   %s\n", op->get_operator_name().c_str());
+#endif
+         }
       else if ( isSgUntypedValueExpression(ut_expr) != NULL )
          {
             SgUntypedValueExpression* expr = dynamic_cast<SgUntypedValueExpression*>(ut_expr);
@@ -1121,19 +1020,8 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             SgUntypedReferenceExpression* expr = dynamic_cast<SgUntypedReferenceExpression*>(ut_expr);
             SgVarRefExp* varRef = SageBuilder::buildVarRefExp(expr->get_name(), NULL);
             ROSE_ASSERT(varRef != NULL);
-            sg_expr = varRef;
 
-         // SageBuilder builds FileInfo for the variable reference
-            if (sg_expr->get_startOfConstruct() != NULL)
-               {
-                  delete sg_expr->get_startOfConstruct();
-                  sg_expr->set_startOfConstruct(NULL);
-               }
-            if (sg_expr->get_endOfConstruct() != NULL)
-               {
-                  delete sg_expr->get_endOfConstruct();
-                  sg_expr->set_endOfConstruct(NULL);
-               }
+            sg_expr = varRef;
             setSourcePositionFrom(sg_expr, ut_expr);
 
 #if DEBUG_UNTYPED_CONVERTER
@@ -1152,7 +1040,6 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
 
       return sg_expr;
    }
-
 
 
 SgValueExp*
@@ -1212,12 +1099,22 @@ UntypedConverter::convertSgUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_
 
     switch(untyped_operator->get_expression_enum())
        {
-         case SgToken::FORTRAN_INTRINSIC_NOT:
+         case Jovial_ROSE_Translation::e_unaryPlusOperator:
             {
 #if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_NOT: \n");
+               printf("  - JOVIAL_PLUS_UNARY_OP: \n");
 #endif
-               op = new SgNotOp(expr, NULL);
+               op = new SgUnaryAddOp(expr, NULL);
+               setSourcePositionFrom(op, expr);
+               break;
+            }
+         case Jovial_ROSE_Translation::e_unaryMinusOperator:
+            {
+#if DEBUG_UNTYPED_CONVERTER
+               printf("  - JOVIAL_MINUS_UNARY_OP: \n");
+#endif
+               op = new SgMinusOp(expr, NULL);
+               setSourcePositionFrom(op, expr);
                break;
             }
          default:
@@ -1235,148 +1132,87 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
 
     switch(untyped_operator->get_expression_enum())
        {
-         case SgToken::FORTRAN_INTRINSIC_PLUS:
+         case Jovial_ROSE_Translation::e_plusOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_PLUS: lhs=%p rhs=%p \n", lhs, rhs);
-#endif
                op = new SgAddOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_MINUS:
+         case Jovial_ROSE_Translation::e_minusOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_MINUS: lhs=%p rhs=%p\n", lhs, rhs);
-#endif
                op = new SgSubtractOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_POWER:
+         case Jovial_ROSE_Translation::e_exponentiateOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_POWER:\n");
-#endif
                op = new SgExponentiationOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_CONCAT:
+         case Jovial_ROSE_Translation::e_multiplyOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_CONCAT:\n");
-#endif
-               op = new SgConcatenationOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
-               break;
-            }
-         case SgToken::FORTRAN_INTRINSIC_TIMES:
-            {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_TIMES: lhs=%p rhs=%p\n", lhs, rhs);
-#endif
                op = new SgMultiplyOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_DIVIDE:
+         case Jovial_ROSE_Translation::e_divideOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_DIVIDE: lhs=%p rhs=%p\n", lhs, rhs);
-#endif
                op = new SgDivideOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_AND:
+         case Jovial_ROSE_Translation::e_andOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_AND:\n");
-#endif
                op = new SgAndOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_OR:
+         case Jovial_ROSE_Translation::e_orOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_OR:\n");
-#endif
                op = new SgOrOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_EQV:
+         case Jovial_ROSE_Translation::e_equivOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_EQV:\n");
-#endif
                op = new SgEqualityOp(lhs, rhs, NULL);
                ROSE_ASSERT(0);  // check on logical operands
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_NEQV:
+         case Jovial_ROSE_Translation::e_equalOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_NEQV:\n");
-#endif
-               op = new SgNotEqualOp(lhs, rhs, NULL);
-               ROSE_ASSERT(0);  // check on logical operands
-               setSourcePositionIncluding(op, lhs, rhs);
-               break;
-            }
-         case SgToken::FORTRAN_INTRINSIC_EQ:
-            {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_EQ:\n");
-#endif
                op = new SgEqualityOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_NE:
+         case Jovial_ROSE_Translation::e_notEqualOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_NE:\n");
-#endif
                op = new SgNotEqualOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_GE:
+         case Jovial_ROSE_Translation::e_greaterThanOrEqualOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_GE:\n");
-#endif
                op = new SgGreaterOrEqualOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_LE:
+         case Jovial_ROSE_Translation::e_lessThanOrEqualOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_LE:\n");
-#endif
                op = new SgLessOrEqualOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_LT:
+         case Jovial_ROSE_Translation::e_lessThanOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_LT:\n");
-#endif
                op = new SgLessThanOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
-         case SgToken::FORTRAN_INTRINSIC_GT:
+         case Jovial_ROSE_Translation::e_greaterThanOperator:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - FORTRAN_INTRINSIC_GT:\n");
-#endif
                op = new SgGreaterThanOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);
                break;

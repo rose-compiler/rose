@@ -509,6 +509,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // be output differently for the GNU g++ 4.5 version compiler and later.
           SgName trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName);
 
+       // DQ (1/21/2018): Added support for lambda function capture variables in annonymous compiler generated classes passed as template arguments
+          bool isAnonymousClass(SgType* templateArgumentType);
+
 #if 0
        // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
           enum token_sequence_position_enum_type

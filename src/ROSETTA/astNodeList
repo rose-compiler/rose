@@ -731,6 +731,8 @@ SgUntypedBinaryOperator
 SgUntypedValueExpression
 SgUntypedArrayReferenceExpression
 SgUntypedOtherExpression
+SgUntypedNullExpression
+SgUntypedExprListExpression
 SgUntypedFunctionCallOrArrayReferenceExpression
 SgUntypedStatement
 SgUntypedNamedStatement
@@ -787,6 +789,7 @@ SgUntypedModuleScope
 SgUntypedGlobalScope
 SgUntypedModuleDeclaration
 SgUntypedSubmoduleDeclaration
+SgUntypedBlockDataDeclaration
 SgUntypedStructureDeclaration
 SgUntypedPackageDeclaration
 SgUntypedExceptionDeclaration

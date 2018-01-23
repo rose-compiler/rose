@@ -314,15 +314,22 @@ std::vector <std::pair<AliasRelationNode, AliasRelationNode> > AliasInfoGenerato
 
 void IntraProcAliasAnalysis::buildCFG() {
         
-        SgFunctionDefinition *defn = isSgFunctionDefinition(isSgFunctionDeclaration(
-                                                isSgFunctionDeclaration(head)->get_definingDeclaration())->get_definition());
+        printf ("In IntraProcAliasAnalysis::buildCFG(): \n");
+
+        SgFunctionDefinition *defn = isSgFunctionDefinition(isSgFunctionDeclaration(isSgFunctionDeclaration(head)->get_definingDeclaration())->get_definition());
         
         ROSE_ASSERT(defn != NULL);
                 
+        printf ("In IntraProcAliasAnalysis::buildCFG(): StaticCFG::CustomFilteredCFG constructor \n");
+
         cfg = new StaticCFG::CustomFilteredCFG<AliasCfgFilter>(defn);
         
+        printf ("In IntraProcAliasAnalysis::buildCFG(): calling buildFilteredCFG() \n");
+
         cfg->buildFilteredCFG();
         
+        printf ("In IntraProcAliasAnalysis::buildCFG(): done calling buildFilteredCFG() \n");
+
         // run a bfs and list the nodes
         cfgNodes.clear();
         std::queue<SgGraphNode *> workQ;
@@ -331,6 +338,8 @@ void IntraProcAliasAnalysis::buildCFG() {
         workQ.push(cfg->getEntry());
         visited.push_back(cfg->getEntry());
         
+        printf ("In IntraProcAliasAnalysis::buildCFG(): call while loop \n");
+
         while(!workQ.empty()) {
             SgGraphNode *node = workQ.front();
             workQ.pop();
@@ -339,29 +348,44 @@ void IntraProcAliasAnalysis::buildCFG() {
 
             std::vector<SgDirectedGraphEdge*>outs = StaticCFG::outEdges(node);
             
+             printf ("In IntraProcAliasAnalysis::buildCFG(): call for loop \n");
+
             for(unsigned int i=0; i< outs.size(); i++) 
                 if(find(visited.begin(), visited.end(), outs[i]->get_to()) == visited.end() ) {
                        workQ.push(outs[i]->get_to());
                        visited.push_back(outs[i]->get_to());
                 }
         }
+
+     printf ("Leaving IntraProcAliasAnalysis::buildCFG() \n");
 }
 
 
 IntraProcAliasAnalysis::IntraProcAliasAnalysis(SgNode *head, ClassHierarchyWrapper *_classHierarchy, CallGraphBuilder *_cgBuilder,
                     boost::unordered_map<SgFunctionDeclaration *, IntraProcAliasAnalysis *> &_mapping,
                     boost::unordered_map<SgExpression*, std::vector<SgFunctionDeclaration*> > &_resolver) :
-           IntraProcDataFlowAnalysis<SgGraphNode, CompReprPtr>(head), classHierarchy(_classHierarchy), cfg(0), cgBuilder(_cgBuilder), 
-           mapping(_mapping), resolver(_resolver) {
+           IntraProcDataFlowAnalysis<SgGraphNode, CompReprPtr>(head), classHierarchy(_classHierarchy), cfg(0), cgBuilder(_cgBuilder), mapping(_mapping), resolver(_resolver) {
 
         ROSE_ASSERT(isSgFunctionDeclaration(head));    
-        
+
+        printf ("In IntraProcAliasAnalysis constructor: calling buildCFG() \n");
+  
         buildCFG();
         
+        printf ("In IntraProcAliasAnalysis constructor: done calling buildCFG() \n");
+
         checkPointHash = 0;
         gen = new AliasInfoGenerator;
+
+        printf ("In IntraProcAliasAnalysis constructor: done calling CollectAliasRelations constructor \n");
+
         CollectAliasRelations *car = new CollectAliasRelations(cfg, gen);
+
+        printf ("In IntraProcAliasAnalysis constructor: done calling buildCFG() \n");
+
         car->run();
+
+        printf ("Leaving IntraProcAliasAnalysis constructor \n");
 };  
 
 void IntraProcAliasAnalysis:: run() {

@@ -16,6 +16,7 @@ HEADER_NODE_PREDECLARATION_START
 #include <boost/serialization/vector.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Interval.h>
 #include <Sawyer/IntervalSet.h>
 
@@ -596,6 +597,11 @@ typedef SgUntypedTokenPtrList*              SgUntypedTokenPtrListPtr;
 class SgUntypedTokenPair;
 typedef Rose_STL_Container<SgUntypedTokenPair*> SgUntypedTokenPairPtrList;
 typedef SgUntypedTokenPairPtrList*              SgUntypedTokenPairPtrListPtr;
+
+// Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+class SgUntypedExpression;
+typedef Rose_STL_Container<SgUntypedExpression*> SgUntypedExpressionPtrList;
+typedef SgUntypedExpressionPtrList*              SgUntypedExpressionPtrListPtr;
 
 class SgUntypedStatement;
 typedef Rose_STL_Container<SgUntypedStatement*> SgUntypedStatementPtrList;

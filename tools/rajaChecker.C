@@ -3,6 +3,7 @@
 //
 // Liao, 4/6/2017
 #include "rose.h"
+#include <CommandLine.h>
 #include <iostream>
 #include "keep_going.h"
 #include <string>
@@ -274,12 +275,12 @@ std::string RAJA_Checker::toString (SgNode* node)
 std::vector<std::string> RAJA_Checker::commandline_processing(std::vector< std::string > & argvList)
 {
   using namespace Sawyer::CommandLine;                                                                                
-  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);                                     
+  Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);                                     
   p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");                                                  
   p.longPrefix("-");                                                                                                  
 
 // initialize generic Sawyer switches: assertion, logging, threads, etc.                                              
-  p.with(CommandlineProcessing::genericSwitches());                                                                   
+  p.with(Rose::CommandLine::genericSwitches());                                                                   
                                                                                                                       
 // initialize this tool's switches                                                                                    
   p.with(commandLineSwitches());                                                                                      

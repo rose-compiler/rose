@@ -3,6 +3,7 @@
 
 #include <BinaryDataFlow.h>                             // Dataflow engine
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <MemoryCellList.h>
 #include <Partitioner2/DataFlow.h>                      // Dataflow components that we can re-use
@@ -595,7 +596,7 @@ Analysis::init(Disassembler *disassembler) {
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SmtSolver *solver = NULL;
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);

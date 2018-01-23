@@ -68,9 +68,39 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 
 #elif defined(__APPLE__) && defined(__MACH__)
 
-// I don't have a Mac OSX on which to test things, so whoever does, please replace this comment with whatever's necessary to
-// make the rest of the code compile.  See the windows stuff above for examples. [Robb P. Matzke 2015-02-20]
-#error "FIXME[Robb P. Matzke 2015-02-20]: Not supported on Mac OSX yet"
+# warning("FIXME[Robb P. Matzke  2015-02-20]: Not supported on Mac OSX yet")
+# warning("FIXME[Craig Rasmussen 2017-12-09]: Still not supported on Mac OSX but will now compile")
+
+# include <signal.h>
+# include <sys/ptrace.h>
+
+// from /usr/include/sys/ptrace.h (perhaps for future use)
+//
+# define  PTRACE_TRACEME     PT_TRACE_ME    /* child declares it's being traced */
+# define  PTRACE_CONT        PT_CONTINUE    /* continue the child */
+# define  PTRACE_KILL        PT_KILL        /* kill the child process */
+# define  PTRACE_SINGLESTEP  PT_STEP        /* single step the child */
+# define  PTRACE_DETACH      PT_DETACH      /* stop tracing a process */
+# define  PTRACE_ATTACH      PT_ATTACHEXC   /* attach to running process with signal exception */
+
+// no direct equivalent
+//
+#define ROSE_PT_NO_EQUIVALENT  33
+#define PTRACE_GETREGS         ROSE_PT_NO_EQUIVALENT
+#define PTRACE_SETREGS         ROSE_PT_NO_EQUIVALENT
+#define PTRACE_GETFPREGS       ROSE_PT_NO_EQUIVALENT
+#define PTRACE_SYSCALL         ROSE_PT_NO_EQUIVALENT
+
+struct user_regs_struct {                               // Mac OSX dud
+    long int eip;
+};
+
+typedef int __ptrace_request;                           // Mac OSX dud
+
+static int ptrace(__ptrace_request, int, void*, void*) {// Mac OSX dud
+    errno = ENOSYS;
+    return -1;
+}
 
 #else
 
@@ -106,7 +136,7 @@ sendCommandInt(__ptrace_request request, int child, void *addr, int i) {
     return sendCommand(request, child, addr, ptr);
 }
 
-#if defined(BOOST_WINDOWS) || __WORDSIZE==32
+#if defined(BOOST_WINDOWS) || __WORDSIZE==32 || (defined(__APPLE__) && defined(__MACH__))
 static rose_addr_t
 getInstructionPointer(const user_regs_struct &regs) {
     return regs.eip;

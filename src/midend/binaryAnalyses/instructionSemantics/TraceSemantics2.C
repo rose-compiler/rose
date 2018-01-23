@@ -264,13 +264,13 @@ RiscOperators::protoval() const
 }
 
 void
-RiscOperators::solver(SmtSolver *s)
+RiscOperators::solver(const SmtSolverPtr &s)
 {
     checkSubdomain();
     subdomain_->solver(s);
 }
 
-SmtSolver *
+SmtSolverPtr
 RiscOperators::solver() const
 {
     checkSubdomain();

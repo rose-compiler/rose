@@ -3,6 +3,7 @@
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
 #include <BinaryYicesSolver.h>
+#include <CommandLine.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -126,20 +127,21 @@ public:
 
 protected:
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                  Rose::BinaryAnalysis::SmtSolver *solver)
+                  const Rose::BinaryAnalysis::SmtSolverPtr &solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                  Rose::BinaryAnalysis::SmtSolver *solver)
+                  const Rose::BinaryAnalysis::SmtSolverPtr &solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
 public:
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
-                                     FeasiblePath::SearchMode searchMode, Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
+                                     FeasiblePath::SearchMode searchMode,
+                                     const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory;
@@ -162,23 +164,25 @@ public:
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
+                                     const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, protoval, solver));
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
+                                     const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
     }
 
 public:
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual BaseSemantics::RiscOperatorsPtr
+    create(const BaseSemantics::SValuePtr &protoval,
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(NULL, protoval, solver);
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual BaseSemantics::RiscOperatorsPtr
+    create(const BaseSemantics::StatePtr &state,
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(NULL, state, solver);
     }
 
@@ -436,9 +440,8 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
         }
     }
 
-    // Create the RiscOperators and Dispatcher. We could use an SMT solver here also, but it seems to slow things down more
-    // than speed them up.
-    SmtSolver *solver = NULL;
+    // Create the RiscOperators and Dispatcher.
+    SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, settings_.searchMode, solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
@@ -626,7 +629,8 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 }
 
 boost::logic::tribool
-FeasiblePath::isPathFeasible(const P2::CfgPath &path, SmtSolver &solver, const std::vector<SymbolicExpr::Ptr> &endConstraints,
+FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver,
+                             const std::vector<SymbolicExpr::Ptr> &endConstraints,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
                              BaseSemantics::DispatcherPtr &cpu /*out*/) {
     static const char *prefix = "      ";
@@ -663,16 +667,18 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, SmtSolver &solver, const s
         } else if (hasVirtualAddress(pathEdge->target())) {
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression(),
+                                                                solver);
             constraint->comment("cfg edge " + partitioner_->edgeName(pathEdge));
-            SAWYER_MESG(mlog[DEBUG]) <<prefix <<"constraint at edge " <<partitioner_->edgeName(pathEdge) <<": " <<*constraint <<"\n";
+            SAWYER_MESG(mlog[DEBUG]) <<prefix <<"constraint at edge " <<partitioner_->edgeName(pathEdge)
+                                     <<": " <<*constraint <<"\n";
             pathConstraints.push_back(constraint);
         }
     }
     
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
     pathConstraints.insert(pathConstraints.end(), endConstraints.begin(), endConstraints.end());
-    switch (solver.satisfiable(pathConstraints)) {
+    switch (solver->satisfiable(pathConstraints)) {
         case SmtSolver::SAT_YES: return true;
         case SmtSolver::SAT_NO: return false;
         default: return boost::logic::indeterminate;
@@ -928,7 +934,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             if (atEndOfPath)
                 postConditions = settings_.postConditions;
             BaseSemantics::DispatcherPtr cpu;
-            YicesSolver solver;
+            SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
             boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions,
                                                               pathConditions /*in,out*/, cpu /*out*/);
             if (debug) {

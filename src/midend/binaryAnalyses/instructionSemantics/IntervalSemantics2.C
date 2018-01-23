@@ -17,7 +17,8 @@ static const size_t maxComplexity = 50;                 // arbitrary max interva
  *******************************************************************************************************************************/
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SmtSolver*) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&,
+                            const SmtSolverPtr&) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     BaseSemantics::SValuePtr retval;
@@ -86,7 +87,7 @@ SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
@@ -98,7 +99,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
