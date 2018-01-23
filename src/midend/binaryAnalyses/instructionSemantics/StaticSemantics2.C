@@ -16,7 +16,7 @@ namespace StaticSemantics {
 void attachInstructionSemantics(SgNode *ast, Disassembler *disassembler) {
     ASSERT_not_null(ast);
     ASSERT_not_null(disassembler);
-    RiscOperatorsPtr ops = RiscOperators::instance(SValue::instance(), NULL);
+    RiscOperatorsPtr ops = RiscOperators::instance(SValue::instance(), SmtSolverPtr());
     BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
     if (!cpu)
         throw BaseSemantics::Exception("no instruction semantics for architecture", NULL);
