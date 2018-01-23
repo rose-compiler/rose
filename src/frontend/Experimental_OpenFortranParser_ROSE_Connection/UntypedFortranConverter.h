@@ -1,22 +1,22 @@
-#ifndef UNTYPED_CONVERTER_H
-#define UNTYPED_CONVERTER_H
+#ifndef UNTYPED_FORTRAN_CONVERTER_H
+#define UNTYPED_FORTRAN_CONVERTER_H
 
 //-----------------------------------------------------------------------------------
 // The SgUntyped::UntypedConverter class functions are used to convert
 // SgUntypedNodes to regular SgNodes.
 //-----------------------------------------------------------------------------------
 
-#include "FASTNodes.hpp"
+#include "FASTNodes.h"
 #include "FortranBuilderInterface.h"
 
 namespace Fortran {
 namespace Untyped {
 
-class UntypedConverter
+class UntypedFortranConverter
   {
     public:
 
-      UntypedConverter(FortranBuilderInterface* builder) : pBuilder(builder)
+      UntypedFortranConverter(FortranBuilderInterface* builder) : pBuilder(builder)
         {
         }
 
@@ -78,6 +78,6 @@ class UntypedConverter
 } // namespace Fortran
 } // namespace Untyped
 
-// endif for UNTYPED_CONVERTER_H
+// endif for UNTYPED_FORTRAN_CONVERTER_H
 #endif
 

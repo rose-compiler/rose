@@ -1,24 +1,24 @@
 #include "sage3basic.h"
-#include "UntypedTraversal.h"
+#include "UntypedFortranTraversal.h"
 
 #define DEBUG_UNTYPED_TRAVERSAL 0
 
 using namespace Fortran::Untyped;
 
 
-UntypedTraversal::UntypedTraversal(SgSourceFile* sourceFile)
+UntypedFortranTraversal::UntypedFortranTraversal(SgSourceFile* sourceFile)
 {
    p_source_file = sourceFile;
-   pConverter = new UntypedConverter(this);
+   pConverter = new UntypedFortranConverter(this);
 }
 
-UntypedTraversal::~UntypedTraversal()
+UntypedFortranTraversal::~UntypedFortranTraversal()
 {
    if (pConverter) delete pConverter;
 }
 
 InheritedAttribute
-UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute currentScope)
+UntypedFortranTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute currentScope)
 {
    if (isSgUntypedFile(n) != NULL)
       {
@@ -122,7 +122,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
 
 
 SynthesizedAttribute
-UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute currentScope, SynthesizedAttributesList childAttrs)
+UntypedFortranTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute currentScope, SynthesizedAttributesList childAttrs)
 {
 // Synthesized attribute is temporarily an expression, initialize to NULL for when an expression doesn't make sense.
 // Probaby should change the SynthesizedAttribute to an expression as statements will be added to the scope aren't

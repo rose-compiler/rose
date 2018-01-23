@@ -1,12 +1,12 @@
-#ifndef UNTYPED_TRAVERSAL_H
-#define UNTYPED_TRAVERSAL_H
+#ifndef UNTYPED_FORTRAN_TRAVERSAL_H
+#define UNTYPED_FORTRAN_TRAVERSAL_H
 
 //-----------------------------------------------------------------------------------
 // The SgUntyped::UntypedTraversal class is used to traverse SgUntypedNodes and
 // convert them to regular SgNodes.
 //-----------------------------------------------------------------------------------
 
-#include "UntypedConverter.h"
+#include "UntypedFortranConverter.h"
 
 namespace Fortran {
 namespace Untyped {
@@ -14,7 +14,7 @@ namespace Untyped {
 typedef SgScopeStatement*  InheritedAttribute;
 typedef SgExpression*      SynthesizedAttribute;
 
-class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>, public FortranBuilderInterface
+class UntypedFortranTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>, public FortranBuilderInterface
   {
     public:
 
@@ -22,9 +22,9 @@ class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, 
       virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute
                                                                           , SynthesizedAttributesList childAttrs  );
 
-      virtual ~UntypedTraversal();
+      virtual ~UntypedFortranTraversal();
 
-      UntypedTraversal(SgSourceFile* sourceFile);
+      UntypedFortranTraversal(SgSourceFile* sourceFile);
 
 
       std::string getCurrentFilename()
@@ -35,12 +35,12 @@ class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, 
     private:
 
       SgSourceFile* p_source_file;
-      UntypedConverter* pConverter;
+      UntypedFortranConverter* pConverter;
   };
 
 } // namespace Fortran
 } // namespace Untyped
 
-// endif for UNTYPED_TRAVERSAL_H
+// endif for UNTYPED_FORTRAN_TRAVERSAL_H
 #endif
 

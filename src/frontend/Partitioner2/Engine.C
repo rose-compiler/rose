@@ -1295,6 +1295,10 @@ Engine::runPartitioner(Partitioner &partitioner) {
 
     if (settings_.partitioner.doingPostAnalysis)
         updateAnalysisResults(partitioner);
+
+    // Make sure solver statistics are accumulated into the class
+    if (SmtSolverPtr solver = partitioner.smtSolver())
+        solver->resetStatistics();
 }
 
 Partitioner

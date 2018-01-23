@@ -75,15 +75,17 @@ public:
 public:
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
-                        SmtSolver*) const ROSE_OVERRIDE {
+                        const SmtSolverPtr&) const ROSE_OVERRIDE {
         TODO("[Robb P. Matzke 2015-08-10]");
     }
 
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return true;
     }
 
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return false;
     }
 
@@ -153,21 +155,21 @@ class InnerRiscOperators: public BaseSemantics::RiscOperators {
 
     // The normal C++ constructors; protected because this object is reference counted
 protected:
-    explicit InnerRiscOperators(const SValuePtr &protoval, SmtSolver *solver=NULL)
+    explicit InnerRiscOperators(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(protoval, solver) {
         name("DataFlow(Inner)");
     }
 
     // Static allocating constructor; no state since register and memory I/O methods are no-ops
 public:
-    static InnerRiscOperatorsPtr instance(SmtSolver *solver=NULL) {
+    static InnerRiscOperatorsPtr instance(const SmtSolverPtr &solver = SmtSolverPtr()) {
         return InnerRiscOperatorsPtr(new InnerRiscOperators(SValue::instance(), solver));
     }
 
     // Virtual constructors
 private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -175,7 +177,7 @@ private:
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();

@@ -13,7 +13,7 @@
 #include "fortran_support.h"
 
 #include <aterm2.h>
-#include "UntypedTraversal.h"
+#include "UntypedFortranTraversal.h"
 
 using namespace std;
 using namespace Rose;
@@ -153,7 +153,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 //----------------------------------------------------------------------
 
   // Create the untyped traversal object
-     Fortran::Untyped::UntypedTraversal sg_traversal(OpenFortranParser_globalFilePointer);
+     Fortran::Untyped::UntypedFortranTraversal sg_traversal(OpenFortranParser_globalFilePointer);
      Fortran::Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
