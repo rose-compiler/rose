@@ -26,7 +26,7 @@ using namespace std;
 void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
    {
       ROSE_ASSERT(expr != NULL);
-#if 0      
+#if 0
       printf ("In Unparse_Jovial::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
 #endif
 
@@ -43,20 +43,25 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
        {
 
        // operators
-       // case V_SgUnaryOp:            unparseUnaryExpr (expr, info); break;
-          case V_SgBinaryOp:           unparseBinaryExpr(expr, info); break;
+          case V_SgUnaryOp:            unparseUnaryExpr  (expr, info);  break;
+          case V_SgBinaryOp:           unparseBinaryExpr (expr, info);  break;
+          case V_SgAssignOp:           unparseAssignOp   (expr, info);  break;
+          case V_SgVarRefExp:          unparseVarRef     (expr, info);  break;
 
-          case V_SgAssignOp:           unparseAssignOp(expr, info);   break;
-          case V_SgVarRefExp:          unparseVarRef(expr, info);     break;
+          case V_SgAddOp:              unparseBinaryOperator(expr, "+", info);   break;
+          case V_SgSubtractOp:         unparseBinaryOperator(expr, "-", info);   break;
+          case V_SgMultiplyOp:         unparseBinaryOperator(expr, "*", info);   break;
+          case V_SgDivideOp:           unparseBinaryOperator(expr, "/", info);   break;
+
+          case V_SgUnaryAddOp:         unparseUnaryOperator(expr, "+", info);    break;
+          case V_SgMinusOp:            unparseUnaryOperator(expr, "-", info);    break;
 
 #if 0
-                case V_SgAddOp:
                 case V_SgAndOp:
                 case V_SgAssignOp:
                 case V_SgBitAndOp:
                 case V_SgBitOrOp:
                 case V_SgBitXorOp:
-                case V_SgDivideOp:
                 case V_SgDotExp:
                 case V_SgArrowExp:
                 case V_SgEqualityOp:
@@ -67,18 +72,14 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
                 case V_SgLessThanOp:
                 case V_SgLshiftOp:
                 case V_SgModOp:
-                case V_SgMultiplyOp:
                 case V_SgOrOp:
                 case V_SgNotEqualOp:
                 case V_SgRshiftOp:
-                case V_SgSubtractOp:
                 case V_SgCommaOpExp: // charles4 10/14/2011
                      unparseBinaryOp(isSgBinaryOp(expr), info ); break;
 
                 case V_SgPlusPlusOp:
                 case V_SgMinusMinusOp:
-                case V_SgUnaryAddOp:
-                case V_SgMinusOp:
                 case V_SgNotOp:
                 case V_SgBitComplementOp:
                      unparseUnaryOp(isSgUnaryOp(expr), info ); break;
@@ -124,6 +125,22 @@ Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info)
      curprint(" ;");
    }
 
+void
+Unparse_Jovial::unparseBinaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+     ninfo.set_operator_name(op);
+     unparseBinaryExpr(expr, ninfo);
+   }
+
+void
+Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+     ninfo.set_operator_name(op);
+     unparseUnaryExpr(expr, ninfo);
+   }
+
 
 //----------------------------------------------------------------------------
 //  ::<symbol references>
@@ -133,6 +150,7 @@ void
 Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
+
      ROSE_ASSERT(var_ref != NULL);
      ROSE_ASSERT(var_ref->get_symbol() != NULL);
 

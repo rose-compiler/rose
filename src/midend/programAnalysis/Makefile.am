@@ -21,7 +21,7 @@ if !ROSE_USING_BOOST_VERSION_1_62
 # SUBDIRS += staticSingleAssignment
   SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
 else
-#  SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
+# SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
 endif
 # SUBDIRS += ssaUnfilteredCfg
 

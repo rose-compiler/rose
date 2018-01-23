@@ -35,16 +35,15 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeWchar:      unparseTypeWchar( isSgTypeWchar(type), info); break;
           case V_SgTypeShort:      unparseTypeShort( isSgTypeShort(type), info); break;
 #endif
-          case V_SgTypeInt:
-             {
-               curprint("S");
-               break;
-             }
+
+          case V_SgTypeInt:         curprint("S"); unparseTypeSize(type, info);  break;
+          case V_SgTypeUnsignedInt: curprint("U"); unparseTypeSize(type, info);  break;
+          case V_SgTypeBool:        curprint("B"); unparseTypeSize(type, info);  break;
+
 #if 0
           case V_SgTypeLong:       unparseTypeLong( isSgTypeLong(type), info); break;
           case V_SgTypeFloat:      unparseTypeFloat( isSgTypeFloat(type), info); break;
           case V_SgTypeDouble:     unparseTypeDouble( isSgTypeDouble(type), info); break;
-          case V_SgTypeBool:       unparseTypeBool( isSgTypeBool(type), info); break;
 
           case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
           case V_SgTypedefType:    unparseTypedefType( isSgTypedefType(type), info); break;
@@ -58,4 +57,15 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(false);
                break;
         }
+   }
+
+void
+Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
+   {
+      SgExpression* size = type->get_type_kind();
+      if (size != NULL)
+         {
+            curprint(" ");
+            unparseExpression(size,info);
+         }
    }
