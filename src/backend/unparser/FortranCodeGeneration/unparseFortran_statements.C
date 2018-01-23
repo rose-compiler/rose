@@ -4295,17 +4295,17 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
        // Code generation support for "pure" attribute
           if (procedureHeader->get_functionModifier().isPure() == true)
              {
-               curprint("pure ");
+               curprint("PURE ");
              }
 
           if (procedureHeader->get_functionModifier().isElemental() == true)
              {
-               curprint("elemental ");
+               curprint("ELEMENTAL ");
              }
 
           if (procedureHeader->get_functionModifier().isRecursive() == true)
              {
-               curprint("recursive ");
+               curprint("RECURSIVE ");
              }
 
        // Output the forward declaration only
