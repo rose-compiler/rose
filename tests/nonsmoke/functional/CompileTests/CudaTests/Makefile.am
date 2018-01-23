@@ -36,6 +36,8 @@ TESTCODES_Objects = ${TESTCODES:.cu=.o}
 $(TESTCODES_Objects): ../../testTranslator
 	../../testTranslator -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.cu)
 
+test-cuda: $(TESTCODES_Objects)
+
 if ROSE_USE_EDG_VERSION_4_9
 # DQ (1/25/2016): These are conditional upon EDG 4.9 which is the only version with the C++11 support.
 if !ROSE_USING_GCC_VERSION_LATER_4_9
