@@ -42,7 +42,7 @@ main(int argc, char *argv[]) {
     // Create the machine state
     const RegisterDictionary *registers = RegisterDictionary::dictionary_amd64();
     const RegisterDescriptor EAX = *registers->lookup("eax");
-    SmtSolver *solver = NULL;
+    SmtSolverPtr solver;
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registers, solver);
     ops->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_LSB);
 
