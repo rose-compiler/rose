@@ -84,7 +84,8 @@ static void
 test_svalues() {
     using namespace InstructionSemantics2;
 
-    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(SymbolicSemantics::SValue::instance(), NULL);
+    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(SymbolicSemantics::SValue::instance(),
+                                                                                     SmtSolverPtr());
 
     BaseSemantics::SValuePtr a1 = ops->undefined_(32);                 // v1
     BaseSemantics::SValuePtr a2 = ops->add(a1, ops->number_(32, 4));   // (add v1 4)

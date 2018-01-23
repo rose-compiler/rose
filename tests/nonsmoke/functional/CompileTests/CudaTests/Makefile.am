@@ -15,9 +15,11 @@ CUDA_NO_BUILT_IN_CODES = \
 test_2011_01.cu \
 test_2011_02.cu
 
+CUDA_CODES_FAILING = mm_single.cu header_test.cu
+
 CUDA_CODES = \
 test_2011_11.cu \
-test_2011_12.cu 
+test_2011_12.cu
 
 # DQ (1/19/2017): These are a problem for GNU 5.1 (but maybe just because __atomic_is_lock_free() is not correctly handled).
 if !ROSE_USING_GCC_VERSION_LATER_5_1

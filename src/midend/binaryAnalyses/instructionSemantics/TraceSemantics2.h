@@ -97,13 +97,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     // Real constructors.
 protected:
     // use the version that takes a subdomain instead of this c'tor
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
         name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
         name("Trace");
     }
@@ -126,14 +126,14 @@ public:
     /** Instantiates a new RiscOperators object.  This domain does not create any of its own values--it only wraps another
      *  domains RISC operators. Therefore, the supplied protoval and solver are not actually used.  It is probably better to
      *  construct the TraceSemantics' RISC operators with the constructor that takes the subdomain's RISC operators. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object.  This domain does not manage any state--it only wraps another domains RISC
      *  operators. Therefore, the supplied protoval and solver are not actually used.  It is probably better to construct the
      *  TraceSemantics' RISC operators with the constructor that takes the subdomain's RISC operators. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
     
@@ -152,12 +152,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -258,8 +258,8 @@ protected:
     // Methods we override from our super class
 public:
     virtual BaseSemantics::SValuePtr protoval() const ROSE_OVERRIDE;
-    virtual void solver(SmtSolver*) ROSE_OVERRIDE;
-    virtual SmtSolver *solver() const ROSE_OVERRIDE;
+    virtual void solver(const SmtSolverPtr&) ROSE_OVERRIDE;
+    virtual SmtSolverPtr solver() const ROSE_OVERRIDE;
     virtual BaseSemantics::StatePtr currentState() const ROSE_OVERRIDE;
     virtual void currentState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;

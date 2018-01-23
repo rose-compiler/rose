@@ -264,7 +264,7 @@ public:
                 }
 
                 // Do one pointer analysis
-                Rose::BinaryAnalysis::SmtSolver *solver = NULL;
+                Rose::BinaryAnalysis::SmtSolverPtr solver;
                 PointerDetector ptr_detector(args.thread->get_process(), solver);
                 ptr_detector.analyze(analysis_addr, addrspc);
                 const PointerDetector::Pointers &pointers = ptr_detector.get_pointers();

@@ -39,11 +39,26 @@ ATbool traverse_ItemTypeDescription(ATerm term, SgUntypedType** type);
 
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS
 ATbool traverse_IntegerItemDescription(ATerm term, SgUntypedType** type);
-ATbool traverse_OptIntegerSize(ATerm term, bool* has_size /*TODO - return type */);
+ATbool traverse_OptItemSize(ATerm term, bool* has_size, SgUntypedExpression** size);
 
 // 2.1.1.2 FLOATING TYPE DESCRIPTIONS
-
+ATbool traverse_FloatingItemDescription(ATerm term, SgUntypedType** type);
 ATbool traverse_OptRoundOrTruncate(ATerm term, bool* has_round_or_truncate /*TODO - return type */);
+
+// 2.1.1.3 FIXED TYPE DESCRIPTIONS
+ATbool traverse_FixedItemDescription(ATerm term, SgUntypedType** type);
+
+// 2.1.1.4 BIT TYPE DESCRIPTIONS
+ATbool traverse_BitItemDescription(ATerm term, SgUntypedType** type);
+
+// 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
+ATbool traverse_CharacterItemDescription(ATerm term, SgUntypedType** type);
+
+// 2.1.1.6 STATUS TYPE DESCRIPTIONS
+ATbool traverse_StatusItemDescription(ATerm term, SgUntypedType** type);
+
+// 2.1.1.7 POINTER TYPE DESCRIPTIONS
+ATbool traverse_PointerItemDescription(ATerm term, SgUntypedType** type);
 
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, bool* has_spec, std::string & spec_string);
