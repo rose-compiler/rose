@@ -75,7 +75,25 @@ class IsPotentiallyModifiedVisitor: public AstSimpleProcessing {
 
   virtual void visit(SgNode* n) {
     // cout << "Checking for modifications to " << expr->unparseToString() << " in " << (isSgInitializedName(n) ? "initname" : n->unparseToString()) << ", result is " << result << endl;
-    if (result) return;
+    if (result) 
+      return;
+
+    // skip things in a system/user header, Liao 1/23/2018
+    if (SgLocatedNode* lnode = isSgLocatedNode(n) && Inliner::skipHeaders )
+    {
+      string filename= lnode->get_file_info()->get_filename();
+      string suffix = Rose::StringUtility ::fileNameSuffix(filename);
+
+      //vector.tcc: This is an internal header file, included by other library headers
+      if (suffix=="h" ||suffix=="hpp"|| suffix=="hh"||suffix=="H" ||suffix=="hxx"||suffix=="h++" ||suffix=="tcc")
+        return ;
+
+      // also check if it is compiler generated. Not from user code
+      // skip compiler generated codes, mostly from template headers
+      if (lnode->get_file_info()->isCompilerGenerated() )
+        return; 
+    }
+
     switch (n->variantT()) {
       case V_SgAndAssignOp:
       case V_SgAssignOp:
@@ -111,14 +129,17 @@ class IsPotentiallyModifiedVisitor: public AstSimpleProcessing {
 
 // DQ (8/13/2004): Working with Jeremiah, we can now assert this 
 // and we don't have to handle the cases where this is false!
-        ROSE_ASSERT (ft != NULL);
-        SgTypePtrList& params = ft->get_arguments();
-        SgExpressionPtrList& args = args1->get_expressions();
-        SgTypePtrList::iterator pi = params.begin();
-        SgExpressionPtrList::iterator ai = args.begin();
-        for (; ai != args.end(); ++ai, ++pi) {
-          if (SageInterface::isNonconstReference(*pi))
-            result |= containsNonConst(*ai, expr);
+        //ROSE_ASSERT (ft != NULL);
+        if (ft) // sometimes we enter template function declarations. The function type is SgTemplateType
+        {
+          SgTypePtrList& params = ft->get_arguments();
+          SgExpressionPtrList& args = args1->get_expressions();
+          SgTypePtrList::iterator pi = params.begin();
+          SgExpressionPtrList::iterator ai = args.begin();
+          for (; ai != args.end(); ++ai, ++pi) {
+            if (SageInterface::isNonconstReference(*pi))
+              result |= containsNonConst(*ai, expr);
+          }
         }
         break;
       }
