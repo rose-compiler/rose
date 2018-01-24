@@ -21,4 +21,11 @@
 //! what can be inlined are bugs in the inliner code.
 ROSE_DLL_API bool doInline(SgFunctionCallExp* funcall, bool allowRecursion = false);
 
+
+// a namespace
+namespace Inliner {
+  // if set to true, ignore function calls within headers. Default is false. 
+  extern bool skipHeaders;   
+}
+
 #endif // INLINER_H
