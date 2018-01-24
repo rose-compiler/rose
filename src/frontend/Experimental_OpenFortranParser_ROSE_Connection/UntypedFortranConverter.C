@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "UntypedConverter.h"
+#include "UntypedFortranConverter.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
 
@@ -7,13 +7,13 @@ using namespace Fortran::Untyped;
 
 
 void
-UntypedConverter::setSourcePositionUnknown(SgLocatedNode* locatedNode)
+UntypedFortranConverter::setSourcePositionUnknown(SgLocatedNode* locatedNode)
 {
   // This function sets the source position to be marked as not available (since we don't have token information)
   // These nodes WILL be unparsed in the code generation phase.
 
 #if DEBUG_UNTYPED_CONVERTER
-     printf ("UntypedConverter::setSourcePositionUnknown: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+     printf ("UntypedFortranConverter::setSourcePositionUnknown: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
 #endif
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
@@ -37,7 +37,7 @@ UntypedConverter::setSourcePositionUnknown(SgLocatedNode* locatedNode)
 }
 
 void
-UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* fromNode )
+UntypedFortranConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* fromNode )
 {
    ROSE_ASSERT(toNode != NULL && fromNode != NULL);
 
@@ -49,7 +49,7 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
    ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
 
 #if DEBUG_UNTYPED_CONVERTER
-   std::cout << "UntypedConverter::setSourcePositionFrom: ";
+   std::cout << "UntypedFortranConverter::setSourcePositionFrom: ";
    printf("   --- toNode: %p from: %p", toNode, fromNode);
    std::cout << " strt: " << start->get_line() << " " << start->get_col();
    std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
@@ -67,7 +67,7 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
 }
 
 void
-UntypedConverter::setSourcePositionIncluding ( SgLocatedNode* toNode, SgLocatedNode* startNode, SgLocatedNode* endNode )
+UntypedFortranConverter::setSourcePositionIncluding ( SgLocatedNode* toNode, SgLocatedNode* startNode, SgLocatedNode* endNode )
 {
    ROSE_ASSERT(toNode != NULL && startNode != NULL && endNode != NULL);
 
@@ -79,7 +79,7 @@ UntypedConverter::setSourcePositionIncluding ( SgLocatedNode* toNode, SgLocatedN
    ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
 
 #if DEBUG_UNTYPED_CONVERTER
-   std::cout << "UntypedConverter::setSourcePositionIncluding: ";
+   std::cout << "UntypedFortranConverter::setSourcePositionIncluding: ";
    printf("   --- toNode: %p start: %p end %p", toNode, startNode, endNode);
    std::cout << " strt: " << start->get_line() << " " << start->get_col();
    std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
@@ -155,7 +155,7 @@ setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_
 
 
 void
-UntypedConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
+UntypedFortranConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
                                 SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
 {
    std::string label_name = ut_stmt->get_label_string();
@@ -170,7 +170,7 @@ UntypedConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stm
 }
 
 void
-UntypedConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl)
+UntypedFortranConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl)
 {
    SgUntypedTokenPtrList tokens = prefix_list->get_token_list();
    SgUntypedTokenPtrList::const_iterator it;
@@ -213,7 +213,7 @@ UntypedConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunc
             }
          default:
             {
-               std::cerr << "ERROR: UntypedConverter::convertFunctionPrefix: unimplemented prefix " << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
+               std::cerr << "ERROR: UntypedFortranConverter::convertFunctionPrefix: unimplemented prefix " << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
                ROSE_ASSERT(0);  // NOT IMPLEMENTED                                                                  
             }
        }
@@ -221,7 +221,7 @@ UntypedConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunc
 }
 
 void
-UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedTokenList* modifier_list)
+UntypedFortranConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedTokenList* modifier_list)
 {
    SgUntypedTokenPtrList modifiers = modifier_list->get_token_list();
    SgUntypedTokenPtrList::const_iterator it;
@@ -340,7 +340,7 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
             }
          default:
             {
-               std::cerr << "ERROR: UntypedConverter::setDeclarationModifiers: unimplemented modifier "
+               std::cerr << "ERROR: UntypedFortranConverter::setDeclarationModifiers: unimplemented modifier "
                          << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
                ROSE_ASSERT(0);  // NOT IMPLEMENTED                                                                  
             }
@@ -349,7 +349,7 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
 }
 
 SgType*
-UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope)
 {
    SgType* sg_type = NULL;
 
@@ -409,7 +409,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
 
         default:
            {
-              fprintf(stderr, "UntypedConverter::convertSgUntypedType: failed to find known type, enum is %d \n", ut_type->get_type_enum_id());
+              fprintf(stderr, "UntypedFortranConverter::convertSgUntypedType: failed to find known type, enum is %d \n", ut_type->get_type_enum_id());
               ROSE_ASSERT(0);
            }
       }
@@ -431,7 +431,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
 
 
 SgInitializedName*
-UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
+UntypedFortranConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
 {
    SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type, sg_init);
 // SageBuilder builds FileInfo for the variable declaration
@@ -453,7 +453,7 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
 }
 
 SgGlobal*
-UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
 {
 // The global scope should not have executables
    ROSE_ASSERT(ut_scope->get_statement_list()  -> get_traversalSuccessorContainer().size() == 0);
@@ -465,7 +465,7 @@ UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, S
 }
 
 void
-UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
 {
    if (scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition)
       {
@@ -474,7 +474,7 @@ UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDecl
                // Need to add a contains statement to the current scope as it currently
                // doesn't exist in OFP's Fortran AST (FAST) design (part of concrete syntax only)
                SgContainsStatement* containsStatement = new SgContainsStatement();
-               UntypedConverter::setSourcePositionUnknown(containsStatement);
+               UntypedFortranConverter::setSourcePositionUnknown(containsStatement);
 //TODO - maybe ok
             // ROSE_ASSERT(0);
 
@@ -488,7 +488,7 @@ UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDecl
 
 
 SgModuleStatement*
-UntypedConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
 {
   // This function builds a class declaration and definition 
   // (both the defining and nondefining declarations as required).
@@ -582,7 +582,7 @@ UntypedConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration*
 
 
 SgProgramHeaderStatement*
-UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_program, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_program, SgScopeStatement* scope)
 {
    ROSE_ASSERT(scope->variantT() == V_SgGlobal);
 
@@ -632,14 +632,14 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
    programBody->set_parent(programDefinition);
    programDefinition->set_parent(programDeclaration);
 
-   UntypedConverter::setSourcePositionFrom(programDeclaration, ut_program);
+   UntypedFortranConverter::setSourcePositionFrom(programDeclaration, ut_program);
 // TODO - see if param list unknown is ok (as there is no param list
-// UntypedConverter::setSourcePositionFrom(programDeclaration->get_parameterList(), ut_program);
-   UntypedConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
+// UntypedFortranConverter::setSourcePositionFrom(programDeclaration->get_parameterList(), ut_program);
+   UntypedFortranConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
 
 // Convert the labels for the program begin and end statements
-   UntypedConverter::convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
-   UntypedConverter::convertLabel(ut_program_end_statement, programDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ programDefinition);
+   UntypedFortranConverter::convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
+   UntypedFortranConverter::convertLabel(ut_program_end_statement, programDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ programDefinition);
 
 // Set the end statement name if it exists
    if (ut_program_end_statement->get_statement_name().empty() != true)
@@ -652,8 +652,8 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
 
         if (programKeyword != NULL)
         {
-            UntypedConverter::setSourcePosition(programDeclaration, programKeyword);
-            UntypedConverter::setSourcePosition(programDeclaration->get_parameterList(), programKeyword);
+            UntypedFortranConverter::setSourcePosition(programDeclaration, programKeyword);
+            UntypedFortranConverter::setSourcePosition(programDeclaration->get_parameterList(), programKeyword);
         }
         else
         {
@@ -661,19 +661,19 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
 
            // DQ (12/18/2008): These need to make marked with a valid file id (not NULL_FILE, internally),
            // so that any attached comments and CPP directives will be properly attached.
-              UntypedConverter::setSourcePosition(programDeclaration, tokenList);
-              UntypedConverter::setSourcePosition(programDeclaration->get_parameterList(), tokenList);
+              UntypedFortranConverter::setSourcePosition(programDeclaration, tokenList);
+              UntypedFortranConverter::setSourcePosition(programDeclaration->get_parameterList(), tokenList);
         }
 
-        UntypedConverter::setSourcePosition(programDefinition, tokenList);
-        UntypedConverter::setSourcePosition(programBody, tokenList);
+        UntypedFortranConverter::setSourcePosition(programDefinition, tokenList);
+        UntypedFortranConverter::setSourcePosition(programBody, tokenList);
 #endif
 
 //TODO - the start for both of these should be the first statement in the program (if non-empty)
 //TODO - perhaps the end of the block could be the last statement in the program
 //TODO - look at C for the answer (original front-end looks suspicious)
-   UntypedConverter::setSourcePositionIncluding(programDefinition, ut_program, ut_program_end_statement);
-   UntypedConverter::setSourcePositionIncluding(programBody,       ut_program, ut_program_end_statement);
+   UntypedFortranConverter::setSourcePositionIncluding(programDefinition, ut_program, ut_program_end_statement);
+   UntypedFortranConverter::setSourcePositionIncluding(programBody,       ut_program, ut_program_end_statement);
 
 #if 0
    if (programDeclaration->get_program_statement_explicit() == false)
@@ -697,7 +697,7 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
 
 
 SgProcedureHeaderStatement*
-UntypedConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
    {
       SgName name = ut_function->get_name();
 
@@ -725,7 +725,7 @@ printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name
 
 
 SgProcedureHeaderStatement*
-UntypedConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
    SgName name = ut_function->get_name();
 
@@ -754,7 +754,7 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
 
 
 SgProcedureHeaderStatement*
-UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
    {
    // The block data statement is implemented to build a function (which initializes data)
    // Note that it can be declared with the "EXTERNAL" statement and as such it works much
@@ -816,8 +816,8 @@ UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclar
       blockDataDeclaration->set_parent(currentScopeOfFunctionDeclaration);
 
    // Convert the labels for the program begin and end statements
-      UntypedConverter::convertLabel(ut_block_data,                      blockDataDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ blockDataDefinition);
-      UntypedConverter::convertLabel(ut_block_data->get_end_statement(), blockDataDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ blockDataDefinition);
+      UntypedFortranConverter::convertLabel(ut_block_data,                      blockDataDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ blockDataDefinition);
+      UntypedFortranConverter::convertLabel(ut_block_data->get_end_statement(), blockDataDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ blockDataDefinition);
 
    // Set the end statement name if it exists
       if (ut_block_data->get_end_statement()->get_statement_name().empty() != true)
@@ -841,7 +841,7 @@ UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclar
 //TODO-WARNING: This needs help!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //
 SgVariableDeclaration*
-UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
 {
    std::cerr << "convertSgUntypedVariableDeclaration: scope is " << scope->class_name() << std::endl;
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
@@ -888,7 +888,7 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
          //   4. CoarraySpec: buildArrayType with coarray attribute
          //   5. Pointers: new SgPointerType(sg_type)
          //   7. Dan warned me about sharing types but it looks like the base type is shared in inames
-      SgInitializedName* initializedName = UntypedConverter::convertSgUntypedInitializedName((*it), sg_base_type, /*sg_init*/NULL);
+      SgInitializedName* initializedName = UntypedFortranConverter::convertSgUntypedInitializedName((*it), sg_base_type, /*sg_init*/NULL);
       SgName variableName = initializedName->get_name();
 
       initializedName->set_declptr(sg_decl);
@@ -954,7 +954,7 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
 // R560 implicit-stmt
 //
 SgImplicitStatement*
-UntypedConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope)
 {
 // FIXME - needs an implicit-spec-list
    bool isImplicitNone = true;
@@ -975,7 +975,7 @@ UntypedConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclarati
 }
 
 SgDeclarationStatement*
-UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
    {
       SgUntypedNamePtrList ut_names = ut_decl->get_names()->get_name_list();
       SgUntypedNamePtrList::const_iterator it;
@@ -1044,14 +1044,14 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
 #endif
              }
              scope->append_statement(attr_spec_stmt);     
-             UntypedConverter::convertLabel(ut_decl, attr_spec_stmt);
+             UntypedFortranConverter::convertLabel(ut_decl, attr_spec_stmt);
 
              return attr_spec_stmt;
          }
 
        default:
           {
-             fprintf(stderr, "UntypedConverter::convertSgUntypedNameListDeclaration: failed to find known statement enum, is %d\n", ut_decl->get_statement_enum());
+             fprintf(stderr, "UntypedFortranConverter::convertSgUntypedNameListDeclaration: failed to find known statement enum, is %d\n", ut_decl->get_statement_enum());
              ROSE_ASSERT(0);
           }
        }
@@ -1062,7 +1062,7 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
 //----------------------
 
 SgExprStatement*
-UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
    {
       SgExprStatement* expressionStatement = NULL;
 
@@ -1083,14 +1083,14 @@ UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatem
 
             scope->append_statement(expressionStatement);
 
-            UntypedConverter::convertLabel(ut_stmt, expressionStatement);
+            UntypedFortranConverter::convertLabel(ut_stmt, expressionStatement);
          }
 
       return expressionStatement;
    }
 
 SgStatement*
-UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
    {
       SgStatement* sg_stmt = NULL;
 
@@ -1122,7 +1122,7 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
           }
         default:
           {
-             fprintf(stderr, "UntypedConverter::convertSgUntypedExpressionStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
+             fprintf(stderr, "UntypedFortranConverter::convertSgUntypedExpressionStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
              ROSE_ASSERT(0);
           }
       }
@@ -1135,13 +1135,13 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
 
       scope->append_statement(sg_stmt);
 
-      UntypedConverter::convertLabel(ut_stmt, sg_stmt);
+      UntypedFortranConverter::convertLabel(ut_stmt, sg_stmt);
 
       return sg_stmt;
    }
 
 SgStatement*
-UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
    {
       switch (ut_stmt->get_statement_enum())
         {
@@ -1158,15 +1158,15 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
              scope->append_statement(labelStatement);
 
           // TODO - why does this only work here??????
-          // UntypedConverter::convertLabel(ut_stmt, labelStatement, currentFunctionScope);
-             UntypedConverter::convertLabel(ut_stmt, labelStatement);
+          // UntypedFortranConverter::convertLabel(ut_stmt, labelStatement, currentFunctionScope);
+             UntypedFortranConverter::convertLabel(ut_stmt, labelStatement);
 
              return labelStatement;
          }
 
        default:
           {
-             fprintf(stderr, "UntypedConverter::convertSgUntypedOtherStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
+             fprintf(stderr, "UntypedFortranConverter::convertSgUntypedOtherStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
              ROSE_ASSERT(0);
           }
        }
@@ -1177,7 +1177,7 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
 //
 
 SgExpression*
-UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExpressionPtrList& children, SgScopeStatement* scope)
    {
       SgExpression* sg_expr = NULL;
 
@@ -1239,7 +1239,7 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
 
 
 SgValueExp*
-UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_expr)
+UntypedFortranConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_expr)
 {
    SgValueExp* sg_expr = NULL;
 
@@ -1289,7 +1289,7 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
  }
 
 SgUnaryOp*
-UntypedConverter::convertSgUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_operator, SgExpression* expr)
+UntypedFortranConverter::convertSgUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_operator, SgExpression* expr)
  {
     SgUnaryOp* op = NULL;
 
@@ -1312,7 +1312,7 @@ UntypedConverter::convertSgUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_
  }
 
 SgBinaryOp*
-UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untyped_operator, SgExpression* lhs, SgExpression* rhs)
+UntypedFortranConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untyped_operator, SgExpression* lhs, SgExpression* rhs)
  {
     SgBinaryOp* op = NULL;
 
@@ -1474,7 +1474,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
 
 
 SgScopeStatement*
-UntypedConverter::initialize_global_scope(SgSourceFile* file)
+UntypedFortranConverter::initialize_global_scope(SgSourceFile* file)
 {
  // First we have to get the global scope initialized (and pushed onto the stack).
 
@@ -1517,7 +1517,7 @@ UntypedConverter::initialize_global_scope(SgSourceFile* file)
 
 //! Collects code common to building function and subroutine declarations.
 void
-UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function, SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope)
+UntypedFortranConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function, SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope)
    {
      ROSE_ASSERT(procedureDeclaration != NULL);
 

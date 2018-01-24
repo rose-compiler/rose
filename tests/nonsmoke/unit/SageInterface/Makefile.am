@@ -55,11 +55,12 @@ alias_analysis_tests_cpp = alias-001.cpp \
 # unparsed file results, optional for this test
 rose_nonsmoke_getDataSharingAttribute_c = $(addprefix rose_, ${nonsmoke_getDataSharingAttribute_c})
 rose_nonsmoke_get_C_array_dimensions_c = $(addprefix rose_, ${nonsmoke_get_C_array_dimensions_c})
+# tests/nonsmoke/functional/CompileTests/Cxx_tests/Specimens.inc defines nonsmoke_genericCoverage_c
 rose_nonsmoke_genericCoverage_c = $(addprefix rose_, ${nonsmoke_genericCoverage_c})
 rose_nonsmoke_collectFunctionSideEffect_cpp= $(addprefix rose_, ${nonsmoke_almost_all_cpp})
 
-# Output to .output file
-nonsmoke_getDataSharingAttribute_c_output = $(addsuffix .output, ${nonsmoke_getDataSharingAttribute_c})
+# Output to .output file original_file_name.output
+nonsmoke_getDataSharingAttribute_c_output = $(addsuffix .getDataSharingAttribute.output, ${nonsmoke_getDataSharingAttribute_c})
 nonsmoke_get_C_array_dimensions_c_output = $(addsuffix .get_C_array_dimensions.output, ${nonsmoke_get_C_array_dimensions_c})
 nonsmoke_genericCoverage_c_output = $(addsuffix .genericCoverage.output, ${nonsmoke_genericCoverage_c})
 nonsmoke_collectFunctionSideEffect_cpp_output = $(addsuffix .collectFunctionSideEffect.output, ${nonsmoke_almost_all_cpp})
@@ -67,7 +68,11 @@ performAliasAnalysis_cpp_output = $(addsuffix .performAliasAnalysis.output, ${al
 
 # small set to be verified for now
 # It could be a subset of all the tests
-nonsmoke_getDataSharingAttribute_c_output_verify = $(addsuffix .output, ${nonsmoke_getDataSharingAttribute_c_verify})
+# nonsmoke_getDataSharingAttribute_c_verify is a subset defined in 
+# tests/nonsmoke/functional/CompileTests/OpenMP_tests/Specimens.inc
+nonsmoke_getDataSharingAttribute_c_output_verify = $(addsuffix .getDataSharingAttribute.output, ${nonsmoke_getDataSharingAttribute_c_verify})
+
+# tests/nonsmoke/functional/CompileTests/C_tests/Specimens.inc defines nonsmoke_get_C_array_dimensions_c_verify
 nonsmoke_get_C_array_dimensions_c_output_verify = $(addsuffix .get_C_array_dimensions.output, ${nonsmoke_get_C_array_dimensions_c_verify})
 nonsmoke_genericCoverage_c_output_verify = $(addsuffix .genericCoverage.output, ${nonsmoke_genericCoverage_c_verify})
 nonsmoke_collectFunctionSideEffect_cpp_output_verify = $(addsuffix .collectFunctionSideEffect.output, ${nonsmoke_almost_all_cpp})
@@ -75,9 +80,9 @@ nonsmoke_collectFunctionSideEffect_cpp_output_verify = $(addsuffix .collectFunct
 #$(rose_nonsmoke_getDataSharingAttribute_c): $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) getDataSharingAttribute
 #	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) > $(@:rose_%=%).output
 
-# similar to the previous one
+# similar to the previous one:  original.c.getDataSharingAttribute.output -->  original.c
 $(nonsmoke_getDataSharingAttribute_c_output): getDataSharingAttribute
-	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:%.output=%)
+	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:%.getDataSharingAttribute.output=%)
 
 $(nonsmoke_get_C_array_dimensions_c_output): get_C_array_dimensions
 	$(VALGRIND) ./get_C_array_dimensions $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_C_tests_path)/$(@:%.get_C_array_dimensions.output=%)
@@ -92,7 +97,7 @@ $(nonsmoke_collectFunctionSideEffect_cpp_output): collectFunctionSideEffect
 $(performAliasAnalysis_cpp_output): performAliasAnalysis 
 	$(VALGRIND) ./performAliasAnalysis$(TEST_CXXFLAGS) -c $(top_srcdir)/tests/nonsmoke/unit/SageInterface/tests/$(@:%.performAliasAnalysis.output=%)
 
-# the diff files .output.diff
+# the diff files originalfile.c.output.diff
 nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output_verify})
 nonsmoke_get_C_array_dimensions_c_output_diff = $(addsuffix .diff, ${nonsmoke_get_C_array_dimensions_c_output_verify})
 nonsmoke_genericCoverage_c_output_diff = $(addsuffix .diff, ${nonsmoke_genericCoverage_c_output_verify})
@@ -104,24 +109,24 @@ REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/unit/SageInterface/referenceOutput
 # must dependent on individual output files for both versions : generated vs. reference
 # wrong to use $(nonsmoke_getDataSharingAttribute_c_output) since it is the whole set!
 # Otherwise wrong dependence, redundant execution!! Still wrong. break dependence between .output.diff --> .output
-#$(nonsmoke_getDataSharingAttribute_c_output_diff): $(@:output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output)
-$(nonsmoke_getDataSharingAttribute_c_output_diff): $(nonsmoke_getDataSharingAttribute_c_output)
+#$(nonsmoke_getDataSharingAttribute_c_output_diff): $(nonsmoke_getDataSharingAttribute_c_output)
+$(nonsmoke_getDataSharingAttribute_c_output_diff):  %.diff:%
 	echo "Verifying getDataSharingAttribute by diff ..."; \
-	if diff $(@:.output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+	if diff $(@:.getDataSharingAttribute.output.diff=.getDataSharingAttribute.output) $(REFERENCE_PATH)/$(@:.getDataSharingAttribute.output.diff=.getDataSharingAttribute.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
-$(nonsmoke_get_C_array_dimensions_c_output_diff): $(nonsmoke_get_C_array_dimensions_c_output)
+$(nonsmoke_get_C_array_dimensions_c_output_diff):  %.diff:%
 	echo "Verifying get_C_array_dimensions by diff ..."; \
 	if diff $(@:.get_C_array_dimensions.output.diff=.get_C_array_dimensions.output) $(REFERENCE_PATH)/$(@:.get_C_array_dimensions.output.diff=.get_C_array_dimensions.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
-$(nonsmoke_genericCoverage_c_output_diff): $(nonsmoke_genericCoverage_c_output)
+$(nonsmoke_genericCoverage_c_output_diff): %.diff:%
 	echo "Verifying genericCoverage by diff ..."; \
 	if diff $(@:.genericCoverage.output.diff=.genericCoverage.output) $(REFERENCE_PATH)/$(@:.genericCoverage.output.diff=.genericCoverage.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
-$(nonsmoke_collectFunctionSideEffect_cpp_output_diff): $(nonsmoke_collectFunctionSideEffect_cpp_output)
+$(nonsmoke_collectFunctionSideEffect_cpp_output_diff): %.diff:%
 	echo "Verifying collectFunctionSideEffect by diff ..."; \
 	if diff $(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) $(REFERENCE_PATH)/$(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
-$(performAliasAnalysis_cpp_output_diff): $(performAliasAnalysis_cpp_output)
+$(performAliasAnalysis_cpp_output_diff): %.diff:%
 	echo "Verifying alias analysis by diff ..."; \
 	if diff $(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) $(REFERENCE_PATH)/$(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 

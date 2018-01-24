@@ -18,7 +18,8 @@ namespace ConcreteSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SmtSolver*) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&,
+                            const SmtSolverPtr&) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
 }
@@ -31,12 +32,12 @@ SValue::bits(const Sawyer::Container::BitVector &newBits) {
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
+SValue::may_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr&) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
+SValue::must_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr&) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
@@ -120,18 +121,33 @@ MemoryState::memoryMap(const MemoryMap::Ptr &map, Sawyer::Optional<unsigned> pad
 }
 
 BaseSemantics::SValuePtr
-MemoryState::readMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemantics::SValuePtr &dflt_,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+MemoryState::readOrPeekMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemantics::SValuePtr &dflt_,
+                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                              bool allowSideEffects) {
     ASSERT_require2(8==dflt_->get_width(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
     rose_addr_t addr = addr_->get_number();
     uint8_t dflt = dflt_->get_number();
     if (!map_ || !map_->at(addr).exists()) {
-        allocatePage(addr);
-        map_->at(addr).limit(1).write(&dflt);
+        if (allowSideEffects) {
+            allocatePage(addr);
+            map_->at(addr).limit(1).write(&dflt);
+        }
         return dflt_;
     }
     map_->at(addr).limit(1).read(&dflt);
     return dflt_->number_(8, dflt);
+}
+
+BaseSemantics::SValuePtr
+MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    return readOrPeekMemory(addr, dflt, addrOps, valOps, true /*allow side effects*/);
+}
+
+BaseSemantics::SValuePtr
+MemoryState::peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    return readOrPeekMemory(addr, dflt, addrOps, valOps, false /*no side effects allowed*/);
 }
 
 void
@@ -530,13 +546,10 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                                const BaseSemantics::SValuePtr &dflt, bool allowSideEffects) {
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
-    ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
-    if (cond->is_number() && !cond->get_number())
-        return dflt;
 
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
@@ -548,11 +561,21 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
 
         // Use the lazily updated initial memory state if there is one.
-        if (initialState())
-            byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
-
+        if (initialState()) {
+            if (allowSideEffects) {
+                byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
+            } else {
+                byte_dflt = initialState()->peekMemory(byte_addr, byte_dflt, this, this);
+            }
+        }
+        
         // Read the current memory state
-        SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
+        SValuePtr byte_value;
+        if (allowSideEffects) {
+            byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
+        } else {
+            byte_value = SValue::promote(currentState()->peekMemory(byte_addr, byte_dflt, this, this));
+        }
         if (0==bytenum) {
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
@@ -567,6 +590,21 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 
     ASSERT_require(retval!=NULL && retval->get_width()==nbits);
     return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+    ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
+    if (cond->is_number() && !cond->get_number())
+        return dflt;
+    return readOrPeekMemory(segreg, address, dflt, true /*allow side effects*/);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt) {
+    return readOrPeekMemory(segreg, address, dflt, false /*no side effects allowed*/);
 }
 
 void

@@ -2,7 +2,7 @@
 #define ATERM_TO_UNTYPED_FORTRAN_TRAVERSAL_H
 
 #include <aterm2.h>
-#include "FASTNodes.hpp"
+#include "FASTNodes.h"
 
 // Needed SgUntypedNodes (or something like them)
 class SgUntypedExpressionStatement;

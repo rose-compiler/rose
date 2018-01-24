@@ -181,7 +181,7 @@ CfgEmitter::init() {
 
     // Instance initialization
     if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
-        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
         size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);

@@ -7,18 +7,29 @@
 
 #include <BinarySymbolicExpr.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/unordered_map.hpp>
 #include <inttypes.h>
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** Reference-counting pointer for SMT solvers. */
+typedef Sawyer::SharedPointer<class SmtSolver> SmtSolverPtr;
+
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
- *  The purpose of an SMT solver is to determine if an expression is satisfiable. */
-class SmtSolver {
+ *  The purpose of an SMT solver is to determine if an expression is satisfiable. Solvers are reference counted objects that
+ *  are allocated with @c instance static methods or @c create virtual constructors and should not be explicitly deleted. */
+class SmtSolver: public Sawyer::SharedObject, private boost::noncopyable {
 public:
+    /** Reference counting pointer for SMT solvers. */
+    typedef Sawyer::SharedPointer<SmtSolver> Ptr;
+
     /** Solver availability map. */
     typedef std::map<std::string, bool> Availability;
 
@@ -64,12 +75,26 @@ public:
                        SAT_UNKNOWN                      /**< Could not be proved satisfiable or unsatisfiable. */
     };
 
-    /** SMT solver statistics. */
+    /** SMT solver statistics.
+     *
+     *  Solver statistics get accumulted into the class statistics only when the solver is destroyed or the solver's @ref
+     *  resetStatistics method is invoked. */
     struct Stats {
-        Stats(): ncalls(0), input_size(0), output_size(0) {}
         size_t ncalls;                                  /**< Number of times satisfiable() was called. */
         size_t input_size;                              /**< Bytes of input generated for satisfiable(). */
         size_t output_size;                             /**< Amount of output produced by the SMT solver. */
+        size_t memoizationHits;                         /**< Number of times memoization supplied a result. */
+        size_t nSolversCreated;                         /**< Number of solvers created. Only for class statistics. */
+        size_t nSolversDestroyed;                       /**< Number of solvers destroyed. Only for class statistics. */
+        double prepareTime;                             /**< Time spent creating assertions before solving. */
+        double solveTime;                               /**< Seconds spent in solver's solve function. */
+        double evidenceTime;                            /**< Seconds to retrieve evidence of satisfiability. */
+        // Remember to add all data members to resetStatistics()
+
+        Stats()
+            : ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0), nSolversDestroyed(0),
+              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0) {
+        }
     };
 
     /** Set of variables. */
@@ -99,6 +124,8 @@ public:
 
     typedef std::pair<SExpr::Ptr, Type> SExprTypePair;
 
+    typedef boost::unordered_map<SymbolicExpr::Hash, Satisfiable> Memoization;
+
 private:
     std::string name_;
     std::vector<std::vector<SymbolicExpr::Ptr> > stack_;
@@ -108,7 +135,10 @@ protected:
     std::string outputText_;                            /**< Additional output obtained by satisfiable(). */
     std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
-
+    Memoization memoization_;                           // cached of previously computed results
+    bool doMemoization_;                                // use the memoization_ table?
+    SymbolicExpr::Hash latestMemoizationId_;            // key for last found or inserted memoization, or zero
+    SymbolicExpr::ExprExprHashMap latestMemoizationRewrite_; // variables rewritten, need to be undone when parsing evidence
 
     // Statistics
     static boost::mutex classStatsMutex;
@@ -127,14 +157,19 @@ private:
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(stack_);
-        // linkage_             -- not serialized
-        // termNames_           -- not serialized
-        // outputText_          -- not serialized
-        // parsedOutput_        -- not serialized
-        // classStatsMutex      -- not serialized
-        // classStats           -- not serialized
-        // stats                -- not serialized
-        // mlog                 -- not serialized
+        // linkage_                  -- not serialized
+        // termNames_                -- not serialized
+        // outputText_               -- not serialized
+        // parsedOutput_             -- not serialized
+        // termNames_                -- not serialized
+        // memoization_              -- not serialized
+        // doMemoization_            -- not serialized
+        // latestMemoizationId_      -- not serialized
+        // latestMemoizationRewrite_ -- not serialized
+        // classStatsMutex           -- not serialized
+        // classStats                -- not serialized
+        // stats                     -- not serialized
+        // mlog                      -- not serialized
     }
 #endif
 
@@ -148,9 +183,16 @@ protected:
      *  situation by reading the @p linkage property, or just wait for one of the other methods to throw an @ref
      *  SmtSolver::Exception. */
     SmtSolver(const std::string &name, unsigned linkages)
-        : name_(name), linkage_(LM_NONE) {
+        : name_(name), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
         init(linkages);
     }
+    
+public:
+    /** Virtual constructor. */
+    virtual Ptr create() const = 0;
+
+    // Solvers are reference counted and should not be explicitly deleted.
+    virtual ~SmtSolver();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,14 +212,12 @@ public:
      *  null) and "best" means return @ref bestAvailable (which might also be null). It may be possible to create solvers by
      *  name that are not available, but attempting to use such a solver will fail loudly by calling @ref requireLinkage. If an
      *  invalid name is supplied then an @ref SmtSolver::Exception is thrown. */
-    static SmtSolver* instance(const std::string &name);
+    static Ptr instance(const std::string &name);
 
     /** Best available solver.
      *
      *  Returns a new solver, an instance of the best available solver. If no solver is possible then returns null. */
-    static SmtSolver* bestAvailable();
-
-    virtual ~SmtSolver() {}
+    static Ptr bestAvailable();
 
     /** Property: Name of solver for debugging.
      *
@@ -206,7 +246,35 @@ public:
      *  "Best" is defined as that with the best performance, which is usually direct calls to the solver's API. */
     static LinkMode bestLinkage(unsigned linkages);
 
+    /** Property: Perform memoization.
+     *
+     *  If set, then perform memoization by caching all previous results.
+     *
+     * @{ */
+    bool memoization() const { return doMemoization_; }
+    void memoization(bool b) {
+        doMemoization_ = b;
+        if (!b)
+            clearMemoization();
+    }
+    /** @} */
 
+    /** Id for latest memoized result, or zero. */
+    SymbolicExpr::Hash latestMemoizationId() const {
+        return latestMemoizationId_;
+    }
+    
+    /** Clear memoization table. */
+    virtual void clearMemoization() {
+        memoization_.clear();
+    }
+
+    /** Size of memoization table. */
+    virtual size_t memoizationNEntries() const {
+        return memoization_.size();
+    }
+
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // High-level abstraction for testing satisfiability.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,8 +325,8 @@ public:
 
     /** Pop a backtracking point.
      *
-     *  Pops the top set of assertions from the solver stack. The stack always contains one set of assertions, so popping the
-     *  last set will cause a new, empty set to be created.
+     *  Pops the top set of assertions from the solver stack. It is not legal to call @ref pop when the assertion stack is only
+     *  one level deep; use @ref reset in that case instead.
      *
      *  See also, @ref push and @ref reset. */
     virtual void pop();
@@ -269,6 +337,11 @@ public:
      *  valued is always positive. */
     virtual size_t nLevels() const { return stack_.size(); }
 
+    /** Number of assertions at a specific backtracking level.
+     *
+     *  Backtracking levels are numbered starting at zero up to one less than the value returned by @ref nLevels. */
+    virtual size_t nAssertions(size_t backtrackingLevel);
+    
     /** Insert assertions.
      *
      *  Inserts assertions into the set of assertions at the top of the backtracking stack.
@@ -379,11 +452,14 @@ public:
 
     /** Property: Statistics across all solvers.
      *
+     *  The class statistics are updated whenever a solver is destroyed or its @ref resetStatistics method is invoked. However,
+     *  the nSolversCreated member is updated as soon as a solver is created.
+     *
      *  The statistics are not reset by this call, but continue to accumulate. */
     static Stats classStatistics();
 
     /** Resets statistics for this solver. */
-    void resetStatistics() { stats = Stats(); }
+    void resetStatistics();
 
     /** Resets statistics for the class.
      *
@@ -433,6 +509,25 @@ protected:
     /** Parses evidence of satisfiability.  Some solvers can emit information about what variable bindings satisfy the
      *  expression.  This information is parsed by this function and added to a mapping of variable to value. */
     virtual void parseEvidence() {};
+
+    /** Normalize expressions by renaming variables.
+     *
+     *  This is used during memoization to rename all the variables. It performs a depth-first search and renames each variable
+     *  it encounters. The variables are renumbered starting at zero.  The return value is a vector new new expressions, some
+     *  of which may be the unmodified original expressions if there were no variables.  The @p index is also a return value
+     *  which indicates how original variables were mapped to new variables. */
+    static std::vector<SymbolicExpr::Ptr> normalizeVariables(const std::vector<SymbolicExpr::Ptr>&,
+                                                             SymbolicExpr::ExprExprHashMap &index /*out*/);
+
+    /** Undo the normalizations that were performed earlier.
+     *
+     *  Each of the specified expressions are rewritten by undoing the variable renaming that was done by @ref
+     *  normalizeVariables. The @p index is the same index as returned by @ref normalizeVariables, although the input
+     *  expressions need not be those same expressions. For each input expression, the expression is rewritten by substituting
+     *  the inverse of the index. That is, a depth first search is performed on the expression and if the subexpression matches
+     *  a value of the index, then it's replaced by the corresponding key. */
+    static std::vector<SymbolicExpr::Ptr> undoNormalization(const std::vector<SymbolicExpr::Ptr>&,
+                                                            const SymbolicExpr::ExprExprHashMap &index);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

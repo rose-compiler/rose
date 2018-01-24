@@ -35,10 +35,15 @@ SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, Ris
         // We can finalize the domain and range widths for the memory now that they've been given.
         mem_ = SymbolicExpr::makeMemory(address->get_width(), dflt->get_width());
     }
-    SymbolicExpr::Ptr resultExpr = SymbolicExpr::makeRead(mem_, address->get_expression());
+    SymbolicExpr::Ptr resultExpr = SymbolicExpr::makeRead(mem_, address->get_expression(), valOps->solver());
     SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(dflt->copy());
     retval->set_expression(resultExpr);
     return retval;
+}
+
+SValuePtr
+SymbolicMemory::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    return readMemory(address, dflt, addrOps, valOps);  // readMemory doesn't have side effects
 }
 
 void
@@ -55,7 +60,7 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
         mem_ = SymbolicExpr::makeMemory(address->get_width(), value->get_width());
     }
 
-    mem_ = SymbolicExpr::makeWrite(mem_, address->get_expression(), value->get_expression());
+    mem_ = SymbolicExpr::makeWrite(mem_, address->get_expression(), value->get_expression(), valOps->solver());
 }
 
 bool

@@ -50,7 +50,7 @@ int main(int argc, char * argv[])
   ROSE_ASSERT (firstfile!=NULL);
   
   string filename = Rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
-  string ofilename = filename+".output";
+  string ofilename = filename+".getDataSharingAttribute.output";
   ofile.open(ofilename.c_str());
   visitorTraversal myvisitor;
   myvisitor.traverseInputFiles(project,preorder);
