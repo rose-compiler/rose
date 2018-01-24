@@ -459,6 +459,17 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     }
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt) {
+    if (segreg.is_valid()) {
+        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.get_nbits(), new SgAsmDirectRegisterExpression(segreg));
+        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory, segRegExpr, address, dflt);
+    } else {
+        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory,             address, dflt);
+    }
+}
+
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {

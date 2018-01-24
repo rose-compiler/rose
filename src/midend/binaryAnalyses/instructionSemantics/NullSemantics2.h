@@ -173,6 +173,12 @@ public:
         return protoval()->undefined_(reg.get_nbits());
     }
 
+    virtual BaseSemantics::SValuePtr
+    peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt,
+                 BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        return protoval()->undefined_(reg.get_nbits());
+    }
+    
     virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value,
                                BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {}
 
@@ -231,6 +237,12 @@ public:
 
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {}
+
+    virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
+        return dflt->copy();
+    }
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
 
@@ -380,6 +392,10 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
     virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
