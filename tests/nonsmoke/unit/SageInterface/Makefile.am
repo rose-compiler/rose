@@ -77,10 +77,8 @@ nonsmoke_get_C_array_dimensions_c_output_verify = $(addsuffix .get_C_array_dimen
 nonsmoke_genericCoverage_c_output_verify = $(addsuffix .genericCoverage.output, ${nonsmoke_genericCoverage_c_verify})
 nonsmoke_collectFunctionSideEffect_cpp_output_verify = $(addsuffix .collectFunctionSideEffect.output, ${nonsmoke_almost_all_cpp})
 
-#$(rose_nonsmoke_getDataSharingAttribute_c): $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) getDataSharingAttribute
-#	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) > $(@:rose_%=%).output
-
 # similar to the previous one:  original.c.getDataSharingAttribute.output -->  original.c
+# the verify subset is included in getDataSharingAttribute_c_output
 $(nonsmoke_getDataSharingAttribute_c_output): getDataSharingAttribute
 	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:%.getDataSharingAttribute.output=%)
 

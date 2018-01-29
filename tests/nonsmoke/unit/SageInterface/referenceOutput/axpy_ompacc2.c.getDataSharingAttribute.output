@@ -1,20 +1,119 @@
-for loop at line 30
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"y"	shared
-"i"	private
-"a"	shared
-"x"	shared
-"i"	private
-for loop at line 56
-"i"	private
-"i"	private
-"partsize"	shared
-"i"	private
-"y"	shared
-"i"	private
-"a"	shared
-"x"	shared
-"i"	private
+-----------------------------------------------
+OpenMP region SgOmpTargetStatement @ 28
+"i"@30:8	private
+"i"@30:15	private
+"n"@30:19	shared
+"i"@30:24	private
+"y"@31:5	shared
+"i"@31:7	private
+"a"@31:13	shared
+"x"@31:17	shared
+"i"@31:19	private
+"i"@0:0	private
+"x"@0:0	shared
+"y"@0:0	shared
+"n"@0:0	shared
+"a"@0:0	shared
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 29
+"i"@30:8	private
+"i"@30:15	private
+"n"@30:19	shared
+"i"@30:24	private
+"y"@31:5	shared
+"i"@31:7	private
+"a"@31:13	shared
+"x"@31:17	shared
+"i"@31:19	private
+"i"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 29
+"i"@30:8	private
+"i"@30:15	private
+"n"@30:19	shared
+"i"@30:24	private
+"y"@31:5	shared
+"i"@31:7	private
+"a"@31:13	shared
+"x"@31:17	shared
+"i"@31:19	private
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 37
+"n"@42:22	shared
+"ndev"@42:26	shared
+"n"@43:21	shared
+"ndev"@43:25	shared
+"devid"@45:13	private
+"remain"@45:21	private
+"partsize"@46:17	private
+"esize"@46:28	private
+"starti"@47:17	private
+"partsize"@47:26	private
+"devid"@47:35	private
+"partsize"@49:17	private
+"esize"@49:28	private
+"starti"@50:17	private
+"esize"@50:26	private
+"devid"@50:32	private
+"remain"@50:38	private
+"endi"@52:9	private
+"starti"@52:14	private
+"partsize"@52:23	private
+"i"@56:14	private
+"i"@56:21	private
+"partsize"@56:25	shared
+"i"@56:37	private
+"y"@57:11	shared
+"i"@57:13	private
+"a"@57:19	shared
+"x"@57:23	shared
+"i"@57:25	private
+"i"@0:0	private
+"x"@0:0	shared
+"y"@0:0	shared
+"partsize"@0:0	shared
+"a"@0:0	shared
+"devid"@0:0	private
+"y"@0:0	map
+"x"@0:0	map
+"a"@0:0	map
+"partsize"@0:0	map
+-----------------------------------------------
+OpenMP region SgOmpTargetStatement @ 54
+"i"@56:14	private
+"i"@56:21	private
+"partsize"@56:25	shared
+"i"@56:37	private
+"y"@57:11	shared
+"i"@57:13	private
+"a"@57:19	shared
+"x"@57:23	shared
+"i"@57:25	private
+"i"@0:0	private
+"x"@0:0	shared
+"y"@0:0	shared
+"partsize"@0:0	shared
+"a"@0:0	shared
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 55
+"i"@56:14	private
+"i"@56:21	private
+"partsize"@56:25	shared
+"i"@56:37	private
+"y"@57:11	shared
+"i"@57:13	private
+"a"@57:19	shared
+"x"@57:23	shared
+"i"@57:25	private
+"i"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 55
+"i"@56:14	private
+"i"@56:21	private
+"partsize"@56:25	shared
+"i"@56:37	private
+"y"@57:11	shared
+"i"@57:13	private
+"a"@57:19	shared
+"x"@57:23	shared
+"i"@57:25	private

@@ -229,6 +229,8 @@ namespace OmpSupport
     ROSE_ASSERT (var_sym!= NULL);
 
     SgInitializedName* iname = isSgInitializedName( var_sym->get_declaration() );                                                  
+    //TODO: what to do with SgOmpWorkshareStatement ?  it is a region/SgOmpBodyStatement, but it does not belong to OmpClauseBodyStatement
+
     // obtain the enclosing OpenMP clause body statement: SgOmpForStatement, parallel, sections, single, target, target data, task, etc. 
     SgOmpClauseBodyStatement* omp_clause_body_stmt = findEnclosingOmpClauseBodyStatement (anchor_stmt);
 
@@ -244,7 +246,8 @@ namespace OmpSupport
       // not explicitly specified, using the rules for predetermined and implicitly determined
       else
       {
-        //Not in explicit clause at this level, 
+        //Not in explicit data-sharing attribute clause at this level, 
+        
         // Apply implicit rules : 
         // check if it is locally declared  (the declaration is inside of the omp_clause_body_stmt )
         SgVariableDeclaration* var_decl = isSgVariableDeclaration(iname->get_declaration()); 
@@ -253,8 +256,9 @@ namespace OmpSupport
          // if declared at function parameters, the scope is outside, it should be shared by default if no other rules apply.
         if (var_decl && isAncestor (omp_clause_body_stmt, var_decl))
         {
-          // Variables with automatic storage duration that are declared in a scope inside the construct are private
-          // Variables with static storage duration that are declared in a scope inside the construct are shared.
+          // declared in a scope inside the construct:
+          // Variables with automatic storage duration are private
+          // Variables with static storage duration are shared.
           if (isStatic (var_decl))
             rt_val = e_shared;
           else
@@ -292,37 +296,39 @@ namespace OmpSupport
           }
         }
 
-        // no this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
+        // No this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
         // another case is parallel region + single region, we need to get the parallel region's attribute 
-        /*
-          #pragma omp parallel private(i,j)
-            {
-              for (i = 0; i < LOOPCOUNT; i++)
-                {
-          #pragma omp single copyprivate(j)
-                  {
-                    nr_iterations++;
-                    j = i;   // i should be private, based on enclosing parallel region's info.
-                  }
-             }   
-         */
+       //  
+       //    #pragma omp parallel private(i,j)
+       //      {
+       //        for (i = 0; i < LOOPCOUNT; i++)
+       //          {
+       //    #pragma omp single copyprivate(j)
+       //            {
+       //              nr_iterations++;
+       //              j = i;   // i should be private, based on enclosing parallel region's info.
+       //            }
+       //       }   
+       //   
         // If implicit rules do not apply at this level (worksharing regions like single), Go to find higher level: most omp parallel
         if  (SgOmpClauseBodyStatement * parent_clause_body_stmt = findEnclosingOmpClauseBodyStatement (getEnclosingStatement(omp_clause_body_stmt->get_parent())))
         { 
           // this cause infinite recursion, skip it for now: TODO
           //if (isSgOmpParallelStatement (parent_clause_body_stmt) && ( isSgOmpForStatement(omp_clause_body_stmt)|| isSgOmpSingleStatement(omp_clause_body_stmt)  ) )
-          if (isSgOmpParallelStatement (parent_clause_body_stmt) && ( isSgOmpSingleStatement(omp_clause_body_stmt)  ) )
+          if (isSgOmpParallelStatement (parent_clause_body_stmt) &&  isSgOmpSingleStatement(omp_clause_body_stmt))
           {
             // we need to consider the variable's data sharing attribute in the new context   
-            rt_val = getDataSharingAttribute (sym, parent_clause_body_stmt->get_body());
+            // the body of parallel can be the single region again, causing infinite recursive calls. 
+            //rt_val = getDataSharingAttribute (sym, parent_clause_body_stmt->get_body());
+            rt_val = getDataSharingAttribute (sym, parent_clause_body_stmt);
             return rt_val;
           }
         } 
-     /*
-     TODO: If an array section is a list item in a map clause on the target construct and the array section is
-     derived from a variable for which the type is pointer then that variable is firstprivate.
-     */
+     
+    // TODO: If an array section is a list item in a map clause on the target construct and the array section is
+    // derived from a variable for which the type is pointer then that variable is firstprivate.
      } // end explicit unknown
+
     // the rest is shared by default  
     // TODO Objects with dynamic storage duration are shared.
     // TODO Static data members are shared. 

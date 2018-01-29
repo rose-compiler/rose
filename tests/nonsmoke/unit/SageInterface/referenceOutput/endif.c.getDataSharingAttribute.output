@@ -1,0 +1,6 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 11
+"total_count"@15:5	shared
+-----------------------------------------------
+OpenMP region SgOmpAtomicStatement @ 14
+"total_count"@15:5	shared

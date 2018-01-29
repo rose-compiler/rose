@@ -1,33 +1,30 @@
-for loop at line 14
-"i"	private
-"i"	private
-"i"	private
-"jj"	private
-"jj"	private
-"jj"	private
-"kkk"	private
-"kkk"	private
-"kkk"	private
-"a"	shared
-"i"	private
-"jj"	private
-"kkk"	private
-for loop at line 15
-"jj"	private
-"jj"	private
-"jj"	private
-"kkk"	private
-"kkk"	private
-"kkk"	private
-"a"	shared
-"i"	private
-"jj"	private
-"kkk"	private
-for loop at line 16
-"kkk"	private
-"kkk"	private
-"kkk"	private
-"a"	shared
-"i"	private
-"jj"	private
-"kkk"	private
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 13
+"i"@14:7	private
+"i"@14:11	private
+"i"@14:16	private
+"jj"@15:9	private
+"jj"@15:14	private
+"jj"@15:19	private
+"kkk"@16:12	private
+"kkk"@16:18	private
+"kkk"@16:24	private
+"a"@17:9	shared
+"i"@17:11	private
+"jj"@17:14	private
+"kkk"@17:18	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 13
+"i"@14:7	private
+"i"@14:11	private
+"i"@14:16	private
+"jj"@15:9	private
+"jj"@15:14	private
+"jj"@15:19	private
+"kkk"@16:12	private
+"kkk"@16:18	private
+"kkk"@16:24	private
+"a"@17:9	shared
+"i"@17:11	private
+"jj"@17:14	private
+"kkk"@17:18	private
