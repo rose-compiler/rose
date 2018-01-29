@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page auto_par autoPar
+/** @defgroup auto_par autoPar
+ *  @ingroup rosetools
  * 
  * @section sec_overview Overview
  *

@@ -814,6 +814,15 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
     return retval;
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
+{
+    SValuePtr retval = svalue_empty(reg.get_nbits());
+    SUBDOMAINS(sd, ())
+        retval->set_subvalue(sd.idx(), sd->peekRegister(reg, sd(dflt)));
+    return retval;
+}
+
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a)
 {
@@ -828,6 +837,16 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     SValuePtr retval = svalue_empty(dflt->get_width());
     SUBDOMAINS(sd, (addr, cond))
         retval->set_subvalue(sd.idx(), sd->readMemory(segreg, sd(addr), sd(dflt), sd(cond)));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt)
+{
+    SValuePtr retval = svalue_empty(dflt->get_width());
+    SUBDOMAINS(sd, (addr))
+        retval->set_subvalue(sd.idx(), sd->peekMemory(segreg, sd(addr), sd(dflt)));
     return retval;
 }
 

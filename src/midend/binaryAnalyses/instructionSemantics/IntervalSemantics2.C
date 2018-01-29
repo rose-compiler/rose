@@ -172,6 +172,15 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
     return retval;
 }
 
+BaseSemantics::SValuePtr
+MemoryState::peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
+{
+    ASSERT_not_implemented("[Robb Matzke 2018-01-17]");
+    BaseSemantics::SValuePtr retval;
+    return retval;
+}
+
 void
 MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                          BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
@@ -802,6 +811,14 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &condition)
 {
     return dflt->copy(); // FIXME
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg,
+                          const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt)
+{
+    return dflt->copy(); // FIXME[Robb Matzke 2018-01-17]
 }
 
 void

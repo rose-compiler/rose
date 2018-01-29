@@ -105,6 +105,15 @@ RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, co
 
 void
 RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
+                      const BaseSemantics::SValuePtr &c)
+{
+    checkSubdomain();
+    linePrefix();
+    SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<", " <<toString(c) <<")";
+}
+
+void
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
                       const BaseSemantics::SValuePtr &c, size_t d)
 {
     checkSubdomain();
@@ -1201,6 +1210,21 @@ RiscOperators::readMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &
     before("readMemory", a, b, c, d);
     try {
         return check_width(after(subdomain_->readMemory(a, b, c, d)), c->get_width());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c)
+{
+    before("peekMemory", a, b, c);
+    try {
+        return check_width(after(subdomain_->peekMemory(a, b, c)), c->get_width());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

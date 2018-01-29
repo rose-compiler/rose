@@ -250,8 +250,9 @@ MemoryListState::CellCompressorChoice::operator()(const SValuePtr &address, cons
 }
 
 BaseSemantics::SValuePtr
-MemoryListState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
-                            BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
+                                  BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                  bool allowSideEffects) {
     size_t nBits = dflt->get_width();
     SValuePtr address = SValue::promote(address_);
     ASSERT_require(8==nBits); // SymbolicSemantics::MemoryListState assumes that memory cells contain only 8-bit data
@@ -259,16 +260,40 @@ MemoryListState::readMemory(const BaseSemantics::SValuePtr &address_, const Base
     CellList::iterator cursor = get_cells().begin();
     CellList cells = scan(cursor /*in,out*/, address, nBits, addrOps, valOps);
 
-    // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists.
+    // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists. If
+    // side effects are allowed, we should add a new cell to the return value.
     if (cursor == get_cells().end()) {
-        BaseSemantics::MemoryCellPtr newCell = insertReadCell(address, dflt);
-        cells.push_back(newCell);
+        if (allowSideEffects) {
+            BaseSemantics::MemoryCellPtr newCell = insertReadCell(address, dflt);
+            cells.push_back(newCell);
+        } else {
+            BaseSemantics::MemoryCellPtr newCell = protocell->create(address, dflt);
+            cells.push_back(newCell);
+        }
     }
-    updateReadProperties(cells);
+
+    // If we're doing an actual read (rather than just a peek), then update the returned cells to indicate that they've been
+    // read. Since the "cells" vector is pointers that haven't been deep-copied, this is a side effect on the memory
+    // state. But even if it weren't a side effect, we don't want the returned value to be marked as having been actually
+    // read when we're only peeking.
+    if (allowSideEffects)
+        updateReadProperties(cells);
 
     SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, cells);
     ASSERT_require(retval->get_width()==8);
     return retval;
+}
+
+BaseSemantics::SValuePtr
+MemoryListState::readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                            BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    return readOrPeekMemory(address, dflt, addrOps, valOps, true /*allow side effects*/);
+}
+
+BaseSemantics::SValuePtr
+MemoryListState::peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                            BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    return readOrPeekMemory(address, dflt, addrOps, valOps, false /*no side effects allowed*/);
 }
 
 void
@@ -1058,15 +1083,12 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg,
-                          const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt,
-                          const BaseSemantics::SValuePtr &condition) {
+RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
+                                const BaseSemantics::SValuePtr &address,
+                                const BaseSemantics::SValuePtr &dflt,
+                                bool allowSideEffects) {
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
-    if (condition->is_number() && !condition->get_number())
-        return filterResult(dflt);
     if (address->isBottom())
         return filterResult(bottom_(dflt->get_width()));
 
@@ -1086,11 +1108,21 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
         // Read the default value from the initial memory state first. We want to use whatever value is in the initial memory
         // state if the address is not present in the current memory state. As a side effect, if this value is not in the
         // initial memory it will be added.
-        if (initialState())
-            byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
-
+        if (initialState()) {
+            if (allowSideEffects) {
+                byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
+            } else {
+                byte_dflt = initialState()->peekMemory(byte_addr, byte_dflt, this, this);
+            }
+        }
+        
         // Read a byte from the current memory state. Adds the new value as a side effect if necessary.
-        SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
+        SValuePtr byte_value;
+        if (allowSideEffects) {
+            byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
+        } else {
+            byte_value = SValue::promote(currentState()->peekMemory(byte_addr, byte_dflt, this, this));
+        }
         if (0==bytenum) {
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==currentMem->get_byteOrder()) {
@@ -1123,6 +1155,25 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
             break;
     }
     return filterResult(retval);
+}
+
+
+BaseSemantics::SValuePtr
+RiscOperators::readMemory(RegisterDescriptor segreg,
+                          const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt,
+                          const BaseSemantics::SValuePtr &condition) {
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    if (condition->is_number() && !condition->get_number())
+        return filterResult(dflt);
+    return readOrPeekMemory(segreg, address, dflt, true /*allow side effects*/);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg,
+                          const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt) {
+    return readOrPeekMemory(segreg, address, dflt, false /*no side effects allowed*/);
 }
 
 void
