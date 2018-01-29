@@ -80,7 +80,7 @@ class IsPotentiallyModifiedVisitor: public AstSimpleProcessing {
       return;
 
     // skip things in a system/user header, Liao 1/23/2018
-    if (SgLocatedNode* lnode = isSgLocatedNode(n) && Inliner::skipHeaders )
+    if ((SgLocatedNode* lnode = isSgLocatedNode(n)) && Inliner::skipHeaders )
     {
       string filename= lnode->get_file_info()->get_filename();
       string suffix = Rose::StringUtility ::fileNameSuffix(filename);
