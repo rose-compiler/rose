@@ -1,7 +1,8 @@
 // -*- c++ -*-
 
-/** @page dot_generator dotGenerator and dotGeneratorWholeASTGraph
- * 
+/** @defgroup dot_generator dotGenerator and dotGeneratorWholeASTGraph
+ *  @ingroup rosetools
+ *
  * @section sec_overview Overview
  *
  * There are two tools to generate AST graphs in dot format. They are:

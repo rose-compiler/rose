@@ -3,20 +3,6 @@
 
 #include <string>
 
-/*!
-  \defgroup frontendSageHighLevelInterface High level AST builders
-  \ingroup ROSE_FrontEndGroup
-  \brief This namespace contains high level SAGE III AST node and subtree builders
-
-  Building AST trees using raw SgNode constructors is tedious and error-prone. It becomes
-  even more difficult with the presence of symbol tables. This namespace contains major
-  AST node builders on top of the constructors to take care of symbol tables, various
-  edges to scope,  parent and so on.
-
-  \authors Chunhua Liao (last modified 2/12/2008)
-
-*/
-
 #include "sageInterface.h"
 
 #include "Diagnostics.h"
@@ -27,7 +13,11 @@ namespace SageInterface {
   ROSE_DLL_API void setSourcePosition(SgNode* node);
 }
 
-/** Functions that build an AST. */
+/** Functions that build an AST.
+ *
+ * Building abstract syntax trees (ASTs) using raw @ref SgNode constructors is tedious and error-prone. It becomes even more
+ * difficult with the presence of symbol tables. This namespace contains major AST node builders on top of the constructors to
+ * take care of symbol tables, various edges to scope, parent and so on. */
 namespace SageBuilder
 {
 
