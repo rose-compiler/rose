@@ -2,8 +2,10 @@
 #include "rose.h"
 #include <vector>
 #include <string>
+#include <iostream>
 
 using namespace Rose;
+using namespace std;
 
 // Finds needle in haystack and returns true if found.  Needle is a single node (possibly an invalid pointer and will not be
 // dereferenced) and haystack is the root of an abstract syntax (sub)tree.
