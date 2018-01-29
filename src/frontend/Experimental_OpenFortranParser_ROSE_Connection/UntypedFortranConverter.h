@@ -33,7 +33,8 @@ class UntypedFortranConverter
       void convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
                         SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type, SgScopeStatement* label_scope=NULL);
 
-      SgInitializedName* convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init);
+      SgInitializedName*        convertSgUntypedInitializedName     (SgUntypedInitializedName*     ut_name,      SgType* sg_base_type);
+      SgInitializedNamePtrList* convertSgUntypedInitializedNameList (SgUntypedInitializedNameList* ut_name_list, SgType* sg_base_type);
 
       void convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl);
 
@@ -65,11 +66,15 @@ class UntypedFortranConverter
 
    // Expressions
    //
-      SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr, SgExpressionPtrList& children, SgScopeStatement* scope);
+      SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr);
+      SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr, SgExpressionPtrList& children);
 
       SgValueExp*   convertSgUntypedValueExpression (SgUntypedValueExpression* ut_expr);
-      SgUnaryOp*    convertSgUntypedUnaryOperator   (SgUntypedUnaryOperator* untyped_operator, SgExpression* expr);
+      SgUnaryOp*    convertSgUntypedUnaryOperator   (SgUntypedUnaryOperator * untyped_operator, SgExpression* expr);
       SgBinaryOp*   convertSgUntypedBinaryOperator  (SgUntypedBinaryOperator* untyped_operator, SgExpression* lhs, SgExpression* rhs);
+
+      SgExprListExp* convertSgUntypedExprListExpression  (SgUntypedExprListExpression * ut_expr_list);
+      SgExpression*  convertSgUntypedSubscriptExpression (SgUntypedSubscriptExpression* ut_expr);
 
     private:
       FortranBuilderInterface* pBuilder;  // pointer to controlling builder class; DO NOT delete/free

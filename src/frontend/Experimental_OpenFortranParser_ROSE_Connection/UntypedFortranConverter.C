@@ -1,9 +1,13 @@
 #include "sage3basic.h"
 #include "UntypedFortranConverter.h"
+#include "Fortran_to_ROSE_translation.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
 
 using namespace Fortran::Untyped;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 
 void
@@ -45,8 +49,16 @@ UntypedFortranConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocate
    Sg_File_Info*   end = fromNode->get_endOfConstruct();
 
    ROSE_ASSERT(start != NULL && end != NULL);
-   ROSE_ASSERT(toNode->get_startOfConstruct() == NULL);
-   ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
+
+// SageBuilder may have been used and it builds FileInfo
+   if (toNode->get_startOfConstruct() != NULL) {
+      delete toNode->get_startOfConstruct();
+      toNode->set_startOfConstruct(NULL);
+   }
+   if (toNode->get_endOfConstruct() != NULL) {
+      delete toNode->get_endOfConstruct();
+      toNode->set_endOfConstruct(NULL);
+   }
 
 #if DEBUG_UNTYPED_CONVERTER
    std::cout << "UntypedFortranConverter::setSourcePositionFrom: ";
@@ -126,7 +138,7 @@ setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_
       }
    else
       {
-         std::cerr << "Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!" << std::endl;
+         cerr << "Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!" << endl;
          ROSE_ASSERT (false);
       }
 
@@ -353,6 +365,10 @@ UntypedFortranConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeSt
 {
    SgType* sg_type = NULL;
 
+   if (isSgUntypedArrayType(ut_type)) {
+      cerr << "HELP --- found an array type\n\n";
+   }
+
 // Temporary assertions as this conversion is completed
    ROSE_ASSERT(ut_type->get_is_intrinsic() == true);
    ROSE_ASSERT(ut_type->get_is_literal() == false);
@@ -369,7 +385,7 @@ UntypedFortranConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeSt
          SgUntypedExpression* ut_kind = ut_type->get_type_kind();
       // TODO - figure out how to handle operators (or anything with children)
          ROSE_ASSERT(isSgUntypedValueExpression(ut_kind) != NULL || isSgUntypedReferenceExpression(ut_kind) != NULL);
-         kindExpression = convertSgUntypedExpression(ut_kind, children, scope);
+         kindExpression = convertSgUntypedExpression(ut_kind, children);
       }
    if (ut_type->get_char_length_is_string())
       {
@@ -377,7 +393,7 @@ UntypedFortranConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeSt
          SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
       // TODO - figure out how to handle operators (or anything with children)
          ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
-         lengthExpression = convertSgUntypedExpression(ut_length, children, scope);
+         lengthExpression = convertSgUntypedExpression(ut_length, children);
       }
 
 // TODO - determine if SageBuilder can be used (or perhaps should be updated)
@@ -431,18 +447,25 @@ UntypedFortranConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeSt
 
 
 SgInitializedName*
-UntypedFortranConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
+UntypedFortranConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_base_type)
 {
-   SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type, sg_init);
-// SageBuilder builds FileInfo for the variable declaration
-   if (sg_name->get_startOfConstruct() != NULL) {
-      delete sg_name->get_startOfConstruct();
-      sg_name->set_startOfConstruct(NULL);
-   }
-   if (sg_name->get_endOfConstruct() != NULL) {
-      delete sg_name->get_endOfConstruct();
-      sg_name->set_endOfConstruct(NULL);
-   }
+   SgType* sg_type = sg_base_type;
+
+   std::cerr << "convertSgUntypedInitializedName:   name is " << ut_name->get_name() << endl;
+   std::cerr << "convertSgUntypedInitializedName:   type is " << ut_name->get_type()->class_name() << endl;
+   std::cerr << "convertSgUntypedInitializedName:  btype is " << sg_base_type->class_name() << endl;
+
+   if (isSgUntypedArrayType(ut_name->get_type()))
+      {
+         cout << "convertSgUntypedInitializedName:   YIKES this is an array, quick, DO SOMETHING!" << endl;
+
+         SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_name->get_type());
+         SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info());
+
+         sg_type = SageBuilder::buildArrayType(sg_base_type, sg_dim_info);
+      }
+
+   SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type /*, sg_init*/);
    setSourcePositionFrom(sg_name, ut_name);
 
 #if DEBUG_UNTYPED_CONVERTER
@@ -843,8 +866,8 @@ UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDat
 SgVariableDeclaration*
 UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
 {
-   std::cerr << "convertSgUntypedVariableDeclaration: scope is " << scope->class_name() << std::endl;
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
+   std::cerr << "convertSgUntypedVariableDeclaration: scope is " << scope->class_name() << endl;
 
    SgUntypedType* ut_base_type = ut_decl->get_type();
    SgType*        sg_base_type = convertSgUntypedType(ut_base_type, scope);
@@ -852,21 +875,20 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
    SgUntypedInitializedNamePtrList::const_iterator it;
 
+   std::cerr << "convertSgUntypedVariableDeclaration: # vars is " << ut_vars.size() << endl;
+   std::cerr << "convertSgUntypedVariableDeclaration:   type is " << sg_base_type->class_name() << endl;
+   std::cerr << "convertSgUntypedVariableDeclaration:   name is " << ut_vars[0]->get_name() << endl;
+   ROSE_ASSERT(ut_vars[0]->get_type() != NULL);
+   std::cerr << "convertSgUntypedVariableDeclaration:   type is " << ut_vars[0]->get_type()->class_name() << endl;
+
+   SgInitializedNamePtrList sg_name_list;
+// TODO: convertSgUntypedInitializedNameList(ut_decl->get_variables(), sg_base_type);
+
 // Declare the first variable
 #if 0
 //TODO - not sure this is correct and is ackward anyway as it would be nice to create a variable declaration
 // without any variables and then add them all later.
    SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration((*i)->get_name(), sg_type, /*sg_init*/NULL, scope);
-
-// SageBuilder builds FileInfo for the variable declaration
-   if (sg_decl->get_startOfConstruct() != NULL) {
-      delete sg_decl->get_startOfConstruct();
-      sg_decl->set_startOfConstruct(NULL);
-   }
-   if (sg_decl->get_endOfConstruct() != NULL) {
-      delete sg_decl->get_endOfConstruct();
-      sg_decl->set_endOfConstruct(NULL);
-   }
 #endif
 
 #if 1
@@ -888,11 +910,15 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
          //   4. CoarraySpec: buildArrayType with coarray attribute
          //   5. Pointers: new SgPointerType(sg_type)
          //   7. Dan warned me about sharing types but it looks like the base type is shared in inames
-      SgInitializedName* initializedName = UntypedFortranConverter::convertSgUntypedInitializedName((*it), sg_base_type, /*sg_init*/NULL);
+      SgInitializedName* initializedName = UntypedFortranConverter::convertSgUntypedInitializedName((*it), sg_base_type);
       SgName variableName = initializedName->get_name();
 
+#if 0
+      std::cerr << "convertSgUntypedVariableDeclaration:   name is " << (*it)->get_type()->class_name()   << endl;
+#endif
+
       initializedName->set_declptr(sg_decl);
-      sg_decl->append_variable(initializedName, /*sg_init*/NULL);
+      sg_decl->append_variable(initializedName, initializedName->get_initializer());
 
       SgVariableSymbol* variableSymbol = NULL;
       SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(scope);
@@ -1177,7 +1203,56 @@ UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement
 //
 
 SgExpression*
-UntypedFortranConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr)
+   {
+      SgExpression* sg_expr = NULL;
+
+      switch (ut_expr->variantT())
+         {
+           case V_SgUntypedSubscriptExpression:
+              {
+                 SgUntypedSubscriptExpression* ut_subscript_expr = isSgUntypedSubscriptExpression(ut_expr);
+                 sg_expr = convertSgUntypedSubscriptExpression(ut_subscript_expr);
+                 break;
+              }
+           case V_SgUntypedNullExpression:
+              {
+                 sg_expr = new SgNullExpression();
+                 setSourcePositionFrom(sg_expr, ut_expr);
+                 break;
+              }
+           case V_SgUntypedReferenceExpression:
+              {
+                 SgUntypedReferenceExpression* ref_expr = isSgUntypedReferenceExpression(ut_expr);
+                 sg_expr = SageBuilder::buildVarRefExp(ref_expr->get_name(), NULL);
+                 ROSE_ASSERT(sg_expr != NULL);
+                 setSourcePositionFrom(sg_expr, ut_expr);
+
+#if DEBUG_UNTYPED_CONVERTER
+                 printf ("  - reference expression ==>   %s\n", ref_expr->get_name().c_str());
+#endif
+                 break;
+         }
+           case V_SgUntypedValueExpression:
+              {
+                 SgUntypedValueExpression* ut_value_expr = isSgUntypedValueExpression(ut_expr);
+                 sg_expr = convertSgUntypedValueExpression(ut_value_expr);
+                 setSourcePositionFrom(sg_expr, ut_expr);
+                 break;
+              }
+           default:
+              {
+                 cerr << "UntypedFortranConverter::convertSgUntypedExpression: unimplemented for class " << ut_expr->class_name() << endl;
+                 ROSE_ASSERT(0);  // Unimplemented
+              }
+         }
+
+      return sg_expr;
+   }
+
+
+SgExpression*
+UntypedFortranConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExpressionPtrList& children)
    {
       SgExpression* sg_expr = NULL;
 
@@ -1191,51 +1266,14 @@ UntypedFortranConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
 #endif
          }
-      else if ( isSgUntypedValueExpression(ut_expr) != NULL )
+      else
          {
-            SgUntypedValueExpression* expr = dynamic_cast<SgUntypedValueExpression*>(ut_expr);
-            sg_expr = convertSgUntypedValueExpression(expr);
-#if DEBUG_UNTYPED_CONVERTER
-            printf ("  - value expression     ==>   %s\n", expr->get_value_string().c_str());
-#endif
-         }
-      else if ( isSgUntypedReferenceExpression(ut_expr) != NULL )
-         {
-            SgUntypedReferenceExpression* expr = dynamic_cast<SgUntypedReferenceExpression*>(ut_expr);
-            SgVarRefExp* varRef = SageBuilder::buildVarRefExp(expr->get_name(), NULL);
-            ROSE_ASSERT(varRef != NULL);
-            sg_expr = varRef;
-
-         // SageBuilder builds FileInfo for the variable reference
-            if (sg_expr->get_startOfConstruct() != NULL)
-               {
-                  delete sg_expr->get_startOfConstruct();
-                  sg_expr->set_startOfConstruct(NULL);
-               }
-            if (sg_expr->get_endOfConstruct() != NULL)
-               {
-                  delete sg_expr->get_endOfConstruct();
-                  sg_expr->set_endOfConstruct(NULL);
-               }
-            setSourcePositionFrom(sg_expr, ut_expr);
-
-#if DEBUG_UNTYPED_CONVERTER
-            printf ("  - reference expression ==>   %s\n", expr->get_name().c_str());
-#endif
-         }
-      else if ( isSgUntypedOtherExpression(ut_expr) != NULL )
-         {
-            SgUntypedOtherExpression* expr = dynamic_cast<SgUntypedOtherExpression*>(ut_expr);
-            if (expr->get_expression_enum() == SgToken::FORTRAN_NULL)
-               {
-                  sg_expr = new SgNullExpression();
-                  setSourcePositionFrom(sg_expr, ut_expr);
-               }
+            cerr << "UntypedFortranConverter::convertSgUntypedExpression: unimplemented for class " << ut_expr->class_name() << endl;
+            ROSE_ASSERT(0);  // Unimplemented
          }
 
       return sg_expr;
    }
-
 
 
 SgValueExp*
@@ -1471,6 +1509,77 @@ UntypedFortranConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator*
        }
     return op;
  }
+
+
+SgExprListExp*
+UntypedFortranConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression* ut_expr_list)
+{
+   SgExprListExp* sg_expr_list = new SgExprListExp();
+   setSourcePositionFrom(sg_expr_list, ut_expr_list);
+
+   BOOST_FOREACH(SgUntypedExpression* ut_expr, ut_expr_list->get_expressions())
+      {
+         SgExpression* sg_expr = convertSgUntypedExpression(ut_expr);
+         sg_expr_list->append_expression(sg_expr);
+      }
+
+   return sg_expr_list;
+}
+
+
+SgExpression*
+UntypedFortranConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpression* ut_expr)
+{
+   int expr_enum = ut_expr->get_expression_enum();
+   bool is_asterisk = false;
+   SgExpression* sg_expr = NULL;
+
+   cerr << "UntypedFortranConverter::convertSgUntypedSubscriptExpression: class " << ut_expr->class_name() << endl;
+   cerr << "UntypedFortranConverter::convertSgUntypedSubscriptExpression:  enum " << ut_expr->get_expression_enum() << endl;
+   cerr << "UntypedFortranConverter::convertSgUntypedSubscriptExpression:    lb " << ut_expr->get_lower_bound()->class_name() << endl;
+   cerr << "UntypedFortranConverter::convertSgUntypedSubscriptExpression:    ub " << ut_expr->get_upper_bound()->class_name() << endl;
+   cerr << "UntypedFortranConverter::convertSgUntypedSubscriptExpression:    st " << ut_expr->get_stride()     ->class_name() << endl;
+
+   if ( expr_enum == Fortran_ROSE_Translation::e_assumed_size_array ||
+        expr_enum == Fortran_ROSE_Translation::e_assumed_or_implied_shape_array )
+      {
+         is_asterisk = true;
+      }
+
+   if ( is_asterisk && isSgUntypedNullExpression(ut_expr->get_lower_bound()) )
+      {
+         cerr << "UntypedFortranConverter::convertSgUntypedSubscriptExpression:  assumed size " << ut_expr->get_expression_enum() << endl;
+
+         sg_expr = new SgAsteriskShapeExp();
+         setSourcePositionFrom(sg_expr, ut_expr);
+      }
+   else
+      {
+         SgExpression* sg_upper_bound;
+         SgExpression* sg_lower_bound = convertSgUntypedExpression(ut_expr->get_lower_bound());
+
+         SgExpression* sg_stride = new SgIntVal(1,"1");
+         setSourcePositionUnknown(sg_stride);
+
+         if (is_asterisk)
+            {
+               sg_upper_bound = new SgAsteriskShapeExp();
+               setSourcePositionUnknown(sg_upper_bound);
+            }
+         else  sg_upper_bound = convertSgUntypedExpression(ut_expr->get_upper_bound());
+
+
+         cerr << "UntypedFortranConverter::convertSgUntypedSubscriptExpression:  explicit shape " << ut_expr->get_expression_enum() << endl;
+         cerr << "  lb " << sg_lower_bound->class_name() << endl;
+         cerr << "  ub " << sg_upper_bound->class_name() << endl;
+         cerr << "  st " << sg_stride->class_name() << endl;
+
+         sg_expr = new SgSubscriptExpression(sg_lower_bound, sg_upper_bound, sg_stride);
+         setSourcePositionFrom(sg_expr, ut_expr);
+      }
+
+   return sg_expr;
+}
 
 
 SgScopeStatement*
