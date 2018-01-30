@@ -1,6 +1,6 @@
  /**
      \defgroup X10CodeGenerator Backend X10 Code Generator
-     \ingroup ROSE_BackEndGroup
+     \ingroup rose_backend
 
      \brief Generates X10 (Java) Source code from the AST.
 
