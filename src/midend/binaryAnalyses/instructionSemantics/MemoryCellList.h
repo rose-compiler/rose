@@ -147,6 +147,9 @@ public:
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+
     /** Write a value to memory.
      *
      *  See BaseSemantics::MemoryState() for requirements.  This implementation creates a new memory cell and pushes it onto

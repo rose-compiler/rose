@@ -2,10 +2,10 @@
      \defgroup multiSupportTemplateLibrary Multi-Support Template Library
      \ingroup ROSE_3rdPartyLibrariesGroup
 
-     \brief This library is a separable part of the Rose project.
+     \brief This library is a separable part of the ROSE project.
 
      This library supports many things related to Abstract Syntax Trees.
-     Currently the library is somewhat dependent upon Rose, but this 
+     Currently the library is somewhat dependent upon ROSE, but this 
      will be fixed.
   */
 

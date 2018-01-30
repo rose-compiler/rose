@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page identity_translator Identity Translator
+/** @defgroup identity_translator Identity Translator
+ *  @ingroup rosetools
  * 
  * @section sec_overview Overview
  *  This tool is the simplest tool built using ROSE. It takes input source files , builds AST, and then unparses the AST back to compilable source code. It tries its best to preserve everything from the input file. Any other ROSE-based tools can be built using this tool's skeleton by adding customized AST analysis and transformation.

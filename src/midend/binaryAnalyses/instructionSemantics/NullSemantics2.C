@@ -242,6 +242,15 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     return dflt->copy();
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt)
+{
+    ASSERT_not_null(currentState());
+    (void) SValue::promote(addr);
+    return dflt->copy();
+}
+
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                          const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)

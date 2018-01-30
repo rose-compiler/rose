@@ -230,6 +230,7 @@ protected:
     void before(const std::string&);
     void before(const std::string&, RegisterDescriptor);
     void before(const std::string&, RegisterDescriptor, const BaseSemantics::SValuePtr&);
+    void before(const std::string&, RegisterDescriptor, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
     void before(const std::string&, RegisterDescriptor, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                 size_t);
     void before(const std::string&, RegisterDescriptor, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
@@ -349,6 +350,8 @@ public:
     virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 };

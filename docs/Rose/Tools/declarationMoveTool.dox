@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page declaration_move Declaration Move Tool
+/** @defgroup declaration_move Declaration move tool
+ *  @ingroup rosetools
  * 
  * @section sec_overview Overview
  *  This tool will move variable declarations to their innermost possible used scopes.

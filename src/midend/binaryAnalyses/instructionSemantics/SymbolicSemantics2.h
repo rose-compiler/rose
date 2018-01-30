@@ -591,11 +591,25 @@ public:
                                                 BaseSemantics::RiscOperators *addrOps,
                                                 BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
+    /** Read a byte from memory with no side effects.
+     *
+     *  In order to read a multi-byte value, use RiscOperators::peekMemory(). */
+    virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
+protected:
+    virtual BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &address,
+                                                      const BaseSemantics::SValuePtr &dflt,
+                                                      BaseSemantics::RiscOperators *addrOps,
+                                                      BaseSemantics::RiscOperators *valOps,
+                                                      bool allowSideEffects);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -1171,10 +1185,19 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+protected:
+    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,
+                                                      const BaseSemantics::SValuePtr &addr,
+                                                      const BaseSemantics::SValuePtr &dflt,
+                                                      bool allowSideEffects);
 };
 
 } // namespace

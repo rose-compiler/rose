@@ -1,21 +1,22 @@
- /*!
-     \defgroup AstProcessingClasses AST Processing
-     \ingroup rose_midend
+// -*- c++ -*-
 
-     \authors Markus Schordan\n 
-              (preliminary versions developed by Quinlan and Kowarschik using a different algorithm for combing attributes and a single interface)
+// Authors: Markus Schordan (preliminary versions developed by Quinlan and Kowarschik using a different algorithm for combing
+// attributes and a single interface)
 
-     \brief This is the AST Processing Mechanism for traversing the AST and computing attributes.
-
-     The AST Processing Mechanism allows to traverse the AST and to compute inherited and synthesized attributes.
-     There exist 4 different interfaces:\n
-          -# SimpleProcessing provides a pre- and postorder traversal of the AST. The user needs to implement one visit function.
-          -# The TopDownProcessing - provides the computation of inherited attributes using a pre-order traversal.
-          -# The BottomUpProcessing - provides the computation of synthesized attributes using a post-order traversal.
-          -# The BottomUpTopDownProcessing - provides the computation of inherited and synthesized attributes.
-
-     The classes have pure virtual functions. You must inherit and implement the required methods.
-  */
+/** @defgroup AstProcessingClasses AST Processing
+ *  @ingroup rose_midend
+ *
+ *  Mechanism for traversing the AST and computing attributes.
+ *
+ *  This AST Processing Mechanism allows to traverse the AST and to compute inherited and synthesized attributes.
+ *  The interfaces:
+ *  
+ *  @item SimpleProcessing provides a pre- and postorder traversal of the AST. The user needs to implement one visit function.
+ *  @item The TopDownProcessing - provides the computation of inherited attributes using a pre-order traversal.
+ *  @item The BottomUpProcessing - provides the computation of synthesized attributes using a post-order traversal.
+ *  @item The BottomUpTopDownProcessing - provides the computation of inherited and synthesized attributes.
+ *
+ *  The classes have pure virtual functions. You must inherit and implement the required methods. */
 
 
 /*

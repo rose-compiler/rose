@@ -248,11 +248,22 @@ public:
                                                 BaseSemantics::RiscOperators *addrOps,
                                                 BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
+    virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
     virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
                        BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
+protected:
+    virtual BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &addr,
+                                                      const BaseSemantics::SValuePtr &dflt,
+                                                      BaseSemantics::RiscOperators *addrOps,
+                                                      BaseSemantics::RiscOperators *valOps,
+                                                      bool allowSideEffects);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -470,12 +481,19 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
 protected:
+    // handles readMemory and peekMemory
+    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                                                      const BaseSemantics::SValuePtr &dflt, bool allowSideEffects);
+
     // Convert expression to double
     double exprToDouble(const BaseSemantics::SValuePtr &expr, SgAsmFloatType*);
 

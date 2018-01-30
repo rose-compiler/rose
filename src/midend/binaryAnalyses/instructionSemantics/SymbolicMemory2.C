@@ -41,6 +41,11 @@ SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, Ris
     return retval;
 }
 
+SValuePtr
+SymbolicMemory::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    return readMemory(address, dflt, addrOps, valOps);  // readMemory doesn't have side effects
+}
+
 void
 SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, RiscOperators *addrOps, RiscOperators *valOps) {
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);

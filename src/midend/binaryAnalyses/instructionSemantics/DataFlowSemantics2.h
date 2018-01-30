@@ -165,8 +165,17 @@ public:
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
+                                                const BaseSemantics::SValuePtr &dflt_) ROSE_OVERRIDE;
+
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                              const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+protected:
+    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                                                      const BaseSemantics::SValuePtr &dflt,
+                                                      const BaseSemantics::SValuePtr &cond, bool allowSideEffects);
+
 };
 
 } // namespace

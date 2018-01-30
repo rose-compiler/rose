@@ -566,22 +566,23 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
 }
     
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg,
-                          const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt_,
-                          const BaseSemantics::SValuePtr &condition)
-{
+RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
+                                const BaseSemantics::SValuePtr &address,
+                                const BaseSemantics::SValuePtr &dflt_,
+                                bool allowSideEffects) {
     BaseSemantics::SValuePtr dflt = dflt_;
     size_t nbits = dflt->get_width();
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
-    if (condition->is_number() && !condition->get_number())
-        return dflt;
 
     // Use the initial memory state if there is one.
-    if (initialState())
-        dflt = initialState()->readMemory(address, dflt, this, this);
-
+    if (initialState()) {
+        if (allowSideEffects) {
+            dflt = initialState()->readMemory(address, dflt, this, this);
+        } else {
+            dflt = initialState()->peekMemory(address, dflt, this, this);
+        }
+    }
+    
     // Use the concrete MemoryMap if there is one.  Only those areas of the map that are readable and not writable are used.
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
@@ -601,6 +602,26 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
     SValuePtr retval = SValue::promote(currentState()->readMemory(address, dflt, this, this));
     return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::readMemory(RegisterDescriptor segreg,
+                          const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt,
+                          const BaseSemantics::SValuePtr &condition)
+{
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    if (condition->is_number() && !condition->get_number())
+        return dflt;
+    return readOrPeekMemory(segreg, address, dflt, true /*allow side effects*/);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg,
+                          const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt)
+{
+    return readOrPeekMemory(segreg, address, dflt, false /*no side effects allowed*/);
 }
 
 } // namespace
