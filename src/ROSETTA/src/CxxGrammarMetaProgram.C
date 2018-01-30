@@ -102,19 +102,5 @@ main(int argc, char * argv[])
          printf ("documentedConstructorPrototypes = %s \n",documentedConstructorPrototypes.c_str());
          printf ("Rosetta finished.\n");
      }
+     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
