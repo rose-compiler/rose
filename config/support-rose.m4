@@ -2306,6 +2306,8 @@ src/frontend/DLX/include/DLX/Core/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
+src/frontend/Experimental_General_Language_Support/Makefile
+src/frontend/Experimental_General_Language_Support/ATerm/Makefile
 src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
