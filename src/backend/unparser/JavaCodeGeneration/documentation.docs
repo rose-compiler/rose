@@ -1,6 +1,6 @@
  /*!
      \defgroup JavaCodeGenerator Backend Java Code Generator
-     \ingroup ROSE_BackEndGroup
+     \ingroup rose_backend
 
      \brief Generates Java Source code from the AST.
 

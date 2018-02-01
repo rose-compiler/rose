@@ -16,7 +16,7 @@ namespace StaticSemantics {
 void attachInstructionSemantics(SgNode *ast, Disassembler *disassembler) {
     ASSERT_not_null(ast);
     ASSERT_not_null(disassembler);
-    RiscOperatorsPtr ops = RiscOperators::instance(SValue::instance(), NULL);
+    RiscOperatorsPtr ops = RiscOperators::instance(SValue::instance(), SmtSolverPtr());
     BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
     if (!cpu)
         throw BaseSemantics::Exception("no instruction semantics for architecture", NULL);
@@ -456,6 +456,17 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
         return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_readMemory, segRegExpr, address, dflt, cond);
     } else {
         return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_readMemory,             address, dflt, cond);
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt) {
+    if (segreg.is_valid()) {
+        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.get_nbits(), new SgAsmDirectRegisterExpression(segreg));
+        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory, segRegExpr, address, dflt);
+    } else {
+        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory,             address, dflt);
     }
 }
 

@@ -1,6 +1,6 @@
 #include "rose.h"
 #include "autoParSupport.h"
-
+#include "keep_going.h"
 #include <iterator> // ostream_iterator
 #include <algorithm> // for set union, intersection etc.
 #include <fstream>
@@ -39,7 +39,6 @@ namespace AutoParallelization
       ROSE_ASSERT(project != NULL);
       defuse = new DefUseAnalysis(project);
     }
-
 
     ROSE_ASSERT(defuse != NULL);
     // int result = ;
@@ -1661,11 +1660,23 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     //X. Eliminate irrelevant dependence relations.
     vector<DepInfo>  remainingDependences;
     DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute, indirect_array_table,  array_interface, annot);
+    SgSourceFile* file = getEnclosingSourceFile(sg_node);
+    string  filename = sg_node->get_file_info()->get_filename(); 
+    int lineno= sg_node->get_file_info()->get_line(); 
+    int colno= sg_node->get_file_info()->get_col(); 
+
     if (remainingDependences.size()>0)
     {
+      // write log entries for failed attempts
       isParallelizable = false;
-      if (!enable_diff|| enable_debug) // diff user vs. autopar  needs cleaner output
+      ostringstream oss;
+      oss<<"\tUnparallelizable loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      Rose::KeepGoing::File2StringMap[file]+= oss.str();
+
+      //if (!enable_diff|| enable_debug) // diff user vs. autopar needs cleaner output
+      if (enable_debug) // diff user vs. autopar needs cleaner output
       {
+
         cout<<"====================================================="<<endl;
         cout<<"\nUnparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
           " due to the following dependencies:"<<endl;
@@ -1690,10 +1701,17 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     }
     else
     {
-      if (!enable_diff || enable_debug)
+      // write log entries for success
+      ostringstream oss;
+      oss<<"\tAuto parallelized a loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      Rose::KeepGoing::File2StringMap[file]+= oss.str();
+
+      //if (!enable_diff || enable_debug)
+      if (enable_debug)
       {
-       cout<<"====================================================="<<endl;
-       cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
+    
+        cout<<"=====================================================\n"<<endl;
+        cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
       }
     }
 

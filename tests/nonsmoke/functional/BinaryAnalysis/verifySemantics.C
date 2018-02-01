@@ -99,7 +99,7 @@ class RiscOperators: public ConcreteSemantics::RiscOperators {
     BinaryDebugger &subordinate_;
 protected:
     RiscOperators(const BaseSemantics::StatePtr &state, BinaryDebugger &subordinate)
-        : ConcreteSemantics::RiscOperators(state, NULL), subordinate_(subordinate) {
+        : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()), subordinate_(subordinate) {
         name("Verification");
     }
 public:

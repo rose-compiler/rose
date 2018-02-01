@@ -60,7 +60,7 @@ SValue::number_(size_t nbits, uint64_t number) const
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
-                            SmtSolver *solver) const {
+                            const SmtSolverPtr &solver) const {
     SValuePtr other = SValue::promote(other_);
     SValuePtr retval = create_empty(other->get_width());
     bool changed = false;
@@ -86,7 +86,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const 
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const 
 {
     SValuePtr other = SValue::promote(other_);
     for (size_t i=0; i<subvalues.size(); ++i) {
@@ -97,7 +97,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
     size_t nconsidered = 0;
@@ -814,6 +814,15 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
     return retval;
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
+{
+    SValuePtr retval = svalue_empty(reg.get_nbits());
+    SUBDOMAINS(sd, ())
+        retval->set_subvalue(sd.idx(), sd->peekRegister(reg, sd(dflt)));
+    return retval;
+}
+
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a)
 {
@@ -828,6 +837,16 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     SValuePtr retval = svalue_empty(dflt->get_width());
     SUBDOMAINS(sd, (addr, cond))
         retval->set_subvalue(sd.idx(), sd->readMemory(segreg, sd(addr), sd(dflt), sd(cond)));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt)
+{
+    SValuePtr retval = svalue_empty(dflt->get_width());
+    SUBDOMAINS(sd, (addr))
+        retval->set_subvalue(sd.idx(), sd->peekMemory(segreg, sd(addr), sd(dflt)));
     return retval;
 }
 
