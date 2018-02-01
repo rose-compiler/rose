@@ -8,8 +8,4 @@ int foobar()
             // This friend declaration causes an error in ROSE.
                friend class X;
         };
-
-  // class X {};
-
-  // X xxx;
    }
