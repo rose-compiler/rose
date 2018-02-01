@@ -1,0 +1,12 @@
+-----------------------------------------------
+OpenMP region SgOmpSimdStatement @ 66
+"i"@67:8	linear
+"i"@67:12	linear
+"len"@67:14	shared
+"i"@67:20	linear
+"a"@68:5	shared
+"i"@68:7	linear
+"a"@68:12	shared
+"i"@68:14	linear
+"b"@68:17	shared
+"i"@68:19	linear

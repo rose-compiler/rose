@@ -1,0 +1,22 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 60
+"i"@61:8	private
+"i"@61:12	private
+"len"@61:14	shared
+"i"@61:18	private
+"a"@62:5	shared
+"i"@62:7	private
+"a"@62:10	shared
+"i"@62:12	private
+"a"@62:15	shared
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 60
+"i"@61:8	private
+"i"@61:12	private
+"len"@61:14	shared
+"i"@61:18	private
+"a"@62:5	shared
+"i"@62:7	private
+"a"@62:10	shared
+"i"@62:12	private
+"a"@62:15	shared

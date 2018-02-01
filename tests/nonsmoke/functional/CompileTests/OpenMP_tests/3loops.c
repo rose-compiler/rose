@@ -1,4 +1,5 @@
-/* Test if the loop index variables are treated as private variables 
+/* 
+ *  Only the first level loop index variable should be private
  * */
 #include <stdio.h>
 #if defined (_OPENMP)
@@ -21,3 +22,7 @@ int main(void)
   }
  return 0;
 }
+
+/*  Other loops are not affected by omp directive, so their index variables are still shared!
+ *   Affected ==> collapse(n) or ordered (n)
+ */  

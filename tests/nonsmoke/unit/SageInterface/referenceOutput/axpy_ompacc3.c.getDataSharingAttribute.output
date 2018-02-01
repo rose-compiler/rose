@@ -1,49 +1,101 @@
-for loop at line 22
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"A"	shared
-"i"	private
-for loop at line 31
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"A"	shared
-"i"	private
-for loop at line 40
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"diffsum"	private
-"A"	shared
-"i"	private
-"B"	shared
-"i"	private
-"sum"	private
-"B"	shared
-"i"	private
-for loop at line 51
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"y"	shared
-"i"	private
-"a"	shared
-"x"	shared
-"i"	private
-for loop at line 115
-"j"	private
-"offset"	shared
-"j"	private
-"offset"	shared
-"size"	shared
-"j"	private
-"y_ompacc"	shared
-"j"	private
-"a"	shared
-"x"	shared
-"j"	private
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 50
+"i"@51:8	private
+"i"@51:15	private
+"n"@51:19	shared
+"i"@51:24	private
+"y"@53:5	shared
+"i"@53:7	private
+"a"@53:13	shared
+"x"@53:17	shared
+"i"@53:19	private
+"i"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 50
+"i"@51:8	private
+"i"@51:15	private
+"n"@51:19	shared
+"i"@51:24	private
+"y"@53:5	shared
+"i"@53:7	private
+"a"@53:13	shared
+"x"@53:17	shared
+"i"@53:19	private
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 91
+"tid"@95:30	private
+"n"@110:33	shared
+"GPU_N"@110:36	shared
+"tid"@110:43	private
+"offset"@110:49	private
+"size"@110:58	private
+"tid"@111:109	private
+"tid"@111:114	private
+"size"@111:119	private
+"offset"@111:124	private
+"j"@115:10	private
+"offset"@115:14	shared
+"j"@115:22	private
+"offset"@115:26	shared
+"size"@115:33	shared
+"j"@115:41	private
+"y_ompacc"@117:7	shared
+"j"@117:16	private
+"a"@117:22	shared
+"x"@117:26	shared
+"j"@117:28	private
+"j"@0:0	private
+"size"@0:0	shared
+"a"@0:0	shared
+"tid"@0:0	private
+"y_ompacc"@0:0	map
+"x"@0:0	map
+"a"@0:0	map
+"size"@0:0	map
+"offset"@0:0	map
+-----------------------------------------------
+OpenMP region SgOmpTargetStatement @ 113
+"j"@115:10	private
+"offset"@115:14	shared
+"j"@115:22	private
+"offset"@115:26	shared
+"size"@115:33	shared
+"j"@115:41	private
+"y_ompacc"@117:7	shared
+"j"@117:16	private
+"a"@117:22	shared
+"x"@117:26	shared
+"j"@117:28	private
+"j"@0:0	private
+"size"@0:0	shared
+"a"@0:0	shared
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 114
+"j"@115:10	private
+"offset"@115:14	shared
+"j"@115:22	private
+"offset"@115:26	shared
+"size"@115:33	shared
+"j"@115:41	private
+"y_ompacc"@117:7	shared
+"j"@117:16	private
+"a"@117:22	shared
+"x"@117:26	shared
+"j"@117:28	private
+"j"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 114
+"j"@115:10	private
+"offset"@115:14	shared
+"j"@115:22	private
+"offset"@115:26	shared
+"size"@115:33	shared
+"j"@115:41	private
+"y_ompacc"@117:7	shared
+"j"@117:16	private
+"a"@117:22	shared
+"x"@117:26	shared
+"j"@117:28	private
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 122
+"num_threads"@125:7	shared

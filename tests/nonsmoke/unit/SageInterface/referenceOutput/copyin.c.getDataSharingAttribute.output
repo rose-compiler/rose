@@ -1,0 +1,6 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 26
+"x"@28:34	copyin
+"y"@28:36	copyin
+"z"@28:38	copyin
+"name"@28:40	shared
