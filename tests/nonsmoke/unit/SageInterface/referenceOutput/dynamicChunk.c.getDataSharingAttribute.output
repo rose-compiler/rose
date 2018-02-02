@@ -1,8 +1,9 @@
-for loop at line 10
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"a"	shared
-"i"	private
-"i"	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 9
+"i"@10:8	private
+"i"@10:12	private
+"n"@10:14	shared
+"i"@10:16	private
+"a"@12:5	shared
+"i"@12:7	private
+"i"@12:18	private

@@ -1,0 +1,23 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 59
+"j"@60:10	private
+"j"@60:17	private
+"j"@60:24	private
+"sum"@62:7	reduction
+"a"@62:14	shared
+"i"@62:16	shared
+"j"@62:19	private
+"v"@62:22	shared
+"j"@62:24	private
+"sum"@0:0	reduction
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 59
+"j"@60:10	private
+"j"@60:17	private
+"j"@60:24	private
+"sum"@62:7	reduction
+"a"@62:14	shared
+"i"@62:16	shared
+"j"@62:19	private
+"v"@62:22	shared
+"j"@62:24	private

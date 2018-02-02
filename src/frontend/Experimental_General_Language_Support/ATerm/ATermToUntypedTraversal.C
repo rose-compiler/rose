@@ -114,6 +114,41 @@ ATermToUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLo
 }
 
 void
+ATermToUntypedTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
+{
+   PosInfo pos = getLocation(startTerm);
+   PosInfo end = getLocation(endTerm);
+
+   pos.setEndLine(end.getStartLine());
+   pos.setEndCol(end.getStartCol());
+
+   return setSourcePosition(locatedNode, pos);
+}
+
+void
+ATermToUntypedTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
+{
+   PosInfo pos = getLocation(startTerm);
+   PosInfo end = getLocation(endTerm);
+
+   pos.setEndLine(end.getEndLine());
+   pos.setEndCol(end.getEndCol());
+
+   return setSourcePosition(locatedNode, pos);
+}
+
+void
+ATermToUntypedTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode )
+{
+   PosInfo pos = getLocation(startTerm);
+
+   pos.setEndLine(endNode->get_endOfConstruct()->get_line());
+   pos.setEndCol (endNode->get_endOfConstruct()->get_col() );
+
+   return setSourcePosition(locatedNode, pos);
+}
+
+void
 ATermToUntypedTraversal::setSourcePositionFromEndOnly( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
 {
    PosInfo pos;

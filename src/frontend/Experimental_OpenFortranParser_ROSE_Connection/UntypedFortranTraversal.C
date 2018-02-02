@@ -4,7 +4,8 @@
 #define DEBUG_UNTYPED_TRAVERSAL 0
 
 using namespace Fortran::Untyped;
-
+using std::cout;
+using std::endl;
 
 UntypedFortranTraversal::UntypedFortranTraversal(SgSourceFile* sourceFile)
 {
@@ -18,149 +19,159 @@ UntypedFortranTraversal::~UntypedFortranTraversal()
 }
 
 InheritedAttribute
-UntypedFortranTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute currentScope)
+UntypedFortranTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute currentScope)
 {
-   if (isSgUntypedFile(n) != NULL)
-      {
-      // SgUntypedFile* ut_file = dynamic_cast<SgUntypedFile*>(n);
-         SgSourceFile*  sg_file = p_source_file;
-         ROSE_ASSERT(sg_file != NULL);
-
-         currentScope = pConverter->initialize_global_scope(sg_file);
+   switch (node->variantT())
+   {
+     case V_SgUntypedFile:
+       {
+          SgSourceFile* sg_file = p_source_file;
+          ROSE_ASSERT(sg_file != NULL);
+          currentScope = pConverter->initialize_global_scope(sg_file);
+          break;
+       }
+     case V_SgUntypedGlobalScope:
+       {
+          SgUntypedGlobalScope* ut_scope = dynamic_cast<SgUntypedGlobalScope*>(node);
+          SgGlobal* sg_scope = pConverter->convertSgUntypedGlobalScope(ut_scope, SageBuilder::getGlobalScopeFromScopeStack());
+          currentScope = sg_scope;
+          break;
       }
-
-   else if (isSgUntypedGlobalScope(n) != NULL)
+    case V_SgUntypedModuleDeclaration:
       {
-         SgUntypedGlobalScope* ut_scope = dynamic_cast<SgUntypedGlobalScope*>(n);
-         SgGlobal*             sg_scope = pConverter->convertSgUntypedGlobalScope(ut_scope, SageBuilder::getGlobalScopeFromScopeStack());
-
-         currentScope = sg_scope;
-      }
-
-   else if (isSgUntypedModuleDeclaration(n) != NULL)
-      {
-         SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(n);
+         SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(node);
          pConverter->convertSgUntypedModuleDeclaration(ut_module,currentScope);
-
          currentScope = SageBuilder::topScopeStack();
+         break;
       }
-
-   else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
+    case V_SgUntypedProgramHeaderDeclaration:
       {
-         SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
+         SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(node);
          pConverter->convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
 
       // TODO - think about using SageBuild scope stack (currently used for programs)
          currentScope = SageBuilder::topScopeStack();
+         break;
       }
-
-   else if (isSgUntypedSubroutineDeclaration (n) != NULL)
+    case V_SgUntypedSubroutineDeclaration:
       {
-         SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
+         SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(node);
          SgProcedureHeaderStatement* sg_function = pConverter->convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
-
          currentScope = sg_function->get_definition()->get_body();
+         break;
       }
-
-   else if (isSgUntypedInterfaceDeclaration (n) != NULL)
+    case V_SgUntypedFunctionDeclaration:
       {
-         std::cout << "--- TODO: convert SgUntypedInterfaceDeclaration\n";
-      }
-
-   else if (isSgUntypedBlockDataDeclaration (n) != NULL)
-      {
-         SgUntypedBlockDataDeclaration* ut_block_data = dynamic_cast<SgUntypedBlockDataDeclaration*>(n);
-         SgProcedureHeaderStatement* sg_function = pConverter->convertSgUntypedBlockDataDeclaration(ut_block_data, currentScope);
-
-         currentScope = sg_function->get_definition()->get_body();
-      }
-
-   else if (isSgUntypedFunctionDeclaration (n) != NULL)
-      {
-         SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(n);
+         SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(node);
          SgProcedureHeaderStatement* sg_function = pConverter->convertSgUntypedFunctionDeclaration(ut_function, currentScope);
-
          currentScope = sg_function->get_definition()->get_body();
+         break;
       }
-
-   else if (isSgUntypedFunctionDeclarationList(n) != NULL)
+    case V_SgUntypedFunctionDeclarationList:
       {
-         SgUntypedFunctionDeclarationList* ut_list = dynamic_cast<SgUntypedFunctionDeclarationList*>(n);
+         SgUntypedFunctionDeclarationList* ut_list = dynamic_cast<SgUntypedFunctionDeclarationList*>(node);
 
-      // The list is not converted (note that nothing is returned) but the current scope may be modified
+      // The list is not converted (needed to add a contains statement) but the current scope may be modified
          pConverter->convertSgUntypedFunctionDeclarationList(ut_list, currentScope);
+         break;
       }
-
-   else if (isSgUntypedVariableDeclaration(n) != NULL)
+    case V_SgUntypedInterfaceDeclaration:
       {
-         SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(n);
+         cout << "--- TODO: convert SgUntypedInterfaceDeclaration\n";
+         break;
+      }
+    case V_SgUntypedBlockDataDeclaration:
+      {
+         SgUntypedBlockDataDeclaration* ut_block_data = dynamic_cast<SgUntypedBlockDataDeclaration*>(node);
+         SgProcedureHeaderStatement* sg_function = pConverter->convertSgUntypedBlockDataDeclaration(ut_block_data, currentScope);
+         currentScope = sg_function->get_definition()->get_body();
+         break;
+      }
+    case V_SgUntypedVariableDeclaration:
+      {
+         SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(node);
          pConverter->convertSgUntypedVariableDeclaration(ut_decl, currentScope);
+         break;
       }
-
-   else if (isSgUntypedImplicitDeclaration(n) != NULL)
+    case V_SgUntypedImplicitDeclaration:
       {
-         SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(n);
+         SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(node);
          pConverter->convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
+         break;
       }
-
-   else if (isSgUntypedNameListDeclaration(n) != NULL)
+    case V_SgUntypedNameListDeclaration:
       {
-         SgUntypedNameListDeclaration* ut_decl = dynamic_cast<SgUntypedNameListDeclaration*>(n);
-         std::cout << "NEED to convert name list decl\n";
+         SgUntypedNameListDeclaration* ut_decl = dynamic_cast<SgUntypedNameListDeclaration*>(node);
+         cout << "NEED to convert name list decl\n";
          pConverter->convertSgUntypedNameListDeclaration(ut_decl, currentScope);
+         break;
       }
-
-   else
+    default:
       {
 #if DEBUG_UNTYPED_TRAVERSAL
-         printf ("Down traverse: found a node of type ... %s\n", n->class_name().c_str());
+        cout << "Down traverse: found a node of type ... " << node->class_name() << ": " << node->variantT() << endl;
 #endif
       }
+   }
 
    return currentScope;
 }
 
 
 SynthesizedAttribute
-UntypedFortranTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute currentScope, SynthesizedAttributesList childAttrs)
+UntypedFortranTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute currentScope, SynthesizedAttributesList childAttrs)
 {
 // Synthesized attribute is temporarily an expression, initialize to NULL for when an expression doesn't make sense.
 // Probaby should change the SynthesizedAttribute to an expression as statements will be added to the scope aren't
 // returned as an attribute.
    SynthesizedAttribute sg_expr = NULL;   
 
-   if ( isSgUntypedExpression(n) != NULL)
-      {
-         SgUntypedExpression* ut_expr = isSgUntypedExpression(n);
-         SgExpressionPtrList children(childAttrs);
+   switch (node->variantT())
+   {
+     case V_SgUntypedBinaryOperator:
+       {
+          SgUntypedExpression* ut_expr = isSgUntypedBinaryOperator(node);
+          SgExpressionPtrList children(childAttrs);
+          sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children);
+          break;
+       }
+     case V_SgUntypedNullExpression:
+     case V_SgUntypedReferenceExpression:
+     case V_SgUntypedValueExpression:
+       {
+          SgUntypedExpression* ut_expr = isSgUntypedExpression(node);
+          sg_expr = pConverter->convertSgUntypedExpression(ut_expr);
+          break;
+       }
 
-         sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children, currentScope);
-      }
-   else if ( isSgUntypedAssignmentStatement(n) != NULL )
+    case V_SgUntypedAssignmentStatement:
       {
-         SgUntypedAssignmentStatement* ut_stmt = dynamic_cast<SgUntypedAssignmentStatement*>(n);
+         SgUntypedAssignmentStatement* ut_stmt = dynamic_cast<SgUntypedAssignmentStatement*>(node);
          SgExpressionPtrList children(childAttrs);
-
          pConverter->convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
+         break;
       }
-   else if ( isSgUntypedExpressionStatement(n) != NULL )
+    case V_SgUntypedExpressionStatement:
       {
-         SgUntypedExpressionStatement* ut_stmt = dynamic_cast<SgUntypedExpressionStatement*>(n);
+         SgUntypedExpressionStatement* ut_stmt = dynamic_cast<SgUntypedExpressionStatement*>(node);
          SgExpressionPtrList children(childAttrs);
-
          pConverter->convertSgUntypedExpressionStatement(ut_stmt, children, currentScope);
+         break;
       }
-   else if ( isSgUntypedOtherStatement(n) != NULL )
+    case V_SgUntypedOtherStatement:
       {
-         SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(n);
+         SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(node);
          pConverter->convertSgUntypedOtherStatement(ut_stmt, currentScope);
+         break;
       }
-   else
+
+    default:
       {
 #if DEBUG_UNTYPED_TRAVERSAL
-         printf ("Up   traverse: found a node of type ... %s\n", n->class_name().c_str());
+         cout << "Up   traverse: found a node of type ... " << node->class_name() << ": " << node->variantT() << endl;
 #endif
       }
+   }
 
    return sg_expr;
 }

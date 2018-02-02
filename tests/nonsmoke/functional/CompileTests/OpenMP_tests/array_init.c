@@ -14,3 +14,4 @@ int main(void)
 
   return 0;
 }
+// j is shared, causing data races

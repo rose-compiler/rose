@@ -1,19 +1,28 @@
-for loop at line 8
-"k"	private
-"k"	private
-"k"	private
-"j"	private
-"j"	private
-"j"	private
-"jlast"	lastprivate
-"j"	private
-"klast"	lastprivate
-"k"	private
-for loop at line 9
-"j"	private
-"j"	private
-"j"	private
-"jlast"	lastprivate
-"j"	private
-"klast"	lastprivate
-"k"	private
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 7
+"k"@8:8	private
+"k"@8:12	private
+"k"@8:19	private
+"j"@9:10	private
+"j"@9:14	private
+"j"@9:21	private
+"jlast"@11:7	lastprivate
+"j"@11:15	private
+"klast"@12:7	lastprivate
+"k"@12:15	private
+"j"@0:0	private
+"k"@0:0	private
+"jlast"@0:0	lastprivate
+"klast"@0:0	lastprivate
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 7
+"k"@8:8	private
+"k"@8:12	private
+"k"@8:19	private
+"j"@9:10	private
+"j"@9:14	private
+"j"@9:21	private
+"jlast"@11:7	lastprivate
+"j"@11:15	private
+"klast"@12:7	lastprivate
+"k"@12:15	private

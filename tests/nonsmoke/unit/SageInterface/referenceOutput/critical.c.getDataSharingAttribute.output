@@ -1,0 +1,20 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 6
+"a"@9:5	shared
+"a"@9:7	shared
+"b"@11:5	shared
+"b"@11:7	shared
+"c"@13:5	shared
+"c"@13:7	shared
+-----------------------------------------------
+OpenMP region SgOmpCriticalStatement @ 8
+"a"@9:5	shared
+"a"@9:7	shared
+-----------------------------------------------
+OpenMP region SgOmpCriticalStatement @ 10
+"b"@11:5	shared
+"b"@11:7	shared
+-----------------------------------------------
+OpenMP region SgOmpCriticalStatement @ 12
+"c"@13:5	shared
+"c"@13:7	shared
