@@ -16,6 +16,7 @@ static const char *description =
 // (objects within ROSETTA)
 #include "grammar.h"
 
+#include <iostream>
 #include <rose_config.h>
 #include <Sawyer/CommandLine.h>
 #include <string>
