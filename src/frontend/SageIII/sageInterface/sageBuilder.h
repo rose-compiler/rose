@@ -3,6 +3,20 @@
 
 #include <string>
 
+/*!
+  \defgroup frontendSageHighLevelInterface High level AST builders
+  \ingroup ROSE_FrontEndGroup
+  \brief This namespace contains high level SAGE III AST node and subtree builders
+
+  Building AST trees using raw SgNode constructors is tedious and error-prone. It becomes
+  even more difficult with the presence of symbol tables. This namespace contains major
+  AST node builders on top of the constructors to take care of symbol tables, various
+  edges to scope,  parent and so on.
+
+  \authors Chunhua Liao (last modified 2/12/2008)
+
+*/
+
 #include "sageInterface.h"
 
 #include "Diagnostics.h"
@@ -13,11 +27,7 @@ namespace SageInterface {
   ROSE_DLL_API void setSourcePosition(SgNode* node);
 }
 
-/** Functions that build an AST.
- *
- * Building abstract syntax trees (ASTs) using raw @ref SgNode constructors is tedious and error-prone. It becomes even more
- * difficult with the presence of symbol tables. This namespace contains major AST node builders on top of the constructors to
- * take care of symbol tables, various edges to scope, parent and so on. */
+/** Functions that build an AST. */
 namespace SageBuilder
 {
 
@@ -234,6 +244,16 @@ ROSE_DLL_API SgModifierType* buildRestrictType(SgType* base_type);
 
 //! Build ArrayType
 ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
+
+// RASMUSSEN (1/25/2018)
+//! Build an ArrayType based on dimension information.
+//! Note, the index member variable will be set to a NullExpression.
+//!
+//! \param base_type The base type of the array.
+//!        Note that if the base type is itself an array type, the shape of the array may be changed.
+//! \param dim_info A list of expressions describing the shape of the array.
+//!        The rank of the array is set from the length of this list.
+ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type, SgExprListExp* dim_info);
 
 // DQ (8/27/2010): Added Fortran specific support for types based on kind expressions.
 //! Build a type based on the Fortran kind mechanism
