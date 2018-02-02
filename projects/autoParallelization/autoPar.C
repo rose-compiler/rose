@@ -165,9 +165,13 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
   switches.doc("These switches control the autoPar tool. ");
   switches.name("rose:autopar"); 
 
+  switches.insert(Switch("enable_verbose")
+      .intrinsicValue(true, AutoParallelization::enable_verbose)
+      .doc("Enable the verbose mode to print out parallelization results for loops."));
+
   switches.insert(Switch("enable_debug")
       .intrinsicValue(true, AutoParallelization::enable_debug)
-      .doc("Enable the debugging mode to print out information of internal processing."));
+      .doc("Enable the debugging mode to print out lots of information of internal processing."));
 
   // Keep going option of autoPar
   switches.insert(Switch("keep_going")

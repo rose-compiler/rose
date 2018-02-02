@@ -243,11 +243,11 @@ test_diff.out : ../autoPar $(top_srcdir)/tests/nonsmoke/functional/CompileTests/
 
 # Two files are singled out since their output will be put in tutorial text
 doall_2.out: ../autoPar doall_2.c 
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/doall_2.c > doall_2.out
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -enable_verbose -c $(srcdir)/doall_2.c > doall_2.out
 
 # special flags, no aliasing flag is used        
 inner_only.out: ../autoPar inner_only.c 
-	$(VALGRIND) ../autoPar --edg:no_warnings -w -rose:verbose 0 $(TESTCODE_INCLUDES) -c $(srcdir)/inner_only.c > inner_only.out
+	$(VALGRIND) ../autoPar --edg:no_warnings -w -enable_verbose -rose:verbose 0 $(TESTCODE_INCLUDES) -c $(srcdir)/inner_only.c > inner_only.out
 
 rose_inner_only.c.diff: inner_only.out
 	echo "Verifying autoPar translation by using diff ..."; \

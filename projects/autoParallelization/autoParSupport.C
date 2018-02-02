@@ -16,6 +16,7 @@ using namespace SageInterface;
 namespace AutoParallelization
 {
   bool enable_debug;
+  bool enable_verbose;
   bool enable_patch;
   bool keep_going;
   bool enable_diff;
@@ -1674,11 +1675,11 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       Rose::KeepGoing::File2StringMap[file]+= oss.str();
 
       //if (!enable_diff|| enable_debug) // diff user vs. autopar needs cleaner output
-      if (enable_debug) // diff user vs. autopar needs cleaner output
+      if (enable_debug||enable_verbose) // diff user vs. autopar needs cleaner output
       {
 
         cout<<"====================================================="<<endl;
-        cout<<"\nUnparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
+        cout<<"Unparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
           " due to the following dependencies:"<<endl;
         for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
             iter != remainingDependences.end(); iter ++ )
@@ -1707,11 +1708,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       Rose::KeepGoing::File2StringMap[file]+= oss.str();
 
       //if (!enable_diff || enable_debug)
-      if (enable_debug)
+      if (enable_debug || enable_verbose)
       {
-    
-        cout<<"=====================================================\n"<<endl;
-        cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
+        cout<<"====================================================="<<endl;
+        cout<<"Automatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
       }
     }
 
@@ -1727,6 +1727,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         cout<<" at line "<<isSgLocatedNode(sg_node)->get_file_info()->get_line()<<endl;
       }
       OmpSupport::addOmpAttribute(omp_attribute,sg_node);
+
+      // Output patch text to the log also
+      Rose::KeepGoing::File2StringMap[file]+= OmpSupport::generateDiffTextFromOmpAttribute (sg_node);
+
       // 6. Generate and insert #pragma omp parallel for 
       // Liao, 2/12/2010
       // In the enable_diff mode, we don't want to generate pragmas from compiler-generated OmpAttribute.
@@ -1734,7 +1738,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       if (! enable_diff) 
         OmpSupport::generatePragmaFromOmpAttribute(sg_node);
     }
-    else
+    else // Not parallelizable, release resources.
     {
       delete omp_attribute;
     }
