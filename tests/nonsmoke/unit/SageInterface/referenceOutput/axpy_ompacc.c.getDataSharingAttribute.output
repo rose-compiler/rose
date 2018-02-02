@@ -1,47 +1,39 @@
-for loop at line 16
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"A"	shared
-"i"	private
-for loop at line 25
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"A"	shared
-"i"	private
-for loop at line 33
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"y"	shared
-"i"	private
-"a"	shared
-"x"	shared
-"i"	private
-for loop at line 44
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"diffsum"	private
-"A"	shared
-"i"	private
-"B"	shared
-"i"	private
-"sum"	private
-"B"	shared
-"i"	private
-for loop at line 60
-"i"	private
-"i"	private
-"n"	shared
-"i"	private
-"y"	shared
-"i"	private
-"a"	shared
-"x"	shared
-"i"	private
+-----------------------------------------------
+OpenMP region SgOmpTargetStatement @ 58
+"i"@60:8	private
+"i"@60:15	private
+"n"@60:19	shared
+"i"@60:24	private
+"y"@61:5	shared
+"i"@61:7	private
+"a"@61:13	shared
+"x"@61:17	shared
+"i"@61:19	private
+"i"@0:0	private
+"x"@0:0	shared
+"y"@0:0	shared
+"n"@0:0	shared
+"a"@0:0	shared
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 59
+"i"@60:8	private
+"i"@60:15	private
+"n"@60:19	shared
+"i"@60:24	private
+"y"@61:5	shared
+"i"@61:7	private
+"a"@61:13	shared
+"x"@61:17	shared
+"i"@61:19	private
+"i"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 59
+"i"@60:8	private
+"i"@60:15	private
+"n"@60:19	shared
+"i"@60:24	private
+"y"@61:5	shared
+"i"@61:7	private
+"a"@61:13	shared
+"x"@61:17	shared
+"i"@61:19	private

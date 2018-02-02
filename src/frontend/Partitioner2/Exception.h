@@ -16,7 +16,6 @@ class Exception: public std::runtime_error {
 public:
     Exception(const std::string &mesg): std::runtime_error(mesg) {}
     ~Exception() throw() {}
-
 };
 
 class PlaceholderError: public Exception {
@@ -53,6 +52,13 @@ public:
         : Exception(mesg), function_(function) {}
     ~FunctionError() throw() {}
     Function::Ptr function() const { return function_; }
+};
+
+class FileError: public Exception {
+public:
+    FileError(const std::string &mesg)
+        : Exception(mesg) {}
+    ~FileError() throw() {}
 };
 
 } // namespace

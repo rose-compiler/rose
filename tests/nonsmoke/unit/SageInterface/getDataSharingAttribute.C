@@ -25,17 +25,23 @@ void visitorTraversal::visit(SgNode* node)
     if (insideSystemHeader (lnode))
       return; 
 
-    if (SgForStatement* forloop= isSgForStatement(node))
+// test over all relevant OpenMP regions, not just for loops now.
+    //if (SgForStatement* forloop= isSgForStatement(node))
+    if (SgOmpBodyStatement* omp_region = isSgOmpBodyStatement(node))
     {
-      ofile<<"for loop at line "<< forloop->get_file_info()->get_line() <<endl; 
+      ofile<<"-----------------------------------------------"<<endl;
+      ofile<<"OpenMP region "<< omp_region->class_name() <<" @ "<< omp_region->get_file_info()->get_line() <<endl; 
       std::vector< SgVarRefExp * > ref_vec; 
-      collectVarRefs (forloop, ref_vec);
+      SgStatement* body = omp_region->get_body();
+      collectVarRefs (body, ref_vec);
       for (std::vector< SgVarRefExp * >::iterator iter = ref_vec.begin(); iter!= ref_vec.end(); iter ++) 
       {
-        SgSymbol* s = (*iter)->get_symbol();
+        SgVarRefExp* var_ref = (*iter); 
+        SgSymbol* s = var_ref->get_symbol();
+        // omp_construct_enum  OmpSupport::getDataSharingAttribute(SgVarRefExp* varRef); 
         omp_construct_enum atr = getDataSharingAttribute (*iter);
-        // will redirect to a .output file to enable diff-based correctness checking
-        ofile<<s->get_name()<<"\t"<<toString(atr) <<endl; 
+        // write to a .output file to enable diff-based correctness checking
+        ofile<<s->get_name()<<"@" <<var_ref->get_file_info()->get_line()<<":"<<var_ref->get_file_info()->get_col() <<"\t"<<toString(atr) <<endl; 
       }
     }
   }

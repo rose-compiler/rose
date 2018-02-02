@@ -1,0 +1,17 @@
+-----------------------------------------------
+OpenMP region SgOmpSimdStatement @ 54
+"i"@55:8	lastprivate
+"i"@55:12	lastprivate
+"i"@55:18	lastprivate
+"j"@56:10	lastprivate
+"j"@56:14	lastprivate
+"j"@56:20	lastprivate
+"a"@57:7	shared
+"i"@57:9	lastprivate
+"j"@57:12	lastprivate
+"b"@57:15	shared
+"i"@57:17	lastprivate
+"j"@57:20	lastprivate
+"c"@57:23	shared
+"i"@57:25	lastprivate
+"j"@57:28	lastprivate

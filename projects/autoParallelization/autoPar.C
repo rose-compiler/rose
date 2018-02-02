@@ -149,7 +149,6 @@ void normalizeLoops (std::vector<SgFunctionDefinition* > candidateFuncDefs)
 Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
   using namespace Sawyer::CommandLine;
 
-
   // Default log files for keep_going option
   // There is no home directory if called by a web server account. 
   const char* logdir = "/tmp";
@@ -162,14 +161,17 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
   Rose::KeepGoing::report_filename__fail = log_path +"/autoPar-failed-files.txt";
   Rose::KeepGoing::report_filename__pass = log_path +"/autoPar-passed-files.txt";
 
-
   SwitchGroup switches("autoPar's switches");
   switches.doc("These switches control the autoPar tool. ");
   switches.name("rose:autopar"); 
 
+  switches.insert(Switch("enable_verbose")
+      .intrinsicValue(true, AutoParallelization::enable_verbose)
+      .doc("Enable the verbose mode to print out parallelization results for loops."));
+
   switches.insert(Switch("enable_debug")
       .intrinsicValue(true, AutoParallelization::enable_debug)
-      .doc("Enable the debugging mode to print out information of internal processing."));
+      .doc("Enable the debugging mode to print out lots of information of internal processing."));
 
   // Keep going option of autoPar
   switches.insert(Switch("keep_going")
@@ -488,14 +490,11 @@ main (int argc, char *argv[])
 label_end: 
   // Report errors
   int status = backend (project);
-  if (keep_going)
+// we always write to log files by default now  
+//  if (keep_going)
   {
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
     Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
   }
-
-  //project->unparse();
-  //return backend (project);
   return status; 
-
 }
