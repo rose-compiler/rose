@@ -79,7 +79,7 @@ createDispatcher(RSIM_Thread *owningThread) {
     }
 
     const RegisterDictionary *regs = disassembler->registerDictionary();
-    RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs, NULL);
+    RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs);
     size_t wordSize = disassembler->instructionPointerRegister().get_nbits();
     ASSERT_require(wordSize == 32 || wordSize == 64);
 
