@@ -2597,6 +2597,7 @@ void Grammar::setUpBinaryInstructions() {
             OP_peekRegister,
             OP_writeRegister,
             OP_readMemory,                              /**< Three or four args depending on whether segment reg is present. */
+            OP_peekMemory,
             OP_writeMemory,                             /**< Three or four args depending on whether segment reg is present. */
             OP_N_OPERATORS                              /**< Number of operators in this enum. */ // MUST BE LAST!
         };

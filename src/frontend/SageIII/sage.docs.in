@@ -1,8 +1,8 @@
-/*!
-     \defgroup SageClasses Sage III Intermediate Representation (IR)
-     \ingroup ROSE_FrontEndGroup
+/*
+     \defgroup SageClasses Sage III Intermediate Representation
+     \ingroup rose_frontend
 
-     \brief This class represents the Abstract Syntax Tree (AST) Intermediate Repesentation (IR) used within ROSE.
+     \brief Abstract Syntax Tree (AST) Intermediate Repesentation (IR).
 
      These classes have been reconstructed to be consistant with the Sage II implementation built by Dennis
      Gannon (and others).  With Dennis's permission we have called this work Sage III.

@@ -6673,6 +6673,29 @@ BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
 
 
+// RASMUSSEN (1/25/2018)
+SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_info)
+   {
+     ROSE_ASSERT(base_type != NULL);
+     ROSE_ASSERT(dim_info  != NULL);
+
+     SgExpression* index = new SgNullExpression();
+     ROSE_ASSERT(index);
+     setSourcePosition(index);
+
+     SgArrayType* array_type = new SgArrayType(base_type, index);
+     ROSE_ASSERT(array_type);
+     ROSE_ASSERT(array_type->get_dim_info() == NULL);
+
+     index   ->set_parent(array_type);
+     dim_info->set_parent(array_type);
+
+     array_type->set_dim_info(dim_info);
+     array_type->set_rank(dim_info->get_expressions().size());
+
+     return array_type;
+   }
+
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type/*=NULL*/, SgExpression* index/*=NULL*/)
    {
      SgArrayType* result = new SgArrayType(base_type,index);
