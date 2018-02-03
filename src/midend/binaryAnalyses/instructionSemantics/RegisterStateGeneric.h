@@ -44,7 +44,7 @@ public:
     class RegisterNotPresent: public std::runtime_error {
         RegisterDescriptor desc_;
     public:
-        explicit RegisterNotPresent(RegisterDescriptor d)
+        explicit RegisterNotPresent(RegisterDescriptor)
             : std::runtime_error("accessed register is not available in register state") {}
     };
 
@@ -65,7 +65,7 @@ public:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(majr);
             s & BOOST_SERIALIZATION_NVP(minr);
         }
@@ -96,7 +96,7 @@ public:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(desc);
             s & BOOST_SERIALIZATION_NVP(value);
         }
@@ -176,7 +176,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(RegisterState);
         s & BOOST_SERIALIZATION_NVP(properties_);
         s & BOOST_SERIALIZATION_NVP(writers_);

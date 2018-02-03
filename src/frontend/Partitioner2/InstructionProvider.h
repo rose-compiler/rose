@@ -44,7 +44,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         roseAstSerializationRegistration(s);            // so we can save instructions through SgAsmInstruction base ptrs
         bool hasDisassembler = disassembler_ != NULL;
         s <<BOOST_SERIALIZATION_NVP(hasDisassembler);
@@ -58,7 +58,7 @@ private:
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         roseAstSerializationRegistration(s);
         bool hasDisassembler = false;
         s >>BOOST_SERIALIZATION_NVP(hasDisassembler);

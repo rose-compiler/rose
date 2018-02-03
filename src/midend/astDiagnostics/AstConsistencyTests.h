@@ -81,48 +81,48 @@ class TestAstNullPointers : public AstNodePtrs {
   class DI : AstInheritedAttribute {}; // Dummy inherited attribute
   class DS : AstSynthesizedAttribute {}; // Dummy synthesized attribute
   class DummyISTestQuery1 : public AstTopDownBottomUpProcessing<DI,DS> {
-    DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
-    DS evaluateSynthesizedAttribute(SgNode*, DI inh, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
+    DI evaluateInheritedAttribute(SgNode*, DI inh) { return inh; }
+    DS evaluateSynthesizedAttribute(SgNode*, DI, SubTreeSynthesizedAttributes) { DS syn; return syn; }
   };
   class DummyITestQuery1 : public AstTopDownProcessing<DI> {
-    DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
+    DI evaluateInheritedAttribute(SgNode*, DI inh) { return inh; }
   };
   class DummySTestQuery1 : public AstBottomUpProcessing<DS> {
-    DS evaluateSynthesizedAttribute(SgNode* n, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
+    DS evaluateSynthesizedAttribute(SgNode*, SubTreeSynthesizedAttributes) { DS syn; return syn; }
   };
   class DummyTestQuery1 : public AstSimpleProcessing {
-    void visit(SgNode* n) {}
+    void visit(SgNode*) {}
   };
 
 // #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   class DummyISTestQuery2 : public AstReversePrefixInhSynProcessing<DI,DS> {
-    DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
-    DS evaluateSynthesizedAttribute(SgNode*, DI inh, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
+    DI evaluateInheritedAttribute(SgNode*, DI inh) { return inh; }
+    DS evaluateSynthesizedAttribute(SgNode*, DI, SubTreeSynthesizedAttributes) { DS syn; return syn; }
   };
 
   class DummyITestQuery2 : public AstReversePrefixInhProcessing<DI> {
-    DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
+    DI evaluateInheritedAttribute(SgNode*, DI inh) { return inh; }
   };
 
   class DummySTestQuery2 : public AstReversePrefixSynProcessing<DS> {
-    DS evaluateSynthesizedAttribute(SgNode* n, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
+    DS evaluateSynthesizedAttribute(SgNode*, SubTreeSynthesizedAttributes) { DS syn; return syn; }
   };
   class DummyTestQuery2 : public AstReversePrefixSimpleProcessing {
-    void visit(SgNode* n) {}
+    void visit(SgNode*) {}
   };
 
   class DummyISTestQuery3 : public AstReverseBranchInhSynProcessing<DI,DS> {
-    DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
-    DS evaluateSynthesizedAttribute(SgNode*, DI inh, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
+    DI evaluateInheritedAttribute(SgNode*, DI inh) { return inh; }
+    DS evaluateSynthesizedAttribute(SgNode*, DI, SubTreeSynthesizedAttributes) { DS syn; return syn; }
   };
   class DummyITestQuery3 : public AstReverseBranchInhProcessing<DI> {
-    DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
+    DI evaluateInheritedAttribute(SgNode*, DI inh) { return inh; }
   };
   class DummySTestQuery3 : public AstReverseBranchSynProcessing<DS> {
-    DS evaluateSynthesizedAttribute(SgNode* n, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
+    DS evaluateSynthesizedAttribute(SgNode*, SubTreeSynthesizedAttributes) { DS syn; return syn; }
   };
   class DummyTestQuery3 : public AstReverseBranchSimpleProcessing {
-    void visit(SgNode* n) {}
+    void visit(SgNode*) {}
   };
 // #endif
 

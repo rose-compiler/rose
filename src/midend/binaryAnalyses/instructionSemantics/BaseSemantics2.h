@@ -546,7 +546,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(width);
     }
 #endif
@@ -556,7 +556,7 @@ private:
 protected:
     SValue(): width(0) {}                               // needed for serialization
     explicit SValue(size_t nbits): width(nbits) {}      // hot
-    SValue(const SValue &other): width(other.width) {}
+    SValue(const SValue &other): Sawyer::SharedObject(other), width(other.width) {}
 
 public:
     /** Shared-ownership pointer for an @ref SValue object. See @ref heap_object_shared_ownership. */
@@ -770,7 +770,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         //s & merger_; -- not saved
         s & BOOST_SERIALIZATION_NVP(protoval_);
     }
@@ -1078,7 +1078,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(addrProtoval_);
         s & BOOST_SERIALIZATION_NVP(valProtoval_);
         s & BOOST_SERIALIZATION_NVP(byteOrder_);
@@ -1294,7 +1294,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(protoval_);
         s & BOOST_SERIALIZATION_NVP(registers_);
         s & BOOST_SERIALIZATION_NVP(memory_);
@@ -1318,7 +1318,7 @@ protected:
 
     // deep-copy the registers and memory
     State(const State &other)
-        : protoval_(other.protoval_) {
+        : boost::enable_shared_from_this<State>(other), protoval_(other.protoval_) {
         registers_ = other.registers_->clone();
         memory_ = other.memory_->clone();
     }
@@ -1570,7 +1570,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(protoval_);
         s & BOOST_SERIALIZATION_NVP(currentState_);
         s & BOOST_SERIALIZATION_NVP(initialState_);
@@ -2056,7 +2056,7 @@ public:
      *  instance, an x86 INT instruction uses major number zero and the minor number is the interrupt number (e.g., 0x80 for
      *  Linux system calls), while an x86 SYSENTER instruction uses major number one. The minr operand for INT3 is -3 to
      *  distinguish it from the one-argument "INT 3" instruction which has slightly different semantics. */
-    virtual void interrupt(int majr, int minr) {}
+    virtual void interrupt(int /*majr*/, int /*minr*/) {}
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2286,7 +2286,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(operators);
         s & BOOST_SERIALIZATION_NVP(regdict);
         s & BOOST_SERIALIZATION_NVP(addrWidth_);

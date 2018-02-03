@@ -228,7 +228,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(nBits_);
         s & BOOST_SERIALIZATION_NVP(domainWidth_);
         s & BOOST_SERIALIZATION_NVP(flags_);
@@ -559,7 +559,7 @@ public:
     /** Constant folding. The range @p begin (inclusive) to @p end (exclusive) must contain at least two nodes and all of
      *  the nodes must be leaf nodes with known values.  This method returns a new folded node if folding is possible, or
      *  the null pointer if folding is not possible. */
-    virtual Ptr fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
+    virtual Ptr fold(Nodes::const_iterator /*begin*/, Nodes::const_iterator /*end*/) const {
         return Ptr();
     }
 
@@ -754,7 +754,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
         s & BOOST_SERIALIZATION_NVP(op_);
         s & BOOST_SERIALIZATION_NVP(children_);
@@ -931,7 +931,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
         s & BOOST_SERIALIZATION_NVP(leafType_);
         s & BOOST_SERIALIZATION_NVP(bits_);
@@ -939,7 +939,7 @@ private:
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
         s & BOOST_SERIALIZATION_NVP(leafType_);
         s & BOOST_SERIALIZATION_NVP(bits_);

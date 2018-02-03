@@ -354,7 +354,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serializeCommon(S &s, const unsigned version) {
+    void serializeCommon(S &s, const unsigned /*version*/) {
         s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
         s.template register_type<InstructionSemantics2::DispatcherX86>();

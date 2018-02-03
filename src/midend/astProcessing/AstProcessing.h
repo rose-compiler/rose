@@ -569,7 +569,7 @@ traverseWithinFile(SgNode* node, InheritedAttributeType inheritedValue)
 template <class SynthesizedAttributeType>
 DummyAttribute
 AstBottomUpProcessing<SynthesizedAttributeType>::
-evaluateInheritedAttribute(SgNode* astNode, DummyAttribute inheritedValue)
+evaluateInheritedAttribute(SgNode*, DummyAttribute /*inheritedValue*/)
 {
     /* called but not used */
     DummyAttribute a = defaultDummyAttribute;
@@ -593,7 +593,7 @@ defaultSynthesizedAttribute()
 // MS: 30/07/04
 template <class SynthesizedAttributeType>
 SynthesizedAttributeType AstBottomUpProcessing<SynthesizedAttributeType>::
-defaultSynthesizedAttribute(DummyAttribute inheritedValue)
+defaultSynthesizedAttribute(DummyAttribute /*inheritedValue*/)
 {
     return defaultSynthesizedAttribute();
 }
@@ -602,7 +602,7 @@ defaultSynthesizedAttribute(DummyAttribute inheritedValue)
 template <class SynthesizedAttributeType>
 SynthesizedAttributeType AstBottomUpProcessing<SynthesizedAttributeType>::
 evaluateSynthesizedAttribute(SgNode* astNode,
-        DummyAttribute inheritedValue,
+        DummyAttribute /*inheritedValue*/,
         SynthesizedAttributesList l)
 {
     return evaluateSynthesizedAttribute(astNode, l);
@@ -655,7 +655,7 @@ traverseInputFiles(SgProject* projectNode)
 // MS: 07/29/04
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 SynthesizedAttributeType SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-defaultSynthesizedAttribute(InheritedAttributeType inh)
+defaultSynthesizedAttribute(InheritedAttributeType /*inh*/)
 {
     // we provide 'inh' but do not use it in the constructor of 's' to allow primitive types
     SynthesizedAttributeType s = SynthesizedAttributeType(); 

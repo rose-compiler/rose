@@ -43,12 +43,12 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     };
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         regcache_init();
         iproc_init();

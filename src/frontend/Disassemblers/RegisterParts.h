@@ -40,7 +40,7 @@ private:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(majr_);
             s & BOOST_SERIALIZATION_NVP(minr_);
         }
@@ -79,7 +79,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(map_);
     }
 #endif

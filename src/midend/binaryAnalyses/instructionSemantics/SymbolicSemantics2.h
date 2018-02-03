@@ -203,7 +203,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         roseAstSerializationRegistration(s);            // "defs" has SgAsmInstruction ASTs
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(expr);
@@ -509,7 +509,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
@@ -658,7 +658,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
@@ -809,7 +809,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(omit_cur_insn);
         s & BOOST_SERIALIZATION_NVP(computingDefiners_);
@@ -946,7 +946,7 @@ public:
         return computingDefiners() == TRACK_ALL_DEFINERS;
     }
     void computingUseDef(bool b) ROSE_DEPRECATED("use computingDefiners instead") {
-        computingDefiners(TRACK_ALL_DEFINERS);
+        computingDefiners(b ? TRACK_ALL_DEFINERS : TRACK_NO_DEFINERS);
     }
 
     // [Robb P. Matzke 2015-08-10] deprecated API

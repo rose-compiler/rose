@@ -70,7 +70,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(calleeOutputRegisters_);
         s & BOOST_SERIALIZATION_NVP(calleeOutputParameters_);
