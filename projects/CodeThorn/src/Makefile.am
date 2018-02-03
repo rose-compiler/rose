@@ -687,6 +687,11 @@ check-commandline-options: ./codethorn
 	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
+check-lowering:
+	@echo ================================================================
+	@echo RUNNING LOWERING TESTS
+	@echo ================================================================
+	$(srcdir)/scripts/runLoweringTests $(srcdir)/tests
 
 
 # MS: 1-6 is reasonable for V1.2
