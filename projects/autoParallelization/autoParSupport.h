@@ -37,8 +37,9 @@ namespace AutoParallelization
   // Required analysis and their initialization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
-  extern bool enable_debug; 
+  extern bool enable_debug; // maximum debugging output to the screen
   extern bool keep_going; 
+  extern bool enable_verbose;  // verbose mode, print out loop info. for successful or failed parallelization attempts . Default is true
   extern bool no_aliasing;  // assuming aliasing or not
   extern bool enable_patch; // an option to control the generation of patch files
   extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.

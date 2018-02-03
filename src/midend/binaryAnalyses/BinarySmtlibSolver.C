@@ -5,6 +5,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Diagnostics.h>
+#include <Sawyer/Stopwatch.h>
 #include <stringify.h>
 
 using namespace Sawyer::Message::Common;
@@ -22,6 +23,12 @@ void
 SmtlibSolver::clearEvidence() {
     SmtSolver::clearEvidence();
     evidence.clear();
+}
+
+void
+SmtlibSolver::clearMemoization() {
+    SmtSolver::clearMemoization();
+    memoizedEvidence.clear();
 }
 
 std::string
@@ -49,7 +56,7 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
           <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
         outputVariableDeclarations(o, vars);
     }
-    
+
     o <<"\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
       <<"; Common subexpressions\n"
@@ -367,7 +374,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
         expr->depthFirstTraversal(t1);
 }
-                        
+
 void
 SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
@@ -382,7 +389,6 @@ SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<Symb
 
         SExprTypePair et = outputExpression(cse);
         ASSERT_not_null(et.first);
-        ASSERT_require(BIT_VECTOR == et.second || MEM_STATE == et.second);
 
         o <<"(define-fun " <<termName <<" " <<typeName(cse) <<" " <<*et.first <<")\n";
         termNames_.insert(cse, StringTypePair(termName, et.second));
@@ -801,7 +807,7 @@ SmtlibSolver::outputSignExtend(const SymbolicExpr::InteriorPtr &inode) {
                                                         SExpr::instance(signBitIdx)),
                                         expr),
                         SExpr::instance("#b1"));
-    
+
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance("concat"),
                         SExpr::instance(SExpr::instance("ite"), isNegative, ones, zeros),
@@ -820,7 +826,7 @@ SmtlibSolver::outputSet(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(inode->nChildren() >= 2);
     SymbolicExpr::LeafPtr var = varForSet(inode);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, SmtSolverPtr(), var);
     ite->comment(inode->comment());
     return outputExpression(ite);
 }
@@ -912,7 +918,7 @@ SmtlibSolver::outputLogicalShiftRight(const SymbolicExpr::InteriorPtr &inode) {
 // For left shifts:
 // ROSE (rose-left-shift-op amount expr) =>
 // SMT-LIB ((_ extract [2*expr.size-1] expr.size) (bvshl (concat expr zeros_or_ones) extended_amount))
-// 
+//
 // Where extended_amount is the ROSE "amount" widened (or truncated) to the same width as "expr",
 // and where "zeros_or_ones" is a constant with all bits set or clear and the same width as "expr"
 SmtSolver::SExprTypePair
@@ -1182,8 +1188,28 @@ SmtlibSolver::outputWrite(const SymbolicExpr::InteriorPtr &inode) {
 void
 SmtlibSolver::parseEvidence() {
     requireLinkage(LM_EXECUTABLE);
+    Sawyer::Stopwatch evidenceTimer;
     boost::regex varNameRe("v\\d+");
 
+    // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
+    // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
+    // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
+    // caller.
+    SymbolicExpr::Hash memoId = latestMemoizationId();
+    if (memoId > 0) {
+        MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
+        if (found != memoizedEvidence.end()) {
+            SymbolicExpr::ExprExprHashMap denorm = latestMemoizationRewrite_.invert();
+            evidence.clear();
+            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
+                evidence.insert(node.key()->substituteMultiple(denorm),
+                                node.value()->substituteMultiple(denorm));
+            stats.evidenceTime += evidenceTimer.stop();
+            return;
+        }
+    }
+
+    // Parse the evidence
     BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
         if (sexpr->children().size() > 0 && sexpr->children()[0]->name() == "model") {
             for (size_t i = 1; i < sexpr->children().size(); ++i) {
@@ -1235,6 +1261,17 @@ SmtlibSolver::parseEvidence() {
             }
         }
     }
+
+    // Cache the evidence. We must cache using the normalized form of expressions.
+    if (memoId > 0) {
+        ExprExprMap &me = memoizedEvidence[memoId];
+        BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
+            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
+                      node.value()->substituteMultiple(latestMemoizationRewrite_));
+        }
+    }
+
+    stats.evidenceTime += evidenceTimer.stop();
 }
 
 SymbolicExpr::Ptr

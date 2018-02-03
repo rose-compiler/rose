@@ -32,6 +32,17 @@ smtSolver.passed: $(top_srcdir)/scripts/test_exit_status smtSolver
 		CMD="./smtSolver"			\
 		$< $@
 
+########################################################################################################################
+
+noinst_PROGRAMS += peekPoke
+peekPoke_SOURCES = peekPoke.C
+
+TEST_TARGETS += peekPoke.passed
+peekPoke.passed: $(top_srcdir)/scripts/test_exit_status peekPoke
+	@$(RTH_RUN)					\
+		TITLE="peek/poke semantic states [$@]"	\
+		CMD="./peekPoke"			\
+		$< $@
 
 ###############################################################################################################################
 # Boilerplate

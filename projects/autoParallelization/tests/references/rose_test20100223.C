@@ -41,91 +41,55 @@ void foo(class XX *xx)
     real8 *dda = 0;
     switch(b){
       case 0:
-{
-        aa = xx -> aa[0];
-        break; 
-      }
+      aa = xx -> aa[0];
+      break; 
       case 1:
-{
-        aa = xx -> aa[1];
-        break; 
-      }
+      aa = xx -> aa[1];
+      break; 
       case 2:
-{
-        aa = xx -> aa[2];
-        break; 
-      }
+      aa = xx -> aa[2];
+      break; 
       case 3:
-{
-        aa = xx -> aa[3];
-        break; 
-      }
+      aa = xx -> aa[3];
+      break; 
       case 4:
-{
-        aa = xx -> aa[4];
-        break; 
-      }
+      aa = xx -> aa[4];
+      break; 
       case 5:
-{
-        aa = xx -> aa[5];
-        break; 
-      }
+      aa = xx -> aa[5];
+      break; 
       case 6:
-{
-        aa = xx -> aa[6];
-        break; 
-      }
+      aa = xx -> aa[6];
+      break; 
       case 7:
-{
-        aa = xx -> aa[6];
-        break; 
-      }
+      aa = xx -> aa[6];
+      break; 
       case 8:
-{
-        aa = xx -> aa[6];
-        break; 
-      }
+      aa = xx -> aa[6];
+      break; 
 /* do nothing */
       default:
       ;
     }
     switch(b){
-      case 0:
-{
-      }
-      case 3:
-{
-      }
+      case 0:;
+      case 3:;
       case 6:
-{
-        dda = v1;
-        ddb = v2;
-        break; 
-      }
-      case 1:
-{
-      }
-      case 4:
-{
-      }
+      dda = v1;
+      ddb = v2;
+      break; 
+      case 1:;
+      case 4:;
       case 7:
-{
-        dda = v3;
-        ddb = v4;
-        break; 
-      }
-      case 2:
-{
-      }
-      case 5:
-{
-      }
+      dda = v3;
+      ddb = v4;
+      break; 
+      case 2:;
+      case 5:;
       case 8:
-{
-        dda = v5;
-        ddb = v6;
-        break; 
-      }
+      dda = v5;
+      ddb = v6;
+      break; 
     }
     while(aa){
       

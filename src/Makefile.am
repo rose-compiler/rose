@@ -36,6 +36,13 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+# Rasmussen (01/21/2018): Adding general support for experimental languages
+if ROSE_BUILD_ATERM_SUPPORT
+   libroseExperimentalGeneralLanguagelibraries = frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
+else
+   libroseExperimentalGeneralLanguagelibraries =
+endif
+
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
 
@@ -187,6 +194,7 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseExperimentalGeneralLanguagelibraries) \
    $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \

@@ -13,7 +13,7 @@
 #include "fortran_support.h"
 
 #include <aterm2.h>
-#include "UntypedTraversal.h"
+#include "UntypedFortranTraversal.h"
 
 using namespace std;
 using namespace Rose;
@@ -29,7 +29,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      int i, status;
      string parse_table;
-     OFP::ATermToUntypedFortranTraversal* aterm_traversal = NULL;
+     ATermSupport::ATermToUntypedFortranTraversal* aterm_traversal = NULL;
 
   // Rasmussen (11/13/2017): Moved parse table to ROSE 3rdPartyLibraries (no longer set by caller).
      if (argc < 2)
@@ -135,7 +135,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 //----------------------------------------------------------------------
 
   // Create object to traverse the ATerm file
-     aterm_traversal = new OFP::ATermToUntypedFortranTraversal(OpenFortranParser_globalFilePointer);
+     aterm_traversal = new ATermSupport::ATermToUntypedFortranTraversal(OpenFortranParser_globalFilePointer);
 
      if (aterm_traversal->traverse_Program(program_term) != ATtrue)
         {
@@ -148,12 +148,17 @@ experimental_openFortranParser_main(int argc, char **argv)
      printf ("--------------------------------------------------------------\n\n");
 #endif
 
+  // Rasmussen (01/22/18): Create a dot file.  This is temporary or should
+  // at least be a rose option.
+     SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
+     generateDOT(global_scope, filenameWithoutPath + ".ut");
+
 //----------------------------------------------------------------------
 //  Traverse the SgUntypedFile object and convert to regular sage nodes
 //----------------------------------------------------------------------
 
   // Create the untyped traversal object
-     Fortran::Untyped::UntypedTraversal sg_traversal(OpenFortranParser_globalFilePointer);
+     Fortran::Untyped::UntypedFortranTraversal sg_traversal(OpenFortranParser_globalFilePointer);
      Fortran::Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes

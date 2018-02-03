@@ -79,7 +79,7 @@ public:
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const std::vector<SymbolicExpr::Ptr> &pathConditions,
                              const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
-                             SmtSolver &solver) = 0;
+                             const SmtSolverPtr &solver) = 0;
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -257,7 +257,8 @@ public:
      *  @p postConditions are additional optional conditions that must be satisified at the end of the path.  The entire set of
      *  conditions is returned via @p pathConditions argument, which can also initially contain preconditions. */
     virtual boost::tribool
-    isPathFeasible(const Partitioner2::CfgPath &path, SmtSolver&, const std::vector<SymbolicExpr::Ptr> &postConditions,
+    isPathFeasible(const Partitioner2::CfgPath &path, const SmtSolverPtr&,
+                   const std::vector<SymbolicExpr::Ptr> &postConditions,
                    std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 

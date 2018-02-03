@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <BinarySymbolicExprParser.h>
+#include <BinarySmtSolver.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Map.h>
 #include <integerOps.h>
@@ -370,11 +371,20 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 //                                      SymbolicExprParser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SymbolicExprParser::OperatorExpansion::OperatorExpansion(const SmtSolverPtr &solver)
+    : solver(solver) {}
+
+SymbolicExprParser::OperatorExpansion::~OperatorExpansion() {}
+
 // Throws an exception for functions named "..."
 class AbbreviatedOperator: public SymbolicExprParser::OperatorExpansion {
+protected:
+    explicit AbbreviatedOperator(const SmtSolverPtr &solver)
+        : SymbolicExprParser::OperatorExpansion(solver) {}
+
 public:
-    static Ptr instance() {
-        return Ptr(new AbbreviatedOperator);            // undocumented
+    static Ptr instance(const SmtSolverPtr &solver) {
+        return Ptr(new AbbreviatedOperator(solver));            // undocumented
     }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
         if (op.lexeme() == "...")
@@ -401,7 +411,8 @@ class SmtOperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    SmtOperators() {
+    explicit SmtOperators(const SmtSolverPtr &solver)
+        : SymbolicExprParser::OperatorExpansion(solver) {
         std::string doc;
         ops_.insert("add",          SymbolicExpr::OP_ADD);
         doc += "@named{add}"
@@ -625,14 +636,14 @@ protected:
     }
 
 public:
-    static Ptr instance() {
-        return Ptr(new SmtOperators);
+    static Ptr instance(const SmtSolverPtr &solver) {
+        return Ptr(new SmtOperators(solver));
     }
 
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args);
+        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -641,7 +652,8 @@ class COperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    COperators() {
+    explicit COperators(const SmtSolverPtr &solver)
+        : SymbolicExprParser::OperatorExpansion(solver) {
         std::string doc;
         ops_.insert("+",        SymbolicExpr::OP_ADD);
         doc += "@named{+}"
@@ -756,14 +768,14 @@ protected:
     }
         
 public:
-    static Ptr instance() {
-        return Ptr(new COperators);
+    static Ptr instance(const SmtSolverPtr &solver) {
+        return Ptr(new COperators(solver));
     }
 
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args);
+        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -805,12 +817,22 @@ public:
     }
 };
 
+SymbolicExprParser::SymbolicExprParser() {
+    init();
+}
+
+SymbolicExprParser::SymbolicExprParser(const SmtSolverPtr &solver)
+    : solver_(solver) {
+    init();
+}
+
+SymbolicExprParser::~SymbolicExprParser() {}
 
 void
 SymbolicExprParser::init() {
-    appendOperatorExpansion(AbbreviatedOperator::instance());
-    appendOperatorExpansion(SmtOperators::instance());
-    appendOperatorExpansion(COperators::instance());
+    appendOperatorExpansion(AbbreviatedOperator::instance(solver_));
+    appendOperatorExpansion(SmtOperators::instance(solver_));
+    appendOperatorExpansion(COperators::instance(solver_));
 
     appendAtomExpansion(AbbreviatedAtom::instance());
     appendAtomExpansion(CanonicalVariable::instance());

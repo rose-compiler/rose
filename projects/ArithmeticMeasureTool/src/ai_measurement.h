@@ -8,6 +8,7 @@
 namespace ArithemeticIntensityMeasurement
 {
   extern bool debug;
+  extern bool e_inline; // enable inlining or not
   // the version of the counting algorithm: 
   // value 1: flow-insensitive (default), treating all statements as straightline statements  
   //       2: flow-sensitive (under development), considering if branches, loop iteration counts, etc. 

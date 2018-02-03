@@ -17,7 +17,8 @@ static const size_t maxComplexity = 50;                 // arbitrary max interva
  *******************************************************************************************************************************/
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SmtSolver*) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&,
+                            const SmtSolverPtr&) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     BaseSemantics::SValuePtr retval;
@@ -86,7 +87,7 @@ SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
@@ -98,7 +99,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
@@ -167,6 +168,15 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
+    BaseSemantics::SValuePtr retval;
+    return retval;
+}
+
+BaseSemantics::SValuePtr
+MemoryState::peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
+{
+    ASSERT_not_implemented("[Robb Matzke 2018-01-17]");
     BaseSemantics::SValuePtr retval;
     return retval;
 }
@@ -801,6 +811,14 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &condition)
 {
     return dflt->copy(); // FIXME
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg,
+                          const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt)
+{
+    return dflt->copy(); // FIXME[Robb Matzke 2018-01-17]
 }
 
 void

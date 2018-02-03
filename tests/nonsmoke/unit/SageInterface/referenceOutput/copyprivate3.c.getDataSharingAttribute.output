@@ -1,0 +1,24 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 15
+"i"@17:10	private
+"i"@17:17	private
+"i"@17:32	private
+"nr_iterations"@21:11	shared
+"j"@22:11	copyprivate
+"i"@22:15	private
+"j"@0:0	copyprivate
+"result"@27:11	shared
+"result"@27:20	shared
+"j"@27:29	private
+"i"@27:33	private
+-----------------------------------------------
+OpenMP region SgOmpSingleStatement @ 19
+"nr_iterations"@21:11	shared
+"j"@22:11	copyprivate
+"i"@22:15	private
+-----------------------------------------------
+OpenMP region SgOmpCriticalStatement @ 25
+"result"@27:11	shared
+"result"@27:20	shared
+"j"@27:29	private
+"i"@27:33	private
