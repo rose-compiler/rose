@@ -8,6 +8,8 @@
 #ifndef Sawyer_Access_H
 #define Sawyer_Access_H
 
+#include <Sawyer/Sawyer.h>
+
 namespace Sawyer {
 namespace Access {
 
