@@ -37,13 +37,13 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         s & BOOST_SERIALIZATION_NVP(p_size);
         s & boost::serialization::make_nvp("p_pool", boost::serialization::make_array(p_pool, p_size));
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(p_size);
         p_capacity = p_size;
         p_pool = new value_type[p_capacity];
