@@ -12,7 +12,7 @@
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 1.1.2)
+               mkinstaller (rev. 2.0.1)
             </nobr>
          </center>
       </h3>
@@ -329,14 +329,12 @@
                building the software being installed. Note that the string
                is expected to a blank separated pair: the name and version
                number. The default is the string "- -" (meaning "unknown"
-               or "don't care").
-            </blockquote>
-
-            <blockquote>
-               Example:
+               or "don't care"). For example:
                <blockquote>
                   --cc="gcc 4.5.1"
                </blockquote>
+               Note that at this time only the C compiler name is used.
+               This option has been replaced by the <b><big><code>--CC=</code></big></b><i>name</i> and <b><big><code>--CC-options=</code></big></b><i>string</i> options.
             </blockquote>
 
             <b>--cxx=</b><i>string</i>
@@ -345,14 +343,51 @@
                in building the software being installed. Note that the string
                is expected to a blank separated pair: the name and version
                number. The default is the string "- -" (meaning "unknown"
-               or "don't care").
-            </blockquote>
-
-            <blockquote>
-               Example:
+               or "don't care"). For example:
                <blockquote>
                   --cxx="g++ 4.5.1"
                </blockquote>
+               Note that at this time only the C++ compiler name is used.
+               This option has been replaced by the <b><big><code>--CXX=</code></big></b><i>name</i> and <b><big><code>--CXX-options=</code></big></b><i>string</i> options.
+            </blockquote>
+
+            <b>CC=</b><i>name</i> <br>
+            <b>--CC=</b><i>name</i>
+            <blockquote>
+               Used to specify the name of the C compiler used. If a pathname
+               is supplied, only the basename will be used. For historical
+               reasons the leading double-dash is optional.
+            </blockquote>
+
+            <b>CC-options=</b><i>string</i> <br>
+            <b>--CC-options=</b><i>string</i>
+            <blockquote>
+               Used to specify the options to be used with the C compiler used.
+               Only special options such as the language standard assumed are
+               to be specified. Define <b><big><code>-D</code></big></b><i>name</i>, include pathname <b><big><code>-I</code></big></b><i>pathname</i>,
+               and library pathname <b><big><code>-L</code></big></b><i>pathname</i> (along with library names) are
+               not normally used. The normal compile-only option <b><big><code>-c</code></big></b> is used by
+               default. Note that the <i>string</i> of options should be quoted.
+               For historical reasons the leading double-dash is optional.
+            </blockquote>
+
+            <b>CXX=</b><i>name</i> <br>
+            <b>--CXX=</b><i>name</i>
+            <blockquote>
+               Used to specify the name of the C++ compiler used. If a pathname
+               is supplied, only the basename will be used. For historical
+               reasons the leading double-dash is optional.
+            </blockquote>
+
+            <b>CXX-options=</b><i>string</i> <br>
+            <b>--CXX-options=</b><i>string</i>
+            <blockquote>
+               Used to specify the options to be used with the C++ compiler used.
+               Only special options such as the language standard assumed are
+               to be specified. Define <b><big><code>-D</code></big></b><i>name</i>, include pathname <b><big><code>-I</code></big></b><i>pathname</i>,
+               and library pathname <b><big><code>-L</code></big></b><i>pathname</i> (along with library names) are
+               not normally used. The normal compile-only option <b><big><code>-c</code></big></b> is used by
+               default. Note that the <i>string</i> of options should be quoted.
             </blockquote>
 
             <b>--contact=</b><i>address</i>
@@ -393,6 +428,18 @@
                </blockquote>
             </blockquote>
 
+            <b>--intermediate-dir=</b><i>name</i> <br>
+            <b>version-dir=</b><i>name</i>
+            <blockquote>
+               Use the given simple name as an intermediate directory name
+               (aka. a version directory name) to be added under the PREFIX
+               directory pathname as given to the installer at installation
+               time in to which the directories will be installed. The
+               default is no such intermediate directory, the installations
+               will be done in the PREFIX directory as given at installation
+               time.
+            </blockquote>
+
             <b>--nofollow</b>
             <blockquote>
                Don't follow symbolic links for directory pathnames to will be
@@ -403,6 +450,12 @@
             </blockquote>
             <blockquote>
                Note that Windows-like systems do not support symbolic-links.
+            </blockquote>
+
+            <b>--nosha</b>
+            <blockquote>
+               Don't generate a SHA hash file for the generated script. This
+               is the default behaviour.
             </blockquote>
 
             <b>--nonstd</b>
@@ -535,6 +588,18 @@
                no default project version number.
             </blockquote>
 
+            <b>--sha-1</b> <br>
+            <b>--sha-160</b> <br>
+            <b>--sha-256</b> <br>
+            <b>--sha-384</b> <br>
+            <b>--sha-512</b>
+            <blockquote>
+               Generate a SHA hash of the generated script. The hash file
+               will have the same name as the generated script but with an
+               added <b><big><code>.sha-</code></big></b><i>nnn</i>" suffix (where <i>nnn</i> is one of 1, 256,
+               384, or 512). Note that <b><big><code>--sha-1</code></big></b> and <b><big><code>--sha-160</code></big></b> are synonymous.
+            </blockquote>
+
             <b>--std</b>
             <blockquote>
                If <b>none</b> of the given directory pathnames have basenames such
@@ -575,6 +640,24 @@
                notice that is to be output by the generated installer script
                when the installer's <b><big><code>--copyright</code></big></b> option is used. By default
                the generated installer doesn't support a <b><big><code>--copyright</code></big></b> option.
+            </blockquote>
+
+            <b>--with-payload</b>
+            <blockquote>
+               Include the payload with the generated script. This results
+               in a useful installer script that will actually install the
+               supplied directories under the indicated prefix directory (see
+               the <b><big><code>--prefix=</code></big></b><i>...</i> and the <b><big><code>--intermediate-dir=</code></big></b><i>...</i> options. This
+               is the default behavior.
+            </blockquote>
+
+            <b>--without-payload</b>
+            <blockquote>
+               Don't include the payload with the generated script. This
+               results in an ineffective installer script that won't actually
+               install anything. It does however go through much of the other
+               parts of the process and so may be an aid when debugging the
+               generated installer.
             </blockquote>
 
             <i>pathname</i>
@@ -657,7 +740,12 @@
       <blockquote>
          <a href="http://nsis.sourceforge.net/Docs/Chapter3.html#">makensis</a>(1), <br>
          <a href="http://nsis.sourceforge.net/Main_Page">NSIS</a>, <br>
+         <a href="../html1/pshaw.html">pshaw</a>(<a href="../html1/index.html">1x</a>), <br>
          sh(1), <br>
+         sha1sum(1), <br>
+         sha256sum(1), <br>
+         sha384sum(1), <br>
+         sha512sum(1), <br>
          tar(1)
       </blockquote>
 
@@ -746,11 +834,11 @@
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 1.1.2)
+               mkinstaller (rev. 2.0.1)
             </nobr>
          </center>
       </h3>
 
-      <i>This man page was generated by mkinstaller 1.1.2 using the <code>--html</code> option. Revised  1Dec2017 20:41:23z</i>
+      <i>This man page was generated by mkinstaller 2.0.1 using the <code>--html</code> option. Revised  6Feb2018 18:15:21z</i>
    </body>
 </html>
