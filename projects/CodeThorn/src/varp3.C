@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include "rose.h"
 #include "AstTerm.h"
 #include "AstMatching.h"
@@ -19,6 +20,8 @@
 #endif
 
 using namespace std;
+
+stringstream ss;
 
 class TestTraversal : public AstSimpleProcessing {
 public:
@@ -41,6 +44,78 @@ void makeAllCastsExplicit(SgProject* root) {
       }
     }
   }
+}
+
+string nodeString(SgExpression* node) {
+  stringstream tempss;
+  tempss<<"x"<<node;
+  return tempss.str();
+}
+
+string nodeId(SgExpression* node) {
+  if(isSgVarRefExp(node)) {
+    return node->unparseToString(); // TODO: use variableid
+  } else {
+    return nodeString(node);
+  }
+}
+
+void addNode(SgExpression* node) {
+  SgType* type=node->get_type();
+  string color;
+  switch(type->variantT()) {
+  case V_SgTypeFloat: color="blue";break;
+  case V_SgTypeDouble: color="green";break;
+  case V_SgTypeLongDouble: color="red";break;
+  default: color="white";
+  }
+  string labelInfo;
+  labelInfo=string("\n")+"type:"+type->unparseToString();
+
+  if(isSgUnaryOp(node)||isSgBinaryOp(node)) {
+    ss<<nodeId(node)<<"[label=\"op:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+  } else if(isSgVarRefExp(node)) {
+    ss<<nodeId(node)<<"[label=\"var:"<<node->unparseToString()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+  } else {
+    ss<<nodeId(node)<<"[label=\""<<node->unparseToString()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+  }
+}
+
+void addEdge(SgExpression* from, SgExpression* to) {
+  if(from->unparseToString()=="FE_UPWARD") {
+    cout<<"DEBUG:   "<<from->unparseToString()<<endl;
+    cout<<"DEBUG:p :"<<from->get_parent()->unparseToString()<<endl;
+    cout<<"DEBUG:pp:"<<from->get_parent()->get_parent()->unparseToString()<<endl;
+  }
+  ss<<nodeId(to)<<" -> "<<nodeId(from)<<"[dir=back];"<<endl;
+}
+
+void generateTypeGraph(SgProject* root) {
+  RoseAst ast(root);
+  ss<<"digraph G {"<<endl;
+  for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgExpression* currentExpNode=isSgExpression(*i);
+    if(currentExpNode) {
+      SgExpression* parentExpNode=isSgExpression((*i)->get_parent());
+      if(parentExpNode) {
+	if(SgAssignOp* assignOp=isSgAssignOp(parentExpNode)) {
+	  // redirect assignment edge
+	  SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(parentExpNode));
+	  SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(parentExpNode));
+	  if(currentExpNode==lhs) {
+	    std::swap(currentExpNode,parentExpNode); // invert direction of edge rhs<->assignop
+	  }
+	}
+	addNode(currentExpNode);
+	addNode(parentExpNode);
+	addEdge(currentExpNode,parentExpNode);
+      } else {
+	addNode(currentExpNode);
+      }
+    }
+  }
+  ss<<"}"<<endl;
+  write_file("typegraph.dot",ss.str());
 }
 
 void annotateImplicitCastsAsComments(SgProject* root) {
@@ -130,6 +205,7 @@ int main (int argc, char* argv[])
     ("version,v", "display the version.")
     ("annotate", "annotate casts as comments.")
     ("explicit", "make all imlicit casts explicit.")
+    ("type-graph", "generated dot file with type graph.")
     ("float-var", po::value< string >()," change type of var to float.")
     ("double-var", po::value< string >()," change type of var to double.")
     ("long-double-var", po::value< string >()," change type of var to long double.")
@@ -175,6 +251,10 @@ int main (int argc, char* argv[])
     cout<<"Changing variable type."<<endl;
     string varName=args.getString("float-var");
     changeVariableType(sageProject, varName, SageBuilder::buildFloatType());
+  }
+  if(args.isUserProvided("type-graph")) {
+    generateTypeGraph(sageProject);
+    exit(0);
   }
 
   backend(sageProject);
