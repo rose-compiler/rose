@@ -2268,7 +2268,9 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                     newnode = inode->rewrite(AsrSimplifier(), solver);
                 break;
             case OP_XOR:
-                newnode = inode->associative()->commutative()->foldConstants(XorSimplifier());
+                newnode = inode->associative()->commutative()->identity(0, solver);
+                if (newnode==node)
+                    newnode = inode->foldConstants(XorSimplifier());
                 if (newnode==node)
                     newnode = inode->rewrite(XorSimplifier(), solver);
                 break;

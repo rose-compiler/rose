@@ -21,6 +21,11 @@ namespace BinaryAnalysis {
 /** Reference-counting pointer for SMT solvers. */
 typedef Sawyer::SharedPointer<class SmtSolver> SmtSolverPtr;
 
+class CompareLeavesByName {
+public:
+    bool operator()(const SymbolicExpr::LeafPtr&, const SymbolicExpr::LeafPtr&) const;
+};
+
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. Solvers are reference counted objects that
@@ -98,7 +103,7 @@ public:
     };
 
     /** Set of variables. */
-    typedef Sawyer::Container::Set<SymbolicExpr::LeafPtr> VariableSet;
+    typedef Sawyer::Container::Set<SymbolicExpr::LeafPtr, CompareLeavesByName> VariableSet;
 
     typedef std::set<uint64_t> Definitions;             /**< Free variables that have been defined. */
 

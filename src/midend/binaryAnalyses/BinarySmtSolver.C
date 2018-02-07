@@ -28,6 +28,19 @@ namespace BinaryAnalysis {
 
 Sawyer::Message::Facility SmtSolver::mlog;
 
+bool
+CompareLeavesByName::operator()(const SymbolicExpr::LeafPtr &a, const SymbolicExpr::LeafPtr &b) const {
+    if (!a || !b)
+        return !a && b;                                 // null a is less than non-null b; other null combos return false
+    ASSERT_forbid(a->isNumber());                       // leaf comparison is only for variables, not constants
+    ASSERT_forbid(b->isNumber());                       // ditto
+    if (a->isVariable() && b->isVariable())
+        return a->nameId() < b->nameId();
+    if (a->isMemory() && b->isMemory())
+        return a->nameId() < b->nameId();
+    return a->isVariable() && b->isMemory();            // variables are less than memory
+}
+
 // class method
 void
 SmtSolver::initDiagnostics() {
@@ -341,6 +354,12 @@ SmtSolver::check() {
             ++stats.memoizationHits;
             return retval;
         }
+    }
+
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"assertions:\n";
+        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, assertions())
+            mlog[DEBUG] <<"  " <<*expr <<"\n";
     }
     
     // Do the real work

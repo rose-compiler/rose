@@ -36,7 +36,7 @@ private:
     std::vector<std::vector<z3::expr> > z3Stack_;       // lazily parallel with parent class' "stack_" data member
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, Z3ExprTypePair> CommonSubexpressions;
     CommonSubexpressions ctxCses_; // common subexpressions
-    typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, z3::func_decl> VariableDeclarations;
+    typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, z3::func_decl, CompareLeavesByName> VariableDeclarations;
     VariableDeclarations ctxVarDecls_;
 #endif
 
