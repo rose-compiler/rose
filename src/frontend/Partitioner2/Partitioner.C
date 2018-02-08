@@ -580,8 +580,12 @@ Partitioner::newOperators() const {
 
 BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators(SemanticMemoryParadigm memType) const {
+    //  Create a new SMT solver each call because this might be called from different threads and each thread should have its
+    //  own SMT solver.
+    SmtSolver::Ptr solver = solver_ ? solver_->create() : SmtSolver::Ptr();
+
     Semantics::RiscOperatorsPtr ops =
-        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, memType);
+        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver, memType);
     BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->memoryMap(memoryMap_);

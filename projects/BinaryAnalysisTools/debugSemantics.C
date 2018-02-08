@@ -612,7 +612,9 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         try {
             dispatcher->processInstruction(insn);
         } catch (const BaseSemantics::Exception &e) {
-            std::cout <<e <<"\n";
+            std::cout <<"Semantics error: " <<e <<"\n";
+        } catch (const SmtSolver::Exception &e) {
+            std::cout <<"SMT solver error: " <<e.what() <<"\n";
         }
         if (settings.showStates)
             std::cout <<(*ops+formatter) <<"\n";
