@@ -60,6 +60,10 @@ string nodeId(SgExpression* node) {
   }
 }
 
+string dotString(string s) {
+  return SgNodeHelper::doubleQuotedEscapedString(s);
+}
+
 void addNode(SgExpression* node) {
   SgType* type=node->get_type();
   string color;
@@ -70,14 +74,16 @@ void addNode(SgExpression* node) {
   default: color="white";
   }
   string labelInfo;
-  labelInfo=string("\n")+"type:"+type->unparseToString();
+  labelInfo=string("\\n")+"type:"+type->unparseToString();
 
-  if(isSgUnaryOp(node)||isSgBinaryOp(node)) {
+  if(isSgUnaryOp(node)||isSgBinaryOp(node)||isSgConditionalExp(node)||isSgCallExpression(node)) {
     ss<<nodeId(node)<<"[label=\"op:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
   } else if(isSgVarRefExp(node)) {
     ss<<nodeId(node)<<"[label=\"var:"<<node->unparseToString()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+  } else if(isSgValueExp(node)) {
+    ss<<nodeId(node)<<"[label=\"val:"<<dotString(node->unparseToString())+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
   } else {
-    ss<<nodeId(node)<<"[label=\""<<node->unparseToString()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+    ss<<nodeId(node)<<"[label=\"node:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
   }
 }
 
@@ -98,10 +104,10 @@ void generateTypeGraph(SgProject* root) {
     if(currentExpNode) {
       SgExpression* parentExpNode=isSgExpression((*i)->get_parent());
       if(parentExpNode) {
-	if(SgAssignOp* assignOp=isSgAssignOp(parentExpNode)) {
+	if(isSgAssignOp(parentExpNode)) {
 	  // redirect assignment edge
 	  SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(parentExpNode));
-	  SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(parentExpNode));
+	  //SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(parentExpNode));
 	  if(currentExpNode==lhs) {
 	    std::swap(currentExpNode,parentExpNode); // invert direction of edge rhs<->assignop
 	  }
