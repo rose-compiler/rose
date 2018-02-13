@@ -1671,7 +1671,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       // write log entries for failed attempts
       isParallelizable = false;
       ostringstream oss;
-      oss<<"\tUnparallelizable loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      oss<<"Unparallelizable loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
       Rose::KeepGoing::File2StringMap[file]+= oss.str();
 
       //if (!enable_diff|| enable_debug) // diff user vs. autopar needs cleaner output
@@ -1704,7 +1704,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     {
       // write log entries for success
       ostringstream oss;
-      oss<<"\tAuto parallelized a loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      oss<<"Auto parallelized a loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
       Rose::KeepGoing::File2StringMap[file]+= oss.str();
 
       //if (!enable_diff || enable_debug)

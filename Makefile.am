@@ -85,6 +85,7 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
 	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
+	$(MAKE) install -C $(top_builddir)/tutorial/buildCallGraph
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif

@@ -461,7 +461,7 @@ main (int argc, char *argv[])
       // insert omp.h if needed
       if (hasOpenMP && !enable_diff)
       {
-        SageInterface::insertHeader("omp.h",PreprocessingInfo::after,false,root);
+        SageInterface::insertHeader("omp.h",PreprocessingInfo::after,true,root);
         if (enable_patch)
           generatePatchFile(sfile); 
       }
