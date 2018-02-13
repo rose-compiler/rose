@@ -69,7 +69,7 @@ class ROSE_DLL_API rose_rva_t {
 		friend class boost::serialization::access;
 
 		template<class S>
-                void serialize(S &s, const unsigned version) {
+                void serialize(S &s, const unsigned /*version*/) {
                     s & BOOST_SERIALIZATION_NVP(addr);
                     s & BOOST_SERIALIZATION_NVP(section);
                 }

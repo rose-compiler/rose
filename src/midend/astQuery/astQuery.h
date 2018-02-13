@@ -69,7 +69,7 @@ namespace AstQueryNamespace
 
   struct helpF : public std::binary_function<bool,bool,bool >
   {
-    bool operator()(bool x, bool y)
+    bool operator()(bool x, bool /*y*/)
     {
       return x;
     }

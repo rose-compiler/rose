@@ -483,3 +483,16 @@ SAWYER_EXPORT std::string thisExecutableName();
 #define SAWYER_CONFIGURED /*void*/
 
 #endif
+
+// Clean up namespace pollution (shame on Qt for attempting to unilaterally change the language!)
+// These need to be outside the #ifndef Sawyer_H that protects the rest of this file, otherwise the following
+// is possible:
+//     #include "foo.h" // which includes Saywer.h"
+//     #include "bar.h" // which includes #define emit...
+//     #include "baz.h" // which has "emit" symbols clobbered by the pollution
+//
+// I decided it's better to fail early/fail often, therefore these are always deleted.
+// Please fix your Qt headers. Qt's "moc" tool has a command-line switch that prevents the pollution.
+#undef slot
+#undef emit
+

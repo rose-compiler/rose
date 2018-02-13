@@ -581,8 +581,7 @@ public:
      *  copying and then deleting other_value.
      *
      *  Returns true if merging occurred, false otherwise. */
-    bool merge(const Range &my_range, const Range &other_range, const RangeMapVoid &other_value) {
-        assert(!my_range.empty() && !other_range.empty());
+    bool merge(const Range &/*my_range*/, const Range &/*other_range*/, const RangeMapVoid &/*other_value*/) {
         return true;
     }
 

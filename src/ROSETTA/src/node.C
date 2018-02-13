@@ -149,6 +149,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedNullExpression,           "UntypedNullExpression",           "TEMP_UntypedNullExpression" );
      NEW_TERMINAL_MACRO (UntypedValueExpression,          "UntypedValueExpression",          "TEMP_UntypedValueExpression" );
      NEW_TERMINAL_MACRO (UntypedArrayReferenceExpression, "UntypedArrayReferenceExpression", "TEMP_UntypedArrayReferenceExpression" );
+     NEW_TERMINAL_MACRO (UntypedSubscriptExpression,      "UntypedSubscriptExpression",      "TEMP_UntypedSubscriptExpression" );
      NEW_TERMINAL_MACRO (UntypedOtherExpression,          "UntypedOtherExpression",          "TEMP_UntypedOtherExpression" );
      NEW_TERMINAL_MACRO (UntypedFunctionCallOrArrayReferenceExpression, "UntypedFunctionCallOrArrayReferenceExpression",  "TEMP_UntypedFunctionCallOrArrayReferenceExpression" );
 
@@ -159,10 +160,11 @@ Grammar::setUpNodes ()
   //     UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression | 
   //     UntypedReferenceExpression, "UntypedExpression", "UntypedExpressionTag", false);
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression and SgUntypedNullExpression
+  // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
      NEW_NONTERMINAL_MACRO (UntypedExpression,
          UntypedUnaryOperator            | UntypedBinaryOperator  | UntypedExprListExpression  | UntypedValueExpression |
          UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression       |
-         UntypedReferenceExpression      | UntypedNullExpression,
+         UntypedSubscriptExpression      | UntypedNullExpression  | UntypedReferenceExpression,
          "UntypedExpression", "UntypedExpressionTag", true);
 
      NEW_TERMINAL_MACRO (UntypedNameListDeclaration,      "UntypedNameListDeclaration",      "TEMP_UntypedNameListDeclaration" );
@@ -632,6 +634,14 @@ Grammar::setUpNodes ()
      UntypedExprListExpression.setDataPrototype     ("SgUntypedExpressionPtrList", "expressions", "",
                                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedNullExpression.setFunctionPrototype     ( "HEADER_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
+     UntypedSubscriptExpression.setDataPrototype    ( "SgUntypedExpression*", "lower_bound", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedSubscriptExpression.setDataPrototype    ( "SgUntypedExpression*", "upper_bound", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedSubscriptExpression.setDataPrototype    ( "SgUntypedExpression*", "stride",      "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedValueExpression.setFunctionPrototype ( "HEADER_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
   // Save this as a string so that we can reproduce the exact value for floating point numbers.
@@ -1362,7 +1372,8 @@ Grammar::setUpNodes ()
   // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
   // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
-  // Rasmussen (12/20/2017): Adding SgUntypedExprListExpression
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+  // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
 
      UntypedNode.setFunctionSource                  ( "SOURCE_UNTYPED_NODE", "../Grammar/LocatedNode.code");
 
@@ -1374,6 +1385,7 @@ Grammar::setUpNodes ()
      UntypedOtherExpression.setFunctionSource       ( "SOURCE_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedNullExpression.setFunctionSource        ( "SOURCE_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedReferenceExpression.setFunctionSource   ( "SOURCE_UNTYPED_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedSubscriptExpression.setFunctionSource   ( "SOURCE_UNTYPED_SUBSCRIPT_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedFunctionCallOrArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_OR_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
 
@@ -1477,10 +1489,13 @@ Grammar::setUpNodes ()
      ROSE_ASSERT(InitializedName.associatedGrammar != NULL);
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar() != NULL);
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() != NULL);
-     printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
-          (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
-               "ROOT GRAMMAR" :
-               InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
+     if (verbose) {
+         printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
+                 (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
+                 "ROOT GRAMMAR" :
+                 InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
+     }
+
 #if 0
      if (InitializedName.associatedGrammar->isRootGrammar() == false)
         {

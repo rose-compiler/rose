@@ -9,6 +9,7 @@
 #define Sawyer_CommandLine_Boost_H
 
 #include <Sawyer/CommandLine.h>
+#include <Sawyer/Sawyer.h>
 
 namespace Sawyer {
 namespace CommandLine {

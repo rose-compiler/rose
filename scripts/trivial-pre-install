@@ -20,13 +20,13 @@ $Interpreter ||= "/usr/bin/perl";
 
 # MyUniqueFileId: 05bfd522-45a2-4dfa-ca27-420e6c630546
 
-$mkinstaller_ver_major = "1";
-$mkinstaller_ver_minor = "1";
-$mkinstaller_ver_build = "2";
+$mkinstaller_ver_major = "2";
+$mkinstaller_ver_minor = "0";
+$mkinstaller_ver_build = "1";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "1.1.2";
-$mkinstaller_ver_time  = "22Dec2017 17:39:59z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.2 - 22Dec2017 17:39:59z";
+$mkinstaller_ver_name  = "2.0.1";
+$mkinstaller_ver_time  = " 6Feb2018 18:15:21z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.0.1 -  6Feb2018 18:15:21z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-18 James Frederick Reus\n"
@@ -46,7 +46,7 @@ $mkinstaller_ver_id    = "@(#)mkinstaller 1.1.2 - 22Dec2017 17:39:59z";
     , "limitations under the License.\n"
     );
 
-# MyUniqueFileId: 08a2697c-7a76-48bf-fe94-1d68e212b462
+# MyUniqueFileId: c8ab21dc-c964-4102-a6e3-2f9cbc23cfe3
 $rawCommand   = $0;
 $theCommand   = $rawCommand;
 $theCommand   =~ tr/\\/\//;
@@ -63,7 +63,9 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
    #
    #  Initialization...
    #
-   #  Note that much of this isn't really needed.
+   #  Note this script is almost identical to the tbg-post-install script. Also
+   #  much of this isn't really needed, it is demo'in a lot of potentially
+   #  useful stuff.
    #
    #----------------------------------------------------------------------------
 
@@ -73,9 +75,11 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
    my $dir_prefix     = "";
    my $here           = getWorkingDirectory();
    my $inputPathname  = "";
+   my %lookFor        = ();
    my $outputPathname = "";
    my $prefix_include = "";
    my $prefix_lib     = "";
+   my $prefix_lib64   = "";
    my $qdir_include   = "";
    my $qdir_lib       = "";
    my $qdir_prefix    = "";
@@ -109,7 +113,8 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
    #
    #  Then step through the command line...
    #
-   #  Note that much of this isn't really needed.
+   #  Again much of this isn't really needed,
+   #  just a lot of potentially useful stuff.
    #
    #---------------------------------------
 
@@ -141,7 +146,10 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
                                 print STDERR "tbg-pre-install: unexpected $opt\n";
                                 exit 1;
                              }
-                             $prefix_include = $1;
+                             $prefix_include        = $1;
+                             if ( ! exists $lookFor{'include'}) {
+                                $lookFor{'include'} = $prefix_include."/include";
+                             }
                              print "tbg-pre-install:    headers under \"$prefix_include\"\n" if $debugging;
                              last parseArgs;
                           };
@@ -160,15 +168,52 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
                                 print STDERR "tbg-pre-install: unexpected $opt\n";
                                 exit 1;
                              }
-                             $prefix_lib     = $1;
+                             if ($prefix_lib64 ne "") {
+                                print STDERR "tbg-pre-install: unexpected $opt\n";
+                                exit 1;
+                             }
+                             $prefix_lib            = $1;
+                             if ( ! exists $lookFor{'lib'}) {
+                                $lookFor{'lib'}     = $prefix_lib."/lib";
+                             }
                              print "tbg-pre-install:    libraries under \"$prefix_lib\"\n" if $debugging;
                              last parseArgs;
                           };
 
-                       /^--prefix-[a-zA-Z0-9_]+=(.+)$/
+                       /^--prefix-lib64=?$/
 
                           && do {
-                             my $ignored     = $1;
+                             print STDERR "tbg-pre-install: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^--prefix-lib64=(.+)$/
+
+                          && do {
+                             if ($prefix_lib ne "") {
+                                print STDERR "tbg-pre-install: unexpected $opt\n";
+                                exit 1;
+                             }
+                             if ($prefix_lib64 ne "") {
+                                print STDERR "tbg-pre-install: unexpected $opt\n";
+                                exit 1;
+                             }
+                             $prefix_lib64          = $1;
+                             if ( ! exists $lookFor{'lib64'}) {
+                                $lookFor{'lib64'}   = $prefix_lib64."/lib64";
+                             }
+                             print "tbg-pre-install:    libraries under \"$prefix_lib64\"\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--prefix-([a-zA-Z0-9_]+)=(.+)$/
+
+                          && do {
+                             my $name               = $1;
+                             my $pathname           = $2;
+                             if ( ! exists $lookFor{$name}) {
+                                $lookFor{$name}     = $pathname."/".$name;
+                             }
                              print "tbg-pre-install:    ignoring \"$ignored\"\n" if $debugging;
                              last parseArgs;
                           };
@@ -183,15 +228,26 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
                        /^--prefix=(.+)$/
 
                           && do {
-                             if (($prefix_include ne "") || ($prefix_lib ne "")) {
+                             if (($prefix_include ne "") || ($prefix_lib ne "") || ($prefix_lib64 ne "")) {
                                 print STDERR "tbg-pre-install: unexpected $opt\n";
                                 exit 1;
                              }
-                             my $collective  = $1;
-                             $prefix_include = $collective."/include";
-                             $prefix_lib     = $collective."/lib";
+                             my $collective         = $1;
+                             $prefix_include        = $collective."/include";
+                             $prefix_lib            = $collective."/lib";
+                             $prefix_lib64          = $collective."/lib64";
+                             if ( ! exists $lookFor{'include'}) {
+                                $lookFor{'include'} = $prefix_include;
+                             }
+                             if ( ! exists $lookFor{'lib'}) {
+                                $lookFor{'lib'}     = $prefix_lib;
+                             }
+                             if ( ! exists $lookFor{'lib64'}) {
+                                $lookFor{'lib64'}   = $prefix_lib64;
+                             }
                              print "tbg-pre-install:    headers under \"$prefix_include\"\n" if $debugging;
                              print "tbg-pre-install:    libraries under \"$prefix_lib\"\n" if $debugging;
+                             print "tbg-pre-install:                 or \"$prefix_lib64\"\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -321,11 +377,12 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
    #
    #  Consider what was given...
    #
-   #     A prefix for the include directory and for the lib directory must
-   #     be supplied. Now strip any enclosing quotes. Establish the names of
-   #     both the include and lib directories.
+   #     A prefix for the include directory and for the lib (or lib64) directory
+   #     must be supplied. Now strip any enclosing quotes. Establish the names
+   #     of both the include and lib (or lib64) directories.
    #
-   #     Note that much of this isn't really needed.
+   #     Again much of this isn't really needed, just a lot of potentially
+   #     useful stuff.
    #
    #----------------------------------------------------------------------------
 
@@ -349,6 +406,9 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
       $prefix_include = $1;
       print "tbg-pre-install: stripped single-quotes from include prefix\n" if $debugging;
    }
+   if (($prefix_lib ne "") && ($prefix_lib64 ne "")) {
+      print STDERR "tbg-pre-install: error -- prefix for lib and lib64 were both specified\n";
+   }
    if ($prefix_lib =~ /^"(.*)"$/) {
       $prefix_lib     = $1;
       print "tbg-pre-install: stripped double-quotes from lib prefix\n" if $debugging;
@@ -357,11 +417,36 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
       $prefix_lib     = $1;
       print "tbg-pre-install: stripped single-quotes from lib prefix\n" if $debugging;
    }
-   if ($prefix_include ne $prefix_lib) {
-      print STDERR "tbg-pre-install: warning -- the prefix for headers(=\"$prefix_include\")\n";
-      print STDERR "tbg-pre-install: ...is not the same as prefix for libraries(=\"$prefix_lib\")\n";
+   if ($prefix_lib64 =~ /^"(.*)"$/) {
+      $prefix_lib64   = $1;
+      print "tbg-pre-install: stripped double-quotes from lib64 prefix\n" if $debugging;
    }
-   $prefix            = $prefix_lib;
+   elsif ($prefix_lib64 =~ /^'(.*)'$/) {
+      $prefix_lib64   = $1;
+      print "tbg-pre-install: stripped single-quotes from lib64 prefix\n" if $debugging;
+   }
+   $ok    = 0;
+   if ($prefix_include eq $prefix_lib) {
+      $ok = 1;
+   }
+   elsif ($prefix_include eq $prefix_lib64) {
+      $ok = 1;
+   }
+   if ( ! $ok) {
+      print STDERR "tbg-pre-install: warning -- the prefix for headers(=\"$prefix_include\")\n";
+      if ($prefix_lib ne "") {
+         print STDERR "tbg-pre-install: ...is not the same as prefix for libraries(=\"$prefix_lib\")\n";
+      }
+      if ($prefix_lib64 ne "") {
+         print STDERR "tbg-pre-install: ...is not the same as prefix for libraries(=\"$prefix_lib64\")\n";
+      }
+   }
+   if ($prefix_lib ne "") {
+      $prefix         = $prefix_lib;
+   }
+   elsif ($prefix_lib64 ne "") {
+      $prefix         = $prefix_lib64;
+   }
 
    $dir_include       = $prefix_include."/include";
    if ($dir_include =~ /\s/) {
@@ -370,12 +455,23 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
    else {
       $qdir_include   = $dir_include;
    }
-   $dir_lib           = $prefix_lib."/lib";
-   if ($dir_lib =~ /\s/) {
-      $qdir_lib       = "\"".$dir_lib."\"";
+   if ($prefix_lib ne "") {
+      $dir_lib        = $prefix_lib."/lib";
+      if ($dir_lib =~ /\s/) {
+         $qdir_lib    = "\"".$dir_lib."\"";
+      }
+      else {
+         $qdir_lib    = $dir_lib;
+      }
    }
-   else {
-      $qdir_lib       = $dir_lib;
+   elsif ($prefix_lib64 ne "") {
+      $dir_lib        = $prefix_lib64."/lib64";
+      if ($dir_lib =~ /\s/) {
+         $qdir_lib    = "\"".$dir_lib."\"";
+      }
+      else {
+         $qdir_lib    = $dir_lib;
+      }
    }
    $dir_prefix        = $prefix;
    if ($dir_prefix =~ /\s/) {
@@ -391,7 +487,130 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
    #
    #----------------------------------------------------------------------------
 
+   print STDERR "tbg-pre-install:\n" if (1 <= $verbosityLevel);
    print STDERR "tbg-pre-install: $mkinstaller_ver_name rev. $mkinstaller_ver_time\n" if (1 <= $verbosityLevel);
+
+   #----------------------------------------------------------------------------
+   #
+   #  Check if installation directories exist
+   #
+   #  Note that the various installation directories may or may not exist
+   #  before the installation process commences. It is probably not a good
+   #  idea for them to already exist so we'll warn about such. If a
+   #  pathname already exists but is NOT a (symbolic-link to a) directory
+   #  then proper installation may be blocked and so it should be considered
+   #  an error.
+   #
+   #----------------------------------------------------------------------------
+
+   {
+      my %errors    = ( );
+      my $first     = 1;
+      my $Nerrors   = 0;
+      my $Nwarnings = 0;
+      my %warnings  = ( );
+      my $bn;
+      foreach $bn (sort keys %lookFor) {
+         my $pathname = $lookFor{$bn};
+         if ($first) {
+            print STDERR "tbg-pre-install: checking for the installation directories:\n" if (1 <= $verbosityLevel);
+            print STDERR "tbg-pre-install: ...\"$pathname\"" if (1 <= $verbosityLevel);
+            $first = 0;
+         }
+         else {
+            print STDERR "tbg-pre-install:    \"$pathname\"" if (1 <= $verbosityLevel);
+         }
+         if ( -l $pathname) {
+            if ( -d $pathname) {
+               print STDERR " exists as a symbolic-link to a directory\n" if (1 <= $verbosityLevel);
+               if ( ! exists $warnings{$pathname}) {
+                  $warnings{$pathname} = $bn;
+                  $Nwarnings          += 1;
+               }
+            }
+            elsif ( -f $pathname) {
+               print STDERR " exists as a symbolic-link to a file\n" if (1 <= $verbosityLevel);
+               if ( ! exists $warnings{$pathname}) {
+                  $errors{$pathname} = $bn;
+                  $Nerrors          += 1;
+               }
+            }
+            elsif ( -e $pathname) {
+               print STDERR " exists as a symbolic-link to something other than a directory or a file\n" if (1 <= $verbosityLevel);
+               if ( ! exists $warnings{$pathname}) {
+                  $errors{$pathname} = $bn;
+                  $Nerrors          += 1;
+               }
+            }
+            else {
+               print STDERR " exists as a broken symbolic-link\n" if (1 <= $verbosityLevel);
+               if ( ! exists $warnings{$pathname}) {
+                  $errors{$pathname} = $bn;
+                  $Nerrors          += 1;
+               }
+            }
+         }
+         elsif ( -d $pathname) {
+            print STDERR " exists as a directory\n";
+            if ( ! exists $warnings{$pathname}) {
+               $warnings{$pathname} = $bn;
+               $Nwarnings          += 1;
+            }
+         }
+         elsif ( -f $pathname) {
+            print STDERR " exists as a file\n";
+            if ( ! exists $warnings{$pathname}) {
+               $errors{$pathname} = $bn;
+               $Nerrors          += 1;
+            }
+         }
+         elsif ( -e $pathname) {
+            print STDERR " exists as something other than a directory, file, or symbolic-link\n" if (1 <= $verbosityLevel);
+            if ( ! exists $warnings{$pathname}) {
+               $errors{$pathname} = $bn;
+               $Nerrors          += 1;
+            }
+         }
+         else {
+            print STDERR " doesn't exist (yet)\n";
+         }
+      }
+      if (1 <= $Nwarnings) {
+         print STDERR "tbg-pre-install: warning -- some installation directories already exist\n";
+         my $first = 1;
+         my $pathname;
+         foreach $pathname (sort keys %warnings) {
+            my $bn = $warnings{$pathname};
+            if ($first) {
+               print STDERR "tbg-pre-install: ...\"$pathname\"\n";
+               $first = 0;
+            }
+            else {
+               print STDERR "tbg-pre-install:    \"$pathname\"\n";
+            }
+         }
+      }
+      if (1 <= $Nerrors) {
+         print STDERR "tbg-pre-install: error -- some installation pathnames already exist but are not directories\n";
+         my $first = 1;
+         my $pathname;
+         foreach $pathname (sort keys %errors) {
+            my $bn = $errors{$pathname};
+            if ($first) {
+               print STDERR "tbg-pre-install: ...\"$pathname\"\n";
+               $first = 0;
+            }
+            else {
+               print STDERR "tbg-pre-install:    \"$pathname\"\n";
+            }
+         }
+         #---------------------------------------
+         #
+         #  Should probably quit here
+         #
+         #---------------------------------------
+      }
+   }
 
    #----------------------------------------------------------------------------
    #
@@ -400,20 +619,44 @@ if ( exists $ENV{"DEBUG_tbg_pre_install"}) {
    #----------------------------------------------------------------------------
 
    if (1 <= $verbosityLevel) {
-      print "tbg-pre-install: (re)announce command line contents...\n" if $debugging;
-      print "tbg-pre-install: given:\n";
+      print STDERR "tbg-pre-install:\n";
+      print STDERR "tbg-pre-install: given:\n";
       my $i;
       for ($i=0; $i<=$#ARGV; $i+=1) {
          my $opt = $ARGV[$i];
          if ($i == 0) {
-            print "tbg-pre-install: ...";
+            print STDERR "tbg-pre-install: ...";
          }
          else {
-            print "tbg-pre-install:    ";
+            print STDERR "tbg-pre-install:    ";
          }
-         print $i.": [".$opt."]\n";
+         print STDERR $i.": [".$opt."]\n";
       }
-      print "tbg-pre-install: ...done\n" if $debugging;
+
+      #---------------------------------------
+      #
+      #  Where headers and/or libraries
+      #  ended-up...
+      #
+      #---------------------------------------
+
+      if ($qdir_include ne "") {
+         if ($qdir_lib ne "") {
+            print STDERR "tbg-pre-install: \n";
+            print STDERR "tbg-pre-install: Note: headers in $qdir_include\n";
+            print STDERR "tbg-pre-install:     libraries in $qdir_lib\n";
+         }
+         else {
+            print STDERR "tbg-pre-install: \n";
+            print STDERR "tbg-pre-install: Note: headers in $qdir_include\n";
+         }
+      }
+      else {
+         if ($qdir_lib ne "") {
+            print STDERR "tbg-pre-install: \n";
+            print STDERR "tbg-pre-install: Note: libraries in $qdir_lib\n";
+         }
+      }
    }
 
    print "tbg-pre-install: ...all done\n" if $debugging;

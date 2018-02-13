@@ -11,6 +11,7 @@
 #include <Sawyer/Graph.h>
 
 #include <Sawyer/BitVector.h>
+#include <Sawyer/Sawyer.h>
 #include <list>
 #include <vector>
 

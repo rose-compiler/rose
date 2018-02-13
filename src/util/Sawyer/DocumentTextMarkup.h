@@ -9,6 +9,7 @@
 #define Sawyer_Document_TextMarkup_H
 
 #include <Sawyer/DocumentBaseMarkup.h>
+#include <Sawyer/Sawyer.h>
 
 namespace Sawyer {
 namespace Document {
@@ -25,7 +26,7 @@ public:
         init();
     }
 
-    virtual void emit(const std::string &doc) /*override*/;
+    virtual bool emit(const std::string &doc) /*override*/;
 
     /** Property: Whether to create a page header.
      *

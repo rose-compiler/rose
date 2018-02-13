@@ -27,7 +27,7 @@ class AstNodePtrs : public SgBottomUpProcessing<AstNodePtrSynAttr>
      protected:
           typedef std::vector<SgNode*> AstNodePointersList;
           virtual AstNodePtrSynAttr evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList );
-          virtual void visitWithAstNodePointersList(SgNode* node, AstNodePointersList l) {}
+          virtual void visitWithAstNodePointersList(SgNode*, AstNodePointersList) {}
      private:
    };
 
