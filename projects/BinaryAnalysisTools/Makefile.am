@@ -368,6 +368,7 @@ $(xml2json_tests): %.passed: $(abspath $(srcdir))/specimens/% xml2json
 		USE_SUBDIR=yes								\
 		CMD="$$(pwd)/xml2json $< $(notdir $<).json && cat $(notdir $<).json"	\
 		ANS="$(srcdir)/TestAnswers/$*.ans"					\
+		FILTER="$(srcdir)/semanticsFilter"					\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 endif

@@ -20,7 +20,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(offset);
         s & BOOST_SERIALIZATION_NVP(nBytes);
         s & BOOST_SERIALIZATION_NVP(address);
@@ -46,7 +46,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(writers);
         s & BOOST_SERIALIZATION_NVP(ioProperties);
     }
@@ -72,7 +72,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(location);
         s & BOOST_SERIALIZATION_NVP(meta);
     }

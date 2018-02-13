@@ -500,7 +500,34 @@ NEW_2017_TESTS = \
    test2018_06.C \
    test2018_07.C \
    test2018_08.C \
-   test2018_09.C
+   test2018_09.C \
+   test2018_10.C \
+   test2018_11.C \
+   test2018_12.C \
+   test2018_13.C \
+   test2018_14.C \
+   test2018_15.C \
+   test2018_16.C \
+   test2018_17.C \
+   test2018_18.C \
+   test2018_19.C \
+   test2018_20.C \
+   test2018_21.C \
+   test2018_27.C \
+   test2018_29.C \
+   test2018_32.C \
+   test2018_33.C \
+   test2018_34.C \
+   test2018_35.C \
+   test2018_36.C \
+   test2018_37.C \
+   test2018_38.C \
+   test2018_39.C \
+   test2018_40.C \
+   test2018_41.C \
+   test2018_42.C \
+   test2018_43.C \
+   test2018_44.C
 
 
 

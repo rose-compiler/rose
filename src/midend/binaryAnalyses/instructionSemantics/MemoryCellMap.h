@@ -44,7 +44,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryCellState);
         s & BOOST_SERIALIZATION_NVP(cells);
     }
@@ -98,6 +98,8 @@ public:
     virtual void clear() ROSE_OVERRIDE;
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;

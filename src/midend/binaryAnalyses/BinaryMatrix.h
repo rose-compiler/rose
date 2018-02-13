@@ -92,7 +92,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         size_t nr = this->nr(), nc = this->nc();
         s & BOOST_SERIALIZATION_NVP(nr);
         s & BOOST_SERIALIZATION_NVP(nc);
@@ -103,7 +103,7 @@ private:
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         size_t nr, nc;
         s & BOOST_SERIALIZATION_NVP(nr);
         s & BOOST_SERIALIZATION_NVP(nc);

@@ -42,7 +42,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
         // varsForSets_ -- not saved
         // evidence     -- not saved
@@ -53,20 +53,35 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Construction-related things
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
+    explicit YicesSolver(unsigned linkages = LM_ANY)
+        : SmtSolver("yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {
+        memoization(false);                             // not supported in this solver
+    }
+
 public:
     /** Constructs object to communicate with Yices solver.
      *
      *  The solver will be named "Yices" (see @ref name property) and will use the library linkage if the Yices library
      *  is present, otherwise the executable linkage. If neither is available then an @c SmtSolver::Exception is thrown. */
-    explicit YicesSolver(unsigned linkages = LM_ANY)
-        : SmtSolver("yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {}
+    static Ptr instance(unsigned linkages = LM_ANY) {
+        return Ptr(new YicesSolver(linkages));
+    }
 
+    /** Virtual constructor.
+     *
+     *  Create a new solver just like this one. */
+    virtual Ptr create() const {
+        return instance(linkage());
+    }
+    
     /** Returns a bit vector of linkage capabilities.
      *
      *  Returns a vector of @ref LinkMode bits that say what possible modes of communicating with the Yices SMT solver are
      *  available. A return value of zero means the Yices solver is not supported in this configuration of ROSE. */
     static unsigned availableLinkages();
 
+    // Reference counted object. Do not explicitly delete.
     virtual ~YicesSolver();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

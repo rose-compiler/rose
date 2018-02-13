@@ -1,0 +1,58 @@
+-----------------------------------------------
+OpenMP region SgOmpTargetStatement @ 26
+"i"@29:8	private
+"i"@29:12	private
+"m"@29:14	shared
+"i"@29:16	private
+"j"@31:11	private
+"j"@31:15	private
+"n"@31:17	shared
+"j"@31:19	private
+"a"@36:7	shared
+"i"@36:9	private
+"j"@36:12	private
+"i"@36:15	private
+"j"@36:17	private
+"l"@36:19	private
+"k"@36:21	private
+"z"@36:23	private
+"j"@0:0	private
+"i"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 27
+"i"@29:8	private
+"i"@29:12	private
+"m"@29:14	shared
+"i"@29:16	private
+"j"@31:11	private
+"j"@31:15	private
+"n"@31:17	shared
+"j"@31:19	private
+"a"@36:7	shared
+"i"@36:9	private
+"j"@36:12	private
+"i"@36:15	private
+"j"@36:17	private
+"l"@36:19	private
+"k"@36:21	private
+"z"@36:23	private
+"j"@0:0	private
+"i"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 27
+"i"@29:8	private
+"i"@29:12	private
+"m"@29:14	shared
+"i"@29:16	private
+"j"@31:11	private
+"j"@31:15	private
+"n"@31:17	shared
+"j"@31:19	private
+"a"@36:7	shared
+"i"@36:9	private
+"j"@36:12	private
+"i"@36:15	private
+"j"@36:17	private
+"l"@36:19	private
+"k"@36:21	private
+"z"@36:23	private

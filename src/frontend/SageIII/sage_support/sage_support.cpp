@@ -2344,12 +2344,11 @@ SgProject::parse()
      printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %" PRIuPTR " \n",vectorOfFiles.size());
 #endif
 
-  errorCode = this->RunFrontend();
-  if (errorCode > 3)
-  {
-      return errorCode;
-  }
-
+     errorCode = this->RunFrontend();
+     if (errorCode > 3)
+        {
+          return errorCode;
+        }
 #endif
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
@@ -2422,47 +2421,76 @@ SgProject::parse()
   // secondary pass over each file runs after all fixes have been done. This
   // is relevant where the AstPostProcessing mechanism must first mark nodes
   // to be output before preprocessing information is attached.
-  SgFilePtrList &files = get_fileList();
-  {
-      BOOST_FOREACH(SgFile* file, files)
-      {
+     SgFilePtrList &files = get_fileList();
+
+// {
+     BOOST_FOREACH(SgFile* file, files)
+        {
           ROSE_ASSERT(file != NULL);
 
           if (KEEP_GOING_CAUGHT_FRONTEND_SECONDARY_PASS_SIGNAL)
-          {
-              std::cout
-                  << "[WARN] "
-                  << "Configured to keep going after catching a signal in "
-                  << "SgFile::secondaryPassOverSourceFile()"
-                  << std::endl;
+             {
+               std::cout
+                    << "[WARN] "
+                    << "Configured to keep going after catching a signal in "
+                    << "SgFile::secondaryPassOverSourceFile()"
+                    << std::endl;
 
-              if (file != NULL)
-              {
-                  file->set_frontendErrorCode(100);
-                  errorCode = std::max(100, errorCode);
-              }
-              else
-              {
-                  std::cout
-                      << "[FATAL] "
-                      << "Unable to keep going due to an unrecoverable internal error"
-                      << std::endl;
-  // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.              
+               if (file != NULL)
+                  {
+                    file->set_frontendErrorCode(100);
+                    errorCode = std::max(100, errorCode);
+                  }
+                 else
+                  {
+                    std::cout
+                         << "[FATAL] "
+                         << "Unable to keep going due to an unrecoverable internal error"
+                         << std::endl;
+                 // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.              
                     exit(1);
-//                  return std::max(100, errorCode);
-              }
-          }
-          else
-          {
-              file->secondaryPassOverSourceFile();
-          }
-      }
+                 // return std::max(100, errorCode);
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("Test for call to secondaryPassOverSourceFile(): get_disable_edg_backend() = %s \n",
+                    file->get_disable_edg_backend() ? "true" : "false");
+#endif
+#if 0
+               display("Calling secondaryPassOverSourceFile()");
+#endif
+            // DQ (1/23/2018): If we are not doing the translation of EDG to ROSE, then we don't want to call this second pass.
+            // This will fix the negative test in Plum hall for what should be an error to the C preprocessor.
+            // file->secondaryPassOverSourceFile();
 
-      if (errorCode != 0)
-      {
+            // if (file->get_skip_translation_from_edg_ast_to_rose_ast() == false)
+               if (file->get_disable_edg_backend() == false)
+                  {
+#if 0
+                    printf ("Calling secondaryPassOverSourceFile() \n");
+#endif
+                    file->secondaryPassOverSourceFile();
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Skipping the call to secondaryPassOverSourceFile() \n");
+#endif
+                  }
+#if 0
+               printf ("Exiting after test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+
+     if (errorCode != 0)
+        {
           return errorCode;
-      }
-  }
+        }
+//  }
 
   // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
   // In the second step (after preprocessing infos are already attached), collect the including files map.
@@ -2552,7 +2580,9 @@ SgProject::parse()
 
   // if (get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
+        {
           cout << "C++ source(s) parsed. AST generated." << endl;
+        }
 
      if ( get_verbose() > 3 )
         {
@@ -2562,6 +2592,8 @@ SgProject::parse()
 
      return errorCode;
    } // end parse(;
+
+
 
 //negara1 (07/29/2011)
 //The returned file path is not normalized. 
@@ -2896,6 +2928,9 @@ SgFile::callFrontEnd()
   // Exit if we are to ONLY call the vendor's backend compiler
      if (p_useBackendOnly == true)
         {
+#if 0
+          printf ("############## Exit because we are to ONLY call the vendor's backend compiler \n");
+#endif
           return 0;
         }
 
@@ -3069,6 +3104,10 @@ SgFile::callFrontEnd()
 #if 0
      printf ("Exiting as a test of the F03 module support \n");
      ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d frontendErrorLevel = %d \n",fileNameIndex,frontendErrorLevel);
 #endif
 
   // return the error code associated with the call to the C++ Front-end
@@ -6023,8 +6062,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                   // nothing to do...
                   }
-               else if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
-                  {
+                 else 
+                    if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
+                       {
                  // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
                  // header file list, and is required to be supported in ROSE as part of some application 
                  // specific configuration testing (when configure tests ROSE translators)).
@@ -6033,7 +6073,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                  //                   Commenting out for now to allow $ROSE/tests/CompilerOptionTests to pass
                  //                   in order to expedite the transition from ROSE-EDG3 to ROSE-EDG4.
                  //   ROSE_ASSERT(! "Not implemented yet");
-                  }
+                       }
              }
             else
              {

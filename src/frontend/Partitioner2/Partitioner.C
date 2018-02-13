@@ -14,13 +14,28 @@
 #include "SymbolicSemantics2.h"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/config.hpp>
 #include <boost/foreach.hpp>
+#include <boost/thread.hpp>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
-#include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
+
+#ifndef BOOST_WINDOWS
+    #include <errno.h>
+    #include <fcntl.h>
+    #include <fstream>
+    #include <string.h>
+    #include <unistd.h>
+    #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        #include <boost/archive/binary_iarchive.hpp>
+        #include <boost/archive/binary_oarchive.hpp>
+        #include <boost/iostreams/device/file_descriptor.hpp>
+        #include <boost/iostreams/stream.hpp>
+    #endif
+#endif
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace Rose::Diagnostics;
@@ -50,7 +65,7 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
 // after a while.
 Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+    : autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
       progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);                             // initialize just like default
     *this = other;                                      // then delegate to the assignment operator
@@ -130,6 +145,171 @@ Partitioner::convertFrom(const Partitioner &other, ControlFlowGraph::ConstVertex
     ControlFlowGraph::VertexIterator thisIter = cfg_.findVertex(otherIter->id());
     ASSERT_forbid(thisIter == cfg_.vertices().end());
     return thisIter;
+}
+
+void
+Partitioner::saveRbaFile(const boost::filesystem::path &fileName) const {
+    if (fileName.empty())
+        throw FileError("cannot save RBA file with an empty name");
+#if defined(BOOST_WINDOWS)
+    throw FileError("RBA files are not supported on Microsoft Windows machines");
+#elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    throw FileError("RBA files require Boost serialization support");
+#else
+    std::ofstream file(fileName.native().c_str(), std::ios::binary);
+    if (!file)
+        throw FileError("cannot open " + fileName.native());
+    boost::archive::binary_oarchive archive(file);
+    archive <<*this;
+#endif
+}
+
+#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+static
+void saveRbaFileHelper(const Partitioner *p, int fd, int *status) {
+    ASSERT_not_null(p);
+    ASSERT_require(fd >= 0);
+    ASSERT_not_null(status);
+    boost::iostreams::file_descriptor_sink device(fd, boost::iostreams::never_close_handle);
+    boost::iostreams::stream<boost::iostreams::file_descriptor_sink> file;
+    file.open(device);
+    if (!file) {
+        *status = 1;
+    } else {
+        boost::archive::binary_oarchive archive(file);
+        archive <<*p;
+        *status = 0;
+    }
+}
+#endif
+
+void
+Partitioner::saveRbaFile(const boost::filesystem::path &fileName, Sawyer::ProgressBar<size_t> &progress) const {
+    if (fileName.empty())
+        throw FileError("cannot save RBA file with an empty name");
+#if defined(BOOST_WINDOWS)
+    throw FileError("RBA files are not supported on Microsoft Windows machines");
+#elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    throw FileError("RBA files require Boost serialization support");
+#else
+    int fd = 1;
+    if (fileName != "-") {
+        fd = ::open(fileName.native().c_str(), O_RDWR|O_TRUNC|O_CREAT, 0666);
+        if (-1 == fd)
+            throw FileError("cannot open " + fileName.native() + " for writing");
+    }
+    progress.value(0, 0, 0);
+
+    // Save RBA file asynchronously
+    int status = 0;
+    boost::thread worker(saveRbaFileHelper, this, fd, &status);
+
+    // Busy wait, updating progress bar with file size
+    boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+    while (!worker.try_join_for(timeout)) {
+        off_t cur = ::lseek(fd, 0, SEEK_CUR);
+        if (cur != -1)
+            progress.value(cur);
+    }
+    ::close(fd);
+
+    if (0 == status) {
+        off_t cur = ::lseek(fd, 0, SEEK_CUR);
+        if (cur != -1) {
+            progress.value(0, cur, cur);
+        } else {
+            progress.value(0, cur, 0);
+        }
+    } else {
+        throw FileError("file created but serialization was incomplete");
+    }
+#endif
+}
+    
+void
+Partitioner::loadRbaFile(const boost::filesystem::path &fileName) {
+    if (fileName.empty())
+        throw FileError("cannot load RBA file with an empty name");
+#if defined(BOOST_WINDOWS)
+    throw FileError("Partitioner::loadRbaFile is not supported on Microsoft Windows operating systems");
+#elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    throw FileError("Partitioner::loadRbaFile requires Boost serialization support");
+#else
+    std::ifstream file(fileName.native().c_str(), std::ios::binary);
+    if (!file)
+        throw FileError("cannot open " + fileName.native());
+    boost::archive::binary_iarchive archive(file);
+    archive >>*this;
+#endif
+}
+
+#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+static
+void loadRbaFileHelper(Partitioner *p, int fd, int *status) {
+    ASSERT_not_null(p);
+    ASSERT_require(fd >= 0);
+    ASSERT_not_null(status);
+    boost::iostreams::file_descriptor_source device(fd, boost::iostreams::never_close_handle);
+    boost::iostreams::stream<boost::iostreams::file_descriptor_source> file;
+    file.open(device);
+    if (!file) {
+        *status = 1;
+    } else {
+        boost::archive::binary_iarchive archive(file);
+        archive >>*p;
+        *status = 0;
+    }
+}
+#endif
+    
+void
+Partitioner::loadRbaFile(const boost::filesystem::path &fileName, Sawyer::ProgressBar<size_t> &progress) {
+    if (fileName.empty())
+        throw FileError("cannot load RBA file with an empty name");
+#if defined(BOOST_WINDOWS)
+    throw FileError("Partitioner::loadRbaFile is not supported on Microsoft Windows operating systems");
+#elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    throw FileError("Partitioner::loadRbaFile requires Boost serialization support");
+#else
+    // We need to run the deserialization in a different thread so we can monitor it from this thread and update the progress
+    // object.  We base our progress reports on the file input position w.r.t. the file size. Since std::istream doesn't have a
+    // portable, thread-safe way to get the current position, we use POSIX "lseek" and wrap the file descriptor in a
+    // boost::iostreams::stream object to give it a std::istream interface.
+    int fd = 0;
+    if (fileName != "-") {
+        fd = ::open(fileName.native().c_str(), O_RDONLY);
+        if (-1 == fd)
+            throw FileError("cannot open " + fileName.native() + " for reading");
+    }
+    struct stat sb;
+    if (-1 == fstat(fd, &sb)) {
+        sb.st_size = 0;
+        progress.value(0, 0, 0);
+    } else {
+        progress.value(0, 0, sb.st_size);
+    }
+
+    // Load RBA file asynchronously
+    int status = 0;
+    boost::thread worker(loadRbaFileHelper, this, fd, &status);
+
+    // Busy wait, updating the progress bar.
+    boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+    while (!worker.try_join_for(timeout)) {
+        if (sb.st_size > 0) {
+            off_t cur = ::lseek(fd, 0, SEEK_CUR);
+            if (cur != -1)
+                progress.value(cur);
+        }
+    }
+    ::close(fd);
+
+    if (0 == status) {
+        progress.value(sb.st_size);
+    } else {
+        throw FileError("file exists but load failed");
+    }
+#endif
 }
 
 Unparser::BasePtr
@@ -973,11 +1153,11 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
                 SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
                 SymbolicExpr::Ptr spNExpr =
-                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew);
-                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew);
+                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
 
                 // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false), NULL)) {
+                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
                     allCalleesPopWithoutReturning = false;
                     break;
                 }

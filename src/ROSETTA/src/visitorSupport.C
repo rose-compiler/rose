@@ -80,7 +80,7 @@ string Grammar::buildVisitorBaseClass()
         }
      // DXN (08/27/210): add the default case that does nothing as a catch-all;
      // Let the derived class override if so desired.
-     s += "    virtual void visitDefault(SgNode* n) {}\n";
+     s += "    virtual void visitDefault(SgNode*) {}\n";
      s += "};\n\n";
 
      s += "class ROSE_VisitorPatternDefaultBase : public ROSE_VisitorPattern  {\npublic:\n";

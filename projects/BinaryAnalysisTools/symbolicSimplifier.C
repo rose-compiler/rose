@@ -18,13 +18,12 @@
 
 using namespace Rose::BinaryAnalysis;
 
-static SymbolicExprParser
-symbolicParser() {
-    return SymbolicExprParser();
-}
+bool testSerialization = false;
+bool testSmtSolver = false;
+
 
 static void
-parseCommandLine(int argc, char *argv[], bool &testSerialization /*in,out*/) {
+parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
     Parser parser;
 
@@ -44,6 +43,11 @@ parseCommandLine(int argc, char *argv[], bool &testSerialization /*in,out*/) {
                 .intrinsicValue(false, testSerialization)
                 .hidden(true));
 
+    Rose::CommandLine::insertBooleanSwitch(tool, "check-satisfiability", testSmtSolver,
+                                           "Runs the expression through an SMT solver. If the expression is one bit wide "
+                                           "then it's used as-is, otherwise we compare it to a new variable of the same "
+                                           "width.");
+
     parser
         .purpose("test symbolic simplification")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
@@ -52,7 +56,7 @@ parseCommandLine(int argc, char *argv[], bool &testSerialization /*in,out*/) {
         .doc("Description",
              "Parses symbolic expressions from standard input and prints the resulting expression trees. These trees "
              "undergo basic simplifications in ROSE before they're printed.")
-        .doc("Symbolic expression syntax", symbolicParser().docString())
+        .doc("Symbolic expression syntax", SymbolicExprParser().docString())
         .with(Rose::CommandLine::genericSwitches())
         .with(tool);
 
@@ -62,9 +66,12 @@ parseCommandLine(int argc, char *argv[], bool &testSerialization /*in,out*/) {
 
 int
 main(int argc, char *argv[]) {
-    bool testSerialization = false;
-    parseCommandLine(argc, argv, testSerialization /*in,out*/);
+    ROSE_INITIALIZE;
+    parseCommandLine(argc, argv);
     unsigned lineNumber = 0;
+
+    SmtSolver::Ptr smtSolver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+
     while (1) {
 
         // Prompt for and read a line containing one expression
@@ -87,8 +94,31 @@ main(int argc, char *argv[]) {
 
         // Parse the expression
         try {
-            SymbolicExpr::Ptr expr = symbolicParser().parse(line);
+            SymbolicExprParser symbolicParser(smtSolver);
+            SymbolicExpr::Ptr expr = symbolicParser.parse(line);
             std::cout <<"Parsed value = " <<*expr <<"\n\n";
+
+            if (testSmtSolver && smtSolver) {
+                SymbolicExpr::Ptr assertion;
+                if (expr->nBits() == 1) {
+                    assertion = expr;
+                } else {
+                    assertion = SymbolicExpr::makeEq(expr, SymbolicExpr::makeVariable(expr->nBits()));
+                }
+                std::cout <<"Checking satisfiability of " <<*assertion <<"\n";
+                switch (smtSolver->satisfiable(assertion)) {
+                    case SmtSolver::SAT_NO:
+                        std::cout <<"not satisfiable\n";
+                        break;
+                    case SmtSolver::SAT_YES:
+                        std::cout <<"satisfiable\n";
+                        break;
+                    case SmtSolver::SAT_UNKNOWN:
+                        std::cout <<"satisfiability is unknown\n";
+                        break;
+                }
+            }
+
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
             if (testSerialization) {
                 std::cout <<"Serializing\n";

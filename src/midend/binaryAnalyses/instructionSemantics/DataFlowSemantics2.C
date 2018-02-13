@@ -75,15 +75,17 @@ public:
 public:
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
-                        SmtSolver*) const ROSE_OVERRIDE {
+                        const SmtSolverPtr&) const ROSE_OVERRIDE {
         TODO("[Robb P. Matzke 2015-08-10]");
     }
 
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return true;
     }
 
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return false;
     }
 
@@ -153,21 +155,21 @@ class InnerRiscOperators: public BaseSemantics::RiscOperators {
 
     // The normal C++ constructors; protected because this object is reference counted
 protected:
-    explicit InnerRiscOperators(const SValuePtr &protoval, SmtSolver *solver=NULL)
+    explicit InnerRiscOperators(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(protoval, solver) {
         name("DataFlow(Inner)");
     }
 
     // Static allocating constructor; no state since register and memory I/O methods are no-ops
 public:
-    static InnerRiscOperatorsPtr instance(SmtSolver *solver=NULL) {
+    static InnerRiscOperatorsPtr instance(const SmtSolverPtr &solver = SmtSolverPtr()) {
         return InnerRiscOperatorsPtr(new InnerRiscOperators(SValue::instance(), solver));
     }
 
     // Virtual constructors
 private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -175,7 +177,7 @@ private:
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -358,6 +360,15 @@ public:
 #endif
     }
     
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
+        ASSERT_not_reachable("peekMemory is not possible for this semantic domain");
+#ifdef _MSC_VER
+        return BaseSemantics::SValuePtr();
+#endif
+    }
+    
     virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
@@ -462,14 +473,18 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond) {
-    if (cond->is_number() && !cond->get_number())
-        return dflt_;
+RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
+                                const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond,
+                                bool allowSideEffects) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
     MultiSemantics::SValuePtr dflt = MultiSemantics::SValue::promote(dflt_);
-    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
+    MultiSemantics::SValuePtr result;
+    if (allowSideEffects) {
+        result = MultiSemantics::SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
+    } else {
+        result = MultiSemantics::SValue::promote(Super::peekMemory(segreg, addr, dflt));
+    }
 
     size_t addrWidth = addr->get_width();
     size_t valueWidth = dflt->get_width();
@@ -486,6 +501,20 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     }
     result->set_subvalue(innerDomainId_, definers);
     return result;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+    if (cond->is_number() && !cond->get_number())
+        return dflt;
+    return readOrPeekMemory(segreg, addr, dflt, cond, true /*allow side effects*/);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt) {
+    return readOrPeekMemory(segreg, addr, dflt, undefined_(1), false /*noside effects allowed*/);
 }
 
 void

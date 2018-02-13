@@ -61,7 +61,11 @@ class ATermToUntypedTraversal
    void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
    void setSourcePosition              ( SgLocatedNode* locatedNode, PosInfo & pos );
    void setSourcePositionFrom          ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
+   void setSourcePositionExcludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
+   void setSourcePositionIncludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
+   void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
    void setSourcePositionFromEndOnly   ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
+
 
 }; // class ATermToUntypedTraversal
 }  // namespace ATermSupport

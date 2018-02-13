@@ -103,7 +103,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(type_);
         s & BOOST_SERIALIZATION_NVP(reg_);
         if (STACK==type_) {
@@ -241,7 +241,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(comment_);
         s & BOOST_SERIALIZATION_NVP(wordWidth_);
@@ -792,7 +792,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(cpu_);
         s & BOOST_SERIALIZATION_NVP(regDict_);
         s & BOOST_SERIALIZATION_NVP(defaultCc_);

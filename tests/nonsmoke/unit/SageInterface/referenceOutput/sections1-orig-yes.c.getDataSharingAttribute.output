@@ -1,0 +1,14 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 55
+"i"@58:5	shared
+"i"@60:5	shared
+-----------------------------------------------
+OpenMP region SgOmpSectionsStatement @ 55
+"i"@58:5	shared
+"i"@60:5	shared
+-----------------------------------------------
+OpenMP region SgOmpSectionStatement @ 57
+"i"@58:5	shared
+-----------------------------------------------
+OpenMP region SgOmpSectionStatement @ 59
+"i"@60:5	shared

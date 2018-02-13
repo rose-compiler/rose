@@ -342,8 +342,8 @@ sorts
 
 %% 6.6 Image selectors
 
-%%ImageSelector                       %% R624, replace by R624-F2015-N2007
-  Cosubscript                         %% R625
+%%ImageSelector                       %% R624, replaced by R924-F2018-N2146
+%%Cosubscript                         %% R625, replaced by R925-F2018-N2146
 
   OptImageSelector
 
@@ -411,6 +411,7 @@ sorts
   LogicalExpr                         %% R724
   DefaultCharExpr                     %% R725
   IntExpr                             %% R726
+  ScalarIntExpr                       %% TODO - use this in 2008 grammar portion as well
   NumericExpr                         %% R727
   SpecificationExpr                   %% R728
   ConstantExpr                        %% R729
@@ -762,18 +763,21 @@ sorts
 %% WG5/N2007 - 12th March 2014 9:46
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  ChangeTeamConstruct                 %% R501-F2015-N2007
-  ChangeTeamStmt                      %% R502-F2015-N2007
-  CoarrayAssociation                  %% R503-F2015-N2007
-%%Coselector                          %% R504-F2015-N2007 (not used)
-  EndChangeTeamStmt                   %% R505-F2015-N2007
-  TeamVariable                        %% R506-F2015-N2007
+  ChangeTeamConstruct                 %% R1111-F2018-N2146
+  ChangeTeamStmt                      %% R1112-F2018-N2146
+  CoarrayAssociation                  %% R1113-F2018-N2146
+  EndChangeTeamStmt                   %% R1114-F2018-N2146
+  TeamValue                           %% R1115-F2018-N2146
 
-  ImageSelector                       %% R624, R624-F2015-N2007
+  ImageSelector                       %% R924-F2018-N2146, R624
+  Cosubscript                         %% R925-F2018-N2146
+  ImageSelectorSpec                   %% R926-F2018-N2146
 
-  FormTeamStmt                        %% R507-F2015-N2007
-  TeamId                              %% R508-F2015-N2007
-  FormTeamSpec                        %% R509-F2015-N2007
+  FormTeamStmt                        %% R1175-F2018-N2146
+  TeamNumber                          %% R1176-F2018-N2146
+  TeamVariable                        %% R1177-F2018-N2146
+  FormTeamSpec                        %% R1178-F2018-N2146
+
   SyncTeamStmt                        %% R510-F2015-N2007
   FailImageStmt                       %% R511-F2015-N2007
 
@@ -782,11 +786,11 @@ sorts
   EventWaitStmt                       %% R603-F2015-N2007
 %%WaitSpec                            %% R604-F2015-N2007
 
-  ScalarIntExpr                       %% TODO - use this in 2008 grammar portion as well
   ScalarVariable                      %% TODO - use this in 2008 grammar portion as well
 
   OptWaitSpecList OptFormTeamSpecList OptParensSyncStatList OptCoarrayAssociationList
-  OptTeamId OptTeamVariable CoselectorName OptTeamConstructName OptTeamConstructNameCOLON
+  OptTeamVariable CoselectorName OptTeamConstructName OptTeamConstructNameCOLON
+  OptImageSelectorSpecList
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1898,17 +1902,12 @@ context-free syntax
 %% 6.6 Image selectors
 %%
 
-%%R624 - Replaced by R624-F2015-N2007
+%%R624 - Replaced by R924-F2018-N2146
 %%
 %%'[' {Cosubscript ','}+ ']'                             -> ImageSelector        {cons("ImageSelector")}
 %%ImageSelector                                          -> OptImageSelector
 %%ImageSelector '(' SubstringRange ')'                   -> OptImageSelector     {cons("substring-section-range")}
 %%% empty %                                              -> OptImageSelector     {cons("no-image-selector")}
-
-%%625
-%%      int-expr substituted for scalar-int-expr
-%%
-  IntExpr                                                -> Cosubscript
 
 
 %% 6.7 Dynamic association
@@ -3934,71 +3933,6 @@ context-free syntax
 
   Ident                                                 -> CoselectorName
 
-%%R504-F2015-N2007
-%% Note: not used
-%%
-%%Coarray                                               -> Coselector
-
-%%R505-F2015-N2007
-%%
-  OptLabel 'END' 'TEAM'
-  OptParensSyncStatList OptTeamConstructName        EOS -> EndChangeTeamStmt     {cons("EndChangeTeamStmt")}
-
-  '(' { SyncStat ','}+ ')'                              -> OptParensSyncStatList {cons("paren-list")}
-  % empty %                                             -> OptParensSyncStatList {cons("no-list")}
-
-  Ident                                                 -> OptTeamConstructName  {cons("Name")}
-  % empty %                                             -> OptTeamConstructName  {cons("no-name")}
-
-%%R506-F2015-N2007
-%%
-  ScalarVariable                                        -> TeamVariable
-  Variable                                              -> ScalarVariable
-
-%% 5.4 Image selectors
-%% -------------------
-
-%%R624-F2015-N2007
-%%
-  '['
-      OptTeamVariable {Cosubscript ','}+
-      OptTeamId
-  ']'                                                   -> ImageSelector        {cons("ImageSelector")}
-
-  ImageSelector                                         -> OptImageSelector
-  ImageSelector '(' SubstringRange ')'                  -> OptImageSelector     {cons("substring-section-range")}
-  % empty %                                             -> OptImageSelector     {cons("no-image-selector")}
-
-  TeamVariable '::'                                     -> OptTeamVariable      {cons("TeamVariable")}
-  % empty %                                             -> OptTeamVariable      {cons("no-team-variable")}
-
-  'TEAM_ID' '=' ScalarIntExpr                           -> OptTeamId            {cons("TeamId")}
-  % empty %                                             -> OptTeamId            {cons("no-team-id")}
-
-  Expr                                                  -> ScalarIntExpr
-
-%% 5.5 FORM TEAM statement
-%% -----------------------
-
-%% R507-F2015-N2007
-%%
-  OptLabel 'FORM' 'TEAM'
-  '('
-      TeamId ',' TeamVariable OptFormTeamSpecList
-  ')'                                              EOS -> FormTeamStmt          {cons("FormTeamStmt")}
-
-  ',' { FormTeamSpec ','}+                             -> OptFormTeamSpecList   {cons("comma-list")}
-  % empty %                                            -> OptFormTeamSpecList   {cons("no-list")}
-
-%% R508-F2015-N2007
-%%
-  ScalarIntExpr                                        -> TeamId
-
-%% R509-F2015-N2007
-%%
-  'NEW_INDEX' '=' ScalarIntExpr                        -> FormTeamSpec          {cons("FormTeamSpec")}
-  SyncStat                                             -> FormTeamSpec
-
 %% 5.6 SYNC TEAM statement
 %% -----------------------
 
@@ -4051,3 +3985,117 @@ context-free syntax
 %%
   'UNTIL_COUNT' '=' ScalarIntExpr                     -> WaitSpec              {cons("UNTIL_COUNT")}
   SyncStat                                            -> WaitSpec
+
+
+%%%%%%%%%%
+%% Fortran ISO/IECJTC1-SC22-WG5 N2146
+%% Section 9 Use of data objects
+%% -----------------------------
+%%%%%%%%%%
+
+%% 9.1 Designator
+%% -------------------
+
+
+%% 9.6 Image selectors
+%% -------------------
+
+%% R924-F2018-N2146
+%%
+  '['
+      {Cosubscript ','}+
+      OptImageSelectorSpecList
+  ']'                                              -> ImageSelector        {cons("ImageSelector")}
+
+  ImageSelector                                    -> OptImageSelector
+  ImageSelector '(' SubstringRange ')'             -> OptImageSelector     {cons("substring-section-range")}
+  % empty %                                        -> OptImageSelector     {cons("no-image-selector")}
+
+%% R925-F2018-N2146
+  ScalarIntExpr                                    -> Cosubscript
+
+%% R926-F2018-N2146
+  'STAT'        '=' StatVariable                   -> ImageSelectorSpec    {cons("STAT")}
+  'TEAM'        '=' TeamValue                      -> ImageSelectorSpec    {cons("TEAM")}
+  'TEAM_NUMBER' '=' ScalarIntExpr                  -> ImageSelectorSpec    {cons("TEAM_NUMBER")}
+
+  {ImageSelectorSpec ','}+                         -> OptImageSelectorSpecList  {cons("OptImageSelectorSpecList")}
+  % empty %                                        -> OptImageSelectorSpecList  {cons("no-list")}
+
+  TeamVariable '::'                                -> OptTeamVariable      {cons("TeamVariable")}
+  % empty %                                        -> OptTeamVariable      {cons("no-team-variable")}
+
+
+%%%%%%%%%%
+%% Fortran ISO/IECJTC1-SC22-WG5 N2146
+%% Section 11 Execution control
+%% ----------------------------
+%%%%%%%%%%
+
+%% 11.1.5 CHANGE TEAM construct
+
+%% R1111-F2018-N2146
+%%
+  ChangeTeamStmt
+    Block
+  EndChangeTeamStmt                                     -> ChangeTeamConstruct   {cons("ChangeTeamConstruct")}
+
+%% R1112-F2018-N2146
+%%
+  OptLabel OptTeamConstructName 'CHANGE' 'TEAM'
+  '('
+      TeamValue
+      OptCoarrayAssociationList OptSyncStatList
+  '('                                               EOS -> ChangeTeamStmt        {cons("ChangeTeamStmt")}
+
+%% R1113-F2018-N2146
+%%
+  CodimensionDecl '=>' Selector                         -> CoarrayAssociation    {cons("CoarrayAssociation")}
+
+%% R1114-F2018-N2146
+%%
+  OptLabel 'END' 'TEAM'
+  OptParensSyncStatList OptTeamConstructName        EOS -> EndChangeTeamStmt     {cons("EndChangeTeamStmt")}
+
+  '(' { SyncStat ','}+ ')'                              -> OptParensSyncStatList {cons("OptParensSyncStatList")}
+  '('                  ')'                              -> OptParensSyncStatList {cons("no-list")}
+  % empty %                                             -> OptParensSyncStatList {cons("no-list")}
+
+  Ident                                                 -> OptTeamConstructName  {cons("Name")}
+  % empty %                                             -> OptTeamConstructName  {cons("no-name")}
+
+%% R1114-F2018-N2146
+%%
+
+%% R1115-F2018-N2146
+%%
+  ScalarIntExpr                                         -> TeamValue
+
+  Expr                                                  -> ScalarIntExpr
+
+%% 11.6.9 FORM TEAM statement
+%% --------------------------
+
+%% R1175-F2018-N2146
+%%
+  OptLabel 'FORM' 'TEAM'
+  '('
+      TeamNumber ',' TeamVariable OptFormTeamSpecList
+  ')'                                              EOS  -> FormTeamStmt          {cons("FormTeamStmt")}
+
+%% R1176-F2018-N2146
+%%
+  ScalarIntExpr                                         -> TeamNumber
+
+%% R1177-F2018-N2146
+%%
+  ScalarVariable                                        -> TeamVariable
+  Variable                                              -> ScalarVariable
+
+%% R1178-F2018-N2146
+%%
+  'NEW_INDEX' '=' ScalarIntExpr                         -> FormTeamSpec          {cons("FormTeamSpec")}
+  SyncStat                                              -> FormTeamSpec
+
+  ',' { FormTeamSpec ','}+                              -> OptFormTeamSpecList   {cons("OptFormTeamSpecList")}
+  % empty %                                             -> OptFormTeamSpecList   {cons("no-list")}

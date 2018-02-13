@@ -44,7 +44,7 @@ public:
     class RegisterNotPresent: public std::runtime_error {
         RegisterDescriptor desc_;
     public:
-        explicit RegisterNotPresent(RegisterDescriptor d)
+        explicit RegisterNotPresent(RegisterDescriptor)
             : std::runtime_error("accessed register is not available in register state") {}
     };
 
@@ -65,7 +65,7 @@ public:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(majr);
             s & BOOST_SERIALIZATION_NVP(minr);
         }
@@ -96,7 +96,7 @@ public:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(desc);
             s & BOOST_SERIALIZATION_NVP(value);
         }
@@ -176,7 +176,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(RegisterState);
         s & BOOST_SERIALIZATION_NVP(properties_);
         s & BOOST_SERIALIZATION_NVP(writers_);
@@ -267,8 +267,8 @@ public:
      *  When this property is true then existing storage locations can be modified, otherwise extra steps are taken to preserve
      *  the list of storage locations.
      *
-     *  This property does not applies only to @ref readRegister and @ref writeRegister and not to those methods that are not
-     *  typically called as part of processing instruction semantics.
+     *  This property applies only to @ref readRegister and @ref writeRegister and not to those methods that are not typically
+     *  called as part of processing instruction semantics.
      *
      * @{ */
     bool accessModifiesExistingLocations() const /*final*/ { return accessModifiesExistingLocations_; }
@@ -346,6 +346,7 @@ public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
