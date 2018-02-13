@@ -4169,6 +4169,9 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
                   {
                     if (thisExp->get_file_info()->isCompilerGenerated() == true)
                        {
+#if 0
+                         printf ("In isImplicitArrowExpWithinLambdaFunction(): found compiler generated this expression: thisExp = %p = %s \n",thisExp,thisExp->class_name().c_str());
+#endif
                          suppressOutputOfImplicitArrowExp = true;
                        }
                   }
@@ -4181,6 +4184,17 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
                     printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
 #endif
                     suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+
+                 // DQ (2/12/2018): And if the rhs is not compiler generated then we want to return false.
+                    SgExpression* nested_operator_rhs = nested_arrowExp->get_rhs_operand();
+                    if (nested_operator_rhs->get_file_info()->isCompilerGenerated() == false)
+                       {
+#if 0
+                         printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: found NON compiler generated expression: nested_operator_rhs = %p = %s \n",
+                              nested_operator_rhs,nested_operator_rhs->class_name().c_str());
+#endif
+                         suppressOutputOfImplicitArrowExp = false;
+                       }
                   }
 
             // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
@@ -4207,7 +4221,7 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
         }
 
 #if 0
-     printf ("In isImplicitArrowExpWithinLambdaFunction(): suppressOutputOfImplicitArrowExp = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+     printf ("Leaving isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",expr,expr->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
 #endif
 
      return suppressOutputOfImplicitArrowExp;
@@ -4219,7 +4233,7 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
 bool
 partOfArrowOperatorChain(SgExpression* expr)
    {
-#define DEBUG_ARROW_OPERATOR_CHAIN 1
+#define DEBUG_ARROW_OPERATOR_CHAIN 0
 
      SgBinaryOp* binary_op = isSgBinaryOp(expr);
      ROSE_ASSERT(binary_op != NULL);
@@ -4310,20 +4324,30 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
      ROSE_ASSERT(binary_op != NULL);
 
 #if DEBUG_BINARY_OPERATORS
-      curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
-      printf ("\n @@@@@ In unparseBinaryExpr(): expr = %p %s \n",expr,expr->class_name().c_str());
+     curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
+     printf ("\n @@@@@ In unparseBinaryExpr(): expr = %p %s \n",expr,expr->class_name().c_str());
 #endif
 
-   // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
-      bool suppressOutputOfDotExp           = isDotExprWithAnonymousUnion(expr);
-      bool suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(expr,info);
+  // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
+     bool suppressOutputOfDotExp           = isDotExprWithAnonymousUnion(expr);
+     bool suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(expr,info);
+
+#if 0
+  // DQ (2/12/2018): Debuging Cxx11_tests/test2018_10.C
+     printf ("In unparseBinaryExpr(): suppressOutputOfImplicitArrowExp: expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",
+          expr,expr->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
+     curprint ("/* In unparseBinaryExpr(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+     curprint ("/* In unparseBinaryExpr(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " rhs = " + binary_op->get_rhs_operand()->class_name() + " */\n ");
+     curprint ("/* In unparseBinaryExpr(): suppressOutputOfImplicitArrowExp: suppressOutputOfImplicitArrowExp = " + string(suppressOutputOfImplicitArrowExp ? "true" : "false") + " */\n");
+  // suppressOutputOfImplicitArrowExp = false;
+#endif
 
 #if DEBUG_BINARY_OPERATORS
-   // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
-      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " */ \n");
-      curprint ( string("\n /*                              lhs class name         = ") + StringUtility::numberToString(binary_op->get_lhs_operand()) + " = " + binary_op->get_lhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              rhs class name         = ") + StringUtility::numberToString(binary_op->get_rhs_operand()) + " = " + binary_op->get_rhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              suppressOutputOfDotExp = ") + (suppressOutputOfDotExp ? "true" : "false") + " */ \n");
+  // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
+     curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " */ \n");
+     curprint ( string("\n /*                              lhs class name         = ") + StringUtility::numberToString(binary_op->get_lhs_operand()) + " = " + binary_op->get_lhs_operand()->class_name() + " */ \n");
+     curprint ( string("\n /*                              rhs class name         = ") + StringUtility::numberToString(binary_op->get_rhs_operand()) + " = " + binary_op->get_rhs_operand()->class_name() + " */ \n");
+     curprint ( string("\n /*                              suppressOutputOfDotExp = ") + (suppressOutputOfDotExp ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
@@ -4562,8 +4586,10 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 
 #if DEBUG_BINARY_OPERATORS
-          curprint ("/* STARTING LHS: Calling unparseExpression(): " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          curprint ("/* STARTING LHS: Calling unparseExpression(): " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n");
           printf ("STARTING LHS: Calling unparseExpression(): for LHS = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
+          printf ("STARTING LHS: Calling unparseExpression(): suppressOutputOfImplicitArrowExp = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+          curprint ("/* STARTING LHS: Calling unparseExpression(): suppressOutputOfImplicitArrowExp = " + string(suppressOutputOfImplicitArrowExp ? "true" : "false") + " */\n");
 #endif
 
        // DQ (9/3/2014): Adding support to supress the output if this operators in lambda functions.
@@ -4641,6 +4667,11 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                printf ("In unparseBinaryExpr(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
 #endif
              }
+#endif
+
+#if DEBUG_BINARY_OPERATORS
+          printf ("In unparseBinaryExpr(): (after LHS): suppressOutputOfImplicitArrowExp            = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+          curprint ("/* In unparseBinaryExpr(): (after LHS): suppressOutputOfImplicitArrowExp = " + string(suppressOutputOfImplicitArrowExp ? "true" : "false") + " */\n ");
 #endif
 
        // DQ: This is handling that is specific to anonomous unions.

@@ -1429,8 +1429,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          SgTemplateInstantiationDirectiveStatement* templateInstantiationDirectiveStatement = isSgTemplateInstantiationDirectiveStatement(templateInstantiationFunction->get_parent());
                          if (templateInstantiationDirectiveStatement != NULL)
                             {
+#if 0
                               printf ("******** Found a function template instantiation that is a part of a SgTemplateInstantiationDirectiveStatement \n");
-
+#endif
                            // DQ (11/18/2017): Commented out the trap to force an exit here!
 #if 0
                               printf ("Exiting as a test! \n");
