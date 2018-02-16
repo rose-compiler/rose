@@ -1206,6 +1206,7 @@ ParserResult::insertValuesForSwitch(const ParsedValues &pvals, const Parser*, co
         case SAVE_NONE:
             if (!pvals.empty())
                 throw std::runtime_error(pvals.front().switchString() + " is illegal here");
+            break;
         case SAVE_ONE:
             if (!keyIndex_.getOrDefault(key).empty() && !pvals.empty())
                 throw std::runtime_error("switch key \"" + key + "\" cannot appear multiple times (" +

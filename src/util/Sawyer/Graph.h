@@ -658,21 +658,18 @@ private:
         }
 
         bool isSingleton(EdgePhase phase) const {
-            ASSERT_this();
             ASSERT_require(phase < N_PHASES);
             ASSERT_require((next_[phase]==this && prev_[phase]==this) || (next_[phase]!=this && prev_[phase]!=this));
             return next_[phase]==this;
         }
 
         bool isEmpty(EdgePhase phase) const {
-            ASSERT_this();
             ASSERT_require(isHead());
             ASSERT_require((next_[phase]==this && prev_[phase]==this) || (next_[phase]!=this && prev_[phase]!=this));
             return next_[phase]==this;
         }
 
         void insert(EdgePhase phase, VirtualList *newNode) { // insert newNode before this
-            ASSERT_this();
             ASSERT_require(phase < N_PHASES);
             ASSERT_not_null(newNode);
             ASSERT_forbid(newNode->isHead());
@@ -684,7 +681,6 @@ private:
         }
 
         void remove(EdgePhase phase) {                  // Remove this node from the list
-            ASSERT_this();
             ASSERT_require(phase < N_PHASES);
             ASSERT_forbid(isHead());
             prev_[phase]->next_[phase] = next_[phase];
@@ -698,13 +694,11 @@ private:
         const VirtualList& prev(EdgePhase phase) const { return *prev_[phase]; }
 
         T& dereference() {                              // Return the Edge to which this VirtualList node belongs
-            ASSERT_this();
             ASSERT_forbid(isHead());                    // list head contains no user-data
             return *(T*)this;                           // depends on VirtualList being at the beginning of Edge
         }
 
         const T& dereference() const {
-            ASSERT_this();
             ASSERT_forbid(isHead());
             return *(const T*)this;
         }

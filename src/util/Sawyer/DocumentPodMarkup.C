@@ -151,7 +151,7 @@ PodMarkup::init() {
     with(InlineFormat::instance("v", "I"));;            // variable
 }
 
-SAWYER_EXPORT void
+SAWYER_EXPORT bool
 PodMarkup::emit(const std::string &doc) {
     // Generate POD documentation into a temporary file. Since perldc doesn't support the "name" property, but rather uses the
     // file name, we create a temporary directory and place a POD file inside with the name we want.
@@ -168,7 +168,7 @@ PodMarkup::emit(const std::string &doc) {
                       " -w 'section:" + escapeSingleQuoted(chapterNumberOrDefault()) + "'"
                       " '" + escapeSingleQuoted(tmpFile.name().string()) + "'";
 
-    (void) system(cmd.c_str());
+    return system(cmd.c_str()) == 0;
 };
 
 SAWYER_EXPORT std::string

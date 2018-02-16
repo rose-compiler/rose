@@ -245,6 +245,16 @@ ROSE_DLL_API SgModifierType* buildRestrictType(SgType* base_type);
 //! Build ArrayType
 ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
 
+// RASMUSSEN (1/25/2018)
+//! Build an ArrayType based on dimension information.
+//! Note, the index member variable will be set to a NullExpression.
+//!
+//! \param base_type The base type of the array.
+//!        Note that if the base type is itself an array type, the shape of the array may be changed.
+//! \param dim_info A list of expressions describing the shape of the array.
+//!        The rank of the array is set from the length of this list.
+ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type, SgExprListExp* dim_info);
+
 // DQ (8/27/2010): Added Fortran specific support for types based on kind expressions.
 //! Build a type based on the Fortran kind mechanism
 ROSE_DLL_API SgModifierType* buildFortranKindType(SgType* base_type, SgExpression* kindExpression );

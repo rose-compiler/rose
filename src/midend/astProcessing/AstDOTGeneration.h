@@ -184,7 +184,7 @@ namespace AstDOTGenerationExtended_Defaults
 
         struct DefaultExtraNodeOptions
         {
-                std::string operator()(SgNode* node)
+                std::string operator()(SgNode*)
                 {
                         return std::string();
                 }
@@ -192,7 +192,7 @@ namespace AstDOTGenerationExtended_Defaults
 
         struct DefaultExtraEdgeInfo
         {
-                std::string operator()(SgNode* from, SgNode* to, std::string label)
+                std::string operator()(SgNode*/*from*/, SgNode*/*to*/, std::string /*label*/)
                 {
                         return std::string();
                 }
@@ -200,7 +200,7 @@ namespace AstDOTGenerationExtended_Defaults
 
         struct DefaultExtraEdgeOptions
         {
-                std::string operator()(SgNode* node, SgNode* to, std::string label)
+                std::string operator()(SgNode*/*node*/, SgNode*/*to*/, std::string /*label*/)
                 {
                         return std::string();
                 }

@@ -101,7 +101,7 @@ std::string DepInfo :: toString() const
   std::stringstream out;
   out <<this<< " Distance Matrix size:"<< rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
-  out << "CarryLevel = ("<<num1 << "," << num2 << ") ";
+  out << "CarryLevel = ("<<num1 << "," << num2 << ") \n";
   if (is_precise()) 
       out << " Is precise ";
   else

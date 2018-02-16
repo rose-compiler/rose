@@ -1,24 +1,11 @@
 // -*- c++ -*-
 
-/** @page tooldev Developing ROSE-based Tools
+/** @page tooldev_page Developing ROSE-based tools
  *
- *  @section tooldev_using Using the library
+ *  How to build tools based on the ROSE library.
  *
- *  Once the ROSE library has been @ref installation "configured, built, and installed" it can be used. Any program that uses ROSE will likely need
- *  to be compiled with the same switches and software components as ROSE itself.  The easiest way to get this information is
- *  by running "rose-config --help".
- *
- *  Here's an example makefile:
- *
- *  @includelineno SampleMakefile
- *
- *
- *
- *  @section installation_nextsteps Next steps
- *
- *  If you're interested in source code analysis or source-to-source translation, read the [ROSE
- *  tutorial](http://rosecompiler.org/ROSE_Tutorial/ROSE-Tutorial.pdf). If you're interested in binary analysis try @ref
- *  binary_tutorial.
- *
- *  This page is generated from $ROSE/docs/Rose/ToolDevelopment/GettingStarted.dox */
+ *  See @ref tooldev */
 
+/** @defgroup tooldev Developing ROSE-based tools
+ *
+ *  How to build tools based on the ROSE library. */

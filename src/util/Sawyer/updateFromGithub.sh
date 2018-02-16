@@ -27,6 +27,8 @@ if [ -d "$SAWYER_ROOT" ]; then
 else
     git clone "$SAWYER_REPO" "$SAWYER_ROOT"
 fi
+
+cp "$SAWYER_ROOT/LICENSE" LICENSE
         
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!

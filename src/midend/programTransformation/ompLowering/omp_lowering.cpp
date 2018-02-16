@@ -4,6 +4,7 @@
 #include "sageBuilder.h"
 #include "Outliner.hh"
 #include "omp_lowering.h"
+#include "RoseAst.h"
 
 using namespace std;
 using namespace Rose;
@@ -212,13 +213,79 @@ namespace OmpSupport
     return getDataSharingAttribute(s, varRef);
   }
 
+  // TODO: expose to header
+ // From collapse(Integer), find all affected for loops of a 'omp for' or 'omp simd' directive
+ // In this case, normalizing combined constructs like 'parallel for' is convenient, less directives to consider.
+  vector <SgForStatement* > getAffectedForLoops (SgOmpClauseBodyStatement* forOrSimd)
+  {
+    vector <SgForStatement* > loops; 
+    ROSE_ASSERT (forOrSimd != NULL);
+    int loop_count = 1; // by default, only one loop is affected. 
+    SgExpression* exp = getClauseExpression (forOrSimd, V_SgOmpCollapseClause);
+    if (exp !=NULL )
+    {
+      SgIntVal * ival = isSgIntVal(exp);
+      if (ival == NULL)
+      {
+        cerr<<"Error. Expecting SgIntVal of Collapse(exp), seeing "<<exp->class_name() << " instead."<<endl;
+        ROSE_ASSERT (false);
+      }
+      loop_count = ival->get_value();
+    } 
+
+    // Now obtain all loops within forOrSimd, up to loop_count
+    RoseAst ast (forOrSimd);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      if (loop_count==0) 
+        break; 
+      if (SgForStatement* fs = isSgForStatement (*i)) 
+      {
+        loops.push_back(fs);
+        loop_count --;
+      }
+    }
+    return loops; 
+  }
+
+  // TODO: expose to header
+  vector <SgInitializedName* > getAffectedForLoopIndexVars (SgOmpClauseBodyStatement* forOrSimd)
+  {
+    vector <SgInitializedName* > result; 
+    // use a map to cache results, avoid repetitive analysis of OpenMP regions
+    static map <SgOmpClauseBodyStatement*, vector <SgInitializedName* > > Region2Index; 
+    static map <SgOmpClauseBodyStatement*, bool > RegionAnalyzed; 
+    
+    if (!RegionAnalyzed[forOrSimd])
+    {
+      RegionAnalyzed[forOrSimd] = true; 
+      vector <SgForStatement* > loops = getAffectedForLoops (forOrSimd);
+      for (size_t i=0; i< loops.size(); i++)
+        result.push_back(getLoopIndexVariable (loops[i]) );
+      Region2Index[forOrSimd] = result;   
+    }
+    else
+      result = Region2Index[forOrSimd];
+
+    return result; 
+  }
+  
+  // TODO: expose to header
+  // Check if a variable is a loop index variable of a loop affected by OpenMP for or simd directives.
+  bool isAffectedForLoopIndexVariable (SgOmpClauseBodyStatement* forOrSimd, SgInitializedName* iname)
+  {
+    vector <SgInitializedName* > loopIndexVars = getAffectedForLoopIndexVars (forOrSimd); 
+    vector <SgInitializedName* >::iterator where = find (loopIndexVars.begin(), loopIndexVars.end(), iname);
+    return (where != loopIndexVars.end());
+  }
+
   //! Return the data sharing attribute type of a variable within a context node (anchor_stmt indicates the start search location within AST)
   //! Possible values include: e_shared, e_private,  e_firstprivate,  e_lastprivate,  e_reduction, e_threadprivate, e_copyin, and e_copyprivate.
   // The rules are defined in OpenMP 4.5 specification,  page 179, 
   //    2.15.1 Data-sharing Attribute Rules
   omp_construct_enum getDataSharingAttribute (SgSymbol* sym, SgNode* anchor_node)
   {
-    omp_construct_enum rt_val = e_shared; // shared by default for now  TODO: if default() is present, we have to change this. 
+    omp_construct_enum rt_val = e_shared; // shared by default for now  
+    //TODO: if default() is present, we have to change this. 
     ROSE_ASSERT (sym != NULL);
     ROSE_ASSERT (anchor_node!= NULL);
     SgStatement* anchor_stmt = getEnclosingStatement (anchor_node);
@@ -228,7 +295,10 @@ namespace OmpSupport
     ROSE_ASSERT (var_sym!= NULL);
 
     SgInitializedName* iname = isSgInitializedName( var_sym->get_declaration() );                                                  
+    //TODO: what to do with SgOmpWorkshareStatement ?  it is a region/SgOmpBodyStatement, but it does not belong to OmpClauseBodyStatement
+
     // obtain the enclosing OpenMP clause body statement: SgOmpForStatement, parallel, sections, single, target, target data, task, etc. 
+    // TODO: this may not be reliable:  region {stmtlist ;  loop; stmtlist; } 
     SgOmpClauseBodyStatement* omp_clause_body_stmt = findEnclosingOmpClauseBodyStatement (anchor_stmt);
 
     if (omp_clause_body_stmt != NULL)
@@ -243,7 +313,8 @@ namespace OmpSupport
       // not explicitly specified, using the rules for predetermined and implicitly determined
       else
       {
-        //Not in explicit clause at this level, 
+        //Not in explicit data-sharing attribute clause at this level, 
+        
         // Apply implicit rules : 
         // check if it is locally declared  (the declaration is inside of the omp_clause_body_stmt )
         SgVariableDeclaration* var_decl = isSgVariableDeclaration(iname->get_declaration()); 
@@ -252,8 +323,9 @@ namespace OmpSupport
          // if declared at function parameters, the scope is outside, it should be shared by default if no other rules apply.
         if (var_decl && isAncestor (omp_clause_body_stmt, var_decl))
         {
-          // Variables with automatic storage duration that are declared in a scope inside the construct are private
-          // Variables with static storage duration that are declared in a scope inside the construct are shared.
+          // declared in a scope inside the construct:
+          // Variables with automatic storage duration are private
+          // Variables with static storage duration are shared.
           if (isStatic (var_decl))
             rt_val = e_shared;
           else
@@ -268,60 +340,85 @@ namespace OmpSupport
           return rt_val;
         }
 
-        if (isLoopIndexVariable (iname, anchor_stmt)) // TODO: need more work here
+        // Check if a SgInitializedName is used as a loop index within a AST subtree. 
+        // This function will use a bottom-up traverse starting from the subtree_root to find 
+        // all enclosing loops and check if ivar is used as an index for either of them.
+//        if (isLoopIndexVariable (iname, anchor_stmt)) // TODO: need more work here
+        //  not just any loop variables, but these affected by the OpenMP directives
+        if (isAffectedForLoopIndexVariable ( omp_clause_body_stmt, iname ))
         {
           /*  loop iteration variable
-            TODO: The loop iteration variable(s) in the associated for-loop(s) of a for, parallel for,
-            taskloop, or distribute construct is (are) private.
+            private: The loop iteration variable(s) in the associated for-loop(s) of a for, parallel for,
+            taskloop, or distribute construct. 
 
-            TODO linear: The loop iteration variable in the associated for-loop of a simd construct with just one
+            linear: The loop iteration variable in the associated for-loop of a simd construct with just one
             associated for-loop is linear with a linear-step that is the increment of the associated for-loop.
             
-            TODO lastprivate: The loop iteration variables in the associated for-loops of a simd construct with multiple
+            lastprivate: The loop iteration variables in the associated for-loops of a simd construct with multiple
             associated for-loops are lastprivate.
           */  
-          if (isSgOmpForStatement(omp_clause_body_stmt))  // TODO: check other types of constructs here: taskloop, distribute construct
+          if (isSgOmpForStatement(omp_clause_body_stmt))  
+          // TODO: check other types of constructs here: taskloop, distribute construct
           {
             rt_val = e_private;
             return rt_val;
           }
+          else if (SgOmpSimdStatement* simd_stmt = isSgOmpSimdStatement(omp_clause_body_stmt))
+          {
+            // if simd+ multiple affected loops:  lastprivate().  We check collapse() to see if multiple loops are affected. 
+            // TODO: we need to check if collapse(val) val >=1
+            if (hasClause(simd_stmt, V_SgOmpCollapseClause))
+            {
+              rt_val = e_lastprivate;
+            }
+            else
+              rt_val = e_linear;
+            return rt_val; 
+          }
           else
           {
-            //cerr<<"found a loop index, but enclosing body statement is not omp for. "<<endl;
+            //cerr<<"found a loop index, but enclosing body statement is not omp for, but "<<omp_clause_body_stmt->class_name() <<endl;
           }
         }
-#if 1 // no this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
+        // Important algorithm step here: 
+        // No this logic in the specification, but I split the combined parallel for into two constructs, need to double check this
         // another case is parallel region + single region, we need to get the parallel region's attribute 
-        /*
-#pragma omp parallel private(i,j)
-  {
-    for (i = 0; i < LOOPCOUNT; i++)
-      {
-#pragma omp single copyprivate(j)
-        {
-          nr_iterations++;
-          j = i;   // i should be private, based on enclosing parallel region's info.
-        }
-   }   
-         */
+        // Similar handling for simd directives, going after parent omp parallel or omp for if there is any, to find out the attributes. 
+        //   parallel+ for + simd: three levels
+       //  
+       //    #pragma omp parallel private(i,j)
+       //      {
+       //        for (i = 0; i < LOOPCOUNT; i++)
+       //          {
+       //    #pragma omp single copyprivate(j)
+       //            {
+       //              nr_iterations++;
+       //              j = i;   // i should be private, based on enclosing parallel region's info.
+       //            }
+       //       }   
+       //   
         // If implicit rules do not apply at this level (worksharing regions like single), Go to find higher level: most omp parallel
         if  (SgOmpClauseBodyStatement * parent_clause_body_stmt = findEnclosingOmpClauseBodyStatement (getEnclosingStatement(omp_clause_body_stmt->get_parent())))
         { 
-          // this cause infinite recursion, skip it for now: TODO
           //if (isSgOmpParallelStatement (parent_clause_body_stmt) && ( isSgOmpForStatement(omp_clause_body_stmt)|| isSgOmpSingleStatement(omp_clause_body_stmt)  ) )
-          if (isSgOmpParallelStatement (parent_clause_body_stmt) && ( isSgOmpSingleStatement(omp_clause_body_stmt)  ) )
+          //if (isSgOmpParallelStatement (parent_clause_body_stmt) &&  isSgOmpSingleStatement(omp_clause_body_stmt))
+          // TODO: add other directives which may be nested within others
+          if (isSgOmpForStatement (omp_clause_body_stmt) ||
+              isSgOmpSimdStatement (omp_clause_body_stmt) || 
+              isSgOmpSingleStatement(omp_clause_body_stmt))
           {
             // we need to consider the variable's data sharing attribute in the new context   
-            rt_val = getDataSharingAttribute (sym, parent_clause_body_stmt->get_body());
+            // the body of parallel can be the single region again, causing infinite recursive calls. 
+            //rt_val = getDataSharingAttribute (sym, parent_clause_body_stmt->get_body());
+            rt_val = getDataSharingAttribute (sym, parent_clause_body_stmt);
             return rt_val;
           }
         } 
-#endif
-/*
-TODO: If an array section is a list item in a map clause on the target construct and the array section is
-derived from a variable for which the type is pointer then that variable is firstprivate.
-*/
+     
+    // TODO: If an array section is a list item in a map clause on the target construct and the array section is
+    // derived from a variable for which the type is pointer then that variable is firstprivate.
      } // end explicit unknown
+
     // the rest is shared by default  
     // TODO Objects with dynamic storage duration are shared.
     // TODO Static data members are shared. 
@@ -330,6 +427,7 @@ derived from a variable for which the type is pointer then that variable is firs
     else //orphaned code segments
     {
 /*
+    For the data race detection project, we choose to inline everything. So the implementation of orphaned segs is lower priority.
   //TODO: handle more cases as needed. 
   Variables with static storage duration that are declared in called routines in the region are shared.
 
@@ -369,6 +467,7 @@ derived from a variable for which the type is pointer then that variable is firs
         }
       }
     } // end of orphaned code segments
+
     return  rt_val; 
   } 
 

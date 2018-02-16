@@ -229,11 +229,13 @@ OPTIONS
             building the software being installed. Note that the string
             is expected to a blank separated pair: the name and version
             number. The default is the string "- -" (meaning "unknown"
-            or "don't care").
+            or "don't care"). For example:
 
-            Example:
+                --cc="gcc 4.5.1"
 
-            --cc="gcc 4.5.1"
+            Note that at this time only the C compiler name is used. This
+            option has been replaced by the --CC=<name> and --CC-options=<string>
+            options.
 
         --cxx=<string>
 
@@ -241,11 +243,48 @@ OPTIONS
             in building the software being installed. Note that the string
             is expected to a blank separated pair: the name and version
             number. The default is the string "- -" (meaning "unknown"
-            or "don't care").
+            or "don't care"). For example:
 
-            Example:
+                --cxx="g++ 4.5.1"
 
-            --cxx="g++ 4.5.1"
+            Note that at this time only the C++ compiler name is used. This
+            option has been replaced by the --CXX=<name> and --CXX-options=<string>
+            options.
+
+        CC=<name>
+        --CC=<name>
+
+            Used to specify the name of the C compiler used. If a pathname
+            is supplied, only the basename will be used. For historical
+            reasons the leading double-dash is optional.
+
+        CC-options=<string>
+        --CC-options=<string>
+
+            Used to specify the options to be used with the C compiler used.
+            Only special options such as the language standard assumed are
+            to be specified. Define -D<name>, include pathname -I<pathname>,
+            and library pathname -L<pathname> (along with library names) are
+            not normally used. The normal compile-only option -c is used by
+            default. Note that the <string> of options should be quoted.
+            For historical reasons the leading double-dash is optional.
+
+        CXX=<name>
+        --CXX=<name>
+
+            Used to specify the name of the C++ compiler used. If a pathname
+            is supplied, only the basename will be used. For historical
+            reasons the leading double-dash is optional.
+
+        CXX-options=<string>
+        --CXX-options=<string>
+
+            Used to specify the options to be used with the C++ compiler used.
+            Only special options such as the language standard assumed are
+            to be specified. Define -D<name>, include pathname -I<pathname>,
+            and library pathname -L<pathname> (along with library names) are
+            not normally used. The normal compile-only option -c is used by
+            default. Note that the <string> of options should be quoted.
 
         --contact=<address>
 
@@ -277,6 +316,17 @@ OPTIONS
 
             --fortran="gfortran 4.5.1"
 
+        --intermediate-dir=<name>
+        --version-dir=<name>
+
+            Use the given simple name as an intermediate directory name
+            (aka. a version directory name) to be added under the PREFIX
+            directory pathname as given to the installer at installation
+            time in to which the directories will be installed. The
+            default is no such intermediate directory, the installations
+            will be done in the PREFIX directory as given at installation
+            time.
+
         --nofollow
 
             Don't follow symbolic links for directory pathnames to will be
@@ -286,6 +336,11 @@ OPTIONS
             This is the default behavior.
 
             Note that Windows-like systems do not support symbolic-links.
+
+        --nosha
+
+            Don't generate a SHA hash file for the generated script. This
+            is the default behaviour.
 
         --nonstd
 
@@ -399,6 +454,17 @@ OPTIONS
             then the --project-version option must also be used. There is
             no default project version number.
 
+        --sha-1
+        --sha-160
+        --sha-256
+        --sha-384
+        --sha-512
+
+            Generate a SHA hash of the generated script. The hash file
+            will have the same name as the generated script but with an
+            added ".sha-nnn" suffix (where nnn is one of 1, 160, 256,
+            384, or 512). Note that --sha-1 and --sha-160 are synonymous.
+
         --std
 
             If none of the given directory pathnames have basenames such
@@ -430,6 +496,22 @@ OPTIONS
             notice that is to be output by the generated installer script
             when the installer's --copyright option is used. By default
             the generated installer doesn't support a --copyright option.
+
+        --with-payload
+
+            Include the payload with the generated script. This results
+            in a useful installer script that will actually install the
+            supplied directories under the indicated prefix directory (see
+            the --prefix=... and the --intermediate-dir=... options. This
+            is the default behavior.
+
+        --without-payload
+
+            Don't include the payload with the generated script. This
+            results in an ineffective installer script that won't actually
+            install anything. It does however go through much of the other
+            parts of the process and so may be an aid when debugging the
+            generated installer.
 
         <pathname>
 
@@ -471,7 +553,7 @@ INPLEMENTATION
     "mkinstaller" is implemented as a Perl script.
 
 SEE ALSO
-    makensis(1), NSIS, sh(1), tar(1)
+    makensis(1), NSIS, pshaw(1x), sh(1), sha1sum(1), sha256sum(1), sha384sum(1), sha512sum(1), tar(1)
 
 NOTES
     The directory where temporary files are to be placed is determined

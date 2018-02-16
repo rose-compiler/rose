@@ -2,7 +2,7 @@
 
  /*!
      \defgroup backendGenerator Backend C and C++ Code Generator
-     \ingroup ROSE_BackEndGroup
+     \ingroup rose_backend
 
      \brief Generates C or C++ Source code from the AST.
 

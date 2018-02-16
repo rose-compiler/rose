@@ -4,7 +4,9 @@
 // **********************************************************************************
 //                       DESCRIPTION OF AST DIAGNOSTICS
 // **********************************************************************************
-/*!
+
+// Removed from doxygen. Reasons: incomplete and vaporware.
+/*
 \defgroup astDiagnostics Description of AST Diagnostics within ROSE
 
     This page specifies what mechanisms we provide to test the AST.
