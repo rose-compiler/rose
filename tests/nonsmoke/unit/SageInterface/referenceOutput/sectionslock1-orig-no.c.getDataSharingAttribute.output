@@ -1,0 +1,26 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 58
+"lck"@62:21	shared
+"i"@63:7	shared
+"lck"@64:23	shared
+"lck"@68:21	shared
+"i"@69:7	shared
+"lck"@70:23	shared
+-----------------------------------------------
+OpenMP region SgOmpSectionsStatement @ 58
+"lck"@62:21	shared
+"i"@63:7	shared
+"lck"@64:23	shared
+"lck"@68:21	shared
+"i"@69:7	shared
+"lck"@70:23	shared
+-----------------------------------------------
+OpenMP region SgOmpSectionStatement @ 60
+"lck"@62:21	shared
+"i"@63:7	shared
+"lck"@64:23	shared
+-----------------------------------------------
+OpenMP region SgOmpSectionStatement @ 66
+"lck"@68:21	shared
+"i"@69:7	shared
+"lck"@70:23	shared

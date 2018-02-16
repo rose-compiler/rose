@@ -39,6 +39,20 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
     return retval;
 }
 
+// identical to readMemory but without side effects
+SValuePtr
+MemoryCellList::peekMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    CellList::iterator cursor = get_cells().begin();
+    CellList cells = scan(cursor /*in,out*/, addr, dflt->get_width(), addrOps, valOps);
+    SValuePtr retval = mergeCellValues(cells, dflt, addrOps, valOps);
+
+    // If there's no must_equal match and at least one may_equal match, then merge the default into the return value.
+    if (!cells.empty() && cursor == get_cells().end())
+        retval = retval->createMerged(dflt, merger(), valOps->solver());
+
+    return retval;
+}
+
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {

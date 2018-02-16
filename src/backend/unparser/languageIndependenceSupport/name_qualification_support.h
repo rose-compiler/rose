@@ -31,7 +31,7 @@ class Unparser_Nameq
      public:
        // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
        // Unparser_Nameq(Unparser* unp):unp(unp){};
-          Unparser_Nameq(Unparser* unp) { };
+          Unparser_Nameq(Unparser*) { };
           virtual ~Unparser_Nameq() {};
 
        // DQ (6/2/2011): New name qualification support.

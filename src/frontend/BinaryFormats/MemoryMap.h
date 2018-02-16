@@ -124,7 +124,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s.template register_type<AllocatingBuffer>();
         s.template register_type<MappedBuffer>();
         s.template register_type<NullBuffer>();

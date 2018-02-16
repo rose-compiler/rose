@@ -563,7 +563,7 @@ varp3_SOURCES = Timer.cpp varp3.C
 
 check-varp3: varp3
 	rm -f rose_casttest1.C
-	./varp3 tests/casttest1.C
+	./varp3 $(srcdir)/tests/casttest1.C
 	g++ rose_casttest1.C
 	rm -f a.out
 

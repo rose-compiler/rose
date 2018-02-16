@@ -10,5 +10,9 @@ int main() {
     i1=(int)f1;
   }
   d1=f1=i1;
+  double testVar;
+  long double ld1;
+  testVar=(long double)10.0;
+  ld1=testVar;
   return 0;
 }

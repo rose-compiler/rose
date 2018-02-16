@@ -25,24 +25,8 @@ void write_file(std::string filename, std::string data) {
   myfile.close();
 }
 
-int main (int argc, char* argv[])
-{
-  Rose::global_options.set_frontend_notes(false);
-  Rose::global_options.set_frontend_warnings(false);
-  Rose::global_options.set_backend_warnings(false);
-
-
-  vector<string> argvList(argv, argv+argc);
-  argvList.push_back("-rose:skipfinalCompileStep");
-  SgProject* sageProject=frontend (argvList); 
-  // Run internal consistency tests on AST
-  //AstTests::runAllTests(sageProject);
-  //AstDOTGeneration dotGen;
-  //dotGen.generate(sageProject,"matcher",AstDOTGeneration::TOPDOWN);
-  SgNode* root;
-  root=sageProject;
+void annotateImplicitCastsAsComments(SgProject* root) {
   RoseAst ast(root);
-
   std::string matchexpression="$CastNode=SgCastExp($CastOpChild)";
   AstMatching m;
   MatchResult r=m.performMatching(matchexpression,root);
@@ -68,7 +52,7 @@ int main (int argc, char* argv[])
       }
       // line are created in reverse order
       report.push_front(reportLine); 
-
+      
       string newSourceCode;
       newSourceCode="/* CAST ("+castTypeString+") */";
       newSourceCode+=castExp->unparseToString();
@@ -82,5 +66,38 @@ int main (int argc, char* argv[])
   //m.printMarkedLocations();
   //m.printMatchOperationsSequence();
   cout<<"Number of compiler generated casts: "<<statementTransformations<<endl;
+}
+
+void changeVariableType(SgProject* root, string varNameToFind, SgType* type) {
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+      SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
+      string varName=SgNodeHelper::symbolToString(varSym);
+      if(varName==varNameToFind) {
+        cout<<"DEBUG: found declaration of var "<<varNameToFind<<". Changing type to "<<type->unparseToString()<<endl;
+        SgTypeFloat* ft=SageBuilder::buildFloatType();
+        varInitName->set_type(ft);
+      }
+    }
+  }
+}
+
+int main (int argc, char* argv[])
+{
+  Rose::global_options.set_frontend_notes(false);
+  Rose::global_options.set_frontend_warnings(false);
+  Rose::global_options.set_backend_warnings(false);
+
+  vector<string> argvList(argv, argv+argc);
+  argvList.push_back("-rose:skipfinalCompileStep");
+  SgProject* sageProject=frontend (argvList); 
+
+  changeVariableType(sageProject, "testVar", SageBuilder::buildFloatType());
+
+  annotateImplicitCastsAsComments(sageProject);
+
   backend(sageProject);
+  return 0;
 }

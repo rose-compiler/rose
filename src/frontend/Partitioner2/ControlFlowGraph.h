@@ -29,7 +29,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(type_);
         s & BOOST_SERIALIZATION_NVP(startVa_);
         s & BOOST_SERIALIZATION_NVP(bblock_);
@@ -171,7 +171,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(type_);
         s & BOOST_SERIALIZATION_NVP(confidence_);
     }

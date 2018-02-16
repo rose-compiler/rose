@@ -2962,6 +2962,20 @@ SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node
    }
 
 
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedSubscriptExpression* SgUntypedSubscriptExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, SgUntypedExpression* lower_bound, SgUntypedExpression* upper_bound, SgUntypedExpression* stride )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedSubscriptExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, SgUntypedExpression* lower_bound, SgUntypedExpression* upper_bound, SgUntypedExpression* stride): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedSubscriptExpression* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 /* #line 2898 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */

@@ -73,7 +73,7 @@ class RiscOperators: public MultiSemantics::RiscOperators {
     // The normal C++ constructors; protected because this object is reference counted
 protected:
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &userDomain)
-        : MultiSemantics::RiscOperators(MultiSemantics::SValue::instance(), NULL) {
+        : MultiSemantics::RiscOperators(MultiSemantics::SValue::instance(), SmtSolverPtr()) {
         init(userDomain);
     }
 
@@ -90,7 +90,7 @@ public:
     // dataflow semantics framework only through the "instance" method. (But we still must override them.)
 private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -98,7 +98,7 @@ private:
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -165,8 +165,17 @@ public:
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
+                                                const BaseSemantics::SValuePtr &dflt_) ROSE_OVERRIDE;
+
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                              const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+protected:
+    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                                                      const BaseSemantics::SValuePtr &dflt,
+                                                      const BaseSemantics::SValuePtr &cond, bool allowSideEffects);
+
 };
 
 } // namespace

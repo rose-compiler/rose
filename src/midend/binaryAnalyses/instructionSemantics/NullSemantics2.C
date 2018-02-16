@@ -18,7 +18,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
     BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
     BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     BaseSemantics::StatePtr state = State::instance(registers, memory);
-    SmtSolver *solver = NULL;
+    SmtSolverPtr solver;
     return RiscOperatorsPtr(new RiscOperators(state, solver));
 }
 
@@ -239,6 +239,15 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     ASSERT_not_null(currentState());
     (void) SValue::promote(addr);
     (void) SValue::promote(cond);
+    return dflt->copy();
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                          const BaseSemantics::SValuePtr &dflt)
+{
+    ASSERT_not_null(currentState());
+    (void) SValue::promote(addr);
     return dflt->copy();
 }
 

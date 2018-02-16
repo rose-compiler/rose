@@ -70,7 +70,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(address_);
         s & BOOST_SERIALIZATION_NVP(value_);
         s & BOOST_SERIALIZATION_NVP(writers_);
@@ -90,7 +90,8 @@ protected:
     }
 
     // deep-copy cell list so modifying this new one doesn't alter the existing one
-    MemoryCell(const MemoryCell &other) {
+    MemoryCell(const MemoryCell &other)
+        : boost::enable_shared_from_this<MemoryCell>(other) {
         address_ = other.address_->copy();
         value_ = other.value_->copy();
         writers_ = other.writers_;

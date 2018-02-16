@@ -4982,7 +4982,7 @@ HEADER_NAME_START
        // To handle "assert(p_name != NULL);" where p_name is a SgName
        // object, STL requires that the "operator==()" be defined
        // (STL builds the "operator!=()" from the "operator==()"
-          bool operator== (const int i) const { return false; }
+          bool operator== (const int) const { return false; }
 
           void display( const std::string& label ) const;
 

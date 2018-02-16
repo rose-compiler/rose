@@ -517,8 +517,6 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
    }
 }
 
-   
-
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
@@ -544,6 +542,12 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
         }
     }
     return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &dflt) {
+    ASSERT_not_reachable("operation doesn't make sense in this domain");
 }
 
 void

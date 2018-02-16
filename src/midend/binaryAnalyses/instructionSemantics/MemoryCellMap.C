@@ -29,6 +29,19 @@ MemoryCellMap::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscO
     return retval;
 }
 
+SValuePtr
+MemoryCellMap::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    // Just like readMemory except no side effects
+    SValuePtr retval;
+    CellKey key = generateCellKey(address);
+    if (MemoryCellPtr cell = cells.getOrDefault(key)) {
+        retval = cell->get_value();
+    } else {
+        retval = dflt->copy();
+    }
+    return retval;
+}
+
 void
 MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(address);

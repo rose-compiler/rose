@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 #include <BinaryZ3Solver.h>
 #include <stringify.h>
+#include <Sawyer/Stopwatch.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -48,47 +49,59 @@ Z3Solver::clearEvidence() {
 }
 
 void
-Z3Solver::push() {
-    SmtlibSolver::push();
-#ifdef ROSE_HAVE_Z3
-    if (linkage() == LM_LIBRARY) {
-        ASSERT_not_null(ctx_);
-        ASSERT_not_null(solver_);
-        solver_->push();
-        z3Stack_.push_back(std::vector<z3::expr>());
-    }
-#endif
-}
-
-void
 Z3Solver::pop() {
     SmtlibSolver::pop();
 #ifdef ROSE_HAVE_Z3
-    if (linkage() == LM_LIBRARY) {
-        ASSERT_not_null(ctx_);
-        ASSERT_not_null(solver_);
+    if (nLevels() < z3Stack_.size()) {
+        ASSERT_require(nLevels() + 1 == z3Stack_.size());
         solver_->pop();
         z3Stack_.pop_back();
-        if (z3Stack_.empty())
-            z3Stack_.push_back(std::vector<z3::expr>());
     }
 #endif
 }
 
 void
-Z3Solver::insert(const SymbolicExpr::Ptr &expr) {
-    SmtlibSolver::insert(expr);
+Z3Solver::z3Update() {
 #ifdef ROSE_HAVE_Z3
     if (linkage() == LM_LIBRARY) {
         ASSERT_not_null(ctx_);
         ASSERT_not_null(solver_);
+        ASSERT_forbid(z3Stack_.empty());
+        ASSERT_require(z3Stack_.size() <= nLevels());
+        Sawyer::Stopwatch prepareTimer;
 
-        VariableSet vars = findVariables(expr);
-        ctxVariableDeclarations(vars);
-        ctxCommonSubexpressions(expr);
-        z3::expr z3expr = ctxCast(ctxExpression(expr), BOOLEAN).first;
-        solver_->add(z3expr);
-        z3Stack_.back().push_back(z3expr);
+        while (z3Stack_.size() < nLevels() || z3Stack_.back().size() < assertions(nLevels()-1).size()) {
+
+            // Push z3 expressions onto the top of the z3 stack
+            size_t level = z3Stack_.size() - 1;
+            std::vector<SymbolicExpr::Ptr> exprs = assertions(level);
+            while (z3Stack_.back().size() < exprs.size()) {
+                size_t i = z3Stack_[level].size();
+                SymbolicExpr::Ptr expr = exprs[i];
+
+                // Create the Z3 expression for this ROSE expression
+                VariableSet vars = findVariables(expr);
+                ctxVariableDeclarations(vars);
+                ctxCommonSubexpressions(expr);
+                z3::expr z3expr = ctxCast(ctxExpression(expr), BOOLEAN).first;
+                solver_->add(z3expr);
+                z3Stack_.back().push_back(z3expr);
+            }
+            
+            // Push another level onto the z3 stack
+            if (z3Stack_.size() < nLevels()) {
+                solver_->push();
+                z3Stack_.push_back(std::vector<z3::expr>());
+            }
+        }
+
+#ifndef NDEBUG
+        ASSERT_require(z3Stack_.size() == nLevels());
+        for (size_t i=0; i<nLevels(); ++i)
+            ASSERT_require(z3Stack_[i].size() == assertions(i).size());
+#endif
+
+        stats.prepareTime += prepareTimer.stop();
     }
 #endif
 }
@@ -98,34 +111,13 @@ Z3Solver::checkLib() {
     requireLinkage(LM_LIBRARY);
     
 #ifdef ROSE_HAVE_Z3
-    ASSERT_not_null(ctx_);
-    ASSERT_not_null(solver_);
+    z3Update();
 
-    // Keep track of how often we call the SMT solver.
-    ++stats.ncalls;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        ++classStats.ncalls;
-    }
-
-    std::vector<SymbolicExpr::Ptr> allExprs = assertions();
-    ctxVarDecls_.clear();
-    ctxCses_.clear();
+    Sawyer::Stopwatch timer;
+    z3::check_result result = solver_->check();
+    stats.solveTime += timer.stop();
     
-    for (size_t level = 0; level < nLevels(); ++level) {
-        if (level > 0)
-            solver_->push();
-
-        std::vector<SymbolicExpr::Ptr> exprs = assertions(level);
-        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
-            VariableSet vars = findVariables(expr);
-            ctxVariableDeclarations(vars);
-            ctxCommonSubexpressions(expr);
-            solver_->add(ctxCast(ctxExpression(expr), BOOLEAN).first);
-        }
-    }
-
-    switch (solver_->check()) {
+    switch (result) {
         case z3::unsat:
             return SAT_NO;
         case z3::sat:
@@ -361,8 +353,25 @@ Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
             z3::expr z3expr = ctx_->bv_val((unsigned long long)leaf->toInt(), (unsigned)leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
         } else {
-            z3::expr z3expr = ctx_->bv_val(("#x" + leaf->bits().toHex()).c_str(), leaf->nBits());
+#if 0 // [Robb Matzke 2018-01-04]: This fails silently with z3 4.5.0 and 4.6.0
+            // FIXME[Robb Matzke 2018-01-04]: Our bit vector (leaf->bits()) is an array of unsigned ints and it would be nice
+            // if we could pass it directly into Z3 to get a z3::expr bit vector. Second approach is if Z3 could accept a
+            // string representing in binary, octal, hexadecimal, or some other power-of-two radix. Neither of these approaches
+            // seems possible with the C or C++ APIs in z3-4.5.0 or 4.6.0. There is a z3::context::bv_val function that takes a
+            // string, but only a decimal representation (give it anything else and it fails silently).  Converting from ROSE
+            // binary representation to decimal string back to z3 binary representation is going to involve division and
+            // multiplication.
+            std::string hexStr = "#x" + leaf->bits().toHex();
+            z3::expr z3expr = ctx_->bv_val(hexStr.c_str(), leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
+#else
+            static bool called;
+            if (!called) {
+                mlog[WARN] <<"FIXME: Z3 interface does not support bit vector constants wider than 64 bits\n";
+                called = true;
+            }
+            throw Exception("z3 interface does not support bit vector constants wider than 64 bits");
+#endif
         }
     } else if (leaf->isVariable()) {
         z3::func_decl decl = ctxVarDecls_.get(leaf);
@@ -520,7 +529,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                     ASSERT_require(BIT_VECTOR == type);
                     z3expr = children[0].first;
                     for (size_t i = 1; i < children.size(); ++i)
-                        z3expr = children[i].first;
+                        z3expr = z3expr | children[i].first;
                 }
                 return Z3ExprTypePair(z3expr, type);
             }
@@ -789,7 +798,7 @@ Z3Solver::ctxSet(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(inode->nChildren() >= 2);
     SymbolicExpr::LeafPtr var = varForSet(inode);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, SmtSolverPtr(), var);
     return ctxExpression(ite);
 }
 
@@ -962,6 +971,28 @@ Z3Solver::parseEvidence() {
         return SmtlibSolver::parseEvidence();
 
 #ifdef ROSE_HAVE_Z3
+    Sawyer::Stopwatch evidenceTimer;
+
+    // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
+    // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
+    // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
+    // caller.
+    SymbolicExpr::Hash memoId = latestMemoizationId();
+    if (memoId > 0) {
+        MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
+        if (found != memoizedEvidence.end()) {
+            evidence.clear();
+            SymbolicExpr::ExprExprHashMap undo = latestMemoizationRewrite_.invert();
+            evidence.clear();
+            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
+                evidence.insert(node.key()->substituteMultiple(undo),
+                                node.value()->substituteMultiple(undo));
+            stats.evidenceTime += evidenceTimer.stop();
+            return;
+        }
+    }
+
+    // Parse the evidence
     ASSERT_not_null(solver_);
     z3::model model = solver_->get_model();
     for (size_t i=0; i<model.size(); ++i) {
@@ -996,12 +1027,22 @@ Z3Solver::parseEvidence() {
             mlog[WARN] <<"cannot parse evidence expression for " <<*var <<"\n";
             continue;
         }
-        
+
         ASSERT_not_null(var);
         ASSERT_not_null(val);
         evidence.insert(var, val);
     }
 
+    // Cache the evidence. We need to cache the evidence in terms of the normalized variable names.
+    if (memoId > 0) {
+        ExprExprMap &me = memoizedEvidence[memoId];
+        BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
+            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
+                      node.value()->substituteMultiple(latestMemoizationRewrite_));
+        }
+    }
+
+    stats.evidenceTime += evidenceTimer.stop();
 #else
     ASSERT_not_reachable("z3 not enabled");
 #endif

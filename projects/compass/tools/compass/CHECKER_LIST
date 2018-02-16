@@ -8,12 +8,7 @@ assignmentOperatorCheckSelf
 assignmentReturnConstThis
 asynchronousSignalHandler
 avoidUsingTheSameHandlerForMultipleSignals
-binPrintAsmFunctions
-binPrintAsmInstruction
-binaryBufferOverflow
-binaryInterruptAnalysis
 booleanIsHas
-bufferOverflowFunctions
 byteByByteStructureComparison
 charStarForString
 commaOperator
@@ -24,7 +19,6 @@ constructorDestructorCallsVirtualFunction
 controlVariableTestAgainstFunction
 copyConstructorConstArg
 cppCallsSetjmpLongjmp
-cycleDetection
 cyclomaticComplexity
 dataMemberAccess
 deepNesting

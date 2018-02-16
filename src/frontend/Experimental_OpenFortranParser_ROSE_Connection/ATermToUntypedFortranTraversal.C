@@ -4,11 +4,16 @@
 #include "untypedBuilder.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 1
+#define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 
-using namespace OFP;
+using namespace ATermSupport;
+using std::cout;
+using std::cerr;
+using std::endl;
 
+
+#if USE_BASE_CLASS
 static void
 fixupLocation(FAST::PosInfo & loc)
 {
@@ -26,7 +31,9 @@ fixupLocation(FAST::PosInfo & loc)
          loc.setEndCol(end_col - 1);
       }
 }
+#endif
 
+#if USE_BASE_CLASS
 FAST::PosInfo
 ATermToUntypedFortranTraversal::getLocation(ATerm term)
 {
@@ -43,7 +50,7 @@ ATermToUntypedFortranTraversal::getLocation(ATerm term)
          pinfo = FAST::PosInfo(i1,i2,i3,i4);
       }
    }
-   fixupLocation(pinfo);
+   ATermToUntypedTraversal::fixupLocation(pinfo);
 
    return pinfo;
 }
@@ -102,7 +109,9 @@ ATermToUntypedFortranTraversal::setSourcePositionIncludingNode( SgLocatedNode* l
 
    return setSourcePosition(locatedNode, pos);
 }
+#endif
 
+#if USE_BASE_CLASS
 void
 ATermToUntypedFortranTraversal::setSourcePosition( SgLocatedNode* locatedNode, FAST::PosInfo & pos )
 {
@@ -125,6 +134,7 @@ ATermToUntypedFortranTraversal::setSourcePosition( SgLocatedNode* locatedNode, F
 
      SageInterface::setSourcePosition(locatedNode);
 }
+#endif
 
 
 //--------------------------------- above should be refactored/moved ---------------------------
@@ -194,7 +204,7 @@ SgUntypedType* ATermToUntypedFortranTraversal::buildType(SgUntypedType::type_enu
 }
 
 
-ATermToUntypedFortranTraversal::ATermToUntypedFortranTraversal(SgSourceFile* source)
+ATermToUntypedFortranTraversal::ATermToUntypedFortranTraversal(SgSourceFile* source) : ATermToUntypedTraversal(source)
 {
    UntypedBuilder::set_language(SgFile::e_Fortran_language);
 
@@ -229,26 +239,16 @@ ATermToUntypedFortranTraversal::setSourcePositionUnknown(SgLocatedNode* locatedN
      printf ("UntypedConverter::setSourcePositionUnknown: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
 #endif
 
-#if 0
+#if 1
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
 
   // Make sure we never try to reset the source position of the global scope (set elsewhere in ROSE).
      ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
 
-  // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
-     if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL)
-        {
-        // TODO - figure out if anything needs to be done here
-        // printf ("In setSourcePositionUnknown: source position known locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-        }
-     else
-        {
-           ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
-           ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
-     printf("---setSourcePosUnknown: %p %p %p\n", locatedNode, locatedNode->get_startOfConstruct(), locatedNode->get_endOfConstruct());
-           SageInterface::setSourcePosition(locatedNode);
-        }
+     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
+     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
+     SageInterface::setSourcePosition(locatedNode);
 #endif
 }
 
@@ -1106,7 +1106,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
    printf("... traverse_LiteralConstant: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm term2;
+   ATerm t_kind;
    char* arg1;
    std::string value;
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_TYPE;
@@ -1118,13 +1118,16 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
       value += arg1;
       type = buildType(SgUntypedType::e_int);
    }
-   else if (ATmatch(term, "IntVal(<str>,<term>)", &arg1,&term2)) {
+   else if (ATmatch(term, "IntVal(<str>,<term>)", &arg1,&t_kind)) {
       SgUntypedExpression* kind;
-      if (traverse_Expression(term2, &kind)) {
+      if (traverse_Expression(t_kind, &kind)) {
          // MATCHED KindParam
-      }
+      } else return ATfalse;
       value += arg1;
       type = buildType(SgUntypedType::e_int);
+   // add type kind expression
+      type->set_has_kind(true);
+      type->set_type_kind(kind);
    }
    else return ATfalse;
 
@@ -1383,59 +1386,48 @@ ATbool ATermToUntypedFortranTraversal::traverse_EntityDecl(ATerm term, SgUntyped
    printf("... traverse_EntityDecl: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm term1, term2, term3, term4, eos_term;
+   ATerm t_name, t_array_spec, t_coarray_spec, t_char_length, eos_term;
    std::string name;
 
-   SgUntypedType* initialized_type = NULL;
+   SgUntypedArrayType* array_type = NULL;
    SgUntypedInitializedName* initialized_name = NULL;
-   SgUntypedExprListExpression* dim_info = NULL;
    SgUntypedExpression* char_length = NULL;
    SgUntypedExpression* initialization = NULL;
 
-// TODO - is this ok (can pointers to types be shared/copied)
-// NO NO NO, Dan says don't do this...........
-// YES YES YES, Dan says it's ok...........
-   std::cerr << "...TODO... WARNING may be sharing pointers to nodes (FIXME)" << std::endl;
+   SgUntypedType* type = declared_type;
 
-   initialized_type = declared_type;
-
-   if (ATmatch(term, "EntityDecl(<term>,<term>,<term>,<term>,<term>)",&term1,&term2,&term3,&term4,&eos_term)) {
-      if (traverse_Name(term1, name)) {
+   if (ATmatch(term, "EntityDecl(<term>,<term>,<term>,<term>,<term>)",&t_name,&t_array_spec,&t_coarray_spec,&t_char_length,&eos_term)) {
+      if (traverse_Name(t_name, name)) {
          // MATCHED ObjectName                                                                                      
       } else return ATfalse;
-      if (traverse_OptArraySpec(term2, declared_type, &initialized_type)) {
-         // MATCHED ArraySpec
-         // will have changed to an SgUntypedArrayType
+
+      if (traverse_OptArraySpec(t_array_spec, type, &array_type)) {
+         if (array_type != NULL) type = array_type;
+      } else return ATfalse;
+
+      if (traverse_OptCoarraySpec(t_coarray_spec, type, &array_type)) {
          //TODO - implement in traverseal
+         if (array_type != NULL) type = array_type;
       } else return ATfalse;
-      if (traverse_OptCoarraySpec(term3, declared_type, &initialized_type)) {
-         // MATCHED CoarraySpec
-         // may have changed to an SgUntypedArrayType
-      //TODO - implement in traverseal
-      } else return ATfalse;
-      if (traverse_OptCharLength(term4, &char_length)) {
+
+      if (traverse_OptCharLength(t_char_length, &char_length)) {
          // MATCHED OptCharLength
          if (char_length != NULL) {
-            initialized_type->set_char_length_expression(char_length);
+            type->set_char_length_expression(char_length);
          }
       } else return ATfalse;
-      if (traverse_OptInitialization(eos_term, &initialization)) {
-         // MATCHED ArraySpec
-      //TODO_SgUntyped - SgUntypedInitializedName/SgUntypedType requires ability to initialize
-#if 0
-         if (initialization != NULL) {
-            initialized_type->set_char_length_expression(char_length);
-         }
-#endif
-      } else return ATfalse;
+
+   // TODO_SgUntyped - SgUntypedInitializedName/SgUntypedType requires ability to initialize
+      if (initialization != NULL) {
+         type->set_char_length_expression(char_length);
+      }
+
    } else return ATfalse;
 
-   initialized_name = new SgUntypedInitializedName(initialized_type, name);
+   initialized_name = new SgUntypedInitializedName(type, name);
    setSourcePosition(initialized_name, term);
 
    name_list->get_name_list().push_back(initialized_name);
-
-//TODO
 
    return ATtrue;
 }
@@ -1486,7 +1478,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptInitialization(ATerm term, Sg
 //========================================================================================
 // R509 coarray-spec (optional only for now)
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* declared_type, SgUntypedType** initialized_type)
+ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptCoarraySpec: %s\n", ATwriteToString(term));
@@ -1506,72 +1498,108 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUnt
 //========================================================================================
 // R515 array-spec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* declared_type, SgUntypedType** initialized_type)
+ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptArraySpec: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_array_spec_arg;
-   SgUntypedExprListExpression* dim_info;
-   SgUntypedExpression *lower_bound, *upper_bound;
+   SgUntypedSubscriptExpression *range;
+   SgUntypedExpression *lower_bound, *upper_bound, *stride;
+   SgUntypedExprListExpression *dim_info;
+   Fortran_ROSE_Translation::ExpressionKind expr_enum = Fortran_ROSE_Translation::e_unknown;
+   int rank = 0;
+
+   *array_type = NULL;
 
    if (ATmatch(term, "no-list()")) {
       // MATCHED no-list()
    }
    else if (ATmatch(term, "ArraySpec(<term>)", &t_array_spec_arg)) {
-      // check for non-list array-spec term first
-      // 
+
+      dim_info = new SgUntypedExprListExpression(Fortran_ROSE_Translation::e_array_shape);
+      setSourcePosition(dim_info, t_array_spec_arg);
+
+   // check for non-list array-spec term first, e.g., dimension A(*)
+   // 
       if (traverse_AssumedOrImpliedSpec(t_array_spec_arg, &lower_bound)) {
-         SgUntypedExprListExpression* range = new SgUntypedExprListExpression();
+         upper_bound = new SgUntypedNullExpression();
+         setSourcePositionUnknown(upper_bound);
 
-      // assumed and implied shape arrays have rank 1, e.g., dimension A(*)
-         int rank = 1;
+         stride = new SgUntypedNullExpression();
+         setSourcePositionUnknown(stride);
 
-         upper_bound = new SgUntypedOtherExpression(5); /* TODO - assumed_or_implied_enum, 5 for now */
-         range->get_expressions().push_back(lower_bound);
-         range->get_expressions().push_back(upper_bound);
+         expr_enum = Fortran_ROSE_Translation::e_assumed_or_implied_shape_array;
+         range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
+         setSourcePosition(range, t_array_spec_arg);
 
-         dim_info = new SgUntypedExprListExpression(0); /* TODO - WHAT is 0 */
          dim_info->get_expressions().push_back(range);
 
+      // assumed and implied shape arrays have rank 1
+         rank = 1;
       // TODO: The builder should probably be based on the declared type
-         SgUntypedArrayType* array_type = UntypedBuilder::buildArrayType(declared_type->get_type_enum_id(),dim_info,rank);
+         *array_type = UntypedBuilder::buildArrayType(base_type->get_type_enum_id(),dim_info,rank);
 
-         *initialized_type = array_type;
-
-         std::cout << "-----------FOUND assumed-spec of implied-spec --------------\n\n";
         return ATtrue;
       }
-#if 0
-      if (traverse_AssumedSize(t_array_spec_arg)) {
-           // TODO - need SgUntypedExprListExpression
+
+   // check for an assumed-size array, e.g., dimension A(3,*)
+   // 
+      if (traverse_AssumedSize(t_array_spec_arg, base_type, array_type)) {
          return ATtrue;
       }
-#endif
 
-      // this is a list of array-spec terms
+   // final choice is a list of array-spec terms
+   //
       ATermList tail = (ATermList) ATmake("<term>", t_array_spec_arg);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_ExplicitShape(head, &lower_bound, &upper_bound)) {
-           // TODO - append to SgUntypedExprListExpression
+            expr_enum = Fortran_ROSE_Translation::e_explicit_shape;
+
+            rank += 1;
+
+            stride = new SgUntypedNullExpression();
+            setSourcePositionUnknown(stride);
+
+            range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
+            setSourcePosition(range, head);
+
+            dim_info->get_expressions().push_back(range);
          }
          else if (traverse_AssumedShape(head, &lower_bound)) {
-           // TODO - append to SgUntypedExprListExpression
+            ROSE_ASSERT(expr_enum == Fortran_ROSE_Translation::e_unknown ||
+                        expr_enum == Fortran_ROSE_Translation::e_assumed_size_array);
+            expr_enum = Fortran_ROSE_Translation::e_assumed_size_array;
+
+            rank += 1;
+
+            upper_bound = new SgUntypedNullExpression();
+            setSourcePositionUnknown(upper_bound);
+
+            stride = new SgUntypedNullExpression();
+            setSourcePositionUnknown(stride);
+
+            range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
+            setSourcePosition(range, head);
+
+            dim_info->get_expressions().push_back(range);
          }
         else {
            std::cerr << "traverse_OptArraySpec: ERROR in ArraySpec list" << std::endl;
            return ATfalse;
         }
       }
+
+   // TODO: The builder should probably be based on the declared (or base) type
+      *array_type = UntypedBuilder::buildArrayType(base_type->get_type_enum_id(),dim_info,rank);
    }
    else {
       return ATfalse;
    }
 
-   std::cout << "\n---------------------------------------------------\n";
    return ATtrue;
 }
 
@@ -1592,6 +1620,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShape(ATerm term, SgUnty
    if (ATmatch(term, "ExplicitShape(<term>,<term>)", &t_lower_bound, &t_upper_bound)) {
       if (ATmatch(t_lower_bound, "no-lower-bound()")) {
          *lower_bound = new SgUntypedNullExpression();
+         setSourcePositionUnknown(*lower_bound);
       }
       else if (traverse_Expression(t_lower_bound, lower_bound)) {
       } else return ATfalse;
@@ -1600,6 +1629,47 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShape(ATerm term, SgUnty
       } else return ATfalse;
       
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShapeList(ATerm term, SgUntypedExprListExpression* dim_info)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ExplicitShapeList: %s\n", ATwriteToString(term));
+#endif
+
+   SgUntypedExpression *lower_bound, *upper_bound, *stride, *range;
+
+   // traverse list of explicit-shape terms
+   //
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+      if (traverse_ExplicitShape(head, &lower_bound, &upper_bound)) {
+         int expr_enum = Fortran_ROSE_Translation::e_array_range;
+         
+         if (isSgUntypedNullExpression(lower_bound))
+            {
+            // can be simplifified by only using upper bound
+               delete lower_bound;
+               range = upper_bound;
+            }
+         else
+            {
+            // add stride explicitly and let unparser ignore it
+               stride = new SgUntypedValueExpression(SgToken::FORTRAN_TYPE,"1",buildType(SgUntypedType::e_int));
+               setSourcePositionUnknown(stride);
+         
+               range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
+               setSourcePosition(range, head);
+            }
+         
+         dim_info->get_expressions().push_back(range);
+
+      } else return ATfalse;
+   }
 
    return ATtrue;
 }
@@ -1620,11 +1690,66 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedShape(ATerm term, SgUntyp
    if (ATmatch(term, "AssumedShape(<term>)", &t_lower_bound)) {
       if (ATmatch(t_lower_bound, "no-lower-bound()")) {
          *lower_bound = new SgUntypedNullExpression();
+         setSourcePositionUnknown(*lower_bound);
       }
       else if (traverse_Expression(t_lower_bound, lower_bound)) {
       } else return ATfalse;
 
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R521 assumed-size
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_AssumedSize(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AssumedSize: %s\n", ATwriteToString(term));
+#endif
+
+   int rank;
+   ATerm t_explicit_shape_list, t_lower_bound;
+   SgUntypedExpression *lower_bound, *upper_bound, *stride;
+
+   SgUntypedExprListExpression* dim_info = new SgUntypedExprListExpression(Fortran_ROSE_Translation::e_array_shape);
+   setSourcePosition(dim_info, term);
+
+   if (ATmatch(term, "AssumedSize(<term>,<term>)", &t_explicit_shape_list, &t_lower_bound)) {
+
+   // traverse the list of explicit shape dimension before the final '*'
+      if (traverse_ExplicitShapeList(t_explicit_shape_list, dim_info)) {
+         // list of ExplicitShape terms are added to dim_info
+      } else return ATfalse;
+
+   // match the final dimension which makes it assumed-size, i.e., '*'
+      if (ATmatch(t_lower_bound, "no-lower-bound()")) {
+         lower_bound = new SgUntypedNullExpression();
+         setSourcePositionUnknown(lower_bound);
+      }
+      else if (traverse_Expression(t_lower_bound, &lower_bound)) {
+      } else return ATfalse;
+
+      upper_bound = new SgUntypedNullExpression();
+      setSourcePositionUnknown(upper_bound);
+
+      stride = new SgUntypedNullExpression();
+      setSourcePositionUnknown(stride);
+
+      int expr_enum = Fortran_ROSE_Translation::e_assumed_size_array;
+      SgUntypedSubscriptExpression* range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
+      setSourcePosition(range, t_lower_bound);
+
+      dim_info->get_expressions().push_back(range);
+      dim_info->get_expressions().size();
+
+   } else return ATfalse;
+
+   rank = dim_info->get_expressions().size();
+
+// TODO: The array-type builder should probably be based on the declared type
+   *array_type = UntypedBuilder::buildArrayType(base_type->get_type_enum_id(),dim_info,rank);
 
    return ATtrue;
 }
@@ -1644,7 +1769,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedOrImpliedSpec(ATerm term,
 
    if (ATmatch(term, "AssumedOrImpliedSpec(<term>)", &t_lower_bound)) {
       if (ATmatch(t_lower_bound, "no-lower-bound()")) {
-         *lower_bound = new SgUntypedOtherExpression(SgToken::FORTRAN_NULL);
+         *lower_bound = new SgUntypedNullExpression();
+         setSourcePositionUnknown(*lower_bound);
       }
       else if (traverse_Expression(t_lower_bound, lower_bound)) {
       } else return ATfalse;
@@ -1852,8 +1978,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptExpr( ATerm term, SgUntypedEx
 
    if (ATmatch(term, "no-expr()")) {
       // No Expression
-      *expr = new SgUntypedOtherExpression(SgToken::FORTRAN_NULL);
-      setSourcePosition(*expr, term);
+      *expr = new SgUntypedNullExpression();
+      setSourcePositionUnknown(*expr);
    }
    else if (traverse_Expression(term, expr)) {
       // MATCHED an Expression
@@ -2017,8 +2143,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptStopCode(ATerm term, SgUntype
   
    if (ATmatch(term, "no-stop-code()")) {
       // No StopCode
-      *stop_code = new SgUntypedOtherExpression(SgToken::FORTRAN_NULL);
-      setSourcePosition(*stop_code, term);
+      *stop_code = new SgUntypedNullExpression();
+      setSourcePositionUnknown(*stop_code);
    }
    else if (traverse_Expression(term, stop_code)) {
       // MATCHED StopCode

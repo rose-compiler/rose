@@ -1,0 +1,8 @@
+-----------------------------------------------
+OpenMP region SgOmpCriticalStatement @ 59
+"q"@60:4	shared
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 68
+"i"@70:10	shared
+"sum"@71:6	reduction
+"i"@71:11	shared

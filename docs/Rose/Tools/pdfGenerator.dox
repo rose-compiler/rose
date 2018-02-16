@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page pdf_generator PDF Generator
+/** @defgroup pdf_generator PDF Generator
+ *  @ingroup rosetools
  * 
  * @section sec_overview Overview
  *  This tool will generate a pdf file from a list of input source files. It is especially useful when the AST is too large to be visualized by the Dot graph generators.

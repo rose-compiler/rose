@@ -32,7 +32,7 @@ parseCommandLine(int argc, char *argv[]) {
 }
 
 void
-testSolver(SmtSolver *solver) {
+testSolver(const SmtSolverPtr &solver) {
     mlog[INFO] <<"testing " <<solver->name() <<"\n";
     if (solver->linkage() == SmtSolver::LM_NONE) {
         mlog[WARN] <<"test skipped due to lack of SMT solver\n";

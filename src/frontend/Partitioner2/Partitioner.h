@@ -19,11 +19,13 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
+#include <Sawyer/ProgressBar.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <BinaryUnparser.h>
 #include <Progress.h>
 
+#include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 
@@ -312,7 +314,7 @@ private:
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
-    SmtSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
+    SmtSolverPtr solver_;                               // Satisfiable modulo theory solver used by semantic expressions
     Functions functions_;                               // List of all attached functions by entry address
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
@@ -352,7 +354,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serializeCommon(S &s, const unsigned version) {
+    void serializeCommon(S &s, const unsigned /*version*/) {
         s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
         s.template register_type<InstructionSemantics2::DispatcherX86>();
@@ -488,6 +490,50 @@ public:
     bool addressIsExecutable(rose_addr_t va) const /*final*/ {
         return memoryMap_!=NULL && memoryMap_->at(va).require(MemoryMap::EXECUTABLE).exists();
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Saving and loading
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Save state in a file.
+     *
+     *  The partitioner's current state is saved in the specified binary file, which will be created if it doesn't exist and
+     *  truncated first if it does exist. A @ref FileError is thrown for failures related to the file; various Boost errors are
+     *  thrown for failures related to the serialization.
+     *
+     *  If a @ref Sawyer::ProgressBar is supplied then its range will be set to be a spinner (0, 0) and its value will be
+     *  periodically updated to equal its current size while the serialization progresses in a separate thread.
+     *
+     * @{ */
+    void saveRbaFile(const boost::filesystem::path &fileName) const;
+    void saveRbaFile(const boost::filesystem::path &fileName, Sawyer::ProgressBar<size_t> &progress) const;
+    /** @} */
+
+    /** Load state from a file.
+     *
+     *  This partitioner's state is reset by loading information from a file previously saved with @ref saveRbaFile. A @ref
+     *  FileError is thrown for failures related to the file; various Boost errors are thrown for failures related to the
+     *  deserialization.
+     *
+     *  If a @ref Sawyer::ProgressBar is supplied then its range will be adjusted to equal the total input file size and it
+     *  will be incremented while the actual deserialization progresses in a separate thread.
+     *
+     * @{ */
+    void loadRbaFile(const boost::filesystem::path &fileName);
+    void loadRbaFile(const boost::filesystem::path &fileName, Sawyer::ProgressBar<size_t> &progress);
+    /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Unparsing
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /** Returns an unparser.
      *
@@ -2358,7 +2404,7 @@ public:
      *  delete it.  Some configurations will not use a solver, in which case the null pointer is returned.
      *
      *  Thread safety: Not thread safe. */
-    SmtSolver *smtSolver() const /*final*/ { return solver_; }
+    SmtSolverPtr smtSolver() const /*final*/ { return solver_; }
 
     /** Obtain new RiscOperators.
      *

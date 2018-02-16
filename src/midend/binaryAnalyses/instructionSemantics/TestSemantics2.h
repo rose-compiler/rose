@@ -97,9 +97,9 @@ public:
     // Compile-time checks for RiscOperators
     class RiscOperatorsSubclass: public RiscOperators {
     public:
-        explicit RiscOperatorsSubclass(const SValuePtr &protoval, SmtSolver *solver=NULL)
+        explicit RiscOperatorsSubclass(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
             : RiscOperators(protoval, solver) {}
-        explicit RiscOperatorsSubclass(const StatePtr &state, SmtSolver *solver=NULL)
+        explicit RiscOperatorsSubclass(const StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
             : RiscOperators(state, solver) {}
     };
 
@@ -124,7 +124,7 @@ public:
         const RegisterDescriptor *segreg_ = regdict->lookup("ss");
         require(segreg_!=NULL, "segreg lookup");
         const RegisterDescriptor segreg = *segreg_;
-        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // SValue

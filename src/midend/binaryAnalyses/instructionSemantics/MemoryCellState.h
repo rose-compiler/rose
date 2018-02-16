@@ -29,7 +29,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryState);
         s & BOOST_SERIALIZATION_NVP(protocell);
         s & BOOST_SERIALIZATION_NVP(latestWrittenCell_);

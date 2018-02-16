@@ -49,7 +49,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryCellState);
         s & BOOST_SERIALIZATION_NVP(cells);
         s & BOOST_SERIALIZATION_NVP(occlusionsErased_);
@@ -145,6 +145,9 @@ public:
      *  The width of the @p dflt value determines how much data is read. The base implementation assumes that all cells contain
      *  8-bit values. */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
     /** Write a value to memory.

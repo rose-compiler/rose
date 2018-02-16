@@ -63,7 +63,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(cpu_);
         s & BOOST_SERIALIZATION_NVP(initialConcreteStackPointer_);
         s & BOOST_SERIALIZATION_NVP(hasResults_);

@@ -730,6 +730,7 @@ SgUntypedUnaryOperator
 SgUntypedBinaryOperator
 SgUntypedValueExpression
 SgUntypedArrayReferenceExpression
+SgUntypedSubscriptExpression
 SgUntypedOtherExpression
 SgUntypedNullExpression
 SgUntypedExprListExpression

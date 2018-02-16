@@ -9,6 +9,7 @@ bool
 listSmtSolverNames(std::ostream &out) {
     BinaryAnalysis::SmtSolver::Availability solvers = BinaryAnalysis::SmtSolver::availability();
     bool foundSolver = false;
+    out <<"solver \"none\" is available\n";
     BOOST_FOREACH (BinaryAnalysis::SmtSolver::Availability::value_type &node, solvers) {
         out <<"solver \"" <<node.first <<"\" is " <<(node.second?"":"not ") <<"available\n";
         if (node.second)
@@ -28,10 +29,8 @@ validateSmtSolverName(const std::string &name) {
 std::string
 bestSmtSolverName() {
     std::string name;
-    if (BinaryAnalysis::SmtSolver *solver = BinaryAnalysis::SmtSolver::bestAvailable()) {
+    if (const BinaryAnalysis::SmtSolverPtr &solver = BinaryAnalysis::SmtSolver::bestAvailable())
         name = solver->name();
-        delete solver;
-    }
     return name;
 }
 
@@ -89,9 +88,11 @@ smtSolverDocumentationString(const std::string &dfltValue) {
 
     docstr += " The default is \"" + dfltValue + "\"";
     if ("best" == dfltValue) {
-        SmtSolver *solver = SmtSolver::bestAvailable();
-        docstr += ", which currently means \"" + solver->name() + "\".";
-        delete solver;
+        if (SmtSolverPtr solver = SmtSolver::bestAvailable()) {
+            docstr += ", which currently means \"" + solver->name() + "\".";
+        } else {
+            docstr += ", which currently mean \"none\".";
+        }
     } else {
         docstr += ".";
     }

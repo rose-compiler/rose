@@ -84,7 +84,7 @@ namespace Rose {
  *  The following guidelines should be used when writing a long-running task, such as a ROSE analysis or transformation, that
  *  supports progress reporting. These guidelines assume that the task is encapsulated in a class (as most analyses and
  *  transformations should be) so that an application is able to have more than one instance of the task. A task that's
- *  implemented as a single function should take an argument of type <code>const Rose::Progress::Ptr&<code> (which may be a
+ *  implemented as a single function should take an argument of type <code>const Rose::Progress::Ptr&</code> (which may be a
  *  null progress object), and a task that's implemented in a namespace should try to provide an API similar to a class (the
  *  main difference will be that there's only once "instance" of the analysis).
  *
