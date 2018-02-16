@@ -2277,10 +2277,6 @@ scripts/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Components/Common/Makefile

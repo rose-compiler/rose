@@ -188,6 +188,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     } catch (const BaseSemantics::Exception &e) {
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
+    } catch (const SmtSolver::Exception &e) {
+        mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
+        converged = false;
     }
     
     // Get the final dataflow state
