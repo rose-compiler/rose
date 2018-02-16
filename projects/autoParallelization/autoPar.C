@@ -491,7 +491,7 @@ label_end:
   // Report errors
   int status = backend (project);
 // we always write to log files by default now  
-//  if (keep_going)
+  if (keep_going)
   {
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
     Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
