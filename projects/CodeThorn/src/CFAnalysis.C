@@ -330,9 +330,19 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   case V_SgReturnStmt:
     return finalSet;
+  case V_SgLabelStatement: {
+    // MS 2/15/2018: added support for new AST structure in ROSE: SgLabelStatement(child).
+    SgStatement* child=isSgLabelStatement(node)->get_statement();
+    if(child) {
+      LabelSet s=finalLabels(child);
+      finalSet+=s;
+    } else {
+      finalSet.insert(labeler->getLabel(node));
+    }
+    return finalSet;
+  }
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
-  case V_SgLabelStatement:
   case V_SgInitializedName:
   case V_SgVariableDeclaration:
   case V_SgDefaultOptionStmt:
@@ -891,12 +901,22 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet.insert(edge);
     return edgeSet;
   }
+  case V_SgLabelStatement: {
+    // MS 2/15/2018: added support for new AST structure in ROSE: SgLabelStatement(child).
+    SgStatement* child=isSgLabelStatement(node)->get_statement();
+    if(child) {
+      Edge edge=Edge(getLabel(node),EDGE_FORWARD,initialLabel(child));
+      edgeSet.insert(edge);
+      Flow flowSgLabelChild=flow(child);
+      edgeSet+=flowSgLabelChild;
+    }
+    return edgeSet;
+  }
   case V_SgBreakStmt:
   case V_SgInitializedName:
   case V_SgVariableDeclaration:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
-  case V_SgLabelStatement:
   case V_SgExprStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
