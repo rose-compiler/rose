@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
     ("normalize", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (eliminate compound assignment operators).")
-    ("normalize2", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (normalize for-statements).")
+    ("lowering", po::value< bool >()->default_value(false)->implicit_value(true), "apply lowering to code (eliminates for,while,do-while,continue,break; inlines functions).")
     ("inline", po::value< bool >()->default_value(true)->implicit_value(true), "perform inlining.")
     ("eliminate-empty-if", po::value< bool >()->default_value(true)->implicit_value(true), "eliminate if-statements with empty branches in main function.")
     ("eliminate-dead-code", po::value< bool >()->default_value(true)->implicit_value(true), "eliminate dead code (variables and expressions).")
@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
-  if(args.getBool("normalize2")) {
+  if(args.getBool("lowering")) {
     logger[TRACE] <<"STATUS: Lowering started."<<endl;
     SPRAY::Lowering lowering;
     lowering.lowerAst(root);

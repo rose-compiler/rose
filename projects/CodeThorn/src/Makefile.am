@@ -528,6 +528,11 @@ analyterix_SOURCES = \
   UDAstAttribute.h \
   analyterix.C
 
+roseonlytools: woodpecker analyterix
+
+check-roseonlytools: check-flow-insenstive
+
+
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
 #matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
@@ -559,11 +564,13 @@ varp1_SOURCES = Timer.cpp varp1.C
 varp3_DEPENDENCIES=libspray.la
 varp3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varp3__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-varp3_SOURCES = Timer.cpp varp3.C
+varp3_SOURCES = Timer.cpp varp3.C CommandLineOptions.C
 
 check-varp3: varp3
 	rm -f rose_casttest1.C
-	./varp3 $(srcdir)/tests/casttest1.C
+	./varp3 -DSKIP_ROSE_BUILTIN_DECLARATIONS --type-graph $(srcdir)/tests/casttest1.C 
+	dot -Tpdf typegraph.dot -o type-graph.pdf
+	./varp3 --explicit $(srcdir)/tests/casttest1.C
 	g++ rose_casttest1.C
 	rm -f a.out
 
@@ -580,7 +587,7 @@ astinfo_DEPENDENCIES=
 astinfo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 astinfo_SOURCES = astinfo.C LineColInfo.C
 
-check-astinfo:
+check-astinfo: astinfo
 	@echo "-------------------------------------------------------------"
 	./astinfo --classname --edg:no_warnings $(srcdir)/tests/bugs/bug1.C
 	@echo "-------------------------------------------------------------"
@@ -687,6 +694,11 @@ check-commandline-options: ./codethorn
 	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
+check-lowering:
+	@echo ================================================================
+	@echo RUNNING LOWERING TESTS
+	@echo ================================================================
+	$(srcdir)/scripts/runLoweringTests $(srcdir)/tests
 
 
 # MS: 1-6 is reasonable for V1.2

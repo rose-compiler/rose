@@ -1,3 +1,4 @@
+#include <iostream>
 
 int main() {
   float f1;
@@ -15,5 +16,7 @@ int main() {
   long double ld1;
   testVar=(long double)10.0;
   ld1=testVar;
-  return ld1==testVar;
+  std::cout<<"testVar:"<<testVar<<std::endl;
+  std::cout<<"ld1:"<<ld1<<std::endl;
+  return 0;
 }
