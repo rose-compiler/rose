@@ -2239,6 +2239,23 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
                break;
              }
 
+       // DQ (2/2/2018): Added case for currently unimplemented unparsing support for template variable declarations.
+          case V_SgTemplateVariableDeclaration:
+             {
+            // printf ("Unparsing of SgTemplateVariableDeclaration in unparseTemplateInstantiationDirectiveStmt not implemented \n");
+            // ROSE_ASSERT(false);
+
+               SgTemplateVariableDeclaration* variableDeclaration = isSgTemplateVariableDeclaration(declarationStatement);
+               ROSE_ASSERT(variableDeclaration != NULL);
+
+               unparseTemplateVariableDeclStmt(variableDeclaration,info);
+#if 0
+               printf ("Unparsing of SgTemplateVariableDeclaration in unparseTemplateInstantiationDirectiveStmt not implemented \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
           default:
              {
                printf ("Error: default reached in switch (declarationStatement = %s) \n",declarationStatement->class_name().c_str());
