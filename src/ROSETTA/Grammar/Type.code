@@ -1568,6 +1568,11 @@ SgType::isIntegerType() const
           case T_SIGNED_LONG:
           case T_UNSIGNED_LONG:
           case T_WCHAR:
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          case T_CHAR16:
+          case T_CHAR32:
+
           case T_LONG_LONG:
           case T_SIGNED_LONG_LONG:
           case T_UNSIGNED_LONG_LONG:
@@ -2901,6 +2906,16 @@ SOURCE_TYPE_GLOBAL_VOID_TYPE_END
 SOURCE_TYPE_WCHAR_TYPE_START
 
 SOURCE_TYPE_WCHAR_TYPE_END
+
+
+SOURCE_TYPE_CHAR16_TYPE_START
+
+SOURCE_TYPE_CHAR16_TYPE_END
+
+
+SOURCE_TYPE_CHAR32_TYPE_START
+
+SOURCE_TYPE_CHAR32_TYPE_END
 
 
 SOURCE_TYPE_FLOAT_TYPE_START
@@ -5652,6 +5667,14 @@ SgArrayType::get_name(void) const {
     else if (isSgTypeWchar(type)) {
         name = "char";
     }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar16(type)) {
+        name = "char16";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar32(type)) {
+        name = "char32";
+    }
     else if (isSgTypeInt(type)) {
         name = "int";
     }
@@ -5712,6 +5735,14 @@ SgArrayType::get_qualified_name(void) const {
     }
     else if (isSgTypeWchar(type)) {
         name = "char";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar16(type)) {
+        name = "char16";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar32(type)) {
+        name = "char32";
     }
     else if (isSgTypeInt(type)) {
         name = "int";

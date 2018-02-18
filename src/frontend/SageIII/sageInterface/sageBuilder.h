@@ -193,6 +193,10 @@ ROSE_DLL_API SgTypeString* buildStringType( SgExpression* stringLengthExpression
 ROSE_DLL_API SgTypeVoid * buildVoidType();
 ROSE_DLL_API SgTypeWchar* buildWcharType();
 
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+ROSE_DLL_API SgTypeChar16* buildChar16Type();
+ROSE_DLL_API SgTypeChar32* buildChar32Type();
+
 ROSE_DLL_API SgTypeSignedChar*  buildSignedCharType();
 ROSE_DLL_API SgTypeSignedInt*   buildSignedIntType();
 ROSE_DLL_API SgTypeSignedLong*  buildSignedLongType();
@@ -368,6 +372,12 @@ ROSE_DLL_API SgNullptrValExp* buildNullptrValExp_nfi();
 
 ROSE_DLL_API SgWcharVal* buildWcharVal(wchar_t value = 0);
 ROSE_DLL_API SgWcharVal* buildWcharVal_nfi(wchar_t value, const std::string& str);
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+ROSE_DLL_API SgChar16Val* buildChar16Val(unsigned short value = 0);
+ROSE_DLL_API SgChar16Val* buildChar16Val_nfi(unsigned short value, const std::string& str);
+ROSE_DLL_API SgChar32Val* buildChar32Val(unsigned int value = 0);
+ROSE_DLL_API SgChar32Val* buildChar32Val_nfi(unsigned int value, const std::string& str);
 
 // DQ (3/20/2017): This function has never existed (inputs must be SgValueExp pointers).
 // ROSE_DLL_API SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );

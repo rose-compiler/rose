@@ -564,6 +564,26 @@ HEADER_WCHAR_VALUE_EXPRESSION_START
 HEADER_WCHAR_VALUE_EXPRESSION_END
 
 
+HEADER_CHAR16_VALUE_EXPRESSION_START
+       // DQ (2/16/2018): ROSE needs to be able to be compiled on non C++11 systems where char_32_t is not defiled.
+       // char16_t get_value() const;
+       // void set_value(char16_t new_val);
+          unsigned short get_value() const;
+          void set_value(unsigned short new_val);
+
+HEADER_CHAR16_VALUE_EXPRESSION_END
+
+
+HEADER_CHAR32_VALUE_EXPRESSION_START
+       // DQ (2/16/2018): ROSE needs to be able to be compiled on non C++11 systems where char_32_t is not defiled.
+       // char32_t get_value() const;
+       // void set_value(char32_t new_val);
+          unsigned int get_value() const;
+          void set_value(unsigned int new_val);
+
+HEADER_CHAR32_VALUE_EXPRESSION_END
+
+
 HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION_START
 HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION_END
 
@@ -3904,6 +3924,58 @@ $CLASSNAME::set_value(wchar_t new_val)
    }
 
 SOURCE_WCHAR_VALUE_EXPRESSION_END
+
+
+SOURCE_CHAR16_VALUE_EXPRESSION_START
+void
+$CLASSNAME::post_construction_initialization()
+   {
+  // We can't initialize this to NULL since it might have just been set!
+  // p_valueUL = 0L;
+   }
+
+// DQ (2/16/2018): ROSE needs to be able to be compiled on non C++11 systems where char_32_t is not defiled.
+// char16_t
+unsigned short
+$CLASSNAME::get_value() const
+   {
+     return p_valueUL;
+   }
+
+// void $CLASSNAME::set_value(char16_t new_val)
+void
+$CLASSNAME::set_value(unsigned short new_val)
+   {
+     p_valueUL = new_val;
+   }
+
+SOURCE_CHAR16_VALUE_EXPRESSION_END
+
+
+SOURCE_CHAR32_VALUE_EXPRESSION_START
+void
+$CLASSNAME::post_construction_initialization()
+   {
+  // We can't initialize this to NULL since it might have just been set!
+  // p_valueUL = 0L;
+   }
+
+// DQ (2/16/2018): ROSE needs to be able to be compiled on non C++11 systems where char_32_t is not defiled.
+// char32_t
+unsigned int
+$CLASSNAME::get_value() const
+   {
+     return p_valueUL;
+   }
+
+// void $CLASSNAME::set_value(char32_t new_val)
+void
+$CLASSNAME::set_value(unsigned int new_val)
+   {
+     p_valueUL = new_val;
+   }
+
+SOURCE_CHAR32_VALUE_EXPRESSION_END
 
 
 SOURCE_UNSIGNED_SHORT_VALUE_EXPRESSION_START

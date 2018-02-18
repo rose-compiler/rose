@@ -5155,6 +5155,11 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgShortVal:               { unparseShortVal(expr, info);        break; }
                case V_SgUnsignedCharVal:        { unparseUCharVal(expr, info);        break; }
                case V_SgWcharVal:               { unparseWCharVal(expr, info);        break; }
+
+            // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+               case V_SgChar16Val:              { unparseChar16Val(expr, info);       break; }
+               case V_SgChar32Val:              { unparseChar32Val(expr, info);       break; }
+
                case V_SgStringVal:              { unparseStringVal(expr, info);       break; }
                case V_SgUnsignedShortVal:       { unparseUShortVal(expr, info);       break; }
                case V_SgEnumVal:                { unparseEnumVal(expr, info);         break; }
@@ -5442,6 +5447,42 @@ UnparseLanguageIndependentConstructs::unparseWCharVal(SgExpression* expr, SgUnpa
        else
         {
           curprint ( wchar_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseChar16Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar16Val* char_val = isSgChar16Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar32Val* char_val = isSgChar32Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
         }
    }
 

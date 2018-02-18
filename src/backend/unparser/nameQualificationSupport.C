@@ -470,6 +470,11 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeLongLong:
           case V_SgTypeVoid:
           case V_SgTypeChar:
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          case V_SgTypeChar16:
+          case V_SgTypeChar32:
+
           case V_SgTypeFloat:
           case V_SgTypeDouble:
           case V_SgTypeLongDouble:

@@ -5784,6 +5784,41 @@ SgWcharVal* SageBuilder::buildWcharVal_nfi(wchar_t value, const string& str)
   return result;
 }
 
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+SgChar16Val* SageBuilder::buildChar16Val(unsigned short value /*= 0*/)
+{
+  SgChar16Val* result = new SgChar16Val(value, "");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgChar16Val* SageBuilder::buildChar16Val_nfi(unsigned short value, const string& str)
+{
+  SgChar16Val* result = new SgChar16Val(value, str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+SgChar32Val* SageBuilder::buildChar32Val(unsigned int value /*= 0*/)
+{
+  SgChar32Val* result = new SgChar32Val(value, "");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgChar32Val* SageBuilder::buildChar32Val_nfi(unsigned int value, const string& str)
+{
+  SgChar32Val* result = new SgChar32Val(value, str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+
 SgComplexVal* SageBuilder::buildComplexVal(SgValueExp* real_value, SgValueExp* imaginary_value)
 {
   SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,imaginary_value->get_type(),"");
@@ -9867,6 +9902,11 @@ SgTypeChar * SageBuilder::buildCharType()
   BUILD_SGTYPE_DEF(Void)
 
   BUILD_SGTYPE_DEF(Wchar)
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+  BUILD_SGTYPE_DEF(Char16)
+  BUILD_SGTYPE_DEF(Char32)
+
   BUILD_SGTYPE_DEF(SignedChar)
   BUILD_SGTYPE_DEF(SignedInt)
   BUILD_SGTYPE_DEF(SignedLong)
@@ -9971,6 +10011,23 @@ SgTypeWchar * SageBuilder::buildWcharType()
   ROSE_ASSERT(result);
   return result;
 }
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+SgTypeChar16 * SageBuilder::buildChar16Type()
+{
+  SgTypeChar16 * result =SgTypeChar16::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+SgTypeChar32 * SageBuilder::buildChar32Type()
+{
+  SgTypeChar32 * result =SgTypeChar32::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
 
 SgTypeSignedChar * SageBuilder::buildSignedCharType()
 {
