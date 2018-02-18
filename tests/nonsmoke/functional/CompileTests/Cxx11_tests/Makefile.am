@@ -138,6 +138,23 @@ test2017_23.C \
 test2018_04.C \
 test2018_05.C \
 test2018_06.C \
+test2018_07.C \
+test2018_08.C \
+test2018_09.C \
+test2018_10.C \
+test2018_11.C \
+test2018_12.C \
+test2018_15.C \
+test2018_16.C \
+test2018_17.C \
+test2018_18.C \
+test2018_19.C \
+test2018_20.C \
+test2018_21.C \
+test2018_23.C \
+test2018_24.C \
+test2018_26.C \
+test2018_27.C \
 last.C
 
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
