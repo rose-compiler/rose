@@ -408,6 +408,21 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgUnparse_Info ninfo(info);
      ninfo.set_supressImplicitThisOperator();
 
+#if 0
+     printf ("In unparseLambdaExpression(): BEFORE UNSET: ninfo.SkipEnumDefinition()     = %s \n",ninfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseLambdaExpression(): BEFORE UNSET: ninfo.SkipClassDefinition()    = %s \n",ninfo.SkipClassDefinition() ? "true" : "false");
+     printf ("In unparseLambdaExpression(): BEFORE UNSET: ninfo.SkipFunctionDefinition() = %s \n",ninfo.SkipFunctionDefinition() ? "true" : "false");
+#endif
+
+  // DQ (2/19/2018): Need to unset the support to skip the function definitions so that the unparsing of the block will allow comments and CPP directives to be output.
+     ninfo.unset_SkipEnumDefinition();
+     ninfo.unset_SkipClassDefinition();
+     ninfo.unset_SkipFunctionDefinition();
+
+#if 0
+     printf ("In unparseLambdaExpression(): AFTER UNSET ninfo.SkipFunctionDefinition() = %s \n",ninfo.SkipFunctionDefinition() ? "true" : "false");
+#endif
+
   // Output the function definition
      ROSE_ASSERT(lambdaFunction->get_definition() != NULL);
      unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo);
