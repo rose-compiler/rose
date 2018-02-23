@@ -65,6 +65,13 @@ namespace RAJA_Checker
                          SgExprStatement* & callStmt, // return  the call statement
                          SgFunctionDeclaration*& raja_func_decl);
 
+  //! Check if an expression is used as a function call parameter to a template function with a given name 
+  bool isWrapperTemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
+                         string func_name, // the matching name of the function
+                         SgExprStatement* & callStmt, // return  the call statement
+                         SgFunctionDeclaration*& template_func_decl);
+
+
   //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable and a loop stmt
   bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt, SgStatement* loopStmt);
 
@@ -203,6 +210,56 @@ namespace RAJA_Checker
       ROSE_ASSERT (false);
     }
 #endif    
+    return retval;
+  }
+
+  //! Check if a lambda function is inside a call to a template function matching a given name. Return the function decl if it is. 
+  // This is a key interface function. Developers can first find a lambda expression , 
+  // then check if it is a RAJA template function's parameter.
+  //
+  //
+  // The AST should look like  SgFunctionCallExp
+  //                           * SgExprListExp
+  //                           ** SgLambdaExp 
+  bool isWrapperTemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
+                       string func_name, // the matching name of the function
+                       SgExprStatement* & callStmt, 
+                       SgFunctionDeclaration*& raja_func_decl)
+  {
+    bool retval = false; 
+    ROSE_ASSERT (n!= NULL);
+    // Add another case: the call to the lambda exp is indirectly through a variable reference.
+    SgExpression* le = isSgExpression(n);
+    if (isSgLambdaExp (le) || isSgVarRefExp(le))
+    {
+      SgNode* parent = le->get_parent();
+      ROSE_ASSERT(parent!=NULL);
+      parent = parent->get_parent();
+      ROSE_ASSERT(parent!=NULL);
+      if (SgFunctionCallExp* call_exp = isSgFunctionCallExp (parent)) 
+      {
+        // check if the function name matches a given name
+        retval = isCallToRAJAFunction (call_exp);
+
+        SgFunctionDeclaration* func_decl = call_exp->getAssociatedFunctionDeclaration();
+        string obtained_name = (func_decl->get_qualified_name()).getString(); 
+      //  if (func_name == obtained_name) // the full qualified name is ::for_all < seq_exec ,  >, we only match the first portion for now
+       if (obtained_name.find (func_name,0) !=string::npos)
+          retval = true; 
+
+        if (enable_debug)
+        {
+          if (!retval)
+            cout<<"\t obtained func name is: "<< obtained_name <<" no matching given: " << func_name<<endl;
+        }
+
+        //if (raja_func_decl != NULL)
+        raja_func_decl = call_exp-> getAssociatedFunctionDeclaration();
+        callStmt = isSgExprStatement(call_exp->get_parent());
+        ROSE_ASSERT(callStmt);
+      }
+    }
+
     return retval;
   }
 
@@ -1172,10 +1229,20 @@ bool RAJA_Checker::isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
   // this is the raja template function declaration!!
   SgFunctionDeclaration* raja_func = NULL;
   SgExprStatement* call_stmt = NULL;
-  if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func))
+  if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func)  && 
+      !isWrapperTemplateFunctionCallParameter (exp, "::for_all <",  call_stmt, raja_func))
+  {
+    if (RAJA_Checker::enable_debug)
+       cout<<"\tLambda exp is not a raja template function call parameter "<<endl;   
     return false;
+  }
    
-   if (raja_func ==NULL) return false;
+   if (raja_func ==NULL) 
+   {
+     if (RAJA_Checker::enable_debug)
+       cout<<"\t raja template function declaration is NULL"<<endl;   
+     return false;
+   }
 
   return hasNodalAccumulationBody (exp, fstmt);
 }
