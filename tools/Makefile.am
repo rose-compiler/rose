@@ -32,6 +32,7 @@ if USING_GNU_COMPILER
 if ROSE_USE_EDG_VERSION_4_12
 if ROSE_USING_GCC_VERSION_LATER_4_9
 Checker_Test_Files += \
+   nodalAccPatternForAllWrapper.cpp \		      
    nodalAccPattern1.cpp \
    nodalAccPattern2.cpp \
    constDouble.cpp \
