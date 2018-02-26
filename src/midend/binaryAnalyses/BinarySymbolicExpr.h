@@ -563,6 +563,9 @@ public:
      *  then return false without modifying the arguments. */
     bool matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/);
 
+    /** True (non-null) if this node is the specified operator. */
+    InteriorPtr isOperator(Operator);
+
 protected:
     void printFlags(std::ostream &o, unsigned flags, char &bracket);
 };
