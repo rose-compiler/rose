@@ -260,6 +260,8 @@ struct Substituter {
 //                                      Base node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+boost::logic::tribool (*Node::mayEqualCallback)(const Ptr&, const Ptr&, const SmtSolver::Ptr&) = NULL;
+
 Ptr
 Node::newFlags(unsigned newFlags) {
     if (newFlags == flags_)
@@ -432,6 +434,27 @@ Node::printFlags(std::ostream &o, unsigned flags, char &bracket) {
     }
 }
 
+bool
+Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/) {
+    if (InteriorPtr inode = isInteriorNode()) {
+        if (OP_ADD == inode->getOperator() && 2 == inode->nChildren()) {
+            LeafPtr arg0 = inode->child(0)->isLeafNode();
+            LeafPtr arg1 = inode->child(1)->isLeafNode();
+            if (arg0 && arg1) {
+                if (arg0->isVariable() && arg1->isNumber()) {
+                    variable = arg0;
+                    constant = arg1;
+                    return true;
+                } else if (arg0->isNumber() && arg1->isVariable()) {
+                    variable = arg1;
+                    constant = arg0;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Interior node
@@ -817,18 +840,45 @@ Interior::mustEqual(const Ptr &other_, const SmtSolverPtr &solver/*NULL*/) {
 
 bool
 Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
-    bool retval = false;
-    if (this==getRawPointer(other)) {
+    // Fast comparison of literally the same expression pointer
+    if (this == getRawPointer(other))
         return true;
-    } else if (isEquivalentTo(other)) {
-        // This is probably faster than using an SMT solver.  It also serves as the naive approach when an SMT solver
-        // is not available.
-        retval = true;
-    } else if (solver) {
-        Ptr assertion = makeEq(sharedFromThis(), other, solver);
-        retval = SmtSolver::SAT_YES==solver->satisfiable(assertion);
+
+    // Give the user a chance to decide.
+    if (mayEqualCallback) {
+        boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
+        if (true == result || false == result)
+            return result;
     }
-    return retval;
+    
+    // Two addition operations of the form V + X and V + Y where V is a variable and X and Y are constants, are equal if and
+    // only if X = Y.
+    LeafPtr variableA, variableB, constantA, constantB;
+    if (matchAddVariableConstant(variableA/*out*/, constantA/*out*/) &&
+        other->matchAddVariableConstant(variableB/*out*/, constantB/*out*/)) {
+        if (variableA->nameId() == variableB->nameId()) {
+            ASSERT_require(variableA->nBits() == variableB->nBits());
+            ASSERT_require(constantA->nBits() == constantB->nBits());
+            return constantA->bits().compare(constantB->bits()) == 0;
+        }
+    }
+
+    // Two expressions that are structurally equivalent are also equal.
+    if (isEquivalentTo(other))
+        return true;
+
+    // It is difficult to prove that arbitrary expressions are equal or not equal.  Ask the solver to find a solution where
+    // they are equal.  If the solver finds a solution, then obviously they can be equal.  If the solver can't prove the
+    // equality assertion, we want to assume that they can be equal.  Thus only if the solver can prove that they cannot be
+    // equal do we have anything to return here.
+    if (solver) {
+        Ptr assertion = makeEq(sharedFromThis(), other, solver);
+        if (SmtSolver::SAT_NO == solver->satisfiable(assertion))
+            return false;
+    }
+
+    // If we couldn't prove that the two expressions are unequal, then assume they could be equal.
+    return true;
 }
 
 int
@@ -2680,21 +2730,34 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
 }
 
 bool
-Leaf::mayEqual(const Ptr &other_, const SmtSolverPtr &solver) {
-    bool retval = false;
-    LeafPtr other = other_->isLeafNode();
-    if (this==getRawPointer(other)) {
-        retval = true;
-    } else if (other==NULL) {
-        // We need an SMT solver to figure out things like "x mayEqual (add y 1))", which is true.
-        if (solver) {
-            Ptr assertion = makeEq(sharedFromThis(), other_, solver);
-            retval = SmtSolver::SAT_YES == solver->satisfiable(assertion);
-        }
-    } else if (!isNumber() || !other->isNumber() || 0==bits_.compare(other->bits_)) {
-        retval = true;
+Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
+    // Fast comparison of literally the same expression pointer
+    if (this == getRawPointer(other))
+        return true;
+
+    // The may-equal operator is symmetric, therefore if other is an interior node use that method instead (which is where the
+    // more complicated logic lives).
+    if (other->isInteriorNode())
+        return other->mayEqual(sharedFromThis(), solver);
+
+    // If both expressions are constant leaf nodes, we can reach a conclusion without a solver.  Two constants that are
+    // different sizes can be equal (e.g., 42[8] == 42[16]).
+    LeafPtr otherLeaf = other->isLeafNode();
+    ASSERT_not_null(otherLeaf);
+    if (isNumber() && otherLeaf->isNumber())
+        return bits().compare(otherLeaf->bits()) == 0;
+
+    // Give the user a chance to decide.
+    if (mayEqualCallback) {
+        boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
+        if (true == result || false == result)
+            return result;
     }
-    return retval;
+    
+    // The other cases are variable, memory, or constant compared to variable, memory, or constant as long as both are not
+    // constants.  In all eight of those cases, the two expressions can be equal to each other and we don't need an SMT
+    // solver to prove it.
+    return true;
 }
 
 int
