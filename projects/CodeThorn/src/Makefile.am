@@ -695,6 +695,11 @@ check-lowering:
 	@echo ================================================================
 	$(srcdir)/scripts/runLoweringTests $(srcdir)/tests
 
+check-deadcode:
+	@echo ================================================================
+	@echo RUNNING DEADCODE TESTS
+	@echo ================================================================
+	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

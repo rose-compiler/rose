@@ -46,15 +46,16 @@ void makeAllCastsExplicit(SgProject* root) {
   }
 }
 
-string nodeString(SgExpression* node) {
+string nodeString(SgNode* node) {
   stringstream tempss;
   tempss<<"x"<<node;
   return tempss.str();
 }
 
 string nodeId(SgExpression* node) {
-  if(isSgVarRefExp(node)) {
-    return node->unparseToString(); // TODO: use variableid
+  if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
+    SgSymbol* varSym=SgNodeHelper::getSymbolOfVariable(varRef);
+    return nodeString(varSym);
   } else {
     return nodeString(node);
   }
@@ -75,9 +76,7 @@ void addNode(SgExpression* node) {
   addNode(node,type);
 }
 
-void addNode(SgExpression* node, SgType* type) {
-  ROSE_ASSERT(node);
-  ROSE_ASSERT(type);
+string typeColorName(SgType* type) {
   string color;
   switch(type->variantT()) {
   case V_SgTypeFloat: color="blue";break;
@@ -85,8 +84,14 @@ void addNode(SgExpression* node, SgType* type) {
   case V_SgTypeLongDouble: color="red";break;
   default: color="white";
   }
-  string labelInfo;
-  labelInfo=string("\\n")+"type:"+type->unparseToString();
+  return color;
+}
+
+void addNode(SgExpression* node, SgType* type) {
+  ROSE_ASSERT(node);
+  ROSE_ASSERT(type);
+  string color=typeColorName(type);
+  string labelInfo=string("\\n")+"type:"+type->unparseToString();
 
   if(isSgUnaryOp(node)||isSgBinaryOp(node)||isSgConditionalExp(node)||isSgCallExpression(node)) {
     ss<<nodeId(node)<<"[label=\"op:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
