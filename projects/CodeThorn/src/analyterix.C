@@ -303,7 +303,7 @@ string getScopeAsMangledStableString(SgLocatedNode* stmt) {
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
 
-  SPRAY::DFAnalysisBase::normalizeProgram(root);
+  //SPRAY::DFAnalysisBase::normalizeProgram(root);
 
   if(option_fi_constanalysis) {
     VarConstSetMap varConstSetMap;
