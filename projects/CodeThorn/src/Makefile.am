@@ -603,11 +603,15 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-# check-flow-insenstive
+CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-equivalence-checking check-data-races check-svcomp-witness
+
+CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
+CHECK_WITH_SPOT=$(CHECK_DEFAULT) $(CHECK_WITH_SPOT_ONLY)
+
 if ROSE_WITH_SPOT
-check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-svcomp-witness check-ltl check-ltl-driven
+check-local: $(CHECK_WITH_SPOT)
 else
-check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-svcomp-witness
+check-local: $(CHECK_DEFAULT)
 endif
 
 check-svcomp:
