@@ -171,7 +171,7 @@ SerialOutput::savePartitioner(const Partitioner2::Partitioner &partitioner) {
 }
 
 void
-SerialOutput::saveAst(SgAsmNode *ast) {
+SerialOutput::saveAstHelper(SgNode *ast) {
     if (ast) {
         SgNode *oldParent = ast->get_parent();
         try {
@@ -185,6 +185,16 @@ SerialOutput::saveAst(SgAsmNode *ast) {
     } else {
         saveObject(AST, ast);
     }
+}
+
+void
+SerialOutput::saveAst(SgAsmNode *ast) {
+    saveAstHelper(ast);
+}
+
+void
+SerialOutput::saveAst(SgBinaryComposite *ast) {
+    saveAstHelper(ast);
 }
 
 void
@@ -288,7 +298,7 @@ SerialInput::open(const boost::filesystem::path &fileName) {
 void
 SerialInput::advanceObjectType() {
     ASSERT_require(isOpen());
-    Savable typeId;
+    Savable typeId = NO_OBJECT;
     switch (format()) {
         case BINARY:
             *binary_archive_ >>typeId;
@@ -308,9 +318,9 @@ SerialInput::loadPartitioner() {
     return loadObject<Partitioner2::Partitioner>(PARTITIONER);
 }
 
-SgAsmNode*
+SgNode*
 SerialInput::loadAst() {
-    return loadObject<SgAsmNode*>(AST);
+    return loadObject<SgNode*>(AST);
 }
 
 void

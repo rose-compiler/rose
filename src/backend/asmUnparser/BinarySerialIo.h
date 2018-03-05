@@ -286,6 +286,13 @@ public:
      *  AST node to null and thus may interfere with threads that reading this part of the AST.  It is unsafe to invoke this
      *  method while other threads are modifying this part of the AST since AST modification is not thread safe. */
     void saveAst(SgAsmNode*);
+    void saveAst(SgBinaryComposite*);
+private:
+    // The saveAstHelper is what actually gets called for the functions above. It doesn't descriminate between nodes that
+    // support serialization and those that don't, which is why it's private. Use only the public functions because they'll
+    // give you a nice compiler error if you try to save an Ast node type that isn't supported.
+    void saveAstHelper(SgNode*);
+public:
 
     /** Save an object to the output stream.
      *
@@ -430,7 +437,7 @@ public:
      *
      * Throws an @ref Exception if no file is attached to this I/O object or if the next object to be read from the
      * input is not an AST, or if any other errors occur while reading the AST. */
-    SgAsmNode* loadAst();
+    SgNode* loadAst();
 
     template<class T>
     T loadObject(Savable objectTypeId) {
