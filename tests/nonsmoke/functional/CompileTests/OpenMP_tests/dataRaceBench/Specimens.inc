@@ -1,5 +1,8 @@
 # TODO failing tests
 
+dataracebench_cpp_files = \
+2018-static-data-member-orig-yes.cpp
+
 dataracebench_c_files = \
 3mm-tile-no.c \
 adi-tile-no.c \
