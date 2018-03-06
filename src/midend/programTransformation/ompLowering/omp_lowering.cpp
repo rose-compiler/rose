@@ -206,6 +206,12 @@ namespace OmpSupport
     return rt_val;
   }
 
+  //! Check if a variable access is a shared access , assuming it is already within an OpenMP region.
+  bool isSharedAccess (SgVarRefExp* varRef)
+  {
+    return (getDataSharingAttribute (varRef)== e_shared);
+  }
+
   omp_construct_enum getDataSharingAttribute (SgVarRefExp* varRef)
   {
     ROSE_ASSERT (varRef != NULL);
