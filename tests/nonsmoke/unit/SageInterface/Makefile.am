@@ -148,11 +148,13 @@ $(performAliasAnalysis_cpp_output_diff): %.diff:%
 # shortcut to test generating outputs only, tested for avoid redundant running.
 generateOutput: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_genericCoverage_c_output) $(nonsmoke_collectFunctionSideEffect_cpp_output)
 # shortcut to test generating the diff files
-getDataSharingAttribute_diff_check: $(nonsmoke_getDataSharingAttribute_c_output_diff)
 get_C_array_dimensions_diff_check: $(nonsmoke_get_C_array_dimensions_c_output_diff)
 genericCoverage_diff_check: $(nonsmoke_genericCoverage_c_output_diff)
 collectFunctionSideEffect_diff_check: $(nonsmoke_collectFunctionSideEffect_cpp_output_diff)
 performAliasAnalysis_diff_check: $(performAliasAnalysis_cpp_output_diff)
+
+# two targets for data sharing attributes testing
+getDataSharingAttribute_diff_check: $(nonsmoke_getDataSharingAttribute_c_output_diff)
 dataracebench_diff_check: $(dataracebench_getDataSharingAttribute_c_output_diff)
 
 dataracebench_output:$(dataracebench_getDataSharingAttribute_c_output)
