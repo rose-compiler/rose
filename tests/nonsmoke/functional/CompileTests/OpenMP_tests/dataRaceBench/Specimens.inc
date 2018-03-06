@@ -87,4 +87,6 @@ truedepsingleelement-var-yes.c \
 2018-parallel-for-simd-orig-no.c \
 2018-threadprivate-orig-no.c \
 2018-private-origin-no.c \
-2018-static-origin-yes.c 
+2018-static-origin-yes.c \
+2018-collapse-orig-no.c \
+2018-collapsemissing-orig-yes.c
