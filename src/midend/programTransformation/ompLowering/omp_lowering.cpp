@@ -228,7 +228,8 @@ namespace OmpSupport
     ROSE_ASSERT (forOrSimd != NULL);
     int loop_count = 1; // by default, only one loop is affected. 
     SgExpression* exp = getClauseExpression (forOrSimd, V_SgOmpCollapseClause);
-    if (exp !=NULL )
+    SgExpression* exp_ordered = getClauseExpression (forOrSimd, V_SgOmpOrderedClause);
+    if (exp !=NULL)
     {
       SgIntVal * ival = isSgIntVal(exp);
       if (ival == NULL)
@@ -238,6 +239,15 @@ namespace OmpSupport
       }
       loop_count = ival->get_value();
     } 
+    else if (exp_ordered !=NULL)
+    {
+     SgIntVal * ival = isSgIntVal(exp_ordered);
+      if (ival == NULL) // ordered clause may have no expression specified at all. default to 1 loop affected.
+        loop_count = 1;
+      else
+        loop_count = ival->get_value();
+    }
+    // TODO: what if both ordered() and collapse() appear??
 
     // Now obtain all loops within forOrSimd, up to loop_count
     RoseAst ast (forOrSimd);
