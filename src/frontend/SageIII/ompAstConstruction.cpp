@@ -411,6 +411,9 @@ namespace OmpSupport
   SgExpression* checkOmpExpressionClause( SgExpression* clause_expression, SgGlobal* global, omp_construct_enum clause_type )
   {
       SgExpression* newExp = clause_expression;
+      // ordered (n): optional (n)
+      if (clause_expression == NULL && clause_type == e_ordered_clause)
+         return NULL; 
       ROSE_ASSERT(clause_expression != NULL);
       bool returnNewExpression = false;
       if( isSgTypeUnknown( clause_expression->get_type( ) ) )
@@ -502,6 +505,13 @@ namespace OmpSupport
     SgGlobal* global = SageInterface::getGlobalScope( att->getNode() );
     switch (clause_type)
     {
+      case e_ordered_clause:
+        {
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_ordered_clause).second, global, e_ordered_clause);
+          result = new SgOmpOrderedClause(param);
+          break;
+        }
+ 
       case e_collapse:
         {
           SgExpression* collapseParam = checkOmpExpressionClause( att->getExpression(e_collapse).second, global, e_collapse );
@@ -599,6 +609,8 @@ namespace OmpSupport
     return result;
   }
 
+// This becomes an expression clause since OpenMP 4.5
+#if 0
   SgOmpOrderedClause * buildOmpOrderedClause(OmpAttribute* att)
   {
     ROSE_ASSERT(att != NULL);
@@ -609,7 +621,7 @@ namespace OmpSupport
     setOneSourcePositionForTransformation(result);
     return result;
   }
-
+#endif
   SgOmpUntiedClause * buildOmpUntiedClause(OmpAttribute* att)
   {
     ROSE_ASSERT(att != NULL);
@@ -1125,11 +1137,13 @@ namespace OmpSupport
           result = buildOmpNowaitClause(att); 
           break;
         }
+#if 0  // this becames an expression clause since OpenMP 4.5       
       case e_ordered_clause:
         {
           result = buildOmpOrderedClause(att); 
           break;
         }
+#endif        
       case e_schedule:
         {
           result = buildOmpScheduleClause(att);
@@ -1163,6 +1177,7 @@ namespace OmpSupport
       case e_device:
       case e_safelen:
       case e_simdlen:
+      case e_ordered_clause:
         {
           result = buildOmpExpressionClause(att, c_clause_type);
           break;

@@ -89,4 +89,6 @@ truedepsingleelement-var-yes.c \
 2018-private-origin-no.c \
 2018-static-origin-yes.c \
 2018-collapse-orig-no.c \
-2018-collapsemissing-orig-yes.c
+2018-collapsemissing-orig-yes.c \
+2018-ordered-orig-no.c \
+2018-ordered-orig-yes.c
