@@ -66,6 +66,7 @@ class ATermToUntypedTraversal
    void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
    void setSourcePositionFromEndOnly   ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
 
+   void setSourcePositionUnknown       ( SgLocatedNode* locatedNode);
 
 }; // class ATermToUntypedTraversal
 }  // namespace ATermSupport

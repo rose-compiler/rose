@@ -2,12 +2,16 @@
 #include "untypedBuilder.h"
 
 #include "ATermToUntypedJovialTraversal.h"
+#include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
 #define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 ATermToUntypedJovialTraversal::ATermToUntypedJovialTraversal(SgSourceFile* source) : ATermToUntypedTraversal(source)
 {
@@ -125,8 +129,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
 
       std::string label = "";
 
-      SgUntypedInitializedNameList* param_list  = new SgUntypedInitializedNameList();
-      SgUntypedTokenList*           prefix_list = new SgUntypedTokenList();
+      SgUntypedInitializedNameList* param_list = new SgUntypedInitializedNameList();
+      SgUntypedExprListExpression* prefix_list = new SgUntypedExprListExpression();
 
       SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
       SgUntypedNamedStatement* end_program_stmt = new SgUntypedNamedStatement("",0,"");
@@ -291,7 +295,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
 
    SgUntypedVariableDeclaration* variable_decl = NULL;
    SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
-   SgUntypedTokenList*               attr_list = new SgUntypedTokenList();
+   SgUntypedExprListExpression*      attr_list = new SgUntypedExprListExpression();
 
    if (ATmatch(term, "ItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_type,&t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
@@ -655,7 +659,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUnty
    ATerm t_sign, t_expr, t_lhs, t_op, t_rhs;
 
    if (ATmatch(term, "IntegerFormula(<term>,<term>)", &t_sign,&t_expr)) {
-      Jovial_ROSE_Translation::ExpressionKind op_enum;
+      General_Language_Translation::ExpressionKind op_enum;
 
       // OptSign IntegerTerm -> IntegerFormula
 
@@ -667,11 +671,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUnty
          // MATCHED IntegerTerm
       } else return ATfalse;
 
-      if (op_enum == Jovial_ROSE_Translation::e_unaryMinusOperator) {
+      if (op_enum == General_Language_Translation::e_operator_unary_minus) {
         *expr = new SgUntypedUnaryOperator(op_enum, "-", *expr);
         setSourcePosition(*expr, t_sign);
       }
-      else if (op_enum == Jovial_ROSE_Translation::e_unaryPlusOperator) {
+      else if (op_enum == General_Language_Translation::e_operator_unary_plus) {
         *expr = new SgUntypedUnaryOperator(op_enum, "+", *expr);
         setSourcePosition(*expr, t_sign);
       }
@@ -682,7 +686,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUnty
       // IntegerFormula PlusOrMinus IntegerTerm -> IntegerFormula
 
       std::string op_name;
-      Jovial_ROSE_Translation::ExpressionKind op_enum;
+      General_Language_Translation::ExpressionKind op_enum;
       SgUntypedExpression * lhs, * rhs;
 
       if (traverse_IntegerFormula(t_lhs, &lhs)) {
@@ -690,11 +694,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUnty
       } else return ATfalse;
 
       if (ATmatch(t_op, "PLUS()")) {
-         op_enum = Jovial_ROSE_Translation::e_plusOperator;
+         op_enum = General_Language_Translation::e_operator_add;
          op_name = "+";
       }
       else if (ATmatch(t_op, "MINUS()")) {
-         op_enum = Jovial_ROSE_Translation::e_minusOperator;
+         op_enum = General_Language_Translation::e_operator_subtract;
          op_name = "-";
       } else return ATfalse;
 
@@ -746,20 +750,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUnty
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_OptSign(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum)
+ATbool ATermToUntypedJovialTraversal::traverse_OptSign(ATerm term, General_Language_Translation::ExpressionKind & op_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptSign: %s\n", ATwriteToString(term));
 #endif
 
    if (ATmatch(term, "no-sign()")) {
-      op_enum = Jovial_ROSE_Translation::e_notAnOperator;
+      op_enum = General_Language_Translation::e_operator_unity;
    }
    else if (ATmatch(term, "PLUS()")) {
-      op_enum = Jovial_ROSE_Translation::e_unaryPlusOperator;
+      op_enum = General_Language_Translation::e_operator_unary_plus;
    }
    else if (ATmatch(term, "MINUS()")) {
-      op_enum = Jovial_ROSE_Translation::e_unaryMinusOperator;
+      op_enum = General_Language_Translation::e_operator_unary_minus;
    }
    else return ATfalse;
 
@@ -774,7 +778,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntyped
 
    ATerm t_lhs, t_op, t_rhs;
    std::string op_name;
-   Jovial_ROSE_Translation::ExpressionKind op_enum;
+   General_Language_Translation::ExpressionKind op_enum;
    SgUntypedExpression * lhs, * rhs;
 
    if (ATmatch(term, "IntegerTerm(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
@@ -888,26 +892,26 @@ ATbool ATermToUntypedJovialTraversal::traverse_VariableList(ATerm term, std::vec
 //----------------------------------------------------------------------------------------
 
 ATbool
-ATermToUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum, std::string & op_name)
+ATermToUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_MultiplyDivideOrMod: %s\n", ATwriteToString(term));
 #endif
 
    if (ATmatch(term, "TIMES()")) {
-      op_enum = Jovial_ROSE_Translation::e_multiplyOperator;
+      op_enum = General_Language_Translation::e_operator_multiply;
       op_name = "*";
    }
    else if (ATmatch(term, "DIV()")) {
-      op_enum = Jovial_ROSE_Translation::e_divideOperator;
+      op_enum = General_Language_Translation::e_operator_divide;
       op_name = "/";
    }
    else if (ATmatch(term, "MOD()")) {
-      op_enum = Jovial_ROSE_Translation::e_modOperator;
+      op_enum = General_Language_Translation::e_operator_mod;
       op_name = "MOD";
    }
    else {
-      op_enum = Jovial_ROSE_Translation::e_unknown;
+      op_enum = General_Language_Translation::e_unknown;
       op_name = "Jovial_operator_unknown";
       return ATfalse;
    }

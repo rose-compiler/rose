@@ -760,7 +760,7 @@ Grammar::setUpNodes ()
      UntypedVariableDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
-     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedTokenList*", "modifiers", "",
+     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedExprListExpression*", "modifiers", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedInitializedNameList*", "variables", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -774,7 +774,7 @@ Grammar::setUpNodes ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedFunctionScope*", "scope", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedTokenList*", "modifiers", "",
+     UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedExprListExpression*", "modifiers", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

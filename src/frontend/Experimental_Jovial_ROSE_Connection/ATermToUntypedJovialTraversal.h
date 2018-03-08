@@ -1,8 +1,8 @@
 #ifndef ATERM_TO_UNTYPED_JOVIAL_TRAVERSAL_H
 #define ATERM_TO_UNTYPED_JOVIAL_TRAVERSAL_H
 
-#include "ATermToUntypedTraversal.h"
-#include "Jovial_to_ROSE_translation.h"
+#include "ATerm/ATermToUntypedTraversal.h"
+#include "general_language_translation.h"
 
 namespace ATermSupport {
 
@@ -81,7 +81,7 @@ ATbool traverse_NumericFormula(ATerm term, SgUntypedExpression** expr);
 // 5.1.1 INTEGER FORMULAS
 ATbool traverse_IntegerFormula (ATerm term, SgUntypedExpression** expr);
 ATbool traverse_IntegerPrimary (ATerm term, SgUntypedExpression** expr);
-ATbool traverse_OptSign        (ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum);
+ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
 ATbool traverse_IntegerTerm    (ATerm term, SgUntypedExpression** expr);
 ATbool traverse_IntegerFactor  (ATerm term, SgUntypedExpression** expr);
 
@@ -90,7 +90,7 @@ ATbool traverse_Variable(ATerm term, SgUntypedExpression** var);
 ATbool traverse_VariableList(ATerm term, std::vector<SgUntypedExpression*> & vars);
 
 // 8.2.3 OPERATORS
-ATbool traverse_MultiplyDivideOrMod(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum, std::string & op_name);
+ATbool traverse_MultiplyDivideOrMod(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name);
 
 }; // class ATermToUntypedJovialTraversal
 }  // namespace Jovial

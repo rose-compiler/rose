@@ -38,7 +38,9 @@ endif
 
 # Rasmussen (01/21/2018): Adding general support for experimental languages
 if ROSE_BUILD_ATERM_SUPPORT
-   libroseExperimentalGeneralLanguagelibraries = frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
+   libroseExperimentalGeneralLanguagelibraries = \
+        frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
+        frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
 else
    libroseExperimentalGeneralLanguagelibraries =
 endif
