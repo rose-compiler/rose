@@ -239,7 +239,7 @@ void changeVariableType(SgProject* root, string varNameToFind, SgType* type) {
   }
 }
 
-string toolName="varp3";
+string toolName="typeforge";
 
 int main (int argc, char* argv[])
 {
