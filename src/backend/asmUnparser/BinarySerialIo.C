@@ -299,6 +299,7 @@ void
 SerialInput::advanceObjectType() {
     ASSERT_require(isOpen());
     Savable typeId = NO_OBJECT;
+#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     switch (format()) {
         case BINARY:
             *binary_archive_ >>typeId;
@@ -310,6 +311,7 @@ SerialInput::advanceObjectType() {
             *xml_archive_ >>BOOST_SERIALIZATION_NVP(typeId);
             break;
     }
+#endif
     objectType(typeId);
 }
 
@@ -345,8 +347,8 @@ SerialInput::close() {
         }
 
         file_.close();
-#endif
         fileSize_ = 0;
+#endif
         SerialIo::close();
     }
 }

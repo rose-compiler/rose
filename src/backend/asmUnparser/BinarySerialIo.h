@@ -243,14 +243,20 @@ public:
     typedef Sawyer::SharedPointer<SerialOutput> Ptr;
 
 private:
+#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     boost::iostreams::file_descriptor_sink device_;
     boost::iostreams::stream<boost::iostreams::file_descriptor_sink> file_;
     boost::archive::binary_oarchive *binary_archive_;
     boost::archive::text_oarchive *text_archive_;
     boost::archive::xml_oarchive *xml_archive_;
+#endif
 
 protected:
+#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     SerialOutput(): binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
+#else
+    SerialOutput() {}
+#endif
 
 public:
     ~SerialOutput();
@@ -392,15 +398,21 @@ public:
     typedef Sawyer::SharedPointer<SerialInput> Ptr;
 
 private:
+#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     size_t fileSize_;
     boost::iostreams::file_descriptor_source device_;
     boost::iostreams::stream<boost::iostreams::file_descriptor_source> file_;
     boost::archive::binary_iarchive *binary_archive_;
     boost::archive::text_iarchive *text_archive_;
     boost::archive::xml_iarchive *xml_archive_;
+#endif
 
 protected:
+#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     SerialInput(): fileSize_(0), binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
+#else
+    SerialInput() {}
+#endif
 
 public:
     ~SerialInput();
@@ -473,8 +485,8 @@ public:
         if (!errorMessage.empty())
             throw Exception(errorMessage);
         advanceObjectType();
-#endif
         return object;
+#endif
     }
 
 private:
