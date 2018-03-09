@@ -11,6 +11,10 @@
 #include "Timer.h"
 #include "CommandLineOptions.h"
 #include <map>
+
+// graph support
+#include "Sawyer/Graph.h"
+
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
 #ifdef USE_SAWYER_COMMANDLINE
@@ -24,6 +28,28 @@
 using namespace std;
 
 stringstream ss;
+
+class EdgeData {
+};
+
+class VertexData {
+public:
+  VertexData(SgNode* node):node(node) {
+  }
+  VertexData(SgNode* node, SgType* type):node(node),type(type) {
+  }
+private:
+  SgNode* node=nullptr;
+  SgType* type=nullptr;
+};
+
+typedef Sawyer::Container::Graph<VertexData, EdgeData> CastGraph;
+
+CastGraph castGraph;
+
+typedef CastGraph::VertexIterator VertexIterType;
+typedef std::map<SgNode*, VertexIterType> NodeVertexMapping;
+NodeVertexMapping nodeVertexMapping;
 
 class TestTraversal : public AstSimpleProcessing {
 public:
@@ -92,21 +118,31 @@ string typeColorName(SgType* type) {
 void addNode(SgExpression* node, SgType* type) {
   ROSE_ASSERT(node);
   ROSE_ASSERT(type);
-  string color=typeColorName(type);
-  string labelInfo=string("\\n")+"type:"+type->unparseToString();
 
-  if(isSgUnaryOp(node)||isSgBinaryOp(node)||isSgConditionalExp(node)||isSgCallExpression(node)) {
-    ss<<nodeId(node)<<"[label=\"op:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
-  } else if(isSgVarRefExp(node)) {
-    ss<<nodeId(node)<<"[label=\"var:"<<node->unparseToString()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
-  } else if(isSgValueExp(node)) {
-    ss<<nodeId(node)<<"[label=\"val:"<<dotString(node->unparseToString())+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
-  } else {
-    ss<<nodeId(node)<<"[label=\"node:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+  if(nodeVertexMapping.find(node)==nodeVertexMapping.end()) {
+    VertexIterType v=castGraph.insertVertex(VertexData(node,type));
+    nodeVertexMapping[node]=v;
+  
+    string color=typeColorName(type);
+    string labelInfo=string("\\n")+"type:"+type->unparseToString();
+    
+    if(isSgUnaryOp(node)||isSgBinaryOp(node)||isSgConditionalExp(node)||isSgCallExpression(node)) {
+      ss<<nodeId(node)<<"[label=\"op:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+    } else if(isSgVarRefExp(node)) {
+      ss<<nodeId(node)<<"[label=\"var:"<<node->unparseToString()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+    } else if(isSgValueExp(node)) {
+      ss<<nodeId(node)<<"[label=\"val:"<<dotString(node->unparseToString())+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+    } else {
+      ss<<nodeId(node)<<"[label=\"node:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
+    }
   }
 }
 
 void addEdge(SgExpression* from, SgExpression* to) {
+  ROSE_ASSERT(nodeVertexMapping.find(from)!=nodeVertexMapping.end());
+  ROSE_ASSERT(nodeVertexMapping.find(to)!=nodeVertexMapping.end());
+  castGraph.insertEdge(nodeVertexMapping[from],nodeVertexMapping[to]);
+
   if(from->unparseToString()=="FE_UPWARD") {
     cout<<"DEBUG:   "<<from->unparseToString()<<endl;
     cout<<"DEBUG:p :"<<from->get_parent()->unparseToString()<<endl;
