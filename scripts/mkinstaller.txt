@@ -304,18 +304,6 @@ OPTIONS
 
             Note that Windows-like systems do not support symbolic-links.
 
-        --fortran=<string>
-
-            The FORTRAN compiler name and version number that had been
-            used in building the software being installed. Note that the
-            string is expected to a blank separated pair: the name and
-            version number. The default is the string "- -" (meaning
-            "unknown" or "don't care").
-
-            Example:
-
-            --fortran="gfortran 4.5.1"
-
         --intermediate-dir=<name>
         --version-dir=<name>
 
@@ -505,6 +493,16 @@ OPTIONS
             the --prefix=... and the --intermediate-dir=... options. This
             is the default behavior.
 
+        --with-<name>-file=<pathname>
+
+            A file with the specified <pathname> is to be included in the
+            specified installation directory with the given basename (see
+            the <pathname> description below (actually a parameter) for
+            how directories to be installed are to be specified. Note that
+            <name> in the option name is typically something like bin,
+            include, lib, ... and like <pathname> below, may not contain
+            any spaces, tabs, or dashes.
+
         --without-payload
 
             Don't include the payload with the generated script. This
@@ -515,13 +513,13 @@ OPTIONS
 
         <pathname>
 
-            The pathnames of one or more directories which will be
-            embedded as tarballs within the generated installer script.
-            Typical directory basenames are: bin, include, lib, ... Note
-            that at least one such directory pathname is required.
+            The pathnames of one or more directories to be installed which
+            will be embedded as tarballs within the generated installer
+            script. Typical directory basenames are: bin, include, lib, ...
+            Note that at least one such directory pathname is required.
 
-            The basename of this pathname may not contain any spaces or
-            tabs however the directory component (if any) may.
+            The basename of this pathname may not contain any spaces, tabs,
+            or dashes however the directory component (if any) may.
 
 RETURNS
     "mkinstaller" returns the standard exit codes:
