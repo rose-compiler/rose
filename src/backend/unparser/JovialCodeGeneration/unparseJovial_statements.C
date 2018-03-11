@@ -22,6 +22,8 @@
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 using namespace std;
+using std::cerr;
+using std::endl;
 
 #include "sage_support.h"
 
@@ -52,7 +54,7 @@ Unparse_Jovial::unparseJovialFile(SgSourceFile *sourcefile, SgUnparse_Info& info
 void
 Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // This function unparses the language specific parse not handled by the base class unparseStatement() member function
+  // This function unparses the language specific statements not handled by the base class unparseStatement() member function
 
      ROSE_ASSERT(stmt != NULL);
 
@@ -94,7 +96,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
           case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
-          case V_SgNullStatement:          curprint("");/* Tab over for stmt*/ break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
 
@@ -116,7 +117,8 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
           default:
              {
-               printf("Unparse_Jovial::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->class_name().c_str(), stmt->variantT());
+                cerr << "Unparse_Jovial::unparseLanguageSpecificStatement: Error: No handler for "
+                     <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
                ROSE_ASSERT(false);
                break;
              }
@@ -222,20 +224,28 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 #endif
 
-     curprint("ITEM ");
-     curprint(name.str());
-     curprint(" ");
+     switch (type->variantT())
+        {
+          case V_SgArrayType:
+             curprint("TABLE ");
+             curprint(name.str());
+             break;
+          default:
+             curprint("ITEM ");
+             curprint(name.str());
+             curprint(" ");
+        }
 
      unparseType(type, info);
 
-      if (init != NULL)
-      {
-         curprint(" = ");
-         SgInitializer* initializer = isSgInitializer(init);
-         ROSE_ASSERT(initializer != NULL);
-      // TODO
-      // unparseExpression(initializer, info);
-      }
+     if (init != NULL)
+        {
+           curprint(" = ");
+           SgInitializer* initializer = isSgInitializer(init);
+           ROSE_ASSERT(initializer != NULL);
+           // TODO
+           // unparseExpression(initializer, info);
+        }
 
      curprint(" ;\n");
    }
