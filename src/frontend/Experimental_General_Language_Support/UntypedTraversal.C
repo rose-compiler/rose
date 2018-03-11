@@ -130,19 +130,19 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
    {
      case V_SgUntypedBinaryOperator:
        {
-         SgUntypedExpression* ut_expr = isSgUntypedBinaryOperator(node);
-         SgExpressionPtrList children(childAttrs);
-         sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children);
-         break;
+          SgUntypedExpression* ut_expr = isSgUntypedBinaryOperator(node);
+          SgExpressionPtrList children(childAttrs);
+          sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children);
+          break;
        }
 
      case V_SgUntypedNullExpression:
      case V_SgUntypedReferenceExpression:
      case V_SgUntypedValueExpression:
        {
-         SgUntypedExpression* ut_expr = isSgUntypedExpression(node);
-         sg_expr = pConverter->convertSgUntypedExpression(ut_expr);
-         break;
+          SgUntypedExpression* ut_expr = isSgUntypedExpression(node);
+          sg_expr = pConverter->convertSgUntypedExpression(ut_expr);
+          break;
        }
 
     case V_SgUntypedAssignmentStatement:

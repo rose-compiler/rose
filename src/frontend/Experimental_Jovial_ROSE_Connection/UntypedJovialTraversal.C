@@ -15,6 +15,10 @@ UntypedJovialTraversal::UntypedJovialTraversal(SgSourceFile* sourceFile, Untyped
 InheritedAttribute
 UntypedJovialTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute currentScope)
 {
+#if DEBUG_UNTYPED_TRAVERSAL
+   cout << "........  inherited traversing, scope is " << currentScope << endl;
+#endif
+
    switch (node->variantT())
    {
     default:

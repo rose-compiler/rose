@@ -177,6 +177,8 @@ Grammar::setUpNodes ()
 
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     NEW_TERMINAL_MACRO (UntypedNullDeclaration,               "UntypedNullDeclaration",               "TEMP_UntypedNullDeclaration" );
      NEW_TERMINAL_MACRO (UntypedNullStatement,                 "UntypedNullStatement",                 "TEMP_UntypedNullStatement" );
      NEW_TERMINAL_MACRO (UntypedIfStatement,                   "UntypedIfStatement",                   "TEMP_UntypedIfStatement" );
      NEW_TERMINAL_MACRO (UntypedCaseStatement,                 "UntypedCaseStatement",                 "TEMP_UntypedCaseStatement" );
@@ -231,9 +233,11 @@ Grammar::setUpNodes ()
   //     UntypedFunctionDeclaration | UntypedModuleDeclaration,
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration, UntypedBlockDataDeclaration
-     NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedNameListDeclaration | UntypedUseStatement |
-         UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration |
-         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration |
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement,
+         UntypedNullDeclaration      | UntypedNameListDeclaration  | UntypedUseStatement                |
+         UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration         |
+         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration        |
          UntypedPackageDeclaration   | UntypedStructureDeclaration | UntypedExceptionHandlerDeclaration |
          UntypedExceptionDeclaration | UntypedTaskDeclaration      | UntypedUnitDeclaration,
          "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
@@ -716,6 +720,8 @@ Grammar::setUpNodes ()
 
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     UntypedNullDeclaration.setFunctionPrototype               ( "HEADER_UNTYPED_NULL_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedNullStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
 
      UntypedIfStatement.setFunctionPrototype           ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
@@ -1398,6 +1404,8 @@ Grammar::setUpNodes ()
 
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     UntypedNullDeclaration.setFunctionSource               ( "SOURCE_UNTYPED_NULL_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedNullStatement.setFunctionSource                 ( "SOURCE_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedIfStatement.setFunctionSource                   ( "SOURCE_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedCaseStatement.setFunctionSource                 ( "SOURCE_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");

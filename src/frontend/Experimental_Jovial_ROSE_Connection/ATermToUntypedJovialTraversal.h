@@ -22,6 +22,7 @@ ATbool traverse_CompoolModule(ATerm term, SgUntypedScope* scope);
 // 1.2.2 PROCEDURE MODULES
 ATbool traverse_ProcedureModule(ATerm term, SgUntypedScope* scope);
 ATbool traverse_DeclarationList(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_NullDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 1.2.3 MAIN PROGRAM MODULES
 ATbool traverse_MainProgramModule(ATerm term, SgUntypedGlobalScope* global_scope);
@@ -60,6 +61,28 @@ ATbool traverse_StatusItemDescription(ATerm term, SgUntypedType** type);
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription(ATerm term, SgUntypedType** type);
 
+// 2.1.2 TABLE DECLARATION
+ATbool traverse_TableDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_TableDescription(ATerm term, SgUntypedType** type,
+                                 bool* has_spec, std::string & spec_string,
+                                 bool* has_bits, SgUntypedExpression** bits_expr);
+ATbool traverse_EntrySpecifier(ATerm term, SgUntypedType** type);
+
+// 2.1.2.3 ORDINARY TABLE ENTRIES
+ATbool traverse_OrdinaryEntrySpecifier(ATerm term, SgUntypedType** type);
+ATbool traverse_OptPackingSpecifier(ATerm term, bool* has_spec, std::string & spec_string);
+
+// 2.1.2.4 SPECIFIED TABLE ENTRIES
+ATbool traverse_SpecifiedEntrySpecifier(ATerm term, SgUntypedType** type);
+
+// 2.1.2.1 TABLE DIMENSION LISTS
+ATbool traverse_OptDimensionList(ATerm term, SgUntypedExprListExpression* dim_info);
+ATbool traverse_Dimension(ATerm term, SgUntypedExprListExpression* dim_info);
+
+// 2.1.2.2 TABLE STRUCTURE
+ATbool traverse_OptStructureSpecifier(ATerm term, bool* has_spec, std::string & spec_string,
+                                                  bool* has_bits, SgUntypedExpression** bits_expr);
+
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, bool* has_spec, std::string & spec_string);
 
@@ -67,6 +90,7 @@ ATbool traverse_OptAllocationSpecifier(ATerm term, bool* has_spec, std::string &
 ATbool traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_StatementList(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_SimpleStatement(ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_NullStatement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels);
 
 // 4.1 ASSIGNMENT STATEMENTS

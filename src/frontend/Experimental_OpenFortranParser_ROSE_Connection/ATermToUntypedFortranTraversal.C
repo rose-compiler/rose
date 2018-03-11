@@ -1131,6 +1131,39 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUn
         else if (ATmatch(head, "VOLATILE()")) {
            attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_volatile);
         }
+
+#ifdef CUDA_FORTRAN_IMPLEMENTED
+     // CUDA Attributes
+     // ---------------
+        else if (ATmatch(head, "CUDA_DEVICE()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_device);
+        }
+        else if (ATmatch(head, "CUDA_GLOBAL()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_global);
+        }
+        else if (ATmatch(head, "CUDA_GRID_GLOBAL()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_grid_global);
+        }
+        else if (ATmatch(head, "CUDA_HOST()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_host);
+        }
+        else if (ATmatch(head, "CUDA_MANAGED()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_managed);
+        }
+        else if (ATmatch(head, "CUDA_CONSTANT()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_constant);
+        }
+        else if (ATmatch(head, "CUDA_SHARED()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_shared);
+        }
+        else if (ATmatch(head, "CUDA_PINNED()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_pinned);
+        }
+        else if (ATmatch(head, "CUDA_TEXTURE()")) {
+           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_texture);
+        }
+#endif
+
         else {
            std::cerr << "...TODO... finish attributes in OptAttrSpecList" << std::endl;
            return ATfalse;
@@ -1244,32 +1277,40 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptInitialization(ATerm term, Sg
 }
 
 //========================================================================================
-// R509 coarray-spec (optional only for now)
+// R509 coarray-spec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+ATbool ATermToUntypedFortranTraversal::traverse_CoarraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_OptCoarraySpec: %s\n", ATwriteToString(term));
+   printf("... traverse_CoarraySpec: %s\n", ATwriteToString(term));
 #endif
 
+ //TODO - implement CoarraySpec
+   std::cerr << "...TODO... implement OptCoarraySpec" << std::endl;
+   return ATfalse;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+{
    if (ATmatch(term, "no-list()")) {
+      // MATCHED no-list()
+   }
+   else if (traverse_CoarraySpec(term, base_type, array_type)) {
+      // MATCHED CoarraySpec
    }
    else {
-      //TODO - implement CoarraySpec  
-      std::cerr << "...TODO... implement OptCoarraySpec" << std::endl;
       return ATfalse;
    }
-
    return ATtrue;
 }
 
 //========================================================================================
 // R515 array-spec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_OptArraySpec: %s\n", ATwriteToString(term));
+   printf("... traverse_ArraySpec: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_array_spec_arg;
@@ -1281,10 +1322,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
 
    *array_type = NULL;
 
-   if (ATmatch(term, "no-list()")) {
-      // MATCHED no-list()
-   }
-   else if (ATmatch(term, "ArraySpec(<term>)", &t_array_spec_arg)) {
+   if (ATmatch(term, "ArraySpec(<term>)", &t_array_spec_arg)) {
 
       dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
       setSourcePosition(dim_info, t_array_spec_arg);
@@ -1357,7 +1395,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
             dim_info->get_expressions().push_back(range);
          }
         else {
-           std::cerr << "traverse_OptArraySpec: ERROR in ArraySpec list" << std::endl;
+           std::cerr << "traverse_ArraySpec: ERROR in ArraySpec list" << std::endl;
            return ATfalse;
         }
       }
@@ -1369,6 +1407,20 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
       return ATfalse;
    }
 
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+{
+   if (ATmatch(term, "no-list()")) {
+      // MATCHED no-list()
+   }
+   else if (traverse_ArraySpec(term, base_type, array_type)) {
+      // MATCHED ArraySpec
+   }
+   else {
+      return ATfalse;
+   }
    return ATtrue;
 }
 
@@ -3171,6 +3223,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedE
          else if (ATmatch(head, "RECURSIVE()")) {
             prefix = new SgUntypedOtherExpression(e_function_modifier_recursive);
          }
+#ifdef CUDA_FORTRAN_IMPLEMENTED
+         else if (traverse_CudaAttributesPrefix(head, &prefix)) {
+            // MATCHED CudaAttributesPrefix
+         }
+#endif
          else return ATfalse;
 
          if (prefix != NULL) {
@@ -3182,6 +3239,28 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedE
 
    return ATtrue;
 }
+
+#ifdef CUDA_FORTRAN_IMPLEMENTED
+ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CudaAttributesPrefix: %s\n", ATwriteToString(term));
+#endif
+
+   *prefix = NULL;
+
+   if (ATmatch(term, "CudaAttributesPrefix(CUDA_DEVICE())")) {
+      *prefix = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_device);
+      cout << "..... found cuda device " << Fortran_ROSE_Translation::e_cuda_device << endl;
+   }
+   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_HOST())")) {
+      *prefix = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_host);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+#endif
 
 //========================================================================================
 // FunctionSubprogram (R1227)

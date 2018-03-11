@@ -81,9 +81,11 @@ ATbool traverse_EntityDeclList (ATerm term, SgUntypedType* declared_type, SgUnty
 ATbool traverse_OptInitialization(ATerm term, SgUntypedExpression** expr);
 
 // R509
+ATbool traverse_CoarraySpec    (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 ATbool traverse_OptCoarraySpec (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 
 // R515
+ATbool traverse_ArraySpec      (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 ATbool traverse_OptArraySpec   (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 
 // R516
@@ -215,6 +217,9 @@ ATbool traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl
 
 // R1225
 ATbool traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type);
+#ifdef CUDA_FORTRAN_IMPLEMENTED
+ATbool traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix);
+#endif
 
 // R1227
 ATbool traverse_FunctionSubprogram(ATerm term, SgUntypedScope* scope);

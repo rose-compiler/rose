@@ -10,7 +10,7 @@ using std::endl;
 
 void
 UntypedJovialConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
-                                SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
+                                      SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
 {
    std::string label_name = ut_stmt->get_label_string();
    if (!label_name.empty())

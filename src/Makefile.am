@@ -516,7 +516,3 @@ endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
-
-
-
-
