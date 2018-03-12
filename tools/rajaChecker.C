@@ -67,7 +67,7 @@ namespace RAJA_Checker
 
   //! Check if an expression is used as a function call parameter to a template function with a given name 
   bool isWrapperTemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
-                         string func_name, // the matching name of the function
+                         const vector<string>& func_names, // the matching names of wrapper functions
                          SgExprStatement* & callStmt, // return  the call statement
                          SgFunctionDeclaration*& template_func_decl);
 
@@ -222,7 +222,7 @@ namespace RAJA_Checker
   //                           * SgExprListExp
   //                           ** SgLambdaExp 
   bool isWrapperTemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
-                       string func_name, // the matching name of the function
+                       const vector<string>& func_names, // the matching names of wrapper functions
                        SgExprStatement* & callStmt, 
                        SgFunctionDeclaration*& raja_func_decl)
   {
@@ -243,14 +243,27 @@ namespace RAJA_Checker
 
         SgFunctionDeclaration* func_decl = call_exp->getAssociatedFunctionDeclaration();
         string obtained_name = (func_decl->get_qualified_name()).getString(); 
-      //  if (func_name == obtained_name) // the full qualified name is ::for_all < seq_exec ,  >, we only match the first portion for now
-       if (obtained_name.find (func_name,0) !=string::npos)
-          retval = true; 
+       
+        for (size_t i=0; i< func_names.size(); i++)
+        {
+          string func_name = func_names[i];
+          //  if (func_name == obtained_name) // the full qualified name is ::for_all < seq_exec ,  >, we only match the first portion for now
+          if (obtained_name.find (func_name,0) !=string::npos)
+          {
+            retval = true; 
+            break; 
+          }
+        }
 
         if (enable_debug)
         {
           if (!retval)
-            cout<<"\t obtained func name is: "<< obtained_name <<" no matching given: " << func_name<<endl;
+          {
+            cout<<"\t obtained func name is: "<< obtained_name <<" no matching given names: "<<endl;
+            for (size_t i=0; i< func_names.size(); i++)
+              cout<<func_names[i]<<" ";
+            cout<<endl;
+          }
         }
 
         //if (raja_func_decl != NULL)
@@ -1229,8 +1242,12 @@ bool RAJA_Checker::isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
   // this is the raja template function declaration!!
   SgFunctionDeclaration* raja_func = NULL;
   SgExprStatement* call_stmt = NULL;
+  vector<string> wrappers; 
+  wrappers.push_back("::for_all <");
+  wrappers.push_back("::for_all_zones <");
+  wrappers.push_back("::for_all_zones_tiled <");
   if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func)  && 
-      !isWrapperTemplateFunctionCallParameter (exp, "::for_all <",  call_stmt, raja_func))
+      !isWrapperTemplateFunctionCallParameter (exp, wrappers,  call_stmt, raja_func))
   {
     if (RAJA_Checker::enable_debug)
        cout<<"\tLambda exp is not a raja template function call parameter "<<endl;   
