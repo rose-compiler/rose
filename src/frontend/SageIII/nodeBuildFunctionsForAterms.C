@@ -3400,6 +3400,19 @@ SgUntypedNullStatement* SgUntypedNullStatement::build_node_from_nonlist_children
    }
 
 
+SgUntypedNullDeclaration* SgUntypedNullDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNullDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNullDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 SgUntypedReturnStatement* SgUntypedReturnStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
    {
 #if 0

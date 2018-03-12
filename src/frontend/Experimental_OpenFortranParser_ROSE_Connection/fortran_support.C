@@ -11,16 +11,15 @@
 // #include "rosePublicConfig.h"
 
 #include "fortran_support.h"
-
-#include <aterm2.h>
+#include "ATermToUntypedFortranTraversal.h"
 #include "UntypedFortranTraversal.h"
+#include "UntypedFortranConverter.h"
 
 using namespace std;
 using namespace Rose;
 
 #define DEBUG_ROSE_EXPERIMENTAL 0
 
-#include "ATermToUntypedFortranTraversal.h"
 
 int
 experimental_openFortranParser_main(int argc, char **argv)
@@ -46,6 +45,8 @@ experimental_openFortranParser_main(int argc, char **argv)
      string stratego_bin_path = STRATEGO_BIN_PATH;
      ROSE_ASSERT(stratego_bin_path.empty() == false);
 
+  // Step 1 - Parse the input file
+  // ------
      string commandString = stratego_bin_path + "/sglri ";
 
   // Rasmussen (11/13/2017): Moved parse table to ROSE 3rdPartyLibraries (no longer set by caller).
@@ -126,13 +127,8 @@ experimental_openFortranParser_main(int argc, char **argv)
      ATerm program_term = ATreadFromTextFile(file);
      fclose(file);
 
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): Calling traverse_SgUntypedFile() \n");
-#endif
-
-//----------------------------------------------------------------------
-//  Traverse the ATerm file and convert to untyped nodes
-//----------------------------------------------------------------------
+  // Step 2 - Traverse the ATerm parse tree and convert into Untyped nodes
+  // ------
 
   // Create object to traverse the ATerm file
      aterm_traversal = new ATermSupport::ATermToUntypedFortranTraversal(OpenFortranParser_globalFilePointer);
@@ -143,23 +139,19 @@ experimental_openFortranParser_main(int argc, char **argv)
            return 1;
         }
 
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): successfully traversed ATerms, beginning traversal \n");
-     printf ("--------------------------------------------------------------\n\n");
-#endif
-
   // Rasmussen (01/22/18): Create a dot file.  This is temporary or should
   // at least be a rose option.
      SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
      generateDOT(global_scope, filenameWithoutPath + ".ut");
 
-//----------------------------------------------------------------------
-//  Traverse the SgUntypedFile object and convert to regular sage nodes
-//----------------------------------------------------------------------
+  // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
+  // ------
 
   // Create the untyped traversal object
-     Fortran::Untyped::UntypedFortranTraversal sg_traversal(OpenFortranParser_globalFilePointer);
-     Fortran::Untyped::InheritedAttribute scope = NULL;
+
+     Untyped::UntypedFortranConverter sg_converter;
+     Untyped::UntypedFortranTraversal sg_traversal(OpenFortranParser_globalFilePointer, &sg_converter);
+     Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
      sg_traversal.traverse(aterm_traversal->get_file(), scope);
