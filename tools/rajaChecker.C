@@ -81,6 +81,9 @@ namespace RAJA_Checker
   //!  if there is a form like: int varRef1 = indexSet[loopIndex]; 
   bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
 
+  //!  if there is a form like: int varRef1 = loopIndex; 
+  bool connectedViaAssignment (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
+
   // TODO: move some functions to SageInterface if needed.
   //! Find and warn if there are data member accesses within a scope
   // This is useful in the context of RAJA programming: 
@@ -543,6 +546,61 @@ bool RAJA_Checker::connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName
   return false;
 }
 
+// Check if varRef1 is defined by loopIndex via  int varRef1 = loopIndex;
+// This helps to find loop index buried behind another variable. 
+bool RAJA_Checker::connectedViaAssignment(SgVarRefExp* varRef1, SgInitializedName* loopIndex)
+{
+  AstMatching m;
+  ROSE_ASSERT (varRef1!=NULL);
+  ROSE_ASSERT (loopIndex!=NULL);
+  if (enable_debug)
+  {
+    cout<<"\t\t Entering connectedViaAssignment() ..."<<endl;
+  }  
+
+  // symbol and decl for varRef1  
+  SgVariableSymbol* sym = varRef1->get_symbol();
+  SgInitializedName* iname = sym->get_declaration();
+  SgDeclarationStatement* decl = iname->get_declaration();
+  
+  if (enable_debug)
+  {
+    cout<<"\t\t the ast term for var decl:"<<endl;
+    string p("$rhs=SgVariableDeclaration");
+    MatchResult res=m.performMatching(p, decl);
+    for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+      SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+      cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+    }
+  }
+
+#if 1  
+  //SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgVarRefExp:zoneIdx)))
+  //string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,$rhs=SgVarRefExp))))");
+  // there may be this-> pointer for indeSet variable reference!!
+  //string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(_,$rhs=SgVarRefExp))))");
+  string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer($rhs=SgVarRefExp)))");
+  MatchResult res=m.performMatching(p, decl);
+  if (enable_debug)
+    cout<<"\t\t matched result size():"<<res.size()<<endl;
+  for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+     SgVarRefExp* rhs = isSgVarRefExp((*i)["$rhs"]);
+
+     //SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+     //cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+
+     ROSE_ASSERT (rhs);
+     SgVariableSymbol* sym2= rhs->get_symbol();
+     ROSE_ASSERT (sym2);
+     SgInitializedName* i2 = sym2->get_declaration();
+     if (loopIndex==i2 ) 
+       return true; 
+  }
+#endif  
+  return false;
+}
+
+
 // Check if an operand is a form of x[index], x is a pointer to a double, index is a loop index
 bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefExp** varRefOut)
 {
@@ -632,13 +690,13 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefE
 
   SgSymbol * s1 = varRef->get_symbol();
   SgSymbol * s2 = lvar->get_symbol_from_symbol_table ();
-  if ( s1 != s2 && !connectedViaIndexSet(varRef, lvar))
+  if ( s1 != s2 && !connectedViaIndexSet(varRef, lvar) && ! connectedViaAssignment(varRef, lvar))
   {
     if (RAJA_Checker::enable_debug) 
     {
       cout<<"\t\t\t symbol is not equal to loop index symbol" <<endl;
-      cout<< "\t\t\t rhs of a[i] var Ref:" << varRef->unparseToString() <<" : "<<s1->unparseToString() <<endl;
-      cout<< "\t\t\t loop index var:" << lvar->unparseToString() <<" : "<<s2->unparseToString() <<endl;
+      cout<< "\t\t\t\t rhs of a[i] var Ref:" << varRef->unparseToString() <<" : "<<s1->unparseToString() <<endl;
+      cout<< "\t\t\t\t loop index var:" << lvar->unparseToString() <<" : "<<s2->unparseToString() <<endl;
     }
     return false;
   }
