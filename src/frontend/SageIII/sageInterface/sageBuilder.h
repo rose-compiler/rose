@@ -161,6 +161,9 @@ ROSE_DLL_API void setSourcePositionClassificationMode(SourcePositionClassificati
 //! DQ (7/27/2012): changed semantics from removing the template arguments in names to adding the template arguments to names.
 ROSE_DLL_API SgName appendTemplateArgumentsToName( const SgName & name, const SgTemplateArgumentPtrList & templateArgumentsList);
 
+//! DQ (3/9/2018): Added to support debugging.
+SgName unparseTemplateArgumentToString (SgTemplateArgument* templateArgument);
+
 // *************************************************************************************************************
 
 
@@ -924,7 +927,7 @@ buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgSc
 // ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
 // buildTemplateInstantiationTypedefDeclaration_nfi();
 ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentList);
+buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentsList);
 #endif
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in

@@ -3221,11 +3221,32 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          if (local_symbol == NULL)
                             {
+
+                           // It appears this is an issue because the name is slightly different between:
+                           //      name = template_class2 < int  , double  >  SgSymbol = 0x150ac90 = SgTemplateTypedefSymbol type = 0x7fdc28051098 = SgTypedefType = template_class2 < int , double >  
+                           // and
+                           //      get_symbol_basis() = 0x7fdc27d94010 = SgTemplateInstantiationTypedefDeclaration = template_class2 < int , double >  
+                           //
+                           // Specifically:
+                           //      name = template_class2 < int  , double  >
+                           //             template_class2 < int , double >
+
                               printf ("The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
                                    declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str(),
                                    symbol,symbol->class_name().c_str(),SageInterface::get_name(scope).c_str(),
                                    scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
                               declarationStatement->get_startOfConstruct()->display("declarationStatement->get_symbol_from_symbol_table() == NULL: debug");
+
+                              printf ("******************** START **********************\n");
+                              printf ("In AST Consistantcy tests: Output the symbol table for scope = %p = %s: \n",scope,scope->class_name().c_str());
+                              SageInterface::outputLocalSymbolTables(scope);
+                              printf ("******************** DONE ***********************\n");
+
+#if 1
+                           // DQ (2/28/2018): Added testing (Tristan indicates that this is a problem for Fortran, above).
+                              ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
+                              ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
+#endif
                             }
 
                       // DQ (11/7/2007): Allow this, with a warning, I think!
