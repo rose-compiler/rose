@@ -875,6 +875,10 @@ HEADER_PARTIAL_FUNCTION_TYPE_START
 HEADER_PARTIAL_FUNCTION_TYPE_END
 
 HEADER_TYPEDEF_TYPE_START
+
+       // DQ (2/20/2018): Adding support to build typedef type from template instantiation
+          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
+
 HEADER_TYPEDEF_TYPE_END
 
 
@@ -6233,7 +6237,7 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
             // SgName dname = decl->get_name();
             // SgTypedefType *tptr= isSgTypedefType((*i).irep());
                ROSE_ASSERT( (*i) != NULL);
-               SgTypedefType *tptr= isSgTypedefType(*i);
+               SgTypedefType *tptr = isSgTypedefType(*i);
                ROSE_ASSERT(tptr != NULL);
 
             // DQ (3/21/2012): No, test2004_48.C fails this test.
@@ -6244,9 +6248,66 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
             // DQ (3/3/2012): I think this is always NULL pointer to a SgSymbol. 
             // ROSE_ASSERT(tptr->get_parent_scope() == NULL);
 
-               if( (decl->get_name() == tptr->get_name()) &&
-                   (decl->get_parent_scope() == tptr->get_parent_scope()) )
+#if 0
+            // DQ (2/27/2018): I think this is the wrong code because the value returned by get_name() contains 
+            // the name of the template instantiation with template arguments, and the value of the function 
+            // get_templateName() has the value of the associated template name (without template arguments).
+
+               SgName name = decl->get_name();
+            // SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+               SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(decl);
+               if (templateInstantiationTypedefDeclaration != NULL)
+                 {
+                   name = templateInstantiationTypedefDeclaration->get_templateName();
+                   printf ("In SgTypedefType::createType(): case of SgTemplateInstantiationTypedefDeclaration: name = %s \n",name.str());
+                   ROSE_ASSERT(name != "");
+                 }
+                else
+                 {
+                // DQ (2/25/2018): If this is a SgTemplateTypedefDeclaration then it might be that we can't just use the name (but I'm not ceertain).
+                   SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+                   if (templateTypedefDeclaration != NULL)
+                      {
+                        printf ("In SgTypedefType::createType(): case of SgTemplateTypedefDeclaration: Need to handle this special case (I think)! \n");
+                      }
+                 }
+
+               SgName i_name = decl->get_name();
+            // SgTemplateTypedefDeclaration* i_templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+               SgTemplateInstantiationTypedefDeclaration* i_templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(tptr->get_declaration());
+               if (i_templateInstantiationTypedefDeclaration != NULL)
+                 {
+                   i_name = i_templateInstantiationTypedefDeclaration->get_templateName();
+                   printf ("In SgTypedefType::createType(): case of SgTemplateInstantiationTypedefDeclaration: i_name = %s \n",i_name.str());
+                   ROSE_ASSERT(i_name != "");
+                 }
+                else
+                 {
+                // DQ (2/25/2018): If this is a SgTemplateTypedefDeclaration then it might be that we can't just use the name (but I'm not ceertain).
+                   SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(tptr->get_declaration());
+                   if (templateTypedefDeclaration != NULL)
+                      {
+                        printf ("In SgTypedefType::createType(): case of SgTemplateTypedefDeclaration: Need to handle this special case (I think)! \n");
+                      }
+                 }
+#if 1
+               printf ("In SgTypedefType::createType(): decl = %p decl->get_firstNondefiningDeclaration() = %p \n",decl,decl->get_firstNondefiningDeclaration());
+               printf ("In SgTypedefType::createType(): decl = %p decl->get_definingDeclaration()         = %p \n",decl,decl->get_definingDeclaration());
+               printf ("In SgTypedefType::createType(): case of %s: name   = %s \n",decl->class_name().c_str(),name.str());
+               printf ("In SgTypedefType::createType(): case of %s: i_name = %s \n",tptr->get_declaration()->class_name().c_str(),i_name.str());
+#endif
+            // if ( (decl->get_name() == tptr->get_name()) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+               if ( (name == i_name) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+                  {
                     return (tptr);
+                  }
+#else
+            // DQ (2/27/2018): This is the original code, and I think it maybe the best version.
+               if ( (decl->get_name() == tptr->get_name()) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+                  {
+                    return tptr;
+                  }
+#endif
                i++;
              }
 
