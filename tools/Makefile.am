@@ -35,6 +35,7 @@ Checker_Test_Files += \
    nodalAccPatternForAllWrapper.cpp \		      
    nodalAccPattern1.cpp \
    nodalAccPattern2.cpp \
+   nodalAccPattern-localIndex.cpp \
    constDouble.cpp \
    indirectArrayAccess.cpp \
    indirectLambdaCall.cpp \
