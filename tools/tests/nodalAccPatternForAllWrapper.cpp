@@ -42,6 +42,20 @@ void for_all ( RAJA::Index_type begin, RAJA::Index_type end, LOOP_BODY loop_body
   RAJA::forall <EXEC_POLICY_T> ( begin, end, loop_body );
 }
 
+// a wrapper template function 2 here
+template < typename EXEC_POLICY_T, typename LOOP_BODY > 
+void for_all_zones ( RAJA::Index_type begin, RAJA::Index_type end, LOOP_BODY loop_body)
+{
+  RAJA::forall <EXEC_POLICY_T> ( begin, end, loop_body );
+}
+
+// a wrapper template function 2 here
+template < typename EXEC_POLICY_T, typename LOOP_BODY > 
+void for_all_zones_tiled ( RAJA::Index_type begin, RAJA::Index_type end, LOOP_BODY loop_body)
+{
+  RAJA::forall <EXEC_POLICY_T> ( begin, end, loop_body );
+}
+
 
 void foo(double* x, int jp, int kp, RAJA::Index_type begin, RAJA::Index_type end, double rh1)
 {
@@ -56,6 +70,30 @@ void foo(double* x, int jp, int kp, RAJA::Index_type begin, RAJA::Index_type end
 
    //Condition 3:  A regular loop or a RAJA loop
    for_all <class RAJA::seq_exec> (begin, end, [=](int i)
+   {
+      // Condition 4: accumulation pattern: lhs accum-op rhs
+      // lhs : array element access x[i]: x is pointer type, i is loop index 
+      // rhs: a scalar double type
+      // accum-op:   +=, -=, *=, /=, MIN (), MAX() 
+      x1[i] += rh1; 
+      x2[i] -= rh1; 
+      x3[i] *= rh1; 
+      x4[i] /= rh1; 
+   } );
+
+   for_all_zones <class RAJA::seq_exec> (begin, end, [=](int i)
+   {
+      // Condition 4: accumulation pattern: lhs accum-op rhs
+      // lhs : array element access x[i]: x is pointer type, i is loop index 
+      // rhs: a scalar double type
+      // accum-op:   +=, -=, *=, /=, MIN (), MAX() 
+      x1[i] += rh1; 
+      x2[i] -= rh1; 
+      x3[i] *= rh1; 
+      x4[i] /= rh1; 
+   } );
+
+   for_all_zones_tiled <class RAJA::seq_exec> (begin, end, [=](int i)
    {
       // Condition 4: accumulation pattern: lhs accum-op rhs
       // lhs : array element access x[i]: x is pointer type, i is loop index 
