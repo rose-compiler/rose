@@ -2,7 +2,7 @@
 #include <BinarySerialIo.h>
 #include <Partitioner2/Partitioner.h>
 
-#ifndef BOOST_WINDOWS
+#ifdef ROSE_SUPPORTS_SERIAL_IO
 #include <fcntl.h>
 #include <fstream>
 #include <string.h>
@@ -120,7 +120,7 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
     if (isOpen())
         close();
 
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
     throw Exception("binary state files are not supported in this configuration");
 #else
     objectType(ERROR); // in case of exception
@@ -200,7 +200,7 @@ SerialOutput::saveAst(SgBinaryComposite *ast) {
 void
 SerialOutput::close() {
     if (isOpen() && objectType() != END_OF_DATA && objectType() != ERROR) {
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
         throw Exception("binary state files are not supported in this configuration");
 #else
         Savable endMarker = END_OF_DATA;
@@ -245,7 +245,7 @@ SerialInput::open(const boost::filesystem::path &fileName) {
     if (isOpen())
         close();
 
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
     throw Exception("binary state files are not supported in this configuration");
 #else
     objectType(ERROR); // in case of exception
@@ -299,7 +299,7 @@ void
 SerialInput::advanceObjectType() {
     ASSERT_require(isOpen());
     Savable typeId = NO_OBJECT;
-#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifdef ROSE_SUPPORTS_SERIAL_IO
     switch (format()) {
         case BINARY:
             *binary_archive_ >>typeId;
@@ -328,7 +328,7 @@ SerialInput::loadAst() {
 void
 SerialInput::close() {
     if (isOpen()) {
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
         throw Exception("binary state files are not supported in this configuration");
 #else
         switch (format()) {

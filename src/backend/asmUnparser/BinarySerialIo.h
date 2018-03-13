@@ -2,7 +2,6 @@
 #define Rose_BinaryAnalysis_SerialIo_H
 
 #include <Progress.h>
-
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
@@ -10,7 +9,24 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Synchronization.h>
 
-#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#if defined(BOOST_WINDOWS)
+    // Lacks POSIX file system, so we can't monitor the I/O progress
+    #undef ROSE_SUPPORTS_SERIAL_IO
+#elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    // Lacks Boost's serialization library, which is how we convert objects to bytes and vice versa
+    #undef ROSE_SUPPORTS_SERIAL_IO
+#elif defined(__GNUC__)
+    #if __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
+        // GCC <= 4.2.4 gets segfaults compiling this file
+        #undef ROSE_SUPPORTS_SERIAL_IO
+    #else
+        #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
+    #endif
+#else
+    #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
+#endif
+
+#ifdef ROSE_SUPPORTS_SERIAL_IO
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -243,7 +259,7 @@ public:
     typedef Sawyer::SharedPointer<SerialOutput> Ptr;
 
 private:
-#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifdef ROSE_SUPPORTS_SERIAL_IO
     boost::iostreams::file_descriptor_sink device_;
     boost::iostreams::stream<boost::iostreams::file_descriptor_sink> file_;
     boost::archive::binary_oarchive *binary_archive_;
@@ -252,7 +268,7 @@ private:
 #endif
 
 protected:
-#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifdef ROSE_SUPPORTS_SERIAL_IO
     SerialOutput(): binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
 #else
     SerialOutput() {}
@@ -321,7 +337,7 @@ public:
         if (ERROR == objectType())
             throw Exception("cannot save object because stream is in error state");
 
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
         throw Exception("binary state files are not supported in this configuration");
 #else
         // A different thread saves the object while this thread updates the progress
@@ -353,7 +369,7 @@ private:
     template<class T>
     void asyncSave(Savable objectTypeId, const T &object, std::string *errorMessage) {
         ASSERT_not_null(errorMessage);
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
         ASSERT_not_reachable("not supported in this configuration");
 #else
         try {
@@ -398,7 +414,7 @@ public:
     typedef Sawyer::SharedPointer<SerialInput> Ptr;
 
 private:
-#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifdef ROSE_SUPPORTS_SERIAL_IO
     size_t fileSize_;
     boost::iostreams::file_descriptor_source device_;
     boost::iostreams::stream<boost::iostreams::file_descriptor_source> file_;
@@ -408,7 +424,7 @@ private:
 #endif
 
 protected:
-#if !defined(BOOST_WINDOWS) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifdef ROSE_SUPPORTS_SERIAL_IO
     SerialInput(): fileSize_(0), binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
 #else
     SerialInput() {}
@@ -456,7 +472,7 @@ public:
         if (!isOpen())
             throw Exception("cannot load object when no file is open");
 
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
         throw Exception("binary state files are not supported in this configuration");
 #else
         if (ERROR == objectType())
@@ -499,7 +515,7 @@ private:
     template<class T>
     void asyncLoad(T &object, std::string *errorMessage) {
         ASSERT_not_null(errorMessage);
-#if defined(BOOST_WINDOWS) || !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+#ifndef ROSE_SUPPORTS_SERIAL_IO
         ASSERT_not_reachable("not supported in this configuration");
 #else
         try {
