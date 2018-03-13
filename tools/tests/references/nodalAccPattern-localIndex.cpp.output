@@ -1,5 +1,3 @@
 Not a nodal accumulation loop at line:28
-Found a nodal accumulation lambda function at line:50
-	 The first accumulation statement is at line:57
-Found a nodal accumulation lambda function at line:76
-	 The first accumulation statement is at line:83
+Found a nodal accumulation lambda function at line:50 1st acc. stmt at line:57
+Found a nodal accumulation lambda function at line:76 1st acc. stmt at line:83
