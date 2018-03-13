@@ -14,10 +14,11 @@ Progress::instance() {
 }
 
 void
-Progress::update(double completion) {
+Progress::update(double completion, double maximum) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     ASSERT_forbid(reports_.empty());
     reports_.back().completion = completion;
+    reports_.back().maximum = maximum;
     ++reportNumber_;
     reportAge_.restart();
 #if SAWYER_MULTI_THREADED
@@ -51,8 +52,8 @@ Progress::push() {
 }
 
 Progress::Report
-Progress::push(double completion) {
-    return push(Report(completion));
+Progress::push(double completion, double maximum) {
+    return push(Report(completion, maximum));
 }
 
 Progress::Report
@@ -87,7 +88,7 @@ Progress::pop() {
 }
 
 void
-Progress::pop(double completion) {
+Progress::pop(double completion, double maximum) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     ASSERT_forbid(reports_.empty());
     if (reports_.size() > 1) {
@@ -97,6 +98,7 @@ Progress::pop(double completion) {
         reportNumber_ = TERMINATING;
     }
     reports_.back().completion = completion;
+    reports_.back().maximum = maximum;
     reportAge_.restart();
 #if SAWYER_MULTI_THREADED
     cv_.notify_all();
@@ -133,10 +135,11 @@ Progress::finished() {
 }
 
 void
-Progress::finished(double completion) {
+Progress::finished(double completion, double maximum) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     ASSERT_forbid(reports_.empty());
     reports_.back().completion = completion;
+    reports_.back().maximum = maximum;
     if (reports_.size() > 1) {
         ++reportNumber_;
     } else {

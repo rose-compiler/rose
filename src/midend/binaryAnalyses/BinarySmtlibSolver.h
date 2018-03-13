@@ -150,8 +150,8 @@ protected:
 
     // Create multiplicative expression. */
     virtual SExprTypePair outputMultiply(const SymbolicExpr::InteriorPtr&);
-    virtual SExprTypePair outputUnsignedDivide(const SymbolicExpr::InteriorPtr&);
-    virtual SExprTypePair outputUnsignedModulo(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputDivide(const SymbolicExpr::InteriorPtr&, const std::string &operation);
+    virtual SExprTypePair outputModulo(const SymbolicExpr::InteriorPtr&, const std::string &operation);
 
     // Create a memory read expression. The return type is a bit vector. */
     virtual SExprTypePair outputRead(const SymbolicExpr::InteriorPtr&);

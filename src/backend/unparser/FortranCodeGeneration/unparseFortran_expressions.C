@@ -1046,7 +1046,7 @@ FortranCodeGeneration_locatedNode::unparseSubscriptExpr(SgExpression* expr, SgUn
   //    {
      SgIntVal* integerValue = isSgIntVal(strideExpression);
 
-  // See if this is the default value for the strinde (unit stride) and skip the output in this case.
+  // See if this is the default value for the stride (unit stride) and skip the output in this case.
      bool defaultValue = ( (integerValue != NULL) && (integerValue->get_value() == 1) ) ? true : false;
      if (defaultValue == false)
         {

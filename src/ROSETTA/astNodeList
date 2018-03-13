@@ -753,6 +753,7 @@ SgUntypedProgramHeaderDeclaration
 SgUntypedFunctionDeclaration
 SgUntypedSubroutineDeclaration
 SgUntypedInterfaceDeclaration
+SgUntypedNullDeclaration
 SgUntypedNullStatement
 SgUntypedIfStatement
 SgUntypedCaseStatement

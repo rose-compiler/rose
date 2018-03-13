@@ -168,22 +168,29 @@ public:
 
     /** A single progress report.
      *
-     *  Progress is reported and monitored as a stream of progress reports, and this object represents one such report. */
+     *  Progress is reported and monitored as a stream of progress reports, and this object represents one such report.
+     *
+     *  A progress report has a name, an amount completed, and a maximum value. The name is optional. The amount
+     *  completed is normally a non-negative number and can be NAN if the completion amount is unknown.  The maximum is
+     *  the expected upper range of the completion (defaulting to 1.0) and is used to calculate percents. If the maximum
+     *  is NAN, then the percent completed cannot be computed and perhaps a busy indicator or spinner would be used instead
+     *  of a progress bar to represent the state. */
     struct Report {
-        std::string name;                               /**< What is being reported. Defaults to "progress". */
-        double completion;                              /**< Estimated degree of completion. Usually in [0..1] or NAN. */
+        std::string name;                               /**< What is being reported. Defaults to empty string. */
+        double completion;                              /**< Estimated degree of completion. In [0..maximum] or NAN. */
+        double maximum;                                 /**< Maximum value for completion. Defaults to 1.0. NAN => spinner. */
 
         /** Initial progress report. */
         Report()
-            : completion(0.0) {}
+            : completion(0.0), maximum(1.0) {}
 
         /** Report completion with default name. */
-        explicit Report(double completion)
-            : completion(completion) {}
+        explicit Report(double completion, double maximum = 1.0)
+            : completion(completion), maximum(maximum) {}
 
-        /** Full report with name and completion. */
-        Report(const std::string &name, double completion)
-            : name(name), completion(completion) {}
+        /** Report with name and completion. */
+        Report(const std::string &name, double completion, double maximum = 1.0)
+            : name(name), completion(completion), maximum(maximum) {}
     };
 
 private:
@@ -228,7 +235,7 @@ public:
      *  Thread safety: This method is thread safe.
      *
      * @{ */
-    void update(double completion);
+    void update(double completion, double maximum = 1.0);
     void update(const Report&);
     /** @} */
 
@@ -247,7 +254,7 @@ public:
      *
      * @{ */
     Report push();
-    Report push(double completion);
+    Report push(double completion, double maximum = 1.0);
     Report push(const Report&);
     /** @} */
 
@@ -266,7 +273,7 @@ public:
      *
      * @{ */
     void pop();
-    void pop(double completion);
+    void pop(double completion, double maximum = 1.0);
     void pop(const Report&);
     /** @} */
 
@@ -291,7 +298,7 @@ public:
      *
      * @{ */
     void finished();
-    void finished(double completion);
+    void finished(double completion, double maximum = 1.0);
     void finished(const Report&);
     /** @} */
 
