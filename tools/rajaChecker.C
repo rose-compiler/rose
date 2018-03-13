@@ -705,16 +705,20 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefE
 }
 
 //  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
-bool isNodalAccumulationOp (SgExpression* op)
+bool isNodalAccumulationOp (SgExpression* op, bool& isAssign )
 {
   if (op == NULL) return false;
 
   if (isSgPlusAssignOp(op) ||
       isSgMinusAssignOp(op) ||
       isSgMultAssignOp(op) ||
-      isSgDivAssignOp(op)  // TODO: MIN() and MAX ()
+      isSgDivAssignOp(op)  || 
+       isSgAssignOp(op)  // MIN() and MAX () expanded to  xm[i]= xm[i]<op2 ? xm[i]: op2 or xm[i]= xm[i]>op2 ? xm[i]: op2
      )
+  {
+    isAssign = isSgAssignOp (op);
     return true;
+  }
 
   return false;
 }
@@ -1023,8 +1027,8 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
       cout<<"\t\t not SgExpression"<<endl;
     return false;
   }
-
-  if (! isNodalAccumulationOp (exp) )
+  bool isAssign = false; // is direct assignment statement or not: differentiate MIN/MAX pattern
+  if (! isNodalAccumulationOp (exp, isAssign) )
   {  
     if (RAJA_Checker::enable_debug)
       cout<<"\t\t not NodalAccumulationOp"<<endl;
@@ -1034,6 +1038,7 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
   SgBinaryOp* bop = isSgBinaryOp (exp);
   ROSE_ASSERT (bop != NULL);
 
+  // check properties of lhs = ..  ----------------------------
   // lhs is x[i]
   SgVarRefExp* varRef=NULL; 
   if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar, &varRef))
@@ -1100,24 +1105,41 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
     *lhsUniqueDef= true; 
   }
 
-  // rhs is a scalar type
-  SgType* rhs_type = bop->get_rhs_operand()->get_type();
-  rhs_type = rhs_type->stripType(SgType::STRIP_REFERENCE_TYPE);
-  if (!SageInterface::isScalarType (rhs_type)) 
-  {
-    if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not scalar type for rhs, but "<< rhs_type->class_name()<<endl;
-    return false;
-  }
-  // skip const or typedef chain
-  rhs_type =rhs_type->stripTypedefsAndModifiers();
+  // check properties of rhs ------------------------   
 
-  // rhs is a double type
-  if (!isSgTypeDouble(rhs_type)) 
+  if (isAssign) // match rhs pattern for MIN/MAX
   {
-    if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not double type for rhs"<<endl;
-    return false;
+    SgExpression* rhs = bop->get_rhs_operand(); 
+    if (!isSgConditionalExp(rhs))
+    { // TODO : more restrictive pattern match here: 
+       // xm[i] = xm[i]<op2 ? xm[i]: op2
+       // xm[i] = xm[i]>op2 ? xm[i]: op2
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t not conditional operation for rhs within lhs = rhs, but "<< rhs->class_name()<<endl;
+      return false;
+    } 
+  }
+  else // match rhs pattern for += rhs, -= rhs, etc. 
+  {
+    // rhs is a scalar type
+    SgType* rhs_type = bop->get_rhs_operand()->get_type();
+    rhs_type = rhs_type->stripType(SgType::STRIP_REFERENCE_TYPE);
+    if (!SageInterface::isScalarType (rhs_type)) 
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t not scalar type for rhs, but "<< rhs_type->class_name()<<endl;
+      return false;
+    }
+    // skip const or typedef chain
+    rhs_type =rhs_type->stripTypedefsAndModifiers();
+
+    // rhs is a double type
+    if (!isSgTypeDouble(rhs_type)) 
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t not double type for rhs"<<endl;
+      return false;
+    }
   }
   // meet all conditions above
   return true;
