@@ -264,8 +264,7 @@ namespace RAJA_Checker
           {
             cout<<"\t obtained func name is: "<< obtained_name <<" no matching given names: "<<endl;
             for (size_t i=0; i< func_names.size(); i++)
-              cout<<func_names[i]<<" ";
-            cout<<endl;
+              cout<<func_names[i]<<endl;
           }
         }
 
@@ -1340,7 +1339,10 @@ bool RAJA_Checker::isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
   vector<string> wrappers; 
   wrappers.push_back("::for_all <");
   wrappers.push_back("::for_all_zones <");
+  wrappers.push_back("::for_all_region_zones <");
   wrappers.push_back("::for_all_zones_tiled <");
+  wrappers.push_back("::for_all_mixed_slots <");
+  wrappers.push_back("::for_all_mixed_zones <");
   if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func)  && 
       !isWrapperTemplateFunctionCallParameter (exp, wrappers,  call_stmt, raja_func))
   {
