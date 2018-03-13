@@ -885,7 +885,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 
 
 void
-Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info, bool is_template_header)
    {
 #if 0
      printf ("In unparseTemplateParameterList(): templateParameterList.size() = %zu \n",templateParameterList.size());
@@ -902,7 +902,7 @@ Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList
 #if 0
                printf ("In unparseTemplateParameterList(): templateParameter = %p \n",templateParameter);
 #endif
-               unparseTemplateParameter(templateParameter,info);
+               unparseTemplateParameter(templateParameter,info,is_template_header);
 
                i++;
 
@@ -918,7 +918,7 @@ Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList
 
 
 void
-Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info, bool is_template_header)
    {
      ROSE_ASSERT(templateParameter != NULL);
 
@@ -966,7 +966,8 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                     printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
 #endif
                     // Liao 12/15/2016, we need explicit typename here
-                    unp->u_exprStmt->curprint(" typename ");
+                    if (is_template_header)
+                      unp->u_exprStmt->curprint(" typename ");
                     curprint(name);
                   }
 
@@ -1013,8 +1014,10 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 #endif
                  // DQ (9/10/2014): Note that this will unparse "int T" which we want in the template header, but not in the template parameter list.
                  // unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
-                 // SgUnparse_Info ninfo(info);
-                 // unp->u_type->unparseType(type,ninfo);
+                    if (is_template_header) {
+                      SgUnparse_Info ninfo(info);
+                      unp->u_type->unparseType(type,ninfo);
+                    }
                     curprint(templateParameter->get_initializedName()->get_name());
                   }
 
