@@ -28,29 +28,11 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
 
      switch (type->variantT())
         {
-#if 0
-          case V_SgTypeVoid:       unparseTypeVoid( isSgTypeVoid(type), info); break;
-
-          case V_SgTypeSignedChar: unparseTypeSignedChar( isSgTypeSignedChar(type), info); break;
-          case V_SgTypeWchar:      unparseTypeWchar( isSgTypeWchar(type), info); break;
-          case V_SgTypeShort:      unparseTypeShort( isSgTypeShort(type), info); break;
-#endif
-
           case V_SgTypeInt:         curprint("S"); unparseTypeSize(type, info);  break;
           case V_SgTypeUnsignedInt: curprint("U"); unparseTypeSize(type, info);  break;
           case V_SgTypeBool:        curprint("B"); unparseTypeSize(type, info);  break;
 
-#if 0
-          case V_SgTypeLong:       unparseTypeLong( isSgTypeLong(type), info); break;
-          case V_SgTypeFloat:      unparseTypeFloat( isSgTypeFloat(type), info); break;
-          case V_SgTypeDouble:     unparseTypeDouble( isSgTypeDouble(type), info); break;
-
           case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
-          case V_SgTypedefType:    unparseTypedefType( isSgTypedefType(type), info); break;
-          case V_SgClassType:      unparseClassType( isSgClassType(type), info); break;
-          case V_SgEnumType:       unparseEnumType( isSgEnumType(type), info); break;
-          case V_SgModifierType:   unparseModifierType( isSgModifierType(type), info); break;
-#endif
 
           default:
                cout << "Unparse_Jovial::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
@@ -69,3 +51,16 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
             unparseExpression(size,info);
          }
    }
+
+void
+Unparse_Jovial::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
+{
+     SgArrayType* array_type = isSgArrayType(type);
+     ROSE_ASSERT(array_type != NULL);
+
+     curprint("(");
+     UnparseLanguageIndependentConstructs::unparseExprList(array_type->get_dim_info(), info);
+     curprint(") ");
+
+     unparseType(array_type->get_base_type(), info);
+}
