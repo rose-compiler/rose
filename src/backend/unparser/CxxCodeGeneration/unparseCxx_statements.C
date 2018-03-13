@@ -10164,7 +10164,7 @@ Unparse_ExprStmt::unparseTemplateVariableDeclStmt(SgStatement* stmt, SgUnparse_I
      unparseTemplateDeclarationStatment_support<SgTemplateVariableDeclaration>(stmt,info);
    }
 
-
+#if 0
 void
 Unparse_ExprStmt::unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info)
    {
@@ -10220,6 +10220,14 @@ Unparse_ExprStmt::unparseTemplateHeader(SgFunctionDeclaration* functionDeclarati
 void
 Unparse_ExprStmt::unparseTemplateHeader(SgClassDeclaration* classDeclaration, SgUnparse_Info& info)
    {
+
+  // TV (3/12/18): Unparse template header from AST
+     curprint("template ");
+     SgTemplateParameterPtrList tlist =  tfunc_decl->get_templateParameters ();
+     Unparse_ExprStmt::unparseTemplateParameterList (tlist, info);
+     curprint("\n");
+
+
   // DQ (9/11/2016): Ultimately we would want to generate the template header (for now I will 
   // see if we can use the internal string representation, if it exists).
 
@@ -10245,7 +10253,18 @@ Unparse_ExprStmt::unparseTemplateHeader(SgClassDeclaration* classDeclaration, Sg
   // curprint("\n");
 #endif
    }
+#endif
 
+template<class T>
+void
+Unparse_ExprStmt::unparseTemplateHeader(T* decl, SgUnparse_Info& info) {
+  if (!decl->get_templateParameters().empty()) {
+    curprint("template ");
+    SgTemplateParameterPtrList tlist =  decl->get_templateParameters ();
+    Unparse_ExprStmt::unparseTemplateParameterList (tlist, info, true);
+    curprint("\n");
+  }
+}
 
 std::string 
 replaceString(std::string subject, const std::string& search, const std::string& replace) 
@@ -10259,7 +10278,6 @@ replaceString(std::string subject, const std::string& search, const std::string&
 
      return subject;
    }
-
 
 template<class T>
 void
@@ -10313,9 +10331,11 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
         }
 
      bool string_represents_function_body = false;
+     SgTemplateClassDeclaration*          templateClassDeclaration          = isSgTemplateClassDeclaration(stmt);
      SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(stmt);
      SgTemplateVariableDeclaration*       templateVariableDeclaration       = isSgTemplateVariableDeclaration(stmt);
+     SgTemplateTypedefDeclaration*        templateTypedefDeclaration        = isSgTemplateTypedefDeclaration(stmt);
      if (templateFunctionDeclaration != NULL)
         {
        // printf ("This is a SgTemplateFunctionDeclaration \n");
@@ -10413,7 +10433,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // ROSE_ASSERT(sourcefile != NULL);
      if (sourcefile == NULL)
         {
-#if 0
+#if 1
           printf ("NOTE: source file not available in SgUnparse_Info in unparseTemplateDeclarationStatment_support(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
         }
@@ -10438,204 +10458,282 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
           templateString = denormalizedTemplateString;
         }
 
-  // DQ (9/6/2014): if this is only a partial string then ignore unparsing this function (until we are done with the implementation of the function header).
-     if (string_represents_function_body == true)
+     if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
         {
-       // DQ (9/7/2014): This is the special case (to output template member and non-member function declarations after EDG normalization 
-       // to move then out of a template class declaration.
+          if (templateMemberFunctionDeclaration != NULL) {
+            SgClassDeclaration * assoc_class_decl = templateMemberFunctionDeclaration->get_associatedClassDeclaration();
+            SgTemplateClassDeclaration * assoc_tpl_class_decl = isSgTemplateClassDeclaration(assoc_class_decl);
 
-       // Output the name qualified function name with function parameters (and then append the saved text string for the function body).
-       // To find the template parameters, we have to ge them from the class.
-#if 0
-          printf ("(string_represents_function_body == true): template_stmt = %p = %s \n",template_stmt,template_stmt->class_name().c_str());
-#endif
-          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(template_stmt);
-          ROSE_ASSERT(functionDeclaration != NULL);
+            SgNode * parent = templateMemberFunctionDeclaration->get_parent();
+            SgTemplateClassDefinition * parent_is_tpl_class_defn = isSgTemplateClassDefinition(parent);
 
-#if 0
-          printf ("We don't want to support this yet, but check it out! \n");
+            if (assoc_tpl_class_decl != NULL && parent_is_tpl_class_defn == NULL) {
+              unparseTemplateHeader(assoc_tpl_class_decl,info);
+            }
+          }
 
-       // DQ (9/7/2014): Try this in case it works best (this will unparse the defining template declaration, but I don't want to support that yet).
-          unparseMFuncDeclStmt(functionDeclaration, info);
-#else
-       // Debugging code
-       // functionDeclaration->get_file_info()->display("string_represents_function_body == true");
+          unparseTemplateHeader(template_stmt,info);
 
-       // DQ (9/10/2014): Test for test2014_187_work_around.C (as a test for the new template unparsing support).
-          string asociatedFilename = functionDeclaration->get_file_info()->get_filenameString();
-          string asociatedFilenameWithoutPath = StringUtility::stripPathFromFileName(asociatedFilename);
-       // printf ("asociatedFilenameWithoutPath = %s \n",asociatedFilenameWithoutPath.c_str());
-          if (asociatedFilenameWithoutPath == "test2014_187_work_around.C" || asociatedFilenameWithoutPath == "AlignedPool.cxx")
-             {
-               printf ("Detected target for work around: asociatedFilenameWithoutPath = %s \n",asociatedFilenameWithoutPath.c_str());
-             }
-            else
-             {
-#if 1
-            // DQ (9/13/2014): Turn this on until we have a few more bugs fixed.
-            // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
-#if 0
-               printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
-#endif
-               return;
-#endif
-             }
-#if 0
-       // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
-          printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
-          return;
-#endif
-
-#if 0
-          curprint(" /* unparse the template header */ \n");
-#endif
-       // DQ (9/7/2014): Now unparse the template header (saved as a string in the globalQualifiedNameMapForTemplateHeaders 
-       // as part of support for name qualification).
-          unparseTemplateHeader(functionDeclaration,info);
-
-       // Output the function return type (if not a constructor or destructor).
           SgUnparse_Info ninfo(info);
 
-          SgType *rtype = NULL;
-#if 0
-          curprint(" /* unparse the return type */ \n");
-#endif
-       // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
-       // unparseReturnType (functionDeclaration,rtype,ninfo);
-       // ROSE_ASSERT(templateMemberFunctionDeclaration != NULL);
-       // unparseReturnType (templateMemberFunctionDeclaration,rtype,ninfo);
-          unparseReturnType (functionDeclaration,rtype,ninfo);
-#if 0
-          curprint(" /* DONE: unparse the return type */ \n");
-#endif
-#if 0
-          SgScopeStatement* scope = template_stmt->get_scope();
-          ROSE_ASSERT(scope != NULL);
-          SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
-          ROSE_ASSERT(templateClassDefinition != NULL);
-          SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
-          ROSE_ASSERT(templateClassDeclaration != NULL);
+          if (templateClassDeclaration != NULL) {
+            ninfo.unset_SkipSemiColon();
+            ninfo.set_declstatement_ptr(NULL);
+            ninfo.set_declstatement_ptr(templateClassDeclaration);
 
-          string template_function_name = functionDeclaration->get_name();
-          printf ("function name = %s \n",template_function_name.c_str());
-#endif
+            unparseClassDefnStmt(templateClassDeclaration->get_definition(), ninfo);
 
-#if OUTPUT_FUNCTION_DECLARATION_DATA || 0
-          printf ("calling unparse_helper \n");
-          curprint ("/* calling unparse_helper */");
-#endif
+            ninfo.set_declstatement_ptr(NULL);
 
-       // DQ (9/7/2014): Set the reference to the SgFunctionDeclaration.
-          ninfo.set_declstatement_ptr(NULL);
-          ninfo.set_declstatement_ptr(functionDeclaration);
+            if (!info.SkipSemiColon())
+              curprint(";");
+          }
+          else if (templateFunctionDeclaration != NULL || templateMemberFunctionDeclaration != NULL) {
 
-          unparse_helper(functionDeclaration, ninfo);
+            SgFunctionDeclaration * functionDeclaration = isSgFunctionDeclaration(stmt);
+            ROSE_ASSERT(functionDeclaration != NULL);
 
-       // DQ (10/15/2006): Matching call to unset the stored declaration.
-          ninfo.set_declstatement_ptr(NULL);
+            SgType * rtype = functionDeclaration->get_type()->get_return_type();
+            unparseReturnType (functionDeclaration,rtype,ninfo);
 
-#if 0
-          printf ("DONE: calling unparse_helper \n");
-          curprint ("/* DONE: calling unparse_helper */");
-#endif
-#endif
+            ninfo.unset_SkipSemiColon();
+            ninfo.set_declstatement_ptr(NULL);
+            ninfo.set_declstatement_ptr(functionDeclaration);
 
-       // Note: In more general cases we have to output the second part of the type.
-          if (rtype != NULL)
-             {
-               SgUnparse_Info ninfo3(ninfo);
-               ninfo3.set_isTypeSecondPart();
+            unparse_helper(functionDeclaration, ninfo);
 
-               unp->u_type->unparseType(rtype, ninfo3);
-             }
+            ninfo.set_declstatement_ptr(NULL);
 
-       // DQ (9/7/2014): There may be a collection of function modifiers that need to be unparsed here (refactor from other membr function unparse functions).
+            if (rtype != NULL) {
+              SgUnparse_Info ninfo3(ninfo);
+              ninfo3.set_isTypeSecondPart();
 
-       // DQ (9/9/2014): Refactored support for function modifiers.
-          if (templateMemberFunctionDeclaration != NULL)
-             {
-#if 0
-               printf ("In unparseTemplateDeclarationStatment_support(): calling unparseTrailingFunctionModifiers() \n");
-#endif
-               unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
-             }
-            else
-             {
-               printf ("Need to refactor non-member function modifiers for use in template function declarations \n");
-               ROSE_ASSERT(false);
-             }
+              unp->u_type->unparseType(rtype, ninfo3);
+            }
 
-       // This will be the partial substring representing the function body.
-          curprint(string("\n") + templateString);
+            SgFunctionDefinition * functionDefn = functionDeclaration->get_definition();
+            if (functionDefn != NULL) {
+              SgBasicBlock * body = functionDefn->get_body();
+              unparseStatement(body, info);
+            }
 
-       // Put a CR after the function.
-          curprint("\n ");
+            if (templateMemberFunctionDeclaration != NULL) {
+              unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
+              if (!info.SkipSemiColon())
+                curprint(";");
+            }
+          }
+          else if (templateVariableDeclaration != NULL) {
+            ROSE_ASSERT(false); // TODO
+          }
+          else {
+            printf("Error: unexpected node variant: %s\n", stmt->class_name().c_str());
+            ROSE_ASSERT(false);
+          }
+
+          curprint ("\n");
         }
        else
         {
-       // DQ (9/7/2014): This is the typical case.
-#if 0
-          printf ("In unparseTemplateDeclarationStatment_support(): Output the templateString = %s \n",templateString.c_str());
-#endif
-       // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
-          curprint(string("\n") + templateString);
-
-         if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
-         {
-           // Liao 12/15/2016, experimental support to unparse transformation-generated template function declarations from AST
-           // templateString is NULL for transformation-generated one.
-           if  (templateFunctionDeclaration && templateString.empty())
-           {
-             //printf ("Unparsing the template declaration from the AST (case of template function declaration) \n");
-             unparseTemplateHeader (templateFunctionDeclaration, info); 
-             if (templateFunctionDeclaration->get_definition()) // we may encounter prototype template (member) functions
+       // DQ (9/6/2014): if this is only a partial string then ignore unparsing this function (until we are done with the implementation of the function header).
+          if (string_represents_function_body == true)
              {
-               unparseStatement(templateFunctionDeclaration->get_definition(), info); 
-             }
-           }
-         }
+            // DQ (9/7/2014): This is the special case (to output template member and non-member function declarations after EDG normalization 
+            // to move then out of a template class declaration.
+
+            // Output the name qualified function name with function parameters (and then append the saved text string for the function body).
+            // To find the template parameters, we have to ge them from the class.
 #if 0
-       // DQ (9/11/2016): Adding support for unparsing the template declaration from the AST.
+               printf ("(string_represents_function_body == true): template_stmt = %p = %s \n",template_stmt,template_stmt->class_name().c_str());
+#endif
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(template_stmt);
+               ROSE_ASSERT(functionDeclaration != NULL);
 
-          printf ("Unparsing the template declaration from the AST (case of class template declaration) \n");
+#if 0
+               printf ("We don't want to support this yet, but check it out! \n");
 
-          SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
-          ROSE_ASSERT(classDeclaration != NULL);
+            // DQ (9/7/2014): Try this in case it works best (this will unparse the defining template declaration, but I don't want to support that yet).
+               unparseMFuncDeclStmt(functionDeclaration, info);
+#else
+            // Debugging code
+            // functionDeclaration->get_file_info()->display("string_represents_function_body == true");
 
-          printf ("In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
-
-       // unparseTemplateHeader(stmt,info);
-          unparseTemplateHeader(classDeclaration,info);
-
-          printf ("DONE: In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
-
-          SgUnparse_Info ninfox(info);
+            // DQ (9/10/2014): Test for test2014_187_work_around.C (as a test for the new template unparsing support).
+               string asociatedFilename = functionDeclaration->get_file_info()->get_filenameString();
+               string asociatedFilenameWithoutPath = StringUtility::stripPathFromFileName(asociatedFilename);
+            // printf ("asociatedFilenameWithoutPath = %s \n",asociatedFilenameWithoutPath.c_str());
+               if (asociatedFilenameWithoutPath == "test2014_187_work_around.C" || asociatedFilenameWithoutPath == "AlignedPool.cxx")
+                  {
+                    printf ("Detected target for work around: asociatedFilenameWithoutPath = %s \n",asociatedFilenameWithoutPath.c_str());
+                  }
+                 else
+                  {
 #if 1
-          printf ("In unparseTemplateDeclarationStatment_support(): calling ninfox.unset_SkipSemiColon() \n");
+                 // DQ (9/13/2014): Turn this on until we have a few more bugs fixed.
+                 // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
+#if 0
+                    printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
 #endif
-          ninfox.unset_SkipSemiColon();
+                    return;
+#endif
+                  }
+#if 0
+            // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
+               printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
+               return;
+#endif
 
-       // DQ (6/13/2007): Set to null before resetting to non-null value 
-          ninfox.set_declstatement_ptr(NULL);
-          ninfox.set_declstatement_ptr(classDeclaration);
+#if 0
+               curprint(" /* unparse the template header */ \n");
+#endif
+            // DQ (9/7/2014): Now unparse the template header (saved as a string in the globalQualifiedNameMapForTemplateHeaders 
+            // as part of support for name qualification).
+               unparseTemplateHeader(template_stmt,info);
 
-       // DQ (9/11/2016): We want to unparse the definition.
-       // unparseClassDeclStmt(classDeclaration,info);
-       // unparseStatement(classDeclaration->get_definition(), ninfox);
-          unparseClassDefnStmt(classDeclaration->get_definition(), ninfox);
+            // Output the function return type (if not a constructor or destructor).
+               SgUnparse_Info ninfo(info);
 
-          if (!info.SkipSemiColon())
-             {
-               curprint(";");
+               SgType *rtype = NULL;
+#if 0
+               curprint(" /* unparse the return type */ \n");
+#endif
+            // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
+            // unparseReturnType (functionDeclaration,rtype,ninfo);
+            // ROSE_ASSERT(templateMemberFunctionDeclaration != NULL);
+            // unparseReturnType (templateMemberFunctionDeclaration,rtype,ninfo);
+               unparseReturnType (functionDeclaration,rtype,ninfo);
+#if 0
+               curprint(" /* DONE: unparse the return type */ \n");
+#endif
+#if 0
+               SgScopeStatement* scope = template_stmt->get_scope();
+               ROSE_ASSERT(scope != NULL);
+               SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
+               ROSE_ASSERT(templateClassDefinition != NULL);
+               SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
+               ROSE_ASSERT(templateClassDeclaration != NULL);
+
+               string template_function_name = functionDeclaration->get_name();
+               printf ("function name = %s \n",template_function_name.c_str());
+#endif
+
+#if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+               printf ("calling unparse_helper \n");
+               curprint ("/* calling unparse_helper */");
+#endif
+
+            // DQ (9/7/2014): Set the reference to the SgFunctionDeclaration.
+               ninfo.set_declstatement_ptr(NULL);
+               ninfo.set_declstatement_ptr(functionDeclaration);
+
+               unparse_helper(functionDeclaration, ninfo);
+
+            // DQ (10/15/2006): Matching call to unset the stored declaration.
+               ninfo.set_declstatement_ptr(NULL);
+
+#if 0
+               printf ("DONE: calling unparse_helper \n");
+               curprint ("/* DONE: calling unparse_helper */");
+#endif
+#endif
+
+            // Note: In more general cases we have to output the second part of the type.
+               if (rtype != NULL)
+                  {
+                    SgUnparse_Info ninfo3(ninfo);
+                    ninfo3.set_isTypeSecondPart();
+
+                    unp->u_type->unparseType(rtype, ninfo3);
+                  }
+
+            // DQ (9/7/2014): There may be a collection of function modifiers that need to be unparsed here (refactor from other membr function unparse functions).
+
+            // DQ (9/9/2014): Refactored support for function modifiers.
+               if (templateMemberFunctionDeclaration != NULL)
+                  {
+#if 0
+                    printf ("In unparseTemplateDeclarationStatment_support(): calling unparseTrailingFunctionModifiers() \n");
+#endif
+                    unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
+                  }
+                 else
+                  {
+                    printf ("Need to refactor non-member function modifiers for use in template function declarations \n");
+                    ROSE_ASSERT(false);
+                  }
+
+            // This will be the partial substring representing the function body.
+               curprint(string("\n") + templateString);
+
+            // Put a CR after the function.
+               curprint("\n ");
              }
-
-          printf ("DONE: Unparsing the template declaration from the AST (case of class template declaration) \n");
-
-          curprint ("\n/* Exiting as a test! */\n\n");
-
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+            else
+             {
+            // DQ (9/7/2014): This is the typical case.
+#if 1
+               printf ("In unparseTemplateDeclarationStatment_support(): Output the templateString = %s \n",templateString.c_str());
 #endif
+            // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
+               curprint(string("\n") + templateString);
+
+              if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
+              {
+                // Liao 12/15/2016, experimental support to unparse transformation-generated template function declarations from AST
+                // templateString is NULL for transformation-generated one.
+                if  (templateFunctionDeclaration && templateString.empty())
+                {
+                  //printf ("Unparsing the template declaration from the AST (case of template function declaration) \n");
+                  unparseTemplateHeader (templateFunctionDeclaration, info); 
+                  if (templateFunctionDeclaration->get_definition()) // we may encounter prototype template (member) functions
+                  {
+                    unparseStatement(templateFunctionDeclaration->get_definition(), info); 
+                  }
+                }
+              }
+#if 0
+            // DQ (9/11/2016): Adding support for unparsing the template declaration from the AST.
+
+               printf ("Unparsing the template declaration from the AST (case of class template declaration) \n");
+
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
+               ROSE_ASSERT(classDeclaration != NULL);
+
+               printf ("In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
+
+            // unparseTemplateHeader(stmt,info);
+               unparseTemplateHeader(classDeclaration,info);
+
+               printf ("DONE: In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
+
+               SgUnparse_Info ninfox(info);
+#if 1
+               printf ("In unparseTemplateDeclarationStatment_support(): calling ninfox.unset_SkipSemiColon() \n");
+#endif
+               ninfox.unset_SkipSemiColon();
+
+            // DQ (6/13/2007): Set to null before resetting to non-null value 
+               ninfox.set_declstatement_ptr(NULL);
+               ninfox.set_declstatement_ptr(classDeclaration);
+
+            // DQ (9/11/2016): We want to unparse the definition.
+            // unparseClassDeclStmt(classDeclaration,info);
+            // unparseStatement(classDeclaration->get_definition(), ninfox);
+               unparseClassDefnStmt(classDeclaration->get_definition(), ninfox);
+
+               if (!info.SkipSemiColon())
+                  {
+                    curprint(";");
+                  }
+
+               printf ("DONE: Unparsing the template declaration from the AST (case of class template declaration) \n");
+
+               curprint ("\n/* Exiting as a test! */\n\n");
+
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
         }
 
 #if 0
