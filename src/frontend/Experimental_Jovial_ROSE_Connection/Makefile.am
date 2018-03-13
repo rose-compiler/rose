@@ -1,6 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/Experimental_Jovial_ROSE_Connection
+ATERM_INCLUDE_DIR = $(ATERM_INSTALL_PATH)/include
+
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(ATERM_INCLUDE_DIR) -I$(top_srcdir)/src/frontend/Experimental_General_Language_Support
 
 noinst_LTLIBRARIES = libexperimentalRoseJovial.la
 
@@ -18,6 +20,5 @@ pkginclude_HEADERS = jovial_support.h
 
 noinst_HEADERS = \
   ATermToUntypedJovialTraversal.h \
-  JovialBuilderInterface.h     \
   UntypedJovialTraversal.h     \
   UntypedJovialConverter.h
