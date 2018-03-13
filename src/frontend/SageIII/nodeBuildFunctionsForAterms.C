@@ -2413,7 +2413,7 @@ SgOmpClause* SgOmpClause::build_node_from_nonlist_children ( Sg_File_Info* start
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpOrderedClause* SgOmpOrderedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpOrderedClause* SgOmpOrderedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExpression* expression )
    {
 #if 0
   // debugging information!
@@ -3395,6 +3395,19 @@ SgUntypedNullStatement* SgUntypedNullStatement::build_node_from_nonlist_children
 #endif
 
      SgUntypedNullStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedNullDeclaration* SgUntypedNullDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNullDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNullDeclaration* returnNode = NULL;
 
      return returnNode;
    }
