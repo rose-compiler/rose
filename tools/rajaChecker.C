@@ -546,7 +546,10 @@ bool RAJA_Checker::connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName
   return false;
 }
 
-// Check if varRef1 is defined by loopIndex via  int varRef1 = loopIndex;
+// Check if varRef1 is defined by loopIndex 
+// We accept both direct assignment and deriving value of lhs from loopIndex
+// e.g 1: int varRef1 = loopIndex;
+// e.g 2: int varRef1 = (loopIndex < nnalls )? loopIndex: loopIndex - nnalls;
 // This helps to find loop index buried behind another variable. 
 bool RAJA_Checker::connectedViaAssignment(SgVarRefExp* varRef1, SgInitializedName* loopIndex)
 {
@@ -563,6 +566,19 @@ bool RAJA_Checker::connectedViaAssignment(SgVarRefExp* varRef1, SgInitializedNam
   SgInitializedName* iname = sym->get_declaration();
   SgDeclarationStatement* decl = iname->get_declaration();
   
+  // check if loopIndex appears within rhs
+  RoseAst ast(decl);
+
+  SgSymbol* idxSym = loopIndex->search_for_symbol_from_symbol_table(); 
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if (SgVarRefExp * varRef = isSgVarRefExp(*i))
+    {
+      if (varRef->get_symbol() == idxSym)
+        return true; 
+    }
+  }
+
+#if 0  
   if (enable_debug)
   {
     cout<<"\t\t the ast term for var decl:"<<endl;
@@ -574,7 +590,6 @@ bool RAJA_Checker::connectedViaAssignment(SgVarRefExp* varRef1, SgInitializedNam
     }
   }
 
-#if 1  
   //SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgVarRefExp:zoneIdx)))
   //string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,$rhs=SgVarRefExp))))");
   // there may be this-> pointer for indeSet variable reference!!
