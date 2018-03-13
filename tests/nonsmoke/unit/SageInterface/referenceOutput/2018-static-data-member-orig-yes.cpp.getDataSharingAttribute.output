@@ -1,0 +1,11 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 18
+"counter"@22:11	shared
+"cout"@23:11	shared
+"i"@23:25	private
+"i"@0:0	private
+-----------------------------------------------
+OpenMP region SgOmpSingleStatement @ 20
+"counter"@22:11	shared
+"cout"@23:11	shared
+"i"@23:25	private

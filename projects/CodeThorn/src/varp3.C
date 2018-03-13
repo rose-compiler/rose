@@ -10,7 +10,7 @@
 #include <vector>
 #include "Timer.h"
 #include "CommandLineOptions.h"
-
+#include <map>
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
 #ifdef USE_SAWYER_COMMANDLINE
@@ -18,6 +18,8 @@
 #else
 #include <boost/program_options.hpp>
 #endif
+
+#include "CastStats.h"
 
 using namespace std;
 
@@ -46,15 +48,16 @@ void makeAllCastsExplicit(SgProject* root) {
   }
 }
 
-string nodeString(SgExpression* node) {
+string nodeString(SgNode* node) {
   stringstream tempss;
   tempss<<"x"<<node;
   return tempss.str();
 }
 
 string nodeId(SgExpression* node) {
-  if(isSgVarRefExp(node)) {
-    return node->unparseToString(); // TODO: use variableid
+  if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
+    SgSymbol* varSym=SgNodeHelper::getSymbolOfVariable(varRef);
+    return nodeString(varSym);
   } else {
     return nodeString(node);
   }
@@ -64,17 +67,33 @@ string dotString(string s) {
   return SgNodeHelper::doubleQuotedEscapedString(s);
 }
 
+void addNode(SgInitializedName* node) {
+  ROSE_ASSERT(node);
+  cout<<"TODO: SgInitializedName: "<<endl;
+}
+
+void addNode(SgExpression* node, SgType* type);
 void addNode(SgExpression* node) {
   SgType* type=node->get_type();
+  addNode(node,type);
+}
+
+string typeColorName(SgType* type) {
   string color;
   switch(type->variantT()) {
-  case V_SgTypeFloat: color="blue";break;
-  case V_SgTypeDouble: color="green";break;
-  case V_SgTypeLongDouble: color="red";break;
+  case V_SgTypeFloat: color="red";break;
+  case V_SgTypeDouble: color="yellow";break;
+  case V_SgTypeLongDouble: color="green";break;
   default: color="white";
   }
-  string labelInfo;
-  labelInfo=string("\\n")+"type:"+type->unparseToString();
+  return color;
+}
+
+void addNode(SgExpression* node, SgType* type) {
+  ROSE_ASSERT(node);
+  ROSE_ASSERT(type);
+  string color=typeColorName(type);
+  string labelInfo=string("\\n")+"type:"+type->unparseToString();
 
   if(isSgUnaryOp(node)||isSgBinaryOp(node)||isSgConditionalExp(node)||isSgCallExpression(node)) {
     ss<<nodeId(node)<<"[label=\"op:"<<node->class_name()+labelInfo<<"\" fillcolor="<<color<<" style=filled];"<<endl;
@@ -110,6 +129,39 @@ void generateTypeGraph(SgProject* root) {
 	  //SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(parentExpNode));
 	  if(currentExpNode==lhs) {
 	    std::swap(currentExpNode,parentExpNode); // invert direction of edge rhs<->assignop
+	  }
+	}
+	if(SgFunctionCallExp* funCall=isSgFunctionCallExp(currentExpNode)) {
+	  // generate edges for pairs (actual parameter (, formal parameter (var decl)).
+	  SgExpressionPtrList& funActualArgs=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	  if(SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall)) {
+	    /* for each formal parameter: 
+	       create edge from the root-node of the actual argument expression to the
+	       formal parameter declaration node
+	    */
+	    SgInitializedNamePtrList& funFormalArgs=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+	    // number of actual args and formal args must match (TODO: default parameters)
+	    if(funActualArgs.size()!=funFormalArgs.size()) {
+	      cerr<<"Error: number of function arguments do not match number of formal parameters."<<endl;
+	      cerr<<"Function call: "<<funCall->unparseToString()<<endl;
+	      exit(1);
+	    }
+	    SgExpressionPtrList::iterator funActualArgIter=funActualArgs.begin();
+	    SgInitializedNamePtrList::iterator funFormalArgIter=funFormalArgs.begin();
+#if 1
+	    while(funActualArgIter!=funActualArgs.end() && funFormalArgIter!=funFormalArgs.end()) {
+	      addNode(*funActualArgIter);
+	      addNode(*funFormalArgIter);
+	      //addEdge(*funActualArgIter,*funFormalArgIter); // TODO
+	      ++funActualArgIter;
+	      ++funFormalArgIter; // ensure: node used here, must be same as declnode linked in body with
+	    }
+	    ROSE_ASSERT(funFormalArgIter==funFormalArgs.end()); // must hold since arg lists are of same length
+#endif
+	    
+	  } else {
+	    // find first declaration. introduce dummy vars, if no variables are provided and link to those
+	    // TODO
 	  }
 	}
 	addNode(currentExpNode);
@@ -209,12 +261,13 @@ int main (int argc, char* argv[])
   desc.add_options()
     ("help,h", "produce this help message.")
     ("version,v", "display the version.")
-    ("annotate", "annotate casts as comments.")
+    ("annotate", "annotate implicit casts as comments.")
     ("explicit", "make all imlicit casts explicit.")
-    ("type-graph", "generated dot file with type graph.")
-    ("float-var", po::value< string >()," change type of var to float.")
-    ("double-var", po::value< string >()," change type of var to double.")
-    ("long-double-var", po::value< string >()," change type of var to long double.")
+    ("stats", "print statistics on casts of built-in floating point types.")
+    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
+    ("float-var", po::value< string >()," change type of var [arg] to float.")
+    ("double-var", po::value< string >()," change type of var [arg] to double.")
+    ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -228,7 +281,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.1"<<endl;
+    cout<<toolName<<" version 0.1.0"<<endl;
     return 0;
   }
 
@@ -250,6 +303,11 @@ int main (int argc, char* argv[])
     makeAllCastsExplicit(sageProject);
     cout<<"Converted all implicit casts to explicit casts."<<endl;
   }
+  if(args.isUserProvided("stats")) {
+    CastStats castStats;
+    castStats.computeStats(sageProject);
+    cout<<castStats.toString();
+  }
   if(args.isUserProvided("annotate")) {
     annotateImplicitCastsAsComments(sageProject);
     cout<<"Annotated program with comments."<<endl;
@@ -258,7 +316,7 @@ int main (int argc, char* argv[])
     string varName=args.getString("float-var");
     changeVariableType(sageProject, varName, SageBuilder::buildFloatType());
   }
-  if(args.isUserProvided("type-graph")) {
+  if(args.isUserProvided("dot-type-graph")) {
     generateTypeGraph(sageProject);
     exit(0);
   }
