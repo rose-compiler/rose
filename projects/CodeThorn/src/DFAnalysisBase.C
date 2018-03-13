@@ -305,16 +305,16 @@ DFAnalysisBase::run() {
   //  unnecessary computations that might occur (e.g. if the if-branch and else-branch
   //  do not have an equivalent number of nodes).
   if(!_no_topological_sort && isForwardAnalysis()) {
-    ROSE_ASSERT(_extremalLabels.size() == 1);
-    Label startLabel = *(_extremalLabels.begin());
-    std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
-    cout << "INFO: Using topological sorted CFG as work list initialization." << endl;
-    for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
-      //cout << (*i).toString() << endl;
-      _workList.add(*i);
+    if(_extremalLabels.size() == 1) {
+      Label startLabel = *(_extremalLabels.begin());
+      std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
+      cout << "INFO: Using topologically sorted CFG as work list initialization." << endl;
+      for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
+        //cout << (*i).toString() << endl;
+        _workList.add(*i);
+      } 
     }
   }
-
   cout<<"INFO: work list size after initialization: "<<_workList.size()<<endl;
   solve();
 }
