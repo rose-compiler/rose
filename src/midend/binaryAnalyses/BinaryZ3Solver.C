@@ -242,7 +242,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputRotateRight(inode);
                 break;
             case SymbolicExpr::OP_SDIV:
-                throw Exception("OP_SDIV not implemented");
+                retval = outputDivide(inode, "bvsdiv");
+                break;
             case SymbolicExpr::OP_SET:
                 retval = outputSet(inode);
                 break;
@@ -274,12 +275,13 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputBinary("bvsgt", inode, BOOLEAN);
                 break;
             case SymbolicExpr::OP_SMOD:
-                throw Exception("OP_SMOD not implemented");
+                retval = outputModulo(inode, "bvsrem");
+                break;
             case SymbolicExpr::OP_SMUL:
                 retval = outputMultiply(inode);
                 break;
             case SymbolicExpr::OP_UDIV:
-                retval = outputUnsignedDivide(inode);
+                retval = outputDivide(inode, "bvudiv");
                 break;
             case SymbolicExpr::OP_UEXTEND:
                 retval = outputUnsignedExtend(inode);
@@ -297,7 +299,7 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputBinary("bvult", inode, BOOLEAN);
                 break;
             case SymbolicExpr::OP_UMOD:
-                retval = outputUnsignedModulo(inode);
+                retval = outputModulo(inode, "bvurem");
                 break;
             case SymbolicExpr::OP_UMUL:
                 retval = outputMultiply(inode);
@@ -540,7 +542,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_ROR:
                 return ctxRotateRight(inode);
             case SymbolicExpr::OP_SDIV:
-                throw Exception("OP_SDIV not implemented");
+                return ctxSignedDivide(inode);
             case SymbolicExpr::OP_SET:
                 return ctxSet(inode);
             case SymbolicExpr::OP_SEXTEND:
@@ -574,7 +576,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                           ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_SMOD:
-                throw Exception("OP_SMOD not implemented");
+                return ctxSignedModulo(inode);
             case SymbolicExpr::OP_SMUL:
                 return ctxMultiply(inode);
             case SymbolicExpr::OP_UDIV:
@@ -909,6 +911,22 @@ Z3Solver::ctxUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
 }
 
 Z3Solver::Z3ExprTypePair
+Z3Solver::ctxSignedDivide(const SymbolicExpr::InteriorPtr &inode) {
+    ASSERT_not_null(inode);
+    ASSERT_require(inode->nChildren() == 2);
+    size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+
+    z3::expr e =
+        (ctxCast(ctxExpression(aExtended), BIT_VECTOR).first /
+         ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        .extract(inode->child(0)->nBits()-1, 0);
+
+    return Z3ExprTypePair(e, BIT_VECTOR);
+}
+
+Z3Solver::Z3ExprTypePair
 Z3Solver::ctxUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
@@ -934,6 +952,22 @@ Z3Solver::ctxUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
 
     z3::expr e =
         z3::urem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
+                 ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        .extract(inode->child(1)->nBits()-1, 0);
+
+    return Z3ExprTypePair(e, BIT_VECTOR);
+}
+
+Z3Solver::Z3ExprTypePair
+Z3Solver::ctxSignedModulo(const SymbolicExpr::InteriorPtr &inode) {
+    ASSERT_not_null(inode);
+    ASSERT_require(inode->nChildren() == 2);
+    size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+
+    z3::expr e =
+        z3::srem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
                  ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
         .extract(inode->child(1)->nBits()-1, 0);
 

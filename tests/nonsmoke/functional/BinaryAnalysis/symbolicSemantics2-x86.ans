@@ -152,10 +152,10 @@ memory:
  addr={defs={0x080482e6}, expr=0x080496d2<134518482>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V2[32])
  addr={defs={0x080482e6}, expr=0x080496d1<134518481>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V2[32])
  addr={defs={0x080482e6}, expr=0x080496d0<134518480>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V2[32])
- addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080482e0 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] V1[32])
- addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080482e0 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
- addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080482e0 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
- addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080482e0 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
+ addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080482e0 value=(extract[8] 0x00000018[32] 0x00000020[32] V1[32])
+ addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080482e0 value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
+ addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080482e0 value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
+ addr={defs={0x080482e0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080482e0 value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
  addr={defs={0x080482e0}, expr=0x080496cf<134518479>[32]} read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] V1[32])
  addr={defs={0x080482e0}, expr=0x080496ce<134518478>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x080482e0}, expr=0x080496cd<134518477>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
@@ -1010,10 +1010,10 @@ registers:
  fpstatus_top = 0x0[3]
 memory:
  addr={defs={0x08048396}, expr=0x080496f4<134518516>[32]} read-before-write value=V1[8]
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048390 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048390 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048390 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048390 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
 0x0804839d: jne 0x080483cc<<BBlock>>
 registers:
@@ -1029,10 +1029,10 @@ registers:
  fpstatus_top = 0x0[3]
 memory:
  addr={defs={0x08048396}, expr=0x080496f4<134518516>[32]} read-before-write value=V1[8]
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048390 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048390 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048390 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048390 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048390 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
@@ -1345,10 +1345,10 @@ memory:
  addr={defs={0x080483d6}, expr=0x080495fa<134518266>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x080483d6}, expr=0x080495f9<134518265>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x080483d6}, expr=0x080495f8<134518264>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080483d0 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080483d0 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080483d0 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080483d0 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
 0x080483db: test eax, eax
 registers:
@@ -1368,10 +1368,10 @@ memory:
  addr={defs={0x080483d6}, expr=0x080495fa<134518266>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x080483d6}, expr=0x080495f9<134518265>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x080483d6}, expr=0x080495f8<134518264>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080483d0 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080483d0 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080483d0 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080483d0 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
 0x080483dd: je 0x08048400<<BBlock>>
 registers:
@@ -1391,10 +1391,10 @@ memory:
  addr={defs={0x080483d6}, expr=0x080495fa<134518266>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x080483d6}, expr=0x080495f9<134518265>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x080483d6}, expr=0x080495f8<134518264>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080483d0 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x080483d0 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x080483d0 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080483d0 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080483d0 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
@@ -2070,10 +2070,10 @@ memory:
  addr={defs={0x08048486}, expr=0x080496fa<134518522>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x08048486}, expr=0x080496f9<134518521>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x08048486}, expr=0x080496f8<134518520>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048480 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048480 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
 0x0804848c: mov dword ss:[esp], 0x080485d4<"Hello, world.\n">
 registers:
@@ -2100,10 +2100,10 @@ memory:
  addr={defs={0x08048486}, expr=0x080496fa<134518522>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x08048486}, expr=0x080496f9<134518521>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x08048486}, expr=0x080496f8<134518520>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048480 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048480 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
 0x08048493: call 0x08048300<puts@plt>
 registers:
@@ -2134,10 +2134,10 @@ memory:
  addr={defs={0x08048486}, expr=0x080496fa<134518522>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x08048486}, expr=0x080496f9<134518521>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x08048486}, expr=0x080496f8<134518520>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048480 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048480 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
@@ -3694,14 +3694,14 @@ memory:
  addr={defs={0x0804858c}, expr=0x080495ea<134518250>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x0804858c}, expr=0x080495e9<134518249>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x0804858c}, expr=0x080495e8<134518248>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebx_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048583 value=(extract[8] 0x00000018[32] 0x00000020[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048583 value=(extract[8] 0x00000010[32] 0x00000018[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048583 value=(extract[8] 0x00000008[32] 0x00000010[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048583 value=(extract[8] 0x00000000[32] 0x00000008[32] ebx_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048580 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048580 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048580 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048580 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
 0x08048591: cmp eax, 0xff<-1>
 registers:
@@ -3722,14 +3722,14 @@ memory:
  addr={defs={0x0804858c}, expr=0x080495ea<134518250>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x0804858c}, expr=0x080495e9<134518249>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x0804858c}, expr=0x080495e8<134518248>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebx_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048583 value=(extract[8] 0x00000018[32] 0x00000020[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048583 value=(extract[8] 0x00000010[32] 0x00000018[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048583 value=(extract[8] 0x00000008[32] 0x00000010[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048583 value=(extract[8] 0x00000000[32] 0x00000008[32] ebx_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048580 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048580 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048580 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048580 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
 0x08048594: je 0x080485ac<<BBlock>>
 registers:
@@ -3750,14 +3750,14 @@ memory:
  addr={defs={0x0804858c}, expr=0x080495ea<134518250>[32]} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] V1[32])
  addr={defs={0x0804858c}, expr=0x080495e9<134518249>[32]} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] V1[32])
  addr={defs={0x0804858c}, expr=0x080495e8<134518248>[32]} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] V1[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebx_0[32])
- addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048583 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebx_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
- addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048580 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048583 value=(extract[8] 0x00000018[32] 0x00000020[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048583 value=(extract[8] 0x00000010[32] 0x00000018[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048583 value=(extract[8] 0x00000008[32] 0x00000010[32] ebx_0[32])
+ addr={defs={0x08048580,0x08048583}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048583 value=(extract[8] 0x00000000[32] 0x00000008[32] ebx_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048580 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])} writer=0x08048580 value=(extract[8] 0x00000010[32] 0x00000018[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048580 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
+ addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048580 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
