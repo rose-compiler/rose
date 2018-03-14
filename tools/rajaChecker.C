@@ -1481,8 +1481,8 @@ void RoseVisitor::visit ( SgNode* n)
         if ( isNodalAccumulationLoop (forloop, fstmt))
         {
             ostringstream oss;
-            oss<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
-            oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+            oss<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line();
+            oss<<" 1st acc. stmt at line:"<< fstmt->get_file_info()->get_line()<<endl;
 
             SgSourceFile* file = getEnclosingSourceFile(forloop);
             string s(":");
@@ -1530,8 +1530,8 @@ void RoseVisitor::visit ( SgNode* n)
           if ( isEmbeddedNodalAccumulationLambda(le, fstmt) || isIndirectNodalAccumulationLambda (le, fstmt, callstmt) )
           {
               ostringstream oss; 
-              oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
-              oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+              oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line();
+              oss<<" 1st acc. stmt at line:"<< fstmt->get_file_info()->get_line()<<endl;
               if (callstmt)
                 oss<<"\t This labmda function is used as a function parameter in a RAJA function is at line:"<< callstmt->get_file_info()->get_line()<<endl;
 
