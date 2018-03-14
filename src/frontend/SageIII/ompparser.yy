@@ -275,8 +275,15 @@ schedule_chunk_opt: /* empty */
 
 ordered_clause: ORDERED {
                       ompattribute->addClause(e_ordered_clause);
-                }
+                      omptype = e_ordered_clause;
+                } ordered_parameter_opt
                ;
+
+ordered_parameter_opt: /* empty */
+                | '(' expression ')' {
+                    addExpression("");
+                   }
+                 ;
 
 schedule_clause: SCHEDULE '(' schedule_kind {
                       ompattribute->addClause(e_schedule);

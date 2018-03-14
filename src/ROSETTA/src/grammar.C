@@ -327,7 +327,8 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
        // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.cpp for an example.
-          printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
+          if (verbose)
+              printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           system(command.c_str());
 
        // retry opening the file...
@@ -1179,6 +1180,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
 
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
   // Rasmussen (10/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
@@ -1209,6 +1211,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
           (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
           (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
+          (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
           (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
           (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
@@ -1305,6 +1308,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
 
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
   // Rasmussen (9/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
@@ -1328,6 +1332,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
           (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
           (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
+          (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
           (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
           (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
@@ -1656,7 +1661,8 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
 
      if (node.baseName == "IfStmt")
         {
-          printf ("In buildMemberAccessFunctionPrototypesAndConstuctorPrototype(): node.name = %s \n",node.name.c_str());
+            if (verbose)
+                printf ("In buildMemberAccessFunctionPrototypesAndConstuctorPrototype(): node.name = %s \n",node.name.c_str());
 #if 0
           for (size_t i = 0; i < dataAccessFunctionPrototypeString.size(); i++)
              {
@@ -3527,7 +3533,8 @@ Grammar::buildCode ()
 #else
      buildSourceFiles(*rootNode,ROSE_ArrayGrammarSourceFile);
 #endif
-     cout << "DONE: buildSourceFiles()" << endl;
+     if (verbose)
+         cout << "DONE: buildSourceFiles()" << endl;
 
   // DQ (5/24/2005): Support for evaluation of memory sizes of IR nodes
      string memoryStorageEvaluationSupport = buildMemoryStorageEvaluationSupport();
@@ -3575,7 +3582,8 @@ Grammar::buildCode ()
 #else
      buildNewAndDeleteOperators(*rootNode,ROSE_NewAndDeleteOperatorSourceFile);
 #endif
-     cout << "DONE: buildNewAndDeletOperators()" << endl;
+     if (verbose)
+         cout << "DONE: buildNewAndDeletOperators()" << endl;
 
   // printf ("Exiting after building new and delete operators \n");
   // ROSE_ASSERT(false);
@@ -3602,7 +3610,8 @@ Grammar::buildCode ()
 #else
      buildTraverseMemoryPoolSupport(*rootNode,ROSE_TraverseMemoryPoolSourceFile);
 #endif
-     cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
 
   // printf ("Exiting after building traverse memory pool functions \n");
   // ROSE_ASSERT(false);
@@ -3626,7 +3635,8 @@ Grammar::buildCode ()
 #else
      buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile);
 #endif
-     cout << "DONE: buildStringForCheckingIfDataMembersAreInMemoryPoolSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForCheckingIfDataMembersAreInMemoryPoolSupport()" << endl;
 
   // printf ("Exiting after building code to check data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
@@ -3649,7 +3659,8 @@ Grammar::buildCode ()
      ROSE_returnClassHierarchySubTreeSourceFile << buildClassHierarchySubTreeFunction();
      // Include the classHierarchyCastTable in the file for fast casting between compatible types
      ROSE_returnClassHierarchySubTreeSourceFile << generateClassHierarchyCastTable();
-     cout << "DONE: buildClassHierarchySubTreeFunction()" << endl;
+     if (verbose)
+         cout << "DONE: buildClassHierarchySubTreeFunction()" << endl;
      ROSE_returnClassHierarchySubTreeSourceFile.close();
 
   // printf ("Exiting after building code to return data members which are pointers to IR nodes \n");
@@ -3669,7 +3680,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      ROSE_memoryPoolTraversalSourceFile << buildMemoryPoolBasedVariantVectorTraversalSupport();
-     cout << "DONE: buildMemoryPoolBasedVariantVectorTraversalSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildMemoryPoolBasedVariantVectorTraversalSupport()" << endl;
      ROSE_memoryPoolTraversalSourceFile.close();
 
   // printf ("Exiting after building code to return data members which are pointers to IR nodes \n");
@@ -3689,7 +3701,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      buildStringForReturnDataMemberPointersSupport(*rootNode,ROSE_ReturnDataMemberPointersSourceFile);
-     cout << "DONE: buildStringForReturnDataMemberPointersSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForReturnDataMemberPointersSupport()" << endl;
 
   // printf ("Exiting after building code to return data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
@@ -3707,7 +3720,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      buildStringForProcessDataMemberReferenceToPointersSupport(*rootNode,ROSE_ProcessDataMemberReferenceToPointersSourceFile);
-     cout << "DONE: buildStringForProcessDataMemberReferenceToPointersSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForProcessDataMemberReferenceToPointersSupport()" << endl;
 
   // printf ("Exiting after building code to return references data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
@@ -3727,7 +3741,8 @@ Grammar::buildCode ()
   // DQ(10/22/2007): fixed missed variable renaming.
   // buildStringForGetChildIndexSupport(*rootNode,ROSE_ReturnDataMemberReferenceToPointersSourceFile);
      buildStringForGetChildIndexSupport(*rootNode,ROSE_GetChildIndexSourceFile);
-     cout << "DONE: buildStringForGetChildIndexSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForGetChildIndexSupport()" << endl;
 
   // printf ("Exiting after building code to get the child index from any IR node \n");
   // ROSE_ASSERT(false);
@@ -3749,7 +3764,8 @@ Grammar::buildCode ()
 #else
      buildCopyMemberFunctions(*rootNode,ROSE_CopyMemberFunctionsSourceFile);
 #endif
-     cout << "DONE: buildCopyMemberFunctions()" << endl;
+     if (verbose)
+         cout << "DONE: buildCopyMemberFunctions()" << endl;
 
   // printf ("Exiting after copy member functions \n");
   // ROSE_ASSERT(false);
@@ -3761,7 +3777,8 @@ Grammar::buildCode ()
   // generate a function for each node in the AST to return the node's successors of the traversal   
   // ---------------------------------------------------------------------------------------------
      StringUtility::FileWithLineNumbers ROSE_treeTraversalFunctionsSourceFile;
-     cout << "Calling buildTreeTraversalFunctions() ..." << endl;
+     if (verbose)
+         cout << "Calling buildTreeTraversalFunctions() ..." << endl;
   // Write header string to file (it's the same string as above, we just reuse it)
      ROSE_treeTraversalFunctionsSourceFile << includeHeaderString;
 
@@ -3770,7 +3787,8 @@ Grammar::buildCode ()
 
   // Generate the implementations of the tree traversal functions
      buildTreeTraversalFunctions(*rootNode, ROSE_treeTraversalFunctionsSourceFile);
-     cout << "DONE: buildTreeTraversalFunctions()" << endl;
+     if (verbose)
+         cout << "DONE: buildTreeTraversalFunctions()" << endl;
      Grammar::writeFile(ROSE_treeTraversalFunctionsSourceFile, target_directory, getGrammarName() + "TreeTraversalSuccessorContainer", ".C");
 
   // DQ (10/4/2014): Adding ATerm support via ROSETTA.
@@ -3778,7 +3796,8 @@ Grammar::buildCode ()
   // generate a function for each node in the AST to support ATerm read and write operations.
   // ---------------------------------------------------------------------------------------------
      StringUtility::FileWithLineNumbers ROSE_ATermSupportSourceFile;
-     cout << "Calling buildAtermSupportFunctions() ..." << endl;
+     if (verbose)
+         cout << "Calling buildAtermSupportFunctions() ..." << endl;
   // Write header string to file (it's the same string as above, we just reuse it)
      ROSE_ATermSupportSourceFile << includeHeaderString;
 
@@ -3790,7 +3809,8 @@ Grammar::buildCode ()
   // Generate the implementations of the ATerm support functions
      buildAtermSupportFunctions(*rootNode, ROSE_ATermSupportSourceFile);
 #endif
-     cout << "DONE: buildAtermSupportFunctions()" << endl;
+     if (verbose)
+         cout << "DONE: buildAtermSupportFunctions()" << endl;
      Grammar::writeFile(ROSE_ATermSupportSourceFile, target_directory, getGrammarName() + "AtermSupport", ".C");
 
 #if 0
@@ -3801,7 +3821,8 @@ Grammar::buildCode ()
   // ---------------------------------------------------------------------------------------------
   // generate what is necessary for SAGE support in AstProcessing classes
   // ---------------------------------------------------------------------------------------------
-     cout << "building TreeTraversalAccessEnums ... ";
+     if (verbose)
+         cout << "building TreeTraversalAccessEnums ... ";
      string treeTraversalClassHeaderFileName = getGrammarName();
      treeTraversalClassHeaderFileName += "TreeTraversalAccessEnums.h";
      ofstream ROSE_treeTraversalClassHeaderFile(string(target_directory+"/"+treeTraversalClassHeaderFileName).c_str());
@@ -3809,7 +3830,8 @@ Grammar::buildCode ()
      ROSE_treeTraversalClassHeaderFile << "// GENERATED HEADER FILE --- DO NOT MODIFY!"
                                        << endl << endl;
      ROSE_treeTraversalClassHeaderFile <<  naiveTraverseGrammar(*rootNode, &Grammar::EnumStringForNode);
-     cout << "finished." << endl;
+     if (verbose)
+         cout << "finished." << endl;
 
   // --------------------------------------------
   // generate code for variantT enum names
@@ -3846,7 +3868,8 @@ Grammar::buildCode ()
      rtiFile << "\n// Simplify code by using std namespace (never put into header files since it effects users) \nusing namespace std;\n\n";
 
      buildRTIFile(rootNode, rtiFile);
-     cout << "DONE: buildRTIFile" << endl;
+     if (verbose)
+         cout << "DONE: buildRTIFile" << endl;
      Grammar::writeFile(rtiFile, target_directory, getGrammarName() + "RTI", ".C");
 
 #if 0
@@ -3867,15 +3890,18 @@ Grammar::buildCode ()
      ofstream GrammarDotFile("grammar.dot");
      ROSE_ASSERT (GrammarDotFile.good());
      buildGrammarDotFile(rootNode, GrammarDotFile);
-     cout << "DONE: buildGrammarDotFile" << endl;
+     if (verbose)
+         cout << "DONE: buildGrammarDotFile" << endl;
      ofstream AbstractTreeGrammarFile("generated_abstractcppgrammar.atg");
      ROSE_ASSERT (AbstractTreeGrammarFile.good());
      buildAbstractTreeGrammarFile(rootNode, AbstractTreeGrammarFile);
-     cout << "DONE: buildAbstractTreeGrammarFile" << endl;
+     if (verbose)
+         cout << "DONE: buildAbstractTreeGrammarFile" << endl;
      ofstream sdfTreeGrammarFile("generated_sdf_tree_grammar.rtg");
      ROSE_ASSERT (sdfTreeGrammarFile.good());
      buildSDFTreeGrammarFile(rootNode, sdfTreeGrammarFile);
-     cout << "DONE: buildSDFTreeGrammarFile" << endl;
+     if (verbose)
+         cout << "DONE: buildSDFTreeGrammarFile" << endl;
 
 #if 1
    // JH (01/18/2006)
@@ -3893,7 +3919,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      buildIRNodeConstructorOfStorageClassSource(*rootNode,ROSE_ConstructorTakingStorageClassSourceFile);
-     cout << "DONE: buildConstructorTakingStorageClass()" << endl;
+     if (verbose)
+         cout << "DONE: buildConstructorTakingStorageClass()" << endl;
 
   // printf ("Exiting after building traverse memory pool functions \n");
   // ROSE_ASSERT(false);
@@ -3907,7 +3934,8 @@ Grammar::buildCode ()
      ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderStringWithoutROSE, "", 1));
      ROSE_ASSERT (rootNode != NULL);
      buildStringForMemoryPoolSupport(rootNode,ROSE_MemoryPoolSupportFile);
-     cout << "DONE: buildStringForMemoryPoolSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForMemoryPoolSupport()" << endl;
      Grammar::writeFile(ROSE_MemoryPoolSupportFile, target_directory, getGrammarName() + "MemoryPoolSupport", ".h");
   // --------------------------------------------
   // generate code for memory pool support source
@@ -3916,7 +3944,8 @@ Grammar::buildCode ()
      ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
      ROSE_ASSERT (rootNode != NULL);
      buildStringForMemoryPoolSupportSource(rootNode,ROSE_MemoryPoolSupportFile);
-     cout << "DONE: buildStringForMemoryPoolSupportSource()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForMemoryPoolSupportSource()" << endl;
      Grammar::writeFile(ROSE_MemoryPoolSupportFile, target_directory, getGrammarName() + "MemoryPoolSupport", ".C");
 #endif
 
@@ -3962,7 +3991,8 @@ Grammar::buildCode ()
      ofstream ROSE_outputClassesAndFieldsSourceFile(string(target_directory+"/"+outputClassesAndFieldsSourceFileName).c_str());
      ROSE_ASSERT (ROSE_outputClassesAndFieldsSourceFile.good() == true);
 
-     printf ("Building OutputClassesAndFields() \n");
+     if (verbose)
+         printf ("Building OutputClassesAndFields() \n");
   // outputClassesAndFields ( *rootNode, ROSE_outputClassesAndFieldsSourceFile);
      ROSE_outputClassesAndFieldsSourceFile << outputClassesAndFields ( *rootNode );
 #endif

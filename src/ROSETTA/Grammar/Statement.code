@@ -2190,6 +2190,13 @@ HEADER_EXPRESSION_STATEMENT_END
 
 
 HEADER_LABEL_STATEMENT_START
+
+     // DQ (1/15/2018): Need to support this member function now that we traverse the statement of the label statement.
+        protected:
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
+        public:
+
        // DQ (10/20/2004): This is not part of a uniform interface for all statements 
        // so it is not a particularly useful interface within a minimalist design.
        // Thus I have deprecated this function, users should use the get_label() 
@@ -2197,6 +2204,9 @@ HEADER_LABEL_STATEMENT_START
           SgName get_name() const ROSE_DEPRECATED_FUNCTION;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+       // DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
@@ -15103,6 +15113,13 @@ SgLabelStatement::get_type() const
   // call this function and it is not a virtual function that will cause derived class versions to be called
   // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
      return NULL;
+   }
+
+bool
+SgLabelStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
+   {
+  // DQ (1/15/2018): Added support for the statement of the label to be traversed.
+     return ( StatementReplace(this, p_statement, target, newstmt) == true );
    }
 
 SOURCE_LABEL_STATEMENT_END

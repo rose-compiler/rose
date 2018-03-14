@@ -8,8 +8,8 @@ class CreateTmpArray
 {
   std::map<std::string, AstNodePtr>& varmap;
   std::list<AstNodePtr>& newStmts;
-  AstNodePtr model;
   AstNodePtr scope;
+  AstNodePtr model;
  public:
   CreateTmpArray( std::map<std::string, AstNodePtr>& _varmap, std::list<AstNodePtr>& _newstmts,const AstNodePtr& declscope) 
      :  varmap(_varmap), newStmts(_newstmts), scope(declscope), model() {} 

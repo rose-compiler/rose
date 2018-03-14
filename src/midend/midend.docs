@@ -1,5 +1,8 @@
 // -*- c++ -*-
 
-/** @defgroup rose_midend ROSE midend
+/** @defgroup rose_midend Midend
+ *  @ingroup library_general_principles
+ *  Analyzing and transforming the AST.
  *
- *  Tools for the processing and transformation of the AST. */
+ *  The "midend" is the second of three phases of analysis and transformation. This phase is responsible for analyzing and/or
+ *  transforming the abstract syntax tree (AST). */

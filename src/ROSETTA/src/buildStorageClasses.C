@@ -384,7 +384,8 @@ Grammar::generateStorageClassesFiles()
 
   // Building the file StorageClasses.h
      ofstream AstSpecificDataHeaderFile ( std::string(target_directory+"/astFileIO/AstSpecificDataManagingClass.h").c_str()) ;
-     std::cout << "Building StorageClasses header" << std::flush;
+     if (verbose)
+         std::cout << "Building StorageClasses header" << std::flush;
      StringUtility::FileWithLineNumbers readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassHeader.macro");
      std::string dataMembers = buildStaticDataMemberListClassEntries(*rootNode);
      std::string accessFunctions = buildAccessFunctionsOfClassEntries(*rootNode);
@@ -399,11 +400,13 @@ Grammar::generateStorageClassesFiles()
      readFromFile = GrammarString::copyEdit(readFromFile,"$REPLACE_ACCESSFUNCITONS", accessFunctions.c_str() );
      AstSpecificDataHeaderFile << StringUtility::toString(readFromFile);
      AstSpecificDataHeaderFile.close();
-     std::cout << "... done " << std::endl;
+     if (verbose)
+         std::cout << "... done " << std::endl;
 
   // Building the file StorageClasses.h
      StringUtility::FileWithLineNumbers StorageClassHeaderFile ;
-     std::cout << "Building StorageClasses header" << std::flush;
+     if (verbose)
+         std::cout << "Building StorageClasses header" << std::flush;
      readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassStorageClassHeader.macro");
      dataMembers = buildStaticDataMemberListClassEntries(*rootNode);
      accessFunctions = buildAccessFunctionsOfClassEntries(*rootNode);
@@ -415,11 +418,13 @@ Grammar::generateStorageClassesFiles()
      StorageClassHeaderFile += readFromFile;
      buildStorageClassHeaderFiles(*rootNode,StorageClassHeaderFile);
      Grammar::writeFile(StorageClassHeaderFile, target_directory, "StorageClasses", ".h");
-     std::cout << "... done " << std::endl;
+     if (verbose)
+         std::cout << "... done " << std::endl;
 
   // Building the file StorageClasses.C
      StringUtility::FileWithLineNumbers StorageClassSourceFile;
-     std::cout << "Building StorageClasses source" << std::flush;
+     if (verbose)
+         std::cout << "Building StorageClasses source" << std::flush;
      readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassSource.macro");
      std::ostringstream myStream2; //creates an ostringstream object
      myStream2 << maxVariant + 1 << std::flush;
@@ -585,7 +590,8 @@ Grammar::generateStorageClassesFiles()
      StorageClassSourceFile << "\n\n";
      StorageClassSourceFile << "#endif // STORAGE_CLASSES_H\n";
      Grammar::writeFile(StorageClassSourceFile, target_directory, "StorageClasses", ".C");
-     std::cout << "... done " << std::endl;
+     if (verbose)
+         std::cout << "... done " << std::endl;
      return;
    }
 

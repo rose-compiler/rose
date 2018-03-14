@@ -16,7 +16,7 @@ namespace boost {
 namespace serialization {
 
 template<class S>
-void serialize(S & s, struct stat &x, const unsigned version) {
+void serialize(S & s, struct stat &x, const unsigned /*version*/) {
     s & boost::serialization::make_nvp("st_dev",     x.st_dev);
     s & boost::serialization::make_nvp("st_ino",     x.st_ino);
     s & boost::serialization::make_nvp("st_mode",    x.st_mode);

@@ -121,27 +121,29 @@ Unparse_MOD_SAGE::isBinaryEqualityOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if(func_ref != NULL)
-    func_name = func_ref->get_symbol()->get_name().str();
-  else
-    func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if(func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if( func_name == "operator<=" ||
-      func_name == "operator>=" ||
-      func_name == "operator<" ||
-      func_name == "operator>" ||
-      func_name == "operator!="  )
-    return true;
+     if( func_name == "operator<=" ||
+         func_name == "operator>=" ||
+         func_name == "operator<" ||
+         func_name == "operator>" ||
+         func_name == "operator!="  )
+        {
+          return true;
+        }
 
-  return false;
+     return false;
+   }
 
-}
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryArithmeticOperator
@@ -151,30 +153,32 @@ bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if(func_ref != NULL)
-    func_name = func_ref->get_symbol()->get_name().str();
-  else
-    func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if(func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if( func_name == "operator+"  ||
-      func_name == "operator-"  ||
-      func_name == "operator*" ||
-      func_name == "operator/" ||
-      func_name == "operator+=" ||
-      func_name == "operator-=" ||
-      func_name == "operator*="||
-      func_name == "operator/="  )
-    return true;
+     if( func_name == "operator+"  ||
+         func_name == "operator-"  ||
+         func_name == "operator*" ||
+         func_name == "operator/" ||
+         func_name == "operator+=" ||
+         func_name == "operator-=" ||
+         func_name == "operator*="||
+         func_name == "operator/="  )
+        {
+          return true;
+        }
 
-  return false;
+     return false;
+   }
 
-}
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryParenOperator
@@ -184,21 +188,23 @@ bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if (func_ref != NULL)
-       func_name = func_ref->get_symbol()->get_name().str();
-    else
-       func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if (func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if (func_name == "operator()")
-    return true;
-  return false;
-}
+     if (func_name == "operator()")
+          return true;
+
+     return false;
+   }
+
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryBracketOperator
@@ -208,22 +214,22 @@ bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref        = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if (func_ref != NULL)
-       func_name = func_ref->get_symbol()->get_name().str();
-    else
-       func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if (func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if (func_name == "operator[]")
-    return true;
-  return false;
+     if (func_name == "operator[]")
+          return true;
 
-}
+     return false;
+   }
 
 
 //-----------------------------------------------------------------------------------
@@ -233,9 +239,11 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
    {
+     ROSE_ASSERT(expr != NULL);
+
      bool isBinaryOperatorResult = false;
 
-     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref        = isSgFunctionRefExp(expr);
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
      if (!func_ref && !mfunc_ref)
@@ -290,7 +298,8 @@ bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
          func_name == "operator[]")
         {
        // DQ (5/6/2007): Make sure this could not be a unary operator (using new fix for unary operators).
-          if (isUnaryOperatorPlus(expr) || isUnaryOperatorMinus(expr))
+       // if (isUnaryOperatorPlus(expr) || isUnaryOperatorMinus(expr))
+          if (isUnaryOperator(expr) == true)
                isBinaryOperatorResult = false;
             else
                isBinaryOperatorResult = true;
@@ -311,7 +320,8 @@ Unparse_MOD_SAGE::isUnaryIncrementOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
-     ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+  // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+     ROSE_ASSERT(expr != NULL);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -333,6 +343,30 @@ Unparse_MOD_SAGE::isUnaryIncrementOperator(SgExpression* expr)
              }
         }
 
+    // DQ (2/1/2018): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                         if (func_name.getString() == "operator++")
+                            {
+                              SgInitializedNamePtrList argList = func_decl->get_args();
+                              if (argList.size() == 0) 
+                                   return true;
+                            }
+                       }
+                  }
+             }
+        }
+
      return false;
    }
 
@@ -346,7 +380,8 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
-     ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+  // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+     ROSE_ASSERT(expr != NULL);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -368,6 +403,30 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
              }
         }
 
+    // DQ (2/1/2018): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                         if (func_name.getString() == "operator--")
+                            {
+                              SgInitializedNamePtrList argList = func_decl->get_args();
+                              if (argList.size() == 0) 
+                                   return true;
+                            }
+                       }
+                  }
+             }
+        }
+
      return false;
    }
 
@@ -384,7 +443,7 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
      if (isSgFunctionRefExp(expr) != NULL && isSgMemberFunctionRefExp(expr) == NULL)
         {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 0
        // printf ("Case not implemented in Unparse_MOD_SAGE::isUnaryOperator(): expr = %p = %s = %s \n",expr,expr->class_name().c_str(),SageInterface::get_name(expr).c_str());
           printf ("Case not implemented in Unparse_MOD_SAGE::isUnaryOperator(): expr = %p = %s = %s \n",expr,expr->class_name().c_str(),isSgFunctionRefExp(expr)->get_symbol()->get_name().str());
 #endif
@@ -399,15 +458,31 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
      if (func_ref == NULL && mfunc_ref == NULL)
         {
        // DQ (8/27/2007): This really is called for many non-functions reference expressions.
-       // printf ("Warning, Unparse_MOD_SAGE::isUnaryOperator() test on non-function \n");
+#if 0
+          printf ("Warning, Unparse_MOD_SAGE::isUnaryOperator() test on non-function \n");
+#endif
           return false;
         }
 
      string func_name;
      if (func_ref != NULL)
+        {
+#if 0
+          printf ("In isUnaryOperator(): this is a non-member function \n");
+#endif
           func_name = func_ref->get_symbol()->get_name().str();
+        }
        else
+        {
+#if 0
+          printf ("In isUnaryOperator(): this is a member function \n");
+#endif
           func_name = mfunc_ref->get_symbol()->get_name().str();
+        }
+
+#if 0
+     printf ("In isUnaryOperator(): func_name = %s \n",func_name.c_str());
+#endif
 
   // DQ (2/14/2005): Need special test for operator*(), and other unary operators,
   // similar to operator+() and operator-().
@@ -416,9 +491,34 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
   // Maybe also for the binary operator&() (what about operator~()?)
   // Added support for isUnaryDereferenceOperator(), isUnaryAddressOperator(),
   // isUnaryOrOperator(), isUnaryComplementOperator().
+#if 1
+  // DQ (2/1/2018): The argument to these functions in the predicate should be "exp" not "mfunc_ref"
+     if ( isUnaryOperatorPlus(expr) ||
+          isUnaryOperatorMinus(expr) ||
+       // DQ (2/1/2018): This operator now has a function to support the evaluation of it being unary.
+       // func_name == "operator!" ||
+          isUnaryNotOperator(expr) ||
+       // func_name == "operator*" ||
+          isUnaryDereferenceOperator(expr) ||
+       // DQ (11/24/2004): Added support for address operator "operator&"
+       // func_name == "operator&" ||
+          isUnaryAddressOperator(expr) ||
+          func_name == "operator--" ||
+          func_name == "operator++" ||
+       // DQ (2/1/2018): I don't think this operator can exist.
+       // isUnaryOrOperator(mfunc_ref) ||
+       // func_name == "operator~")
+          isUnaryComplementOperator(expr) )
+#else
+  // Original code.
+
+#error "DEAD CODE!"
+
      if ( isUnaryOperatorPlus(mfunc_ref) ||
           isUnaryOperatorMinus(mfunc_ref) ||
-          func_name == "operator!" ||
+       // DQ (2/1/2018): This operator now has a function to support the evaluation of it being unary.
+       // func_name == "operator!" ||
+          isUnaryNotOperator(mfunc_ref) ||
        // func_name == "operator*" ||
           isUnaryDereferenceOperator(mfunc_ref) ||
        // DQ (11/24/2004): Added support for address operator "operator&"
@@ -426,10 +526,21 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
           isUnaryAddressOperator(mfunc_ref) ||
           func_name == "operator--" ||
           func_name == "operator++" ||
-          isUnaryOrOperator(mfunc_ref) ||
+       // DQ (2/1/2018): I don't think this operator can exist.
+       // isUnaryOrOperator(mfunc_ref) ||
        // func_name == "operator~")
           isUnaryComplementOperator(mfunc_ref) )
+#endif
+        {
+#if 0
+          printf ("In isUnaryOperator(): returning true \n");
+#endif
           return true;
+        }
+
+#if 0
+     printf ("In isUnaryOperator(): returning false \n");
+#endif
 
      return false;
    }
@@ -443,7 +554,8 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
 bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
-     ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+  // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+     ROSE_ASSERT(expr != NULL);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -460,11 +572,50 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
                          SgInitializedNamePtrList argList = mfunc_decl->get_args();
                            // postfix operators have one argument (0), prefix operators have none ()
                          if (argList.size() == 1)
-                            return true;
+                            {
+#if 0
+                              printf ("In isUnaryPostfixOperator(): returning true \n");
+#endif
+                              return true;
+                            }
                        }
                   }
              }
         }
+
+    // DQ (2/1/2018): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                      // if (func_name.getString() == "operator--")
+                         if (func_name.getString() == "operator++" || func_name.getString() == "operator--")
+                            {
+                              SgInitializedNamePtrList argList = func_decl->get_args();
+                              if (argList.size() == 2) 
+                                 {
+#if 0
+                                   printf ("In isUnaryPostfixOperator(): returning true \n");
+#endif
+                                   return true;
+                                 }
+                            }
+                       }
+                  }
+             }
+        }
+
+#if 0
+     printf ("In isUnaryPostfixOperator(): returning false \n");
+#endif
 
      return false;
    }

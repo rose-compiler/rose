@@ -5,6 +5,9 @@
 #include "SingleStatementToBlockNormalization.h"
 #include <vector>
 
+// #include <iostream>
+#include <stdio.h>
+
 using namespace std;
 
 class SingleStatementToBlockVisitor: public ROSE_VisitorPatternDefaultBase {
@@ -43,8 +46,11 @@ singleStatementBlocks.push_back(node->access2());\
     BLOCKIFY_ONE_BODY(SgForAllStatement, get_body)
     BLOCKIFY_ONE_BODY(SgForStatement, get_loop_body)
     BLOCKIFY_ONE_BODY(SgSwitchStatement, get_body)
+
+ // Note that these are macros that expand to implement functions.
     BLOCKIFY_ONE_BODY(SgCaseOptionStmt, get_body)
     BLOCKIFY_ONE_BODY(SgDefaultOptionStmt, get_body)
+
     BLOCKIFY_ONE_BODY(SgTryStmt, get_body)
     BLOCKIFY_ONE_BODY(SgCatchOptionStmt, get_body)
     BLOCKIFY_TWO_BODY(SgIfStmt, get_true_body, get_false_body)

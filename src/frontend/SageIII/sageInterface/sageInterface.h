@@ -1177,18 +1177,33 @@ bool getForLoopInformations(
 //! Query a subtree to get all nodes of a given type, with an appropriate downcast.
 template <typename NodeType>
 std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)NodeType::static_variant)
-{
-  Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
-  std::vector<NodeType*> result(nodes.size(), NULL);
-  int count = 0;
-  for (Rose_STL_Container<SgNode*>::const_iterator i = nodes.begin();
-       i != nodes.end(); ++i, ++count) {
-    NodeType* node = dynamic_cast<NodeType*>(*i);
-    ROSE_ASSERT (node);
-    result[count] = node;
-  }
-  return result;
-}
+   {
+#if 0
+     printf ("Top of SageInterface::querySubTree() \n");
+#endif
+
+     Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
+     std::vector<NodeType*> result(nodes.size(), NULL);
+     int count = 0;
+#if 0
+     printf ("In SageInterface::querySubTree(): before initialization loop \n");
+#endif
+
+     for (Rose_STL_Container<SgNode*>::const_iterator i = nodes.begin(); i != nodes.end(); ++i, ++count) 
+        {
+#if 0
+          printf ("In SageInterface::querySubTree(): in loop: count = %d \n",count);
+#endif
+          NodeType* node = dynamic_cast<NodeType*>(*i);
+          ROSE_ASSERT (node);
+          result[count] = node;
+        }
+#if 0
+     printf ("Leaving SageInterface::querySubTree(): after initialization loop \n");
+#endif
+
+     return result;
+   }
   /*! \brief Returns STL vector of SgFile IR node pointers.
 
       Demonstrates use of restricted traversal over just SgFile IR nodes.

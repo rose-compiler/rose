@@ -1685,6 +1685,7 @@ namespace OmpSupport
 
         string pragma_str= att->toOpenMPString();
         SgPragmaDeclaration * pragma = SageBuilder::buildPragmaDeclaration("omp "+ pragma_str);
+        //cout<<"insert pragma before a loop ..."<<endl;
         SageInterface::insertStatementBefore(cur_stmt, pragma);
       }
     } // if (attlist)

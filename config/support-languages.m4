@@ -827,7 +827,7 @@ AC_DEFUN([ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS_DEPRECATED],
 USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=no
 AC_ARG_ENABLE([only-binary-analysis],
               AS_HELP_STRING([--enable-only-binary-analysis(=yes)],
-                             [Enable ONLY Java support in ROSE (Warning: '--enable-only-binary-analysis=no' and '--disable-only-binary-analysis' are no longer supported)]),
+                             [Enable ONLY binary support in ROSE (Warning: '--enable-only-binary-analysis=no' and '--disable-only-binary-analysis' are no longer supported)]),
                 case "$enableval" in
                   [yes)]
                   	LANGUAGES_TO_SUPPORT="binaries"

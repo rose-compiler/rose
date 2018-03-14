@@ -12,9 +12,20 @@
 
 namespace ssa_private
 {
+#if 1
+  // using namespace boost;
+  // using namespace std;
+
+    /**
+     * @param dominatorTree map from each node in the dom tree to its childrenn
+     * @param iDominatorMap map from each node to its immediate dominator. */
+    template<class CfgNodeT, class CfgEdgeT>
+    std::multimap< CfgNodeT, std::pair<CfgNodeT, CfgEdgeT> > calculateControlDependence(SgFunctionDefinition* function, const std::map<CfgNodeT, CfgNodeT>& iPostDominatorMap);
+#else
     using namespace boost;
     using namespace std;
 
+  // DQ (1/7/2018): Move this from the header file to the source code file (staticSingleAssignmentCalculation.C).
     /**
      * @param dominatorTree map from each node in the dom tree to its childrenn
      * @param iDominatorMap map from each node to its immediate dominator. */
@@ -58,7 +69,9 @@ namespace ssa_private
                 //We traverse from nextNode up in the postdominator tree until we reach the parent of currNode.
                 CfgNodeT parent;
                 typename map<CfgNodeT, CfgNodeT>::const_iterator parentIter = iPostDominatorMap.find(sourceNode);
+
                 ROSE_ASSERT(parentIter != iPostDominatorMap.end());
+
                 parent = parentIter->second;
 
                 //This is the node that we'll be marking as control dependent
@@ -91,5 +104,7 @@ namespace ssa_private
 
         return controlDepdendences;
     }
+#endif
+
 }
 
