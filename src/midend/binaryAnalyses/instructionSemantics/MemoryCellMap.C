@@ -59,6 +59,18 @@ MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, Ris
 }
 
 bool
+MemoryCellMap::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps) const {
+    ASSERT_not_null(addrOps);
+    for (size_t offset = 0; offset < nBytes; ++offset) {
+        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->get_width(), offset));
+        CellKey key = generateCellKey(byteAddress);
+        if (!cells.exists(key))
+            return false;
+    }
+    return true;
+}
+
+bool
 MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     MemoryCellMapPtr other = boost::dynamic_pointer_cast<MemoryCellMap>(other_);
     ASSERT_not_null(other);

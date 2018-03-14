@@ -84,6 +84,19 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
 }
 
 bool
+MemoryCellList::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps, RiscOperators *valOps) const {
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    for (size_t offset = 0; offset < nBytes; ++offset) {
+        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->get_width(), offset));
+        CellList::const_iterator cursor = get_cells().begin();
+        if (scan(cursor/*in,out*/, byteAddress, 8, addrOps, valOps).empty())
+            return false;
+    }
+    return true;
+}
+
+bool
 MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     MemoryCellListPtr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
     ASSERT_not_null(other);
