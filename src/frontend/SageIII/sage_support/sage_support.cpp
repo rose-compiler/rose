@@ -14,6 +14,7 @@
 #include "failSafePragma.h"
 #include "cmdline.h"
 #include "FileSystem.h"
+#include <CommandLine.h>
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #   include "FortranModuleInfo.h"
@@ -1809,11 +1810,11 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
      using namespace Rose;                   // the ROSE team is migrating everything to this namespace
      using namespace Rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
-  // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
+  // Use Rose::CommandLine to create a consistent parser among all tools.  If you want a tool's parser to be different
   // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
   // creates a parser that assumes all unrecognized switches are intended for a later stage. If there are no later stages
   // then use createEmptyParser instead or else users will never see error messages for misspelled switches.
-     Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+     Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);
      p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
 #if 1
   // DEBUGGING [Robb P Matzke 2016-09-27]
@@ -1829,7 +1830,7 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
   // Sawyer::CommandLine::SwitchGroup, which this tool could extend by adding additional switches.  This could have been done
   // inside createParser, but it turns out that many tools like to extend or re-order this group of switches, which is
   // simpler this way.
-     p.with(CommandlineProcessing::genericSwitches());
+     p.with(Rose::CommandLine::genericSwitches());
 
   // Eventually, if we change frontend so we can query what switches it knows about, we could insert them into our parser at
   // this point.  The frontend could report all known switches (sort of how things are organized one) or we could query only
@@ -1860,8 +1861,8 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
   // Helper function that adds "--old-outliner" and "--no-old-outliner" to the tool switch group, and causes
   // settings.useOldParser to be set to true or false. It also appends some additional documentation to say what the default
   // value is. We could have done this by hand with Sawyer, but having a helper encourages consistency.
-     CommandlineProcessing::insertBooleanSwitch(tool, "old-commandline-handling", rose_settings.useOldCommandlineParser, 
-                                               "Call the old ROSE frontend command line parser in addition to its new Sawyer parser.");
+     Rose::CommandLine::insertBooleanSwitch(tool, "old-commandline-handling", rose_settings.useOldCommandlineParser, 
+                                            "Call the old ROSE frontend command line parser in addition to its new Sawyer parser.");
 
   // We want the "--rose:help" switch to appear in the Sawyer documentation but we have to pass it to the next stage also. We
   // could do this two different ways. The older way (that still works) is to have Sawyer process the switch and then we
@@ -2343,12 +2344,11 @@ SgProject::parse()
      printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %" PRIuPTR " \n",vectorOfFiles.size());
 #endif
 
-  errorCode = this->RunFrontend();
-  if (errorCode > 3)
-  {
-      return errorCode;
-  }
-
+     errorCode = this->RunFrontend();
+     if (errorCode > 3)
+        {
+          return errorCode;
+        }
 #endif
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
@@ -2421,47 +2421,76 @@ SgProject::parse()
   // secondary pass over each file runs after all fixes have been done. This
   // is relevant where the AstPostProcessing mechanism must first mark nodes
   // to be output before preprocessing information is attached.
-  SgFilePtrList &files = get_fileList();
-  {
-      BOOST_FOREACH(SgFile* file, files)
-      {
+     SgFilePtrList &files = get_fileList();
+
+// {
+     BOOST_FOREACH(SgFile* file, files)
+        {
           ROSE_ASSERT(file != NULL);
 
           if (KEEP_GOING_CAUGHT_FRONTEND_SECONDARY_PASS_SIGNAL)
-          {
-              std::cout
-                  << "[WARN] "
-                  << "Configured to keep going after catching a signal in "
-                  << "SgFile::secondaryPassOverSourceFile()"
-                  << std::endl;
+             {
+               std::cout
+                    << "[WARN] "
+                    << "Configured to keep going after catching a signal in "
+                    << "SgFile::secondaryPassOverSourceFile()"
+                    << std::endl;
 
-              if (file != NULL)
-              {
-                  file->set_frontendErrorCode(100);
-                  errorCode = std::max(100, errorCode);
-              }
-              else
-              {
-                  std::cout
-                      << "[FATAL] "
-                      << "Unable to keep going due to an unrecoverable internal error"
-                      << std::endl;
-  // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.              
+               if (file != NULL)
+                  {
+                    file->set_frontendErrorCode(100);
+                    errorCode = std::max(100, errorCode);
+                  }
+                 else
+                  {
+                    std::cout
+                         << "[FATAL] "
+                         << "Unable to keep going due to an unrecoverable internal error"
+                         << std::endl;
+                 // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.              
                     exit(1);
-//                  return std::max(100, errorCode);
-              }
-          }
-          else
-          {
-              file->secondaryPassOverSourceFile();
-          }
-      }
+                 // return std::max(100, errorCode);
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("Test for call to secondaryPassOverSourceFile(): get_disable_edg_backend() = %s \n",
+                    file->get_disable_edg_backend() ? "true" : "false");
+#endif
+#if 0
+               display("Calling secondaryPassOverSourceFile()");
+#endif
+            // DQ (1/23/2018): If we are not doing the translation of EDG to ROSE, then we don't want to call this second pass.
+            // This will fix the negative test in Plum hall for what should be an error to the C preprocessor.
+            // file->secondaryPassOverSourceFile();
 
-      if (errorCode != 0)
-      {
+            // if (file->get_skip_translation_from_edg_ast_to_rose_ast() == false)
+               if (file->get_disable_edg_backend() == false)
+                  {
+#if 0
+                    printf ("Calling secondaryPassOverSourceFile() \n");
+#endif
+                    file->secondaryPassOverSourceFile();
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Skipping the call to secondaryPassOverSourceFile() \n");
+#endif
+                  }
+#if 0
+               printf ("Exiting after test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+
+     if (errorCode != 0)
+        {
           return errorCode;
-      }
-  }
+        }
+//  }
 
   // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
   // In the second step (after preprocessing infos are already attached), collect the including files map.
@@ -2551,7 +2580,9 @@ SgProject::parse()
 
   // if (get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
+        {
           cout << "C++ source(s) parsed. AST generated." << endl;
+        }
 
      if ( get_verbose() > 3 )
         {
@@ -2561,6 +2592,8 @@ SgProject::parse()
 
      return errorCode;
    } // end parse(;
+
+
 
 //negara1 (07/29/2011)
 //The returned file path is not normalized. 
@@ -2895,6 +2928,9 @@ SgFile::callFrontEnd()
   // Exit if we are to ONLY call the vendor's backend compiler
      if (p_useBackendOnly == true)
         {
+#if 0
+          printf ("############## Exit because we are to ONLY call the vendor's backend compiler \n");
+#endif
           return 0;
         }
 
@@ -3068,6 +3104,10 @@ SgFile::callFrontEnd()
 #if 0
      printf ("Exiting as a test of the F03 module support \n");
      ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d frontendErrorLevel = %d \n",fileNameIndex,frontendErrorLevel);
 #endif
 
   // return the error code associated with the call to the C++ Front-end
@@ -6022,8 +6062,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                   // nothing to do...
                   }
-               else if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
-                  {
+                 else 
+                    if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
+                       {
                  // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
                  // header file list, and is required to be supported in ROSE as part of some application 
                  // specific configuration testing (when configure tests ROSE translators)).
@@ -6032,7 +6073,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                  //                   Commenting out for now to allow $ROSE/tests/CompilerOptionTests to pass
                  //                   in order to expedite the transition from ROSE-EDG3 to ROSE-EDG4.
                  //   ROSE_ASSERT(! "Not implemented yet");
-                  }
+                       }
              }
             else
              {

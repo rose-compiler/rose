@@ -4,6 +4,7 @@
 #include <sage3basic.h>
 
 #include <BinaryNoOperation.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
@@ -128,7 +129,7 @@ struct FunctionNoopWorker {
 
 void
 Partitioner::allFunctionIsNoop() const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "function no-op analysis");

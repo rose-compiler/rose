@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Test ROSE Web Interface</title>
+  </head>
+
+ <body>
+
+<form action="/cgi-bin/callrose.sh" method="post">
+
+Please provide the following information to run the identityTranslator of ROSE:<br>
+
+Step 1/2. 
+Input source code<br>
+<script src="autosize.js"></script>
+<textarea rows="40" cols="80" name="filecontent">
+/*a test C++ program. You can replace this content with yours. */
+template <typename T>
+class X
+{
+  public:
+    X();
+    ~X();
+    void foo();
+    X operator+();
+};
+
+X<int>::~X()
+{
+}
+
+X<int>::X()
+{
+}
+
+void X<int>::foo()
+{
+}
+
+X<int> X<int>::operator+( )
+{
+  X<int> x;
+  return x;
+}
+
+</textarea><br>
+
+Step 2/2: Select suffix of the source code <br>
+.c   <input type="radio" name="suffix" value="c" ></input><br>
+.cpp <input type="radio" name="suffix" value="cpp" checked></input><br>
+.f   <input type="radio" name="suffix" value="f"></input><br>
+
+<input type="submit" name="sub" value="Submit"></input>
+</form>
+
+ </body>
+</html>
+

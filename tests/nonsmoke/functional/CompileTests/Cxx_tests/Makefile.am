@@ -450,7 +450,107 @@ NEW_2017_TESTS = \
    test2017_55.C \
    test2017_56.C \
    test2017_57.C \
-   test2017_58.C 
+   test2017_58.C \
+   test2017_60.C \
+   test2017_61.C \
+   test2017_62.C \
+   test2017_63.C \
+   test2017_64.C \
+   test2017_65.C \
+   test2017_66.C \
+   test2017_68.C \
+   test2017_72.C \
+   test2017_73.C \
+   test2017_74.C \
+   test2017_75.C \
+   test2017_76.C \
+   test2017_77.C \
+   test2017_78.C \
+   test2017_79.C \
+   test2017_80.C \
+   test2017_81.C \
+   test2017_82.C \
+   test2017_83.C \
+   test2017_84.C \
+   test2017_87.C \
+   test2017_88.C \
+   test2017_89.C \
+   test2017_90.C \
+   test2017_91.C \
+   test2017_92.C \
+   test2017_93.C \
+   test2017_94.C \
+   test2017_95.C \
+   test2017_96.C \
+   test2017_97.C \
+   test2017_98.C \
+   test2017_100.C \
+   test2017_101.C \
+   test2017_102.C \
+   test2017_103.C \
+   test2017_104.C \
+   test2017_105.C \
+   test2017_106.C \
+   test2017_107.C \
+   test2018_01.C \
+   test2018_02.C \
+   test2018_03.C \
+   test2018_04.C \
+   test2018_05.C \
+   test2018_06.C \
+   test2018_07.C \
+   test2018_08.C \
+   test2018_09.C \
+   test2018_10.C \
+   test2018_11.C \
+   test2018_12.C \
+   test2018_13.C \
+   test2018_14.C \
+   test2018_15.C \
+   test2018_16.C \
+   test2018_17.C \
+   test2018_18.C \
+   test2018_19.C \
+   test2018_20.C \
+   test2018_21.C \
+   test2018_27.C \
+   test2018_29.C \
+   test2018_32.C \
+   test2018_33.C \
+   test2018_34.C \
+   test2018_35.C \
+   test2018_36.C \
+   test2018_37.C \
+   test2018_38.C \
+   test2018_39.C \
+   test2018_40.C \
+   test2018_41.C \
+   test2018_42.C \
+   test2018_43.C \
+   test2018_44.C
+
+
+
+# DQ (12/18/2017): These are perhaps not valid C++ code (might be C code using GNU extensions).
+FAILING_2017_TESTS = \
+   test2017_59.C \
+   test2017_67.C \
+   test2017_70.C \
+   test2017_71.C 
+
+# DQ (1/2/2018): This is a translator test code that should not be in the regression tests.
+TRANSLATOR_TEST_CODE = \
+   test2017_99.C 
+
+# DQ (12/18/2017): These parse using EDG, but fail to parse using GNU g++ (illegal code).
+FAILING_2017_ILLEGAL_CODE = \
+   test2017_85.C \
+   test2017_86.C 
+
+# DQ (12/18/2017): I think this file in simply in the wrong directory.
+ROSE_TRANSLATOR_2017_TESTCODE_IN_WRONG_DIRECTORY = \
+   test2017_99.C 
+
 
 if !ROSE_USE_EDG_VERSION_4_9
 # DQ (11/15/2017): I think this should be "+=" instead of "=".
@@ -470,7 +570,8 @@ NEW_2017_TESTS += \
    test2017_32.C \
    test2017_44.C \
    test2017_46.C \
-   test2017_47.C 
+   test2017_47.C \
+   test2017_69.C 
 endif
 
 STILL_FAILING = \

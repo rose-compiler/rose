@@ -54,7 +54,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize_common(S &s, const unsigned version) {
+    void serialize_common(S &s, const unsigned /*version*/) {
         // Most of the data members don't need to be saved because we'll only save/restore disassemblers that are between
         // instructions (we never save one while it's processing an instruction). Therefore, most of the data members can be
         // constructed in their initial state by a combination of default constructor and init().

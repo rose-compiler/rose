@@ -119,10 +119,10 @@ protected:
     class TransferFunction {
         const DataFlow::VertexFlowGraphs &index_; // maps CFG vertex to data flow graph
         Approximation approximation_;
-        SmtSolver *smtSolver_;
+        SmtSolverPtr smtSolver_;
         Sawyer::Message::Facility &mlog;
     public:
-        TransferFunction(const DataFlow::VertexFlowGraphs &index, Approximation approx, SmtSolver *solver,
+        TransferFunction(const DataFlow::VertexFlowGraphs &index, Approximation approx, const SmtSolverPtr &solver,
                          Sawyer::Message::Facility &mlog)
             : index_(index), approximation_(approx), smtSolver_(solver), mlog(mlog) {}
 
@@ -163,7 +163,7 @@ private:
     DataFlow::VariableList variableList_;
     bool vlistInitialized_;
     std::vector<StatePtr> results_;
-    SmtSolver *smtSolver_;
+    SmtSolverPtr smtSolver_;
 
 public:
     /** Constructs a tainted flow analysis.
@@ -173,7 +173,7 @@ public:
      *  The dispatcher need not have a valid state at this time; however, the state must be initialized before calling @ref
      *  computeFlowGraphs (if that method is called). */
     explicit TaintedFlow(const InstructionSemantics2::BaseSemantics::DispatcherPtr &userDispatcher)
-        : approximation_(UNDER_APPROXIMATE), dataFlow_(userDispatcher), vlistInitialized_(false), smtSolver_(NULL) {}
+        : approximation_(UNDER_APPROXIMATE), dataFlow_(userDispatcher), vlistInitialized_(false) {}
 
     /** Initialize diagnostics.
      *
@@ -198,8 +198,8 @@ public:
      *  which case under and over approximations both degenerate to equality using only structural equivalence.
      *
      *  @{ */
-    SmtSolver *smtSolver() const { return smtSolver_; }
-    void smtSolver(SmtSolver *solver) { smtSolver_ = solver; }
+    SmtSolverPtr smtSolver() const { return smtSolver_; }
+    void smtSolver(const SmtSolverPtr &solver) { smtSolver_ = solver; }
     /** @} */
 
     /** Compute data flow graphs.

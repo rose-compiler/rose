@@ -79,18 +79,18 @@ check_PROGRAM = ${C_TESTCODE_RESULTS:.c=.out}
 #nestedloops.out:rose_nestedloops.c
 #	gcc -O3 rose_nestedloops.c -o nestedloops.out -lm
 
-$(C_Analysis_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
+$(C_Analysis_TESTCODE_RESULTS): ./measureTool 
 	./measureTool -c -static-counting-only -use-algorithm-v2 -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
 # test the translator
-$(C_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
+$(C_TESTCODE_RESULTS):./measureTool 
 	./measureTool -c -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
-$(F_TESTCODE_RESULTS):measureTool $(srcdir)/test/fortran/$(@:rose_%=%) 
+$(F_TESTCODE_RESULTS):./measureTool
 	./measureTool -c -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/fortran/$(@:rose_%=%)
 
 # test for RAJA loop support, static counting mode
-rose_rajaloop.cpp:measureTool $(srcdir)/test/rajaloop.cpp 
+rose_rajaloop.cpp:./measureTool 
 	./measureTool -c -static-counting-only -support_raja_loops -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/rajaloop.cpp
 
 # test for code instrumentor---------------------
@@ -111,6 +111,8 @@ rose_bt_single.out: rose_bt_single.c instrumentor_lib.a
 bt-iter-count.log:rose_bt_single.out
 	./rose_bt_single.out
 ftest: $(F_TESTCODE_RESULTS)
+
+check-static: $(C_Analysis_TESTCODE_RESULTS)
 
 check: rose_rajaloop.cpp $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS) bt-iter-count.log
 clean:

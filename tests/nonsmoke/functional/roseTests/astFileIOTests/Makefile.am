@@ -147,7 +147,7 @@ if !OS_MACOSX
 TEST_TARGETS += parallelMerge_short.passed
 endif
 
-parallelMerge_short.passed: parallelMerge $(parallelMerge_short_binaries)
+parallelMerge_short.passed: ../../testAstFileRead parallelMerge $(parallelMerge_short_binaries)
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
 		CMD="mkdir data temp; $$(pwd)/parallelMerge $(parallelMerge_short_arguments) output.C" \
@@ -171,7 +171,7 @@ if !OS_MACOSX
 TEST_TARGETS += parallelMerge_medium.passed
 endif
 
-parallelMerge_medium.passed: parallelMerge $(parallelMerge_medium_binaries)
+parallelMerge_medium.passed: ../../testAstFileRead parallelMerge $(parallelMerge_medium_binaries)
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
 		CMD="mkdir data temp; $$(pwd)/parallelMerge $(parallelMerge_short_arguments) output.C" \

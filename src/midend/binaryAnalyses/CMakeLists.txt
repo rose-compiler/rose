@@ -15,6 +15,7 @@ add_library(midend_binary OBJECT
   BinaryPointerDetection.C
   BinaryReachability.C
   BinaryReturnValueUsed.C
+  BinarySmtCommandLine.C
   BinarySmtSolver.C
   BinarySmtlibSolver.C
   BinaryStackDelta.C
@@ -75,6 +76,7 @@ install(
     BinaryPointerDetection.h
     BinaryReachability.h
     BinaryReturnValueUsed.h
+    BinarySmtCommandLine.h
     BinarySmtSolver.h
     BinarySmtlibSolver.h
     BinaryStackDelta.h

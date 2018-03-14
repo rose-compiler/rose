@@ -2,6 +2,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <SqlDatabase.h>
@@ -46,7 +47,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .argument("uri", anyParser(settings.databaseUri))
               .doc("Uniform resource locator for the database." + SqlDatabase::uriDocumentation()));
 
-    return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 int

@@ -72,24 +72,30 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 # warning("FIXME[Craig Rasmussen 2017-12-09]: Still not supported on Mac OSX but will now compile")
 
 # include <signal.h>
+# include <sys/ptrace.h>
 
-enum __ptrace_request {                                 // Mac OSX dud
-    PTRACE_ATTACH,
-    PTRACE_CONT,
-    PTRACE_DETACH,
-    PTRACE_GETREGS,
-    PTRACE_GETFPREGS,
-    PTRACE_KILL,
-    PTRACE_SETREGS,
-    PTRACE_SINGLESTEP,
-    PTRACE_TRACEME,
-    PTRACE_PEEKUSER,
-    PTRACE_SYSCALL
-};
+// from /usr/include/sys/ptrace.h (perhaps for future use)
+//
+# define  PTRACE_TRACEME     PT_TRACE_ME    /* child declares it's being traced */
+# define  PTRACE_CONT        PT_CONTINUE    /* continue the child */
+# define  PTRACE_KILL        PT_KILL        /* kill the child process */
+# define  PTRACE_SINGLESTEP  PT_STEP        /* single step the child */
+# define  PTRACE_DETACH      PT_DETACH      /* stop tracing a process */
+# define  PTRACE_ATTACH      PT_ATTACHEXC   /* attach to running process with signal exception */
+
+// no direct equivalent
+//
+#define ROSE_PT_NO_EQUIVALENT  33
+#define PTRACE_GETREGS         ROSE_PT_NO_EQUIVALENT
+#define PTRACE_SETREGS         ROSE_PT_NO_EQUIVALENT
+#define PTRACE_GETFPREGS       ROSE_PT_NO_EQUIVALENT
+#define PTRACE_SYSCALL         ROSE_PT_NO_EQUIVALENT
 
 struct user_regs_struct {                               // Mac OSX dud
     long int eip;
 };
+
+typedef int __ptrace_request;                           // Mac OSX dud
 
 static int ptrace(__ptrace_request, int, void*, void*) {// Mac OSX dud
     errno = ENOSYS;

@@ -6,6 +6,7 @@ static const char *description =
 
 #include <rose.h>
 
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <LinearCongruentialGenerator.h>
@@ -33,8 +34,8 @@ struct Settings {
 void
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    Parser p = CommandlineProcessing::createEmptyParser(purpose, description);
-    p.with(CommandlineProcessing::genericSwitches());
+    Parser p = Rose::CommandLine::createEmptyParser(purpose, description);
+    p.with(Rose::CommandLine::genericSwitches());
 
     SwitchGroup tool("Tool-specific switches");
 

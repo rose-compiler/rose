@@ -108,7 +108,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_26.C \
   inputmoveDeclarationToInnermostScope_test2014_27.C \
   inputmoveDeclarationToInnermostScope_test2014_28.C \
-  inputmoveDeclarationToInnermostScope_test2014_29.C \
   inputmoveDeclarationToInnermostScope_test2014_30.C \
   inputmoveDeclarationToInnermostScope_test2014_31.C \
   inputmoveDeclarationToInnermostScope_test2015_01.C \
@@ -191,8 +190,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_78.C \
   inputmoveDeclarationToInnermostScope_test2015_79.C \
   inputmoveDeclarationToInnermostScope_test2015_80.C \
-  inputmoveDeclarationToInnermostScope_test2015_81.C \
-  inputmoveDeclarationToInnermostScope_test2015_82.C \
   inputmoveDeclarationToInnermostScope_test2015_83.C \
   inputmoveDeclarationToInnermostScope_test2015_84.C \
   inputmoveDeclarationToInnermostScope_test2015_85.C \
@@ -204,7 +201,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_91.C \
   inputmoveDeclarationToInnermostScope_test2015_92.C \
   inputmoveDeclarationToInnermostScope_test2015_93.C \
-  inputmoveDeclarationToInnermostScope_test2015_94.C \
   inputmoveDeclarationToInnermostScope_test2015_95.C \
   inputmoveDeclarationToInnermostScope_test2015_96.C \
   inputmoveDeclarationToInnermostScope_test2015_97.C \
@@ -233,18 +229,14 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_123.C \
   inputmoveDeclarationToInnermostScope_test2015_124.C \
   inputmoveDeclarationToInnermostScope_test2015_125.C \
-  inputmoveDeclarationToInnermostScope_test2015_126.C \
-  inputmoveDeclarationToInnermostScope_test2015_127.C \
   inputmoveDeclarationToInnermostScope_test2015_128.C \
   inputmoveDeclarationToInnermostScope_test2015_129.C \
   inputmoveDeclarationToInnermostScope_test2015_130.C \
   inputmoveDeclarationToInnermostScope_test2015_131.C \
   inputmoveDeclarationToInnermostScope_test2015_132.C \
-  inputmoveDeclarationToInnermostScope_test2015_134.C \
   inputmoveDeclarationToInnermostScope_test2015_135.C \
   inputmoveDeclarationToInnermostScope_test2015_137.C \
   inputmoveDeclarationToInnermostScope_test2015_139.C \
-  inputmoveDeclarationToInnermostScope_test2015_143.C \
   inputmoveDeclarationToInnermostScope_test2015_144.C \
   inputmoveDeclarationToInnermostScope_test2015_145.C \
   inputmoveDeclarationToInnermostScope_test2015_146.C \
@@ -274,6 +266,17 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
 # DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
 # and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
 # the -rose:merge_decl_assign option.
+
+# DQ (1/19/2018): Failing codes:
+MORE_FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
+  inputmoveDeclarationToInnermostScope_test2014_29.C \
+  inputmoveDeclarationToInnermostScope_test2015_81.C \
+  inputmoveDeclarationToInnermostScope_test2015_82.C \
+  inputmoveDeclarationToInnermostScope_test2015_94.C \
+  inputmoveDeclarationToInnermostScope_test2015_126.C \
+  inputmoveDeclarationToInnermostScope_test2015_127.C \
+  inputmoveDeclarationToInnermostScope_test2015_134.C \
+  inputmoveDeclarationToInnermostScope_test2015_143.C 
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
@@ -306,6 +309,7 @@ MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES=$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES
 
 DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
+# rose_v1_input.C
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi

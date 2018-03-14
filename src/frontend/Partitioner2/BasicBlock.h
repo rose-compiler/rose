@@ -48,7 +48,7 @@ public:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(expr_);
             s & BOOST_SERIALIZATION_NVP(type_);
             s & BOOST_SERIALIZATION_NVP(confidence_);
@@ -69,6 +69,7 @@ public:
 
         /** Type of successor. */
         EdgeType type() const { return type_; }
+        void type(EdgeType t) { type_ = t; }
 
         /** Confidence level of this successor.  Did we prove that this is a successor, or only assume it is?
          *
@@ -135,7 +136,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not saved
         s & BOOST_SERIALIZATION_NVP(isFrozen_);
         s & BOOST_SERIALIZATION_NVP(startVa_);
@@ -370,8 +371,12 @@ public:
      *  The control flow successors indicate how control leaves the end of a basic block. These successors should be the
      *  most basic level of information; e.g., a basic block that results in an unconditional function call should not have
      *  an edge representing the return from that call. The successors are typically computed in the partitioner and cached
-     *  in the basic block. */
+     *  in the basic block.
+     *
+     *  @{ */
     const Sawyer::Cached<Successors>& successors() const { return successors_; }
+    void successors(const Successors&);
+    /** @} */
 
     /** Ghost successors.
      *

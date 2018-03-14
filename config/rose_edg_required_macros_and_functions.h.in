@@ -1118,8 +1118,16 @@ long double __builtin_sqrtl  (long double __builtin__x);
    int __sync_lock_release( int & v );
 #endif
 
-/* DQ (12/15/2016): Adding more evaluations of required builtin support. */
-   #define __builtin_va_arg(v,l) (l)(sizeof(l))
+/* 
+DQ (1/31/2018): The original version is the only one that appears to work (except on new testcode: test2018_23.C).
+DQ (1/27/2018): It appears that this is a better implementation to permit test2018_22.C to pass.
+                However, we need to still explicitly support the builtin functions that take 
+                types are argument.
+DQ (12/15/2016): Adding more evaluations of required builtin support. 
+*/
+// #define __builtin_va_arg(v,l) (l)(sizeof(l))
+// #define __builtin_va_arg(v,__type) ({__type __typeValue; __typeValue;})
+#define __builtin_va_arg(v,l) (l)(sizeof(l))
 
 // DQ (12/16/2016): Another iteration of adding builtin functions.
    #define __atomic_fetch_add(ptr,ret,memorder)  *(ptr)

@@ -10,6 +10,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Type.h>
 
 #if SAWYER_MULTI_THREADED
     // It appears as though a certain version of GNU libc interacts badly with C++03 GCC and LLVM compilers. Some system header
@@ -188,10 +189,11 @@ template<typename T>
 class MultiInstanceTls {
     // The implementation needs to handle the case when this object is created on one thread and used in another thread. The
     // constructor, running in thread A, creates a thread-local repo which doesn't exist in thread B using this object.
-    // 
+    //
     // This is a pointer to avoid lack of thread-local dynamic initialization prior to C++11, and to avoid lack of well defined
     // order when initializing and destroying global variables in C++.
-    typedef Container::Map<uintptr_t, T> Repo;
+    typedef Type::UnsignedInteger<8*sizeof(void*)>::type IntPtr;
+    typedef Container::Map<IntPtr, T> Repo;
     static SAWYER_THREAD_LOCAL Repo *repo_;
 
 public:
@@ -199,27 +201,27 @@ public:
     MultiInstanceTls() {
         if (!repo_)
             repo_ = new Repo;
-        repo_->insert(reinterpret_cast<uintptr_t>(this), T());
+        repo_->insert(reinterpret_cast<IntPtr>(this), T());
     }
 
     /** Initialize value. */
     /*implicit*/ MultiInstanceTls(const T& value) {
         if (!repo_)
             repo_ = new Repo;
-        repo_->insert(reinterpret_cast<uintptr_t>(this), value);
+        repo_->insert(reinterpret_cast<IntPtr>(this), value);
     }
 
     /** Assignment operator. */
     MultiInstanceTls& operator=(const T &value) {
         if (!repo_)
             repo_ = new Repo;
-        repo_->insert(reinterpret_cast<uintptr_t>(this), value);
+        repo_->insert(reinterpret_cast<IntPtr>(this), value);
         return *this;
     }
 
     ~MultiInstanceTls() {
         if (repo_)
-            repo_->erase(reinterpret_cast<uintptr_t>(this));
+            repo_->erase(reinterpret_cast<IntPtr>(this));
     }
 
     /** Get interior object.
@@ -228,12 +230,12 @@ public:
     T& get() {
         if (!repo_)
             repo_ = new Repo;
-        return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
+        return repo_->insertMaybeDefault(reinterpret_cast<IntPtr>(this));
     }
     const T& get() const {
         if (!repo_)
             repo_ = new Repo;
-        return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
+        return repo_->insertMaybeDefault(reinterpret_cast<IntPtr>(this));
     }
     /** @} */
 
@@ -259,12 +261,12 @@ public:
     operator T() const {
         if (!repo_)
             repo_ = new Repo;
-        return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
+        return repo_->insertMaybeDefault(reinterpret_cast<IntPtr>(this));
     }
 };
 
 template<typename T>
-SAWYER_THREAD_LOCAL Container::Map<uintptr_t, T>* MultiInstanceTls<T>::repo_;
+SAWYER_THREAD_LOCAL Container::Map<Type::UnsignedInteger<8*sizeof(void*)>::type, T>* MultiInstanceTls<T>::repo_;
 
 } // namespace
 #endif

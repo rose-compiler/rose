@@ -5588,7 +5588,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-","(H)",true) == true )
         {
-       // printf ("option -H found (just run backend compiler with -E to call CPP) \n");
+       // DQ (1/23/2018): Note, we can call the backend compiler using -H or call edg with -H.
+       // This option will call the backend compiler with -H, if we want to call edg with -H 
+       // then we use -edg:H as the option to ROSE.
+#if 0
+          printf ("option -H found (just run backend compiler with -H to call CPP) \n");
+#endif
           p_useBackendOnly = true;
        // p_skip_buildHigherLevelGrammars  = true;
           p_disable_edg_backend  = true; // This variable should be called frontend NOT backend???

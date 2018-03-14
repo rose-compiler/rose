@@ -24,6 +24,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryPointerDetection.C					\
     BinaryReachability.C					\
     BinaryReturnValueUsed.C					\
+    BinarySmtCommandLine.C					\
     BinarySmtSolver.C						\
     BinarySmtlibSolver.C					\
     BinaryStackDelta.C						\
@@ -85,6 +86,7 @@ pkginclude_HEADERS =					\
     BinaryPointerDetection.h				\
     BinaryReachability.h				\
     BinaryReturnValueUsed.h				\
+    BinarySmtCommandLine.h				\
     BinarySmtSolver.h					\
     BinarySmtlibSolver.h				\
     BinaryStackDelta.h					\

@@ -722,7 +722,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
      if (!templateArgListPtr.empty())
         {
 #if 0
-          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
+          printf ("In unparseTemplateArgumentList(): templateArgListPtr.empty() NOT EMPTY: templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -748,34 +748,87 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #if 0
                unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
-           // unparseTemplateArgument(*i,info);
+            // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
                i++;
-
 
                // When to output , ?  the argument must not be the last one.
                if (i != templateArgListPtr.end())
                   {
-                    // check if this is a class type for C++ 11 lambda function
+                 // check if this is a class type for C++ 11 lambda function
                     bool hasLambdaFollowed = false;
                     SgTemplateArgument* arg = *i; 
                     if (arg != NULL) 
-                    {
-                      if (SgClassType * ctype = isSgClassType (arg->get_type()))
-                      {
-                        if (SgNode* pnode = ctype->get_declaration()->get_parent())
-                        {
-                          if (isSgLambdaExp(pnode))
-                          {
-                            hasLambdaFollowed = true; 
-                          }
-                        }
-                      }
-                    }
+                       {
+                         if (SgClassType * ctype = isSgClassType (arg->get_type()))
+                            {
+                              if (SgNode* pnode = ctype->get_declaration()->get_parent())
+                                 {
+                                   if (isSgLambdaExp(pnode))
+                                      {
+                                        hasLambdaFollowed = true; 
+                                      }
+                                 }
+
+                           // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
+                              bool isAnonymous = isAnonymousClass(ctype);
+                              if (isAnonymous == true)
+                                 {
+                                // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
+                                // which checks for a trailing lambda function.  So we should fix this up later.
+                                   hasLambdaFollowed = true; 
+                                 }
+#if 0
+                                else
+                                 {
+                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(ctype->get_declaration());
+                                   if (classDeclaration != NULL)
+                                      {
+                                        printf ("In unparseTemplateArgumentList(): last template argument: classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                                      }
+                                 }
+#endif
+                            }
+#if 0
+                           else
+                            {
+                              ROSE_ASSERT(arg->get_type() != NULL);
+                              printf ("arg->get_type() = %p = %s \n",arg->get_type(),arg->get_type()->class_name().c_str());
+                            }
+#endif
+                       }
 
 #if 0
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s hasLambdaFollowed = %s \n",*i,(*i)->class_name().c_str(), hasLambdaFollowed ? "true" : "false");
+               printf ("In unparseTemplateArgumentList(): explicitlySpecified = %s \n",(*i)->get_explicitlySpecified() ? "true" : "false");
 #endif
+
+#if 0
+             // DQ (1/21/2018): I think this needs to be turned off to handle test2014_04.C, but turned on for test2018_04.C.
+               if ((*i)->get_explicitlySpecified() == false)
+                  {
+#if 1
+                    printf ("In unparseTemplateArgumentList(): Found (*i)->get_explicitlySpecified() == false: set hasLambdaFollowed = true \n");
+#endif
+                 // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
+                 // which checks for a trailing lambda function.  So we should fix this up later.
+                    hasLambdaFollowed = true; 
+                  }
+#endif
+#if 0
+            // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
+               if (SgClassType * ctype = isSgClassType (arg->get_type()))
+                  {
+                    bool isAnonymous = isAnonymousClass(ctype);
+                    if (isAnonymous == true)
+                       {
+                      // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
+                      // which checks for a trailing lambda function.  So we should fix this up later.
+                         hasLambdaFollowed = true; 
+                       }
+                  }
+#endif
+
                // When to skip , ?
                // condition 1: next item is a lambda function
               //  Or condition 2:  next item is an ending parameter pack argument (parameter pack argument in the middle should have , )
@@ -785,8 +838,15 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
               if (!(hasLambdaFollowed  || 
                   ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument 
                     && ((i+1)== templateArgListPtr.end())  )) )
-                 unp->u_exprStmt->curprint(" , ");
-
+                  {
+                    unp->u_exprStmt->curprint(" , ");
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In unparseTemplateArgumentList(): Skipping output of a specific template argument \n");
+#endif
+                  }
 #if 0
                  // unp->u_exprStmt->curprint(" , ");
                  // Now the argument is in the middle. It's next argument must not be start_of_pack_expansion_argument
@@ -1208,6 +1268,31 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
 
 
+bool
+Unparse_ExprStmt::isAnonymousClass(SgType* templateArgumentType)
+   {
+     bool returnValue = false;
+
+     SgClassType* classType = isSgClassType(templateArgumentType);
+     if (classType != NULL)
+        {
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+#if 0
+          printf ("In isAnonymousClass(): case SgTemplateArgument::type_argument: classDeclaration = %p = %s classDeclaration->get_name() = %s \n",
+               classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+          bool isUnnamed = (string(classDeclaration->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+          if (isUnnamed == true)
+             {
+               printf ("In isAnonymousClass(): case SgTemplateArgument::type_argument: isUnnamed = %s \n",isUnnamed ? "true" : "false");
+             }
+#endif
+          returnValue = isUnnamed;
+        }
+
+     return returnValue;
+   }
 
 void
 Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
@@ -1215,7 +1300,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      ROSE_ASSERT(templateArgument != NULL);
 
 #if 0
-     printf ("In unparseTemplateArgument() = %p \n",templateArgument);
+     printf ("In unparseTemplateArgument() = %p (explicitlySpecified = %s) \n",templateArgument,(templateArgument->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -1239,6 +1324,20 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
+#if 0
+  // DQ (1/21/2018): Using the logic set in EDG/ROSE connection to control output of template arguments.
+  // I have tried this previously, and I think it got hung up on details of default template arguments, but
+  // since it impacts the support for lambda functions and compiler generated classes holding capture 
+  // variables it is worth another try to use this logic.
+     if (templateArgument->get_explicitlySpecified() == false)
+        {
+#if 0
+          printf ("In unparseTemplateArgument(): Found templateArgument->get_explicitlySpecified() == false \n");
+#endif
+          return;
+        }
+#endif
 
      SgUnparse_Info newInfo(info);
 
@@ -1306,12 +1405,22 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: templateArgument->get_type() = %s \n",templateArgumentType->class_name().c_str());
             // curprint ( "\n /* templateArgument->get_type() */ \n");
 #endif
+            // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
+               bool isAnonymous = isAnonymousClass(templateArgumentType);
+               if (isAnonymous == true)
+                  {
+#if 0
+                    printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: found anonymous class (returning) \n");
+#endif
+                    return;
+                  }
+
             // DQ (1/9/2017): If the result of get_type() was identified as containing parts with non public access then we want to use an alternative type alias.
             // The test for this is done on the whole of the AST within the ast post processing.
             // Note that this fix also requires that the name qualification support be computed using the unparsable_type_alias.
                if (templateArgument->get_unparsable_type_alias() != NULL)
                   {
-#if 0
+#if 1
                     printf ("In unparseTemplateArgument(): selected an alternative type to unparse to work waround a bug in EDG (this is likely the original type specified in the source code) \n");
 #endif
                     templateArgumentType = templateArgument->get_unparsable_type_alias();
@@ -1696,6 +1805,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
 #if 0
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
+#endif
+#if 0
      curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
 
@@ -1713,7 +1824,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( string("\n/* Bottom of unparseTemplateArgument */ \n"));
 #endif
@@ -4171,7 +4282,9 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
 void
 Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 0
+#define DEBUG_FUNCTION_CALL 0
+
+#if DEBUG_FUNCTION_CALL
      printf ("In Unparse_ExprStmt::unparseFuncCall(): expr = %p unp->opt.get_overload_opt() = %s \n",expr,(unp->opt.get_overload_opt() == true) ? "true" : "false");
      curprint ( "\n/* In Unparse_ExprStmt::unparseFuncCall " + StringUtility::numberToString(expr) + " */ \n");
 #endif
@@ -4181,7 +4294,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      SgUnparse_Info newinfo(info);
      bool needSquareBrackets = false;
 
-#if 0
+#if DEBUG_FUNCTION_CALL
      curprint       ("/* func_call->get_function()                   = " + func_call->get_function()->class_name() + " */\n");
      curprint(string("/* func_call->get_uses_operator_syntax()       = ") + ((func_call->get_uses_operator_syntax() == true) ? "true" : "false") + " */\n");
      curprint(string("/* unp->opt.get_overload_opt()                 = ") + ((unp->opt.get_overload_opt() == true) ? "true" : "false") + " */\n");
@@ -4193,12 +4306,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
   // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
      bool uses_operator_syntax = func_call->get_uses_operator_syntax();
 
-#if 0
+#if DEBUG_FUNCTION_CALL
      printf ("In Unparse_ExprStmt::unparseFuncCall(): (before test for conversion operator) uses_operator_syntax = %s \n",uses_operator_syntax == true ? "true" : "false");
      curprint(string("/* In unparseFuncCall(): (before test for conversion operator) uses_operator_syntax     = ") + (uses_operator_syntax ? "true" : "false") + " */\n");
 #endif
 
-#if 0
+#if DEBUG_FUNCTION_CALL
   // DQ (4/8/2013): Test to make sure this is not presently required in our regression tests.
      if (uses_operator_syntax == true)
         {
@@ -4207,7 +4320,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
-#if 0
+#if DEBUG_FUNCTION_CALL
      printf ("func_call->get_function() = %p = %s \n",func_call->get_function(),func_call->get_function()->class_name().c_str());
 #endif
 
@@ -4241,7 +4354,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                   {
                     if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
                        {
-#if 0
+#if DEBUG_FUNCTION_CALL
                          printf ("In Unparse_ExprStmt::unparseFuncCall(): Detected a conversion operator! \n");
 #endif
                       // DQ (8/28/2014): Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
@@ -4249,7 +4362,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
                          if (is_compiler_generated == true)
                             {
-#if 0
+#if DEBUG_FUNCTION_CALL
                               printf ("In Unparse_ExprStmt::unparseFuncCall(): Detected is_compiler_generated == true for conversion operator! \n");
 #endif
                               suppress_implicit_conversion_operator = true;
@@ -4267,12 +4380,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
              }
         }
 
-#if 0
+#if DEBUG_FUNCTION_CALL
      printf ("In Unparse_ExprStmt::unparseFuncCall(): (after test for conversion operator) uses_operator_syntax = %s \n",uses_operator_syntax == true ? "true" : "false");
      curprint(string("/* In unparseFuncCall(): (after test for conversion operator) uses_operator_syntax     = ") + (uses_operator_syntax ? "true" : "false") + " */\n");
 #endif
 
-#if 0
+#if DEBUG_FUNCTION_CALL
   // DQ (11/16/2013): This need not be a SgFunctionRefExp.
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(func_call->get_function());
   // ROSE_ASSERT(func_ref != NULL);
@@ -4288,15 +4401,19 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
        // If this is not a SgFunctionRefExp, then look for a member function reference via a SgDotExp or SgArrowExp.
         }
 #endif
-#if 0
-     printf ("isBinaryOperator(func_call->get_function())     = %s \n",unp->u_sage->isBinaryOperator(func_call->get_function()) ? "true" : "false");
-     printf ("isSgDotExp(func_call->get_function())           = %s \n",isSgDotExp(func_call->get_function()) ? "true" : "false");
-     printf ("isSgArrowExp(func_call->get_function())         = %s \n",isSgArrowExp(func_call->get_function()) ? "true" : "false");
+#if DEBUG_FUNCTION_CALL
+     printf ("isBinaryOperator(func_call->get_function())       = %s \n",unp->u_sage->isBinaryOperator(func_call->get_function()) ? "true" : "false");
+     printf ("isSgDotExp(func_call->get_function())             = %s \n",isSgDotExp(func_call->get_function()) ? "true" : "false");
+     printf ("isSgArrowExp(func_call->get_function())           = %s \n",isSgArrowExp(func_call->get_function()) ? "true" : "false");
 
-     printf ("isUnaryOperatorPlus(func_call->get_function())  = %s \n",unp->u_sage->isUnaryOperatorPlus(func_call->get_function()) ? "true" : "false");
-     printf ("isUnaryOperatorMinus(func_call->get_function()) = %s \n",unp->u_sage->isUnaryOperatorMinus(func_call->get_function()) ? "true" : "false");
+     printf ("isUnaryOperatorPlus(func_call->get_function())    = %s \n",unp->u_sage->isUnaryOperatorPlus(func_call->get_function()) ? "true" : "false");
+     printf ("isUnaryOperatorMinus(func_call->get_function())   = %s \n",unp->u_sage->isUnaryOperatorMinus(func_call->get_function()) ? "true" : "false");
+
+     printf ("isUnaryOperator(func_call->get_function())        = %s \n",unp->u_sage->isUnaryOperator(func_call->get_function()) ? "true" : "false");
+     printf ("isUnaryPostfixOperator(func_call->get_function()) = %s \n",unp->u_sage->isUnaryPostfixOperator(func_call->get_function()) ? "true" : "false");
+
 #endif
-#if 0
+#if DEBUG_FUNCTION_CALL
      printf ("WARNING: unparseOperatorSyntax and uses_operator_syntax are functionally redundant declarations \n");
 #endif
 
@@ -4309,7 +4426,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
   // if ( ((unp->opt.get_overload_opt() == false) && (uses_operator_syntax == false)) && ( (isSgDotExp(func_call->get_function()) != NULL) || (isSgArrowExp(func_call->get_function()) != NULL) ) )
      if ( ((unp->opt.get_overload_opt() == false) && (uses_operator_syntax == true)) && ( (isSgDotExp(func_call->get_function()) != NULL) || (isSgArrowExp(func_call->get_function()) != NULL) ) )
         {
-#if 0
+#if DEBUG_FUNCTION_CALL
           printf ("Found case to investigate for generation of \"B b; b.A::operator+(b)\" instead of \"B b; b+b\" \n");
 #endif
           SgBinaryOp* binaryOperator = isSgBinaryOp(func_call->get_function());
@@ -4317,7 +4434,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
           SgExpression* lhs = binaryOperator->get_lhs_operand();
           SgExpression* rhs = binaryOperator->get_rhs_operand();
-#if 0
+#if DEBUG_FUNCTION_CALL
           printf ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
           printf ("rhs = %p = %s \n",rhs,rhs->class_name().c_str());
 #endif
@@ -4326,7 +4443,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
              {
                SgSymbol* memberFunctionSymbol = memberFunctionRef->get_symbol();
                ROSE_ASSERT(memberFunctionSymbol != NULL);
-#if 0
+#if DEBUG_FUNCTION_CALL
                printf ("member function symbol = %p name = %s \n",memberFunctionRef->get_symbol(),memberFunctionRef->get_symbol()->get_name().str());
                printf ("lhs->get_type() = %s \n",lhs->get_type()->class_name().c_str());
 #endif
@@ -4335,12 +4452,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                SgClassDefinition*  lhsClassDefinition  = NULL;
                if (classType != NULL)
                   {
-#if 0
+#if DEBUG_FUNCTION_CALL
                     printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
 #endif
                     lhsClassDeclaration = isSgClassDeclaration(classType->get_declaration());
                     ROSE_ASSERT(lhsClassDeclaration != NULL);
-#if 0
+#if DEBUG_FUNCTION_CALL
                     printf ("lhs classDeclaration = %p = %s \n",lhsClassDeclaration,lhsClassDeclaration->get_name().str());
 #endif
                     lhsClassDefinition = lhsClassDeclaration->get_definition();
@@ -4361,7 +4478,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
                SgClassDefinition* functionClassDefinition = isSgClassDefinition(memberFunctionRef->get_symbol()->get_scope());
                ROSE_ASSERT(functionClassDefinition != NULL);
-#if 0
+#if DEBUG_FUNCTION_CALL
                printf ("member function scope (class = %p = %s) \n",functionClassDefinition,functionClassDefinition->class_name().c_str());
 #endif
 #if OUTPUT_HIDDEN_LIST_DATA
@@ -4369,7 +4486,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 #endif
 
                SgClassDeclaration* functionClassDeclaration = isSgClassDeclaration(functionClassDefinition->get_declaration());
-#if 0
+#if DEBUG_FUNCTION_CALL
                printf ("functionClassDeclaration = %p = %s \n",functionClassDeclaration,functionClassDeclaration->get_name().str());
 #endif
                if (lhsClassDeclaration == NULL)
@@ -4389,32 +4506,31 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     if (lhsClassDeclaration->get_firstNondefiningDeclaration() != functionClassDeclaration->get_firstNondefiningDeclaration())
                        {
 #if 0
-                        if (SgProject::get_verbose() > 0)
-                           {
-                             printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
-                           }
-                        curprint ( "/* Warning: lhs and member function from different classes (linked though class derivation) */\n");
+                         if (SgProject::get_verbose() > 0)
+                            {
+                              printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
+                            }
+                         curprint ( "/* Warning: lhs and member function from different classes (linked though class derivation) */\n");
 #endif
 
                          if (SgProject::get_verbose() > 0)
-                         {
-                            printf ("lhsClassDefinition = %p functionClassDefinition = %p \n",lhsClassDefinition,functionClassDefinition);
-                         }
+                            {
+                              printf ("lhsClassDefinition = %p functionClassDefinition = %p \n",lhsClassDefinition,functionClassDefinition);
+                            }
                          ROSE_ASSERT(lhsClassDefinition != NULL || functionClassDefinition != NULL);
-
 
                          set<SgSymbol*> & hiddenList = (lhsClassDefinition != NULL) ? lhsClassDefinition->get_hidden_declaration_list() : functionClassDefinition->get_hidden_declaration_list();
                          if (SgProject::get_verbose() > 0)
-                         {
-                            printf ("Looking for symbol = %p \n",memberFunctionSymbol);
-                         }
+                            {
+                              printf ("Looking for symbol = %p \n",memberFunctionSymbol);
+                            }
                          set<SgSymbol*>::iterator hiddenDeclaration = hiddenList.find(memberFunctionSymbol);
                          if ( hiddenDeclaration != hiddenList.end() )
                             {
-#if 1
+#if DEBUG_FUNCTION_CALL
                               printf ("Warning: lhs class hidding derived class member function call (skip setting uses_operator_syntax == true) \n");
 #endif
-#if 0
+#if DEBUG_FUNCTION_CALL
                               curprint ( "/* Warning: lhs class hidding derived class member function call */\n ");
 #endif
                            // unparseOperatorSyntax = true;
@@ -4428,14 +4544,14 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     printf ("Warning: either lhsClassDeclaration == NULL || functionClassDeclaration == NULL, so we need more work to compute if the operator syntax is required \n");
 #endif
                   }
-#if 0
+#if DEBUG_FUNCTION_CALL
             // printf ("Warning: name qualification required = %s \n",unparseOperatorSyntax ? "true" : "false");
                printf ("Warning: name qualification required = %s \n",uses_operator_syntax ? "true" : "false");
 #endif
              }
             else
              {
-#if 0
+#if DEBUG_FUNCTION_CALL
                printf ("rhs was not a SgMemberFunctionRefExp \n");
             // ROSE_ASSERT(false);
 #endif
@@ -4445,7 +4561,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
        // ROSE_ASSERT(false);
         }
 
-#if 0
+#if DEBUG_FUNCTION_CALL
      printf ("In unparseFuncCall(): unp->u_sage->isBinaryOperator(func_call->get_function() = %p = %s ) = %s \n",
           func_call->get_function(),func_call->get_function()->class_name().c_str(),unp->u_sage->isBinaryOperator(func_call->get_function()) ? "true" : "false");
 #endif
@@ -4460,13 +4576,13 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      if (!unp->opt.get_overload_opt() && (uses_operator_syntax == true) && unp->u_sage->isBinaryOperator(func_call->get_function()) && !(isSgDotExp(func_call->get_function())) && !(isSgArrowExp(func_call->get_function())))
         {
           unp->u_debug->printDebugInfo("in FIRST PART of unparseFuncCall", true);
-#if 0
+#if DEBUG_FUNCTION_CALL
           printf ("output 1st part (without syntax sugar) \n");
           curprint ( " /* output 1st part (without syntax sugar) */ ");
 #endif
           ROSE_ASSERT(func_call->get_args() != NULL);
           SgExpressionPtrList& list = func_call->get_args()->get_expressions();
-#if 0
+#if DEBUG_FUNCTION_CALL
           printf ("In unparseFuncCall(): argument list size = %ld \n",list.size());
 #endif
           SgExpressionPtrList::iterator arg = list.begin();
@@ -4484,11 +4600,11 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
             // DQ (6/21/2011): Added support for name qualification.
                info.set_reference_node_for_qualification(func_call->get_function());
                ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
-#if 0
+#if DEBUG_FUNCTION_CALL
                curprint ( "\n/* In unparseFuncCall(): 1st part BEFORE: unparseExpression(func_call->get_function(), info); */ \n");
 #endif
                unparseExpression(func_call->get_function(), info);
-#if 0
+#if DEBUG_FUNCTION_CALL
                curprint ( "\n/* In unparseFuncCall(): 1st part AFTER: unparseExpression(func_call->get_function(), info); */ \n");
 #endif
                info.set_reference_node_for_qualification(NULL);
@@ -4497,7 +4613,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
             // unparse the rhs operand
                unp->u_debug->printDebugInfo("right arg: ", false);
-#if 0
+#if DEBUG_FUNCTION_CALL
                curprint ( "\n/* In unparseFuncCall(): 1st part BEFORE: right arg: unparseExpression(*arg, info); */ \n");
 #endif
             // DQ (5/6/2007): Added assert, though this was only a problem when handling unary minus implemented as a non-member function
@@ -4516,14 +4632,14 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     printf ("WARNING: arg == list.end() in unparseFuncCall() \n");
                   }
 #endif
-#if 0
+#if DEBUG_FUNCTION_CALL
                curprint ("\n/* In unparseFuncCall(): 1st part AFTER: right arg: unparseExpression(*arg, info); */ \n");
 #endif
                newinfo.unset_nested_expression();
 
             // printf ("DONE: output function argument (right) \n");
              }
-#if 0
+#if DEBUG_FUNCTION_CALL
           curprint ("\n/* Leaving processing first part in unparseFuncCall */ \n");
 #endif
         }
@@ -4544,7 +4660,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
              {
                info.set_nested_expression();
              }
-#if 0
+#if DEBUG_FUNCTION_CALL
           printf ("output 2nd part func_call->get_function() = %s \n",func_call->get_function()->class_name().c_str());
           curprint ("/* output 2nd part  func_call->get_function() = " + func_call->get_function()->class_name() + " */ \n");
           curprint ( string("/* suppress_implicit_conversion_operator = ") + (uses_operator_syntax == true ? "true" : "false") + " */ \n");
@@ -4567,11 +4683,18 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
        // DQ (6/21/2011): Added support for name qualification.
           alt_info.set_reference_node_for_qualification(func_call->get_function());
           ROSE_ASSERT(alt_info.get_reference_node_for_qualification() != NULL);
-#if 0
+#if DEBUG_FUNCTION_CALL
           curprint ( "\n/* In unparseFuncCall(): 2nd part BEFORE: unparseExpression(func_call->get_function(), info); */ \n");
 #endif
-          unparseExpression(func_call->get_function(), alt_info);
-#if 0
+       // DQ (2/2/2018): Handle the case of a non-postfix operator.
+       // unparseExpression(func_call->get_function(), alt_info);
+          if ( ! ( (uses_operator_syntax == true) &&
+                   (unp->u_sage->isUnaryOperator(func_call->get_function()) == true) && 
+                   (unp->u_sage->isUnaryPostfixOperator(func_call->get_function()) == true) ))
+             {
+               unparseExpression(func_call->get_function(), alt_info);
+             }
+#if DEBUG_FUNCTION_CALL
           curprint ( "\n/* In unparseFuncCall(): 2nd part AFTER: unparseExpression(func_call->get_function(), info); */ \n");
 #endif
 #if 0
@@ -4579,7 +4702,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 #endif
           alt_info.set_reference_node_for_qualification(NULL);
 
-#if 0
+#if DEBUG_FUNCTION_CALL
           curprint ( " /* after output func_call->get_function() */ ");
 #endif
 
@@ -4629,7 +4752,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
        //      creating an isBinaryOverloadedOperator().
        //
           SgBinaryOp* binary_op = isSgBinaryOp(func_call->get_function());
-#if 0
+#if DEBUG_FUNCTION_CALL
           curprint ( string(" /* !unp->opt.get_overload_opt() && (uses_operator_syntax == true) = ") + ((!unp->opt.get_overload_opt() && (uses_operator_syntax == true)) ? "true" : "false") + " */ \n ");
 #endif
        // if (!unp->opt.get_overload_opt())
@@ -4645,7 +4768,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                   }
             // if ( binary_op != NULL && rhs->get_specialFunctionModifier().isOperator() && unp->u_sage->noQualifiedName(rhs) )
 
-#if 0
+#if DEBUG_FUNCTION_CALL
                printf ("binary_op = %p rhs = %p \n",binary_op,rhs);
                if (rhs != NULL)
                   {
@@ -4757,12 +4880,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
        // if (func_call->get_args() != NULL)
        //      printDebugInfo("unparsing arguments of function call", true);
 
-#if 0
+#if DEBUG_FUNCTION_CALL
           curprint (string("\n /* Before preint paren in unparseFuncCall: print_paren = ") + (print_paren ? "true" : "false") + " */ \n");
 #endif
           if (print_paren)
              {
-#if 0
+#if DEBUG_FUNCTION_CALL
                curprint ("\n/* Unparse args in unparseFuncCall: opening */ \n"); 
 #endif
                curprint ("(");
@@ -4789,8 +4912,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                  // cast might trigger the argument to not be output.  Need to test this.
                  // bool unparseArg = ((*arg)->get_file_info()->isCompilerGenerated() == false);
                     bool unparseArg = ((*arg)->get_file_info()->isDefaultArgument() == false);
-#if 0
-                    printf ("func_call->get_args() = %p = %s arg = %p = %s unparseArg = %s \n",func_call->get_args(),func_call->get_args()->class_name().c_str(),*arg,(*arg)->class_name().c_str(),unparseArg ? "true" : "false");
+#if DEBUG_FUNCTION_CALL
+                    printf ("func_call->get_args() = %p = %s arg = %p = %s unparseArg = %s \n",func_call->get_args(),
+                         func_call->get_args()->class_name().c_str(),*arg,(*arg)->class_name().c_str(),unparseArg ? "true" : "false");
 #endif
                  // DQ (4/24/2013): Moved this to be ahead so that the unparseArg value would be associated with the current argument.
                     if (arg != list.begin() && unparseArg == true)
@@ -4804,7 +4928,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                          if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
                             {
                               unp->u_debug->printDebugInfo("entering unp->u_sage->unparseOneElemConInit", true);
-#if 0
+#if DEBUG_FUNCTION_CALL
                               curprint("\n/* unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
 #endif
                               unparseOneElemConInit(con_init, newinfo);
@@ -4812,7 +4936,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                             }
                            else
                             {
-#if 0
+#if DEBUG_FUNCTION_CALL
                               curprint("\n/* unparseExpression in args processing in unparseFuncCall */ \n");
 #endif
                            // printf ("unparseExpression in args processing in unparseFuncCall \n");
@@ -4830,12 +4954,24 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                          curprint(","); 
                        }
 #endif
+                 // DQ (1/2/2018): Supress the trailing function argument in the case of a postfix non-member function using operator syntax.
+                    if ( (uses_operator_syntax == true) &&
+                         (unp->u_sage->isUnaryOperator(func_call->get_function()) == true) && 
+                         (unp->u_sage->isUnaryPostfixOperator(func_call->get_function()) == true))
+                       {
+#if DEBUG_FUNCTION_CALL
+                         printf ("Suppress the trailing argument of the unary postfix operator \n");
+                         curprint("\n/* Suppress the trailing argument of the unary postfix operator in unparseFuncCall */ \n"); 
+#endif
+                         ROSE_ASSERT(arg != list.end());
+                         arg++;
+                       }
                   }
              }
 
           if (print_paren)
              {
-#if 0
+#if DEBUG_FUNCTION_CALL
                curprint ("\n/* Unparse args in unparseFuncCall: closing */ \n"); 
 #endif
                curprint (")");
@@ -4852,7 +4988,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
              }
             else
              {
-#if 0
+#if DEBUG_FUNCTION_CALL
                printf ("Skipping due to suppressed implicit user-defined conversion operator \n");
                curprint("/* Skipping due to suppressed implicit user-defined conversion operator */ \n ");
 #endif
@@ -4863,24 +4999,33 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     SgDotExp* dotExp = isSgDotExp(binary_op);
                     if (dotExp != NULL)
                        {
-#if 0
+#if DEBUG_FUNCTION_CALL
                          printf ("Unparse the lhs of the SgDotExp (as part of skipping conversion operator) \n");
                          curprint("/* Unparse the lhs of the SgDotExp (as part of skipping conversion operator) */ \n ");
 #endif
                          unparseExpression(dotExp->get_lhs_operand(),newinfo);
-#if 0
+#if DEBUG_FUNCTION_CALL
                          printf ("DONE: Unparse the lhs of the SgDotExp (as part of skipping conversion operator) \n");
                          curprint("/* DONE: Unparse the lhs of the SgDotExp (as part of skipping conversion operator) */ \n ");
 #endif
                        }
                   }
              }
-#if 0
+
+       // DQ (2/2/2018): Handle the case of a postfix operator.
+          if ( (uses_operator_syntax == true) &&
+               (unp->u_sage->isUnaryOperator(func_call->get_function()) == true) && 
+               (unp->u_sage->isUnaryPostfixOperator(func_call->get_function()) == true))
+             {
+               SgUnparse_Info alt_info(info);
+               unparseExpression(func_call->get_function(), alt_info);
+             }
+#if DEBUG_FUNCTION_CALL
           curprint("\n/* Leaving processing second part in unparseFuncCall */ \n");
 #endif
         }
 
-#if 0
+#if DEBUG_FUNCTION_CALL
      printf ("Leaving Unparse_ExprStmt::unparseFuncCall = %p \n",expr);
      curprint ( "\n/* Leaving Unparse_ExprStmt::unparseFuncCall " + StringUtility::numberToString(expr) + " */ \n");
 #endif

@@ -131,6 +131,10 @@ private:
     public:
         static Ptr instance() { return Ptr(new BasicBlockFinalizer); }
         virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+    private:
+        void fixFunctionReturnEdge(const Args&);
+        void fixFunctionCallEdges(const Args&);
+        void addPossibleIndeterminateEdge(const Args&);
     };
     
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is

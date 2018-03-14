@@ -147,7 +147,8 @@ public:
     }
 
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SmtSolver*) const ROSE_OVERRIDE;
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
+                        const SmtSolverPtr&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors first defined at this level of the class hierarchy
@@ -174,8 +175,10 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
 
     virtual bool isBottom() const ROSE_OVERRIDE {
         return isBottom_;
@@ -290,6 +293,13 @@ public:
     readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
+    /** Read a byte from memory without side effects.
+     *
+     *  In order to read a multi-byte value, use RiscOperators::peekMemory(). */
+    virtual BaseSemantics::SValuePtr
+    peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+               BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
@@ -318,13 +328,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(protoval, solver) {
         name("Interval");
         (void) SValue::promote(protoval); // make sure its dynamic type is an IntervalSemantics::SValue or subclass thereof
     }
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(state, solver) {
         name("Interval");
         (void) SValue::promote(state->protoval());      // dynamic type must be IntervalSemantics::SValue or subclass thereof
@@ -335,7 +345,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      *  IntervalSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -345,13 +355,13 @@ public:
 
     /** Instantiates a new RiscOperators object with specified prototypical value. An SMT solver may be specified as the second
      *  argument for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators with specified state. An SMT solver may be specified as the second argument for
      *  convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -359,12 +369,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -450,6 +460,9 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,

@@ -258,7 +258,7 @@ static void z_solve_cell(void);
       program BT
 c-------------------------------------------------------------------*/
 int main(int argc, char **argv) {
-    
+
   int niter, step, n3;
   int nthreads = 1;
   double navg, mflops;
@@ -268,13 +268,13 @@ int main(int argc, char **argv) {
   char cclass;
   FILE *fp;
 
-/*--------------------------------------------------------------------
-c      Root node reads input file (if it exists) else takes
-c      defaults from parameters
-c-------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------
+    c      Root node reads input file (if it exists) else takes
+    c      defaults from parameters
+    c-------------------------------------------------------------------*/
 
   printf("\n\n NAS Parallel Benchmarks 2.3 OpenMP C version"
-	 " - BT Benchmark\n\n");
+      " - BT Benchmark\n\n");
 
   fp = fopen("inputbt.data", "r");
   if (fp != NULL) {
@@ -284,7 +284,7 @@ c-------------------------------------------------------------------*/
     fscanf(fp, "%lg", &dt);
     while (fgetc(fp) != '\n');
     fscanf(fp, "%d%d%d",
-	   &grid_points[0],  &grid_points[1],  &grid_points[2]);
+        &grid_points[0],  &grid_points[1],  &grid_points[2]);
     fclose(fp);
   } else {
     printf(" No input file inputbt.data. Using compiled defaults\n");
@@ -297,9 +297,9 @@ c-------------------------------------------------------------------*/
   }
 
   printf(" Size: %3dx%3dx%3d\n",
-	 grid_points[0], grid_points[1], grid_points[2]);
+      grid_points[0], grid_points[1], grid_points[2]);
   printf(" Iterations: %3d   dt: %10.6f\n", niter, dt);
-  
+
   if (grid_points[0] > IMAX ||
       grid_points[1] > JMAX ||
       grid_points[2] > KMAX) {
@@ -311,61 +311,60 @@ c-------------------------------------------------------------------*/
   set_constants();
 
 #pragma omp parallel
-{
-  initialize();
+  {
+    initialize();
 
-  lhsinit();
+    lhsinit();
 
-  exact_rhs();
+    exact_rhs();
 
-/*--------------------------------------------------------------------
-c      do one time step to touch all code, and reinitialize
-c-------------------------------------------------------------------*/
-  adi();
-  
-  initialize();
-} /* end parallel */
+    /*--------------------------------------------------------------------
+      c      do one time step to touch all code, and reinitialize
+      c-------------------------------------------------------------------*/
+    adi();
+
+    initialize();
+  } /* end parallel */
 
   timer_clear(1);
   timer_start(1);
 
 #pragma omp parallel firstprivate(niter) private(step)
-{    
-  for (step = 1; step <= niter; step++) {
+  {    
+    for (step = 1; step <= niter; step++) {
 
-    if (step%20 == 0 || step == 1) {
+      if (step%20 == 0 || step == 1) {
 #pragma omp master	
-      printf(" Time step %4d\n", step);
+        printf(" Time step %4d\n", step);
+      }
+
+      adi();
     }
 
-    adi();
-  }
-  
 #if defined(_OPENMP)
 #pragma omp master  
-  nthreads = omp_get_num_threads();
+    nthreads = omp_get_num_threads();
 #endif /* _OPENMP */
-} /* end parallel */
+  } /* end parallel */
 
   timer_stop(1);
   tmax = timer_read(1);
-       
+
   verify(niter, &cclass, &verified);
 
   n3 = grid_points[0]*grid_points[1]*grid_points[2];
   navg = (grid_points[0]+grid_points[1]+grid_points[2])/3.0;
   if ( fabs(tmax-0.0)>1.0e-5 ) {
-  //if ( tmax != 0.0 ) {
     mflops = 1.0e-6*(double)niter*
-	(3478.8*(double)n3-17655.7*pow2(navg)+28023.7*navg) / tmax;
+      (3478.8*(double)n3-17655.7*pow2(navg)+28023.7*navg) / tmax;
   } else {
     mflops = 0.0;
   }
   c_print_results("BT", cclass, grid_points[0], 
-		  grid_points[1], grid_points[2], niter, nthreads,
-		  tmax, mflops, "          floating point", 
-		  verified, NPBVERSION,COMPILETIME, CS1, CS2, CS3, CS4, CS5, 
-		  CS6, "(none)");
+      grid_points[1], grid_points[2], niter, nthreads,
+      tmax, mflops, "          floating point", 
+      verified, NPBVERSION,COMPILETIME, CS1, CS2, CS3, CS4, CS5, 
+      CS6, "(none)");
 }
 
 /*--------------------------------------------------------------------

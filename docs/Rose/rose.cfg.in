@@ -707,6 +707,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
                          @top_srcdir@/src/frontend/BinaryFormats \
                          @top_srcdir@/src/midend/abstractHandle \
+			 @top_srcdir@/src/midend/astMatching \
                          @top_srcdir@/src/midend/binaryAnalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/dataflowanalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics \
@@ -1333,7 +1334,7 @@ SERVER_BASED_SEARCH    = YES
 
 # The following needs doxygen 1.8.3 or later. [Matzke 2015-09-14]
 EXTERNAL_SEARCH = YES
-SEARCHENGINE_URL = http://rosecompiler.org/cgi-bin/doxysearch.cfg
+SEARCHENGINE_URL = http://rosecompiler.org/doxygen/doxysearch.cgi
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output

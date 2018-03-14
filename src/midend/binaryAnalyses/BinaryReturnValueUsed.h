@@ -37,7 +37,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S & s, const unsigned version) {
+    void serialize(S & s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(didConverge_);
         s & BOOST_SERIALIZATION_NVP(callees_);
         s & BOOST_SERIALIZATION_NVP(returnRegistersUsed_);
@@ -106,7 +106,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(defaultCallingConvention_);
         s & BOOST_SERIALIZATION_NVP(callSites_);
         s & BOOST_SERIALIZATION_NVP(assumeCallerReturnsValue_);

@@ -6,7 +6,6 @@
 #include <ArrayAnnot.h>
 #include <ArrayRewrite.h>
 
-//#define USE_Algorithm_V2 1 // testing algorithm 2 for static counting
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -98,6 +97,7 @@ bool processStatements(SgNode* n)
 
   if (insideSystemHeader(isSgLocatedNode(n)) ||insideRAJAHeader(isSgLocatedNode(n)) )
     return false;
+
 
   // consider RAJA::forall loops, lambda functions only, estimate arithmetic intensity
   if (considerLambda)
@@ -194,6 +194,8 @@ int main (int argc, char** argv)
 {
   // Build the AST used by ROSE
   vector <string> argvList (argv, argv + argc);
+  // The command option to accept report file name
+  string report_option="-report-file";
 
   if (CommandlineProcessing::isOption(argvList,"-help","", false))
   {
@@ -203,6 +205,13 @@ int main (int argc, char** argv)
     cout<<endl;
     cout<<"The optional "<<report_option<<" option is provided for users to specify where to save the results"<<endl;
     cout<<"By default, the results will be saved into a file named report.txt"<<endl;
+    cout<<"  -static-counting-only  enable a static estimation of arithmetic intensity of loop bodies"<<endl;
+    cout<<"  -debug                 enable a verbose debugging mode "<<endl;
+    cout<<"  -inline                enable inlining function calls "<<endl;
+    cout<<"  -support_raja_loops    support RAJA loops"<<endl;
+    cout<<"  -report-file           specify a customized output file name, instead of the default file ai_tool_report.txt"<<endl;
+    cout<<"  -annot  annot_file     accept user specified function side effect annotations"<<endl;
+    cout<<"  -use-algorithm-v2      enable flow-sensitive counting of FP operations for static counting, still a new feature under development."<<endl;
     cout<<"Detailed instructions: https://en.wikibooks.org/wiki/ROSE_Compiler_Framework/Arithmetic_intensity_measuring_tool "<<endl;
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }
@@ -232,6 +241,14 @@ int main (int argc, char** argv)
   }
   else 
     debug = false;
+
+  if (CommandlineProcessing::isOption(argvList,"-inline","", true))
+  {
+    e_inline= true; 
+  }
+  else 
+    e_inline= false;
+
 
   if (CommandlineProcessing::isOptionWithParameter (argvList, report_option,"", report_filename,true))
   {
@@ -270,7 +287,7 @@ int main (int argc, char** argv)
     SgSourceFile* s_file = isSgSourceFile(cur_file);
     if (s_file != NULL)
     {
-
+      // Algorithm 2 for static counting
       if ((running_mode ==  e_static_counting) && algorithm_version == 2)
       {
         OperationCountingTraversal oct;
@@ -278,7 +295,8 @@ int main (int argc, char** argv)
         continue; // skip the rest loop iteration
       }
 
-      //  Original V1 algorithm 
+      // Original algorithm V1
+      // process statement one by one
       // Preorder is not friendly for transformation
       //exampleTraversal.traverseWithinFile(s_file, postorder);
       Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(s_file,V_SgStatement);

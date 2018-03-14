@@ -8,6 +8,7 @@ static const char *description =
 
 #include <rose.h>                                       // must be first ROSE include
 #include <Outliner.hh>                                  // from ROSE
+#include <CommandLine.h>                                // from ROSE
 #include <Diagnostics.h>                                // from ROSE
 
 #include <iostream>
@@ -37,11 +38,11 @@ static std::vector<std::string>
 parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
 
-    // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
+    // Use Rose::CommandLine to create a consistent parser among all tools.  If you want a tool's parser to be different
     // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
     // creates a parser that assumes all unrecognized switches are intended for a later stage. If there are no later stages
     // then use createEmptyParser instead or else users will never see error messages for misspelled switches.
-    Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+    Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);
     p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
 #if 1 // DEBUGGING [Robb P Matzke 2016-09-27]
     p.longPrefix("-");
@@ -56,7 +57,7 @@ parseCommandLine(int argc, char *argv[]) {
     // Sawyer::CommandLine::SwitchGroup, which this tool could extend by adding additional switches.  This could have been done
     // inside createParser, but it turns out that many tools like to extend or re-order this group of switches, which is
     // simpler this way.
-    p.with(CommandlineProcessing::genericSwitches());
+    p.with(Rose::CommandLine::genericSwitches());
 
     // Eventually, if we change frontend so we can query what switches it knows about, we could insert them into our parser at
     // this point.  The frontend could report all known switches (sort of how things are organized one) or we could query only
@@ -82,8 +83,8 @@ parseCommandLine(int argc, char *argv[]) {
     // Helper function that adds "--old-outliner" and "--no-old-outliner" to the tool switch group, and causes
     // settings.useOldParser to be set to true or false. It also appends some additional documentation to say what the default
     // value is. We could have done this by hand with Sawyer, but having a helper encourages consistency.
-    CommandlineProcessing::insertBooleanSwitch(tool, "old-outliner", settings.useOldParser, 
-                                               "Call the old Outliner parser in addition to its new Sawyer parser.");
+    Rose::CommandLine::insertBooleanSwitch(tool, "old-outliner", settings.useOldParser, 
+                                           "Call the old Outliner parser in addition to its new Sawyer parser.");
 
     // We want the "--rose:help" switch to appear in the Sawyer documentation but we have to pass it to the next stage also. We
     // could do this two different ways. The older way (that still works) is to have Sawyer process the switch and then we

@@ -248,7 +248,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(usingSemantics);
         s & BOOST_SERIALIZATION_NVP(checkingCallBranch);
         s & BOOST_SERIALIZATION_NVP(basicBlockSemanticsAutoDrop);

@@ -6,6 +6,7 @@
 
 #include <BinaryDebugger.h>
 #include <Combinatorics.h>
+#include <CommandLine.h>
 #include <Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 
@@ -51,7 +52,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     using namespace Sawyer::CommandLine;
 
     // Generic switches
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
 
     // Switches for this tool
     SwitchGroup tool("Tool-specific switches");

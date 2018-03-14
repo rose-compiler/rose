@@ -4,6 +4,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
+#include <CommandLine.h>
 #include <cstring>
 #include <LinearCongruentialGenerator.h>
 #include <Sawyer/CommandLine.h>
@@ -64,7 +65,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                    " @named{shell}{Output one line of space-separated key=value pairs.}"
                    " @named{overrides}{Output entire configuration space as shell OVERRIDE variables.}"));
 
-    if (!parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs().empty()) {
+    if (!parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs().empty()) {
         mlog[FATAL] <<"invalid usage; see --help\n";
         exit(1);
     }

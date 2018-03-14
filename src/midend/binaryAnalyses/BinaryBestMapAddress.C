@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <BinaryBestMapAddress.h>
+#include <CommandLine.h>
 #include <integerOps.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/ProgressBar.h>
@@ -131,7 +132,7 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
     for (size_t i=0; i<deltas.size(); ++i)
         tasks.insertVertex(Task(deltas[i], nMatches[i]));
     Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, Worker(this, progress_, progressBar));
+    Sawyer::workInParallel(tasks, Rose::CommandLine::genericSwitchArgs.threads, Worker(this, progress_, progressBar));
 
     // Sort and cache the results by number of matches.
     upToDate_ = false;

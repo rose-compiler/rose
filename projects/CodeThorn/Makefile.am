@@ -18,6 +18,9 @@ SUBDIRS=src
 demo:
 	make -C src demo
 
+roseonlytools:
+	make -C src roseonlytools
+
 endif
 endif
 endif

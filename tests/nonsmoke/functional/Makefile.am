@@ -34,7 +34,7 @@ endif
 
 endif
 
-# DQ (10/21/2016): Change order of tests (Utility directory tess shuld go after langauge tests).
+# DQ (10/21/2016): Change order of tests (Utility directory test should go after language tests).
 ########################################################################################################################
 # Utility functions
 

@@ -11,6 +11,7 @@
 #include <Sawyer/Interval.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
+#include <Sawyer/Sawyer.h>
 #include <boost/foreach.hpp>
 #include <set>
 #include <vector>

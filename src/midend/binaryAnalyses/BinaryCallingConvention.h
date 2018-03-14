@@ -103,7 +103,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(type_);
         s & BOOST_SERIALIZATION_NVP(reg_);
         if (STACK==type_) {
@@ -241,7 +241,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(comment_);
         s & BOOST_SERIALIZATION_NVP(wordWidth_);
@@ -645,6 +645,7 @@ public:
             case ParameterLocation::STACK: return THIS_FIRST_PARAM; // assume its the first parameter
             case ParameterLocation::ABSOLUTE: return THIS_UNKNOWN; // not supported in old API
         }
+        ASSERT_not_reachable("invalid location type");
     }
     // We can't set the location type independent of the location.
     //void set_this_location(ThisPointerLocation loc) ROSE_DEPRECATED("use thisParameter property instead") {
@@ -792,7 +793,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(cpu_);
         s & BOOST_SERIALIZATION_NVP(regDict_);
         s & BOOST_SERIALIZATION_NVP(defaultCc_);

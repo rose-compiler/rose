@@ -7,6 +7,8 @@
 
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
+#define DEBUG_CFG_HEADER 0
+
 namespace VirtualCFG
 {
   /* Documented by Liao, May not be entirely accurate. 2/14/2012
@@ -154,10 +156,11 @@ namespace VirtualCFG
       void processNodes(NodeT n);
     };
 
-    //! Helper function to print Node information
-    template < typename NodeT > 
-    inline void printNode(std::ostream & o, const NodeT & n)
-    {
+//! Helper function to print Node information
+template < typename NodeT > 
+inline 
+void printNode(std::ostream & o, const NodeT & n)
+   {
         std::string id = n.id();
         std::string nodeColor = "black";
 
@@ -171,84 +174,119 @@ namespace VirtualCFG
         o << id << " [label=\""  << escapeString(n.toString()) << "\", color=\"" << nodeColor <<
             "\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\"];\n";
     }
-    //! Edge printer
-    template < typename EdgeT >
-    inline void printEdge(std::ostream & o, const EdgeT & e, bool isInEdge)
+
+//! Edge printer
+template < typename EdgeT >
+inline void printEdge(std::ostream & o, const EdgeT & e, bool isInEdge)
     {
+#if 0
+      std::cout << "In printEdge(): e.toString() = " << e.toString() << std::endl;
+#endif
         o << e.source().id() << " -> " << e.target().id() << " [label=\"" << 
           escapeString(e.toString()) << "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
     }
 
-    //! Print out a node plus all its outgoing edges
-    template < typename NodeT, typename EdgeT > 
-    void printNodePlusEdges(std::ostream & o,NodeT n);
+//! Print out a node plus all its outgoing edges
+template < typename NodeT, typename EdgeT > 
+void printNodePlusEdges(std::ostream & o,NodeT n);
 
-    /* Internal template function handles the details*/
-    template < typename NodeT, typename EdgeT ,bool Debug>
-    void CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(NodeT n)
-    {
-        ROSE_ASSERT(n.getNode());
-        std::pair < typename std::multimap < SgNode *, NodeT >::const_iterator,
-            typename std::multimap < SgNode *, NodeT >::const_iterator > ip =
-            exploredNodes.equal_range(n.getNode());
-        for (typename std::multimap < SgNode *, NodeT >::const_iterator i = ip.first;
-             i != ip.second; ++i)
-        {
-            if (i->second == n)
-                return;
-        }
-        exploredNodes.insert(std::make_pair(n.getNode(), n));
-        printNodePlusEdges<NodeT, EdgeT>(o, n);
-        std::vector < EdgeT > outEdges = n.outEdges();
-        for (unsigned int i = 0; i < outEdges.size(); ++i)
-        {
-            ROSE_ASSERT(outEdges[i].source() == n);
-            processNodes(outEdges[i].target());
-        }
-        std::vector < EdgeT > inEdges = n.inEdges();
-        for (unsigned int i = 0; i < inEdges.size(); ++i)
-        {
-            ROSE_ASSERT(inEdges[i].target() == n);
-            processNodes(inEdges[i].source());
-        }
-    }
+/* Internal template function handles the details*/
+template < typename NodeT, typename EdgeT ,bool Debug>
+void CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(NodeT n)
+   {
+     ROSE_ASSERT(n.getNode());
+     std::pair < typename std::multimap < SgNode *, NodeT >::const_iterator, typename std::multimap < SgNode *, NodeT >::const_iterator > ip = exploredNodes.equal_range(n.getNode());
 
-    //! Print out a node plus all its outgoing edges
-    template < typename NodeT, typename EdgeT > 
-    void printNodePlusEdges(std::ostream & o, NodeT n)
-    {
-        printNode(o, n);
-        std::vector < EdgeT > outEdges = n.outEdges();
-        for (unsigned int i = 0; i < outEdges.size(); ++i)
+     for (typename std::multimap < SgNode *, NodeT >::const_iterator i = ip.first; i != ip.second; ++i)
         {
-            printEdge(o, outEdges[i], false);
+          if (i->second == n)
+             {
+               return;
+             }
         }
-        #ifdef DEBUG
-        std::vector < EdgeT > inEdges = n.inEdges();
-        for (unsigned int i = 0; i < inEdges.size(); ++i)
+
+     exploredNodes.insert(std::make_pair(n.getNode(), n));
+
+#if DEBUG_CFG_HEADER
+  // printf ("In CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(): o = %p = %s \n",o.getNode(),o.getNode()->class_name().c_str());
+     printf ("In CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(): n.getNode() = %p = %s \n",n.getNode(),n.getNode()->class_name().c_str());
+#endif
+
+     printNodePlusEdges<NodeT, EdgeT>(o, n);
+
+     std::vector < EdgeT > outEdges = n.outEdges();
+     for (unsigned int i = 0; i < outEdges.size(); ++i)
         {
-            printEdge(o, inEdges[i], true);
+          ROSE_ASSERT(outEdges[i].source() == n);
+          processNodes(outEdges[i].target());
         }
-        #endif
-    }
+
+     std::vector < EdgeT > inEdges = n.inEdges();
+     for (unsigned int i = 0; i < inEdges.size(); ++i)
+        {
+          ROSE_ASSERT(inEdges[i].target() == n);
+          processNodes(inEdges[i].source());
+        }
+   }
+
+//! Print out a node plus all its outgoing edges
+template < typename NodeT, typename EdgeT > 
+void printNodePlusEdges(std::ostream & o, NodeT n)
+   {
+#if DEBUG_CFG_HEADER
+     printf ("In printNodePlusEdges(): n.getNode() = %p = %s \n",n.getNode(),n.getNode()->class_name().c_str());
+#endif
+
+     printNode(o, n);
+
+     std::vector < EdgeT > outEdges = n.outEdges();
+     for (unsigned int i = 0; i < outEdges.size(); ++i)
+        {
+#if DEBUG_CFG_HEADER
+          printf ("In printNodePlusEdges(): output edges: i = %u \n",i);
+#endif
+          printEdge(o, outEdges[i], false);
+        }
+
+#ifdef DEBUG
+  // DQ (1/19/2018): Note that this is a problem for tesst2007_151.f (at least, and perhaps a few other Fortran files).
+
+#if DEBUG_CFG_HEADER
+     printf ("In printNodePlusEdges(): output the inEdges for debugging \n");
+#endif
+     std::vector < EdgeT > inEdges = n.inEdges();
+     for (unsigned int i = 0; i < inEdges.size(); ++i)
+        {
+#if DEBUG_CFG_HEADER
+          printf ("In printNodePlusEdges(): input edges: i = %u \n",i);
+#endif
+          printEdge(o, inEdges[i], true);
+        }
+#endif
+
+#if DEBUG_CFG_HEADER
+     printf ("Leaving printNodePlusEdges(): n.getNode() = %p = %s \n",n.getNode(),n.getNode()->class_name().c_str());
+#endif
+   }
+
 #if 0
-    template < typename NodeT, typename EdgeT >
-        void CfgToDotImpl < NodeT, EdgeT >::processNodes(SgNode *)
-    {
+template < typename NodeT, typename EdgeT >
+void CfgToDotImpl < NodeT, EdgeT >::processNodes(SgNode *)
+   {
         for (typename std::multimap < SgNode *, NodeT >::const_iterator it =
              exploredNodes.begin(); it != exploredNodes.end(); ++it)
         {
             printNodePlusEdges < NodeT, EdgeT > (o, it->second);
         }
-    }
+   }
 #endif
 
-    /*User-level interface template function */
-    template < typename FilterFunction > 
-    std::ostream & cfgToDot(std::ostream & o, /* output stream*/
+/*User-level interface template function */
+template < typename FilterFunction > 
+std::ostream & cfgToDot(std::ostream & o, /* output stream*/
                             std::string graphName, /* graph name*/
                             FilteredCFGNode < FilterFunction > start) /* start filtered CFG Node */
-    {
+   {
         o << "digraph " << graphName << " {\n";
         CfgToDotImpl < FilteredCFGNode < FilterFunction >,
                        FilteredCFGEdge < FilterFunction > ,
@@ -256,5 +294,6 @@ namespace VirtualCFG
         impl.processNodes(start);
         o << "}\n";
         return o;
-    }
+   }
+
 }

@@ -161,15 +161,11 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
     switch(blockx){
       int ttt;
       case 0:
-{
-        ttt++;
-        break; 
-      }
+      ttt++;
+      break; 
       case 1:
-{
-        ttt--;
-        break; 
-      }
+      ttt--;
+      break; 
     }
   }
 }

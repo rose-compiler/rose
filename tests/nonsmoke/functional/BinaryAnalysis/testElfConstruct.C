@@ -10,8 +10,10 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 //#include "fileoffsetbits.h"
 
 int
-main() 
+main(int argc, char *argv[]) 
 {
+    const char *outputName = argc > 1 ? argv[1] : "a.out";
+
     /* The SgAsmGenericFile is the root of a tree describing a binary file (executable, shared lib, object, core dump).
      * Usually this node appears in a much larger AST containing instructions contexts and other information, but for the
      * purposes of this example, we'll just be generating the ELF Container and not any instructions.  This root will
@@ -374,7 +376,7 @@ main()
     }
 
     /* Unparse the AST to generate an executable. */
-    std::ofstream f("a.out");
+    std::ofstream f(outputName);
     ef->unparse(f);
 
     return 0;

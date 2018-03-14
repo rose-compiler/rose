@@ -1,3 +1,10 @@
+float f(int x, double b) {
+  b+=1.0;
+  float res;
+  res=x+b;
+  return res;
+}
+
 int main() {
   float f1;
   double d1;
@@ -9,6 +16,11 @@ int main() {
   if(d1==f1) {
     i1=(int)f1;
   }
+  f1=f(i1,d1);
   d1=f1=i1;
-  return 0;
+  double testVar;
+  long double ld1;
+  testVar=(long double)10.0;
+  ld1=testVar;
+  return ld1==testVar;
 }

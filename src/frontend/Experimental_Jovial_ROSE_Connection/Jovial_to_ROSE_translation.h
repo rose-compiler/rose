@@ -53,6 +53,7 @@ namespace Jovial_ROSE_Translation
        // Expressions
        // -----------
 
+          e_literalExpression,
           e_referenceExpression,
 
           e_last

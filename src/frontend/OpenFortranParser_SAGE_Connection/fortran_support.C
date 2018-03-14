@@ -4500,7 +4500,7 @@ convertExpressionOnStackToFunctionCallExp()
 SgArrayType*
 convertTypeOnStackToArrayType( int count )
    {
-  // This function uses the entry on the top of the type stach and the expressions on the astExpressionStack
+  // This function uses the entry on the top of the type stack and the expressions on the astExpressionStack
   // and replaced the top o the typeStack with a SgArrayType.  This conversion of base type to array type is
   // required because we often find out later after having declarated a variable that it is an array (either
   // in the process of building the variable declaration or because an "allocatable statement" is seen after

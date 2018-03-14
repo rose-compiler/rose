@@ -75,7 +75,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not stored
         s & BOOST_SERIALIZATION_NVP(entryVa_);
         s & BOOST_SERIALIZATION_NVP(name_);

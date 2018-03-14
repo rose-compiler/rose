@@ -2,6 +2,7 @@
 
 #include <AsmUnparser.h>
 #include <cstring>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <FileSystem.h>
 #include <iostream>
@@ -38,7 +39,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
         .purpose("compares disassembler results")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .doc("synopsis",
              "@prop{programName} [@v{switches}] @v{csv1} @v{csv2}")
         .doc("description",

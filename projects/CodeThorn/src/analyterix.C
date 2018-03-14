@@ -89,6 +89,7 @@ bool option_trace=false;
 bool option_optimize_icfg=false;
 bool option_csv_stable=false;
 bool option_no_topological_sort=false;
+bool option_annotate_source_code=false;
 
 //boost::program_options::variables_map args;
 
@@ -303,7 +304,7 @@ string getScopeAsMangledStableString(SgLocatedNode* stmt) {
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
 
-  SPRAY::DFAnalysisBase::normalizeProgram(root);
+  //SPRAY::DFAnalysisBase::normalizeProgram(root);
 
   if(option_fi_constanalysis) {
     VarConstSetMap varConstSetMap;
@@ -781,6 +782,7 @@ int main(int argc, char* argv[]) {
       ("lv-analysis", "perform live variables analysis.")
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
+      ("annotate", "Annotate source code with analysis results.")
       ("csv-at-analysis",po::value< string >(), "generate csv-file [arg] with address-taken analysis data.")
       ("no-topological-sort", "do not initialize the worklist with topological sorted CFG.")
       ("icfg-dot", "generates the ICFG as dot file.")
@@ -795,7 +797,7 @@ int main(int argc, char* argv[]) {
       ("print-varid-mapping-array", "prints variableIdMapping with array element varids.")
       ("print-label-mapping", "prints mapping of labels to statements")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
-      ("csv-stable", "do not output csv data that is not stable/portable across environments.")
+      ("csv-stable", "only output csv data that is stable/portable across environments.")
       ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -839,6 +841,9 @@ int main(int argc, char* argv[]) {
     }
     if(args.count("interval-analysis")) {
       option_interval_analysis=true;
+    }
+    if(args.count("annotate")) {
+      option_annotate_source_code=true;
     }
     if(args.count("csv-deadcode-unreachable")) {
       option_interval_analysis = true;
@@ -949,8 +954,10 @@ int main(int argc, char* argv[]) {
   }
   runAnalyses(root, programAbstractionLayer->getLabeler(), programAbstractionLayer->getVariableIdMapping());
 
-  cout << "INFO: generating annotated source code."<<endl;
-  root->unparse(0,0);
+  if(option_annotate_source_code) {
+    cout << "INFO: generating annotated source code."<<endl;
+    root->unparse(0,0);
+  }
 
   if(option_rose_rd_analysis) {
     Experimental::RoseRDAnalysis::generateRoseRDDotFiles(programAbstractionLayer->getLabeler(),root);

@@ -4,6 +4,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <SqlDatabase.h>
@@ -77,7 +78,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .intrinsicValue(true, settings.latestTests)
               .doc("Operate on only the latest version of ROSE in the database."));
 
-    return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 // Render Unix time as a string when printing a database table

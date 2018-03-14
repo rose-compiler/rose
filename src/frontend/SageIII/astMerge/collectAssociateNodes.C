@@ -343,6 +343,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (3/29/2015): Added support for GNU C language extension typeof.
           case V_SgTypeOfType:
 
+       // DQ (1/21/2018): Added support for C++11 language type.
+          case V_SgRvalueReferenceType:
+
        // These are primative types
           case V_SgJavaWildcardType:
           case V_SgTypeBool:
@@ -2019,6 +2022,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                   }
                break;
              }
+
+       // DQ (1/21/2018): Added C++11 support
+          case V_SgStaticAssertionDeclaration:
 
        // DQ (8/22/2007): Added Fortran support
           case V_SgImplicitStatement:

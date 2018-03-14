@@ -2336,6 +2336,8 @@ Grammar::setUpStatements ()
      LabelStatement.setDataPrototype     ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/6/2018): This should be handled as a compound statement, meaning that the statement in 
+  // the label should not be NULL and that it should be traversed.
   // DQ (10/14/2007): Since this is also in the parent's list of statments it would be an error to 
   // traverse this.  The reason why it is not currently an error is that this data member's value 
   // is always NULL.  Because of the specification in the Grammar, it does make since to have this
@@ -2345,8 +2347,11 @@ Grammar::setUpStatements ()
   // I think we want to later make this a constructor parameter.
   // LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      LabelStatement.setDataPrototype     ( "bool", "gnu_extension_unused", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2460,8 +2465,16 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (1/3/2018): Restored the original behavior (case options statment MUST be a compound statement, see test2017_20.c).
+  // DQ (12/23/2017): Removing body from AST for case statement. This is part of a minor design change to address 
+  // the required flexability to support duff's devices and more complex switch statements.
+  // CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
+  //                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
+  //                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (1/6/2006): Added support for GNU case label ranges (e.g. "case 2 ... 5:" in switch statements; see test2005_202.C)
      CaseOptionStmt.setDataPrototype ( "SgExpression*", "key_range_end", " = NULL",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2509,6 +2522,14 @@ Grammar::setUpStatements ()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DefaultOptionStmt.setFunctionPrototype ( "HEADER_DEFAULT_OPTION_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (1/3/2018): Restored the original behavior (case options statment MUST be a compound statement, see test2017_20.c).
+  // DQ (12/23/2017): Removing body from AST for case statement. This is part of a minor design change to address 
+  // the required flexability to support duff's devices and more complex switch statements.
+  // DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
+  //                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
+  //                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 

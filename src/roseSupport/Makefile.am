@@ -21,6 +21,7 @@ rebuild-stringify:
 noinst_LTLIBRARIES = libroseSupport.la
 
 libroseSupport_la_SOURCES =			\
+	CommandLine.C				\
 	Diagnostics.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
@@ -35,6 +36,7 @@ libroseSupport_la_SOURCES =			\
 	utility_functions.C
 
 pkginclude_HEADERS =				\
+	CommandLine.h				\
 	Diagnostics.h				\
 	IncludeDirective.h			\
 	SqlDatabase.h				\

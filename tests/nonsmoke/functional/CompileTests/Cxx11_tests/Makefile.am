@@ -135,6 +135,9 @@ test2017_20.C \
 test2017_21.C \
 test2017_22.C \
 test2017_23.C \
+test2018_04.C \
+test2018_05.C \
+test2018_06.C \
 last.C
 
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
@@ -357,6 +360,13 @@ print_testcodes:
 
 globalVariablesInLambdas_test: globalVariablesInLambdas
 	./globalVariablesInLambdas -std=c++11 --edg:no_warnings -c $(srcdir)/globalVariablesInLambdas_test_01.C
+
+# DQ (12/13/2017): Need to add support for multiple versions of Raja.
+# Use --with-research-raja=... and --with-ares-raja=... , and for other specific applications dependent on Raja.
+RajaInclude = /home/quinlan1/ROSE/RAJA/install/include
+
+rajaTest:../../testTranslator
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(RajaInclude) -I$(srcdir) -c $(srcdir)/test2017_33.C
 
 
 check-local:
