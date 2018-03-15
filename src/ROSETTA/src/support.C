@@ -1302,6 +1302,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     File.setDataPrototype("bool", "experimental_cuda_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
   // (this is part of the internal testing of the new (experimental) Fortran support).
      File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
