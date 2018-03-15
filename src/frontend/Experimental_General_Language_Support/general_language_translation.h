@@ -97,12 +97,13 @@ namespace General_Language_Translation
 
        // CUDA Attributes
        // ---------------
-          e_cuda_device,
           e_cuda_host,
-          e_cuda_kernel,
+          e_cuda_device,
+          e_cuda_global_function,
+          e_cuda_grid_global, /* all threads within a thread group guaranteed to be coresident */
 
           e_cuda_global,
-          e_cuda_grid_global,
+          e_cuda_device_memory,
           e_cuda_managed,
           e_cuda_constant,
           e_cuda_shared,
