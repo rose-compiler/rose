@@ -5371,6 +5371,18 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_cuda_fortran_frontend",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+             {
+               printf ("Using experimental CUDA fortran frontend (explicitly set: ON) \n");
+               printf ("also: experimental fortran frontend (explicitly set: ON) \n");
+             }
+          set_experimental_fortran_frontend(true);
+          set_experimental_cuda_fortran_frontend(true);
+        }
+
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
   // (this is part of the internal testing of the new (experimental) Fortran support).
      set_experimental_fortran_frontend_OFP_test(false);
@@ -5882,6 +5894,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_cuda_fortran_frontend)",1);
 
   // DQ (1/23/2016): Added support for OFP testing within new experimental Fortran support.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend_OFP_test)",1);

@@ -15,20 +15,24 @@
 #include "UntypedFortranTraversal.h"
 #include "UntypedFortranConverter.h"
 
-using namespace std;
 using namespace Rose;
+using std::string;
+using std::cout;
+using std::endl;
 
-#define DEBUG_ROSE_EXPERIMENTAL 0
-
+#define DEBUG_EXPERIMENTAL_FORTRAN 0
 
 int
-experimental_openFortranParser_main(int argc, char **argv)
+experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file)
    {
   // Make system call to call the parser, then traverse resulting ATerm file to create AST.
 
      int i, status;
      string parse_table;
      ATermSupport::ATermToUntypedFortranTraversal* aterm_traversal = NULL;
+
+     ROSE_ASSERT(sg_source_file != NULL);
+     ROSE_ASSERT(sg_source_file->get_experimental_fortran_frontend() == true);
 
   // Rasmussen (11/13/2017): Moved parse table to ROSE 3rdPartyLibraries (no longer set by caller).
      if (argc < 2)
@@ -37,10 +41,8 @@ experimental_openFortranParser_main(int argc, char **argv)
           return 1;
         }
 
-  // DQ (1/22/2016): We want to assume that the stratego sglri executable is in the user's path, which is better than using a hard coded path.
-  // Nowever it appears that sglri must be run with it's full path.  So we need to know that path to the stratego binary in order to avoid
-  // hard coding it into ROSE (as we have done here). The experimental fortran support now requires both aterm and stratego library locations
-  // to be specified at configure time for ROSE (this is also now enforced).
+  // Rasmussen (11/13/2017): The experimental fortran support now requires both aterm and stratego
+  // library locations to be specified at configure time for ROSE (this is also now enforced).
 
      string stratego_bin_path = STRATEGO_BIN_PATH;
      ROSE_ASSERT(stratego_bin_path.empty() == false);
@@ -50,7 +52,6 @@ experimental_openFortranParser_main(int argc, char **argv)
      string commandString = stratego_bin_path + "/sglri ";
 
   // Rasmussen (11/13/2017): Moved parse table to ROSE 3rdPartyLibraries (no longer set by caller).
-  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
      for (i = 1; i < argc; i++)
         {
         // Skips over commands line arguments that begin with "--" (none are meaningful).
@@ -69,12 +70,21 @@ experimental_openFortranParser_main(int argc, char **argv)
         }
 
   // Parse table location is now stored in the source tree
-     string parse_table_path = "src/3rdPartyLibraries/experimental-fortran-parser/bin/Fortran.tbl";
+     string parse_table_path;
+     if (sg_source_file->get_experimental_cuda_fortran_frontend() == false)
+        {
+           parse_table_path += "src/3rdPartyLibraries/experimental-fortran-parser/bin/Fortran.tbl";
+        }
+     else
+        {
+           parse_table_path += "src/3rdPartyLibraries/experimental-fortran-parser/bin/CUDA_Fortran.tbl";
+        }
      parse_table = findRoseSupportPathFromSource(parse_table_path, "bin");
      commandString += "-p " + parse_table + " ";
 
   // Rasmussen (11/14/2017): TODO: What about multiple files?
-     string filenameWithPath = argv[argc-1];
+  // string filenameWithPath = argv[argc-1];
+     string filenameWithPath = sg_source_file->getFileName();
      string filenameWithoutPath = StringUtility::stripPathFromFileName(filenameWithPath);
 
      commandString += "-i " + filenameWithPath;
@@ -85,10 +95,11 @@ experimental_openFortranParser_main(int argc, char **argv)
   // Output the transformed aterm file
      commandString += " -o " + filenameWithoutPath + ".aterm";
 
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): filenameWithPath = %s \n",filenameWithPath.c_str());
-     printf ("In experimental_openFortranParser_main(): filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
-     printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
+#if DEBUG_EXPERIMENTAL_FORTRAN
+     cout << "experimental_fortran_main(): filenameWithoutPath = " << filenameWithoutPath << endl;
+     cout << "... filenameWithPath = " << filenameWithPath << endl;
+     cout << "... commandString    = " << commandString << endl;
+     cout << "... is experimental_cuda_fortran_frontend: " << sg_source_file->get_experimental_cuda_fortran_frontend() << endl;
 #endif
 
      status = system(commandString.c_str());
@@ -112,7 +123,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      string aterm_filename = filenameWithoutPath + ".aterm";
 
-#if DEBUG_ROSE_EXPERIMENTAL
+#if DEBUG_EXPERIMENTAL_FORTRAN
      printf ("In experimental_openFortranParser_main(): Opening aterm file = %s \n", aterm_filename.c_str());
 #endif
 

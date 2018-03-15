@@ -492,9 +492,32 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
              return attr_spec_stmt;
          }
 
+     // TODO - create and use General_Language_Translation::StatementKind for DIMENSION
+     // TODO - probably will require an SgUntypedExprListExpression
+        case SgToken::FORTRAN_DIMENSION:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedNameListDeclaration: DIMENSION statement unimplemented" << endl;
+             ROSE_ASSERT(0);
+             break;
+          }
+
+     // TODO - this should be modified to work like DIMENSION
+        case General_Language_Translation::e_cuda_device:
+        case General_Language_Translation::e_cuda_managed:
+        case General_Language_Translation::e_cuda_constant:
+        case General_Language_Translation::e_cuda_shared:
+        case General_Language_Translation::e_cuda_pinned:
+        case General_Language_Translation::e_cuda_texture:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedNameListDeclaration: CUDA attributes statement unimplemented" << endl;
+             ROSE_ASSERT(0);
+             break;
+          }
+
        default:
           {
-             fprintf(stderr, "UntypedFortranConverter::convertSgUntypedNameListDeclaration: failed to find known statement enum, is %d\n", ut_decl->get_statement_enum());
+             cerr << "UntypedFortranConverter::convertSgUntypedNameListDeclaration: failed to find known statement enum, is "
+                  << ut_decl->get_statement_enum() << endl;
              ROSE_ASSERT(0);
           }
        }
