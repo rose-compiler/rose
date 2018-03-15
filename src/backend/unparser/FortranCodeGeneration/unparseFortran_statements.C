@@ -3938,6 +3938,40 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                curprint(", EXTERNAL");
              }
 
+#if 0
+       // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isContiguous() == true)
+             {
+               curprint(", CONTIGUOUS");
+             }
+#endif
+
+       // Rasmussen (02/06/2018): Fortran CUDA support
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaDeviceMemory() == true)
+             {
+               curprint(", device");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaManaged() == true)
+             {
+               curprint(", managed");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaConstant() == true)
+             {
+               curprint(", constant");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaShared() == true)
+             {
+               curprint(", shared");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaPinned() == true)
+             {
+               curprint(", pinned");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaTexture() == true)
+             {
+               curprint(", texture");
+             }
+
        // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() == true)
              {
@@ -4306,6 +4340,25 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
           if (procedureHeader->get_functionModifier().isRecursive() == true)
              {
                curprint("RECURSIVE ");
+             }
+
+       // Rasmussen (02/06/2018): CUDA function modifiers (prefix)
+
+          if (procedureHeader->get_functionModifier().isCudaHost() == true)
+             {
+               curprint("attributes(host) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaGlobalFunction() == true)
+             {
+               curprint("attributes(global) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaDevice() == true)
+             {
+               curprint("attributes(device) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaGridGlobal() == true)
+             {
+               curprint("attributes(grid_global) ");
              }
 
        // Output the forward declaration only
