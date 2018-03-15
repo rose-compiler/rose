@@ -72,6 +72,7 @@ ATbool traverse_TypeDeclarationStmt(ATerm term, SgUntypedDeclarationStatementLis
 
 // R502
 ATbool traverse_OptAttrSpecList(ATerm term, SgUntypedExprListExpression* attr_list);
+ATbool traverse_CudaAttributesSpec(ATerm term, SgUntypedOtherExpression** attr_spec);
 
 // R503
 ATbool traverse_EntityDecl     (ATerm term, SgUntypedType* declared_type, SgUntypedInitializedNameList* name_list);
@@ -217,9 +218,7 @@ ATbool traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl
 
 // R1225
 ATbool traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type);
-#ifdef CUDA_FORTRAN_IMPLEMENTED
 ATbool traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix);
-#endif
 
 // R1227
 ATbool traverse_FunctionSubprogram(ATerm term, SgUntypedScope* scope);
@@ -257,6 +256,7 @@ ATbool traverse_ReturnStmt   ( ATerm term, SgUntypedStatementList* stmt_list );
 // R1142
 ATbool traverse_ContainsStmt ( ATerm term, SgUntypedOtherStatement** contains_stmt );
 
+ATbool traverse_CudaAttributesStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 }; // class Traversal
 }  // namespace ATermSupport
