@@ -588,6 +588,12 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_shared         = 17, /*!< CUDA, in device's shared memory */
                e_cuda_dynamic_shared = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
 
+           // Rasmussen (03/13/2018): New CUDA storage modifiers
+               e_cuda_device_memory  = 19, /*!< CUDA, in device's global memory */
+               e_cuda_managed        = 20, /*!< CUDA, memory managed between host and device */
+               e_cuda_pinned         = 21, /*!< CUDA, in device's texture memory (read only)  */
+               e_cuda_texture        = 22, /*!< CUDA, in host's page-locked memory */
+
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -665,6 +671,20 @@ HEADER_STORAGE_MODIFIER_START
 
           bool isCudaDynamicShared() const;
           void setCudaDynamicShared();
+
+       // Rasmussen (03/13/2018): New CUDA storage modifiers
+
+          bool isCudaDeviceMemory() const;
+          void setCudaDeviceMemory();
+
+          bool isCudaManaged() const;
+          void setCudaManaged();
+
+          bool isCudaPinned() const;
+          void setCudaPinned();
+
+          bool isCudaTexture() const;
+          void setCudaTexture();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -776,21 +796,25 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
 
             // TV (04/08/2010): Support for CUDA functions modifiers
-               e_cuda_device                 = 25, /*!< CUDA device function */
+               e_cuda_device                 = 25, /*!< CUDA device function called from device */
                e_cuda_kernel                 = 26, /*!< CUDA kernel */
                e_cuda_host                   = 27, /*!< CUDA host function */
                
+            // Rasmussen (03/13/2018): New CUDA function modifiers
+               e_cuda_global_function        = 28, /*!< CUDA device function called from host */
+               e_cuda_grid_global            = 29, /*!< CUDA device function called from host */
+
             // TV (05/03/2010): Support for OpenCL functions modifiers             
-               e_opencl_kernel				   = 28, /*!< OpenCL kernel */
-               e_opencl_vec_type_hint			= 29, /*!< OpenCL */
-               e_opencl_work_group_size_hint	= 30, /*!< OpenCL */
-               e_opencl_work_group_size_req	= 31, /*!< OpenCL */
+               e_opencl_kernel               = 30, /*!< OpenCL kernel */
+               e_opencl_vec_type_hint        = 31, /*!< OpenCL */
+               e_opencl_work_group_size_hint = 32, /*!< OpenCL */
+               e_opencl_work_group_size_req  = 33, /*!< OpenCL */
 
             // DQ (8/11/2011): Added support for Java specific function modifiers.
-               e_java_native                 = 32, /*!< Java native keyword used for JNI function specification */
-               e_java_synchronized           = 33, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
-               e_java_strictfp               = 34, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
-               e_java_initializer            = 35, /*!< Java initializer keyword used to specify that this "synthetic" function is, in fact, an initializer block */
+               e_java_native                 = 34, /*!< Java native keyword used for JNI function specification */
+               e_java_synchronized           = 35, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
+               e_java_strictfp               = 36, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
+               e_java_initializer            = 37, /*!< Java initializer keyword used to specify that this "synthetic" function is, in fact, an initializer block */
 
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -928,6 +952,16 @@ HEADER_FUNCTION_MODIFIER_START
           void setCudaHost();
           void unsetCudaHost();
           
+       // Rasmussen (03/13/2018): New CUDA function modifiers
+
+          bool isCudaGlobalFunction() const;
+          void setCudaGlobalFunction();
+          void unsetCudaGlobalFunction();
+
+          bool isCudaGridGlobal() const;
+          void setCudaGridGlobal();
+          void unsetCudaGridGlobal();
+
        // TV (05/03/2010): Support for OpenCL functions modifiers
        
           bool isOpenclKernel() const;
@@ -2377,6 +2411,20 @@ void SgStorageModifier::setCudaShared()      { p_modifier = e_cuda_shared; }
 bool SgStorageModifier::isCudaDynamicShared() const { return p_modifier == e_cuda_dynamic_shared; }
 void SgStorageModifier::setCudaDynamicShared()      { p_modifier = e_cuda_dynamic_shared; }
 
+// Rasmussen (03/13/2018): New CUDA storage modifiers
+
+bool SgStorageModifier::isCudaDeviceMemory() const  { return p_modifier == e_cuda_device_memory; }
+void SgStorageModifier::setCudaDeviceMemory()       { p_modifier = e_cuda_device_memory; }
+
+bool SgStorageModifier::isCudaManaged() const { return p_modifier == e_cuda_managed; }
+void SgStorageModifier::setCudaManaged()      { p_modifier = e_cuda_managed; }
+
+bool SgStorageModifier::isCudaPinned() const  { return p_modifier == e_cuda_pinned; }
+void SgStorageModifier::setCudaPinned()       { p_modifier = e_cuda_pinned; }
+
+bool SgStorageModifier::isCudaTexture() const { return p_modifier == e_cuda_texture; }
+void SgStorageModifier::setCudaTexture()      { p_modifier = e_cuda_texture; }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -2431,7 +2479,11 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isCudaGlobal()     == rhs.isCudaGlobal()  ) &&
 	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
 	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
-	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared()  ) &&
+	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared() ) &&
+	       (lhs.isCudaDeviceMemory()  == rhs.isCudaDeviceMemory()  ) &&
+	       (lhs.isCudaManaged()    == rhs.isCudaManaged() ) &&
+	       (lhs.isCudaPinned()     == rhs.isCudaPinned()  ) &&
+	       (lhs.isCudaTexture()    == rhs.isCudaTexture() ) &&
 		   true;
 }
 
@@ -2680,6 +2732,15 @@ bool SgFunctionModifier::isCudaHost() const { return checkBit(e_cuda_host,p_modi
 void SgFunctionModifier::setCudaHost()      { setBit(e_cuda_host,p_modifierVector); }
 void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVector); }
 
+// Rasmussen (03/13/2018): New CUDA function modifiers
+bool SgFunctionModifier::isCudaGlobalFunction() const { return checkBit(e_cuda_global_function,p_modifierVector); }
+void SgFunctionModifier::setCudaGlobalFunction()      { setBit(e_cuda_global_function,p_modifierVector); }
+void SgFunctionModifier::unsetCudaGlobalFunction()    { unsetBit(e_cuda_global_function,p_modifierVector); }
+
+bool SgFunctionModifier::isCudaGridGlobal() const { return checkBit(e_cuda_grid_global,p_modifierVector); }
+void SgFunctionModifier::setCudaGridGlobal()      { setBit(e_cuda_grid_global,p_modifierVector); }
+void SgFunctionModifier::unsetCudaGridGlobal()    { unsetBit(e_cuda_grid_global,p_modifierVector); }
+
 // TV (05/03/2010): Support for OpenCL functions modifiers       
 bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }
 void SgFunctionModifier::setOpenclKernel()      { setBit(e_opencl_kernel, p_modifierVector); }
@@ -2811,9 +2872,11 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isGnuAttributeNoThrow()            == rhs.isGnuAttributeNoThrow()           ) &&
 	       (lhs.isGnuAttributeWeakReference()      == rhs.isGnuAttributeWeakReference()     ) &&
 	       // Cuda specific
-	       (lhs.isCudaDevice() == rhs.isCudaDevice()) &&
-	       (lhs.isCudaKernel() == rhs.isCudaKernel()) &&
-	       (lhs.isCudaHost()   == rhs.isCudaHost()  ) &&
+	       (lhs.isCudaDevice()         == rhs.isCudaDevice()) &&
+	       (lhs.isCudaKernel()         == rhs.isCudaKernel()) &&
+	       (lhs.isCudaHost()           == rhs.isCudaHost()  ) &&
+	       (lhs.isCudaGlobalFunction() == rhs.isCudaGlobalFunction()) &&
+	       (lhs.isCudaGridGlobal()     == rhs.isCudaGridGlobal()) &&
 	       // OpenCL specific
 	       (lhs.isOpenclKernel()             == rhs.isOpenclKernel()            ) &&
 	       (lhs.hasOpenclVecTypeHint()       == rhs.hasOpenclVecTypeHint()      ) &&
@@ -15478,7 +15541,9 @@ X aggressive
      p_skipAstConsistancyTests = false;
 
   // DQ (6/7/2013): Added support for using experimental fortran frontend.
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
      p_experimental_fortran_frontend = false;
+     p_experimental_cuda_fortran_frontend = false;
 
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
   // (this is part of the internal testing of the new (experimental) Fortran support).
@@ -16083,6 +16148,9 @@ SgFile::display ( const std::string & label ) const
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      printf ("     p_experimental_fortran_frontend             = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
      printf ("     p_experimental_fortran_frontend_OFP_test    = %s \n",(p_experimental_fortran_frontend_OFP_test == true) ? "true" : "false");
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     printf ("     p_experimental_cuda_fortran_frontend        = %s \n",(p_experimental_cuda_fortran_frontend == true) ? "true" : "false");
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      printf ("     p_multifile_support                         = %s \n",(p_multifile_support == true) ? "true" : "false");
