@@ -11,7 +11,7 @@
 //
 //  Liao, 5/12/2009
 #define length 100
-#include "omp.h" 
+#include <omp.h> 
 double eps[100];
 int zoneset[100];
 

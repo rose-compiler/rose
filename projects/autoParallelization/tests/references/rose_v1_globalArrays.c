@@ -1,5 +1,5 @@
 #define MSIZE 256
-#include "omp.h" 
+#include <omp.h> 
 double u[256][256];
 double f[256][256];
 int n;
