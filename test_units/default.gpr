@@ -1,0 +1,10 @@
+project Default is
+
+   for Languages use ("Ada");
+   for Object_Dir use "./obj";
+   for Source_Dirs use ("./**");
+   for Excluded_Source_Dirs use (project'Object_Dir);
+   for Main use ("hello_world.adb", "procedure_declaration.adb");
+
+end Default;
+

@@ -1,0 +1,20 @@
+with "../dot_asis_library/dot_asis_library";
+
+project C_Main is
+
+   for Source_Dirs use
+     (".");
+
+   for Object_Dir use "./obj";
+
+   for Languages use ("C");
+
+   for Main use
+     ("call_asis_tool_2.c");
+
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+end C_Main;
+

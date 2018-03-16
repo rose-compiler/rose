@@ -1,0 +1,244 @@
+#!/bin/sh
+
+# Notes:
+#
+# Implemented using "$@" to prevent a single arg like this:
+#     GNATMAKEFLAGS="-XPLATFORM=ppc-vxworks -XCORBA_VERSION=PolyOrb_default" 
+# from being broken up into two args like these:
+#     GNATMAKEFLAGS=-XPLATFORM=ppc-vxworks
+#     -XCORBA_VERSION=PolyOrb_default
+#
+# The shell strips double quotes from the command line before giving them 
+# to this script, but everything inside the quotes is still treated as one 
+# argument, regardless of any contained spaces.
+
+show_usage () {
+	echo 'Usage:' `basename $0` '{option} <command> {command parameter}
+
+Options:
+    --help           Output this help and more.
+    --log_dir=<dir>  Create the log file in a directory named <dir>.
+    --log_only       Only send output to the log file; do not tee to stdout.  
+                     (Still outputs the log file name to stdout.)
+    --name=<name>    Use <name> instead of <command> in log and subdir names.
+    --no_date_time   Do not put the date and time in the log file name
+    --use_first_parm Put the first command parm in the log and subdir names.
+                     (converts "/" and "." to "_")
+    --use_host_name  Put the host name in the log and subdir names.
+    --use_subdirs    Create the log file in a directory named
+                     "[dir/]logs/<command>|<name>[__first parm][/hostname]".
+'
+}
+
+show_help () {
+	show_usage
+	echo 'Behavior:
+    Runs <command> {command parameter} and tees or logs stdout and stderr to a 
+log file named "<command>|<name>[__first parm][__host name][__<date>_<time>].log",
+created either in the current directory or in a subdirectory (see --use_subdirs 
+and --log_dir options).  
+    Outputs the log file name, the command lines needed to repeat the run, and
+the current date/time, runs the command, and outputs the date/time and the log 
+file name again.
+'
+}
+
+echo_date_time () {
+   echo "`date '+%Y/%m/%d %H:%M:%S'` ::: [$@]"
+}
+
+echo_log_file_path () {
+	echo "Log file: ${log_file_path}"
+}
+
+echo_repeat_commands () {
+    # Args are the command to run and its parameters
+    echo "To repeat this run:"
+    echo "rlogin `hostname` -l `whoami`"
+    echo "cd `pwd`"
+    echo ${this_script}${local_parms} \\
+    for ARG in "$@"
+    do
+        echo \"${ARG}\" \\
+    done
+}
+
+run_command () {
+    # Args are the command to run and its parameters
+    echo_log_file_path
+    echo " "
+    echo_repeat_commands "$@"
+    echo " "
+    echo_date_time "$@"
+    ### RUN THE COMMAND: ###
+    "$@"
+    command_status=$?
+    echo_date_time "$1 exited with status $command_status"
+    # It is not easy to make run_and_log itself exit with command_status
+    # because run_command is called from within a "()" subshell.
+    echo " "
+    echo_log_file_path
+}
+
+# If first and last parm are non-empty, echo all three, else echo just the one 
+# (or none) that is non-empty.  Changes "A" "/" "B" to "A/B"; "A" "/" "" to "A".
+concat_3_non_empty () {
+  if [ -z "$1" -o -z "$3" ]
+  then 
+    echo "$1$3"
+  else
+    echo "$1$2$3"
+  fi
+}
+
+setup_log_name_base () {
+	# Get rid of any pesky slashes in the resulting log file name:
+	command_or_name=`basename ${command_or_name}`
+	# ${first_parm} may have a space in it, so quote it.  Heck, quote everything.
+   # log_name_base is used by setup_log_dir and setup_log_file_name:
+	# log_name_base=command_or_name[__parm]:
+	log_name_base=`concat_3_non_empty "${command_or_name}" "__" "${first_parm}"`
+}
+
+setup_log_dir () {
+	if [ "${use_subdirs}" = "true" ]
+	then
+		# log_subdirs=logs/command_or_name[__parm][/host]:
+		log_subdirs=`concat_3_non_empty "logs/${log_name_base}" "/" "${host_name}"`
+   fi
+	# log_dir=log_dir_base[/logs/command_or_name[__parm][/host]]:
+   log_dir=`concat_3_non_empty "${log_dir_base}" "/" "${log_subdirs}"`
+	if [ ! -d "${log_dir}" ]
+	then
+		mkdir -p "${log_dir}"
+	fi
+}
+
+setup_log_file_name () {
+	# log_file_name=command_or_name[__parm][__hostname]
+	log_file_name=`concat_3_non_empty "${log_name_base}" "__" "${host_name}"`
+	# log_file_name=command_or_name[__parm][__hostname][__yyyy-mm-dd_HH.MM.SS]
+   if [ "${use_date_time}" = "true" ]
+   then
+      log_file_name=${log_file_name}__`date +%Y-%m-%d_%H.%M.%S`
+   fi
+	# log_file_name=command_or_name[__parm][__hostname][__yyyy-mm-dd_HH.MM.SS].log
+	log_file_name=${log_file_name}.log
+}
+
+setup_log_file_path () {
+	setup_log_name_base
+   setup_log_dir
+	setup_log_file_name
+   log_file_path=`concat_3_non_empty "${log_dir}" "/" "${log_file_name}"`
+}
+
+# Check parms:
+if [ $# -lt 1 ]
+then
+	echo "(`basename $0`) ERROR: Insufficient arguments (0)"
+	show_usage
+	exit -1
+fi
+
+# Parse options:
+command_or_name=
+first_parm=
+host_name=
+local_parms=
+log_dir_base=`pwd`
+log_only=false
+this_script=${0}
+use_date_time=true
+use_first_parm=false
+use_subdirs=false
+
+# Can't do this in a function because in a function "$1" and "shift" only apply
+# to the parameters of that function, and we want to consume the parms of the 
+# script, not just those of the function.
+#
+last_option=false
+while [ "${last_option}" = "false" ]
+do
+  case $1 in 
+    --help)           show_help
+                      exit;;
+    --log_dir=*)      log_dir_base=`echo $1 | cut -c11- -`;;
+    --log_only)       log_only=true;;
+    --name=*)         command_or_name=`echo $1 | cut -c8- -`;;
+    --no_date*)       use_date_time=false;;
+    --use_first_parm) use_first_parm=true;;
+    --use_host*)      host_name=`hostname`;;
+    --use_subdirs)    use_subdirs=true;;
+    --*)   	          echo `basename $0`': Invalid argument: "'$1'"'
+  	                  show_usage
+	                  exit -1;;
+    *)                last_option=true;;
+  esac
+  if [ "${last_option}" = "true" ]
+  then
+    if [ -z "${command_or_name}" ]
+	then
+	  command_or_name=$1
+	fi
+    if [ "${use_first_parm}" = "true" ]
+	then
+	  first_parm=`echo $2 | tr '/.' '__'`
+	fi
+  else
+    # Save this parm for later output in run_command and shift it out of "$@":
+    local_parms="${local_parms} ${1}"
+    shift
+  fi
+done
+
+# Check for a command:
+if [ $# -lt 1 ]
+then
+	echo "(`basename $0`) ERROR: No command after options"
+	show_usage
+	exit -1
+fi
+
+setup_log_file_path
+
+if [ "${log_only}" = "true" ]
+then
+    (run_command "$@" 2>&1) > "${log_file_path}"
+else
+    (run_command "$@" 2>&1) | tee "${log_file_path}"
+fi
+
+#
+# History:
+#
+# 2008/12/15 reynolds12 Written 2008/10..2008/12
+# 2009/01/12 reynolds12 Massaged comments
+# 2009/02/17 reynolds12 Echoing just the basename of this script for better 
+#			            readability.  It should be on the path anyway.
+# 2009/11/20 reynolds12 Added run_and_log_no_tee behavior, refactored out 
+#						repeated date behavior.
+# 2009/11/24 reynolds12 Added hostname to the log file name, moved history to 
+#                       bottom.  
+# 2009/11/24 reynolds12 Added --log_only, --use_first_parm, --use_host_name, 
+#                       --use_subdirs, reorganized
+# 2009/12/03 reynolds12 Moved usage comments into a usage help function, added help option.
+#                       Now outputs log file name.
+#                       Made parm with a space in it work for log file name and dir name.
+#                       Prints usage when no parms are supplied.
+#                       Refactored local parm saving.
+# 2009/12/04 reynolds12 Added --use_name and bad parm detection. Refactored log 
+#                       path construction and parm parsing.
+# 2009/12/14 reynolds12 Changed --use_name <name> to --name=<name>, changed log 
+#                       file name output, updated help.
+# 2009/12/15 reynolds12 Fixed rlogin host.
+# 2010/02/11 reynolds12 Now commands like "run_and_log ../foo/bar" log to 
+#                       bar.log, not ../foo/bar.log
+# 2010/03/29 reynolds12 Added --no_date_time, upgraded missing parm/command handling.
+# 2010/05/05 reynolds12 Now outputs log file name at bottom as well as at top.
+# 2010/05/25 reynolds12 Fixed date_time help.  Added --log_dir.  Now when --log_only
+#                       is specified, std_err goes to the log file as it should.
+# 2010/07/20 reynolds12 Changed "_" separators to "__"
+# 2010/11/02 reynolds12 IC-16753: Now echoing full command (with path) used to 
+#                       execute run_and_log.
+# 2015/04/01 reynolds12 Added exit status to output
