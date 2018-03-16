@@ -1,7 +1,7 @@
 // an example of output dependence preventing parallelization
 // two level loops, check carry level value
 #include <stdio.h> 
-#include "omp.h" 
+#include <omp.h> 
 
 void foo()
 {

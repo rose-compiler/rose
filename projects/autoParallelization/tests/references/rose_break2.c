@@ -1,4 +1,4 @@
-#include "omp.h" 
+#include <omp.h> 
 int i;
 int j;
 int a[100][100];
