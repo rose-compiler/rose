@@ -582,17 +582,20 @@ HEADER_STORAGE_MODIFIER_START
                e_pointer_based = 14, /*!< Pointee of a POINTER definition */
 #endif
 
+            // Rasmussen (02/04/2018): Fortran contiguous array storage attribute
+               e_contiguous    = 15, /*!< Contiguous array memory-storage attribute */
+
             // TV (04/08/2010): Support for CUDA storage modifiers
-               e_cuda_global         = 15, /*!< CUDA, in device's global memory */
-               e_cuda_constant       = 16, /*!< CUDA, in device's constant memory */
-               e_cuda_shared         = 17, /*!< CUDA, in device's shared memory */
-               e_cuda_dynamic_shared = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
+               e_cuda_global         = 16, /*!< CUDA, in device's global memory */
+               e_cuda_constant       = 17, /*!< CUDA, in device's constant memory */
+               e_cuda_shared         = 18, /*!< CUDA, in device's shared memory */
+               e_cuda_dynamic_shared = 19, /*!< CUDA, in device's shared memory, dynamically allocated */
 
            // Rasmussen (03/13/2018): New CUDA storage modifiers
-               e_cuda_device_memory  = 19, /*!< CUDA, in device's global memory */
-               e_cuda_managed        = 20, /*!< CUDA, memory managed between host and device */
-               e_cuda_pinned         = 21, /*!< CUDA, in device's texture memory (read only)  */
-               e_cuda_texture        = 22, /*!< CUDA, in host's page-locked memory */
+               e_cuda_device_memory  = 20, /*!< CUDA, in device's global memory */
+               e_cuda_managed        = 21, /*!< CUDA, memory managed between host and device */
+               e_cuda_pinned         = 22, /*!< CUDA, in device's texture memory (read only)  */
+               e_cuda_texture        = 23, /*!< CUDA, in host's page-locked memory */
 
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -657,6 +660,10 @@ HEADER_STORAGE_MODIFIER_START
           void setPointerBased();
 #endif
 #endif
+
+       // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
+          bool isContiguous() const;
+          void setContiguous();
 
        // TV (04/08/2010): Support for CUDA storage modifiers
 
@@ -2397,6 +2404,10 @@ bool $CLASSNAME::isPointerBased() const { return p_modifier == e_pointer_based; 
 void $CLASSNAME::setPointerBased()      { p_modifier = e_pointer_based; }
 #endif
 
+// Rasmussen (02/04/2018): Fortran contiguous array storage attribute
+bool SgStorageModifier::isContiguous() const { return p_modifier == e_contiguous; }
+void SgStorageModifier::setContiguous()      {        p_modifier  = e_contiguous; }
+
 // TV (08/04/2010): Support for CUDA storage modifiers
 
 bool SgStorageModifier::isCudaGlobal() const { return p_modifier == e_cuda_global; }
@@ -2413,17 +2424,17 @@ void SgStorageModifier::setCudaDynamicShared()      { p_modifier = e_cuda_dynami
 
 // Rasmussen (03/13/2018): New CUDA storage modifiers
 
-bool SgStorageModifier::isCudaDeviceMemory() const  { return p_modifier == e_cuda_device_memory; }
-void SgStorageModifier::setCudaDeviceMemory()       { p_modifier = e_cuda_device_memory; }
+bool SgStorageModifier::isCudaDeviceMemory() const { return p_modifier == e_cuda_device_memory; }
+void SgStorageModifier::setCudaDeviceMemory()      {        p_modifier  = e_cuda_device_memory; }
 
-bool SgStorageModifier::isCudaManaged() const { return p_modifier == e_cuda_managed; }
-void SgStorageModifier::setCudaManaged()      { p_modifier = e_cuda_managed; }
+bool SgStorageModifier::isCudaManaged()      const { return p_modifier == e_cuda_managed; }
+void SgStorageModifier::setCudaManaged()           {        p_modifier  = e_cuda_managed; }
 
-bool SgStorageModifier::isCudaPinned() const  { return p_modifier == e_cuda_pinned; }
-void SgStorageModifier::setCudaPinned()       { p_modifier = e_cuda_pinned; }
+bool SgStorageModifier::isCudaPinned()       const { return p_modifier == e_cuda_pinned; }
+void SgStorageModifier::setCudaPinned()            {        p_modifier  = e_cuda_pinned; }
 
-bool SgStorageModifier::isCudaTexture() const { return p_modifier == e_cuda_texture; }
-void SgStorageModifier::setCudaTexture()      { p_modifier = e_cuda_texture; }
+bool SgStorageModifier::isCudaTexture()      const { return p_modifier == e_cuda_texture; }
+void SgStorageModifier::setCudaTexture()           {        p_modifier  = e_cuda_texture; }
 
 string
 $CLASSNAME::displayString() const
@@ -2476,14 +2487,15 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isMutable()        == rhs.isMutable()  ) &&
 	       (lhs.isTypedef()        == rhs.isTypedef()  ) &&
 	       (lhs.isAsm()            == rhs.isAsm()  ) &&
+	       (lhs.isContiguous()     == rhs.isContiguous()  ) &&
 	       (lhs.isCudaGlobal()     == rhs.isCudaGlobal()  ) &&
-	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
+	       (lhs.isCudaConstant()   == rhs.isCudaConstant()) &&
 	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
-	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared() ) &&
-	       (lhs.isCudaDeviceMemory()  == rhs.isCudaDeviceMemory()  ) &&
 	       (lhs.isCudaManaged()    == rhs.isCudaManaged() ) &&
 	       (lhs.isCudaPinned()     == rhs.isCudaPinned()  ) &&
 	       (lhs.isCudaTexture()    == rhs.isCudaTexture() ) &&
+	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared() ) &&
+	       (lhs.isCudaDeviceMemory()  == rhs.isCudaDeviceMemory()  ) &&
 		   true;
 }
 
@@ -2734,12 +2746,12 @@ void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVec
 
 // Rasmussen (03/13/2018): New CUDA function modifiers
 bool SgFunctionModifier::isCudaGlobalFunction() const { return checkBit(e_cuda_global_function,p_modifierVector); }
-void SgFunctionModifier::setCudaGlobalFunction()      { setBit(e_cuda_global_function,p_modifierVector); }
-void SgFunctionModifier::unsetCudaGlobalFunction()    { unsetBit(e_cuda_global_function,p_modifierVector); }
+void SgFunctionModifier::setCudaGlobalFunction()      {          setBit(e_cuda_global_function,p_modifierVector); }
+void SgFunctionModifier::unsetCudaGlobalFunction()    {        unsetBit(e_cuda_global_function,p_modifierVector); }
 
 bool SgFunctionModifier::isCudaGridGlobal() const { return checkBit(e_cuda_grid_global,p_modifierVector); }
-void SgFunctionModifier::setCudaGridGlobal()      { setBit(e_cuda_grid_global,p_modifierVector); }
-void SgFunctionModifier::unsetCudaGridGlobal()    { unsetBit(e_cuda_grid_global,p_modifierVector); }
+void SgFunctionModifier::setCudaGridGlobal()      {          setBit(e_cuda_grid_global,p_modifierVector); }
+void SgFunctionModifier::unsetCudaGridGlobal()    {        unsetBit(e_cuda_grid_global,p_modifierVector); }
 
 // TV (05/03/2010): Support for OpenCL functions modifiers       
 bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }

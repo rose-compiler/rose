@@ -270,13 +270,11 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
                decl->get_declarationModifier().get_typeModifier().setAsynchronous();
                break;
             }
-#if 0 // TODO CUDA (I think this is really F2008 or F2018)
-          case Fortran_ROSE_Translation::e_storage_modifier_contiguous:
+          case General_Language_Translation::e_storage_modifier_contiguous:
             {
                decl->get_declarationModifier().get_storageModifier().setContiguous();
                break;
             }
-#endif
           case General_Language_Translation::e_storage_modifier_external:
             {
                decl->get_declarationModifier().get_storageModifier().setExtern();
