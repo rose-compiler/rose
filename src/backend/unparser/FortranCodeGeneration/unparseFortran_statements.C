@@ -3938,13 +3938,11 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                curprint(", EXTERNAL");
              }
 
-#if 0
        // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
           if (variableDeclaration->get_declarationModifier().get_storageModifier().isContiguous() == true)
              {
                curprint(", CONTIGUOUS");
              }
-#endif
 
        // Rasmussen (02/06/2018): Fortran CUDA support
           if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaDeviceMemory() == true)
