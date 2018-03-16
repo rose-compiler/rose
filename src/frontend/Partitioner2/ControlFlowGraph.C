@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include <Partitioner2/ControlFlowGraph.h>
+#include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 
 namespace Rose {
@@ -97,6 +98,16 @@ findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
 }
 
 CfgConstEdgeSet
+findCallReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+    CfgConstEdgeSet retval;
+    for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
+        if (edge->value().type() == E_CALL_RETURN)
+            retval.insert(edge);
+    }
+    return retval;
+}
+
+CfgConstEdgeSet
 findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite) {
     CfgConstEdgeSet retval;
     for (ControlFlowGraph::ConstEdgeIterator ei=callSite->outEdges().begin(); ei!=callSite->outEdges().end(); ++ei) {
@@ -178,6 +189,55 @@ reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
             retval.insert(vmap.reverse()[vertex]);
     }
     return retval;
+}
+
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
+findFunctionReturnEdges(const Partitioner &partitioner) {
+    return findFunctionReturnEdges(partitioner, partitioner.cfg());
+}
+
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
+findFunctionReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+    Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> retval;
+    for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
+        if (edge->value().type() == E_FUNCTION_RETURN) {
+            if (BasicBlock::Ptr bblock = edge->source()->value().bblock()) {
+                std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
+                BOOST_FOREACH (const Function::Ptr &function, functions)
+                    retval.insertMaybeDefault(function).insert(edge);
+            }
+        }
+    }
+    return retval;
+}
+
+void
+expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/*in,out*/) {
+    Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> fre = findFunctionReturnEdges(partitioner, cfg);
+    std::set<ControlFlowGraph::ConstEdgeIterator> edgesToErase; // erased after iterating
+
+    CfgConstEdgeSet crEdges = findCallReturnEdges(partitioner, cfg);
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &crEdge, crEdges) {
+        ControlFlowGraph::ConstVertexIterator callSite = crEdge->source();
+        ControlFlowGraph::ConstVertexIterator returnSite = crEdge->target();
+        CfgConstEdgeSet callEdges = findCallEdges(callSite);
+        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &callEdge, callEdges) {
+            if (callEdge->target()->value().type() != V_BASIC_BLOCK)
+                continue; // functionCallEdge is not a call to a known function, so ignore it
+
+            BasicBlock::Ptr functionBlock = callEdge->target()->value().bblock();
+            std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(functionBlock);
+            BOOST_FOREACH (const Function::Ptr &function, functions) {
+                BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &oldReturnEdge, fre.getOrDefault(function)) {
+                    edgesToErase.insert(oldReturnEdge);
+                    cfg.insertEdge(oldReturnEdge->source(), returnSite, E_FUNCTION_RETURN);
+                }
+            }
+        }
+    }
+
+    BOOST_FOREACH (ControlFlowGraph::ConstEdgeIterator edge, edgesToErase)
+        cfg.eraseEdge(edge);
 }
 
 

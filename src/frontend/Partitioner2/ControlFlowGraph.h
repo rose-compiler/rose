@@ -303,13 +303,34 @@ CfgConstVertexSet findCalledFunctions(const ControlFlowGraph &cfg, const Control
 /** Return outgoing call-return edges.
  *
  *  A call-return edge represents a short-circuit control flow path across a function call, from the call site to the return
- *  target. */
+ *  target.
+ *
+ *  If a partitioner and control flow graph are specified, then this returns all edges of type @ref E_CALL_RETURN. If a vertex
+ *  is specified, then it returns only those call-return edges that emanate from said vertex.
+ *
+ * @{ */
+CfgConstEdgeSet findCallReturnEdges(const Partitioner&, const ControlFlowGraph&);
 CfgConstEdgeSet findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
+/** @} */
 
-/** Find function return vertices.
+/** Find all function return vertices.
  *
  *  Returns the list of vertices with outgoing E_FUNCTION_RETURN edges. */
 CfgConstVertexSet findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &beginVertex);
+
+/** Find function return edges organized by function.
+ *
+ *  Finds all control flow graph edges that are function return edges and organizes them according to the function from
+ *  which they emanate.  Note that since a basic block can be shared among several functions (usually just one though), an
+ *  edge may appear multiple times in the returned map.
+ *
+ *  If a control flow graph is supplied, it must be compatible with the specified partitioner. If no control flow graph
+ *  is specified then the partitioner's own CFG is used.
+ *
+ * @{ */
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> findFunctionReturnEdges(const Partitioner&);
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> findFunctionReturnEdges(const Partitioner&, const ControlFlowGraph&);
+/** @} */
 
 /** Erase multiple edges.
  *
@@ -340,6 +361,15 @@ CfgConstVertexSet forwardMapped(const CfgConstVertexSet&, const CfgVertexMap&);
  *  Given a set of iterators and a vertex map, return the corresponding iterators by following the reverse mapping. Any vertex
  *  in the argument that is not present in the mapping is silently ignored. */
 CfgConstVertexSet reverseMapped(const CfgConstVertexSet&, const CfgVertexMap&);
+
+/** Rewrite function return edges.
+ *
+ *  Given a graph that has function return edges (@ref E_FUNCTION_RETURN) that point to the indeterminate vertex, replace them
+ *  with function return edges that point to the return sites. The return sites are the vertices pointed to by the call-return
+ *  (@ref E_CALL_RETURN) edges emanating from the call sites for said function.  The graph is modified in place. The resulting
+ *  graph will usually have more edges than the original graph. */
+void expandFunctionReturnEdges(const Partitioner&, ControlFlowGraph &cfg/*in,out*/);
+
 
 } // namespace
 } // namespace
