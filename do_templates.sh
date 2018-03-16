@@ -23,9 +23,7 @@ target_units="unit_2.adb"
 
 use_gnat () {
   # Make GNAT compiler and gprbuild available:
-  # Needed for use:
-  . /usr/local/tools/dotkit/init.sh
-  use -q gnat
+  module load gnat
 }
 
 build_asis_tool () {
@@ -50,8 +48,8 @@ log_start
 log_invocation "$@"
 
 use_gnat
-log_and_run build_asis_tool    || exit $?
-log_and_run process_units "$@" || exit $?
+log_then_run build_asis_tool    || exit $?
+log_then_run process_units "$@" || exit $?
 
 log_end
 
