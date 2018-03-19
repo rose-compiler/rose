@@ -370,6 +370,39 @@ CfgConstVertexSet reverseMapped(const CfgConstVertexSet&, const CfgVertexMap&);
  *  graph will usually have more edges than the original graph. */
 void expandFunctionReturnEdges(const Partitioner&, ControlFlowGraph &cfg/*in,out*/);
 
+/** Generate a function control flow graph.
+ *
+ *  A function control flow graph is created by erasing all parts of the global control flow graph (@p gcfg) that aren't
+ *  owned by the specified function.  The resulting graph will contain an indeterminate vertex if the global CFG contains
+ *  an indeterminate vertex and the function has any edges to the indeterminate vertex that are not E_FUNCTION_RETURN
+ *  edges. In other words, the indeterminate vertex is excluded unless there are things like branches or calls whose target
+ *  address is a register.
+ *
+ *  Upon return, the @p entry iterator points to the vertex of the return value that serves as the function's entry point.
+ *
+ *  Note that this method of creating a function control flow graph can be slow since it starts with a global control flow
+ *  graph. It has one benefit over @ref functionCfgByReachability though: it will find all vertices that belong to the
+ *  function even if they're not reachable from the function's entry point, or even if they're only reachable by traversing
+ *  through a non-owned vertex. */
+ControlFlowGraph functionCfgByErasure(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+                                      ControlFlowGraph::VertexIterator &entry/*out*/);
+
+/** Generate a function control flow graph.
+ *
+ *  A function control flow graph is created by traversing the specified global control flow grap (@p gcfg) starting at
+ *  the specified vertex (@p gcfgEntry). The traversal follows only vertices that are owned by the specified function, and
+ *  the indeterminate vertex. The indeterminate vertex is only reachable through edges of types other than @ref 
+ *  E_FUNCTION_RETURN.
+ *
+ *  The function control flow graph entry point corresponding to @p gcfgEntry is always vertex number zero in the return
+ *  value.  However, if @p gcfgEntry points to a vertex not owned by @p function, or @p gcfg is empty then the returned
+ *  graph is also empty.
+ *
+ *  Note that this method of creating a function control graph can be much faster than @ref functionCfgByErasure since
+ *  it only traverses part of the global CFG, but the drawback is that the return value won't include vertices that are
+ *  not reachable from the return value's entry vertex. */
+ControlFlowGraph functionCfgByReachability(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+                                           const ControlFlowGraph::ConstVertexIterator &gcfgEntry);
 
 } // namespace
 } // namespace
