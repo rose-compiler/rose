@@ -6599,7 +6599,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
 
 #ifdef CUDA_INC_DIR
-               commandLine.push_back(std::string("-I") + CUDA_INC_DIR);
+               printf("Add --sys_include %s\n", CUDA_INC_DIR);
+               commandLine.push_back(std::string("--sys_include"));
+               commandLine.push_back(std::string(CUDA_INC_DIR));
 #endif
 
             // CUDA is a C++ extention, add default C++ options
@@ -6620,7 +6622,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                     commandLine.push_back(header_path + "/opencl_HEADERS/preinclude-opencl.h");
 
 #ifdef OPENCL_INC_DIR
-                    commandLine.push_back(std::string("-I") + OPENCL_INC_DIR);
+                    commandLine.push_back(std::string("--sys_include"));
+                    commandLine.push_back(std::string(OPENCL_INC_DIR));
 #endif
 
                  // OpenCL is a C extention, add default C options

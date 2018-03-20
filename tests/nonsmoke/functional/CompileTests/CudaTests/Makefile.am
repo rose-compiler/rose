@@ -46,6 +46,17 @@ endif
 
 check-local:
 if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
+	@$(MAKE) $(CUDA_NO_BUILTIN_CODES_Objects)
+	@$(MAKE) $(CUDA_CODES_Objects)
+	@echo "*******************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/CudaTests: make check rule complete (terminated normally) ******"
+	@echo "*******************************************************************************************************************"
+else
+	@echo "Rose is configured without C for CUDA support"
+endif
+
+old-check-local:
+if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
 	@echo "Tests for CUDA support"
 # DQ (2/19/2017): NEW VERSION OF LOGIC
 # DQ (2/18/2017): More specific logic required for portability.
