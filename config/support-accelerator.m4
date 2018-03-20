@@ -2,7 +2,10 @@
 AC_DEFUN([GENERATE_CUDA_SPECIFIC_HEADERS],
 [
    mkdir -p "./include-staging/cuda_HEADERS"
-   cp ${srcdir}/config/preinclude-cuda.h ./include-staging/cuda_HEADERS
+   pushd ./include-staging/cuda_HEADERS
+   cp ${srcdir}/config/preinclude-cuda.h .
+   tar xzf ${srcdir}/cuda-headers.tgz
+   popd
 ])
 
 AC_DEFUN([ROSE_CHECK_CUDA],
@@ -15,6 +18,10 @@ AC_ARG_WITH(cuda-bin,   [  --with-cuda-bin=DIR    For CUDA Binary  (Compiler, NV
 # CUDA header files
 if test "$with_cuda_inc" != ""
 then
+        AC_SUBST(CUDA_INC_DIR, [$with_cuda_inc])
+        AC_DEFINE_UNQUOTED([CUDA_INC_DIR], "$with_cuda_inc", [CUDA include directory])
+else
+        with_cuda_inc=$(pwd)/include-staging/cuda_HEADERS/cuda-7.5/targets/x86_64-linux/include/
         AC_SUBST(CUDA_INC_DIR, [$with_cuda_inc])
         AC_DEFINE_UNQUOTED([CUDA_INC_DIR], "$with_cuda_inc", [CUDA include directory])
 fi
