@@ -51,6 +51,7 @@
 #include "CodeThornException.h"
 
 #include "DataRaceDetection.h"
+#include "AstTermRepresentation.h"
 
 // test
 #include "SSAGenerator.h"
@@ -184,24 +185,6 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgNullExpression, true);
   setAstNodeVariant(V_SgSizeOfOp,true);
 
-}
-
-class TermRepresentation : public DFAstAttribute {
-  public:
-    TermRepresentation(SgNode* node) : _node(node) {}
-    string toString() { return "AstTerm: "+AstTerm::astTermWithNullValuesToString(_node); }
-  private:
-    SgNode* _node;
-};
-
-void attachTermRepresentation(SgNode* node) {
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
-    if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
-      AstAttribute* ara=new TermRepresentation(stmt);
-      stmt->setAttribute("codethorn-term-representation",ara);
-    }
-  }
 }
 
 static IOAnalyzer* global_analyzer=0;

@@ -267,9 +267,10 @@ codethorn_SOURCES = \
   VariableValueMonitor.C \
   Visualizer.C                     \
   Visualizer.h                     \
+  AstTermRepresentation.h \
+  AstTermRepresentation.C \
   codethorn.h \
   codethorn.C 
-
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
