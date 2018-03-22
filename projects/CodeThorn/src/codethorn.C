@@ -1944,7 +1944,7 @@ int main( int argc, char * argv[] ) {
     if (args.getBool("annotate-terms")) {
       // TODO: it might be useful to be able to select certain analysis results to be only annotated
       logger[INFO] << "Annotating term representations."<<endl;
-      attachTermRepresentation(sageProject);
+      AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
       AstAnnotator ara(analyzer->getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     }
