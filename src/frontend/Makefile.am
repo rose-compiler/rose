@@ -9,6 +9,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += CxxFrontend
 endif
 
+# Rasmussen (01/21/2018): Adding general support for experimental languages
+if ROSE_BUILD_ATERM_SUPPORT
+   SUBDIRS += Experimental_General_Language_Support
+endif
+
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += OpenFortranParser_SAGE_Connection
 endif

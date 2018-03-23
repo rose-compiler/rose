@@ -118,6 +118,7 @@ install-rose-library: install-data-local
 rose-installer-rmc2: install-rose-library
 	rm -rf $@.tmp
 	mkdir  $@.tmp
+	$(top_srcdir)/scripts/mkinstaller --version
 	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller					\
 		--create="$@"								\
 		--cc="$(C_VENDOR) $(C_VERSION)"						\

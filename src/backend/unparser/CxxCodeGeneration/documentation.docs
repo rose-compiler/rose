@@ -1,6 +1,6 @@
  /*!
      \defgroup CxxCodeGenerator Backend Cxx Code Generator
-     \ingroup ROSE_BackEndGroup
+     \ingroup rose_backend
 
      \brief Generates C++ Source code from the AST.
 

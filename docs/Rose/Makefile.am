@@ -45,7 +45,6 @@ RoseDocsDependencies = \
      $(top_builddir)/src/frontend/SageIII/sage.docs \
      $(top_srcdir)/src/frontend/SageIII/sage.docs.in \
      $(top_srcdir)/src/extra.docs \
-     $(top_srcdir)/src/util/commandlineProcessing/commandlineProcessingDocumentation.docs \
      $(top_srcdir)/src/util/stringSupport/stringSupportDocumentation.docs \
      $(top_srcdir)/src/util/utilDocumentation.docs \
      $(top_srcdir)/src/midend/astQuery/QueryLib.docs \
