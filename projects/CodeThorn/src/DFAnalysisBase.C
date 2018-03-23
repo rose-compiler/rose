@@ -228,7 +228,7 @@ SPRAY::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
 }
 
 void
-DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
+DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot,bool onlySingleStartLabel) {
   if(startFunRoot) {
     if(isForwardAnalysis()) {
       Label startLabel=_cfanalyzer->getLabel(startFunRoot);
@@ -248,11 +248,14 @@ DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
       }
     }
   } else {
+    // keep _extremalLabels an empty set if no start function is determined
+#if 0
     // naive way of initializing all labels
     for(long i=0;i<getLabeler()->numberOfLabels();++i) {
       Label lab=i;
       _extremalLabels.insert(lab);
     }
+#endif
   }
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
 }
