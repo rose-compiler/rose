@@ -6875,10 +6875,21 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
   ROSE_ASSERT  (c);
   SgOmpExpressionClause* exp_clause = isSgOmpExpressionClause(c);
   ROSE_ASSERT(exp_clause);
+ 
+
+  // ordered (n) vs ordered : (n) is optional
+  if (isSgOmpOrderedClause(c) && (exp_clause->get_expression() == NULL))
+  {  
+    curprint(string(" ordered"));
+    return; 
+  }  
+
   if (isSgOmpCollapseClause(c))
     curprint(string(" collapse("));
   else if (isSgOmpIfClause(c))
     curprint(string(" if("));
+  else if (isSgOmpOrderedClause(c))
+    curprint(string(" ordered("));
   else if (isSgOmpFinalClause(c))
     curprint(string(" final("));
   else if (isSgOmpPriorityClause(c))
@@ -6946,12 +6957,13 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         curprint(string(" notinbranch"));
         break;
       }
- 
+#if 0  // this becomes an expression clause since OpenMP 4.5
     case V_SgOmpOrderedClause:
       {
         curprint(string(" ordered"));
         break;
       }
+#endif      
     case V_SgOmpUntiedClause:
       {
         curprint(string(" untied"));
@@ -6985,6 +6997,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpNumThreadsClause:  
     case V_SgOmpSafelenClause:  
     case V_SgOmpSimdlenClause:  
+    case V_SgOmpOrderedClause:
       //case V_SgOmpExpressionClause: // there should be no instance for this clause
       {
         unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);

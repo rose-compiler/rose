@@ -546,7 +546,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(width);
     }
 #endif
@@ -556,7 +556,7 @@ private:
 protected:
     SValue(): width(0) {}                               // needed for serialization
     explicit SValue(size_t nbits): width(nbits) {}      // hot
-    SValue(const SValue &other): width(other.width) {}
+    SValue(const SValue &other): Sawyer::SharedObject(other), width(other.width) {}
 
 public:
     /** Shared-ownership pointer for an @ref SValue object. See @ref heap_object_shared_ownership. */
@@ -644,7 +644,7 @@ public:
      *  If you always want a copy regardless of whether the merge is necessary, then use the @ref createMerged convenience
      *  function instead. */
     virtual Sawyer::Optional<SValuePtr>
-    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, SmtSolver *solver) const = 0;
+    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, const SmtSolverPtr &solver) const = 0;
 
     /** Create a new value by merging two existing values.
      *
@@ -652,7 +652,7 @@ public:
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary one can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerge. */
-    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SmtSolver *solver) const /*final*/ {
+    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, const SmtSolverPtr &solver) const /*final*/ {
         return createOptionalMerge(other, merger, solver).orElse(copy());
     }
 
@@ -689,10 +689,10 @@ public:
     /** @} */
 
     /** Returns true if two values could be equal. The SMT solver is optional for many subclasses. */
-    virtual bool may_equal(const SValuePtr &other, SmtSolver *solver=NULL) const = 0;
+    virtual bool may_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
 
     /** Returns true if two values must be equal.  The SMT solver is optional for many subclasses. */
-    virtual bool must_equal(const SValuePtr &other, SmtSolver *solver=NULL) const = 0;
+    virtual bool must_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
 
     /** Returns true if concrete non-zero. This is not virtual since it can be implemented in terms of @ref is_number and @ref
      *  get_number. */
@@ -770,7 +770,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         //s & merger_; -- not saved
         s & BOOST_SERIALIZATION_NVP(protoval_);
     }
@@ -884,6 +884,11 @@ public:
      *
      *  See @ref RiscOperators::readRegister for more details. */
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
+
+    /** Read a register without side effects.
+     *
+     *  This is similar to @ref readRegister except it doesn't modify the register state in any way. */
+    virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
     /** Write a value to a register.
      *
@@ -1017,6 +1022,7 @@ public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
@@ -1072,7 +1078,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(addrProtoval_);
         s & BOOST_SERIALIZATION_NVP(valProtoval_);
         s & BOOST_SERIALIZATION_NVP(byteOrder_);
@@ -1201,6 +1207,13 @@ public:
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
+    /** Read a value from memory without side effects.
+     *
+     *  This is similar to @ref readMemory except there are no side effects. The memory state is not modified by this
+     *  function. */
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) = 0;
+
     /** Write a value to memory.
      *
      *  Consults the memory represented by this MemoryState object and possibly inserts the specified value.  The details of
@@ -1281,7 +1294,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(protoval_);
         s & BOOST_SERIALIZATION_NVP(registers_);
         s & BOOST_SERIALIZATION_NVP(memory_);
@@ -1305,7 +1318,7 @@ protected:
 
     // deep-copy the registers and memory
     State(const State &other)
-        : protoval_(other.protoval_) {
+        : boost::enable_shared_from_this<State>(other), protoval_(other.protoval_) {
         registers_ = other.registers_->clone();
         memory_ = other.memory_->clone();
     }
@@ -1408,6 +1421,12 @@ public:
      *  @ref BaseSemantics::RiscOperators::readRegister for details. */
     virtual SValuePtr readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
 
+    /** Read register without side effects.
+     *
+     *  The @ref BaseSemantics::peekRegister implementation simply delegates to the register state member of this state.  See
+     *  @ref BaseSemantics::RiscOperators::peekRegister for details. */
+    virtual SValuePtr peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
+
     /** Write a value to a register.
      *
      *  The @ref BaseSemantics::writeRegister implementation simply delegates to the register state member of this state.  See
@@ -1419,6 +1438,13 @@ public:
      *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state.  See
      *  BaseSemantics::RiscOperators::readMemory() for details.  */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps);
+
+    /** Read from memory without side effects.
+     *
+     *  The BaseSemantics::peekMemory() implementation simply delegates to the memory state member of this state.  See
+     *  BaseSemantics::RiscOperators::peekMemory() for details.  */
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps);
 
     /** Write a value to memory.
@@ -1532,7 +1558,7 @@ class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
     StatePtr currentState_;                             // State upon which RISC operators operate
     StatePtr initialState_;                             // Lazily updated initial state; see readMemory
-    SmtSolver *solver_;                                 // Optional SMT solver
+    SmtSolverPtr solver_;                               // Optional SMT solver
     SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
     size_t nInsns_;                                     // Number of instructions processed
     std::string name_;                                  // Name to use for debugging
@@ -1544,7 +1570,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(protoval_);
         s & BOOST_SERIALIZATION_NVP(currentState_);
         s & BOOST_SERIALIZATION_NVP(initialState_);
@@ -1560,14 +1586,14 @@ private:
 protected:
     // for serialization
     RiscOperators()
-        : solver_(NULL), currentInsn_(NULL), nInsns_(0) {}
+        : currentInsn_(NULL), nInsns_(0) {}
 
-    explicit RiscOperators(const SValuePtr &protoval, SmtSolver *solver=NULL)
+    explicit RiscOperators(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : protoval_(protoval), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(protoval_);
     }
 
-    explicit RiscOperators(const StatePtr &state, SmtSolver *solver=NULL)
+    explicit RiscOperators(const StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : currentState_(state), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(state);
         protoval_ = state->protoval();
@@ -1590,13 +1616,13 @@ public:
     /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
      *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
      *  set by modifying the  @ref currentState property. An optional SMT solver may be specified (see @ref solver). */
-    virtual RiscOperatorsPtr create(const SValuePtr &protoval, SmtSolver *solver=NULL) const = 0;
+    virtual RiscOperatorsPtr create(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
 
     /** Virtual allocating constructor.  The supplied @p state is that upon which the RISC operations operate and is also used
      *  to define the prototypical semantic value. Other states can be supplied by setting @ref currentState. The prototypical
      *  semantic value is used as a factory to create additional values as necessary via its virtual constructors. An optional
      *  SMT solver may be specified (see @ref solver). */
-    virtual RiscOperatorsPtr create(const StatePtr &state, SmtSolver *solver=NULL) const = 0;
+    virtual RiscOperatorsPtr create(const StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts.  No-op since this is the base class.
@@ -1627,13 +1653,9 @@ public:
      *  at whether the values are identical).
      *
      * @{ */
-    virtual SmtSolver* solver() const { return solver_; }
-    virtual void solver(SmtSolver *s) { solver_ = s; }
+    virtual SmtSolverPtr solver() const { return solver_; }
+    virtual void solver(const SmtSolverPtr &s) { solver_ = s; }
     /** @} */
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual void set_solver(SmtSolver *s) ROSE_DEPRECATED("use solver instead") { solver(s); }
-    virtual SmtSolver *get_solver() const ROSE_DEPRECATED("use solver instead") { return solver(); }
 
     /** Property: Current semantic state.
      *
@@ -2034,7 +2056,7 @@ public:
      *  instance, an x86 INT instruction uses major number zero and the minor number is the interrupt number (e.g., 0x80 for
      *  Linux system calls), while an x86 SYSENTER instruction uses major number one. The minr operand for INT3 is -3 to
      *  distinguish it from the one-argument "INT 3" instruction which has slightly different semantics. */
-    virtual void interrupt(int majr, int minr) {}
+    virtual void interrupt(int /*majr*/, int /*minr*/) {}
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2166,6 +2188,13 @@ public:
         currentState_->writeRegister(reg, a, this);
     }
 
+    /** Obtain a register value without side effects.
+     *
+     *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
+     *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
+     *  part of an instruction emulation. */
+    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
+
     /** Reads a value from memory.
      *
      *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
@@ -2204,12 +2233,11 @@ public:
     virtual void writeMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &data,
                              const SValuePtr &cond) = 0;
 
-    /** Obtain a register value without side effects.
+    /** Read memory without side effects.
      *
-     *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
-     *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
-     *  part of an instruction emulation. */
-    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
+     *  This is a lower-level operation than @ref readMemory in that it doesn't cause any side effects in the memory state. In
+     *  all other respects, it's similar to @ref readMemory. */
+    virtual SValuePtr peekMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &dflt) = 0;
 };
 
 
@@ -2258,7 +2286,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(operators);
         s & BOOST_SERIALIZATION_NVP(regdict);
         s & BOOST_SERIALIZATION_NVP(addrWidth_);

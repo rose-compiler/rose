@@ -95,6 +95,7 @@ $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 #	rm -f Grammar
 #	ln -s $(top_srcdir)/src/ROSETTA/Grammar Grammar
 	@echo "Running ROSETTA to generated ROSE IR code:"
+#       Add "--verbose" if you want the old, noisy output from CxxGrammarMetaProgram
 	$(AM_V_GEN) $(VALGRIND) ./CxxGrammarMetaProgram ${top_builddir}/src/frontend/SageIII/
 
 noinst_PROGRAMS = CxxGrammarMetaProgram

@@ -734,6 +734,7 @@ SgUntypedUnaryOperator
 SgUntypedBinaryOperator
 SgUntypedValueExpression
 SgUntypedArrayReferenceExpression
+SgUntypedSubscriptExpression
 SgUntypedOtherExpression
 SgUntypedNullExpression
 SgUntypedExprListExpression
@@ -756,6 +757,7 @@ SgUntypedProgramHeaderDeclaration
 SgUntypedFunctionDeclaration
 SgUntypedSubroutineDeclaration
 SgUntypedInterfaceDeclaration
+SgUntypedNullDeclaration
 SgUntypedNullStatement
 SgUntypedIfStatement
 SgUntypedCaseStatement

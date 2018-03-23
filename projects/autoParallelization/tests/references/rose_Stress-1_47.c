@@ -2,7 +2,7 @@
 //#include <math.h>
 #define MIN(a, b) ( (a < b) ? a : b)
 #define MAX(a, b) ( (a > b) ? a : b)
-#include "omp.h" 
+#include <omp.h> 
 typedef double real8;
 
 void StressCheckEpsFail(real8 *newSxx,real8 *newSyy,real8 *newSzz,real8 *newTxy,real8 *newTxz,real8 *newTyz,real8 *eps,real8 eps_failure_model,const int *zoneset,int length)

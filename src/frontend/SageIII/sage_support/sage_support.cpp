@@ -2779,7 +2779,8 @@ int openFortranParser_main(int argc, char **argv );
 
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 // This is defined separately configured only for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
-   int experimental_openFortranParser_main(int argc, char **argv);
+// Rasmussen (3/12/2018): Modified call to include the source file.
+   int experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file);
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -4234,25 +4235,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // as coming from an command shell command line (where the calling program is always argument zero).
           experimentalFrontEndCommandLine.push_back("dummyArg_0");
 
-       // Rasmussen (11/13/2017): Removed usage of --parseTable command-line option (from next few lines below). This information is better known by the individual language support files.
-       // string parseTableOption = "--parseTable";
-       // experimentalFrontEndCommandLine.push_back(parseTableOption);
-
-       // DQ (1/26/2017): We want to put the Fortran.tbl into /nfs/casc/overture/ROSE/aterm_for_rose_bin so that Craig and I can work togehter.
-       // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
-       // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
-       // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
-       // string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
-
-       // Rasmussen (2/22/2017): OFP_BIN_PATH is the path to the Fortran parse table and other
-       // binaries used in transforming an OFP parse tree to an SgUntypedNode ATerm representation.
-#ifndef USE_CMAKE
-       // std::string path_to_table = OFP_BIN_PATH;
-#else
-       // std::string path_to_table = "";
-#endif
-       // path_to_table += "/Fortran.tbl";
-       // experimentalFrontEndCommandLine.push_back(path_to_table);
+       // Rasmussen (11/13/2017): Removed usage of --parseTable command-line option.
+       // This information is better known by the individual language support files.
+       // Rasmussen (3/12/2018): Also removed usage of path_to_table for same reason.
 
           experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
@@ -4267,7 +4252,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-          frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+       // Rasmussen (3/12/2018): Modified call to include the source file.
+          SgSourceFile* fortranSourceFile = const_cast<SgSourceFile*>(this);
+          frontendErrorLevel = experimental_fortran_main (experimental_openFortranParser_argc,
+                                                          experimental_openFortranParser_argv,
+                                                          fortranSourceFile);
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif

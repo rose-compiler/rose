@@ -19,11 +19,13 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
+#include <Sawyer/ProgressBar.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <BinaryUnparser.h>
 #include <Progress.h>
 
+#include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 
@@ -312,7 +314,7 @@ private:
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
-    SmtSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
+    SmtSolverPtr solver_;                               // Satisfiable modulo theory solver used by semantic expressions
     Functions functions_;                               // List of all attached functions by entry address
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
@@ -352,7 +354,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serializeCommon(S &s, const unsigned version) {
+    void serializeCommon(S &s, const unsigned /*version*/) {
         s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
         s.template register_type<InstructionSemantics2::DispatcherX86>();
@@ -488,6 +490,14 @@ public:
     bool addressIsExecutable(rose_addr_t va) const /*final*/ {
         return memoryMap_!=NULL && memoryMap_->at(va).require(MemoryMap::EXECUTABLE).exists();
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Unparsing
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /** Returns an unparser.
      *
@@ -2358,7 +2368,7 @@ public:
      *  delete it.  Some configurations will not use a solver, in which case the null pointer is returned.
      *
      *  Thread safety: Not thread safe. */
-    SmtSolver *smtSolver() const /*final*/ { return solver_; }
+    SmtSolverPtr smtSolver() const /*final*/ { return solver_; }
 
     /** Obtain new RiscOperators.
      *

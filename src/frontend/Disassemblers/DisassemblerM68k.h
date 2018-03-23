@@ -59,7 +59,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize_common(S &s, const unsigned version) {
+    void serialize_common(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
         s & BOOST_SERIALIZATION_NVP(family);
         s & BOOST_SERIALIZATION_NVP(map);

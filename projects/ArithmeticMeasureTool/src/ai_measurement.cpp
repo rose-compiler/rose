@@ -166,6 +166,7 @@ namespace ArithemeticIntensityMeasurement
     return string(FPOpKindNameList[op_kind]);
   } 
   bool debug;
+  bool e_inline;
   int algorithm_version = 1;
 
   // default file name to store the report
@@ -213,7 +214,7 @@ namespace ArithemeticIntensityMeasurement
     else
       ss<< "NULL node"<<endl;
    // if non-zero, send out error code   
-    if (error_code!=0)
+//    if (error_code!=0)
       ss<<"Error Code:"<<error_code<<endl;
 
     ss<<"\tFP_plus:"<< plus_count<<endl;
@@ -886,6 +887,19 @@ namespace ArithemeticIntensityMeasurement
   FPCounters*  calculateArithmeticIntensity(SgLocatedNode* body, bool includeScalars /*= false */, bool includeIntType /*= false */)
   {
     ROSE_ASSERT (body != NULL);
+
+    // on-demand inlining of function calls inside the code block rooted at body
+    if (e_inline)
+    {
+      // inlining function calls inside the body
+      Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(body, V_SgFunctionCallExp);
+      for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+      {
+        SgFunctionCallExp *call  = isSgFunctionCallExp(*i);
+        doInline (call);
+      }
+    }
+
     CountFPOperations (body);
     CountMemOperations (body , includeScalars, includeIntType); 
     FPCounters* fp_counters = getFPCounters (body);

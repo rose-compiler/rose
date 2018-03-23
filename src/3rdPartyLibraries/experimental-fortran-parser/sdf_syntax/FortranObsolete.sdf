@@ -1,5 +1,5 @@
 %%%%%%%%%%
-%% Fortran obsolete syntax
+%% Fortran obsolete/legacy syntax
 %%%%%%%%%%
 
 module FortranObsolete
@@ -25,6 +25,14 @@ context-free syntax
 
 %% OR851
   OptLabel 'GO' 'TO' IntVariable            EOS -> GotoStmt     {cons("GotoStmt")}
+
+%% OR910
+%% Seems to be commonly supported (Intel, although gfortran v6.3.0 gives warning about legacy)
+  OptLabel 'READ' '(' IoControlSpecList ')' ','  {InputItem ','}*   EOS -> ReadStmt   {cons("ReadStmt")}  %% legacy
+
+%% OR911
+%% Seems to be commonly supported (Intel, although gfortran v6.3.0 gives warning about legacy)
+  OptLabel 'WRITE' '(' IoControlSpecList ')' ',' {OutputItem ','}*  EOS -> WriteStmt  {cons("WriteStmt")}  %% legacy
 
 
 %% Deleted Features

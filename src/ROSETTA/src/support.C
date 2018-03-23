@@ -99,6 +99,7 @@ Grammar::setUpSupport ()
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
      NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
+     BinaryComposite.isBoostSerializable(true);
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
@@ -260,6 +261,8 @@ Grammar::setUpSupport ()
   //                       Header Code Declaration
   // ***********************************************************************
   // ***********************************************************************
+
+     Support.isBoostSerializable(true);
 
   // Header declarations for Support
   // Support.setSubTreeFunctionPrototype ( "HEADER", "../Grammar/sageCommon.code");
@@ -823,6 +826,7 @@ Grammar::setUpSupport ()
 // DQ (4/25/2009): Must fix code in sageInterface/sageBuilder.C before we can use the proper BUILD_LIST_ACCESS_FUNCTIONS macro above.
 #warning "This should be using the BUILD_LIST_ACCESS_FUNCTIONS"
 #endif
+     File.isBoostSerializable(true);
 
   // Modified ROSE to hold variables into the File object
   // DQ (8/10/2004): modified to be an int instead of a bool
@@ -1297,6 +1301,10 @@ Grammar::setUpSupport ()
 
   // DQ (6/7/2013): Added support for use of experimental fortran front-end.
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     File.setDataPrototype("bool", "experimental_cuda_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm

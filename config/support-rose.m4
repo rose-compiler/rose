@@ -1972,6 +1972,11 @@ src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
@@ -2277,10 +2282,6 @@ scripts/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Components/Common/Makefile
@@ -2306,6 +2307,8 @@ src/frontend/DLX/include/DLX/Core/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
+src/frontend/Experimental_General_Language_Support/Makefile
+src/frontend/Experimental_General_Language_Support/ATerm/Makefile
 src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile

@@ -14,13 +14,28 @@
 #include "SymbolicSemantics2.h"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/config.hpp>
 #include <boost/foreach.hpp>
+#include <boost/thread.hpp>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
-#include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
+
+#ifndef BOOST_WINDOWS
+    #include <errno.h>
+    #include <fcntl.h>
+    #include <fstream>
+    #include <string.h>
+    #include <unistd.h>
+    #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        #include <boost/archive/binary_iarchive.hpp>
+        #include <boost/archive/binary_oarchive.hpp>
+        #include <boost/iostreams/device/file_descriptor.hpp>
+        #include <boost/iostreams/stream.hpp>
+    #endif
+#endif
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace Rose::Diagnostics;
@@ -50,7 +65,7 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
 // after a while.
 Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+    : autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
       progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);                             // initialize just like default
     *this = other;                                      // then delegate to the assignment operator
@@ -400,8 +415,12 @@ Partitioner::newOperators() const {
 
 BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators(SemanticMemoryParadigm memType) const {
+    //  Create a new SMT solver each call because this might be called from different threads and each thread should have its
+    //  own SMT solver.
+    SmtSolver::Ptr solver = solver_ ? solver_->create() : SmtSolver::Ptr();
+
     Semantics::RiscOperatorsPtr ops =
-        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, memType);
+        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver, memType);
     BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->memoryMap(memoryMap_);
@@ -973,11 +992,11 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
                 SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
                 SymbolicExpr::Ptr spNExpr =
-                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew);
-                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew);
+                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
 
                 // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false), NULL)) {
+                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
                     allCalleesPopWithoutReturning = false;
                     break;
                 }

@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>
+
 // Thread block size
 #define BLOCK_SIZE 16
 

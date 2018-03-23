@@ -88,7 +88,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpSafelenClause, "OmpSafelenClause", "OmpSafelenTag" );
      NEW_TERMINAL_MACRO (OmpSimdlenClause, "OmpSimdlenClause", "OmpSimdlenTag" );
 
-     NEW_NONTERMINAL_MACRO (OmpExpressionClause, OmpCollapseClause | OmpIfClause | OmpNumThreadsClause | OmpDeviceClause |
+     NEW_NONTERMINAL_MACRO (OmpExpressionClause, OmpOrderedClause | OmpCollapseClause | OmpIfClause | OmpNumThreadsClause | OmpDeviceClause |
                             OmpSafelenClause | OmpSimdlenClause | OmpFinalClause | OmpPriorityClause
          ,"OmpExpressionClause", "OmpExpressionClauseTag",false );
 
@@ -114,7 +114,7 @@ Grammar::setUpNodes ()
 
      NEW_TERMINAL_MACRO (OmpScheduleClause, "OmpScheduleClause", "OmpScheduleClauseTag" );
 
-     NEW_NONTERMINAL_MACRO (OmpClause, OmpOrderedClause | OmpNowaitClause | OmpBeginClause |OmpEndClause | OmpUntiedClause |
+     NEW_NONTERMINAL_MACRO (OmpClause, OmpNowaitClause | OmpBeginClause |OmpEndClause | OmpUntiedClause |
          OmpDefaultClause | OmpAtomicClause | OmpProcBindClause | OmpExpressionClause | OmpInbranchClause | OmpNotinbranchClause |
          OmpVariablesClause | OmpScheduleClause | OmpMergeableClause ,
          "OmpClause", "OmpClauseTag", false);
@@ -149,6 +149,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedNullExpression,           "UntypedNullExpression",           "TEMP_UntypedNullExpression" );
      NEW_TERMINAL_MACRO (UntypedValueExpression,          "UntypedValueExpression",          "TEMP_UntypedValueExpression" );
      NEW_TERMINAL_MACRO (UntypedArrayReferenceExpression, "UntypedArrayReferenceExpression", "TEMP_UntypedArrayReferenceExpression" );
+     NEW_TERMINAL_MACRO (UntypedSubscriptExpression,      "UntypedSubscriptExpression",      "TEMP_UntypedSubscriptExpression" );
      NEW_TERMINAL_MACRO (UntypedOtherExpression,          "UntypedOtherExpression",          "TEMP_UntypedOtherExpression" );
      NEW_TERMINAL_MACRO (UntypedFunctionCallOrArrayReferenceExpression, "UntypedFunctionCallOrArrayReferenceExpression",  "TEMP_UntypedFunctionCallOrArrayReferenceExpression" );
 
@@ -159,10 +160,11 @@ Grammar::setUpNodes ()
   //     UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression | 
   //     UntypedReferenceExpression, "UntypedExpression", "UntypedExpressionTag", false);
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression and SgUntypedNullExpression
+  // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
      NEW_NONTERMINAL_MACRO (UntypedExpression,
          UntypedUnaryOperator            | UntypedBinaryOperator  | UntypedExprListExpression  | UntypedValueExpression |
          UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression       |
-         UntypedReferenceExpression      | UntypedNullExpression,
+         UntypedSubscriptExpression      | UntypedNullExpression  | UntypedReferenceExpression,
          "UntypedExpression", "UntypedExpressionTag", true);
 
      NEW_TERMINAL_MACRO (UntypedNameListDeclaration,      "UntypedNameListDeclaration",      "TEMP_UntypedNameListDeclaration" );
@@ -175,6 +177,8 @@ Grammar::setUpNodes ()
 
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     NEW_TERMINAL_MACRO (UntypedNullDeclaration,               "UntypedNullDeclaration",               "TEMP_UntypedNullDeclaration" );
      NEW_TERMINAL_MACRO (UntypedNullStatement,                 "UntypedNullStatement",                 "TEMP_UntypedNullStatement" );
      NEW_TERMINAL_MACRO (UntypedIfStatement,                   "UntypedIfStatement",                   "TEMP_UntypedIfStatement" );
      NEW_TERMINAL_MACRO (UntypedCaseStatement,                 "UntypedCaseStatement",                 "TEMP_UntypedCaseStatement" );
@@ -229,9 +233,11 @@ Grammar::setUpNodes ()
   //     UntypedFunctionDeclaration | UntypedModuleDeclaration,
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration, UntypedBlockDataDeclaration
-     NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedNameListDeclaration | UntypedUseStatement |
-         UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration |
-         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration |
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement,
+         UntypedNullDeclaration      | UntypedNameListDeclaration  | UntypedUseStatement                |
+         UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration         |
+         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration        |
          UntypedPackageDeclaration   | UntypedStructureDeclaration | UntypedExceptionHandlerDeclaration |
          UntypedExceptionDeclaration | UntypedTaskDeclaration      | UntypedUnitDeclaration,
          "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
@@ -633,6 +639,14 @@ Grammar::setUpNodes ()
                                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedNullExpression.setFunctionPrototype     ( "HEADER_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
 
+  // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
+     UntypedSubscriptExpression.setDataPrototype    ( "SgUntypedExpression*", "lower_bound", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedSubscriptExpression.setDataPrototype    ( "SgUntypedExpression*", "upper_bound", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedSubscriptExpression.setDataPrototype    ( "SgUntypedExpression*", "stride",      "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      UntypedValueExpression.setFunctionPrototype ( "HEADER_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
   // Save this as a string so that we can reproduce the exact value for floating point numbers.
      UntypedValueExpression.setDataPrototype     ( "std::string", "value_string", "= \"\"",
@@ -706,6 +720,8 @@ Grammar::setUpNodes ()
 
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     UntypedNullDeclaration.setFunctionPrototype               ( "HEADER_UNTYPED_NULL_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedNullStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
 
      UntypedIfStatement.setFunctionPrototype           ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
@@ -750,7 +766,7 @@ Grammar::setUpNodes ()
      UntypedVariableDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
-     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedTokenList*", "modifiers", "",
+     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedExprListExpression*", "modifiers", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedInitializedNameList*", "variables", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -764,7 +780,7 @@ Grammar::setUpNodes ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedFunctionScope*", "scope", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedTokenList*", "modifiers", "",
+     UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedExprListExpression*", "modifiers", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1362,7 +1378,8 @@ Grammar::setUpNodes ()
   // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
   // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
-  // Rasmussen (12/20/2017): Adding SgUntypedExprListExpression
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+  // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
 
      UntypedNode.setFunctionSource                  ( "SOURCE_UNTYPED_NODE", "../Grammar/LocatedNode.code");
 
@@ -1374,6 +1391,7 @@ Grammar::setUpNodes ()
      UntypedOtherExpression.setFunctionSource       ( "SOURCE_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedNullExpression.setFunctionSource        ( "SOURCE_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedReferenceExpression.setFunctionSource   ( "SOURCE_UNTYPED_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedSubscriptExpression.setFunctionSource   ( "SOURCE_UNTYPED_SUBSCRIPT_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedFunctionCallOrArrayReferenceExpression.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_OR_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
 
@@ -1386,6 +1404,8 @@ Grammar::setUpNodes ()
 
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+  // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+     UntypedNullDeclaration.setFunctionSource               ( "SOURCE_UNTYPED_NULL_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedNullStatement.setFunctionSource                 ( "SOURCE_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedIfStatement.setFunctionSource                   ( "SOURCE_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedCaseStatement.setFunctionSource                 ( "SOURCE_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
@@ -1477,10 +1497,13 @@ Grammar::setUpNodes ()
      ROSE_ASSERT(InitializedName.associatedGrammar != NULL);
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar() != NULL);
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() != NULL);
-     printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
-          (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
-               "ROOT GRAMMAR" :
-               InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
+     if (verbose) {
+         printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
+                 (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
+                 "ROOT GRAMMAR" :
+                 InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
+     }
+
 #if 0
      if (InitializedName.associatedGrammar->isRootGrammar() == false)
         {

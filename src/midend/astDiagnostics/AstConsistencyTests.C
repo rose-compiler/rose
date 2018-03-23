@@ -4818,9 +4818,11 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
         }
 
   // DQ (10/16/2017): Skip parent pointer checking for the untyped IR nodes.
+  // Rasmussen (3/7/2018): Added class name and node pointer address to output.
      if (isSgUntypedNode(locatedNode) != NULL)
         {
-          printf ("TestParentPointersInMemoryPool::visit(): Skipping SgUntypedNode IR Node \n");
+           std::cerr << "TestParentPointersInMemoryPool::visit(): Skipping SgUntypedNode IR Node "
+                     << node->sage_class_name() << ": " << node << std::endl;
           return;
         }
 

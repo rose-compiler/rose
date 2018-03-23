@@ -1,6 +1,6 @@
 // Contributed by Jeff Keasler
 // 5/24/2010
-#include "omp.h" 
+#include <omp.h> 
 
 void goo(int numAB)
 {

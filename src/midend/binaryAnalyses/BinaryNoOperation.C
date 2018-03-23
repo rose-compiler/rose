@@ -131,7 +131,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SmtSolver *solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
         ops->computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS);
         ops->computingMemoryWriters(SymbolicSemantics::TRACK_LATEST_WRITER); // necessary to erase non-written memory
@@ -259,9 +259,11 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // better way would be to use the instruction pointer register from the state we already computed. Doing so would be a
     // more accurate way to handle opaque predicates.
     //
-    // The check for states.size()==insns.size() is because if there was an exception above, then there won't be as many states
-    // as instructions and we're in effect already ignoring the state for the last instruction (and possibly more).
-    if (ignoreTerminalBranches_ && insns.size() > 1 && states.size() == insns.size()) {
+    // The check for states.size()+1==insns.size() is because if there was an exception above, then there won't be as
+    // many states as instructions and we're in effect already ignoring the state for the last instruction (and possibly
+    // more). There's normally one more state than instructions because we've saved the initial state plus the state
+    // after each instruction.
+    if (ignoreTerminalBranches_ && insns.size() > 1 && states.size() == insns.size() + 1) {
         bool isComplete = true;
         std::set<rose_addr_t> succs = insns.back()->getSuccessors(&isComplete);
         if (succs.size() > 1 || !isComplete) {

@@ -23,7 +23,7 @@
 // MS: 04/25/02
 DummyAttribute
 AstSimpleProcessing::evaluateInheritedAttribute(SgNode* astNode,
-        DummyAttribute inheritedValue)
+        DummyAttribute /*inheritedValue*/)
 {
     visit(astNode);
     // dummy attribute, return default
@@ -37,7 +37,7 @@ AstSimpleProcessing::evaluateInheritedAttribute(SgNode* astNode,
 DummyAttribute 
 AstSimpleProcessing::evaluateSynthesizedAttribute(SgNode* astNode,
         DummyAttribute inheritedValue,
-        SynthesizedAttributesList l)
+        SynthesizedAttributesList)
 {
     visit(astNode);
     // dummy attribute, return default
@@ -47,7 +47,7 @@ AstSimpleProcessing::evaluateSynthesizedAttribute(SgNode* astNode,
 
 DummyAttribute
 AstPrePostProcessing::evaluateInheritedAttribute(SgNode* astNode,
-        DummyAttribute inheritedValue)
+        DummyAttribute /*inheritedValue*/)
 {
     preOrderVisit(astNode);
     // dummy attribute, return default
@@ -57,8 +57,8 @@ AstPrePostProcessing::evaluateInheritedAttribute(SgNode* astNode,
 
 DummyAttribute 
 AstPrePostProcessing::evaluateSynthesizedAttribute(SgNode* astNode,
-        DummyAttribute inheritedValue,
-        SynthesizedAttributesList l)
+        DummyAttribute /*inheritedValue*/,
+        SynthesizedAttributesList)
 {
     postOrderVisit(astNode);
     DummyAttribute a = defaultDummyAttribute;
@@ -67,14 +67,14 @@ AstPrePostProcessing::evaluateSynthesizedAttribute(SgNode* astNode,
 
 // MS: 07/30/04
 DummyAttribute 
-AstSimpleProcessing::defaultSynthesizedAttribute(DummyAttribute inheritedValue)
+AstSimpleProcessing::defaultSynthesizedAttribute(DummyAttribute /*inheritedValue*/)
 {
     DummyAttribute a = defaultDummyAttribute;
     return a;
 }
 
 DummyAttribute 
-AstPrePostProcessing::defaultSynthesizedAttribute(DummyAttribute inheritedValue)
+AstPrePostProcessing::defaultSynthesizedAttribute(DummyAttribute /*inheritedValue*/)
 {
     DummyAttribute a = defaultDummyAttribute;
     return a;

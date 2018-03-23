@@ -26,6 +26,11 @@ Reachability::cfg(const P2::ControlFlowGraph &g) {
     clearReachability();
 }
 
+void
+Reachability::replaceCfg(const P2::ControlFlowGraph &g) {
+    cfg_ = g;
+}
+
 unsigned
 Reachability::isIntrinsicallyReachable(size_t vertexId) const {
     ASSERT_require(vertexId < cfg_.nVertices());

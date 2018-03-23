@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page auto_par autoPar
+/** @defgroup auto_par autoPar
+ *  @ingroup rosetools
  * 
  * @section sec_overview Overview
  *
@@ -21,12 +22,12 @@
  * autoPar -help
  * 
  * Auto parallelization-specific options
- * -rose:autopar:enable_debug     run automatic parallelization in a debugging mode
- * -rose:autopar:enable_patch     additionally generate patch files for translations
- * -rose:autopar:unique_indirect_index assuming all arrays used as indirect indices have unique elements (no overlapping)
- * -rose:autopar:enable_distance  report the absolute dependence distance of a dependence relation preventing parallelization
- * -annot filename        specify annotation file for semantics of abstractions. This option can be repeated in one command line to load multiple annotation files. 
- * -dumpannot            dump annotation file content
+ * --[rose:autopar:]enable_debug     run automatic parallelization in a debugging mode
+ * --[rose:autopar:]enable_patch     additionally generate patch files for translations
+ * --[rose:autopar:]unique_indirect_index assuming all arrays used as indirect indices have unique elements (no overlapping)
+ * --[rose:autopar:]enable_distance  report the absolute dependence distance of a dependence relation preventing parallelization
+ * --[rose:autopar:]annot filename   specify annotation file for semantics of abstractions. This option can be repeated in one command line to load multiple annotation files. 
+ * --[rose:autopar:]dumpannot        dump annotation file content
  * @endcode
  *
  * 
@@ -50,7 +51,7 @@
  * 
  * You can run the tool as follows:
  * @code{.unparsed}
- * autoPar -rose:autopar:unique_indirect_index -rose:autopar:enable_patch inner_only.c
+ * autoPar -c inner_only.c
  *
  * Enabling generating patch files for auto parallelization ...
  * Assuming all arrays used as indirect indices have unique elements (no overlapping) ...
@@ -97,7 +98,7 @@
  * 
  * To use the patch generation feature:
  * @code{.unparsed}
- * autoPar -rose:autopar:unique_indirect_index -rose:autopar:enable_patch -c jacobi_seq.c
+ * autoPar -enable_patch -c jacobi_seq.c
  * Enabling generating patch files for auto parallelization ...
  * Assuming all arrays used as indirect indices have unique elements (no overlapping) ...
  * 
@@ -169,12 +170,12 @@
  * 
  * Running the autoPar as an OpenMP directive checker produces this result:
  * @code{.c}
- * % autoPar -rose:unparse_tokens -rose:autopar:unique_indirect_index -rose:autopar:enable_diff  -fopenmp -c OMPcheck.cc
+ * % autoPar -enable_diff -c OMPcheck.cc
  * <<<<<<<<<
  * user defined      : #pragma omp parallel for
  * --------
  * OMPcheck.cc:11
- * compiler generated:#pragma omp parallel for private (i) reduction (+:total)
+ * autoPar generated:#pragma omp parallel for private (i) reduction (+:total)
  * >>>>>>>> 
  * @endcode
  * The output above from autoPar indicates that the OMP pragma is missing an OpenMP 'private' declaration for the variable 'i', and a reduction annotation for the variable 'total'.

@@ -1,7 +1,7 @@
 /* a local variable to transfer temp value
  * It introduces "fake" data dependence since the variable is local to each iteration
  * */
-#include "omp.h" 
+#include <omp.h> 
 int a[100];
 int b[100];
 

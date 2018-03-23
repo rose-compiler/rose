@@ -8,6 +8,7 @@
 #include <boost/regex.hpp>
 #include <boost/thread/locks.hpp>
 #include <errno.h>
+#include <Sawyer/Stopwatch.h>
 
 #ifdef _MSC_VER
 #define strtoull _strtoui64
@@ -59,14 +60,9 @@ YicesSolver::available_linkage() {
 SmtSolver::Satisfiable
 YicesSolver::checkLib() {
     requireLinkage(LM_LIBRARY);
+    ASSERT_forbid(memoization());
 
 #ifdef ROSE_HAVE_LIBYICES
-    ++stats.ncalls;
-    {
-        boost::lock_guard<boost::mutex> lock(classStatsMutex);
-        ++classStats.ncalls;
-    }
-
     if (!context) {
         context = yices_mk_context();
         ASSERT_not_null(context);
@@ -78,6 +74,7 @@ YicesSolver::checkLib() {
     yices_enable_type_checker(true);
 #endif
 
+    Sawyer::Stopwatch prepareTimer;
     std::vector<SymbolicExpr::Ptr> exprs = assertions();
     Definitions defns;
     termExprs.clear();
@@ -85,10 +82,19 @@ YicesSolver::checkLib() {
     ctx_common_subexpressions(exprs);
     for (std::vector<SymbolicExpr::Ptr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
         ctx_assert(*ei);
+    stats.prepareTime += prepareTimer.stop();
+
+    Sawyer::Stopwatch timer;
     switch (yices_check(context)) {
-        case l_false: return SAT_NO;
-        case l_true:  return SAT_YES;
-        case l_undef: return SAT_UNKNOWN;
+        case l_false:
+            stats.solveTime += timer.stop();
+            return SAT_NO;
+        case l_true:
+            stats.solveTime += timer.stop();
+            return SAT_YES;
+        case l_undef:
+            stats.solveTime += timer.stop();
+            return SAT_UNKNOWN;
     }
     ASSERT_not_reachable("switch statement is incomplete");
 #else
@@ -112,6 +118,7 @@ void
 YicesSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns)
 {
     requireLinkage(LM_EXECUTABLE);
+    ASSERT_forbid(memoization());
     Definitions *allocated = NULL;
     if (!defns)
         defns = allocated = new Definitions;
@@ -152,6 +159,8 @@ YicesSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> 
 
 void
 YicesSolver::parseEvidence() {
+    ASSERT_forbid(memoization());
+    Sawyer::Stopwatch evidenceTimer;
     boost::regex varNameRe("v\\d+");
     boost::regex memNameRe("m\\d+");
     boost::regex binaryConstantRe("0b[01]+");
@@ -191,6 +200,7 @@ YicesSolver::parseEvidence() {
             mlog[ERROR] <<"\n";
         }
     }
+    stats.evidenceTime += evidenceTimer.stop();
 }
 
 std::vector<std::string>
@@ -672,7 +682,7 @@ YicesSolver::out_set(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(in->nChildren() >= 2);
     SymbolicExpr::LeafPtr var = varForSet(in);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in, var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in, SmtSolverPtr(), var);
     ite->comment(in->comment());
     return out_expr(ite);
 }

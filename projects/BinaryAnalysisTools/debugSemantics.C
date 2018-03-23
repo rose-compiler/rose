@@ -174,7 +174,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .doc("Allows the RegisterStateGeneric::accessModifiesExistingLocations property to be turned on or off based "
                     "on the contents of the stack pointer register.  While the stack pointer contains the value "
                     "0x137017c1 the set of stored register locations is not allowed to change. E.g., reading AL when the "
-                    "register state is storing AX will not cause it to start sorting AL and AH instead of AX. The "
+                    "register state is storing AX will not cause it to start storing AL and AH instead of AX. The "
                     "@s{no-test-adaptive-registers} switch disables this feature. The default is to " +
                     std::string(settings.testAdaptiveRegisterState?"":"not ") + " operate in this mode."));
     ctl.insert(Switch("no-test-adaptive-registers")
@@ -248,7 +248,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     return parser.with(sem).with(ctl).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
-static SmtSolver *
+static SmtSolverPtr
 makeSolver(const Settings &settings) {
     return SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 }
@@ -399,7 +399,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     if (className.empty())
         throw std::runtime_error("--semantics switch is required");
     
-    SmtSolver *solver = makeSolver(settings);
+    SmtSolverPtr solver = makeSolver(settings);
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
@@ -535,6 +535,12 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
                           SymbolicSemantics::MemoryMapStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
+        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
+                   settings.rstateClassName=="symbolic" && settings.mstateClassName=="symbolic-list") {
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
             ::mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
@@ -612,7 +618,9 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         try {
             dispatcher->processInstruction(insn);
         } catch (const BaseSemantics::Exception &e) {
-            std::cout <<e <<"\n";
+            std::cout <<"Semantics error: " <<e <<"\n";
+        } catch (const SmtSolver::Exception &e) {
+            std::cout <<"SMT solver error: " <<e.what() <<"\n";
         }
         if (settings.showStates)
             std::cout <<(*ops+formatter) <<"\n";

@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @defgroup tooldev_makefile Build systems
+ *  @ingroup tooldev
+ *  
+ *  Using a build system to build tools.
+ *
+ *  Once the ROSE library has been @ref installation "configured, built, and installed" it can be used. Any program that uses
+ *  ROSE will likely need to be compiled with the same switches and software components as ROSE itself.  The easiest way to get
+ *  this information is by running "rose-config --help".
+ *
+ *  Here's an example makefile:
+ *
+ *  @includelineno SampleMakefile */

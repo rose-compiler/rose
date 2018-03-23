@@ -1,5 +1,5 @@
 #if 1
-#include "omp.h" 
+#include <omp.h> 
 
 void foo1(double o1[],double c[],int len)
 {

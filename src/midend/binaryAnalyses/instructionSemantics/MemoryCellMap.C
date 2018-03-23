@@ -29,6 +29,19 @@ MemoryCellMap::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscO
     return retval;
 }
 
+SValuePtr
+MemoryCellMap::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    // Just like readMemory except no side effects
+    SValuePtr retval;
+    CellKey key = generateCellKey(address);
+    if (MemoryCellPtr cell = cells.getOrDefault(key)) {
+        retval = cell->get_value();
+    } else {
+        retval = dflt->copy();
+    }
+    return retval;
+}
+
 void
 MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(address);
@@ -43,6 +56,18 @@ MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, Ris
     CellKey key = generateCellKey(address);
     cells.insert(key, newCell);
     latestWrittenCell_ = newCell;
+}
+
+bool
+MemoryCellMap::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps) const {
+    ASSERT_not_null(addrOps);
+    for (size_t offset = 0; offset < nBytes; ++offset) {
+        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->get_width(), offset));
+        CellKey key = generateCellKey(byteAddress);
+        if (!cells.exists(key))
+            return false;
+    }
+    return true;
 }
 
 bool
