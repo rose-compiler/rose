@@ -4,13 +4,14 @@
 #include <sstream>
 #include "rose.h"
 #include "AstTerm.h"
-#include "AstMatching.h"
 #include "SgNodeHelper.h"
 #include <list>
 #include <vector>
 #include "Timer.h"
 #include "CommandLineOptions.h"
 #include <map>
+#include <AstProcessing.h>
+#include "AstMatching.h"
 
 // graph support
 #include "Sawyer/Graph.h"
@@ -24,6 +25,7 @@
 #endif
 
 #include "CastStats.h"
+#include "CastTransformer.h"
 
 using namespace std;
 
@@ -339,22 +341,49 @@ int main (int argc, char* argv[])
     makeAllCastsExplicit(sageProject);
     cout<<"Converted all implicit casts to explicit casts."<<endl;
   }
+
   if(args.isUserProvided("stats")) {
     CastStats castStats;
     castStats.computeStats(sageProject);
     cout<<castStats.toString();
+    return 0;
   }
+
   if(args.isUserProvided("annotate")) {
     annotateImplicitCastsAsComments(sageProject);
     cout<<"Annotated program with comments."<<endl;
-  } else if(args.isUserProvided("float-var")) {
+    backend(sageProject);
+    return 0;
+  }
+  
+  if(args.isUserProvided("dot-type-graph")) {
+    generateTypeGraph(sageProject);
+    return 0;
+  }
+
+  if(args.isUserProvided("float-var")) {
     cout<<"Changing variable type."<<endl;
     string varName=args.getString("float-var");
     changeVariableType(sageProject, varName, SageBuilder::buildFloatType());
   }
-  if(args.isUserProvided("dot-type-graph")) {
-    generateTypeGraph(sageProject);
-    exit(0);
+  if(args.isUserProvided("double-var")) {
+    cout<<"Changing variable type."<<endl;
+    string varName=args.getString("double-var");
+    changeVariableType(sageProject, varName, SageBuilder::buildDoubleType());
+  } 
+  if(args.isUserProvided("long-double-var")) {
+    cout<<"Changing variable type."<<endl;
+    string varName=args.getString("long-double-var");
+    changeVariableType(sageProject, varName, SageBuilder::buildLongDoubleType());
+  }
+
+  bool transform=args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var");
+  if(transform) {
+    // make all floating point casts explicit
+    makeAllCastsExplicit(sageProject);
+    // transform all casts now
+    CastTransformer ct;
+    ct.traverseWithinCommandLineFiles(sageProject);
   }
 
   backend(sageProject);
