@@ -57,8 +57,8 @@ LabelSet CFAnalysis::functionEntryLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
   nodeLabels=flow.nodeLabels();
-  for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
-    if(labeler->isFunctionEntryLabel(*i))
+   for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
+    if(labeler->isFunctionEntryLabel(*i)) 
       resultSet.insert(*i);
   }
   return resultSet;
@@ -186,7 +186,7 @@ SgStatement* CFAnalysis::getLastStmtInBlock(SgBasicBlock* block) {
 }
 
 Label CFAnalysis::initialLabel(SgNode* node) {
-  assert(node);
+  ROSE_ASSERT(node);
 
   // special case of incExpr in SgForStatement
   if(SgNodeHelper::isForIncExpr(node))
@@ -200,7 +200,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     cerr << "Error: icfg construction: not label relevant node "<<node->sage_class_name()<<endl;
     exit(1);
   }
-  assert(labeler->isLabelRelevantNode(node));
+  ROSE_ASSERT(labeler->isLabelRelevantNode(node));
   switch (node->variantT()) {
   case V_SgFunctionDeclaration:
     cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
@@ -273,6 +273,10 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpWorkshareStatement:
     return labeler->getLabel(node);
 
+    // special case
+  case V_SgTypedefDeclaration:
+    return labeler->getLabel(node);
+
   default:
     cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
     exit(1);
@@ -294,8 +298,8 @@ SgStatement* CFAnalysis::getCaseOrDefaultBodyStmt(SgNode* node) {
 } 
 
 LabelSet CFAnalysis::finalLabels(SgNode* node) {
-  assert(node);
-  assert(labeler->isLabelRelevantNode(node));
+  ROSE_ASSERT(node);
+  ROSE_ASSERT(labeler->isLabelRelevantNode(node));
   LabelSet finalSet;
 
   // special case of incExpr in SgForStatement
@@ -453,6 +457,11 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgOmpWorkshareStatement:
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
+
+    // special case
+  case V_SgTypedefDeclaration:
+    return finalSet;
+
   default:
     cerr << "Error: Unknown node in CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
   }
@@ -941,6 +950,10 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
   case V_SgOmpWorkshareStatement:
+    return edgeSet;
+
+    // special case
+  case V_SgTypedefDeclaration:
     return edgeSet;
 
   case V_SgContinueStmt: {
