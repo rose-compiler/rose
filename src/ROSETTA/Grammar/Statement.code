@@ -14154,7 +14154,7 @@ SgTemplateInstantiationDecl::post_construction_initialization()
 
   // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
   // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
-     ROSE_ASSERT(p_type == NULL);
+  // ROSE_ASSERT(p_type == NULL);
 
 #if 0
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
