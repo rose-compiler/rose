@@ -1039,6 +1039,7 @@ Flow CFAnalysis::flow(SgNode* node) {
         prevCaseStmtBody=caseBody;
       } else {
         cerr<<"Error: control flow: stmt in switch is not a case or default stmt. Not supported yet."<<endl;
+        cerr<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<(*i)->unparseToString()<<endl;
         exit(1);
       }
     }
