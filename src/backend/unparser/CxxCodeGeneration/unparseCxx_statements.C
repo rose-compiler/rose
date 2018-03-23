@@ -1008,8 +1008,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
 #if 0
-     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
+     printf ("In unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+     printf ("In unparseFunctionArgs(): funcdecl_stmt->get_prototypeIsWithoutParameters() = %s \n",funcdecl_stmt->get_prototypeIsWithoutParameters() ? "true" : "false");
 #endif
 
   // DQ (9/7/2014): These should have been setup to be the same.
@@ -1081,6 +1082,11 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
                curprint(",");
              }
         }
+
+#if 0
+     printf ("Leaving unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
+     curprint("\n/* Leaving unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
    }
 
 //-----------------------------------------------------------------------------------
@@ -1104,6 +1110,9 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
           printf ("   --- templateFunctionDeclaration->get_name()         = %s \n",templateFunctionDeclaration->get_name().str());
           printf ("   --- templateFunctionDeclaration->get_templateName() = %s \n",templateFunctionDeclaration->get_templateName().str());
         }
+     printf ("funcdecl_stmt                                    = %p \n",funcdecl_stmt);
+     printf ("funcdecl_stmt->get_firstNondefiningDeclaration() = %p \n",funcdecl_stmt->get_firstNondefiningDeclaration());
+     printf ("funcdecl_stmt->get_definingDeclaration()         = %p \n",funcdecl_stmt->get_definingDeclaration());
 #endif
 #if 0
      curprint(" /* TOP unparse_helper */ \n");
@@ -1274,6 +1283,10 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      curprint("/* Added closing \")\" to the end of the argument list */ \n");
   // curprint(flush();
      printf ("Leaving Unparse_ExprStmt::unparse_helper() \n");
+#endif
+
+#if 0
+     printf ("Leaving unparse_helper(): funcdecl_stmt->get_name() = %s \n",funcdecl_stmt->get_name().str());
 #endif
    }
 
