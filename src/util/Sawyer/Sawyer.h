@@ -453,7 +453,7 @@ SAWYER_EXPORT std::string thisExecutableName();
 # define SAWYER_STATIC_INIT /*void*/
 # define SAWYER_DEPRECATED(WHY) /*void*/
 
-// Apple compilers doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector,
+// Apple compilers don't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector,
 // which will be cleaned up propertly at end of scope or exceptions.
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
     std::vector<TYPE> NAME##Vec_(SIZE);                 \
