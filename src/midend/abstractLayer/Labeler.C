@@ -241,9 +241,10 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
   case V_SgClassDeclaration:
+#ifdef TYPEDEF_SUPPORT
   case V_SgTypedefDeclaration:
     return 1;
-
+#endif
     // represent all parallel omp constructs as nodes
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
