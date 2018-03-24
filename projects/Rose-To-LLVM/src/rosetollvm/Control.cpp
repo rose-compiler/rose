@@ -195,11 +195,17 @@ void Control::emitLLVM(string &file_prefix, llvm::Module *module) {
 }
 
 
+//extern int llc(int argc, char **argv);
+//extern int compileModule(char *argv0, LLVMContext &Context, std::unique_ptr<Module> &M);
+
 /**
  * Process the list of intermediate files and generate the output.
  */
 std::vector<llvm::Module*> Control::generateOutput() {
-  std::vector<llvm::Module*> res; // TODO: should be a vector of std::unique_ptr<llvm::Module> !
+    std::vector<llvm::Module*> res; // TODO: should be a vector of std::unique_ptr<llvm::Module> !
+
+    string link_command;
+    
     /**
      * 
      */
@@ -234,6 +240,19 @@ std::vector<llvm::Module*> Control::generateOutput() {
             raw_fd_ostream bc_ostream(bc_name.c_str(), EC, sys::fs::F_RW);
             WriteBitcodeToFile(module.get(), bc_ostream);
             bc_ostream.close();
+
+            int ret = system(("llc -filetype=obj " + bc_name).c_str());
+            if (ret != 0) {
+                cout << "***rose2llvm error: llc could not generate object file." << endl;
+	        cout.flush();
+		exit(ret);
+            }
+
+            if (! option.isCompileOnly()) {
+                link_command += " ";
+                link_command += file_prefix;
+                link_command += ".o";
+            }
         }
 
         /**
@@ -255,6 +274,22 @@ std::vector<llvm::Module*> Control::generateOutput() {
         delete llvm_streams[i];
         llvm_streams[i] = NULL;
     }
+
+    /**
+     * If we need to link the program, we do so here.
+     */
+    if (link_command.size()) {
+        link_command = (string) "gcc" + " " + option.optimizationLevel() + " " + option.outputFilename() + link_command;
+cout << "***Issuing Link command: " << link_command << endl;
+cout.flush();
+        int ret = system(link_command.c_str());
+        if (ret != 0) {
+            cout << "***rose2llvm error: gcc could not generate executable file." << endl;
+            cout.flush();
+            exit(ret);
+        }
+    }
+	
     return res;
 }
 
@@ -286,235 +321,14 @@ string Control::FloatToString(double x) {
 }
 
 /**
- * This code was copied from llvm-4.0.1 AsmWriter and altered slightly here...
  *
- * AsmWriter.cpp:
- *
- *     static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
- *                                       TypePrinting &TypePrinter,
- *                                       SlotTracker *Machine,
- *                                       const Module *Context) { ... }
  */
 string Control::FloatToString(APFloat &f) {
-    string output_string;
-    llvm::raw_string_ostream out(output_string);
-
-    if (&(f.getSemantics()) == &APFloat::IEEEsingle() ||
-        &(f.getSemantics()) == &APFloat::IEEEdouble()) {
-        // We would like to output the FP constant value in exponential notation,
-        // but we cannot do this if doing so will lose precision.  Check here to
-        // make sure that we only output it in exponential format if we can parse
-        // the value back and get the same value.
-        //
-        bool ignored;
-        bool isDouble = &(f.getSemantics()) == &APFloat::IEEEdouble();
-        bool isInf = f.isInfinity();
-        bool isNaN = f.isNaN();
-        if (!isInf && !isNaN) {
-            double Val = isDouble ? f.convertToDouble() :
-                                    f.convertToFloat();
-            //
-            // TODO: THIS NEEDS TO BE FIXED !!!
-            //
-            /*	    
-            SmallString<128> StrVal;
-            raw_svector_ostream(StrVal) << Val;
-
-            // Check to make sure that the stringized number is not some string like
-            // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
-            // that the string matches the "[-+]?[0-9]" regex.
-            //
-            if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-                ((StrVal[0] == '-' || StrVal[0] == '+') &&
-                 (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
-                // Reparse stringized version!
-                if (APFloat(APFloat::IEEEdouble(), StrVal).convertToDouble() == Val) {
-                    return StrVal.str().str();
-                }
-            }
-            */
-
-            out << Val;
-            string result = out.str(); // call to str() is required in order to flush buffer ...
-
-            // Check to make sure that the stringized number is not some string like
-            // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
-            // that the string matches the "[-+]?[0-9]" regex.
-            //
-            if (result.length() >= 2) {
-                if ((result[0] >= '0' && result[0] <= '9') ||
-                    ((result[0] == '-' || result[0] == '+') &&
-                     (result[1] >= '0' && result[1] <= '9'))) {
-                    // Reparse stringized version!
-                    if (APFloat(APFloat::IEEEdouble(), result/* StrVal*/).convertToDouble() == Val) {
-                        return result;
-                    }
-                }
-            }
-        }
- 
-        output_string = ""; // Clear the string...
-	
-        // Otherwise we could not reparse it to exactly the same value, so we must
-        // output the string in hexadecimal format!  Note that loading and storing
-        // floating point types changes the bits of NaNs on some hosts, notably
-        // x86, so we must not use these types.
-        static_assert(sizeof(double) == sizeof(uint64_t),
-                      "assuming that double is 64 bits!");
-        APFloat apf = f;
-        // Floats are represented in ASCII IR as double, convert.
-        if (!isDouble)
-            apf.convert(APFloat::IEEEdouble(), APFloat::rmNearestTiesToEven,
-                              &ignored);
-        out << format_hex(apf.bitcastToAPInt().getZExtValue(), 0, /*Upper=*/true);
-        return out.str();
-    }
-
-    // Either half, or some form of long double.
-    // These appear as a magic letter identifying the type, then a
-    // fixed number of hex digits.
-    out << "0x";
-    APInt API = f.bitcastToAPInt();
-    if (&(f.getSemantics()) == &APFloat::x87DoubleExtended()) {
-        out << 'K';
-
-        out << format_hex_no_prefix(API.getHiBits(16).getZExtValue(), 4,
-                                    /*Upper=*/true);
-        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
-                                    /*Upper=*/true);
-    }
-    else if (&(f.getSemantics()) == &APFloat::IEEEquad()) {
-        out << 'L';
-        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
-                                    /*Upper=*/true);
-        out << format_hex_no_prefix(API.getHiBits(64).getZExtValue(), 16,
-                                    /*Upper=*/true);
-    }
-    else if (&(f.getSemantics()) == &APFloat::PPCDoubleDouble()) {
-        out << 'M';
-        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
-                                    /*Upper=*/true);
-        out << format_hex_no_prefix(API.getHiBits(64).getZExtValue(), 16,
-                                    /*Upper=*/true);
-    }
-    else if (&(f.getSemantics()) == &APFloat::IEEEhalf()) {
-        out << 'H';
-        out << format_hex_no_prefix(API.getZExtValue(), 4,
-                                    /*Upper=*/true);
-    }
-    else
-        llvm_unreachable("Unsupported floating point type");
-
-    return out.str();
+    SmallString<128> Str;
+  
+    f.toString(Str, 0, 0);
     
-  /*
-    if (&f.getSemantics() == &APFloat::IEEEsingle() || &f.getSemantics() == &APFloat::IEEEdouble()) {
-        // We would like to output the FP constant value in exponential notation,
-        // but we cannot do this if doing so will lose precision.  Check here to
-        // make sure that we only output it in exponential format if we can parse
-        // the value back and get the same value.
-        //
-        bool ignored;
-        bool isHalf = &f.getSemantics()==&APFloat::IEEEhalf();
-        bool isDouble = &f.getSemantics()==&APFloat::IEEEdouble();
-        bool isInf = f.isInfinity();
-        bool isNaN = f.isNaN();
-        if (!isHalf && !isInf && !isNaN) {
-            double Val = isDouble ? f.convertToDouble() : f.convertToFloat();
-            SmallString<128> StrVal;
-            raw_svector_ostream(StrVal) << Val;
-
-            // Check to make sure that the stringized number is not some string like
-            // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
-            // that the string matches the "[-+]?[0-9]" regex.
-            //
-            if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-                ((StrVal[0] == '-' || StrVal[0] == '+') &&
-                 (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
-                 // Reparse stringized version!
-                 if (APFloat(APFloat::IEEEdouble(), StrVal).convertToDouble() == Val) {
-                    return StrVal.str().str();
-                }
-            }
-        }
-        // Otherwise we could not reparse it to exactly the same value, so we must
-        // output the string in hexadecimal format!  Note that loading and storing
-        // floating point types changes the bits of NaNs on some hosts, notably
-        // x86, so we must not use these types.
-        assert(sizeof(double) == sizeof(uint64_t) && "assuming that double is 64 bits!");
-        char Buffer[40];
-        APFloat apf = f;
-        // Halves and floats are represented in ASCII IR as double, convert.
-        if (!isDouble) {
-            apf.convert(APFloat::IEEEdouble(), APFloat::rmNearestTiesToEven, &ignored);
-        }
-//         out << "0x" << utohex_buffer(uint64_t(apf.bitcastToAPInt().getZExtValue()), Buffer+40);
-	out << format_hex(apf.bitcastToAPInt().getZExtValue(), 0, /*Upper=*/ /*true);
-        return out.str();
-    }
-
-    // Either half, or some form of long double.
-    // These appear as a magic letter identifying the type, then a
-    // fixed number of hex digits.
-    out << "0x";
-    // Bit position, in the current word, of the next nibble to print.
-    int shiftcount;
-
-    if (&f.getSemantics() == &APFloat::x87DoubleExtended()) {
-        out << 'K';
-        // api needed to prevent premature destruction
-        APInt api = f.bitcastToAPInt();
-        const uint64_t* p = api.getRawData();
-        uint64_t word = p[1];
-        shiftcount = 12;
-        int width = api.getBitWidth();
-        for (int j=0; j<width; j+=4, shiftcount-=4) {
-            unsigned int nibble = (word>>shiftcount) & 15;
-            if (nibble < 10)
-                out << (unsigned char)(nibble + '0');
-            else
-                out << (unsigned char)(nibble - 10 + 'A');
-            if (shiftcount == 0 && j+4 < width) {
-                word = *p;
-                shiftcount = 64;
-                if (width-j-4 < 64)
-                    shiftcount = width-j-4;
-            }
-        }
-
-        return out.str();
-    } else if (&f.getSemantics() == &APFloat::IEEEquad()) {
-        shiftcount = 60;
-        out << 'L';
-    } else if (&f.getSemantics() == &APFloat::PPCDoubleDouble()) {
-        shiftcount = 60;
-        out << 'M';
-    } else if (&f.getSemantics() == &APFloat::IEEEhalf()) {
-        shiftcount = 12;
-        out << 'H';
-    } else
-        llvm_unreachable("Unsupported floating point type");
-
-    // api needed to prevent premature destruction
-    APInt api = f.bitcastToAPInt();
-    const uint64_t* p = api.getRawData();
-    uint64_t word = *p;
-    int width = api.getBitWidth();
-    for (int j=0; j<width; j+=4, shiftcount-=4) {
-        unsigned int nibble = (word>>shiftcount) & 15;
-        if (nibble < 10)
-            out << (unsigned char)(nibble + '0');
-        else
-            out << (unsigned char)(nibble - 10 + 'A');
-        if (shiftcount == 0 && j+4 < width) {
-            word = *(++p);
-            shiftcount = 64;
-            if (width-j-4 < 64)
-                shiftcount = width-j-4;
-        }
-    }
-    return out.str();
-*/
+    return Str.str().str();
 }
 
 bool Control::isIntegerType(SgType *t) {

@@ -164,6 +164,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
 public:
+    /** Predicate to determine whether all bytes are present.
+     *
+     *  Returns true if bytes at the specified address and the following consecutive addresses are all present in this
+     *  memory state. */
+    virtual bool isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps, RiscOperators *valOps) const;
+
     /** Property: erase occluded cells.
      *
      *  If this property is true, then writing a new cell to memory will also erase all older cells that must alias the new

@@ -1,5 +1,5 @@
 // a test for two pointers without aliasing
-#include "omp.h" 
+#include <omp.h> 
 
 void foo(int m_namix)
 {

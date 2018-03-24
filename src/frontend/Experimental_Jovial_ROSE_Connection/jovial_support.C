@@ -14,6 +14,7 @@
 #include "jovial_support.h"
 #include "ATermToUntypedJovialTraversal.h"
 #include "UntypedJovialTraversal.h"
+#include "UntypedJovialConverter.h"
 
 int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
@@ -97,10 +98,11 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
   // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
   // ------
 
-  // Build the ATerm traversal object
+  // Create the ATerm traversal object
 
-     Jovial::Untyped::UntypedTraversal sg_traversal(sg_source_file);
-     Jovial::Untyped::InheritedAttribute scope = NULL;
+     Untyped::UntypedJovialConverter sg_converter;
+     Untyped::UntypedJovialTraversal sg_traversal(sg_source_file, &sg_converter);
+     Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
      sg_traversal.traverse(aterm_traversal->get_file(),scope);

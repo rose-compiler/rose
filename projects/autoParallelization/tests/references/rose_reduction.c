@@ -1,7 +1,7 @@
 /*
  *  Test for automatic recognition of reduction variables
  * */
-#include "omp.h" 
+#include <omp.h> 
 int a[100];
 int sum;
 

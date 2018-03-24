@@ -494,42 +494,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    //                                  Saving and loading
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /** Save state in a file.
-     *
-     *  The partitioner's current state is saved in the specified binary file, which will be created if it doesn't exist and
-     *  truncated first if it does exist. A @ref FileError is thrown for failures related to the file; various Boost errors are
-     *  thrown for failures related to the serialization.
-     *
-     *  If a @ref Sawyer::ProgressBar is supplied then its range will be set to be a spinner (0, 0) and its value will be
-     *  periodically updated to equal its current size while the serialization progresses in a separate thread.
-     *
-     * @{ */
-    void saveRbaFile(const boost::filesystem::path &fileName) const;
-    void saveRbaFile(const boost::filesystem::path &fileName, Sawyer::ProgressBar<size_t> &progress) const;
-    /** @} */
-
-    /** Load state from a file.
-     *
-     *  This partitioner's state is reset by loading information from a file previously saved with @ref saveRbaFile. A @ref
-     *  FileError is thrown for failures related to the file; various Boost errors are thrown for failures related to the
-     *  deserialization.
-     *
-     *  If a @ref Sawyer::ProgressBar is supplied then its range will be adjusted to equal the total input file size and it
-     *  will be incremented while the actual deserialization progresses in a separate thread.
-     *
-     * @{ */
-    void loadRbaFile(const boost::filesystem::path &fileName);
-    void loadRbaFile(const boost::filesystem::path &fileName, Sawyer::ProgressBar<size_t> &progress);
-    /** @} */
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
     //                                  Unparsing
     //
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

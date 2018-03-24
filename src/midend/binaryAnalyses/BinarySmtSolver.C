@@ -376,6 +376,20 @@ SmtSolver::check() {
             ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
     }
 
+    if (mlog[DEBUG]) {
+        switch (retval) {
+            case SAT_NO:
+                mlog[DEBUG] <<"  unsat\n";
+                break;
+            case SAT_YES:
+                mlog[DEBUG] <<"  sat\n";
+                break;
+            case SAT_UNKNOWN:
+                mlog[DEBUG] <<"  unknown\n";
+                break;
+        }
+    }
+    
     // Cache the result
     if (doMemoization_) {
         memoization_[h] = retval;
@@ -468,10 +482,8 @@ SmtSolver::checkExe() {
     // Look for an expression that's just "sat" or "unsat"
     BOOST_FOREACH (const SExpr::Ptr &expr, parsedOutput_) {
         if (expr->name() == "sat") {
-            mlog[DEBUG] <<"satisfied\n";
             return SAT_YES;
         } else if (expr->name() == "unsat") {
-            mlog[DEBUG] <<"not satisfied\n";
             return SAT_NO;
         }
     }
