@@ -468,14 +468,14 @@ rose_config_cfg_DATA = rose-config.cfg
 rose-config.cfg:
 	$(AM_V_GEN) (								\
 		echo "# Things that the 'rose-config' tool can report";		\
-		echo "cc       = $(CC)";					\
-		echo "cxx      = $(CXX)";					\
-		echo "cppflags = $(rose_config_installed_cppflags)";		\
-		echo "cflags   = $(CFLAGS)";					\
-		echo "cxxflags = $(CXXFLAGS)";					\
-		echo "ldflags  = $(rose_config_installed_ldflags)";		\
-		echo "libdirs  = $(filter-out -R, $(ROSE_RPATHS))";		\
-		echo "prefix   = $(prefix)";					\
+		echo "ROSE_CC       = $(CC)";					\
+		echo "ROSE_CXX      = $(CXX)";					\
+		echo "ROSE_CPPFLAGS = $(rose_config_installed_cppflags)";		\
+		echo "ROSE_CFLAGS   = $(CFLAGS)";					\
+		echo "ROSE_CXXFLAGS = $(CXXFLAGS)";					\
+		echo "ROSE_LDFLAGS  = $(rose_config_installed_ldflags)";		\
+		echo "ROSE_LIBDIRS  = $(filter-out -R, $(ROSE_RPATHS))";		\
+		echo "ROSE_PREFIX   = $(prefix)";					\
 	) >$@
 
 MOSTLYCLEANFILES += rose-config.cfg
