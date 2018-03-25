@@ -49,7 +49,7 @@ class DFAnalysisBase {
   virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
   virtual void initializeSolver();
-  void determineExtremalLabels(SgNode*);
+  void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
   void run();
   //virtual PropertyState* createPropertyState();
 
