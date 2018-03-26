@@ -7017,6 +7017,9 @@ HEADER_TEMPLATE_ARGUMENT_START
        // DQ (5/22/2016): Adding display function for debugging.
           void display( const std::string & label) const;
 
+       // DQ (3/10/2018): Adding debugging support.
+          std::string unparseToStringSupport();
+
 HEADER_TEMPLATE_ARGUMENT_END
 
 
@@ -7024,13 +7027,17 @@ HEADER_TEMPLATE_PARAMETER_LIST_START
 HEADER_TEMPLATE_PARAMETER_LIST_END
 
 HEADER_TEMPLATE_ARGUMENT_LIST_START
+
+       // DQ (3/10/2018): Adding debugging support.
+          std::string unparseToStringSupport();
+
 HEADER_TEMPLATE_ARGUMENT_LIST_END
 
 HEADER_OPENCL_ACCESS_MODE_MODIFIER_START
 
-  // TV (05/03/2010): OpenCL Access Mode Support
+       // TV (05/03/2010): OpenCL Access Mode Support
 
-	enum access_mode_modifier_enum
+          enum access_mode_modifier_enum
              {
                e_unknown       = 0,  /*!< error value */
                e_default       = 1,  /*!< default value */
@@ -20147,6 +20154,29 @@ SgTemplateArgument::display( const std::string & label) const
         }
    }
 
+std::string
+SgTemplateArgument::unparseToStringSupport()
+   {
+  // DQ (3/10/2018): This is a function mostly used for debugging.
+     ROSE_ASSERT(this != NULL);
+
+     SgUnparse_Info *info = new SgUnparse_Info();
+     ROSE_ASSERT(info != NULL);
+
+     info->set_language(SgFile::e_Cxx_language);
+
+  // DQ (4/28/2017): For template arguments we never want to output the definitions of classes, and enums.
+     info->set_SkipClassDefinition();
+     info->set_SkipEnumDefinition();
+     info->set_use_generated_name_for_template_arguments(true);
+
+     std::string returnName = this->unparseToString(info);
+
+     delete info;
+     info = NULL;
+
+     return returnName;
+   }
 
 SOURCE_TEMPLATE_ARGUMENT_END
 
