@@ -275,6 +275,8 @@ SgCastExp
 SgCatchOptionStmt
 SgCatchStatementSeq
 SgCharVal
+SgChar16Val
+SgChar32Val
 SgClassDecl_attr
 SgClassDeclaration
 SgClassDefinition
@@ -670,6 +672,8 @@ SgTupleExp
 SgType
 SgTypeBool
 SgTypeChar
+SgTypeChar16
+SgTypeChar32
 SgTypeComplex
 SgTypeDefault
 SgTypeExpression

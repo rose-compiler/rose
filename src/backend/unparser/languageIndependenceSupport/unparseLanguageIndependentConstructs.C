@@ -469,9 +469,17 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
      ROSE_ASSERT(locatedNode != NULL);
      AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
 
+#if 0
+     curprint ("/* Inside of printOutComments() */");
+#endif
+
      if (comments != NULL)
         {
+#if 0
           printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+          curprint ("/* Inside of printOutComments(): comments != NULL */");
+#endif
+
           AttachedPreprocessingInfoType::iterator i;
           for (i = comments->begin(); i != comments->end(); i++)
              {
@@ -480,6 +488,8 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
                     ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                     (*i)->getString().c_str());
                printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               curprint (string("/* Inside of printOutComments(): comments = ") +  (*i)->getString() + " */");
+
 #if 0
                (*i)->get_file_info()->display("comment/directive location");
 #endif
@@ -3676,13 +3686,26 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  !info.SkipClassDefinition() &&
                                  !info.SkipFunctionDefinition();
 
+#if 0
+          printf ("info.SkipEnumDefinition()     = %s \n",info.SkipEnumDefinition() ? "true" : "false");
+          printf ("info.SkipClassDefinition()    = %s \n",info.SkipClassDefinition() ? "true" : "false");
+          printf ("info.SkipFunctionDefinition() = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+          printf ("Test 1: infoSaysGoAhead       = %s \n",infoSaysGoAhead ? "true" : "false");
+#endif
+
+#if 0
+          printf ("Reset infoSaysGoAhead == true \n");
+          infoSaysGoAhead = true;
+#endif
+
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
        // Liao 11/9/2010: allow SgInitializedName also
        // negara1 (08/15/2011): Allow SgHeaderFileBody as well.
           infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) || (isSgHeaderFileBody(stmt) != NULL);
 
 #if 0
-          printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
+          printf ("stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("Test 2: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
 #endif
 
 #if 0
@@ -5155,6 +5178,11 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgShortVal:               { unparseShortVal(expr, info);        break; }
                case V_SgUnsignedCharVal:        { unparseUCharVal(expr, info);        break; }
                case V_SgWcharVal:               { unparseWCharVal(expr, info);        break; }
+
+            // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+               case V_SgChar16Val:              { unparseChar16Val(expr, info);       break; }
+               case V_SgChar32Val:              { unparseChar32Val(expr, info);       break; }
+
                case V_SgStringVal:              { unparseStringVal(expr, info);       break; }
                case V_SgUnsignedShortVal:       { unparseUShortVal(expr, info);       break; }
                case V_SgEnumVal:                { unparseEnumVal(expr, info);         break; }
@@ -5442,6 +5470,42 @@ UnparseLanguageIndependentConstructs::unparseWCharVal(SgExpression* expr, SgUnpa
        else
         {
           curprint ( wchar_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseChar16Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar16Val* char_val = isSgChar16Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar32Val* char_val = isSgChar32Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
         }
    }
 

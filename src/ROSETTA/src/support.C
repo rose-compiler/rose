@@ -126,6 +126,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (TemplateParameter, "TemplateParameter", "TemplateParameterTag" );
      NEW_TERMINAL_MACRO (TemplateArgument, "TemplateArgument", "TemplateArgumentTag" );
 
+  // DQ (3/10/2018): I think these IR nodes are no longer used, and if so then they could be deleted.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      NEW_TERMINAL_MACRO (TemplateParameterList, "TemplateParameterList", "TemplateParameterListTag" );
      NEW_TERMINAL_MACRO (TemplateArgumentList, "TemplateArgumentList", "TemplateArgumentListTag" );
@@ -2524,6 +2525,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (3/10/2018): I think these IR nodes are not longer used.  If so then we could remove them.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateArgumentList.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT_LIST", "../Grammar/Support.code");
      TemplateArgumentList.setDataPrototype ( "SgTemplateArgumentPtrList", "args",  "",
