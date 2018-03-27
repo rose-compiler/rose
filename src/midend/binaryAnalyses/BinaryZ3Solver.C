@@ -4,10 +4,6 @@
 #include <stringify.h>
 #include <Sawyer/Stopwatch.h>
 
-#ifdef ROSE_HAVE_DLIB
-#include <dlib/bigint.h>
-#endif
-
 using namespace Sawyer::Message::Common;
 
 namespace Rose {
@@ -1060,29 +1056,14 @@ Z3Solver::parseEvidence() {
                 // Z3 doesn't have an API function to obtain the bits of a constant if the constant is wider than 64 bits. We
                 // can't use the trick of splitting the Z3 bit vector into 64-bit chunks and converting each to a uint64_t and
                 // concatenating the results because "bv.extract(hi,lo)" is no longer a number but rather an extraction
-                // expression.  What we can do is get a string of decimal digits and use addition and multiply-by-10 to convert
-                // it to binary. We use Dlib for this.
-#ifdef ROSE_HAVE_DLIB
+                // expression.  What we can do is get a string of decimal digits and parse it to binary. This isn't
+                // particularly efficient since the conversions to/from string require divide/multiply by 10.
                 std::string digits = interp.get_decimal_string(0);
-                dlib::bigint_kernel_1 bigint(0);
-                std::istringstream ss(digits);
-                ss >>bigint;
-                if (bigint == 0) {
-                    val = SymbolicExpr::makeInteger(var->nBits(), 0);
-                } else {
-                    while (!(bigint == 0)) {
-                        SymbolicExpr::Ptr bit = SymbolicExpr::makeBoolean(!(bigint % 2 == 0));
-                        val = val ? SymbolicExpr::makeConcat(bit, val) : bit;
-                        bigint = bigint / dlib::bigint_kernel_1(2);
-                    }
-                    if (val->nBits() < var->nBits())
-                        val = SymbolicExpr::makeConcat(SymbolicExpr::makeInteger(var->nBits() - val->nBits(), 0), val);
-                }
+                Sawyer::Container::BitVector bits(var->nBits());
+                bits.fromDecimal(bits.hull(), digits);
+                val = SymbolicExpr::makeConstant(bits);
                 ASSERT_require(val->nBits() == var->nBits());
                 ASSERT_require(val->isLeafNode() && val->isLeafNode()->isNumber());
-#else
-                mlog[WARN] <<"cannot parse evidence expression for " <<*var <<" (wider than 64 bits): " <<interp <<"\n";
-#endif
             }
         } else if (interp.is_bool()) {
             val = SymbolicExpr::makeBoolean(interp.get_numeral_uint() != 0);
