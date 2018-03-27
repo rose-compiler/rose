@@ -42,8 +42,8 @@ void CastTransformer::eliminateCast(SgCastExp* castExp) {
 
 void CastTransformer::introduceCast(SgExpression* exp, SgType* type) {
   cout<<"TODO: introduce cast @:"<<SgNodeHelper::sourceLineColumnToString(exp)<<":"<<exp->unparseToString()<<endl;
-  SgCastExp* newCastExp=SageBuilder::buildCastExp(exp,type);
 #if 0
+  SgCastExp* newCastExp=SageBuilder::buildCastExp(exp,type);
   //newCastExp->set_parent(parent);
   //exp->set_parent(newCastExp);
   SgExpression* oldExp=exp;
