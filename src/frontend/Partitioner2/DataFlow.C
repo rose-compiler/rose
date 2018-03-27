@@ -26,7 +26,7 @@ public:
     const ControlFlowGraph &cfg;                             // global control flow graph
     DfCfg dfCfg;                                             // dataflow control flow graph we are building
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
-        
+
     // maps CFG vertex ID to dataflow vertex
     typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
 
@@ -42,7 +42,7 @@ public:
     typedef std::list<CallFrame> CallStack;             // we use a list since there's no default constructor for an iterator
     CallStack callStack;
     size_t maxCallStackSize;                            // safety to prevent infinite recursion
-    
+
 
     DfCfgBuilder(const Partitioner &partitioner, const ControlFlowGraph &cfg, InterproceduralPredicate &predicate)
         : partitioner(partitioner), cfg(cfg), interproceduralPredicate(predicate),
@@ -171,7 +171,7 @@ public:
                 // Create an optional vertex to which this inlined or faked function call will return. This will be an end
                 // iterator if the call apparently doesn't return.
                 DfCfg::VertexIterator returnTo = findOrInsertCallReturnVertex(t.edge()->source());
-                
+
                 callStack.push_back(CallFrame(dfCfg)); {
                     // Inline the function or create a faked call.
                     if (callStack.size() <= maxCallStackSize && t.edge()->target()->value().type()==V_BASIC_BLOCK &&
@@ -281,7 +281,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
     BOOST_FOREACH (const DfCfg::Edge &edge, dfCfg.edges()) {
         out <<edge.source()->id() <<" -> " <<edge.target()->id() <<";\n";
     }
-    
+
     out <<"}\n";
 }
 
@@ -509,9 +509,6 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         // Clobber registers that are modified by the callee. The extra calls to updateWriteProperties is because most
         // RiscOperators implementation won't do that if they don't have a current instruction (which we don't).
         if (callee && callee->callingConventionAnalysis().didConverge()) {
-#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
-            std::cerr <<"ROBB: clobbering output registers according to calling convention analysis\n";
-#endif
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
             BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
@@ -525,9 +522,6 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         } else if (defaultCallingConvention_) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
-#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
-            std::cerr <<"ROBB: clobbering output registers according to default calling convention\n";
-#endif
             BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
                     ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().get_nbits()));
@@ -556,9 +550,6 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         } else {
             // We have not performed a calling convention analysis and we don't have a default calling convention definition. A
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
-#if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
-            std::cerr <<"ROBB: no register clobbering\n";
-#endif
         }
 
         // Adjust the stack pointer (regardless of whether we also did something to it above)
@@ -573,6 +564,13 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         ops->writeRegister(STACK_POINTER_REG, newStack);
         if (genericRegState)
             genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
+
+        // Adjust the instruction pointer since it probably points to the entry block of the called function. We need it to
+        // now point to the return-to site.
+        if (vertex->nOutEdges() == 1) {
+            if (BasicBlock::Ptr returnToBlock = vertex->outEdges().begin()->target()->value().bblock())
+                ops->writeRegister(INSN_POINTER_REG, ops->number_(INSN_POINTER_REG.nBits(), returnToBlock->address()));
+        }
 
     } else if (DfCfgVertex::FUNCRET == vertex->value().type()) {
         // Identity semantics; this vertex just merges all the various return blocks in the function.

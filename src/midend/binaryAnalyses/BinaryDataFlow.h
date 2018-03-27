@@ -214,13 +214,14 @@ public:
 
         bool operator()(InstructionSemantics2::BaseSemantics::StatePtr &dst /*in,out*/,
                         const InstructionSemantics2::BaseSemantics::StatePtr &src) const {
-            struct T {
+            struct PreserveCurrentState {
                 InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
                 InstructionSemantics2::BaseSemantics::StatePtr state;
-                T(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+                PreserveCurrentState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
                     : ops(ops), state(ops->currentState()) {}
-                ~T() { ops->currentState(state); }
+                ~PreserveCurrentState() { ops->currentState(state); }
             } t(ops_);
+
             if (!dst) {
                 dst = src->clone();
                 return true;
@@ -389,7 +390,7 @@ public:
 
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
                 if (mlog[DEBUG]) {
-                    mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId
+                    mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId <<":\n"
                                 <<StringUtility::prefixLines(xfer_.printState(state), "    ", false) <<"\n";
                 }
                 
@@ -400,7 +401,7 @@ public:
                 BOOST_FOREACH (const typename CFG::Edge &edge, vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
                     if (!isFeasible_(cfg_, edge, state)) {
-                        SAWYER_MESG(mlog[DEBUG] <<"    excluded because path is not feasible\n");
+                        SAWYER_MESG(mlog[DEBUG]) <<"    path to vertex #" <<nextVertexId <<" is not feasible, thus skipped\n";
                     } else if (merge_(incomingState_[nextVertexId], state)) {
                         if (mlog[DEBUG]) {
                             mlog[DEBUG] <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
