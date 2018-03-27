@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher varp1 varp3 astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher varp1 typeforge astinfo
 noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
 
 CLEANFILES = 
@@ -267,9 +267,10 @@ codethorn_SOURCES = \
   VariableValueMonitor.C \
   Visualizer.C                     \
   Visualizer.h                     \
+  AstTermRepresentation.h \
+  AstTermRepresentation.C \
   codethorn.h \
   codethorn.C 
-
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
@@ -561,18 +562,20 @@ varp1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varp1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 varp1_SOURCES = Timer.cpp varp1.C
 
-varp3_DEPENDENCIES=libspray.la
-varp3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-varp3__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-varp3_SOURCES = Timer.cpp varp3.C CommandLineOptions.C CastStats.C
+typeforge_DEPENDENCIES=libspray.la
+typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C
 
-check-varp3: varp3
+check-typeforge: typeforge
 	rm -f typegraph.dot
 	rm -f rose_casttest1.C
-	./varp3 -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
-	dot -Tpdf typegraph.dot -o type-graph.pdf
-	./varp3 --explicit $(srcdir)/tests/casttest1.C
-	g++ rose_casttest1.C
+#	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
+#	dot -Tpdf typegraph.dot -o type-graph.pdf
+#	./typeforge --explicit $(srcdir)/tests/casttest1.C
+	./typeforge --explicit --float-var=d1 --double-var=f1 $(srcdir)/tests/casttest1.C
+	g++ -Wall rose_casttest1.C
+
 	rm -f a.out
 
 #MS: iterator_test not ingegrated yet
