@@ -1946,6 +1946,53 @@ SgForStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
+SgRangeBasedForStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgRangeBasedForStatement::fixupCopy_scopes() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgRangeBasedForStatement* forStatement_copy = isSgRangeBasedForStatement(copy);
+     ROSE_ASSERT(forStatement_copy != NULL);
+
+  // This could generate a vaiable declaration, so wait to build the sysmbol table.
+     ROSE_ASSERT(this->get_iterator_declaration() != NULL);
+     this->get_iterator_declaration()->fixupCopy_scopes(forStatement_copy->get_iterator_declaration(),help);
+
+     ROSE_ASSERT(this->get_range_declaration() != NULL);
+     this->get_range_declaration()->fixupCopy_scopes(forStatement_copy->get_range_declaration(),help);
+
+  // DQ (11/1/2007): Force the symbol table to be setup so that references can be made to it later.
+  // If we built it too early then the scope (on The SgInitializedName objects) have not be setup, 
+  // and if we build it too late then we don't have the symbols in place to reset the references.
+  // printf ("Calling SgScopeStatement::fixupCopy_scopes() \n");
+     SgScopeStatement::fixupCopy_scopes(copy,help);
+  // printf ("DONE: SgScopeStatement::fixupCopy_scopes() \n");
+
+     ROSE_ASSERT(this->get_begin_declaration() != NULL);
+     this->get_begin_declaration()->fixupCopy_scopes(forStatement_copy->get_begin_declaration(),help);
+
+     ROSE_ASSERT(this->get_end_declaration() != NULL);
+     this->get_end_declaration()->fixupCopy_scopes(forStatement_copy->get_end_declaration(),help);
+
+     ROSE_ASSERT(this->get_not_equal_expression() != NULL);
+     this->get_not_equal_expression()->fixupCopy_scopes(forStatement_copy->get_not_equal_expression(),help);
+
+     ROSE_ASSERT(this->get_increment_expression() != NULL);
+     this->get_increment_expression()->fixupCopy_scopes(forStatement_copy->get_increment_expression(),help);
+
+     ROSE_ASSERT(this->get_loop_body() != NULL);
+     this->get_loop_body()->fixupCopy_scopes(forStatement_copy->get_loop_body(),help);
+
+#if 0
+  // SgScopeStatement::fixupCopy_scopes(copy,help);
+     printf ("Calling SgScopeStatement::fixupCopy_scopes() (2nd time) \n");
+     SgScopeStatement::fixupCopy_scopes(copy,help);
+     printf ("DONE: SgScopeStatement::fixupCopy_scopes() (2nd time) \n");
+#endif
+   }
+
+void
 SgForInitStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY
