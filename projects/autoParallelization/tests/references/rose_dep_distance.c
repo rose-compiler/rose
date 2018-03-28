@@ -1,7 +1,7 @@
 /*
  *Test dependence distance 
  * */
-#include "omp.h" 
+#include <omp.h> 
 
 void foo()
 {

@@ -645,6 +645,7 @@ public:
             case ParameterLocation::STACK: return THIS_FIRST_PARAM; // assume its the first parameter
             case ParameterLocation::ABSOLUTE: return THIS_UNKNOWN; // not supported in old API
         }
+        ASSERT_not_reachable("invalid location type");
     }
     // We can't set the location type independent of the location.
     //void set_this_location(ThisPointerLocation loc) ROSE_DEPRECATED("use thisParameter property instead") {

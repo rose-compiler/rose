@@ -99,6 +99,7 @@ Grammar::setUpSupport ()
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
      NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
+     BinaryComposite.isBoostSerializable(true);
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
@@ -125,6 +126,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (TemplateParameter, "TemplateParameter", "TemplateParameterTag" );
      NEW_TERMINAL_MACRO (TemplateArgument, "TemplateArgument", "TemplateArgumentTag" );
 
+  // DQ (3/10/2018): I think these IR nodes are no longer used, and if so then they could be deleted.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      NEW_TERMINAL_MACRO (TemplateParameterList, "TemplateParameterList", "TemplateParameterListTag" );
      NEW_TERMINAL_MACRO (TemplateArgumentList, "TemplateArgumentList", "TemplateArgumentListTag" );
@@ -259,6 +261,8 @@ Grammar::setUpSupport ()
   //                       Header Code Declaration
   // ***********************************************************************
   // ***********************************************************************
+
+     Support.isBoostSerializable(true);
 
   // Header declarations for Support
   // Support.setSubTreeFunctionPrototype ( "HEADER", "../Grammar/sageCommon.code");
@@ -822,6 +826,7 @@ Grammar::setUpSupport ()
 // DQ (4/25/2009): Must fix code in sageInterface/sageBuilder.C before we can use the proper BUILD_LIST_ACCESS_FUNCTIONS macro above.
 #warning "This should be using the BUILD_LIST_ACCESS_FUNCTIONS"
 #endif
+     File.isBoostSerializable(true);
 
   // Modified ROSE to hold variables into the File object
   // DQ (8/10/2004): modified to be an int instead of a bool
@@ -1296,6 +1301,10 @@ Grammar::setUpSupport ()
 
   // DQ (6/7/2013): Added support for use of experimental fortran front-end.
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     File.setDataPrototype("bool", "experimental_cuda_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
@@ -2516,6 +2525,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (3/10/2018): I think these IR nodes are not longer used.  If so then we could remove them.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateArgumentList.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT_LIST", "../Grammar/Support.code");
      TemplateArgumentList.setDataPrototype ( "SgTemplateArgumentPtrList", "args",  "",

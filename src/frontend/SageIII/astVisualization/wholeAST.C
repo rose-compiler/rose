@@ -1673,7 +1673,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                                           "\\n  " + flagString +
                                           "\\n  " + flagString2 +
                                           "\\n  " + StringUtility::numberToString(templateTypedefDeclaration) + "  ";
-#if 1
+#if 0
                     printf ("########## templateTypedefDeclaration->get_name() = %s \n",templateTypedefDeclaration->get_name().str());
 #endif
                     break;
@@ -1926,6 +1926,15 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
              {
             // printf ("Graph this node (%s) \n",node->class_name().c_str());
                labelWithSourceCode += string("\\n  name = ") + templateType->get_name().str() + "  " + "position = " + StringUtility::numberToString(templateType->get_template_parameter_position()) + " ";
+             }
+
+       // DQ (2/28/2018): Added name to the graph node for all SgNamedType IR nodes.
+          SgNamedType* namedType = isSgNamedType(node);
+          if (namedType != NULL)
+             {
+            // printf ("Graph this node (%s) \n",node->class_name().c_str());
+            // labelWithSourceCode += string("\\n  name = ") + namedType->get_name().str() + "  ";
+               labelWithSourceCode += string("\\n") + namedType->get_name().str();
              }
 
           SgModifierType* modifierType = isSgModifierType(node);
@@ -2280,7 +2289,22 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
        // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
           string labelWithSourceCode;
 
-          labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          SgSymbol* symbol = isSgSymbol(node);
+#if 0
+          printf ("In CustomMemoryPoolDOTGeneration::defaultColorFilter(): symbol = %p = %s name = %s \n",symbol,symbol->class_name().c_str(),symbol->get_name().str());
+#endif
+#if 1
+       // DQ (2/28/2018): Added debugging code to make symbols in the graphs more clear.
+          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(node);
+          if (aliasSymbol != NULL)
+             {
+               labelWithSourceCode += string("\\n alias to: ") + aliasSymbol->get_base()->class_name();
+             }
+
+          labelWithSourceCode += string("\\n name: ") + symbol->get_name();
+#endif
+       // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(node) + "  ";
 
           AST_NODE_ID id = TransformationTracking::getId(node) ;
           if (id != 0)

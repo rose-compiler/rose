@@ -1,5 +1,5 @@
 // indirect array access: naive form
-#include "omp.h" 
+#include <omp.h> 
 
 void foo1(int *indexSet,int N,int ax)
 {

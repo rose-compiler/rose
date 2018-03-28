@@ -535,6 +535,12 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
                           SymbolicSemantics::MemoryMapStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
+        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
+                   settings.rstateClassName=="symbolic" && settings.mstateClassName=="symbolic-list") {
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
             ::mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";

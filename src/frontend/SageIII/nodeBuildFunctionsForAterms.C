@@ -1222,6 +1222,34 @@ SgTypeChar* SgTypeChar::build_node_from_nonlist_children (  )
    }
 
 
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgTypeChar16* SgTypeChar16::build_node_from_nonlist_children (  )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgTypeChar16::build_node_from_nonlist_children (): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgTypeChar16* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgTypeChar32* SgTypeChar32::build_node_from_nonlist_children (  )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgTypeChar32::build_node_from_nonlist_children (): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgTypeChar32* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 /* #line 1224 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
@@ -2413,7 +2441,7 @@ SgOmpClause* SgOmpClause::build_node_from_nonlist_children ( Sg_File_Info* start
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpOrderedClause* SgOmpOrderedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpOrderedClause* SgOmpOrderedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExpression* expression )
    {
 #if 0
   // debugging information!
@@ -3395,6 +3423,19 @@ SgUntypedNullStatement* SgUntypedNullStatement::build_node_from_nonlist_children
 #endif
 
      SgUntypedNullStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedNullDeclaration* SgUntypedNullDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNullDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNullDeclaration* returnNode = NULL;
 
      return returnNode;
    }
@@ -8688,6 +8729,32 @@ SgCharVal* SgCharVal::build_node_from_nonlist_children ( Sg_File_Info* startOfCo
 #endif
 
      SgCharVal* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgChar16Val* SgChar16Val::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, unsigned short value, std::string valueString )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgChar16Val::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, unsigned short value, std::string valueString): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgChar16Val* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgChar32Val* SgChar32Val::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, unsigned int value, std::string valueString )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgChar32Val::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, unsigned int value, std::string valueString): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgChar32Val* returnNode = NULL;
 
      return returnNode;
    }

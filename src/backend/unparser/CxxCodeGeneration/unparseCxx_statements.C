@@ -1008,8 +1008,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
 #if 0
-     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
+     printf ("In unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+     printf ("In unparseFunctionArgs(): funcdecl_stmt->get_prototypeIsWithoutParameters() = %s \n",funcdecl_stmt->get_prototypeIsWithoutParameters() ? "true" : "false");
 #endif
 
   // DQ (9/7/2014): These should have been setup to be the same.
@@ -1081,6 +1082,11 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
                curprint(",");
              }
         }
+
+#if 0
+     printf ("Leaving unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
+     curprint("\n/* Leaving unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
    }
 
 //-----------------------------------------------------------------------------------
@@ -1104,6 +1110,9 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
           printf ("   --- templateFunctionDeclaration->get_name()         = %s \n",templateFunctionDeclaration->get_name().str());
           printf ("   --- templateFunctionDeclaration->get_templateName() = %s \n",templateFunctionDeclaration->get_templateName().str());
         }
+     printf ("funcdecl_stmt                                    = %p \n",funcdecl_stmt);
+     printf ("funcdecl_stmt->get_firstNondefiningDeclaration() = %p \n",funcdecl_stmt->get_firstNondefiningDeclaration());
+     printf ("funcdecl_stmt->get_definingDeclaration()         = %p \n",funcdecl_stmt->get_definingDeclaration());
 #endif
 #if 0
      curprint(" /* TOP unparse_helper */ \n");
@@ -1274,6 +1283,10 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      curprint("/* Added closing \")\" to the end of the argument list */ \n");
   // curprint(flush();
      printf ("Leaving Unparse_ExprStmt::unparse_helper() \n");
+#endif
+
+#if 0
+     printf ("Leaving unparse_helper(): funcdecl_stmt->get_name() = %s \n",funcdecl_stmt->get_name().str());
 #endif
    }
 
@@ -2942,6 +2955,11 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
   // SgUnparse_Info ninfo(info);
      bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
 
+#if 0
+     saved_unparsedPartiallyUsingTokenStream = true;
+     printf ("In unparseBasicBlock (stmt = %p) reset saved_unparsedPartiallyUsingTokenStream = true \n");
+#endif
+
 #if DEBUG_BASIC_BLOCK
      printf ("In unparseBasicBlock (stmt = %p) saved_unparsedPartiallyUsingTokenStream = %s \n",basic_stmt,saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
 #endif
@@ -3104,7 +3122,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                             {
                            // The least we can do is to output a CR in this case where we have no representative whitespace.
                            // curprint("\n");
-#if 1
+#if 0
                               printf ("Not clear how to compute spacing, but at least we need a CR \n");
 #endif
 #if 1
@@ -3129,7 +3147,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                            else
                             {
                            // This is the backup plan if there was no identified statement associated with the current scope.
-#if 1
+#if 0
                               printf ("Not clear how to compute spacing, but at least we need a CR \n");
 #endif
 #if 1
@@ -3165,9 +3183,13 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           p++;
         }
 
-#if DEBUG_BASIC_BLOCK
+#if DEBUG_BASIC_BLOCK || 0
      printf ("Inside of Unparse_ExprStmt::unparseBasicBlockStmt: output comment \n");
      curprint ("/* Inside of Unparse_ExprStmt::unparseBasicBlockStmt: output comment */");
+#endif
+
+#if 0
+     printf ("Inside of Unparse_ExprStmt::unparseBasicBlockStmt: saved_unparsedPartiallyUsingTokenStream = %s \n",saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
 #endif
 
   // DQ (12/16/2014): This should be controled by the saved_unparsedPartiallyUsingTokenStream value.
@@ -3176,7 +3198,20 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
        // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
+#if 0
+          printf ("Calling unparseAttachedPreprocessingInfo(): INSIDE: basic_stmt = %p = %s \n",basic_stmt,basic_stmt->class_name().c_str());
+          printOutComments(basic_stmt);
+          printf ("In unparseBasicBlockStmt(): info.SkipFunctionDefinition() = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+#endif
+
           unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
+#if 0
+       // DQ (2/18/2018): Added to test output missing comments.
+          printf ("Calling unparseAttachedPreprocessingInfo(): part 1: AFTER: basic_stmt = %p = %s \n",basic_stmt,basic_stmt->class_name().c_str());
+          curprint ("/* Inside of Unparse_ExprStmt::unparseBasicBlockStmt: output comment: part 1 (after) */");
+          unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::after);
+          curprint ("/* DONE: Inside of Unparse_ExprStmt::unparseBasicBlockStmt: output comment: part 1 (after) */");
+#endif
         }
 
 #if DEBUG_BASIC_BLOCK
@@ -3213,6 +3248,17 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
           unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
 
+#if 0
+       // DQ (2/18/2018): Debugging Cxx11_tests/test2018_28.C
+          if (saved_unparsedPartiallyUsingTokenStream == false)
+             {
+               printf ("Inside of Unparse_ExprStmt::unparseBasicBlockStmt: output comment: part 2 (after) \n");
+               curprint ("/* Inside of Unparse_ExprStmt::unparseBasicBlockStmt: output comment: part 2 (after) */");
+               unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::after);
+               curprint ("/* DONE: Inside of Unparse_ExprStmt::unparseBasicBlockStmt: output comment: part 2 (after) */");
+             }
+#endif
+
        // curprint ( string("}"));
           if (SgProject::get_verbose() > 0)
                curprint("/* syntax from AST */ }");
@@ -3239,6 +3285,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("unparse last token in SgBasicBlock \n");
           curprint ("/* unparse last token in SgBasicBlock */");
 #endif
+
        // DQ (1/14/2015): We need to unparse syntax instead of the initial token, becasue this can be a macro expansion
        // (see tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);

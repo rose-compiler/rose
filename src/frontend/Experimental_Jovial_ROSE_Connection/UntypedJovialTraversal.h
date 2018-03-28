@@ -6,39 +6,21 @@
 // convert them to regular SgNodes.
 //-----------------------------------------------------------------------------------
 
-#include "UntypedJovialConverter.h"
+#include "UntypedTraversal.h"
 
-namespace Jovial {
 namespace Untyped {
 
-typedef SgScopeStatement*  InheritedAttribute;
-typedef SgExpression*      SynthesizedAttribute;
-
-class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>, public JovialBuilderInterface
+class UntypedJovialTraversal : public UntypedTraversal
   {
     public:
 
-      virtual InheritedAttribute   evaluateInheritedAttribute   (SgNode* node, InheritedAttribute inheritedAttribute );
-      virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* node, InheritedAttribute inheritedAttribute
-                                                                             , SynthesizedAttributesList childAttrs  );
+      UntypedJovialTraversal(SgSourceFile* sourceFile, UntypedConverter* converter);
 
-      virtual ~UntypedTraversal();
-
-      UntypedTraversal(SgSourceFile* sourceFile);
-
-
-      std::string getCurrentFilename()
-         {
-             return p_source_file->get_sourceFileNameWithPath();
-         }
-
-    private:
-
-      SgSourceFile* p_source_file;
-      UntypedConverter* pConverter;
+      virtual InheritedAttribute   evaluateInheritedAttribute   (SgNode* n, InheritedAttribute inheritedAttribute );
+      virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute
+                                                                          , SynthesizedAttributesList childAttrs  );
   };
 
-} // namespace Jovial
 } // namespace Untyped
 
 // endif for UNTYPED_JOVIAL_TRAVERSAL_H
