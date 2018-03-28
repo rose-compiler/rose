@@ -677,8 +677,8 @@ context-free syntax
 %% 2.1.1.3 FIXED TYPE DESCRIPTIONS
 %%
 
-  FixedItemDescription        -> FixedTypeDescription    {reject}  %% AMBIGUOUS
-  FixedTypeName               -> FixedTypeDescription    {reject}  %% AMBIGUOUS
+  FixedItemDescription        -> FixedTypeDescription    {prefer}
+  FixedTypeName               -> FixedTypeDescription
 
   'A' OptRoundOrTruncate
       ScaleSpecifier
@@ -2164,8 +2164,8 @@ context-free syntax
   Icon                       -> Number
 
   RealLiteral                -> FloatingLiteral
-  Icon Exponent              -> RealLiteral           {cons("RealLiteral")}
-  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteral")}
+  Icon Exponent              -> RealLiteral           {cons("RealLiteralIE")}
+  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteralFF")}
 
   'E' OptSign Number         -> Exponent              {cons("Exponent")}
 

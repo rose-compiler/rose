@@ -78,7 +78,13 @@ namespace SageInterface
       case V_SgTypeUnsignedLong :
 
       case V_SgTypeVoid :
+
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
       case V_SgTypeFloat:
       case V_SgTypeDouble:
 
@@ -507,6 +513,11 @@ bool isPointerToNonConstType(SgType* type)
       case V_SgTypeUnsignedShort:
       case V_SgTypeVoid:
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
         return true;
         break;
 
@@ -659,6 +670,11 @@ bool isCopyConstructible(SgType* type)
         case V_SgTypeUnsignedShort:
         case V_SgTypeVoid:
         case V_SgTypeWchar:
+
+     // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+        case V_SgTypeChar16:
+        case V_SgTypeChar32:
+
             return true;
             break;
 
@@ -778,6 +794,11 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeUnsignedShort:
       case V_SgTypeVoid:
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
         return true;
         break;
 
@@ -823,6 +844,11 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeUnsignedShort:
       case V_SgTypeVoid:
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
       case V_SgFunctionType:
       case V_SgTypeString:
       case V_SgEnumType:
@@ -1115,6 +1141,16 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeWchar:
         result += "w";
         break;
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+        result += "c16";
+        break;
+
+      case V_SgTypeChar32:
+        result += "c32";
+        break;
+
       case V_SgTypeBool:
         result += "b";
         break;

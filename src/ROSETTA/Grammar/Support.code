@@ -582,11 +582,20 @@ HEADER_STORAGE_MODIFIER_START
                e_pointer_based = 14, /*!< Pointee of a POINTER definition */
 #endif
 
+            // Rasmussen (02/04/2018): Fortran contiguous array storage attribute
+               e_contiguous    = 15, /*!< Contiguous array memory-storage attribute */
+
             // TV (04/08/2010): Support for CUDA storage modifiers
-               e_cuda_global         = 15, /*!< CUDA, in device's global memory */
-               e_cuda_constant       = 16, /*!< CUDA, in device's constant memory */
-               e_cuda_shared         = 17, /*!< CUDA, in device's shared memory */
-               e_cuda_dynamic_shared = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
+               e_cuda_global         = 16, /*!< CUDA, in device's global memory */
+               e_cuda_constant       = 17, /*!< CUDA, in device's constant memory */
+               e_cuda_shared         = 18, /*!< CUDA, in device's shared memory */
+               e_cuda_dynamic_shared = 19, /*!< CUDA, in device's shared memory, dynamically allocated */
+
+           // Rasmussen (03/13/2018): New CUDA storage modifiers
+               e_cuda_device_memory  = 20, /*!< CUDA, in device's global memory */
+               e_cuda_managed        = 21, /*!< CUDA, memory managed between host and device */
+               e_cuda_pinned         = 22, /*!< CUDA, in device's texture memory (read only)  */
+               e_cuda_texture        = 23, /*!< CUDA, in host's page-locked memory */
 
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -652,6 +661,10 @@ HEADER_STORAGE_MODIFIER_START
 #endif
 #endif
 
+       // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
+          bool isContiguous() const;
+          void setContiguous();
+
        // TV (04/08/2010): Support for CUDA storage modifiers
 
           bool isCudaGlobal() const;
@@ -665,6 +678,20 @@ HEADER_STORAGE_MODIFIER_START
 
           bool isCudaDynamicShared() const;
           void setCudaDynamicShared();
+
+       // Rasmussen (03/13/2018): New CUDA storage modifiers
+
+          bool isCudaDeviceMemory() const;
+          void setCudaDeviceMemory();
+
+          bool isCudaManaged() const;
+          void setCudaManaged();
+
+          bool isCudaPinned() const;
+          void setCudaPinned();
+
+          bool isCudaTexture() const;
+          void setCudaTexture();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -776,21 +803,25 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
 
             // TV (04/08/2010): Support for CUDA functions modifiers
-               e_cuda_device                 = 25, /*!< CUDA device function */
+               e_cuda_device                 = 25, /*!< CUDA device function called from device */
                e_cuda_kernel                 = 26, /*!< CUDA kernel */
                e_cuda_host                   = 27, /*!< CUDA host function */
                
+            // Rasmussen (03/13/2018): New CUDA function modifiers
+               e_cuda_global_function        = 28, /*!< CUDA device function called from host */
+               e_cuda_grid_global            = 29, /*!< CUDA device function called from host */
+
             // TV (05/03/2010): Support for OpenCL functions modifiers             
-               e_opencl_kernel				   = 28, /*!< OpenCL kernel */
-               e_opencl_vec_type_hint			= 29, /*!< OpenCL */
-               e_opencl_work_group_size_hint	= 30, /*!< OpenCL */
-               e_opencl_work_group_size_req	= 31, /*!< OpenCL */
+               e_opencl_kernel               = 30, /*!< OpenCL kernel */
+               e_opencl_vec_type_hint        = 31, /*!< OpenCL */
+               e_opencl_work_group_size_hint = 32, /*!< OpenCL */
+               e_opencl_work_group_size_req  = 33, /*!< OpenCL */
 
             // DQ (8/11/2011): Added support for Java specific function modifiers.
-               e_java_native                 = 32, /*!< Java native keyword used for JNI function specification */
-               e_java_synchronized           = 33, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
-               e_java_strictfp               = 34, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
-               e_java_initializer            = 35, /*!< Java initializer keyword used to specify that this "synthetic" function is, in fact, an initializer block */
+               e_java_native                 = 34, /*!< Java native keyword used for JNI function specification */
+               e_java_synchronized           = 35, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
+               e_java_strictfp               = 36, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
+               e_java_initializer            = 37, /*!< Java initializer keyword used to specify that this "synthetic" function is, in fact, an initializer block */
 
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -928,6 +959,16 @@ HEADER_FUNCTION_MODIFIER_START
           void setCudaHost();
           void unsetCudaHost();
           
+       // Rasmussen (03/13/2018): New CUDA function modifiers
+
+          bool isCudaGlobalFunction() const;
+          void setCudaGlobalFunction();
+          void unsetCudaGlobalFunction();
+
+          bool isCudaGridGlobal() const;
+          void setCudaGridGlobal();
+          void unsetCudaGridGlobal();
+
        // TV (05/03/2010): Support for OpenCL functions modifiers
        
           bool isOpenclKernel() const;
@@ -2363,6 +2404,10 @@ bool $CLASSNAME::isPointerBased() const { return p_modifier == e_pointer_based; 
 void $CLASSNAME::setPointerBased()      { p_modifier = e_pointer_based; }
 #endif
 
+// Rasmussen (02/04/2018): Fortran contiguous array storage attribute
+bool SgStorageModifier::isContiguous() const { return p_modifier == e_contiguous; }
+void SgStorageModifier::setContiguous()      {        p_modifier  = e_contiguous; }
+
 // TV (08/04/2010): Support for CUDA storage modifiers
 
 bool SgStorageModifier::isCudaGlobal() const { return p_modifier == e_cuda_global; }
@@ -2376,6 +2421,20 @@ void SgStorageModifier::setCudaShared()      { p_modifier = e_cuda_shared; }
 
 bool SgStorageModifier::isCudaDynamicShared() const { return p_modifier == e_cuda_dynamic_shared; }
 void SgStorageModifier::setCudaDynamicShared()      { p_modifier = e_cuda_dynamic_shared; }
+
+// Rasmussen (03/13/2018): New CUDA storage modifiers
+
+bool SgStorageModifier::isCudaDeviceMemory() const { return p_modifier == e_cuda_device_memory; }
+void SgStorageModifier::setCudaDeviceMemory()      {        p_modifier  = e_cuda_device_memory; }
+
+bool SgStorageModifier::isCudaManaged()      const { return p_modifier == e_cuda_managed; }
+void SgStorageModifier::setCudaManaged()           {        p_modifier  = e_cuda_managed; }
+
+bool SgStorageModifier::isCudaPinned()       const { return p_modifier == e_cuda_pinned; }
+void SgStorageModifier::setCudaPinned()            {        p_modifier  = e_cuda_pinned; }
+
+bool SgStorageModifier::isCudaTexture()      const { return p_modifier == e_cuda_texture; }
+void SgStorageModifier::setCudaTexture()           {        p_modifier  = e_cuda_texture; }
 
 string
 $CLASSNAME::displayString() const
@@ -2428,10 +2487,15 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isMutable()        == rhs.isMutable()  ) &&
 	       (lhs.isTypedef()        == rhs.isTypedef()  ) &&
 	       (lhs.isAsm()            == rhs.isAsm()  ) &&
+	       (lhs.isContiguous()     == rhs.isContiguous()  ) &&
 	       (lhs.isCudaGlobal()     == rhs.isCudaGlobal()  ) &&
-	       (lhs.isCudaConstant()   == rhs.isCudaConstant()  ) &&
+	       (lhs.isCudaConstant()   == rhs.isCudaConstant()) &&
 	       (lhs.isCudaShared()     == rhs.isCudaShared()  ) &&
-	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared()  ) &&
+	       (lhs.isCudaManaged()    == rhs.isCudaManaged() ) &&
+	       (lhs.isCudaPinned()     == rhs.isCudaPinned()  ) &&
+	       (lhs.isCudaTexture()    == rhs.isCudaTexture() ) &&
+	       (lhs.isCudaDynamicShared() == rhs.isCudaDynamicShared() ) &&
+	       (lhs.isCudaDeviceMemory()  == rhs.isCudaDeviceMemory()  ) &&
 		   true;
 }
 
@@ -2680,6 +2744,15 @@ bool SgFunctionModifier::isCudaHost() const { return checkBit(e_cuda_host,p_modi
 void SgFunctionModifier::setCudaHost()      { setBit(e_cuda_host,p_modifierVector); }
 void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVector); }
 
+// Rasmussen (03/13/2018): New CUDA function modifiers
+bool SgFunctionModifier::isCudaGlobalFunction() const { return checkBit(e_cuda_global_function,p_modifierVector); }
+void SgFunctionModifier::setCudaGlobalFunction()      {          setBit(e_cuda_global_function,p_modifierVector); }
+void SgFunctionModifier::unsetCudaGlobalFunction()    {        unsetBit(e_cuda_global_function,p_modifierVector); }
+
+bool SgFunctionModifier::isCudaGridGlobal() const { return checkBit(e_cuda_grid_global,p_modifierVector); }
+void SgFunctionModifier::setCudaGridGlobal()      {          setBit(e_cuda_grid_global,p_modifierVector); }
+void SgFunctionModifier::unsetCudaGridGlobal()    {        unsetBit(e_cuda_grid_global,p_modifierVector); }
+
 // TV (05/03/2010): Support for OpenCL functions modifiers       
 bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }
 void SgFunctionModifier::setOpenclKernel()      { setBit(e_opencl_kernel, p_modifierVector); }
@@ -2811,9 +2884,11 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isGnuAttributeNoThrow()            == rhs.isGnuAttributeNoThrow()           ) &&
 	       (lhs.isGnuAttributeWeakReference()      == rhs.isGnuAttributeWeakReference()     ) &&
 	       // Cuda specific
-	       (lhs.isCudaDevice() == rhs.isCudaDevice()) &&
-	       (lhs.isCudaKernel() == rhs.isCudaKernel()) &&
-	       (lhs.isCudaHost()   == rhs.isCudaHost()  ) &&
+	       (lhs.isCudaDevice()         == rhs.isCudaDevice()) &&
+	       (lhs.isCudaKernel()         == rhs.isCudaKernel()) &&
+	       (lhs.isCudaHost()           == rhs.isCudaHost()  ) &&
+	       (lhs.isCudaGlobalFunction() == rhs.isCudaGlobalFunction()) &&
+	       (lhs.isCudaGridGlobal()     == rhs.isCudaGridGlobal()) &&
 	       // OpenCL specific
 	       (lhs.isOpenclKernel()             == rhs.isOpenclKernel()            ) &&
 	       (lhs.hasOpenclVecTypeHint()       == rhs.hasOpenclVecTypeHint()      ) &&
@@ -6942,6 +7017,9 @@ HEADER_TEMPLATE_ARGUMENT_START
        // DQ (5/22/2016): Adding display function for debugging.
           void display( const std::string & label) const;
 
+       // DQ (3/10/2018): Adding debugging support.
+          std::string unparseToStringSupport();
+
 HEADER_TEMPLATE_ARGUMENT_END
 
 
@@ -6949,13 +7027,17 @@ HEADER_TEMPLATE_PARAMETER_LIST_START
 HEADER_TEMPLATE_PARAMETER_LIST_END
 
 HEADER_TEMPLATE_ARGUMENT_LIST_START
+
+       // DQ (3/10/2018): Adding debugging support.
+          std::string unparseToStringSupport();
+
 HEADER_TEMPLATE_ARGUMENT_LIST_END
 
 HEADER_OPENCL_ACCESS_MODE_MODIFIER_START
 
-  // TV (05/03/2010): OpenCL Access Mode Support
+       // TV (05/03/2010): OpenCL Access Mode Support
 
-	enum access_mode_modifier_enum
+          enum access_mode_modifier_enum
              {
                e_unknown       = 0,  /*!< error value */
                e_default       = 1,  /*!< default value */
@@ -15478,7 +15560,9 @@ X aggressive
      p_skipAstConsistancyTests = false;
 
   // DQ (6/7/2013): Added support for using experimental fortran frontend.
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
      p_experimental_fortran_frontend = false;
+     p_experimental_cuda_fortran_frontend = false;
 
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
   // (this is part of the internal testing of the new (experimental) Fortran support).
@@ -16083,6 +16167,9 @@ SgFile::display ( const std::string & label ) const
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      printf ("     p_experimental_fortran_frontend             = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
      printf ("     p_experimental_fortran_frontend_OFP_test    = %s \n",(p_experimental_fortran_frontend_OFP_test == true) ? "true" : "false");
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     printf ("     p_experimental_cuda_fortran_frontend        = %s \n",(p_experimental_cuda_fortran_frontend == true) ? "true" : "false");
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      printf ("     p_multifile_support                         = %s \n",(p_multifile_support == true) ? "true" : "false");
@@ -20067,6 +20154,29 @@ SgTemplateArgument::display( const std::string & label) const
         }
    }
 
+std::string
+SgTemplateArgument::unparseToStringSupport()
+   {
+  // DQ (3/10/2018): This is a function mostly used for debugging.
+     ROSE_ASSERT(this != NULL);
+
+     SgUnparse_Info *info = new SgUnparse_Info();
+     ROSE_ASSERT(info != NULL);
+
+     info->set_language(SgFile::e_Cxx_language);
+
+  // DQ (4/28/2017): For template arguments we never want to output the definitions of classes, and enums.
+     info->set_SkipClassDefinition();
+     info->set_SkipEnumDefinition();
+     info->set_use_generated_name_for_template_arguments(true);
+
+     std::string returnName = this->unparseToString(info);
+
+     delete info;
+     info = NULL;
+
+     return returnName;
+   }
 
 SOURCE_TEMPLATE_ARGUMENT_END
 
