@@ -286,15 +286,15 @@ graphEraseParallelEdges(Graph &g) {
  *  Determines when a pair of vertices, one from each of two graphs, can be considered isomorphic. This class serves as both a
  *  model for those wishing to write their own formulation of equivalence, and as the default implementation when none is
  *  provided by the user. */
-template<class Graph>
+template<class GraphA, class GraphB>
 class CsiEquivalence {
 public:
     /** Isomorphism of two vertices.
      *
      *  Given a pair of vertices, one from each of two graphs, return true if the vertices could be an isomorphic pair in
      *  common subgraph isomorphism algorithms.  This default implementation always returns true. */
-    bool mu(const Graph &g1, const typename Graph::ConstVertexIterator &v1,
-            const Graph &g2, const typename Graph::ConstVertexIterator &v2) const {
+    bool mu(const GraphA &g1, const typename GraphA::ConstVertexIterator &v1,
+            const GraphB &g2, const typename GraphB::ConstVertexIterator &v2) const {
         SAWYER_ARGUSED(g1);                             // Leave formal arg names in declaration because they're important
         SAWYER_ARGUSED(v1);                             // documentation for this function.
         SAWYER_ARGUSED(g2);
@@ -311,10 +311,10 @@ public:
      *  into the solution.
      *
      *  This default implementation always returns true. */
-    bool nu(const Graph &g1, typename Graph::ConstVertexIterator i1, typename Graph::ConstVertexIterator i2,
-            const std::vector<typename Graph::ConstEdgeIterator> &edges1,
-            const Graph &g2, typename Graph::ConstVertexIterator j1, typename Graph::ConstVertexIterator j2,
-            const std::vector<typename Graph::ConstEdgeIterator> &edges2) const {
+    bool nu(const GraphA &g1, typename GraphA::ConstVertexIterator i1, typename GraphA::ConstVertexIterator i2,
+            const std::vector<typename GraphA::ConstEdgeIterator> &edges1,
+            const GraphB &g2, typename GraphB::ConstVertexIterator j1, typename GraphB::ConstVertexIterator j2,
+            const std::vector<typename GraphB::ConstEdgeIterator> &edges2) const {
         SAWYER_ARGUSED(g1);                             // Leave formal argument names in declaration because they're
         SAWYER_ARGUSED(i1);                             // important documentation for this function.
         SAWYER_ARGUSED(i2);
@@ -351,7 +351,7 @@ enum CsiNextAction {
  *  A solution processor returns a code that indicates whether the algorithm should search for additional solutions or return
  *  to its caller. Throwing an exception from the solution processor is another valid way to return from the algorithm,
  *  although it may be slower than returning the abort code. */
-template<class Graph>
+template<class GraphA, class GraphB>
 class CsiShowSolution {
     size_t n;
 public:
@@ -362,7 +362,7 @@ public:
      *  The vector @p x contains vertex IDs from graph @p g1, and @p y contains IDs from @p g2. Both vectors will always be the
      *  same length.  This implementation prints the vectors @p w and @p y to standard output. See the class definition for
      *  more information. */
-    CsiNextAction operator()(const Graph &g1, const std::vector<size_t> &x, const Graph &g2, const std::vector<size_t> &y) {
+    CsiNextAction operator()(const GraphA &g1, const std::vector<size_t> &x, const GraphB &g2, const std::vector<size_t> &y) {
         ASSERT_require(x.size() == y.size());
         std::cout <<"Common subgraph isomorphism solution #" <<n <<" found:\n"
                   <<"  x = [";
@@ -401,11 +401,12 @@ public:
  *
  *  The following functions are convenient wrappers around this class: @ref findCommonIsomorphicSubgraphs, @ref
  *  findFirstCommonIsomorphicSubgraph, @ref findIsomorphicSubgraphs, @ref findMaximumCommonIsomorphicSubgraphs. */
-template<class Graph,
-         class SolutionProcessor = CsiShowSolution<Graph>,
-         class EquivalenceP = CsiEquivalence<Graph> >
+template<class GraphA, class GraphB,
+         class SolutionProcessor = CsiShowSolution<GraphA, GraphB>,
+         class EquivalenceP = CsiEquivalence<GraphA, GraphB> >
 class CommonSubgraphIsomorphism {
-    const Graph &g1, &g2;                               // the two whole graphs being compared
+    const GraphA &g1;                                   // The first graph being compared (i.e., needle)
+    const GraphB &g2;                                   // the second graph being compared (i.e., haystack)
     DenseIntegerSet<size_t> v, w;                       // available vertices of g1 and g2, respectively
     std::vector<size_t> x, y;                           // selected vertices of g1 and g2, which defines vertex mapping
     DenseIntegerSet<size_t> vNotX;                      // X erased from V
@@ -568,7 +569,7 @@ public:
      *  equivalence predicate, @ref CsiEquivalence, allows any vertex in graph @p g1 to be isomorphic to any vertex in graph @p
      *  g2. The solver additionally constrains the two sugraphs of any solution to have the same number of edges (that's the
      *  essence of subgraph isomorphism and cannot be overridden by the vertex isomorphism predicate). */
-    CommonSubgraphIsomorphism(const Graph &g1, const Graph &g2,
+    CommonSubgraphIsomorphism(const GraphA &g1, const GraphB &g2,
                               SolutionProcessor solutionProcessor = SolutionProcessor(),
                               EquivalenceP equivalenceP = EquivalenceP())
         : g1(g1), g2(g2), v(g1.nVertices()), w(g2.nVertices()), vNotX(g1.nVertices()), solutionProcessor_(solutionProcessor),
@@ -723,11 +724,12 @@ private:
         Vam vam(vamAllocator_);
         vam.reserveRows(maxPlusOneOrZero(v));
         BOOST_FOREACH (size_t i, v.values()) {
-            typename Graph::ConstVertexIterator v1 = g1.findVertex(i);
+            typename GraphA::ConstVertexIterator v1 = g1.findVertex(i);
             vam.startNewRow(i, w.size());
             BOOST_FOREACH (size_t j, w.values()) {
-                typename Graph::ConstVertexIterator w1 = g2.findVertex(j);
-                std::vector<typename Graph::ConstEdgeIterator> selfEdges1, selfEdges2;
+                typename GraphB::ConstVertexIterator w1 = g2.findVertex(j);
+                std::vector<typename GraphA::ConstEdgeIterator> selfEdges1;
+                std::vector<typename GraphB::ConstEdgeIterator> selfEdges2;
                 findEdges(g1, i, i, selfEdges1 /*out*/);
                 findEdges(g2, j, j, selfEdges2 /*out*/);
                 if (selfEdges1.size() == selfEdges2.size() &&
@@ -803,6 +805,7 @@ private:
 
     // Find all edges that have the specified source and target vertices.  This is usually zero or one edge, but can be more if
     // the graph contains parallel edges.
+    template<class Graph>
     void
     findEdges(const Graph &g, size_t sourceVertex, size_t targetVertex,
               std::vector<typename Graph::ConstEdgeIterator> &result /*in,out*/) const {
@@ -820,7 +823,8 @@ private:
         ASSERT_require(j != jUnused);
 
         // The two subgraphs in a solution must have the same number of edges.
-        std::vector<typename Graph::ConstEdgeIterator> edges1, edges2;
+        std::vector<typename GraphA::ConstEdgeIterator> edges1;
+        std::vector<typename GraphB::ConstEdgeIterator> edges2;
         findEdges(g1, i, iUnused, edges1 /*out*/);
         findEdges(g2, j, jUnused, edges2 /*out*/);
         if (edges1.size() != edges2.size())
@@ -836,8 +840,8 @@ private:
             return true;
 
         // Everything looks good to us, now let the user weed out certain pairs of vertices based on their incident edges.
-        typename Graph::ConstVertexIterator v1 = g1.findVertex(i), v2 = g1.findVertex(iUnused);
-        typename Graph::ConstVertexIterator w1 = g2.findVertex(j), w2 = g2.findVertex(jUnused);
+        typename GraphA::ConstVertexIterator v1 = g1.findVertex(i), v2 = g1.findVertex(iUnused);
+        typename GraphB::ConstVertexIterator w1 = g2.findVertex(j), w2 = g2.findVertex(jUnused);
         return equivalenceP_.nu(g1, v1, v2, edges1, g2, w1, w2, edges2);
     }
 
@@ -922,27 +926,27 @@ private:
  *  @includelineno graphIso.C
  *
  * @{ */
-template<class Graph, class SolutionProcessor>
-void findCommonIsomorphicSubgraphs(const Graph &g1, const Graph &g2, SolutionProcessor solutionProcessor) {
-    CommonSubgraphIsomorphism<Graph, SolutionProcessor> csi(g1, g2, solutionProcessor);
+template<class GraphA, class GraphB, class SolutionProcessor>
+void findCommonIsomorphicSubgraphs(const GraphA &g1, const GraphB &g2, SolutionProcessor solutionProcessor) {
+    CommonSubgraphIsomorphism<GraphA, GraphB, SolutionProcessor> csi(g1, g2, solutionProcessor);
     csi.run();
 }
 
-template<class Graph, class SolutionProcessor, class EquivalenceP>
-void findCommonIsomorphicSubgraphs(const Graph &g1, const Graph &g2,
+template<class GraphA, class GraphB, class SolutionProcessor, class EquivalenceP>
+void findCommonIsomorphicSubgraphs(const GraphA &g1, const GraphB &g2,
                                    SolutionProcessor solutionProcessor, EquivalenceP equivalenceP) {
-    CommonSubgraphIsomorphism<Graph, SolutionProcessor, EquivalenceP> csi(g1, g2, solutionProcessor, equivalenceP);
+    CommonSubgraphIsomorphism<GraphA, GraphB, SolutionProcessor, EquivalenceP> csi(g1, g2, solutionProcessor, equivalenceP);
     csi.run();
 }
 /** @} */
 
 // Used by findFirstCommonIsomorphicSubgraph
-template<class Graph>
+template<class GraphA, class GraphB>
 class FirstIsomorphicSubgraph {
     std::pair<std::vector<size_t>, std::vector<size_t> > solution_;
 public:
-    CsiNextAction operator()(const Graph &/*g1*/, const std::vector<size_t> &x,
-                             const Graph &/*g2*/, const std::vector<size_t> &y) {
+    CsiNextAction operator()(const GraphA &/*g1*/, const std::vector<size_t> &x,
+                             const GraphB &/*g2*/, const std::vector<size_t> &y) {
         solution_ = std::make_pair(x, y);
         return CSI_ABORT;
     }
@@ -959,10 +963,10 @@ public:
  *  value is empty if no common isomorphic subgraph could be found.
  *
  * @{ */
-template<class Graph>
+template<class GraphA, class GraphB>
 std::pair<std::vector<size_t>, std::vector<size_t> >
-findFirstCommonIsomorphicSubgraph(const Graph &g1, const Graph &g2, size_t minimumSize) {
-    CommonSubgraphIsomorphism<Graph, FirstIsomorphicSubgraph<Graph> > csi(g1, g2);
+findFirstCommonIsomorphicSubgraph(const GraphA &g1, const GraphB &g2, size_t minimumSize) {
+    CommonSubgraphIsomorphism<GraphA, GraphB, FirstIsomorphicSubgraph<GraphA, GraphB> > csi(g1, g2);
     csi.minimumSolutionSize(minimumSize);
     csi.maximumSolutionSize(minimumSize);               // to avoid going further than necessary
     csi.run();
@@ -970,11 +974,11 @@ findFirstCommonIsomorphicSubgraph(const Graph &g1, const Graph &g2, size_t minim
 }
 
 
-template<class Graph, class EquivalenceP>
+template<class GraphA, class GraphB, class EquivalenceP>
 std::pair<std::vector<size_t>, std::vector<size_t> >
-findFirstCommonIsomorphicSubgraph(const Graph &g1, const Graph &g2, size_t minimumSize, EquivalenceP equivalenceP) {
-    CommonSubgraphIsomorphism<Graph, FirstIsomorphicSubgraph<Graph>, EquivalenceP>
-        csi(g1, g2, FirstIsomorphicSubgraph<Graph>(), equivalenceP);
+findFirstCommonIsomorphicSubgraph(const GraphA &g1, const GraphB &g2, size_t minimumSize, EquivalenceP equivalenceP) {
+    CommonSubgraphIsomorphism<GraphA, GraphB, FirstIsomorphicSubgraph<GraphA, GraphB>, EquivalenceP>
+        csi(g1, g2, FirstIsomorphicSubgraph<GraphA, GraphB>(), equivalenceP);
     csi.minimumSolutionSize(minimumSize);
     csi.maximumSolutionSize(minimumSize);               // to avoid going further than necessary
     csi.run();
@@ -999,28 +1003,29 @@ findFirstCommonIsomorphicSubgraph(const Graph &g1, const Graph &g2, size_t minim
  *  @includelineno graphIso.C
  *
  * @{ */
-template<class Graph, class SolutionProcessor>
-void findIsomorphicSubgraphs(const Graph &g1, const Graph &g2, SolutionProcessor solutionProcessor) {
-    CommonSubgraphIsomorphism<Graph, SolutionProcessor> csi(g1, g2, solutionProcessor);
+template<class GraphA, class GraphB, class SolutionProcessor>
+void findIsomorphicSubgraphs(const GraphA &g1, const GraphB &g2, SolutionProcessor solutionProcessor) {
+    CommonSubgraphIsomorphism<GraphA, GraphB, SolutionProcessor> csi(g1, g2, solutionProcessor);
     csi.findingCommonSubgraphs(false);
     csi.run();
 }
 
-template<class Graph, class SolutionProcessor, class EquivalenceP>
-void findIsomorphicSubgraphs(const Graph &g1, const Graph &g2, SolutionProcessor solutionProcessor, EquivalenceP equivalenceP) {
-    CommonSubgraphIsomorphism<Graph, SolutionProcessor, EquivalenceP> csi(g1, g2, solutionProcessor, equivalenceP);
+template<class GraphA, class GraphB, class SolutionProcessor, class EquivalenceP>
+void findIsomorphicSubgraphs(const GraphA &g1, const GraphB &g2,
+                             SolutionProcessor solutionProcessor, EquivalenceP equivalenceP) {
+    CommonSubgraphIsomorphism<GraphA, GraphB, SolutionProcessor, EquivalenceP> csi(g1, g2, solutionProcessor, equivalenceP);
     csi.findingCommonSubgraphs(false);
     csi.run();
 }
 /** @} */
 
 // Used internally by findMaximumCommonIsomorphicSubgraphs
-template<class Graph>
+template<class GraphA, class GraphB>
 class MaximumIsomorphicSubgraphs {
     std::vector<std::pair<std::vector<size_t>, std::vector<size_t> > > solutions_;
 public:
-    CsiNextAction operator()(const Graph &/*g1*/, const std::vector<size_t> &x,
-                             const Graph &/*g2*/, const std::vector<size_t> &y) {
+    CsiNextAction operator()(const GraphA &/*g1*/, const std::vector<size_t> &x,
+                             const GraphB &/*g2*/, const std::vector<size_t> &y) {
         if (!solutions_.empty() && x.size() > solutions_.front().first.size())
             solutions_.clear();
         solutions_.push_back(std::make_pair(x, y));
@@ -1052,20 +1057,20 @@ public:
  *  @includelineno graphIso.C
  *
  * @{ */
-template<class Graph>
+template<class GraphA, class GraphB>
 std::vector<std::pair<std::vector<size_t>, std::vector<size_t> > >
-findMaximumCommonIsomorphicSubgraphs(const Graph &g1, const Graph &g2) {
-    CommonSubgraphIsomorphism<Graph, MaximumIsomorphicSubgraphs<Graph> > csi(g1, g2);
+findMaximumCommonIsomorphicSubgraphs(const GraphA &g1, const GraphB &g2) {
+    CommonSubgraphIsomorphism<GraphA, GraphB, MaximumIsomorphicSubgraphs<GraphA, GraphB> > csi(g1, g2);
     csi.monotonicallyIncreasing(true);
     csi.run();
     return csi.solutionProcessor().solutions();
 }
 
-template<class Graph, class EquivalenceP>
+template<class GraphA, class GraphB, class EquivalenceP>
 std::vector<std::pair<std::vector<size_t>, std::vector<size_t> > >
-findMaximumCommonIsomorphicSubgraphs(const Graph &g1, const Graph &g2, EquivalenceP equivalenceP) {
-    CommonSubgraphIsomorphism<Graph, MaximumIsomorphicSubgraphs<Graph>, EquivalenceP >
-        csi(g1, g2, MaximumIsomorphicSubgraphs<Graph>(), equivalenceP);
+findMaximumCommonIsomorphicSubgraphs(const GraphA &g1, const GraphB &g2, EquivalenceP equivalenceP) {
+    CommonSubgraphIsomorphism<GraphA, GraphB, MaximumIsomorphicSubgraphs<GraphA, GraphB>, EquivalenceP >
+        csi(g1, g2, MaximumIsomorphicSubgraphs<GraphA, GraphB>(), equivalenceP);
     csi.monotonicallyIncreasing(true);
     csi.run();
     return csi.solutionProcessor().solutions();
