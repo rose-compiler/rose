@@ -1,7 +1,6 @@
 #include "sage3basic.h"
 
 #include "ATermToUntypedFortranTraversal.h"
-#include "Fortran_to_ROSE_translation.h"
 #include "general_language_translation.h"
 #include "untypedBuilder.h"
 #include <iostream>
@@ -686,6 +685,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_SpecStmt(ATerm term, SgUntypedDe
    else if (traverse_ExternalStmt(term, decl_list)) {
       // Matched ExternalStmt
    }
+   else if (traverse_CudaAttributesStmt(term, decl_list)) {
+      // Matched ExternalStmt
+   }
 
    //  EntryStmt                              -> DeclarationConstruct
    //  EnumDef                                -> DeclarationConstruct
@@ -1059,6 +1061,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUn
   printf("... traverse_OptAttrSpecList: %s\n", ATwriteToString(term));
 #endif
 
+  using namespace General_Language_Translation;
+
   ATerm terms;
 
   if (ATmatch(term, "no-list()")) {
@@ -1071,98 +1075,86 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUn
         ATerm head = ATgetFirst(tail);
         tail = ATgetNext(tail);
         if (ATmatch(head, "PUBLIC()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_access_modifier_public);
+           attr = new SgUntypedOtherExpression(e_access_modifier_public);
         }
         else if (ATmatch(head, "PRIVATE()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_access_modifier_private);
+           attr = new SgUntypedOtherExpression(e_access_modifier_private);
         }
         else if (ATmatch(head, "ALLOCATABLE()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_allocatable);
+           attr = new SgUntypedOtherExpression(e_type_modifier_allocatable);
         }
         else if (ATmatch(head, "ASYNCHRONOUS()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_asynchronous);
+           attr = new SgUntypedOtherExpression(e_type_modifier_asynchronous);
         }
      // TODO - Codimension
         else if (ATmatch(head, "CONTIGUOUS()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_storage_modifier_contiguous);
+           attr = new SgUntypedOtherExpression(e_storage_modifier_contiguous);
         }
      // TODO - Dimension
         else if (ATmatch(head, "Dimension()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_unknown);
+           attr = new SgUntypedOtherExpression(e_unknown);
            return ATfalse;
         }
         else if (ATmatch(head, "EXTERNAL()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_storage_modifier_external);
+           attr = new SgUntypedOtherExpression(e_storage_modifier_external);
         }
         else if (ATmatch(head, "Intent(IN())")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_intent_in);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intent_in);
         }
         else if (ATmatch(head, "Intent(OUT())")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_intent_out);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intent_out);
         }
         else if (ATmatch(head, "Intent(INOUT())")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_intent_inout);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intent_inout);
         }
         else if (ATmatch(head, "INTRINSIC()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_intrinsic);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intrinsic);
         }
      // TODO - LanguageBindingSpec
         else if (ATmatch(head, "OPTIONAL()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_optional);
+           attr = new SgUntypedOtherExpression(e_type_modifier_optional);
         }
         else if (ATmatch(head, "PARAMETER()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_const);
+           attr = new SgUntypedOtherExpression(e_type_modifier_const);
         }
         else if (ATmatch(head, "POINTER()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_pointer);
+           attr = new SgUntypedOtherExpression(e_type_modifier_pointer);
         }
         else if (ATmatch(head, "PROTECTED()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_protected);
+           attr = new SgUntypedOtherExpression(e_type_modifier_protected);
         }
         else if (ATmatch(head, "SAVE()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_save);
+           attr = new SgUntypedOtherExpression(e_type_modifier_save);
         }
         else if (ATmatch(head, "TARGET()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_target);
+           attr = new SgUntypedOtherExpression(e_type_modifier_target);
         }
         else if (ATmatch(head, "VALUE()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_value);
+           attr = new SgUntypedOtherExpression(e_type_modifier_value);
         }
         else if (ATmatch(head, "VOLATILE()")) {
-           attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_volatile);
+           attr = new SgUntypedOtherExpression(e_type_modifier_volatile);
         }
-
-#ifdef CUDA_FORTRAN_IMPLEMENTED
-     // CUDA Attributes
-     // ---------------
+     // CUDA variable attributes/modifiers/qualifiers
+     // ---------------------------------------------
         else if (ATmatch(head, "CUDA_DEVICE()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_device);
-        }
-        else if (ATmatch(head, "CUDA_GLOBAL()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_global);
-        }
-        else if (ATmatch(head, "CUDA_GRID_GLOBAL()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_grid_global);
-        }
-        else if (ATmatch(head, "CUDA_HOST()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_host);
+           attr = new SgUntypedOtherExpression(e_cuda_device_memory);
         }
         else if (ATmatch(head, "CUDA_MANAGED()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_managed);
+           attr = new SgUntypedOtherExpression(e_cuda_managed);
         }
         else if (ATmatch(head, "CUDA_CONSTANT()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_constant);
+           attr = new SgUntypedOtherExpression(e_cuda_constant);
         }
         else if (ATmatch(head, "CUDA_SHARED()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_shared);
+           attr = new SgUntypedOtherExpression(e_cuda_shared);
         }
         else if (ATmatch(head, "CUDA_PINNED()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_pinned);
+           attr = new SgUntypedOtherExpression(e_cuda_pinned);
         }
         else if (ATmatch(head, "CUDA_TEXTURE()")) {
-           attr = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_texture);
+           attr = new SgUntypedOtherExpression(e_cuda_texture);
         }
-#endif
 
         else {
            std::cerr << "...TODO... finish attributes in OptAttrSpecList" << std::endl;
@@ -1176,6 +1168,39 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUn
   else return ATfalse;
 
   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesSpec(ATerm term, SgUntypedOtherExpression** attr_spec)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CudaAttributesSpec: %s\n", ATwriteToString(term));
+#endif
+
+   *attr_spec = NULL;
+
+   if (ATmatch(term, "CudaAttributesSpec(CUDA_DEVICE())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_device_memory);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_MANAGED())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_managed);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_CONSTANT())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_constant);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_SHARED())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_shared);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_PINNED())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_pinned);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_TEXTURE())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_texture);
+   }
+   else return ATfalse;
+
+   setSourcePosition(*attr_spec, term);
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -3223,11 +3248,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedE
          else if (ATmatch(head, "RECURSIVE()")) {
             prefix = new SgUntypedOtherExpression(e_function_modifier_recursive);
          }
-#ifdef CUDA_FORTRAN_IMPLEMENTED
          else if (traverse_CudaAttributesPrefix(head, &prefix)) {
             // MATCHED CudaAttributesPrefix
          }
-#endif
          else return ATfalse;
 
          if (prefix != NULL) {
@@ -3240,7 +3263,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedE
    return ATtrue;
 }
 
-#ifdef CUDA_FORTRAN_IMPLEMENTED
 ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -3249,18 +3271,22 @@ ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesPrefix(ATerm term,
 
    *prefix = NULL;
 
-   if (ATmatch(term, "CudaAttributesPrefix(CUDA_DEVICE())")) {
-      *prefix = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_device);
-      cout << "..... found cuda device " << Fortran_ROSE_Translation::e_cuda_device << endl;
+   if (ATmatch(term, "CudaAttributesPrefix(CUDA_HOST())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_host);
    }
-   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_HOST())")) {
-      *prefix = new SgUntypedOtherExpression(Fortran_ROSE_Translation::e_cuda_host);
+   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_GLOBAL())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_global_function);
+   }
+   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_DEVICE())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_device);
+   }
+   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_GRID_GLOBAL())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_grid_global);
    }
    else return ATfalse;
 
    return ATtrue;
 }
-#endif
 
 //========================================================================================
 // FunctionSubprogram (R1227)
@@ -3832,6 +3858,58 @@ ATbool ATermToUntypedFortranTraversal::traverse_ContainsStmt(ATerm term, SgUntyp
 
    *contains_stmt = new SgUntypedOtherStatement(label, keyword);
    setSourcePositionExcludingTerm(*contains_stmt, term, term_eos);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// CudaAttributesStmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CudaAttributesStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, term3, eos_term;
+   std::string label;
+   std::string eos;
+
+   int attr_enum;
+   SgUntypedNameList* name_list;
+   SgUntypedOtherExpression* attr_spec;
+   SgUntypedNameListDeclaration* cuda_attributes_stmt;
+
+   if (ATmatch(term, "CudaAttributesStmt(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&eos_term))
+   {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      if (traverse_CudaAttributesSpec(term2, &attr_spec)) {
+         // MATCHED CudaAttributesSpec
+      } else return ATfalse;
+
+      attr_enum = attr_spec->get_expression_enum();
+      delete attr_spec;
+
+      name_list = new SgUntypedNameList();
+      setSourcePosition(name_list, term3);
+
+      if (traverse_NameList(term3, name_list)) {
+         // MATCHED NameList
+      } else return ATfalse;
+
+      if (traverse_eos(eos_term, eos)) {
+         // MATCHED EOS
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   cuda_attributes_stmt = new SgUntypedNameListDeclaration(label, attr_enum, name_list);
+   setSourcePositionExcludingTerm(cuda_attributes_stmt, term, eos_term);
+
+   decl_list->get_decl_list().push_back(cuda_attributes_stmt);
 
    return ATtrue;
 }

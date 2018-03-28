@@ -1,5 +1,5 @@
 // x1 and x2 may alias to each other. If no-aliasing assumed, the loop can be parallelized.
-#include "omp.h" 
+#include <omp.h> 
 
 void foo(double *x,int jp,int begin,int end,double rh1)
 {

@@ -1,5 +1,5 @@
 //! Contributed by Jeff Keasler
-#include "omp.h" 
+#include <omp.h> 
 typedef double real8;
 extern void OtherFunc(int k,real8 *l,real8 *m,real8 *n,real8 *o,real8 *p,real8 q,real8 r,real8 s[3]);
 

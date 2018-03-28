@@ -1,5 +1,5 @@
 // HydroC
-#include "omp.h" 
+#include <omp.h> 
 
 class VectorXY 
 {

@@ -1116,6 +1116,43 @@ set<SgContinueStmt*> SgNodeHelper::loopRelevantContinueStmtNodes(SgNode* node) {
 
 /*! 
   * \author Markus Schordan
+  * \date 2018.
+ */
+set<SgCaseOptionStmt*> SgNodeHelper::switchRelevantCaseStmtNodes(SgNode* node) {
+  set<SgCaseOptionStmt*> caseNodes;
+  RoseAst ast(node);
+  RoseAst::iterator i=ast.begin();
+  while(i!=ast.end()) {
+    if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(*i))
+      caseNodes.insert(caseStmt);
+    // exclude nested switch stmts
+    if(isSgSwitchStatement(*i))
+      i.skipChildrenOnForward();
+    ++i;
+  }
+  return caseNodes;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2018.
+ */
+SgDefaultOptionStmt* SgNodeHelper::switchRelevantDefaultStmtNode(SgNode* node) {
+  RoseAst ast(node);
+  RoseAst::iterator i=ast.begin();
+  while(i!=ast.end()) {
+    if(SgDefaultOptionStmt* defStmt=isSgDefaultOptionStmt(*i))
+      return defStmt;
+    // exclude nested switch stmts
+    if(isSgSwitchStatement(*i))
+      i.skipChildrenOnForward();
+    ++i;
+  }
+  return 0; // nullptr
+}
+
+/*! 
+  * \author Markus Schordan
   * \date 2012.
  */
 bool SgNodeHelper::isAstRoot(SgNode* node) {

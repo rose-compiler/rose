@@ -205,25 +205,28 @@ UntypedConverter::convertFunctionPrefix (SgUntypedExprListExpression* prefix_lis
                break;
             }
 
-#if CUDA_IMPLEMENTED // TODO CUDA
-       // CUDA function modifiers
-       // -----------------------
-          case General_Language_Translation::e_cuda_device:
-            {
-               function_decl->get_functionModifier().setCudaDevice();
-               break;
-            }
-          case General_Language_Translation::e_cuda_kernel:
-            {
-               function_decl->get_functionModifier().setCudaKernel();
-               break;
-            }
+       // CUDA function modifiers/qualifiers
+       // ----------------------------------
           case General_Language_Translation::e_cuda_host:
             {
                function_decl->get_functionModifier().setCudaHost();
                break;
             }
-#endif
+          case General_Language_Translation::e_cuda_global_function:
+            {
+               function_decl->get_functionModifier().setCudaGlobalFunction();
+               break;
+            }
+          case General_Language_Translation::e_cuda_device:
+            {
+               function_decl->get_functionModifier().setCudaDevice();
+               break;
+            }
+          case General_Language_Translation::e_cuda_grid_global:
+            {
+               function_decl->get_functionModifier().setCudaGridGlobal();
+               break;
+            }
 
          default:
             {
@@ -267,13 +270,11 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
                decl->get_declarationModifier().get_typeModifier().setAsynchronous();
                break;
             }
-#if 0 // TODO CUDA
-          case Fortran_ROSE_Translation::e_storage_modifier_contiguous:
+          case General_Language_Translation::e_storage_modifier_contiguous:
             {
                decl->get_declarationModifier().get_storageModifier().setContiguous();
                break;
             }
-#endif
           case General_Language_Translation::e_storage_modifier_external:
             {
                decl->get_declarationModifier().get_storageModifier().setExtern();
@@ -350,13 +351,16 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
                break;
             }
 
-#if 0 // TODO CUDA
-       // CUDA Attributes
-       // ---------------
-          case General_Language_Translation::e_cuda_global:
+       // CUDA variable attributes/qualifiers
+       // -----------------------------------
+          case General_Language_Translation::e_cuda_device_memory:
             {
-               cout << "........... SETTING CUDA global storage modifier" << endl;
-               decl->get_declarationModifier().get_storageModifier().setCudaGlobal();
+               decl->get_declarationModifier().get_storageModifier().setCudaDeviceMemory();
+               break;
+            }
+          case General_Language_Translation::e_cuda_managed:
+            {
+               decl->get_declarationModifier().get_storageModifier().setCudaManaged();
                break;
             }
           case General_Language_Translation::e_cuda_constant:
@@ -369,16 +373,6 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
                decl->get_declarationModifier().get_storageModifier().setCudaShared();
                break;
             }
-          case General_Language_Translation::e_cuda_grid_global:
-            {
-               decl->get_declarationModifier().get_storageModifier().setCudaGridGlobal();
-               break;
-            }
-          case General_Language_Translation::e_cuda_managed:
-            {
-               decl->get_declarationModifier().get_storageModifier().setCudaManaged();
-               break;
-            }
           case General_Language_Translation::e_cuda_pinned:
             {
                decl->get_declarationModifier().get_storageModifier().setCudaPinned();
@@ -389,10 +383,10 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
                decl->get_declarationModifier().get_storageModifier().setCudaTexture();
                break;
             }
-#endif
+
           default:
             {
-               std::cerr << "ERROR: UntypedConverter::setDeclarationModifiers: unimplemented modifier, "
+               std::cerr << "ERROR: UntypedConverter::setDeclarationModifiers: unimplemented variable modifier, "
                          << "expression enum is " << ut_expr->get_expression_enum() << std::endl;
                ROSE_ASSERT(0);  // NOT IMPLEMENTED                                                                  
             }
@@ -1410,9 +1404,11 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 {
    SgValueExp* sg_expr = NULL;
 
+   // TODO - what about doubles, longs, Jovial fixed, ...
    switch(ut_expr->get_type()->get_type_enum_id())
        {
          case SgUntypedType::e_int:
+         case SgUntypedType::e_uint:
             {
                std::string constant_text = ut_expr->get_value_string();
 
@@ -1439,13 +1435,24 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 
                sg_expr = new SgIntVal(atoi(ut_expr->get_value_string().c_str()), constant_text);
                setSourcePositionFrom(sg_expr, ut_expr);
-
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - value expression TYPE_INT \n");
-#endif
-
                break;
             }
+
+         case SgUntypedType::e_float:
+            {
+               std::string constant_text = ut_expr->get_value_string();
+
+            // preserve kind parameter if any
+               if (ut_expr->get_type()->get_has_kind())
+                  {
+                     cerr << "WARNING: UntypedConverter::convertSgUntypedValueExpression: kind value not handled \n";
+                  }
+
+               sg_expr = new SgFloatVal(atof(ut_expr->get_value_string().c_str()), constant_text);
+               setSourcePositionFrom(sg_expr, ut_expr);
+               break;
+            }
+
          default:
             {
                ROSE_ASSERT(0);  // NOT IMPLEMENTED

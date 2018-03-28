@@ -1,6 +1,6 @@
 /* Only the outmost loop can be parallelized
  */
-#include "omp.h" 
+#include <omp.h> 
 
 void foo()
 {
@@ -12,7 +12,7 @@ void foo()
   
 #pragma omp parallel for private (i,j) firstprivate (n,m)
   for (i = 0; i <= n - 1; i += 1) {
-    for (j = 0; j <= m - 1; j += 1) {
+    for (j = 1; j <= m - 1; j += 1) {
       b[i][j] = b[i][j - 1];
     }
   }
