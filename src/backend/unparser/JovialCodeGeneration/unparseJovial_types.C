@@ -30,6 +30,7 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
         {
           case V_SgTypeInt:         curprint("S"); unparseTypeSize(type, info);  break;
           case V_SgTypeUnsignedInt: curprint("U"); unparseTypeSize(type, info);  break;
+          case V_SgTypeFloat:       curprint("F"); unparseTypeSize(type, info);  break;
           case V_SgTypeBool:        curprint("B"); unparseTypeSize(type, info);  break;
 
           case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
