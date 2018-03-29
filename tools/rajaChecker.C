@@ -733,15 +733,22 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefE
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var's type is not a pointer type, but " << lhs->get_type()->class_name() <<endl;
     return false;
   }
-  // lhs is a pointer to double  
-   if (! isSgTypeDouble( ptype->get_base_type()) )
+  // lhs is a pointer to double, float or integer 
+   SgType* bst = ptype->get_base_type();
+   if (! isSgTypeDouble( bst) && ! isSgTypeInt ( bst )  && ! isSgTypeFloat ( bst) )
    {
-    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double type, but " << ptype->get_base_type()->class_name()<<endl;
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double, int or float type, but " << ptype->get_base_type()->class_name()<<endl;
     return false;
    }
   
   // rhs is a loop index
+ 
+ // strip off one or more levels of index arrays
+  while (isSgPntrArrRefExp(rhs))
+    rhs = isSgPntrArrRefExp(rhs)->get_rhs_operand();
+
   SgVarRefExp* varRef = isSgVarRefExp(rhs) ;
+  
   if (varRef == NULL) 
   {
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t rhs of a[i] is not SgVarRefExp, but " << rhs->class_name() <<endl;
@@ -1193,11 +1200,11 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
     // skip const or typedef chain
     rhs_type =rhs_type->stripTypedefsAndModifiers();
 
-    // rhs is a double type
-    if (!isSgTypeDouble(rhs_type)) 
+    // rhs is a double, float or integer type, both integer and float arrays are allowed
+    if (!isSgTypeDouble(rhs_type) && !isSgTypeFloat(rhs_type) && !isSgTypeInt(rhs_type)) 
     {
       if (RAJA_Checker::enable_debug)
-        cout<<"\t\t not double type for rhs"<<endl;
+        cout<<"\t\t not double, float or integer type for rhs, but a type of "<< rhs_type->class_name() <<endl;
       return false;
     }
   }
