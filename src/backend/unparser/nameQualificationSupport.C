@@ -3620,11 +3620,13 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
 #if 0
           printf ("++++++++++++++++ memberFunctionNameString (globalUnparseToString()) = %s \n",memberFunctionNameString.c_str());
 #endif
+       // DQ (3/30/2018): Incremented this for ROSE compiling ROSE using Boost (after bugfix for private types to be replaced with non-private unparsable types).
        // DQ (12/3/2014): Incremented this for ARES application files.
        // DQ (6/9/2013): I have incremented this value to support mangled names in the protobuf-2.5.0 application.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
        // if (memberFunctionNameString.length() > 4000)
+       // if (memberFunctionNameString.length() > 8000)
           if (memberFunctionNameString.length() > 8000)
              {
                printf ("Error: function names should not be this long... memberFunctionNameString.length() = %" PRIuPTR " \n",memberFunctionNameString.length());
