@@ -3789,7 +3789,7 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
      curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
 #endif
 
-#if 1
+#if 0
   // curprint(string("\n/* In outputType():  */ \n");
      curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
      curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
