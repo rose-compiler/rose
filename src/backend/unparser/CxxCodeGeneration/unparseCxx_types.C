@@ -3789,6 +3789,12 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
      curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
 #endif
 
+#if 1
+  // curprint(string("\n/* In outputType():  */ \n");
+     curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+     curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
+#endif
+
 #if 0
   // DQ (9/10/2014): debugging code!
      if (isSgInitializedName(referenceNode) != NULL && isSgTypeInt(referenceNodeType) != NULL)
@@ -3943,5 +3949,12 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
      printf ("DONE: outputType(): \n");
      curprint( "\n/* DONE: outputType(): */ \n");
 #endif
+
+#if 1
+  // curprint(string("\n/* Leaving outputType() */ \n");
+     curprint(string("\n/* Leaving outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+     curprint(string("\n/* Leaving outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
+#endif
+
    }
 

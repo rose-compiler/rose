@@ -1435,8 +1435,11 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
             // Note that this fix also requires that the name qualification support be computed using the unparsable_type_alias.
                if (templateArgument->get_unparsable_type_alias() != NULL)
                   {
-#if 1
+#if 0
                     printf ("In unparseTemplateArgument(): selected an alternative type to unparse to work waround a bug in EDG (this is likely the original type specified in the source code) \n");
+                 // DQ (3/30/2018): Can't call this without infinite recursion!
+                 // printf ("--- were going to use: %s \n",templateArgument->unparseToString().c_str());
+                 // printf ("--- selecing instead : %s \n",templateArgument->get_unparsable_type_alias()->unparseToString().c_str());
 #endif
                     templateArgumentType = templateArgument->get_unparsable_type_alias();
                   }

@@ -19,6 +19,7 @@ struct t_struct3
      template< typename t_t_parm8>
      struct t_struct2 
         {
+       // typedef typename t_t_parm7::template t_struct4< t_t_parm8 >::typedef8 typedef7;
           typedef typename t_t_parm7::template t_struct4< t_t_parm8 >::typedef8 typedef7;
         };
    };
@@ -30,10 +31,16 @@ template< typename t_t_parm4 >
 class t_Class2 
    {
      public:
-          typedef t_struct1<t_t_parm4> typedef1;
+       // typedef t_struct1<t_t_parm4> typedef1;
+          typedef t_t_parm4 typedef1;
+       // t_t_parm4 abc;
 
        // template< typename t_t_parm2> t_struct5<typedef1, bool> t_method1();
-          template< typename t_t_parm2> t_struct5<typedef1 > t_method1();
+       // template< typename t_t_parm2> t_struct5<typedef1 > t_method1();
+       // template< typename t_t_parm2> t_struct5<typedef1> t_method1();
+       // t_struct5<typedef1> t_data1;
+       // typedef1 t_data1;
+          t_struct5<typedef1> t_data1;
    };
 
 template<typename t_t_parm6> class t_Class3 {};
@@ -47,10 +54,16 @@ class t_Class1
      private:
        // typedef typename t_struct3< t_Class4< typedef2 > >::template t_struct2< typedef2 >::typedef7 typedef4;
        // typedef typename t_struct3< t_Class4< int > >::template t_struct2< typedef2 >::typedef7 typedef4;
-          typedef typename t_struct3< t_Class4< int > >::template t_struct2< t_t_parm1 >::typedef7 typedef4;
+       // typedef typename t_struct3< t_Class4< int > >::template t_struct2< t_t_parm1 >::typedef7 typedef4;
+       // typedef typename t_struct3< t_Class4< int > >::t_struct2< t_t_parm1 >::typedef7 typedef4;
+          typedef typename t_struct3< t_Class4< int > >::t_struct2< t_t_parm1 >::typedef7 typedef4;
 
      public:
        // typedef typename t_Class2<typedef2,typedef4 >::typedef1 typedef6;
+       // typedef typename t_Class2<typedef4>::typedef1 typedef6;
+       // typedef typedef4 typedef6;
+       // typedef typename t_Class2<typedef4>::typedef1 typedef6;
+       // typedef typedef4 typedef6;
           typedef typename t_Class2<typedef4>::typedef1 typedef6;
    };
 
