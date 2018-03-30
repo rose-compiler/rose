@@ -214,13 +214,14 @@ public:
 
         bool operator()(InstructionSemantics2::BaseSemantics::StatePtr &dst /*in,out*/,
                         const InstructionSemantics2::BaseSemantics::StatePtr &src) const {
-            struct T {
+            struct PreserveCurrentState {
                 InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
                 InstructionSemantics2::BaseSemantics::StatePtr state;
-                T(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+                PreserveCurrentState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
                     : ops(ops), state(ops->currentState()) {}
-                ~T() { ops->currentState(state); }
+                ~PreserveCurrentState() { ops->currentState(state); }
             } t(ops_);
+
             if (!dst) {
                 dst = src->clone();
                 return true;
@@ -228,6 +229,18 @@ public:
                 ops_->currentState(src);
                 return dst->merge(src, ops_.get());
             }
+        }
+    };
+
+    /** Trivial path feasibility predicate.
+     *
+     * This path feasibility predicate always returns true. This causes the data-flow to be path insensitive and always
+     * follow all edges when propagating states along edges. */
+    template<class CFG, class State>
+    class PathAlwaysFeasible {
+    public:
+        bool operator()(const CFG&, const typename CFG::Edge&, const State&) {
+            return true;
         }
     };
     
@@ -271,6 +284,11 @@ public:
      *      lattice has a bottom element that is a descendent of all other vertices.  However, the data-flow engine is designed
      *      to also operate in cases where a fixed point cannot be reached.
      *
+     *  @li @p PathFeasibility is a predicate that returns true if the data-flow should traverse the specified CFG edge.
+     *      It's called with the following arguments: (1) the CFG, which it should accept as a const reference argument
+     *      for efficiency's sake, (2) the edge that should be tested by this predicate, (3) the outgoing state for the
+     *      source end of the edge.
+     *
      *  A common configuration for an engine is to use a control-flow graph whose vertices are basic blocks, whose @p State is
      *  a pointer to an @ref InstructionSemantics2::BaseSemantics::State "instruction semantics state", whose @p
      *  TransferFunction calls @ref InstructionSemantics2::BaseSemantics::Dispatcher::processInstruction
@@ -279,7 +297,8 @@ public:
      *
      *  The control flow graph and transfer function are specified in the engine's constructor.  The starting CFG vertex and
      *  its initial state are supplied when the engine starts to run. */
-    template<class CFG, class State, class TransferFunction, class MergeFunction>
+    template<class CFG, class State, class TransferFunction, class MergeFunction,
+             class PathFeasibility = PathAlwaysFeasible<CFG, State> >
     class Engine {
     public:
         typedef std::vector<State> VertexStates;        /**< Data-flow states indexed by vertex ID. */
@@ -294,6 +313,7 @@ public:
         WorkList workList_;                             // CFG vertex IDs to be visited, last in first out w/out duplicates
         size_t maxIterations_;                          // max number of iterations to allow
         size_t nIterations_;                            // number of iterations since last reset
+        PathFeasibility isFeasible_;                    // predicate to test path feasibility
 
     public:
         /** Constructor.
@@ -301,8 +321,9 @@ public:
          *  Constructs a new data-flow engine that will operate over the specified control flow graph using the specified
          *  transfer function.  The control flow graph is incorporated into the engine by reference; the transfer functor is
          *  copied. */
-        Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction())
-            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0) {}
+        Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction(),
+               PathFeasibility isFeasible = PathFeasibility())
+            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0), isFeasible_(isFeasible) {}
 
         /** Data-flow control flow graph.
          *
@@ -369,7 +390,7 @@ public:
 
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
                 if (mlog[DEBUG]) {
-                    mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId
+                    mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId <<":\n"
                                 <<StringUtility::prefixLines(xfer_.printState(state), "    ", false) <<"\n";
                 }
                 
@@ -379,7 +400,9 @@ public:
                                          <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
                 BOOST_FOREACH (const typename CFG::Edge &edge, vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
-                    if (merge_(incomingState_[nextVertexId], state)) {
+                    if (!isFeasible_(cfg_, edge, state)) {
+                        SAWYER_MESG(mlog[DEBUG]) <<"    path to vertex #" <<nextVertexId <<" is not feasible, thus skipped\n";
+                    } else if (merge_(incomingState_[nextVertexId], state)) {
                         if (mlog[DEBUG]) {
                             mlog[DEBUG] <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
                             mlog[DEBUG] <<"    merge state is: "

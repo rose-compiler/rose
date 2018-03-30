@@ -307,7 +307,6 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
   //SPRAY::DFAnalysisBase::normalizeProgram(root);
 
   if(option_fi_constanalysis) {
-    VarConstSetMap varConstSetMap;
     FIConstAnalysis fiConstAnalysis(variableIdMapping);
     fiConstAnalysis.runAnalysis(root);
     fiConstAnalysis.attachAstAttributes(labeler,"const-analysis-inout"); // not iolabeler
@@ -492,19 +491,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     std::string funtofind="main";
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-    intervalAnalyzer->determineExtremalLabels(startFunRoot);
+    intervalAnalyzer->determineExtremalLabels(startFunRoot,false);
     intervalAnalyzer->run();
 
-#if 0
-    intervalAnalyzer->attachInInfoToAst("iv-analysis-in");
-    intervalAnalyzer->attachOutInfoToAst("iv-analysis-out");
-    AstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
-    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "iv-analysis-in");
-    ara.annotateAstAttributesAsCommentsAfterStatements(root, "iv-analysis-out");
-#else
     AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
     ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
-#endif
+
     if(option_check_static_array_bounds) {
       checkStaticArrayBounds(root,intervalAnalyzer);
     }

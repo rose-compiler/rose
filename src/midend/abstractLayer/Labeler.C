@@ -241,8 +241,10 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
   case V_SgClassDeclaration:
+#ifdef TYPEDEF_SUPPORT
+  case V_SgTypedefDeclaration:
     return 1;
-
+#endif
     // represent all parallel omp constructs as nodes
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -324,6 +326,10 @@ void Labeler::createLabels(SgNode* root) {
     //   }
     if(isSgExprStatement(*i)||isSgReturnStmt(*i)/*||isSgVariableDeclaration(*i)*/)
       i.skipChildrenOnForward();
+    // MS 2018: skip templates (only label template instantiations)
+    if(isSgTemplateClassDeclaration(*i)||isSgTemplateClassDefinition(*i)) {
+      i.skipChildrenOnForward();
+    }
   }
   //std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
   //std::cout << "DEBUG: mappingLabelToLabelProperty:\n"<<this->toString()<<std::endl;

@@ -203,6 +203,14 @@ namespace SgNodeHelper {
   std::set<SgNode*> loopRelevantBreakStmtNodes(SgNode* node);
   std::set<SgContinueStmt*> loopRelevantContinueStmtNodes(SgNode* node);
 
+  //! collects all case labels from the switch it started in (excludes nested switch stmts)
+  std::set<SgCaseOptionStmt*> switchRelevantCaseStmtNodes(SgNode* node);
+
+  /*! returns the default stmt if it exists. Otherwise return 0 and can
+     be used to test whether a default stmt exists in a given switch
+     stmt. */
+  SgDefaultOptionStmt* switchRelevantDefaultStmtNode(SgNode* node);
+
   //! returns the first child of an arbitrary AST node (throws exception if numChildren==0)
   SgNode* getFirstChild(SgNode* node);
 
