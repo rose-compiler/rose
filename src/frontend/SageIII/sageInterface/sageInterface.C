@@ -1659,6 +1659,11 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
                break;
 
+       // DQ (3/26/2018): Added support for new IR node.
+          case V_SgRangeBasedForStatement:
+               name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
+               break;
+
           default:
                printf ("Error: undefined case (SgScopeStatement) in SageInterface::get_name(): node = %s \n",scope->class_name().c_str());
                ROSE_ASSERT(false);

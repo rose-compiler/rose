@@ -1407,6 +1407,46 @@ HEADER_MATLAB_FOR_STATEMENT_START
 HEADER_MATLAB_FOR_STATEMENT_END
 
 
+HEADER_RANGE_BASED_FOR_STATEMENT_START
+
+       // void post_construction_initialization() $ROSE_OVERRIDE;
+
+     protected:
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression ) $ROSE_OVERRIDE;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
+       // DQ (2/22/2007): Added for uniform support of mangled names
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+#else
+       // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+
+     public:
+       // DQ (3/28/2018): Get the range variable (target container, name used for unparser).
+       // SgInitializedName* range_variable();
+       // SgVarRefExp* range_variable_reference();
+          SgExpression* range_expression();
+
+HEADER_RANGE_BASED_FOR_STATEMENT_END
+
+
 HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -6069,6 +6109,9 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgDoWhileStmt:
           case V_SgForStatement:
 
+       // DQ (3/26/2018): Added support for new C++11 IR node.
+          case V_SgRangeBasedForStatement:
+
        // Liao, 6/17/2008, upc_forall
           case V_SgUpcForAllStatement:
 
@@ -6754,6 +6797,19 @@ SgScopeStatement::getStatementList () const
           case V_SgForStatement:
              { 
                const SgForStatement* forScope = isSgForStatement(currentScope);
+               ROSE_ASSERT (forScope != NULL);
+               ROSE_ASSERT (forScope->get_loop_body() != NULL);
+            // Should this be defined given that there are two SgBasicBlock objects in a SgForStatement
+            // currentStatementList = forScope->get_init_stmt();
+            // currentStatementList = &(forScope->get_loop_body()->getStatementList());
+               return isSgBasicBlock(forScope->get_loop_body()) ? isSgBasicBlock(forScope->get_loop_body())->getStatementList() : emptyStatementList;
+               break;
+             }
+
+       // DQ (3/26/2018): Added support for new C++11 IR node.
+          case V_SgRangeBasedForStatement:
+             { 
+               const SgRangeBasedForStatement* forScope = isSgRangeBasedForStatement(currentScope);
                ROSE_ASSERT (forScope != NULL);
                ROSE_ASSERT (forScope->get_loop_body() != NULL);
             // Should this be defined given that there are two SgBasicBlock objects in a SgForStatement
@@ -10582,6 +10638,154 @@ SgMatlabForStatement::post_construction_initialization()
    {
    }
 SOURCE_MATLAB_FOR_STATEMENT_END
+
+
+
+SOURCE_RANGE_BASED_FOR_STATEMENT_START
+
+void
+SgRangeBasedForStatement::post_construction_initialization()
+   {
+#if 0
+     printf ("In SgRangeBasedForStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (3/24/2018): Uses the same semantics as for the normal for loop IR node.
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_iterator_declaration != NULL)
+        {
+          p_iterator_declaration->set_parent(this);
+        }
+
+     if (p_range_declaration != NULL)
+        {
+          p_range_declaration->set_parent(this);
+        }
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_begin_declaration != NULL)
+        {
+          p_begin_declaration->set_parent(this);
+        }
+
+     if (p_end_declaration != NULL)
+        {
+          p_end_declaration->set_parent(this);
+        }
+
+     if (p_not_equal_expression != NULL)
+        {
+          p_not_equal_expression->set_parent(this);
+        }
+
+     if (p_increment_expression != NULL)
+        {
+          p_increment_expression->set_parent(this);
+        }
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_loop_body != NULL)
+        {
+          p_loop_body->set_parent(this);
+        }
+   }
+
+
+bool
+SgRangeBasedForStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
+   {
+     if ( StatementReplace(this, p_loop_body, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_iterator_declaration, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_range_declaration, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_begin_declaration, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_end_declaration, target, newstmt) == true )
+           return true;
+       else 
+           return false;
+   }
+
+
+int
+SgRangeBasedForStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
+   {
+  // DQ (3/25/2018): This function should have the semantics that it will represent a
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(original_expression != NULL);
+     ROSE_ASSERT(new_expression != NULL);
+
+  // DQ (3/26/2018): I think we need to test for each case of an SgExpression IR date member in this class (similar to statements).
+  // ROSE_ASSERT(original_expression == p_range_expression);
+  // set_range_expression(new_expression);
+
+     printf ("ERROR: Semantics of SgRangeBasedForStatement::replace_expression() not implemented! \n");
+
+     new_expression->set_parent(this);
+
+  // DQ: Let this be a memory leak for now to avoid initial problems.
+     ROSE_ASSERT(original_expression != NULL);
+  // delete original_expression;
+
+     return 0;
+   }
+
+// DQ (3/25/2018): Added to provide uniform support of mangle names for all scopes
+SgName
+SgRangeBasedForStatement::get_mangled_name(void) const
+   {
+     return SgName ("");
+   }
+
+
+// SgVarRefExp* SgRangeBasedForStatement::range_variable_reference()
+SgExpression*
+SgRangeBasedForStatement::range_expression()
+   {
+  // DQ (3/28/2018): Get the range variable (target container, name used for unparser).
+
+  // Note: The container being iterated upon by the range-based for loop is reference through the initializer to the range_declaration.
+
+     SgVariableDeclaration* local_range_declaration = get_range_declaration();
+     ROSE_ASSERT(local_range_declaration != NULL);
+
+     SgInitializedName* local_range_variable = SageInterface::getFirstInitializedName(local_range_declaration);
+     ROSE_ASSERT(local_range_variable != NULL);
+
+     SgInitializer* initializer = local_range_variable->get_initializer();
+     ROSE_ASSERT(initializer != NULL);
+
+#if 1
+  // It would be general to support just returning the initializer, since there can be different kinds 
+  // of initializers used (see test2018_61.C, test2018_63.C, and test2018_64.C).
+     return initializer;
+#else
+     SgAssignInitializer* assign_initializer = isSgAssignInitializer(initializer);
+     if (assign_initializer == NULL)
+        {
+          printf ("In SgRangeBasedForStatement::range_variable_reference(): initializer = %p = %s \n",initializer,initializer->class_name().c_str());
+        }
+     ROSE_ASSERT(assign_initializer != NULL);
+
+     SgExpression* range_expression = assign_initializer->get_operand();
+     ROSE_ASSERT(range_expression != NULL);
+
+     SgVarRefExp* range_reference = isSgVarRefExp(range_expression);
+     if (range_reference == NULL)
+        {
+          printf ("In SgRangeBasedForStatement::range_variable_reference(): range_expression = %p = %s \n",range_expression,range_expression->class_name().c_str());
+        }
+     ROSE_ASSERT(range_reference != NULL);
+
+     return range_reference;
+#endif
+   }
+
+SOURCE_RANGE_BASED_FOR_STATEMENT_END
+
 
 
 SOURCE_UPC_FORALL_STATEMENT_START
