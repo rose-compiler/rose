@@ -205,6 +205,11 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseCharVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUCharVal                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseWCharVal                (SgExpression* expr, SgUnparse_Info& info);  
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          virtual void unparseChar16Val               (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseChar32Val               (SgExpression* expr, SgUnparse_Info& info);  
+
        // Unparsing strings is language dependent.
           virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info) = 0;  
           virtual void unparseUShortVal               (SgExpression* expr, SgUnparse_Info& info);  

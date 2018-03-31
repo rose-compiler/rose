@@ -1659,6 +1659,11 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
                break;
 
+       // DQ (3/26/2018): Added support for new IR node.
+          case V_SgRangeBasedForStatement:
+               name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
+               break;
+
           default:
                printf ("Error: undefined case (SgScopeStatement) in SageInterface::get_name(): node = %s \n",scope->class_name().c_str());
                ROSE_ASSERT(false);
@@ -21217,8 +21222,19 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
 #define DEBUG_TYPE_EQUIVALENCE 0
 
-#if DEBUG_TYPE_EQUIVALENCE
+#if DEBUG_TYPE_EQUIVALENCE || 0
      printf ("In SageInterface::isEquivalentType(): evaluation of type equivalence for lhs and rhs: counter = %d \n",counter);
+     printf ("   --- lhs = %s \n",lhs->unparseToString().c_str());
+     printf ("   --- rhs = %s \n",rhs->unparseToString().c_str());
+#endif
+
+#if DEBUG_TYPE_EQUIVALENCE || 0
+     if (counter == 0)
+        {
+          printf ("In SageInterface::isEquivalentType(): evaluation of type equivalence for lhs and rhs: counter = %d \n",counter);
+          printf ("   --- lhs = %p = %s = %s \n",lhs,lhs->class_name().c_str(),lhs->unparseToString().c_str());
+          printf ("   --- rhs = %p = %s = %s \n",rhs,rhs->class_name().c_str(),rhs->unparseToString().c_str());
+        }
 #endif
 
 #if DEBUG_TYPE_EQUIVALENCE
@@ -21342,9 +21358,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
                     if (X_array_index_expression == Y_array_index_expression)
                        {
-
 #if DEBUG_TYPE_EQUIVALENCE || 0
-                         printf ("In SageInterface::isEquivalentType(): counter = %d: Need to check the array size for static equivalence \n");
+                         printf ("In SageInterface::isEquivalentType(): counter = %d: Need to check the array size for static equivalence \n",counter);
 #endif
                          counter--;
 
@@ -21394,7 +21409,18 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                        }
                       else
                        {
+                      // DQ (2/13/2018): I an unclear if we are really done since they could have resolved to different types or the same type.
                       // Nothing to do here since we have explored all uniform pairs of intermediate types possible.
+#if 0
+                         printf ("Nothing to do here since we have explored all uniform pairs of intermediate types possible: isSame = %s \n",isSame ? "true" : "false");
+                      // printf ("   --- X_element_type = %p = %s \n",X_element_type,X_element_type->unparseToString().c_str());
+                      // printf ("   --- Y_element_type = %p = %s \n",Y_element_type,Y_element_type->unparseToString().c_str());
+                         printf ("   --- lhs = %p = %s \n",lhs,lhs->unparseToString().c_str());
+                         printf ("   --- rhs = %p = %s \n",rhs,rhs->unparseToString().c_str());
+#endif
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: Nothing to do here since we have explored all uniform pairs of intermediate types possible: isSame = %s \n",isSame ? "true" : "false");
+#endif
                        }
                   }
              }
@@ -21553,8 +21579,33 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                if (X_element_type == Y_element_type)
                   {
                     isSame = true;
-#if DEBUG_TYPE_EQUIVALENCE
-                    printf ("In SageInterface::isEquivalentType(): resolved to equal types: isSame = %s \n",isSame ? "true" : "false");
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                 // printf ("In SageInterface::isEquivalentType(): resolved to equal types: isSame = %s \n",isSame ? "true" : "false");
+                    printf ("In SageInterface::isEquivalentType(): resolved to equal types: isSame = %s lhs = %p = %s rhs = %p = %s \n",
+                         isSame ? "true" : "false",lhs,lhs->unparseToString().c_str(),rhs,rhs->unparseToString().c_str());
+#endif
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                 // DQ (2/13/2018): Debugging type equivalence. If they are the same typedef, they 
+                 // still might not be interchangable if one is defined in a restrcited scope.
+                    const SgTypedefType* lhs_typedefType = isSgTypedefType(lhs);
+                    const SgTypedefType* rhs_typedefType = isSgTypedefType(rhs);
+
+                    if (lhs_typedefType != NULL || rhs_typedefType != NULL)
+                       {
+#if 0
+                         if (lhs_typedefType != NULL)
+                            {
+                              printf ("lhs was a typedef: lhs = %p = %s \n",lhs,lhs->unparseToString().c_str());
+                            }
+                         if (rhs_typedefType != NULL)
+                            {
+                              printf ("rhs was a typedef: rhs = %p = %s \n",rhs,rhs->unparseToString().c_str());
+                            }
+#else
+                         printf ("   --- one was a typedef: lhs = %p = %s \n",lhs,lhs->unparseToString().c_str());
+                         printf ("   --- one was a typedef: rhs = %p = %s \n",rhs,rhs->unparseToString().c_str());
+#endif
+                       }
 #endif
                   }
                  else
@@ -21822,7 +21873,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // Decrement the static variable to control the recursive depth while we debug this.
      counter--;
 
-#if DEBUG_TYPE_EQUIVALENCE
+#if DEBUG_TYPE_EQUIVALENCE || 0
      printf ("In SageInterface::isEquivalentType(): isSame = %s \n",isSame ? "true" : "false");
 #endif
 
@@ -21864,6 +21915,31 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                     printf ("   --- --- type chain modifier: %s \n",s.c_str());
                   }
              }
+        }
+#endif
+
+#if 0
+     if (counter == 0) 
+        {
+      // if (counter == 1 && isSame == true) 
+          if (isSame == true) 
+             {
+            // printf ("In SageInterface::isEquivalentType(): counter = %d: isSame = %s type chain X_element_type = %s Y_element_type = %s \n",counter,isSame ? "true" : "false",X.class_name().c_str(),Y.class_name().c_str());
+               printf ("   --- isSame = %s \n",isSame ? "true" : "false");
+            // printf ("   --- --- X_element_type = %p = %s = %s \n",X_element_type,X_element_type->class_name().c_str(),X_element_type->unparseToString().c_str());
+            // printf ("   --- --- Y_element_type = %p = %s = %s \n",Y_element_type,Y_element_type->class_name().c_str(),Y_element_type->unparseToString().c_str());
+               printf ("   --- --- X_element_type = %p = %s = %s \n",X_element_type,X_element_type->class_name().c_str(),X_element_type->unparseToString().c_str());
+               printf ("   --- --- Y_element_type = %p = %s = %s \n",Y_element_type,Y_element_type->class_name().c_str(),Y_element_type->unparseToString().c_str());
+             }
+            else
+             {
+            // printf ("In SageInterface::isEquivalentType(): counter = %d: isSame = %s type chain X_element_type = %s Y_element_type = %s \n",counter,isSame ? "true" : "false",X.class_name().c_str(),Y.class_name().c_str());
+               printf ("   --- isSame = %s \n",isSame ? "true" : "false");
+             }
+        }
+       else
+        {
+          printf ("   --- counter = %d \n",counter);
         }
 #endif
 
