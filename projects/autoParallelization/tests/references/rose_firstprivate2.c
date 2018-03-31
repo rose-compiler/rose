@@ -1,4 +1,4 @@
-#include "omp.h" 
+#include <omp.h> 
 
 void goo(double *o1,double *c,int **idx,int len)
 {

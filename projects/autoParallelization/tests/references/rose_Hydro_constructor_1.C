@@ -3,7 +3,7 @@
 // Real solution needs interprocedural side effect analysis
 // A workaround is to pass annotation files for function side effect analysis
 // ../annot/tinyHydro.annot
-#include "omp.h" 
+#include <omp.h> 
 
 class VectorXY 
 {

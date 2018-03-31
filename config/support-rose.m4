@@ -1972,6 +1972,11 @@ src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.14/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 

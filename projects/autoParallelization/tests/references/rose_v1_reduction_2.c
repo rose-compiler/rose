@@ -1,5 +1,5 @@
 /* A kernel for two level parallelizable loop with reduction */
-#include "omp.h" 
+#include <omp.h> 
 float u[100][100];
 
 float foo()

@@ -264,7 +264,10 @@ BaseSemantics::SValuePtr
 RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
     AccessModifiesExistingLocationsGuard amelGuard(this, false);
     AccessCreatesLocationsGuard aclGuard(this, false);
-    return readRegister(reg, dflt, ops);
+
+    // Use the RegisterStateGeneric implementation rather than any subclass implementation. Suggested by Cory to
+    // avoid an inifinite loop since the subclass readRegister is written in terms of peekRegister.
+    return RegisterStateGeneric::readRegister(reg, dflt, ops);
 }
 
 void

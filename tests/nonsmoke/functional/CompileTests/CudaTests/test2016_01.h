@@ -1,5 +1,7 @@
-struct cuda_traversal {};
 
+#include <cuda.h>
+
+struct cuda_traversal {};
 
 template <typename LOOP_BODY>
 __global__ void forall_kernel(LOOP_BODY loop_body, int length)

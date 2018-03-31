@@ -74,7 +74,6 @@ using namespace Rose;
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0
 
-
 //It is needed because otherwise, the default destructor breaks something.
 
 AttachPreprocessingInfoTreeTrav::~AttachPreprocessingInfoTreeTrav() {

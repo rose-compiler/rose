@@ -1,4 +1,4 @@
-#include "omp.h" 
+#include <omp.h> 
 typedef double real8;
 /************************************************************************
  * Function  : StressZero

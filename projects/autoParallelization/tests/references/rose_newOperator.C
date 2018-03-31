@@ -1,5 +1,5 @@
 // new operator should be thread safe
-#include "omp.h" 
+#include <omp.h> 
 
 void init(int *m_rndxmix[],int m_nreg,int mixlen)
 {

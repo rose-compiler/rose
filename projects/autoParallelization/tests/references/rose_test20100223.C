@@ -2,7 +2,7 @@
 Contributed by Jeff Keasler
 Liao 2/23/2010
 */
-#include "omp.h" 
+#include <omp.h> 
 typedef double real8;
 
 class ZZ 
