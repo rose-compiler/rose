@@ -210,14 +210,18 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgLabelStatement:
     return labeler->getLabel(node);
   case V_SgFunctionDefinition:
-  case V_SgClassDeclaration:
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgReturnStmt:
-  case V_SgVariableDeclaration:
   case V_SgCaseOptionStmt:
   case V_SgDefaultOptionStmt:
       return labeler->getLabel(node);
+
+  case V_SgVariableDeclaration:
+  case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
+      return labeler->getLabel(node);
+
   case V_SgExprStatement: {
     return labeler->getLabel(node);
   }
@@ -348,12 +352,26 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgInitializedName:
-  case V_SgVariableDeclaration:
-  case V_SgDefaultOptionStmt:
-  case V_SgCaseOptionStmt:
-  case V_SgClassDeclaration:
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
+    // declarations
+  case V_SgVariableDeclaration:
+  case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
+    finalSet.insert(labeler->getLabel(node));
+    return finalSet;
+  case V_SgDefaultOptionStmt:
+  case V_SgCaseOptionStmt: {
+    // MS 2/15/2018: added support for new AST structure in ROSE
+    SgStatement* child=getCaseOrDefaultBodyStmt(node);
+    if(child) {
+      LabelSet s=finalLabels(child);
+      finalSet+=s;
+    } else {
+      finalSet.insert(labeler->getLabel(node));
+    }
+    return finalSet;
+  }
   case V_SgExprStatement: {
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
@@ -384,10 +402,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   case V_SgBasicBlock: {
-#if 0
-    finalSet.insert(labeler->blockEndLabel(node));
-    return finalSet;
-#else
     if(SgNodeHelper::numChildren(node)>0) {
       SgNode* lastNode=SgNodeHelper::getLastOfBlock(node);
       LabelSet s=finalLabels(lastNode);
@@ -397,7 +411,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
       finalSet.insert(initialLabel(node));
     }
     return finalSet;
-#endif
   }
   case V_SgFunctionCallExp:
     finalSet.insert(labeler->functionCallReturnLabel(node));
@@ -419,16 +432,22 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
     SgStatement* body=switchStmt->get_body();
     SgBasicBlock* block=isSgBasicBlock(body);
-    if(!block) {
-      cerr<<"Error: CFAnalysis::finalLabels: body of switch is not a basic block. Unknown structure."<<endl;
+    
+    // TODO: revisit, finalLabels(block) might be sufficient
+    if(!block && !isSgStatement(node)) {
+      cerr<<"Error: CFAnalysis::finalLabels: body of switch is not a basic block or stmt. Unknown structure."<<endl;
       exit(1);
+    } else if(!block && isSgStatement(body)) {
+      SgStatement* singleStmt=isSgStatement(body);
+      LabelSet singleStatementLabels=finalLabels(singleStmt);
+      finalSet+=singleStatementLabels;
+      return finalSet;
     }
+
     const SgStatementPtrList& stmtList=block->get_statements();
-    // TODO: revisit this case: this should work for all stmts in the body, when break has its own label as final label.
     if(stmtList.size()>0) {
       SgNode* lastStmt=stmtList.back();
-      SgStatement* lastStmt2=getCaseOrDefaultBodyStmt(lastStmt);
-      LabelSet lsetLastStmt=finalLabels(lastStmt2);
+      LabelSet lsetLastStmt=finalLabels(lastStmt);
       finalSet+=lsetLastStmt;
     } else {
       cerr<<"Error: CFAnalysis::finalLabels: body of switch is empty."<<endl;
@@ -799,7 +818,6 @@ LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
   return reachableNodes;
 }
 
-
 Flow CFAnalysis::flow(SgNode* node) {
   assert(node);
 
@@ -923,13 +941,15 @@ Flow CFAnalysis::flow(SgNode* node) {
   }
   case V_SgBreakStmt:
   case V_SgInitializedName:
-  case V_SgVariableDeclaration:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgExprStatement:
-  case V_SgDefaultOptionStmt:
-  case V_SgCaseOptionStmt:
+    return edgeSet;
+
+    // declarations
+  case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
     return edgeSet;
 
     // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
@@ -1011,50 +1031,46 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet.insert(Edge(initialLabel(node),EDGE_FORWARD,targetLabel));
     return edgeSet;
   }
+
+  case V_SgCaseOptionStmt:
+  case V_SgDefaultOptionStmt: {
+    Label caseStmtLab=labeler->getLabel(node);
+    SgStatement* caseBody=getCaseOrDefaultBodyStmt(node);
+    if(caseBody) {
+      edgeSet.insert(Edge(caseStmtLab,EDGE_FORWARD,initialLabel(caseBody)));
+      Flow flowStmt=flow(caseBody);
+      edgeSet+=flowStmt;
+    } else {
+      // single case/default without body: no edges inside this construct, intentionally empty.
+    }
+    return edgeSet;
+    break;
+  }
   case V_SgSwitchStatement: {
-    SgNode* nodeC=SgNodeHelper::getCond(node);
-    Label condLabel=getLabel(nodeC);
+    // create edges for body of switch
     SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
-    SgStatement* body=switchStmt->get_body();
-    SgBasicBlock* block=isSgBasicBlock(body);
-    if(!block) {
-      cerr<<"Error: CFAnalysis::flow: body of switch is not a basic block. Unknown structure."<<endl;
+    SgStatement* block=switchStmt->get_body();
+    if(false && !isSgBasicBlock(block)) {
+      cerr<<"Error: CFAnalysis::flow: body of switch is not a block. Not supported yet."<<endl;
       exit(1);
     }
-    SgStatementPtrList& stmtList=block->get_statements();
-    ROSE_ASSERT(stmtList.size()>0);
-    SgStatement* prevCaseStmtBody=0;
-    for(SgStatementPtrList::iterator i=stmtList.begin();
-        i!=stmtList.end();
-        ++i) {
-      // TODO: revisit this case: this should work for all stmts in the body, when break has its own label as final label.
-      //SgDefaultOptionStmt
-      if(isSgCaseOptionStmt(*i)||isSgDefaultOptionStmt(*i)) {
-        Label caseStmtLab=labeler->getLabel(*i);
-        SgStatement* caseBody=getCaseOrDefaultBodyStmt(*i);
-        ROSE_ASSERT(caseBody);
-        Label caseBodyLab=labeler->getLabel(caseBody);
-        edgeSet.insert(Edge(condLabel,EDGE_FORWARD,caseStmtLab));
-        edgeSet.insert(Edge(caseStmtLab,EDGE_FORWARD,initialLabel(caseBody)));
-        Flow flowStmt=flow(caseBody);
-        edgeSet+=flowStmt;
-        {
-          // create edges from other case stmts to the next case that have no break at the end.
-          if(prevCaseStmtBody) {
-            LabelSet finalBodyLabels=finalLabels(prevCaseStmtBody);
-            for(LabelSet::iterator i=finalBodyLabels.begin();i!=finalBodyLabels.end();++i) {
-              if(!isSgBreakStmt(labeler->getNode(*i))) {
-                edgeSet.insert(Edge(*i,EDGE_FORWARD,caseBodyLab));
-              }
-            }
-          }
-        }
-        prevCaseStmtBody=caseBody;
-      } else {
-        cerr<<"Error: control flow: stmt in switch is not a case or default stmt. Not supported yet."<<endl;
-        cerr<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<(*i)->unparseToString()<<endl;
-        exit(1);
-      }
+    Flow blockFlow=flow(block);
+    edgeSet+=blockFlow;
+    // create edges from condition to case (if they exist)
+    SgNode* nodeC=SgNodeHelper::getCond(node);
+    Label condLabel=getLabel(nodeC);
+    std::set<SgCaseOptionStmt*> caseNodes=SgNodeHelper::switchRelevantCaseStmtNodes(block);
+    for (auto caseNode : caseNodes) {
+      edgeSet.insert(Edge(condLabel,EDGE_FORWARD,initialLabel(caseNode)));
+    }
+    // create edge from condition to default label (if it exists)
+    SgDefaultOptionStmt* defaultNode=SgNodeHelper::switchRelevantDefaultStmtNode(block);
+    if(defaultNode) {
+      edgeSet.insert(Edge(condLabel,EDGE_FORWARD,initialLabel(defaultNode)));
+    }
+    // special case: if there are no case and no default labels, create an edge to the block or stmt
+    if(caseNodes.size()==0 && !defaultNode) {
+      edgeSet.insert(Edge(condLabel,EDGE_FORWARD,initialLabel(block)));
     }
     return edgeSet;
   }
@@ -1065,9 +1081,6 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgBasicBlock: {
     size_t len=node->get_numberOfTraversalSuccessors();
     if(len==0) {
-      // do not generate edge to blockEndLabel
-      //Edge edge=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,labeler->blockEndLabel(node));
-      //edgeSet.insert(edge);
       return edgeSet;
     } else {
       if(len==1) {
@@ -1172,6 +1185,6 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
   default:
-    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: "+node->class_name()+" Problemnode: "+node->unparseToString());
+    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
   }
 }

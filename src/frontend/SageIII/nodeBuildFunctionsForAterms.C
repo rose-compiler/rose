@@ -4273,6 +4273,19 @@ SgForStatement* SgForStatement::build_node_from_nonlist_children ( Sg_File_Info*
      return returnNode;
    }
 
+// DQ (3/28/2018): Added support for new IR nodes specific to range-based for loop in C++11.
+SgRangeBasedForStatement* SgRangeBasedForStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgVariableDeclaration* iterator_declaration, SgVariableDeclaration* range_declaration, SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, SgExpression* not_equal_expression, SgExpression* increment_expression, SgStatement* loop_body )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgRangeBasedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgVariableDeclaration* iterator_declaration, SgVariableDeclaration* range_declaration, SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, SgExpression* not_equal_expression, SgExpression* increment_expression, SgStatement* loop_body): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgRangeBasedForStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 /* #line 3528 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 

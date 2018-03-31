@@ -768,6 +768,152 @@ static void addInEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, Sg
   }
 }
 
+
+unsigned int
+SgRangeBasedForStatement::cfgIndexForEnd() const 
+   {
+  // DQ (3/25/2018): The range based for statement has one less children than the more common for statement.
+  // return 4;
+     return 3;
+   }
+
+bool SgRangeBasedForStatement::cfgIsIndexInteresting(unsigned int idx) const 
+   {
+  // DQ (3/25/2018): The range based for statement has one less children than the more common for statement.
+  // Not clear if this is the correct value. I think it should be 1 instaed of 2, but not clear.
+  // return idx == 2;
+     return idx == 1;
+   }
+
+unsigned int SgRangeBasedForStatement::cfgFindChildIndex(SgNode* n)
+   {
+  // DQ (8/24/2006): Could be rewritten as:
+  // Make sure that this is either the conditional, true body, or the false body
+  // ROSE_ASSERT (n == this->get_for_init_stmt() || n == this->get_test() || n == this->get_loop_body() || n == this->get_increment_expr_root() );
+  // return (n == this->get_conditional()) ? 0 : ((n == this->get_test()) ? 1 : ((n == this->get_loop_body()) ? 2 : 3) );
+
+     if (n == this->get_iterator_declaration())
+        {
+          return 0;
+        }
+       else
+        {
+          if (n == this->get_range_declaration())
+             {
+               return 1;
+             }
+            else
+             {
+               if (n == this->get_begin_declaration())
+                  {
+                    return 2;
+                  }
+                 else
+                  {
+                    if (n == this->get_end_declaration())
+                       {
+                         return 2;
+                       }
+                      else
+                       {
+                         if (n == this->get_not_equal_expression())
+                            {
+                              return 2;
+                            }
+                           else
+                            {
+                              if (n == this->get_increment_expression())
+                                 {
+                                   return 2;
+                                 }
+                                else
+                                 {
+                                   if (n == this->get_loop_body())
+                                      {
+                                        return 2;
+                                      }
+                                     else
+                                      {
+                                        cerr << "Error: SgForStatement::cfgFindChildIndex(): cannot find a matching child for SgNode n:";
+                                        cerr << n->class_name() << endl;
+                                        if (isSgLocatedNode(n))
+                                           {
+                                             isSgLocatedNode(n)->get_file_info()->display();
+                                           }
+                                        ROSE_ASSERT (!"Bad child in range based for statement");
+                                      }
+                                 }
+                            }
+                       }
+                  }
+             }
+        }
+
+  // DQ (8/24/2006): Added to avoid compiler warning
+     return 0;
+   }
+
+unsigned int SgRangeBasedForStatement::cfgFindNextChildIndex(SgNode* n)
+   {
+     unsigned int parentIndex = this->cfgFindChildIndex(n);
+
+  // DQ (8/24/2006): Modified function to avoid compiler warning about no return value
+     unsigned int returnValue;
+  // if (parentIndex == 3) return 1; else return parentIndex + 1;
+     if (parentIndex == 3) 
+          returnValue = 1;
+       else
+          returnValue = parentIndex + 1;
+
+     return returnValue;
+   }
+
+std::vector<CFGEdge> SgRangeBasedForStatement::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_iterator_declaration()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), this->get_range_declaration()->cfgForBeginning(), result); break;
+    case 2: makeEdge(CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
+            makeEdge(CFGNode(this, idx), CFGNode(this, 4), result); break;
+ // case 3: makeEdge(CFGNode(this, idx), this->get_increment_expr_root()->cfgForBeginning(), result); break;
+ // case 3: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
+    case 4: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgRangeBasedForStatement");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> SgRangeBasedForStatement::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_iterator_declaration()->cfgForEnd(), CFGNode(this, idx), result);
+            makeEdge(this->get_range_declaration()->cfgForEnd(), CFGNode(this, idx), result);
+            break;
+ // case 2: makeEdge(this->get_test()->cfgForEnd(), CFGNode(this, idx), result); break;
+    case 3: {
+      makeEdge(this->get_loop_body()->cfgForEnd(), CFGNode(this, idx), result);
+      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_loop_body(), "");
+      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
+        makeEdge(CFGNode(continueStmts[i], 0), CFGNode(this, idx), result);
+      }
+      break;
+    }
+    case 4: {
+      makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_loop_body(), "");
+      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
+        makeEdge(CFGNode(breakStmts[i], 0), CFGNode(this, idx), result);
+      }
+      break;
+    }
+    default: ROSE_ASSERT (!"Bad index for SgRangeBasedForStatement");
+  }
+  return result;
+}
+
+
 // Forall CFG layout:
 // forall:0 -> header -> forall:1 (representing initial assignments)
 // forall:1 -> forall:2 (conditioned on loop tests) and forall:7
