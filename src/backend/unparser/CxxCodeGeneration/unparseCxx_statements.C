@@ -2563,7 +2563,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
           if (skipforwardDeclarationOfTemplateSpecialization == true)
              {
             // This is a compiler generated forward function declaration of a template instatiation, so skip it!
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
                curprint ( string("\n/* Skipping output of compiler generated forward function declaration of a template specialization */"));
 #endif
@@ -2576,7 +2576,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // skip output of inlined templates since these are likely to have been used 
             // previously and would be defined too late if provided as an inline template 
             // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
                curprint ( string("\n/* Skipping output of inlined template specialization */"));
 #endif
