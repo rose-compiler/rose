@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include <Partitioner2/ControlFlowGraph.h>
+#include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 
 namespace Rose {
@@ -97,6 +98,16 @@ findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
 }
 
 CfgConstEdgeSet
+findCallReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+    CfgConstEdgeSet retval;
+    for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
+        if (edge->value().type() == E_CALL_RETURN)
+            retval.insert(edge);
+    }
+    return retval;
+}
+
+CfgConstEdgeSet
 findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite) {
     CfgConstEdgeSet retval;
     for (ControlFlowGraph::ConstEdgeIterator ei=callSite->outEdges().begin(); ei!=callSite->outEdges().end(); ++ei) {
@@ -180,6 +191,137 @@ reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
     return retval;
 }
 
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
+findFunctionReturnEdges(const Partitioner &partitioner) {
+    return findFunctionReturnEdges(partitioner, partitioner.cfg());
+}
+
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
+findFunctionReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+    Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> retval;
+    for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
+        if (edge->value().type() == E_FUNCTION_RETURN) {
+            if (BasicBlock::Ptr bblock = edge->source()->value().bblock()) {
+                std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
+                BOOST_FOREACH (const Function::Ptr &function, functions)
+                    retval.insertMaybeDefault(function).insert(edge);
+            }
+        }
+    }
+    return retval;
+}
+
+void
+expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/*in,out*/) {
+    Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> fre = findFunctionReturnEdges(partitioner, cfg);
+    std::set<ControlFlowGraph::ConstEdgeIterator> edgesToErase; // erased after iterating
+
+    CfgConstEdgeSet crEdges = findCallReturnEdges(partitioner, cfg);
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &crEdge, crEdges) {
+        ControlFlowGraph::ConstVertexIterator callSite = crEdge->source();
+        ControlFlowGraph::ConstVertexIterator returnSite = crEdge->target();
+        CfgConstEdgeSet callEdges = findCallEdges(callSite);
+        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &callEdge, callEdges) {
+            if (callEdge->target()->value().type() != V_BASIC_BLOCK)
+                continue; // functionCallEdge is not a call to a known function, so ignore it
+
+            BasicBlock::Ptr functionBlock = callEdge->target()->value().bblock();
+            std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(functionBlock);
+            BOOST_FOREACH (const Function::Ptr &function, functions) {
+                BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &oldReturnEdge, fre.getOrDefault(function)) {
+                    edgesToErase.insert(oldReturnEdge);
+                    cfg.insertEdge(oldReturnEdge->source(), returnSite, E_FUNCTION_RETURN);
+                }
+            }
+        }
+    }
+
+    BOOST_FOREACH (ControlFlowGraph::ConstEdgeIterator edge, edgesToErase)
+        cfg.eraseEdge(edge);
+}
+
+ControlFlowGraph
+functionCfgByErasure(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+                     ControlFlowGraph::VertexIterator &entry/*out*/) {
+    ASSERT_not_null(function);
+
+    ControlFlowGraph fcfg = gcfg;
+    entry = fcfg.vertices().end();
+
+    // Start by erasing all vertices that aren't owned by the function, but keep the indeterminate vertex.
+    ControlFlowGraph::VertexIterator vi = fcfg.vertices().begin();
+    ControlFlowGraph::VertexIterator indet = fcfg.vertices().end();
+    while (vi != fcfg.vertices().end()) {
+        if (vi->value().type() == V_INDETERMINATE) {
+            indet = vi++;
+        } if (!vi->value().isOwningFunction(function)) {
+            fcfg.eraseVertex(vi++);
+        } else if (vi->value().type() == V_BASIC_BLOCK && vi->value().address() == function->address()) {
+            entry = vi++;
+        } else {
+            ++vi;
+        }
+    }
+
+    // If there's an indeterminate vertex, erase all the E_FUNCTION_RETURN edges.
+    if (indet != fcfg.vertices().end()) {
+        std::vector<ControlFlowGraph::EdgeIterator> toErase;
+        for (ControlFlowGraph::EdgeIterator edge = indet->inEdges().begin(); edge != indet->inEdges().end(); ++edge) {
+            if (edge->value().type() == E_FUNCTION_RETURN)
+                toErase.push_back(edge);
+        }
+        BOOST_FOREACH (ControlFlowGraph::EdgeIterator &edge, toErase)
+            fcfg.eraseEdge(edge);
+    }
+
+    // Erase the indeterminate vertex if appropriate
+    if (indet != fcfg.vertices().end() && indet->degree() == 0)
+        fcfg.eraseVertex(indet);
+
+    return fcfg;
+}
+
+ControlFlowGraph
+functionCfgByReachability(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+                          const ControlFlowGraph::ConstVertexIterator &gcfgEntry) {
+    ASSERT_not_null(function);
+
+    ControlFlowGraph fcfg;
+    if (gcfg.isEmpty() || !gcfg.isValidVertex(gcfgEntry))
+        return fcfg;
+
+    // Copy all reachable vertices that belong to the function, plus copy the indeterminate vertex.
+    typedef Sawyer::Container::BiMap<ControlFlowGraph::ConstVertexIterator, ControlFlowGraph::VertexIterator> GlobalToFunction;
+    GlobalToFunction g2f;
+    typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<const ControlFlowGraph> Traversal;
+    ControlFlowGraph::VertexIterator fcfgIndet = fcfg.vertices().end();
+    for (Traversal t(gcfg, gcfgEntry); t; ++t) {
+        if (t->value().type() == V_INDETERMINATE || t->value().isOwningFunction(function)) {
+            ControlFlowGraph::VertexIterator vertex = fcfg.insertVertex(t->value());
+            if (t->value().type() == V_INDETERMINATE)
+                fcfgIndet = vertex;
+            g2f.insert(gcfg.findVertex(t->id()), vertex);
+        } else {
+            t.skipChildren();
+        }
+    }
+    
+    // Copy all edges if both endpoint vertices exist in the function CFG. But omit E_FUNCTION_RETURN edges that go
+    // to the indeterminate vertex.
+    BOOST_FOREACH (const GlobalToFunction::Forward::Node mapping, g2f.forward().nodes()) {
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, mapping.key()->outEdges()) {
+            if ((edge.value().type() != E_FUNCTION_RETURN || edge.target()->value().type() != V_INDETERMINATE) &&
+                g2f.forward().exists(edge.target()))
+                fcfg.insertEdge(mapping.value(), g2f.forward()[edge.target()], edge.value());
+        }
+    }
+
+    // If we copied the indeterminate vertex but it isn't reachable, remove it.
+    if (fcfgIndet != fcfg.vertices().end() && fcfgIndet->nInEdges() == 0 && fcfgIndet->id() != 0)
+        fcfg.eraseVertex(fcfgIndet);
+
+    return fcfg;
+}
 
 } // namespace
 } // namespace
