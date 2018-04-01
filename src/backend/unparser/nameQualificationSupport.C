@@ -590,6 +590,21 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                     break;
                   }
 
+            // DQ (3/31/2018): Added code to help debug strange case (see Cxx11_tests/test2018_68.C).
+               case V_SgTemplateFunctionDeclaration:
+                  {
+                 // Actually there is nothing to do here.
+#if 0
+                    printf ("Note: Template arguments being evaluated against template declaration (which has only template parameters) \n");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+
                default:
                   {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -4650,6 +4665,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
              }
 
+#if 0
+          printf ("currentScope = %p \n",currentScope);
+#endif
+
        // ROSE_ASSERT(currentScope != NULL);
           if (currentScope != NULL)
              {
@@ -4684,6 +4703,20 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
             // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
                traverseType(returnType,functionDeclaration,currentScope,functionDeclaration);
+
+#if 0
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("@@@@@@@@@@@@@@@@@@ Process the function name @@@@@@@@@@@@@@@@@@ \n");
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+#if 0
+               printf ("functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+               printf ("currentScope = %p \n",currentScope);
+               if (currentScope != NULL)
+                  {
+                    printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                  }
+#endif
 
             // Handle the function name...
             // DQ (6/20/2011): Friend function can be qualified...sometimes...
@@ -4790,15 +4823,21 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                       else
                        {
+                      // DQ (3/31/2018): Added assertion.
+                         ROSE_ASSERT(functionDeclaration->get_scope() != NULL);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("currentScope = %p functionDeclaration->get_scope() = %p \n",currentScope,functionDeclaration->get_scope());
+                         printf ("functionDeclaration->get_scope() = %s \n",functionDeclaration->get_scope()->class_name().c_str());
 #endif
                       // Case of non-member functions (more logical name qualification rules).
                          if (currentScope != functionDeclaration->get_scope())
                             {
                            // DQ (1/21/2013): Added support for testing the more general equivalence of scopes (where the pointers are not equal, applies only to namespaces, I think).
                               bool isSameNamespace = SgScopeStatement::isEquivalentScope(currentScope,functionDeclaration->get_scope());
-
+#if 0
+                              printf ("isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
+#endif
                               if (isSameNamespace == false)
                                  {
                                    int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
@@ -4816,6 +4855,24 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                    if (skipNameQualification == false)
                                       {
                                         setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                                      }
+                                 }
+                                else
+                                 {
+                                // DQ (3/31/2018): Note that we still might require name qualification on any template arguments in the template function instantiation.
+                                // Ignore the case fo a SgTemplateFunctionDeclaration.
+                                   if (isSgTemplateInstantiationFunctionDecl(functionDeclaration) != NULL)
+                                      {
+                                     // This point of calling this function is to just have the template arguments evaluated for name qualification (see Cxx11_tests/test2018_68.C).
+                                        int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+#if 0
+                                        printf ("Need to process the template arguments: exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
                                       }
                                  }
                             }
@@ -4862,6 +4919,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                        }
                   }
+#if 0
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("@@@@@@@@@@@@@@@@@@ DONE: Process the function name @@@@@@@@@@@@@@@@@@ \n");
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
              }
             else
              {
@@ -4872,6 +4934,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
             // ROSE_ASSERT(false);
              }
+
+#if 0
+          printf ("Exiting as a test at the end of SgFunctionDeclaration name qualification support \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
   // Handle references to SgMemberFunctionDeclaration...
@@ -5324,7 +5391,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
              }
 
-       // If this is a templated function then we have to save the name becuase its templated name might have template arguments that require name qualification.
+       // If this is a templated function then we have to save the name because its templated name might have template arguments that require name qualification.
           SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(functionRefExp->getAssociatedFunctionDeclaration());
           if (templateInstantiationFunctionDeclaration != NULL)
              {
