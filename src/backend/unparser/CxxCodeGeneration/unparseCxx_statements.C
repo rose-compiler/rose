@@ -1457,6 +1457,10 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // case IF_STMT:            unparseIfStmt(stmt, info);           break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
+
+       // DQ (3/26/2018): Adding support for C++11 IR node (previously missed).
+          case V_SgRangeBasedForStatement: unparseRangeBasedForStmt(stmt, info); break; 
+
           case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
           case V_SgTemplateFunctionDefinition: unparseTemplateFunctionDefnStmt(stmt, info); break;
           case V_SgFunctionDefinition:     unparseFuncDefnStmt(stmt, info);     break;
@@ -2559,7 +2563,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
           if (skipforwardDeclarationOfTemplateSpecialization == true)
              {
             // This is a compiler generated forward function declaration of a template instatiation, so skip it!
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
                curprint ( string("\n/* Skipping output of compiler generated forward function declaration of a template specialization */"));
 #endif
@@ -2572,7 +2576,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // skip output of inlined templates since these are likely to have been used 
             // previously and would be defined too late if provided as an inline template 
             // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
                curprint ( string("\n/* Skipping output of inlined template specialization */"));
 #endif
@@ -4064,6 +4068,80 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
    }
 
+
+
+void
+Unparse_ExprStmt::unparseRangeBasedForStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // printf ("Unparse range-based for loop \n");
+     SgRangeBasedForStatement* for_stmt = isSgRangeBasedForStatement(stmt);
+     ROSE_ASSERT(for_stmt != NULL);
+
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+
+#define DEBUG_RANGE_BASED_FOR_STMT 0
+
+#if DEBUG_RANGE_BASED_FOR_STMT
+     printf ("In unparseRangeBasedForStmt(): saved_unparsedPartiallyUsingTokenStream = %s \n",saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
+     curprint ("/* Top of unparseForStmt */");
+#endif
+
+  // printf ("ERROR: Range-based For statement unparseRangeBasedForStmt() not implemented \n");
+
+     curprint("for ( ");
+
+     SgVariableDeclaration* interator_declaration = for_stmt->get_iterator_declaration();
+     ROSE_ASSERT(interator_declaration != NULL);
+
+     SgUnparse_Info ninfo(info);
+
+  // Need to suppress the output of the semicolon in the output of the variable declaration.
+     ninfo.set_SkipSemiColon();
+     ninfo.set_SkipInitializer();
+
+     unparseStatement(interator_declaration, ninfo);
+
+     curprint(" : ");
+
+  // SgVarRefExp* range_variable = for_stmt->range_variable_reference();
+  // ROSE_ASSERT(range_variable != NULL);
+     SgExpression* range_expression = for_stmt->range_expression();
+     ROSE_ASSERT(range_expression != NULL);
+
+     unparseExpression(range_expression, info);
+
+     curprint(" )");
+
+     SgStatement* loopBody = for_stmt->get_loop_body();
+     ROSE_ASSERT(loopBody != NULL);
+  // printf ("loopBody = %p         = %s \n",loopBody,loopBody->class_name().c_str());
+  // printf ("info.SkipBasicBlock() = %s \n",info.SkipBasicBlock() ? "true" : "false");
+
+     if ( (loopBody != NULL) && !info.SkipBasicBlock())
+        {
+#if DEBUG_RANGE_BASED_FOR_STMT
+          printf ("Unparse the for loop body \n");
+          curprint("/* Unparse the for loop body */ ");
+#endif
+          unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
+          unparseStatement(loopBody, info);
+          unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
+
+#if DEBUG_RANGE_BASED_FOR_STMT
+          curprint("/* DONE: Unparse the range-based for loop body */ ");
+#endif
+        }
+       else
+        {
+       // printf ("No range-based for loop body to unparse! \n");
+       // curprint ( string("\n/* No range-based for loop body to unparse! */ \n";
+          if (!info.SkipSemiColon())
+             {
+               curprint ( string(";"));
+             }
+        }
+
+   }
 
 void
 Unparse_ExprStmt::unparseExceptionSpecification(const SgTypePtrList& exceptionSpecifierList, SgUnparse_Info& info)
