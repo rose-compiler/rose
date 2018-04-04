@@ -2148,6 +2148,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
           case V_SgDeclarationScope:
 
+       // DQ (3/26/2018): Added support for new C++11 IR node.
+          case V_SgRangeBasedForStatement:
+
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:
           case V_SgBasicBlock:

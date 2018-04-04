@@ -1135,6 +1135,14 @@ ROSE_DLL_API SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt
 ROSE_DLL_API SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 ROSE_DLL_API void buildForStatement_nfi(SgForStatement* result, SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 
+// DQ (3/26/2018): Adding support for range based for statement.
+// ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(SgVariableDeclaration* initializer, SgExpression* range, SgStatement* body);
+ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(
+     SgVariableDeclaration* initializer, SgVariableDeclaration* range, 
+     SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, 
+     SgExpression* not_equal_expression, SgExpression* increment_expression,
+     SgStatement* body);
+
 // EDG 4.8 handled the do-while statement differently (more similar to a block scope than before in EDG 4.7 (i.e. with an end-of-construct statement).
 // So we need an builder function that can use the existing SgDoWhileStatement scope already on the stack.
 ROSE_DLL_API void buildDoWhileStatement_nfi(SgDoWhileStmt* result, SgStatement * body, SgStatement * condition);

@@ -184,6 +184,11 @@ test2018_56.C \
 test2018_57.C \
 test2018_58.C \
 test2018_59.C \
+test2018_60.C \
+test2018_61.C \
+test2018_62.C \
+test2018_65.C \
+test2018_68.C \
 last.C
 
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
@@ -199,6 +204,12 @@ test2016_39.C
 # test2017_17.C 
 # test2017_18.C 
 
+if ROSE_USING_GCC_VERSION_LATER_4_9
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2018_63.C \
+test2018_64.C \
+test2018_66.C
+endif
 
 # DQ (2/21/2017): This fails due to missing builtin functions (still to be addressed).
 if !USING_CLANG_COMPILER

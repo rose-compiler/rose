@@ -38,7 +38,6 @@ class CFAnalysis {
   LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
-  Flow flowBlock(SgNode* node);
   SPRAY::Labeler* getLabeler();
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 

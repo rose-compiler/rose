@@ -210,14 +210,18 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgLabelStatement:
     return labeler->getLabel(node);
   case V_SgFunctionDefinition:
-  case V_SgClassDeclaration:
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgReturnStmt:
-  case V_SgVariableDeclaration:
   case V_SgCaseOptionStmt:
   case V_SgDefaultOptionStmt:
       return labeler->getLabel(node);
+
+  case V_SgVariableDeclaration:
+  case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
+      return labeler->getLabel(node);
+
   case V_SgExprStatement: {
     return labeler->getLabel(node);
   }
@@ -348,8 +352,12 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgInitializedName:
+    finalSet.insert(labeler->getLabel(node));
+    return finalSet;
+    // declarations
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
   case V_SgDefaultOptionStmt:
@@ -933,11 +941,15 @@ Flow CFAnalysis::flow(SgNode* node) {
   }
   case V_SgBreakStmt:
   case V_SgInitializedName:
-  case V_SgVariableDeclaration:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgExprStatement:
+    return edgeSet;
+
+    // declarations
+  case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
     return edgeSet;
 
     // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
@@ -1173,6 +1185,6 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
   default:
-    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: "+node->class_name()+" Problemnode: "+node->unparseToString());
+    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
   }
 }

@@ -589,6 +589,7 @@ SgPythonPrintStmt
 SgQualifiedName
 SgQualifiedNameType
 SgRangeExp
+SgRangeBasedForStatement
 SgReadStatement
 SgRealPartOp
 SgRefExp

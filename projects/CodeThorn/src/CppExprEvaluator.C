@@ -359,6 +359,10 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     char value = isSgCharVal(node)->get_value();
     return NumberIntervalLattice(Number(static_cast<int>(value)));
   }
+  case V_SgEnumVal: {
+    int value = isSgEnumVal(node)->get_value();
+    return NumberIntervalLattice(Number(static_cast<int>(value)));
+  }
 
   case V_SgStringVal: return NumberIntervalLattice::top();
 
