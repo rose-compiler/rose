@@ -306,8 +306,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
 
    ATerm t_name, t_alloc, t_type, t_preset;
    char* name;
-   bool  has_spec;
-   std::string spec_string;
 
    SgUntypedType* declared_type;
 
@@ -320,11 +318,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
          // MATCHED ItemName
       } else return ATfalse;
 
-      if (traverse_OptAllocationSpecifier(t_alloc, &has_spec, spec_string)) {
+      if (traverse_OptAllocationSpecifier(t_alloc, attr_list)) {
          // MATCHED OptAllocationSpecifier
       } else return ATfalse;
 
-      if (traverse_ItemTypeDescription(t_type, &declared_type)) {
+      if (traverse_ItemTypeDescription(t_type, &declared_type, attr_list)) {
          // MATCHED ItemTypeDescription
       } else return ATfalse;
 
@@ -356,23 +354,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemTypeDescription: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_IntegerItemDescription(term, type)) {
+   if (traverse_IntegerItemDescription(term, type, attr_list)) {
       // MATCHED IntegerItemDescription
    }
-   else if (traverse_FloatingItemDescription(term, type)) {
+   else if (traverse_FloatingItemDescription(term, type, attr_list)) {
       // MATCHED FloatingItemDescription
    }
-#if 0
-   else if (traverse_FixedItemDescription(term, type)) {
+   else if (traverse_FixedItemDescription(term, type, attr_list)) {
       // MATCHED FixedItemDescription
    }
-#endif
    else if (traverse_BitItemDescription(term, type)) {
       // MATCHED BitItemDescription
    }
@@ -395,7 +391,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
 //========================================================================================
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerItemDescription: %s\n", ATwriteToString(term));
@@ -404,6 +400,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
    ATerm t_round_or_truncate, t_size;
    bool has_round_or_truncate, has_size;
    SgUntypedExpression* size;
+   General_Language_Translation::ExpressionKind modifier_enum;
 
    if (ATmatch(term, "IntegerItemDescription (<term>,<term>)", &t_round_or_truncate,&t_size)) {
       *type = UntypedBuilder::buildType(SgUntypedType::e_int);
@@ -413,8 +410,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
    }
    else return ATfalse;
 
-   if (traverse_OptRoundOrTruncate(t_round_or_truncate, &has_round_or_truncate)) {
+   if (traverse_OptRoundOrTruncate(t_round_or_truncate, &has_round_or_truncate, &modifier_enum)) {
       // MATCHED OptRoundOrTruncate
+      if (has_round_or_truncate) {
+         if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
+            cerr << "WARNING: e_type_modifier_round information not forwarded from ATerm traversal \n";
+         }
+         else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
+            cerr << "WARNING: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+         }
+         else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
+            cerr << "WARNING: e_type_modifier_z information not forwarded from ATerm traversal \n";
+         }
+         else ROSE_ASSERT(false);
+      }
    } else return ATfalse;
 
    if (traverse_OptItemSize(t_size, &has_size, &size)) {
@@ -453,7 +462,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptItemSize(ATerm term, bool* has
 //========================================================================================
 // 2.1.1.2 FLOATING TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FloatingItemDescription: %s\n", ATwriteToString(term));
@@ -461,6 +470,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm ter
 
    ATerm t_round_or_truncate, t_precision;
    bool has_round_or_truncate;
+   General_Language_Translation::ExpressionKind modifier_enum;
    SgUntypedExpression* precision;
 
    if (ATmatch(term, "FloatingItemDescription (<term>,<term>)", &t_round_or_truncate,&t_precision)) {
@@ -468,8 +478,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm ter
    }
    else return ATfalse;
 
-   if (traverse_OptRoundOrTruncate(t_round_or_truncate, &has_round_or_truncate)) {
+   if (traverse_OptRoundOrTruncate(t_round_or_truncate, &has_round_or_truncate, &modifier_enum)) {
       // MATCHED OptRoundOrTruncate
+      if (has_round_or_truncate) {
+         if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
+            cerr << "WARNING: e_type_modifier_round information not forwarded from ATerm traversal \n";
+         }
+         else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
+            cerr << "WARNING: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+         }
+         else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
+            cerr << "WARNING: e_type_modifier_z information not forwarded from ATerm traversal \n";
+         }
+         else ROSE_ASSERT(false);
+      }
    } else return ATfalse;
 
    if (traverse_FloatingFormula(t_precision, &precision)) {
@@ -480,7 +502,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm ter
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bool* has_round_or_truncate /*TODO - return type */)
+ATbool ATermToUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bool* has_round_or_truncate,
+                                                                  General_Language_Translation::ExpressionKind* modifier_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptRoundOrTruncate: %s\n", ATwriteToString(term));
@@ -488,6 +511,89 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bo
 
    if (ATmatch(term, "no-round-or-truncate()")) {
       *has_round_or_truncate = false;
+   }
+   else if (ATmatch(term, "R()")) {
+      *has_round_or_truncate = true;
+      *modifier_enum = General_Language_Translation::e_type_modifier_round;
+   }
+   else if (ATmatch(term, "T()")) {
+      *has_round_or_truncate = true;
+      *modifier_enum = General_Language_Translation::e_type_modifier_truncate;
+   }
+   else if (ATmatch(term, "Z()")) {
+      *has_round_or_truncate = true;
+      *modifier_enum = General_Language_Translation::e_type_modifier_z;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.1.1.3 FIXED TYPE DESCRIPTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FixedItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_round_or_truncate, t_scale, t_fraction;
+   bool has_round_or_truncate, has_fraction_specifier;
+   General_Language_Translation::ExpressionKind modifier_enum;
+   SgUntypedExpression * scale, * fraction;
+
+   if (ATmatch(term, "FixedItemDescription (<term>,<term>,<term>)", &t_round_or_truncate,&t_scale,&t_fraction)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
+   }
+   else return ATfalse;
+
+   if (traverse_OptRoundOrTruncate(t_round_or_truncate, &has_round_or_truncate, &modifier_enum)) {
+      // MATCHED OptRoundOrTruncate
+      if (has_round_or_truncate) {
+         if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
+            cerr << "WARNING: e_type_modifier_round information not forwarded from ATerm traversal \n";
+         }
+         else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
+            cerr << "WARNING: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+         }
+         else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
+            cerr << "WARNING: e_type_modifier_z information not forwarded from ATerm traversal \n";
+         }
+         else ROSE_ASSERT(false);
+      }
+   } else return ATfalse;
+
+   if (traverse_IntegerFormula(t_scale, &scale)) {
+      (*type)->set_has_kind(true);
+      (*type)->set_type_kind(scale);
+   } else return ATfalse;
+
+   if (ATmatch(t_fraction, "no-fraction-specifier()")) {
+      // MATCHED no-fraction-specifier
+   }
+   else if (traverse_FractionSpecifier(t_fraction, &fraction)) {
+      cerr << "WARNING: fraction specifier has not been implemented \n";
+      return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FractionSpecifier(ATerm term, SgUntypedExpression** fraction)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FractionSpecifier: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_fraction;
+   *fraction = NULL;
+
+   if (ATmatch(term, "FractionSpecifier(<term>)", &t_fraction)) {
+      if (traverse_FixedFormula(t_fraction, fraction)) {
+        // MATCHED FixedFormula
+      } else return ATfalse;
    }
    else return ATfalse;
 
@@ -530,9 +636,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
 
    ATerm t_name, t_alloc, t_dim_list, t_table_desc;
    char* name;
-   bool  has_spec, has_bits;
-   std::string spec_string;
-   SgUntypedExpression* bits_expr;
 
    SgUntypedType *declared_type, *actual_type;
 
@@ -555,7 +658,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
          // MATCHED ItemName
       } else return ATfalse;
 
-      if (traverse_OptAllocationSpecifier(t_alloc, &has_spec, spec_string)) {
+      if (traverse_OptAllocationSpecifier(t_alloc, attr_list)) {
          // MATCHED OptAllocationSpecifier
       } else return ATfalse;
 
@@ -563,7 +666,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
          // MATCHED OptDimensionList
       } else return ATfalse;
 
-      if (traverse_TableDescription(t_table_desc, &declared_type, &has_spec, spec_string, &has_bits, &bits_expr)) {
+      if (traverse_TableDescription(t_table_desc, &declared_type, attr_list)) {
          // MATCHED TableDescription
       } else return ATfalse;
 
@@ -594,9 +697,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUntypedType** type,
-                                                                bool* has_spec, std::string & spec_string,
-                                                                bool* has_bits, SgUntypedExpression** bits_expr)
+ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDescription: %s\n", ATwriteToString(term));
@@ -606,11 +707,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
 
    if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struc_spec,&t_entry_spec)) {
 
-      if (traverse_OptStructureSpecifier(t_struc_spec, has_spec, spec_string, has_bits, bits_expr)) {
+      if (traverse_OptStructureSpecifier(t_struc_spec, attr_list)) {
          // MATCHED OptStructureSpecifier
       } else return ATfalse;
 
-      if (traverse_EntrySpecifier(t_entry_spec, type)) {
+      if (traverse_EntrySpecifier(t_entry_spec, type, attr_list)) {
          // MATCHED EntrySpecifier
       } else return ATfalse;
 
@@ -620,16 +721,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_EntrySpecifier(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_EntrySpecifier(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EntrySpecifier: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_OrdinaryEntrySpecifier(term, type)) {
+   if (traverse_OrdinaryEntrySpecifier(term, type, attr_list)) {
       // MATCHED OrdinaryEntrySpecifier -> EntrySpecifier
    }
-   else if (traverse_SpecifiedEntrySpecifier(term, type)) {
+   else if (traverse_SpecifiedEntrySpecifier(term, type, attr_list)) {
       // MATCHED SpecifiedEntrySpecifier -> EntrySpecifier
    }
    else return ATfalse;
@@ -725,17 +826,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_Dimension(ATerm term, SgUntypedEx
 //========================================================================================
 // 2.1.2.2 TABLE STRUCTURE
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_OptStructureSpecifier(ATerm term, bool* has_spec, std::string & spec_string,
-                                                                                 bool* has_bits, SgUntypedExpression** bits_expr)
+ATbool ATermToUntypedJovialTraversal::traverse_OptStructureSpecifier(ATerm term, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptStructureSpecifier: %s\n", ATwriteToString(term));
 #endif
 
    if (ATmatch(term, "no-structure-specifier()")) {
-      *has_spec = false;
-      *has_bits = false;
-      *bits_expr = NULL;
+      // MATCHED no-structure-specifier
    }
    else return ATfalse;
 
@@ -745,23 +843,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptStructureSpecifier(ATerm term,
 //========================================================================================
 // 2.1.2.3 ORDINARY TABLE ENTRIES
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OrdinaryEntrySpecifier: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_pack_spec, t_item_desc, t_preset;
-   bool has_pack_spec;
-   std::string pack_string;
 
    if (ATmatch(term, "OrdinaryEntrySpecifier(<term>,<term>,<term>)", &t_pack_spec,&t_item_desc,&t_preset)) {
 
-      if (traverse_OptPackingSpecifier(t_pack_spec, &has_pack_spec, pack_string)) {
+      if (traverse_OptPackingSpecifier(t_pack_spec, attr_list)) {
          // MATCHED OptStructureSpecifier
       } else return ATfalse;
 
-      if (traverse_ItemTypeDescription(t_item_desc, type)) {
+      if (traverse_ItemTypeDescription(t_item_desc, type, attr_list)) {
          // MATCHED ItemTypeDescription
       } else return ATfalse;
 
@@ -771,26 +867,26 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_OptPackingSpecifier(ATerm term, bool* has_spec, std::string & spec_string)
+ATbool ATermToUntypedJovialTraversal::traverse_OptPackingSpecifier(ATerm term, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptPackingSpecifier: %s\n", ATwriteToString(term));
 #endif
 
    if (ATmatch(term, "no-packing-specifier()")) {
-      *has_spec = false;
+      // MATCHED no-packing-specifier
    }
    else if (ATmatch(term, "N")) {
-      *has_spec = true;
-      spec_string = "N";
+      // TODO - add attribute
+      return ATfalse;
    }
    else if (ATmatch(term, "M")) {
-      *has_spec = true;
-      spec_string = "M";
+      // TODO - add attribute
+      return ATfalse;
    }
    else if (ATmatch(term, "D")) {
-      *has_spec = true;
-      spec_string = "D";
+      // TODO - add attribute
+      return ATfalse;
    }
    else return ATfalse;
 
@@ -800,7 +896,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptPackingSpecifier(ATerm term, b
 //========================================================================================
 // 2.1.2.4 SPECIFIED TABLE ENTRIES
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedEntrySpecifier(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedEntrySpecifier(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecifiedEntrySpecifier: %s\n", ATwriteToString(term));
@@ -812,18 +908,19 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedEntrySpecifier(ATerm ter
 //========================================================================================
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term, bool* has_spec, std::string & spec_string)
+ATbool ATermToUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptAllocationSpecifier: %s\n", ATwriteToString(term));
 #endif
 
    if (ATmatch(term, "no-allocation-specifier()")) {
-      *has_spec = false;
+      // MATCHED no-allocation-specifier
    }
    else if (ATmatch(term, "STATIC()")) {
-      *has_spec = true;
-      spec_string = "STATIC";
+      SgUntypedExpression* attr = new SgUntypedOtherExpression(General_Language_Translation::e_storage_modifier_static);
+      setSourcePosition(attr, term);
+      attr_list->get_expressions().push_back(attr);
    }
    else return ATfalse;
 
@@ -1472,6 +1569,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingLiteral(ATerm term, SgUnt
    else return ATfalse;
 
    return ATtrue;
+}
+
+//========================================================================================
+// 5.1.3 FIXED FORMULAS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_FixedFormula(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FixedFormula: %s\n", ATwriteToString(term));
+#endif
+
+   cerr << "FIXED Formula expressions are not yet implemented! \n";
+
+   return ATfalse;
 }
 
 //========================================================================================

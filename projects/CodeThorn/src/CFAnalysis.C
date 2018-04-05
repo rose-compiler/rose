@@ -57,7 +57,7 @@ LabelSet CFAnalysis::functionEntryLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
   nodeLabels=flow.nodeLabels();
-   for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
+  for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
     if(labeler->isFunctionEntryLabel(*i)) 
       resultSet.insert(*i);
   }
