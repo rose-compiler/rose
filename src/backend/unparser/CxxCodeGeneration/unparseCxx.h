@@ -339,7 +339,12 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseForStmt          (SgStatement* stmt, SgUnparse_Info& info);
+
+       // DQ (3/26/2018): Adding support for C++11 IR node (previously missed).
+          virtual void unparseRangeBasedForStmt(SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseFuncDeclStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseMFuncDeclStmt    (SgStatement* stmt, SgUnparse_Info& info);

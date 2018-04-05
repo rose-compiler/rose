@@ -7,7 +7,7 @@
 #define KMAX      PROBLEM_SIZE
 #define IMAXP     IMAX/2*2
 #define JMAXP     JMAX/2*2
-#include "omp.h" 
+#include <omp.h> 
 double u[24][24 / 2 * 2 + 1][24 / 2 * 2 + 1][5];
 void exact_solution(double xi,double eta,double zeta,double dtemp[5]);
 double dnym1;

@@ -138,6 +138,57 @@ test2017_23.C \
 test2018_04.C \
 test2018_05.C \
 test2018_06.C \
+test2018_07.C \
+test2018_08.C \
+test2018_09.C \
+test2018_10.C \
+test2018_11.C \
+test2018_12.C \
+test2018_13.C \
+test2018_14.C \
+test2018_15.C \
+test2018_16.C \
+test2018_17.C \
+test2018_18.C \
+test2018_19.C \
+test2018_20.C \
+test2018_21.C \
+test2018_23.C \
+test2018_24.C \
+test2018_26.C \
+test2018_27.C \
+test2018_28.C \
+test2018_29.C \
+test2018_30.C \
+test2018_31.C \
+test2018_34.C \
+test2018_35.C \
+test2018_37.C \
+test2018_38.C \
+test2018_39.C \
+test2018_40.C \
+test2018_41.C \
+test2018_42.C \
+test2018_43.C \
+test2018_44.C \
+test2018_45.C \
+test2018_46.C \
+test2018_47.C \
+test2018_48.C \
+test2018_51.C \
+test2018_52.C \
+test2018_53.C \
+test2018_54.C \
+test2018_55.C \
+test2018_56.C \
+test2018_57.C \
+test2018_58.C \
+test2018_59.C \
+test2018_60.C \
+test2018_61.C \
+test2018_62.C \
+test2018_65.C \
+test2018_68.C \
 last.C
 
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
@@ -153,6 +204,12 @@ test2016_39.C
 # test2017_17.C 
 # test2017_18.C 
 
+if ROSE_USING_GCC_VERSION_LATER_4_9
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2018_63.C \
+test2018_64.C \
+test2018_66.C
+endif
 
 # DQ (2/21/2017): This fails due to missing builtin functions (still to be addressed).
 if !USING_CLANG_COMPILER

@@ -45,7 +45,7 @@ public:
 
     /** Construct a faked call vertex. The function may be null if indeterminate. */
     explicit DfCfgVertex(const Function::Ptr &function): type_(FAKED_CALL), callee_(function) {}
-    
+
     /** Construct a vertex of specified type that takes no auxiliary data. */
     explicit DfCfgVertex(Type type): type_(type) {
         ASSERT_require2(BBLOCK!=type && FAKED_CALL!=type, "use a different constructor");
@@ -163,13 +163,14 @@ class TransferFunction {
     BaseSemantics::DispatcherPtr cpu_;
     BaseSemantics::SValuePtr callRetAdjustment_;
     const RegisterDescriptor STACK_POINTER_REG;
+    const RegisterDescriptor INSN_POINTER_REG;
     CallingConvention::DefinitionPtr defaultCallingConvention_;
 public:
     /** Construct from a CPU.
      *
      *  Constructs a new transfer function using the specified @p cpu. */
     explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()) {
+        : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()) {
         size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
         callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
     }
@@ -185,9 +186,9 @@ public:
     /** Property: Default calling convention.
      *
      *  The default calling convention is used whenever a call is made to a function that has no calling convention
-     *  information. It specifies which registers should be clobbered by the call and how the stack is adjusted when returning
-     *  from the call.  The default calling convention may be a null pointer to indicate that absolutely nothing is known about
-     *  the convention of non-analyzed functions.
+     *  information. It specifies which registers should be clobbered by the call and how the stack and instruction poniter
+     *  are adjusted when returning from the call.  The default calling convention may be a null pointer to indicate that
+     *  absolutely nothing is known about the convention of non-analyzed functions.
      *
      * @{ */
     CallingConvention::DefinitionPtr defaultCallingConvention() const { return defaultCallingConvention_; }
@@ -196,7 +197,7 @@ public:
 
     // Required by data-flow engine
     std::string printState(const BaseSemantics::StatePtr &state);
-    
+
     // Required by data-flow engine: compute new output state given a vertex and input state.
     BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
 };

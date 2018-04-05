@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryZ3Solver.h>
+#include <rose_strtoull.h>
 #include <stringify.h>
 #include <Sawyer/Stopwatch.h>
 
@@ -242,7 +243,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputRotateRight(inode);
                 break;
             case SymbolicExpr::OP_SDIV:
-                throw Exception("OP_SDIV not implemented");
+                retval = outputDivide(inode, "bvsdiv");
+                break;
             case SymbolicExpr::OP_SET:
                 retval = outputSet(inode);
                 break;
@@ -274,12 +276,13 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputBinary("bvsgt", inode, BOOLEAN);
                 break;
             case SymbolicExpr::OP_SMOD:
-                throw Exception("OP_SMOD not implemented");
+                retval = outputModulo(inode, "bvsrem");
+                break;
             case SymbolicExpr::OP_SMUL:
                 retval = outputMultiply(inode);
                 break;
             case SymbolicExpr::OP_UDIV:
-                retval = outputUnsignedDivide(inode);
+                retval = outputDivide(inode, "bvudiv");
                 break;
             case SymbolicExpr::OP_UEXTEND:
                 retval = outputUnsignedExtend(inode);
@@ -297,7 +300,7 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputBinary("bvult", inode, BOOLEAN);
                 break;
             case SymbolicExpr::OP_UMOD:
-                retval = outputUnsignedModulo(inode);
+                retval = outputModulo(inode, "bvurem");
                 break;
             case SymbolicExpr::OP_UMUL:
                 retval = outputMultiply(inode);
@@ -353,25 +356,20 @@ Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
             z3::expr z3expr = ctx_->bv_val((unsigned long long)leaf->toInt(), (unsigned)leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
         } else {
-#if 0 // [Robb Matzke 2018-01-04]: This fails silently with z3 4.5.0 and 4.6.0
-            // FIXME[Robb Matzke 2018-01-04]: Our bit vector (leaf->bits()) is an array of unsigned ints and it would be nice
-            // if we could pass it directly into Z3 to get a z3::expr bit vector. Second approach is if Z3 could accept a
-            // string representing in binary, octal, hexadecimal, or some other power-of-two radix. Neither of these approaches
-            // seems possible with the C or C++ APIs in z3-4.5.0 or 4.6.0. There is a z3::context::bv_val function that takes a
-            // string, but only a decimal representation (give it anything else and it fails silently).  Converting from ROSE
-            // binary representation to decimal string back to z3 binary representation is going to involve division and
-            // multiplication.
-            std::string hexStr = "#x" + leaf->bits().toHex();
-            z3::expr z3expr = ctx_->bv_val(hexStr.c_str(), leaf->nBits());
-            return Z3ExprTypePair(z3expr, BIT_VECTOR);
-#else
-            static bool called;
-            if (!called) {
-                mlog[WARN] <<"FIXME: Z3 interface does not support bit vector constants wider than 64 bits\n";
-                called = true;
+            // Z3-4.5.0 and 4.6.0 lack an interface for creating a bit vector with more than 64 bits from a hexadecimal
+            // string. A function taking a bool[] has been added to z3's development branch but is not yet
+            // available. Therefore, we construct a wider-than-64-bit constant by concatenating up to 64 bits at a time.
+            z3::expr z3expr(*ctx_);
+            for (size_t offset=0; offset < leaf->bits().size(); offset += 64) {
+                size_t windowSize = std::min((size_t)64, leaf->bits().size() - offset);
+                z3::expr window = ctx_->bv_val((unsigned long long)leaf->bits().toInteger(), (unsigned)windowSize);
+                if (0 == offset) {
+                    z3expr = window;
+                } else {
+                    z3expr = z3::concat(z3expr, window);
+                }
             }
-            throw Exception("z3 interface does not support bit vector constants wider than 64 bits");
-#endif
+            return Z3ExprTypePair(z3expr, BIT_VECTOR);
         }
     } else if (leaf->isVariable()) {
         z3::func_decl decl = ctxVarDecls_.get(leaf);
@@ -540,7 +538,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_ROR:
                 return ctxRotateRight(inode);
             case SymbolicExpr::OP_SDIV:
-                throw Exception("OP_SDIV not implemented");
+                return ctxSignedDivide(inode);
             case SymbolicExpr::OP_SET:
                 return ctxSet(inode);
             case SymbolicExpr::OP_SEXTEND:
@@ -574,7 +572,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                           ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_SMOD:
-                throw Exception("OP_SMOD not implemented");
+                return ctxSignedModulo(inode);
             case SymbolicExpr::OP_SMUL:
                 return ctxMultiply(inode);
             case SymbolicExpr::OP_UDIV:
@@ -909,6 +907,22 @@ Z3Solver::ctxUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
 }
 
 Z3Solver::Z3ExprTypePair
+Z3Solver::ctxSignedDivide(const SymbolicExpr::InteriorPtr &inode) {
+    ASSERT_not_null(inode);
+    ASSERT_require(inode->nChildren() == 2);
+    size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+
+    z3::expr e =
+        (ctxCast(ctxExpression(aExtended), BIT_VECTOR).first /
+         ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        .extract(inode->child(0)->nBits()-1, 0);
+
+    return Z3ExprTypePair(e, BIT_VECTOR);
+}
+
+Z3Solver::Z3ExprTypePair
 Z3Solver::ctxUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
@@ -934,6 +948,22 @@ Z3Solver::ctxUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
 
     z3::expr e =
         z3::urem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
+                 ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        .extract(inode->child(1)->nBits()-1, 0);
+
+    return Z3ExprTypePair(e, BIT_VECTOR);
+}
+
+Z3Solver::Z3ExprTypePair
+Z3Solver::ctxSignedModulo(const SymbolicExpr::InteriorPtr &inode) {
+    ASSERT_not_null(inode);
+    ASSERT_require(inode->nChildren() == 2);
+    size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+
+    z3::expr e =
+        z3::srem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
                  ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
         .extract(inode->child(1)->nBits()-1, 0);
 
@@ -1020,7 +1050,21 @@ Z3Solver::parseEvidence() {
         SymbolicExpr::Ptr val;
         z3::expr interp = model.get_const_interp(fdecl);
         if (interp.is_bv()) {
-            val = SymbolicExpr::makeInteger(var->nBits(), interp.get_numeral_uint64());
+            if (var->nBits() <= 64) {
+                val = SymbolicExpr::makeInteger(var->nBits(), interp.get_numeral_uint64());
+            } else {
+                // Z3 doesn't have an API function to obtain the bits of a constant if the constant is wider than 64 bits. We
+                // can't use the trick of splitting the Z3 bit vector into 64-bit chunks and converting each to a uint64_t and
+                // concatenating the results because "bv.extract(hi,lo)" is no longer a number but rather an extraction
+                // expression.  What we can do is get a string of decimal digits and parse it to binary. This isn't
+                // particularly efficient since the conversions to/from string require divide/multiply by 10.
+                std::string digits = interp.get_decimal_string(0);
+                Sawyer::Container::BitVector bits(var->nBits());
+                bits.fromDecimal(bits.hull(), digits);
+                val = SymbolicExpr::makeConstant(bits);
+                ASSERT_require(val->nBits() == var->nBits());
+                ASSERT_require(val->isLeafNode() && val->isLeafNode()->isNumber());
+            }
         } else if (interp.is_bool()) {
             val = SymbolicExpr::makeBoolean(interp.get_numeral_uint() != 0);
         } else {

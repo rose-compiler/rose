@@ -408,6 +408,21 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgUnparse_Info ninfo(info);
      ninfo.set_supressImplicitThisOperator();
 
+#if 0
+     printf ("In unparseLambdaExpression(): BEFORE UNSET: ninfo.SkipEnumDefinition()     = %s \n",ninfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseLambdaExpression(): BEFORE UNSET: ninfo.SkipClassDefinition()    = %s \n",ninfo.SkipClassDefinition() ? "true" : "false");
+     printf ("In unparseLambdaExpression(): BEFORE UNSET: ninfo.SkipFunctionDefinition() = %s \n",ninfo.SkipFunctionDefinition() ? "true" : "false");
+#endif
+
+  // DQ (2/19/2018): Need to unset the support to skip the function definitions so that the unparsing of the block will allow comments and CPP directives to be output.
+     ninfo.unset_SkipEnumDefinition();
+     ninfo.unset_SkipClassDefinition();
+     ninfo.unset_SkipFunctionDefinition();
+
+#if 0
+     printf ("In unparseLambdaExpression(): AFTER UNSET ninfo.SkipFunctionDefinition() = %s \n",ninfo.SkipFunctionDefinition() ? "true" : "false");
+#endif
+
   // Output the function definition
      ROSE_ASSERT(lambdaFunction->get_definition() != NULL);
      unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo);
@@ -594,6 +609,14 @@ Unparse_ExprStmt::unparseTemplateFunctionName(SgTemplateInstantiationFunctionDec
   // unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
      if (unparseTemplateArguments == true)
         {
+#if 0
+          SgTemplateArgumentPtrList & templateArgList = templateInstantiationFunctionDeclaration->get_templateArguments();
+          printf ("In unparseTemplateFunctionName(): templateArgList.size() = %zu \n",templateArgList.size());
+          for (size_t i = 0; i < templateArgList.size(); i++)
+             {
+               printf ("--- templateArgList[%zu] = %p \n",i,templateArgList[i]);
+             }
+#endif
           unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
         }
    }
@@ -748,8 +771,17 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #if 0
                unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
+
+#if 0
+               printf ("In unparseTemplateArgumentList(): Calling unparseTemplateArgument(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
             // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
+
+#if 0
+               printf ("In unparseTemplateArgumentList(): DONE: Calling unparseTemplateArgument(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
+
                i++;
 
                // When to output , ?  the argument must not be the last one.
@@ -807,7 +839,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
              // DQ (1/21/2018): I think this needs to be turned off to handle test2014_04.C, but turned on for test2018_04.C.
                if ((*i)->get_explicitlySpecified() == false)
                   {
-#if 1
+#if 0
                     printf ("In unparseTemplateArgumentList(): Found (*i)->get_explicitlySpecified() == false: set hasLambdaFollowed = true \n");
 #endif
                  // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
@@ -1303,7 +1335,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      printf ("In unparseTemplateArgument() = %p (explicitlySpecified = %s) \n",templateArgument,(templateArgument->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Unparse TemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( "\n/* Unparse TemplateArgument */ \n");
      unp->u_exprStmt->curprint ( "\n");
@@ -1404,6 +1436,16 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #if 0
                printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: templateArgument->get_type() = %s \n",templateArgumentType->class_name().c_str());
             // curprint ( "\n /* templateArgument->get_type() */ \n");
+            // if (isSgTypedefType(templateArgumentType) != NULL)
+               if (isSgNamedType(templateArgumentType) != NULL)
+                  {
+                 // SgTypedefType* typedefType = isSgTypedefType(templateArgumentType);
+                    SgNamedType* namedType = isSgNamedType(templateArgumentType);
+                    if (namedType != NULL)
+                       {
+                         printf ("--- name = %s \n",namedType->get_name().str());
+                       }
+                  }
 #endif
             // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
                bool isAnonymous = isAnonymousClass(templateArgumentType);
@@ -1420,8 +1462,11 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
             // Note that this fix also requires that the name qualification support be computed using the unparsable_type_alias.
                if (templateArgument->get_unparsable_type_alias() != NULL)
                   {
-#if 1
+#if 0
                     printf ("In unparseTemplateArgument(): selected an alternative type to unparse to work waround a bug in EDG (this is likely the original type specified in the source code) \n");
+                 // DQ (3/30/2018): Can't call this without infinite recursion!
+                 // printf ("--- were going to use: %s \n",templateArgument->unparseToString().c_str());
+                 // printf ("--- selecing instead : %s \n",templateArgument->get_unparsable_type_alias()->unparseToString().c_str());
 #endif
                     templateArgumentType = templateArgument->get_unparsable_type_alias();
                   }
@@ -2356,6 +2401,7 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializedName->get_initptr());
      ROSE_ASSERT(aggregateInitializer != NULL);
      ROSE_ASSERT(aggregateInitializer->get_uses_compound_literal() == true);
+
 #if 0
      printf ("Calling unparseAggrInit() \n");
      curprint ("/* Calling unparseAggrInit() */ \n");
@@ -2367,6 +2413,7 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
      printf ("DONE: Calling unparseAggrInit() \n");
      curprint ("/* DONE: Calling unparseAggrInit() */ \n");
 #endif
+
 #if 0
      printf ("unparseCompoundLiteral not implemented yet! \n");
 #endif
@@ -6417,6 +6464,146 @@ removeIncludeDirective(SgLocatedNode* locatedNode)
    }
 
 
+bool uses_cxx11_initialization (SgNode* n)
+   {
+  // See what the structure of this initialization is to see if it is using the C++11 initialization features for structs.
+
+  // SgInitializer* initializerChain[3] = { NULL, NULL, NULL };
+     std::vector<SgInitializer*> initializerChain;
+     bool returnValue = false;
+
+#if 0
+     printf ("In uses_cxx11_initialization(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
+
+#if 0
+     class InitializerTraversal : public AstSimpleProcessing
+        {
+          private:
+               std::vector<SgInitializer*> & initializerChain;
+               int counter;
+
+          public:
+               InitializerTraversal(std::vector<SgInitializer*> & x) : initializerChain(x), counter(0) {}
+               void visit (SgNode* node)
+                  {
+                    ROSE_ASSERT(node != NULL);
+#if 0
+                    printf ("In InitializerTraversal::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                    SgInitializer* initializer = isSgInitializer(node);
+                    if (initializer != NULL && counter < 3)
+                       {
+                      // initializerChain[counter] = initializer;
+                         initializerChain.push_back(initializer);
+                         counter++;
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     InitializerTraversal traversal(initializerChain);
+     traversal.traverse(n, preorder);
+#else
+  // This version starts at the second in the chain of three SgAggregateInitializer IR nodes.
+  // It initializes the first intry in the chain through accessing the parents and the last two 
+  // from the current node and it's children.
+
+     class InitializerTraversal : public AstSimpleProcessing
+        {
+          private:
+               std::vector<SgInitializer*> & initializerChain;
+               int counter;
+
+          public:
+               InitializerTraversal(std::vector<SgInitializer*> & x) : initializerChain(x), counter(1) {}
+               void visit (SgNode* node)
+                  {
+                    ROSE_ASSERT(node != NULL);
+#if 0
+                    printf ("In InitializerTraversal::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                    SgInitializer* initializer = isSgInitializer(node);
+                    if (initializer != NULL && counter < 3)
+                       {
+                      // initializerChain[counter] = initializer;
+                         initializerChain.push_back(initializer);
+                         counter++;
+                       }
+                  }
+        };
+
+
+     SgExprListExp* expressonList = isSgExprListExp(n->get_parent());
+     if (expressonList != NULL)
+        {
+          SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(expressonList->get_parent());
+          if (aggregateInitializer != NULL)
+             {
+               initializerChain.push_back(aggregateInitializer);
+
+               ROSE_ASSERT(initializerChain.size() == 1);
+
+            // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+               InitializerTraversal traversal(initializerChain);
+               traversal.traverse(n, preorder);
+
+             }
+        }
+
+#endif
+
+     ROSE_ASSERT(initializerChain.size() <= 3);
+
+     if (initializerChain.size() == 3)
+        {
+       // Check the order of the initializers.
+          SgAggregateInitializer* agregateInitializer_0 = isSgAggregateInitializer(initializerChain[0]);
+          SgAggregateInitializer* agregateInitializer_1 = isSgAggregateInitializer(initializerChain[1]);
+          SgAggregateInitializer* agregateInitializer_2 = isSgAggregateInitializer(initializerChain[2]);
+#if 0
+          printf ("agregateInitializer_0 = %p = %s \n",agregateInitializer_0,initializerChain[0]->class_name().c_str());
+          printf ("agregateInitializer_1 = %p = %s \n",agregateInitializer_1,initializerChain[1]->class_name().c_str());
+          printf ("agregateInitializer_2 = %p = %s \n",agregateInitializer_2,initializerChain[2]->class_name().c_str());
+#endif
+          if (agregateInitializer_0 != NULL && agregateInitializer_1 != NULL && agregateInitializer_2 != NULL)
+             {
+               SgType* agregateInitializer_type_0 = isSgClassType(agregateInitializer_0->get_type());
+               SgType* agregateInitializer_type_1 = isSgArrayType(agregateInitializer_1->get_type());
+               SgType* agregateInitializer_type_2 = isSgClassType(agregateInitializer_2->get_type());
+#if 0
+               printf ("agregateInitializer_type_0 = %p = %s \n",agregateInitializer_type_0,agregateInitializer_0->get_type()->class_name().c_str());
+               printf ("agregateInitializer_type_1 = %p = %s \n",agregateInitializer_type_1,agregateInitializer_1->get_type()->class_name().c_str());
+               printf ("agregateInitializer_type_2 = %p = %s \n",agregateInitializer_type_2,agregateInitializer_2->get_type()->class_name().c_str());
+#endif
+               SgClassType* classType_0 = isSgClassType(agregateInitializer_type_0);
+               SgArrayType* arrayType_1 = isSgArrayType(agregateInitializer_type_1);
+               SgClassType* classType_2 = isSgClassType(agregateInitializer_type_2);
+
+               if (classType_0 != NULL && arrayType_1 != NULL && classType_2 != NULL)
+                  {
+#if 0
+                    printf ("Found C++11 specific initializer chain that requires use of class specifier \n");
+#endif
+                    returnValue = true;
+                  }
+                 else
+                  {
+#if 0
+                    printf ("No C++11 class specification required for this initializer chain \n");
+#endif
+                  }
+             }
+        }
+
+#if 0
+     printf ("Leaving uses_cxx11_initialization(): n = %p = %s returnValue = %s \n",n,n->class_name().c_str(),returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
+   }
+
+
 void
 Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -6437,12 +6624,35 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
      SgUnparse_Info newinfo(info);
 
+     static int depth = 0;
+
+     depth++;
+
 #define DEBUG_AGGREGATE_INITIALIZER 0
 
-#if DEBUG_AGGREGATE_INITIALIZER
+#if DEBUG_AGGREGATE_INITIALIZER || 0
      printf ("In unparseAggrInit(): aggr_init = %p = %s aggr_init->get_uses_compound_literal() = %s \n",aggr_init,aggr_init->class_name().c_str(),aggr_init->get_uses_compound_literal() ? "true" : "false");
      curprint ("/* In unparseAggrInit() */ ");
 #endif
+
+#if 1
+  // See what the structure of this initialization is to see if it is using the C++11 initialization features for structs.
+     bool need_cxx11_class_specifier = uses_cxx11_initialization (expr);
+
+#if 0
+     printf ("DONE: Calling uses_cxx11_initialization: expr = %p type = %p = %s need_cxx11_class_specifier = %s \n",
+          expr,expr->get_type(),expr->get_type()->class_name().c_str(),need_cxx11_class_specifier ? "true" : "false");
+#endif
+#if 0
+     printf ("&&&&&&&&&&&&&&&&&&& In unparseAggrInit(): depth = %d need_cxx11_class_specifier = %s \n",depth,need_cxx11_class_specifier ? "true" : "false");
+#endif
+#endif
+
+  // DQ (3/21/2018): For testing this should work on test2018_59.C for the first case.
+  // ROSE_ASSERT (need_cxx11_class_specifier == true);
+
+  // DQ  (3/12/2018): Moved to outer functions scope so that we can reuse it in the loop over initializers.
+     SgUnparse_Info newinfo2(info);
 
   // DQ (7/27/2013): Added support for aggregate initializers.
      if (aggr_init->get_uses_compound_literal() == true)
@@ -6459,8 +6669,17 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // SgAggregateInitializer (shares the same parent statement).
        // SgUnparse_Info newinfo(info);
        // newinfo.unset_SkipClassDefinition();
-          SgUnparse_Info newinfo2(info);
-          if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
+
+       // DQ  (3/12/2018): Moved to outer functions scope so that we can reuse it in the loop over initializers.
+       // SgUnparse_Info newinfo2(info);
+
+       // DQ (3/12/2018): Rewrite this so that we can output the calue of "shared".
+       // if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
+          bool shares = (sharesSameStatement(aggr_init,aggr_init->get_type()) == true);
+#if 0
+          printf ("In unparseAggrInit(): shares = %s \n",shares ? "true" : "false");
+#endif
+          if (shares == true)
              {
 #if 0
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
@@ -6496,6 +6715,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           newinfo2.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
 #endif
           curprint ("(");
+
+       // DQ (3/21/2018): Added assertion.
+          ROSE_ASSERT(aggr_init->get_type() != NULL);
 
 #if 0
           printf ("In unparseAggrInit(): aggr_init->get_type() = %p = %s \n",aggr_init->get_type(),aggr_init->get_type()->class_name().c_str());
@@ -6541,8 +6763,22 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
   // if (aggr_init->get_need_explicit_braces())
      if (need_explicit_braces == true)
         {
+       // DQ (3/12/2018): Could this be what should drive the introduction of the class name?
+          if (info.inAggregateInitializer() == true)
+             {
+               curprint("/* Need explicit braces: is this where we insert the class name? */ ");
+             }
+
           curprint("{");
         }
+
+#if 0
+  // DQ (3/12/2018): Set this so that we can only add class names inside of the first AggregateInitializer.
+#if 0
+     printf ("In unparseAggrInit(): Calling newinfo2.set_inAggregateInitializer() \n");
+#endif
+     newinfo2.set_inAggregateInitializer();
+#endif
 
      SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
      size_t last_index = list.size() -1;
@@ -6595,34 +6831,74 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      curprint ("/* output list elements in unparseAggrInit() */ ");
 #endif
 
-     for (size_t index = 0; index < list.size(); index ++)
+  // SgArrayType* arrayType = isSgArrayType(aggr_init->get_type());
+#if 0
+     printf ("Looking for an array initializer: arrayType = %p \n",arrayType);
+#endif
+
+     for (size_t index = 0; index < list.size(); index++)
         {
-#if 1
+#if DEBUG_AGGREGATE_INITIALIZER || 0
+          printf ("In unparseAggrInit(): list index = %zu \n",index);
+          curprint ("/* output list element */ ");
+#endif
+
+#if 0
+       // printf ("Top of loop: depth = %d need_cxx11_class_specifier = %s \n",depth,need_cxx11_class_specifier ? "true" : "false");
+          printf ("Top of loop: depth = %d \n",depth);
+#endif
+
+       // **********************************************************************************************
+       // DQ (3/12/2018): Best thoughts as I am leaving to head home! Pick this up again in the morning.
+       // Sometimes we need to output the class name if the list elements are class types.
+       // However, it might be that we don't do this if we are initializing an array of class types.
+       // In contrast we should output the class type when we are initializing a structure containing 
+       // multiple data members that are of class types.
+       // **********************************************************************************************
+
+          SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(list[index]);
+       // ROSE_ASSERT(aggregateInitializer != NULL);
+
+#if 0
+          printf ("In loop: depth = %d need_cxx11_class_specifier = %s \n",depth,need_cxx11_class_specifier ? "true" : "false");
+#endif
+          if (need_cxx11_class_specifier == true)
+             {
+               ROSE_ASSERT(aggregateInitializer != NULL);
+#if 0
+               printf ("aggregateInitializer->get_type() = %p = %s \n",aggregateInitializer->get_type(),aggregateInitializer->get_type()->class_name().c_str());
+#endif
+            // Might need to strip modifiers.
+            // SgClassType* classType = isSgClassType(arrayType->get_base_type());
+               SgClassType* classType = isSgClassType(aggregateInitializer->get_type());
+               ROSE_ASSERT(classType != NULL);
+#if 0
+               printf ("In unparseAggrInit(): need_cxx11_class_specifier == true: aggregateInitializer = %p \n",aggregateInitializer);
+               printf ("In unparseAggrInit(): need_cxx11_class_specifier == true: classType            = %p \n",classType);
+#endif
+            // DQ (3/12/2018): Trying something different.
+            // unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo2);
+               if (aggregateInitializer != NULL && classType != NULL)
+                  {
+                    newinfo2.set_SkipClassSpecifier();
+
+                    unp->u_type->outputType<SgAggregateInitializer>(aggregateInitializer,classType,newinfo2);
+                  }
+             }
+
+#if DEBUG_AGGREGATE_INITIALIZER
+          printf ("In unparseAggrInit(): between class name and expression: index = %zu \n",index);
+          curprint ("/* output class name between array elements */ ");
+#endif
+
        // If there was an include then unparse everything (because we removed the include (above)).
        // If there was not an include then still unparse everything!
           unparseExpression(list[index], newinfo);
-          if (index!= last_index)
+          if (index != last_index)
                curprint ( ", ");
-#else
-       // DQ (9/11/2013): Older code that attempted to use the source position, but it is sensitive  
-       // to errors in the source position information in EDG (or maybe in the translation to ROSE).
-       // bool skipUnparsing = isFromAnotherFile(aggr_init,index);
-          bool skipUnparsing = isFromAnotherFile(list[index]);
-          if (!skipUnparsing)
-             {
 
-#error "DEAD CODE!"
-
-               unparseExpression(list[index], newinfo);
-               if (index!= last_index)
-                    curprint(", ");
-             }
-            else
-             {
 #if 0
-               printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %" PRIuPTR "] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
-#endif
-             }
+          printf ("Bottom of loop: depth = %d need_cxx11_class_specifier = %s \n",depth,need_cxx11_class_specifier ? "true" : "false");
 #endif
         }
      unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
@@ -6633,10 +6909,16 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           curprint("}");
         }
 
-#if DEBUG_AGGREGATE_INITIALIZER
+#if DEBUG_AGGREGATE_INITIALIZER 
      printf ("Leaving unparseAggrInit() \n");
      curprint ("/* Leaving unparseAggrInit() */ ");
 #endif
+
+#if 0
+     printf ("Leaving unparseAggrInit(): depth = %d \n",depth);
+#endif
+
+     depth--;
    }
 
 

@@ -172,7 +172,7 @@ struct VariableRenamer {
 
     VariableRenamer(ExprExprHashMap &index, size_t &nextVariableId, const SmtSolverPtr &solver)
         : index(index), nextVariableId(nextVariableId), solver(solver) {}
-    
+
     Ptr rename(const Ptr &input) {
         ASSERT_not_null(input);
         Ptr retval;
@@ -260,6 +260,8 @@ struct Substituter {
 //                                      Base node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+boost::logic::tribool (*Node::mayEqualCallback)(const Ptr&, const Ptr&, const SmtSolver::Ptr&) = NULL;
+
 Ptr
 Node::newFlags(unsigned newFlags) {
     if (newFlags == flags_)
@@ -280,7 +282,7 @@ Node::newFlags(unsigned newFlags) {
         return makeMemory(domainWidth(), nBits(), comment(), newFlags);
     ASSERT_not_reachable("invalid leaf node type");
 }
-    
+
 std::set<LeafPtr>
 Node::getVariables() {
     struct T1: public Visitor {
@@ -432,6 +434,36 @@ Node::printFlags(std::ostream &o, unsigned flags, char &bracket) {
     }
 }
 
+InteriorPtr
+Node::isOperator(Operator op) {
+    if (InteriorPtr inode = isInteriorNode()) {
+        if (inode->getOperator() == op)
+            return inode;
+    }
+    return InteriorPtr();
+}
+
+bool
+Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/) {
+    if (InteriorPtr inode = isOperator(OP_ADD)) {
+        if (inode->nChildren() == 2) {
+            LeafPtr arg0 = inode->child(0)->isLeafNode();
+            LeafPtr arg1 = inode->child(1)->isLeafNode();
+            if (arg0 && arg1) {
+                if (arg0->isVariable() && arg1->isNumber()) {
+                    variable = arg0;
+                    constant = arg1;
+                    return true;
+                } else if (arg0->isNumber() && arg1->isVariable()) {
+                    variable = arg1;
+                    constant = arg0;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Interior node
@@ -817,18 +849,45 @@ Interior::mustEqual(const Ptr &other_, const SmtSolverPtr &solver/*NULL*/) {
 
 bool
 Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
-    bool retval = false;
-    if (this==getRawPointer(other)) {
+    // Fast comparison of literally the same expression pointer
+    if (this == getRawPointer(other))
         return true;
-    } else if (isEquivalentTo(other)) {
-        // This is probably faster than using an SMT solver.  It also serves as the naive approach when an SMT solver
-        // is not available.
-        retval = true;
-    } else if (solver) {
-        Ptr assertion = makeEq(sharedFromThis(), other, solver);
-        retval = SmtSolver::SAT_YES==solver->satisfiable(assertion);
+
+    // Give the user a chance to decide.
+    if (mayEqualCallback) {
+        boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
+        if (true == result || false == result)
+            return result;
     }
-    return retval;
+
+    // Two addition operations of the form V + X and V + Y where V is a variable and X and Y are constants, are equal if and
+    // only if X = Y.
+    LeafPtr variableA, variableB, constantA, constantB;
+    if (matchAddVariableConstant(variableA/*out*/, constantA/*out*/) &&
+        other->matchAddVariableConstant(variableB/*out*/, constantB/*out*/)) {
+        if (variableA->nameId() == variableB->nameId()) {
+            ASSERT_require(variableA->nBits() == variableB->nBits());
+            ASSERT_require(constantA->nBits() == constantB->nBits());
+            return constantA->bits().compare(constantB->bits()) == 0;
+        }
+    }
+
+    // Two expressions that are structurally equivalent are also equal.
+    if (isEquivalentTo(other))
+        return true;
+
+    // It is difficult to prove that arbitrary expressions are equal or not equal.  Ask the solver to find a solution where
+    // they are equal.  If the solver finds a solution, then obviously they can be equal.  If the solver can't prove the
+    // equality assertion, we want to assume that they can be equal.  Thus only if the solver can prove that they cannot be
+    // equal do we have anything to return here.
+    if (solver) {
+        Ptr assertion = makeEq(sharedFromThis(), other, solver);
+        if (SmtSolver::SAT_NO == solver->satisfiable(assertion))
+            return false;
+    }
+
+    // If we couldn't prove that the two expressions are unequal, then assume they could be equal.
+    return true;
 }
 
 int
@@ -1067,7 +1126,7 @@ Interior::additiveNesting(const SmtSolverPtr &solver) {
                 makeExtend(makeInteger(8, additive_nbits), child(0), solver);
         Ptr b = nested->child(0)->nBits()==additive_nbits ? nested->child(0) :
                 makeExtend(makeInteger(8, additive_nbits), nested->child(0), solver);
-        
+
         // construct the new node but don't simplify it yet (i.e., don't use Interior::create())
         Interior *inode = new Interior(nBits(), getOperator(), makeAdd(a, b, solver), nested->child(1), comment());
         return InteriorPtr(inode);
@@ -1167,6 +1226,31 @@ AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 
 Ptr
 AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+    // Simplify these expressions by hoisting the ite (SEI):
+    //   (add (ite C X Y) Z)
+    //   (add Z (ite C X Y)
+    // where Z is not an ite expression,
+    // to this expression:
+    //   (ite C (add X Z) (add Y Z))
+    // and simplify the add operations
+    if (inode->nChildren() == 2) {
+        if (InteriorPtr ite = inode->child(0)->isOperator(OP_ITE)) {
+            if (!inode->child(0)->isOperator(OP_ITE)) {
+                // (add (ite C X Y) Z) => (ite (add X Z) (add Y Z))
+                return makeIte(ite->child(0),
+                               makeAdd(ite->child(1), inode->child(1), solver),
+                               makeAdd(ite->child(2), inode->child(1), solver),
+                               solver);
+            }
+        } else if (InteriorPtr ite = inode->child(1)->isOperator(OP_ITE)) {
+            // (add Z (ite C X Y)) => (ite (add Z X) (add Z Y))
+            return makeIte(ite->child(0),
+                           makeAdd(inode->child(0), ite->child(1), solver),
+                           makeAdd(inode->child(0), ite->child(2), solver),
+                           solver);
+        }
+    }
+        
     // A and B are duals if they have one of the following forms:
     //    (1) A = x           AND  B = (negate x)
     //    (2) A = x           AND  B = (invert x)   [adjust constant]
@@ -1426,6 +1510,33 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
 
 Ptr
 ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+    // Hoist "ite" if possible. In other words, simplify this:
+    //   (concat (ite C X1 Y1) ... (ite C Xn Yn))
+    // to this:
+    //   (ite C (concat X1 ... Xn) (concat Y1 ... Yn))
+    // and simplify the concat operations
+    Ptr condition;
+    Nodes trueValues, falseValues;
+    BOOST_FOREACH (const Ptr &child, inode->children()) {
+        InteriorPtr ite = child->isInteriorNode();
+        if (!ite || ite->getOperator() != OP_ITE) {
+            condition = Ptr();
+            break;
+        } else if (!condition) {
+            condition = ite->child(0);
+        } else if (!ite->child(0)->mustEqual(condition, solver)) {
+            condition = Ptr();
+            break;
+        }
+        trueValues.push_back(ite->child(1));
+        falseValues.push_back(ite->child(2));
+    }
+    if (condition) {
+        Ptr trueConcat = Interior::create(inode->nBits(), OP_CONCAT, trueValues, solver);
+        Ptr falseConcat = Interior::create(inode->nBits(), OP_CONCAT, falseValues, solver);
+        return Interior::create(inode->nBits(), OP_ITE, condition, trueConcat, falseConcat, solver);
+    }
+
     // If all the concatenated expressions are extract expressions, all extracting bits from the same expression and
     // in the correct order, then we can simplify this to that expression.  For instance:
     //   (concat[32]
@@ -1636,12 +1747,30 @@ IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     if (cond_node!=NULL && cond_node->isNumber()) {
         if (cond_node->nBits() != 1)
             throw Exception(toStr(inode->getOperator()) + " operator's first argument (condition) should be one bit wide");
-        return cond_node->toInt() ? inode->child(1) : inode->child(2);
+        bool condition = ! cond_node->bits().isAllClear();
+        return condition ? inode->child(1) : inode->child(2);
     }
 
     // Are both operands the same? Then the condition doesn't matter
     if (inode->child(1)->isEquivalentTo(inode->child(2)))
         return inode->child(1);
+
+    // Are both extracts of the same offsets?
+    // convert this: (ite cond (extract x y expr1) (extract x y expr2))
+    // to this:      (extract x y (ite cond expr1 expr2))
+    InteriorPtr in1 = inode->child(1)->isInteriorNode();
+    InteriorPtr in2 = inode->child(2)->isInteriorNode();
+    if (in1 && in2 &&
+        in1->getOperator() == OP_EXTRACT && in2->getOperator() == OP_EXTRACT &&
+        in1->nBits() == in2->nBits() &&
+        in1->child(0)->mustEqual(in2->child(0), solver) &&      // both extracts have same "from" bit offset
+        in1->child(1)->mustEqual(in2->child(1), solver) &&      // both extracts have same "to" bit offset
+        in1->child(2)->nBits() == in2->child(2)->nBits()) {     // both extracted-from values are same width
+
+        Ptr newIte = makeIte(inode->child(0), in1->child(2), in2->child(2), solver);
+        Ptr newExtract = makeExtract(in1->child(0), in1->child(1), newIte, solver);
+        return newExtract;
+    }
 
     return Ptr();
 }
@@ -1694,7 +1823,7 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         result.rotateLeft(*sa);
         return makeConstant(result, inode->comment(), inode->flags());
     }
-    
+
     // If the shift amount is zero then this is a no-op
     if (sa && *sa % inode->nBits() == 0)
         return inode->child(1);
@@ -1949,7 +2078,7 @@ ZeropSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->isNumber())
         return makeBoolean(a_leaf->bits().isEqualToZero(), inode->comment(), inode->flags());
-    
+
     return Ptr();
 }
 
@@ -2053,7 +2182,7 @@ ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_wi
         strength1 = makeExtend(makeInteger(32, sum_width), strength1, solver);
     if (strength2->nBits() < sum_width)
         strength2 = makeExtend(makeInteger(32, sum_width), strength2, solver);
-    
+
     return makeAdd(strength1, strength2, solver);
 }
 
@@ -2503,7 +2632,7 @@ Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, 
     LeafPtr retval(node);
     return retval;
 }
-    
+
 // class method
 uint64_t
 Leaf::nextNameCounter(uint64_t useThis) {
@@ -2680,21 +2809,34 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
 }
 
 bool
-Leaf::mayEqual(const Ptr &other_, const SmtSolverPtr &solver) {
-    bool retval = false;
-    LeafPtr other = other_->isLeafNode();
-    if (this==getRawPointer(other)) {
-        retval = true;
-    } else if (other==NULL) {
-        // We need an SMT solver to figure out things like "x mayEqual (add y 1))", which is true.
-        if (solver) {
-            Ptr assertion = makeEq(sharedFromThis(), other_, solver);
-            retval = SmtSolver::SAT_YES == solver->satisfiable(assertion);
-        }
-    } else if (!isNumber() || !other->isNumber() || 0==bits_.compare(other->bits_)) {
-        retval = true;
+Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
+    // Fast comparison of literally the same expression pointer
+    if (this == getRawPointer(other))
+        return true;
+
+    // The may-equal operator is symmetric, therefore if other is an interior node use that method instead (which is where the
+    // more complicated logic lives).
+    if (other->isInteriorNode())
+        return other->mayEqual(sharedFromThis(), solver);
+
+    // If both expressions are constant leaf nodes, we can reach a conclusion without a solver.  Two constants that are
+    // different sizes can be equal (e.g., 42[8] == 42[16]).
+    LeafPtr otherLeaf = other->isLeafNode();
+    ASSERT_not_null(otherLeaf);
+    if (isNumber() && otherLeaf->isNumber())
+        return bits().compare(otherLeaf->bits()) == 0;
+
+    // Give the user a chance to decide.
+    if (mayEqualCallback) {
+        boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
+        if (true == result || false == result)
+            return result;
     }
-    return retval;
+
+    // The other cases are variable, memory, or constant compared to variable, memory, or constant as long as both are not
+    // constants.  In all eight of those cases, the two expressions can be equal to each other and we don't need an SMT
+    // solver to prove it.
+    return true;
 }
 
 int
@@ -2853,7 +2995,7 @@ Ptr
 makeXor(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
     return Interior::create(0, OP_XOR, a, b, solver, comment, flags);
 }
-    
+
 Ptr
 makeConcat(const Ptr &hi, const Ptr &lo, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
     return Interior::create(0, OP_CONCAT, hi, lo, solver, comment, flags);

@@ -8,6 +8,7 @@
 #include "Map.h"
 
 #include <boost/any.hpp>
+#include <boost/logic/tribool.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
@@ -264,6 +265,14 @@ protected:
         : nBits_(0), domainWidth_(0), flags_(flags), comment_(comment), hashval_(0) {}
 
 public:
+    /** User-supplied predicate to augment alias checking.
+     *
+     * If this pointer is non-null, then the @ref mayEqual methods invoke this function. If this function returns true
+     * or false, then its return value becomes the return value of @ref mayEqual, otherwise @ref mayEqual continues
+     * as it normally would.  This user-defined function is invoked by @ref mayEqual after trivial situations are checked
+     * and before any calls to an SMT solver. The SMT solver argument is optional (may be null). */
+    static boost::logic::tribool (*mayEqualCallback)(const Ptr &a, const Ptr &b, const SmtSolverPtr&);
+    
     /** Returns true if two expressions must be equal (cannot be unequal).
      *
      *  If an SMT solver is specified then that solver is used to answer this question, otherwise equality is established by
@@ -546,6 +555,16 @@ public:
      *  expression and adding expressions to the return vector whenever a subtree is encountered a second time. Therefore the
      *  if a common subexpression A contains another common subexpression B then B will appear earlier in the list than A. */
     std::vector<Ptr> findCommonSubexpressions();
+
+    /** Determine whether an expression is a variable plus a constant.
+     *
+     *  If this expression is of the form V + X or X + V where V is a variable and X is a constant, return true and make @p
+     *  variable point to the variable and @p constant point to the constant.  If the expression is not one of these forms,
+     *  then return false without modifying the arguments. */
+    bool matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/);
+
+    /** True (non-null) if this node is the specified operator. */
+    InteriorPtr isOperator(Operator);
 
 protected:
     void printFlags(std::ostream &o, unsigned flags, char &bracket);

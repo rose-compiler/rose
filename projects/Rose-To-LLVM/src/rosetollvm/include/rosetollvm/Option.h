@@ -34,6 +34,17 @@ public:
     void setTranslating() { translating = true; }
     void resetTranslating() { translating = false; }
 
+    bool isCompileOnly() { return compile_only; }
+    void setCompileOnly() { compile_only = true; }
+    void resetCompileOnly() { compile_only = false; }
+
+    std::string optimizationLevel() { return optimization_level; }
+    void setOptimizationLevel(std::string level) { optimization_level = level; }
+
+    std::string outputFilename() { return output_filename; }
+    void setOutputFilename(std::string filename) { output_filename = filename; }
+
+
     /*
     int numLLVMFiles() { return llvm_file_prefixes.size(); }
 
@@ -56,6 +67,10 @@ private:
          debug_pre_traversal,
          debug_post_traversal,
          debug_output;
+
+    bool compile_only;
+    std::string optimization_level;
+    std::string output_filename;
 
     //    std::vector<std::string> llvm_file_prefixes;
 
