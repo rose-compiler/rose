@@ -161,6 +161,9 @@ ROSE_DLL_API void setSourcePositionClassificationMode(SourcePositionClassificati
 //! DQ (7/27/2012): changed semantics from removing the template arguments in names to adding the template arguments to names.
 ROSE_DLL_API SgName appendTemplateArgumentsToName( const SgName & name, const SgTemplateArgumentPtrList & templateArgumentsList);
 
+//! DQ (3/9/2018): Added to support debugging.
+SgName unparseTemplateArgumentToString (SgTemplateArgument* templateArgument);
+
 // *************************************************************************************************************
 
 
@@ -192,6 +195,10 @@ ROSE_DLL_API SgTypeString* buildStringType( SgExpression* stringLengthExpression
 
 ROSE_DLL_API SgTypeVoid * buildVoidType();
 ROSE_DLL_API SgTypeWchar* buildWcharType();
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+ROSE_DLL_API SgTypeChar16* buildChar16Type();
+ROSE_DLL_API SgTypeChar32* buildChar32Type();
 
 ROSE_DLL_API SgTypeSignedChar*  buildSignedCharType();
 ROSE_DLL_API SgTypeSignedInt*   buildSignedIntType();
@@ -378,6 +385,12 @@ ROSE_DLL_API SgNullptrValExp* buildNullptrValExp_nfi();
 
 ROSE_DLL_API SgWcharVal* buildWcharVal(wchar_t value = 0);
 ROSE_DLL_API SgWcharVal* buildWcharVal_nfi(wchar_t value, const std::string& str);
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+ROSE_DLL_API SgChar16Val* buildChar16Val(unsigned short value = 0);
+ROSE_DLL_API SgChar16Val* buildChar16Val_nfi(unsigned short value, const std::string& str);
+ROSE_DLL_API SgChar32Val* buildChar32Val(unsigned int value = 0);
+ROSE_DLL_API SgChar32Val* buildChar32Val_nfi(unsigned int value, const std::string& str);
 
 // DQ (3/20/2017): This function has never existed (inputs must be SgValueExp pointers).
 // ROSE_DLL_API SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
@@ -924,7 +937,7 @@ buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgSc
 // ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
 // buildTemplateInstantiationTypedefDeclaration_nfi();
 ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentList);
+buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentsList);
 #endif
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
@@ -1121,6 +1134,14 @@ ROSE_DLL_API SgForStatement * buildForStatement(SgStatement* initialize_stmt,  S
 ROSE_DLL_API SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 ROSE_DLL_API SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 ROSE_DLL_API void buildForStatement_nfi(SgForStatement* result, SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
+
+// DQ (3/26/2018): Adding support for range based for statement.
+// ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(SgVariableDeclaration* initializer, SgExpression* range, SgStatement* body);
+ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(
+     SgVariableDeclaration* initializer, SgVariableDeclaration* range, 
+     SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, 
+     SgExpression* not_equal_expression, SgExpression* increment_expression,
+     SgStatement* body);
 
 // EDG 4.8 handled the do-while statement differently (more similar to a block scope than before in EDG 4.7 (i.e. with an end-of-construct statement).
 // So we need an builder function that can use the existing SgDoWhileStatement scope already on the stack.

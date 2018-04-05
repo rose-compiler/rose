@@ -662,9 +662,9 @@ context-free syntax
   'F' OptRoundOrTruncate
       Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
 
-  ',' 'R'                     -> RoundOrTruncate         {cons("RoundOrTruncateR")}
-  ',' 'T'                     -> RoundOrTruncate         {cons("RoundOrTruncateT")}
-  ',' 'Z'                     -> RoundOrTruncate         {cons("RoundOrTruncateZ")}
+  ',' 'R'                     -> RoundOrTruncate         {cons("R")}
+  ',' 'T'                     -> RoundOrTruncate         {cons("T")}
+  ',' 'Z'                     -> RoundOrTruncate         {cons("Z")}
 
   RoundOrTruncate             -> OptRoundOrTruncate
   % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
@@ -677,15 +677,15 @@ context-free syntax
 %% 2.1.1.3 FIXED TYPE DESCRIPTIONS
 %%
 
-  FixedItemDescription        -> FixedTypeDescription    {reject}  %% AMBIGUOUS
-  FixedTypeName               -> FixedTypeDescription    {reject}  %% AMBIGUOUS
+  FixedItemDescription        -> FixedTypeDescription    {prefer}
+  FixedTypeName               -> FixedTypeDescription
 
   'A' OptRoundOrTruncate
       ScaleSpecifier
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
   CompileTimeIntegerFormula   -> ScaleSpecifier
-  CompileTimeFixedFormula     -> FractionSpecifier
+  CompileTimeFixedFormula     -> FractionSpecifier       {cons("FractionSpecifier")}
 
   FractionSpecifier           -> OptFractionSpecifier
   % empty %                   -> OptFractionSpecifier    {cons("no-fraction-specifier")}
@@ -2164,8 +2164,8 @@ context-free syntax
   Icon                       -> Number
 
   RealLiteral                -> FloatingLiteral
-  Icon Exponent              -> RealLiteral           {cons("RealLiteral")}
-  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteral")}
+  Icon Exponent              -> RealLiteral           {cons("RealLiteralIE")}
+  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteralFF")}
 
   'E' OptSign Number         -> Exponent              {cons("Exponent")}
 
