@@ -257,9 +257,10 @@ echo "Testing value of FC = $FC"
           elif test $XCODE_VERSION_MAJOR -eq 9; then
               BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
             # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
+            # Rasmussen (04/04//2018): Added results for clang --version 9.0.1
             # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
               case "$XCODE_VERSION_MINOR" in
-                  0)
+                  0|1)
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=9
                       ;;
                   *)
