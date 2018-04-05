@@ -18,6 +18,7 @@ namespace General_Language_Translation
        // --------------
           e_storage_modifier_contiguous,
           e_storage_modifier_external,
+          e_storage_modifier_static,
 
        // Type modifiers
        // --------------
@@ -31,10 +32,13 @@ namespace General_Language_Translation
           e_type_modifier_optional,
           e_type_modifier_pointer,
           e_type_modifier_protected,
+          e_type_modifier_round,
           e_type_modifier_save,
           e_type_modifier_target,
+          e_type_modifier_truncate,
           e_type_modifier_value,
           e_type_modifier_volatile,
+          e_type_modifier_z,
 
        // Function modifiers
        // ------------------
