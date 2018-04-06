@@ -690,9 +690,9 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
         Flow* flow=rdAnalysis->getFlow();
         cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-        CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
-        int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
-        cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
+        //CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
+        //int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
+        //cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
         
 #if 0
         cout << "INFO: computing program statistics."<<endl;
@@ -954,7 +954,9 @@ int main(int argc, char* argv[]) {
       cfAnalysis->optimizeFlow(flow);
     }
     InterFlow interFlow=cfAnalysis->interFlow(flow);
+    // merges interFlow into Flow
     cfAnalysis->intraInterFlow(flow,interFlow);
+    cout << "generating icfg.dot."<<endl;
     string dotString=flow.toDot(programAbstractionLayer->getLabeler());
     writeFile("icfg.dot",dotString);
 

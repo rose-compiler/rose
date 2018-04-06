@@ -694,17 +694,24 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
       // replace local edge with external edge
       Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
       Flow::iterator localEdgeIter=flow.find(localEdge);
-      //cout<<"DEBUG: changing local to external edge (before): "<<(*localEdgeIter).toString()<<endl;
+      if(localEdgeIter!=flow.end()) {
+        cout<<"DEBUG: changing local to external edge (before): "<<(*localEdgeIter).toString()<<endl;
 #if 0
-      (*localEdgeIter).removeType(EDGE_LOCAL);
-      (*localEdgeIter).addType(EDGE_EXTERNAL);
+        (*localEdgeIter).removeType(EDGE_LOCAL);
+        (*localEdgeIter).addType(EDGE_EXTERNAL);
 #else
-      EdgeTypeSet tset=localEdgeIter.getTypes();
-      tset.erase(EDGE_LOCAL);
-      tset.insert(EDGE_EXTERNAL);
-      localEdgeIter.setTypes(tset);
+        EdgeTypeSet tset=localEdgeIter.getTypes();
+        tset.erase(EDGE_LOCAL);
+        tset.insert(EDGE_EXTERNAL);
+        localEdgeIter.setTypes(tset);
 #endif
-      //cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
+        cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
+        Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
+        Flow::iterator externalEdgeIter=flow.find(externalEdge);
+        cout<<"DEBUG: checking external edge (after): "<<(*externalEdgeIter).toString()<<endl;
+      } else {
+        cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::getNode((*i).call) endl;
+      }
 #else
       Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);      
       flow.insert(externalEdge);
