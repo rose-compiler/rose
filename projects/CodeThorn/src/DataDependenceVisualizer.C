@@ -174,8 +174,8 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
     if(((*i).exit != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL))
       myfile<<(*i).exit<<" -> "<<(*i).callReturn<<";\n";
     // generate optional local edge
-    if(((*i).call != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL))
-      myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
+    //if(((*i).entry == Labeler::NO_LABEL) && ((*i).exit== Labeler::NO_LABEL))
+    //  myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
   }
   myfile<<"// access to global variables\n";
   myfile<<accessToGlobalVariables.str();

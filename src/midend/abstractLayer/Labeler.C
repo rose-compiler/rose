@@ -20,6 +20,7 @@ Label::Label() {
   }
 
 Label::Label(size_t labelId) {
+  ROSE_ASSERT(labelId!=NO_LABEL_ID);
   _labelId=labelId;
 }
 
@@ -72,9 +73,19 @@ size_t Label::getId() const {
   return _labelId;
 }
 
+std::string Label::toString() const {
+  if(_labelId==NO_LABEL_ID) {
+    return "NO_LABEL_ID";
+  } else {
+    stringstream ss;
+    ss<<_labelId;
+    return ss.str();
+  }
+}
+
 // friend function
 ostream& SPRAY::operator<<(ostream& os, const Label& label) {
-  os<<label._labelId;
+  os<<label.toString();
   return os;
 }
 

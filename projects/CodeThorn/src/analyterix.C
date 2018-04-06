@@ -524,8 +524,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
               deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
                               << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
                               << endl;
+            } else {
+              //cout<<"DEBUG: EXCLUDING: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;
             }
           }
+        } else {
+          //cout<<"DEBUG: FUNCTION CALLRETURN LABEL: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;
         }
       }
       deadCodeCsvFile.close();
@@ -789,6 +793,7 @@ int main(int argc, char* argv[]) {
       ("print-varid-mapping", "prints variableIdMapping")
       ("print-varid-mapping-array", "prints variableIdMapping with array element varids.")
       ("print-label-mapping", "prints mapping of labels to statements")
+      ("print-inter-flow", "prints inter-procedural information call/entry/exit/callreturn.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ("start-function",po::value< string >(), "set name of function where analysis is supposed to start (default is 'main').")
       ("csv-stable", "only output csv data that is stable/portable across environments.")
@@ -928,6 +933,17 @@ int main(int argc, char* argv[]) {
 
   if(args.count("print-label-mapping")) {
     cout<<(programAbstractionLayer->getLabeler()->toString());
+    return 0;
+  }
+
+  if(args.count("print-inter-flow")) {
+    CFAnalysis* cfAnalysis=new CFAnalysis(programAbstractionLayer->getLabeler());
+    Flow flow=cfAnalysis->flow(root);
+    if(option_optimize_icfg) {
+      cfAnalysis->optimizeFlow(flow);
+    }
+    InterFlow interFlow=cfAnalysis->interFlow(flow);
+    cout<<interFlow.toString()<<endl;
     return 0;
   }
 

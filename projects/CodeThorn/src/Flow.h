@@ -43,7 +43,9 @@ namespace SPRAY {
     std::string toDotAnnotationOnly() const; 
     std::string typesToString() const;
     static std::string typeToString(EdgeType et);
+    // is true if specified type is present in the edge annotation, or it is of type EDGE_PATH.
     bool isType(EdgeType et) const;
+    // If type EDGE_PATH is added then only EDGE_PATH is represented (all others are removed).
     void addType(EdgeType et);
     void addTypes(std::set<EdgeType> ets);
     void removeType(EdgeType et);
@@ -83,6 +85,7 @@ namespace SPRAY {
       iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
       iterator operator++(int) { return iterator(SawyerCfg::EdgeIterator::operator++(1)); }
       EdgeTypeSet getTypes();
+      void setTypes(EdgeTypeSet types);
       std::string getAnnotation();
       Label source();
       Label target();
@@ -167,7 +170,6 @@ namespace SPRAY {
     //! inverts all edges in the graph. The root node is updated. This operation is only successful if
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
     SPRAY::Flow reverseFlow();
-    
   private:
     bool _dotOptionDisplayLabel;
     bool _dotOptionDisplayStmt;
