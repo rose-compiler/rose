@@ -695,7 +695,7 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
       Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
       Flow::iterator localEdgeIter=flow.find(localEdge);
       if(localEdgeIter!=flow.end()) {
-        cout<<"DEBUG: changing local to external edge (before): "<<(*localEdgeIter).toString()<<endl;
+        //cout<<"DEBUG: changing local to external edge (before): "<<(*localEdgeIter).toString()<<endl;
 #if 0
         (*localEdgeIter).removeType(EDGE_LOCAL);
         (*localEdgeIter).addType(EDGE_EXTERNAL);
@@ -705,12 +705,12 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         tset.insert(EDGE_EXTERNAL);
         localEdgeIter.setTypes(tset);
 #endif
-        cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
-        Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
-        Flow::iterator externalEdgeIter=flow.find(externalEdge);
-        cout<<"DEBUG: checking external edge (after): "<<(*externalEdgeIter).toString()<<endl;
+        //cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
+        //Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
+        //Flow::iterator externalEdgeIter=flow.find(externalEdge);
+        //cout<<"DEBUG: checking external edge (after): "<<(*externalEdgeIter).toString()<<endl;
       } else {
-        cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::getNode((*i).call) endl;
+        cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::sourceLineColumnToString(getNode((*i).call))<<endl;
       }
 #else
       Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);      
@@ -1094,10 +1094,6 @@ Flow CFAnalysis::flow(SgNode* node) {
     // create edges for body of switch
     SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
     SgStatement* block=switchStmt->get_body();
-    if(false && !isSgBasicBlock(block)) {
-      cerr<<"Error: CFAnalysis::flow: body of switch is not a block. Not supported yet."<<endl;
-      exit(1);
-    }
     Flow blockFlow=flow(block);
     edgeSet+=blockFlow;
     // create edges from condition to case (if they exist)
