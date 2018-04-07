@@ -26,6 +26,8 @@ static size_t global_depth = 0;
 
 bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStatement* targetScope)
    {
+  // DQ (4/2/2018): Note that this function now addresses requirements of supporting both private and protected types.
+
 #if DEBUGGING_USING_RECURSIVE_DEPTH
   // For debugging, keep track of the recursive depth.
      static size_t depth = 0;
@@ -54,7 +56,13 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
           SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(typedefType->get_declaration());
           ROSE_ASSERT(typedefDeclaration != NULL);
 
+#if 0
           bool isPrivate = typedefDeclaration->get_declarationModifier().get_accessModifier().isPrivate();
+#else
+       // DQ (4/2/2018): Fix this to address requirements of both private and protected class members (see Cxx11_tests/test2018_71.C).
+          bool isPrivate = typedefDeclaration->get_declarationModifier().get_accessModifier().isPrivate() ||
+                           typedefDeclaration->get_declarationModifier().get_accessModifier().isProtected();
+#endif
 #if DEBUG_PRIVATE_TYPE || 0
           printf ("typedefDeclaration isPrivate = %s \n",isPrivate ? "true" : "false");
 #endif
