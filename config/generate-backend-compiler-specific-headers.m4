@@ -229,7 +229,6 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
    chmod u+x "${srcdir}/$ROSE_HOME/config/dirincludes"
 
-
  #Mac OS X (and possibly other BSD-distros) does not support the echo -n option.
  #We need to detect this special case and use a "\c" in the end of the echo to not print a
  #newline.
@@ -272,11 +271,27 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
        exit 1
    fi
 
+ # echo "compilerHeaderDirs = $compilerHeaderDirs"
+ # echo "{compilerNameCxx}_HEADERS = ${compilerNameCxx}_HEADERS"
+ # temp_directory_list=`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`
+ # echo "temp_directory_list = $temp_directory_list"
+ # echo "space"
+ # echo "space"
+
+ # temp_includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, $compilerHeaderDirs"
+ # echo "temp_includeString = $temp_includeString"
+ # echo "space"
+ # echo "space"
+
    includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, $compilerHeaderDirs"
    includeString="$includeString \"/usr/include\"}"
 
    echo "includeString = $includeString"
    AC_DEFINE_UNQUOTED([CXX_INCLUDE_STRING],$includeString,[Include path for backend C++ compiler.])
+
+ # echo "Exiting in setup backend cxx compiler specific references"
+ # exit 1;
+
 ])
 
 AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
@@ -418,6 +433,10 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
        exit 1
    fi
 
+ # temp_includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, $compilerHeaderDirs"
+ # echo "temp_includeString = $temp_includeString"
+ # echo "\n\n"
+
    includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, $compilerHeaderDirs"
    includeString="$includeString \"/usr/include\"}"
 
@@ -432,7 +451,7 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
 #     echo "DONE: SETUP BACKEND C COMPILER: Copying config/rose_specific_tgmath_clang.h to ${compilerNameC}_HEADERS/tgmath_clang.h"
    fi
 
-#  echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES: BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
-#  exit 1
+# echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES: BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
+# exit 1
 ])
 

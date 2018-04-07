@@ -170,6 +170,10 @@ Grammar::setUpTypes ()
   // DQ (12/21/2005): Support for qualified named types (wraps SgType (always a SgNamedType) with SgQualifiedName)
      NEW_TERMINAL_MACRO ( QualifiedNameType        , "QualifiedNameType",         "T_QUALIFIED_NAME" );
 
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     NEW_TERMINAL_MACRO ( TypeChar16           , "TypeChar16",            "T_CHAR16" );
+     NEW_TERMINAL_MACRO ( TypeChar32           , "TypeChar32",            "T_CHAR32" );
+
   // DQ (5/7/2004): Added TemplateType to be derived from SgType (this leaves room later to 
   // build more specific types for template classes ? template function, etc. unless they 
   // should be derived from there non-template associated types as is done for the template 
@@ -189,7 +193,7 @@ Grammar::setUpTypes ()
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
-          TypeTuple , "Type","TypeTag", false);
+          TypeTuple            | TypeChar16              | TypeChar32, "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
 
@@ -445,6 +449,10 @@ Grammar::setUpTypes ()
   // DQ (3/24/2014): Adding support for 128 bit integers.
      TypeSigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeUnsigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t for C99 and C++11.
+     TypeChar16.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeChar32.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      TypeCAFTeam.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
@@ -1077,6 +1085,10 @@ Grammar::setUpTypes ()
   // DQ (3/24/2014): Adding support for 128 bit integers.
      TypeSigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "SL128" );
      TypeUnsigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "UL128" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t for C99 and C++11.
+     TypeChar16.editSubstitute( "MANGLED_ID_STRING", "c16" );
+     TypeChar32.editSubstitute( "MANGLED_ID_STRING", "c32" );
 
      TypeCAFTeam.editSubstitute( "MANGLED_ID_STRING", "s" );
 

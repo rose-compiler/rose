@@ -169,6 +169,11 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CharVal,                "CharVal",                "CHAR_VAL" );
      NEW_TERMINAL_MACRO (UnsignedCharVal,        "UnsignedCharVal",        "UNSIGNED_CHAR_VAL" );
      NEW_TERMINAL_MACRO (WcharVal,               "WcharVal",               "WCHAR_VAL" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     NEW_TERMINAL_MACRO (Char16Val,              "Char16Val",              "CHAR16_VAL" );
+     NEW_TERMINAL_MACRO (Char32Val,              "Char32Val",              "CHAR32_VAL" );
+
      NEW_TERMINAL_MACRO (UnsignedShortVal,       "UnsignedShortVal",       "UNSIGNED_SHORT_VAL" );
      NEW_TERMINAL_MACRO (IntVal,                 "IntVal",                 "INT_VAL" );
      NEW_TERMINAL_MACRO (EnumVal,                "EnumVal",                "ENUM_VAL" );
@@ -392,10 +397,9 @@ Grammar::setUpExpressions ()
           BoolValExp           | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal             | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
           LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal            | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
-          TemplateParameterVal | NullptrValExp /* | LabelAddressVal */,
+          DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
+          TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val /* | LabelAddressVal */,
           "ValueExp","ValueExpTag", false);
-
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
           ListExp  | TupleExp | MatrixExp,
@@ -1587,7 +1591,21 @@ Grammar::setUpExpressions ()
      WcharVal.setDataPrototype ( "unsigned long", "valueUL", "= 0",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      WcharVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
-                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionPrototype ( "HEADER_CHAR16_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Char16Val.setDataPrototype ( "unsigned short", "valueUL", "= 0",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Char16Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char32Val.setFunctionPrototype ( "HEADER_CHAR32_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Char32Val.setDataPrototype ( "unsigned int", "valueUL", "= 0",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Char32Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UnsignedShortVal.setFunctionPrototype ( "HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
      UnsignedShortVal.setDataPrototype ( "unsigned short", "value", "= 0",
@@ -2292,33 +2310,75 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+  // DQ (3/22/2018): Revert back to the previous implementation and pursue changing the name qualification support code.
+  // The new version below with the names NOT using the "_for_type" version was a problem for the unparser support
+  // (which reuses the same code for SgInitializedName, SgTemplateArgument, and SgAggregateInitializer).  So it might
+  // be better to just fixup the name qualification support and reuse the unparsing support then to reuse the name 
+  // qualification support and implement new unparsing support.  It appears that we can not quite do both, unless 
+  // I figure that out next.
+
+  // DQ (3/22/2018): The names of the data members have been renamed to support the name qualification support 
+  // using the same support as for the SgConstructor initializer.  The name qualification that is supported for
+  // an aggregate initializer is just that for the C++11 specific type specifier that is sometime required 
+  // (for an example of this see Cxx11_tests/test2018_47.C).  Since it is the type name that is qualified
+  // it does make sens to use the original names (e.g. name_qualification_length_for_type), but it would be
+  // inconsistant with the constructor initializer support, and eliminate the opportunity to reuse that
+  // supporting name qualification code.
+#define USE_NAME_QUALIFICATION_THROUGH_TYPE 1
+
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (8/1/2014): Added to support C++11 constexpr constructors that can generate an originalExpressionTree in ROSE.
      AggregateInitializer.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
@@ -2758,6 +2818,11 @@ Grammar::setUpExpressions ()
      CharVal.setFunctionSource ( "SOURCE_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource ( "SOURCE_UNSIGNED_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      WcharVal.setFunctionSource ( "SOURCE_WCHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionSource ( "SOURCE_CHAR16_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     Char32Val.setFunctionSource ( "SOURCE_CHAR32_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
      UnsignedShortVal.setFunctionSource ( "SOURCE_UNSIGNED_SHORT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      IntVal.setFunctionSource ( "SOURCE_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
      EnumVal.setFunctionSource ( "SOURCE_ENUM_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -3018,6 +3083,11 @@ Grammar::setUpExpressions ()
      CharVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      WcharVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     Char32Val.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
      UnsignedShortVal.setFunctionSource       ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      IntVal.setFunctionSource                 ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      EnumVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -3052,7 +3122,13 @@ Grammar::setUpExpressions ()
      CharVal.editSubstitute        ( "GENERIC_TYPE", "SgTypeChar" );
 
      UnsignedCharVal.editSubstitute        ( "GENERIC_TYPE", "SgTypeUnsignedChar" );
+
      WcharVal.editSubstitute               ( "GENERIC_TYPE", "SgTypeWchar" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.editSubstitute              ( "GENERIC_TYPE", "SgTypeChar16" );
+     Char32Val.editSubstitute              ( "GENERIC_TYPE", "SgTypeChar32" );
+
      UnsignedShortVal.editSubstitute       ( "GENERIC_TYPE", "SgTypeUnsignedShort" );
      IntVal.editSubstitute                 ( "GENERIC_TYPE", "SgTypeInt" );
 
