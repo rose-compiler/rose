@@ -2682,8 +2682,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                         printf ("associatedFunctionDeclarationFromSymbol = %p = %s \n",associatedFunctionDeclarationFromSymbol,associatedFunctionDeclarationFromSymbol->class_name().c_str());
                                         functionReport(associatedFunctionDeclarationFromSymbol);
 #endif
-                                     // DQ (4/7/2018): I think we can assert this.
-                                        ROSE_ASSERT(functionDeclarationFromSymbol_mangled_name != associatedFunctionDeclarationFromSymbol_mangled_name);
+                                     // DQ (4/7/2018): I think we can assert this (this fails for Cxx_tests/test2017_29.C).
+                                     // ROSE_ASSERT(functionDeclarationFromSymbol_mangled_name != associatedFunctionDeclarationFromSymbol_mangled_name);
                                       }
 
                                 // SgName functionDeclarationFromSymbol_mangled_name           = functionDeclarationFromSymbol->get_mangled_name();
@@ -2733,7 +2733,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                         printf ("associatedFunctionDeclarationFromSymbol = %p = %s \n",associatedFunctionDeclarationFromSymbol,associatedFunctionDeclarationFromSymbol->class_name().c_str());
                                         functionReport(associatedFunctionDeclarationFromSymbol);
 #endif
-#if 1
+#if 0
                                         printf ("Exiting as a test! \n");
                                         ROSE_ASSERT(false);
 #endif
