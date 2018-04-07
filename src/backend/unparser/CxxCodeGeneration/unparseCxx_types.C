@@ -3698,41 +3698,77 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
 #if 0
      printf ("In unparseTemplateType(): Unparsing the SgTemplateType as name = %s \n",name.str());
 #endif
+#if 0
+    // TV (03/29/2018): Working on unparsing of nonreal class and nonreal members of class
+    {
+       SgType * class_type = template_type->get_class_type();
+       printf("  class_type = %p (%s)\n", class_type, class_type ? class_type->class_name().c_str() : "");
+       SgType * parent_class_type = template_type->get_parent_class_type();
+       printf("  parent_class_type = %p (%s)\n", parent_class_type, parent_class_type ? parent_class_type->class_name().c_str() : "");
+       SgDeclarationStatement * tpl_decl = template_type->getAssociatedDeclaration();
+       printf("  tpl_decl = %p (%s)\n", tpl_decl, tpl_decl ? tpl_decl->class_name().c_str() : "");
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
+//     SgDeclarationStatement * assoc_tpl = template_type->get_assoc_tpl();
+//     printf("  assoc_tpl = %p (%s)\n", assoc_tpl, assoc_tpl ? assoc_tpl->class_name().c_str() : "");
+
+       SgTemplateArgumentPtrList & tpl_args = template_type->get_tpl_args();
+       printf("  tpl_args = \n");
+       for (unsigned int i = 0; i < tpl_args.size(); i++) {
+         printf("    [%d] %p (%s) : %s\n", i, tpl_args[i], tpl_args[i] ? tpl_args[i]->class_name().c_str() : "", tpl_args[i]->get_global_qualification_required() ? "true" : "false");
+       }
+
+       SgTemplateArgumentPtrList & part_spec_tpl_args = template_type->get_part_spec_tpl_args();
+       printf("  part_spec_tpl_args = \n");
+       for (unsigned int i = 0; i < part_spec_tpl_args.size(); i++) {
+         printf("    [%d] %p (%s)\n", i, part_spec_tpl_args[i], part_spec_tpl_args[i] ? part_spec_tpl_args[i]->class_name().c_str() : "");
+       }
+
+       SgScopeStatement * scope = SageBuilder::topScopeStack();
+       printf("  SageBuilder::topScopeStack() = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
+     }
+#endif
+
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("In Unparse_Type::unparseTemplateType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
 #endif
 
-  // For now just unparse a simple string that will at least be a correct type.
-  // curprint("unparse_template_type ");
+     SgNode * name_qual_ref = info.get_reference_node_for_qualification();
+#if 0
+     printf("  name_qual_ref = %p (%s)\n", name_qual_ref, name_qual_ref ? name_qual_ref->class_name().c_str() : "");
+#endif
 
-  // DQ (8/25/2012): This was a problem for the output ofr types called from different locations.
-     if ( (info.isTypeFirstPart() == false) && (info.isTypeSecondPart() == false) )
-        {
-       // This is the case where this is called from unparseToString. So we need to output something.
-          curprint(name);
-        }
-       else
-        {
-       // This is the case where it is called from within the unparser.
-
-       // DQ (9/9/2014): Fixing this to unparse as part of first part (when either is true) and not the second part.
-       // if (info.isTypeSecondPart() == true)
-          if (info.isTypeFirstPart() == true)
-             {
-               curprint(name);
-             }
-        }
+  // TV (03/29/2018): either first part is requested, or neither if called from unparseToString.
+     bool unparse_type = info.isTypeFirstPart() || ( !info.isTypeFirstPart() && !info.isTypeSecondPart() );
+     if (unparse_type) {
+       SgType * parent_class_type = template_type->get_parent_class_type();
+       SgTemplateArgumentPtrList & tpl_args = template_type->get_tpl_args();
+       SgTemplateArgumentPtrList & part_spec_tpl_args = template_type->get_part_spec_tpl_args();
+       if (parent_class_type != NULL) {
+         unparseType(parent_class_type, info);
+         curprint("::");
+       }
+       if (tpl_args.size() > 0 || part_spec_tpl_args.size() > 0) curprint("template ");
+       curprint(name);
+       if (tpl_args.size() > 0) {
+         SgUnparse_Info ninfo(info);
+         ninfo.set_SkipClassDefinition();
+         ninfo.set_SkipEnumDefinition();
+         ninfo.set_SkipClassSpecifier();
+         unp->u_exprStmt->unparseTemplateArgumentList(tpl_args, ninfo);
+       }
+       if (part_spec_tpl_args.size() > 0) {
+         SgUnparse_Info ninfo(info);
+         ninfo.set_SkipClassDefinition();
+         ninfo.set_SkipEnumDefinition();
+         ninfo.set_SkipClassSpecifier();
+         unp->u_exprStmt->unparseTemplateArgumentList(part_spec_tpl_args, ninfo);
+       }
+     }
 
 #if 0
      printf ("Leaving Unparse_Type::unparseTemplateType() \n");
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
 #endif
    }
 

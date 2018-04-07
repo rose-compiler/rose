@@ -6208,9 +6208,9 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal_nfi(unsigned 
   return result;
 }
 
-SgTemplateType* SageBuilder::buildTemplateType(SgName name/* ="" */, int template_parameter_position/* = -1*/)
+SgTemplateType* SageBuilder::buildTemplateType(SgName name/* ="" */)
 {
-  SgTemplateType* result = new SgTemplateType (name, template_parameter_position);
+  SgTemplateType* result = new SgTemplateType (name);
   ROSE_ASSERT (result);
   setOneSourcePositionForTransformation(result);
   return result;

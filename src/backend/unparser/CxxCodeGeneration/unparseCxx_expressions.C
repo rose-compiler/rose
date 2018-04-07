@@ -951,6 +951,7 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                     if (classType != NULL)
                        {
                          string name = classType->get_name();
+                         if (is_template_header) curprint(" typename ");
                          curprint(name);
                        }
                       else
@@ -966,8 +967,9 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                     printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
 #endif
                     // Liao 12/15/2016, we need explicit typename here
-                    if (is_template_header)
-                      unp->u_exprStmt->curprint(" typename ");
+                    // TV (03/20/2018) only if it is a template header (not a specialization)
+                    // TV (03/23/2018): could either be class or typename: where is the info in EDG? where to store it in the AST?
+                    if (is_template_header) curprint(" typename ");
                     curprint(name);
                   }
 
@@ -1014,6 +1016,7 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 #endif
                  // DQ (9/10/2014): Note that this will unparse "int T" which we want in the template header, but not in the template parameter list.
                  // unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+                    // TV (03/20/2018) only if it is a template header (not a specialization)
                     if (is_template_header) {
                       SgUnparse_Info ninfo(info);
                       unp->u_type->unparseType(type,ninfo);
@@ -1032,26 +1035,14 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 #if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: output name = %s \n",templateDeclaration->get_name().str());
 #endif
-#if 0
-            // This is a part of the template header that is not output here.
+               curprint("template ");
+
                SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
-               SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
-               curprint(" template < ");
-               while (i != templateParameterList.end())
-                  {
-                    SgUnparse_Info newInfo(info);
-                    curprint(" typename ");
-                    unparseTemplateParameter(*i,newInfo);
-                 // curprint(" SgTemplateDeclaration_name ");
+               Unparse_ExprStmt::unparseTemplateParameterList (templateParameterList, info, true);
 
-                    i++;
+               // TV (03/23/2018): could either be class or typename: where is the info in EDG? where to store it in the AST?
+               curprint(" typename ");
 
-                    if (i != templateParameterList.end())
-                         curprint(",");
-                  }
-
-               curprint(" > ");
-#endif
                curprint(templateDeclaration->get_name());
 #if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: Sorry, not implemented! \n");

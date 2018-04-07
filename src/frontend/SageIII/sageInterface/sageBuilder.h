@@ -454,7 +454,7 @@ ROSE_DLL_API SgTemplateParameterVal* buildTemplateParameterVal(int template_para
 ROSE_DLL_API SgTemplateParameterVal* buildTemplateParameterVal_nfi(int template_parameter_position, const std::string& str);
 
 //! Build a template type, used for template parameter and later argument
-ROSE_DLL_API SgTemplateType* buildTemplateType(SgName name="", int template_parameter_position = -1);
+ROSE_DLL_API SgTemplateType* buildTemplateType(SgName name="");
 
 //! Build a template parameter, passing enum kind and SgTemplateType
 //! template_parameter_enum { parameter_undefined = 0, type_parameter = 1, nontype_parameter = 2,  template_parameter = 3}

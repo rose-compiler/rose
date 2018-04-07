@@ -5269,22 +5269,57 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                  // Note: We might want to refine this criteria to if the associated class is a SgTemplateClassDeclaration.
 
                  // DQ (9/10/2014): Add the typename based on the base type ignoreing modifiers, etc.
-                 // SgType* stripType (unsigned char bit_array=STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE) const
-                 // SgClassType*   classType   = isSgClassType(rtype);
-                 // SgTypedefType* typedefType = isSgTypedefType(rtype);
-                    SgType* baseTypeOfPointerOrReference = rtype->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
+                 // SgType* baseTypeOfPointerOrReference = rtype->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
+                 // TV (03/27/2018) : go all the way down to the base type
+                    SgType * btype = rtype->stripType();
+                    ROSE_ASSERT(btype != NULL);
 
-                    SgClassType*   classType   = isSgClassType(baseTypeOfPointerOrReference);
-                    SgTypedefType* typedefType = isSgTypedefType(baseTypeOfPointerOrReference);
-
-                    bool isOperator = funcdecl_stmt->get_specialFunctionModifier().isOperator();
 #if 0
-                    printf ("In unparseReturnType(): isOperator = %s \n",isOperator ? "true" : "false");
+                    printf ("  btype = %p = %s \n",btype,btype->class_name().c_str());
 #endif
+
+                 // TV (03/27/2018): condition to determine whether or not to prefix return types with "typename"
+
+                    SgClassType*   classType   = isSgClassType(btype);
+                    SgTypedefType* typedefType = isSgTypedefType(btype);
+                    SgTemplateType* templateType = isSgTemplateType(btype);
+
+
+                    SgDeclarationStatement * assoc_decl_stmt = btype->getAssociatedDeclaration();
+#if 0
+                    printf ("  assoc_decl_stmt = %p = %s \n", assoc_decl_stmt, assoc_decl_stmt ? assoc_decl_stmt->class_name().c_str() : "");
+#endif
+
+                    ROSE_ASSERT(classType == NULL || assoc_decl_stmt != NULL);
+
+                 // TV (03/27/2018): "typename" is needed if the base-type is a template-type or the class-type of a template decl
+                    bool class_type_needs_typename = classType != NULL && isSgTemplateClassDeclaration(assoc_decl_stmt);
+                    bool tpl_type_needs_typename = templateType != NULL && templateType->get_template_parameter_position() == 0;
+                    bool type_needs_typename = tpl_type_needs_typename || class_type_needs_typename;
+
+                 // TV (03/27/2018): Only for function template or methods outside of their classes
+                    bool parent_is_scope = funcdecl_stmt->get_parent() == funcdecl_stmt->get_scope();
+                    bool method_outside_class_scope = templateMemberFunctionDeclaration && !parent_is_scope;
+                    bool function_or_method_outside_class_scope = templateFunctionDeclaration || method_outside_class_scope;
+
+                 // TV (03/27/2018): kept that condition from previous code (TODO relevant example)
+                    bool isOperator = funcdecl_stmt->get_specialFunctionModifier().isOperator();
+
+                 // TV (03/27/2018): whether or not to add "typename"
+                    bool prepend_typename = type_needs_typename && function_or_method_outside_class_scope && !isOperator;
+#if 0
+		    printf ("  class_type_needs_typename = %s \n", class_type_needs_typename ? "true" : "false");
+		    printf ("  template_type_needs_typename = %s \n", tpl_type_needs_typename ? "true" : "false");
+		    printf ("  type_needs_typename = %s \n", type_needs_typename ? "true" : "false");
+		    printf ("  parent_is_scope = %s \n", parent_is_scope ? "true" : "false");
+		    printf ("  method_outside_class_scope = %s \n", method_outside_class_scope ? "true" : "false");
+		    printf ("  function_or_method_outside_class_scope = %s \n", function_or_method_outside_class_scope ? "true" : "false");
+                    printf ("  isOperator = %s \n",isOperator ? "true" : "false");
+                    printf ("  prepend_typename = %s \n", prepend_typename ? "true" : "false");
+#endif
+
                  // DQ (9/10/2014): Another case where typename is required for g++ (see test2014_208.C).
-                 // if (classType != NULL)
-                 // if (classType != NULL && isOperator == false)
-                    if ( (classType != NULL || typedefType != NULL) && isOperator == false)
+                    if (prepend_typename)
                        {
                          curprint("typename ");
                        }
@@ -5310,9 +5345,10 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
             // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
             // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
             // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
-            // printf ("mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() = %s \n",mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false");
+               printf ("funcdecl_stmt->get_requiresNameQualificationOnReturnType() = %s \n",funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false");
             // curprint ( string("\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " + (mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") + " */ \n";
-               if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true)
+            // if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true)
+               if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true || isSgTemplateType(rtype->stripType()))
                   {
                  // Output the name qualification for the type in the variable declaration.
                  // But we have to do so after any modifiers are output, so in unp->u_type->unparseType().
@@ -10221,13 +10257,6 @@ void
 Unparse_ExprStmt::unparseTemplateHeader(SgClassDeclaration* classDeclaration, SgUnparse_Info& info)
    {
 
-  // TV (3/12/18): Unparse template header from AST
-     curprint("template ");
-     SgTemplateParameterPtrList tlist =  tfunc_decl->get_templateParameters ();
-     Unparse_ExprStmt::unparseTemplateParameterList (tlist, info);
-     curprint("\n");
-
-
   // DQ (9/11/2016): Ultimately we would want to generate the template header (for now I will 
   // see if we can use the internal string representation, if it exists).
 
@@ -10481,8 +10510,45 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
             ninfo.set_declstatement_ptr(NULL);
             ninfo.set_declstatement_ptr(templateClassDeclaration);
 
-            unparseClassDefnStmt(templateClassDeclaration->get_definition(), ninfo);
+            SgClassDefinition * class_defn = templateClassDeclaration->get_definition();
+            if (class_defn != NULL) {
+              unparseClassDefnStmt(templateClassDeclaration->get_definition(), ninfo);
+            }
+            else {
+              SgClassDeclaration::class_types class_type = templateClassDeclaration->get_class_type();
 
+              switch (class_type) {
+                case SgClassDeclaration::e_class :
+                  {
+                    curprint("class ");
+                    break;
+                  }
+                case SgClassDeclaration::e_struct :
+                  {
+                    curprint("struct ");
+                    break;
+                  }
+                case SgClassDeclaration::e_union :
+                  {
+                    curprint("union ");
+                    break;
+                  }
+                case SgClassDeclaration::e_template_parameter :
+                  {
+                    curprint(" ");
+                    break;
+                  }
+                default:
+                  {
+                    printf ("Error: default reached in unparseClassDeclStmt() \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+              }
+
+              SgName class_name = templateClassDeclaration->get_name();
+              curprint(class_name.getString().c_str());
+            }
             ninfo.set_declstatement_ptr(NULL);
 
             if (!info.SkipSemiColon())
@@ -10519,7 +10585,8 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 
             if (templateMemberFunctionDeclaration != NULL) {
               unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
-              if (!info.SkipSemiColon())
+            }
+            if (functionDefn == NULL && !info.SkipSemiColon()) {
                 curprint(";");
             }
           }
@@ -10671,7 +10738,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
             else
              {
             // DQ (9/7/2014): This is the typical case.
-#if 1
+#if 0
                printf ("In unparseTemplateDeclarationStatment_support(): Output the templateString = %s \n",templateString.c_str());
 #endif
             // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
