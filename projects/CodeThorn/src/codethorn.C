@@ -51,6 +51,7 @@
 #include "CodeThornException.h"
 
 #include "DataRaceDetection.h"
+#include "AstTermRepresentation.h"
 
 // test
 #include "SSAGenerator.h"
@@ -184,24 +185,6 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgNullExpression, true);
   setAstNodeVariant(V_SgSizeOfOp,true);
 
-}
-
-class TermRepresentation : public DFAstAttribute {
-  public:
-    TermRepresentation(SgNode* node) : _node(node) {}
-    string toString() { return "AstTerm: "+AstTerm::astTermWithNullValuesToString(_node); }
-  private:
-    SgNode* _node;
-};
-
-void attachTermRepresentation(SgNode* node) {
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
-    if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
-      AstAttribute* ara=new TermRepresentation(stmt);
-      stmt->setAttribute("codethorn-term-representation",ara);
-    }
-  }
 }
 
 static IOAnalyzer* global_analyzer=0;
@@ -784,6 +767,7 @@ void automataDotInput(Sawyer::Message::Facility logger) {
 
   bool withResults = args.getBool("output-with-results");
   bool withAnnotations = args.getBool("output-with-annotations");
+#ifdef HAVE_SPOT
   if (args.count("promela-output")) {
     PropertyValueTable* ltlResults;
     if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
@@ -792,14 +776,13 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     } else {
       ltlResults = explorer.propertyValueTable();
     }
-#ifdef HAVE_SPOT
     string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations);
     promelaCode += "\n" + promelaLtlFormulae;
     string filename = args["promela-output"].as<string>();
     write_file(filename, promelaCode);
     cout << "generated " << filename  <<"."<<endl;
-#endif
   }
+#endif
   if (args.count("ltl-properties-output")) {
     string ltlFormulae = explorer.propertyValueTable()->getLtlsRersFormat(withResults, withAnnotations);
     string filename = args["ltl-properties-output"].as<string>();
@@ -1063,7 +1046,7 @@ int main( int argc, char * argv[] ) {
     // display error message and exit in case SPOT is not avaiable, but related options are selected
     if (args.count("csv-stats-cegpra") ||
 	args.count("cegpra-ltl") ||
-	args.count("cegpra-ltl-all") ||
+	args.getBool("cegpra-ltl-all") ||
 	args.count("cegpra-max-iterations") ||
 	args.count("viz-cegpra-detailed") ||
 	args.count("csv-spot-ltl") ||
@@ -1071,16 +1054,16 @@ int main( int argc, char * argv[] ) {
 	args.count("single-property") ||
 	args.count("ltl-in-alphabet") ||
 	args.count("ltl-out-alphabet") ||
-	args.count("ltl-driven") ||
-	args.count("with-ltl-counterexamples") ||
+	args.getBool("ltl-driven") ||
+	args.getBool("with-ltl-counterexamples") ||
 	args.count("mine-num-verifiable") ||
 	args.count("mine-num-falsifiable") ||
 	args.count("ltl-mode") ||
 	args.count("ltl-properties-output") ||
 	args.count("promela-output") ||
-	args.count("promela-output-only") ||
-	args.count("output-with-results") ||
-	args.count("output-with-annotations")){
+	args.getBool("promela-output-only") ||
+	args.getBool("output-with-results") ||
+	args.getBool("output-with-annotations")) {
       cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
       exit(1);
     }
@@ -1961,7 +1944,7 @@ int main( int argc, char * argv[] ) {
     if (args.getBool("annotate-terms")) {
       // TODO: it might be useful to be able to select certain analysis results to be only annotated
       logger[INFO] << "Annotating term representations."<<endl;
-      attachTermRepresentation(sageProject);
+      AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
       AstAnnotator ara(analyzer->getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     }

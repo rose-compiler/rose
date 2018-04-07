@@ -15,6 +15,9 @@
 #include <list>
 #include <algorithm>
 
+// DQ (3/24/2018): Added include file (using Boost 1.60, if that makes a difference).
+#include <vector>
+
 namespace SPRAY {
   std::string replace_string(std::string toModify, std::string toReplace, std::string with);
   int randomIntInRange(std::pair<int,int> range);

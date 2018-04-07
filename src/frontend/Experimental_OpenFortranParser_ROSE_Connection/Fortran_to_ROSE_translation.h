@@ -9,6 +9,33 @@ namespace Fortran_ROSE_Translation
         {
           e_unknown,
 
+       // Attributes
+       // ----------
+          e_public,
+          e_private,
+          e_allocatable,
+          e_asynchronous,
+          e_contiguous,
+          e_external,
+          e_intent_in,
+          e_intent_out,
+          e_intent_inout,
+          e_intrinsic,
+          e_optional,
+          e_parameter,
+          e_pointer,
+          e_protected,
+          e_save,
+          e_target,
+          e_value,
+          e_volatile,
+
+          e_elemental,
+          e_impure,
+          e_module,
+          e_pure,
+          e_recursive,
+
        // Operators
        // ---------
 
@@ -48,16 +75,29 @@ namespace Fortran_ROSE_Translation
           e_referenceExpression,
 
        // Special expressions denoting array declaration type
-          e_array_range,
           e_array_shape,
           e_explicit_shape,
-          e_assumed_or_implied_shape_array,
-          e_assumed_shape_array,
-          e_assumed_size_array,
+          e_assumed_or_implied_shape,
+          e_assumed_shape,
+          e_assumed_size,
+
+       // CUDA Attributes
+       // ---------------
+          e_cuda_device,
+          e_cuda_host,
+          e_cuda_kernel,
+
+          e_cuda_global,
+          e_cuda_grid_global,
+          e_cuda_managed,
+          e_cuda_constant,
+          e_cuda_shared,
+          e_cuda_pinned,
+          e_cuda_texture,
 
           e_last
         };
 
-   } // namespace Jovial_ROSE_Translation 
+   } // namespace Fortran_ROSE_Translation
 
 #endif

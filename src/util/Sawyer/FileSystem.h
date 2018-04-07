@@ -10,6 +10,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <boost/filesystem.hpp>
+#include <boost/noncopyable.hpp>
 #include <fstream>
 
 namespace Sawyer {
@@ -21,14 +22,9 @@ namespace FileSystem {
  *
  *  Creates a file with the specified name (or a pseudo-random name in the system temp directory), and make sure it gets
  *  deleted from the file system upon object destruction. */
-class SAWYER_EXPORT TemporaryFile {
+class SAWYER_EXPORT TemporaryFile: private boost::noncopyable {
     boost::filesystem::path name_;
     std::ofstream stream_;
-
-private:
-    // Don't depend on C++11's explicit delete of member functions
-    TemporaryFile(const TemporaryFile&) { ASSERT_not_reachable("no copy constructor"); }
-    TemporaryFile& operator=(const TemporaryFile&) { ASSERT_not_reachable("no assignment operator"); }
 
 public:
     /** Create a temporary file in the system temp directory. */
@@ -62,13 +58,8 @@ public:
  *
  *  Creates a directory with the specified name (or a pseudo-random name in the system temp directory), and makes sure it gets
  *  deleted recursively upon object destruction. */
-class SAWYER_EXPORT TemporaryDirectory {
+class SAWYER_EXPORT TemporaryDirectory: private boost::noncopyable {
     boost::filesystem::path name_;
-
-private:
-    // Don't depend on C++11's explicit delete of member functions
-    TemporaryDirectory(const TemporaryDirectory&) { ASSERT_not_reachable("no copy constructor"); }
-    TemporaryDirectory& operator=(const TemporaryDirectory&) { ASSERT_not_reachable("no assignment operator"); }
 
 public:
     /** Create a temporary subdirectory in the system's temp directory.

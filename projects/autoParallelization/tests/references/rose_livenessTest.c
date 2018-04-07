@@ -1,4 +1,4 @@
-#include "omp.h" 
+#include <omp.h> 
 typedef double real8;
 
 void foo(real8 *y,real8 *d__,real8 *d11,real8 *d12,real8 *d13,real8 *d22,real8 *d23,real8 *d33,real8 *m,int *nell,real8 *p,int t,int flagB,int flagA,int ub)

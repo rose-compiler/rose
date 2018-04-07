@@ -1,6 +1,6 @@
 // functions within a namespace
 // 
-#include "omp.h" 
+#include <omp.h> 
 namespace abc
 {
 

@@ -3,7 +3,7 @@ Naive matrix-vector multiplication
 By C. Liao
 */
 #define N 1000
-#include "omp.h" 
+#include <omp.h> 
 int i;
 int j;
 int k;

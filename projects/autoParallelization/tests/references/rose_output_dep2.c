@@ -1,6 +1,6 @@
 // an example of output dependence preventing parallelization
 // loop carried vs. non-loop carried output dependence!
-#include "omp.h" 
+#include <omp.h> 
 
 void foo()
 {
