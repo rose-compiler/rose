@@ -3287,6 +3287,21 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
         {
           skipThisType = true;
         }
+ 
+  // TV (04/03/2018): Look for SgTemplateType
+     SgType * btype = type->stripType();
+     SgTemplateType * tpl_type = isSgTemplateType(btype);
+     if (tpl_type != NULL) {
+       if (tpl_type->get_tpl_args().size() > 0) {
+         evaluateNameQualificationForTemplateArgumentList(tpl_type->get_tpl_args(), currentScope, positionStatement);
+       }
+       if (tpl_type->get_part_spec_tpl_args().size() > 0) {
+         evaluateNameQualificationForTemplateArgumentList(tpl_type->get_part_spec_tpl_args(), currentScope, positionStatement);
+       }
+       if (tpl_type->get_parent_class_type() != NULL) {
+         traverseType(tpl_type->get_parent_class_type(), nodeReferenceToType, currentScope, positionStatement);
+       }
+     }
 
 #if 0
   // DQ (4/23/2013): Added this case to allow pointers to function to have there argument types unparsed with name qualification.
@@ -3348,13 +3363,13 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // DQ (8/19/2013): Added specification to skip class specifier (fixes problem with test2013_306.C).
           unparseInfoPointer->set_SkipClassSpecifier();
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ Calling globalUnparseToString(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ typeNameString (globalUnparseToString()) = %s \n",typeNameString.c_str());
 #endif
 
@@ -7896,96 +7911,104 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
   //       or we should be sharing the SgTemplateArgument across both the non-defining and defining declarations.
   //       I think I would like to share the SgTemplateArgument (this this problem would take care of itself).
 
-     ROSE_ASSERT(templateArgument->get_parent() != NULL);
-     SgDeclarationStatement* associatedDeclaration = isSgDeclarationStatement(templateArgument->get_parent());
-     ROSE_ASSERT(associatedDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
-#endif
-     SgDeclarationStatement* firstNondefining_associatedDeclaration = associatedDeclaration->get_firstNondefiningDeclaration();
-     SgDeclarationStatement* defining_associatedDeclaration         = associatedDeclaration->get_definingDeclaration();
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("firstNondefining_associatedDeclaration = %p \n",firstNondefining_associatedDeclaration);
-#endif
-     SgTemplateInstantiationDecl* firstDefining_classTemplateInstantiationDeclaration = isSgTemplateInstantiationDecl(firstNondefining_associatedDeclaration);
-
-  // SgTemplateArgument* nondefining_templateArgument = templateArgument;
-     SgTemplateArgument* defining_templateArgument    = NULL;
-
-     int nondefiningDeclaration_templateArgument_position = 0;
-     int definingDeclaration_templateArgument_position    = 0;
-
-     bool found = false;
-     if (firstDefining_classTemplateInstantiationDeclaration != NULL)
-        {
-       // Find the index position of the current template argument.
-          SgTemplateArgumentPtrList & l = firstDefining_classTemplateInstantiationDeclaration->get_templateArguments();
-          for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
-             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
-#endif
-               if (found == false)
-                  {
-                    if (*i == templateArgument)
-                         found = true;
-                      else
-                         nondefiningDeclaration_templateArgument_position++;
-                  }
-             }
-        }
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("defining_associatedDeclaration                   = %p \n",defining_associatedDeclaration);
-     printf ("nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
-     printf ("definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
-#endif
-
-     SgTemplateInstantiationDecl* defining_classTemplateInstantiationDeclaration      = isSgTemplateInstantiationDecl(defining_associatedDeclaration);
-     if (defining_classTemplateInstantiationDeclaration != NULL)
-        {
-       // Find the associated template argument (matching position) in the template argument list of the defining declaration.
+  // TV (04/04/2018): Look for matching defining template argument.
+  //                  For non-real template instantiation, i.e. member of a template parameter: "T0::template T1<A>", the template argument ("A") parent is the global scope (FIXME or is it the scope of the template parameter ("T0")??? FIXME)
+     SgTemplateArgument* defining_templateArgument = NULL;
+     SgNode * tpl_arg_parent = templateArgument->get_parent();
 #if 0
-       // This is simpler code (but it causes some sort of error in the stack).
-          defining_templateArgument = defining_classTemplateInstantiationDeclaration->get_templateArguments()[nondefiningDeclaration_templateArgument_position];
+     printf ("tpl_arg_parent = %p = %s \n", tpl_arg_parent, tpl_arg_parent ? tpl_arg_parent->class_name().c_str() : "");
+#endif
+     ROSE_ASSERT(tpl_arg_parent != NULL);
+
+     SgDeclarationStatement* associatedDeclaration = isSgDeclarationStatement(tpl_arg_parent);
+     if (associatedDeclaration != NULL) {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+       printf ("associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
+#endif
+       SgDeclarationStatement* firstNondefining_associatedDeclaration = associatedDeclaration->get_firstNondefiningDeclaration();
+       SgDeclarationStatement* defining_associatedDeclaration         = associatedDeclaration->get_definingDeclaration();
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+       printf ("firstNondefining_associatedDeclaration = %p \n",firstNondefining_associatedDeclaration);
+#endif
+       SgTemplateInstantiationDecl* firstDefining_classTemplateInstantiationDeclaration = isSgTemplateInstantiationDecl(firstNondefining_associatedDeclaration);
+
+    // SgTemplateArgument* nondefining_templateArgument = templateArgument;
+
+       int nondefiningDeclaration_templateArgument_position = 0;
+       int definingDeclaration_templateArgument_position    = 0;
+
+       bool found = false;
+       if (firstDefining_classTemplateInstantiationDeclaration != NULL)
+          {
+         // Find the index position of the current template argument.
+            SgTemplateArgumentPtrList & l = firstDefining_classTemplateInstantiationDeclaration->get_templateArguments();
+            for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
+               {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                 printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
+                 if (found == false)
+                    {
+                      if (*i == templateArgument)
+                           found = true;
+                        else
+                           nondefiningDeclaration_templateArgument_position++;
+                    }
+               }
+          }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+       printf ("defining_associatedDeclaration                   = %p \n",defining_associatedDeclaration);
+       printf ("nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
+       printf ("definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
+#endif
+
+       SgTemplateInstantiationDecl* defining_classTemplateInstantiationDeclaration      = isSgTemplateInstantiationDecl(defining_associatedDeclaration);
+       if (defining_classTemplateInstantiationDeclaration != NULL)
+          {
+         // Find the associated template argument (matching position) in the template argument list of the defining declaration.
+#if 0
+         // This is simpler code (but it causes some sort of error in the stack).
+            defining_templateArgument = defining_classTemplateInstantiationDeclaration->get_templateArguments()[nondefiningDeclaration_templateArgument_position];
 #else
-       // This code is better tested and works well.
-          SgTemplateArgumentPtrList & l = defining_classTemplateInstantiationDeclaration->get_templateArguments();
-          for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
-             {
+         // This code is better tested and works well.
+            SgTemplateArgumentPtrList & l = defining_classTemplateInstantiationDeclaration->get_templateArguments();
+            for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
+               {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
-               printf ("In loop: nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
-               printf ("In loop: definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
+                 printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
+                 printf ("In loop: nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
+                 printf ("In loop: definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
 #endif
-               if (definingDeclaration_templateArgument_position == nondefiningDeclaration_templateArgument_position)
-                  {
-                 // This is the template argument in the coresponding defining declaration.
-                    defining_templateArgument = *i;
-                  }
+                 if (definingDeclaration_templateArgument_position == nondefiningDeclaration_templateArgument_position)
+                    {
+                   // This is the template argument in the coresponding defining declaration.
+                      defining_templateArgument = *i;
+                    }
 
-               definingDeclaration_templateArgument_position++;
-             }
+                 definingDeclaration_templateArgument_position++;
+               }
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("defining_templateArgument = %p \n",defining_templateArgument);
+            printf ("defining_templateArgument = %p \n",defining_templateArgument);
 #endif
 
-       // This is false when the template arguments are shared (which appears to happen sometimes, see test2004_38.C).
-       // ROSE_ASSERT(defining_templateArgument != NULL);
-       // if (defining_templateArgument != NULL)
-          if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
-             {
-            // Mark the associated template argument in the defining declaration so that it can be output with qualification (see test2012_220.C).
-               defining_templateArgument->set_global_qualification_required(outputGlobalQualification);
-               defining_templateArgument->set_name_qualification_length(outputNameQualificationLength);
-               defining_templateArgument->set_type_elaboration_required(outputTypeEvaluation);
+         // This is false when the template arguments are shared (which appears to happen sometimes, see test2004_38.C).
+         // ROSE_ASSERT(defining_templateArgument != NULL);
+         // if (defining_templateArgument != NULL)
+            if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
+               {
+              // Mark the associated template argument in the defining declaration so that it can be output with qualification (see test2012_220.C).
+                 defining_templateArgument->set_global_qualification_required(outputGlobalQualification);
+                 defining_templateArgument->set_name_qualification_length(outputNameQualificationLength);
+                 defining_templateArgument->set_type_elaboration_required(outputTypeEvaluation);
 
-            // DQ (9/24/2012): Make sure these are different.
-               ROSE_ASSERT(defining_templateArgument != templateArgument);
-             }
-        }
+              // DQ (9/24/2012): Make sure these are different.
+                 ROSE_ASSERT(defining_templateArgument != templateArgument);
+               }
+          }
+     }
 
 
   // Look for the template argument in the IR node map and either reset it or add it to the map.
@@ -8946,6 +8969,7 @@ NameQualificationTraversal::buildTemplateHeaderString ( SgTemplateParameterPtrLi
                     template_name += buildTemplateHeaderString(templateParameterList);
 
                  // Not clear if this should always be marked as "class".
+                 // TV (04/06/2018): not always (rarely?) necessary...
                     template_name += "class ";
 #if 0
                     printf ("buildTemplateHeaderString(): case SgTemplateParameter::template_parameter: Sorry, not implemented (ignored) \n");

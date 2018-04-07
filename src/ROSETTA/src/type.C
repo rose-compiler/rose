@@ -762,7 +762,14 @@ Grammar::setUpTypes ()
   // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of 
   // template parameters and the template declaration (OR just the template paramters only; I have not decided).
      TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_depth","= -1",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TemplateType.setDataPrototype     ("SgType *","class_type","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgType *","parent_class_type","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateParameter *","template_parameter","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateArgumentPtrList", "tpl_args", "= SgTemplateArgumentPtrList()", NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateArgumentPtrList", "part_spec_tpl_args", "= SgTemplateArgumentPtrList()", NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/18/2017): We need to support a flag to indicate packing in template parameters.
      TemplateType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
