@@ -197,6 +197,8 @@ test2018_69.C \
 test2018_70.C \
 test2018_71.C \
 test2018_72.C \
+test2018_73.C \
+test2018_74.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 test2016_40.C \
 last.C
