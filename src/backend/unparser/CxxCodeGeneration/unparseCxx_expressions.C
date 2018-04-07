@@ -262,18 +262,18 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      // To workaround some wrong AST generated from RAJA LULESH code
      // we clear skip base type flag of unparse_info
      if (info.SkipBaseType())
-     {
-       cout<<"Warning in Unparse_ExprStmt::unparseLambdaExpression().  Unparse_Info has skipBaseType() set. Unset it now."<<endl;
-       //ROSE_ASSERT(false);
-       info.unset_SkipBaseType ();
-     }
+        {
+       // DQ (4/7/2018): cleanup output spew (review with Liao).
+       // cout<<"Warning in Unparse_ExprStmt::unparseLambdaExpression().  Unparse_Info has skipBaseType() set. Unset it now."<<endl;
+       // ROSE_ASSERT(false);
+
+          info.unset_SkipBaseType ();
+        }
 
      curprint(" [");
      // if '=' or '&' exists
      bool hasCaptureCharacter = false;
      int commaCounter = 0;
-
-
 
      // schroder3 (2016-08-23): Do not print "&" AND "=" (because "[&=](){}" is ill-formed):
      if (lambdaExp->get_capture_default() == true) {
