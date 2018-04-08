@@ -43,6 +43,7 @@ using namespace Rose;
 
 #define HIGH_FEDELITY_TOKEN_UNPARSING 1
 
+#define OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES 0
 
 Unparse_ExprStmt::Unparse_ExprStmt(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
@@ -2566,7 +2567,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #if 0
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
 #endif
-#if 1
+#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
                curprint("\n/* Skipping output of compiler generated forward function declaration of a template specialization */");
 #endif
 #if PRINT_DEVELOPER_WARNINGS || 0
@@ -2778,7 +2779,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
 #if 0
                printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): function has no definition, so skip output! \n");
 #endif
-#if 1
+#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
                curprint (" /* function has no definition, so skip output */ ");
 #endif
              }
@@ -2871,7 +2872,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
                  // It is built in ROSE/src/roseSupport/templateSupport.C void fixupInstantiatedTemplates ( SgProject* project ).
                  // The forward declaration is placed directly after the template declaration so that no uses of the function can exist
                  // prior to its declaration.  Output a message into the gnerated source code identifying this transformation.
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                     curprint ( string("\n/* ROSE generated forward declaration of the ROSE generated member template specialization */"));
 #endif
                   }
@@ -2882,7 +2883,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
                  // at the end of file and may be defined there because a forward declaration for the 
                  // specialization was output directly after the template declaration (before any use of 
                  // the function could have been made ???).
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                     curprint ( string("\n/* ROSE generated member template specialization */"));
 #endif
                   }
@@ -10782,7 +10783,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        else
         {
        // DQ (9/7/2014): This is the typical case.
-#if 1
+#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
        // DQ (4/5/2018): For debugging, output something so that we know why nothing is output.
           if (templateString.size() == 0)
              {
