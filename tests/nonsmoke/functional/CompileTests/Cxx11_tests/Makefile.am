@@ -187,10 +187,7 @@ test2018_59.C \
 test2018_60.C \
 test2018_61.C \
 test2018_62.C \
-test2018_63.C \
-test2018_64.C \
 test2018_65.C \
-test2018_66.C \
 test2018_67.C \
 test2018_68.C \
 test2018_69.C \
