@@ -1747,6 +1747,16 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+            // DQ (4/8/2018): Added support for the namespace alias.
+               case V_SgNamespaceAliasDeclarationStatement:
+                  {
+                    SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " + namespaceAliasDeclaration->get_name().getString() + 
+                                          "\\n  " + StringUtility::numberToString(namespaceAliasDeclaration) + "  ";
+                    break;
+                  }
+
                default:
                   {
                  // It appears that we can't unparse one of these (not implemented)
