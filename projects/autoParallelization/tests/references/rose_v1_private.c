@@ -3,7 +3,7 @@
  * They are dead (not belong to live-in variable sets) with respect to the loop body
  * If they are live-out with respect to the loop, it is lastprivate. 
  */
-#include "omp.h" 
+#include <omp.h> 
 int g;
 
 void foo()

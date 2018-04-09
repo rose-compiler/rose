@@ -1,7 +1,7 @@
 /*
  * dependence graph:
  */
-#include "omp.h" 
+#include <omp.h> 
 
 void foo()
 {

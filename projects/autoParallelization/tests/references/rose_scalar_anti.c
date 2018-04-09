@@ -2,7 +2,7 @@
  * Scalar-to-scalar dependencies
  * */
 #include <stdio.h>
-#include "omp.h" 
+#include <omp.h> 
 int a[100];
 #if 1
 

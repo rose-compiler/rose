@@ -1,4 +1,4 @@
-
+#if 0
 // This code compiles as a C++11 file and only if the initializer_list header is include.
 #include<initializer_list>
 
@@ -11,3 +11,4 @@ struct A
      A() : b(3) { }
      int b;
    };
+#endif

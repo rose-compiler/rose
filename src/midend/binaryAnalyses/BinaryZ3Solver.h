@@ -180,8 +180,10 @@ protected:
     Z3ExprTypePair ctxShiftRight(const SymbolicExpr::InteriorPtr&);
     Z3ExprTypePair ctxMultiply(const SymbolicExpr::InteriorPtr&);
     Z3ExprTypePair ctxUnsignedDivide(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxSignedDivide(const SymbolicExpr::InteriorPtr&);
     Z3ExprTypePair ctxUnsignedExtend(const SymbolicExpr::InteriorPtr&);
     Z3ExprTypePair ctxUnsignedModulo(const SymbolicExpr::InteriorPtr&);
+    Z3ExprTypePair ctxSignedModulo(const SymbolicExpr::InteriorPtr&);
     Z3ExprTypePair ctxWrite(const SymbolicExpr::InteriorPtr&);
     Z3ExprTypePair ctxZerop(const SymbolicExpr::InteriorPtr&);
 #endif

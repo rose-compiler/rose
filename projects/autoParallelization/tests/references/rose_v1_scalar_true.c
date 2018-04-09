@@ -1,7 +1,7 @@
 /* 
  * Scalar-to-scalar dependencies
  * */
-#include "omp.h" 
+#include <omp.h> 
 int a[100];
 
 void foo2()

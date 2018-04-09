@@ -83,6 +83,11 @@ string get_type_name(SgType* t)
           case T_VOID:                    return "void";
           case T_GLOBAL_VOID:             return "global void";
           case T_WCHAR:                   return "wchar_t";
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          case T_CHAR16:                  return "char16_t";
+          case T_CHAR32:                  return "char32_t";
+
           case T_FLOAT:                   return "float";
           case T_DOUBLE:                  return "double";
           case T_LONG_LONG:               return "long long";
@@ -623,6 +628,11 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_VOID:
                case T_GLOBAL_VOID:
                case T_WCHAR:
+
+            // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+               case T_CHAR16:
+               case T_CHAR32:
+
                case T_FLOAT:
                case T_DOUBLE:
                case T_LONG_LONG:
@@ -3780,6 +3790,12 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
 #endif
 
 #if 0
+  // curprint(string("\n/* In outputType():  */ \n");
+     curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+     curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
+#endif
+
+#if 0
   // DQ (9/10/2014): debugging code!
      if (isSgInitializedName(referenceNode) != NULL && isSgTypeInt(referenceNodeType) != NULL)
         {
@@ -3933,5 +3949,12 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
      printf ("DONE: outputType(): \n");
      curprint( "\n/* DONE: outputType(): */ \n");
 #endif
+
+#if 0
+  // curprint(string("\n/* Leaving outputType() */ \n");
+     curprint(string("\n/* Leaving outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+     curprint(string("\n/* Leaving outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
+#endif
+
    }
 

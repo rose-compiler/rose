@@ -1,7 +1,7 @@
 /* 
  * Scalar-to-scalar output dependencies
  * */
-#include "omp.h" 
+#include <omp.h> 
 int a[100];
 // A private case
 

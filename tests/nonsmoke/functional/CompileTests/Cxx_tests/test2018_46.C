@@ -1,3 +1,6 @@
+#if 0
+// DQ (4/7/2018): This is a C++11 test, moved to the Cxx11_tests directory.
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -17,3 +20,4 @@ void foobar()
      std::string s = "abc";
      std::for_each(s.begin(), s.end(), Printer(std::cout));
    }
+#endif

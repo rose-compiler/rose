@@ -1,4 +1,4 @@
-#include "omp.h" 
+#include <omp.h> 
 double a[10];
 
 int foo()

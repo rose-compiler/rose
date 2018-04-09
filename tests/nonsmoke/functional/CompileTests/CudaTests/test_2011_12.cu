@@ -1,4 +1,6 @@
 
+#include <cuda.h>
+
 __global__ void square_array() {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 }

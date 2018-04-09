@@ -2,7 +2,7 @@
 // Representing unparsing error after loop normalization
 // ((LoopAlgorithm *)(this)) -> m_Domain -> m_kmax 
 // complains about protected member is accessed illegally. 
-#include "omp.h" 
+#include <omp.h> 
 namespace loopsuite
 {
 
