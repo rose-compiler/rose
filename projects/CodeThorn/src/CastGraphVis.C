@@ -90,7 +90,7 @@ void addEdge(SgExpression* from, SgExpression* to) {
   ss<<nodeId(to)<<" -> "<<nodeId(from)<<"[dir=back];"<<endl;
 }
 
-void generateTypeGraph(SgProject* root) {
+bool generateTypeGraph(SgProject* root, string dotFileName) {
   RoseAst ast(root);
   ss<<"digraph G {"<<endl;
   for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -148,5 +148,5 @@ void generateTypeGraph(SgProject* root) {
     }
   }
   ss<<"}"<<endl;
-  write_file("typegraph.dot",ss.str());
+  return writeFile(dotFileName,ss.str());
 }

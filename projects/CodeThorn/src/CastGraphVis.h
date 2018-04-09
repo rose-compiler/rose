@@ -18,11 +18,9 @@ private:
 };
 
 typedef Sawyer::Container::Graph<VertexData, EdgeData> CastGraph;
-
-
 typedef CastGraph::VertexIterator VertexIterType;
 typedef std::map<SgNode*, VertexIterType> NodeVertexMapping;
 
-void generateTypeGraph(SgProject* root);
+bool generateTypeGraph(SgProject* root, std::string dotFileName);
 
 #endif

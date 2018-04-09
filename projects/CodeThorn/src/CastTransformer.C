@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
-#include "CastTransformer.h"
 #include <iostream>
+#include "CastTransformer.h"
 #include "SgNodeHelper.h"
 
 using namespace std;
@@ -18,7 +18,7 @@ bool CastTransformer::isEqualPrecise(SgType* t1, SgType* t2) {
   return t1==t2;
 }
 
-bool CastTransformer::isEqualOrLessPrecise(SgType* t1, SgType* t2) {
+bool CastTransformer::isLessOrEqualPrecise(SgType* t1, SgType* t2) {
   return isEqualPrecise(t1,t2) || isLessPrecise(t1,t2);
 }
 
@@ -119,6 +119,10 @@ CTSynthesizedAttributeType CastTransformer::evaluateSynthesizedAttribute (SgNode
 #endif
   }
   return syn;
+}
+
+void CastTransformer::transformCommandLineFiles(SgProject* project) {
+  traverseWithinCommandLineFiles(project);
 }
 
 void CastTransformer::traverseWithinCommandLineFiles(SgProject* project) {

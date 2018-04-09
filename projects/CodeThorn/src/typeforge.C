@@ -14,6 +14,7 @@
 #include "AstProcessing.h"
 #include "AstMatching.h"
 #include "Sawyer/Graph.h"
+#include "TypeTransformer.h"
 
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
@@ -26,6 +27,9 @@
 #include "CastStats.h"
 #include "CastTransformer.h"
 #include "CastGraphVis.h"
+#include "CppStdUtilities.h"
+#include <utility>
+#include <functional>
 
 using namespace std;
 
@@ -34,80 +38,6 @@ public:
   virtual void visit(SgNode* node) { /* do nothing */ };
 };
 
-void makeAllCastsExplicit(SgProject* root) {
-  RoseAst ast(root);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgCastExp* castExp=isSgCastExp(*i)) {
-      if(castExp->isCompilerGenerated()) {
-	castExp->unsetCompilerGenerated();
-      }
-    }
-  }
-}
-
-
-void annotateImplicitCastsAsComments(SgProject* root) {
-  RoseAst ast(root);
-  std::string matchexpression="$CastNode=SgCastExp($CastOpChild)";
-  AstMatching m;
-  MatchResult r=m.performMatching(matchexpression,root);
-  //std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
-  list<string> report;
-  int statementTransformations=0;
-  for(MatchResult::reverse_iterator i=r.rbegin();i!=r.rend();++i) {
-    statementTransformations++;
-    SgCastExp* castExp=isSgCastExp((*i)["$CastNode"]);
-    ROSE_ASSERT(castExp);
-    SgExpression* childNode=isSgExpression((*i)["$CastOpChild"]);
-    ROSE_ASSERT(childNode);
-    if(castExp->isCompilerGenerated()) {
-      SgType* castType=castExp->get_type();
-      string castTypeString=castType->unparseToString();
-      SgType* castedType=childNode->get_type();
-      string castedTypeString=castedType->unparseToString();
-      string reportLine="compiler generated cast: "
-        +SgNodeHelper::sourceLineColumnToString(castExp->get_parent())
-        +": "+castTypeString+" <== "+castedTypeString;
-      if(castType==castedType) {
-        reportLine+=" [ no change in type. ]";
-      }
-      // line are created in reverse order
-      report.push_front(reportLine); 
-      
-      string newSourceCode;
-      newSourceCode="/*CAST("+castTypeString+")*/";
-      newSourceCode+=castExp->unparseToString();
-      castExp->unsetCompilerGenerated(); // otherwise it is not replaced
-      SgNodeHelper::replaceAstWithString(castExp,newSourceCode);
-    }
-  }
-  for(list<string>::iterator i=report.begin();i!=report.end();++i) {
-    cout<<*i<<endl;
-  }
-  //m.printMarkedLocations();
-  //m.printMatchOperationsSequence();
-  cout<<"Number of compiler generated casts: "<<statementTransformations<<endl;
-}
-
-void changeVariableType(SgProject* root, string varNameToFind, SgType* type) {
-  RoseAst ast(root);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-      SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-      if(varInitName) {
-	SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
-	if(varSym) {
-	  string varName=SgNodeHelper::symbolToString(varSym);
-	  if(varName==varNameToFind) {
-	    cout<<"STATUS: found declaration of var "<<varNameToFind<<". Changed type to "<<type->unparseToString()<<"."<<endl;
-	    SgTypeFloat* ft=SageBuilder::buildFloatType();
-	    varInitName->set_type(ft);
-	  }
-	}
-      }
-    }
-  }
-}
 
 string toolName="typeforge";
 
@@ -168,9 +98,10 @@ int main (int argc, char* argv[])
   vector<string> argvList(argv, argv+argc);
   argvList.push_back("-rose:skipfinalCompileStep");
   SgProject* sageProject=frontend (argvList); 
+  TypeTransformer tt;
 
   if(args.isUserProvided("explicit")) {
-    makeAllCastsExplicit(sageProject);
+    tt.makeAllCastsExplicit(sageProject);
     cout<<"Converted all implicit casts to explicit casts."<<endl;
   }
 
@@ -182,42 +113,36 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("annotate")) {
-    annotateImplicitCastsAsComments(sageProject);
+    tt.annotateImplicitCastsAsComments(sageProject);
     cout<<"Annotated program with comments."<<endl;
     backend(sageProject);
     return 0;
   }
   
   if(args.isUserProvided("dot-type-graph")) {
-    generateTypeGraph(sageProject);
+    string dotFileName="typegraph.dot";
+    if(generateTypeGraph(sageProject,dotFileName)) {
+      cout<<"Generated file "<<dotFileName<<endl;
+    } else {
+      cerr<<"Error: could not write file "<<dotFileName<<endl;
+    }
     return 0;
   }
 
+  TypeTransformer::VarTypeVarNamePairList list;
   if(args.isUserProvided("float-var")) {
-    cout<<"Changing variable type."<<endl;
-    string varName=args.getString("float-var");
-    changeVariableType(sageProject, varName, SageBuilder::buildFloatType());
+    string varNames=args.getString("float-var");
+    tt.addToTransformationList(list,SageBuilder::buildFloatType(),varNames);
   }
   if(args.isUserProvided("double-var")) {
-    cout<<"Changing variable type."<<endl;
-    string varName=args.getString("double-var");
-    changeVariableType(sageProject, varName, SageBuilder::buildDoubleType());
+    string varNames=args.getString("double-var");
+    tt.addToTransformationList(list,SageBuilder::buildDoubleType(),varNames);
   } 
   if(args.isUserProvided("long-double-var")) {
-    cout<<"Changing variable type."<<endl;
-    string varName=args.getString("long-double-var");
-    changeVariableType(sageProject, varName, SageBuilder::buildLongDoubleType());
+    string varNames=args.getString("long-double-var");
+    tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),varNames);
   }
-
-  bool transform=args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var");
-  if(transform) {
-    // make all floating point casts explicit
-    makeAllCastsExplicit(sageProject);
-    // transform all casts now
-    CastTransformer ct;
-    ct.traverseWithinCommandLineFiles(sageProject);
-  }
-
+  tt.transformCommandLineFiles(sageProject,list);
   backend(sageProject);
 
   return 0;
