@@ -195,13 +195,18 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Only do AST post-processing for C/C++
-     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) ||
-                             (SageInterface::is_PHP_language() == true) ||
-                             (SageInterface::is_Python_language() == true);
+  // Rasmussen (4/8/2018): Added Ada, Cobol, and Jovial. The logic should probably
+  // be inverted to only process C and C++ but I don't understand interactions like OpenMP langauges.
+     bool noPostprocessing = (SageInterface::is_Ada_language()     == true) ||
+                             (SageInterface::is_Cobol_language()   == true) ||
+                             (SageInterface::is_Fortran_language() == true) ||
+                             (SageInterface::is_Jovial_language()  == true) ||
+                             (SageInterface::is_PHP_language()     == true) ||
+                             (SageInterface::is_Python_language()  == true);
 
   // If this is C or C++ then we are using the new EDG translation and althrough fewer 
   // fixups should be required, some are still required.
-     if (doPostprocessing == false)
+     if (noPostprocessing == false)
         {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");

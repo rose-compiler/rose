@@ -45,7 +45,7 @@ HEADER_START
        // void operator delete (void* pointer) { $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME)); };
        // DQ (9/2/2015): Added comment for delete operator.
       /*! \brief ROSETTA generated delete operator: deletes all non-traversed members. */
-          void operator delete (void* pointer);
+          //void operator delete (void* pointer);
 #else
        // DQ (4/5/2007): This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE.
           void operator delete (void* pointer)
