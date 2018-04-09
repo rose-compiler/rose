@@ -4,6 +4,7 @@
 #include <MemoryCellList.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/GraphViz.h>
+#include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 #include <SymbolicSemantics2.h>
@@ -174,16 +175,26 @@ public:
 
                 callStack.push_back(CallFrame(dfCfg)); {
                     // Inline the function or create a faked call.
-                    if (callStack.size() <= maxCallStackSize && t.edge()->target()->value().type()==V_BASIC_BLOCK &&
-                        interproceduralPredicate(cfg, t.edge(), callStack.size())) {
+                    Function::Ptr calleeFunc;
+                    if (t.edge()->target()->value().type() == V_BASIC_BLOCK)
+                        calleeFunc = bestSummaryFunction(t.edge()->target()->value().owningFunctions());
+                    bool doInline = true;
+                    if (callStack.size() > maxCallStackSize) {
+                        doInline = false;               // too much recursive inlining
+                    } else if (t.edge()->target()->value().type() != V_BASIC_BLOCK) {
+                        doInline = false;               // e.g., call to indeterminate address
+                    } else if (!interproceduralPredicate(cfg, t.edge(), callStack.size())) {
+                        doInline = false;               // user says no inlining
+                    } else if (ModulesElf::isUnlinkedImport(partitioner, calleeFunc)) {
+                        doInline = false;               // callee is not actually present (not linked in yet)
+                    }
+
+                    if (doInline) {
                         // Inline the called function into the dfCFG
                         buildRecursively(t.edge()->target());
                     } else {
                         // Insert a "faked" call, i.e. a vertex that summarizes the call by referencing the callee function.
                         // The function pointer will be null if the address is indeterminate.
-                        Function::Ptr calleeFunc;
-                        if (t.edge()->target()->value().type() == V_BASIC_BLOCK)
-                            calleeFunc = bestSummaryFunction(t.edge()->target()->value().owningFunctions());
                         callStack.back().functionEntryVertex = insertVertex(DfCfgVertex(calleeFunc));
                         callStack.back().functionReturnVertex = callStack.back().functionEntryVertex;
                     }
