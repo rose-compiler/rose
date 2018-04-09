@@ -2875,6 +2875,14 @@ Grammar::setUpStatements ()
      NamespaceAliasDeclarationStatement.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/8/2018): WE need to add a new data member to support a namespace alias to another namespace alias (see test2018_26.C).
+  // Note that the namespaceDeclaration data member represents the semantics, but a namespaceAliasDeclaration will support
+  // the structure of the original source code.  Not clear if this should be traversed within the AST (not for now).
+     NamespaceAliasDeclarationStatement.setDataPrototype("bool","is_alias_for_another_namespace_alias","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NamespaceAliasDeclarationStatement.setDataPrototype ("SgNamespaceAliasDeclarationStatement*", "namespaceAliasDeclaration", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      NamespaceDefinitionStatement.setFunctionPrototype ( "HEADER_NAMESPACE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
   // NamespaceDefinitionStatement.setDataPrototype ("SgDeclarationStatementPtrList", "declarationList", "",
