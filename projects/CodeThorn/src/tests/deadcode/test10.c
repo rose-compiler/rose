@@ -40,4 +40,3 @@ void h(int x)
   }
   x=3;
 }
-
