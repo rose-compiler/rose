@@ -565,7 +565,7 @@ varp1_SOURCES = Timer.cpp varp1.C
 typeforge_DEPENDENCIES=libspray.la
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C
+typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C CastGraphVis.C CppStdUtilities.C
 
 check-typeforge: typeforge
 	rm -f typegraph.dot
