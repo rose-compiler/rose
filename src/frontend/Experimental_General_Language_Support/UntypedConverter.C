@@ -1404,9 +1404,11 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 {
    SgValueExp* sg_expr = NULL;
 
+   // TODO - what about doubles, longs, Jovial fixed, ...
    switch(ut_expr->get_type()->get_type_enum_id())
        {
          case SgUntypedType::e_int:
+         case SgUntypedType::e_uint:
             {
                std::string constant_text = ut_expr->get_value_string();
 
@@ -1433,13 +1435,24 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 
                sg_expr = new SgIntVal(atoi(ut_expr->get_value_string().c_str()), constant_text);
                setSourcePositionFrom(sg_expr, ut_expr);
-
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - value expression TYPE_INT \n");
-#endif
-
                break;
             }
+
+         case SgUntypedType::e_float:
+            {
+               std::string constant_text = ut_expr->get_value_string();
+
+            // preserve kind parameter if any
+               if (ut_expr->get_type()->get_has_kind())
+                  {
+                     cerr << "WARNING: UntypedConverter::convertSgUntypedValueExpression: kind value not handled \n";
+                  }
+
+               sg_expr = new SgFloatVal(atof(ut_expr->get_value_string().c_str()), constant_text);
+               setSourcePositionFrom(sg_expr, ut_expr);
+               break;
+            }
+
          default:
             {
                ROSE_ASSERT(0);  // NOT IMPLEMENTED

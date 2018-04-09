@@ -13,10 +13,13 @@ int main() {
     r=4;
     break;
   }
-  default: r=100;
+  default: 
+    r=100;
+    r=r+1;
     break;
   case 0xB0:
     r=5;
+    r=r+1;
   }
   return !(r==r);
 }

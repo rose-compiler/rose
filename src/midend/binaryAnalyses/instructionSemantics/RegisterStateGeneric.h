@@ -102,7 +102,7 @@ public:
         }
 #endif
 
-    protected:
+    public:
         RegPair() {}                                    // for serialization
 
     public:
