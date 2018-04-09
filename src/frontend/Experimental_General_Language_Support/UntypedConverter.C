@@ -422,8 +422,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
 
    ROSE_ASSERT(ut_type->get_is_user_defined() == false);
 
-   SgExpression*   kindExpression = NULL;
-   SgExpression* lengthExpression = NULL;
+   SgExpression* kindExpression = NULL;
 
    if (ut_type->get_has_kind())
       {
@@ -431,15 +430,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
          SgUntypedExpression* ut_kind = ut_type->get_type_kind();
       // TODO - figure out how to handle operators (or anything with children)
          ROSE_ASSERT(isSgUntypedValueExpression(ut_kind) != NULL || isSgUntypedReferenceExpression(ut_kind) != NULL);
-         kindExpression = convertSgUntypedExpression(ut_kind, children);
-      }
-   if (ut_type->get_char_length_is_string())
-      {
-         SgExpressionPtrList children;
-         SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
-      // TODO - figure out how to handle operators (or anything with children)
-         ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
-         lengthExpression = convertSgUntypedExpression(ut_length, children);
+         kindExpression = convertSgUntypedExpression(ut_kind, children, scope);
       }
 
 // TODO - determine if SageBuilder can be used (or perhaps should be updated)
@@ -447,6 +438,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
       {
         case SgUntypedType::e_void:           sg_type = SageBuilder::buildVoidType();              break;
         case SgUntypedType::e_int:            sg_type = SgTypeInt::createType(0, kindExpression);  break;
+        case SgUntypedType::e_uint:           sg_type = SgTypeUnsignedInt::createType(kindExpression); break;
         case SgUntypedType::e_float:          sg_type = SgTypeFloat::createType(kindExpression);   break;
         case SgUntypedType::e_double:         sg_type = SageBuilder::buildDoubleType();            break;
 
@@ -454,19 +446,23 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
         case SgUntypedType::e_complex:        sg_type = SgTypeComplex::createType(SgTypeFloat::createType(kindExpression), kindExpression); break;
         case SgUntypedType::e_double_complex: sg_type = SgTypeComplex::createType(SgTypeDouble::createType());                              break;
 
+     // TODO - is incorrect (may be closer to a hexadecimal or Hollerith, but used in boolean expressions)
+        case SgUntypedType::e_bit:            sg_type = SgTypeBool::createType(kindExpression);    break;
         case SgUntypedType::e_bool:           sg_type = SgTypeBool::createType(kindExpression);    break;
 
-     // character and string types
-        case SgUntypedType::e_char:
+        case SgUntypedType::e_char:           sg_type = SgTypeChar::createType(kindExpression);    break;
+        case SgUntypedType::e_string:
            {
-              if (lengthExpression)
-                 {
-                    sg_type = SgTypeString::createType(lengthExpression, kindExpression);          break;
-                 }
-              else
-                 {
-                    sg_type = SgTypeChar::createType(kindExpression);                              break;
-                 }
+              SgExpressionPtrList children;
+              SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
+           // TODO - figure out how to handle operators (or anything with children)
+              ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
+
+              SgExpression* sg_length = convertSgUntypedExpression(ut_length, children, scope);
+              ROSE_ASSERT(sg_length != NULL);
+
+              sg_type = SageBuilder::buildStringType(sg_length);
+              break;
            }
 
         default:
@@ -480,10 +476,6 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
    if (kindExpression != NULL)
       {
          kindExpression->set_parent(sg_type);
-      }
-   if (lengthExpression != NULL)
-      {
-         lengthExpression->set_parent(sg_type);
       }
 
    ROSE_ASSERT(sg_type != NULL);

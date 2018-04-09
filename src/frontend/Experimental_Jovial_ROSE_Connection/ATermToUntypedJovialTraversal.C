@@ -372,10 +372,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    else if (traverse_BitItemDescription(term, type)) {
       // MATCHED BitItemDescription
    }
-#if 0
    else if (traverse_CharacterItemDescription(term, type)) {
       // MATCHED CharacterItemDescription
    }
+#if 0
    else if (traverse_StatusItemDescription(term, type)) {
       // MATCHED StatusItemDescription
    }
@@ -620,6 +620,36 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitItemDescription(ATerm term, Sg
    if (traverse_OptItemSize(t_size, &has_size, &size)) {
       (*type)->set_has_kind(has_size);
       (*type)->set_type_kind(size);
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_CharacterItemDescription(ATerm term, SgUntypedType** type)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CharacterItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_size;
+   bool has_size;
+   SgUntypedExpression* size;
+
+   if (ATmatch(term, "CharacterItemDescription(<term>)", &t_size)) {
+      // MATCHED CharacterItemDescription
+   } else return ATfalse;
+
+   if (traverse_OptItemSize(t_size, &has_size, &size)) {
+      if (has_size) {
+         *type = UntypedBuilder::buildType(SgUntypedType::e_string);
+         (*type)->set_char_length_expression(size);
+      }
+      else {
+         *type = UntypedBuilder::buildType(SgUntypedType::e_char);
+      }
    } else return ATfalse;
 
    return ATtrue;

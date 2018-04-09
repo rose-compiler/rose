@@ -19,8 +19,6 @@ class UntypedJovialConverter : public UntypedConverter
                                 SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type,
                                 SgScopeStatement* label_scope=NULL);
 
-      SgType* convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope);
-
    // Declaration statements
    //
 
