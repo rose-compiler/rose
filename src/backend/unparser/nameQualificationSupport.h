@@ -252,6 +252,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (3/31/2014): Adding support for global qualifiction.
           size_t depthOfGlobalNameQualification(SgDeclarationStatement* declaration);
+
+       // DQ (4/5/2018): Debugging support.
+          void functionReport(SgFunctionDeclaration* functionDeclaration);
    };
 
 
