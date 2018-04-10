@@ -42,16 +42,19 @@ void CastTransformer::eliminateCast(SgCastExp* castExp) {
 }
 
 void CastTransformer::introduceCast(SgExpression* exp, SgType* type) {
-  TypeTransformer::trace("TODO: introduce cast @:"+SgNodeHelper::sourceLineColumnToString(exp)+":"+exp->unparseToString());
-#if 0
+  TypeTransformer::trace("introducing cast @:"+SgNodeHelper::sourceLineColumnToString(exp)+":"+exp->unparseToString());
+  SgNode* parentOfExpBackup=exp->get_parent();
   SgCastExp* newCastExp=SageBuilder::buildCastExp(exp,type);
-  //newCastExp->set_parent(parent);
-  //exp->set_parent(newCastExp);
-  SgExpression* oldExp=exp;
-  SgExpression* newExp=newCastExp;
-  bool keepOldExp=true;
-  SgNodeHelper::replaceExpression(oldExp, newExp, keepOldExp);
-#endif
+  // set parent back to original value, because buildCastExp modifies
+  // the parent in the existing AST and this conflicts with the replacements of the original node
+  exp->set_parent(parentOfExpBackup); 
+
+  // replace original exp (which is now a child of the new cast exp)
+  // with the new cast exp.
+  bool keepOldExp=false;
+  SgNodeHelper::replaceExpression(exp, newCastExp, keepOldExp);
+  // set parent of exp now
+  exp->set_parent(newCastExp);
 }
 
 void CastTransformer::changeCast(SgCastExp* castExp, SgType* newType) {
