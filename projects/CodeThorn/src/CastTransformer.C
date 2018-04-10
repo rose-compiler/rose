@@ -3,6 +3,7 @@
 #include <iostream>
 #include "CastTransformer.h"
 #include "SgNodeHelper.h"
+#include "TypeTransformer.h" // only required for trace
 
 using namespace std;
 
@@ -33,7 +34,7 @@ bool CastTransformer::castIsNecessary(SgType* source, SgType* target) {
 }
 
 void CastTransformer::eliminateCast(SgCastExp* castExp) {
-  cout<<"ACTION: eliminating cast:"<<SgNodeHelper::sourceLineColumnToString(castExp)<<":"<<castExp->unparseToString()<<endl;
+  TypeTransformer::trace("eliminating cast:"+SgNodeHelper::sourceLineColumnToString(castExp)+":"+castExp->unparseToString());
   SgExpression* oldExp=castExp;
   SgExpression* newExp=castExp->get_operand();
   bool keepOldExp=true;
@@ -41,7 +42,7 @@ void CastTransformer::eliminateCast(SgCastExp* castExp) {
 }
 
 void CastTransformer::introduceCast(SgExpression* exp, SgType* type) {
-  cout<<"TODO: introduce cast @:"<<SgNodeHelper::sourceLineColumnToString(exp)<<":"<<exp->unparseToString()<<endl;
+  TypeTransformer::trace("TODO: introduce cast @:"+SgNodeHelper::sourceLineColumnToString(exp)+":"+exp->unparseToString());
 #if 0
   SgCastExp* newCastExp=SageBuilder::buildCastExp(exp,type);
   //newCastExp->set_parent(parent);
@@ -54,9 +55,9 @@ void CastTransformer::introduceCast(SgExpression* exp, SgType* type) {
 }
 
 void CastTransformer::changeCast(SgCastExp* castExp, SgType* newType) {
-  cout<<"ACTION: changing cast :"
-      <<SgNodeHelper::sourceLineColumnToString(castExp)
-      <<":"<<castExp->unparseToString()<<" TO "<<newType->unparseToString()<<endl;
+  TypeTransformer::trace("changing cast :"
+        +SgNodeHelper::sourceLineColumnToString(castExp)
+        +":"+castExp->unparseToString()+" TO "+newType->unparseToString());
 }
 
 bool CastTransformer::isOutsideTemplate(CTInheritedAttributeType inh) {

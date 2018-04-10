@@ -11,6 +11,7 @@ class CastTransformer : public AstTopDownBottomUpProcessing<CTInheritedAttribute
   CTSynthesizedAttributeType defaultSynthesizedAttribute(CTInheritedAttributeType inh);
 
   void transformCommandLineFiles(SgProject* project);
+  
  private:
   void traverseWithinCommandLineFiles(SgProject* project);
   void traverseWithinCommandLineFiles(SgProject* project, CTInheritedAttributeType inh);

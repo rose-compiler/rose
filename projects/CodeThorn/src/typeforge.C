@@ -64,6 +64,7 @@ int main (int argc, char* argv[])
     ("annotate", "annotate implicit casts as comments.")
     ("explicit", "make all imlicit casts explicit.")
     ("stats", "print statistics on casts of built-in floating point types.")
+    ("trace", "print cast operations as they are performed.")
     ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("float-var", po::value< string >()," change type of var [arg] to float.")
     ("double-var", po::value< string >()," change type of var [arg] to double.")
@@ -127,6 +128,10 @@ int main (int argc, char* argv[])
       cerr<<"Error: could not write file "<<dotFileName<<endl;
     }
     return 0;
+  }
+
+  if(args.isUserProvided("trace")) {
+    tt.setTraceFlag(true);
   }
 
   TypeTransformer::VarTypeVarNamePairList list;

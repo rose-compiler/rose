@@ -569,11 +569,11 @@ typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastT
 
 check-typeforge: typeforge
 	rm -f typegraph.dot
-	rm -f rose_casttest1.C
+	rm -f rose_casttest3.C
 #	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
-	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest1.C
+	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
 	g++ -Wall rose_casttest1.C
 
 	rm -f a.out

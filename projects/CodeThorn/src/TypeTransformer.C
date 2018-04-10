@@ -7,6 +7,9 @@
 
 using namespace std;
 
+// static member
+bool TypeTransformer::_traceFlag=false;
+
 void TypeTransformer::addToTransformationList(std::list<VarTypeVarNamePair>& list,SgType* type, string varNames) {
   vector<string> varNamesVector=CppStdUtilities::splitByComma(varNames);
   for (auto name:varNamesVector) {
@@ -45,7 +48,7 @@ void TypeTransformer::changeVariableType(SgProject* root, string varNameToFind, 
 	if(varSym) {
 	  string varName=SgNodeHelper::symbolToString(varSym);
 	  if(varName==varNameToFind) {
-	    cout<<"STATUS: found declaration of var "<<varNameToFind<<". Changed type to "<<type->unparseToString()<<"."<<endl;
+	    trace("Found declaration of var "+varNameToFind+". Changed type to "+type->unparseToString()+".");
 	    SgTypeFloat* ft=SageBuilder::buildFloatType();
 	    varInitName->set_type(ft);
 	  }
@@ -107,4 +110,14 @@ void TypeTransformer::annotateImplicitCastsAsComments(SgProject* root) {
   //m.printMarkedLocations();
   //m.printMatchOperationsSequence();
   cout<<"Number of compiler generated casts: "<<statementTransformations<<endl;
+}
+
+void TypeTransformer::setTraceFlag(bool traceFlag) {
+  _traceFlag=traceFlag;
+}
+
+void TypeTransformer::trace(string s) {
+  if(TypeTransformer::_traceFlag) {
+    cout<<"TRACE: "<<s<<endl;
+  }
 }

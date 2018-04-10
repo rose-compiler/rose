@@ -12,6 +12,9 @@ class TypeTransformer {
   void makeAllCastsExplicit(SgProject* root);
   void annotateImplicitCastsAsComments(SgProject* root);
   void transformCastsInCommandLineFiles(SgProject* project);
+  void setTraceFlag(bool);
+  static void trace(std::string s);
  private:
   CastTransformer _castTransformer;
+  static bool _traceFlag;
 };
