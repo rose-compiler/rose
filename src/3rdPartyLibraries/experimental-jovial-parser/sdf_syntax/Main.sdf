@@ -662,9 +662,9 @@ context-free syntax
   'F' OptRoundOrTruncate
       Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
 
-  ',' 'R'                     -> RoundOrTruncate         {cons("RoundOrTruncateR")}
-  ',' 'T'                     -> RoundOrTruncate         {cons("RoundOrTruncateT")}
-  ',' 'Z'                     -> RoundOrTruncate         {cons("RoundOrTruncateZ")}
+  ',' 'R'                     -> RoundOrTruncate         {cons("R")}
+  ',' 'T'                     -> RoundOrTruncate         {cons("T")}
+  ',' 'Z'                     -> RoundOrTruncate         {cons("Z")}
 
   RoundOrTruncate             -> OptRoundOrTruncate
   % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
@@ -685,7 +685,7 @@ context-free syntax
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
   CompileTimeIntegerFormula   -> ScaleSpecifier
-  CompileTimeFixedFormula     -> FractionSpecifier
+  CompileTimeFixedFormula     -> FractionSpecifier       {cons("FractionSpecifier")}
 
   FractionSpecifier           -> OptFractionSpecifier
   % empty %                   -> OptFractionSpecifier    {cons("no-fraction-specifier")}

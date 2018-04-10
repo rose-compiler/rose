@@ -262,18 +262,18 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      // To workaround some wrong AST generated from RAJA LULESH code
      // we clear skip base type flag of unparse_info
      if (info.SkipBaseType())
-     {
-       cout<<"Warning in Unparse_ExprStmt::unparseLambdaExpression().  Unparse_Info has skipBaseType() set. Unset it now."<<endl;
-       //ROSE_ASSERT(false);
-       info.unset_SkipBaseType ();
-     }
+        {
+       // DQ (4/7/2018): cleanup output spew (review with Liao).
+       // cout<<"Warning in Unparse_ExprStmt::unparseLambdaExpression().  Unparse_Info has skipBaseType() set. Unset it now."<<endl;
+       // ROSE_ASSERT(false);
+
+          info.unset_SkipBaseType ();
+        }
 
      curprint(" [");
      // if '=' or '&' exists
      bool hasCaptureCharacter = false;
      int commaCounter = 0;
-
-
 
      // schroder3 (2016-08-23): Do not print "&" AND "=" (because "[&=](){}" is ill-formed):
      if (lambdaExp->get_capture_default() == true) {
@@ -691,6 +691,11 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
         {
           unparseTemplateArgumentList(templateInstantiationMemberFunctionDeclaration->get_templateArguments(),info);
         }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -3009,11 +3014,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 #if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): isPartOfArrowOperatorChain                   = %s \n",isPartOfArrowOperatorChain ? "true" : "false");
      printf ("In unparseMFuncRefSupport(): uses_operator_syntax  = %s \n",uses_operator_syntax ? "true" : "false");
-     printf ("In unparseMFuncRefSupport(): is_compiler_generated = %s \n",is_compiler_generated ? "true" : "false");
+  // printf ("In unparseMFuncRefSupport(): is_compiler_generated = %s \n",is_compiler_generated ? "true" : "false");
 #endif
 #if MFuncRefSupport_DEBUG
      curprint (string("\n /* Inside of unparseMFuncRef: uses_operator_syntax  = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
-     curprint (string("\n /* Inside of unparseMFuncRef: is_compiler_generated = ") + (is_compiler_generated ? "true" : "false") + " */ \n");
+  // curprint (string("\n /* Inside of unparseMFuncRef: is_compiler_generated = ") + (is_compiler_generated ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (11/17/2004): Interface modified, use get_class_scope() if we want a
@@ -3450,6 +3455,12 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                                    printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
 #endif
                                    unparseTemplateMemberFunctionName(templateInstantiationMemberFunctionDecl,info);
+
+#if 0
+                                // DQ (4/1/2018): Added debbuging for test2018_69.C.
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
                                  }
                                 else
                                  {
@@ -3612,7 +3623,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          bool is_unary_operator = (mfd->get_args().size() == 0);
 #if MFuncRefSupport_DEBUG
                          printf ("In unparseMFuncRefSupport(): is_unary_operator     = %s \n",is_unary_operator     ? "true" : "false");
-                         printf ("In unparseMFuncRefSupport(): is_compiler_generated = %s \n",is_compiler_generated ? "true" : "false");
+                      // printf ("In unparseMFuncRefSupport(): is_compiler_generated = %s \n",is_compiler_generated ? "true" : "false");
 #endif
 #if 1
                       // DQ (7/6/2014): If this is compiler generated then supress the output of the operator name.

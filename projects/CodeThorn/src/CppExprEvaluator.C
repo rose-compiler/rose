@@ -352,7 +352,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   case V_SgNullptrValExp: return NumberIntervalLattice(Number(0));
 
   // schroder3 (2016-08-25): empty expression (e.g. ";;")
-  case V_SgNullExpression: throw SPRAY::Exception("CppExprEvaluator can not handle SgNullExpression nodes.");
+  case V_SgNullExpression: return NumberIntervalLattice::top(); //throw SPRAY::Exception("CppExprEvaluator can not handle SgNullExpression nodes.");
 
   // schroder3 (2016-08-25): Convert char to integer:
   case V_SgCharVal: {
@@ -387,13 +387,18 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
   }
   case V_SgFunctionCallExp: {
-    if(SgNodeHelper::getFunctionName(node)=="__assert_fail") {
-      return NumberIntervalLattice::bot();
-    } else {
-      // schroder3 (2016-08-25): The CppExprEvaluator can not handle calls. Instead, calls should be handled by the corresponding transfer function. This call is
-      //  probably inside an expresion and was therefore not handled by the transfer function. This means that the input is not normalized and we abort here
-      //  because even returning top would be wrong because the function call can change other variables.
-      throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " + node->unparseToString() + ").");
+    {
+      string funName=SgNodeHelper::getFunctionName(node);
+      if(funName=="__assert_fail") {
+        return NumberIntervalLattice::bot();
+      } else {
+        cout<<"Warning: unknown function call inside expression: "<<node->unparseToString()<<". Assuming function is side-effect free."<<endl;
+        return NumberIntervalLattice::top();
+        // schroder3 (2016-08-25): The CppExprEvaluator can not handle calls. Instead, calls should be handled by the corresponding transfer function. This call is
+        //  probably inside an expresion and was therefore not handled by the transfer function. This means that the input is not normalized and we abort here
+        //  because even returning top would be wrong because the function call can change other variables.
+        //throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " + node->unparseToString() + ").");
+      }
     }
   }
   default: // generates top element
