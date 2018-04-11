@@ -1867,7 +1867,18 @@ Unparse_ExprStmt::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, 
 #endif
      curprint ( nameQualifier);
 
-     curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
+  // DQ (4/9/2018): Added support for aliases of namespace alias namespaces.
+  // curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
+     if (namespaceAliasDeclaration->get_is_alias_for_another_namespace_alias() == false)
+        {
+          curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
+        }
+       else
+        {
+       // DQ (4/9/2018): This is the case of an alis to a namespace alias (see Cxx_tests/test2018_26.C).
+          curprint ( namespaceAliasDeclaration->get_namespaceAliasDeclaration()->get_name().str());
+        }
+
      curprint ( string(";\n"));
    }
 
