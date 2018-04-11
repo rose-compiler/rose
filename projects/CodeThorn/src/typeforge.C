@@ -83,7 +83,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.1.0"<<endl;
+    cout<<toolName<<" version 0.2.0"<<endl;
     return 0;
   }
 
@@ -159,16 +159,21 @@ int main (int argc, char* argv[])
           cerr<<"Error: wrong input format in file "<<changeFileName<<". Wrong number of entries in line "<<lineNr<<"."<<endl;
           return 1;
         }
-        RoseAst completeast(sageProject);
-        SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
-        if(typeName=="float") {
-          tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varName);
-        } else if(typeName=="double") {
-          tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varName);
-        } else if(typeName=="long double") {
-          tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varName);
+        if(functionName.size()>=2&&functionName[0]=='/' && functionName[1]=='/') {
+          // line is commented out (skip)
+          cout<<"Skipping "<<functionName<<","<<varName<<","<<typeName<<endl;
         } else {
-          cerr<<"Error: unknown type "<<typeName<<" in file "<<changeFileName<<" in line "<<lineNr<<"."<<endl;
+          RoseAst completeast(sageProject);
+          SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
+          if(typeName=="float") {
+            tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varName);
+          } else if(typeName=="double") {
+            tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varName);
+          } else if(typeName=="long double") {
+            tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varName);
+          } else {
+            cerr<<"Error: unknown type "<<typeName<<" in file "<<changeFileName<<" in line "<<lineNr<<"."<<endl;
+          }
         }
       } 
       tt.transformCommandLineFiles(sageProject,list);
