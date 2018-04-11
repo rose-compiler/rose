@@ -95,6 +95,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor-static.c \
 	ompGetNumThreads.c \
 	omp_sections.c \
+	ordered3.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
@@ -236,6 +237,7 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 PASSING_C_TEST_RESULTS = $(addprefix rose_,${C_TESTCODES_REQUIRED_TO_PASS})
 PASSING_CXX_TEST_RESULTS = $(addprefix rose_,${CXX_TESTCODES_REQUIRED_TO_PASS})
 
+# rose_input.c/cpp 
 PASSING_C_CXX_TEST_RESULTS = $(PASSING_C_TEST_RESULTS) $(PASSING_CXX_TEST_RESULTS) 
 
 PASSING_C_CXX_ACC_TEST_RESULTS=$(PASSING_C_CXX_TEST_RESULTS) $(C_OMP_ACC_TEST_Unparsed) rose_bonds-2.c rose_macroIds.c

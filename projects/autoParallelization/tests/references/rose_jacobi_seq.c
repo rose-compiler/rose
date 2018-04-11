@@ -3,7 +3,7 @@
  * */
 #include <stdio.h>
 #include <math.h>
-#include "omp.h" 
+#include <omp.h> 
 void driver();
 void initialize();
 void jacobi();

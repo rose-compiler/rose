@@ -5371,6 +5371,18 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_cuda_fortran_frontend",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+             {
+               printf ("Using experimental CUDA fortran frontend (explicitly set: ON) \n");
+               printf ("also: experimental fortran frontend (explicitly set: ON) \n");
+             }
+          set_experimental_fortran_frontend(true);
+          set_experimental_cuda_fortran_frontend(true);
+        }
+
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
   // (this is part of the internal testing of the new (experimental) Fortran support).
      set_experimental_fortran_frontend_OFP_test(false);
@@ -5882,6 +5894,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_cuda_fortran_frontend)",1);
 
   // DQ (1/23/2016): Added support for OFP testing within new experimental Fortran support.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend_OFP_test)",1);
@@ -6578,21 +6593,26 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (enable_cuda || enable_opencl) 
         {
-          Rose::Cmdline::makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
           if (enable_cuda && !enable_opencl) 
              {
                commandLine.push_back("--preinclude");
                commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
 
+#ifdef CUDA_INC_DIR
+               printf("Add --sys_include %s\n", CUDA_INC_DIR);
+               commandLine.push_back(std::string("--sys_include"));
+               commandLine.push_back(std::string(CUDA_INC_DIR));
+#endif
+
             // CUDA is a C++ extention, add default C++ options
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+               Rose::Cmdline::makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
 
             // DQ (4/13/2016): If we are going to set this, set it to a more reasonable value.
             // Try letting EDG specify the value of this internal variable.
             // commandLine.push_back("-D__cplusplus=1");
             // commandLine.push_back("-D__cplusplus=199711L");
 
-               Rose::Cmdline::makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
              }
             else 
              {
@@ -6600,6 +6620,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   {
                     commandLine.push_back("--preinclude");
                     commandLine.push_back(header_path + "/opencl_HEADERS/preinclude-opencl.h");
+
+#ifdef OPENCL_INC_DIR
+                    commandLine.push_back(std::string("--sys_include"));
+                    commandLine.push_back(std::string(OPENCL_INC_DIR));
+#endif
 
                  // OpenCL is a C extention, add default C options
                     commandLine.push_back("-DROSE_LANGUAGE_MODE=0");

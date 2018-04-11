@@ -1,5 +1,5 @@
 //! if statement without an explicit basic block as a body
-#include "omp.h" 
+#include <omp.h> 
 
 void foo(int j)
 {

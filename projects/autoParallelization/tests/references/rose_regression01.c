@@ -3,7 +3,7 @@
  *
  * Liao 2/10/2010
  * */
-#include "omp.h" 
+#include <omp.h> 
 typedef double real8;
 
 void foo(real8 *a,real8 *b,real8 *c,real8 *d,int len)

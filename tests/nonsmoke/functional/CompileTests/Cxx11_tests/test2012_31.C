@@ -12,5 +12,5 @@
 // alignas(alignof(T)). For example, to specify that a char array should be properly 
 // aligned to hold a float:
 
-alignas(float) unsigned char c[sizeof(float)]
+alignas(float) unsigned char c[sizeof(float)];
 

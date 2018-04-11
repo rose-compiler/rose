@@ -112,6 +112,12 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
                  break;
                }
+             case SgUntypedType::e_string:
+               {
+                 type = new SgUntypedType("C",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                 break;
+               }
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildType: unimplemented for Jovial type_enum %d \n", type_enum);
@@ -218,6 +224,47 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildArrayType: unimplemented for Fortran type_enum %d \n", type_enum);
+                 ROSE_ASSERT(0);  // NOT IMPLEMENTED
+               }
+            }
+          break;
+        }
+
+      case SgFile::e_Jovial_language:
+        {
+          switch(type_enum)
+            {
+             case SgUntypedType::e_int:
+               {
+                 type = new SgUntypedArrayType("S",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          shape, rank);
+                 break;
+               }
+             case SgUntypedType::e_uint:
+               {
+                 type = new SgUntypedArrayType("U",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          shape, rank);
+                 break;
+               }
+             case SgUntypedType::e_float:
+               {
+                 type = new SgUntypedArrayType("F",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          shape, rank);
+                 break;
+               }
+             case SgUntypedType::e_bit:
+               {
+                 type = new SgUntypedArrayType("B",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          shape, rank);
+                 break;
+               }
+             default:
+               {
+                 fprintf(stderr, "UntypedBuilder::buildArrayType: unimplemented for Jovial type_enum %d \n", type_enum);
                  ROSE_ASSERT(0);  // NOT IMPLEMENTED
                }
             }

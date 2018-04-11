@@ -1,54 +1,16 @@
 #ifndef ATERM_TO_UNTYPED_FORTRAN_TRAVERSAL_H
 #define ATERM_TO_UNTYPED_FORTRAN_TRAVERSAL_H
 
-#include <aterm2.h>
-//#include "../Experimental_General_Language_Support/ATerm/ATermToUntypedTraversal.h"
 #include "ATerm/ATermToUntypedTraversal.h"
-#include "Fortran_to_ROSE_translation.h"
 #include "FASTNodes.h"
-
-// Needed SgUntypedNodes (or something like them)
-class SgUntypedExpressionStatement;
 
 namespace ATermSupport {
 
 class ATermToUntypedFortranTraversal : public ATermToUntypedTraversal
 {
  public:
+
    ATermToUntypedFortranTraversal(SgSourceFile* source);
-   virtual ~ATermToUntypedFortranTraversal();
-
-   SgUntypedFile*        get_file()  { return pUntypedFile; }
-   SgUntypedGlobalScope* get_scope() { return pUntypedFile->get_scope(); }
-
-   std::string getCurrentFilename()
-      {
-         return pSourceFile->get_sourceFileNameWithPath();
-      }
-
- protected:
-   SgUntypedFile* pUntypedFile;
-   SgSourceFile*  pSourceFile;
-
- public:
-
-static void setSourcePositionUnknown(SgLocatedNode* locatedNode);
-
-#if USE_BASE_CLASS
-static FAST::PosInfo getLocation(ATerm term);
-#endif
-
-#if USE_BASE_CLASS
-void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
-void setSourcePosition              ( SgLocatedNode* locatedNode, FAST::PosInfo & pos );
-void setSourcePositionFrom          ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
-void setSourcePositionExcludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
-void setSourcePositionIncludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
-void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
-#endif
-
-// These should probably go in UntypedBuilder class
-static SgUntypedType* buildType(SgUntypedType::type_enum type_enum = SgUntypedType::e_unknown);
 
 //R201
 ATbool traverse_Program(ATerm term);
@@ -109,7 +71,8 @@ ATbool traverse_OptCharLength(ATerm term, SgUntypedExpression** expr);
 ATbool traverse_TypeDeclarationStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // R502
-ATbool traverse_OptAttrSpecList(ATerm term, SgUntypedTokenList* attr_list);
+ATbool traverse_OptAttrSpecList(ATerm term, SgUntypedExprListExpression* attr_list);
+ATbool traverse_CudaAttributesSpec(ATerm term, SgUntypedOtherExpression** attr_spec);
 
 // R503
 ATbool traverse_EntityDecl     (ATerm term, SgUntypedType* declared_type, SgUntypedInitializedNameList* name_list);
@@ -119,9 +82,11 @@ ATbool traverse_EntityDeclList (ATerm term, SgUntypedType* declared_type, SgUnty
 ATbool traverse_OptInitialization(ATerm term, SgUntypedExpression** expr);
 
 // R509
+ATbool traverse_CoarraySpec    (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 ATbool traverse_OptCoarraySpec (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 
 // R515
+ATbool traverse_ArraySpec      (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 ATbool traverse_OptArraySpec   (ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type);
 
 // R516
@@ -252,7 +217,8 @@ ATbool traverse_ImportStmtList(ATerm term, SgUntypedDeclarationStatementList* de
 ATbool traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // R1225
-ATbool traverse_OptPrefix(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type);
+ATbool traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type);
+ATbool traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix);
 
 // R1227
 ATbool traverse_FunctionSubprogram(ATerm term, SgUntypedScope* scope);
@@ -290,6 +256,7 @@ ATbool traverse_ReturnStmt   ( ATerm term, SgUntypedStatementList* stmt_list );
 // R1142
 ATbool traverse_ContainsStmt ( ATerm term, SgUntypedOtherStatement** contains_stmt );
 
+ATbool traverse_CudaAttributesStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 }; // class Traversal
 }  // namespace ATermSupport

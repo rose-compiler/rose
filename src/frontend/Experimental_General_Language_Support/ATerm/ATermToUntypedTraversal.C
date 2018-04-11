@@ -1,11 +1,12 @@
 #include "sage3basic.h"
-
 #include "ATermToUntypedTraversal.h"
 
 #define PRINT_ATERM_TRAVERSAL 0
 
-
 using namespace ATermSupport;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 ATermToUntypedTraversal::ATermToUntypedTraversal(SgSourceFile* source)
 {
@@ -22,7 +23,6 @@ ATermToUntypedTraversal::ATermToUntypedTraversal(SgSourceFile* source)
 
 // DQ (2/25/2013): Set the default for source position generation to be consistent with other languages (e.g. C/C++).
    SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
-//TODO     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
 }
 
 ATermToUntypedTraversal::~ATermToUntypedTraversal()
@@ -68,6 +68,27 @@ ATermToUntypedTraversal::getLocation(ATerm term)
    fixupLocation(pinfo);
 
    return pinfo;
+}
+
+void
+ATermToUntypedTraversal::setSourcePositionUnknown(SgLocatedNode* locatedNode)
+{
+     SageInterface::setSourcePosition(locatedNode);
+
+#if 0
+  // This function sets the source position to be marked as not available (since we don't have token information)
+  // These nodes WILL be unparsed in the code generation phase.
+
+  // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
+     ROSE_ASSERT(locatedNode != NULL);
+
+  // Make sure we never try to reset the source position of the global scope (set elsewhere in ROSE).
+     ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
+
+     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
+     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
+     SageInterface::setSourcePosition(locatedNode);
+#endif
 }
 
 void

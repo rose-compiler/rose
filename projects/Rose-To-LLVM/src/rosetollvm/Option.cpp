@@ -21,7 +21,12 @@ Option::Option(Rose_STL_Container<string> &args) : query(false),
                                                    emit_llvm_bitcode(false),
                                                    debug_pre_traversal(false),
                                                    debug_post_traversal(false),
-                                                   debug_output(false)
+                                                   debug_output(false),
+						   
+                                                   compile_only(false),
+                                                   optimization_level("-O0"),
+                                                   output_filename("-o a.out")
+
 {
     options_description desc("");
     addOptionsToDescription(desc);
@@ -68,6 +73,42 @@ Option::Option(Rose_STL_Container<string> &args) : query(false),
     // Default to llvm bitcode is no option is specified.
     if (!(emit_llvm_bitcode || emit_llvm || debug_output))
         emit_llvm_bitcode = true;
+
+    /**/
+    // TODO:  Temporary patch... Do this right !!!
+    /**/
+    for (int i = 0; i < args.size(); i++) {
+        if (args[i].compare("-c") == 0) {
+            setCompileOnly();
+        }
+        else if (args[i].size() > 2 && args[i].compare(0, 2, "-O") == 0) {
+            if (args[i].size() == 3 && (args[i].at(2) == '0' ||
+                                        args[i].at(2) == '1' || 
+                                        args[i].at(2) == '2' || 
+                                        args[i].at(2) == '3')) {
+                optimization_level = args[i];
+            }
+            else {
+                cout << "***rose2llvm warning: ignoring optimization option: " << args[i]
+                     << endl;
+                cout.flush();
+            }
+        }
+        else if (args[i].compare("-o") == 0) {
+            if (i+1 < args.size()) {
+                output_filename = args[i] + " " + args[i + 1];
+	    }
+            else {
+                cout << "***rose2llvm warning: ignoring output filename option with no filename specified: " << args[i]
+                     << endl;
+                cout.flush();
+            }
+        }
+        else if (args[i].size() >= 3 && args[i].compare(0, 3, "-o=") == 0) {
+            output_filename = "-o " + args[i].substr(3);
+        }
+    }
+    /**/
 
     return;
 }
