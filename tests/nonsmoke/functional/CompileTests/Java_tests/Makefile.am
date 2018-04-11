@@ -433,6 +433,7 @@ testTranslator=../../testTranslator
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
+	mkdir -p "$(builddir)/javac-output-classes"
 
 # This is broken, disable that for now in the interest of time.
 testGraphGeneration=../../testGraphGeneration

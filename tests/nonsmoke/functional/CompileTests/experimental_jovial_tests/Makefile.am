@@ -35,6 +35,9 @@ JOVIAL_TESTCODES_WORKING_ON = \
  1_2_3_program-body_f.jov               \
  1_2_3_program-body_g.jov               \
  1_2_3_program-body_h.jov               \
+ 4_10_abort_stmt_a.jov                  \
+ 4_10_abort_stmt_b.jov                  \
+ 4_10_abort_stmt_c.jov                  \
  5_1_1_integer-factor.jov               \
  5_1_1_integer-formula.jov              \
  5_1_1_integer-precedence.jov           \

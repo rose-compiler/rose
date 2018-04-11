@@ -7975,7 +7975,7 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
      SgName name = returnType->get_mangled();
 
 #if 0
-     printf ("In SgTypeString::createType(): Building an character string [exp = %p] mangled name = %s \n",idx,name.str());
+     printf ("In SgTypeString::createType(): Building an character string [exp = %p] mangled name = %s \n",lengthExpression,name.str());
 #endif
 
   // Only look for pointers to type in the global type table.

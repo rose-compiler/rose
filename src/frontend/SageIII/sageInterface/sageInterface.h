@@ -634,7 +634,9 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
 //  std::string version();  // utility_functions.h, version number
   /*! Brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
+  ROSE_DLL_API bool is_Ada_language ();
   ROSE_DLL_API bool is_C_language ();
+  ROSE_DLL_API bool is_Cobol_language ();
   ROSE_DLL_API bool is_OpenMP_language ();
   ROSE_DLL_API bool is_UPC_language ();
   //! Check if dynamic threads compilation is used for UPC programs
@@ -642,6 +644,7 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   ROSE_DLL_API bool is_C99_language ();
   ROSE_DLL_API bool is_Cxx_language ();
   ROSE_DLL_API bool is_Java_language ();
+  ROSE_DLL_API bool is_Jovial_language ();
   ROSE_DLL_API bool is_Fortran_language ();
   ROSE_DLL_API bool is_CAF_language ();
   ROSE_DLL_API bool is_PHP_language();
