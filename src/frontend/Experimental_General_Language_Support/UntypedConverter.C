@@ -1568,8 +1568,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
          case General_Language_Translation::e_operator_and:
             {
 #if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_and
-:\n");
+               printf("  - e_operator_and:\n");
 #endif
                op = new SgAndOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);

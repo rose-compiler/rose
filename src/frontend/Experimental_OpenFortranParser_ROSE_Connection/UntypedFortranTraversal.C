@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "UntypedFortranTraversal.h"
 
+#define DEBUG_UNTYPED_TRAVERSAL 0
+
 using namespace Untyped;
 using std::cout;
 using std::endl;
@@ -13,6 +15,10 @@ UntypedFortranTraversal::UntypedFortranTraversal(SgSourceFile* sourceFile, Untyp
 InheritedAttribute
 UntypedFortranTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute currentScope)
 {
+#if DEBUG_UNTYPED_TRAVERSAL
+   cout << "........  inherited traversing, scope is " << currentScope << endl;
+#endif
+
    switch (node->variantT())
    {
     default:
@@ -34,22 +40,6 @@ UntypedFortranTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAtt
 
    switch (node->variantT())
    {
-  // At the moment this is a special case because of the type kind parameter.
-  // May not be needed once a way is found to delete untyped type nodes.
-     case V_SgUntypedValueExpression:
-       {
-         SgUntypedValueExpression* ut_expr = isSgUntypedValueExpression(node);
-         sg_expr = pConverter->convertSgUntypedExpression(ut_expr);
-         SgUntypedType* type = ut_expr->get_type();
-         if (type->get_has_kind())
-            {
-            // TODO - find a way to delete untyped type nodes (perhaps let them be traversed)
-               cout << "Up   traverse: deleted node of type ... " << node->class_name() << ": " << node << endl;
-               cout << "                  has kind: " << type->get_has_kind() << endl;
-            }
-         delete ut_expr;
-         break;
-       }
     default:
       {
          return UntypedTraversal::evaluateSynthesizedAttribute(node, currentScope, childAttrs);
