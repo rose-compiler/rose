@@ -1019,13 +1019,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       //  GotoStatement               -> SimpleStatement
       //  ExitStatement               -> SimpleStatement
       //  StopStatement               -> SimpleStatement
-      //  AbortStatement              -> SimpleStatement
 
       else if (traverse_NullStatement(t_stmt, stmt_list)) {
          // MATCHED NullStatement
       }
       else return ATfalse;
    }
+
+// This subsumes the labels in statements, eventually all SimpleStatements will take this path
+   else if (ATmatch(term, "SimpleStatement(<term>)", &t_stmt)) {
+      if (traverse_AbortStatement(t_stmt, stmt_list)) {
+         // MATCHED AbortStatement
+      }
+      else return ATfalse;
+   }
+
    else return ATfalse;
 
    return ATtrue;
@@ -1053,13 +1061,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector
 #endif
 
    ATerm t_labels;
+   char * label;
+
    if (ATmatch(term, "LabelList(<term>)" , &t_labels)) {
       ATermList tail = (ATermList) ATmake("<term>", t_labels);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         // TODO - match label
-         return ATfalse;
+         if (ATmatch(head, "Label(<str>)", &label)) {
+            labels.push_back(label);
+         } else return ATfalse;
       }
    } else return ATfalse;
 
@@ -1109,6 +1120,36 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
 
    return ATtrue;
 }
+
+//========================================================================================
+// 4.10 ABORT STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_AbortStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AbortStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels;
+   std::vector<std::string> labels;
+
+   if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+      // TODO - construct untyped node for AbortStatement
+      // SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
+      // setSourcePosition(abort_stmt, term);
+      // TODO - add new node to stmt_list
+      // stmt_list->get_stmt_list().push_back(abort_stmt);
+      return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
 
 //========================================================================================
 // 5.0 FORMULAS
