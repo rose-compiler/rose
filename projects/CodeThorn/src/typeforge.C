@@ -66,6 +66,7 @@ int main (int argc, char* argv[])
     ("stats", "print statistics on casts of built-in floating point types.")
     ("trace", "print cast operations as they are performed.")
     ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
+    ("command-file", po::value< string >()," name of file where each line specifies how to change a variable's type: type-name function-name var-name.")
     ("float-var", po::value< string >()," change type of var [arg] to float.")
     ("double-var", po::value< string >()," change type of var [arg] to double.")
     ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
@@ -134,21 +135,69 @@ int main (int argc, char* argv[])
     tt.setTraceFlag(true);
   }
 
-  TypeTransformer::VarTypeVarNamePairList list;
-  if(args.isUserProvided("float-var")) {
-    string varNames=args.getString("float-var");
-    tt.addToTransformationList(list,SageBuilder::buildFloatType(),varNames);
+  if(args.isUserProvided("command-file")) {
+    string changeFileName=args.getString("command-file");
+    CppStdUtilities::DataFileVector lines;
+    bool fileOK=CppStdUtilities::readDataFile(changeFileName,lines);
+    if(fileOK) {
+      TypeTransformer::VarTypeVarNameTupleList list;
+      int lineNr=0;
+      for (auto line : lines) {
+        lineNr++;
+        std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
+        string functionName,varName,typeName;
+        if(splitLine.size()>=2) {
+          functionName=splitLine[0];
+          varName=splitLine[1];
+        } 
+        if(splitLine.size()==3) {
+          typeName=splitLine[2];
+        } else {
+          typeName="float";
+        }
+        if(splitLine.size()>3) {
+          cerr<<"Error: wrong input format in file "<<changeFileName<<". Wrong number of entries in line "<<lineNr<<"."<<endl;
+          return 1;
+        }
+        RoseAst completeast(sageProject);
+        SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
+        if(typeName=="float") {
+          tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varName);
+        } else if(typeName=="double") {
+          tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varName);
+        } else if(typeName=="long double") {
+          tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varName);
+        } else {
+          cerr<<"Error: unknown type "<<typeName<<" in file "<<changeFileName<<" in line "<<lineNr<<"."<<endl;
+        }
+      } 
+      tt.transformCommandLineFiles(sageProject,list);
+      backend(sageProject);
+      return 0;
+    } else {
+      cerr<<"Error: could not access file "<<changeFileName<<endl;
+      return 1;
+    }
   }
-  if(args.isUserProvided("double-var")) {
-    string varNames=args.getString("double-var");
-    tt.addToTransformationList(list,SageBuilder::buildDoubleType(),varNames);
-  } 
-  if(args.isUserProvided("long-double-var")) {
-    string varNames=args.getString("long-double-var");
-    tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),varNames);
-  }
-  tt.transformCommandLineFiles(sageProject,list);
-  backend(sageProject);
 
+  if(args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var")) {
+    TypeTransformer::VarTypeVarNameTupleList list;
+    SgFunctionDefinition* funDef=nullptr;
+    if(args.isUserProvided("float-var")) {
+      string varNames=args.getString("float-var");
+      tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varNames);
+    }
+    if(args.isUserProvided("double-var")) {
+      string varNames=args.getString("double-var");
+      tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varNames);
+    } 
+    if(args.isUserProvided("long-double-var")) {
+      string varNames=args.getString("long-double-var");
+      tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varNames);
+    }
+    tt.transformCommandLineFiles(sageProject,list);
+    backend(sageProject);
+  }
+  
   return 0;
 }

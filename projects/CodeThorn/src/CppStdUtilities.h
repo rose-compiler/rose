@@ -5,6 +5,14 @@
 #include <vector>
 
 namespace CppStdUtilities {
+
+  typedef std::vector<std::string> DataFileVector;
+
+  // Read data file and add the lines in the provided vector. Chops off a newline if it is
+  // present at the end of a line.
+  // Returns true if reading the file was successful, otherwise false.
+  bool readDataFile(std::string fileName, DataFileVector& dfv);
+
   // write the string 'data' to file with name 'filename'. It opens and closes the file.
   // if the file can be written the function returns true, otherwise false.
   bool writeFile(std::string filename, std::string data);

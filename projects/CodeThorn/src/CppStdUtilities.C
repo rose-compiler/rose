@@ -1,11 +1,33 @@
 #include "CppStdUtilities.h"
 #include <fstream>
+#include <iostream>
 #include <regex>
+#include <string>
 
 using namespace std;
 
 // C++11, requires at least gcc 4.9
 namespace CppStdUtilities {
+
+  bool readDataFile(std::string fileName, DataFileVector& dfv) {
+    string line;
+    ifstream infile(fileName);
+    if(infile.is_open()) {
+      // get all the lines
+      while(getline(infile,line)) {
+        // remove newline if present at the end of line
+        if (line.size()>0 && line.back()=='\n') {
+          line.pop_back(); // C++11: str.pop_back();
+        }
+        dfv.push_back(line);
+      }
+      infile.close();
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
   bool writeFile(std::string filename, std::string data) {
     std::ofstream myfile;
     myfile.open(filename.c_str(),std::ios::out);

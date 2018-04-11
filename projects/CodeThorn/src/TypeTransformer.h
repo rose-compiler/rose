@@ -3,12 +3,13 @@
 
 class TypeTransformer {
  public:
-  typedef std::pair<SgType*,std::string> VarTypeVarNamePair;
-  typedef std::list<VarTypeVarNamePair> VarTypeVarNamePairList;
-  void addToTransformationList(VarTypeVarNamePairList& list,SgType* type, std::string varNames);
-  void changeVariableType(SgProject* root, std::string varNameToFind, SgType* type);
+  typedef std::tuple<SgType*,SgFunctionDefinition*,std::string> VarTypeVarNameTuple;
+  typedef std::list<VarTypeVarNameTuple> VarTypeVarNameTupleList;
+  void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames);
+  // searches for variable in the given subtree 'root'
+  int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type);
   void transformCommandLineFiles(SgProject* project);
-  void transformCommandLineFiles(SgProject* project, VarTypeVarNamePairList& list);
+  void transformCommandLineFiles(SgProject* project, VarTypeVarNameTupleList& list);
   void makeAllCastsExplicit(SgProject* root);
   void annotateImplicitCastsAsComments(SgProject* root);
   void transformCastsInCommandLineFiles(SgProject* project);

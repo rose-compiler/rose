@@ -10,10 +10,10 @@ using namespace std;
 // static member
 bool TypeTransformer::_traceFlag=false;
 
-void TypeTransformer::addToTransformationList(std::list<VarTypeVarNamePair>& list,SgType* type, string varNames) {
+void TypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames) {
   vector<string> varNamesVector=CppStdUtilities::splitByComma(varNames);
   for (auto name:varNamesVector) {
-    TypeTransformer::VarTypeVarNamePair p=std::make_pair(type,name);
+    TypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name);
     list.push_back(p);
   }
 }
@@ -25,11 +25,29 @@ void TypeTransformer::transformCommandLineFiles(SgProject* project) {
   transformCastsInCommandLineFiles(project);
 }
 
-void TypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNamePairList& list) {
-  for (auto typeNamePair:list) {
-    SgType* newVarType=typeNamePair.first;
-    string varName=typeNamePair.second;
-    changeVariableType(project, varName, newVarType);
+void TypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNameTupleList& list) {
+  for (auto typeNameTuple:list) {
+    SgType* newVarType=std::get<0>(typeNameTuple);
+    SgFunctionDefinition* funDef=std::get<1>(typeNameTuple);
+    string varName=std::get<2>(typeNameTuple);
+    SgNode* root=nullptr;
+    if(funDef)
+      root=funDef;
+    else
+      root=project;
+
+    int numChanges=changeVariableType(root, varName, newVarType);
+    if(numChanges==0) {
+      cout<<"Warning: Did not find variable "<<varName;
+      if(funDef) {
+        cout<<" in function "<<SgNodeHelper::getFunctionName(funDef)<<".";
+      } else {
+        cout<<" anywhere in file."<<endl;
+      }
+      cout<<endl;
+    } else if(numChanges>1) {
+      cout<<"Warning: Found more than one instance of variable "<<varName<<endl;
+    }
     transformCommandLineFiles(project);
   }
 }
@@ -38,8 +56,9 @@ void TypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
   _castTransformer.transformCommandLineFiles(project);
 }
 
-void TypeTransformer::changeVariableType(SgProject* root, string varNameToFind, SgType* type) {
+int TypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* type) {
   RoseAst ast(root);
+  bool foundVar=0;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
       SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
@@ -48,14 +67,19 @@ void TypeTransformer::changeVariableType(SgProject* root, string varNameToFind, 
 	if(varSym) {
 	  string varName=SgNodeHelper::symbolToString(varSym);
 	  if(varName==varNameToFind) {
-	    trace("Found declaration of var "+varNameToFind+". Changed type to "+type->unparseToString()+".");
+            string funName;
+            if(isSgFunctionDefinition(root)) 
+              funName=SgNodeHelper::getFunctionName(root);
+	    trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+type->unparseToString()+".");
 	    SgTypeFloat* ft=SageBuilder::buildFloatType();
 	    varInitName->set_type(ft);
+            foundVar++;
 	  }
 	}
       }
     }
   }
+  return foundVar;
 }
 
 void TypeTransformer::makeAllCastsExplicit(SgProject* root) {

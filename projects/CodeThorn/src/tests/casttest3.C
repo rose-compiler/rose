@@ -1,8 +1,8 @@
-float f(int x, double b) {
+float function1(int x, double b) {
   b+=1.0;
-  float res;
-  res=x+b;
-  return res;
+  long double d1;
+  d1=x+b;
+  return d1;
 }
 
 int main() {
@@ -16,7 +16,7 @@ int main() {
   if(d1==f1) {
     i1=(int)f1;
   }
-  f1=f(i1,d1);
+  f1=function1(i1,d1);
   d1=f1=i1;
   double testVar;
   long double ld1;
