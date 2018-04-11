@@ -1,9 +1,11 @@
 #include "sage3basic.h"
 
+#include <AsmUnparser_compat.h>
 #include <Color.h>
 #include <MemoryCellList.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/GraphViz.h>
+#include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 #include <SymbolicSemantics2.h>
@@ -32,21 +34,25 @@ public:
 
     // Info about one function call
     struct CallFrame {
+        Function::Ptr function;
+        size_t inliningId;
         VertexMap vmap;
         DfCfg::VertexIterator functionEntryVertex;
         DfCfg::VertexIterator functionReturnVertex;
-        CallFrame(DfCfg &dfCfg)
-            : functionEntryVertex(dfCfg.vertices().end()), functionReturnVertex(dfCfg.vertices().end()) {}
+        CallFrame(DfCfg &dfCfg, const Function::Ptr &function, size_t inliningId)
+            : function(function), inliningId(inliningId),
+              functionEntryVertex(dfCfg.vertices().end()),
+              functionReturnVertex(dfCfg.vertices().end()) {}
     };
 
     typedef std::list<CallFrame> CallStack;             // we use a list since there's no default constructor for an iterator
     CallStack callStack;
     size_t maxCallStackSize;                            // safety to prevent infinite recursion
-
-
+    size_t nextInliningId;                              // next ID when crating a CallFrame
+    
     DfCfgBuilder(const Partitioner &partitioner, const ControlFlowGraph &cfg, InterproceduralPredicate &predicate)
         : partitioner(partitioner), cfg(cfg), interproceduralPredicate(predicate),
-          maxCallStackSize(10) {}
+          maxCallStackSize(10), nextInliningId(0) {}
 
     typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> CfgTraversal;
 
@@ -79,19 +85,21 @@ public:
     }
 
     // Insert a data-flow vertex of specified type, associating it with a control flow vertex.
-    DfCfg::VertexIterator insertVertex(DfCfgVertex::Type type, const ControlFlowGraph::ConstVertexIterator &cfgVertex) {
-        return insertVertex(DfCfgVertex(type), cfgVertex);
+    DfCfg::VertexIterator insertVertex(DfCfgVertex::Type type, const ControlFlowGraph::ConstVertexIterator &cfgVertex,
+                                       const Function::Ptr &parentFunction, size_t inliningId) {
+        return insertVertex(DfCfgVertex(type, parentFunction, inliningId), cfgVertex);
     }
 
     // Insert a data-flow vertex of specified type. Don't use this for inserting a df vertex that needs to be associated with a
     // control flow vertex.
-    DfCfg::VertexIterator insertVertex(DfCfgVertex::Type type) {
-        return insertVertex(DfCfgVertex(type));
+    DfCfg::VertexIterator insertVertex(DfCfgVertex::Type type, const Function::Ptr &parentFunction, size_t inliningId) {
+        return insertVertex(DfCfgVertex(type, parentFunction, inliningId));
     }
 
     // Insert basic block into the dfCFG if it hasn't been already. This only looks at the top-most function on the virtual
     // function call graph to decide whether to insert the basic block.
-    DfCfg::VertexIterator findOrInsertBasicBlockVertex(const ControlFlowGraph::ConstVertexIterator &cfgVertex) {
+    DfCfg::VertexIterator findOrInsertBasicBlockVertex(const ControlFlowGraph::ConstVertexIterator &cfgVertex,
+                                                       const Function::Ptr &parentFunction, size_t inliningId) {
         ASSERT_require(!callStack.empty());
         CallFrame &callFrame = callStack.back();
         ASSERT_require(cfgVertex != cfg.vertices().end());
@@ -100,12 +108,12 @@ public:
         if (!callFrame.vmap.getOptional(cfgVertex).assignTo(retval)) {
             BasicBlock::Ptr bblock = cfgVertex->value().bblock();
             ASSERT_not_null(bblock);
-            retval = insertVertex(DfCfgVertex(bblock), cfgVertex);
+            retval = insertVertex(DfCfgVertex(bblock, parentFunction, inliningId), cfgVertex);
 
             // All function return basic blocks will point only to the special FUNCRET vertex.
             if (partitioner.basicBlockIsFunctionReturn(bblock)) {
                 if (!dfCfg.isValidVertex(callFrame.functionReturnVertex))
-                    callFrame.functionReturnVertex = insertVertex(DfCfgVertex::FUNCRET);
+                    callFrame.functionReturnVertex = insertVertex(DfCfgVertex::FUNCRET, parentFunction, inliningId);
                 dfCfg.insertEdge(retval, callFrame.functionReturnVertex);
             }
         }
@@ -114,7 +122,8 @@ public:
 
     // Returns the dfCfg vertex for a CALL's return-to vertex, creating it if necessary.  There might be none, in which case the
     // vertex end iterator is returned.
-    DfCfg::VertexIterator findOrInsertCallReturnVertex(const ControlFlowGraph::ConstVertexIterator &cfgCallSite) {
+    DfCfg::VertexIterator findOrInsertCallReturnVertex(const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
+                                                       const Function::Ptr &parentFunction, size_t inliningId) {
         ASSERT_require(cfgCallSite != cfg.vertices().end());
         ASSERT_require(cfgCallSite->value().type() == V_BASIC_BLOCK);
         DfCfg::VertexIterator dfReturnSite = dfCfg.vertices().end();
@@ -123,7 +132,7 @@ public:
                 ASSERT_require(edge.target()->value().type() == V_BASIC_BLOCK);
                 ASSERT_require2(dfReturnSite == dfCfg.vertices().end(),
                                 edge.target()->value().bblock()->printableName() + " has multiple call-return edges");
-                dfReturnSite = findOrInsertBasicBlockVertex(edge.target());
+                dfReturnSite = findOrInsertBasicBlockVertex(edge.target(), parentFunction, inliningId);
             }
         }
         return dfReturnSite;
@@ -131,7 +140,9 @@ public:
 
     // top-level build function.
     DfCfgBuilder& build(const ControlFlowGraph::ConstVertexIterator &startVertex) {
-        callStack.push_back(CallFrame(dfCfg));
+        Function::Ptr parentFunction = partitioner.functionExists(startVertex->value().address());
+        ASSERT_not_null(parentFunction);
+        callStack.push_back(CallFrame(dfCfg, parentFunction, nextInliningId++));
         buildRecursively(startVertex);
         ASSERT_require(callStack.size() == 1);
         return *this;
@@ -150,11 +161,11 @@ public:
                 // are reachable from non-call, non-return edges. I.e., we're visiting vertices that belong to a single
                 // function.
                 if (t.vertex()->value().type() == V_BASIC_BLOCK) {
-                    findOrInsertBasicBlockVertex(t.vertex());
+                    findOrInsertBasicBlockVertex(t.vertex(), callStack.back().function, callStack.back().inliningId);
                     if (partitioner.basicBlockIsFunctionReturn(t.vertex()->value().bblock()))
                         t.skipChildren();               // we're handling return successors explicitly
                 } else {
-                    insertVertex(DfCfgVertex::INDET, t.vertex());
+                    insertVertex(DfCfgVertex::INDET, t.vertex(), callStack.back().function, callStack.back().inliningId);
                 }
 
             } else if (t.edge()->value().type() == E_FUNCTION_CALL) {
@@ -165,26 +176,41 @@ public:
                 if (t.event() != ENTER_EDGE)
                     continue;
                 t.skipChildren();
+                Function::Ptr callerFunc = callStack.back().function;
+                size_t callerInliningId = callStack.back().inliningId;
                 DfCfg::VertexIterator callFrom = findVertex(t.edge()->source());
                 ASSERT_require(dfCfg.isValidVertex(callFrom));
 
                 // Create an optional vertex to which this inlined or faked function call will return. This will be an end
                 // iterator if the call apparently doesn't return.
-                DfCfg::VertexIterator returnTo = findOrInsertCallReturnVertex(t.edge()->source());
+                DfCfg::VertexIterator returnTo = findOrInsertCallReturnVertex(t.edge()->source(), callerFunc, callerInliningId);
 
-                callStack.push_back(CallFrame(dfCfg)); {
-                    // Inline the function or create a faked call.
-                    if (callStack.size() <= maxCallStackSize && t.edge()->target()->value().type()==V_BASIC_BLOCK &&
-                        interproceduralPredicate(cfg, t.edge(), callStack.size())) {
+                // Function being called
+                Function::Ptr calleeFunc;
+                if (t.edge()->target()->value().type() == V_BASIC_BLOCK)
+                    calleeFunc = bestSummaryFunction(t.edge()->target()->value().owningFunctions());
+
+                // Insert either a summary vertex or recursively inline the callee's body
+                callStack.push_back(CallFrame(dfCfg, calleeFunc, nextInliningId++)); {
+                    bool doInline = true;
+                    if (callStack.size() > maxCallStackSize) {
+                        doInline = false;               // too much recursive inlining
+                    } else if (t.edge()->target()->value().type() != V_BASIC_BLOCK) {
+                        doInline = false;               // e.g., call to indeterminate address
+                    } else if (!interproceduralPredicate(cfg, t.edge(), callStack.size())) {
+                        doInline = false;               // user says no inlining
+                    } else if (ModulesElf::isUnlinkedImport(partitioner, calleeFunc)) {
+                        doInline = false;               // callee is not actually present (not linked in yet)
+                    }
+
+                    if (doInline) {
                         // Inline the called function into the dfCFG
                         buildRecursively(t.edge()->target());
                     } else {
                         // Insert a "faked" call, i.e. a vertex that summarizes the call by referencing the callee function.
                         // The function pointer will be null if the address is indeterminate.
-                        Function::Ptr calleeFunc;
-                        if (t.edge()->target()->value().type() == V_BASIC_BLOCK)
-                            calleeFunc = bestSummaryFunction(t.edge()->target()->value().owningFunctions());
-                        callStack.back().functionEntryVertex = insertVertex(DfCfgVertex(calleeFunc));
+                        callStack.back().functionEntryVertex =
+                            insertVertex(DfCfgVertex(calleeFunc, callerFunc, callerInliningId));
                         callStack.back().functionReturnVertex = callStack.back().functionEntryVertex;
                     }
 
@@ -242,40 +268,60 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
     const Color::HSV indetColor(0.00, 1.0, 0.8);        // light red
     const Color::HSV returnColor(0.67, 1.0, 0.9);       // light blue
 
-    out <<"digraph dfCfg {\n";
-
+    // How many subgraphs?
+    Sawyer::Container::Map<size_t, std::string> subgraphs;
     BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
-        out <<vertex.id() <<" [";
-        if (0 == vertex.id())
-            out <<" style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
+        if (vertex.value().parentFunction()) {
+            subgraphs.insert(vertex.value().inliningId(), vertex.value().parentFunction()->printableName());
+        } else {
+            subgraphs.insertMaybe(vertex.value().inliningId(), "no function");
+        }
+    }
+    
+    out <<"digraph dfCfg {\n";
+    BOOST_FOREACH (size_t subgraphId, subgraphs.keys()) {
+        if (subgraphs.size() > 1) {
+            out <<"subgraph cluster_" <<subgraphId <<" {\n"
+                <<" graph ["
+                <<" label=<subgraph " <<subgraphId <<"<br/>" <<GraphViz::htmlEscape(subgraphs[subgraphId]) <<">"
+                <<" ];\n";
+        }
+        
+        BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+            if (vertex.value().inliningId() == subgraphId) {
+                out <<vertex.id() <<" [";
+                if (0 == vertex.id())
+                    out <<" shape=box style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
 
-        out <<" label=<Vertex " <<vertex.id() <<"<br/>";
-        switch (vertex.value().type()) {
-            case DfCfgVertex::BBLOCK:
-                out <<GraphViz::htmlEscape(vertex.value().bblock()->printableName()) <<">";
-                break;
-            case DfCfgVertex::FAKED_CALL:
-                if (Function::Ptr callee = vertex.value().callee()) {
-                    out <<"fake call to<br/>function " <<StringUtility::addrToString(callee->address());
-                    if (!callee->demangledName().empty())
-                        out <<"<br/>" <<GraphViz::htmlEscape(callee->demangledName());
-                    out <<">";
-                } else {
-                    out <<"fake call to<br/>indeterminate function>";
-                    out <<" style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
+                out <<" label=<<b>Vertex " <<vertex.id() <<"</b>";
+                switch (vertex.value().type()) {
+                    case DfCfgVertex::BBLOCK:
+                        BOOST_FOREACH (SgAsmInstruction *insn, vertex.value().bblock()->instructions())
+                            out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(unparseInstructionWithAddress(insn));
+                        out <<"<br align=\"left\"/>> shape=box fontname=Courier";
+                        break;
+                    case DfCfgVertex::FAKED_CALL:
+                        if (Function::Ptr callee = vertex.value().callee()) {
+                            out <<"<br/>fake call to<br/>" <<GraphViz::htmlEscape(callee->printableName()) <<">";
+                        } else {
+                            out <<"<br/>fake call to<br/>indeterminate function>";
+                            out <<" style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
+                        }
+                        break;
+                    case DfCfgVertex::FUNCRET:
+                        out <<"<br/>function return>";
+                        out <<" style=filled fillcolor=\"" <<returnColor.toHtml() <<"\"";
+                        break;
+                    case DfCfgVertex::INDET:
+                        out <<"<br/>indeterminate> style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
+                        break;
                 }
-                break;
-            case DfCfgVertex::FUNCRET:
-                out <<"function return>";
-                out <<" style=filled fillcolor=\"" <<returnColor.toHtml() <<"\"";
-                break;
-            case DfCfgVertex::INDET:
-                out <<"indeterminate> style=filled fillcolor=\"" <<indetColor.toHtml() <<"\"";
-                break;
+                out <<" ];\n";
+            }
         }
 
-
-        out <<" ];\n";
+        if (subgraphs.size() > 1)
+            out <<"}\n";
     }
 
     BOOST_FOREACH (const DfCfg::Edge &edge, dfCfg.edges()) {
