@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "0";
-$mkinstaller_ver_build = "1";
+$mkinstaller_ver_build = "6";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.0.1";
-$mkinstaller_ver_time  = " 6Feb2018 18:15:21z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.0.1 -  6Feb2018 18:15:21z";
+$mkinstaller_ver_name  = "2.0.6";
+$mkinstaller_ver_time  = " 6Mar2018 19:15:31z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.0.6 -  6Mar2018 19:15:31z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-18 James Frederick Reus\n"
@@ -948,7 +948,7 @@ sub getWorkingDirectory {
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
       print STDERR "getWorkingDirectory: ...UNIX-like\n" if $debugging;
-      my $tmpFile = "$tmpdir/pwd-$$.tmp";;
+      my $tmpFile = "$tmpdir/pwd-$$.tmp";
       print STDERR "getWorkingDirectory: ...run: [pwd 2>$tmpFile]\n" if $debugging;
       $gives      = `pwd 2>$tmpFile`;
       $exitCode   = $? + 0;
