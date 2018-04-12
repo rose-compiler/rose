@@ -550,6 +550,16 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         }
 #endif
 
+#if 1
+  // DQ (4/6/2018): Adding support to output lvvalue information.
+     SgExpression* expression = isSgExpression(node);
+     if (expression != NULL)
+        {
+          bool is_lvalue = expression->get_lvalue();
+          nodelabel += string("\\n lvalue = ") + (is_lvalue ? "true" : "false");
+        }
+#endif
+
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)

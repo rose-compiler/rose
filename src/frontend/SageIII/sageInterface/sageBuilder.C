@@ -707,6 +707,14 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      delete info;
      info = NULL;
 
+#if 0
+  // DQ (4/2/2018): Debugging cae of template instantiation function appearing in std namespace with two symbols.
+     if (name == "getline")
+        {
+          printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): Found input function named: name = %s returnName = %s \n",name.str(),returnName.str());
+        }
+#endif
+
      return returnName;
    }
 
@@ -758,6 +766,8 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
 
      switch(decl->variantT())
         {
+       // DQ (4/9/2018): Added support for namespace alias.
+          case V_SgNamespaceAliasDeclarationStatement:
        // DQ (8/17/2013): These cases do not use templates.
        // This function has to handle these cases because it is called in a general context
        // on many types of declarations as part of the name qualification support.
@@ -885,6 +895,8 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
 
      switch(decl->variantT())
         {
+       // DQ (4/9/2018): Added support for namespace alias.
+          case V_SgNamespaceAliasDeclarationStatement:
        // DQ (8/17/2013): These cases do not use templates.
        // This function has to handle these cases because it is called in a general context
        // on many types of declarations as part of the name qualification support.
@@ -3217,10 +3229,13 @@ SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement *
      printf ("In SageBuilder::buildOpaqueType(): DONE calling SgTypedefType::createType() using this = %p = %s \n",type_decl,type_decl->class_name().c_str());
 #endif
 
+#if 0
+ // DQ (3/28/2018): Commented out sinnce this fails for the documentation generation step in ROSE.
  // DQ (2/27/2018): The constructor semantics now require the type to be built after the IR node has been built.
  // Make this fail so that we can detect it an fix it properly later.
     printf ("In SageBuilder::buildOpaqueType(): ERROR: The constructor semantics now require the type to be built after the IR node has been built \n");
     ROSE_ASSERT(false);
+#endif
 
     type_symbol = new SgTypedefSymbol(type_decl);
     ROSE_ASSERT(type_symbol);
@@ -3569,6 +3584,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",nameWithTemplateArguments.str(),func_symbol);
 #endif
+#if 0
+          if (nameWithoutTemplateArguments == "getline")
+             {
+               printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",nameWithTemplateArguments.str(),func_symbol);
+             }
+#endif
+
        // If not a proper function (or instantiated template function), then check for a template function declaration.
           if (func_symbol == NULL)
              {
@@ -4342,6 +4364,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
      SgSymbol* symbol_from_first_nondefining_function = func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
      ROSE_ASSERT(symbol_from_first_nondefining_function != NULL);
 
+#if 0
+     if (nameWithoutTemplateArguments == "getline")
+        {
+          printf ("In buildNondefiningFunctionDeclaration_T(): symbol_from_first_nondefining_function = %p \n",symbol_from_first_nondefining_function);
+        }
+#endif
+
   // DQ (12/11/2011): Note that this may be false when func is not the first nondefining declaration.
      if (func != func->get_firstNondefiningDeclaration())
         {
@@ -4396,6 +4425,47 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
   // DQ (4/16/2015): This is replaced with a better implementation.
   // Make sure the isModified boolean is clear for all newly-parsed nodes.
      unsetNodesMarkedAsModified(func);
+
+#if 0
+  // DQ (4/2/2018): Debugging case of two symbols for the same function in the same namespace (but different namespace definitions).
+     if (nameWithoutTemplateArguments == "getline")
+        {
+          printf ("&&& Leaving buildNondefiningFunctionDeclaration_T(): getline: func: func = %p = %s unparseNameToString() = %s \n",func,func->class_name().c_str(),func->unparseNameToString().c_str());
+          printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
+          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+          if (namespaceDefinition != NULL)
+             {
+               printf ("   --- namespaceDefinition: name = %s \n",namespaceDefinition->get_namespaceDeclaration()->get_name().str());
+               printf ("   --- global namespace          = %p \n",namespaceDefinition->get_global_definition());
+             }
+            else
+             {
+               SgTemplateInstantiationDefn* templateInstantiationDefn = isSgTemplateInstantiationDefn(scope);
+               if (templateInstantiationDefn != NULL)
+                  {
+                    SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(templateInstantiationDefn->get_declaration());
+                    printf ("   --- templateInstantiationDecl: name = %s \n",templateInstantiationDecl->get_name().str());
+                  }
+                 else
+                  {
+                    SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
+                    if (templateClassDefinition != NULL)
+                       {
+                         SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(templateClassDefinition->get_declaration());
+                         printf ("   --- templateClassDeclaration: name = %s \n",templateClassDeclaration->get_name().str());
+
+                      // See where this is (because it happens twice in the same class).
+                         templateClassDeclaration->get_file_info()->display("getline found in SgTemplateClassDeclaration: debug");
+#if 0
+                         printf ("Output the symbol tabel used for this template declaration/definition: \n");
+                         templateClassDefinition->get_symbol_table()->print("getline found in SgTemplateClassDeclaration");
+#endif
+                       }
+                  }
+             }
+          printf ("   --- symbol_from_first_nondefining_function = %p = %s \n",symbol_from_first_nondefining_function,symbol_from_first_nondefining_function->class_name().c_str());
+        }
+#endif
 
 #if 0
      printf ("Leaving buildNondefiningFunctionDeclaration_T(): func: unparseNameToString() = %s \n",func->unparseNameToString().c_str());
@@ -5857,6 +5927,48 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
   // because we have added statements explicitly marked as transformations.
   // checkIsModifiedFlag(defining_func);
      unsetNodesMarkedAsModified(defining_func);
+
+#if 0
+  // DQ (4/2/2018): Debugging case of two symbols for the same function in the same namespace (but different namespace definitions).
+     if (nameWithoutTemplateArguments == "getline")
+        {
+          printf ("### Leaving buildDefiningFunctionDeclaration_T(): getline: func: defining_func = %p = %s unparseNameToString() = %s \n",
+               defining_func,defining_func->class_name().c_str(),defining_func->unparseNameToString().c_str());
+          printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
+          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+          if (namespaceDefinition != NULL)
+             {
+               printf ("   --- namespaceDefinition: name = %s \n",namespaceDefinition->get_namespaceDeclaration()->get_name().str());
+               printf ("   --- global namespace          = %p \n",namespaceDefinition->get_global_definition());
+             }
+            else
+             {
+               SgTemplateInstantiationDefn* templateInstantiationDefn = isSgTemplateInstantiationDefn(scope);
+               if (templateInstantiationDefn != NULL)
+                  {
+                    SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(templateInstantiationDefn->get_declaration());
+                    printf ("   --- templateInstantiationDecl: name = %s \n",templateInstantiationDecl->get_name().str());
+                  }
+                 else
+                  {
+                    SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
+                    if (templateClassDefinition != NULL)
+                       {
+                         SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(templateClassDefinition->get_declaration());
+                         printf ("   --- templateClassDeclaration: name = %s \n",templateClassDeclaration->get_name().str());
+
+                      // See where this is (because it happens twice in the same class).
+                         templateClassDeclaration->get_file_info()->display("getline found in SgTemplateClassDeclaration: debug");
+#if 0
+                         printf ("Output the symbol tabel used for this template declaration/definition: \n");
+                         templateClassDefinition->get_symbol_table()->print("getline found in SgTemplateClassDeclaration");
+#endif
+                       }
+                  }
+             }
+          printf ("   --- func_symbol = %p = %s \n",func_symbol,func_symbol->class_name().c_str());
+        }
+#endif
 
      return defining_func;
    }
@@ -8925,6 +9037,40 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
      ROSE_ASSERT(result->get_increment()     != NULL);
      ROSE_ASSERT(result->get_loop_body()     != NULL);
    }
+
+
+// DQ (3/26/2018): Adding support for range based for statement.
+// SgRangeBasedForStatement* SageBuilder::buildRangeBasedForStatement_nfi(SgVariableDeclaration* initializer, SgExpression* range, SgStatement* body)
+SgRangeBasedForStatement* 
+SageBuilder::buildRangeBasedForStatement_nfi(
+     SgVariableDeclaration* initializer,          SgVariableDeclaration* range, 
+     SgVariableDeclaration* begin_declaration,    SgVariableDeclaration* end_declaration, 
+     SgExpression*          not_equal_expression, SgExpression*          increment_expression,
+     SgStatement*           body)
+   {
+     ROSE_ASSERT(initializer != NULL);
+     ROSE_ASSERT(range       != NULL);
+  // ROSE_ASSERT(body        != NULL);
+
+     SgRangeBasedForStatement* result = new SgRangeBasedForStatement(initializer, range, begin_declaration, end_declaration, not_equal_expression, increment_expression, body);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+
+     if (initializer != NULL) initializer->set_parent(result);
+     if (range       != NULL) range->set_parent(result);
+
+     if (begin_declaration != NULL) begin_declaration->set_parent(result);
+     if (end_declaration   != NULL) end_declaration->set_parent(result);
+
+     if (not_equal_expression != NULL) not_equal_expression->set_parent(result);
+     if (increment_expression != NULL) increment_expression->set_parent(result);
+
+     if (body        != NULL) body->set_parent(result);
+
+     return result;
+   }
+
 
 void
 SageBuilder::buildDoWhileStatement_nfi(SgDoWhileStmt* result, SgStatement * body, SgStatement * condition)
