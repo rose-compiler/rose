@@ -1140,12 +1140,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntyp
       } else return ATfalse;
 
       if (ATmatch(t_stop_code, "no-integer-formula()")) {
-	 // No StopCode
+         // No StopCode
          stop_code = new SgUntypedNullExpression();
          setSourcePositionUnknown(stop_code);
       }
       else if (traverse_IntegerFormula(t_stop_code, &stop_code)) {
-	 // MATCHED IntegerFormula
+         // MATCHED IntegerFormula
       } else return ATfalse;
 
       SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;

@@ -198,7 +198,7 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgStopOrPauseStatement* sg_stmt = isSgStopOrPauseStatement(stmt);
+     SgStopOrPauseStatement* sp_stmt = isSgStopOrPauseStatement(stmt);
      ROSE_ASSERT(sp_stmt != NULL);
 
      SgStopOrPauseStatement::stop_or_pause_enum kind = sp_stmt->get_stop_or_pause();
