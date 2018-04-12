@@ -384,14 +384,14 @@ public:
                 typename CFG::ConstVertexIterator vertex = cfg_.findVertex(cfgVertexId);
                 State state = incomingState_[cfgVertexId];
                 if (mlog[DEBUG]) {
-                    mlog[DEBUG] <<"  incoming state for vertex #" <<cfgVertexId
-                                <<StringUtility::prefixLines(xfer_.printState(state), "    ", false) <<"\n";
+                    mlog[DEBUG] <<"  incoming state for vertex #" <<cfgVertexId <<":\n"
+                                <<StringUtility::prefixLines(xfer_.printState(state), "    ") <<"\n";
                 }
 
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
                 if (mlog[DEBUG]) {
                     mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId <<":\n"
-                                <<StringUtility::prefixLines(xfer_.printState(state), "    ", false) <<"\n";
+                                <<StringUtility::prefixLines(xfer_.printState(state), "    ") <<"\n";
                 }
                 
                 // Outgoing state must be merged into the incoming states for the CFG successors.  Any such incoming state that

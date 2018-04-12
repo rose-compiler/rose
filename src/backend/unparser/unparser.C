@@ -1839,6 +1839,10 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
    {
      string returnString;
 
+#if 0
+     printf ("Inside of globalUnparseToString(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
+
 // tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
 #if ROSE_GCC_OMP
 #pragma omp critical (unparser)
@@ -1923,6 +1927,10 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
      ROSE_ASSERT(astNode != NULL || templateArgumentList != NULL || templateParameterList != NULL);
 
      string returnString;
+
+#if 0
+     printf ("Inside of globalUnparseToString_OpenMPSafe(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
 
   // all options are now defined to be false. When these options can be passed in
   // from the prompt, these options will be set accordingly.
@@ -2172,6 +2180,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
      printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipClassDefinition() = %s \n",(inheritedAttributeInfo.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In globalUnparseToString_OpenMPSafe(): inheritedAttributeInfo.SkipEnumDefinition()  = %s \n",(inheritedAttributeInfo.SkipEnumDefinition()  == true) ? "true" : "false");
 #endif
+
   // DQ (1/13/2014): These should have been setup to be the same.
      ROSE_ASSERT(inheritedAttributeInfo.SkipClassDefinition() == inheritedAttributeInfo.SkipEnumDefinition());
 
@@ -2231,12 +2240,17 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                  else
                   {
                  // Unparse as a C/C++ code.
-
+#if 0
+                    printf ("In globalUnparseToString_OpenMPSafe(): calling roseUnparser.u_exprStmt->unparseStatement() \n");
+#endif
                     ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
 
                  // printf ("Calling roseUnparser.u_exprStmt->unparseStatement() stmt = %s \n",stmt->class_name().c_str());
                  // roseUnparser.u_exprStmt->curprint ("Output from curprint");
                     roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
+#if 0
+                    printf ("In globalUnparseToString_OpenMPSafe(): DONE: calling roseUnparser.u_exprStmt->unparseStatement() \n");
+#endif
                   }
              }
 

@@ -1,8 +1,9 @@
 
 #include "sage3basic.h"
-#include "CastTransformer.h"
 #include <iostream>
+#include "CastTransformer.h"
 #include "SgNodeHelper.h"
+#include "TypeTransformer.h" // only required for trace
 
 using namespace std;
 
@@ -18,7 +19,7 @@ bool CastTransformer::isEqualPrecise(SgType* t1, SgType* t2) {
   return t1==t2;
 }
 
-bool CastTransformer::isEqualOrLessPrecise(SgType* t1, SgType* t2) {
+bool CastTransformer::isLessOrEqualPrecise(SgType* t1, SgType* t2) {
   return isEqualPrecise(t1,t2) || isLessPrecise(t1,t2);
 }
 
@@ -33,7 +34,7 @@ bool CastTransformer::castIsNecessary(SgType* source, SgType* target) {
 }
 
 void CastTransformer::eliminateCast(SgCastExp* castExp) {
-  cout<<"ACTION: eliminating cast:"<<SgNodeHelper::sourceLineColumnToString(castExp)<<":"<<castExp->unparseToString()<<endl;
+  TypeTransformer::trace("eliminating cast:"+SgNodeHelper::sourceLineColumnToString(castExp)+":"+castExp->unparseToString());
   SgExpression* oldExp=castExp;
   SgExpression* newExp=castExp->get_operand();
   bool keepOldExp=true;
@@ -41,22 +42,25 @@ void CastTransformer::eliminateCast(SgCastExp* castExp) {
 }
 
 void CastTransformer::introduceCast(SgExpression* exp, SgType* type) {
-  cout<<"TODO: introduce cast @:"<<SgNodeHelper::sourceLineColumnToString(exp)<<":"<<exp->unparseToString()<<endl;
-#if 0
+  TypeTransformer::trace("introducing cast @:"+SgNodeHelper::sourceLineColumnToString(exp)+":"+exp->unparseToString());
+  SgNode* parentOfExpBackup=exp->get_parent();
   SgCastExp* newCastExp=SageBuilder::buildCastExp(exp,type);
-  //newCastExp->set_parent(parent);
-  //exp->set_parent(newCastExp);
-  SgExpression* oldExp=exp;
-  SgExpression* newExp=newCastExp;
-  bool keepOldExp=true;
-  SgNodeHelper::replaceExpression(oldExp, newExp, keepOldExp);
-#endif
+  // set parent back to original value, because buildCastExp modifies
+  // the parent in the existing AST and this conflicts with the replacements of the original node
+  exp->set_parent(parentOfExpBackup); 
+
+  // replace original exp (which is now a child of the new cast exp)
+  // with the new cast exp.
+  bool keepOldExp=false;
+  SgNodeHelper::replaceExpression(exp, newCastExp, keepOldExp);
+  // set parent of exp now
+  exp->set_parent(newCastExp);
 }
 
 void CastTransformer::changeCast(SgCastExp* castExp, SgType* newType) {
-  cout<<"ACTION: changing cast :"
-      <<SgNodeHelper::sourceLineColumnToString(castExp)
-      <<":"<<castExp->unparseToString()<<" TO "<<newType->unparseToString()<<endl;
+  TypeTransformer::trace("changing cast :"
+        +SgNodeHelper::sourceLineColumnToString(castExp)
+        +":"+castExp->unparseToString()+" TO "+newType->unparseToString());
 }
 
 bool CastTransformer::isOutsideTemplate(CTInheritedAttributeType inh) {
@@ -119,6 +123,10 @@ CTSynthesizedAttributeType CastTransformer::evaluateSynthesizedAttribute (SgNode
 #endif
   }
   return syn;
+}
+
+void CastTransformer::transformCommandLineFiles(SgProject* project) {
+  traverseWithinCommandLineFiles(project);
 }
 
 void CastTransformer::traverseWithinCommandLineFiles(SgProject* project) {

@@ -975,6 +975,40 @@ SgForStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
+SgRangeBasedForStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgRangeBasedForStatement::fixupCopy_references() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgScopeStatement::fixupCopy_references(copy,help);
+
+     SgRangeBasedForStatement* forStatement_copy = isSgRangeBasedForStatement(copy);
+     ROSE_ASSERT(forStatement_copy != NULL);
+
+     ROSE_ASSERT(this->get_iterator_declaration() != NULL);
+     this->get_iterator_declaration()->fixupCopy_references(forStatement_copy->get_iterator_declaration(),help);
+
+     ROSE_ASSERT(this->get_range_declaration() != NULL);
+     this->get_range_declaration()->fixupCopy_references(forStatement_copy->get_range_declaration(),help);
+
+     ROSE_ASSERT(this->get_begin_declaration() != NULL);
+     this->get_begin_declaration()->fixupCopy_references(forStatement_copy->get_begin_declaration(),help);
+
+     ROSE_ASSERT(this->get_end_declaration() != NULL);
+     this->get_end_declaration()->fixupCopy_references(forStatement_copy->get_end_declaration(),help);
+
+     ROSE_ASSERT(this->get_not_equal_expression() != NULL);
+     this->get_not_equal_expression()->fixupCopy_references(forStatement_copy->get_not_equal_expression(),help);
+
+     ROSE_ASSERT(this->get_increment_expression() != NULL);
+     this->get_increment_expression()->fixupCopy_references(forStatement_copy->get_increment_expression(),help);
+
+     ROSE_ASSERT(this->get_loop_body() != NULL);
+     this->get_loop_body()->fixupCopy_references(forStatement_copy->get_loop_body(),help);
+   }
+
+void
 SgForInitStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY

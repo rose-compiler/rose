@@ -1659,6 +1659,11 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
                break;
 
+       // DQ (3/26/2018): Added support for new IR node.
+          case V_SgRangeBasedForStatement:
+               name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
+               break;
+
           default:
                printf ("Error: undefined case (SgScopeStatement) in SageInterface::get_name(): node = %s \n",scope->class_name().c_str());
                ROSE_ASSERT(false);
@@ -4606,6 +4611,24 @@ void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Cont
 }
 
 
+// Rasmussen (4/8/2018): Added Ada
+bool
+SageInterface::is_Ada_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Ada_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 bool
 SageInterface::is_C_language()
    {
@@ -4622,6 +4645,25 @@ SageInterface::is_C_language()
 
      return returnValue;
    }
+
+// Rasmussen (4/8/2018): Added Cobol
+bool
+SageInterface::is_Cobol_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Cobol_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 bool
 SageInterface::is_OpenMP_language()
    {
@@ -4748,6 +4790,24 @@ SageInterface::is_Java_language()
      for (int i = 0; i < size; i++)
         {
           if (fileList[i]->get_Java_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+// Rasmussen (4/4/2018): Added Jovial
+bool
+SageInterface::is_Jovial_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Jovial_only() == true)
                returnValue = true;
         }
 

@@ -48,6 +48,11 @@ class t_Class1
           typedef typename t_Class2<typedef2,typedef4 >::typedef1 typedef6;
    };
 
+// BUG: A private type is referenced.
+// The original code appears as:
+// t_struct5< t_Class1< char >::typedef6, bool > local2;
+// and the generated code appears as:
+// t_struct5< t_Class2< t_Class1< char > ::typedef2 ,t_Class1< char > ::typedef4 > ::typedef1  , bool  > local2;
 t_struct5< t_Class1< char >::typedef6, bool > local2;
 
 

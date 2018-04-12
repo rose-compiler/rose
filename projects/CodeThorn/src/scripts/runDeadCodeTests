@@ -5,16 +5,34 @@ TESTDIR=$1
     echo "running DEADCODE TESTS"
     echo "------------------------------------------------"
 
-    for p in 1 2 3 4 5 6 7 8; do
+    # C++ tests
+    for p in 1 2 3 4 5 6 7 8 9; do
 	./analyterix --csv-deadcode-unreachable=tmptest.csv $TESTDIR/deadcode/test$p.C
 	echo -n "DEADCODE test${p}.C : "
 	diff tmptest.csv $TESTDIR/deadcode/test$p.csv
 	if [ ! $? -eq 0 ]
 	then
 	    echo "FAIL"
+            exit 1
 	else
 	    echo "PASS"
 	fi
 	echo "-------------------------------------------------"
     done
+
+    # C tests
+    for p in 10; do
+	./analyterix --csv-deadcode-unreachable=tmptest.csv $TESTDIR/deadcode/test$p.c
+	echo -n "DEADCODE test${p}.c : "
+	diff tmptest.csv $TESTDIR/deadcode/test$p.csv
+	if [ ! $? -eq 0 ]
+	then
+	    echo "FAIL"
+            exit 1
+	else
+	    echo "PASS"
+	fi
+	echo "-------------------------------------------------"
+    done
+
 #    rm -f tmptest.csv

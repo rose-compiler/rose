@@ -20,6 +20,7 @@ Label::Label() {
   }
 
 Label::Label(size_t labelId) {
+  ROSE_ASSERT(labelId!=NO_LABEL_ID);
   _labelId=labelId;
 }
 
@@ -72,9 +73,19 @@ size_t Label::getId() const {
   return _labelId;
 }
 
+std::string Label::toString() const {
+  if(_labelId==NO_LABEL_ID) {
+    return "NO_LABEL_ID";
+  } else {
+    stringstream ss;
+    ss<<_labelId;
+    return ss.str();
+  }
+}
+
 // friend function
 ostream& SPRAY::operator<<(ostream& os, const Label& label) {
-  os<<label._labelId;
+  os<<label.toString();
   return os;
 }
 
@@ -233,18 +244,21 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgGotoStatement:
-  case V_SgVariableDeclaration:
   case V_SgLabelStatement:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgSwitchStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
+    return 1;
+
+    // declarations
+  case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
-#ifdef TYPEDEF_SUPPORT
+  case V_SgEnumDeclaration:
   case V_SgTypedefDeclaration:
     return 1;
-#endif
+
     // represent all parallel omp constructs as nodes
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:

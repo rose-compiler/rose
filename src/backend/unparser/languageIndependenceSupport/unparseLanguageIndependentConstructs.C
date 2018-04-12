@@ -1713,6 +1713,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
        // DQ (10/30/2013): This code is executed for C++ code (e.g. for test2004_58.C -- template support).
 
+#if 0
+          printf ("fixup ordering of comments and any compiler generated code: returning after push onto queue \n");
+#endif
+
        // push all compiler generated nodes onto the static stack and unparse them after comments and directives 
        // of the next statement are output but before the associated statement to which they are attached.
 
@@ -1727,6 +1731,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      if ( unparseLineReplacement(stmt,info) )
         {
        // DQ (10/30/2013): Not clear why we want a return here...
+#if 0
+          printf ("In unparseLineReplacement() case \n");
+#endif
           return;
         }
 
@@ -1750,10 +1757,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
   // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL) || (isSgTypedefDeclaration(stmt) != NULL);
      bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
+
 #if 0
      printf ("In unparseStatement(): skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
      printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
+
      if (skipOutputOfPreprocessingInfo == false)
         {
 #if 0
@@ -1822,7 +1831,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // printf ("Unparser Delegate found! \n");
           if (unp->repl->unparse_statement(stmt,info, unp->cur))
              {
-            // printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
+#if 1
+               printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
+#endif
                return;
              }
         }
@@ -2271,11 +2282,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                       // Note that becasue of the logic below, this is the first CR for a SgBasicBlock (I don't know exactly why).
                       // The other CR frequenty introduces is in the unparseLanguageSpecificStatement() function.
                          unp->cur.reset_chars_on_line();
-#if 1
+#if 0
                          curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
 #endif
                          unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
-#if 1
+#if 0
                          curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
 #endif
                        }
@@ -2511,6 +2522,13 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // DQ (1/10/2015) We have added support to carry a pointer to the SgSourceFile within the SgUnparse_Info.
           SgSourceFile* sourceFile = info.get_current_source_file();
 
+#if 0
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): sourceFile         = %p \n",sourceFile);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): scope              = %p \n",scope);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): globalScope        = %p \n",globalScope);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): functionDefinition = %p \n",functionDefinition);
+#endif
+
        // DQ (1/10/2015): We can't enforce this for all expresions (not clear why).
        // ROSE_ASSERT(sourceFile != NULL);
           if (sourceFile != NULL)
@@ -2532,6 +2550,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                          lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
                        }
                     isLastStatementOfScope = (stmt == lastStatement);
+#if 0
+                    printf ("isLastStatementOfScope = %s \n",isLastStatementOfScope ? "true" : "false");
+#endif
                   }
                  else
                   {
@@ -2699,7 +2720,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (5/31/2005): special handling for compiler generated statements
      if (isSgGlobal(stmt) != NULL)
         {
-       // printf ("Output template definitions after the final comments in the file \n");
+#if 0
+          printf ("Output template definitions after the final comments in the file \n");
+#endif
           outputCompilerGeneratedStatements(info);
         }
 
