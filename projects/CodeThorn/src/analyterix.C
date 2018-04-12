@@ -91,7 +91,7 @@ bool option_optimize_icfg=false;
 bool option_csv_stable=false;
 bool option_no_topological_sort=false;
 bool option_annotate_source_code=false;
-
+bool option_ignore_unknown_functions=false;
 //boost::program_options::variables_map args;
 
 void writeFile(std::string filename, std::string data) {
@@ -488,6 +488,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
+    intervalAnalyzer->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
+
     intervalAnalyzer->setSolverTrace(option_trace);
     std::string funtofind=option_start_function;
     RoseAst completeast(root);
@@ -796,6 +798,7 @@ int main(int argc, char* argv[]) {
       ("print-inter-flow", "prints inter-procedural information call/entry/exit/callreturn.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ("start-function",po::value< string >(), "set name of function where analysis is supposed to start (default is 'main').")
+      ("ignore-unknown-functions","ignore unknown functions (assume those functions are side effect free)")
       ("csv-stable", "only output csv data that is stable/portable across environments.")
       ;
   //    ("int-option",po::value< int >(),"option info")
@@ -885,6 +888,9 @@ int main(int argc, char* argv[]) {
     }
     if (args.count("no-topological-sort")) {
       option_no_topological_sort=true;
+    }
+    if (args.count("ignore-unknown-functions")) {
+      option_ignore_unknown_functions=true;
     }
 
     // clean up string-options in argv

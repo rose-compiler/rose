@@ -34,14 +34,15 @@ public:
   virtual void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   virtual void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}
+  virtual void setSkipSelectedFunctionCalls(bool flag);
+  virtual void addParameterPassingVariables();
+  VariableId getParameterVariableId(int paramNr);
+  VariableId getResultVariableId();
+
   //protected:
  public:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 
- public:
-  virtual void addParameterPassingVariables();
-  VariableId getParameterVariableId(int paramNr);
-  VariableId getResultVariableId();
  private:
   SPRAY::ProgramAbstractionLayer* _programAbstractionLayer;
   VariableId parameter0VariableId;

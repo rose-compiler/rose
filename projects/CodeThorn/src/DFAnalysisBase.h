@@ -75,18 +75,19 @@ class DFAnalysisBase {
 
   // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
+  void setSkipSelectedFunctionCalls(bool defer);
 
  protected:
   SPRAY::PointerAnalysisInterface* getPointerAnalysis();
 
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
-  ProgramAbstractionLayer* _programAbstractionLayer;
-  CFAnalysis* _cfanalyzer;
+  ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
+  CFAnalysis* _cfanalyzer=nullptr;
   set<Label> _extremalLabels;
   Flow _flow;
   // following members are initialized by function initialize()
-  long _numberOfLabels; 
+  long _numberOfLabels=0;
   vector<Lattice*> _analyzerDataPreInfo;
   vector<Lattice*> _analyzerDataPostInfo;
   WorkListSeq<Edge> _workList;
@@ -103,19 +104,20 @@ class DFAnalysisBase {
   virtual DFAstAttribute* createDFAstAttribute(Lattice*);
   void computeAllPreInfo();
   void computeAllPostInfo();
-  bool _preInfoIsValid;
-  bool _postInfoIsValid;
+  bool _preInfoIsValid=false;
+  bool _postInfoIsValid=false;
  public:
-  DFTransferFunctions* _transferFunctions;
+  DFTransferFunctions* _transferFunctions=nullptr;
  protected:
-  PropertyStateFactory* _initialElementFactory;
-  SPRAY::PASolver1* _solver;
-  AnalysisType _analysisType;
-  bool _no_topological_sort;
+  PropertyStateFactory* _initialElementFactory=nullptr;
+  SPRAY::PASolver1* _solver=nullptr;
+  AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
+  bool _no_topological_sort=false;
  private:
-  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
-  SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation;
-  Lattice* _globalVariablesState;
+  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
+  SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
+  Lattice* _globalVariablesState=nullptr;
+  bool _skipSelectedFunctionCalls=false;
 };
 
 } // end of namespace

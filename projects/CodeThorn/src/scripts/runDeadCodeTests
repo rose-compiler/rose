@@ -35,4 +35,12 @@ TESTDIR=$1
 	echo "-------------------------------------------------"
     done
 
+    # C tests
+    for p in 11; do
+	./analyterix --csv-deadcode-unreachable=tmptest.csv --ignore-unknown-functions $TESTDIR/deadcode/test$p.C
+	echo -n "DEADCODE test${p}.C : "
+        echo "Skipping check."
+	echo "-------------------------------------------------"
+    done
+
 #    rm -f tmptest.csv

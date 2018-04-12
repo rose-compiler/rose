@@ -392,12 +392,21 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       if(funName=="__assert_fail") {
         return NumberIntervalLattice::bot();
       } else {
-        cout<<"Warning: unknown function call inside expression: "<<node->unparseToString()<<". Assuming function is side-effect free."<<endl;
-        return NumberIntervalLattice::top();
-        // schroder3 (2016-08-25): The CppExprEvaluator can not handle calls. Instead, calls should be handled by the corresponding transfer function. This call is
-        //  probably inside an expresion and was therefore not handled by the transfer function. This means that the input is not normalized and we abort here
-        //  because even returning top would be wrong because the function call can change other variables.
-        //throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " + node->unparseToString() + ").");
+        if(getSkipSelectedFunctionCalls()) {
+          //cout<<"Warning: unknown function call inside expression: "<<node->unparseToString()<<". Assuming function is side-effect free."<<endl;
+          return NumberIntervalLattice::top();
+        } else {
+          // schroder3 (2016-08-25): The CppExprEvaluator can not
+          //  handle calls. Instead, calls should be handled by the
+          //  corresponding transfer function. This call is probably
+          //  inside an expresion and was therefore not handled by the
+          //  transfer function. This means that the input is not
+          //  normalized and we abort here because even returning top
+          //  would be wrong because the function call can change
+          //  other variables.
+          throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " 
+                                                      + node->unparseToString() + ").");
+        }
       }
     }
   }
@@ -447,4 +456,13 @@ SgNode* SPRAY::CppExprEvaluator::findExprRootNode(SgNode* node) {
     return 0;
   }
 }
+
+void SPRAY::CppExprEvaluator::setSkipSelectedFunctionCalls(bool flag) {
+  _skipSelectedFunctionCalls=flag;
+}
+
+bool SPRAY::CppExprEvaluator::getSkipSelectedFunctionCalls() {
+  return _skipSelectedFunctionCalls;
+}
+
 #endif

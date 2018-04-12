@@ -1122,3 +1122,4 @@ SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrV
   int index2=abstrValue.getIntValue();
   return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
 }
+

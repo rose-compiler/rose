@@ -255,3 +255,8 @@ SPRAY::CppExprEvaluator* SPRAY::IntervalTransferFunctions::getCppExprEvaluator()
 void SPRAY::IntervalTransferFunctions::setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval) {
   _cppExprEvaluator=expEval;
 }
+
+void SPRAY::IntervalTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
+  ROSE_ASSERT(getCppExprEvaluator());
+  getCppExprEvaluator()->setSkipSelectedFunctionCalls(flag);
+}
