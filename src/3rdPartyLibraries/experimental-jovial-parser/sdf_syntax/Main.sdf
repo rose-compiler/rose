@@ -1277,7 +1277,7 @@ context-free syntax
   ReturnStatement             -> SimpleStatement
   GotoStatement               -> SimpleStatement
   ExitStatement               -> SimpleStatement
-  StopStatement               -> SimpleStatement
+  StopStatement               -> LabeledSimpleStatement
   AbortStatement              -> LabeledSimpleStatement
   NullStatement               -> SimpleStatement
 
@@ -1468,10 +1468,10 @@ context-free syntax
 %% 4.9 STOP STATEMENTS
 %%
 
-  'STOP' OptIntegerFormula ';'  -> StopStatement          {cons("StopStatement")}
+  LabelList 'STOP' OptIntegerFormula ';'  -> StopStatement          {cons("StopStatement")}
 
-  IntegerFormula                -> OptIntegerFormula
-  % empty %                     -> OptIntegerFormula      {cons("no-integer-formula")}
+  IntegerFormula                          -> OptIntegerFormula
+  % empty %                               -> OptIntegerFormula      {cons("no-integer-formula")}
 
 %% 4.10 ABORT STATEMENTS
 %%
