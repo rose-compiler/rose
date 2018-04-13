@@ -469,9 +469,17 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
      ROSE_ASSERT(locatedNode != NULL);
      AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
 
+#if 0
+     curprint ("/* Inside of printOutComments() */");
+#endif
+
      if (comments != NULL)
         {
+#if 0
           printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+          curprint ("/* Inside of printOutComments(): comments != NULL */");
+#endif
+
           AttachedPreprocessingInfoType::iterator i;
           for (i = comments->begin(); i != comments->end(); i++)
              {
@@ -480,6 +488,8 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
                     ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                     (*i)->getString().c_str());
                printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               curprint (string("/* Inside of printOutComments(): comments = ") +  (*i)->getString() + " */");
+
 #if 0
                (*i)->get_file_info()->display("comment/directive location");
 #endif
@@ -1703,6 +1713,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
        // DQ (10/30/2013): This code is executed for C++ code (e.g. for test2004_58.C -- template support).
 
+#if 0
+          printf ("fixup ordering of comments and any compiler generated code: returning after push onto queue \n");
+#endif
+
        // push all compiler generated nodes onto the static stack and unparse them after comments and directives 
        // of the next statement are output but before the associated statement to which they are attached.
 
@@ -1717,6 +1731,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      if ( unparseLineReplacement(stmt,info) )
         {
        // DQ (10/30/2013): Not clear why we want a return here...
+#if 0
+          printf ("In unparseLineReplacement() case \n");
+#endif
           return;
         }
 
@@ -1740,10 +1757,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
   // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL) || (isSgTypedefDeclaration(stmt) != NULL);
      bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
+
 #if 0
      printf ("In unparseStatement(): skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
      printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
+
      if (skipOutputOfPreprocessingInfo == false)
         {
 #if 0
@@ -1812,7 +1831,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // printf ("Unparser Delegate found! \n");
           if (unp->repl->unparse_statement(stmt,info, unp->cur))
              {
-            // printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
+#if 1
+               printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
+#endif
                return;
              }
         }
@@ -2261,11 +2282,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                       // Note that becasue of the logic below, this is the first CR for a SgBasicBlock (I don't know exactly why).
                       // The other CR frequenty introduces is in the unparseLanguageSpecificStatement() function.
                          unp->cur.reset_chars_on_line();
-#if 1
+#if 0
                          curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
 #endif
                          unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
-#if 1
+#if 0
                          curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
 #endif
                        }
@@ -2501,6 +2522,13 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // DQ (1/10/2015) We have added support to carry a pointer to the SgSourceFile within the SgUnparse_Info.
           SgSourceFile* sourceFile = info.get_current_source_file();
 
+#if 0
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): sourceFile         = %p \n",sourceFile);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): scope              = %p \n",scope);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): globalScope        = %p \n",globalScope);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): functionDefinition = %p \n",functionDefinition);
+#endif
+
        // DQ (1/10/2015): We can't enforce this for all expresions (not clear why).
        // ROSE_ASSERT(sourceFile != NULL);
           if (sourceFile != NULL)
@@ -2522,6 +2550,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                          lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
                        }
                     isLastStatementOfScope = (stmt == lastStatement);
+#if 0
+                    printf ("isLastStatementOfScope = %s \n",isLastStatementOfScope ? "true" : "false");
+#endif
                   }
                  else
                   {
@@ -2689,7 +2720,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (5/31/2005): special handling for compiler generated statements
      if (isSgGlobal(stmt) != NULL)
         {
-       // printf ("Output template definitions after the final comments in the file \n");
+#if 0
+          printf ("Output template definitions after the final comments in the file \n");
+#endif
           outputCompilerGeneratedStatements(info);
         }
 
@@ -3676,13 +3709,26 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  !info.SkipClassDefinition() &&
                                  !info.SkipFunctionDefinition();
 
+#if 0
+          printf ("info.SkipEnumDefinition()     = %s \n",info.SkipEnumDefinition() ? "true" : "false");
+          printf ("info.SkipClassDefinition()    = %s \n",info.SkipClassDefinition() ? "true" : "false");
+          printf ("info.SkipFunctionDefinition() = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+          printf ("Test 1: infoSaysGoAhead       = %s \n",infoSaysGoAhead ? "true" : "false");
+#endif
+
+#if 0
+          printf ("Reset infoSaysGoAhead == true \n");
+          infoSaysGoAhead = true;
+#endif
+
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
        // Liao 11/9/2010: allow SgInitializedName also
        // negara1 (08/15/2011): Allow SgHeaderFileBody as well.
           infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) || (isSgHeaderFileBody(stmt) != NULL);
 
 #if 0
-          printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
+          printf ("stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("Test 2: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
 #endif
 
 #if 0
@@ -5155,6 +5201,11 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgShortVal:               { unparseShortVal(expr, info);        break; }
                case V_SgUnsignedCharVal:        { unparseUCharVal(expr, info);        break; }
                case V_SgWcharVal:               { unparseWCharVal(expr, info);        break; }
+
+            // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+               case V_SgChar16Val:              { unparseChar16Val(expr, info);       break; }
+               case V_SgChar32Val:              { unparseChar32Val(expr, info);       break; }
+
                case V_SgStringVal:              { unparseStringVal(expr, info);       break; }
                case V_SgUnsignedShortVal:       { unparseUShortVal(expr, info);       break; }
                case V_SgEnumVal:                { unparseEnumVal(expr, info);         break; }
@@ -5442,6 +5493,42 @@ UnparseLanguageIndependentConstructs::unparseWCharVal(SgExpression* expr, SgUnpa
        else
         {
           curprint ( wchar_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseChar16Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar16Val* char_val = isSgChar16Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar32Val* char_val = isSgChar32Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
         }
    }
 
@@ -6811,10 +6898,21 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
   ROSE_ASSERT  (c);
   SgOmpExpressionClause* exp_clause = isSgOmpExpressionClause(c);
   ROSE_ASSERT(exp_clause);
+ 
+
+  // ordered (n) vs ordered : (n) is optional
+  if (isSgOmpOrderedClause(c) && (exp_clause->get_expression() == NULL))
+  {  
+    curprint(string(" ordered"));
+    return; 
+  }  
+
   if (isSgOmpCollapseClause(c))
     curprint(string(" collapse("));
   else if (isSgOmpIfClause(c))
     curprint(string(" if("));
+  else if (isSgOmpOrderedClause(c))
+    curprint(string(" ordered("));
   else if (isSgOmpFinalClause(c))
     curprint(string(" final("));
   else if (isSgOmpPriorityClause(c))
@@ -6882,12 +6980,13 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         curprint(string(" notinbranch"));
         break;
       }
- 
+#if 0  // this becomes an expression clause since OpenMP 4.5
     case V_SgOmpOrderedClause:
       {
         curprint(string(" ordered"));
         break;
       }
+#endif      
     case V_SgOmpUntiedClause:
       {
         curprint(string(" untied"));
@@ -6921,6 +7020,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpNumThreadsClause:  
     case V_SgOmpSafelenClause:  
     case V_SgOmpSimdlenClause:  
+    case V_SgOmpOrderedClause:
       //case V_SgOmpExpressionClause: // there should be no instance for this clause
       {
         unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);
