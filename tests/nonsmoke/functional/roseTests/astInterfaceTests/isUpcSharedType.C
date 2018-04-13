@@ -33,6 +33,15 @@ int main(int argc, char* argv[])
   visitorTraversal exampleTraversal;
   exampleTraversal.traverse(project,preorder);
  std::cout <<"Found "<<counter<<" shared declarations." <<std::endl;
- ROSE_ASSERT(counter==6);
+
+#if 0
+// DQ (3/23/2018): Original code.
+  ROSE_ASSERT(counter==6);
   return backend(project);
+#else
+// DQ (3/23/2018): Unparse the file and then run the assertion.
+  int status = backend(project);
+  ROSE_ASSERT(counter==6);
+  return status;
+#endif
 }

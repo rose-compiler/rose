@@ -2,7 +2,7 @@
 Contributed by Jeff Keasler
 Liao, 10/22/2009
 */
-#include "omp.h" 
+#include <omp.h> 
 
 int main(int argc,char *argv[])
 {

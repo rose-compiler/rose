@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include "ATermToUntypedFortranTraversal.h"
+#include "general_language_translation.h"
 #include "untypedBuilder.h"
 #include <iostream>
 
@@ -13,269 +14,10 @@ using std::cerr;
 using std::endl;
 
 
-#if USE_BASE_CLASS
-static void
-fixupLocation(FAST::PosInfo & loc)
-{
-   int end_col = loc.getEndCol();
-
-// make sure start column isn't the same as end col
-   if (loc.getStartLine() == loc.getEndLine() && loc.getStartCol() == loc.getEndCol())
-      {
-         return;
-      }
-
-// check that end column isn't first column in the line
-   if (end_col > 1)
-      {
-         loc.setEndCol(end_col - 1);
-      }
-}
-#endif
-
-#if USE_BASE_CLASS
-FAST::PosInfo
-ATermToUntypedFortranTraversal::getLocation(ATerm term)
-{
-   FAST::PosInfo pinfo;
-
-   ATerm annotations = ATgetAnnotations(term);
-   if (annotations) {
-      int i1,i2,i3,i4;
-      ATerm loc = ATgetFirst(annotations);
-      if (ATmatch(loc, "Location(<int>,<int>,<int>,<int>)", &i1,&i2,&i3,&i4)) {
-#if PRINT_ATERM_TRAVERSAL
-         printf("... loc: %d %d %d %d\n", i1,i2,i3,i4);
-#endif
-         pinfo = FAST::PosInfo(i1,i2,i3,i4);
-      }
-   }
-   ATermToUntypedTraversal::fixupLocation(pinfo);
-
-   return pinfo;
-}
-
-void
-ATermToUntypedFortranTraversal::setSourcePosition( SgLocatedNode* locatedNode, ATerm term )
-{
-   FAST::PosInfo pos = getLocation(term);
-   return setSourcePosition(locatedNode, pos);
-}
-
-void
-ATermToUntypedFortranTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
-{
-   FAST::PosInfo pos;
-
-   pos.setStartLine (fromNode->get_startOfConstruct()-> get_line());
-   pos.setStartCol  (fromNode->get_startOfConstruct()-> get_col() );
-   pos.setEndLine   (fromNode->get_endOfConstruct()  -> get_line());
-   pos.setEndCol    (fromNode->get_endOfConstruct()  -> get_col() );
-
-   return setSourcePosition(locatedNode, pos);
-}
-
-void
-ATermToUntypedFortranTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
-{
-   FAST::PosInfo pos = getLocation(startTerm);
-   FAST::PosInfo end = getLocation(endTerm);
-
-   pos.setEndLine(end.getStartLine());
-   pos.setEndCol(end.getStartCol());
-
-   return setSourcePosition(locatedNode, pos);
-}
-
-void
-ATermToUntypedFortranTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
-{
-   FAST::PosInfo pos = getLocation(startTerm);
-   FAST::PosInfo end = getLocation(endTerm);
-
-   pos.setEndLine(end.getEndLine());
-   pos.setEndCol(end.getEndCol());
-
-   return setSourcePosition(locatedNode, pos);
-}
-
-void
-ATermToUntypedFortranTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode )
-{
-   FAST::PosInfo pos = getLocation(startTerm);
-
-   pos.setEndLine(endNode->get_endOfConstruct()->get_line());
-   pos.setEndCol (endNode->get_endOfConstruct()->get_col() );
-
-   return setSourcePosition(locatedNode, pos);
-}
-#endif
-
-#if USE_BASE_CLASS
-void
-ATermToUntypedFortranTraversal::setSourcePosition( SgLocatedNode* locatedNode, FAST::PosInfo & pos )
-{
-     ROSE_ASSERT(locatedNode != NULL);
-     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
-     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
-
-     std::string filename = getCurrentFilename();
-
-#if PRINT_SOURCE_POSITION
-     std::cout << "... setSourcePosition: " << pos.getStartLine() << " " <<  pos.getStartCol();
-     std::cout <<                       " " << pos.getEndLine()   << " " <<  pos.getEndCol() << std::endl;
-#endif
-
-     locatedNode->set_startOfConstruct(new Sg_File_Info(filename, pos.getStartLine(), pos.getStartCol()));
-     locatedNode->get_startOfConstruct()->set_parent(locatedNode);
-
-     locatedNode->set_endOfConstruct(new Sg_File_Info(filename, pos.getEndLine(), pos.getEndCol()));
-     locatedNode->get_endOfConstruct()->set_parent(locatedNode);
-
-     SageInterface::setSourcePosition(locatedNode);
-}
-#endif
-
-
-//--------------------------------- above should be refactored/moved ---------------------------
-
-// These should probably go in UntypedBuilder class
-SgUntypedType* ATermToUntypedFortranTraversal::buildType(SgUntypedType::type_enum type_enum)
-{
-   SgUntypedExpression* type_kind = NULL;
-   bool has_kind = false;
-   bool is_literal = false;
-   bool is_class = false;
-   bool is_intrinsic = true;
-   bool is_constant = false;
-   bool is_user_defined = false;
-   SgUntypedExpression* char_length_expr = NULL;
-   std::string char_length;
-   bool char_length_is_string = false;
-
-   SgUntypedType* type = NULL;
-
-   switch(type_enum)
-    {
-      case SgUntypedType::e_unknown:
-       {
-          type = new SgUntypedType("UNKNOWN",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                   is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
-          break;
-       }
-      case SgUntypedType::e_void:
-       {
-          type = new SgUntypedType("void",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                   is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
-          break;
-       }
-      case SgUntypedType::e_int:
-       {
-          type = new SgUntypedType("integer",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                   is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
-          break;
-       }
-      case SgUntypedType::e_float:
-       {
-          type = new SgUntypedType("real",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                   is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
-          break;
-       }
-      case SgUntypedType::e_bool:
-       {
-          type = new SgUntypedType("logical",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                   is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
-          break;
-       }
-      case SgUntypedType::e_bit:
-       {
-          type = new SgUntypedType("bit",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                   is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
-          break;
-       }
-      default:
-       {
-          fprintf(stderr, "ATermToUntypedFortranTraversal::buildType: unimplemented for type_enum %d \n", type_enum);
-          ROSE_ASSERT(0);  // NOT IMPLEMENTED
-       }
-    }
-
-   return type;
-}
-
-
 ATermToUntypedFortranTraversal::ATermToUntypedFortranTraversal(SgSourceFile* source) : ATermToUntypedTraversal(source)
 {
    UntypedBuilder::set_language(SgFile::e_Fortran_language);
-
-   SgUntypedDeclarationStatementList* sg_decls = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            sg_stmts = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  sg_funcs = new SgUntypedFunctionDeclarationList();
-   SgUntypedGlobalScope*          global_scope = new SgUntypedGlobalScope("",sg_decls,sg_stmts,sg_funcs);
-
-   pSourceFile = source;
-   ROSE_ASSERT(pSourceFile != NULL);
-
-   pUntypedFile = new SgUntypedFile(global_scope);
-   ROSE_ASSERT(pUntypedFile != NULL);
-
-// DQ (2/25/2013): Set the default for source position generation to be consistent with other languages (e.g. C/C++).
-   SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
-//TODO     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
 }
-
-ATermToUntypedFortranTraversal::~ATermToUntypedFortranTraversal()
-{
-   delete pUntypedFile;
-}
-
-void
-ATermToUntypedFortranTraversal::setSourcePositionUnknown(SgLocatedNode* locatedNode)
-{
-  // This function sets the source position to be marked as not available (since we don't have token information)
-  // These nodes WILL be unparsed in the code generation phase.
-
-#if DEBUG_UNTYPED_CONVERTER
-     printf ("UntypedConverter::setSourcePositionUnknown: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-#endif
-
-#if 1
-  // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
-     ROSE_ASSERT(locatedNode != NULL);
-
-  // Make sure we never try to reset the source position of the global scope (set elsewhere in ROSE).
-     ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
-
-     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
-     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
-     SageInterface::setSourcePosition(locatedNode);
-#endif
-}
-
-
-// This version can be used to drop eos (EndOfStmt) location
-//
-#ifdef REPLACE_WITH_SgUntyped
-static FAST::PosInfo getLocation(ATerm startTerm, ATerm endTerm)
-{
-   FAST::PosInfo start = getLocation(startTerm);
-   FAST::PosInfo   end = getLocation(  endTerm);
-
-   return FAST::PosInfo(start.getStartLine(),start.getStartCol(),end.getEndLine(),end.getEndCol());
-}
-#endif
-
-// This version is based on eos (EndOfStmt) location
-//
-#ifdef REPLACE_WITH_SgUntyped
-static FAST::PosInfo getLocationFromEOS(ATerm startTerm, ATerm eosTerm)
-{
-   FAST::PosInfo start = getLocation(startTerm);
-   FAST::PosInfo   end = getLocation(  eosTerm);
-
-   return FAST::PosInfo(start.getStartLine(),start.getStartCol(),end.getStartLine(),end.getStartCol()-1);
-}
-#endif
 
 static ATbool convert_list_item(ATerm term, const char* match, std::map<std::string,std::string> & map)
 {
@@ -943,6 +685,19 @@ ATbool ATermToUntypedFortranTraversal::traverse_SpecStmt(ATerm term, SgUntypedDe
    else if (traverse_ExternalStmt(term, decl_list)) {
       // Matched ExternalStmt
    }
+   else if (traverse_CudaAttributesStmt(term, decl_list)) {
+      // Matched ExternalStmt
+   }
+
+   //  EntryStmt                              -> DeclarationConstruct
+   //  EnumDef                                -> DeclarationConstruct
+   //  FormatStmt                             -> DeclarationConstruct
+   //  InterfaceBlock                         -> DeclarationConstruct
+   //  ParameterStmt                          -> DeclarationConstruct
+   //  ProcedureDeclarationStmt               -> DeclarationConstruct
+   //  OtherSpecificationStmt                 -> DeclarationConstruct
+   //  TypeDeclarationStmt                    -> DeclarationConstruct
+
    else {
       return ATfalse;
    }
@@ -1077,22 +832,82 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
    printf("... traverse_IntrinsicTypeSpec: %s\n", ATwriteToString(term));
 #endif
   
-  //TODO kind-type
-   std::cerr << "...TODO... implement kind-type in IntrinsictypeSpec" << std::endl;
+   ATerm t_type, t_kind;
 
-  if (ATmatch(term, "IntrinsicType(INTEGER())")) {
-     *type = buildType(SgUntypedType::e_int);
-  }
-  else if (ATmatch(term, "IntrinsicType(REAL())")) {
-     *type = buildType(SgUntypedType::e_float);
-  }
-  else if (ATmatch(term, "IntrinsicType(LOGICAL())")) {
-     *type = buildType(SgUntypedType::e_bool);
-  }
-  else {
-     std::cerr << "...TODO... implement additional types in IntrinsictypeSpec" << std::endl;
-     return ATfalse;
-  }
+   *type = NULL;
+
+   if (ATmatch(term, "IntrinsicType(<term>)", &t_type)) {
+      // MATCHED IntrinsicType
+   } else return ATfalse;
+
+// Check for type declarations without type-kind parameter
+   if (ATmatch(t_type, "INTEGER()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_int);
+   }
+   else if (ATmatch(t_type, "REAL()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+   else if (ATmatch(t_type, "DOUBLEPRECISION()")) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+   else if (ATmatch(t_type, "COMPLEX()")) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_complex);
+   }
+   else if (ATmatch(t_type, "CHARACTER()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_char);
+   }
+   else if (ATmatch(t_type, "LOGICAL()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+   else if (ATmatch(t_type, "DOUBLECOMPLEX()")) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+
+   if (*type != NULL) {
+   // have a type without a type-kind parameter, return
+      return ATtrue;
+   }
+
+// Only type declarations with a kind parameter or length parameters left
+// ----------------------------------------------------------------------
+
+   if (ATmatch(t_type, "INTEGER(<term>)", &t_kind)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_int);
+   }
+   else if (ATmatch(t_type, "REAL(<term>)", &t_kind)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+   else if (ATmatch(t_type, "COMPLEX(<term>)", &t_kind)) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_complex);
+      return ATfalse;
+   }
+   else if (ATmatch(t_type, "LOGICAL(<term>)", &t_kind)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+
+// Check for a type-kind parameter
+   if (*type != NULL) {
+      SgUntypedExpression* kind;
+      if (traverse_KindSelector(t_kind, &kind)) {
+      // add type kind expression
+         (*type)->set_has_kind(true);
+         (*type)->set_type_kind(kind);
+      }
+      else {
+         cerr << "ERROR: no expected kind-type parameter in IntrinsictypeSpec" << endl;
+         return ATfalse;
+      }
+   }
+   else {
+      cerr << "ERROR: unknown intrinsic type in IntrinsictypeSpec" << endl;
+      return ATfalse;
+   }
+
+// TODO - Check for a character string
+   if (*type != NULL) {
+   // have a type with a type-kind parameter, return
+      return ATtrue;
+   }
 
   return ATtrue;
 }
@@ -1116,15 +931,15 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
    if (ATmatch(term, "IntVal(<str>)", &arg1)) {
       // MATCHED IntVal
       value += arg1;
-      type = buildType(SgUntypedType::e_int);
+      type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
    else if (ATmatch(term, "IntVal(<str>,<term>)", &arg1,&t_kind)) {
       SgUntypedExpression* kind;
       if (traverse_Expression(t_kind, &kind)) {
-         // MATCHED KindParam
+         // MATCHED Expression
       } else return ATfalse;
       value += arg1;
-      type = buildType(SgUntypedType::e_int);
+      type = UntypedBuilder::buildType(SgUntypedType::e_int);
    // add type kind expression
       type->set_has_kind(true);
       type->set_type_kind(kind);
@@ -1148,7 +963,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedEx
 
    ATerm term1, term2;
 
-   SgToken::ROSE_Fortran_Operators  op_enum;
+   General_Language_Translation::ExpressionKind op_enum;
    std::string op_name;
    SgUntypedExpression* lhs;
    SgUntypedExpression* rhs;
@@ -1158,43 +973,47 @@ ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedEx
 // Binary operators
 //
    if (ATmatch(term, "Power(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_POWER;
+      op_enum = General_Language_Translation::e_operator_exponentiate;
       op_name = "**";
    }
    else if (ATmatch(term, "Mult(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_TIMES;
+      op_enum = General_Language_Translation::e_operator_multiply;
       op_name = "*";
    }
    else if (ATmatch(term, "Div(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_DIVIDE;
+      op_enum = General_Language_Translation::e_operator_divide;
       op_name = "/";
    }
    else if (ATmatch(term, "Plus(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_PLUS;
+      op_enum = General_Language_Translation::e_operator_add;
       op_name = "+";
    }
    else if (ATmatch(term, "Minus(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_MINUS;
+      op_enum = General_Language_Translation::e_operator_subtract;
       op_name = "-";
    }
    else if (ATmatch(term, "EQ(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_EQ;
+      op_enum = General_Language_Translation::e_operator_equality;
       op_name = "==";
    }
    else if (ATmatch(term, "NE(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_NE;
+      op_enum = General_Language_Translation::e_operator_not_equal;
       op_name = "/=";
    }
    else if (ATmatch(term, "LT(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_LT;
+      op_enum = General_Language_Translation::e_operator_less_than;
       op_name = "<";
    }
+   else if (ATmatch(term, "LE(<term>,<term>)", &term1,&term2)) {
+      op_enum = General_Language_Translation::e_operator_less_than_or_equal;
+      op_name = "<=";
+   }
    else if (ATmatch(term, "GT(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_GT;
+      op_enum = General_Language_Translation::e_operator_greater_than;
       op_name = ">";
    }
    else if (ATmatch(term, "GE(<term>,<term>)", &term1,&term2)) {
-      op_enum = SgToken::FORTRAN_INTRINSIC_GE;
+      op_enum = General_Language_Translation::e_operator_greater_than_or_equal;
       op_name = ">=";
    }
    else {
@@ -1212,6 +1031,26 @@ ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedEx
    setSourcePosition(*var_expr, term);
 
   return ATtrue;
+}
+
+//========================================================================================
+// R405 kind-selector
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_KindSelector(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_KindSelector: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_kind;
+
+   if (ATmatch(term, "Kind(<term>)", &t_kind)) {
+      if (traverse_Expression(t_kind, expr)) {
+         // MATCHED type-kind expression
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -1250,24 +1089,29 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
    SgUntypedType* declared_type;
 
    SgUntypedVariableDeclaration* variable_decl = NULL;
-   SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
-   SgUntypedTokenList*               attr_list = new SgUntypedTokenList();
+   SgUntypedInitializedNameList* var_name_list = NULL;
+   SgUntypedExprListExpression*      attr_list = NULL;
 
    if (ATmatch(term, "TypeDeclarationStmt(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
       } else return ATfalse;
+
       if (traverse_DeclarationTypeSpec(term2, &declared_type)) {
          // MATCHED DeclarationTypeSpec
       } else return ATfalse;
+
+      attr_list = new SgUntypedExprListExpression();
       if (traverse_OptAttrSpecList(term3, attr_list)) {
          // MATCHED AttrSpecList
-      //TODO_SgUntyped - need way to add attributes
       } else return ATfalse;
+
+      var_name_list = new SgUntypedInitializedNameList();
       if (traverse_EntityDeclList(term4, declared_type, var_name_list)) {
          // MATCHED EntityDeclList
          setSourcePosition(var_name_list, term4);
       } else return ATfalse;
+
       if (traverse_eos(term_eos, eos)) {
          // MATCHED eos string
       } else return ATfalse;
@@ -1291,90 +1135,152 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
 //========================================================================================
 // R502 attr-spec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUntypedTokenList* attr_list)
+ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptAttrSpecList: %s\n", ATwriteToString(term));
 #endif
 
+  using namespace General_Language_Translation;
+
   ATerm terms;
+
   if (ATmatch(term, "no-list()")) {
   }
+
   else if (ATmatch(term, "comma-list(<term>)", &terms)) {
      ATermList tail = (ATermList) ATmake("<term>", terms);
      while (! ATisEmpty(tail)) {
-        SgUntypedToken* attr;
+        SgUntypedExpression* attr;
         ATerm head = ATgetFirst(tail);
         tail = ATgetNext(tail);
         if (ATmatch(head, "PUBLIC()")) {
-           attr = new SgUntypedToken("PUBLIC", SgToken::FORTRAN_PUBLIC);
+           attr = new SgUntypedOtherExpression(e_access_modifier_public);
         }
         else if (ATmatch(head, "PRIVATE()")) {
-           attr = new SgUntypedToken("PRIVATE", SgToken::FORTRAN_PRIVATE);
+           attr = new SgUntypedOtherExpression(e_access_modifier_private);
         }
         else if (ATmatch(head, "ALLOCATABLE()")) {
-           attr = new SgUntypedToken("ALLOCATABLE", SgToken::FORTRAN_ALLOCATABLE);
+           attr = new SgUntypedOtherExpression(e_type_modifier_allocatable);
         }
         else if (ATmatch(head, "ASYNCHRONOUS()")) {
-           attr = new SgUntypedToken("ASYNCHRONOUS", SgToken::FORTRAN_ASYNCHRONOUS);
+           attr = new SgUntypedOtherExpression(e_type_modifier_asynchronous);
         }
      // TODO - Codimension
         else if (ATmatch(head, "CONTIGUOUS()")) {
-           attr = new SgUntypedToken("CONTIGUOUS", SgToken::FORTRAN_CONTIGUOUS);
+           attr = new SgUntypedOtherExpression(e_storage_modifier_contiguous);
         }
      // TODO - Dimension
+        else if (ATmatch(head, "Dimension()")) {
+           attr = new SgUntypedOtherExpression(e_unknown);
+           return ATfalse;
+        }
         else if (ATmatch(head, "EXTERNAL()")) {
-           attr = new SgUntypedToken("EXTERNAL", SgToken::FORTRAN_EXTERNAL);
+           attr = new SgUntypedOtherExpression(e_storage_modifier_external);
         }
         else if (ATmatch(head, "Intent(IN())")) {
-           attr = new SgUntypedToken("INTENT(IN)", SgToken::FORTRAN_INTENT_IN);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intent_in);
         }
         else if (ATmatch(head, "Intent(OUT())")) {
-           attr = new SgUntypedToken("INTENT(IN)", SgToken::FORTRAN_INTENT_OUT);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intent_out);
         }
         else if (ATmatch(head, "Intent(INOUT())")) {
-           attr = new SgUntypedToken("INTENT(IN)", SgToken::FORTRAN_INTENT_INOUT);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intent_inout);
         }
         else if (ATmatch(head, "INTRINSIC()")) {
-           attr = new SgUntypedToken("INTRINSIC", SgToken::FORTRAN_INTRINSIC);
+           attr = new SgUntypedOtherExpression(e_type_modifier_intrinsic);
         }
      // TODO - LanguageBindingSpec
         else if (ATmatch(head, "OPTIONAL()")) {
-           attr = new SgUntypedToken("OPTIONAL", SgToken::FORTRAN_OPTIONAL);
+           attr = new SgUntypedOtherExpression(e_type_modifier_optional);
         }
         else if (ATmatch(head, "PARAMETER()")) {
-           attr = new SgUntypedToken("PARAMETER", SgToken::FORTRAN_PARAMETER);
+           attr = new SgUntypedOtherExpression(e_type_modifier_const);
         }
         else if (ATmatch(head, "POINTER()")) {
-           attr = new SgUntypedToken("POINTER", SgToken::FORTRAN_POINTER);
+           attr = new SgUntypedOtherExpression(e_type_modifier_pointer);
         }
         else if (ATmatch(head, "PROTECTED()")) {
-           attr = new SgUntypedToken("PROTECTED", SgToken::FORTRAN_PROTECTED);
+           attr = new SgUntypedOtherExpression(e_type_modifier_protected);
         }
         else if (ATmatch(head, "SAVE()")) {
-           attr = new SgUntypedToken("SAVE", SgToken::FORTRAN_SAVE);
+           attr = new SgUntypedOtherExpression(e_type_modifier_save);
         }
         else if (ATmatch(head, "TARGET()")) {
-           attr = new SgUntypedToken("TARGET", SgToken::FORTRAN_TARGET);
+           attr = new SgUntypedOtherExpression(e_type_modifier_target);
         }
         else if (ATmatch(head, "VALUE()")) {
-           attr = new SgUntypedToken("VALUE", SgToken::FORTRAN_VALUE);
+           attr = new SgUntypedOtherExpression(e_type_modifier_value);
         }
         else if (ATmatch(head, "VOLATILE()")) {
-           attr = new SgUntypedToken("VOLATILE", SgToken::FORTRAN_VOLATILE);
+           attr = new SgUntypedOtherExpression(e_type_modifier_volatile);
         }
+     // CUDA variable attributes/modifiers/qualifiers
+     // ---------------------------------------------
+        else if (ATmatch(head, "CUDA_DEVICE()")) {
+           attr = new SgUntypedOtherExpression(e_cuda_device_memory);
+        }
+        else if (ATmatch(head, "CUDA_MANAGED()")) {
+           attr = new SgUntypedOtherExpression(e_cuda_managed);
+        }
+        else if (ATmatch(head, "CUDA_CONSTANT()")) {
+           attr = new SgUntypedOtherExpression(e_cuda_constant);
+        }
+        else if (ATmatch(head, "CUDA_SHARED()")) {
+           attr = new SgUntypedOtherExpression(e_cuda_shared);
+        }
+        else if (ATmatch(head, "CUDA_PINNED()")) {
+           attr = new SgUntypedOtherExpression(e_cuda_pinned);
+        }
+        else if (ATmatch(head, "CUDA_TEXTURE()")) {
+           attr = new SgUntypedOtherExpression(e_cuda_texture);
+        }
+
         else {
            std::cerr << "...TODO... finish attributes in OptAttrSpecList" << std::endl;
            return ATfalse;
         }
 
         setSourcePosition(attr, head);
-        attr_list->get_token_list().push_back(attr);
+        attr_list->get_expressions().push_back(attr);
      }
   }
   else return ATfalse;
 
   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesSpec(ATerm term, SgUntypedOtherExpression** attr_spec)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CudaAttributesSpec: %s\n", ATwriteToString(term));
+#endif
+
+   *attr_spec = NULL;
+
+   if (ATmatch(term, "CudaAttributesSpec(CUDA_DEVICE())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_device_memory);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_MANAGED())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_managed);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_CONSTANT())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_constant);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_SHARED())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_shared);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_PINNED())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_pinned);
+   }
+   else if (ATmatch(term, "CudaAttributesSpec(CUDA_TEXTURE())")) {
+      *attr_spec = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_texture);
+   }
+   else return ATfalse;
+
+   setSourcePosition(*attr_spec, term);
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -1476,49 +1382,54 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptInitialization(ATerm term, Sg
 }
 
 //========================================================================================
-// R509 coarray-spec (optional only for now)
+// R509 coarray-spec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+ATbool ATermToUntypedFortranTraversal::traverse_CoarraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_OptCoarraySpec: %s\n", ATwriteToString(term));
+   printf("... traverse_CoarraySpec: %s\n", ATwriteToString(term));
 #endif
 
+ //TODO - implement CoarraySpec
+   std::cerr << "...TODO... implement OptCoarraySpec" << std::endl;
+   return ATfalse;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_OptCoarraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+{
    if (ATmatch(term, "no-list()")) {
+      // MATCHED no-list()
+   }
+   else if (traverse_CoarraySpec(term, base_type, array_type)) {
+      // MATCHED CoarraySpec
    }
    else {
-      //TODO - implement CoarraySpec  
-      std::cerr << "...TODO... implement OptCoarraySpec" << std::endl;
       return ATfalse;
    }
-
    return ATtrue;
 }
 
 //========================================================================================
 // R515 array-spec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_OptArraySpec: %s\n", ATwriteToString(term));
+   printf("... traverse_ArraySpec: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_array_spec_arg;
    SgUntypedSubscriptExpression *range;
    SgUntypedExpression *lower_bound, *upper_bound, *stride;
    SgUntypedExprListExpression *dim_info;
-   Fortran_ROSE_Translation::ExpressionKind expr_enum = Fortran_ROSE_Translation::e_unknown;
+   General_Language_Translation::ExpressionKind expr_enum = General_Language_Translation::e_unknown;
    int rank = 0;
 
    *array_type = NULL;
 
-   if (ATmatch(term, "no-list()")) {
-      // MATCHED no-list()
-   }
-   else if (ATmatch(term, "ArraySpec(<term>)", &t_array_spec_arg)) {
+   if (ATmatch(term, "ArraySpec(<term>)", &t_array_spec_arg)) {
 
-      dim_info = new SgUntypedExprListExpression(Fortran_ROSE_Translation::e_array_shape);
+      dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
       setSourcePosition(dim_info, t_array_spec_arg);
 
    // check for non-list array-spec term first, e.g., dimension A(*)
@@ -1530,7 +1441,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
          stride = new SgUntypedNullExpression();
          setSourcePositionUnknown(stride);
 
-         expr_enum = Fortran_ROSE_Translation::e_assumed_or_implied_shape_array;
+         expr_enum = General_Language_Translation::e_assumed_or_implied_shape;
          range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
          setSourcePosition(range, t_array_spec_arg);
 
@@ -1557,7 +1468,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_ExplicitShape(head, &lower_bound, &upper_bound)) {
-            expr_enum = Fortran_ROSE_Translation::e_explicit_shape;
+            expr_enum = General_Language_Translation::e_explicit_shape;
 
             rank += 1;
 
@@ -1570,9 +1481,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
             dim_info->get_expressions().push_back(range);
          }
          else if (traverse_AssumedShape(head, &lower_bound)) {
-            ROSE_ASSERT(expr_enum == Fortran_ROSE_Translation::e_unknown ||
-                        expr_enum == Fortran_ROSE_Translation::e_assumed_size_array);
-            expr_enum = Fortran_ROSE_Translation::e_assumed_size_array;
+            cout << "... this is assumed shape why care about expr_num == " << expr_enum << endl;
+    //??            ROSE_ASSERT(expr_enum == General_Language_Translation::e_unknown ||
+    //??                        expr_enum == General_Language_Translation::e_assumed_size);
+            expr_enum = General_Language_Translation::e_assumed_shape;
 
             rank += 1;
 
@@ -1588,7 +1500,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
             dim_info->get_expressions().push_back(range);
          }
         else {
-           std::cerr << "traverse_OptArraySpec: ERROR in ArraySpec list" << std::endl;
+           std::cerr << "traverse_ArraySpec: ERROR in ArraySpec list" << std::endl;
            return ATfalse;
         }
       }
@@ -1600,6 +1512,20 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntyp
       return ATfalse;
    }
 
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_OptArraySpec(ATerm term, SgUntypedType* base_type, SgUntypedArrayType** array_type)
+{
+   if (ATmatch(term, "no-list()")) {
+      // MATCHED no-list()
+   }
+   else if (traverse_ArraySpec(term, base_type, array_type)) {
+      // MATCHED ArraySpec
+   }
+   else {
+      return ATfalse;
+   }
    return ATtrue;
 }
 
@@ -1648,7 +1574,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShapeList(ATerm term, Sg
       ATerm head = ATgetFirst(tail);
       tail = ATgetNext(tail);
       if (traverse_ExplicitShape(head, &lower_bound, &upper_bound)) {
-         int expr_enum = Fortran_ROSE_Translation::e_array_range;
+         int expr_enum = General_Language_Translation::e_explicit_shape;
          
          if (isSgUntypedNullExpression(lower_bound))
             {
@@ -1659,7 +1585,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShapeList(ATerm term, Sg
          else
             {
             // add stride explicitly and let unparser ignore it
-               stride = new SgUntypedValueExpression(SgToken::FORTRAN_TYPE,"1",buildType(SgUntypedType::e_int));
+               stride = new SgUntypedValueExpression(SgToken::FORTRAN_TYPE,"1",
+                                                     UntypedBuilder::buildType(SgUntypedType::e_int));
                setSourcePositionUnknown(stride);
          
                range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
@@ -1713,7 +1640,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedSize(ATerm term, SgUntype
    ATerm t_explicit_shape_list, t_lower_bound;
    SgUntypedExpression *lower_bound, *upper_bound, *stride;
 
-   SgUntypedExprListExpression* dim_info = new SgUntypedExprListExpression(Fortran_ROSE_Translation::e_array_shape);
+   SgUntypedExprListExpression* dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
    setSourcePosition(dim_info, term);
 
    if (ATmatch(term, "AssumedSize(<term>,<term>)", &t_explicit_shape_list, &t_lower_bound)) {
@@ -1737,7 +1664,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedSize(ATerm term, SgUntype
       stride = new SgUntypedNullExpression();
       setSourcePositionUnknown(stride);
 
-      int expr_enum = Fortran_ROSE_Translation::e_assumed_size_array;
+      int expr_enum = General_Language_Translation::e_assumed_size;
       SgUntypedSubscriptExpression* range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
       setSourcePosition(range, t_lower_bound);
 
@@ -2166,18 +2093,18 @@ ATbool ATermToUntypedFortranTraversal::traverse_MainProgram(ATerm term, SgUntype
    ATerm term1, term2, term3, term4, term5;
    std::string label, name;
 
-   SgUntypedProgramHeaderDeclaration* main_program;
-   SgUntypedNamedStatement* program_stmt;
-   SgUntypedOtherStatement* contains_stmt;
-   SgUntypedNamedStatement* end_program_stmt;
-   SgUntypedFunctionScope * function_scope;
+   SgUntypedProgramHeaderDeclaration* main_program = NULL;;
+   SgUntypedNamedStatement*     program_stmt = NULL;;
+   SgUntypedOtherStatement*    contains_stmt = NULL;;
+   SgUntypedNamedStatement* end_program_stmt = NULL;;
+   SgUntypedFunctionScope * function_scope = NULL;;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list;
-   SgUntypedStatementList*            stmt_list;
-   SgUntypedFunctionDeclarationList*  func_list;
-   SgUntypedInitializedNameList*     param_list;
-   SgUntypedTokenList*              prefix_list;
+   SgUntypedDeclarationStatementList* decl_list = NULL;
+   SgUntypedStatementList*            stmt_list = NULL;
+   SgUntypedFunctionDeclarationList*  func_list = NULL;
+   SgUntypedInitializedNameList*     param_list = NULL;
+   SgUntypedExprListExpression*     prefix_list = NULL;
 
    if (ATmatch(term, "MainProgram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
    {
@@ -2189,7 +2116,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_MainProgram(ATerm term, SgUntype
       stmt_list   = new SgUntypedStatementList();
       func_list   = new SgUntypedFunctionDeclarationList();
       param_list  = new SgUntypedInitializedNameList();
-      prefix_list = new SgUntypedTokenList();
+      prefix_list = new SgUntypedExprListExpression();
 
       if (traverse_InitialSpecPart(term2, decl_list)) {
          // InitialSpecPart
@@ -2206,7 +2133,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_MainProgram(ATerm term, SgUntype
       function_scope = new SgUntypedFunctionScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_OptInternalSubprogramPart(term4, &contains_stmt, function_scope)) {
-         // OptInternalSubprogramPart
+         if (contains_stmt != NULL)
+            {
+               stmt_list->get_stmt_list().push_back(contains_stmt);
+            }
          setSourcePosition(func_list, term4);
       } else return ATfalse;
       if (traverse_EndProgramStmt(term5, &end_program_stmt)) {
@@ -2214,22 +2144,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_MainProgram(ATerm term, SgUntype
       } else return ATfalse;
    } else return ATfalse;
 
-// organize parameters to construct the program
-//
-#if 0
-//TODO - is this needed
-   SgUntypedExpression* null_expr1 = new SgUntypedExpression(SgToken::FORTRAN_NULL);
-   SgUntypedExpression* null_expr2 = new SgUntypedExpression(SgToken::FORTRAN_NULL);
-   SgUntypedType* type = new SgUntypedType("void",null_expr1/*type_kind*/,false,false,false,true/*is_intrinsic*/,false,false,
-                                                  null_expr2/*char_length*/,"",false/*char_length_is_string*/,SgUntypedType::e_void);
-#else
-   SgUntypedType* type = buildType(SgUntypedType::e_void);
-#endif
-
 // create the program
-   main_program   = new SgUntypedProgramHeaderDeclaration(label, name, param_list,type,
-                                                          function_scope, prefix_list, end_program_stmt);
 
+   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
+   main_program = new SgUntypedProgramHeaderDeclaration(label, name, param_list, type,
+                                                        function_scope, prefix_list, end_program_stmt);
    setSourcePositionIncludingNode(main_program, term, end_program_stmt);
 
 // add program to the global scope
@@ -3125,11 +3044,12 @@ ATbool ATermToUntypedFortranTraversal::traverse_InterfaceStmt(ATerm term, SgUnty
    SgUntypedStatementList*            stmt_list = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  func_list = new SgUntypedFunctionDeclarationList();
    SgUntypedInitializedNameList*     param_list = new SgUntypedInitializedNameList();
-   SgUntypedTokenList*              prefix_list = new SgUntypedTokenList();
+   SgUntypedExprListExpression*     prefix_list = new SgUntypedExprListExpression();
 
    SgUntypedFunctionScope* interface_scope = new SgUntypedFunctionScope(label,decl_list,stmt_list,func_list);
 
-   *interface_decl = new SgUntypedInterfaceDeclaration(label, name, param_list, buildType(SgUntypedType::e_unknown),
+   *interface_decl = new SgUntypedInterfaceDeclaration(label, name, param_list,
+                                                       UntypedBuilder::buildType(SgUntypedType::e_unknown),
                                                        interface_scope, prefix_list, NULL, interface_type);
 
 // Source positions can only be set once end-interface-stmt is matched
@@ -3369,11 +3289,13 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExternalStmt(ATerm term, SgUntyp
 //========================================================================================
 // Prefix (R1225)
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type)
+ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptPrefix: %s\n", ATwriteToString(term));
 #endif
+
+   using namespace General_Language_Translation;
 
    if (ATmatch(term, "no-prefix()"))
    {
@@ -3385,35 +3307,63 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedT
       ATermList tail = (ATermList) ATmake("<term>", term);
       while (! ATisEmpty(tail))
       {
-         SgUntypedToken* prefix = NULL;
+         SgUntypedOtherExpression* prefix = NULL;
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_DeclarationTypeSpec(head, type)) {
             // MATCHED DeclarationTypeSpec
          }
          else if (ATmatch(head, "ELEMENTAL()")) {
-            prefix = new SgUntypedToken("ELEMENTAL", SgToken::FORTRAN_ELEMENTAL);
+            prefix = new SgUntypedOtherExpression(e_function_modifier_elemental);
          }
          else if (ATmatch(head, "IMPURE()")) {
-            prefix = new SgUntypedToken("IMPURE", SgToken::FORTRAN_IMPURE);
+            prefix = new SgUntypedOtherExpression(e_function_modifier_impure);
          }
          else if (ATmatch(head, "MODULE()")) {
-            prefix = new SgUntypedToken("MODULE", SgToken::FORTRAN_MODULE);
+            prefix = new SgUntypedOtherExpression(e_function_modifier_module);
          }
          else if (ATmatch(head, "PURE()")) {
-            prefix = new SgUntypedToken("PURE", SgToken::FORTRAN_PURE);
+            prefix = new SgUntypedOtherExpression(e_function_modifier_pure);
          }
          else if (ATmatch(head, "RECURSIVE()")) {
-            prefix = new SgUntypedToken("RECURSIVE", SgToken::FORTRAN_RECURSIVE);
+            prefix = new SgUntypedOtherExpression(e_function_modifier_recursive);
+         }
+         else if (traverse_CudaAttributesPrefix(head, &prefix)) {
+            // MATCHED CudaAttributesPrefix
          }
          else return ATfalse;
 
          if (prefix != NULL) {
             setSourcePosition(prefix, head);
-            prefix_list->get_token_list().push_back(prefix);
+            prefix_list->get_expressions().push_back(prefix);
          }
       }
    }
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CudaAttributesPrefix: %s\n", ATwriteToString(term));
+#endif
+
+   *prefix = NULL;
+
+   if (ATmatch(term, "CudaAttributesPrefix(CUDA_HOST())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_host);
+   }
+   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_GLOBAL())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_global_function);
+   }
+   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_DEVICE())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_device);
+   }
+   else if (ATmatch(term, "CudaAttributesPrefix(CUDA_GRID_GLOBAL())")) {
+      *prefix = new SgUntypedOtherExpression(General_Language_Translation::e_cuda_grid_global);
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -3438,11 +3388,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_FunctionSubprogram(ATerm term, S
    SgUntypedType* function_type = NULL;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list;
-   SgUntypedStatementList*            stmt_list;
-   SgUntypedFunctionDeclarationList*  func_list;
-   SgUntypedInitializedNameList*     param_list;
-   SgUntypedTokenList*              prefix_list;
+   SgUntypedDeclarationStatementList* decl_list = NULL;
+   SgUntypedStatementList*            stmt_list = NULL;
+   SgUntypedFunctionDeclarationList*  func_list = NULL;
+   SgUntypedInitializedNameList*     param_list = NULL;
+   SgUntypedExprListExpression*     prefix_list = NULL;
 
    if (ATmatch(term, "FunctionSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5,&term6))
    {
@@ -3462,7 +3412,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_FunctionSubprogram(ATerm term, S
          stmt_list   = new SgUntypedStatementList();
          func_list   = new SgUntypedFunctionDeclarationList();
          param_list  = new SgUntypedInitializedNameList();
-         prefix_list = new SgUntypedTokenList();
+         prefix_list = new SgUntypedExprListExpression();
 
          if (traverse_OptPrefix(prefix_term, prefix_list, &function_type)) {
             // MATCHED OptPrefix
@@ -3512,7 +3462,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_FunctionSubprogram(ATerm term, S
    if (function_type == NULL) {
       // Build an unknown type for now
       // TODO - check suffix for RESULT and find correct type
-      function_type = buildType(SgUntypedType::e_unknown);
+      function_type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
       std::cerr << "...TODO... implement function type SgUntypedFunctionDeclaration" << std::endl;
    }
 
@@ -3620,11 +3570,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_SubroutineSubprogram(ATerm term,
    SgUntypedType* function_type = NULL;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list;
-   SgUntypedStatementList*            stmt_list;
-   SgUntypedFunctionDeclarationList*  func_list;
-   SgUntypedInitializedNameList*     param_list;
-   SgUntypedTokenList*              prefix_list;
+   SgUntypedDeclarationStatementList* decl_list = NULL;
+   SgUntypedStatementList*            stmt_list = NULL;
+   SgUntypedFunctionDeclarationList*  func_list = NULL;
+   SgUntypedInitializedNameList*     param_list = NULL;
+   SgUntypedExprListExpression*     prefix_list = NULL;
 
    if (ATmatch(term, "SubroutineSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
    {
@@ -3644,7 +3594,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_SubroutineSubprogram(ATerm term,
          stmt_list   = new SgUntypedStatementList();
          func_list   = new SgUntypedFunctionDeclarationList();
          param_list  = new SgUntypedInitializedNameList();
-         prefix_list = new SgUntypedTokenList();
+         prefix_list = new SgUntypedExprListExpression();
 
          if (traverse_OptPrefix(prefix_term, prefix_list, &function_type)) {
             // MATCHED OptPrefix
@@ -3691,7 +3641,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_SubroutineSubprogram(ATerm term,
 
 // organize parameters to construct the subroutine
 //
-   SgUntypedType* type = buildType(SgUntypedType::e_void);
+   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
 
 // create the subroutine
    subroutine = new SgUntypedSubroutineDeclaration(label, name, param_list, type,
@@ -3726,7 +3676,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptDummyArgList(ATerm term, SgUn
          tail = ATgetNext(tail);
          if (ATmatch(head, "<str>", &arg)) {
             // Matched an arg name
-            SgUntypedInitializedName* iname = new SgUntypedInitializedName(buildType(SgUntypedType::e_unknown), arg);
+            SgUntypedInitializedName* iname = new SgUntypedInitializedName(UntypedBuilder::buildType(SgUntypedType::e_unknown), arg);
             setSourcePosition(iname, head);
             param_list->get_name_list().push_back(iname);
          } else return ATfalse;
@@ -3789,11 +3739,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_SeparateModuleSubprogram(ATerm t
    SgUntypedFunctionScope * function_scope;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list;
-   SgUntypedStatementList*            stmt_list;
-   SgUntypedFunctionDeclarationList*  func_list;
-   SgUntypedInitializedNameList*     param_list;
-   SgUntypedTokenList*              prefix_list;
+   SgUntypedDeclarationStatementList* decl_list = NULL;
+   SgUntypedStatementList*            stmt_list = NULL;
+   SgUntypedFunctionDeclarationList*  func_list = NULL;
+   SgUntypedInitializedNameList*     param_list = NULL;
+   SgUntypedExprListExpression*     prefix_list = NULL;
 
    if (ATmatch(term, "SeparateModuleSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
    {
@@ -3805,7 +3755,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_SeparateModuleSubprogram(ATerm t
       stmt_list   = new SgUntypedStatementList();
       func_list   = new SgUntypedFunctionDeclarationList();
       param_list  = new SgUntypedInitializedNameList();
-      prefix_list = new SgUntypedTokenList();
+      prefix_list = new SgUntypedExprListExpression();
 
       if (traverse_InitialSpecPart(term2, decl_list)) {
          // InitialSpecPart
@@ -3834,7 +3784,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_SeparateModuleSubprogram(ATerm t
 // organize parameters to construct the separate-module-subprogram
 //
 //TODO - is this OK (check everywhere in this file)
-   SgUntypedType* type = buildType(SgUntypedType::e_void);
+   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
 
 // create the subroutine
    mp_subprogram = new SgUntypedSubroutineDeclaration(label, name, param_list, type,
@@ -3988,6 +3938,58 @@ ATbool ATermToUntypedFortranTraversal::traverse_ContainsStmt(ATerm term, SgUntyp
 
    *contains_stmt = new SgUntypedOtherStatement(label, keyword);
    setSourcePositionExcludingTerm(*contains_stmt, term, term_eos);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// CudaAttributesStmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_CudaAttributesStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CudaAttributesStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, term3, eos_term;
+   std::string label;
+   std::string eos;
+
+   int attr_enum;
+   SgUntypedNameList* name_list;
+   SgUntypedOtherExpression* attr_spec;
+   SgUntypedNameListDeclaration* cuda_attributes_stmt;
+
+   if (ATmatch(term, "CudaAttributesStmt(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&eos_term))
+   {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      if (traverse_CudaAttributesSpec(term2, &attr_spec)) {
+         // MATCHED CudaAttributesSpec
+      } else return ATfalse;
+
+      attr_enum = attr_spec->get_expression_enum();
+      delete attr_spec;
+
+      name_list = new SgUntypedNameList();
+      setSourcePosition(name_list, term3);
+
+      if (traverse_NameList(term3, name_list)) {
+         // MATCHED NameList
+      } else return ATfalse;
+
+      if (traverse_eos(eos_term, eos)) {
+         // MATCHED EOS
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   cuda_attributes_stmt = new SgUntypedNameListDeclaration(label, attr_enum, name_list);
+   setSourcePositionExcludingTerm(cuda_attributes_stmt, term, eos_term);
+
+   decl_list->get_decl_list().push_back(cuda_attributes_stmt);
 
    return ATtrue;
 }

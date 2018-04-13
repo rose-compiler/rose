@@ -376,6 +376,20 @@ SmtSolver::check() {
             ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
     }
 
+    if (mlog[DEBUG]) {
+        switch (retval) {
+            case SAT_NO:
+                mlog[DEBUG] <<"  unsat\n";
+                break;
+            case SAT_YES:
+                mlog[DEBUG] <<"  sat\n";
+                break;
+            case SAT_UNKNOWN:
+                mlog[DEBUG] <<"  unknown\n";
+                break;
+        }
+    }
+    
     // Cache the result
     if (doMemoization_) {
         memoization_[h] = retval;
@@ -468,10 +482,8 @@ SmtSolver::checkExe() {
     // Look for an expression that's just "sat" or "unsat"
     BOOST_FOREACH (const SExpr::Ptr &expr, parsedOutput_) {
         if (expr->name() == "sat") {
-            mlog[DEBUG] <<"satisfied\n";
             return SAT_YES;
         } else if (expr->name() == "unsat") {
-            mlog[DEBUG] <<"not satisfied\n";
             return SAT_NO;
         }
     }
@@ -732,6 +744,9 @@ SmtSolver::selfTest() {
     exprs.push_back(makeSignedLe(a8, z8, NO_SOLVER, "signed less than or equal"));
     exprs.push_back(makeSignedGt(a8, z8, NO_SOLVER, "signed greater than"));
     exprs.push_back(makeSignedGe(a8, z8, NO_SOLVER, "signed greather than or equal"));
+
+    //  Wider than 64 bits
+    exprs.push_back(makeEq(z256, a256, NO_SOLVER, "wide constant"));
 
     // Boolean operations
     exprs.push_back(makeEq(makeIte(makeZerop(a8), z8, b8), b8, NO_SOLVER, "if-then-else"));

@@ -830,14 +830,22 @@ protected:
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         name("Symbolic");
-        (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
+        ASSERT_always_not_null(protoval);
+        ASSERT_always_not_null2(protoval.dynamicCast<SValue>(),
+                                "SymbolicSemantics supports only symbolic SValue types or derivatives thereof");
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         name("Symbolic");
-        (void) SValue::promote(state->protoval()); // values must have SymbolicSemantics::SValue dynamic type
+        ASSERT_always_not_null(state);
+        ASSERT_always_not_null(state->registerState());
+        ASSERT_always_not_null2(boost::dynamic_pointer_cast<RegisterState>(state->registerState()),
+                                "SymbolicSemantics supports only RegisterStateGeneric or derivatives thereof");
+        ASSERT_always_not_null(state->protoval());
+        ASSERT_always_not_null2(state->protoval().dynamicCast<SValue>(),
+                                "SymbolicSemantics supports only symbolic SValue types or derivatives thereof");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

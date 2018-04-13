@@ -545,7 +545,8 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputRotateRight(inode);
                 break;
             case SymbolicExpr::OP_SDIV:
-                throw Exception("OP_SDIV not implemented");
+                retval = outputDivide(inode, "bvsdiv");
+                break;
             case SymbolicExpr::OP_SET:
                 retval = outputSet(inode);
                 break;
@@ -577,12 +578,13 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputSignedCompare(inode);
                 break;
             case SymbolicExpr::OP_SMOD:
-                throw Exception("OP_SMOD not implemented");
+                retval = outputModulo(inode, "bvsrem");
+                break;
             case SymbolicExpr::OP_SMUL:
                 retval = outputMultiply(inode);
                 break;
             case SymbolicExpr::OP_UDIV:
-                retval = outputUnsignedDivide(inode);
+                retval = outputDivide(inode, "bvudiv");
                 break;
             case SymbolicExpr::OP_UEXTEND:
                 retval = outputUnsignedExtend(inode);
@@ -600,7 +602,7 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputUnsignedCompare(inode);
                 break;
             case SymbolicExpr::OP_UMOD:
-                retval = outputUnsignedModulo(inode);
+                retval = outputModulo(inode, "bvurem");
                 break;
             case SymbolicExpr::OP_UMUL:
                 retval = outputMultiply(inode);
@@ -1053,7 +1055,7 @@ SmtlibSolver::outputMultiply(const SymbolicExpr::InteriorPtr &inode) {
 //
 // where a_extended and b_extended are zero extended to have the width max(a.size,b.size).
 SmtSolver::SExprTypePair
-SmtlibSolver::outputUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputDivide(const SymbolicExpr::InteriorPtr &inode, const std::string &operation) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
@@ -1065,7 +1067,7 @@ SmtlibSolver::outputUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
                                         SExpr::instance("extract"),
                                         SExpr::instance(inode->child(0)->nBits()-1),
                                         SExpr::instance(0)),
-                        SExpr::instance(SExpr::instance("bvudiv"),
+                        SExpr::instance(SExpr::instance(operation),
                                         outputCast(outputExpression(aExtended), BIT_VECTOR).first,
                                         outputCast(outputExpression(bExtended), BIT_VECTOR).first));
 
@@ -1077,7 +1079,7 @@ SmtlibSolver::outputUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
 //
 // where a_extended and b_extended are zero extended to have the width max(a.size,b.size).
 SmtSolver::SExprTypePair
-SmtlibSolver::outputUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputModulo(const SymbolicExpr::InteriorPtr &inode, const std::string &operation) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());

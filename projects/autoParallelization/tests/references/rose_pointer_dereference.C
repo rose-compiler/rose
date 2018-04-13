@@ -1,5 +1,5 @@
 #define max_ir 100
-#include "omp.h" 
+#include <omp.h> 
 int *nd_array[100];
 int *gr_array[100];
 

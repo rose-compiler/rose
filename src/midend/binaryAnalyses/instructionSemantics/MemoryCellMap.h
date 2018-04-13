@@ -94,6 +94,12 @@ public:
      *  either the (single) cell found by that function or a null pointer. */
     virtual MemoryCellPtr findCell(const SValuePtr &addr) const;
 
+    /** Predicate to determine whether all bytes are present.
+     *
+     *  Returns true if bytes at the specified address and the following consecutive addresses are all present in this
+     *  memory state. */
+    virtual bool isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps) const;
+
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;

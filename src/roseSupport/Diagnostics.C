@@ -24,6 +24,7 @@ namespace BinaryAnalysis {
     namespace ReturnValueUsed { void initDiagnostics(); }
     namespace StackDelta { void initDiagnostics(); }
     namespace Strings { void initDiagnostics(); }
+    void SerialIo_initDiagnostics();
 } // namespace
 } // namespace
 #endif
@@ -99,8 +100,8 @@ void initialize() {
         Sawyer::Message::assertionStream = mlog[FATAL];
 
         // Turn down the progress bar rates
-        Sawyer::ProgressBarSettings::initialDelay(12.0);
-        Sawyer::ProgressBarSettings::minimumUpdateInterval(2.5);
+        Sawyer::ProgressBarSettings::initialDelay(1.0);
+        Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2);
 
         // Register logging facilities from other software layers.  Calling these initializers should make all the streams
         // point to the Rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
@@ -119,6 +120,7 @@ void initialize() {
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();
+        BinaryAnalysis::SerialIo_initDiagnostics();
         BinaryAnalysis::SmtSolver::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();

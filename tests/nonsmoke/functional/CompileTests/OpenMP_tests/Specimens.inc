@@ -288,6 +288,7 @@ nonsmoke_getDataSharingAttribute_c = \
     upperCase.c \
     variables.c
 
+# TODO: move typical test cases above into verify category, or at least into dataRaceBench
 nonsmoke_getDataSharingAttribute_c_verify = \
     3loops.c \
     alignment.c \
