@@ -109,8 +109,7 @@ enum enumType1 {
 
  
 
-const map<basic_string<char>, unsigned int>::value_type const1 =
-      map<basic_string<char>, unsigned int>::value_type("", enum_val1);
+const map<basic_string<char>, unsigned int>::value_type const1 = map<basic_string<char>, unsigned int>::value_type("", enum_val1);
 
  
 

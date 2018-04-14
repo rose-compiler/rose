@@ -598,7 +598,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_23.c \
      test2018_24.c \
      test2018_25.c \
-     test2018_27.c \
      test2018_28.c \
      test2018_29.c \
      test2018_30.c \
@@ -617,6 +616,7 @@ FAILING_2017_TESTS = \
 
 FAILING_2018_TESTS = \
      test2018_26.c \
+     test2018_27.c \
      test2018_34.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
