@@ -128,6 +128,14 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
 
    switch (node->variantT())
    {
+     case V_SgUntypedUnaryOperator:
+       {
+          SgUntypedExpression* ut_expr = isSgUntypedUnaryOperator(node);
+          SgExpressionPtrList children(childAttrs);
+          sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children);
+          break;
+       }
+
      case V_SgUntypedBinaryOperator:
        {
           SgUntypedExpression* ut_expr = isSgUntypedBinaryOperator(node);

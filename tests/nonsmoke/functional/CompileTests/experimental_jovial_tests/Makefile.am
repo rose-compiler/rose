@@ -13,6 +13,9 @@ JOVIAL_TESTCODES = \
  1_2_3_program-body_c.jov               \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
+ 4_9_stop_stmt_a.jov                    \
+ 4_9_stop_stmt_b.jov                    \
+ 4_9_stop_stmt_c.jov                    \
  5_1_1_integer-primary.jov
 
 JOVIAL_TESTCODES_WORKING_ON = \
