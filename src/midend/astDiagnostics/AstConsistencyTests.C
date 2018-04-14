@@ -4547,6 +4547,10 @@ TestMangledNames::visit ( SgNode* node )
         {
        // DQ (1/12/13): Added fix for scopes that may have been deleted (happens where astDelete mechanism is used)
        // mangledName = declarationStatement->get_mangled_name().getString();
+          if (declarationStatement->get_scope() == NULL)
+             {
+               printf ("ERROR: TestMangledNames::visit(): declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+             }
           ROSE_ASSERT(declarationStatement->get_scope() != NULL);
 #if 0
           printf ("TestMangledNames::visit(): declarationStatement->get_scope() = %p = %s \n",declarationStatement->get_scope(),declarationStatement->get_scope()->class_name().c_str());
