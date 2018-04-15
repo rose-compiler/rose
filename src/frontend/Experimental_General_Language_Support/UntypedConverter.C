@@ -422,8 +422,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
 
    ROSE_ASSERT(ut_type->get_is_user_defined() == false);
 
-   SgExpression*   kindExpression = NULL;
-   SgExpression* lengthExpression = NULL;
+   SgExpression* kindExpression = NULL;
 
    if (ut_type->get_has_kind())
       {
@@ -431,15 +430,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
          SgUntypedExpression* ut_kind = ut_type->get_type_kind();
       // TODO - figure out how to handle operators (or anything with children)
          ROSE_ASSERT(isSgUntypedValueExpression(ut_kind) != NULL || isSgUntypedReferenceExpression(ut_kind) != NULL);
-         kindExpression = convertSgUntypedExpression(ut_kind, children);
-      }
-   if (ut_type->get_char_length_is_string())
-      {
-         SgExpressionPtrList children;
-         SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
-      // TODO - figure out how to handle operators (or anything with children)
-         ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
-         lengthExpression = convertSgUntypedExpression(ut_length, children);
+         kindExpression = convertSgUntypedExpression(ut_kind, children, scope);
       }
 
 // TODO - determine if SageBuilder can be used (or perhaps should be updated)
@@ -447,6 +438,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
       {
         case SgUntypedType::e_void:           sg_type = SageBuilder::buildVoidType();              break;
         case SgUntypedType::e_int:            sg_type = SgTypeInt::createType(0, kindExpression);  break;
+        case SgUntypedType::e_uint:           sg_type = SgTypeUnsignedInt::createType(kindExpression); break;
         case SgUntypedType::e_float:          sg_type = SgTypeFloat::createType(kindExpression);   break;
         case SgUntypedType::e_double:         sg_type = SageBuilder::buildDoubleType();            break;
 
@@ -454,19 +446,23 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
         case SgUntypedType::e_complex:        sg_type = SgTypeComplex::createType(SgTypeFloat::createType(kindExpression), kindExpression); break;
         case SgUntypedType::e_double_complex: sg_type = SgTypeComplex::createType(SgTypeDouble::createType());                              break;
 
+     // TODO - is incorrect (may be closer to a hexadecimal or Hollerith, but used in boolean expressions)
+        case SgUntypedType::e_bit:            sg_type = SgTypeBool::createType(kindExpression);    break;
         case SgUntypedType::e_bool:           sg_type = SgTypeBool::createType(kindExpression);    break;
 
-     // character and string types
-        case SgUntypedType::e_char:
+        case SgUntypedType::e_char:           sg_type = SgTypeChar::createType(kindExpression);    break;
+        case SgUntypedType::e_string:
            {
-              if (lengthExpression)
-                 {
-                    sg_type = SgTypeString::createType(lengthExpression, kindExpression);          break;
-                 }
-              else
-                 {
-                    sg_type = SgTypeChar::createType(kindExpression);                              break;
-                 }
+              SgExpressionPtrList children;
+              SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
+           // TODO - figure out how to handle operators (or anything with children)
+              ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
+
+              SgExpression* sg_length = convertSgUntypedExpression(ut_length, children, scope);
+              ROSE_ASSERT(sg_length != NULL);
+
+              sg_type = SageBuilder::buildStringType(sg_length);
+              break;
            }
 
         default:
@@ -480,10 +476,6 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
    if (kindExpression != NULL)
       {
          kindExpression->set_parent(sg_type);
-      }
-   if (lengthExpression != NULL)
-      {
-         lengthExpression->set_parent(sg_type);
       }
 
    ROSE_ASSERT(sg_type != NULL);
@@ -1329,6 +1321,16 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
 #endif
          }
+      else if ( isSgUntypedUnaryOperator(ut_expr) != NULL )
+         {
+            SgUntypedUnaryOperator* op = dynamic_cast<SgUntypedUnaryOperator*>(ut_expr);
+            ROSE_ASSERT(children.size() == 1);
+            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, children[0]);
+            sg_expr = sg_operator;
+#if DEBUG_UNTYPED_CONVERTER
+            printf ("  -  unary operator      ==>   %s\n", op->get_operator_name().c_str());
+#endif
+         }
       else
          {
             cerr << "UntypedConverter::convertSgUntypedExpression: unimplemented for class " << ut_expr->class_name() << endl;
@@ -1404,9 +1406,11 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 {
    SgValueExp* sg_expr = NULL;
 
+   // TODO - what about doubles, longs, Jovial fixed, ...
    switch(ut_expr->get_type()->get_type_enum_id())
        {
          case SgUntypedType::e_int:
+         case SgUntypedType::e_uint:
             {
                std::string constant_text = ut_expr->get_value_string();
 
@@ -1433,13 +1437,24 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 
                sg_expr = new SgIntVal(atoi(ut_expr->get_value_string().c_str()), constant_text);
                setSourcePositionFrom(sg_expr, ut_expr);
-
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - value expression TYPE_INT \n");
-#endif
-
                break;
             }
+
+         case SgUntypedType::e_float:
+            {
+               std::string constant_text = ut_expr->get_value_string();
+
+            // preserve kind parameter if any
+               if (ut_expr->get_type()->get_has_kind())
+                  {
+                     cerr << "WARNING: UntypedConverter::convertSgUntypedValueExpression: kind value not handled \n";
+                  }
+
+               sg_expr = new SgFloatVal(atof(ut_expr->get_value_string().c_str()), constant_text);
+               setSourcePositionFrom(sg_expr, ut_expr);
+               break;
+            }
+
          default:
             {
                ROSE_ASSERT(0);  // NOT IMPLEMENTED
@@ -1563,8 +1578,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
          case General_Language_Translation::e_operator_and:
             {
 #if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_and
-:\n");
+               printf("  - e_operator_and:\n");
 #endif
                op = new SgAndOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);

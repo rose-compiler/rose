@@ -428,7 +428,8 @@ BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned 
         if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
             // errno is set, but no way to access it in an async-signal-safe way
             const char *mesg= "Rose::BinaryDebugger::attach: ptrace_traceme failed\n";
-            write(2, mesg, strlen(mesg));
+            if (write(2, mesg, strlen(mesg)) == -1)
+                abort();
             _Exit(1);                                   // avoid calling C++ destructors from child
         }
 
@@ -436,10 +437,13 @@ BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned 
 
         // If failure, we must still call only async signal-safe functions.
         const char *mesg = "Rose::BinaryDebugger::attach: exec failed: ";
-        write(2, mesg, strlen(mesg));
+        if (write(2, mesg, strlen(mesg)) == -1)
+            abort();
         mesg = strerror(errno);
-        write(2, mesg, strlen(mesg));
-        write(2, "\n", 1);
+        if (write(2, mesg, strlen(mesg)) == -1)
+            abort();
+        if (write(2, "\n", 1) == -1)
+            abort();
         _Exit(1);
     }
 

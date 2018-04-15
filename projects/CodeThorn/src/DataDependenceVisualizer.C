@@ -99,8 +99,13 @@ void DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileN
   * \date 2013.
  */
 void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, bool withDataDependencies) {
+  /*
+    generates a new cfg and a dot-cluster for each function and
+    computes the inter-procedural edges with interFlow and adds them
+    as edges between nodes of the clusters.
 
-  // temporary combersome recomputation
+    temporary combersome recomputation; TODO: replace this with a proper extraction from the icfg
+  */
   Flow flow=cfanalyzer->flow(root);
   LabelSet entryLabels=cfanalyzer->functionEntryLabels(flow);
   InterFlow iflow=cfanalyzer->interFlow(flow);
@@ -174,8 +179,8 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
     if(((*i).exit != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL))
       myfile<<(*i).exit<<" -> "<<(*i).callReturn<<";\n";
     // generate optional local edge
-    if(((*i).call != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL))
-      myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
+    //if(((*i).entry == Labeler::NO_LABEL) && ((*i).exit== Labeler::NO_LABEL))
+    //  myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
   }
   myfile<<"// access to global variables\n";
   myfile<<accessToGlobalVariables.str();
