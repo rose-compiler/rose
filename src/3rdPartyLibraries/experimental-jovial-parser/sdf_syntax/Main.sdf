@@ -22,7 +22,7 @@ sorts
 % 3.0    %  SubroutineDeclaration SubroutineDefinition
 
 % 4.0    %  Statement SimpleStatement NullStatement Label StatementName CompoundStatement
-            LabelList
+            LabeledSimpleStatement LabelList
 
 InterferenceControl
 TraceControl
@@ -219,7 +219,7 @@ CaseAlternative
 StatusFormula
 CharacterFormula
 BitFormula
-IntegerFormula
+IntegerFormula OptIntegerFormula
 CaseBody
 CaseSelectorFormula
 ElseClause
@@ -662,9 +662,9 @@ context-free syntax
   'F' OptRoundOrTruncate
       Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
 
-  ',' 'R'                     -> RoundOrTruncate         {cons("RoundOrTruncateR")}
-  ',' 'T'                     -> RoundOrTruncate         {cons("RoundOrTruncateT")}
-  ',' 'Z'                     -> RoundOrTruncate         {cons("RoundOrTruncateZ")}
+  ',' 'R'                     -> RoundOrTruncate         {cons("R")}
+  ',' 'T'                     -> RoundOrTruncate         {cons("T")}
+  ',' 'Z'                     -> RoundOrTruncate         {cons("Z")}
 
   RoundOrTruncate             -> OptRoundOrTruncate
   % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
@@ -677,15 +677,15 @@ context-free syntax
 %% 2.1.1.3 FIXED TYPE DESCRIPTIONS
 %%
 
-  FixedItemDescription        -> FixedTypeDescription    {reject}  %% AMBIGUOUS
-  FixedTypeName               -> FixedTypeDescription    {reject}  %% AMBIGUOUS
+  FixedItemDescription        -> FixedTypeDescription    {prefer}
+  FixedTypeName               -> FixedTypeDescription
 
   'A' OptRoundOrTruncate
       ScaleSpecifier
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
   CompileTimeIntegerFormula   -> ScaleSpecifier
-  CompileTimeFixedFormula     -> FractionSpecifier
+  CompileTimeFixedFormula     -> FractionSpecifier       {cons("FractionSpecifier")}
 
   FractionSpecifier           -> OptFractionSpecifier
   % empty %                   -> OptFractionSpecifier    {cons("no-fraction-specifier")}
@@ -1266,6 +1266,7 @@ context-free syntax
 %%%%%%%%%%
 
   LabelList SimpleStatement   -> Statement             {cons("SimpleStatement")}
+  LabeledSimpleStatement      -> Statement             {cons("SimpleStatement")}
   LabelList CompoundStatement -> Statement             {cons("CompoundStatement")}
 
   AssignmentStatement         -> SimpleStatement
@@ -1276,8 +1277,8 @@ context-free syntax
   ReturnStatement             -> SimpleStatement
   GotoStatement               -> SimpleStatement
   ExitStatement               -> SimpleStatement
-  StopStatement               -> SimpleStatement
-  AbortStatement              -> SimpleStatement
+  StopStatement               -> LabeledSimpleStatement
+  AbortStatement              -> LabeledSimpleStatement
   NullStatement               -> SimpleStatement
 
   ';'                         -> NullStatement         {cons("NullStatement")}
@@ -1290,7 +1291,7 @@ context-free syntax
 
   Label*                      -> LabelList             {cons("LabelList")}
 
-  Name                        -> StatementName         {cons("StatementName")}
+  Name                        -> StatementName
 
   'BEGIN'
     Statement+
@@ -1305,7 +1306,7 @@ context-free syntax
 
   {Variable ','}+            -> VariableList           {cons("VariableList")}
 
-%% 4.2 LOOP STATEMEMTS
+%% 4.2 LOOP STATEMENTS
 %%
 
   LoopType ControlledStatement -> LoopStatement        {cons("LoopStatement")}
@@ -1357,7 +1358,7 @@ context-free syntax
   WhilePhrase                  -> OptWhilePhrase
   % empty %                    -> OptWhilePhrase       {cons("no-while-phrase")}
 
-%% 4.3 IF STATEMEMTS
+%% 4.3 IF STATEMENTS
 %%
 
   'IF' BooleanFormula ';'
@@ -1371,7 +1372,7 @@ context-free syntax
   ElseClause                 -> OptElseClause
   % empty %                  -> OptElseClause          {cons("no-else-clause")}
 
-%% 4.4 CASE STATEMEMTS
+%% 4.4 CASE STATEMENTS
 %%
 
   'CASE'
@@ -1408,7 +1409,7 @@ context-free syntax
   CompileTimeStatusFormula     -> CaseIndex            {cons("CaseIndex")}
   LowerBound ':' UpperBound    -> CaseIndex            {cons("CaseIndex")}
 
-%% 4.5 PROCEDURE CALL STATEMEMTS
+%% 4.5 PROCEDURE CALL STATEMENTS
 %%
 
   UserDefinedProcedureCall     -> ProcedureCallStatement   {cons("ProcedureCallStatement")}
@@ -1449,30 +1450,33 @@ context-free syntax
   Name                         -> ProcedureName
   Name                         -> FunctionName
 
-%% 4.6 RETURN STATEMEMTS
+%% 4.6 RETURN STATEMENTS
 %%
 
   'RETURN' ';'               -> ReturnStatement        {cons("ReturnStatement")}
 
-%% 4.7 GOTO STATEMEMTS
+%% 4.7 GOTO STATEMENTS
 %%
 
   'GOTO' StatementName       -> GotoStatement          {cons("GotoStatement")}
 
-%% 4.8 Exit STATEMEMTS
+%% 4.8 EXIT STATEMENTS
 %%
 
   'EXIT' ';'                 -> ExitStatement          {cons("ExitStatement")}
 
-%% 4.9 STOP STATEMEMTS
+%% 4.9 STOP STATEMENTS
 %%
 
-  'EXIT' IntegerFormula      -> StopStatement          {cons("StopStatement")}
+  LabelList 'STOP' OptIntegerFormula ';'  -> StopStatement          {cons("StopStatement")}
 
-%% 4.10 ABORT STATEMEMTS
+  IntegerFormula                          -> OptIntegerFormula
+  % empty %                               -> OptIntegerFormula      {cons("no-integer-formula")}
+
+%% 4.10 ABORT STATEMENTS
 %%
 
-  'ABORT' ';'                -> AbortStatement         {cons("AbortStatement")}
+  LabelList 'ABORT' ';'         -> AbortStatement         {cons("AbortStatement")}
 
 
 %%%%%%%%%%
@@ -2164,8 +2168,8 @@ context-free syntax
   Icon                       -> Number
 
   RealLiteral                -> FloatingLiteral
-  Icon Exponent              -> RealLiteral           {cons("RealLiteral")}
-  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteral")}
+  Icon Exponent              -> RealLiteral           {cons("RealLiteralIE")}
+  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteralFF")}
 
   'E' OptSign Number         -> Exponent              {cons("Exponent")}
 

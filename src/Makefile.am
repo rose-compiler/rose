@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
+bin_SCRIPTS =
 MOSTLYCLEANFILES =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -465,22 +466,31 @@ rose_config_installed_ldflags =			\
 rose_config_cfgdir = $(libdir)
 rose_config_cfg_DATA = rose-config.cfg
 
+# Rasmussen (3/23/2018): Added ROSE_RPATHS and ROSE_LINK_RPATHS to enable
+# linking on Mac OSX from a ROSE installations.
 rose-config.cfg:
 	$(AM_V_GEN) (								\
 		echo "# Things that the 'rose-config' tool can report";		\
-		echo "cc       = $(CC)";					\
-		echo "cxx      = $(CXX)";					\
-		echo "cppflags = $(rose_config_installed_cppflags)";		\
-		echo "cflags   = $(CFLAGS)";					\
-		echo "cxxflags = $(CXXFLAGS)";					\
-		echo "ldflags  = $(rose_config_installed_ldflags)";		\
-		echo "libdirs  = $(filter-out -R, $(ROSE_RPATHS))";		\
-		echo "prefix   = $(prefix)";					\
+		echo "ROSE_CC       = $(CC)";					\
+		echo "ROSE_CXX      = $(CXX)";					\
+		echo "ROSE_CPPFLAGS = $(rose_config_installed_cppflags)";	\
+		echo "ROSE_CFLAGS   = $(CFLAGS)";				\
+		echo "ROSE_CXXFLAGS = $(CXXFLAGS)";				\
+		echo "ROSE_LDFLAGS  = $(rose_config_installed_ldflags)";	\
+		echo "ROSE_LIBDIRS  = $(filter-out -R, $(ROSE_RPATHS))";	\
+		echo "ROSE_PREFIX   = $(prefix)";				\
+		echo "# Additional items useful to include in Makefiles";	\
+		echo "ROSE_RPATHS       = $(ROSE_RPATHS)";			\
+		echo "ROSE_LINK_RPATHS  = $(ROSE_LINK_RPATHS)";			\
 	) >$@
 
 MOSTLYCLEANFILES += rose-config.cfg
 
 ########################################################################################################################
+
+# Rasmussen (3/23/2018): Added installing libtool to the bin directory to support
+# linking an application using ROSE from a ROSE installations.
+bin_SCRIPTS += ../libtool
 
 
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
