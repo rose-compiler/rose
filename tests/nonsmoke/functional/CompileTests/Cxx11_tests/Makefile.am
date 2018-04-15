@@ -197,11 +197,14 @@ test2018_72.C \
 test2018_73.C \
 test2018_74.C \
 test2018_75.C \
+test2018_76.C \
 test2018_78.C \
 test2018_79.C \
 test2018_80.C \
 test2018_81.C \
 test2018_82.C \
+test2018_83.C \
+test2018_84.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 test2016_40.C \
 last.C
@@ -209,7 +212,6 @@ last.C
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
 FAILING_TEST = \
 test2016_39.C \
-test2018_76.C \
 test2018_77.C 
 
 # DQ (5/12/2017): Note that tests test2017_21.C and test2017_22.C will fail using the 
