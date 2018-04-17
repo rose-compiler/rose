@@ -6650,6 +6650,16 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
   // See what the structure of this initialization is to see if it is using the C++11 initialization features for structs.
      bool need_cxx11_class_specifier = uses_cxx11_initialization (expr);
 
+  // DQ (4/12/2018): Check if this is a C++11 file (just to make sure), see C_tests/test2018_35.c).
+     SgSourceFile* sourceFile = info.get_current_source_file();
+     ROSE_ASSERT(sourceFile != NULL);
+
+     bool isCxx11 = sourceFile->get_Cxx11_only();
+     if (isCxx11 == false)
+        {
+          need_cxx11_class_specifier = false;
+        }
+
 #if 0
      printf ("DONE: Calling uses_cxx11_initialization: expr = %p type = %p = %s need_cxx11_class_specifier = %s \n",
           expr,expr->get_type(),expr->get_type()->class_name().c_str(),need_cxx11_class_specifier ? "true" : "false");

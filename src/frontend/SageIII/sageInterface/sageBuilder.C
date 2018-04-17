@@ -766,6 +766,8 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
 
      switch(decl->variantT())
         {
+       // DQ (4/9/2018): Added support for namespace alias.
+          case V_SgNamespaceAliasDeclarationStatement:
        // DQ (8/17/2013): These cases do not use templates.
        // This function has to handle these cases because it is called in a general context
        // on many types of declarations as part of the name qualification support.
@@ -893,6 +895,8 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
 
      switch(decl->variantT())
         {
+       // DQ (4/9/2018): Added support for namespace alias.
+          case V_SgNamespaceAliasDeclarationStatement:
        // DQ (8/17/2013): These cases do not use templates.
        // This function has to handle these cases because it is called in a general context
        // on many types of declarations as part of the name qualification support.

@@ -1321,6 +1321,16 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
 #endif
          }
+      else if ( isSgUntypedUnaryOperator(ut_expr) != NULL )
+         {
+            SgUntypedUnaryOperator* op = dynamic_cast<SgUntypedUnaryOperator*>(ut_expr);
+            ROSE_ASSERT(children.size() == 1);
+            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, children[0]);
+            sg_expr = sg_operator;
+#if DEBUG_UNTYPED_CONVERTER
+            printf ("  -  unary operator      ==>   %s\n", op->get_operator_name().c_str());
+#endif
+         }
       else
          {
             cerr << "UntypedConverter::convertSgUntypedExpression: unimplemented for class " << ut_expr->class_name() << endl;
@@ -1568,8 +1578,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
          case General_Language_Translation::e_operator_and:
             {
 #if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_and
-:\n");
+               printf("  - e_operator_and:\n");
 #endif
                op = new SgAndOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);

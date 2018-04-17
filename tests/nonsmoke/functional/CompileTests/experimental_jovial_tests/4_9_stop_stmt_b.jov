@@ -1,0 +1,6 @@
+START
+PROGRAM teststop ;
+BEGIN
+ STOP ;
+END
+TERM

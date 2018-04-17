@@ -10,6 +10,9 @@ class CastTransformer : public AstTopDownBottomUpProcessing<CTInheritedAttribute
   virtual CTSynthesizedAttributeType evaluateSynthesizedAttribute (SgNode*, CTInheritedAttributeType, SubTreeSynthesizedAttributes);
   CTSynthesizedAttributeType defaultSynthesizedAttribute(CTInheritedAttributeType inh);
 
+  void transformCommandLineFiles(SgProject* project);
+  
+ private:
   void traverseWithinCommandLineFiles(SgProject* project);
   void traverseWithinCommandLineFiles(SgProject* project, CTInheritedAttributeType inh);
   
@@ -21,7 +24,7 @@ class CastTransformer : public AstTopDownBottomUpProcessing<CTInheritedAttribute
   bool isFloatingPointType(SgType*);
   bool isLessPrecise(SgType*,SgType*);
   bool isEqualPrecise(SgType*,SgType*);
-  bool isEqualOrLessPrecise(SgType* t1, SgType* t2);
+  bool isLessOrEqualPrecise(SgType* t1, SgType* t2);
 };
 
 #endif
