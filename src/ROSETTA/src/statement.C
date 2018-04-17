@@ -1173,6 +1173,14 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "bool","type_syntax_is_available", "= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/12/2018): This is the parameter list that is used to support function prototypes where the 
+  // function parameter type or parameter names are different from the defining declaration (see example
+  // in C_tests/test2018_32.c).  This data member is only non-null when type_syntax_is_available == true.
+  // FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList_syntax", "= NULL",
+  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList_syntax", "= NULL",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/26/2014): Added support for C11 "_Noreturn" keyword (alternative noreturn specification).
   // This could maybe be moved to the SgFunctionModifier.
      FunctionDeclaration.setDataPrototype("bool","using_C11_Noreturn_keyword","= false",

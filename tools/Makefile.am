@@ -48,7 +48,8 @@ Checker_Test_Files += \
    nodalAccPattern3.cpp \
    nodalAccPattern4.cpp \
    definedTwice.cpp \
-   insideForLoop.cpp
+   insideForLoop.cpp \
+   integerPattern.cpp
 endif
 endif
 endif
