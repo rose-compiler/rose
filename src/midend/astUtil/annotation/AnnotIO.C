@@ -13,8 +13,8 @@
 using namespace std;
 
 namespace annotation{
-static string buffer = "";
-static unsigned index = 0;
+  static string buffer = "";
+  static unsigned index = 0;
 };
 
 bool DebugAnnotRead()
@@ -40,15 +40,18 @@ bool DebugAnnot()
   }
   return debug == 1;
 }
+
 bool is_space( char c)
 {
   return c == ' ' || c == '\t' || c == '\n';
 }
+
 //! Check if a character is a numerical character: 0 to 9
 bool is_num( char c)
 {
   return c >= '0' && c <= '9';
 }
+
 //! Check if a character is part of an indentifier: _ or a to z or A to Z
 bool is_id( char c)
 {
@@ -63,6 +66,7 @@ int is_operator( char c)
       return 0;
   return p - op.c_str() + 1;
 }
+
 //! Grab the next char from an annotation buffer, 
 // if the buffer is fully processed already, get the char from an input stream
 char getch( istream& in)
@@ -118,7 +122,7 @@ string peek_next(istream& in, unsigned size)
    }
    return annotation::buffer.substr(annotation::index,size);
 }
-
+// read a non-space character from the input stream
 char read_ch( istream& in )
 {
   char c = 0;
@@ -127,7 +131,7 @@ char read_ch( istream& in )
       return 0;
   return c;
 }
-
+// Expect to read a char c from the in stream.
 void read_ch( istream& in, char c)
 {
   char c1 = read_ch(in);

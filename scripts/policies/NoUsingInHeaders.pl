@@ -25,7 +25,9 @@ my $nfail=0;
 my $files = FileLister->new();
 while (my $filename = $files->next_file) {
   next if $filename =~ /\b(tests|projects)\//; # skip test and project directories
-  if ($filename =~ /\.(h|hh|hpp)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
+  # utility_functionsImpl.C is misnamed -- it's actually a header file.
+  if (($filename =~ /\.(h|hh|hpp)$/ || $filename =~ /\/utility_functionsImpl.C$/) &&
+      !is_disabled($filename) && open FILE, "<", $filename) {
     while (<FILE>) {
       if (/^\b(using\s+namespace\s+[a-z_A-Z]\w*)/) {
 	print $desc unless $nfail++;

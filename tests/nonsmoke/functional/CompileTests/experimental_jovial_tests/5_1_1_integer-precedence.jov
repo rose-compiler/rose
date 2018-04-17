@@ -1,0 +1,16 @@
+START
+PROGRAM integerformula ;
+  BEGIN
+    ivar = 1 - 2 + 3 ;
+    ivar = 1 + 2 - 3 ;
+    ivar = 1*2 + 3 ;
+    ivar = 1 - 2/3 ;
+    ivar = -1MOD2 + 3 ;
+    ivar = -1 - 2MOD3 ;
+    ivar = 1 ** 2 + 3 * 4 ;
+    ivar = 1 + 2 ** 3 * 4 ;
+    ivar = 1 + 2 ** 3 * 4 / 5 ;
+    ivar = 1 * 2 + 3 ** 4 * 5 ;
+    ivar = 1 ** 2 - 3 / 4 ** 5 ;
+  END
+TERM

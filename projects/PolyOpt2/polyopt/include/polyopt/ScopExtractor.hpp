@@ -25,6 +25,7 @@
 #  define SCOPLIB_INT_T_IS_LONGLONG
 # endif
 # include <scoplib/scop.h>
+# include <past/past.h>
 
 /**
  * \brief Sage AST analyzer for extracting SCoPs.
@@ -80,10 +81,17 @@ public:
    */
   std::vector<SgNode*>& getScopRoots();
 
+  /**
+   * Accessor.
+   *
+   */
+  std::vector<s_past_node_t*>& getPastRoots();
+
 private:
   bool assertNodeIsCandidate(SgProject* project, SgNode* root);
   bool assertFunctionIsCandidate(SgProject* project, SgNode* root);
   void inspectBottomUpFunctionBody(SgProject* project, SgNode* root);
+  void inspectBottomUpFunctionBody_base(SgProject* project, SgNode* root);
 
   // Attributes:
   PolyRoseOptions polyoptions;
@@ -91,6 +99,7 @@ private:
 
   std::vector<scoplib_scop_p> _scoplibs;
   std::vector<SgNode*> _scopRoots;
+  std::vector<s_past_node_t*> _pastRoots;
 };
 
 #endif

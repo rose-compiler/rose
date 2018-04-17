@@ -42,13 +42,9 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   // 2) add (lab,lhs.varid)
 
   // (for programs with pointers we require a set here)
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
   ROSE_ASSERT(_pointerAnalysisInterface);
-  if(_pointerAnalysisInterface->hasDereferenceOperation(node)) {
-    VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
-    // union sets
-    defVarIds+=modVarIds;
-  }
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // If an unknown array element is referenced, we consider
     // all its elements modified in the same statement.
@@ -88,7 +84,7 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // If an array is defined, we add all its elements to def set.
     // Remove pairs corresponding to array elements as in transferExpression()

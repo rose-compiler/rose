@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+// DQ (12/10/2016): Added assert.h to support fix for warning we want to make an error.
+#include <assert.h>
+
 using namespace std;
 
 // ------------------------------------------------------------
@@ -485,6 +488,13 @@ annVariable * Annotations::lookup_global(const string & name)
   }
   else
     return (*p).second;
+
+// DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
+   printf ("Exiting at a previously undefined function return location. \n");
+   assert(false);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   return NULL;
 }
 
 // --- Access information from the header file

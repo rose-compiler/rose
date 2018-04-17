@@ -9,11 +9,11 @@
 #include <Sawyer/Message.h>
 #include <Sawyer/ProgressBar.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
@@ -45,8 +45,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         "address not expected.\n\n"
 
         "One method of obtaining a list of expected addresses is to use the @man{recursiveDisassemble}{--help} tool's "
-        "@s{list-instruction-addressses} switch. Although this produces output that contains instruction sizes as well as "
-        "addresses, @prop{programName} ignores the sizes.  This can be used to test whether a process executes any "
+        "@s{list-instruction-addressses}{noerror} switch. Although this produces output that contains instruction sizes "
+        "as well as addresses, @prop{programName} ignores the sizes.  This can be used to test whether a process executes any "
         "instructions that were not also disassembled, thereby testing some aspect of the disassembly quality.";
 
     // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
@@ -64,6 +64,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         .with(engine.loaderSwitches());
     
     SwitchGroup tool("Tool specific switches");
+    tool.name("tool");
     tool.insert(Switch("map")
                 .argument("how", enumParser(settings.mapSource)
                           ->with("native", MAP_NATIVE)
@@ -115,8 +116,12 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                 .intrinsicValue(true, settings.showUnmapped)
                 .doc("List addresses that were executed but are not present in the memory map.  These are probably instructions "
                      "that belong to the dynamic linker, dynamically-linked libraries, or virtual dynamic shared objects.  The "
-                     "@s{no-show-unampped} switch turns this listing off.  The default is to " +
+                     "@s{no-show-unmapped} switch turns this listing off.  The default is to " +
                      std::string(settings.showUnmapped?"":"not ") + "show this information."));
+    tool.insert(Switch("no-show-unmapped")
+                .key("show-unmapped")
+                .intrinsicValue(false, settings.showUnmapped)
+                .hidden(true));
 
     return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
 }
@@ -137,13 +142,13 @@ parseAddressFile(const std::string &fileName) {
 }
 
 static inline bool
-isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap &map, rose_addr_t va) {
-    return !map.at(va).exists() || goodVas.find(va)!=goodVas.end();
+isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap::Ptr &map, rose_addr_t va) {
+    return !map->at(va).exists() || goodVas.find(va)!=goodVas.end();
 }
 
 // returns number of good and bad addresses executed
 static std::pair<size_t, size_t>
-execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryDebugger &debugger, const MemoryMap &map,
+execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryDebugger &debugger, const MemoryMap::Ptr &map,
         AddressCounts &executed /*in,out*/) {
     Sawyer::ProgressBar<size_t> progress(mlog[MARCH], "instructions");
     std::ofstream trace;
@@ -172,9 +177,8 @@ execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryD
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
     Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2); // more fluid spinner
 
     // Parse command-line
@@ -190,7 +194,7 @@ main(int argc, char *argv[]) {
 
     // Load specimen natively and attach debugger
     std::vector<std::string> specimen_cmd(args.begin()+1, args.end());
-    BinaryDebugger debugger(specimen_cmd);
+    BinaryDebugger debugger(specimen_cmd, BinaryDebugger::CLOSE_FILES);
     debugger.setBreakpoint(AddressInterval::whole());
     ASSERT_always_require(debugger.isAttached());
     ASSERT_always_forbid(debugger.isTerminated());
@@ -198,17 +202,18 @@ main(int argc, char *argv[]) {
     mlog[INFO] <<"child PID " <<pid <<"\n";
 
     // Get memory map.
-    MemoryMap map;
+    MemoryMap::Ptr map;
     if (MAP_ROSE==settings.mapSource) {
         map = engine.loadSpecimens(specimen_cmd[0]);
     } else {
-        map.insertProcess(":noattach:" + numberToString(pid));
+        map = MemoryMap::instance();
+        map->insertProcess(pid, MemoryMap::Attach::NO);
     }
-    map.dump(mlog[INFO]);
+    map->dump(mlog[INFO]);
 
     // The addresses specified in the instruction address file must all be in memory that is mapped.
     BOOST_FOREACH (rose_addr_t va, knownVas) {
-        ASSERT_always_require2(map.at(va).require(MemoryMap::EXECUTABLE).exists(),
+        ASSERT_always_require2(map->at(va).require(MemoryMap::EXECUTABLE).exists(),
                                "given address " + addrToString(va) + " is not mapped or lacks execute permission");
     }
 
@@ -216,8 +221,8 @@ main(int argc, char *argv[]) {
     // map came from an ELF file parsed by ROSE then it will probably have a ".plt" section that is executable.  It is very
     // likely that the process will execute instructions here that we don't know about, and can't know about since we didn't do
     // any dynamic linking.  Therefore, simply remove these sections from the map.
-    map.require(MemoryMap::EXECUTABLE).keep();
-    map.substr("(.plt)").prune();
+    map->require(MemoryMap::EXECUTABLE).keep();
+    map->substr("(.plt)").prune();
 
     // Single step the process and see if each mapped execution address is also an instruction address. Keep track of which
     // addresses were executed.
@@ -240,7 +245,7 @@ main(int argc, char *argv[]) {
     if (settings.showUnmapped) {
         std::cout <<"Unmapped addresses:\n";
         BOOST_FOREACH (const AddressCounts::Node &addrCount, executed.nodes()) {
-            if (!map.at(addrCount.key()).exists())
+            if (!map->at(addrCount.key()).exists())
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }
     }

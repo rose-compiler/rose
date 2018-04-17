@@ -96,12 +96,17 @@ int main(int argc, char* argv[])
   VariableIdMapping vidm;
   vidm.computeVariableSymbolMapping(project);
 
+  // TODO
+  // compute functionId mappings
+  FunctionIdMapping fidm;
+  fidm.computeFunctionSymbolMapping(project);
+
   // collect all the variables that are used in functions in
   // the code we are analyzing
   // collect type information only about these variables
   VariableIdSet usedVarsInProgram = usedVariablesInsideFunctions(project, &vidm);
 
-  FlowInsensitivePointerInfo fipi(project, vidm, usedVarsInProgram);
+  FlowInsensitivePointerInfo fipi(project, vidm, fidm, usedVarsInProgram);
   fipi.collectInfo();
   fipi.printInfoSets();
 

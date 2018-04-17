@@ -1,13 +1,14 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = printVars
 
 printVars_SOURCES = printVars.C MyTraversal.C
 printVars_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD = $(ROSE_LIBS)
 
 # testing (generate output, dot file, pdf file)
 

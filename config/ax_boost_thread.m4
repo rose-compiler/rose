@@ -75,6 +75,11 @@ AC_DEFUN([AX_BOOST_THREAD],
                 case "$build_os" in
                     solaris ) CXXFLAGS="-pthreads $CXXFLAGS" ;;
                     ming32 ) CXXFLAGS="-mthreads $CXXFLAGS" ;;
+                  # DQ (12/6/2016): Added pthread option since it appears that the default installation of Boost used pthread library.
+                  # Note that their is no "s" on the -pthread option for Clang or GNU g++.
+                  # Note that since boost appears to not be compiled on OSX with threading enabled, we don't want to specify -pthread option to the compiler.
+                  # darwin* ) CXXFLAGS="$CXXFLAGS" ;;
+                  # darwin* ) CXXFLAGS="-pthread $CXXFLAGS" ;;
                     darwin* ) CXXFLAGS="$CXXFLAGS" ;;
                     * ) CXXFLAGS="-pthread $CXXFLAGS" ;;
                 esac
@@ -112,21 +117,21 @@ AC_DEFUN([AX_BOOST_THREAD],
                     ax_lib=${libextension}
                     AC_CHECK_LIB($ax_lib, toupper,
                         [BOOST_THREAD_LIB="-l$ax_lib"; AC_SUBST(BOOST_THREAD_LIB) link_thread="yes"; break],
-                        [link_thread="no"])
+                        [link_thread="no"], [${BOOST_SYSTEM_LIB}])
                 done
                 if test "x$link_thread" != "xyes"; then
                     for libextension in `ls $BOOSTLIBDIR/boost_thread*.{dll,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^\(boost_thread.*\)\.dll.*$;\1;' -e 's;^\(boost_thread.*\)\.a*$;\1;'` ; do
                         ax_lib=${libextension}
                         AC_CHECK_LIB($ax_lib, toupper,
                             [BOOST_THREAD_LIB="-l$ax_lib"; AC_SUBST(BOOST_THREAD_LIB) link_thread="yes"; break],
-                            [link_thread="no"])
+                            [link_thread="no"], [${BOOST_SYSTEM_LIB}])
                     done
                 fi
             else
                for ax_lib in $ax_boost_user_thread_lib boost_thread-$ax_boost_user_thread_lib; do
                    AC_CHECK_LIB($ax_lib, toupper,
                        [BOOST_THREAD_LIB="-l$ax_lib"; AC_SUBST(BOOST_THREAD_LIB) link_thread="yes"; break],
-                       [link_thread="no"])
+                       [link_thread="no"], [${BOOST_SYSTEM_LIB}])
                done
             fi
 

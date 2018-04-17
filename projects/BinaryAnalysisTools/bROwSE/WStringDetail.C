@@ -9,7 +9,7 @@
 #include <Wt/WPushButton>
 #include <Wt/WText>
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -27,7 +27,7 @@ WStringDetail::init() {
 
 void
 WStringDetail::changeString(const Strings::EncodedString &string) {
-    using namespace rose;
+    using namespace Rose;
     using namespace StringUtility;
 
     std::string title = numberToString(string.length()) + "-character " + string.encoder()->name();

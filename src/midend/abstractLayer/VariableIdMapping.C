@@ -5,6 +5,7 @@
 
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
+#include "SprayException.h"
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>
@@ -72,6 +73,11 @@ SgType* VariableIdMapping::getType(VariableId varId) {
   return varSym->get_type();
 }
 
+bool VariableIdMapping::hasReferenceType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgReferenceType(type);
+}
+
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::isStrictIntegerType(type);
@@ -89,24 +95,24 @@ bool VariableIdMapping::hasArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
 }
-bool VariableIdMapping::isConstantArray(VariableId varId) {
-  if(hasArrayType(varId)) {
-    // TODO: use new function: hasConstantArrayType.
-    return true;
-  } else {
-    return false;
-  }
+bool VariableIdMapping::hasClassType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgClassType(type)!=0;
 }
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    os<<""<<i
+    VariableId varId=variableIdFromCode(i);
+    os<<i
+      <<","<<varId.toString(this)
+      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])  
       <<","<<mappingVarIdToSym[i]
-      <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
-      <<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
+      <<","<<getNumberOfElements(varId)
+      <<","<<getElementSize(varId)
       <<endl;
     ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
@@ -232,7 +238,6 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
       if(sym)
         generateStmtSymbolDotEdge(myfile,initname,variableId(initname));
 #else          
-      cout << "AT:"<<initname->get_name()<<endl;
       if(initname->get_name()=="") {
         cerr<<"WARNING: SgInitializedName::get_name()==\"\" .. skipping."<<endl;
       } else {
@@ -262,8 +267,17 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
 VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   assert(sym);
   VariableId newId;
-  // intentionally a friend action to avoid that users can create VariableIds from int.
-  newId._id=mappingSymToVarId[sym]; 
+  // schroder3 (2016-08-23): Added if-else to make sure that this does not create a
+  //  new mapping entry (with id 0) if the given symbol is not in the mapping yet
+  //  (std::map's operator[] creates a new entry with value-initialization (zero-initialization
+  //  in this case) if its argument is not in the map).
+  if(mappingSymToVarId.count(sym)) {
+    // intentionally a friend action to avoid that users can create VariableIds from int.
+    newId._id=mappingSymToVarId[sym];
+  }
+  else {
+    ROSE_ASSERT(!newId.isValid());
+  }
   return newId;
 }
 
@@ -276,20 +290,22 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
-//SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
-//  return varId.getSymbol();
-//}
 
-void VariableIdMapping::setSize(VariableId variableId, size_t size) {
-  ROSE_ASSERT(hasArrayType(variableId));
-  mappingVarIdToSize[variableId._id]=size;
+void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
+  mappingVarIdToNumberOfElements[variableId._id]=size;
 }
 
-size_t VariableIdMapping::getSize(VariableId variableId) {
-  ROSE_ASSERT(hasArrayType(variableId));
-  return mappingVarIdToSize[variableId._id];
+size_t VariableIdMapping::getNumberOfElements(VariableId variableId) {
+  return mappingVarIdToNumberOfElements[variableId._id];
 }
 
+void VariableIdMapping::setElementSize(VariableId variableId, size_t size) {
+  mappingVarIdToElementSize[variableId._id]=size;
+}
+
+size_t VariableIdMapping::getElementSize(VariableId variableId) {
+  return mappingVarIdToElementSize[variableId._id];
+}
 
 /*! 
   * \author Markus Schordan
@@ -301,73 +317,78 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
     RoseAst ast(*k);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      SgSymbol* sym=0;
-      bool found=false;
-      int arraySize=-1; // -1 denotes: not an array
-      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-        sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
+      // Try to find a symbol, type, and initializer of the current node:
+      SgSymbol* sym = 0;
+      SgType* type = 0;
+      SgInitializer* initializer = 0;
+
+      // schroder3 (2016-08-18): Added variables that are "declared" in a lambda capture. There is currently no SgInitializedName for
+      //  these closure variables.
+      if(SgLambdaCapture* lambdaCapture = isSgLambdaCapture(*i)) {
+        // Add the closure variable (which is a member of enclosing lambda's anonymous class) to the mapping. (Even in case of a
+        //  capture by reference there is a new reference member that references to the same variable as the captured reference.)
+        SgVarRefExp* closureVar = isSgVarRefExp(lambdaCapture->get_closure_variable());
+        ROSE_ASSERT(closureVar);
+        sym = closureVar->get_symbol();
+        ROSE_ASSERT(sym);
+        type = closureVar->get_type();
+      }
+      else if(SgInitializedName* initName = isSgInitializedName(*i)) {
+        // Variable/ parameter found: Try to get its symbol:
+        sym = initName->search_for_symbol_from_symbol_table();
         if(sym) {
-          found=true;
-          if(/*modeVariableIdForEachArrayElement &&*/ SgNodeHelper::isArrayDeclaration(varDecl)) {
-            SgNode* initName0=varDecl->get_traversalSuccessorByIndex(1); // get-InitializedName
-            ROSE_ASSERT(initName0);
-            SgInitializedName* initName=isSgInitializedName(initName0);
-            ROSE_ASSERT(initName);
-            SgType* type=initName->get_type();
-            if(SgArrayType* arrayType=isSgArrayType(type)) {
-              //cout<<"DEBUG: found array type."<<endl;
-              // returns 0 if type does not contain size
-              arraySize=getArrayElementCount(arrayType);
-            }
+          type = initName->get_type();
+          initializer = initName->get_initializer();
+        }
+        else {
+          //cout << "computeVariableSymbolMapping: SgInitializedName \"" << initName->unparseToString() << "\" without associated symbol found." << endl;
+          // Registration is not possible without symbol.
+          // This is presumably a parameter in a declaration, a built-in variable (e.g. __builtin__x), an enum value, or a child of a SgCtorInitializerList.
+          //  TODO: Is it possible to assert this?
+          //  ==> It is okay to ignore these.
+        }
+      }
+      // schroder3 (2016-08-22): This is currently not necessary because we will insert the variable when traversing its declaration.
+      // else if(SgVarRefExp* varRef = isSgVarRefExp(*i)) {
+      //   sym = varRef->get_symbol();
+      //   ROSE_ASSERT(sym);
+      // }
+
+      if(sym) {
+        // Symbol found. There should be a type:
+        ROSE_ASSERT(type);
+        // Check if the symbol is already registered:
+        if(symbolSet.find(sym) == symbolSet.end()) {
+          // New symbol: Check for array symbol:
+          if(SgArrayType* arrayType=isSgArrayType(type)) {
+            // Try to find the array dimensions:
+            // returns 0 if type does not contain size
+            int arraySize = getArrayElementCount(arrayType);
             if(arraySize==0) {
               // check the initializer
-              arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initName->get_initializer()));
+              arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initializer));
             }
             if(arraySize > 0) {
               //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
+              // Array dimensions found: Registration as array symbol:
               registerNewArraySymbol(sym, arraySize);
+              // Remember that this symbol is already registered:
               symbolSet.insert(sym);
-              found = false;
+              // Do not register as normal symbol and continue with next iteration:
+              continue;
+            }
+            else {
+              // Array dimensions are not available at compile time: Register as normal symbol (no continue;)
             }
           }
-        } else {
-          cerr<<"WARNING: computeVariableSymbolMapping: VariableDeclaration without associated symbol found. Ignoring.";
-        }
-        assert(!isSgVariableDefinition(sym));
-      }
-      if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-        sym=SgNodeHelper::getSymbolOfVariable(varRef);
-        if(sym)
-          found=true;
-        else
-          cerr<<"WARNING: computeVariableSymbolMapping: VarRefExp without associated symbol found. Ignoring.";
-        assert(!isSgVariableDefinition(sym));
-      }
-      if(found) {
-        //cout << "INFO: var: "<<SgNodeHelper::symbolToString(sym)<<endl;
-        // currently not possible because variables in forward declarations are not represented by a SgSymbol (only as SgName).
-#if 0
-        if(SgNodeHelper::isVariableSymbolInFunctionForwardDeclaration(sym)) {
-          // special case: we exclude variables in forward declarations to be used in variable id mappings.
-          cout << "INFO: ignoring variable in forward declaration: "<<SgNodeHelper::symbolToString(sym)<<endl;
-          continue;
-        }
-#endif        
-        //string longName=SgNodeHelper::uniqueLongVariableName(sym);
-        
-        // ensure all symbols are SgVariableSymbol
-        SgVariableSymbol* finalvarsym=isSgVariableSymbol(sym);
-        assert(finalvarsym);
-        //MapPair pair=make_pair(longName,finalvarsym);
-        if(symbolSet.find(finalvarsym)==symbolSet.end()) {
-          assert(finalvarsym);
-          registerNewSymbol(finalvarsym);
-          symbolSet.insert(finalvarsym);
+          // Register new symbol as normal variable symbol:
+          registerNewSymbol(sym);
+          // Remember that this symbol was already registered:
+          symbolSet.insert(sym);
         }
       }
     }
   }
-  cout << "STATUS: computeVariableSymbolMapping: done."<<endl;
   return;
 }
 
@@ -383,26 +404,12 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   * \author Markus Schordan
   * \date 2012.
  */
-string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
-  if(!isTemporaryVariableId(varId)) {
-    return variableName(varId);
-    //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
-  } else {
-    return "$$$tmp"+variableName(varId);
-  }
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
+string VariableIdMapping::uniqueVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
     if(!varId.isValid())
       return "$invalidId";
     else
       return variableName(varId)+"_"+varId.toString().substr(1);
-    //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
   } else {
     return string("tmp")+"_"+varId.toString().substr(1);
   }
@@ -498,16 +505,29 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
 
 /*! 
   * \author Markus Schordan
-  * \date 2012.
+  * \date 2017.
  */
-bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
+bool VariableIdMapping::isHeapMemoryRegionId(VariableId varId) {
+  return isTemporaryVariableId(varId);
 }
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
+bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
+}
+
+bool VariableIdMapping::isVariableIdValid(VariableId varId) {
+  return varId.isValid() && ((size_t)varId._id) < mappingVarIdToSym.size() && varId._id >= 0;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+// deprecated (use createAndRegisterVariableId instead)
 VariableId
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
@@ -520,11 +540,30 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
     }
   }
   // temporary variable with name 'name' does not exist yet, create, register, and return
-  SgSymbol* sym=new UniqueTemporaryVariableSymbol(name);
-  registerNewSymbol(sym);
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId newVarId=variableId(sym);
   temporaryVariableIdMapping.insert(make_pair(newVarId,name));
   return newVarId;
+}
+
+SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
+  SgSymbol* sym=new UniqueTemporaryVariableSymbol(name);
+  registerNewSymbol(sym);
+  return sym;
+}
+
+SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
+  VariableId varId=variableId(sym);
+  setNumberOfElements(varId,1); // default
+  return varId;
+}
+
+SPRAY::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::string name, int regionSize) {
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
+  VariableId varId=variableId(sym);
+  setNumberOfElements(varId,regionSize);
+  return varId;
 }
 
 void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
@@ -544,20 +583,41 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
       mappingVarIdToSym.push_back(sym);
     }
     // size needs to be set *after* mappingVarIdToSym has been updated
-    setSize(tmpVarId,arraySize);
+    setNumberOfElements(tmpVarId,arraySize);
   } else {
-    cerr<< "Error: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
-    exit(1);
+    stringstream ss;
+    ss<< "VariableIdMapping: registerNewArraySymbol: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
+    throw SPRAY::Exception(ss.str());
   }
 }
 
 void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
+  ROSE_ASSERT(sym);
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
-    mappingSymToVarId[sym]=mappingVarIdToSym.size();
+    // Due to arrays there can be multiple ids for one symbol (one id
+    //  for each array element but only one symbol for the whole array)
+    //  but there can not be multiple symbols for one id. The symbol count
+    //  therefore must be less than or equal to the id count:
+    ROSE_ASSERT(mappingSymToVarId.size() <= mappingVarIdToSym.size());
+    // If one of the sizes is zero, the other size have to be zero too:
+    ROSE_ASSERT(mappingSymToVarId.size() == 0 ? mappingVarIdToSym.size() == 0 : true);
+    ROSE_ASSERT(mappingVarIdToSym.size() == 0 ? mappingSymToVarId.size() == 0 : true);
+
+    // Create new mapping entry:
+    size_t newIdCode = mappingVarIdToSym.size();
+    mappingSymToVarId[sym] = newIdCode;
     mappingVarIdToSym.push_back(sym);
+    // set size to 1 (to compute bytes, multiply by size of type)
+    VariableId newVarId;
+    newVarId.setIdCode(newIdCode);
+    setNumberOfElements(newVarId,1);
+    // Mapping in both directions must be possible:
+    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
+    ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
   } else {
-    cerr<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
-    exit(1);
+    stringstream ss;
+    ss<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
+    throw SPRAY::Exception(ss.str());
   }
 }
 
@@ -567,11 +627,13 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
  */
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
-  if(isTemporaryVariableId(varId))
-    delete getSymbol(varId);
-  else
-    throw "VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.";
-}
+  if(isTemporaryVariableId(varId)) {
+    //cerr<<"DEBUG WARNING: not deleting temporary variable id symbol."<<endl;
+    //delete getSymbol(varId);
+  } else {
+    throw SPRAY::Exception("VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.");
+  }
+  }
 
 /*! 
   * \author Markus Schordan
@@ -598,6 +660,8 @@ VariableId::VariableId():_id(-1){
 //VariableId::VariableId(int id):_id(id){
 //}
 
+const char * const VariableId::idKindIndicator = "V";
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -605,40 +669,35 @@ VariableId::VariableId():_id(-1){
 string
 VariableId::toString() const {
   stringstream ss;
-  ss<<"V"<<_id;
+  ss<<idKindIndicator<<_id;
   return ss.str();
 }
 
 string
+VariableId::toUniqueString(VariableIdMapping& vim) const {
+  return vim.uniqueVariableName(*this);
+}
+
+string
+VariableId::toUniqueString(VariableIdMapping* vim) const {
+  if(vim)
+    return vim->uniqueVariableName(*this);
+  else
+    return toString();
+}
+
+string
 VariableId::toString(VariableIdMapping& vim) const {
-  return vim.uniqueShortVariableName(*this);
-}
-
-#if 0
-VariableId::VariableId(SgSymbol* sym):sym(sym){
-}
-SgSymbol* VariableId::getSymbol() const {
-  return sym;
+  return vim.variableName(*this);
 }
 
 string
-VariableId::variableName() const {
-  SgSymbol* sym=getSymbol();
-  if(sym==0) return "id-no-var";
-  //stringstream ss;
-  //ss<<sym<<":"<<SgNodeHelper::symbolToString(sym);
-  //return ss.str();
-  return SgNodeHelper::symbolToString(sym);
+VariableId::toString(VariableIdMapping* vim) const {
+  if(vim)
+    return vim->variableName(*this);
+  else
+    return toString();
 }
-
-string
-VariableId::longVariableName() const {
-  SgSymbol* sym=getSymbol();
-  if(sym==0) return "id-no-var";
-  // TODO: MS: long names do not work with SgNodehelper from SgSymbol. We can only support this with precomputed VariableIdMappings (we do not want to use mangled names)
-  return variableName();
-}
-#endif
 
 bool SPRAY::operator<(VariableId id1, VariableId id2) {
   return id1._id<id2._id;

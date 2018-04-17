@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <cerrno>
 #include "rose_getline.h"
 
 ssize_t
@@ -28,6 +29,7 @@ rose_getline (char **lineptr, size_t *n, FILE *stream)
             return nread;
         }
 
+        errno = 0;
         int c = fgetc(stream);
         if (c<0) {
             (*lineptr)[nread] = '\0';

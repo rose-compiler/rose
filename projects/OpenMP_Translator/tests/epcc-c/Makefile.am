@@ -68,8 +68,9 @@ syncbench: syncbench.o delay.o getclock.o gtod.o
 	$(CC) -o $@ $^ $(LDADD)
 schedbench:schedbench.o delay.o getclock.o gtod.o
 	$(CC) -o $@ $^ $(LDADD)
+conditional-check-local:
 else 
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -81,6 +82,8 @@ check-local:
 endif
 
 EXTRA_DIST =  $(ALL_TESTCODES)
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.[cC] runme test.log

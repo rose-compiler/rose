@@ -21,4 +21,8 @@
  *
  *  Run <code>apt-get install git</code> as the administrator.
  *
+ *  @section installing_git_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
+ *  Run <code>apt-get install git</code> as the administrator.
+ *
  *  */

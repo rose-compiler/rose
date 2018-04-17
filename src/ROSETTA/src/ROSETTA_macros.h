@@ -36,7 +36,7 @@
     #define ROSE_ABORT  abort
 #elif defined(ROSE_ASSERTION_BEHAVIOR)
     // ROSE_ASSERT should use Sawyer ASSERT macros which support various termination behaviors that are configurable at compile
-    // time and can be overridden at runtime by the command-line or the rose::Diagnostics API.  They also produce nicer output.
+    // time and can be overridden at runtime by the command-line or the Rose::Diagnostics API.  They also produce nicer output.
 #ifdef __GNUC__
     // Pei-Hung (6/16/2015): Using Sawyer ASSERT will consume more than 4GB memory when building ROSE with 32-bit GCC in version 4.2.4
     // If building ROSE with GCC older than version 4.4, turn off support for Sawyer assert.

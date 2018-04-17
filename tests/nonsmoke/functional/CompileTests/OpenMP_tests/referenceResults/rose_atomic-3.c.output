@@ -1,0 +1,5 @@
+#pragma omp atomic read
+#pragma omp atomic capture
+#pragma omp parallel 
+#pragma omp atomic write
+#pragma omp atomic update

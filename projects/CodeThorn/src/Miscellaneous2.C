@@ -6,6 +6,14 @@
 
 #include "Miscellaneous2.h"
 #include <cctype>
+#include <cstdlib>
+#include "SprayException.h"
+
+#include "boost/algorithm/string.hpp"
+#include "boost/algorithm/string/trim.hpp"
+#include "boost/algorithm/string/regex.hpp"
+#include "boost/regex.hpp"
+#include "boost/lexical_cast.hpp"
 
 using namespace std;
 
@@ -77,7 +85,7 @@ SPRAY::Parse::parseString(string w,istream& is) {
     string s;
     is>>s;
     cerr<< "Parsed "<<i<<"characters. Remaining input: "<<s<<"..."<<endl;
-    throw "Parser Error.";
+    throw SPRAY::Exception("Parser Error.");
   }
 }
 
@@ -118,7 +126,7 @@ SPRAY::Parse::integerList(string liststring) {
     if(ss.peek()=='[')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at start).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
     int i;
     while(ss>>i) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
@@ -130,7 +138,31 @@ SPRAY::Parse::integerList(string liststring) {
     if(ss.peek()==']')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at end).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
+#endif
+    return intList;
+}
+
+list<set<int> >
+SPRAY::Parse::integerSetList(string liststring) {
+  list<set<int> > intList;
+      stringstream ss(liststring);
+    if(ss.peek()=='[')
+      ss.ignore();
+    else
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
+    string set;
+    while(ss>>set) {
+      //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
+      intList.push_back(integerSet(set));
+      if(ss.peek()==','||ss.peek()==' ')
+        ss.ignore();
+    }
+#if 0
+    if(ss.peek()==']')
+      ss.ignore();
+    else
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intList;
 }
@@ -142,7 +174,7 @@ SPRAY::Parse::integerSet(string setstring) {
     if(ss.peek()=='{')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at start).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
     int i;
     while(ss>>i) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
@@ -154,8 +186,54 @@ SPRAY::Parse::integerSet(string setstring) {
     if(ss.peek()=='}')
       ss.ignore();
     else
-      throw "Error: parse integer-values: wrong input format (at end).";
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intSet;
 }
 
+int SPRAY::randomIntInRange(pair<int,int> range) {
+  int rangeLength = range.second - range.first + 1;
+  return range.first + (rand() % rangeLength);
+}
+
+list<int> SPRAY::nDifferentRandomIntsInSet(int n, set<int> values) {
+  list<int> result;
+  list<int> indices = nDifferentRandomIntsInRange(n, pair<int,int>(0, values.size() - 1));
+  indices.sort();
+  set<int>::iterator iterSet = values.begin();
+  list<int>::iterator iterIndices = indices.begin();
+  int index = 0;
+  while(iterIndices != indices.end()) {
+    // move to the next chosen set element (virtual index)
+    while(index < *iterIndices) {
+      ++iterSet;
+      ++index;
+    }
+    // add set element to the results
+    result.push_back(*iterSet);
+    ++iterIndices;
+  }
+  return result;
+}
+
+list<int> SPRAY::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
+  list<int> result;
+  for (int i = 0; i < n; ++i) {
+    int chosen_intermediate = randomIntInRange( pair<int,int>(range.first, (range.second - i)) );
+    int chosen_final = chosen_intermediate;
+    for (list<int>::const_iterator k=result.begin(); k!=result.end(); ++k) {
+      if (*k <= chosen_intermediate) {
+	++chosen_final;
+      }
+    }
+    result.push_back(chosen_final);
+  }
+  return result;
+}
+
+std::vector<std::string> SPRAY::Parse::commandLineArgs(std::string commandLine) {
+  vector<std::string> v; 		
+  boost::split_regex(v, commandLine, boost::regex("( )+"));
+  cout<<"Parsing command line: found "<<v.size()<<" arguments."<<endl;
+  return v;
+}

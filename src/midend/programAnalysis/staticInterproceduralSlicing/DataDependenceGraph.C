@@ -214,7 +214,11 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
           //                    cout <<"\tIUSE"<<endl;
           //                    cout <<"\tIDEF"<<endl;
           defPlaces=defuse->getDefFor(varRef,initName);
-          for (int j=0;j<defPlaces.size();j++) {
+
+       // DQ (12/6/2016): Fixed compiler warning we want to have be an error: -Wsign-compare 
+       // for (int j=0;j<defPlaces.size();j++) 
+          for (size_t j=0;j<defPlaces.size();j++) 
+          {
             //                          cout<<"\tdef "<<j<<": "<<defPlaces[j]->unparseToString()<<endl;
             //                          cout<<"\tclass:"<<defPlaces[j]->class_name()<<endl;
             interestingDefParent=getNextParentInterstingNode(defPlaces[j]);

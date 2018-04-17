@@ -7,39 +7,114 @@
 #include <Partitioner2/Utility.h>
 
 #include "AsmUnparser_compat.h"
-#include "SymbolicSemantics2.h"
+#include "BinaryUnparserBase.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
+#include "RecursionCounter.h"
+#include "SymbolicSemantics2.h"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/config.hpp>
 #include <boost/foreach.hpp>
+#include <boost/thread.hpp>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
-#include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-using namespace rose::Diagnostics;
+#ifndef BOOST_WINDOWS
+    #include <errno.h>
+    #include <fcntl.h>
+    #include <fstream>
+    #include <string.h>
+    #include <unistd.h>
+    #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        #include <boost/archive/binary_iarchive.hpp>
+        #include <boost/archive/binary_oarchive.hpp>
+        #include <boost/iostreams/device/file_descriptor.hpp>
+        #include <boost/iostreams/stream.hpp>
+    #endif
+#endif
 
-namespace rose {
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+using namespace Rose::Diagnostics;
+
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-// class method
-void Partitioner::initDiagnostics() {
-    static bool initialized = false;
-    if (!initialized) {
-        initialized = true;
-        mlog.initStreams(Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
-    }
+Partitioner::Partitioner()
+    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
+    init(NULL, memoryMap_);
 }
 
+Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
+    : memoryMap_(map), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
+      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
+    init(disassembler, map);
+}
+
+// FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
+// partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
+// things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
+// unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
+// FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
+// after a while.
+Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
+    : autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
+    init(NULL, memoryMap_);                             // initialize just like default
+    *this = other;                                      // then delegate to the assignment operator
+}
+
+Partitioner&
+Partitioner::operator=(const Partitioner &other) {
+    Sawyer::Attribute::Storage<>::operator=(other);
+    settings_ = other.settings_;
+    config_ = other.config_;
+    instructionProvider_ = other.instructionProvider_;
+    memoryMap_ = other.memoryMap_;
+    cfg_ = other.cfg_;
+    vertexIndex_.clear();                               // initialized by init(other)
+    aum_ = other.aum_;
+    solver_ = other.solver_;
+    functions_ = other.functions_;
+    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
+    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
+    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
+    addressNames_ = other.addressNames_;
+    unparser_ = other.unparser_;
+    insnUnparser_ = other.insnUnparser_;
+    cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
+    basicBlockCallbacks_ = other.basicBlockCallbacks_;
+    functionPrologueMatchers_ = other.functionPrologueMatchers_;
+    functionPaddingMatchers_ = other.functionPaddingMatchers_;
+    semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
+
+    {
+        SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
+        cfgProgressTotal_ = other.cfgProgressTotal_;
+        progress_ = other.progress_;
+    }
+
+    init(other);                                        // copies graph iterators, etc.
+    return *this;
+}
+
+Partitioner::~Partitioner() {}
+
 void
-Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
-    if (disassembler)
+Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
+    if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
+        unparser_ = disassembler->unparser()->copy();
+        insnUnparser_ = disassembler->unparser()->copy();
+        insnUnparser_->settings() = Unparser::Settings::minimal();
+    }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
     nonexistingVertex_ = cfg_.insertVertex(CfgVertex(V_NONEXISTING));
@@ -72,6 +147,79 @@ Partitioner::convertFrom(const Partitioner &other, ControlFlowGraph::ConstVertex
     return thisIter;
 }
 
+Unparser::BasePtr
+Partitioner::unparser() const {
+    return unparser_;
+}
+
+void
+Partitioner::unparser(const Unparser::BasePtr &u) {
+    unparser_ = u;
+}
+
+Unparser::BasePtr
+Partitioner::insnUnparser() const {
+    return insnUnparser_;
+}
+
+void
+Partitioner::insnUnparser(const Unparser::BasePtr &u) {
+    insnUnparser_ = u;
+}
+
+std::string
+Partitioner::unparse(SgAsmInstruction *insn) const {
+    std::ostringstream ss;
+    unparse(ss, insn);
+    return ss.str();
+}
+
+void
+Partitioner::unparse(std::ostream &out, SgAsmInstruction *insn) const {
+    if (!insn) {
+        out <<"null instruction";
+    } else {
+        ASSERT_not_null(insnUnparser());
+        (*insnUnparser())(out, *this, insn);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out, const BasicBlock::Ptr &bb) const {
+    if (!bb) {
+        out <<"null basic block";
+    } else {
+        ASSERT_not_null(unparser());
+        (*unparser())(out, *this, bb);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out, const DataBlock::Ptr &db) const {
+    if (!db) {
+        out <<"null data block";
+    } else {
+        ASSERT_not_null(unparser());
+        (*unparser())(out, *this, db);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out, const Function::Ptr &f) const {
+    if (!f) {
+        out <<"null function";
+    } else {
+        ASSERT_not_null(unparser());
+        (*unparser())(out, *this, f);
+    }
+}
+
+void
+Partitioner::unparse(std::ostream &out) const {
+    ASSERT_not_null(unparser());
+    (*unparser())(out, *this);
+}
+
 // Label the progress report and also show some other statistics.  It is okay for this to be slightly expensive since its only
 // called when a progress report is actually emitted.
 class ProgressBarSuffix {
@@ -93,28 +241,62 @@ operator<<(std::ostream &out, const ProgressBarSuffix &x) {
     return out;
 };
 
-void
-Partitioner::reportProgress() const {
-    // All partitioners share a single progress bar.
-    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+Progress::Ptr
+Partitioner::progress() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return progress_;
+}
 
-    if (0==progressTotal_) {
-        BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_.nodes()) {
+void
+Partitioner::progress(const Progress::Ptr &p) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    progress_ = p;
+}
+
+void
+Partitioner::updateProgress(const std::string &phase, double completion) const {
+    Progress::Ptr progress;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        progress = progress_;
+    }
+    if (progress)
+        progress->update(Progress::Report(phase, completion));
+}
+
+// Updates progress information during the main partitioning phase. The progress is the ratio of the number of bytes
+// represented in the CFG to the number of executable bytes in the memory map.
+void
+Partitioner::updateCfgProgress() {
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (!progress_)
+            return;
+    }
+
+    // How many bytes are mapped with execute permission
+    if (0 == cfgProgressTotal_) {
+        BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
             if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
-                progressTotal_ += node.key().size();
+                cfgProgressTotal_ += node.key().size();
         }
     }
-    
-    if (!bar)
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[MARCH], "cfg");
 
-    if (progressTotal_) {
-        // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
-        // appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also immediately
-        // updates the progress bar (we don't want that, so update only if necessary).
+    double completion = cfgProgressTotal_ > 0 ? (double)nBytes() / cfgProgressTotal_ : 0.0;
+    updateProgress("partition", completion);
+
+    // All partitioners share a single progress bar for the CFG completion amount
+    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+    if (!bar)
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(cfgProgressTotal_, mlog[MARCH], "cfg");
+
+    // Update the progress bar. If multiple partitioners are sharing the progress bar then also make sure that the lower and
+    // upper limits are appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also
+    // immediately updates the progress bar (we don't want that, so update only if necessary).
+    if (cfgProgressTotal_) {
         bar->suffix(ProgressBarSuffix(this));
-        if (bar->domain().first!=0 || bar->domain().second!=progressTotal_) {
-            bar->value(0, nBytes(), progressTotal_);
+        if (bar->domain().first!=0 || bar->domain().second!=cfgProgressTotal_) {
+            bar->value(0, nBytes(), cfgProgressTotal_);
         } else {
             bar->value(nBytes());
         }
@@ -228,13 +410,22 @@ Partitioner::basicBlockExists(const BasicBlock::Ptr &bblock) const {
 
 BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators() const {
+    return newOperators(semanticMemoryParadigm_);
+}
+
+BaseSemantics::RiscOperatorsPtr
+Partitioner::newOperators(SemanticMemoryParadigm memType) const {
+    //  Create a new SMT solver each call because this might be called from different threads and each thread should have its
+    //  own SMT solver.
+    SmtSolver::Ptr solver = solver_ ? solver_->create() : SmtSolver::Ptr();
+
     Semantics::RiscOperatorsPtr ops =
-        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, semanticMemoryParadigm_);
+        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver, memType);
     BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
-        ml->memoryMap(&memoryMap_);
+        ml->memoryMap(memoryMap_);
     } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
-        mm->memoryMap(&memoryMap_);
+        mm->memoryMap(memoryMap_);
     }
     return ops;
 }
@@ -257,7 +448,7 @@ Partitioner::detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         placeholder->value().nullify();
         adjustPlaceholderEdges(placeholder);
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-            aum_.eraseInstruction(insn);
+            aum_.eraseInstruction(insn, bblock);
         BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
             if (0==dblock->decrementOwnerCount())
                 detachDataBlock(dblock);
@@ -315,12 +506,12 @@ Partitioner::discoverBasicBlock(rose_addr_t startVa) const {
 
 BasicBlock::Ptr
 Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
-    // If the first instruction of this basic block already exists (in the middle of) some other basic block then the other
-    // basic block is called a "conflicting block".  This only applies for the first instruction of this block, but is used in
+    // If the first instruction of this basic block already exists (in the middle of) some other basic blocks then the other
+    // basic blocks are called "conflicting blocks".  This only applies for the first instruction of this block, but is used in
     // the termination conditions below.
-    AddressUser conflict;
-    if (instructionExists(startVa).assignTo(conflict))
-        ASSERT_forbid(conflict.insn()->get_address() == conflict.basicBlock()->address());// handled in discoverBasicBlock
+    AddressUser startVaOwners;
+    if (instructionExists(startVa).assignTo(startVaOwners))
+        ASSERT_forbid(startVaOwners.isBlockEntry());                    // handled in discoverBasicBlock
 
     // Keep adding instructions until we reach a termination condition.  The termination conditions are enumerated in detail in
     // the doxygen documentation for this function. READ IT AND KEEP IT UP TO DATE!!!
@@ -373,10 +564,12 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (findPlaceholder(successorVa)!=cfg_.vertices().end())        // case: successor is an existing block
             goto done;
 
-        AddressUser addressUser;
-        if (instructionExists(successorVa).assignTo(addressUser)) {     // case: successor is inside an existing block
-            if (addressUser.basicBlock() != conflict.basicBlock())
-                goto done;
+        AddressUser succVaOwners;
+        if (instructionExists(successorVa).assignTo(succVaOwners) &&    // case: successor is inside an existing block that
+            !isSupersetUnique(startVaOwners.basicBlocks(),              //       doesn't own startVa
+                              succVaOwners.basicBlocks(),
+                              sortBasicBlocksByAddress)) {
+            goto done;
         }
 
         va = successorVa;
@@ -395,7 +588,7 @@ done:
                 retval->insertSuccessor(successorVa, nBits);
         }
     }
-    
+
     retval->freeze();
     return retval;
 }
@@ -432,9 +625,12 @@ Partitioner::insertPlaceholder(rose_addr_t startVa) {
     if (placeholder == cfg_.vertices().end()) {
         AddressUser addressUser;
         if (instructionExists(startVa).assignTo(addressUser)) {
-            ControlFlowGraph::VertexIterator conflictBlock = findPlaceholder(addressUser.basicBlock()->address());
-            placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
-            ASSERT_require(placeholder->value().address() == startVa);
+            // This placeholder is in the middle of some other basic block(s), so we must truncate them.
+            BOOST_FOREACH (const BasicBlock::Ptr &existingBlock, addressUser.basicBlocks()) {
+                ControlFlowGraph::VertexIterator conflictBlock = findPlaceholder(existingBlock->address());
+                placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
+                ASSERT_require(placeholder->value().address() == startVa);
+            }
         } else {
             placeholder = cfg_.insertVertex(CfgVertex(startVa));
             vertexIndex_.insert(startVa, placeholder);
@@ -504,7 +700,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
                 edgeType = E_FUNCTION_RETURN;
             }
         }
-        
+
         CfgEdge edge(edgeType, successor.confidence());
         if (successor.expr()->is_number()) {
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
@@ -555,7 +751,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         dblock->incrementOwnerCount();
     }
 
-    if (basicBlockSemanticsAutoDrop_)
+    if (basicBlockSemanticsAutoDrop())
         bblock->dropSemantics();
 
     bblockAttached(placeholder);
@@ -625,7 +821,7 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
         // if our try failed then this one probably will too.  In fact, this one will be even slower because it must reprocess
         // the entire basic block each time it's called because it is stateless, whereas ours above only needed to process each
         // instruction as it was appended to the block.
-        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(bb->instructions(), &complete, &memoryMap_);
+        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(bb->instructions(), &complete, memoryMap_);
 #else
         // Look only at the final instruction of the basic block.  This is probably quite fast compared to looking at a whole
         // basic block.
@@ -659,25 +855,30 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
 
     if (bb->isEmpty() || bb->ghostSuccessors().getOptional().assignTo(ghosts))
         return ghosts;
-    
-    std::set<rose_addr_t> insnVas;
+
+    // Addresses of all instructions in this basic block
+    Sawyer::Container::Set<rose_addr_t> insnVas;
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
         insnVas.insert(insn->get_address());
-    
-    const BasicBlock::Successors &successors = basicBlockSuccessors(bb);
+
+    // Find naive per-instruction successors that are not pointing to another instruction and which aren't in the set of basic
+    // block successors.  "Naive" successors are obtained by considering each insn in isolation (e.g., conditional branches
+    // have two naive successors even if the predicate is opaque.
+    const BasicBlock::Successors &bblockSuccessors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        BOOST_FOREACH (rose_addr_t naiveVa, insn->getSuccessors(&complete)) {
-            if (insnVas.find(naiveVa)==insnVas.end()) {
+        BOOST_FOREACH (rose_addr_t naiveSuccessor, insn->getSuccessors(&complete)) {
+            if (!insnVas.exists(naiveSuccessor)) {
+                // Is naiveSuccessor also a basic block successor?
                 bool found = false;
-                BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
-                    if (successor.expr()->is_number() && successor.expr()->get_number()==naiveVa) {
+                BOOST_FOREACH (const BasicBlock::Successor &bblockSuccessor, bblockSuccessors) {
+                    if (bblockSuccessor.expr()->is_number() && bblockSuccessor.expr()->get_number()==naiveSuccessor) {
                         found = true;
                         break;
                     }
                 }
                 if (!found)
-                    ghosts.insert(naiveVa);
+                    ghosts.insert(naiveSuccessor);
             }
         }
     }
@@ -709,10 +910,17 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     if (bb->isEmpty() || bb->isFunctionCall().getOptional().assignTo(retval))
         return retval;                                  // already cached
 
+    // Avoid infinite recursion
+    static size_t recursionDepth = 0;
+    RecursionCounter recursion(recursionDepth);
+    if (recursionDepth > 2 /*arbitrary*/)
+        return false;      // if we can't prove it, assume false
+
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
     // Use our own semantics if we have them.
     if (BaseSemantics::StatePtr state = bb->finalState()) {
+        // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
         // Is the block fall-through address equal to the value on the top of the stack?
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
@@ -730,7 +938,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             bb->isFunctionCall() = false;
             return false;
         }
-        
+
         // If the only successor is also the fall-through address then this isn't a function call.  This case handles code that
         // obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and B are
         // consecutive instruction addresses.
@@ -740,9 +948,94 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             return false;
         }
 
+        // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after all.
+        if (checkingCallBranch()) {
+            bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
+            BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
+                // Find callee basic block
+                if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+                rose_addr_t calleeVa = successor.expr()->get_number();
+                BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
+                if (!calleeBb)
+                    calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
+                if (!calleeBb) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // If the called block is also a function return (i.e., we're calling a function which is only one block long),
+                // then of course the block will pop the return address even though it's a legitimate function.
+                if (basicBlockIsFunctionReturn(calleeBb)) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // Get callee block's initial and final states
+                BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
+                BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
+                if (!calleeState0 || !calleeStateN) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
+                // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll
+                // substitute a concrete value for the stack pointer.
+                BaseSemantics::SValuePtr sp0 =
+                    calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+                BaseSemantics::SValuePtr spN =
+                    calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+
+                SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
+                SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+                SymbolicExpr::Ptr spNExpr =
+                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
+
+                // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
+                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // Did the callee return to somewhere other than caller's return address?
+                BaseSemantics::SValuePtr ipN =
+                    calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
+                if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+            }
+            if (allCalleesPopWithoutReturning) {
+                bb->isFunctionCall() = false;
+                return false;
+            }
+        }
+
         // This appears to be a function call
         bb->isFunctionCall() = true;
         return true;
+    }
+
+    // An x86 idiom is two consecutive instructions "call next: pop ebx" where "next" is the address of the POP instruction
+    // that immediately follows the CALL instruction.
+    if (SgAsmX86Instruction *i1 = isSgAsmX86Instruction(lastInsn)) {
+        if (i1->get_kind() == x86_call) {
+            rose_addr_t callFallThroughVa = i1->get_address() + i1->get_size();
+            bool complete = true;
+            std::set<rose_addr_t> callSuccVas = i1->getSuccessors(&complete);
+            if (callSuccVas.size() == 1 && *callSuccVas.begin() == callFallThroughVa) {
+                if (SgAsmX86Instruction *i2 = isSgAsmX86Instruction(discoverInstruction(callFallThroughVa))) {
+                    if (i2->get_kind() == x86_pop) {
+                        bb->isFunctionCall() = false;
+                        return false;
+                    }
+                }
+            }
+        }
     }
 
     // We don't have semantics, so delegate to the SgAsmInstruction subclass.
@@ -763,18 +1056,37 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 
     // Use our own semantics if we have them.
     if (BaseSemantics::StatePtr state = bb->finalState()) {
-        // This is a function return if the instruction pointer has the same value as the memory for one past the end of the
-        // stack pointer.  The assumption is that a function return pops the return-to address off the top of the stack and
-        // unconditionally branches to it.  It may pop other things from the stack as well.  Assuming stacks grow down. This
-        // will not work for callee-cleans-up returns where the callee also pops off some arguments that were pushed before
-        // the call.
+        // This is a function return if the new instruction pointer (after processing this basic block semantically) has a
+        // value equal to a return address which is now past the top of the stack.
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
         const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP),
-                                                       ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8)));
+
+        // Find the pointer to the return address. Since the return instruction (e.g., x86 RET) has been processed semantically
+        // already, the return address is beyond the end of the stack.  Here we handle architecture-specific instructions that
+        // might pop more than just the return address (e.g., x86 "RET 4").
+        BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
+        if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(lastInsn)) {
+            if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
+                x86insn->get_operandList()->get_operands().size() == 1 &&
+                isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])) {
+                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])
+                                  ->get_absoluteValue();
+                nbytes += REG_IP.get_nbits() / 8;       // size of return address
+                stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), nbytes));
+            }
+        }
+        if (!stackOffset) {
+            // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
+            // downward.
+            stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
+        }
+        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP), stackOffset);
+
+        // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
+        // pointer. If equal, then the basic block returns to the caller.
         BaseSemantics::SValuePtr retAddr = ops->undefined_(REG_IP.get_nbits());
         retAddr = ops->readMemory(REG_SS, retAddrPtr, retAddr, ops->boolean_(true));
         BaseSemantics::SValuePtr isEqual = ops->equalToZero(ops->add(retAddr, ops->negate(ops->readRegister(REG_IP))));
@@ -834,7 +1146,7 @@ Partitioner::basicBlocks() const {
 
 std::vector<BasicBlock::Ptr>
 Partitioner::basicBlocksOverlapping(const AddressInterval &interval) const {
-    return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).basicBlocks();
+    return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).instructionOwners();
 }
 
 BasicBlock::Ptr
@@ -847,6 +1159,11 @@ Partitioner::basicBlockContainingInstruction(rose_addr_t insnVa) const {
         }
     }
     return BasicBlock::Ptr();
+}
+
+AddressInterval
+Partitioner::instructionExtent(SgAsmInstruction *insn) const {
+    return insn ? AddressInterval::baseSize(insn->get_address(), insn->get_size()) : AddressInterval();
 }
 
 SgAsmInstruction *
@@ -1054,12 +1371,14 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
 
     AddressUsers overlapping = aum_.overlapping(interval);
     BOOST_FOREACH (const AddressUser &user, overlapping.addressUsers()) {
-        if (BasicBlock::Ptr bb = user.basicBlock()) {
-            ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bb->address());
-            ASSERT_require(placeholder != cfg_.vertices().end());
-            ASSERT_require(placeholder->value().bblock()==bb);
-            BOOST_FOREACH (const Function::Ptr &function, placeholder->value().owningFunctions().values())
-                insertUnique(functions, function, sortFunctionsByAddress);
+        if (user.insn()) {
+            BOOST_FOREACH (const BasicBlock::Ptr &bb, user.basicBlocks()) {
+                ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bb->address());
+                ASSERT_require(placeholder != cfg_.vertices().end());
+                ASSERT_require(placeholder->value().bblock() == bb);
+                BOOST_FOREACH (const Function::Ptr &function, placeholder->value().owningFunctions().values())
+                    insertUnique(functions, function, sortFunctionsByAddress);
+            }
         } else {
             ASSERT_not_null(user.dataBlock());
             BOOST_FOREACH (const Function::Ptr &function, user.dataBlockOwnership().owningFunctions())
@@ -1069,12 +1388,9 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
     return functions;
 }
 
-AddressIntervalSet
-Partitioner::functionExtent(const Function::Ptr &function) const {
+void
+Partitioner::functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
     ASSERT_not_null(function);
-    AddressIntervalSet retval;
-
-    // Basic blocks and their data
     BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblockVa);
         if (placeholder != cfg_.vertices().end()) {
@@ -1086,11 +1402,38 @@ Partitioner::functionExtent(const Function::Ptr &function) const {
             }
         }
     }
+}
 
-    // Data blocks owned by the function
+AddressIntervalSet
+Partitioner::functionBasicBlockExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionBasicBlockExtent(function, retval);
+    return retval;
+}
+
+void
+Partitioner::functionDataBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks())
         retval.insert(dataBlockExtent(dblock));
+}
 
+AddressIntervalSet
+Partitioner::functionDataBlockExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionDataBlockExtent(function, retval);
+    return retval;
+}
+
+void
+Partitioner::functionExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
+    functionBasicBlockExtent(function, retval);
+    functionDataBlockExtent(function, retval);
+}
+
+AddressIntervalSet
+Partitioner::functionExtent(const Function::Ptr &function) const {
+    AddressIntervalSet retval;
+    functionExtent(function, retval);
     return retval;
 }
 
@@ -1098,8 +1441,7 @@ void
 Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
     ASSERT_require(newVertex!=cfg_.vertices().end());
     ASSERT_require(newVertex->value().type() == V_BASIC_BLOCK);
-    if (isReportingProgress_)
-        reportProgress();
+    updateCfgProgress();
     rose_addr_t startVa = newVertex->value().address();
     BasicBlock::Ptr bblock = newVertex->value().bblock();
 
@@ -1118,11 +1460,11 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
         }
     }
 
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::AttachedBasicBlock(this, startVa, bblock));
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
 }
@@ -1144,11 +1486,11 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
         }
     }
 
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::DetachedBasicBlock(this, startVa, bblock));
-#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
+#if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
 }
@@ -1203,16 +1545,22 @@ Partitioner::checkConsistency() const {
                 } else {
                     // Existing basic block
                     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                        BasicBlock::Ptr bb2 = aum_.instructionExists(insn);
-                        ASSERT_not_null2(bb2,
-                                         "instruction " + addrToString(insn->get_address()) + " in block " +
-                                         addrToString(bb->address()) + " must be present in the AUM");
-                        ASSERT_require2(bb2 == bb,
+                        static const AddressUser NO_USER;
+                        AddressUser insnAddrUser = aum_.instructionExists(insn->get_address()).orElse(NO_USER);
+                        ASSERT_require2(insnAddrUser.insn() == insn,
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
-                                        addrToString(bb->address()) + " must belong to correct basic block");
+                                         addrToString(bb->address()) + " must be present in the AUM");
+                        bool foundBlock = false;
+                        BOOST_FOREACH (const BasicBlock::Ptr &bb2, insnAddrUser.basicBlocks()) {
+                            if ((foundBlock = bb2 == bb))
+                                break;
+                        }
+                        ASSERT_require2(foundBlock,
+                                        "instruction " + addrToString(insn->get_address()) + " in " +
+                                        bb->printableName() + " does not have correct ownership in AUM\n");
                         AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
                         AddressUsers addressUsers = aum_.spanning(insnInterval);
-                        ASSERT_require2(addressUsers.instructionExists(insn),
+                        ASSERT_require2(addressUsers.instructionExists(insn->get_address()),
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
                                         addrToString(bb->address()) + " must span its own address interval in the AUM");
                     }
@@ -1481,7 +1829,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 }
             }
         }
-        
+
         // Show instructions in execution order
         if (showBlocks) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
@@ -1545,7 +1893,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 out <<"unknown\n";
             }
         }
-        
+
         // Sort outgoing edges according to destination (makes comparisons easier)
         std::vector<ControlFlowGraph::ConstEdgeIterator> sortedOutEdges;
         for (ControlFlowGraph::ConstEdgeIterator ei=vertex->outEdges().begin(); ei!=vertex->outEdges().end(); ++ei)
@@ -1587,7 +1935,7 @@ Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
 
 std::vector<Function::Ptr>
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
-    while (memoryMap_.atOrAfter(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
+    while (memoryMap_->atOrAfter(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
         Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
         if (!unmappedVa)
             return std::vector<Function::Ptr>();        // empty; no higher unused address
@@ -1728,7 +2076,7 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
         attachFunction(newFunction);
         return newFunction;
     }
-    
+
     // Perhapse use this new function's name.  If the names are the same except for the "@plt" part then use the version with
     // the "@plt".
     if (existingFunction->name().empty()) {
@@ -1777,10 +2125,10 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
 
         attachFunction(existingFunction);
     }
-    
+
     return existingFunction;
 }
-    
+
 size_t
 Partitioner::attachFunctionBasicBlocks(const Functions &functions) {
     size_t nNewBlocks = 0;
@@ -1835,10 +2183,12 @@ Partitioner::detachFunction(const Function::Ptr &function) {
 
 const CallingConvention::Analysis&
 Partitioner::functionCallingConvention(const Function::Ptr &function,
-                                       const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+                                       const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     ASSERT_not_null(function);
     if (!function->callingConventionAnalysis().hasResults()) {
-        function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(newOperators()));
+        function->callingConventionDefinition(CallingConvention::Definition::Ptr());
+        BaseSemantics::RiscOperatorsPtr ops = newOperators(MAP_BASED_MEMORY); // map works better for calling convention
+        function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(ops));
         function->callingConventionAnalysis().defaultCallingConvention(dfltCc);
         function->callingConventionAnalysis().analyzeFunction(*this, function);
     }
@@ -1847,7 +2197,7 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
 
 CallingConvention::Dictionary
 Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
-                                                  const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+                                                  const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     const CallingConvention::Analysis &ccAnalysis = functionCallingConvention(function, dfltCc);
     const CallingConvention::Dictionary &archConventions = instructionProvider().callingConventions();
     return ccAnalysis.match(archConventions);
@@ -1857,17 +2207,17 @@ Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
 struct CallingConventionWorker {
     const Partitioner &partitioner;
     Sawyer::ProgressBar<size_t> &progress;
-    const CallingConvention::Definition *dfltCc;
+    CallingConvention::Definition::Ptr dfltCc;
 
     CallingConventionWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress,
-                            const CallingConvention::Definition *dfltCc)
+                            const CallingConvention::Definition::Ptr dfltCc)
         : partitioner(partitioner), progress(progress), dfltCc(dfltCc) {}
 
     void operator()(size_t workId, const Function::Ptr &function) {
         Sawyer::Stopwatch t;
         partitioner.functionCallingConvention(function, dfltCc);
 
-        // Show some results. We're using rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
+        // Show some results. We're using Rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
         // here doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex
         // helps keep the output lines separated from one another where there's lots of worker threads, especially when they're
         // all first starting up.
@@ -1878,20 +2228,52 @@ struct CallingConventionWorker {
             trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<" seconds\n";
         }
 
+        // Update progress reports
         ++progress;
+        partitioner.updateProgress("call-conv", progress.ratio());
     }
 };
 
 void
-Partitioner::allFunctionCallingConvention(const CallingConvention::Definition *dfltCc/*=NULL*/) const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
-    Sawyer::Message::FacilitiesGuard guard();
+    Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
-        rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
+        Rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
+}
+
+void
+Partitioner::allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
+    allFunctionCallingConvention(dfltCc);
+
+    // Compute the histogram for calling convention definitions.
+    typedef Sawyer::Container::Map<std::string, size_t> Histogram;
+    Histogram histogram;
+    Sawyer::Container::Map<rose_addr_t, CallingConvention::Dictionary> allMatches;
+    BOOST_FOREACH (const Function::Ptr &function, functions()) {
+        CallingConvention::Dictionary functionCcDefs = functionCallingConventionDefinitions(function, dfltCc);
+        allMatches.insert(function->address(), functionCcDefs);
+        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, functionCcDefs)
+            ++histogram.insertMaybe(ccdef->name(), 0);
+    }
+
+    // For each function, choose the calling convention definition with the highest frequencey in the histogram.
+    BOOST_FOREACH (const Function::Ptr &function, functions()) {
+        CallingConvention::Dictionary &functionCcDefs = allMatches[function->address()];
+        CallingConvention::Definition::Ptr bestCcDef = dfltCc;
+        if (!functionCcDefs.empty()) {
+            bestCcDef = functionCcDefs[0];
+            for (size_t i=1; i<functionCcDefs.size(); ++i) {
+                if (histogram[functionCcDefs[i]->name()] > histogram[bestCcDef->name()])
+                    bestCcDef = functionCcDefs[i];
+            }
+        }
+        function->callingConventionDefinition(bestCcDef);
+    }
 }
 
 AddressUsageMap
@@ -2176,6 +2558,33 @@ Partitioner::addressName(rose_addr_t va, const std::string &name) {
     } else {
         addressNames_.insert(va, name);
     }
+}
+
+void
+Partitioner::rebuildVertexIndices() {
+    vertexIndex_.clear();
+    for (ControlFlowGraph::VertexIterator vertex = cfg_.vertices().begin(); vertex != cfg_.vertices().end(); ++vertex) {
+        switch (vertex->value().type()) {
+            case V_BASIC_BLOCK:
+                ASSERT_forbid(vertexIndex_.exists(vertex->value().address()));
+                vertexIndex_.insert(vertex->value().address(), vertex);
+                break;
+            case V_INDETERMINATE:
+                indeterminateVertex_ = vertex;
+                break;
+            case V_NONEXISTING:
+                nonexistingVertex_ = vertex;
+                break;
+            case V_UNDISCOVERED:
+                undiscoveredVertex_ = vertex;
+                break;
+            case V_USER_DEFINED:
+                ASSERT_not_reachable("user-defined vertices cannot be saved or restored");
+        }
+    }
+    unparser_ = instructionProvider().disassembler()->unparser()->copy();
+    insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
+    insnUnparser_->settings() = Unparser::Settings::minimal();
 }
 
 } // namespace

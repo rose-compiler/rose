@@ -6,7 +6,7 @@
 
 #include <BaseSemantics2.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -75,6 +75,9 @@ public:
 
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
 public:
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;

@@ -1,2 +1,2 @@
-SgAssignOp(SgVarRefExp,SgIntVal)
+$R=SgAssignOp($X=SgVarRefExp,SgIntVal)
 

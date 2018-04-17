@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryDemangler.h>
 #include <BinaryString.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
@@ -13,9 +14,9 @@
 #include <Sawyer/CommandLine.h>
 #include <stringify.h>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Modules {
@@ -32,6 +33,34 @@ canonicalFunctionName(const std::string &name) {
         return function + "@" + library;
     }
     return name;
+}
+
+void
+demangleFunctionNames(const Partitioner &p) {
+    // The demangler is most efficient if we give it all the names at once.
+    std::vector<std::string> mangledNames;
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName())
+            mangledNames.push_back(f->name());
+    }
+
+    // Demangle everything that possible to demangle.  An exception probably means that c++filt is not available or doesn't
+    // work.
+    Demangler demangler;
+    try {
+        demangler.fillCache(mangledNames);
+    } catch (const std::runtime_error &e) {
+        mlog[WARN] <<"name demangler failed: " <<e.what() <<"\n";
+        return;
+    }
+
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName()) { // same condition as above
+            std::string demangled = demangler.demangle(f->name());
+            if (demangled != f->name())
+                f->demangledName(demangled);
+        }
+    }
 }
 
 bool
@@ -51,6 +80,19 @@ PreventDiscontiguousBlocks::operator()(bool chain, const Args &args) {
         std::vector<rose_addr_t> successors = args.partitioner.basicBlockConcreteSuccessors(args.bblock, &complete);
         if (complete && 1==successors.size() && successors[0]!=args.bblock->fallthroughVa())
             args.results.terminate = TERMINATE_NOW;
+    }
+    return chain;
+}
+
+bool
+BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
+    if (chain && args.bblock->nInstructions() >= maxInsns_) {
+        args.results.terminate = TERMINATE_NOW;
+        if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"BasicBlockSizeLimiter triggered:\n";
+            BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
+                mlog[DEBUG] <<"        " <<unparseInstructionWithAddress(insn) <<"\n";
+        }
     }
     return chain;
 }
@@ -78,10 +120,10 @@ InstructionLister::switches(Settings &settings) {
 std::string
 InstructionLister::docString() {
     Settings settings;
-    return ("Lists all CFG-attached instructions overlapping the specified @s{select} address interval when a "
-            "basic block or placeholder whose address is in the specified @s{bblock} address interval is attached to the CFG. "
-            "The listing indicates address gaps and overlaps with \"+@v{n}\" and \"-@v{n}\" notation where @v{n} is the "
-            "number of bytes skipped forward or backward." +
+    return ("Lists all CFG-attached instructions overlapping the specified @s{select}{noerror} address interval when a "
+            "basic block or placeholder whose address is in the specified @s{bblock}{noerror} address interval is attached "
+            "to the CFG. The listing indicates address gaps and overlaps with \"+@v{n}\" and \"-@v{n}\" notation where "
+            "@v{n} is the number of bytes skipped forward or backward." +
             Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
@@ -154,7 +196,7 @@ CfgGraphVizDumper::switches(Settings &settings) {
     switches.insert(Switch("neighbors")
                     .intrinsicValue("true", booleanParser(settings.showNeighbors))
                     .doc("If specified, then the graph will also contain the immediate neighbors of all selected "
-                         "vertices, and they will be shown in a different style.  The @s{no-neighbors} switch "
+                         "vertices, and they will be shown in a different style.  The @s{no-neighbors}{noerror} switch "
                          "can turn this off.  The default is to " +
                          std::string(settings.showNeighbors?"":"not ") + "show neighbors."));
     switches.insert(Switch("no-neighbors")
@@ -176,9 +218,9 @@ std::string
 CfgGraphVizDumper::docString() {
     Settings settings;
     return ("Dumps a GraphViz file representing a control flow sub-graph when a basic block or placeholder whose address "
-            "is in the specified @s{bblock} address interval is inserted into the CFG.  The graph will contain vertices whose "
-            "starting address fall within the @s{select} interval, and optionally neighbors of those vertices." +
-            Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
+            "is in the specified @s{bblock}{noerror} address interval is inserted into the CFG.  The graph will contain "
+            "vertices whose starting address fall within the @s{select}{noerror} interval, and optionally neighbors of "
+            "those vertices." + Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
 // class method
@@ -246,8 +288,8 @@ HexDumper::switches(Settings &settings) {
     switches.insert(Switch("accent")
                     .intrinsicValue(true, settings.accentSpecialValues)
                     .doc("Causes zero bytes to be output as a single dot \".\" and 0xff bytes to be output as the "
-                         "string \"##\".  This emphasizes these two important values in the output.  The @s{no-accent} "
-                         "switch causes them to output as \"00\" and \"ff\". The default is to " +
+                         "string \"##\".  This emphasizes these two important values in the output.  The "
+                         "@s{no-accent}{noerror} switch causes them to output as \"00\" and \"ff\". The default is to " +
                          std::string(settings.accentSpecialValues?"":"not ") + "accent them."));
     switches.insert(Switch("no-accent")
                     .key("accent")
@@ -261,7 +303,7 @@ std::string
 HexDumper::docString() {
     Settings settings;
     return ("Lists virtual memory contents in standard hexdump format when a basic block or placeholder whose address is "
-            "in the specified @s{bblock} address interval is attached to the CFG." +
+            "in the specified @s{bblock}{noerror} address interval is attached to the CFG." +
             Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
@@ -302,11 +344,11 @@ HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
         fmt.prefix = "    ";                            // prefix before each line
 
         rose_addr_t va = settings_.what.least();
-        while (AddressInterval avail = args.partitioner->memoryMap().atOrAfter(va).singleSegment().available()) {
+        while (AddressInterval avail = args.partitioner->memoryMap()->atOrAfter(va).singleSegment().available()) {
             if (avail.least() > settings_.what.greatest())
                 break;
             const size_t nPrint = std::min(settings_.what.greatest()+1-avail.least(), avail.size());
-            const MemoryMap::Node &node = *args.partitioner->memoryMap().find(avail.least());
+            const MemoryMap::Node &node = *args.partitioner->memoryMap()->find(avail.least());
             const MemoryMap::Segment &segment = node.value();
             const AddressInterval segmentInterval = node.key();
             size_t offsetWithinSegment = avail.least() - segmentInterval.least();
@@ -347,8 +389,8 @@ std::string
 Debugger::docString() {
     Settings settings;
     return ("Calls Debugger::debug, which is a convenient point to attach a debugger such as GDB.  The method is called "
-            "when a basic block or placeholder whose address is in the specified @s{bblock} address interval is attached "
-            "to the CFG." + Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
+            "when a basic block or placeholder whose address is in the specified @s{bblock}{noerror} address interval is "
+            "attached to the CFG." + Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
 }
 
 // class method
@@ -390,14 +432,15 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
 }
 
 AddressIntervalSet
-deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
+deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
+    ASSERT_not_null(map);
     AddressIntervalSet changes;
     if (leaveAtFront + leaveAtBack >= threshold)
         return changes;
-    rose_addr_t va = map.hull().least();
+    rose_addr_t va = map->hull().least();
     AddressInterval zeros;
     uint8_t buf[4096];
-    while (AddressInterval accessed = map.atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
+    while (AddressInterval accessed = map->atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
         size_t nRead = accessed.size();
         size_t firstZero = 0;
         while (firstZero < nRead) {
@@ -407,13 +450,15 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 while (firstZero+nZeros < nRead && buf[firstZero+nZeros]==0) ++nZeros;
 
                 if (zeros.isEmpty()) {
-                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
-                } else if (zeros.greatest()+1 == va+firstZero) {
+                    zeros = AddressInterval::baseSize(accessed.least()+firstZero, nZeros);
+                } else if (zeros.greatest()+1 == accessed.least()+firstZero) {
                     zeros = AddressInterval::baseSize(zeros.least(), zeros.size()+nZeros);
                 } else {
-                    if (zeros.size() >= threshold) {
-                        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-                        changes.insert(zeros);
+                    if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
+                        AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront,
+                                                                         zeros.greatest()-leaveAtBack);
+                        map->within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+                        changes.insert(affected);
                     }
                     zeros = AddressInterval::baseSize(va+firstZero, nZeros);
                 }
@@ -421,11 +466,13 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 firstZero += nZeros+1;
             }
         }
-        va += nRead;
+        if (accessed.greatest() == map->greatest())
+            break;                                      // avoid possible overflow in next statement
+        va = accessed.greatest() + 1;
     }
-    if (zeros.size() >= threshold && zeros.size() >= leaveAtFront + leaveAtBack) {
+    if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
         AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
-        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+        map->within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
         changes.insert(affected);
     }
     return changes;
@@ -456,13 +503,13 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
-                    if (partitioner.memoryMap().at(va).exists())
+                    if (partitioner.memoryMap()->at(va).exists())
                         partitioner.addressName(va, name);
 
                     // Sometimes weak symbol values are offsets w.r.t. their linked section.
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
                         va = value + section->get_mapped_actual_va();
-                        if (partitioner.memoryMap().at(va).exists())
+                        if (partitioner.memoryMap()->at(va).exists())
                             partitioner.addressName(va, name);
                     }
                 }
@@ -497,7 +544,7 @@ nameStrings(const Partitioner &partitioner) {
                         ival->set_comment(label);
                     } else if (partitioner.instructionsOverlapping(va).empty()) {
                         stringFinder.reset();
-                        stringFinder.find(partitioner.memoryMap().at(va));
+                        stringFinder.find(partitioner.memoryMap()->at(va));
                         if (!stringFinder.strings().empty()) {
                             ASSERT_require(stringFinder.strings().front().address() == va);
                             std::string str = stringFinder.strings().front().narrow(); // front is the longest string
@@ -533,13 +580,19 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
 
 size_t
 findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader, std::vector<Function::Ptr> &functions) {
+    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrNames;
+
+    // This traversal only finds the addresses for the new functions, it does not modify the AST since that's a dangerous thing
+    // to do while we're traversing it.  It shouldn't make any difference though because we're traversing a different part of
+    // the AST (the ELF/PE container) than we're modifying (instructions).
     struct T1: AstSimpleProcessing {
         const Partitioner &partitioner;
         SgAsmGenericHeader *fileHeader;
-        std::vector<Function::Ptr> &functions;
-        size_t nInserted;
-        T1(const Partitioner &p, SgAsmGenericHeader *fh, std::vector<Function::Ptr> &functions)
-            : partitioner(p), fileHeader(fh), functions(functions), nInserted(0) {}
+        AddrNames addrNames;
+
+        T1(const Partitioner &p, SgAsmGenericHeader *h)
+            : partitioner(p), fileHeader(h) {}
+
         void visit(SgNode *node) {
             if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
                 if (symbol->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
@@ -549,17 +602,17 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     SgAsmGenericSection *section = symbol->get_bound();
 
                     // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
-                    // different address than it expected to be mapped, then adjust the symbol's value by the same amount.
+                    // different address than it expected to be mapped, then adjust the symbol's value by the same amount. Keep
+                    // only the first non-empty name we find for each address.
                     rose_addr_t va = value;
                     if (section!=NULL && section->is_mapped() &&
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
                     if (partitioner.discoverInstruction(va)) {
-                        Function::Ptr function = Function::instance(va, symbol->get_name()->get_string(),
-                                                                    SgAsmFunction::FUNC_SYMBOL);
-                        if (insertUnique(functions, function, sortFunctionsByAddress))
-                            ++nInserted;
+                        std::string &s = addrNames.insertMaybeDefault(va);
+                        if (s.empty())
+                            s = symbol->get_name()->get_string();
                     }
 
                     // Sometimes weak symbol values are offsets from a section (this code handles that), but other times
@@ -567,17 +620,24 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK)
                         value += section->get_mapped_actual_va();
                     if (partitioner.discoverInstruction(value)) {
-                        Function::Ptr function = Function::instance(value, symbol->get_name()->get_string(),
-                                                                    SgAsmFunction::FUNC_SYMBOL);
-                        if (insertUnique(functions, function, sortFunctionsByAddress))
-                            ++nInserted;
+                        std::string &s = addrNames.insertMaybeDefault(value);
+                        if (s.empty())
+                            s = symbol->get_name()->get_string();
                     }
                 }
             }
         }
-    } t1(partitioner, fileHeader, functions);
+    } t1(partitioner, fileHeader);
+
+    size_t nInserted = 0;
     t1.traverse(fileHeader, preorder);
-    return t1.nInserted;
+    BOOST_FOREACH (const AddrNames::Node &node, t1.addrNames.nodes()) {
+        Function::Ptr function = Function::instance(node.key(), node.value(), SgAsmFunction::FUNC_SYMBOL);
+        if (insertUnique(functions, function, sortFunctionsByAddress))
+            ++nInserted;
+    }
+                    
+    return nInserted;
 }
 
 std::vector<Function::Ptr>
@@ -713,7 +773,7 @@ SgAsmBlock*
 buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings &settings) {
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
-    size_t nRead = partitioner.memoryMap().at(dblock->address()).read(rawBytes).size();
+    size_t nRead = partitioner.memoryMap()->at(dblock->address()).read(rawBytes).size();
     ASSERT_always_require(nRead==dblock->size());
     SgAsmStaticData *datum = SageBuilderAsm::buildStaticData(dblock->address(), rawBytes);
 
@@ -792,15 +852,11 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
 
-    // Function's calling convention. For now, we just set the function's calling convention to the best one on a local
-    // basis. A separate pass later can choose the globally best conventions.  Don't run the analysis if it hasn't been run
-    // already (sometimes users request that we skip this expensive analysis).
-    const CallingConvention::Definition *bestCallingConvention = NULL;
-    if (function->callingConventionAnalysis().hasResults()) {
-        CallingConvention::Dictionary conventions = partitioner.functionCallingConventionDefinitions(function);
-        if (!conventions.empty())
-            bestCallingConvention = new CallingConvention::Definition(conventions.front());
-    }
+    // Function's calling convention. The AST holds the name of the best calling convention, or the empty string if no calling
+    // convention has been assigned.
+    std::string bestCallingConvention;
+    if (CallingConvention::Definition::Ptr ccdef = function->callingConventionDefinition())
+        bestCallingConvention = ccdef->name();
     
     // Build the AST
     SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
@@ -931,8 +987,9 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
         const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
         if (!ccAnalysis.hasResults())
             continue;                                   // don't run analysis if not run already
-        BOOST_FOREACH (const CallingConvention::Definition &ccDef, partitioner.functionCallingConventionDefinitions(function))
-            ++totals.insertMaybe(ccDef.name(), 0);
+        CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs)
+            ++totals.insertMaybe(ccDef->name(), 0);
     }
 
     // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
@@ -944,18 +1001,18 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
             if (!ccAnalysis.hasResults())
                 continue;                               // don't run analysis if not run already
             CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
-            const CallingConvention::Definition *ccBest = NULL;
-            BOOST_FOREACH (const CallingConvention::Definition &ccDef, ccDefs) {
+            CallingConvention::Definition::Ptr ccBest;
+            BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs) {
                 if (NULL==ccBest) {
-                    ccBest = &ccDef;
-                } else if (totals.getOrElse(ccDef.name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
-                    ccBest = &ccDef;
+                    ccBest = ccDef;
+                } else if (totals.getOrElse(ccDef->name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
+                    ccBest = ccDef;
                 }
             }
             if (ccBest) {
                 // We cannot delete previously stored calling conventions because there's no clear rule about whether they need
                 // to be allocated on the heap, and if so, who owns them or what allocator was used.
-                astFunction->set_callingConvention(new CallingConvention::Definition(*ccBest));
+                astFunction->set_callingConvention(ccBest->name());
             }
         }
     }

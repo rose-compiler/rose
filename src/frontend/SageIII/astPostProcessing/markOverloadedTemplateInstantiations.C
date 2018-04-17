@@ -96,10 +96,12 @@ MarkOverloadedTemplateInstantiations::visit ( SgNode *node )
 #endif
                if (isOverloaded == true)
                   {
+#if 0
+                 // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
                     bool istemplatedMemberFunction = false;
                     if (memberFunctionInstantiation->isTemplateFunction() == true)
                          istemplatedMemberFunction = true;
-#if 0
+
                     printf ("      istemplatedMemberFunction = %s \n",istemplatedMemberFunction ? "true" : "false");
 #endif
 #if 0

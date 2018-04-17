@@ -9,6 +9,7 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
+#include "Lowering.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -22,6 +23,7 @@ DFAnalysisBase::DFAnalysisBase():
   _transferFunctions(0),
   _initialElementFactory(0),
   _analysisType(DFAnalysisBase::FORWARD_ANALYSIS),
+  _no_topological_sort(false),
   _pointerAnalysisInterface(0),
   _pointerAnalysisEmptyImplementation(0)
 {}
@@ -70,6 +72,7 @@ void DFAnalysisBase::computeAllPreInfo() {
 void DFAnalysisBase::computeAllPostInfo() {
   if(!_postInfoIsValid) {
     computeAllPreInfo();
+    cout << "INFO: computing post data."<<endl;
     // compute set of used labels in ICFG.
     for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
       Label lab=*i;
@@ -109,6 +112,14 @@ bool DFAnalysisBase::isBackwardAnalysis() {
   return _analysisType==DFAnalysisBase::BACKWARD_ANALYSIS;
 }
 
+bool DFAnalysisBase::getNoTopologicalSort() {
+  return _no_topological_sort;
+}
+
+void DFAnalysisBase::setNoTopologicalSort(bool no_topological_sort) {
+  _no_topological_sort = no_topological_sort;
+}
+
 // outdated
 Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
@@ -144,15 +155,9 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 
 void
 DFAnalysisBase::normalizeProgram(SgProject* root) {
-    cout<<"STATUS: Normalizing program."<<endl;
-  ExtractFunctionArguments efa;
-  if(!efa.IsNormalized(root)) {
-    cout<<"STATUS: Normalizing function call arguments."<<endl;
-    efa.NormalizeTree(root,true);
-  }
-  FunctionCallNormalization fn;
-  cout<<"STATUS: Normalizing function calls in expressions."<<endl;
-  fn.visit(root);
+  cout<<"STATUS: Normalizing program."<<endl;
+  SPRAY::Lowering lowering;
+  lowering.lowerAst(root);
 }
 
 
@@ -176,6 +181,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
+#if 0
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
     size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
@@ -183,6 +189,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
     int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (reduced nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
+#endif
 
   ROSE_ASSERT(_initialElementFactory);
   for(long l=0;l<getLabeler()->numberOfLabels();++l) {
@@ -223,7 +230,7 @@ SPRAY::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
 }
 
 void
-DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
+DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot,bool onlySingleStartLabel) {
   if(startFunRoot) {
     if(isForwardAnalysis()) {
       Label startLabel=_cfanalyzer->getLabel(startFunRoot);
@@ -231,22 +238,36 @@ DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
     } else if(isBackwardAnalysis()) {
       if(isSgFunctionDefinition(startFunRoot)) {
         Label startLabel=_cfanalyzer->getLabel(startFunRoot);
-        // TODO: temporary hack (requires get-methods for different types of labels
-        // or a list of all labels that are associated with a node)
-        int startLabelId=startLabel.getId();
-        // exit-label = entry-label + 1
-        Label endLabel(startLabelId+1);
+        Label endLabel=_cfanalyzer->correspondingFunctionExitLabel(startLabel);
         _extremalLabels.insert(endLabel);
       } else {
-        cerr<<"Error: backward analysis only supported for start at a function exit label."<<endl;
+        cerr<<"Error: backward analysis only supported for start at function exit label."<<endl;
         exit(1);
       }
     }
   } else {
-    // naive way of initializing all labels
-    for(long i=0;i<getLabeler()->numberOfLabels();++i) {
-      Label lab=i;
-      _extremalLabels.insert(lab);
+    if(!onlySingleStartLabel) {
+      Labeler* labeler=getLabeler();
+      long numLabels=labeler->numberOfLabels();
+      // naive way of initializing all labels
+      for(long i=0;i<numLabels;++i) {
+        Label lab=i;
+        // only add function entry labels as extremal labels
+        if(isForwardAnalysis()) {
+          if(labeler->isFunctionEntryLabel(i)) {
+            _extremalLabels.insert(lab);
+          }
+        } else {
+          ROSE_ASSERT(isBackwardAnalysis());
+          if(labeler->isFunctionExitLabel(i)) {
+            _extremalLabels.insert(lab);
+          }
+        }
+      }
+    } else {
+      // keep _extremalLabels an empty set if no start function is
+      // determined and only a single start label is requested.
+      // _extremalLabels remains empty. Analysis will not be run.
     }
   }
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
@@ -280,9 +301,13 @@ DFAnalysisBase::run() {
     cout<<"INFO: Initialized "<<*i<<" with ";
     cout<<_analyzerDataPreInfo[(*i).getId()]->toString(getVariableIdMapping());
     cout<<endl;
-    Flow outEdges=_flow.outEdges(*i);
-    for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
-      _workList.add(*j);
+    // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
+    //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
+    if(_no_topological_sort || !isForwardAnalysis()) {
+      Flow outEdges=_flow.outEdges(*i);
+      for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
+        _workList.add(*j);
+      }
     }
 #if 0
     LabelSet initsucc=_flow.succ(*i);
@@ -290,6 +315,29 @@ DFAnalysisBase::run() {
       _workList.add(*i);
     }
 #endif
+  }
+
+  // schroder3 (2016-08-16): Use the topological sorted CFG as worklist initialization. This avoids
+  //  unnecessary computations that might occur (e.g. if the if-branch and else-branch
+  //  do not have an equivalent number of nodes).
+  if(!_no_topological_sort && isForwardAnalysis()) {
+    if(_extremalLabels.size() == 1) {
+      Label startLabel = *(_extremalLabels.begin());
+      std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
+      cout << "INFO: Using topologically sorted CFG as work list initialization." << endl;
+      for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
+        //cout << (*i).toString() << endl;
+        _workList.add(*i);
+      } 
+    } else {
+      cout << "INFO: Using non-topologically sorted CFG with multiple function entries as work list initialization." << endl;
+      for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
+        Flow outEdges=_flow.outEdges(*i);
+        for(Flow::iterator i=outEdges.begin();i!=outEdges.end();++i) {
+          _workList.add(*i);
+        }
+      }
+    }
   }
   cout<<"INFO: work list size after initialization: "<<_workList.size()<<endl;
   solve();
@@ -323,6 +371,10 @@ Labeler* DFAnalysisBase::getLabeler() {
 
 VariableIdMapping* DFAnalysisBase::getVariableIdMapping() {
   return _programAbstractionLayer->getVariableIdMapping();
+}
+
+FunctionIdMapping* DFAnalysisBase::getFunctionIdMapping() {
+  return _programAbstractionLayer->getFunctionIdMapping();
 }
 
 #if 0

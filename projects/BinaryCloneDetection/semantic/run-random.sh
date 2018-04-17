@@ -35,7 +35,7 @@ for i in $(seq 1 $NSPECIMENS); do
 
     ./runRandom --version
     (  set -x;
- 	i386 -R ./runRandom -L 'rose::BinaryAnalysis::Partitioner2(!warn)' \
+ 	i386 -R ./runRandom -L 'Rose::BinaryAnalysis::Partitioner2(!warn)' \
 	    --init=main --functions=100 --instructions=100 --limit=1000000 run:$SPECIMEN
     )
 done

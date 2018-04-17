@@ -62,6 +62,12 @@ regenerate:
 # GMY Jul. 2008 Test for new checker integration of Compass
 #        chmod -R u+w $(compass_checker_dir)
 #        chmod -R u+w $(srcdir)
+
+# DQ (3/2/2017): This makefile rule will modify the source tree and the CHECKER_LIST file which is a 
+# problem for development because the modification is done to the source tree and the new directory
+# will not be a part of the git repository, and which the work is commited and tested the modified
+# CHECKER_LIST file will reference a checker "blankTestChecker" that does not exist.  This rule
+# should be modified to only make changes to the build tree.
 testNewChecker: $(compass_scripts_dir)/gen_checker.sh
 	 chmod -R u+w $(compass_checker_dir)
 	 chmod -R u+w $(srcdir)

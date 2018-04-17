@@ -5,10 +5,12 @@
 
 #include <AsmUnparser_compat.h>
 #include <BinarySymbolicExprParser.h>
+#include <BinaryYicesSolver.h>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <DwarfLineMapper.h>
 #include <Partitioner2/CfgPath.h>
@@ -21,13 +23,12 @@
 #include <Sawyer/Stopwatch.h>
 #include <SymbolicMemory2.h>
 #include <SymbolicSemantics2.h>
-#include <YicesSolver.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 using namespace Sawyer::Container::Algorithm;
-using namespace rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, SymbolicSemantics
+using namespace Rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, SymbolicSemantics
 using namespace PathFinder;
 namespace P2 = Partitioner2;
 
@@ -39,7 +40,7 @@ enum FollowCalls { SINGLE_FUNCTION, FOLLOW_CALLS };
 // so that they hopefully don't conflict with any real registers, which tend to start counting at zero.  Since we're using
 // BaseSemantics::RegisterStateGeneric, we can use its flexibility to store extra "registers" without making any other changes
 // to the architecture.
-static const RegisterDescriptor REG_PATH(99, 0, 0, 1);
+static const RegisterDescriptor REG_PATH(15, 1023, 0, 1);
 
 // This is the register where functions will store their return value.
 static RegisterDescriptor REG_RETURN;
@@ -87,6 +88,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
     
     //--------------------------- 
     SwitchGroup cfg("Control flow graph switches");
+    cfg.name("cfg");
+
     cfg.insert(Switch("begin")
                .argument("name_or_va", anyParser(settings.beginVertex))
                .doc("CFG vertex where paths will start.  If @v{name_or_va} is an integer (decimal, octal, or hexadecimal "
@@ -193,7 +196,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
     //---------------------------
     SwitchGroup pcond("Post-condition switches");
-    pcond.insert(Switch("post-condition")
+    pcond.name("post");
+
+    pcond.insert(Switch("condition")
                  .argument("expression", anyParser(settings.postConditionsStr))
                  .whichValue(SAVE_ALL)
                  .doc("Specifies post conditions that must be met at the end of the path. This switch may appear "
@@ -204,6 +209,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
     //--------------------------- 
     SwitchGroup out("Output switches");
+    out.name("out");
+
     out.insert(Switch("show-instructions")
                .intrinsicValue(true, settings.showInstructions)
                .doc("Cause instructions to be listed as part of each path. The @s{no-show-instructions} switch turns "
@@ -280,15 +287,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
     out.insert(Switch("no-show-expr-width")
                .key("show-expr-width")
                .intrinsicValue(false, settings.showExprWidth)
-               .hidden(true));
-
-    out.insert(Switch("debug-smt")
-               .intrinsicValue(true, settings.debugSmtSolver)
-               .doc("Turns on debugging of the SMT solver.  The @s{no-debug-smt} switch disables debugging. The default "
-                    "is to " + std::string(settings.debugSmtSolver ? "" : "not ") + "debug the solver."));
-    out.insert(Switch("no-debug-smt")
-               .key("debug-smt")
-               .intrinsicValue(false, settings.debugSmtSolver)
                .hidden(true));
 
     ParserResult cmdline = parser.with(cfg).with(pcond).with(out).parse(argc, argv).apply();
@@ -601,8 +599,7 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         }
     }
 
-    // We could use an SMT solver here also, but it seems to slow things down more than speed them up.
-    SMTSolver *solver = NULL;
+    SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, myRegs, solver);
 
     return partitioner.instructionProvider().dispatcher()->create(ops);
@@ -702,17 +699,17 @@ processVertex(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGrap
 }
 
 static void
-showPathEvidence(SMTSolver &solver, const RiscOperatorsPtr &ops) {
+showPathEvidence(const SmtSolverPtr &solver, const RiscOperatorsPtr &ops) {
     std::cout <<"  Inputs sufficient to cause path to be taken:\n";
-    std::vector<std::string> enames = solver.evidence_names();
+    std::vector<std::string> enames = solver->evidenceNames();
     if (enames.empty()) {
         std::cout <<"    not available (or none necessary)\n";
     } else {
         BOOST_FOREACH (const std::string &ename, enames) {
             if (ename.substr(0, 2) == "0x") {
-                std::cout <<"    memory[" <<ename <<"] == " <<*solver.evidence_for_name(ename) <<"\n";
+                std::cout <<"    memory[" <<ename <<"] == " <<*solver->evidenceForName(ename) <<"\n";
             } else {
-                std::cout <<"    " <<ename <<" == " <<*solver.evidence_for_name(ename) <<"\n";
+                std::cout <<"    " <<ename <<" == " <<*solver->evidenceForName(ename) <<"\n";
             }
             std::string varComment = ops->varComment(ename);
             if (!varComment.empty())
@@ -765,11 +762,12 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
 
     FunctionSummary summary(cfgCallTarget, stackDelta);
     functionSummaries.insert(summary.address, summary);
+    summaryVertex->value().address(summary.address);
 }
 
 static void
 printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pathsGraph, const P2::CfgPath &path,
-             size_t pathNumber, const std::vector<SymbolicExpr::Ptr> &pathConstraints, SMTSolver &solver,
+             size_t pathNumber, const std::vector<SymbolicExpr::Ptr> &pathConstraints, const SmtSolverPtr &solver,
              const RiscOperatorsPtr &ops) {
     std::cout <<"Found feasible path #" <<pathNumber
               <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
@@ -877,7 +875,7 @@ class MemoryExpansion: public SymbolicExprParser::OperatorExpansion {
     BaseSemantics::RiscOperatorsPtr ops_;
 protected:
     MemoryExpansion(const BaseSemantics::RiscOperatorsPtr &ops)
-        : ops_(ops) {}
+        : SymbolicExprParser::OperatorExpansion(ops->solver()), ops_(ops) {}
 public:
     static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
         Ptr functor = Ptr(new MemoryExpansion(ops));
@@ -945,7 +943,7 @@ checkPostConditionSyntax(const P2::Partitioner &partitioner) {
 
 /** Process one path. Given a path, determine if the path is feasible.  If @p showResults is set, then emit information about
  *  the initial conditions that cause this path to be taken. */
-static SMTSolver::Satisfiable
+static SmtSolver::Satisfiable
 singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const P2::CfgPath &path,
                       bool atEndOfPath) {
     ASSERT_require(settings.searchMode == SEARCH_SINGLE_DFS);
@@ -963,8 +961,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
         info <<"  saved as \"" <<StringUtility::cEscape(graphVizFileName) <<"\"\n";
     }
 
-    YicesSolver solver;
-    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
+    SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
@@ -981,12 +978,13 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
                 // Executing the path forces us to go a different direction than where the path indicates we should go. We
                 // don't need an SMT solver to tell us that when the values are just integers.
                 info <<"  not feasible according to ROSE semantics\n";
-                return SMTSolver::SAT_NO;
+                return SmtSolver::SAT_NO;
             }
         } else if (hasVirtualAddress(pathEdge->target())) {
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression(),
+                                                                solver);
             pathConstraints.push_back(constraint);
         }
     }
@@ -994,18 +992,18 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
         incorporatePostConditions(ops, pathConstraints /*out*/);
 
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
-    SMTSolver::Satisfiable isSatisfied = SMTSolver::SAT_UNKNOWN;
-    isSatisfied = solver.satisfiable(pathConstraints);
+    SmtSolver::Satisfiable isSatisfied = SmtSolver::SAT_UNKNOWN;
+    isSatisfied = solver->satisfiable(pathConstraints);
 
     if (!atEndOfPath)
         return isSatisfied;
 
-    if (isSatisfied == SMTSolver::SAT_YES) {
+    if (isSatisfied == SmtSolver::SAT_YES) {
         printResults(partitioner, paths, path, npaths, pathConstraints, solver, ops);
-    } else if (isSatisfied == SMTSolver::SAT_NO) {
+    } else if (isSatisfied == SmtSolver::SAT_NO) {
         info <<"  not feasible according to SMT solver\n";
     } else {
-        ASSERT_require(isSatisfied == SMTSolver::SAT_UNKNOWN);
+        ASSERT_require(isSatisfied == SmtSolver::SAT_UNKNOWN);
         error <<"SMT solver could not determine satisfiability\n";
     }
     return isSatisfied;
@@ -1043,21 +1041,22 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
     // vertices that can participate in a path from the callee's entry point to any of its returning points.
     P2::CfgPath path(pathsBeginVertex);
     while (!path.isEmpty()) {
+        // If backVertex is a function summary, then there is no corresponding cfgBackVertex.
         P2::ControlFlowGraph::ConstVertexIterator backVertex = path.backVertex();
         P2::ControlFlowGraph::ConstVertexIterator cfgBackVertex = pathToCfg(partitioner, backVertex);
-        ASSERT_require(partitioner.cfg().isValidVertex(cfgBackVertex));
+
         bool doBacktrack = false;
         bool atEndOfPath = pathsEndVertices.find(backVertex) != pathsEndVertices.end();
 
         // Test path feasibility
-        SMTSolver::Satisfiable isFeasible = singlePathFeasibility(partitioner, paths, path, atEndOfPath);
-        if (atEndOfPath && isFeasible == SMTSolver::SAT_YES) {
+        SmtSolver::Satisfiable isFeasible = singlePathFeasibility(partitioner, paths, path, atEndOfPath);
+        if (atEndOfPath && isFeasible == SmtSolver::SAT_YES) {
             if (0 == --settings.maxPaths) {
                 info <<"terminating because the maximum number of feasiable paths has been found\n";
                 exit(0);
             }
             doBacktrack = true;
-        } else if (atEndOfPath || isFeasible == SMTSolver::SAT_NO) {
+        } else if (atEndOfPath || isFeasible == SmtSolver::SAT_NO) {
             doBacktrack = true;
         }
         
@@ -1090,6 +1089,7 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
         // traversal because we're modifying parts of the graph that aren't part of the current path.  This is where having
         // insert- and erase-stable graph iterators is a huge help!
         if (!doBacktrack && pathEndsWithFunctionCall(partitioner, path) && !P2::findCallReturnEdges(backVertex).empty()) {
+            ASSERT_require(partitioner.cfg().isValidVertex(cfgBackVertex));
             BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, P2::findCallEdges(cfgBackVertex)) {
                 if (shouldSummarizeCall(path, partitioner.cfg(), cfgCallEdge->target())) {
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
@@ -1287,8 +1287,7 @@ struct BfsContext {
 // Runs in a separate thread.
 static void
 singleThreadBfsWorker(BfsContext *ctx) {
-    YicesSolver solver;
-    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
+    SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
@@ -1340,14 +1339,15 @@ singleThreadBfsWorker(BfsContext *ctx) {
         if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
             SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), pathsEdge->target()->value().address());
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression(),
+                                                                solver);
             bfsVertex->value().constraint = constraint;
             SAWYER_MESG(debug) <<"  path edge has constraint expression\n";
         }
 
         // Accumulate all constraints along this path and invoke the SMT solver.
         bool atEndOfPath = ctx->pathsEndVertices.find(pathsEdge->target()) != ctx->pathsEndVertices.end();
-        SMTSolver::Satisfiable isFeasible = SMTSolver::SAT_UNKNOWN;
+        SmtSolver::Satisfiable isFeasible = SmtSolver::SAT_UNKNOWN;
         std::vector<SymbolicExpr::Ptr> pathConstraints;
         if (!abandonPrefix) {
             BfsForest::VertexIterator vertex=bfsVertex;
@@ -1363,16 +1363,16 @@ singleThreadBfsWorker(BfsContext *ctx) {
             if (atEndOfPath)
                 incorporatePostConditions(ops, pathConstraints /*out*/);
             SAWYER_MESG(debug) <<"  solving " <<StringUtility::plural(pathConstraints.size(), "path constraints") <<"\n";
-            isFeasible = solver.satisfiable(pathConstraints);
-            if (SMTSolver::SAT_NO == isFeasible)
+            isFeasible = solver->satisfiable(pathConstraints);
+            if (SmtSolver::SAT_NO == isFeasible)
                 abandonPrefix = true;
             SAWYER_MESG(debug) <<"  solver returned "
-                               <<(SMTSolver::SAT_YES==isFeasible?"yes":(SMTSolver::SAT_NO==isFeasible?"no":"unknown")) <<"\n";
+                               <<(SmtSolver::SAT_YES==isFeasible?"yes":(SmtSolver::SAT_NO==isFeasible?"no":"unknown")) <<"\n";
         }
 
         // Print results
         bool shouldExit = false;
-        if (isFeasible == SMTSolver::SAT_YES && atEndOfPath) {
+        if (isFeasible == SmtSolver::SAT_YES && atEndOfPath) {
             SAWYER_MESG(debug) <<"  path is feasible and complete (printing results)\n";
             // Build the path. We do so backward from the end toward the beginning since that's most convenient.
             P2::CfgPath path(pathsEdge->target()); // end of the path, a vertex in the paths-graph
@@ -1536,6 +1536,7 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     searching <<"; took " <<searchTime <<" seconds\n";
 }
 
+#if 0 // [Robb Matzke 2018-04-10]
 /** Merge states for multi-path feasibility analysis. Given two paths, such as when control flow merges after an "if"
  * statement, compute a state that represents both paths.  The new state that's returned will consist largely of ite
  * expressions. */
@@ -1585,13 +1586,16 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->memoryState());
     SymbolicExpr::Ptr memExpr1 = s1mem->expression();
     SymbolicExpr::Ptr memExpr2 = s2mem->expression();
-    SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2);
+    SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2,
+                                                         ops->solver());
     BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
     mergedMem->expression(mergedExpr);
 
     return ops->currentState()->create(mergedReg, mergedMem);
 }
+#endif
 
+#if 0 // [Robb Matzke 2018-04-10]
 // Merge all the predecessor outgoing states to create a new incoming state for the specified vertex.
 static BaseSemantics::StatePtr
 mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::ControlFlowGraph::ConstVertexIterator vertex,
@@ -1612,6 +1616,7 @@ mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::Con
     ASSERT_not_null(state);
     return state;
 }
+#endif
 
 class ReverseMultiVisitDfsTraversal {
     struct Node {
@@ -1696,7 +1701,6 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
 
     // Build the semantics framework and initialize the path constraints.
     YicesSolver solver;
-    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
@@ -1800,12 +1804,12 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
 
         // Is the constraint satisfiable?
         info <<"  invoking SMT solver\n";
-        SMTSolver::Satisfiable isSatisfied = solver.satisfiable(constraint);
-        if (isSatisfied == SMTSolver::SAT_YES) {
+        SmtSolver::Satisfiable isSatisfied = solver.satisfiable(constraint);
+        if (isSatisfied == SmtSolver::SAT_YES) {
             info <<"  constraints are satisfiable\n";
             std::cout <<"Found a feasible path (specified path is not available)\n";
             showPathEvidence(solver, ops);
-        } else if (isSatisfied == SMTSolver::SAT_NO) {
+        } else if (isSatisfied == SmtSolver::SAT_NO) {
             info <<"  constraints are not satisfiable\n";
         } else {
             info <<"  constraint satisfiability could not be determined.\n";
@@ -1932,9 +1936,8 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
 
 int main(int argc, char *argv[]) {
     // Initialization
-    Diagnostics::initialize();
-    PathFinder::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(PathFinder::mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&PathFinder::mlog, "tool");
     Sawyer::Message::Stream info(PathFinder::mlog[INFO]);
 
     P2::Engine engine;

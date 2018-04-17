@@ -5,6 +5,9 @@ using namespace std;
 int
 main ( int argc, char * argv[] )
    {
+  // Initialize and check compatibility. See Rose::initialize
+     ROSE_INITIALIZE;
+
      vector<string> argvList(argv, argv + argc);
 
      SgProject* project = NULL;

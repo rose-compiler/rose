@@ -679,6 +679,7 @@ WARN_LOGFILE           =
 
 INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/docs/Rose/Installation \
+			 @top_srcdir@/docs/Rose/ToolDevelopment \
 			 @top_srcdir@/docs/Rose/LibraryGeneralPrinciples.dox \
 			 @top_srcdir@/docs/Rose/BinaryTutorial.dox \
 			 @top_srcdir@/docs/Rose/Tools \
@@ -690,57 +691,9 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/docs/testDoxygen \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \
-                         @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C \
-                         @top_srcdir@/src/frontend/Disassemblers/Expressions.C \
-                         @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
-                         @top_srcdir@/src/frontend/Disassemblers/Registers.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmArmInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmBlock.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmFloatValueExpression.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmFunction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmIntegerValueExpression.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmInterpretation.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmM68kInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmMipsInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmType.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmX86Instruction.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfFileHeader.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfNote.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfRelocation.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSectionTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSegmentTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfStringTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSymbolTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSymbolVersion.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ExecDOS.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ExecGeneric.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ExecLE.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ExecNE.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ExtentMap.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericDynamicLinking.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericFile.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericFormat.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericHeader.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericString.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/Hexdump.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/IntelPinSupport.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/MemoryMap.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeExport.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeImportDirectory.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeImportItem.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeImportSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeRvaSizePair.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeSectionTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeStringTable.C \
                          @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C \
                          @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
                          @top_srcdir@/src/frontend/BinaryLoader \
@@ -753,10 +706,11 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
                          @top_srcdir@/src/frontend/BinaryFormats \
+                         @top_srcdir@/src/midend/abstractHandle \
+			 @top_srcdir@/src/midend/astMatching \
                          @top_srcdir@/src/midend/binaryAnalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/dataflowanalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics \
-                         @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C \
                          @top_srcdir@/src/midend/binaryAnalyses/libraryIdentification \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
@@ -776,6 +730,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/midend/programAnalysis/EditDistance \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
+                         @top_srcdir@/src/midend/programTransformation/ompLowering/omp_lowering.h \
                          @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
@@ -783,11 +738,11 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
                          @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
                          @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
-                         @top_srcdir@/src/backend/asmUnparser/AsmUnparser.C \
                          @top_srcdir@/src/backend/unparser/unparser.docs \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \
                          @top_srcdir@/src/backend/unparser/FortranCodeGeneration/documentation.docs \
+			 @top_srcdir@/src/util \
                          @top_srcdir@/src/util/FormatRestorer.h \
                          @top_srcdir@/src/util/Sawyer \
                          @top_srcdir@/src/util/utilDocumentation.docs \
@@ -852,16 +807,6 @@ EXCLUDE                = @top_srcdir@/src/frontend/CxxFrontend/EDG \
                          @top_srcdir@/util/roseString.C \
                          @top_srcdir@/docs/Rose/AstProcessing \
                          @top_srcdir@/docs/Rose/Tutorial \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/FindRegisterDefs.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/NullSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/ReadWriteRegisterFragment.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/flowEquations.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h \
                          @top_pwd@/src/frontend/SageIII/StorageClasses.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
@@ -893,7 +838,7 @@ EXCLUDE_SYMBOLS        =
 EXAMPLE_PATH           = @top_srcdir@ \
 			 @top_srcdir@/tutorial \
                          @top_srcdir@/src/util/Sawyer/docs/examples \
-			 @top_srcdir@/tests/roseTests/binaryTests
+			 @top_srcdir@/tests/nonsmoke/functional/roseTests/binaryTests
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp
@@ -1388,9 +1333,8 @@ SEARCHENGINE           = YES
 SERVER_BASED_SEARCH    = YES
 
 # The following needs doxygen 1.8.3 or later. [Matzke 2015-09-14]
-# Fixme: This needs to change to http://rosecompiler.org/doxysearch.cgi eventually.
 EXTERNAL_SEARCH = YES
-SEARCHENGINE_URL = https://hoosierfocus.com/ROSE/doxysearch.cgi
+SEARCHENGINE_URL = http://rosecompiler.org/doxygen/doxysearch.cgi
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
@@ -1658,7 +1602,7 @@ ENABLE_PREPROCESSING   = YES
 # compilation will be performed. Macro expansion can be done in a controlled
 # way by setting EXPAND_ONLY_PREDEF to YES.
 
-MACRO_EXPANSION        = NO
+MACRO_EXPANSION        = YES
 
 # If the EXPAND_ONLY_PREDEF and MACRO_EXPANSION tags are both set to YES
 # then the macro expansion is limited to the macros specified with the
@@ -1704,7 +1648,8 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = HAVE_EXPLICIT_TEMPLATE_INSTANTIATION \
                          __EXTERN_C__ \
                          ROSE_HAVE_LIBYICES \
-                         ROSE_USE_NEW_GRAPH_NODES
+                         ROSE_USE_NEW_GRAPH_NODES \
+			 DOCUMENTATION
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.
@@ -1712,7 +1657,7 @@ PREDEFINED             = HAVE_EXPLICIT_TEMPLATE_INSTANTIATION \
 # Use the PREDEFINED tag if you want to use a different macro definition that
 # overrules the definition found in the source code.
 
-EXPAND_AS_DEFINED      =
+EXPAND_AS_DEFINED      = DECLARE_LEAF_CLASS DECLARE_HEADERS DECLARE_OTHERS IS_SERIALIZABLE
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES (the default) then
 # doxygen's preprocessor will remove all references to function-like macros

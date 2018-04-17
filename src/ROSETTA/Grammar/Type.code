@@ -329,7 +329,7 @@ HEADER_GET_MANGLED_START
       //! Mangled name support for unparser support
        // SgName get_mangled ( SgUnparse_Info & info );
        // RV (1/31/2006): Removed dependence on SgUnparse_Info.
-          virtual SgName get_mangled (void) const;
+          virtual SgName get_mangled (void) const $ROSE_OVERRIDE;
 
 HEADER_GET_MANGLED_END
 
@@ -360,7 +360,7 @@ HEADER_GET_NAME_START
           This applies to the SgClassType, SgTypedef and the
           SgEnumType (derived from SgNamedType)
        */
-          SgName get_name() const;
+          SgName get_name() const $ROSE_OVERRIDE;
 HEADER_GET_NAME_END
 
 
@@ -399,6 +399,10 @@ HEADER_JAVA_WILDCARD_TYPE_END
 
 HEADER_JAVA_UNION_TYPE_START
           SgJavaUnionType ( const SgJavaUnionType & X );
+
+       // DQ (3/22/2017): Added explicitly to avoid using mechansim reserved for virtual functions 
+       // (part of support for override specification and elimination of those warnings from Clang).
+          SgName get_name() const;
 HEADER_JAVA_UNION_TYPE_END
 
 
@@ -726,7 +730,7 @@ HEADER_MODIFIER_TYPE_START
 #endif
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
 HEADER_MODIFIER_TYPE_END
 
@@ -754,7 +758,7 @@ HEADER_FUNCTION_TYPE_START
        // static SgFunctionType* createType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization ();
+          void post_construction_initialization () $ROSE_OVERRIDE;
 
       // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
       //! This is a const convience access function to the STL container of types in the child IR node (SgFunctionParameterTypeList* p_argument_list).
@@ -802,7 +806,7 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           SgMemberFunctionType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
 #if 1
       //! Enum for const and volatile function modifiers
@@ -867,10 +871,14 @@ HEADER_MEMBER_FUNCTION_TYPE_START
 HEADER_MEMBER_FUNCTION_TYPE_END
 
 HEADER_PARTIAL_FUNCTION_TYPE_START
-          void post_construction_initialization ();
+          void post_construction_initialization () $ROSE_OVERRIDE;
 HEADER_PARTIAL_FUNCTION_TYPE_END
 
 HEADER_TYPEDEF_TYPE_START
+
+       // DQ (2/20/2018): Adding support to build typedef type from template instantiation
+          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
+
 HEADER_TYPEDEF_TYPE_END
 
 
@@ -889,12 +897,12 @@ HEADER_TYPE_COMPLEX_TYPE_START
       //! function returns example of type
        // static $CLASSNAME* createType(SgType* base_type);
           static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
-      // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
-          virtual SgExpression* get_type_kind () const;
-          virtual void set_type_kind ( SgExpression* type_kind );
+       // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
+          virtual SgExpression* get_type_kind () const $ROSE_OVERRIDE;
+          virtual void set_type_kind ( SgExpression* type_kind ) $ROSE_OVERRIDE;
 HEADER_TYPE_COMPLEX_TYPE_END
 
-//SK(08/20/2015): SgTypeTuple implementation
+// SK(08/20/2015): SgTypeTuple implementation
 HEADER_TYPE_TUPLE_START
     SgTypePtrList& get_types();
     const SgTypePtrList& get_types() const;
@@ -916,7 +924,7 @@ HEADER_TYPE_STRING_TYPE_START
           static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = NULL);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_TYPE_STRING_TYPE_END
 
 HEADER_TYPE_DEFAULT_TYPE_START
@@ -954,6 +962,16 @@ HEADER_TYPEOF_TYPE_START
           void set_base_type(SgType* base_type);
 
 HEADER_TYPEOF_TYPE_END
+
+
+HEADER_ARRAY_TYPE_START
+
+       // DQ (3/22/2017): I would like to remove this function if possible.
+       // DQ (3/22/2017): Added the get_name() function prototype directly so that 
+       // it could be differentiated from where it is a virtual function.
+          SgName get_name() const;
+
+HEADER_ARRAY_TYPE_END
 
 
 // #########################################################
@@ -999,9 +1017,23 @@ $CLASSNAME::get_mangled (void) const
              }
             else
              {
+            // DQ (9/6/2016): This is where the name of the class is used and where it can collide with a 
+            // complex type (SgTypeComplex) if the class name is "_Complex".  This is why we need something
+            // other than the name to be used here.  Unclear if a single prefix is sufficent or if we need 
+            // a different prefix for each type of named type.  It come down to is there can be multiple 
+            // types with the same name, and there is only a choice of SgNamedTypes: SgClassType, SgTypedefType, 
+            // and SgEnumType.  These can't have the same name, so we need not have a unity prefix for each type.
+            // I think the issue is that MANGLED_ID_STRING is not defined for any of the SgNameType IR nodes.
+#if 0
+               printf ("In get_mangled(void): (get_type_kind() != NULL): this = %p = %s MANGLED ID STRING = %s \n",this,this->class_name().c_str(),"MANGLED_ID_STRING");
+#endif
                name += SageInterface::generateUniqueName(get_type_kind(),false);
              }
         }
+
+#if 0
+     printf ("Leaving get_mangled(void): this = %p = %s MANGLED_ID_STRING = %s \n",this,this->class_name().c_str(),"MANGLED_ID_STRING");
+#endif
 
      return name;
    }
@@ -1187,7 +1219,7 @@ SgTypeString::get_mangled (void) const
 #if 0
      if (this->p_definedUsingScalarLength == true)
         {
-          mangled_length_name = StringUtility::numberToString(this->p_lengthScalar);
+            mangled_length_name = Rose::StringUtility::numberToString(this->p_lengthScalar);
         }
        else
         {
@@ -1540,6 +1572,11 @@ SgType::isIntegerType() const
           case T_SIGNED_LONG:
           case T_UNSIGNED_LONG:
           case T_WCHAR:
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          case T_CHAR16:
+          case T_CHAR32:
+
           case T_LONG_LONG:
           case T_SIGNED_LONG_LONG:
           case T_UNSIGNED_LONG_LONG:
@@ -1907,7 +1944,8 @@ SgType::stripType(unsigned char bit_array) const
                               if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
                                  {
 #if 0
-                                   printf ("In loop of SgType::stripType(): found SgTypedefType \n");
+                                   printf ("In loop of SgType::stripType(): found SgTypedefType: currentType = %p = %s typedefType->get_base_type() = %p = %s \n",
+                                        currentType,currentType->class_name().c_str(),typedefType->get_base_type(),typedefType->get_base_type()->class_name().c_str());
 #endif
                                 // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
                                    currentType = typedefType->get_base_type();
@@ -2874,6 +2912,16 @@ SOURCE_TYPE_WCHAR_TYPE_START
 SOURCE_TYPE_WCHAR_TYPE_END
 
 
+SOURCE_TYPE_CHAR16_TYPE_START
+
+SOURCE_TYPE_CHAR16_TYPE_END
+
+
+SOURCE_TYPE_CHAR32_TYPE_START
+
+SOURCE_TYPE_CHAR32_TYPE_END
+
+
 SOURCE_TYPE_FLOAT_TYPE_START
 SOURCE_TYPE_FLOAT_TYPE_END
 
@@ -2979,6 +3027,11 @@ SgTypeDefault::get_mangled (void) const
 SgTypeDefault*
 SgTypeDefault::createType ( const SgName & nameOfType )
    {
+#if 0
+     printf ("In SgTypeDefault::createType(): calling new SgTypeDefault \n");
+     printf ("   --- nameOfType = %s \n",nameOfType.str());
+#endif
+
      SgTypeDefault* returnType = new SgTypeDefault();
      if (nameOfType.is_null() == false)
         {
@@ -2999,7 +3052,7 @@ SgTypeDefault::createType ( const SgName & nameOfType )
         {
        // The pointer type was not found in the type table, put it into the global type table.
 #if 0
-          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+          printf ("Mangled type name for SgTypeDefault = %s (does NOT exist in type table) interting it... \n",name.str());
 #endif
           get_globalTypeTable()->insert_type(name,returnType);
         }
@@ -3007,15 +3060,24 @@ SgTypeDefault::createType ( const SgName & nameOfType )
         {
        // If it is already present in the type table then delete the type (so that it will remain unique).
 #if 0
-          printf ("Mangled type name for SgStringType = %s (already exists in type table) \n",name.str());
+          printf ("Mangled type name for SgTypeDefault = %s (already exists in type table) \n",name.str());
 #endif
           ROSE_ASSERT(t != returnType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
           delete returnType;
+#endif
           returnType = NULL;
 
           returnType = isSgTypeDefault(t);
         }
+
+#if 0
+     printf ("Leaving SgTypeDefault::createType(): returnType = %p \n",returnType);
+#endif
 
      return returnType;
    }
@@ -3045,6 +3107,10 @@ SgTypeLabel::get_mangled (void) const
 SgTypeLabel*
 SgTypeLabel::createType ( const SgName & nameOfType )
    {
+#if 0
+     printf ("In SgTypeLabel::createType(): \n");
+#endif
+
      SgTypeLabel* returnType = new SgTypeLabel();
      if (nameOfType.is_null() == false)
         {
@@ -3077,7 +3143,12 @@ SgTypeLabel::createType ( const SgName & nameOfType )
 #endif
           ROSE_ASSERT(t != returnType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
           delete returnType;
+#endif
           returnType = NULL;
 
           returnType = isSgTypeLabel(t);
@@ -3239,7 +3310,7 @@ SgTypeOfType::get_mangled (void) const
 
        // base_name += base_expression->get_mangled();
        // base_name += SageInterface::get_name(base_expression);
-          base_name += string("_base_expr_") + StringUtility::numberToString(this);
+          base_name += string("_base_expr_") + Rose::StringUtility::numberToString(this);
 
 #if 0
           printf ("DONE: In $CLASSNAME::get_mangled(): base_expression = %p = %s accumulated base_name = %s \n",base_expression,base_expression->class_name().c_str(),base_name.str());
@@ -3381,9 +3452,11 @@ SgName
 SgClassType::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
+
 #if 0
      printf ("In SgClassType::get_mangled(): get_name() = %s \n",get_name().str());
 #endif
+
      SgName mangled_name;
   // if (get_name().get_length() != 0) // not anonymous
      if (get_name().is_null() == false) // not anonymous
@@ -3418,11 +3491,15 @@ SgClassType::get_mangled(void) const
                  // This is for just a simple SgClassDeclaration.
                     mangled_name = class_decl->get_mangled_name();
 #if 0
-                    printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
+                    printf ("In SgClassType::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
 #endif
                   }
              }
         }
+
+#if 0
+     printf ("Leaving SgClassType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
 
      return mangled_name;
    }
@@ -3792,7 +3869,7 @@ SgTemplateType::get_mangled(void) const
   // We need to asspciate template template arguments with their associated declarations and not just there name.
   // See test2012_217.C (return types of functions should be different, have different mangled names, for each function).
   // mangled_name += StringUtility::numberToString(this->get_declaration());
-     mangled_name += StringUtility::numberToString(this);
+     mangled_name += Rose::StringUtility::numberToString(this);
 
 #if 0
     printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());
@@ -5569,6 +5646,10 @@ SOURCE_PARTIAL_FUNCTION_TYPE_END
 
 
 SOURCE_ARRAY_TYPE_START
+
+#if 1
+// DQ (3/22/2017): I would like to remove this function if possible (it is not sufficiently general).
+// Note that this is used within ROSE (which might be worth checking out in more detail later).
 SgName
 SgArrayType::get_name(void) const {
     string dimensions = "[]";
@@ -5589,6 +5670,14 @@ SgArrayType::get_name(void) const {
     }
     else if (isSgTypeWchar(type)) {
         name = "char";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar16(type)) {
+        name = "char16";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar32(type)) {
+        name = "char32";
     }
     else if (isSgTypeInt(type)) {
         name = "int";
@@ -5628,6 +5717,7 @@ SgArrayType::get_name(void) const {
 
     return SgName(name);
 }
+#endif
 
 SgName
 SgArrayType::get_qualified_name(void) const {
@@ -5649,6 +5739,14 @@ SgArrayType::get_qualified_name(void) const {
     }
     else if (isSgTypeWchar(type)) {
         name = "char";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar16(type)) {
+        name = "char16";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar32(type)) {
+        name = "char32";
     }
     else if (isSgTypeInt(type)) {
         name = "int";
@@ -5991,12 +6089,27 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
   // builtin_type.p_freepointer = AST_FileIO::IS_VALID_POINTER();
   // return &builtin_type;
 
+#if 0
+     printf ("In $CLASSNAME::createType() (COMMON_CREATE_TYPE) \n");
+#endif
+
   // DQ (10/4/2010): New version of code to support multiple kinds of bool as required for the Fortran type_kind support within ROSE.
   // Note that this implementation does not use p_builtin_type, since with the global type table it is not required.
 
      $CLASSNAME* temp_type = new $CLASSNAME();
+
+#if 0
+     printf ("In $CLASSNAME::createType() (COMMON_CREATE_TYPE): temp_type = %p \n",temp_type);
+#endif
+
+  // DQ (10/31/2016): Added assertion.
+     ROSE_ASSERT(temp_type != NULL);
+
      if (optional_fortran_type_kind != NULL)
         {
+       // DQ (10/31/2016): Added assertion.
+          ROSE_ASSERT(temp_type != NULL);
+
           temp_type->set_type_kind(optional_fortran_type_kind);
         }
 #if 0
@@ -6008,14 +6121,20 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
 #endif
 
      SgName name = temp_type->get_mangled();
+
 #if 0
      printf ("Mangled type name for $CLASSNAME = %s get_globalTypeTable()->get_type_table()->size() = %d \n",name.str(),get_globalTypeTable()->get_type_table()->size());
 #endif
 
+  // DQ (10/31/2016): Added assertion.
+     ROSE_ASSERT(get_globalTypeTable() != NULL);
+
      SgType* t = get_globalTypeTable()->lookup_type(name);
+
 #if 0
      printf ("In $CLASSNAME::createType(): type from lookup_type = %p \n",t);
 #endif
+
      if (t == NULL)
         {
           get_globalTypeTable()->insert_type(name,temp_type);
@@ -6025,7 +6144,15 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
        // If t is the same as p_builtin_type then we can't delete it...(only comes up in merging AST's read from files).
           if (t != temp_type)
              {
+#if 0
+               printf ("In $CLASSNAME::createType(): deleting temp_type = %p \n",temp_type);
+#endif
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete temp_type;
+#endif
                temp_type = NULL;
 #if 0
             // Should we clear the p_builtin_type? I think we have to, but it will be overwritten below.
@@ -6040,6 +6167,10 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
           temp_type = is$CLASSNAME(t);
           ROSE_ASSERT(temp_type != NULL);
         }
+
+#if 0
+     printf ("Leaving $CLASSNAME::createType(): temp_type = %p \n",temp_type);
+#endif
 
      return temp_type;
    }
@@ -6059,6 +6190,10 @@ $CLASSNAME::createType(SgType* rtype,SgExpression* optional_fortran_type_kind)
 
   // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In $CLASSNAME::createType() (CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE) \n");
+#endif
 
      $CLASSNAME* returnType = new $CLASSNAME(rtype);
      ROSE_ASSERT(returnType != NULL);
@@ -6080,6 +6215,10 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
   // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#if 0
+     printf ("In SgTypedefType::createType() (CREATE_TYPE_FOR_TYPEDEF_TYPE) \n");
+#endif
+
   // if (!decl->get_type())
      if (decl->get_type() == NULL)
         {
@@ -6098,7 +6237,7 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
             // SgName dname = decl->get_name();
             // SgTypedefType *tptr= isSgTypedefType((*i).irep());
                ROSE_ASSERT( (*i) != NULL);
-               SgTypedefType *tptr= isSgTypedefType(*i);
+               SgTypedefType *tptr = isSgTypedefType(*i);
                ROSE_ASSERT(tptr != NULL);
 
             // DQ (3/21/2012): No, test2004_48.C fails this test.
@@ -6109,9 +6248,66 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
             // DQ (3/3/2012): I think this is always NULL pointer to a SgSymbol. 
             // ROSE_ASSERT(tptr->get_parent_scope() == NULL);
 
-               if( (decl->get_name() == tptr->get_name()) &&
-                   (decl->get_parent_scope() == tptr->get_parent_scope()) )
+#if 0
+            // DQ (2/27/2018): I think this is the wrong code because the value returned by get_name() contains 
+            // the name of the template instantiation with template arguments, and the value of the function 
+            // get_templateName() has the value of the associated template name (without template arguments).
+
+               SgName name = decl->get_name();
+            // SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+               SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(decl);
+               if (templateInstantiationTypedefDeclaration != NULL)
+                 {
+                   name = templateInstantiationTypedefDeclaration->get_templateName();
+                   printf ("In SgTypedefType::createType(): case of SgTemplateInstantiationTypedefDeclaration: name = %s \n",name.str());
+                   ROSE_ASSERT(name != "");
+                 }
+                else
+                 {
+                // DQ (2/25/2018): If this is a SgTemplateTypedefDeclaration then it might be that we can't just use the name (but I'm not ceertain).
+                   SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+                   if (templateTypedefDeclaration != NULL)
+                      {
+                        printf ("In SgTypedefType::createType(): case of SgTemplateTypedefDeclaration: Need to handle this special case (I think)! \n");
+                      }
+                 }
+
+               SgName i_name = decl->get_name();
+            // SgTemplateTypedefDeclaration* i_templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+               SgTemplateInstantiationTypedefDeclaration* i_templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(tptr->get_declaration());
+               if (i_templateInstantiationTypedefDeclaration != NULL)
+                 {
+                   i_name = i_templateInstantiationTypedefDeclaration->get_templateName();
+                   printf ("In SgTypedefType::createType(): case of SgTemplateInstantiationTypedefDeclaration: i_name = %s \n",i_name.str());
+                   ROSE_ASSERT(i_name != "");
+                 }
+                else
+                 {
+                // DQ (2/25/2018): If this is a SgTemplateTypedefDeclaration then it might be that we can't just use the name (but I'm not ceertain).
+                   SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(tptr->get_declaration());
+                   if (templateTypedefDeclaration != NULL)
+                      {
+                        printf ("In SgTypedefType::createType(): case of SgTemplateTypedefDeclaration: Need to handle this special case (I think)! \n");
+                      }
+                 }
+#if 1
+               printf ("In SgTypedefType::createType(): decl = %p decl->get_firstNondefiningDeclaration() = %p \n",decl,decl->get_firstNondefiningDeclaration());
+               printf ("In SgTypedefType::createType(): decl = %p decl->get_definingDeclaration()         = %p \n",decl,decl->get_definingDeclaration());
+               printf ("In SgTypedefType::createType(): case of %s: name   = %s \n",decl->class_name().c_str(),name.str());
+               printf ("In SgTypedefType::createType(): case of %s: i_name = %s \n",tptr->get_declaration()->class_name().c_str(),i_name.str());
+#endif
+            // if ( (decl->get_name() == tptr->get_name()) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+               if ( (name == i_name) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+                  {
                     return (tptr);
+                  }
+#else
+            // DQ (2/27/2018): This is the original code, and I think it maybe the best version.
+               if ( (decl->get_name() == tptr->get_name()) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+                  {
+                    return tptr;
+                  }
+#endif
                i++;
              }
 
@@ -6157,7 +6353,12 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
 #endif
                     ROSE_ASSERT(t != tempType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+                 // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+                 // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+                 // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                     delete tempType;
+#endif
                     tempType = NULL;
 
                  // Reuse this tempType variable so we can use the same code below.
@@ -6203,6 +6404,10 @@ SgFunctionType::createType(SgPartialFunctionType* ft, SgExpression* optional_for
   // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#if 0
+     printf ("In SgFunctionType::createType() (CREATE_TYPE_FOR_FUNCTION_TYPE) \n");
+#endif
+
 #if 1
   // DQ (3/29/2006):
   // Simplify this function to not use the function type table, thus SgFunctionType nodes are not
@@ -6230,7 +6435,7 @@ SgFunctionType::createType(SgPartialFunctionType* ft, SgExpression* optional_for
   // be rebuilt after the AST is build (in a post-processing phase).
      static int functionCounter = 0;
      string baseName = "function_";
-     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     string mangleName = baseName + Rose::StringUtility::numberToString(functionCounter++);
      SgName nname = mangleName;
 
 #if 0
@@ -6284,6 +6489,10 @@ SgMemberFunctionType::createType(SgPartialFunctionType* ft, SgExpression* option
   // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#if 0
+     printf ("In SgMemberFunctionType::createType() (CREATE_TYPE_FOR_MEMBER_FUNCTION_TYPE) \n");
+#endif
+
 #if 1
   // DQ (3/29/2006):
   // Simplify this function to not use the function type table, thus SgFunctionType nodes are not
@@ -6308,7 +6517,7 @@ SgMemberFunctionType::createType(SgPartialFunctionType* ft, SgExpression* option
   // be rebuilt after the AST is build (in a post-processing phase).
      static int functionCounter = 0;
      string baseName = "memberfunction_";
-     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     string mangleName = baseName + Rose::StringUtility::numberToString(functionCounter++);
      SgName nname = mangleName;
 
 #if 0
@@ -6357,6 +6566,10 @@ $CLASSNAME::createType ( SgType* base_type, SgType *class_type, SgExpression* op
   // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#if 0
+     printf ("In $CLASSNAME::createType() (CREATE_TYPE_FOR_POINTER_MEMBER_TYPE) \n");
+#endif
+
      $CLASSNAME* returnType = new $CLASSNAME(base_type,class_type);
      assert(returnType != NULL);
      return returnType;
@@ -6391,6 +6604,10 @@ SgTypeInt* SgTypeInt::p_builtin_type = NULL;
 SgTypeInt*
 SgTypeInt::createType(int bitLength, SgExpression* optional_fortran_type_kind)
    {
+#if 0
+     printf ("In SgTypeInt::createType() \n");
+#endif
+
 #if 0
      static bool firstCallToFunction = true;
      if (firstCallToFunction == true)
@@ -6472,7 +6689,12 @@ SgTypeInt::createType(int bitLength, SgExpression* optional_fortran_type_kind)
        // If t is the same as p_builtin_type then we can't delete it...(only comes up in merging AST's read from files).
           if (t != temp_type)
              {
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete temp_type;
+#endif
                temp_type = NULL;
              }
 
@@ -6512,6 +6734,11 @@ SgEnumType::createType(SgEnumDeclaration* cd, SgExpression* optional_fortran_typ
   // return cd->get_type() ? cd->get_type() : new $CLASSNAME(cd);
 
      assert(cd != NULL);
+
+#if 0
+     printf ("In SgEnumType::createType() \n");
+#endif
+
      returnType = cd->get_type();
      if (returnType == NULL)
         {
@@ -6571,7 +6798,12 @@ SgEnumType::createType(SgEnumDeclaration* cd, SgExpression* optional_fortran_typ
 #endif
                     ROSE_ASSERT(t != returnType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+                 // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+                 // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+                 // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                     delete returnType;
+#endif
                     returnType = NULL;
 
                  // Reuse this returnType variable so we can use the same code below.
@@ -6611,6 +6843,10 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgClassType::createType() \n");
+#endif
 
   // DQ (12/4/2011): Adding template declaration support to AST.  An SgClassType is modified to hold a SgTemplateClassDeclaration or a SgClassDeclaration.
      SgClassDeclaration*         classDeclaration         = isSgClassDeclaration(cd);
@@ -6756,7 +6992,12 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 #if 0
                          printf ("Deleting the just built exploritory type = %p (case of t != newType) t = %p = %s \n",newType,t,t->class_name().c_str());
 #endif
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+                      // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+                      // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+                      // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                          delete newType;
+#endif
                          newType = NULL;
                        }
                       else
@@ -6900,6 +7141,10 @@ SgJavaParameterizedType::createType(SgClassDeclaration * cd, SgExpression* optio
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#if 0
+     printf ("In SgJavaParameterizedType::createType() \n");
+#endif
+
      return ($CLASSNAME*) cd->get_type();
    }
 
@@ -6917,6 +7162,10 @@ SgJavaQualifiedType::createType(SgClassDeclaration * cd, SgExpression* optional_
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#if 0
+     printf ("In SgJavaQualifiedType::createType() \n");
+#endif
+
      return ($CLASSNAME*) cd->get_type();
    }
 
@@ -6930,6 +7179,10 @@ SgJavaWildcardType::createType(SgClassDeclaration *cd, SgExpression* optional_fo
    {
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgJavaWildcardType::createType() \n");
+#endif
 
      SgJavaWildcardType* returnType = new SgJavaWildcardType(cd);
 
@@ -6949,6 +7202,10 @@ SgJavaUnionType::createType(SgClassDeclaration * cd, SgExpression* optional_fort
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#if 0
+     printf ("In SgJavaUnionType::createType() \n");
+#endif
+
      return ($CLASSNAME*) cd->get_type();
    }
 
@@ -6965,6 +7222,11 @@ SgJavaParameterType::createType(SgClassDeclaration * cd, SgExpression* optional_
 
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgJavaParameterType::createType() \n");
+#endif
+
      if (! cd -> get_type()) {
          $CLASSNAME *newType = new $CLASSNAME(cd);
          cd -> set_type(newType);
@@ -7004,6 +7266,10 @@ SgPointerType::createType(SgType* base_type, SgExpression* optional_fortran_type
 
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgPointerType::createType() \n");
+#endif
 
      if (base_type->p_ptr_to != NULL)
         {
@@ -7067,7 +7333,12 @@ SgPointerType::createType(SgType* base_type, SgExpression* optional_fortran_type
 #endif
                ROSE_ASSERT(t != newType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete newType;
+#endif
                newType = NULL;
 
                newType = isSgPointerType(t);
@@ -7093,6 +7364,10 @@ SgReferenceType::createType(SgType* base_type, SgExpression* optional_fortran_ty
 
   // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgReferenceType::createType() \n");
+#endif
 
      if (base_type->p_ref_to)
         {
@@ -7148,7 +7423,12 @@ SgReferenceType::createType(SgType* base_type, SgExpression* optional_fortran_ty
 #endif
                ROSE_ASSERT(t != newType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete newType;
+#endif
                newType = NULL;
 
                newType = isSgReferenceType(t);
@@ -7173,6 +7453,10 @@ SgRvalueReferenceType::createType(SgType* base_type, SgExpression* optional_fort
 
   // DQ (7/29/2014): I think that rvalue reference types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgRvalueReferenceType::createType() \n");
+#endif
 
      if (base_type->p_rvalue_ref_to)
         {
@@ -7218,7 +7502,12 @@ SgRvalueReferenceType::createType(SgType* base_type, SgExpression* optional_fort
 #endif
                ROSE_ASSERT(t != newType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete newType;
+#endif
                newType = NULL;
 
                newType = isSgRvalueReferenceType(t);
@@ -7245,6 +7534,10 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
 
   // DQ (8/2/2014): I think that decltype reference types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgDeclType::createType() \n");
+#endif
 
      if (base_type->p_decltype_ref_to)
         {
@@ -7318,7 +7611,12 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
 #endif
                ROSE_ASSERT(t != newType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete newType;
+#endif
                newType = NULL;
 
                newType = isSgDeclType(t);
@@ -7349,6 +7647,10 @@ SOURCE_CREATE_TYPE_FOR_TYPEOF_TYPE_START
 SgTypeOfType*
 SgTypeOfType::createType(SgExpression* base_expression, SgExpression* optional_fortran_type_kind)
    {
+#if 0
+     printf ("In SgTypeOfType::createType() \n");
+#endif
+
   // DQ (8/2/2014): The decltype takes an expression (and stores it) but references the type of that expression.
      SgType* base_type = base_expression->get_type();
      ROSE_ASSERT(base_type != NULL);
@@ -7408,7 +7710,12 @@ SgTypeOfType::createType(SgExpression* base_expression, SgExpression* optional_f
 #endif
                ROSE_ASSERT(t != newType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete newType;
+#endif
                newType = NULL;
 
                newType = isSgTypeOfType(t);
@@ -7443,6 +7750,10 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
 
 #if DEBUG_TYPEOF_CREATETYPE_TYPE
      printf ("Building a typeoftype (type argument) base_type->p_typeof_ref_to = %p \n",base_type->p_typeof_ref_to);
+#endif
+
+#if 0
+     printf ("In SgTypeOfType::createType() \n");
 #endif
 
      if (base_type->p_typeof_ref_to)
@@ -7492,7 +7803,12 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
 #endif
                ROSE_ASSERT(t != newType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+            // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+            // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+            // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
                delete newType;
+#endif
                newType = NULL;
 
                newType = isSgTypeOfType(t);
@@ -7518,6 +7834,10 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
 
   // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#if 0
+     printf ("In SgArrayType::createType() \n");
+#endif
 
      SgArrayType* returnType = new SgArrayType(base_type, idx);
      ROSE_ASSERT(returnType != NULL);
@@ -7591,7 +7911,12 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
              }
           ROSE_ASSERT(returnType->get_index() == NULL);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
           delete returnType;
+#endif
           returnType = NULL;
 
           returnType = isSgArrayType(t);
@@ -7634,6 +7959,10 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
   // ROSE_ASSERT(idx != NULL);
   // ROSE_ASSERT((idx != NULL) || (length > 0));
 
+#if 0
+     printf ("In SgTypeString::createType() \n");
+#endif
+
   // SgTypeString* returnType = new SgTypeString(lengthExpression,length);
      SgTypeString* returnType = new SgTypeString(lengthExpression);
      if (optional_fortran_type_kind != NULL)
@@ -7646,7 +7975,7 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
      SgName name = returnType->get_mangled();
 
 #if 0
-     printf ("In SgTypeString::createType(): Building an character string [exp = %p] mangled name = %s \n",idx,name.str());
+     printf ("In SgTypeString::createType(): Building an character string [exp = %p] mangled name = %s \n",lengthExpression,name.str());
 #endif
 
   // Only look for pointers to type in the global type table.
@@ -7668,7 +7997,12 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
 #endif
           ROSE_ASSERT(t != returnType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
           delete returnType;
+#endif
           returnType = NULL;
 
           returnType = isSgTypeString(t);
@@ -7780,7 +8114,12 @@ SgModifierType::createType(SgType* base_type, unsigned int f, SgExpression* opti
 #endif
           ROSE_ASSERT(t != newType);
 
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
           delete newType;
+#endif
           newType = NULL;
 
           newType = isSgModifierType(t);
@@ -7934,6 +8273,10 @@ SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_START
 $CLASSNAME*
 $CLASSNAME::createType(SgType* t, SgExpression* optional_fortran_type_kind)
    {
+#if 0
+     printf ("In $CLASSNAME::createType() (CREATE_TYPE_FOR_COMPLEX_TYPE) \n");
+#endif
+
   // Not clear why this is using a map???
      static std::map<SgType*, $CLASSNAME*> cache;
 

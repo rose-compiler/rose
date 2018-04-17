@@ -1,0 +1,4 @@
+#pragma omp task  depend(inout : A[k][k])
+#pragma omp task  depend(in : A[k][k]) depend(inout : A[k][i])
+#pragma omp task  depend(in : A[k][i],A[k][j]) depend(inout : A[j][i])
+#pragma omp task  depend(in : A[k][i]) depend(inout : A[i][i])

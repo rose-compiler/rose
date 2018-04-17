@@ -10,6 +10,7 @@
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 
 using namespace std;
+using namespace Rose;
 
 // ********************************************************************
 // ********************************************************************
@@ -16365,7 +16366,7 @@ void c_action_label(Token_t * lbl)
         outputState("At TOP of R1109 c_action_use_stmt()");
 #endif
 
-        // This could be the first stament in a program.
+        // This could be the first statement in a program.
         build_implicit_program_statement_if_required();
 
         ROSE_ASSERT(id != NULL);
@@ -19102,7 +19103,10 @@ void c_action_label(Token_t * lbl)
                 hasScalarIntExpr ? "true" : "false");
 
         SgExpression* returnValue = NULL;
-        bool returningFromFunctionUsingAlternativeReturnArguments = false;
+
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // bool returningFromFunctionUsingAlternativeReturnArguments = false;
+
         if (hasScalarIntExpr == true)
         {
 #if 0
@@ -19168,7 +19172,9 @@ void c_action_label(Token_t * lbl)
 
                 if (argumentInitializedName != NULL)
                 {
-                    returningFromFunctionUsingAlternativeReturnArguments = true;
+                 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+                 // returningFromFunctionUsingAlternativeReturnArguments = true;
+
                     SgSymbol
                     * tempSymbol =
                     argumentInitializedName->search_for_symbol_from_symbol_table();

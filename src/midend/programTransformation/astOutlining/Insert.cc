@@ -690,6 +690,7 @@ Outliner::insert (SgFunctionDeclaration* func,
 //   Liao, 5/1/2009
 //   We still generate the prototype even they are not needed if dlopen() is used. 
 //   since SageInterface::appendStatementWithDependentDeclaration() depends on it
+   if (SageInterface::is_Fortran_language() == false ) // C/C++ only
    {
      // This is done in the original file (does not effect the separate file if we outline the function there)
      // Insert a single, global prototype (i.e., a first non-defining
@@ -772,8 +773,13 @@ Outliner::insert (SgFunctionDeclaration* func,
          //if (!use_dlopen)
          {
            // Since the outlined function has been kept in the same file we can have a pointer to the defining declaration.
-           sourceFileFunctionPrototype->set_definingDeclaration(func);
-           ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+        // sourceFileFunctionPrototype->set_definingDeclaration(func);
+        // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+           if (SageInterface::is_Fortran_language() == false)
+            {
+              sourceFileFunctionPrototype->set_definingDeclaration(func);
+              ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+            }
          }
        }
 

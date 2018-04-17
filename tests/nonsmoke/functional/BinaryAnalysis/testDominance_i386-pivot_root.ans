@@ -1,0 +1,70 @@
+CFG dominators for function 0x080482ec:
+  dominator of 0x080482fc<0> is 0x080482f7<3>
+  dominator of 0x08048301<1> is 0x080482fc<0>
+  dominator of 0x080482ec<2> is none
+  dominator of 0x080482f7<3> is 0x080482ec<2>
+CFG dominators for function 0x08048304 "DYNAMIC_LINKER_TRAMPOLINE":
+  dominator of 0x08048304<0> is none
+CFG dominators for function 0x08048314 "perror@plt":
+  dominator of 0x08048314<0> is none
+CFG dominators for function 0x08048324 "fprintf@plt":
+  dominator of 0x08048324<0> is none
+CFG dominators for function 0x08048334 "syscall@plt":
+  dominator of 0x08048334<0> is none
+CFG dominators for function 0x08048344 "__libc_start_main@plt":
+  dominator of 0x08048344<0> is none
+CFG dominators for function 0x08048354 "_start":
+  dominator of 0x08048375<0> is 0x08048354<1>
+  dominator of 0x08048354<1> is none
+CFG dominators for function 0x08048378:
+  dominator of 0x08048393<0> is 0x08048378<2>
+  dominator of 0x08048395<1> is 0x08048378<2>
+  dominator of 0x08048378<2> is none
+CFG dominators for function 0x0804839c:
+  dominator of 0x080483cc<0> is 0x0804839c<3>
+  dominator of 0x080483c5<1> is 0x080483ba<5>
+  dominator of 0x080483ad<2> is none
+  dominator of 0x0804839c<3> is none
+  dominator of 0x080483ab<4> is 0x0804839c<3>
+  dominator of 0x080483ba<5> is 0x0804839c<3>
+  dominator of 0x080483b0<6> is 0x080483ba<5>
+CFG dominators for function 0x080483d0:
+  dominator of 0x080483d0<0> is none
+  dominator of 0x080483df<1> is 0x080483d0<0>
+  dominator of 0x080483f8<2> is 0x080483d0<0>
+  dominator of 0x080483e8<3> is 0x080483df<1>
+  dominator of 0x080483f2<4> is 0x080483e8<3>
+CFG dominators for function 0x080483fc:
+  dominator of 0x080483fc<0> is none
+  dominator of 0x08048461<1> is 0x08048455<2>
+  dominator of 0x08048455<2> is 0x0804844f<4>
+  dominator of 0x08048431<3> is 0x080483fc<0>
+  dominator of 0x0804844f<4> is 0x08048435<6>
+  dominator of 0x0804842c<5> is 0x08048411<7>
+  dominator of 0x08048435<6> is 0x080483fc<0>
+  dominator of 0x08048411<7> is 0x080483fc<0>
+CFG dominators for function 0x08048468:
+  dominator of 0x080484a3<0> is 0x080484a0<5>
+  dominator of 0x080484b2<1> is 0x08048482<3>
+  dominator of 0x0804849c<2> is 0x08048482<3>
+  dominator of 0x08048482<3> is 0x08048468<4>
+  dominator of 0x08048468<4> is none
+  dominator of 0x080484a0<5> is 0x0804849c<2>
+CFG dominators for function 0x080484bc:
+  dominator of 0x080484bc<0> is none
+  dominator of 0x080484e7<1> is none
+  dominator of 0x080484f1<2> is 0x080484ec<3>
+  dominator of 0x080484ec<3> is 0x080484bc<0>
+  dominator of 0x080484eb<4> is 0x080484e8<6>
+  dominator of 0x080484f6<5> is 0x080484f1<2>
+  dominator of 0x080484e8<6> is 0x080484ec<3>
+CFG dominators for function 0x08048500:
+  dominator of 0x08048511<0> is none
+  dominator of 0x08048514<1> is 0x0804851b<4>
+  dominator of 0x08048520<2> is 0x0804851b<4>
+  dominator of 0x08048519<3> is 0x08048514<1>
+  dominator of 0x0804851b<4> is 0x08048500<5>
+  dominator of 0x08048500<5> is none
+CFG dominators for function 0x08048524:
+  dominator of 0x0804853a<0> is 0x08048524<1>
+  dominator of 0x08048524<1> is none

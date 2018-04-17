@@ -1,0 +1,11 @@
+START
+      ;
+      ;
+      ;
+  DEF PROC sub1 ;
+      ;
+  DEF PROC sub2 ;
+      ;
+  DEF PROC sub3 ;
+      ;
+TERM

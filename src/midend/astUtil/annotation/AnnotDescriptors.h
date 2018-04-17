@@ -175,6 +175,7 @@ class NameDescriptor : public StringDescriptor
   NameDescriptor()  {}
   NameDescriptor( int i) { char buf[10]; sprintf(buf,"%d", i); get_name() =  "par__"+ std::string(buf); }
   NameDescriptor( const std::string& n ) : StringDescriptor(n) {}
+  bool read(std::istream& in);
 };
 
 class TypeDescriptor : public StringDescriptor
@@ -213,7 +214,7 @@ class IntDescriptor
 };
 //! A descriptor with begin(left) and end(right) characters, such as {x}, (x), etc
 template <class Descriptor, char left, char right>
-class ROSE_DLL_API CloseDescriptor : public Descriptor {
+class CloseDescriptor : public Descriptor {
  public:
   bool read( std::istream& in);
   void write(std::ostream& out) const ;

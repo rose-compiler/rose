@@ -6,3 +6,7 @@ operator max(double val1, double val2)
    {
     modify none; read{val1, val2}; alias none;
    }
+operator gettimeofday (struct timeval *tv, struct timezone *tz)
+{
+         modify none; read{val}; alias none;
+}

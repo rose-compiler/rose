@@ -1,0 +1,2 @@
+#pragma omp parallel  num_threads(6) shared(NUM_THREADS)
+#pragma omp master 

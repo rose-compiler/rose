@@ -21,4 +21,9 @@
  *
  *  @section installing_libmagic_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
- *  Run <code>apt-get install libmagic-dev</code> as the administrator. */
+ *  Run <code>apt-get install libmagic-dev</code> as the administrator.
+ *
+ *  @section installing_libmagic_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
+ *  Run <code>apt-get install libmagic-dev</code> as the administrator.
+ */

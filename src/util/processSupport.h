@@ -44,21 +44,21 @@ int pcloseFromVector(FILE* f);
 //      terms. E.g. ASSERT_forbid2(s.empty(), "symbol name cannot be the empty string").
 //    + The name encodes whether the macro is disabled when NDEBUG is defined. The "always" versions are never disabled, nor
 //      are the macros ASSERT_not_implemented, ASSERT_not_reachable, TODO, and FIXME. E.g., ASSERT_always_require(...).
-//    + Failure behavior is configurable via rose::Diagnostics API, frontend() command-line, or autotools/cmake.  E.g.,
-//      a failing assertion can abort, exit with non-zero status, or throw a rose::Diagnostics::FailedAssertion exception.
+//    + Failure behavior is configurable via Rose::Diagnostics API, frontend() command-line, or autotools/cmake.  E.g.,
+//      a failing assertion can abort, exit with non-zero status, or throw a Rose::Diagnostics::FailedAssertion exception.
 //    + Output from failed assertions is easier to read because it's split across multiple lines. On ANSI terminals it will
 //      show up in bright red.
 //
 // Additional documentation can be found here:
 //   + Sawyer ASSERT_* macros (https://hoosierfocus.com/~matzke/Sawyer/namespaceSawyer_1_1Assert.html)
-//   + rose::Diagnostics (http://rosecompiler.org/ROSE_HTML_Reference/namespacerose_1_1Diagnostics.html)
+//   + Rose::Diagnostics (http://rosecompiler.org/ROSE_HTML_Reference/namespacerose_1_1Diagnostics.html)
 #ifndef ROSE_ASSERT
     #if _MSC_VER
         #include <assert.h>
         #define ROSE_ASSERT assert
     #elif defined(ROSE_ASSERTION_BEHAVIOR)
         // Use Sawyer ASSERT_require because it supports different behaviors (abort, exit, or throw) based on ROSE
-        // configuration and overridden at runtime by frontend() command-line switches or the rose::Diagnostics API. However,
+        // configuration and overridden at runtime by frontend() command-line switches or the Rose::Diagnostics API. However,
         // since "ROSE_ASSERT(false)" and equivalents are used so often for "should not get here", we must ensure that
         // ROSE_ASSERT is checked regardless of whether NDEBUG is defined (thus the "_always_" version).  Also, the Sawyer
         // ASSERT_always_* macros evaluate their arguments exactly once. New code should use ASSERT_not_implemented,
@@ -80,7 +80,7 @@ int pcloseFromVector(FILE* f);
 // introducing class rose_excepction
 // this class gets thrown by ROSE_ABORT
 // it should probably inherit from std::runtime_error
-// See also rose::Diagnostics::FailedAssertion
+// See also Rose::Diagnostics::FailedAssertion
 class ROSE_UTIL_API rose_exception
     : public std::exception
 {
@@ -125,7 +125,7 @@ ROSE_UTIL_API void ROSE_ABORT(const char *message);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Assertion handling
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-namespace rose {
+namespace Rose {
 
 /** Aborts for a failed assertion. */
 ROSE_UTIL_API void abortOnFailedAssertion(const char*, const char*, const std::string&, const char*, unsigned, const char*);

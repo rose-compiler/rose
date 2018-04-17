@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace rose {
+namespace Rose {
 namespace EditDistance {
 namespace TreeEditDistance {
 

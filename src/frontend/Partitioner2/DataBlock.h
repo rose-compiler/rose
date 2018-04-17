@@ -3,19 +3,20 @@
 
 #include <Partitioner2/BasicTypes.h>
 
+#include <boost/serialization/access.hpp>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <string>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 /** Data block information.
  *
  *  A data block represents data with a type. */
-class DataBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
+class DataBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Shared pointer to a data block. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<DataBlock> Ptr;
@@ -26,7 +27,24 @@ private:
     size_t size_;                                       // size in bytes; FIXME[Robb P. Matzke 2014-08-12]: replace with type
     size_t nAttachedOwners_;                            // number of attached basic blocks and functions that own this data
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        // s & boost::serialization::base_object<Sawyer::Attribute::Storage>(*this); -- not serialized
+        s & BOOST_SERIALIZATION_NVP(isFrozen_);
+        s & BOOST_SERIALIZATION_NVP(startVa_);
+        s & BOOST_SERIALIZATION_NVP(size_);
+        s & BOOST_SERIALIZATION_NVP(nAttachedOwners_);
+    }
+#endif
+    
 protected:
+    // needed for serialization
+    DataBlock(): isFrozen_(false), startVa_(0), size_(0), nAttachedOwners_(0) {}
+
     // use instance() instead
     DataBlock(rose_addr_t startVa, size_t size): startVa_(startVa), size_(size), nAttachedOwners_(0) {
         ASSERT_require(size_ > 0);

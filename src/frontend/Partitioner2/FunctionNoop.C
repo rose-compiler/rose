@@ -4,6 +4,7 @@
 #include <sage3basic.h>
 
 #include <BinaryNoOperation.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
@@ -12,10 +13,10 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::Diagnostics;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -115,12 +116,12 @@ struct FunctionNoopWorker {
         : partitioner(partitioner), progress(progress) {}
 
     void operator()(size_t workId, const Function::Ptr &function) {
-#if 1 // DEBUGGING [Robb Matzke 2016-02-26]
+#if 0 // DEBUGGING [Robb Matzke 2016-02-26]
         std::cerr <<"ROBB: starting " <<function->printableName() <<"\n";
 #endif
         partitioner.functionIsNoop(function);
         ++progress;
-#if 1 // DEBUGGING [Robb Matzke 2016-02-26]
+#if 0 // DEBUGGING [Robb Matzke 2016-02-26]
         std::cerr <<"      ending   " <<function->printableName() <<"\n";
 #endif
     }
@@ -128,7 +129,7 @@ struct FunctionNoopWorker {
 
 void
 Partitioner::allFunctionIsNoop() const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "function no-op analysis");

@@ -20,49 +20,50 @@ DEFINE_TABLE_2( testtable,  string,name,  double,number );
 
 
 //-----------------------------------------------------------------------------
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+   {
+  // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
+  // any warning message using the message looging feature in ROSE will fail).
+     ROSE_INITIALIZE;
 
-	GlobalDatabaseConnection db;
-	int initOk =  db.initialize();
-	assert( initOk==0 );
+     GlobalDatabaseConnection db;
+     int initOk =  db.initialize();
+     assert( initOk==0 );
 
-	CREATE_TABLE(db, projects);
-	CREATE_TABLE(db, files);
-	CREATE_TABLE(db, graphdata);
-	CREATE_TABLE(db, graphnode);
-	CREATE_TABLE(db, graphedge);
+     CREATE_TABLE(db, projects);
+     CREATE_TABLE(db, files);
+     CREATE_TABLE(db, graphdata);
+     CREATE_TABLE(db, graphnode);
+     CREATE_TABLE(db, graphedge);
 
-	TableAccess< testtableRowdata > testtable( &db );
-	testtable.initialize();
+     TableAccess< testtableRowdata > testtable( &db );
+     testtable.initialize();
 
-	// initialize project
-	string projectName = "testProject";  // this should be given at the command line
-	string fileName    = "testFile.C";   // this should be retrieved from a SgFile node
+  // initialize project
+     string projectName = "testProject";  // this should be given at the command line
+     string fileName    = "testFile.C";   // this should be retrieved from a SgFile node
 
-	projectsRowdata prow( UNKNOWNID ,projectName, UNKNOWNID );
-	projects.retrieveCreateByColumn( &prow, "name", 
-			projectName );
-	long projectId 	= prow.get_id();
+     projectsRowdata prow( UNKNOWNID ,projectName, UNKNOWNID );
+     projects.retrieveCreateByColumn( &prow, "name", projectName );
+     long projectId 	= prow.get_id();
 
-	// get id of this file
-	filesRowdata frow( UNKNOWNID, projectId , fileName );
-	files.retrieveCreateByColumn( &frow, "fileName", 
-			fileName, frow.get_projectId() );
-	long fileId	= frow.get_id();
+  // get id of this file
+     filesRowdata frow( UNKNOWNID, projectId , fileName );
+     files.retrieveCreateByColumn( &frow, "fileName", fileName, frow.get_projectId() );
+     long fileId	= frow.get_id();
 
-	// init graph
-	DatabaseGraph<testtableRowdata, EdgeTypeEmpty> *callgraph = 
-		new DatabaseGraph<testtableRowdata, EdgeTypeEmpty>( projectId, GTYPE_SIMPLECALLGRAPH, &db );
-	callgraph->loadFromDatabase( );
+  // init graph
+     DatabaseGraph<testtableRowdata, EdgeTypeEmpty> *callgraph = new DatabaseGraph<testtableRowdata, EdgeTypeEmpty>( projectId, GTYPE_SIMPLECALLGRAPH, &db );
+     callgraph->loadFromDatabase( );
 
-	// traverse... NYI
+  // traverse... NYI
 
-	// save graph to dot file, and to database
-	graph->writeToDOTFile( "simplecallgraph_example.dot" );
-	graph->writeToDatabase( );
-	delete callgraph;
+  // save graph to dot file, and to database
+     graph->writeToDOTFile( "simplecallgraph_example.dot" );
+     graph->writeToDatabase( );
+     delete callgraph;
 
-	db.shutdown();
-	return( 0 );
-}
+     db.shutdown();
+     return( 0 );
+   }
 

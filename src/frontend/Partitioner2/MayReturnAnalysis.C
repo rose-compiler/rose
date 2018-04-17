@@ -4,9 +4,9 @@
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -344,7 +344,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexIter
                         t.skipChildren();
                     } else if (isBlackListed) {
                         // Block is blacklisted by some owning function.
-                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<isWhiteListed->printableName() <<" is blacklisted\n";
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<isBlackListed->printableName() <<" is blacklisted\n";
                         vertexInfo[t.vertex()->id()].result = false;
                         t.skipChildren();
                     } else if (isDynamicLinked) {
@@ -474,7 +474,10 @@ Partitioner::allFunctionMayReturn() const {
                     ASSERT_require(t.event() == LEAVE_VERTEX);
                     functionOptionalMayReturn(t.vertex()->value());
                     visited[t.vertex()->id()] = true;
+
+                    // Update progress reports
                     ++progress;
+                    updateProgress("may-return", progress.ratio());
                 }
             }
         }

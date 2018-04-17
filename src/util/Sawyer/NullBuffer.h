@@ -11,6 +11,10 @@
 #include <Sawyer/Buffer.h>
 #include <Sawyer/Sawyer.h>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/nvp.hpp>
+
 namespace Sawyer {
 namespace Container {
 
@@ -21,13 +25,28 @@ namespace Container {
 template<class A, class T>
 class NullBuffer: public Buffer<A, T> {
 public:
-    typedef A Address;
-    typedef T Value;
+    typedef A Address;                                  /**< Type of addresses. */
+    typedef T Value;                                    /**< Type of values. */
+    typedef Buffer<A, T> Super;                         /**< Type of base class. */
+
 private:
     Address size_;
+
+private:
+    friend class boost::serialization::access;
+
+    // Users: You'll need to register the subclass once you know its type, such as
+    // BOOST_CLASS_REGISTER(Sawyer::Container::NullBuffer<size_t,uint8_t>);
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(size_);
+    }
+
 protected:
-    NullBuffer(): size_(0) {}
-    explicit NullBuffer(Address size): size_(size) {}
+    NullBuffer(): Super(".NullBuffer"), size_(0) {}
+    explicit NullBuffer(Address size): Super(".NullBuffer"), size_(size) {}
+
 public:
     /** Construct a new buffer.
      *
@@ -57,7 +76,7 @@ public:
         return nread;
     }
 
-    Address write(const Value *buf, Address address, Address n) /*override*/ {
+    Address write(const Value */*buf*/, Address /*address*/, Address /*n*/) /*override*/ {
         return 0;
     }
 

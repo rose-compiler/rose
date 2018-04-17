@@ -36,7 +36,7 @@ WAssemblyListing::init() {
 
 void
 WAssemblyListing::changeFunction(const P2::Function::Ptr &function) {
-    using namespace rose;
+    using namespace Rose;
 
     if (function_ == function)
         return;

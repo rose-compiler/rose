@@ -11,6 +11,9 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+// DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+#undef mprintf
+#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -36,10 +39,12 @@ void AstPostProcessing (SgNode* node)
   // improved by enforcing that this could not be called at the SgFile level of the hierarchy.
      if (isSgProject(node) == NULL)
         {
-          printf ("Error: AstPostProcessing should only be called on SgProject (due to repeated memory pool traversals when multiple files are specified on the command line). node = %s \n",node->class_name().c_str());
+       // DQ (5/17/17): Note that this function is called, and this message is output, from the outliner, which is OK but not ideal.
+          printf ("Warning: AstPostProcessing should ideally be called on SgProject (due to repeated memory pool traversals and quadratic \n");
+          printf ("         behavior (over files) when multiple files are specified on the command line): node = %s \n",node->class_name().c_str());
         }
   // DQ (1/31/2014): This is a problem to enforce this for at least (this test program): 
-  //      tests/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
+  //      tests/nonsmoke/functional/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
   // ROSE_ASSERT(isSgProject(node) != NULL);
 
   // DQ (3/17/2007): This should be empty
@@ -190,13 +195,18 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Only do AST post-processing for C/C++
-     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) ||
-                             (SageInterface::is_PHP_language() == true) ||
-                             (SageInterface::is_Python_language() == true);
+  // Rasmussen (4/8/2018): Added Ada, Cobol, and Jovial. The logic should probably
+  // be inverted to only process C and C++ but I don't understand interactions like OpenMP langauges.
+     bool noPostprocessing = (SageInterface::is_Ada_language()     == true) ||
+                             (SageInterface::is_Cobol_language()   == true) ||
+                             (SageInterface::is_Fortran_language() == true) ||
+                             (SageInterface::is_Jovial_language()  == true) ||
+                             (SageInterface::is_PHP_language()     == true) ||
+                             (SageInterface::is_Python_language()  == true);
 
   // If this is C or C++ then we are using the new EDG translation and althrough fewer 
   // fixups should be required, some are still required.
-     if (doPostprocessing == false)
+     if (noPostprocessing == false)
         {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
@@ -410,6 +420,16 @@ void postProcessingSupport (SgNode* node)
           postProcessingTestFunctionCallArguments(node);
 #endif
 
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupTemplateArguments() \n");
+             }
+
+       // DQ (2/11/2017): Changed API to use SgSimpleProcessing based traversal.
+       // DQ (11/27/2016): Fixup template arguments to additionally reference a type that can be unparsed.
+       // fixupTemplateArguments();
+          fixupTemplateArguments(node);
+
        // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
        // printf ("Exiting after calling resetTemplateNames() \n");
        // ROSE_ASSERT(false);
@@ -464,7 +484,7 @@ void postProcessingSupport (SgNode* node)
             else
              {
             // DQ (1/31/2014): I don't think we can make this an error: called by some tests in: 
-            //      tests/roseTests/astRewriteTests/.libs/testIncludeDirectiveInsertion
+            //      tests/nonsmoke/functional/roseTests/astRewriteTests/.libs/testIncludeDirectiveInsertion
                printf ("Error: postProcessingSupport should not be called for non SgProject IR nodes \n");
             // ROSE_ASSERT(false);
              }
@@ -542,6 +562,14 @@ void postProcessingSupport (SgNode* node)
        // DQ (4/24/2013): Detect the correct function declaration to declare the use of default arguments.
        // This can only be a single function and it can't be any function (this is a moderately complex issue).
           fixupFunctionDefaultArguments(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling addPrototypesForTemplateInstantiations() \n");
+             }
+
+       // DQ (5/18/2017): Adding missing prototypes.
+          addPrototypesForTemplateInstantiations(node);
 
           if (SgProject::get_verbose() > 1)
              {
@@ -952,7 +980,8 @@ void postProcessingSupport (SgNode* node)
           ROSE_ASSERT(globalScope != NULL);
           if (globalScope->get_declarations().empty() == true)
              {
-               printf ("WARNING: no statements in global scope for file = %s \n",sourceFile->getFileName().c_str());
+            // DQ (3/17/2017): Added support to use message streams.
+               mprintf ("WARNING: no statements in global scope for file = %s \n",sourceFile->getFileName().c_str());
              }
         }
        else 
@@ -968,7 +997,8 @@ void postProcessingSupport (SgNode* node)
                          ROSE_ASSERT(globalScope != NULL);
                          if (globalScope->get_declarations().empty() == true)
                             {
-                              printf ("WARNING: no statements in global scope for file = %s \n",(*fileI)->getFileName().c_str());
+                           // DQ (3/17/2017): Added support to use message streams.
+                              mprintf ("WARNING: no statements in global scope for file = %s \n",(*fileI)->getFileName().c_str());
                             }
                        }
                   }

@@ -7,6 +7,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection -I${top_builddir}/src/3rdPartyLibraries/fortran-parser $(JAVA_JVM_INCLUDE)
 
+# DQ (1/26/2017): Added to handled Clang 3.8 on Ubuntu system.
+CFLAGS += -fPIC
+
 EXTRA_DIST = CMakeLists.txt preproc-fortran.ll preproc-fortran-fixed.ll
 DISTCLEANFILES = preproc-fortran.cc preproc-fortran-fixed.cc
 

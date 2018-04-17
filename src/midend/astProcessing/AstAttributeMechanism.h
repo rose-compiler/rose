@@ -87,7 +87,18 @@ public:
      *
      *  @li @c UNKNOWN_OWNERSHIP: This final policy is for subclasses implemented before clear attribute ownership rules were
      *     defined.  Due to the ambiguity in the original AstAttributeMechanism implementation and the fact that attributes
-     *     are used by code outside the ROSE library, this must be the default implementation. */
+     *     are used by code outside the ROSE library, this must be the default implementation.
+     *
+     *  Regardless of the ownership policy, an attribute must not be deleted while it is a member of an AstAttributeMechanism
+     *  container. This is because in order for the container to decide whether it should delete the attribute, it must first
+     *  ask the attribute for its ownership policy.  In other words, the following code will likely result in a segmentation
+     *  fault:
+     *
+     *  @code
+     *   SgDirectedGraphEdge *edge = ...;
+     *   delete edge->getAttribute("info");
+     *   delete edge; // INVALID ACCESS TO EDGE ATTRIBUTE HERE
+     *  @code */
     virtual OwnershipPolicy getOwnershipPolicy() const;
 
     /** Support for attibutes to specify edges in the dot graphs. */
@@ -238,7 +249,7 @@ public:
  *  For additional information, including examples, see @ref attributes. */
 class ROSE_DLL_API AstAttributeMechanism {
     // Use containment because we want to keep the original API.
-    Sawyer::Attribute::Storage attributes_;
+    Sawyer::Attribute::Storage<> attributes_;
 
 public:
     /** Default constructor.
@@ -417,11 +428,11 @@ public:
     virtual double getValue()  const { return value_; }
     virtual void setValue(double newVal) { value_ = newVal; }
 
-    virtual std::string toString();
+    virtual std::string toString() ROSE_OVERRIDE;
 
-    virtual int packed_size();
-    virtual char* packed_data();
-    virtual void unpacked_data(int size, char* data);
+    virtual int packed_size() ROSE_OVERRIDE;
+    virtual char* packed_data() ROSE_OVERRIDE;
+    virtual void unpacked_data(int size, char* data) ROSE_OVERRIDE;
 
     MetricAttribute& operator+=(const MetricAttribute &other);
     MetricAttribute& operator-=(const MetricAttribute &other);

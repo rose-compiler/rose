@@ -11,8 +11,9 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 # AST_FILE_IO.lo: StorageClassMemoryManagement.h 
 StorageClasses.lo: StorageClassMemoryManagement.h StorageClassMemoryManagement.C AstSpecificDataManagingClass.h
 
-pkginclude_HEADERS = \
-     StorageClassMemoryManagement.h
+pkginclude_HEADERS =				\
+	AstSerialization.h			\
+	StorageClassMemoryManagement.h
 
 # This file is generated
 nodist_pkginclude_HEADERS = \

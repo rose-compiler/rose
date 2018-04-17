@@ -38,9 +38,14 @@
  *  directory when building ROSE and when running ROSE java analysis or you may experience segmentation faults during the
  *  analysis.
  *
- *  @section installing_jre_ubuntu1404 "Trusty Tahr"
+ *  @section installing_jre_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
- *  Follow the instructions for Debian 8. */
+ *  Follow the instructions for Debian 8.
+ *
+ *  @section installing_jre_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
+ *  Follow the instructions for Debian 8, except use "1082" instead of "1072".
+ */
 
 
 // Original notes for RHEL that need to be rewritten:

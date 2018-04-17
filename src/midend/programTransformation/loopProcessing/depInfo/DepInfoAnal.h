@@ -74,8 +74,8 @@ class DepInfoAnal
 
  private:
         DependenceTesting& handle;
-        std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
-        ModifyVariableInfo varmodInfo;
+          std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
+          ModifyVariableInfo varmodInfo;
 };
 
 class DependenceTesting{
@@ -241,7 +241,7 @@ class MakeUniqueVarGetBound
   ReverseRecMap &reverse;
   void VisitVar( const SymbolicVar& var)
   {
-          result = GetBound(var);
+     result = GetBound(var);
   }
  public:
    MakeUniqueVarGetBound( ReverseRecMap& r1, DepInfoAnal& a) 

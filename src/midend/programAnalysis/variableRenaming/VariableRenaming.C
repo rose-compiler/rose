@@ -17,6 +17,7 @@
 #define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
+using namespace Rose;
 
 //Initializations of the static attribute tags
 std::string VariableRenaming::varKeyTag = "rename_KeyTag";
@@ -2745,6 +2746,13 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunction
 
         return result;
     }
+
+// DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
+   printf ("Exiting at a previously undefined function return location. \n");
+   ROSE_ASSERT(false);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   return result;
 }
 
 VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var)
@@ -2792,6 +2800,13 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
         return result;
     }
+
+// DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
+   printf ("Exiting at a previously undefined function return location. \n");
+   ROSE_ASSERT(false);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtStatementStart(SgStatement* statement)

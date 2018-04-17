@@ -1,0 +1,4 @@
+!$omp parallel 
+!$omp do  private(xx)
+!$omp end do 
+!$omp end parallel 

@@ -1,0 +1,5 @@
+#pragma omp parallel 
+#pragma omp single  nowait
+#pragma omp task  untied
+#pragma omp task  untied firstprivate(kk,jj) shared(BENCH)
+#pragma omp taskwait 

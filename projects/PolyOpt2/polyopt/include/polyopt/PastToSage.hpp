@@ -116,7 +116,7 @@ private:
    *
    *
    */
-  SgExpression* buildVariableReference(s_past_variable_t* varref);
+  SgExpression* buildVariableReference(s_past_varref_t* varref);
 
 
 

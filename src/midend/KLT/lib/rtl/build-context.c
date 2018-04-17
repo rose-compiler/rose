@@ -111,9 +111,24 @@ void dump_loop_ctx(struct klt_loop_context_t * loop_ctx) {
   int i;
   int * ptr = loop_ctx->data;
   for (i = 0; i < loop_ctx->num_loops; i++)
-    printf("Loop #%d : %d to %d by %d\n", i, *(ptr++), *(ptr++), *(ptr++));
+     {
+    // DQ (12/6/2016): Fixing warning we want to have be an error: -Wunsequenced.
+    // printf("Loop #%d : %d to %d by %d\n", i, *(ptr++), *(ptr++), *(ptr++));
+       int* first  = ptr++;
+       int* second = ptr++;
+       int* third  = ptr++;
+       printf("Loop #%d : %d to %d by %d\n", i, *(first), *(second), *(third));
+     }
+  
   for (i = 0; i < loop_ctx->num_tiles; i++)
-    printf("Tile #%d : %d by %d\n", i, *(ptr++), *(ptr++));
+     {
+    // DQ (12/6/2016): Fixing warning we want to have be an error: -Wunsequenced.
+    // printf("Tile #%d : %d by %d\n", i, *(ptr++), *(ptr++));
+       int* first  = ptr++;
+       int* second = ptr++;
+       printf("Tile #%d : %d by %d\n", i, *(first), *(second));
+     }
+  
 }
 
 struct klt_loop_context_t * klt_build_loop_context(struct klt_loop_container_t * loop_container, struct klt_loop_t * loops_, struct klt_kernel_t * kernel) {

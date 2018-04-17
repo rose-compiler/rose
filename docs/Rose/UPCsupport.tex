@@ -69,7 +69,7 @@ back to ROSE.
 Alternatively ROSE provides function identification based on header files
 where the declarations occured and this would be used to automate the recognition of UPC 
 specific runtime support functions.  See the use of the {\em classifyFileName()}
-function in {\em tests/roseTests/fileLocation\_tests}
+function in {\em tests/nonsmoke/functional/roseTests/fileLocation\_tests}
 directory for examples of how file names can be classified.  Alternatively,
 just the infomation in the source position reports the file name of the
 original declaration and this can be used to identify specific functions as 
@@ -90,7 +90,7 @@ support for UPC static threads compilation with n threads.
 %-------------------------------------------------------------
 \section{Example UPC Code Acceptable for ROSE}
 We give some output after ROSE's source-to-source translation of some example UPC input. 
-These UPC input are actually some of ROSE's daily regression test input available from \textit{ROSE/tests/CompileTests/UPC\_tests}.
+These UPC input are actually some of ROSE's daily regression test input available from \textit{ROSE/tests/nonsmoke/functional/CompileTests/UPC\_tests}.
 
 Figure~\ref{Manual:UPC:hello} shows the output of the ROSE
 identityTranslator handling a hello program in UPC.
@@ -98,10 +98,10 @@ identityTranslator handling a hello program in UPC.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_hello.upc}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_hello.upc}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_hello.upc}
+    \verbatiminput{\TopBuildDirectory/tests/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_hello.upc}
     \end{htmlonly}
   }
 }
@@ -115,10 +115,10 @@ constructs related to memory consistency.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_consistency.upc}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_consistency.upc}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_consistency.upc}
+    \verbatiminput{\TopBuildDirectory/tests/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_consistency.upc}
     \end{htmlonly}
   }
 }
@@ -135,10 +135,10 @@ of \lstinline{upc_forall} with \lstinline{affinity}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_forall_continue.upc}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_forall_continue.upc}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_forall_continue.upc}
+    \verbatiminput{\TopBuildDirectory/tests/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_forall_continue.upc}
     \end{htmlonly}
   }
 }
@@ -150,10 +150,10 @@ of \lstinline{upc_forall} with \lstinline{affinity}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_forall_affinity.upc}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_forall_affinity.upc}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_forall_affinity.upc}
+    \verbatiminput{\TopBuildDirectory/tests/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_forall_affinity.upc}
     \end{htmlonly}
   }
 }
@@ -171,10 +171,10 @@ shared variables can be correctly parsed and unparsed.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_shared.upc.aa}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_shared.upc.aa}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_shared.upc.aa}
+    \verbatiminput{\TopBuildDirectory/tests/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_shared.upc.aa}
     \end{htmlonly}
   }
 }
@@ -186,10 +186,10 @@ shared variables can be correctly parsed and unparsed.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_shared.upc.ab}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_shared.upc.ab}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_shared.upc.ab}
+    \verbatiminput{\TopBuildDirectory/tests/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_shared.upc.ab}
     \end{htmlonly}
   }
 }
@@ -204,10 +204,10 @@ Figure~\ref{Manual:UPC:lock}.
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_lock.upc}
+    \lstinputlisting{\TopBuildDirectory/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_lock.upc}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_lock.upc}
+    \verbatiminput{\TopBuildDirectory/tests/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_lock.upc}
     \end{htmlonly}
   }
 }

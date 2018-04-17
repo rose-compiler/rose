@@ -13,15 +13,16 @@
 // The following stuff is mostly cut-n-pasted from x86sim.C with minor modifications to the documentation.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <CommandLine.h>                                // ROSE command-line
 #include <Diagnostics.h>                                // ROSE diagnostics
 #include <RSIM_Debugger.h>                              // Simulator interactive debugger
 #include <RSIM_Linux32.h>                               // Simulator architecture: Linux-x86
 #include <RSIM_Linux64.h>                               // Simulator architecture: Linux-amd64
 #include <Sawyer/Map.h>                                 // Sawyer maps distributed with ROSE
 
-using namespace rose;
+using namespace Rose;
 using namespace StringUtility;
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
@@ -148,7 +149,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     return parser
         .errorStream(::mlog[FATAL])
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .with(sg)                                       // tool-specific
         .with(RSIM_Simulator::commandLineSwitches(settings.simSettings))
         .parse(argc, argv).apply().unreachedArgs();
@@ -720,7 +721,7 @@ simulate(const Settings &settings, const std::vector<std::string> &args, char *e
 int
 main(int argc, char *argv[], char *envp[]) {
     // Initialize ROSE diagnostics since we're not calling ROSE frontend()
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
     ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insert(mlog);
 

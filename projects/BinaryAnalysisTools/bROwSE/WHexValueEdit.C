@@ -6,6 +6,8 @@
 #include <Wt/WPushButton>
 #include <Wt/WText>
 
+using namespace Rose;
+
 namespace bROwSE {
 
 void

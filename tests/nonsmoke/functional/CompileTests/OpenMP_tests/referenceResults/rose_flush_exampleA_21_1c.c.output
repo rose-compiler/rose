@@ -1,0 +1,6 @@
+#pragma omp parallel  private(iam,neighbor) shared(work,synch)
+#pragma omp barrier 
+#pragma omp flush (work,synch)
+#pragma omp flush (synch)
+#pragma omp flush (synch)
+#pragma omp flush (work,synch)

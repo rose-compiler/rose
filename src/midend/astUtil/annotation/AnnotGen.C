@@ -1,5 +1,3 @@
-
-
 #include "AnnotGen.h"
 
 bool POET::GenAnnot_AstParse::operator()

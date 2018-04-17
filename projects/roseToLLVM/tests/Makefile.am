@@ -49,7 +49,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 # test.c - need to remove test script for this to run
 
 C_TESTCODES_CURRENTLY_FAILING = \
- 								example2.c \
+								example2.c \
 								switch5.c \
 								switch6.c
 
@@ -94,7 +94,7 @@ $(C_TEST_CLANG_OUT): $(C_TEST_CLANG_EXECUTABLES)
 $(DIFF_CHECK): $(C_TEST_OUT) $(C_TEST_CLANG_OUT)
 	@if $(DIFF)	$(@:.c.diff=.c.out) $(@:.c.diff=.c.clang.out); then :; else echo "Files differ; test falied"; exit 1; fi
 
-check-local:
+conditional-check-local:
 	@echo "Test for rose2llvm translator."	
 	@$(MAKE) $(C_TEST_EXECUTABLES)
 	@$(MAKE) $(C_TEST_OUT)
@@ -103,10 +103,16 @@ check-local:
 	@$(MAKE) $(DIFF_CHECK)
 	@echo "======== make check rule for rose2llvm terminated normally ========"
 
-clean-local:	
-	rm -f $(C_TEST_EXECUTABLES) *.ll *.out *.clang *.c *.c.in
+else
+
+conditional-check-local:
 
 endif
 
 EXTRA_DIST = $(ALL_TESTCODES) $(ALL_TESTCODES:.c=.c.in)
+
+check-local: conditional-check-local
+
+clean-local:	
+	rm -f $(C_TEST_EXECUTABLES) *.ll *.out *.clang *.c *.c.in
 

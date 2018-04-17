@@ -1,0 +1,4 @@
+#pragma omp parallel  shared(f,nd,np,pos,vel) private(i,j,k,rij,d,d2) reduction(+ : pe,ke)
+#pragma omp for 
+#pragma omp parallel  shared(acc,dt,f,nd,np,pos,rmass,vel) private(i,j)
+#pragma omp for 

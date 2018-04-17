@@ -5,7 +5,7 @@
 
 # defaults
 PARSER=sglr
-TESTPATH=../../../tests/CompileTests/Cxx_tests
+TESTPATH=../../../tests/nonsmoke/functional/CompileTests/Cxx_tests
 WITH_CPP="yes"
 
 if [[ ($# -eq 0) || ($# -ge 4) || $1 == "-h" || $1 == "--help" ]]

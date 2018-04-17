@@ -41,14 +41,21 @@ bool SPRAY::IntervalPropertyState::approximatedBy(Lattice& other0) {
   return true;
 }
 
-void SPRAY::IntervalPropertyState::combine(Lattice& other0){
+bool SPRAY::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) {
+  return approximatedBy(other);
+}
+
+// schroder3 (2016-08-05): Merges the "other0" IntervalPropertyState into this IntervalPropertyState.
+//  The interval of each variable in this state is joined with the interval of the corresponding
+//  variable in the "other0" state.
+void SPRAY::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode joinMode) {
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other!=0);
   if(isBot()&&other->isBot())
     return;
   if(!isBot()&&other->isBot())
     return;
-  if(isBot()&&!other->isBot()) 
+  if(isBot()&&!other->isBot())
     _bot=false;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
@@ -56,7 +63,7 @@ void SPRAY::IntervalPropertyState::combine(Lattice& other0){
       // ps's variable is not in other's ps
       // nothing to do - assume bot in this case
     }else {
-      intervals[varId].join(other->intervals[varId]);
+      intervals[varId].join(other->intervals[varId], joinMode);
     }
   }
   for(IntervalMapType::iterator i=other->intervals.begin();i!=other->intervals.end();++i) {
@@ -65,9 +72,23 @@ void SPRAY::IntervalPropertyState::combine(Lattice& other0){
       // other ps's variable is not in this ps yet
       intervals[varId]=(*i).second;
     }else {
-      intervals[varId].join(other->intervals[varId]);
+      // schroder3 (2016-08-05): This should already been handled in the upper for-loop and this
+      //  should therefore never change anything:
+      NumberIntervalLattice previous = intervals[varId].getCopy();
+      intervals[varId].join(other->intervals[varId], joinMode);
+      ROSE_ASSERT(intervals[varId] == previous);
     }
   }
+}
+
+void SPRAY::IntervalPropertyState::combine(Lattice& other0){
+  // schroder3 (2016-08-05): Use the exact join:
+  combineInternal(other0, JM_Exact);
+}
+
+void SPRAY::IntervalPropertyState::combineAsymmetric(Lattice& other0){
+  // schroder3 (2016-08-05): Use the asymmetric join:
+  combineInternal(other0, JM_InfinityAsymmetric);
 }
 
 // adds integer variable

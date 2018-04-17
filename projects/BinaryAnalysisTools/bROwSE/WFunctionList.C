@@ -1,4 +1,5 @@
 #include <rose.h>
+#include <rose_isnan.h>
 #include <bROwSE/WAddressSpace.h>
 #include <bROwSE/WFunctionList.h>
 
@@ -7,7 +8,8 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -99,7 +101,7 @@ WFunctionList::functions() const {
 // Internal: called when top gutter is clicked. Zoom to segment and emit segmentAddressClicked
 void
 WFunctionList::selectSegmentByAddress(rose_addr_t va, const Wt::WMouseEvent &event) {
-    boost::iterator_range<MemoryMap::ConstNodeIterator> found = ctx_.partitioner.memoryMap().at(va).nodes();
+    boost::iterator_range<MemoryMap::ConstNodeIterator> found = ctx_.partitioner.memoryMap()->at(va).nodes();
     if (found.begin() != found.end()) {
         const AddressInterval &interval = found.begin()->key();
         wAddressSpace_->displayedDomain(interval);
@@ -188,7 +190,7 @@ WFunctionList::updateFunctionHeatMaps() {
         double p5  = model_->heatStats().p5();
         double p50 = model_->heatStats().p50();
         double p95 = model_->heatStats().p95();
-        ASSERT_forbid(isnan(p5) || isnan(p50) || isnan(p95));
+        ASSERT_forbid(rose_isnan(p5) || rose_isnan(p50) || rose_isnan(p95));
 
         // Inserted in increasing order of importance in case some values overlap
         wAddressSpace_->gradient(functionIdx).insert(p5,      g(0.05));

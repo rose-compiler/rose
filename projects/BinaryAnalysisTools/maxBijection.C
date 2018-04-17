@@ -1,7 +1,9 @@
 #include "rose.h"
 #include "rose_getline.h"
 #include "rose_strtoull.h"
+#include <CommandLine.h>                                // ROSE
 #include "Diagnostics.h"
+#include "integerOps.h"
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>
 #include <set>
@@ -9,8 +11,8 @@
 typedef rose_addr_t Value;
 typedef std::set<Value> Set;
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 struct Settings {
     unsigned nBits;
@@ -20,7 +22,7 @@ struct Settings {
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup generic = CommandlineProcessing::genericSwitches();
+    SwitchGroup generic = Rose::CommandLine::genericSwitches();
 
     SwitchGroup tool("Tool-specific switches");
     tool.insert(Switch("width")
@@ -123,7 +125,7 @@ countMatches(const Set &s1, Set s2, Value delta, Value mask) {
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
+    ROSE_INITIALIZE;
 
     // Parse command line
     Settings settings;

@@ -5,10 +5,12 @@
 #include <LoopTree.h>
 #include <ProcessAstTree.h>
 
+
 class LoopTreeBuild : public ProcessAstTree
 {
   LoopTreeCreate *lt;
   LoopTreeNode *cur;
+  bool supportNonFortranLoop; 
  protected:
   bool ProcessLoop( AstInterface &fa, const AstNodePtr& loop ,
                       const AstNodePtr& body,
@@ -16,7 +18,8 @@ class LoopTreeBuild : public ProcessAstTree
     {
        LoopTreeNode *root = lt->GetTreeRoot();
        if (t == AstInterface::PreVisit) {
-          if (fa.IsFortranLoop(loop)) {
+         // Liao, we want to allow a loop with nested non-fortran loop in the loop tree. 
+          if (fa.IsFortranLoop(loop)||supportNonFortranLoop) {
               LoopTreeNode* result = lt->CreateLoopNode(loop);
               result->Link(cur, LoopTreeNode::AsLastChild);
               cur = result;
@@ -51,6 +54,7 @@ class LoopTreeBuild : public ProcessAstTree
        return ProcessAstTree::ProcessStmt(fa, start);
     } 
  public:
+  LoopTreeBuild(bool nonfortran=0) : supportNonFortranLoop(nonfortran) {}
    bool operator ()( AstInterface& fa, const AstNodePtr& top, 
                         LoopTreeCreate *ltc, LoopTreeNode* root = 0)
      { 

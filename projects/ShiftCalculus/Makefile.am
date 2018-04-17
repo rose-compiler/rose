@@ -32,7 +32,7 @@ PASSING_REGRESSION_TEST_Output = ${TESTCODES_REQUIRED_TO_PASS:.C=.C.passing}
 
 
 $(PASSING_REGRESSION_TEST_Output): ./shiftCalculusCompiler
-	./shiftCalculusCompiler $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.passing=.C)
+	./shiftCalculusCompiler $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passing=.C)
 
 
 

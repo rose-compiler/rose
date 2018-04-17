@@ -30,7 +30,7 @@ void SPRAY::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
       os<<(*i).first;
       os<<",";
       if(vim)
-        os<<vim->uniqueShortVariableName((*i).second);
+        os<<vim->uniqueVariableName((*i).second);
       else
         os<<(*i).second.toString();
       os<<")";

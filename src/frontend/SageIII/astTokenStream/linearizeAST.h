@@ -43,7 +43,8 @@ class LinearizeAST : public SgTopDownProcessing<LinearizeInheritedAttribute>
 
 
      private:
-       bool isRootNode;
+    // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+    // bool isRootNode;
 
        std::vector<SgNode*> nodes;
 

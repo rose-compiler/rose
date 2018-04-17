@@ -16,6 +16,7 @@
  */
 
 #include "util.h"
+#include <rose_isnan.h>
 
 void FLP02();
 void FLP03();
@@ -145,7 +146,7 @@ void FLP32(void) {
 
         /* Set the value for x */
 
-        if ( isnan(x) || isless(x,-1) || isgreater(x, 1) ){
+        if ( rose_isnan(x) || isless(x,-1) || isgreater(x, 1) ){
                  /* handle domain error */
         }
         result = acos(x);
@@ -155,7 +156,7 @@ void FLP32(void) {
         }
         result = atan2(y, x);
 
-        if (isnan(x) || islessequal(x, 0)) {
+        if (rose_isnan(x) || islessequal(x, 0)) {
                 /* handle domain and range errors */
         }
         result = log(x);

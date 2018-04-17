@@ -5,16 +5,20 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
+#include "FileSystem.h"
+#include "x86InstructionProperties.h"
+
+#include <Sawyer/MappedBuffer.h>
 
 #include <errno.h>
 #include <fcntl.h>
 
-using namespace rose;
+using namespace Rose;
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
-static void
-printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned variant=V_SgNode)
+void
+printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned variant=V_SgNode)
 {
     if (!e) {
         fprintf(f, "null");
@@ -24,7 +28,6 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         variant = e->variantT();
     switch (variant) {
         case V_SgAsmExpression: {
-            fprintf(f, ",\n%sreplacement=\"%s\"", prefix.c_str(), e->get_replacement().c_str());
             fprintf(f, ",\n%scomment=\"%s\"", prefix.c_str(), e->get_comment().c_str());
             break;
         }
@@ -35,8 +38,8 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             SgAsmValueExpression *ee = isSgAsmValueExpression(e);
             fprintf(f, ",\n%sbit_offset=%u, bit_size=%u", prefix.c_str(), ee->get_bit_offset(), ee->get_bit_size());
             fprintf(f, ", unfolded=");
-            printExpr(f, ee->get_unfolded_expression_tree(), prefix+"  ");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, ee->get_unfolded_expression_tree(), prefix+"  ");
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
         case V_SgAsmIntegerValueExpression: {
@@ -51,7 +54,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmFloatValueExpression: {
             SgAsmFloatValueExpression *ee = isSgAsmFloatValueExpression(e);
             fprintf(f, "FloatValue {value=%g", ee->get_nativeValue());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmValueExpression);
             fprintf(f, "}");
             break;
         }
@@ -61,87 +64,87 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmBinaryExpression: {
             SgAsmBinaryExpression *ee = isSgAsmBinaryExpression(e);
             fprintf(f, "\n%slhs=", prefix.c_str());
-            printExpr(f, ee->get_lhs(), prefix+"  ");
+            printSgAsmExpression(f, ee->get_lhs(), prefix+"  ");
             fprintf(f, "\n%srhs=", prefix.c_str());
-            printExpr(f, ee->get_rhs(), prefix+"  ");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, ee->get_rhs(), prefix+"  ");
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
         case V_SgAsmBinaryAdd: {
             fprintf(f, "Add {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinarySubtract: {
             fprintf(f, "Subtract {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryMultiply: {
             fprintf(f, "Multiply {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryDivide: {
             fprintf(f, "Divide {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryMod: {
             fprintf(f, "Mod {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryAddPreupdate: {
             fprintf(f, "AddPreupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinarySubtractPreupdate: {
             fprintf(f, "SubtractPreupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryAddPostupdate: {
             fprintf(f, "AddPostupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinarySubtractPostupdate: {
             fprintf(f, "SubtractPostupdate {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryLsl: {
             fprintf(f, "Lsl {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryLsr: {
             fprintf(f, "Lsr {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryAsr: {
             fprintf(f, "Asr {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmBinaryRor: {
             fprintf(f, "Ror {");
-            printExpr(f, e, prefix, V_SgAsmBinaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
@@ -151,31 +154,31 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmUnaryExpression: {
             SgAsmUnaryExpression *ee = isSgAsmUnaryExpression(e);
             fprintf(f, "operand=");
-            printExpr(f, ee->get_operand(), prefix+"  ");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, ee->get_operand(), prefix+"  ");
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
         case V_SgAsmUnaryPlus: {
             fprintf(f, "Plus {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmUnaryMinus: {
             fprintf(f, "Minus {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmUnaryRrx: {
             fprintf(f, "Rrx {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
         case V_SgAsmUnaryArmSpecialRegisterList: {
             fprintf(f, "ArmSpecialRegisterList {");
-            printExpr(f, e, prefix, V_SgAsmUnaryExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
             fprintf(f, "}");
             break;
         }
@@ -185,7 +188,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmDirectRegisterExpression:
         case V_SgAsmIndirectRegisterExpression: {
             fprintf(f, ", type=?");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
 
@@ -194,11 +197,11 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression *ee = isSgAsmMemoryReferenceExpression(e);
             fprintf(f, "MemoryReference {\n%saddress=", prefix.c_str());
-            printExpr(f, ee->get_address(), prefix+"  ");
+            printSgAsmExpression(f, ee->get_address(), prefix+"  ");
             fprintf(f, "\n%ssegment=", prefix.c_str());
-            printExpr(f, ee->get_segment(), prefix+"  ");
+            printSgAsmExpression(f, ee->get_segment(), prefix+"  ");
             fprintf(f, "\n%stype=?", prefix.c_str());
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
@@ -206,14 +209,14 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
         case V_SgAsmControlFlagsExpression: {
             SgAsmControlFlagsExpression *ee = isSgAsmControlFlagsExpression(e);
             fprintf(f, "ControlFlags {bit_flags=0x%08lx", ee->get_bit_flags());
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
             
         case V_SgAsmCommonSubExpression: {
             fprintf(f, "CommonSub {");
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
@@ -224,9 +227,9 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             for (size_t i=0; i<ee->get_expressions().size(); i++) {
                 SgAsmExpression *operand = ee->get_expressions()[i];
                 fprintf(f, "\n%soperand[%" PRIuPTR "]=", prefix.c_str(), i);
-                printExpr(f, operand, prefix+"  ");
+                printSgAsmExpression(f, operand, prefix+"  ");
             }
-            printExpr(f, e, prefix, V_SgAsmExpression);
+            printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
         }
@@ -1690,7 +1693,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         for (size_t i=0; i<insn->get_operandList()->get_operands().size(); i++) {
             SgAsmExpression *operand = insn->get_operandList()->get_operands()[i];
             fprintf(p_debug, "  operand[%" PRIuPTR "]=", i);
-            printExpr(p_debug, operand, "    ");
+            printSgAsmExpression(p_debug, operand, "    ");
             fprintf(p_debug, "\n");
         }
 #endif
@@ -1755,103 +1758,69 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
 }
 
 SgUnsignedCharList
-AssemblerX86::assembleProgram(const std::string &_source)
+AssemblerX86::assembleProgram(const std::string &source)
 {
-    SgUnsignedCharList retval;
-    char src_file_name[L_tmpnam];
-    src_file_name[0] = '\0';
-    char dst_file_name[L_tmpnam+4];
-    dst_file_name[0] = '\0';
-    int fd = -1;
-
-    /* Boiler plate */
-    std::string source = std::string("BITS 32\n") + _source;
-#ifndef _MSC_VER
-    try {
-        /* Write source code to a temporary file */
-        for (int i=0; i<10 && !src_file_name[0]; i++) {
-            if (!tmpnam(src_file_name))
-                throw Exception("tmpnam failed");
-            fd = open(src_file_name, O_CREAT|O_EXCL|O_RDWR, 0666);
-            if (fd<0) {
-                src_file_name[0] = '\0';
-            } else {
-                size_t offset = 0;
-                size_t to_write = source.size();
-                while (to_write>0) {
-                    ssize_t nwritten = TEMP_FAILURE_RETRY(write(fd, source.c_str()+offset, to_write));
-                    if (nwritten<0) {
-                        close(fd);
-                        unlink(src_file_name);
-                        throw Exception(std::string("failed to write assembly source to temporary file: ")+ strerror(errno));
-                    }
-                    to_write -= nwritten;
-                    offset += nwritten;
-                }
-                close(fd);
-                fd = -1;
-            }
-        }
-        if (!src_file_name[0])
-            throw Exception("could not create temporary file for assembly source code");
-        strcpy(dst_file_name, src_file_name);
-        strcat(dst_file_name, ".bin");
-        unlink(dst_file_name);
-
-        /* Run the assembler, capturing its stdout (and combined stderr) */
-        char nasm_cmd[256 + L_tmpnam + L_tmpnam];
-        sprintf(nasm_cmd, "nasm -s -f bin -o %s %s", dst_file_name, src_file_name);
-        FILE *nasm_output = popen(nasm_cmd, "r");
-        if (!nasm_output)
-            throw Exception(std::string("could not execute command: ") + nasm_cmd);
-        std::string output;
-        char *line = NULL;
-        size_t line_nalloc = 0;
-        while (0<rose_getline(&line, &line_nalloc, nasm_output))
-            output += line;
-        if (line) free(line);
-        if (!output.empty() && '\n'==output[output.size()-1])
-            output = output.substr(0, output.size()-1);
-        int status = pclose(nasm_output);
-        if (status!=0)
-            throw Exception("nasm exited with status " + StringUtility::numberToString(status) + ": " + output);
-
-        /* Read the raw assembly */
-        fd = open(dst_file_name, O_RDONLY);
-        if (fd<0)
-            throw Exception(std::string("nasm didn't produce output in ") + dst_file_name);
-        struct stat sb;
-        if (fstat(fd, &sb)<0)
-            throw Exception(std::string("fstat failed on ") + dst_file_name);
-        retval.resize(sb.st_size, '\0');
-        ssize_t pos = 0;
-        while (pos<sb.st_size) {
-            ssize_t nread = TEMP_FAILURE_RETRY(read(fd, &retval[pos], sb.st_size-pos));
-            if (nread<0)
-                throw Exception(std::string("failed to read nasm output: ") + strerror(errno));
-            if (0==nread)
-                throw Exception("possible short read of nasm output");
-            pos += nread;
-        }
-
-    } catch (...) {
-        /* Make sure temp files are deleted */
-        if (src_file_name[0])
-            unlink(src_file_name);
-        if (dst_file_name[0])
-            unlink(dst_file_name);
-        if (fd>=0)
-            close(fd);
-        throw;
-    }
-
-    /* Cleanup */
-    close(fd);
-    unlink(src_file_name);
-    unlink(dst_file_name);
+#if BOOST_VERSION < 104700
+#warning "Rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0"
+    ASSERT_not_reachable("Rose::AssemblerX86::assembleProgram is no longer supported for boost < 1.47.0");
 #else
-        printf ("ERROR: MSVC function not impemented yet.");
-        ROSE_ASSERT(false);
+    struct Resources {
+        FileSystem::Path srcFileName, dstFileName;
+        FILE *nasmOutput;
+        char *line;
+        int fd;
+
+        Resources()
+            : nasmOutput(NULL), line(NULL), fd(-1) {}
+
+        ~Resources() {
+            if (!srcFileName.empty())
+                boost::filesystem::remove(srcFileName);
+            if (!dstFileName.empty())
+                boost::filesystem::remove(dstFileName);
+            if (nasmOutput)
+                pclose(nasmOutput);
+            if (line)
+                free(line);
+            if (fd >= 0)
+                close(fd);
+        }
+    } r;
+
+    /* Write source code to a temporary file */
+    r.srcFileName = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path(FileSystem::tempNamePattern);
+    std::ofstream out(r.srcFileName.native().c_str());
+    out <<"BITS 32\n" << source;
+    if (!out.good())
+        throw Exception("failed to write assembly source to temporary file: " + r.srcFileName.native());
+    out.close();
+
+#ifndef _MSC_VER
+    /* Run the assembler, capturing its stdout (and combined stderr) */
+    r.dstFileName = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path(FileSystem::tempNamePattern);
+    std::string nasmCmd = "nasm -s -f bin -o '" + r.dstFileName.native() + "' '" + r.srcFileName.native() + "' 2>&1";
+    r.nasmOutput = popen(nasmCmd.c_str(), "r");
+    if (!r.nasmOutput)
+        throw Exception("could not execute command: " + nasmCmd);
+    std::string output;
+    size_t line_nalloc = 0;
+    while (0<rose_getline(&r.line, &line_nalloc, r.nasmOutput))
+        output += r.line;
+    if (!output.empty() && '\n'==output[output.size()-1])
+        output = output.substr(0, output.size()-1);
+    int status = pclose(r.nasmOutput); r.nasmOutput = NULL;
+    if (status!=0)
+        throw Exception("nasm exited with status " + StringUtility::numberToString(status) + ": " + output);
+#else
+    ASSERT_not_reachable("MSVC function not implemented yet");
 #endif
-    return retval;
+
+    /* Read the raw assembly */
+    Sawyer::Container::Buffer<size_t, unsigned char>::Ptr buf =
+        Sawyer::Container::MappedBuffer<size_t, unsigned char>::instance(r.dstFileName.native());
+    if (!buf || buf->size() == 0)
+        throw Exception("nasm didn't produce output in " + r.dstFileName.native());
+    ASSERT_not_null(buf->data());
+    return SgUnsignedCharList(buf->data(), buf->data() + buf->size());
+#endif
 }

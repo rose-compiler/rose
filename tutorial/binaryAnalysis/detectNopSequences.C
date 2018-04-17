@@ -10,6 +10,9 @@
 
 int main( int argc, char * argv[] )
    {
+  // Initialize and check compatibility. See Rose::initialize
+     ROSE_INITIALIZE;
+
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv);
 

@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace rose {
+namespace Rose {
 namespace EditDistance {                                // documented elsewhere
 
 /** Analysis to determine how to make one AST look like another.
@@ -22,7 +22,7 @@ namespace EditDistance {                                // documented elsewhere
  *  The way the analysis is used is like this:
  *
  * @code
- *  using namespace rose::EditDistance;
+ *  using namespace Rose::EditDistance;
  *  SgNode *ast1 = ...;                  // The first subtree
  *  SgNode *ast2 = ...;                  // Second subtree
  *  TreeEditDistance::Analysis ted;      // Object for performing the analysis

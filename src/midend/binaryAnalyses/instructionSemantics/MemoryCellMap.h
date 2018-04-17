@@ -6,7 +6,11 @@
 #include <MemoryCellState.h>
 #include <Sawyer/Map.h>
 
-namespace rose {
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -34,6 +38,20 @@ public:
 
 protected:
     CellMap cells;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryCellState);
+        s & BOOST_SERIALIZATION_NVP(cells);
+    }
+#endif
+    
+protected:
+    MemoryCellMap() {}                                  // for serialization
 
     explicit MemoryCellMap(const MemoryCellPtr &protocell)
         : MemoryCellState(protocell) {}
@@ -76,10 +94,18 @@ public:
      *  either the (single) cell found by that function or a null pointer. */
     virtual MemoryCellPtr findCell(const SValuePtr &addr) const;
 
+    /** Predicate to determine whether all bytes are present.
+     *
+     *  Returns true if bytes at the specified address and the following consecutive addresses are all present in this
+     *  memory state. */
+    virtual bool isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps) const;
+
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
@@ -99,5 +125,9 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);
+#endif
 
 #endif

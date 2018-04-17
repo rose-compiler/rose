@@ -49,7 +49,7 @@ SUFFIXES = .P
 $(srcdir)/rose.P: $(srcdir)/gen_rose_tables.tcl $(top_srcdir)/src/ROSETTA/src/*.C
 	if test \! -e $(srcdir)/rose.P -o -w $(srcdir)/rose.P; then ${SHELL} $(top_srcdir)/config/missing --run tclsh $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h $(srcdir)/rose.P; fi
 
-check-local: switch_without_default null_deref qsolve simple_example sortTest
+conditional-check-local: switch_without_default null_deref qsolve simple_example sortTest
 #	@if [ -e compass_parameters ]; then echo "Please remove compass_parameters before running \"make check\"" 1>&2; exit 1; fi
 	@rm -rf compass_parameters
 	@touch compass_parameters
@@ -69,8 +69,15 @@ check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@echo "Test passed"
 # endif
 
+else
+
+conditional-check-local:
+
 endif
 
 EXTRA_DIST = check_correct_answers gen_rose_tables.tcl rose.P
+
+check-local: conditional-check-local
+
 clean-local:
 	rm -rf compass_parameters current_answers

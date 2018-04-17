@@ -13,6 +13,7 @@ struct ArrayElementAccessData {
   ArrayElementAccessData();
   ArrayElementAccessData(SgPntrArrRefExp* ref, SPRAY::VariableIdMapping* variableIdMapping);
   std::string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
+  std::string toStringNoSsaSubscript(SPRAY::VariableIdMapping* variableIdMapping) const;
   //! checks validity of data. The default value is not valid (does not correspond to any array) but can be used when creating STL containers.
   bool isValid() const;
 };

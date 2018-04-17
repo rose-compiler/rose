@@ -1,0 +1,3 @@
+#pragma omp threadprivate (x,y)
+#pragma omp single  copyprivate(x,y)
+#pragma omp parallel 

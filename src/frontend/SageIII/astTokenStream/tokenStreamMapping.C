@@ -46,6 +46,7 @@
 // #include "rose.h"
 #include "sage3basic.h"
 
+#include "FileUtility.h"
 #include "general_token_defs.h"
 
 
@@ -66,6 +67,7 @@
 #define ERROR_CHECKING 0
 
 using namespace std;
+using namespace Rose;
 
 // namespace for token ID values.
 using namespace ROSE_token_ids;
@@ -674,10 +676,11 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                int trailing_whitespace_end_line     = trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.line_num;
                int trailing_whitespace_end_column   = trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.column_num;
 
-               int else_whitespace_start_line       = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.line_num; 
-               int else_whitespace_start_column     = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.column_num;
-               int else_whitespace_end_line         = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.line_num;
-               int else_whitespace_end_column       = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.column_num;
+            // DQ (3/25/2017): Clang reports these as unused variables.
+            // int else_whitespace_start_line       = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.line_num; 
+            // int else_whitespace_start_column     = else_whitespace_start < 0 ? -1 : tokenList[else_whitespace_start]->beginning_fpi.column_num;
+            // int else_whitespace_end_line         = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.line_num;
+            // int else_whitespace_end_column       = else_whitespace_end   < 0 ? -1 : tokenList[else_whitespace_end]->ending_fpi.column_num;
 
                label += "\\n leading_whitespace token #'s (" + StringUtility::numberToString(leading_whitespace_start) + "," + StringUtility::numberToString(leading_whitespace_end) +
                         ") pos (" + StringUtility::numberToString(leading_whitespace_start_line)  + ":" + StringUtility::numberToString(leading_whitespace_start_column) + "," + 
@@ -803,7 +806,7 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                     printf ("In Graph_TokenMappingTraversal::visit(): child_index = %zu \n",child_index);
                     printf ("In Graph_TokenMappingTraversal::visit(): n->get_parent()->get_traversalSuccessorNamesContainer().size() = %zu \n",n->get_parent()->get_traversalSuccessorNamesContainer().size());
 #endif
-                 // DQ (1/4/2015): Handle strange case (demonstrated by tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_11.C).
+                 // DQ (1/4/2015): Handle strange case (demonstrated by tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_11.C).
                  // string edge_name   = n->get_parent()->get_traversalSuccessorNamesContainer()[child_index];
                     bool name_available = (child_index < n->get_parent()->get_traversalSuccessorNamesContainer().size());
                     string edge_name   = name_available ? n->get_parent()->get_traversalSuccessorNamesContainer()[child_index] : "unknown edge name";
@@ -951,7 +954,10 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
           return;
         }
      ROSE_ASSERT(leading_whitespace_start >= 0);
-     ROSE_ASSERT(leading_whitespace_start < tokenStream.size());
+
+  // DQ (12/5/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+  // ROSE_ASSERT(leading_whitespace_start < tokenStream.size());
+     ROSE_ASSERT((size_t)leading_whitespace_start < tokenStream.size());
 
   // DQ (12/26/2014): Modify to only adjust the white space if there exists some whitespace to start with.
      if ( tokenStream[leading_whitespace_start]->p_tok_elem->token_id == C_CXX_WHITESPACE ||
@@ -1024,7 +1030,10 @@ TokenMappingTraversal::trimTrailingWhiteSpaceFromRight(TokenStreamSequenceToNode
   // DQ (1/2/2015): There is no trailing white space at the end of the token sequence (by definition).
   // This case happends for the trivial case of SgGlobal.
   // if (original_end_of_token_subsequence == tokenStream.size()-1)
-     if (trailing_whitespace_end > tokenStream.size()-1)
+
+  // DQ (12/5/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+  // if (trailing_whitespace_end > tokenStream.size()-1)
+     if ((size_t)trailing_whitespace_end >= tokenStream.size())
         {
 #if 0
           printf ("Note: In trimTrailingWhiteSpaceFromRight(): trailing_whitespace_end > tokenStream.size()-1: returning without modification to mappingInfo \n");
@@ -1032,7 +1041,10 @@ TokenMappingTraversal::trimTrailingWhiteSpaceFromRight(TokenStreamSequenceToNode
           return;
         }
      ROSE_ASSERT(trailing_whitespace_end >= 0);
-     ROSE_ASSERT(trailing_whitespace_end < tokenStream.size());
+
+  // DQ (12/5/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+  // ROSE_ASSERT(trailing_whitespace_end < tokenStream.size());
+     ROSE_ASSERT((size_t)trailing_whitespace_end < tokenStream.size());
 
   // DQ (12/26/2014): Modify to only adjust the white space if there exists some whitespace to start with.
      if ( tokenStream[trailing_whitespace_end]->p_tok_elem->token_id == C_CXX_WHITESPACE ||
@@ -1326,7 +1338,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                               int test_end = for_test_mappingInfo->token_subsequence_end;
                               int increment_start = for_increment_mappingInfo->token_subsequence_start;
-                              int increment_end = for_increment_mappingInfo->token_subsequence_start;
+
+                           // DQ (3/25/2017): Clang reports these as unused variables.
+                           // int increment_end = for_increment_mappingInfo->token_subsequence_start;
 #if 0
                               printf ("test_end = %d increment_start = %d increment_end = %d \n",test_end,increment_start,increment_end);
 #endif
@@ -1454,7 +1468,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               TokenStreamSequenceToNodeMapping* function_protytype_mappingInfo = tokenStreamSequenceMap[n];
                               ROSE_ASSERT(function_protytype_mappingInfo != NULL);
 
-                           // DQ (12/13/2015): This is required code and demonstrated in tests/roseTests/astTokenStreamTests/input_test2015_01.c
+                           // DQ (12/13/2015): This is required code and demonstrated in tests/nonsmoke/functional/roseTests/astTokenStreamTests/input_test2015_01.c
                            // DQ (12/12/2015): I am hoping we can avoid this fixup (we want to have as few as possible).
                            // Also this might not be required now that we have fixed the source position information in 
                            // the AST for secondary declarations (using the declaration_range where available).
@@ -1849,8 +1863,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ROSE_ASSERT(tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end());
                               TokenStreamSequenceToNodeMapping* current_mappingInfo = tokenStreamSequenceMap[n];
                               ROSE_ASSERT(current_mappingInfo != NULL);
-                              int current_token_sequence_start  = current_mappingInfo->token_subsequence_start;
-                              int current_token_sequence_end    = current_mappingInfo->token_subsequence_end;
+
+                           // DQ (3/25/2017): Clang reports these as unused variables.
+                           // int current_token_sequence_start  = current_mappingInfo->token_subsequence_start;
+                           // int current_token_sequence_end    = current_mappingInfo->token_subsequence_end;
 #if 0
                               printf ("   --- n = %p = %s current_token_sequence (%d,%d) \n",n,n->class_name().c_str(),current_token_sequence_start,current_token_sequence_end);
 #endif
@@ -1915,7 +1931,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                      {
                                                     // Examples failing this test are: "#pragma pack(1)" which does not compute the ending column 
                                                     // position correctly because EDG normalizes the pragma's string to be "pack ( 1 )".  
-                                                    // See tests/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
+                                                    // See tests/nonsmoke/functional/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
 
                                                        printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
                                                        printf ("   --- --- IR node %p = %s : Need to fixup STARTING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
@@ -1966,7 +1982,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                      {
                                                     // Examples failing this test are: "#pragma pack(1)" which does not compute the ending column 
                                                     // position correctly because EDG normalizes the pragma's string to be "pack ( 1 )".  
-                                                    // See tests/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
+                                                    // See tests/nonsmoke/functional/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
 
                                                        printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
                                                        printf ("   --- --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
@@ -2238,8 +2254,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                     int current_node_token_subsequence_start   = -1;
                     int current_node_token_subsequence_end     = -1;
 
-                    int last_node_token_subsequence_start = -1; // current_node_token_subsequence_start;
-                    int last_node_token_subsequence_end   = -1; // current_node_token_subsequence_end;
+                 // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+                 // int last_node_token_subsequence_start = -1; // current_node_token_subsequence_start;
+                 // int last_node_token_subsequence_end   = -1; // current_node_token_subsequence_end;
 
                     if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
                        {
@@ -2499,7 +2516,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                               if (i == 0)
                                  {
-                                // DQ (1/17/2015): Adding support for tests/roseTests/astInterface/*_test2015_47.C
+                                // DQ (1/17/2015): Adding support for tests/nonsmoke/functional/roseTests/astInterface/*_test2015_47.C
                                    TokenStreamSequenceToNodeMapping* previous_mappingInfo = NULL;
                                    if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
                                       {
@@ -2509,8 +2526,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    if (previous_mappingInfo != NULL)
                                       {
                                         int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
-                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
 #if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
                                         printf ("   --- previous_mappingInfo_leading_whitespace_end = %d \n",previous_mappingInfo_leading_whitespace_end);
                                         printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
 #endif
@@ -2583,8 +2600,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       {
                                      // int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
                                         int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_end + 1;
-                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
 #if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
                                         printf ("   --- previous_mappingInfo_leading_whitespace_end = %d \n",previous_mappingInfo_leading_whitespace_end);
                                         printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
 #endif
@@ -3516,8 +3533,11 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          printf ("   --- TOKENS: AFTER RESET: leading_whitespace tokens (%d,%d) token_subsequence (%d,%d) trailing_whitespace tokens (%d,%d) \n",
                             mappingInfo->leading_whitespace_start,mappingInfo->leading_whitespace_end,mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end,mappingInfo->trailing_whitespace_start,mappingInfo->trailing_whitespace_end);
 #endif
-                         last_node_token_subsequence_start = token_subsequence_start;
-                         last_node_token_subsequence_end   = token_subsequence_end;
+
+                      // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+                      // last_node_token_subsequence_start = token_subsequence_start;
+                      // last_node_token_subsequence_end   = token_subsequence_end;
+
 #if 0
                       // DQ (1/27/2015): Debugging case of test2015_110.C (prefix operator++() used in for loop increment expression).
                          if (isSgForStatement(n) != NULL && mappingInfo->node == isSgForStatement(n)->get_increment() )
@@ -3682,7 +3702,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               bool done = false;
 
                               while ( (done == false) && 
-                                      (temp_starting_NodeSequenceWithoutTokenMapping >= 0) &&
+                                   // DQ (3/25/2017): Eliminate Clang warning: warning: comparison of unsigned expression >= 0 is always true [-Wtautological-compare]
+                                   // (temp_starting_NodeSequenceWithoutTokenMapping >= 0) &&
                                       ( (childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node == NULL) ||
                                         (tokenStreamSequenceMap.find(childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node) == tokenStreamSequenceMap.end()) ) )
                                  {
@@ -3711,8 +3732,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         temp_starting_NodeSequenceWithoutTokenMapping--;
                                       }
 
-                                   if (temp_starting_NodeSequenceWithoutTokenMapping >= 0)
-                                      {
+                                // DQ (3/25/2017): Eliminate Clang warning: warning: comparison of unsigned expression >= 0 is always true [-Wtautological-compare]
+                                // if (temp_starting_NodeSequenceWithoutTokenMapping >= 0)
+                                //    {
                                         left_edge_node = childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node;
 #if 0
                                         printf ("   --- temp_starting_NodeSequenceWithoutTokenMapping = %zu \n",temp_starting_NodeSequenceWithoutTokenMapping);
@@ -3733,7 +3755,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                   (tokenStreamSequenceMap.find(childAttributes[temp_starting_NodeSequenceWithoutTokenMapping].node) != tokenStreamSequenceMap.end()) ? "true" : "false");
                                            }
 #endif
-                                      }
+                                  //  }
 #if 0
                                    printf ("   --- (end of loop): done = %s \n",done ? "true" : "false");
 #endif
@@ -3992,7 +4014,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // ROSE_ASSERT(end_of_token_subsequence < tokenStream.size());
                          if (end_of_token_subsequence >= 0)
                             {
-                              ROSE_ASSERT(end_of_token_subsequence < tokenStream.size());
+                           // DQ (12/6/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+                              ROSE_ASSERT((size_t)end_of_token_subsequence < tokenStream.size());
                             }
 
                          if (start_of_token_subsequence >= 0)
@@ -4002,7 +4025,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               leading_whitespace_end   = leading_whitespace_start;
 
                               ROSE_ASSERT(leading_whitespace_start >= 0);
-                              ROSE_ASSERT(leading_whitespace_start < tokenStream.size());
+
+                           // DQ (12/6/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+                              ROSE_ASSERT((size_t)leading_whitespace_start < tokenStream.size());
 
                               ROSE_ASSERT(tokenStream[leading_whitespace_start] != NULL);
                               if (tokenStream[leading_whitespace_start]->p_tok_elem != NULL)
@@ -4052,7 +4077,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // ROSE_ASSERT(end_of_token_subsequence < tokenStream.size());
                          if (end_of_token_subsequence >= 0)
                             {
-                              ROSE_ASSERT(end_of_token_subsequence < tokenStream.size());
+                           // DQ (12/6/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+                               ROSE_ASSERT((size_t)end_of_token_subsequence < tokenStream.size());
                             }
 // #if 1
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
@@ -4069,7 +4095,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
                               printf ("start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
 #endif
-                              ROSE_ASSERT(trailing_whitespace_end < tokenStream.size());
+                           // DQ (12/6/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+                              ROSE_ASSERT((size_t)trailing_whitespace_end < tokenStream.size());
+
                               ROSE_ASSERT(tokenStream[trailing_whitespace_end] != NULL);
                               if (tokenStream[trailing_whitespace_end]->p_tok_elem != NULL)
                                  {
@@ -4163,7 +4191,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                       // for (int k = starting_NodeSequenceWithoutTokenMapping; k < ending_NodeSequenceWithoutTokenMapping; k++)
                       // for (int k = starting_NodeSequenceWithoutTokenMapping; k <= ending_NodeSequenceWithoutTokenMapping; k++)
-                         for (int k = starting_NodeSequenceWithoutTokenMapping; k < ending_NodeSequenceWithoutTokenMapping; k++)
+
+                      // DQ (12/6/2016): Eliminate warning that we want to consider an error: -Wsign-compare
+                         for (size_t k = starting_NodeSequenceWithoutTokenMapping; k < ending_NodeSequenceWithoutTokenMapping; k++)
                             {
                            // Mark this shared and add the associated IR nodes sharing this token sequence. 
                               element->shared = true;
@@ -4202,8 +4232,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                          printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector[%zu] = %p \n",i,tokenToNodeVector[i]);
 #endif
-                         TokenStreamSequenceToNodeMapping* mappingInfo = tokenToNodeVector[i];
 #if 0
+                         TokenStreamSequenceToNodeMapping* mappingInfo = tokenToNodeVector[i];
                          printf ("   --- node = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
                       // Need to define intervals and detect redundant intervals (based on token_subsequence_start and token_subsequence_end, and not the leading and trailing intervals).
@@ -4713,9 +4743,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                               printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.column_num    = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
                               printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
+#if 0
                               int ending_token_line_number   = tokenStream[end_of_token_subsequence]->ending_fpi.line_num;
                               int ending_token_column_number = tokenStream[end_of_token_subsequence]->ending_fpi.column_num;
-#if 0
                               printf ("ending_token_line_number   = %d ending_line   = %d \n",ending_token_line_number,ending_line);
                               printf ("ending_token_column_number = %d ending_column = %d \n",ending_token_column_number,ending_column);
 #endif
@@ -5169,7 +5199,11 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                               int else_whitespace_start     = -1;
                               int else_whitespace_end       = -1;
 
-                              ROSE_ASSERT(end_of_token_subsequence == -1 || end_of_token_subsequence < tokenStream.size());
+                           // DQ (12/6/2016): Need to enforce this to support fix for warning below.
+                              ROSE_ASSERT(end_of_token_subsequence >= -1);
+
+                           // DQ (12/6/2016): Fixing earnings now considered to be errors.
+                              ROSE_ASSERT(end_of_token_subsequence == -1 || (size_t)end_of_token_subsequence < tokenStream.size());
 
                            // Generate a unique TokenStreamSequenceToNodeMapping for each interval defined by (start_of_token_subsequence,end_of_token_subsequence).
                            // TokenStreamSequenceToNodeMapping* element = new TokenStreamSequenceToNodeMapping(n,leading_whitespace_start,leading_whitespace_end,start_of_token_subsequence,end_of_token_subsequence,trailing_whitespace_start,trailing_whitespace_end);
@@ -5220,7 +5254,8 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                       }
                                    ROSE_ASSERT(start_of_token_subsequence == end_of_token_subsequence);
 
-                                   if (start_of_token_subsequence >= 0 && tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str() != ";")
+                                // if (start_of_token_subsequence >= 0 && tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str() != ";")
+                                   if (start_of_token_subsequence >= 0 && tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != ";")
                                       {
 #if 0
                                         printf ("Reset the processing value to false (to eliminate mapping children (child statements in a macro expansion) to the token stream) \n");
@@ -5292,7 +5327,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
         }
      ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
 
-     ROSE_ASSERT(end_of_token_subsequence == -1 || end_of_token_subsequence < tokenStream.size());
+  // DQ (12/6/2016): Added assertion as part of fix for warning now considered to be an error.
+     ROSE_ASSERT(end_of_token_subsequence >= -1);
+     ROSE_ASSERT(end_of_token_subsequence == -1 || (size_t)end_of_token_subsequence < tokenStream.size());
 
      ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
 
@@ -5428,11 +5465,14 @@ TokenMappingTraversal::generateTokenSubsequence( int start, int end)
         }
        else
         {
-          if (end != -1 && end >= tokenStream.size())
+       // DQ (12/6/2016): Added assertion as part of fix for warning now considered to be an error.
+       // if (end != -1 && end >= tokenStream.size())
+          ROSE_ASSERT(end >= -1);
+          if (end != -1 && (size_t)end >= tokenStream.size())
              {
                printf ("Error: In generateTokenSubsequence(): start = %d end = %d tokenStream.size() = %zu \n",start,end,tokenStream.size());
              }
-          ROSE_ASSERT(end == -1 || end < tokenStream.size());
+          ROSE_ASSERT(end == -1 || (size_t)end < tokenStream.size());
 
 #if 0
           for (int j = start; j <= end; j++)
@@ -5511,9 +5551,9 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
        // int tokenStream_start = i->second.first;
        // int tokenStream_end = i->second.second;
           SgNode* node          = (*i)->node;
+#if 0
           int tokenStream_start = (*i)->token_subsequence_start;
           int tokenStream_end   = (*i)->token_subsequence_end;
-#if 0
           printf ("In outputTokenStreamSequenceMap(): node = %p = %s tokenStream_start = %d tokenStream_end = %d \n",node,node->class_name().c_str(),tokenStream_start,tokenStream_end);
 #endif
        // if ( (tokenStream_start - previous_end) > 1)
@@ -5527,6 +5567,9 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
             // Output the tokens between the end of the last token and the start of the current token.
             // printf ("\n\nSpace before node = %p = %s tokens previous_end = %d to tokenStream_start-1 = %d \n",node,node->class_name().c_str(),previous_end,tokenStream_start-1);
             // int node_start_line   = node->get_startOfConstruct()->get_line();
+
+               int trailing_whitespace_end   = (*i)->trailing_whitespace_end;
+#if 0
                int node_start_line   = node->get_startOfConstruct()->get_physical_line();
                int node_start_column = node->get_startOfConstruct()->get_col();
             // int node_end_line     = node->get_endOfConstruct()->get_line();
@@ -5536,8 +5579,7 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
                int leading_whitespace_start  = (*i)->leading_whitespace_start;
                int leading_whitespace_end    = (*i)->leading_whitespace_end;
                int trailing_whitespace_start = (*i)->trailing_whitespace_start;
-               int trailing_whitespace_end   = (*i)->trailing_whitespace_end;
-#if 0
+
             // if (tokenStream.size() <= (size_t)trailing_whitespace_end)
                if (tokenStream.size() <= trailing_whitespace_end)
                   {
@@ -5546,7 +5588,9 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
                   }
 #endif
             // ROSE_ASSERT(tokenStream.size() > (size_t)trailing_whitespace_end);
-               ROSE_ASSERT(trailing_whitespace_end == -1 || tokenStream.size() > trailing_whitespace_end);
+
+            // DQ (12/6/2016): Added assertion as part of fix for warning now considered to be an error.
+               ROSE_ASSERT(trailing_whitespace_end == -1 || tokenStream.size() > (size_t)trailing_whitespace_end);
 #if 0
                printf ("\n\nToken stream for unassigned token locations: previous_end = %d to tokenStream_start-1 = %d \n",previous_end,tokenStream_start-1);
                if (previous_end >= 0)

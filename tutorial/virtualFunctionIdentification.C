@@ -11,6 +11,9 @@ using namespace std;
 int
 main( int argc, char * argv[] )
    {
+  // Initialize and check compatibility. See Rose::initialize
+     ROSE_INITIALIZE;
+
   // Build the AST used by ROSE
      SgProject* project = frontend(argc,argv);
 

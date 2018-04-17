@@ -4,6 +4,8 @@
 #include <Wt/WPushButton>
 #include <Wt/WText>
 
+using namespace Rose;
+
 namespace bROwSE {
 
 void
@@ -53,7 +55,7 @@ WAddressComboBox::insertAst(SgNode *ast, const AddressIntervalSet &restrict) {
 void
 WAddressComboBox::insertBasicBlock(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bblock) {
     // Restrict addresses to those which are mapped.
-    AddressIntervalSet mapped(partitioner.memoryMap());
+    AddressIntervalSet mapped(*partitioner.memoryMap());
 
     // Addresses for the basic block instructions (these should all be mapped, so no need to check)
     AddressIntervalSet bblockVas = partitioner.basicBlockInstructionExtent(bblock);

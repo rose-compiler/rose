@@ -412,7 +412,9 @@ AstPerformance::getLock()
      unsigned long counter             = 0;
      const unsigned long userTolerance = 10;
 
-     while ( (fd = open("rose_performance_report_lockfile.lock", O_WRONLY | O_CREAT | O_EXCL)) == -1 )
+  // DQ (1/24/2017): Robb suggests adding 0666 as a required 3rd function argument (fails on ubuntu machines).
+  // while ( (fd = open("rose_performance_report_lockfile.lock", O_WRONLY | O_CREAT | O_EXCL)) == -1 )
+     while ( (fd = open("rose_performance_report_lockfile.lock", O_WRONLY | O_CREAT | O_EXCL, 0666)) == -1 )
         {
        // Skip the message output if this is the first try!
           if ( counter > 0 )

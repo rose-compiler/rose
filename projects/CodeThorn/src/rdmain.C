@@ -20,6 +20,7 @@
 
 #include "addressTakenAnalysis.h"
 #include "FIPointerAnalysis.h"
+#include "FunctionIdMapping.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -33,8 +34,6 @@ int main(int argc, char* argv[]) {
   bool option_interval_analysis=false;
   try {
     cout << "INIT: Parsing and creating AST."<<endl;
-    boolOptions.registerOption("semantic-fold",false); // temporary
-    boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
 
     {
@@ -42,7 +41,9 @@ int main(int argc, char* argv[]) {
       // compute variableId mappings
       VariableIdMapping variableIdMapping;
       variableIdMapping.computeVariableSymbolMapping(root);
-      SPRAY::FIPointerAnalysis fipa(&variableIdMapping,root);
+
+      FunctionIdMapping functionIdMapping;
+      SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
       fipa.initialize();
       fipa.run();
       VariableIdSet vidset=fipa.getModByPointer();

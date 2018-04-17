@@ -22,7 +22,7 @@ libastTokenStream_la_SOURCES = \
    tokenStreamMapping.C frontierDetection.C simpleFrontierDetection.C previousAndNextNode.C maxExtents.C \
    detectMacroOrIncludeFileExpansions.C detectMacroExpansionsToBeUnparsedAsAstTransformations.C
 
-# DQ (10/27/2013): These are required for the older tests in tests/roseTests/astTokenStreamTests
+# DQ (10/27/2013): These are required for the older tests in tests/nonsmoke/functional/roseTests/astTokenStreamTests
 libastTokenStream_la_SOURCES += createMap.C  doCompleteMapping.C linearizeAST.C unparseMacro.C
 
 libastTokenStream_la_LIBADD       = 

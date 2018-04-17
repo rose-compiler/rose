@@ -142,7 +142,7 @@ else
    ./build
 fi
 
-# Here will will build the executable (tests/testAstFileIO) that we will then use to compile ROSE again.
+# Here will will build the executable (tests/nonsmoke/functional/testAstFileIO) that we will then use to compile ROSE again.
 if test -e ROSE-compile-ROSE-executable-build ; then chmod -R u+wx ROSE-compile-ROSE-executable-build ; fi
 rm -rf ROSE-compile-ROSE-executable-build
 mkdir ROSE-compile-ROSE-executable-build

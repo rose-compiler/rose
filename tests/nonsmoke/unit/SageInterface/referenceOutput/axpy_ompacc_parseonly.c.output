@@ -1,0 +1,44 @@
+for loop at line 35
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"A"	shared
+"i"	private
+for loop at line 44
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"A"	shared
+"i"	private
+for loop at line 53
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"sum"	private
+"A"	shared
+"i"	private
+"B"	shared
+"i"	private
+for loop at line 63
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"y"	shared
+"i"	private
+"a"	shared
+"x"	shared
+"i"	private
+for loop at line 75
+"i"	private
+"i"	private
+"n"	shared
+"i"	private
+"y"	shared
+"i"	private
+"a"	shared
+"x"	shared
+"i"	private

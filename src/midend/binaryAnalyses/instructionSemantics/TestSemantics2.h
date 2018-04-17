@@ -3,8 +3,9 @@
 #define Rose_TestSemantics2_H
 
 #include "BaseSemantics2.h"
+#include "CommandLine.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -96,9 +97,9 @@ public:
     // Compile-time checks for RiscOperators
     class RiscOperatorsSubclass: public RiscOperators {
     public:
-        explicit RiscOperatorsSubclass(const SValuePtr &protoval, SMTSolver *solver=NULL)
+        explicit RiscOperatorsSubclass(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
             : RiscOperators(protoval, solver) {}
-        explicit RiscOperatorsSubclass(const StatePtr &state, SMTSolver *solver=NULL)
+        explicit RiscOperatorsSubclass(const StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
             : RiscOperators(state, solver) {}
     };
 
@@ -123,7 +124,7 @@ public:
         const RegisterDescriptor *segreg_ = regdict->lookup("ss");
         require(segreg_!=NULL, "segreg lookup");
         const RegisterDescriptor segreg = *segreg_;
-        SMTSolver *solver = NULL;
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // SValue

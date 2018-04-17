@@ -1,0 +1,12 @@
+CFG dominators for function 0x004000e0 "_start":
+  dominator of 0x004000e0<0> is none
+CFG dominators for function 0x004000e1:
+  dominator of 0x004000e1<0> is none
+CFG dominators for function 0x0040012d:
+  dominator of 0x0040012d<0> is none
+CFG dominators for function 0x00400165:
+  dominator of 0x00400165<0> is none
+CFG dominators for function 0x00400195:
+  dominator of 0x00400195<0> is none
+CFG dominators for function 0x004001cf:
+  dominator of 0x004001cf<0> is none

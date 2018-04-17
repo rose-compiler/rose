@@ -720,7 +720,7 @@ int buildAstMergeCommandFile ( SgProject* project )
   //                           SgProject::project_argc,SgProject::project_argv,skipInitialEntry,skipSourceFiles);
      string commandline = CommandlineProcessing::generateStringFromArgList(argv,skipInitialEntry,skipSourceFiles);
      string separator = "::";
-     string workingDirectory = rose::getWorkingDirectory();
+     string workingDirectory = Rose::getWorkingDirectory();
 
      if (SgProject::get_verbose() > 0)
         {
@@ -1212,7 +1212,7 @@ buildDeleteSet( SgProject* project )
                numberOfASTnodesBeforeComputingDeleteSet,numberOfASTnodesAfterComputingDeleteSet);
         }
 
-  // DQ (7/11/2010): This fails for a tests in tests/CompileTests/mergeAST_tests, still have to investigate why!
+  // DQ (7/11/2010): This fails for a tests in tests/nonsmoke/functional/CompileTests/mergeAST_tests, still have to investigate why!
   // DQ (7/10/2010): The identification of nodes to delete should not create any new IR nodes.
   // ROSE_ASSERT(numberOfASTnodesBeforeComputingDeleteSet == numberOfASTnodesAfterComputingDeleteSet);
 

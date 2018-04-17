@@ -10,7 +10,7 @@
 #include <AstConsistencyTests.h>
 
 //! Default Cpp2Cpp Translator. Translates a C++ program by 
-//! invoking the EDG frontend and the ROSE backend, to a slightly reformated C++
+//! invoking the EDG frontend and the ROSE backend, to a slightly reformatted C++
 //! program. The default midend is the identity transformation.
 //! This Translator can be customized by overriding frontend/midend/backend.
 //! Examples are CppToDotTranslator, CppToPdfTranslator, CppTestTranslator.
@@ -20,6 +20,7 @@ class ROSE_DLL_API CppToCppTranslator : public Translator<int> {
   CppToCppTranslator();
   virtual ~CppToCppTranslator();
   virtual void setOptions(int argc,char** argv);
+  virtual void setOptions(const std::vector <std::string>& argvList);
   virtual void frontend();
   virtual void midend();
   virtual void backend();
@@ -48,6 +49,8 @@ protected:
 };
 
 class ROSE_DLL_API CppToPdfTranslator : public CppToCppTranslator {
+ public:
+    static bool dumpFullAST; // a flag to indicate if full AST (including parts from headers) should be dumped
  protected:
   /*! the backend generates a PDF file (instead of a C++ file). */
   virtual void backend();

@@ -9,6 +9,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace Rose;
 
 void
 Grammar::markNodeForConstructorWithoutSourcePositionInformation ( AstNodeClass & node )
@@ -203,6 +204,8 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( AstNodeClass & node 
                string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
                constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
              }
+
+          constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS","");
 
           returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
         }

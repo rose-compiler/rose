@@ -1,0 +1,7 @@
+#pragma omp parallel  shared(x,y,n,a)
+#pragma omp for  private(i)
+#pragma omp parallel  shared(GPU_N,x,y_ompacc,n) private(i)
+#pragma omp target  device(tid) map(tofrom : y_ompacc[offset:size]) map(to : x[offset:size],a,size,offset)
+#pragma omp parallel  shared(size,a)
+#pragma omp for  private(j)
+#pragma omp parallel  shared(num_threads)

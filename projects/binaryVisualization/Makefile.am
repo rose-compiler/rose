@@ -23,7 +23,7 @@ test_SOURCES = test.C
 endif
 
 
-check-local: test
+conditional-check-local: test
 	./test $(srcdir)/lsdiff
 
 include_HEADERS = helper.h
@@ -37,8 +37,10 @@ clean:
 
 else
 
+conditional-check-local:
+
 bin_PROGRAMS =
 
 endif
 
-
+check-local: conditional-check-local

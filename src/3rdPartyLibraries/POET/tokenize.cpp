@@ -31,6 +31,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 
 #include <poet_ASTeval.h>
 extern bool debug_lex();
+extern "C" POETCode* make_inputlist( POETCode* car, POETCode *cdr);
 
 POETCode* EvaluatePOET:: apply_tokens(POETCode* tokens, POETList* input)
 {
@@ -46,32 +47,35 @@ POETCode* EvaluatePOET:: apply_tokens(POETCode* tokens, POETList* input)
          for ( ; first_token == 0 && p_tokens != 0; p_tokens = p_tokens->get_rest())
             first_token = apply_tokenFilter(p_tokens->get_first(),input,input1); 
       }
-      assert(input1==0 || input1->get_enum() == SRC_LIST);
       if (first_token==0) return input;
       if (first_token != EMPTY)
       {
-          POETCode* res= new POETInputList(first_token,dynamic_cast<POETList*>(input1));
-          return res;
+         if (debug_lex()) 
+            std::cerr << "recognized token: " << first_token->toString() << "\n";
+         POETCode* res = make_inputlist(first_token,input1);
+         return res;
       }
+      if (debug_lex()) 
+           std::cerr << "leftover after empty token" << ((input1==0)? "NULL" : input1->toString()) << "\n";
       return input1;
    }
    return input;
 }
 
 POETCode* EvaluatePOET::
-apply_tokenFilter(POETCode* pattern, POETList* input, 
+apply_tokenFilter(POETCode* pattern, POETCode* input, 
                   POETCode*& leftOver, bool make_string)
 {
      if (pattern == EMPTY) { leftOver=input; return pattern; }
-     if (input == 0)  return 0;
-     if (debug_lex()) {
-         std::cerr << "apply token filter: " << pattern->toString() << " to input " << input->toString() << "\n";
-     }
+     if (debug_lex()) 
+         std::cerr << "apply token filter: " << pattern->toString() << " to " << ((input==0)? "" : input->toString()) << "\n";
+
      leftOver = input;
      switch (pattern->get_enum())
         {
         case SRC_STRING: {
-            POETCode* cur_input = input->get_first();
+            if (input == 0)   return 0;
+            POETCode* cur_input = get_head(input);
             if (cur_input->get_enum() != SRC_STRING) return 0;
             std::string str_pat = static_cast<POETString*>(pattern)->get_content();
             std::string str_input = static_cast<POETString*>(cur_input)->get_content();
@@ -80,20 +84,20 @@ apply_tokenFilter(POETCode* pattern, POETList* input,
               pos = str_pat.size();
               char nextchar = str_input[pos];
               if (str_input.size() == pos) {
-                  leftOver=input->get_rest();
+                  leftOver=get_tail(input);
                   return pattern;
               }
-              else if (nextchar <= '9' && nextchar >= '0') { /*QY: split identifier*/
-                  leftOver=ASTFactory::inst()->new_string(str_input.substr(pos,str_input.size()-pos));
-                  leftOver=ASTFactory::inst()->new_list(leftOver,input->get_rest());
+              else { 
+                  POETCode* new_str = ASTFactory::inst()->new_string(str_input.substr(pos,str_input.size()-pos));
+                  leftOver=make_inputlist(new_str,get_tail(input));
                   return pattern;
               }
             }
             return 0;
            }
         case SRC_ICONST:
-            if (input != 0 && input->get_first() == pattern) {
-                leftOver = input->get_rest();
+            if (input != 0 && get_head(input) == pattern) {
+                leftOver = get_tail(input);
                 return pattern;
             }
             return 0;
@@ -101,7 +105,7 @@ apply_tokenFilter(POETCode* pattern, POETList* input,
             if (input != 0) { 
               POETCode* cur_token = get_head(input);
               if (match_Type(cur_token, static_cast<POETType*>(pattern), true))
-                   leftOver = input->get_rest();
+                   leftOver = get_tail(input);
               else cur_token=0;
               return cur_token;
              }
@@ -116,30 +120,28 @@ apply_tokenFilter(POETCode* pattern, POETList* input,
           return cur_token;
           }
         case SRC_LIST: {
-            if (input==0) return 0;
-            POETList* p_input = input;
+            POETCode* p_input = input;
             POETList* p_content = static_cast<POETList*>(pattern);
             std::string token_content;
             std::vector<POETCode*> match_res;
             for ( ; p_content != 0; p_content=p_content->get_rest()) { 
                 POETCode* cur_token = apply_tokenFilter(p_content->get_first(), p_input, leftOver,make_string);
                 if (cur_token == 0) return 0;
-                assert(leftOver==0 || leftOver->get_enum() == SRC_LIST);
-                p_input=dynamic_cast<POETList*>(leftOver); // leftOver must be a list
+                p_input=leftOver; 
                 match_res.push_back(cur_token);
                 if (cur_token->get_enum() != SRC_STRING)
                     make_string=false;
                 else token_content=token_content+static_cast<POETString*>(cur_token)->get_content();
             }
             if (make_string) return fac->new_string(token_content);
-            return  Vector2List(match_res);
+            if (match_res.size()==0) return 0;
+            return Vector2List(match_res);
          }
          case SRC_CVAR: {  
-             if (input == 0) return 0;
-             POETCode* first = input->get_first();
+             POETCode* first = get_head(input);
               CodeVar* cvar = static_cast<CodeVar*>(pattern);
-             if (first->get_enum() == SRC_CVAR && static_cast<CodeVar*>(first)->get_entry() == cvar->get_entry()) { 
-                 leftOver=input->get_rest();
+             if (first != 0 && first->get_enum() == SRC_CVAR && static_cast<CodeVar*>(first)->get_entry() == cvar->get_entry()) { 
+                 leftOver=get_tail(input);
                  return first;
              }
               POETCode* pars=cvar->get_entry().get_param();
@@ -150,6 +152,8 @@ apply_tokenFilter(POETCode* pattern, POETList* input,
                    if (pars != 0) cvar->get_entry().get_symTable()->push_table(false);
                    POETCode* cur_token = apply_tokenFilter(code, input, leftOver, false); 
                    if (cur_token != 0) {
+                       if (debug_lex()) 
+std::cerr << "found code template: " << cur_token->toString(DEBUG_OUTPUT) << "\n";
                       if (pars != 0) { pars=eval_AST(pars); }
                        cur_token= cvar->invoke_rebuild(pars);
                        if (cur_token == 0) { cur_token = fac->build_codeRef(cvar->get_entry(),pars); }
@@ -181,7 +185,7 @@ apply_tokenFilter(POETCode* pattern, POETList* input,
                  if (input != 0) {
                     POETCode* cur_token = get_head(input);
                     if (match_AST(cur_token, pattern, MATCH_AST_PATTERN)) 
-                         leftOver = input->get_rest();
+                         leftOver = get_tail(input);
                     else cur_token=0;
                     return cur_token;
                   }
@@ -217,4 +221,33 @@ apply_tokenFilter(POETCode* pattern, POETList* input,
             LEX_INCORRECT(pattern);
       }
 }
+
+POETCode* EvaluatePOET::
+eval_readInput(POETCode* inputFiles, POETCode* codeType, POETCode* inputInline)
+{
+   POETCode* res = 0; 
+   if (inputFiles != 0) {
+      std::list<POETProgram*> inputPrograms;
+      ReadFiles(eval_AST(inputFiles), inputPrograms);
+      std::list<POETProgram*>::reverse_iterator p = inputPrograms.rbegin(); 
+      for ( ; p != inputPrograms.rend(); ++p) {
+          POETProgram* prog = *p;
+          POETProgram::const_iterator p=prog->begin();
+          if (p != prog->end()) {
+             POETCode* eval = *p;
+             eval = parse_input( eval, codeType);  
+             assert(eval != 0);
+             if (res == 0) res = eval; 
+             else res= make_inputlist(eval, res);
+          } 
+      }
+   }
+   if (inputInline != 0) {
+      inputInline = parse_input( inputInline, codeType);
+      if (!res) res = inputInline;
+      else res = ASTFactory::inst()->new_list(res, inputInline);
+   }
+   return res;
+}
+
 

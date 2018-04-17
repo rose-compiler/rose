@@ -3,6 +3,7 @@
 
 #include <AsmUnparser_compat.h>
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <MemoryCellList.h>
@@ -12,12 +13,12 @@
 #include <Sawyer/ProgressBar.h>
 #include <SymbolicSemantics2.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace PointerDetection {
 
@@ -28,8 +29,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::PointerDetection", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::PointerDetection");
     }
 }
 
@@ -43,11 +43,11 @@ PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDesc
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->get_registers();
+        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SMTSolver *solver = NULL;
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
@@ -158,14 +158,14 @@ class RiscOperators: public SymbolicSemantics::RiscOperators {
 public:
     typedef SymbolicSemantics::RiscOperators Super;
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : Super(protoval, solver) {}
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : Super(state, solver) {}
 
 public:
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -173,22 +173,22 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
     
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -199,7 +199,7 @@ public:
     }
 
 public:
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
@@ -322,7 +322,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     try {
         // Use this rather than runToFixedPoint because it lets us show a progress report
         Sawyer::ProgressBar<size_t> progress(mlog[MARCH], function->printableName());
-        dfEngine.reset(startVertexId, initialState_);
+        dfEngine.reset(BaseSemantics::StatePtr());
+        dfEngine.insertStartingVertex(startVertexId, initialState_);
         while (dfEngine.runOneIteration())
             ++progress;
     } catch (const DataFlow::NotConverging &e) {

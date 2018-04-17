@@ -12,7 +12,13 @@ public:
   IntervalPropertyState();
   void toStream(std::ostream& os, VariableIdMapping* vim=0);
   bool approximatedBy(Lattice& other);
+  bool approximatedByAsymmetric(Lattice& other);
   void combine(Lattice& other);
+  void combineAsymmetric(Lattice& other);
+ private:
+  void combineInternal(Lattice& other, JoinMode joinMode);
+ public:
+  void overwrite(Lattice& other0);
   // adds integer variable
   void addVariable(VariableId varId);
   void setVariable(VariableId varId,NumberIntervalLattice num);

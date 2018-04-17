@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include <Partitioner2/Exception.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

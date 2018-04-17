@@ -5,13 +5,29 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
-/** Constructor.
- *  Headers (SgAsmGenericHeader and derived classes) set the file/header relationship--a bidirectional link between this new
- *  header and the single file that contains this new header. This new header points to its file and the file contains a list
- *  that points to this new header. The header-to-file half of the link is deleted by the default destructor by virtue of being
- *  a simple pointer, but we also need to delete the other half of the link in the destructors. */
+const char *
+SgAsmGenericHeader::format_name() const
+   {
+     return "ASM_GENERIC_HEADER";
+   }
+
+ByteOrder::Endianness
+SgAsmGenericHeader::get_sex() const
+   {
+     ROSE_ASSERT(p_exec_format != NULL);
+     return p_exec_format->get_sex();
+   }
+
+size_t
+SgAsmGenericHeader::get_word_size() const
+   {
+     ROSE_ASSERT(p_exec_format != NULL);
+     return p_exec_format->get_word_size();
+   }
+
+
 void
 SgAsmGenericHeader::ctor()
 {
@@ -47,7 +63,6 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
     get_file()->remove_header(this);
 }
 
-/** Allow all sections to reallocate themselves */
 bool
 SgAsmGenericHeader::reallocate()
 {
@@ -59,7 +74,6 @@ SgAsmGenericHeader::reallocate()
     return reallocated;
 }
     
-/** Unparse headers and all they point to */
 void
 SgAsmGenericHeader::unparse(std::ostream &f) const
 {
@@ -70,8 +84,6 @@ SgAsmGenericHeader::unparse(std::ostream &f) const
         (*i)->unparse(f);
 }
 
-/** Returns the RVA (relative to the header's base virtual address) of the first entry point. If there are no entry points
- *  defined then return a zero RVA. */
 rose_addr_t
 SgAsmGenericHeader::get_entry_rva() const
 {
@@ -80,7 +92,6 @@ SgAsmGenericHeader::get_entry_rva() const
     return p_entry_rvas[0].get_rva();
 }
 
-/** Adds a new section to the header. This is called implicitly by the section constructor. */
 void
 SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
 {
@@ -99,7 +110,6 @@ SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
     p_sections->get_sections().push_back(section);
 }
 
-/** Removes a secton from the header's section list. */
 void
 SgAsmGenericHeader::remove_section(SgAsmGenericSection *section)
 {
@@ -115,7 +125,6 @@ SgAsmGenericHeader::remove_section(SgAsmGenericSection *section)
     }
 }
 
-/** Add a new DLL to the header DLL list */
 void
 SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
 {
@@ -133,7 +142,6 @@ SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
     dll->set_parent(p_dlls);
 }
 
-/** Returns the list of sections that are memory mapped */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_mapped_sections() const
 {
@@ -146,7 +154,6 @@ SgAsmGenericHeader::get_mapped_sections() const
     return retval;
 }
     
-/** Returns sections in this header that have the specified ID. */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_id(int id) const
 {
@@ -159,7 +166,6 @@ SgAsmGenericHeader::get_sections_by_id(int id) const
     return retval;
 }
 
-/** Returns single section in this header that has the specified ID. */
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound/*optional*/) const
 {
@@ -168,8 +174,6 @@ SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound/*optional*/) const
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns sections in this header that have the specified name. If 'SEP' is a non-null string then ignore any part of name at
- *  and after SEP. */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_name(std::string name, char sep/*or NUL*/) const
 {
@@ -193,7 +197,6 @@ SgAsmGenericHeader::get_sections_by_name(std::string name, char sep/*or NUL*/) c
     return retval;
 }
 
-/** Returns single section in this header that has the specified name. */
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_name(const std::string &name, char sep/*or NUL*/, size_t *nfound/*optional*/) const
 {
@@ -202,7 +205,6 @@ SgAsmGenericHeader::get_section_by_name(const std::string &name, char sep/*or NU
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns sectons in this header that contain all of the specified portion of the file. */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
 {
@@ -217,7 +219,6 @@ SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size)
     return retval;
 }
 
-/** Returns single section in this header that contains all of the specified portion of the file. */
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
 {
@@ -226,7 +227,6 @@ SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, 
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
 {
@@ -241,8 +241,6 @@ SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
     return retval;
 }
 
-/** Returns the single section having a preferred mapping that includes the specified relative virtual address. If there are
- *  no sections or multiple sections satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
@@ -251,10 +249,6 @@ SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns sections having a preferred or actual mapping that includes the specified virtual address.  If @p use_preferred is
- *  set, then the condition is evaluated by looking at the section's preferred mapping, otherwise the actual mapping is used.
- *  If an actual mapping is used, the specified virtual address must be part of the actual mapped section, not merely in the
- *  memory region that was also mapped to satisfy alignment constraints. */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_va(rose_addr_t va, bool use_preferred) const
 {
@@ -275,11 +269,6 @@ SgAsmGenericHeader::get_sections_by_va(rose_addr_t va, bool use_preferred) const
     return retval;
 }
 
-/** Returns the section having a preferred or actual mapping that includes the specified virtual address. If @p use_preferred
- *  is set, then the condition is evaluated by looking at the section's preferred mapping, otherwise the actual mapping is
- *  used. If an actual mapping is used, the specified virtual address must be part of the actual mapped section, not merely in
- *  the memory region that was also mapped to satisfy alignment constraints.  If there are no sections or multiple sections
- *  satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
 {
@@ -288,7 +277,6 @@ SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
 SgAsmGenericSection *
 SgAsmGenericHeader::get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound) const
 {
@@ -297,7 +285,6 @@ SgAsmGenericHeader::get_best_section_by_va(rose_addr_t va, bool use_preferred, s
     return SgAsmGenericFile::best_section_by_va(candidates, va);
 }
 
-/* Print some debugging info */
 void
 SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

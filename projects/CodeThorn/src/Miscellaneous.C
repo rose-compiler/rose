@@ -4,10 +4,19 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h" // included for the ROSE_ASSERT macro
+
 #include "Miscellaneous.h"
 #include "CommandLineOptions.h"
 #include <cctype>
 #include <iomanip>
+#include "CodeThornException.h"
+
+//BOOST includes
+#include "boost/algorithm/string.hpp"
+#include "boost/algorithm/string/regex.hpp"
+#include "boost/regex.hpp"
+#include "boost/lexical_cast.hpp"
 
 using namespace std;
 
@@ -49,9 +58,18 @@ string CodeThorn::int_to_string(int x) {
   return ss.str();
 }
 
+pair<int,int> CodeThorn::parseCsvIntPair(string toParse) {
+  vector<string> values; 
+  boost::split(values, toParse, boost::is_any_of(",")); 
+  ROSE_ASSERT(values.size() == 2); // needs to be a pair
+  int valOne = boost::lexical_cast<int>(values[0]);
+  int valTwo = boost::lexical_cast<int>(values[1]);
+  return pair<int,int>(valOne, valTwo);
+}
+
 string CodeThorn::color(string name) {
 #ifndef CT_IGNORE_COLORS_BOOLOPTIONS
-  if(!boolOptions["colors"]) 
+  if(!args.getBool("colors")) 
     return "";
 #endif
   string c="\33[";
@@ -84,7 +102,7 @@ string CodeThorn::color(string name) {
       return c+"3"+int_to_string(i)+"m";
   }
   else
-    throw "Error: unknown color code.";
+    throw CodeThorn::Exception("Error: unknown color code.");
 }
 
 string CodeThorn::readableruntime(double timeInMilliSeconds) {
@@ -123,5 +141,24 @@ string CodeThorn::readableruntime(double timeInMilliSeconds) {
   }
   s<<time<<" months"; 
   return s.str();
+}
+
+long CodeThorn::getPhysicalMemorySize() {
+  long physicalMemoryUsedUnix = -1;
+#if defined(__unix__) || defined(__unix) || defined(unix)
+  long residentSetSize = -1;
+  FILE* statm = NULL;
+  if ((statm = fopen( "/proc/self/statm", "r" )) != NULL) {
+    if (fscanf( statm, "%*s%ld", &residentSetSize ) == 1) {
+      physicalMemoryUsedUnix = residentSetSize * sysconf(_SC_PAGESIZE);
+    }
+  }
+  fclose(statm);
+#endif
+  if (physicalMemoryUsedUnix == -1) {
+    cerr << "ERROR: Physical memory consumption could not be determined." << endl;
+    ROSE_ASSERT(0);
+  }
+  return physicalMemoryUsedUnix;
 }
 

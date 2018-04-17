@@ -42,6 +42,9 @@ initializeLibrary(size_t vmajor, size_t vminor, size_t vpatch, bool withThreads)
         initialized = true;
     }
 #endif
+
+    atexit(Sawyer::Message::shutdown);
+
     return true;
 }
 
@@ -104,9 +107,45 @@ generateSequentialName(size_t length) {
     size_t sequence = ncalls++;
     std::string letters(length, 'a');
     for (size_t i=0; i<length && sequence; ++i, sequence/=26)
-        letters[length-(i+1)] += sequence % 26;
+        letters[length-(i+1)] += (char)(sequence % 26);
     return letters;
 }
 
+SAWYER_EXPORT void
+checkBoost() {
+    // We do not support boost 1.54 with C++11 because of boost ticket #9215 [https://svn.boost.org/trac/boost/ticket/9215]. It
+    // is better if we check for this at runtime rather than compile time because many other features of boost 1.54 work
+    // fine. If we allow the user to continue, then boost::any's move constructor will enter infinite recursion eventually
+    // ending with a segmentation fault (although probably not occuring as a result of calling just Storage's c'tor).
+    ASSERT_always_forbid2(BOOST_VERSION == 105400 && __cplusplus >= 201103L,
+                          "boost::any move constructor has infinite recursion in boost-1.54");
+}
+
+// thread-safe (assuming Windows API is thread-safe)
+SAWYER_EXPORT std::string
+thisExecutableName() {
+    std::string retval;
+#ifdef BOOST_WINDOWS
+# if 0 // [Robb Matzke 2014-06-13] temporarily disable for ROSE linking error (needs psapi.lib in Windows)
+    if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
+        TCHAR buffer[MAX_PATH];
+        if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) // requires linking with MinGW's psapi.a
+            retval = buffer;
+        CloseHandle(handle);
+    }
+# endif
+#elif defined(__APPLE__) && defined(__MACH__)
+    // unknown
+#else
+    // no synchronization necessary for this global state
+    if (FILE *f = fopen("/proc/self/cmdline", "r")) {
+        int c;
+        while ((c = fgetc(f)) > 0)
+            retval += (char)c;
+        fclose(f);
+    }
+#endif
+    return retval;
+}
 
 } // namespace

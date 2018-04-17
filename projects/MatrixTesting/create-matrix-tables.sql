@@ -6,17 +6,17 @@ begin transaction;
 --
 -- The folowing tables are created automatically by the web application
 --
---  auth_users		-- application-level user information
---  auth_info		-- Wt::Auth information about each user
---  auth_identities	-- login name(s) for each user
---  auth_tokens		-- web browser tokens to maintain logins between sessions
+--  auth_users          -- application-level user information
+--  auth_info           -- Wt::Auth information about each user
+--  auth_identities     -- login name(s) for each user
+--  auth_tokens         -- web browser tokens to maintain logins between sessions
 
 --
 -- Persistent interface settings
 --
 create table interface_settings (
-    rose_public_version text default '',		-- version number to show by default on the public parts of the site
-    pass_criteria text default 'end' 			-- what test needs to be reached for ROSE to be considered useful
+    rose_public_version text default '',                -- version number to show by default on the public parts of the site
+    pass_criteria text default 'end'                    -- what test needs to be reached for ROSE to be considered useful
 );
 
 insert into interface_settings (rose_public_version) values ('');
@@ -116,17 +116,19 @@ insert into dependencies values ('boost',        '1.57',             1);
 insert into dependencies values ('boost',        '1.58',             1);
 insert into dependencies values ('boost',        '1.59',             1);
 insert into dependencies values ('boost',        '1.60',             1);
+insert into dependencies values ('boost',        '1.61',             1);
 
 -- DLib version numbers or "system" or "none"
 insert into dependencies values ('dlib',         'none',             1);
-insert into dependencies values ('dlib',         '18.10',            0);
-insert into dependencies values ('dlib',         '18.11',            0);
-insert into dependencies values ('dlib',         '18.12',            0);
-insert into dependencies values ('dlib',         '18.13',            0);
-insert into dependencies values ('dlib',         '18.14',            0);
-insert into dependencies values ('dlib',         '18.15',            0);
-insert into dependencies values ('dlib',         '18.16',            0);
+insert into dependencies values ('dlib',         '18.10',            1);
+insert into dependencies values ('dlib',         '18.11',            1);
+insert into dependencies values ('dlib',         '18.12',            1);
+insert into dependencies values ('dlib',         '18.13',            1);
+insert into dependencies values ('dlib',         '18.14',            1);
+insert into dependencies values ('dlib',         '18.15',            1);
+insert into dependencies values ('dlib',         '18.16',            1);
 insert into dependencies values ('dlib',         '18.17',            1);
+insert into dependencies values ('dlib',         '18.18',            1);
 
 -- Doxygen version numbers or "system" or "none"
 insert into dependencies values ('doxygen',      'none',             0);
@@ -141,11 +143,16 @@ insert into dependencies values ('doxygen',      '1.8.8',            0);
 insert into dependencies values ('doxygen',      '1.8.9',            0);
 insert into dependencies values ('doxygen',      '1.8.10',           1);
 
+-- libdwarf version numbers
+insert into dependencies values ('dwarf',        'ambivalent',       1);
+
 -- EDG version numbers.
 insert into dependencies values ('edg',          '4.4',              0);
-insert into dependencies values ('edg',          '4.7',              1);
-insert into dependencies values ('edg',          '4.8',              1);
+insert into dependencies values ('edg',          '4.7',              0);
+insert into dependencies values ('edg',          '4.8',              0);
 insert into dependencies values ('edg',          '4.9',              1);
+insert into dependencies values ('edg',          '4.11',             1);
+insert into dependencies values ('edg',          '4.12'              1);
 
 -- libmagic version numbers or "system" or "none"
 insert into dependencies values ('magic',        'none',             1);
@@ -180,9 +187,13 @@ insert into dependencies values ('yaml',         '0.5.2',            0);
 insert into dependencies values ('yaml',         '0.5.3',            0);
 
 -- Yices SMT solver version or "system" or "none"
-insert into dependencies values ('yices',        'no',               1);
+insert into dependencies values ('yices',        'none',             1);
 insert into dependencies values ('yices',        '1.0.28',           0);
-insert into dependencies values ('yices',        '1.0.34',           1);
+insert into dependencies values ('yices',        '1.0.34',           0);
+
+-- Z3 SMT solver version or "none"
+insert into dependencies values ('z3',           'none',             1);
+insert into dependencies values ('z3',           '4.5.0',            1);
 
 
 --
@@ -207,7 +218,7 @@ insert into test_names values ( 'end',              999 );
 
 create table test_results (
     id serial primary key,
-    enabled boolean default true,			-- can be set to false to prevent test from showing in browser
+    enabled boolean default true,                       -- can be set to false to prevent test from showing in browser
 
     -- who did the testing and reporting
     reporting_user integer references auth_users(id),   -- user making this report
@@ -230,8 +241,9 @@ create table test_results (
     rmc_debug           varchar(64) default 'unknown',
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
+    rmc_dwarf           varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
-    rmc_java		varchar(64) default 'unknown',
+    rmc_java            varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
     rmc_magic           varchar(64) default 'unknown',
     rmc_optimize        varchar(64) default 'unknown',
@@ -243,6 +255,7 @@ create table test_results (
     rmc_wt              varchar(64) default 'unknown',
     rmc_yaml            varchar(64) default 'unknown',
     rmc_yices           varchar(64) default 'unknown',
+    rmc_z3              varchar(64) default 'unknown',
 
     -- Test disposition.  This is a word that says where the test failed. Rather than simply "passed"
     -- or "failed", we have a lattice of dispositions. A simple example is a lattice with a single path:
@@ -262,7 +275,7 @@ create table test_results (
 
     -- Information about the first error message.
     first_error text,
-    first_error_staging text				-- temporary column when for searching for errors
+    first_error_staging text                            -- temporary column when for searching for errors
 );
 
 --
@@ -279,11 +292,42 @@ create table attachments (
 -- Stores info about error messages
 --
 create table errors (
-    status text not null,				-- point at which error was detected
-    message text not null,				-- the error message
-    issue_name text default '', 			-- name of corresponding JIRA issue if any
-    commentary text default '',				-- commentary about the error message
-    mtime int	     					-- time that commentary was added/changed (unix)
+    status text not null,                               -- point at which error was detected
+    message text not null,                              -- the error message
+    issue_name text default '',                         -- name of corresponding JIRA issue if any
+    commentary text default '',                         -- commentary about the error message
+    mtime int default 0                                 -- time that commentary was added/changed (unix)
 );
 
+--
+-- Table for tracking progress compiling applications
+--
+create table application_results (
+    id serial primary key,
+    enabled boolean default true,			-- can be set to false to prevent test from showing in browser
+
+    -- who did the testing and reporting
+    reporting_user integer references auth_users(id),	-- user making this report
+    reporting_time integer,	      			-- when report was made (unix time)
+    tester varchar(256),				-- who did the testing (e.g., a Jenkins slave name)
+    os varchar(64),					-- operating system information
+
+    -- what version of ROSE did the testing
+    rose varchar(64) not null,				-- SHA1 of the ROSE version that was compiling
+    rose_date integer,					-- time at which version was created if known (unix time)
+
+    -- what application was compiled
+    application varchar(64) not null,			-- name of the application
+    application_version varchar(64),			-- version string or other identifying information
+    application_date integer,				-- application version date if known (unix time)
+
+    -- status of the test
+    nfiles integer,					-- total number of files processed by ROSE, failing or not
+    npass integer,					-- number of files which were compiled successfully
+    duration integer,					-- length of compilation in seconds if known
+    noutput integer,					-- number of lines of stdout + stderr produced by ROSE
+    nwarnings integer					-- number or warnings produced by ROSE
+);
+    
+    
 commit;

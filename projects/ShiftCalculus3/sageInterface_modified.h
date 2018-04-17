@@ -58,7 +58,7 @@ ROSE_DLL_API std::string getVariantName (VariantT v);
 /*! \brief This namespace is to organize functions that are useful when operating on the AST.
 
   \defgroup frontendSageUtilityFunctions SAGE III utility functions(SageInterface)
-  \ingroup ROSE_FrontEndGroup
+  \ingroup rose_frontend
 
     The Sage III IR design attempts to be minimalist. Thus additional functionality is
 intended to be presented using separate higher level interfaces which work with the IR.
@@ -67,7 +67,7 @@ The namespace, SageInterface, collects functions that operate on the IR and are 
     \internal Further organization of the functions in this namespace is required.
 Major AST manipulation functions are scattered in the following directories
    - src/midend/astUtil/astInterface
-   - src/roseSupport/utility_function.h,  namespace rose
+   - src/roseSupport/utility_function.h,  namespace Rose
    - src/roseSupport/TransformationSupport.h, class TransformationSupport
    - src/midend/astInlining/inlinerSupport.C
    - src/frontend/SageIII/sageInterface

@@ -869,7 +869,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
 
      unsigned long sizeOfActualPool  = 0;
   // DQ (9/3/2015): Fixed unsigned-ness of type.
-     unsigned long storageClassIndex = 0 ;
+  // unsigned long storageClassIndex = 0 ;
 
 
 $REPLACE_READASTFROMFILE

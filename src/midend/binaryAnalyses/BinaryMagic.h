@@ -3,7 +3,7 @@
 
 #include <MemoryMap.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Identifies magic numbers in binaries.
@@ -55,7 +55,7 @@ public:
     /** @} */
 
     /** Identify the magic number at the specified address. */
-    std::string identify(const MemoryMap&, rose_addr_t va) const;
+    std::string identify(const MemoryMap::Ptr&, rose_addr_t va) const;
 
 private:
     void init();

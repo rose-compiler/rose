@@ -29,8 +29,8 @@
 #ifndef _TMMINTRIN_H_INCLUDED
 #define _TMMINTRIN_H_INCLUDED
 
-#ifndef __SSSE3__
-# error "SSSE3 instruction set not enabled"
+#ifndef __SSE3__
+# error "SSE3 instruction set not enabled"
 #else
 
 /* We need definitions from the SSE3, SSE2 and SSE header files*/

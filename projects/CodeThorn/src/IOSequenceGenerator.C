@@ -1,7 +1,7 @@
 #ifndef IOSequenceGenerator_H
 #define IOSequenceGenerator_H
 
-#include "StateRepresentations.h"
+#include "EState.h"
 #include <iostream>
 #include <sstream>
 
@@ -32,7 +32,7 @@ namespace CodeThorn {
           ss<<sep;
         }
         if((*i)->io.isStdInIO()) {
-          AType::ConstIntLattice val=(*i)->determineUniqueIOValue();
+          AbstractValue val=(*i)->determineUniqueIOValue();
           ss<<val.toString();
         } else {
           ss<<"ERROR:"<<(*i)->toString();

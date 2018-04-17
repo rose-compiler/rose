@@ -61,7 +61,7 @@ AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
 
 # DQ (2/2/2010): New code to control use of different versions of OFP within ROSE.
 AC_ARG_ENABLE(ofp-version,
-[  --enable-ofp-version    version number for OFP (e.g. 20111225).],
+[  --enable-ofp-version    version number for OFP Java-based parser (e.g. 20111225).],
 [ echo "Setting up OFP version"
 ])
 

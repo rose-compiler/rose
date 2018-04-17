@@ -92,11 +92,13 @@ class DistNodeInfo : public LoopTreeObserveInfo
 {
   protected:
     LoopTreeNode *newNode;
+    int pos; /*pos=-1: before; pos = 1: after */
   public:
-    DistNodeInfo( LoopTreeNode *o, LoopTreeNode *n)
-       : LoopTreeObserveInfo(o)  {  newNode = n;  }
+    DistNodeInfo( LoopTreeNode *o, LoopTreeNode *n, int _pos)
+       : LoopTreeObserveInfo(o)  {  newNode = n;  pos=_pos; }
     virtual ~DistNodeInfo() {}
     LoopTreeNode * GetNewNode() const { return newNode; }
+    int get_pos() const { return pos; }
 
     virtual void UpdateObserver(LoopTreeObserver &o) const
                { o.UpdateDistNode( *this ); }

@@ -15,6 +15,7 @@
 #include <bROwSE/WSplash.h>
 #include <bROwSE/WStatus.h>
 #include <bROwSE/WStrings.h>
+#include <CommandLine.h>                                // ROSE
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
 #include <Partitioner2/Modules.h>                       // ROSE
@@ -39,9 +40,9 @@ int main(int argc, char *argv[]) {
 
 
 
-using namespace ::rose;
-using namespace ::rose::BinaryAnalysis;
-using namespace ::rose::Diagnostics;
+using namespace ::Rose;
+using namespace ::Rose::BinaryAnalysis;
+using namespace ::Rose::Diagnostics;
 
 namespace bROwSE {
 
@@ -52,7 +53,7 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
     using namespace Sawyer::CommandLine;
 
     // Generic switches
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
     gen.insert(Switch("config")
                .argument("names", listParser(anyParser(settings.configurationNames), ":"))
                .whichValue(SAVE_ALL)
@@ -63,7 +64,7 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
                     "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
                     "function names and whose values are have a \"function.delta\" integer. The delta does not include "
                     "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                    "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
+                    "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
 
     // Switches for disassembly
     SwitchGroup dis("Disassembly switches");
@@ -130,9 +131,8 @@ Application::main(int argc, char *argv[]) {
     // own message sinks to the list later.
     Diagnostics::destination = Sawyer::Message::Multiplexer::instance()
                                ->to(Sawyer::Message::FileSink::instance(stderr));
-    Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("bROwSE", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "bROwSE");
 
     // Parse the command-line
     Settings settings;
@@ -375,7 +375,7 @@ Application::isTabAvailable(MainTab idx) {
         case PartitionerTab:
             return true;
         case MemoryMapTab:
-            return !wMemoryMap_->memoryMap().isEmpty();
+            return !wMemoryMap_->memoryMap()->isEmpty();
         case FunctionListTab:
             return (!ctx_.partitioner.isDefaultConstructed() && wFunctionList_->functions().size());
         case FunctionSummaryTab:
@@ -383,11 +383,11 @@ Application::isTabAvailable(MainTab idx) {
         case AssemblyTab:
             return currentFunction_ != NULL;
         case HexDumpTab:
-            return !wHexDump_->memoryMap().isEmpty();
+            return !wHexDump_->memoryMap()->isEmpty();
         case MagicTab:
-            return !wMagic_->memoryMap().isEmpty();
+            return !wMagic_->memoryMap()->isEmpty();
         case StringsTab:
-            return !wStrings_->memoryMap().isEmpty();
+            return !wStrings_->memoryMap()->isEmpty();
         case StatusTab:
             return true;
         default:
@@ -432,7 +432,7 @@ Application::handleSpecimenLoaded(bool done) {
     if (done) {
         wMemoryMap_->memoryMap(ctx_.engine.memoryMap());
     } else {
-        wMemoryMap_->memoryMap(MemoryMap());
+        wMemoryMap_->memoryMap(MemoryMap::instance());
     }
     showHideTabs();
 }

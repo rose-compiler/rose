@@ -175,6 +175,9 @@ filterOnEdges::operator()(SgNode* node, pair<SgNode*,std::string>& x) const
 int
 main (int argc, char *argv[])
    {
+  // Initialize and check compatibility. See Rose::initialize
+     ROSE_INITIALIZE;
+
   // Build the AST
      SgProject *project = frontend (argc, argv);
      ROSE_ASSERT (project != NULL);

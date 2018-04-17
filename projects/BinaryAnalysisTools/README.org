@@ -171,7 +171,7 @@
       Other disassembly tools are:
           + linearDisassemble: disassemble one address at a time
             without any regard for control flow.
-          + $ROSE/tests/roseTests/binaryTests/disassemble: an earlier
+          + $ROSE/tests/nonsmoke/functional/roseTests/binaryTests/disassemble: an earlier
             recursive disassembler that uses a different partitioning
             mechanism which is what frontend() currently uses (Oct
             2014).

@@ -19,4 +19,8 @@
  *
  *  @section installing_cmake_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
+ *  Run <code>apt-get install cmake</code> as the administrator.
+ *
+ *  @section installing_cmake_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
  *  Run <code>apt-get install cmake</code> as the administrator. */

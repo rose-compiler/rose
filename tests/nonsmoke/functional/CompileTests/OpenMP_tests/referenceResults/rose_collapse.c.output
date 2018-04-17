@@ -1,0 +1,2 @@
+#pragma omp parallel 
+#pragma omp for  private(j,k) collapse(2) lastprivate(jlast,klast)

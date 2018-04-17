@@ -155,7 +155,7 @@ Unparse_X10::unparseX10WildcardType(SgJavaWildcardType* wildcard_type, SgUnparse
 void 
 Unparse_X10::unparseX10UnionType(SgJavaUnionType *union_type, SgUnparse_Info& info) {
     SgTypePtrList type_list = union_type -> get_type_list();
-    for (int i = 0; i < type_list.size(); i++) {
+    for (size_t i = 0; i < type_list.size(); i++) {
         if (i > 0) {
             curprint(" | ");
         }
@@ -189,11 +189,12 @@ Unparse_X10::unparseEnumType(SgEnumType* type, SgUnparse_Info& info)
 
           curprint ( "enum ");
 
-          SgNamedType *ptype = NULL;
-          if (cdefn != NULL)
-             {
-               ptype = isSgNamedType(cdefn->get_declaration()->get_type());
-             }
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // SgNamedType *ptype = NULL;
+       // if (cdefn != NULL)
+       //    {
+       //      ptype = isSgNamedType(cdefn->get_declaration()->get_type());
+       //    }
 
           if (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true)
              {

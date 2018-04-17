@@ -159,8 +159,10 @@ SgGraph::computeNodeIndexSet( const string & label )
 
      typedef std::pair<rose_graph_string_integer_hash_multimap::const_iterator,rose_graph_string_integer_hash_multimap::const_iterator> equal_range_type;
      equal_range_type equal_range_pair = p_string_to_node_index_multimap.equal_range(label);
-     rose_graph_string_integer_hash_multimap::const_iterator lower_bound = equal_range_pair.first;
-     rose_graph_string_integer_hash_multimap::const_iterator upper_bound = equal_range_pair.second;
+
+  // DQ (3/25/2017): Eliminated Clange warning about unused variables.
+  // rose_graph_string_integer_hash_multimap::const_iterator lower_bound = equal_range_pair.first;
+  // rose_graph_string_integer_hash_multimap::const_iterator upper_bound = equal_range_pair.second;
 
   // DQ (8/18/2009): This CAN be an empty set so we have to allow this.
   // ROSE_ASSERT(lower_bound != upper_bound);
@@ -436,7 +438,9 @@ bool SgIncidenceDirectedGraph::removeDirectedEdge( SgDirectedGraphEdge* edge  ) 
         p_edge_index_to_edge_map.erase(edge_index);
         
         int node_index_first  = edge->get_node_A()->get_index();
-        int node_index_second = edge->get_node_B()->get_index();
+
+     // DQ (3/25/2017): Eliminated Clange warning about unused variables.
+     // int node_index_second = edge->get_node_B()->get_index();
         
         for(rose_graph_integerpair_edge_hash_multimap::const_iterator it = p_node_index_pair_to_edge_multimap.begin() ;
                 it != p_node_index_pair_to_edge_multimap.end(); it++) {

@@ -1,0 +1,16 @@
+#pragma omp simd
+#pragma omp simd safelen(16)
+#pragma omp simd simdlen(16)
+#pragma omp simd linear(j,k)
+#pragma omp simd linear(j,k:1)
+#pragma omp simd aligned(j,k)
+#pragma omp simd aligned(j,k:1)
+#pragma omp simd private(tmp) reduction(+ : sum)
+#pragma omp simd lastprivate(j)
+#pragma omp for simd  collapse(2) private(tmp)
+#pragma omp parallel 
+#pragma omp for simd  collapse(2) private(tmp)
+#pragma omp declare simd simdlen(1) notinbranch
+#pragma omp declare simd linear(p:1)
+#pragma omp declare simd uniform(p)
+#pragma omp declare simd simdlen(1) notinbranch

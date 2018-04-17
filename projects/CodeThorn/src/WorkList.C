@@ -4,6 +4,7 @@
 #include <list>
 #include <algorithm>
 #include "WorkListSeq.h"
+#include "CodeThornException.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -49,7 +50,7 @@ void WorkListSeq<Element>::add(std::set<Element>& elemSet) {
 template<typename Element>
 Element WorkListSeq<Element>::take() {
   if(workList.size()==0) {
-    throw "Error: attempted to take element from empty work list.";
+    throw CodeThorn::Exception("Error: attempted to take element from empty work list.");
 
   }  else {
     Element co;
@@ -65,7 +66,7 @@ Element WorkListSeq<Element>::take() {
 template<typename Element>
 Element WorkListSeq<Element>::examine() {
   if(workList.size()==0)
-    throw "Error: attempted to examine next element in empty work list.";
+    throw CodeThorn::Exception("Error: attempted to examine next element in empty work list.");
   Element elem;
 #pragma omp critical(WL)
   {

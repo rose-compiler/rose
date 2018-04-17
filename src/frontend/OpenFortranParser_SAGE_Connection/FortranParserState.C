@@ -171,7 +171,11 @@ bool AttributeRec::getIsPrivate() { return isPrivate; }
 void AttributeRec::setIsPrivate(bool isPriv) { isPrivate = isPriv; }
 int AttributeRec::getPrivateAttr() { return privateAttr; }
 void AttributeRec::setPrivateAttr(int privAttr) { privateAttr = privAttr; }
-bool AttributeRec::getIsAllocatable() { isAllocatable; }
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+// bool AttributeRec::getIsAllocatable() { isAllocatable; }
+bool AttributeRec::getIsAllocatable() { return isAllocatable; }
+
 void AttributeRec::setIsAllocatable(bool isAlloc) { isAllocatable = isAlloc; }
 int AttributeRec::getAllocatableAttr() { return allocatableAttr; }
 void AttributeRec::setAllocatableAttr(int allocAttr) { allocatableAttr = allocAttr; }

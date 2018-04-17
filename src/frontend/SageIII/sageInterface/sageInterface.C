@@ -3,6 +3,9 @@
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
+#include "FileUtility.h"
+#include "AstPDFGeneration.h"
+#include "SgNodeHelper.h" //Markus's helper functions
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -24,6 +27,8 @@
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
 
+// DQ (3/14/2017): Try to comment this out since it is not tested (used in get_C_array_dimensions(), 
+// from midend/programTransformation/ompLowering/omp_lowering.cpp, but not tested).
 // PP 01/06/2012 : need swap operations for wrapFunction implementation
 // PP 05/30/2012 : need ancestor function
 #include "sageGeneric.h"
@@ -71,9 +76,9 @@ namespace Rose {
                 extern jmethodID createTempNamedDirectoryMethod;
 
             } // ::Rose::Frontend::Java::Ecj
-        }// ::rose::frontend::java
-    }// ::rose::frontend
-}// ::rose
+        }// ::Rose::frontend::java
+    }// ::Rose::frontend
+}// ::Rose
 
 using namespace Rose::Frontend::Java::Ecj;
 
@@ -107,8 +112,14 @@ std::map<SgNode*,std::string> SageInterface::local_node_to_name_map;
 
 typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
+namespace SageInterface
+{
+    Transformation_Record trans_records;
+}
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace Rose;
 using namespace SageBuilder;
 
 
@@ -246,38 +257,45 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
                          printf ("Ignoring the error for a SgFunctionParameterList and SgTemplateInstantiationDecl \n");
 #else
-                         printf ("Ignoring the error for a SgFunctionParameterList \n");
+                         printf ("In SageInterface::DeclarationSets::addDeclaration(): Ignoring the error for a SgFunctionParameterList \n");
 #endif
 #endif
                        }
                       else
                        {
+#if 0
                          printf ("declarationMap[firstNondefiningDeclaration]->size() = %" PRIuPTR " \n",declarationMap[firstNondefiningDeclaration]->size());
 
                          printf ("decl                             = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
                          printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
-
+#endif
                          SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
                          if (namespaceDefinitionStatement != NULL)
                             {
                               namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
                             }
-
+#if 0
                          if (isSgCtorInitializerList(decl) != NULL)
                             {
                               firstNondefiningDeclaration->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration->get_parent(): debug");
                               decl->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl->get_parent(): debug");
                             }
-
+#endif
+#if 0
                          firstNondefiningDeclaration->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration: debug");
                          decl->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl: debug");
-
+#endif
                       // DQ (2/5/2015): This is a problem for EDG 4.9 code using the GNU 4.8.1 compiler 
                       // and maybe related to C++11 support (commented out assertion as a test).
-#if 1
-                         printf ("Can not ignore this error \n");
+#if 0
+                         printf ("In SageInterface::DeclarationSets::addDeclaration(): Can not ignore this error \n");
                          ROSE_ASSERT(false);
+#else
+                      // DQ (5/22/2016): Comment out this assertion as a test (test of using new typeEquivalent test in the symbol handling and C++11 mode on testRoseHeaders_01.C with Boost 1.59.
+#if 0
+                         printf ("In SageInterface::DeclarationSets::addDeclaration(): I would like to ignore this for debugging! decl = %p = %s \n",decl,decl->class_name().c_str());
+#endif
 #endif
                        }
                   }
@@ -541,7 +559,7 @@ SageInterface::whereAmI(SgNode* node)
   // This highest level node acceptable for us by this function is a SgGlobal (global scope).
 
      ROSE_ASSERT(node != NULL);
-     printf ("Inside of SageInterface::whereAmI(node = %p = %s) \n",node,node->class_name().c_str());
+//     printf ("Inside of SageInterface::whereAmI(node = %p = %s) \n",node,node->class_name().c_str());
 
   // Enforce that some IR nodes should not be acepted inputs.
      ROSE_ASSERT(isSgFile(node)     == NULL);
@@ -553,10 +571,10 @@ SageInterface::whereAmI(SgNode* node)
   // Don't traverse past the SgFile level.
      while (parent != NULL && isSgFileList(parent) == NULL)
         {
-          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
+//          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
 
           ROSE_ASSERT(parent->get_file_info() != NULL);
-          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
+//          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
 
           parent = parent->get_parent();
         }
@@ -1563,6 +1581,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+       // DQ (1/21/2018): Added case for C++11 SgStaticAssertionDeclaration
+          case V_SgStaticAssertionDeclaration:
+             {
+               name = "_static_assertion_declaration_stmt_";
+               const SgStaticAssertionDeclaration* statement = isSgStaticAssertionDeclaration(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgStaticAssertionDeclaration*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -1609,6 +1638,9 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                name = (isSgJavaLabelStatement(scope)->get_label()).getString();
                break;
 
+       // DQ (7/18/2017): Added support for the new declaration scope.
+          case V_SgDeclarationScope:
+
        // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
@@ -1624,6 +1656,11 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgWhileStmt:
           case V_SgFortranDo:
           case V_SgForAllStatement:
+               name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
+               break;
+
+       // DQ (3/26/2018): Added support for new IR node.
+          case V_SgRangeBasedForStatement:
                name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
                break;
 
@@ -2616,7 +2653,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
           default:
              {
                printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): Unsupported declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-               ROSE_ASSERT(false);
+//               ROSE_ASSERT(false);
              }
         }
 
@@ -2933,18 +2970,21 @@ SageInterface::templateDefinitionIsInClass( SgTemplateInstantiationMemberFunctio
   // Alternative approach
   // SgTemplateDeclaration* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
      SgDeclarationStatement* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
-     printf ("In templateDefinitionIsInClass(): templateDeclaration = %p parent of templateDeclaration = %p = %s \n",templateDeclaration,
-          templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
+//     printf ("In templateDefinitionIsInClass(): templateDeclaration = %p parent of templateDeclaration = %p = %s \n",templateDeclaration,
+//          templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
 
-     SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
-     if (isSgClassDefinition(parentScope) != NULL)
-        {
-          result = true;
-        }
+    if (templateDeclaration != NULL && templateDeclaration->get_parent() != NULL)
+    {  
+      SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
+      if (isSgClassDefinition(parentScope) != NULL)
+         {
+           result = true;
+         }
+    }
 
      return result;
    }
-
+#if 0
 SgDeclarationStatement*
 generateUniqueDeclaration ( SgDeclarationStatement* declaration )
    {
@@ -2970,6 +3010,7 @@ generateUniqueDeclaration ( SgDeclarationStatement* declaration )
 
      return keyDeclaration;
    }
+#endif   
 //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
 std::string SageInterface::extractPragmaKeyword(const SgPragmaDeclaration *pragmaDeclaration)
 {
@@ -2981,11 +3022,17 @@ std::string SageInterface::extractPragmaKeyword(const SgPragmaDeclaration *pragm
 }
 
 //! Check if a node is SgOmp*Statement
+// TODO: move all Omp*statement under a parent SgOmpStatement
 bool SageInterface::isOmpStatement(SgNode* n)
 {
   ROSE_ASSERT (n != NULL);
   bool result = false;
-  if (isSgOmpBarrierStatement(n)||isSgOmpBodyStatement(n)|| isSgOmpFlushStatement(n)|| isSgOmpTaskwaitStatement(n) )
+  if (isSgOmpBarrierStatement(n)||
+      isSgOmpBodyStatement(n)||
+      isSgOmpDeclareSimdStatement(n) ||
+      isSgOmpFlushStatement(n)|| 
+      isSgOmpThreadprivateStatement(n)|| 
+      isSgOmpTaskwaitStatement(n) )
     result = true;
 
   return result;
@@ -3411,7 +3458,7 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
           i++;
         }
    }
-
+#if 0
 // DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
 void
 SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList )
@@ -3421,7 +3468,7 @@ SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgIniti
 
      supportForVariableLists(scope,symbolTable,variableList);
    }
-
+#endif
 
 void
 supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolTable, SgVariableDeclaration* variableDeclaration )
@@ -3592,6 +3639,12 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                break;
              }
 
+        case V_SgMatlabForStatement:
+          {
+            return;
+            break;
+          }
+             
 
        // DQ (12/23/2012): Added support for templates.
           case V_SgTemplateFunctionDefinition:
@@ -4096,6 +4149,10 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                          break;
                        }
 
+
+                 // DQ (2/18/2017): Added support for C++11 SgTemplateTypedefDeclaration.
+                    case V_SgTemplateTypedefDeclaration:
+
                     case V_SgTypedefDeclaration:
                        {
                          SgTypedefDeclaration* derivedDeclaration = isSgTypedefDeclaration(declaration);
@@ -4246,6 +4303,15 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                       {
                         printf ("Special cases not handled %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
                         ROSE_ASSERT(false);
+                        break;
+                      }
+
+                  case V_SgStaticAssertionDeclaration:
+                      {
+                     // DQ (2/18/2017): This is not really a declaration (I think).  This will be fixed later.
+#if 0
+                        printf ("A static assertion statement (SgStaticAssertionDeclaration) declaration is not really a declaration %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+#endif
                         break;
                       }
 
@@ -4519,13 +4585,23 @@ SgProject * SageInterface::getProject(const SgNode * node) {
 }
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
-  if (isSgFunctionRefExp(func)) {
+  SgFunctionDeclaration * ret = NULL; 
+  if (isSgFunctionRefExp(func)) 
+  {
     return isSgFunctionRefExp(func)->get_symbol()->get_declaration();
-  } else if (isSgDotExp(func) || isSgArrowExp(func)) {
+  } 
+  else if (isSgDotExp(func) || isSgArrowExp(func)) 
+  {
     SgExpression* func2 = isSgBinaryOp(func)->get_rhs_operand();
-    ROSE_ASSERT (isSgMemberFunctionRefExp(func2));
-    return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
-  } else return 0;
+    if (isSgMemberFunctionRefExp(func2))
+      return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
+    else
+    {
+      cerr<<"Warning in SageInterface::getDeclarationOfNamedFunction(): rhs operand of dot or arrow operations is not a member function, but a "<<func2->class_name()<<endl;
+    }
+  } 
+
+  return ret;
 }
 
 SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
@@ -4571,6 +4647,24 @@ void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Cont
 }
 
 
+// Rasmussen (4/8/2018): Added Ada
+bool
+SageInterface::is_Ada_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Ada_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 bool
 SageInterface::is_C_language()
    {
@@ -4587,6 +4681,25 @@ SageInterface::is_C_language()
 
      return returnValue;
    }
+
+// Rasmussen (4/8/2018): Added Cobol
+bool
+SageInterface::is_Cobol_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Cobol_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 bool
 SageInterface::is_OpenMP_language()
    {
@@ -4713,6 +4826,24 @@ SageInterface::is_Java_language()
      for (int i = 0; i < size; i++)
         {
           if (fileList[i]->get_Java_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+// Rasmussen (4/4/2018): Added Jovial
+bool
+SageInterface::is_Jovial_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Jovial_only() == true)
                returnValue = true;
         }
 
@@ -5063,6 +5194,10 @@ SageInterface::getMangledNameFromCache( SgNode* astNode )
 std::string
 SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMangledName)
    {
+#if 0
+     printf ("In SageInterface::addMangledNameToCache(): TOP: astNode = %p = %s oldMangledName = %s \n",astNode,astNode->class_name().c_str(),oldMangledName.c_str());
+#endif
+
 #if 0
      SgGlobal* globalScope = isSgGlobal(astNode);
 
@@ -5907,6 +6042,11 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
           cscope = SageBuilder::topScopeStack();
      ROSE_ASSERT(cscope != NULL);
 
+#if 0
+     printf ("In lookupTypedefSymbolInParentScopes(): name = %s starting with cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
+     printf ("--- parent scope = %p = %s \n",cscope->get_scope(),(cscope->get_scope() != NULL) ? cscope->get_scope()->class_name().c_str() : "null");
+#endif
+
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
@@ -5916,7 +6056,15 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
             else
                cscope = NULL;
+
+#if 0
+          printf ("In lookupTypedefSymbolInParentScopes(): symbol = %p next cscope = %p = %s \n",symbol,cscope,(cscope != NULL) ? cscope->class_name().c_str() : "null");
+#endif
         }
+
+#if 0
+     printf ("Leaving lookupTypedefSymbolInParentScopes(): symbol = %p \n",symbol);
+#endif
 
      return symbol;
    }
@@ -6258,7 +6406,6 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
      setSourcePosition(node);
    }
 
-
 // DQ (5/1/2012): Newly renamed function (previous name preserved for backward compatability).
 void
 SageInterface::setSourcePositionPointersToNull(SgNode *node)
@@ -6320,7 +6467,6 @@ SageInterface::setSourcePositionPointersToNull(SgNode *node)
              }
         }
    }
-
 
 // DQ (1/24/2009): Could we change the name to be "setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root)"
 void
@@ -6548,7 +6694,7 @@ SageInterface::setSourcePosition(SgNode* node)
 #endif
    }
 
-
+#if 0
 void
 SageInterface::setSourcePositionForTransformation_memoryPool()
    {
@@ -6565,7 +6711,7 @@ SageInterface::setSourcePositionForTransformation_memoryPool()
           setOneSourcePositionForTransformation(*i);
         }
    }
-
+#endif
 
 SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
    {
@@ -6839,7 +6985,7 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
 // This is useful to find a safe place to insert a declaration statement with special requirements about where it can be inserted.
 // e.g. a variable declaration statement should not be inserted before IMPLICIT none in Fortran
 // If it returns NULL, a declaration statement should be able to be prepended to the scope
-SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope)
+SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope, bool includePragma/* = false */ )
 {
   SgStatement* rt = NULL;
   ROSE_ASSERT (scope != NULL);
@@ -6849,8 +6995,17 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
   for (size_t i = 0; i<stmt_list.size(); i++)
   {
     SgStatement* cur_stmt = stmt_list[i];
-    if (isSgDeclarationStatement(cur_stmt))
-      rt = cur_stmt;
+    // We should exclude pragma decl. We don't want to insert things after pragmas.
+    if (isSgDeclarationStatement(cur_stmt)) 
+    {
+      if (isSgPragmaDeclaration (cur_stmt))
+      {
+        if (includePragma)
+          rt = cur_stmt;
+      }
+      else  
+        rt = cur_stmt;
+    }  
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
   }
 
@@ -6873,7 +7028,7 @@ SgNode * SageInterface::deepCopyNode (const SgNode* n)
 // by Jeremiah
 // Return bool for C++ code, and int for C code
 SgType* SageInterface::getBoolType(SgNode* n) {
-  bool isC = TransformationSupport::getSourceFile(n)->get_outputLanguage() == SgFile::e_C_output_language;
+  bool isC = TransformationSupport::getSourceFile(n)->get_outputLanguage() == SgFile::e_C_language;
   if (isC) {
     return SgTypeInt::createType();
   } else {
@@ -6903,50 +7058,162 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
 #endif
    }
 
-bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2) {
-  if (arg1 == arg2) return true;
+#define DEBUG_TEMPLATE_ARG_EQUIVALENCE 0
 
-  if (arg1->get_argumentType() != arg2->get_argumentType()) return false;
+bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2) 
+   {
+     if (arg1 == arg2)
+        {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+          printf ("In templateArgumentEquivalence(): same pointer to template argument: returning true \n");
+#endif
+          return true;
+        }
 
-  switch (arg1->get_argumentType()) {
-    case SgTemplateArgument::type_argument:
-      return arg1->get_type() == arg2->get_type();
-    case SgTemplateArgument::nontype_argument:
-      if (arg1->get_expression() == arg2->get_expression()) return true;
-      else {
-        ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
-      }
-    case SgTemplateArgument::template_template_argument:
-      if (arg1->get_templateDeclaration() == arg2->get_templateDeclaration()) return true;
-      else {
-        ROSE_ASSERT(!"NIY: template template argument comparaison."); /// \todo
-      }
-    case SgTemplateArgument::argument_undefined: ROSE_ASSERT(!"Try to compare template arguments of unknown type...");
+     if (arg1->get_argumentType() != arg2->get_argumentType())
+        {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+          printf ("In templateArgumentEquivalence(): different argumentType(): returning false \n");
+#endif
+          return false;
+        }
 
- // DQ (7/19/2015): Added missing case:
-    case SgTemplateArgument::start_of_pack_expansion_argument: ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
+     switch (arg1->get_argumentType()) 
+        {
+          case SgTemplateArgument::type_argument:
+             {
+               ROSE_ASSERT(arg1->get_type() != NULL);
+               ROSE_ASSERT(arg2->get_type() != NULL);
 
- // DQ (7/19/2015): Added missing default case: we always want to ahve a default case to catch errors and missing cases.
-    default:
-       {
-         printf ("Error: default case not handled! \n");
-         ROSE_ASSERT(false);
-       }
-  }
-  ROSE_ASSERT(false); // unreachable code
-}
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+               printf ("In templateArgumentEquivalence(): case SgTemplateArgument::type_argument: checking for the same type: arg1->get_type() = %p = %s arg2->get_type() = %p = %s \n",
+                    arg1->get_type(),arg1->get_type()->class_name().c_str(),
+                    arg2->get_type(),arg2->get_type()->class_name().c_str());
+#endif
+            // DQ (5/19/2016): Rewrote to support debugging.
+            // return arg1->get_type() == arg2->get_type();
+               if (arg1->get_type() == arg2->get_type()) 
+                  {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::type_argument: checking for the same type: returning true \n");
+#endif
+                    return true;
+                  }
+                 else
+                  {
+                 // ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
 
-bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2) {
-  if (list1.size() != list2.size()) return false;
+                 // DQ (5/19/2016): Use type equivalence mechanism to handle the case where
+                 // these are different pointers to what might still be the same type.
+                 // return false;
+                    bool typesAreEqual = isEquivalentType(arg1->get_type(),arg2->get_type());
 
-  if (list1 == list2) return true;
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::type_argument: checking for the same type: pointers are different: returning typesAreEqual = %s \n",typesAreEqual ? "true" : "false");
+#endif
+                    return typesAreEqual;
+                  }
+             }
 
-  for (unsigned i = 0; i < list1.size(); i++)
-    if (!templateArgumentEquivalence(list1[i], list2[i]))
-      return false;
+          case SgTemplateArgument::nontype_argument:
+             {
+               if (arg1->get_expression() == arg2->get_expression()) 
+                  {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: checking for the same expression: returning true \n");
+#endif
+                    return true;
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
+                  }
+             }
 
-  return true;
-}
+          case SgTemplateArgument::template_template_argument:
+             {
+               if (arg1->get_templateDeclaration() == arg2->get_templateDeclaration()) 
+                  {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::template_template_argument: checking for the same templateDeclaration: returning true \n");
+#endif
+                    return true;
+                  }
+                 else 
+                  {
+                    ROSE_ASSERT(!"NIY: template template argument comparaison."); /// \todo
+                  }
+             }
+
+          case SgTemplateArgument::argument_undefined: 
+             {
+               ROSE_ASSERT(!"Try to compare template arguments of unknown type...");
+             }
+
+       // DQ (7/19/2015): Added missing case:
+          case SgTemplateArgument::start_of_pack_expansion_argument:
+             {
+               // Liao 6/24/2016. Handle the simplest case: both arguments are parameter pack.
+               if (arg2->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) 
+                 return true; 
+               ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
+             }
+
+       // DQ (7/19/2015): Added missing default case: we always want to ahve a default case to catch errors and missing cases.
+          default:
+             {
+               printf ("Error: default case not handled! \n");
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(false); // unreachable code
+   }
+
+#define DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE 0
+
+bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2) 
+   {
+     if (list1.size() != list2.size()) 
+        {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+          printf ("In templateArgumentListEquivalence(): different list sizes: returning false \n");
+          printf ("   --- list1.size() = %zu \n",list1.size());
+          printf ("   --- list2.size() = %zu \n",list2.size());
+#endif
+          return false;
+        }
+
+     if (list1 == list2)
+        {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+          printf ("In templateArgumentListEquivalence(): same list using STL equality operator: returning true \n");
+#endif
+          return true;
+        }
+
+  // for (unsigned i = 0; i < list1.size(); i++)
+     for (size_t i = 0; i < list1.size(); i++)
+        {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+          printf ("In templateArgumentListEquivalence(): calling templateArgumentEquivalence() for i = %zu \n",i);
+#endif
+       // if (!templateArgumentEquivalence(list1[i], list2[i]))
+          if (templateArgumentEquivalence(list1[i], list2[i]) == false)
+             {
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+               printf ("In templateArgumentListEquivalence(): calling templateArgumentEquivalence() for i = %zu --- returned false: returning false \n",i);
+#endif
+               return false;
+             }
+        }
+
+#if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
+     printf ("In templateArgumentListEquivalence(): reached base of function: returning true \n");
+#endif
+
+     return true;
+   }
 
 // Add a step statement to the end of a loop body
 // Add a new label to the end of the loop, with the step statement after
@@ -7162,7 +7429,7 @@ SageInterface::getScope( const SgNode* astNode )
 
 
 // from outliner, ASTtools
-// ========================================================================
+// ------------------------------------------------
 
 /*!
  *  \brief Return an existing variable symbol for the given
@@ -7651,7 +7918,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
   // If there are comments and/or CPP directives then those comments and/or CPP directives will
   // be moved to a new SgStatement.  The new SgStatement is selected using the findSurroundingStatementFromSameFile()
   // function and if there is not statement found then the SgGlobal IR node will be selected.
-  // this work is tested by the tests/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
+  // this work is tested by the tests/nonsmoke/functional/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
   // translator and a number of input codes that represent a range of contexts which exercise different
   // cases in the code below.
 
@@ -8315,7 +8582,7 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
 void
 SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
    {
-  // DQ (8/18/2015): This function is called from the tests/testTemplates translator.
+  // DQ (8/18/2015): This function is called from the tests/nonsmoke/functional/testTemplates translator.
 
   // DQ (7/19/2015): This function can't use an iterator since it will be 
   // doing transformations on the AST and will cause iterator invalidation errors.
@@ -8576,6 +8843,13 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     isSgForStatement(parent)->set_increment(newExp);
     // TODO: any other cases here??
   }
+  else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent))
+    {
+      if(matlabFor->get_index() == oldExp)
+        matlabFor->set_index(newExp);
+      else if(matlabFor->get_range() == oldExp)
+        matlabFor->set_range(newExp);
+    }
   else if (isSgReturnStmt(parent))
     isSgReturnStmt(parent)->set_expression(newExp);
   else  if (isSgBinaryOp(parent)!=NULL){
@@ -8675,12 +8949,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
 SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
    {
   // reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
-     return rose::getNextStatement(currentStmt);
+     return Rose::getNextStatement(currentStmt);
    }
 
 SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt, bool climbOutScope /*= true*/)
    {
-     return rose::getPreviousStatement(currentStmt, climbOutScope);
+     return Rose::getPreviousStatement(currentStmt, climbOutScope);
    }
 
 bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
@@ -8777,6 +9051,18 @@ SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   ROSE_ASSERT (s);
   return isSgSwitchStatement(s);
 }
+
+//! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+SgOmpClauseBodyStatement* SageInterface::findEnclosingOmpClauseBodyStatement(SgStatement* s) {
+  while (s && !isSgOmpClauseBodyStatement(s)) {
+    s = isSgStatement(s->get_parent());
+  }
+  // ROSE_ASSERT (s); // s is allowed to be NULL.
+  if (s==NULL)
+    return NULL; 
+  return isSgOmpClauseBodyStatement(s);
+}
+
 
 SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::string& label, bool stopOnSwitches) {
   /* label can represent a fortran label or a java label provided as a label in a continue/break statement */
@@ -8996,76 +9282,141 @@ static SgExpression* SkipCasting (SgExpression* exp)
 }
 
 //! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
-bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) 
+{
   ROSE_ASSERT(loop!=NULL);
 
   SgStatementPtrList &init = loop ->get_init_stmt();
   if (init.size() !=1) // We only handle one statement case
     return false;
-  else
+
+  SgStatement* init1 = init.front();
+  SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
+  if (decl == NULL) // we only handle for (int i=0; ...) 
+    return true;    // the return value is ambiguous: if not int i=0; it is already normalized
+
+  SgVariableSymbol* osymbol = getFirstVarSym(decl);
+  SgInitializedName* ivarname = decl->get_variables().front();
+  SgExpression* lbast = NULL; // the lower bound, initial state
+  ROSE_ASSERT(ivarname != NULL);
+  SgInitializer * initor = ivarname->get_initializer();
+  if (isSgAssignInitializer(initor))
   {
-    SgStatement* init1 = init.front();
-    SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
-    if (decl)
-    {
-      SgVariableSymbol* osymbol = getFirstVarSym(decl);
-      SgInitializedName* ivarname = decl->get_variables().front();
-      SgExpression* lbast = NULL; // the lower bound, initial state
-      ROSE_ASSERT(ivarname != NULL);
-      SgInitializer * initor = ivarname->get_initializer();
-      if (isSgAssignInitializer(initor))
-      {
-        lbast = isSgAssignInitializer(initor)->get_operand();
-      } else
-      { //SgConstructorInitializer etc.
-        // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
-        // they cause a loop to be non-canonical.
-        return false;
-      }
-
-      // add a new statement like int i; and insert it to the enclosing function
-      // There are multiple choices about where to insert this statement:
-      //  global scope: max name pollution,
-      //  right before the loop: mess up perfectly nested loops
-      //  So we prepend the statement to the enclosing function's body
-      SgFunctionDefinition* funcDef =  getEnclosingFunctionDefinition(loop);
-      ROSE_ASSERT(funcDef!=NULL);
-      SgBasicBlock* funcBody = funcDef->get_body();
-      ROSE_ASSERT(funcBody!=NULL);
-      //TODO a better name
-      std::ostringstream os;
-      os<<ivarname->get_name().getString();
-      
-      // keep the original variable name if possible
-      SgSymbol * visibleSym = NULL; 
-      visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
-      if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
-      {
-        os<<"_nom_";
-        os<<++gensym_counter;
-      }
-
-      SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
-      prependStatement(ndecl, funcBody);
-      SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
-
-      // replace variable ref to the new symbol
-      Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
-      for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
-      {
-        SgVarRefExp *vRef = isSgVarRefExp((*i));
-        if (vRef->get_symbol()==osymbol)
-          vRef->set_symbol(nsymbol);
-      }
-      // replace for (int i=0;) with for (i=0;)
-      SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast));
-      removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
-      init.push_back(ninit);
-      ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
-      // ninit->set_parent(loop);
-       ninit->set_parent(loop->get_for_init_stmt ());
-    }
+    lbast = isSgAssignInitializer(initor)->get_operand();
+  } 
+  else
+  { //SgConstructorInitializer etc.
+    // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
+    // they cause a loop to be non-canonical.
+    return false;
   }
+
+  // add a new statement like int i; and insert it to the enclosing function
+  // There are multiple choices about where to insert this statement:
+  //  global scope: max name pollution,
+  //  right before the loop: mess up perfectly nested loops
+  //  So we prepend the statement to the enclosing function's body
+  SgFunctionDefinition* funcDef =  getEnclosingFunctionDefinition(loop);
+  ROSE_ASSERT(funcDef!=NULL);
+  SgBasicBlock* funcBody = funcDef->get_body();
+  ROSE_ASSERT(funcBody!=NULL);
+  //TODO a better name
+  std::ostringstream os;
+  os<<ivarname->get_name().getString();
+
+  // keep the original variable name if possible
+  SgSymbol * visibleSym = NULL; 
+  visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
+  if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
+  {
+    os<<"_nom_";
+    os<<++gensym_counter;
+  }
+
+  SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
+  prependStatement(ndecl, funcBody);
+  SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
+
+  // replace variable ref to the new symbol
+  Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if (vRef->get_symbol()==osymbol)
+      vRef->set_symbol(nsymbol);
+  }
+  // replace for (int i=0;) with for (i=0;)
+  SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast));
+  removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
+  init.push_back(ninit);
+  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
+  // ninit->set_parent(loop);
+  ninit->set_parent(loop->get_for_init_stmt ());
+
+  // keep record of this normalization
+  // We may undo it later on.
+  trans_records.forLoopInitNormalizationTable[loop] = true;
+  trans_records.forLoopInitNormalizationRecord[loop] = make_pair (decl, ndecl) ;
+
+  return true;
+}
+
+/*
+  int i_norm_1;
+  for (i_norm_1=0; i_norm_1<upper; i_norm_1 ++ ); 
+Becomes: 
+  for (int i=0; i< upper; i++) ;
+ * */
+bool SageInterface::unnormalizeForLoopInitDeclaration(SgForStatement* loop)
+{
+  ROSE_ASSERT (loop != NULL);
+  //If not previously normalized, nothing to do and return false.
+  if (!trans_records.forLoopInitNormalizationTable[loop])
+    return false;
+  // retrieve original and new declaration of the previous normalization   
+  SgVariableDeclaration* decl = trans_records.forLoopInitNormalizationRecord[loop].first;   
+  SgVariableDeclaration* ndecl = trans_records.forLoopInitNormalizationRecord[loop].second;   
+  ROSE_ASSERT (decl!= NULL);
+  ROSE_ASSERT (ndecl!= NULL);
+   
+  
+  // Sanity check
+  SgStatementPtrList &init = loop ->get_init_stmt();
+  ROSE_ASSERT(init.size() ==1); // We only handle one statement case
+
+  // remove the current init_stmt
+  SgStatement* init1 = init.front();
+  SgExprStatement* exp_stmt = isSgExprStatement(init1);
+  ROSE_ASSERT (exp_stmt != NULL);
+  SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+  ROSE_ASSERT (assign_op != NULL);
+
+  // remove the new declaration and the current i_norm=1; 
+  removeStatement(ndecl);
+  removeStatement (exp_stmt);
+ 
+  // restore the original declaration
+  init.push_back(decl);                                                                                                          
+  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);                                                                               
+  // ninit->set_parent(loop);                                                                                                     
+  decl->set_parent(loop->get_for_init_stmt ());     
+ 
+  // replace variable references
+  // current symbol in the AST
+  SgVariableSymbol* osymbol = getFirstVarSym(ndecl);
+  // new symbol  we want to have: the original decl
+  SgVariableSymbol* nsymbol = getFirstVarSym(decl);
+  // replace variable ref to the new symbol
+  Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if (vRef->get_symbol()==osymbol)
+      vRef->set_symbol(nsymbol);
+  }
+
+  // clear record: now the loop is not normalized any more
+  trans_records.forLoopInitNormalizationTable[loop] = false; 
   return true;
 }
 
@@ -9075,6 +9426,15 @@ bool SageInterface::normalizeForLoopTest(SgForStatement* loop)
 
   // Normalized the test expressions
   // -------------------------------------
+#if 0  // this is undecided
+  // skip for (;;) case
+  SgStatement* test_stmt = loop->get_test();
+  if (test_stmt!=NULL)
+  {
+    if (isSgNullStatement(test_stmt))
+      return false;
+  }
+#endif  
   SgExpression* test = loop->get_test_expr();
   SgExpression* testlhs=NULL, * testrhs=NULL;
   if (isSgBinaryOp(test))
@@ -9308,9 +9668,14 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
   //Handle 0 and 1, which means no unrolling at all
   if (unrolling_factor <= 1)
     return true;
+
   // normalize the target loop first
-  if (!forLoopNormalization(target_loop));
-  {// the return value is not reliable
+
+  // DQ (3/25/2017): Fixed Clang warning: warning: if statement has empty body [-Wempty-body]
+  // if (!forLoopNormalization(target_loop));
+  if (!forLoopNormalization(target_loop))
+  {
+    // the return value is not reliable
     //    cerr<<"Error in SageInterface::loopUnrolling(): target loop cannot be normalized."<<endl;
     //    dumpInfo(target_loop);
     //    return false;
@@ -9553,8 +9918,10 @@ bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, siz
   ROSE_ASSERT(loops.size()>=targetLevel);
   SgForStatement* target_loop = loops[targetLevel -1]; // adjust to numbering starting from 0
 
+  // DQ (3/25/2017): Fixed Clang warning: warning: if statement has empty body [-Wempty-body]
   // normalize the target loop first
-  if (!forLoopNormalization(target_loop));
+  // if (!forLoopNormalization(target_loop));
+  if (!forLoopNormalization(target_loop))
   {// the return value is not reliable
 //    cerr<<"Error in SageInterface::loopTiling(): target loop cannot be normalized."<<endl;
 //    dumpInfo(target_loop);
@@ -9749,7 +10116,13 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   // C/C++ case ------------------------------
   SgForStatement* fs = isSgForStatement(loop);
-  ROSE_ASSERT (fs != NULL);
+  if (fs == NULL)
+  {
+    return NULL;  
+  }
+  // we only handle C/C++ for loops and Fortran Do loops.
+  // Any other kinds of loops (while, do-while,etc.) are skipped and return NULL; 
+  // ROSE_ASSERT (fs != NULL);
 
   //Check initialization statement is something like i=xx;
   SgStatementPtrList & init = fs->get_init_stmt();
@@ -9763,7 +10136,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   SgExpression* ivarast=NULL;
 
   // DQ (3/20/2016): Note that GNU compiler reports these variables are set but not used.
-  bool isCase1=false, isCase2=false;
+  //bool isCase1=false, isCase2=false;
 
   //consider C99 style: for (int i=0;...)
   if (isSgVariableDeclaration(init1))
@@ -9771,9 +10144,9 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
     SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
     ivarname = decl->get_variables().front();
     ROSE_ASSERT(ivarname != NULL);
-    SgInitializer * initor = ivarname->get_initializer();
-    if (isSgAssignInitializer(initor))
-      isCase1 = true;
+    //SgInitializer * initor = ivarname->get_initializer();
+   // if (isSgAssignInitializer(initor))
+   //   isCase1 = true;
   }// other regular case: for (i=0;..)
   else if (isAssignmentStatement(init1, &ivarast))
   {
@@ -9781,7 +10154,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
     if (var)
     {
       ivarname = var->get_symbol()->get_declaration();
-      isCase2 = true;
+      //isCase2 = true;
     }
   }
   else if (SgExprStatement* exp_stmt = isSgExprStatement(init1))
@@ -9804,9 +10177,12 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   else
   {
-    cerr<<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
-    cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
-    init1->get_file_info()->display("Debug");
+    if (getProject()->get_verbose()>0)
+    {
+      cerr<<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
+      cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
+      init1->get_file_info()->display("Debug");
+    }
     return NULL; 
     //ROSE_ASSERT (false);
   }
@@ -10003,7 +10379,52 @@ bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar
   }
   return true;
 }
+//TODO: expose it to the namespace once it matures.
+//! Check if an executable statement (possibly compound), is a structured block
+//  with a single entry at the top and a single exit at the bottom, or an OpenMP construct.
+/*
+From OpenMP 4.5 Specification
 
+1.2.2 OpenMP Language Terminology
+
+For C/C++, an executable statement, possibly compound, with a single entry at the
+top and a single exit at the bottom, or an OpenMP construct.
+
+For Fortran, a block of executable statements with a single entry at the top and a
+single exit at the bottom, or an OpenMP construct.
+
+COMMENTS:
+
+For all base languages:
+* Access to the structured block must not be the result of a branch; and
+* The point of exit cannot be a branch out of the structured block.
+
+ For C/C++:
+* The point of entry must not be a call to setjmp();
+* longjmp() and throw() must not violate the entry/exit criteria;
+* Calls to exit() are allowed in a structured block; and
+* An expression statement, iteration statement, selection statement, or try block is considered to be a structured block if the corresponding compound statement obtained by enclosing it in { and } would be a structured block.
+
+For Fortran:
+* STOP statements are allowed in a structured block.
+
+*/
+bool isStructuredBlock(SgStatement* s)
+{
+  bool rt = true; 
+  ROSE_ASSERT (s != NULL);
+
+  // contain break; 
+  std::set<SgNode*>  bset = SgNodeHelper::loopRelevantBreakStmtNodes (s);
+  if (bset.size()!=0 ) 
+    rt = false;
+  //TODO: contain goto statement, jumping to outside targets
+  // longjump(), throw(), 
+  // calls to exit() are allowed.
+
+  return rt; 
+  
+}
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
 //TODO check the loop index is not being written in the loop body
@@ -10104,6 +10525,19 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
   ubast = test->get_rhs_operand();
 
   //3. Check the increment expression
+  /* Allowed forms
+     ++var
+     var++
+     --var
+     var--
+
+     var += incr
+     var -= incr
+
+     var = var + incr
+     var = incr + var
+     var = var - incr
+  */
   SgExpression* incr = fs->get_increment();
   SgVarRefExp* incr_var = NULL;
   switch (incr->variantT()) {
@@ -10117,12 +10551,47 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       incr_var = isSgVarRefExp(SkipCasting(isSgUnaryOp(incr)->get_operand()));
       stepast = buildIntVal(1); // will this dangling SgNode cause any problem?
       break;
+    case V_SgAssignOp: { // cases : var + incr, var - incr, incr + var (not allowed: incr-var)
+      incr_var=isSgVarRefExp(SkipCasting(isSgBinaryOp(incr)->get_lhs_operand()));
+      if(incr_var == NULL)
+        return false;
+      SgAddOp* addOp=isSgAddOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgSubtractOp* subtractOp=isSgSubtractOp(SkipCasting(isSgBinaryOp(incr)->get_rhs_operand()));
+      SgBinaryOp* arithOp=0;
+      if(addOp)
+        arithOp=addOp;
+      else if(subtractOp)
+        arithOp=subtractOp;
+      else
+        return false;
+      ROSE_ASSERT(arithOp!=0);
+      if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
+        // cases : var + incr, var - incr
+        incr_var=varRefExp;
+        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+      } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
+        if(isSgAddOp(arithOp)) {
+          // case : incr + var (not allowed: incr-var)
+          incr_var=varRefExp;
+          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+        }
+      }
+      break;
+    } // end of V_AssignOp
     default:
       return false;
   }
+
   if (incr_var == NULL)
     return false;
   if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())
+    return false;
+
+
+  // single entry and single exit?
+  // only for C for loop for now
+  // TODO: Fortran support later
+  if (fs && !isStructuredBlock(fs->get_loop_body()) )
     return false;
 
   // return loop information if requested
@@ -10376,23 +10845,29 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
 }
 
 
-  void SageInterface::removeConsecutiveLabels(SgNode* top) {
-   Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
-   for (size_t i = 0; i < gotos.size(); ++i) {
-     SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
-     SgLabelStatement* ls = gs->get_label();
-     SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
-     if (!lsParent) continue;
-     SgStatementPtrList& bbStatements = lsParent->get_statements();
-     size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls)
-  - bbStatements.begin();
-     ROSE_ASSERT (j != bbStatements.size());     while (j <
-  bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1])) {
-     ++j;
-     }
-     gs->set_label(isSgLabelStatement(bbStatements[j]));
+void
+SageInterface::removeConsecutiveLabels(SgNode* top)
+   {
+     Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
+     for (size_t i = 0; i < gotos.size(); ++i)
+        {
+          SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
+          SgLabelStatement* ls = gs->get_label();
+          SgBasicBlock* lsParent = isSgBasicBlock(ls->get_parent());
+          if (!lsParent) continue;
+          SgStatementPtrList& bbStatements = lsParent->get_statements();
+
+          size_t j = std::find(bbStatements.begin(), bbStatements.end(), ls) - bbStatements.begin();
+
+          ROSE_ASSERT (j != bbStatements.size());
+
+          while (j < bbStatements.size() - 1 && isSgLabelStatement(bbStatements[j + 1]))
+             {
+               ++j;
+             }
+          gs->set_label(isSgLabelStatement(bbStatements[j]));
+        }
    }
-  }
 
 bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
 {
@@ -10427,11 +10902,15 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
   if (decl_var_symbol!=NULL)
   {
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
   }
   else
   { // fallback to comparing variable names instead
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false;
   }
 
   // Everything looks fine now. Do the merge.
@@ -10479,11 +10958,15 @@ bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, 
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
   if (decl_var_symbol!=NULL)
   {
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
   }
   else
   { // fallback to comparing variable names instead
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false; 
   }
 
   // Everything looks fine now. Do the merge.
@@ -10853,6 +11336,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
     SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
+    if (fr == NULL) return false;
     return fr->get_symbol()->get_declaration() == decl;
   }
 
@@ -10861,6 +11345,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
     SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
+    if (fr == NULL) return false;
     string name =
   fr->get_symbol()->get_declaration()->get_qualified_name().getString();
     return (name == qualifiedName &&
@@ -11847,7 +12332,7 @@ void SageInterface::insertStatementListBefore(SgStatement *targetStmt, const std
 
   //a wrapper for set_expression(), set_operand(), set_operand_exp() etc
   // special concern for lvalue, parent,
-  // todo: warning overwritting existing operands
+  // todo: warning overwriting existing operands
 void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
   {
     ROSE_ASSERT(target);
@@ -11873,11 +12358,15 @@ void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
       case V_SgVarArgStartOneOperandOp:
         isSgVarArgStartOneOperandOp(target)->set_operand_expr(operand);
         break;
+      case V_SgAssignInitializer:
+         isSgAssignInitializer (target)->set_operand(operand);
+         break;
       default:
-        if (isSgUnaryOp(target)!=NULL) isSgUnaryOp(target)->set_operand_i(operand);
+        if (isSgUnaryOp(target)!=NULL) 
+          isSgUnaryOp(target)->set_operand_i(operand);
         else
           {
-            cout<<"SageInterface::setOperand(): unhandled case for target expression of type "
+            cerr<<"\tSageInterface::setOperand(): unhandled case for target expression of type "
                 <<target->class_name()<<endl;
             ROSE_ASSERT(false);
           }
@@ -13122,7 +13611,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
                  // if (*j != func)
                     if (func_decl != func)
                        {
-                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
                       // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
                          if (func_decl->get_firstNondefiningDeclaration() == NULL)
                             {
@@ -13139,7 +13628,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
 #if 0
                printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Testing func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
 #endif
-            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
             // func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
                if (func->get_firstNondefiningDeclaration() == NULL)
                   {
@@ -14513,13 +15002,14 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
         }
         return p;
 }
-#endif
+
   void SageInterface::changeAllLoopBodiesToBlocks(SgNode* top) {
     cerr<<"Warning: SageInterface::changeAllLoopBodiesToBlocks() is being replaced by SageInterface::changeAllBodiesToBlocks()."<<endl;
     cerr<<"Please use SageInterface::changeAllBodiesToBlocks() if you can."<<endl;
         changeAllBodiesToBlocks(top) ;
   }
 
+#endif
   void SageInterface::changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody /*= true*/ ) {
     class Visitor: public AstSimpleProcessing {
       public: 
@@ -14984,6 +15474,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       case V_SgUnsignedLongVal: return isSgUnsignedLongVal(expr)->get_value();
       case V_SgLongLongIntVal: return isSgLongLongIntVal(expr)->get_value();
       case V_SgUnsignedLongLongIntVal: return isSgUnsignedLongLongIntVal(expr)->get_value();
+      case V_SgBoolValExp: return (long long )(isSgBoolValExp(expr)->get_value());
 
    // DQ (2/18/2015): Make this a better error message.
    // default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
@@ -15486,8 +15977,16 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
          {
            // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
            declaration = classDeclaration->get_definingDeclaration();
-           ROSE_ASSERT(declaration != NULL);
-           addDeclaration(declaration);
+           // Liao, 12/09/2016. 
+           // In some cases, forward declaration of class types are used and sufficient, without providing defining declaration.
+           // We should allow this. 
+           if (declaration != NULL)
+           {
+             //  ROSE_ASSERT(declaration != NULL);
+             addDeclaration(declaration);
+           }
+           else 
+             addDeclaration (classDeclaration); // we use the original forward declaration.
 
            // Note that since types are shared in the AST, the declaration for a named type may be (is)
            // associated with the class declaration in the original file. However, we want to associated
@@ -15880,7 +16379,8 @@ SageInterface::isIndexOperator( SgExpression* exp )
    {
      bool returnValue = false;
      SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(exp);
-     ROSE_ASSERT(memberFunctionRefExp != NULL);
+     if (memberFunctionRefExp == NULL)
+       return false;
 
      SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
      if (memberFunctionDeclaration != NULL)
@@ -16353,7 +16853,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   //   developersScratchSpace/Dan/translator_tests/reverseTraversal.C
 
   // To test this run: "rm moreTest2.o ; make moreTest2.o"
-  // in directory: tests/roseTests/astOutliningTests
+  // in directory: tests/nonsmoke/functional/roseTests/astOutliningTests
 
   // ***** Also move different loop IR nodes into a common base class *****
 
@@ -17825,7 +18325,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                       // The func declaration should be moved along with the call site.
                       // The scope should be set to the new block also
                       // Liao 1/14/2011
-                      if (func->get_firstNondefiningDeclaration() == func);
+                      if (func->get_firstNondefiningDeclaration() == func)
                         func->set_scope(targetBlock);
                     }
                     else
@@ -17872,6 +18372,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                      break;
                      case V_SgFortranIncludeLine:
                      case V_SgAttributeSpecificationStatement:
+                     case V_SgPragmaDeclaration: 
                        break;
                     default:
                        {
@@ -17915,9 +18416,58 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
    }
 
 
+//! Check if a function declaration is a C++11 lambda function
+// TODO, expose to SageInterface namespace
+bool isLambdaFunction (SgFunctionDeclaration* func)
+{
+  bool rt = false;
+  ROSE_ASSERT (func != NULL);
+  SgNode* p = func->get_parent();
+  ROSE_ASSERT (p != NULL);
+  SgLambdaExp* le = isSgLambdaExp (p);
+  if (le && le->get_lambda_function() == func)
+    rt = true; 
+  return rt;   
+}
+
+// check if a variable reference is this->a[i] inside of a lambda function
+// SgArrowExp <SgThisExp,  SgVarRefExp>, both are compiler generated nodes
+// class symbol of ThisExp 's declaration is AutonomousDeclaration SgClassDeclaration
+// its parent is SgLambdaExp, and lambda_closure_class points back to this class declaration
+bool isLambdaCapturedVariable (SgVarRefExp* varRef)
+{
+  bool rt = false;
+#ifdef  _MSC_VER
+  #pragma message ("WARNING: MSVC does not handle isLambdaCapturedVariable() properly.")
+#else  
+  ROSE_ASSERT (varRef!= NULL);
+  SgNode* parent = varRef->get_parent();
+  if (SgArrowExp *p = isSgArrowExp(parent))
+  {
+    SgThisExp* te = isSgThisExp(p->get_lhs_operand_i());
+    if (te != NULL)
+    {
+      SgClassSymbol* csym = te->get_class_symbol();
+      ROSE_ASSERT (csym!= NULL);
+      SgClassDeclaration* cdecl = isSgClassDeclaration(csym->get_declaration());
+      // each this exp should have a class decl
+      ROSE_ASSERT (cdecl != NULL); 
+      SgLambdaExp* le = isSgLambdaExp(cdecl->get_parent());
+      if (le != NULL)
+      {
+        if (le->get_lambda_closure_class() == cdecl ) // the class is a lambda closure class
+          rt = true; 
+      }
+    }
+  }
+#endif  
+  return rt; 
+}
+
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
+//! For dot and arrow expressions, a top level SgInitializedName.
 //TODO consult  AstInterface::IsVarRef() for more cases
-SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
+SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, bool coarseGrain/*=true*/)
 {
   SgInitializedName* name = NULL;
   SgExpression* nameExp = NULL;
@@ -17932,51 +18482,101 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
     suc= SageInterface::isArrayReference(isSgExpression(current),&nameExp);
     ROSE_ASSERT(suc == true);
      // has to resolve this recursively
-    return convertRefToInitializedName(nameExp);
+    return convertRefToInitializedName(nameExp, coarseGrain);
   }
   else if (isSgVarRefExp(current))
   {
-    SgNode* parent = current->get_parent();
-    if (isSgDotExp(parent))
+    if (coarseGrain)
     {
-       if (isSgDotExp(parent)->get_rhs_operand() == current)
-        return convertRefToInitializedName(parent);
-    }
-    else if(isSgArrowExp(parent))
-    {
-      if (isSgArrowExp(parent)->get_rhs_operand() == current)
-        return convertRefToInitializedName(parent);
+     // Outliner needs coarse grain mem objects to work. Always returning fine grain objects will cause problems.
+      SgNode* parent = current->get_parent();
+      if (isSgDotExp(parent))
+      {
+        if (isSgDotExp(parent)->get_rhs_operand() == current)
+          return convertRefToInitializedName(parent, coarseGrain);
+      }
+      // avoid backtracking to parent if this is part of lambda function 
+      else if(isSgArrowExp(parent) && ! isLambdaCapturedVariable ( isSgVarRefExp(current) ) )
+      {
+        if (isSgArrowExp(parent)->get_rhs_operand() == current)
+          return convertRefToInitializedName(parent, coarseGrain);
+      }
     }
     name = isSgVarRefExp(current)->get_symbol()->get_declaration();
   }
   else if (isSgDotExp(current))
   {
-    SgExpression* lhs = isSgDotExp(current)->get_lhs_operand();
-    ROSE_ASSERT(lhs);
+    SgExpression* child = NULL; 
+    if (coarseGrain)
+     child= isSgDotExp(current)->get_lhs_operand();
+    else
+     child= isSgDotExp(current)->get_rhs_operand();
+    ROSE_ASSERT(child);
      // has to resolve this recursively
-    return convertRefToInitializedName(lhs);
+    return convertRefToInitializedName(child, coarseGrain);
   }
    else if (isSgArrowExp(current))
   {
-    SgExpression* lhs = isSgArrowExp(current)->get_lhs_operand();
-    ROSE_ASSERT(lhs);
+    SgExpression* child = NULL; 
+    if (coarseGrain)
+    {
+      child = isSgArrowExp(current)->get_lhs_operand();
+      SgExpression* lhs = isSgArrowExp(current)->get_lhs_operand();
+      ROSE_ASSERT(lhs);
+      // Liao 9/12/2016, special handling for variables inside of C++11 lambda functions
+      // They capture variables outside of the lambda function. 
+      // They are represented as a class variable of an anonymous class, this->a[i]
+      // So, we have to recognize this pattern, and pass the rhs variable to obtain initialized name.
+      // has to resolve this recursively
+      SgFunctionDeclaration* efunc =  getEnclosingFunctionDeclaration (current);
+
+      if (isLambdaFunction (efunc) )
+        child= isSgArrowExp(current)->get_rhs_operand();
+      else
+        child = lhs; 
+    }
+    else
+      child = isSgArrowExp(current)->get_rhs_operand();
+    ROSE_ASSERT(child);
      // has to resolve this recursively
-    return convertRefToInitializedName(lhs);
+  
+    return convertRefToInitializedName(child, coarseGrain);
   } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp
+  else if (isSgThisExp(current))
+  {
+    //SgThisExp* texp = isSgThisExp(current);
+    name = NULL; // inside a class, there is no initialized name at all!! what to do??
+  }
   else if (isSgPointerDerefExp(current))
   {
-    return convertRefToInitializedName(isSgPointerDerefExp(current)->get_operand());
+    return convertRefToInitializedName(isSgPointerDerefExp(current)->get_operand(), coarseGrain);
   }
   else if (isSgCastExp(current))
   {
-    return convertRefToInitializedName(isSgCastExp(current)->get_operand());
+    return convertRefToInitializedName(isSgCastExp(current)->get_operand(), coarseGrain);
+  }
+  // Scientific applications often use *(address + offset) to access array elements
+  // If a pointer dereferencing  is applied to AddOp, we assume the left operand is the variable of our interests
+  else if (isSgAddOp(current))
+  {
+    SgExpression* lhs = isSgAddOp(current)->get_lhs_operand();
+    return convertRefToInitializedName(lhs, coarseGrain);
+  }
+  else if (isSgSubtractOp(current))
+  {
+    SgExpression* lhs = isSgSubtractOp(current)->get_lhs_operand();
+    return convertRefToInitializedName(lhs, coarseGrain);
   }
  else
   {
-    cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
-    ROSE_ASSERT(false);
+    // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer 
+    if (!isSgConstructorInitializer(current)) 
+    {
+      cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
+      ROSE_ASSERT(false);
+    }
   }
-  ROSE_ASSERT(name != NULL);
+  //ROSE_ASSERT(name != NULL);
   return name;
 }
 
@@ -18095,7 +18695,10 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   }
 
   // get function level information
-  SgFunctionDefinition* funcDef = SageInterface::getEnclosingFunctionDefinition(stmt);
+  SgFunctionDefinition* funcDef = isSgFunctionDefinition(stmt);
+  if (!funcDef)
+     funcDef= SageInterface::getEnclosingFunctionDefinition(stmt);
+
   ROSE_ASSERT(funcDef != NULL);
   SgBasicBlock* funcBody = funcDef->get_body();
   ROSE_ASSERT(funcBody!= NULL);
@@ -18109,7 +18712,8 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
     LoopTransformInterface::set_arrayInfo(array_interface);
   } else {
     ArrayInterface array_interface(*annot);
-    array_interface.initialize(fa, AstNodePtrImpl(funcDef));
+ // Alias analysis and value propagation are called in initialize(). Turn both off for now.   
+//    array_interface.initialize(fa, AstNodePtrImpl(funcDef));
     array_interface.observe(fa);
     LoopTransformInterface::set_arrayInfo(&array_interface);
   }
@@ -18125,7 +18729,9 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   // Actual side effect analysis
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
-//    cerr<<"error in side effect analysis!"<<endl;
+    if(getProject()->get_verbose()>1)
+     cerr<<"Warning: failed in side effect analysis within SageInterface::collectReadWriteRefs()!"<<endl;
+    //ROSE_ASSERT (false);
     return false;
   }
 
@@ -18158,9 +18764,18 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
 
   return true;
 }
-
+#if 0
+// The side effect analysis will report three references for a statement like this->x = ...
+// 1.SgThisExp 2. SgArrowExp  3. SgVarRefExp
+// We only need to keep SgVarRefExp and skip the other two.
+static bool skipSomeRefs(SgNode* n)
+{
+  ROSE_ASSERT (n);
+  return (isSgThisExp(n)||isSgArrowExp(n)||isSgDotExp(n));
+}
+#endif
 //!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
-bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializedName*>& readVars, set<SgInitializedName*>& writeVars)
+bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializedName*>& readVars, set<SgInitializedName*>& writeVars, bool coarseGrain/*=true*/)
 {
   ROSE_ASSERT(stmt != NULL);
   vector <SgNode* > readRefs, writeRefs;
@@ -18173,49 +18788,40 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
   for (; iter!=readRefs.end();iter++)
   {
     SgNode* current = *iter;
-    SgInitializedName* name = convertRefToInitializedName(current);
+    //if (skipSomeRefs(current)) continue;
+
+    ROSE_ASSERT (current != NULL);
+    SgInitializedName* name= convertRefToInitializedName(current, coarseGrain);
+    //ROSE_ASSERT (name); // this pointer will return NULL 
+    if (!name) continue;
    // Only insert unique ones
-#if 0   //
-    vector <SgInitializedName*>::iterator iter2 = find (readVars.begin(), readVars.end(), name);
-    if (iter2==readVars.end())
-    {
-      readVars.push_back(name);
-    //  cout<<"inserting read SgInitializedName:"<<name->unparseToString()<<endl;
-    }
-#else
-    // We use std::set to ensure uniqueness now
+   // We use std::set to ensure uniqueness now
     readVars.insert(name);
-#endif
   }
   // process write references
   vector<SgNode*>::iterator iterw = writeRefs.begin();
   for (; iterw!=writeRefs.end();iterw++)
   {
     SgNode* current = *iterw;
-    SgInitializedName* name = convertRefToInitializedName(current);
+    ROSE_ASSERT (current != NULL);
+   // if (skipSomeRefs(current)) continue;
+    SgInitializedName* name = convertRefToInitializedName(current, coarseGrain);
+    if (!name) continue;
+    //ROSE_ASSERT (name); // this pointer will return NULL
    // Only insert unique ones
-#if 0   //
-    vector <SgInitializedName*>::iterator iter2 = find (writeVars.begin(), writeVars.end(), name);
-    if (iter2==writeVars.end())
-    {
-      writeVars.push_back(name);
-     // cout<<"inserting written SgInitializedName:"<<name->unparseToString()<<endl;
-    }
-#else
-    // We use std::set to ensure uniqueness now
+   // We use std::set to ensure uniqueness now
     writeVars.insert(name);
-#endif
   }
   return true;
 }
 
 //!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement.
-void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars)
+void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars, bool coarseGrain/*=true*/)
 {
   ROSE_ASSERT(stmt != NULL);
   set<SgInitializedName*> readVars, writeVars;
    // Only collect read only variables if collectReadWriteVariables() succeeded.
-  if (collectReadWriteVariables(stmt, readVars, writeVars))
+  if (collectReadWriteVariables(stmt, readVars, writeVars, coarseGrain))
   {
     // read only = read - write
     set_difference(readVars.begin(), readVars.end(),
@@ -18226,10 +18832,10 @@ void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgIniti
 
 
 //!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement.
-void SageInterface::collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols)
+void SageInterface::collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols, bool coarseGrain/*=true*/)
 {
   set<SgInitializedName*> temp;
-  collectReadOnlyVariables(stmt, temp);
+  collectReadOnlyVariables(stmt, temp, coarseGrain);
 
   for (set<SgInitializedName*>::const_iterator iter = temp.begin();
       iter!=temp.end(); iter++)
@@ -18499,6 +19105,309 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
 }
 #endif
 
+//Check if two references form an idiom like:  x= x op expr,  x = expr op x (except for subtraction)
+static bool isAssignReduction (SgVarRefExp* ref_exp1, SgVarRefExp* ref_exp2, OmpSupport::omp_construct_enum& optype)
+{
+  bool isReduction = false; 
+  // Sanity check
+  ROSE_ASSERT (ref_exp1!= NULL);
+  ROSE_ASSERT (ref_exp2!= NULL);
+  ROSE_ASSERT (ref_exp1-> get_symbol() == ref_exp2-> get_symbol());
+  // must be scalar type
+  ROSE_ASSERT (SageInterface::isScalarType(ref_exp1-> get_symbol()->get_type() ) );
+
+  SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
+  SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
+  if (stmt != stmt2) return false; // early return false;
+
+  // must be assignment statement using
+  //  x= x op expr,  x = expr op x (except for subtraction)
+  // one reference on left hand, the other on the right hand of assignment expression
+  // the right hand uses associative operators +, *, -, &, ^ ,|, &&, ||
+  SgExprStatement* exp_stmt =  isSgExprStatement(stmt);
+  if (exp_stmt && isSgAssignOp(exp_stmt->get_expression()))
+  {
+    SgExpression* assign_lhs=NULL, * assign_rhs =NULL;
+    assign_lhs = isSgAssignOp(exp_stmt->get_expression())->get_lhs_operand();
+    assign_rhs = isSgAssignOp(exp_stmt->get_expression())->get_rhs_operand();
+    ROSE_ASSERT(assign_lhs && assign_rhs);
+    // x must show up in both lhs and rhs in any order:
+    //  e.g.: ref1 = ref2 op exp or ref2 = ref1 op exp
+    if (((assign_lhs==ref_exp1)&&SageInterface::isAncestor(assign_rhs,ref_exp2))
+        ||((assign_lhs==ref_exp2)&&SageInterface::isAncestor(assign_rhs,ref_exp1)))
+    {
+      // assignment's rhs must match the associative binary operations
+      // +, *, -, &, ^ ,|, &&, ||
+      SgBinaryOp * binop = isSgBinaryOp(assign_rhs);
+      if (binop!=NULL){
+        SgExpression* op_lhs = binop->get_lhs_operand();
+        SgExpression* op_rhs = binop->get_rhs_operand();
+
+        // double check that the binary expression has either ref1 or ref2 as one operand
+        if( !((op_lhs==ref_exp1)||(op_lhs==ref_exp2))
+            && !((op_rhs==ref_exp1)||(op_rhs==ref_exp2)))
+          return false;  // early return false;
+
+        bool isOnLeft = false; // true if it has form (refx op exp), instead (exp or refx)
+        if ((op_lhs==ref_exp1)||   // TODO might have in between !!
+            (op_lhs==ref_exp2))
+          isOnLeft = true;
+        switch (binop->variantT())
+        {
+          case V_SgAddOp:
+            {
+              optype = OmpSupport::e_reduction_plus;
+              isReduction = true;
+              break;
+            }
+          case V_SgMultiplyOp:
+            {
+              optype = OmpSupport::e_reduction_mul;
+              isReduction = true;
+              break;
+            }
+          case V_SgSubtractOp: // special handle here!!
+            {
+              optype = OmpSupport::e_reduction_minus;
+              if (isOnLeft) // cannot allow (exp - x)a
+              {
+                isReduction = true;
+              }
+              break;
+            }
+          case V_SgBitAndOp:
+            {
+              optype = OmpSupport::e_reduction_bitand ;
+              isReduction = true;
+              break;
+            }
+          case V_SgBitXorOp:
+            {
+              optype = OmpSupport::e_reduction_bitxor;
+              isReduction = true;
+              break;
+            }
+          case V_SgBitOrOp:
+            {
+              optype = OmpSupport::e_reduction_bitor;
+              isReduction = true;
+              break;
+            }
+          case V_SgAndOp:
+            {
+              optype = OmpSupport::e_reduction_logand;
+              isReduction = true;
+              break;
+            }
+          case V_SgOrOp:
+            {
+              optype = OmpSupport::e_reduction_logor;
+              isReduction = true;
+              break;
+            }
+          default:
+            break;
+        }
+      } // end matching associative operations
+    }
+  } // end if assignop
+  return isReduction; 
+}
+// A helper function for reduction recognition
+// check if two references to the same variable form a reduction idiom using if-statement
+// example 1: if (array[i]> maxV) maxV = array[i]
+// example 2: if (array[i]< minV) minV = array[i]
+// If it matches, return true and the reduction operator type 
+static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp_construct_enum& optype)
+{
+  bool matchStmt1 = false;
+  bool matchStmt2 = false;
+
+  //TODO: ensure ref1, ref2 are ordered as pre-order manner in AST
+  //   SgExpression* reduction_var_ref = NULL; 
+  //   SgExpression* source_var_ref = NULL;  //array[i] is the source var ref
+
+  // Sanity check
+  ROSE_ASSERT (ref1 != NULL);
+  ROSE_ASSERT (ref2 != NULL);
+  ROSE_ASSERT (ref1-> get_symbol() == ref2-> get_symbol());
+  // must be scalar type
+  ROSE_ASSERT (SageInterface::isScalarType(ref1-> get_symbol()->get_type() ) );
+
+  SgStatement* stmt1 = SageInterface::getEnclosingStatement(ref1);                                                               
+  SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref2);                                                              
+
+  //early return if the same stmt
+  if (stmt1 == stmt2) return false;
+
+  // check stmt2 first. It is easier.
+  // stmt2 should be an assignment stmt like: 
+  //    reduction_variable = else; 
+  //    minV = array[i];
+  SgExpression* lhs2 = NULL;
+  SgExpression* rhs2 = NULL;
+  if (SageInterface::isAssignmentStatement (stmt2, &lhs2, &rhs2 ))
+  {
+    // lhs2 must be ref2 
+    if (lhs2 == ref2 ) 
+    {
+      matchStmt2 = true; 
+      //     reduction_var_ref = lhs2; 
+      //     source_var_ref= rhs2; 
+    }
+  } // end assignment stmt
+
+  // stmt1 should be a if-stmt's conditional expression stmt
+  // and its body should be stmt2
+  if (SgExprStatement* if_cond_stmt = isSgExprStatement(stmt1))
+  {
+    bool matchBody = false;
+    bool matchCondition= false;
+    if (SgIfStmt * if_stmt = isSgIfStmt (if_cond_stmt->get_parent()) )
+    {
+      if (SgStatement* body = if_stmt->get_true_body())
+      {
+        if (SgBasicBlock* block = isSgBasicBlock (body))
+        {
+          // stmt2 must be the only child of the if true body
+          if ( ((block->get_statements()).size() == 1) && stmt2->get_scope() == block )
+            matchBody = true;
+        }
+        else
+        {
+          if (body == stmt2)
+            matchBody = true;
+        }
+      } // body match test
+
+      // match condition   SgExprStatement  ref1 SgLessThanOp source_var
+      if (SgExprStatement* cond_exp_stmt = isSgExprStatement (if_stmt->get_conditional()) )
+      {
+        SgExpression* cond_exp = cond_exp_stmt->get_expression();
+        if (SgBinaryOp * binop = isSgBinaryOp (cond_exp))
+        {
+          if (ref1 == binop->get_lhs_operand_i())
+          {
+            // minV > array[i] ;
+            if (isSgLessThanOp (binop))
+            {
+              optype = OmpSupport::e_reduction_max;
+              matchCondition= true;
+            }
+            else if (isSgGreaterThanOp(binop))  
+            {
+              optype = OmpSupport::e_reduction_min;
+              matchCondition= true;
+            }
+          }
+          else if ( ref1 == binop->get_rhs_operand_i() )
+          {
+            // array[i] < minV
+            if (isSgLessThanOp (binop))
+            {
+              optype = OmpSupport::e_reduction_min;
+              matchCondition= true;
+            }
+            else if (isSgGreaterThanOp(binop))  
+            {
+              optype = OmpSupport::e_reduction_max;
+              matchCondition= true;
+            }
+          }
+        } // end if binary op
+        // TODO the source_var should match the source_var from stmt2
+      }
+    }
+    matchStmt1 = matchBody && matchCondition;
+  } // end if-stmt
+
+
+  return (matchStmt2 && matchStmt1);   
+}
+
+// check if a var ref is a form of
+//  --x, x--, ++x, x++
+//  x+= .., x-= ..., etc.
+// The reduction variable appears only once in the reduction idiom.
+static bool isSingleAppearanceReduction(SgVarRefExp* ref1, OmpSupport::omp_construct_enum& optype )
+{
+  bool isReduction = false; 
+
+  ROSE_ASSERT (ref1 != NULL);
+  // must be scalar type
+  ROSE_ASSERT (SageInterface::isScalarType(ref1-> get_symbol()->get_type() ) );
+
+  SgStatement* stmt = SageInterface::getEnclosingStatement(ref1);
+
+  if (isSgExprStatement(stmt))
+  {
+    SgExpression* exp = isSgExprStatement(stmt)->get_expression();
+    SgExpression* binop = isSgBinaryOp(exp);
+    if (isSgPlusPlusOp(exp)) // x++ or ++x
+    { // Could have multiple reduction clause with different operators!!
+      // So the variable list is associated with each kind of operator
+      optype = OmpSupport::e_reduction_plus;
+      isReduction = true;
+    }
+    else if (isSgMinusMinusOp(exp)) // x-- or --x
+    {
+      optype = OmpSupport::e_reduction_minus;
+      isReduction = true;
+    }
+    else
+      // x binop= expr where binop is one of + * - & ^ |
+      // x must be on the left hand side
+      if (binop!=NULL) {
+        SgExpression* lhs= isSgBinaryOp(exp)->get_lhs_operand ();
+        if (lhs==ref1)
+        {
+          switch (exp->variantT())
+          {
+            case V_SgPlusAssignOp:
+              {
+                optype = OmpSupport::e_reduction_plus;
+                isReduction = true;
+                break;
+              }
+            case V_SgMultAssignOp:
+              {
+                optype = OmpSupport::e_reduction_mul;
+                isReduction = true;
+                break;
+              }
+            case V_SgMinusAssignOp:
+              {
+                optype = OmpSupport::e_reduction_minus;
+                isReduction = true;
+                break;
+              }
+            case V_SgAndAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitand;
+                isReduction = true;
+                break;
+              }
+            case V_SgXorAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitxor;
+                isReduction = true;
+                break;
+              }
+            case V_SgIorAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitor;
+                isReduction = true;
+                break;
+              }
+            default:
+              break;
+          } // end
+        }// end if on left side
+      }
+  }
+  return isReduction;
+}
+
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 /* This code is refactored from project/autoParallelization/autoParSupport.C
   std::vector<SgInitializedName*>
@@ -18519,13 +19428,13 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
    *  op is not an overloaded operator, but +, *, -, &, ^ ,|, &&, ||
    *  binop is not an overloaded operator, but: +, *, -, &, ^ ,|
   */
-void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results)
+void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > & results)
 {
   //x. Collect variable references of scalar types as candidates, excluding loop index
   SgInitializedName* loopindex;
   if (!(isCanonicalForLoop(loop, &loopindex)))
   {
-    cerr<<"Skip reduction recognition for non-canonical for loop"<<endl;
+//    cerr<<"Skip reduction recognition for non-canonical for loop"<<endl;
     return;
   }
   std::set<SgInitializedName*> candidateVars; // scalar variables used within the loop
@@ -18553,87 +19462,22 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
       var_references[initname].push_back(ref_exp);
     }
   }
-  //
+
   //Consider variables referenced at most twice
   std::set<SgInitializedName*>::iterator niter=candidateVars.begin();
   for (; niter!=candidateVars.end(); niter++)
   {
     SgInitializedName* initname = *niter;
     bool isReduction = false;
-    VariantT optype;
+    OmpSupport::omp_construct_enum optype;
     // referenced once only
     if (var_references[initname].size()==1)
     {
-      if(getProject()->get_verbose()>1)
+      if(getProject()->get_verbose()>1) //TODO: a new parameter to control this
         cout<<"Debug: SageInterface::ReductionRecognition() A candidate used once:"<<initname->get_name().getString()<<endl;
       SgVarRefExp* ref_exp = *(var_references[initname].begin());
-      SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp);
-      if (isSgExprStatement(stmt))
-      {
-        SgExpression* exp = isSgExprStatement(stmt)->get_expression();
-        SgExpression* binop = isSgBinaryOp(exp);
-        if (isSgPlusPlusOp(exp)) // x++ or ++x
-        { // Could have multiple reduction clause with different operators!!
-          // So the variable list is associated with each kind of operator
-          optype = V_SgPlusPlusOp;
-          isReduction = true;
-        }
-        else if (isSgMinusMinusOp(exp)) // x-- or --x
-        {
-          optype = V_SgMinusMinusOp;
-          isReduction = true;
-        }
-        else
-        // x binop= expr where binop is one of + * - & ^ |
-        // x must be on the left hand side
-        if (binop!=NULL) {
-          SgExpression* lhs= isSgBinaryOp(exp)->get_lhs_operand ();
-          if (lhs==ref_exp)
-          {
-            switch (exp->variantT())
-            {
-              case V_SgPlusAssignOp:
-                {
-                  optype = V_SgPlusAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgMultAssignOp:
-                {
-                  optype = V_SgMultAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgMinusAssignOp:
-                {
-                  optype = V_SgMinusAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgAndAssignOp:
-                {
-                  optype = V_SgAndAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgXorAssignOp:
-                {
-                  optype = V_SgXorAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgIorAssignOp:
-                {
-                  optype = V_SgIorAssignOp;
-                  isReduction = true;
-                  break;
-                }
-              default:
-                break;
-            } // end
-          }// end if on left side
-        }
-      }
+      if (isSingleAppearanceReduction (ref_exp, optype))
+        isReduction = true; 
     }
     // referenced twice within a same statement
     else if (var_references[initname].size()==2)
@@ -18642,100 +19486,15 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
         cout<<"Debug: A candidate used twice:"<<initname->get_name().getString()<<endl;
       SgVarRefExp* ref_exp1 = *(var_references[initname].begin());
       SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
-      SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
-      SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
-      if (stmt != stmt2)
-        continue;
-      // must be assignment statement using
-      //  x= x op expr,  x = expr op x (except for subtraction)
-      // one reference on left hand, the other on the right hand of assignment expression
-      // the right hand uses associative operators +, *, -, &, ^ ,|, &&, ||
-      SgExprStatement* exp_stmt =  isSgExprStatement(stmt);
-      if (exp_stmt && isSgAssignOp(exp_stmt->get_expression()))
+      // TODO: recognize  maxV = array[i]>maxV? array[i]:maxV // this can be normalized to if () stmt
+      // TODO: recognize  maxV = max (maxV, array[i])
+      if (isAssignReduction (ref_exp1, ref_exp2, optype) || isIfReduction (ref_exp1, ref_exp2, optype) )
       {
-        SgExpression* assign_lhs=NULL, * assign_rhs =NULL;
-        assign_lhs = isSgAssignOp(exp_stmt->get_expression())->get_lhs_operand();
-        assign_rhs = isSgAssignOp(exp_stmt->get_expression())->get_rhs_operand();
-        ROSE_ASSERT(assign_lhs && assign_rhs);
-        // x must show up in both lhs and rhs in any order:
-        //  e.g.: ref1 = ref2 op exp or ref2 = ref1 op exp
-        if (((assign_lhs==ref_exp1)&&SageInterface::isAncestor(assign_rhs,ref_exp2))
-            ||((assign_lhs==ref_exp2)&&SageInterface::isAncestor(assign_rhs,ref_exp1)))
-        {
-          // assignment's rhs must match the associative binary operations
-          // +, *, -, &, ^ ,|, &&, ||
-          SgBinaryOp * binop = isSgBinaryOp(assign_rhs);
-          if (binop!=NULL){
-            SgExpression* op_lhs = binop->get_lhs_operand();
-            SgExpression* op_rhs = binop->get_rhs_operand();
-            // double check that the binary expression has either ref1 or ref2 as one operand
-            if( !((op_lhs==ref_exp1)||(op_lhs==ref_exp2))
-                && !((op_rhs==ref_exp1)||(op_rhs==ref_exp2)))
-              continue;
-            bool isOnLeft = false; // true if it has form (refx op exp), instead (exp or refx)
-            if ((op_lhs==ref_exp1)||   // TODO might have in between !!
-                (op_lhs==ref_exp2))
-              isOnLeft = true;
-            switch (binop->variantT())
-            {
-              case V_SgAddOp:
-                {
-                  optype = V_SgAddOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgMultiplyOp:
-                {
-                  optype = V_SgMultiplyOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgSubtractOp: // special handle here!!
-                {
-                  optype = V_SgSubtractOp;
-                  if (isOnLeft) // cannot allow (exp - x)a
-                  {
-                    isReduction = true;
-                  }
-                  break;
-                }
-              case V_SgBitAndOp:
-                {
-                  optype = V_SgBitAndOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgBitXorOp:
-                {
-                  optype = V_SgBitXorOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgBitOrOp:
-                {
-                  optype = V_SgBitOrOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgAndOp:
-                {
-                  optype = V_SgAndOp;
-                  isReduction = true;
-                  break;
-                }
-              case V_SgOrOp:
-                {
-                  optype = V_SgOrOp;
-                  isReduction = true;
-                  break;
-                }
-              default:
-                break;
-            }
-          } // end matching associative operations
-        }
-      } // end if assignop
+        isReduction = true; 
+      }
+
     }// end referenced twice
+
     if (isReduction)
       results.insert(make_pair(initname,optype));
   }// end for ()
@@ -18785,6 +19544,10 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     return *vardecl.get_variables().front();
   }
 
+#if 0
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
+
   /// \brief  clones a function parameter list @params and uses the function
   ///         definition @fundef as new scope
   /// \return a copy of a function parameter list
@@ -18805,6 +19568,10 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     return copy;
   }
+#endif
+
+#if 0
+  // DQ (2/16/2017): This is a static function that is defined but not used in this file (compiler waring).
 
   /// \brief swaps the "defining elements" of two function declarations
   static
@@ -18816,6 +19583,11 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     // \todo do we need to swap also exception spec, decorator_list, etc. ?
   }
+#endif
+
+#if 0
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
 
   std::pair<SgStatement*, SgInitializedName*>
   SageInterface::wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName)
@@ -18893,6 +19665,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     return std::make_pair(callStatement, resultName);
   }
+#endif
 
   //
   // flatten C/C++ array dimensions
@@ -19031,7 +19804,6 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   {
     return get_C_array_dimensions_aux(arrtype, varrefCreator(initname));
   }
-
 
 // DQ (1/23/2013): Added support for generated a set of source sequence entries.
 class CollectSourceSequenceNumbers : public AstSimpleProcessing
@@ -20434,7 +21206,82 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
    }
 
 
+void SageInterface:: saveToPDF(SgNode* node)
+{
+  saveToPDF(node, string("temp.pdf") );
+}
+//! Save AST into a pdf file, start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
+void SageInterface:: saveToPDF(SgNode* node, std::string filename)
+{
+  ROSE_ASSERT(node != NULL); 
+  AstPDFGeneration pdf;
+  pdf.generateWithinFile(filename, getEnclosingFileNode(node));
+}
 
+bool SageInterface::insideSystemHeader (SgLocatedNode* node)
+{
+  bool rtval = false; 
+  ROSE_ASSERT (node != NULL);
+  Sg_File_Info* finfo = node->get_file_info();
+  if (finfo!=NULL)
+  {
+    string fname = finfo->get_filenameString();
+    string buildtree_str1 = string("include-staging/gcc_HEADERS");
+    string buildtree_str2 = string("include-staging/g++_HEADERS");
+    string installtree_str1 = string("include/edg/gcc_HEADERS"); 
+    string installtree_str2 = string("include/edg/g++_HEADERS"); 
+    // if the file name has a sys header path of either source or build tree
+    if ((fname.find (buildtree_str1, 0) != string::npos) ||
+        (fname.find (buildtree_str2, 0) != string::npos) ||
+        (fname.find (installtree_str1, 0) != string::npos) ||
+        (fname.find (installtree_str2, 0) != string::npos)
+       )
+      rtval = true;
+  }
+  return rtval;  
+}
+
+//! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
+//! They may differ in one SgTemplateType pointer but identical otherwise. 
+//! The algorithm is to compare return type and all argument types
+bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const SgFunctionType* rhs)
+{
+  ROSE_ASSERT (lhs != NULL);
+  ROSE_ASSERT (rhs != NULL);
+  if (lhs == rhs)
+    return true;
+    
+  bool rt = false;
+  SgType* rt1 = lhs->get_return_type();
+  SgType* rt2 = rhs->get_return_type();
+
+  if (isEquivalentType (rt1, rt2))
+  {
+    SgTypePtrList f1_arg_types = lhs->get_arguments();
+    SgTypePtrList f2_arg_types = rhs->get_arguments();
+    // Must have same number of argument types
+    if (f1_arg_types.size() == f2_arg_types.size())
+    {
+   // DQ (2/16/2017): Fixed compiler warning about comparison between signed and unsigned integers
+   // int counter = 0; 
+      size_t counter = 0; 
+   // iterate through all argument types
+   // for (int i=0; i< f1_arg_types.size(); i++)
+      for (size_t i=0; i< f1_arg_types.size(); i++)
+      {
+        if (isEquivalentType (f1_arg_types[i], f2_arg_types[i]) )
+           counter ++;  // count the number of equal arguments 
+        else
+          break; // found different type? jump out the loop
+      }
+      // all arguments are equivalent, set to true
+      if (counter == f1_arg_types.size())
+        rt = true;
+    }
+  } // end if equivalent return types
+
+  return rt; 
+}
 
 bool
 SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
@@ -20444,7 +21291,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // DQ (11/28/2015): A better goal for this function should be to define it as a recursive function.
 
   // DQ (12/8/2015): We need to add support for SgMemberFunctionType as demonstrated by test2007_17.C.
-  // and for SgTemplateType as demonstrated by tests/CompileTests/RoseExample_tests/testRoseHeaders_03.C
+  // and for SgTemplateType as demonstrated by tests/nonsmoke/functional/CompileTests/RoseExample_tests/testRoseHeaders_03.C
   // Note that this is only required within the change to use this isEquivalentType() function in the
   // support to replace: 
   //    templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type()
@@ -20469,8 +21316,19 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
 #define DEBUG_TYPE_EQUIVALENCE 0
 
-#if DEBUG_TYPE_EQUIVALENCE
+#if DEBUG_TYPE_EQUIVALENCE || 0
      printf ("In SageInterface::isEquivalentType(): evaluation of type equivalence for lhs and rhs: counter = %d \n",counter);
+     printf ("   --- lhs = %s \n",lhs->unparseToString().c_str());
+     printf ("   --- rhs = %s \n",rhs->unparseToString().c_str());
+#endif
+
+#if DEBUG_TYPE_EQUIVALENCE || 0
+     if (counter == 0)
+        {
+          printf ("In SageInterface::isEquivalentType(): evaluation of type equivalence for lhs and rhs: counter = %d \n",counter);
+          printf ("   --- lhs = %p = %s = %s \n",lhs,lhs->class_name().c_str(),lhs->unparseToString().c_str());
+          printf ("   --- rhs = %p = %s = %s \n",rhs,rhs->class_name().c_str(),rhs->unparseToString().c_str());
+        }
 #endif
 
 #if DEBUG_TYPE_EQUIVALENCE
@@ -20484,12 +21342,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = X_typeChain[i];
           printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- X_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("X type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }
         }
 
@@ -20498,30 +21358,39 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         {
           SgType* element_type = Y_typeChain[i];
           printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          printf ("   --- Y_element_type unparseToString: = %s \n",element_type->unparseToString().c_str());
           SgModifierType* modifierType = isSgModifierType(element_type);
           if (modifierType != NULL)
              {
             // modifierType->get_typeModifier().display("Y type chain");
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
+               printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
              }          
         }
 #endif
 
-  // Increment the static variable to control the recursive d3epth while we debug this.
+  // Increment the static variable to control the recursive depth while we debug this.
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
+  // if (counter >= 280) 
+  // if (counter >= 500)
      if (counter >= 280) 
         {
-          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+       // printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s = %p Y_element_type = %s = %p \n",counter,X.class_name().c_str(),lhs,Y.class_name().c_str(),rhs);
         }
 
   // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
   // DQ (11/28/2015): exit in stead of infinte recursion.
-     if (counter > 300) 
+  // if (counter > 300)
+  // if (counter > 600)
+  // if (counter > 5000)
+  // if (counter > 300)
+     if (counter > 350)
         {
-       // DQ (11/28/2015): I htink this is a reasonable limit.
+       // DQ (11/28/2015): I think this is a reasonable limit.
           printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
           ROSE_ASSERT(false);
 
@@ -20530,7 +21399,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
   // bool exit = false;
 
-  // Strip off ant typedefs since they are equivalent by definition.
+  // Strip off any typedefs since they are equivalent by definition.
      SgType* X_element_type = X.stripType( SgType::STRIP_TYPEDEF_TYPE );
      SgType* Y_element_type = Y.stripType( SgType::STRIP_TYPEDEF_TYPE );
 
@@ -20583,9 +21452,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
                     if (X_array_index_expression == Y_array_index_expression)
                        {
-
 #if DEBUG_TYPE_EQUIVALENCE || 0
-                         printf ("In SageInterface::isEquivalentType(): counter = %d: Need to check the array size for static equivalence \n");
+                         printf ("In SageInterface::isEquivalentType(): counter = %d: Need to check the array size for static equivalence \n",counter);
 #endif
                          counter--;
 
@@ -20602,6 +21470,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          string str2 = Y_array_index_expression->unparseToString();
                          printf ("   --- array index expressions: str1 = %s str2 = %s \n",str1.c_str(),str2.c_str());
 #endif
+                      // DQ (12/9/2016): Need to decriment the counter as part of recursive function call.
+                         counter--;
+
+                      // Recursive call.
                          return isEquivalentType(X_element_type,Y_element_type);
                        }
                   }
@@ -20631,11 +21503,22 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                        }
                       else
                        {
+                      // DQ (2/13/2018): I an unclear if we are really done since they could have resolved to different types or the same type.
                       // Nothing to do here since we have explored all uniform pairs of intermediate types possible.
+#if 0
+                         printf ("Nothing to do here since we have explored all uniform pairs of intermediate types possible: isSame = %s \n",isSame ? "true" : "false");
+                      // printf ("   --- X_element_type = %p = %s \n",X_element_type,X_element_type->unparseToString().c_str());
+                      // printf ("   --- Y_element_type = %p = %s \n",Y_element_type,Y_element_type->unparseToString().c_str());
+                         printf ("   --- lhs = %p = %s \n",lhs,lhs->unparseToString().c_str());
+                         printf ("   --- rhs = %p = %s \n",rhs,rhs->unparseToString().c_str());
+#endif
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: Nothing to do here since we have explored all uniform pairs of intermediate types possible: isSame = %s \n",isSame ? "true" : "false");
+#endif
                        }
                   }
              }
-        }
+        } // end if reference type, pointer type, array type, and template type
 
      SgModifierType* X_modifierType = isSgModifierType(X_element_type);
      SgModifierType* Y_modifierType = isSgModifierType(Y_element_type);
@@ -20674,6 +21557,9 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 #if DEBUG_TYPE_EQUIVALENCE
                     printf ("In SageInterface::isEquivalentType(): loop: these are not equivalent modifier types: check for default settings: isSame = %s \n",isSame ? "true" : "false");
 #endif
+                 // DQ (5/22/2016): fixing bug which cansed infinite recursion (case there the SgModifiers were different).
+                    bool skippingOverIdentityModifier = false;
+
                  // if (X_modifierType->get_typeModifier().isDefault() == true)
                     if (X_modifierType->get_typeModifier().isIdentity() == true)
                        {
@@ -20681,6 +21567,9 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          printf ("In SageInterface::isEquivalentType(): loop: found self-similar setting for lhs: isSame = %s \n",isSame ? "true" : "false");
 #endif
                          X_element_type = X_modifierType->get_base_type();
+
+                      // DQ (5/22/2016): Record that progress was made in uncovering the relevant base type, and trigger reevaluation.
+                         skippingOverIdentityModifier = true;
                        }
 
                  // if (Y_modifierType->get_typeModifier().isDefault() == true)
@@ -20690,15 +21579,35 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          printf ("In SageInterface::isEquivalentType(): loop: found self-similar setting for rhs: isSame = %s \n",isSame ? "true" : "false");
 #endif
                          Y_element_type = Y_modifierType->get_base_type();
+
+                      // DQ (5/22/2016): Record that progress was made in uncovering the relevant base type, and trigger reevaluation.
+                         skippingOverIdentityModifier = true;
                        }
 
                  // NOTE: If either of these are a SgTypedefType then the typedefs will be stripped away at the top of the recursive call.
 #if DEBUG_TYPE_EQUIVALENCE
-                    printf ("In SageInterface::isEquivalentType(): loop: recursive call on different adjusted modifier types: before recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+                    printf ("In SageInterface::isEquivalentType(): loop: skippingOverIdentityModifier = %s \n",skippingOverIdentityModifier ? "true" : "false");
 #endif
                  // Recursive call on non-default modifier base types.
                  // isSame = (*X_element_type) == (*Y_element_type);
-                    isSame = isEquivalentType(X_element_type,Y_element_type);
+                 // isSame = isEquivalentType(X_element_type,Y_element_type);
+                    if (skippingOverIdentityModifier == true)
+                       {
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: recursive call on different adjusted modifier types: before recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                      // If we have made progress in skipping over an identity modifier then we need to reevaluate if these are the equivalent types.
+                         isSame = isEquivalentType(X_element_type,Y_element_type);
+                       }
+                      else
+                       {
+                      // If we have not skipped over an identity modifier then noting will change in the recursive call and these types are not equivalent (return false).
+                         isSame = false;
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: no progress was made in resolving the base type, so returning isSame set to false: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                       }
+
 #if DEBUG_TYPE_EQUIVALENCE
                     printf ("In SageInterface::isEquivalentType(): loop: these are different modifier types: after recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
 #endif
@@ -20764,8 +21673,33 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                if (X_element_type == Y_element_type)
                   {
                     isSame = true;
-#if DEBUG_TYPE_EQUIVALENCE
-                    printf ("In SageInterface::isEquivalentType(): resolved to equal types: isSame = %s \n",isSame ? "true" : "false");
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                 // printf ("In SageInterface::isEquivalentType(): resolved to equal types: isSame = %s \n",isSame ? "true" : "false");
+                    printf ("In SageInterface::isEquivalentType(): resolved to equal types: isSame = %s lhs = %p = %s rhs = %p = %s \n",
+                         isSame ? "true" : "false",lhs,lhs->unparseToString().c_str(),rhs,rhs->unparseToString().c_str());
+#endif
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                 // DQ (2/13/2018): Debugging type equivalence. If they are the same typedef, they 
+                 // still might not be interchangable if one is defined in a restrcited scope.
+                    const SgTypedefType* lhs_typedefType = isSgTypedefType(lhs);
+                    const SgTypedefType* rhs_typedefType = isSgTypedefType(rhs);
+
+                    if (lhs_typedefType != NULL || rhs_typedefType != NULL)
+                       {
+#if 0
+                         if (lhs_typedefType != NULL)
+                            {
+                              printf ("lhs was a typedef: lhs = %p = %s \n",lhs,lhs->unparseToString().c_str());
+                            }
+                         if (rhs_typedefType != NULL)
+                            {
+                              printf ("rhs was a typedef: rhs = %p = %s \n",rhs,rhs->unparseToString().c_str());
+                            }
+#else
+                         printf ("   --- one was a typedef: lhs = %p = %s \n",lhs,lhs->unparseToString().c_str());
+                         printf ("   --- one was a typedef: rhs = %p = %s \n",rhs,rhs->unparseToString().c_str());
+#endif
+                       }
 #endif
                   }
                  else
@@ -20930,6 +21864,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                    if (X_functionType != NULL || Y_functionType != NULL)
                                       {
                                         bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (X_functionType == Y_functionType) );
+                                        //TODO: Liao, 9/15/2016, better comparison of function types
+                                        //bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (isEquivalentFunctionType(X_functionType, Y_functionType)) );
 #if DEBUG_TYPE_EQUIVALENCE || 0
                                         printf ("In SageInterface::isEquivalentType(): loop: Process case of SgFunctionType: value = %s \n",value ? "true" : "false");
 #endif
@@ -21008,7 +21944,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                                   printf ("In SageInterface::isEquivalentType(): loop: Process default case: X_element_type = %p = %s Y_element_type = %p = %s \n",
                                                        X_element_type,X_element_type->class_name().c_str(),Y_element_type,Y_element_type->class_name().c_str());
 #endif
-                                                  isSame = true;
+                                               // DQ (5/26/2016): It is not good enough that the variants match.
+                                               // isSame = true;
+                                               // isSame = isEquivalentType(X_element_type,Y_element_type);
+                                                  isSame = (X_element_type == Y_element_type);
                                                 }
                                                else
                                                 {
@@ -21028,7 +21967,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // Decrement the static variable to control the recursive depth while we debug this.
      counter--;
 
-#if DEBUG_TYPE_EQUIVALENCE
+#if DEBUG_TYPE_EQUIVALENCE || 0
      printf ("In SageInterface::isEquivalentType(): isSame = %s \n",isSame ? "true" : "false");
 #endif
 
@@ -21073,5 +22012,104 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         }
 #endif
 
+#if 0
+     if (counter == 0) 
+        {
+      // if (counter == 1 && isSame == true) 
+          if (isSame == true) 
+             {
+            // printf ("In SageInterface::isEquivalentType(): counter = %d: isSame = %s type chain X_element_type = %s Y_element_type = %s \n",counter,isSame ? "true" : "false",X.class_name().c_str(),Y.class_name().c_str());
+               printf ("   --- isSame = %s \n",isSame ? "true" : "false");
+            // printf ("   --- --- X_element_type = %p = %s = %s \n",X_element_type,X_element_type->class_name().c_str(),X_element_type->unparseToString().c_str());
+            // printf ("   --- --- Y_element_type = %p = %s = %s \n",Y_element_type,Y_element_type->class_name().c_str(),Y_element_type->unparseToString().c_str());
+               printf ("   --- --- X_element_type = %p = %s = %s \n",X_element_type,X_element_type->class_name().c_str(),X_element_type->unparseToString().c_str());
+               printf ("   --- --- Y_element_type = %p = %s = %s \n",Y_element_type,Y_element_type->class_name().c_str(),Y_element_type->unparseToString().c_str());
+             }
+            else
+             {
+            // printf ("In SageInterface::isEquivalentType(): counter = %d: isSame = %s type chain X_element_type = %s Y_element_type = %s \n",counter,isSame ? "true" : "false",X.class_name().c_str(),Y.class_name().c_str());
+               printf ("   --- isSame = %s \n",isSame ? "true" : "false");
+             }
+        }
+       else
+        {
+          printf ("   --- counter = %d \n",counter);
+        }
+#endif
+
      return isSame;
    }
+
+
+#if 0
+// This is modified to be a template function and so must be moved to the header file.
+// DQ (8/30/2016): Added function to detect EDG AST normalization.
+bool
+SageInterface::isNormalizedTemplateInstantiation (SgFunctionDeclaration* function)
+   {
+  // This function is called in the Call graph generation to avoid filtering out EDG normalized 
+  // function template instnatiations (which come from normalized template functions and member functions).
+
+     bool retval = false;
+
+#if 1
+  // DQ (8/30/2016): We need to mark this as an EDG normalization so that we can detect it as an exception 
+  // to some simple attempts to filter the AST (e.g. for the Call Graph implementation which filters on only 
+  // functions in the current directory).  This explicit makring makes it much easier to get this test correct.
+  // But we still need to look at if the location of the parent template is something that we wnat to output.
+  // If tis is a template instantiation then it is not enough to look only at the non-defining declaration if 
+  // it is not compiler generated.
+     retval = function->get_marked_as_edg_normalization();
+#else
+  // Test for this to be a template instantation (in which case it was marked as 
+  // compiler generated but we may want to allow it to be used in the call graph, 
+  // if it's template was a part was defined in the current directory).
+     SgTemplateInstantiationFunctionDecl*       templateInstantiationFunction       = isSgTemplateInstantiationFunctionDecl(function);
+     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(function);
+
+     if (templateInstantiationFunction != NULL)
+        {
+       // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+          templateInstantiationFunction = isSgTemplateInstantiationFunctionDecl(templateInstantiationFunction->get_firstNondefiningDeclaration());
+          SgTemplateFunctionDeclaration* templateFunctionDeclaration = templateInstantiationFunction->get_templateDeclaration();
+          if (templateFunctionDeclaration != NULL)
+             {
+            // retval = operator()(templateFunctionDeclaration);
+               retval = (templateFunctionDeclaration->isCompilerGenerated() == false);
+             }
+            else
+             {
+             // Assume false.
+             }
+
+#if DEBUG_SELECTOR
+          printf ("   --- case of templateInstantiationFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+        }
+       else
+        {
+          if (templateInstantiationMemberFunction != NULL)
+             {
+            // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+               templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(templateInstantiationMemberFunction->get_firstNondefiningDeclaration());
+               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = templateInstantiationMemberFunction->get_templateDeclaration();
+               if (templateMemberFunctionDeclaration != NULL)
+                  {
+                 // retval = operator()(templateMemberFunctionDeclaration);
+                    retval = (templateMemberFunctionDeclaration->isCompilerGenerated() == false);
+                  }
+                 else
+                  {
+                 // Assume false.
+                  }
+
+#if DEBUG_SELECTOR
+               printf ("   --- case of templateInstantiationMemberFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+             }
+        }
+#endif
+
+     return retval;
+   }
+#endif

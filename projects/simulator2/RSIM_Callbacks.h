@@ -55,7 +55,7 @@
  *              SgAsmBlock *block = process->disassemble();
  *
  *              // Output disassembled instructions, functions, etc.  See disassemble.C
- *              // in tests/roseTests/binaryTests for more sophisticated examples of
+ *              // in tests/nonsmoke/functional/roseTests/binaryTests for more sophisticated examples of
  *              // displaying instructions and other information using AsmUnparser.
  *              AsmUnparser().unparse(std::cout, block);
  *

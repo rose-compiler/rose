@@ -7,12 +7,12 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 static const size_t WARNING_LIMIT=10;
 static size_t nwarnings=0;
 
-/** Non-parsing constructor */
 void
 SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
 {
@@ -25,8 +25,6 @@ SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
     p_fd_entries->set_parent(this);
 }
 
-/** Unparse one Common Information Entry (CIE) without unparsing the Frame Description Entries (FDE) to which it points. The
- *  initial length fields are not included in the result string. */
 std::string
 SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const 
 {
@@ -117,7 +115,6 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
     return retval;
 }
 
-/** Print some debugging info */
 void
 SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -157,7 +154,6 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/** Non-parsing constructor */
 void
 SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
 {
@@ -167,8 +163,6 @@ SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
     set_parent(cie->get_fd_entries());
 }
 
-/** Unparse the Frame Description Entry (FDE) into a string but do not include the leading length field(s) or the CIE back
- *  pointer. */
 std::string
 SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfEHFrameEntryCI *cie) const
 {
@@ -229,7 +223,6 @@ SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfE
 }
 
 
-/** Print some debugging info */
 void
 SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -251,7 +244,6 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
     hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
 }
 
-/** Non-parsing constructor */
 void
 SgAsmElfEHFrameSection::ctor()
 {
@@ -259,7 +251,6 @@ SgAsmElfEHFrameSection::ctor()
     p_ci_entries->set_parent(this);
 }
 
-/** Initialize by parsing a file. */
 SgAsmElfEHFrameSection *
 SgAsmElfEHFrameSection::parse()
 {
@@ -487,8 +478,6 @@ SgAsmElfEHFrameSection::parse()
     return this;
 }
 
-/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. Since EH Frame Sections are
- *  run-length encoded, we need to actually unparse the section in order to determine its size. */
 rose_addr_t
 SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -504,16 +493,12 @@ SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_
     return whole;
 }
 
-/** Write data to .eh_frame section */
 void
 SgAsmElfEHFrameSection::unparse(std::ostream &f) const
 {
     unparse(&f);
 }
 
-/** Unparses the section into the optional output stream and returns the number of bytes written. If there is no output stream
- *  we still go through the actions but don't write anything. This is the only way to determine the amount of memory required
- *  to store the section since the section is run-length encoded. */
 rose_addr_t
 SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
 {
@@ -593,7 +578,6 @@ SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
     return at;
 }
 
-/* Print some debugging info */
 void
 SgAsmElfEHFrameSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

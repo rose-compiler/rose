@@ -14,7 +14,6 @@ typedef BitVectorRepr ReachingDefinitions;
 class ReachingDefinitionBase 
  : private BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >
 {
-  Ast2StringMap scopemap;
  public:
   typedef BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >::iterator iterator;
   void collect_refs ( AstInterface& fa, const AstNodePtr& h,
@@ -35,13 +34,12 @@ class ReachingDefinitionBase
  friend class ReachingDefinitionGenerator;
 };
 
-class  ROSE_DLL_API ReachingDefinitionGenerator 
+class  ReachingDefinitionGenerator 
 : private BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >
 {
-  Ast2StringMap scopemap;
  public:
   ReachingDefinitionGenerator( const ReachingDefinitionBase& b)
-    : BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >(b), scopemap(b.scopemap) {}
+    : BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >(b) {}
   void add_unknown_def( ReachingDefinitions& gen, 
                         const std::pair<AstNodePtr,AstNodePtr>& def) const
       { add_member( gen, "unknown", def); }
@@ -94,7 +92,7 @@ class ReachingDefNode
   friend class ReachingDefinitionAnalysis;
 };
 
-class ROSE_DLL_API ReachingDefinitionAnalysis 
+class ReachingDefinitionAnalysis 
 : public DataFlowAnalysis <ReachingDefNode, ReachingDefinitions>
 {
   ReachingDefinitionGenerator* g;

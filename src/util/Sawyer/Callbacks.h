@@ -57,9 +57,10 @@ public:
     }
 
     Callbacks& eraseLast(const Callback &callback) {
-        for (typename CbList::reverse_iterator iter=callbacks_.rbegin(); iter!=callbacks_.rend(); ++iter) {
-            if (*iter == callback) {
-                callbacks_.erase(iter);
+        for (typename CbList::reverse_iterator reverseIter=callbacks_.rbegin(); reverseIter!=callbacks_.rend(); ++reverseIter) {
+            if (*reverseIter == callback) {
+                typename CbList::iterator forwardIter = (++reverseIter).base();
+                callbacks_.erase(forwardIter);
                 break;
             }
         }
@@ -98,6 +99,21 @@ public:
         for (typename CbList::const_iterator iter=callbacks_.begin(); iter!=callbacks_.end(); ++iter)
             chained = applyCallback(*iter, chained, arguments);
         return chained;
+    }
+};
+
+template<class Callback>
+class TemporaryCallback {
+    Callbacks<Callback> &callbacks_;
+    Callback callback_;
+public:
+    TemporaryCallback(Callbacks<Callback> &callbacks, const Callback &callback)
+        : callbacks_(callbacks), callback_(callback) {
+        callbacks_.append(callback);
+    }
+
+    ~TemporaryCallback() {
+        callbacks_.eraseLast(callback_);
     }
 };
 

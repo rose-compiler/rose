@@ -86,7 +86,7 @@ namespace FailSafe
       //! The associated SgNode for this attribute, could be SgPragmaDeclaration or other nodes
       SgNode*  mNode;
       //! Associated PreprocessingInfo for Fortran only
-      PreprocessingInfo* pinfo;
+      //PreprocessingInfo* pinfo;
 
       //!Directive information: type 
       enum fail_safe_enum  fs_type;

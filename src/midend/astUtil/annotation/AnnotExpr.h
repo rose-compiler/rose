@@ -4,10 +4,10 @@
 #include "AnnotDescriptors.h"
 #include "SymbolicVal.h"
 #include "FunctionObject.h"
-#include <stdlib.h>
 #include <vector>
+#include <list>
 //! SymbolicVal with I/O interface
-class ROSE_DLL_API SymbolicValDescriptor
+class SymbolicValDescriptor
 {
   SymbolicVal val;
   void set_val( const SymbolicVal &v);
@@ -179,7 +179,7 @@ class SymbolicFunctionDeclarationGroup
       BaseClass;
 public:
  bool get_val( const std::vector<SymbolicVal>& argList, SymbolicVal& r) const;
- bool get_val( AstInterface& fa, AstInterface::AstNodeList& argList, 
+ bool get_val( AstInterface& fa, const AstInterface::AstNodeList& argList, 
                   AstNodePtr& r) const;
  void replace_var( const std::string& varname, const SymbolicVal& val);
  void replace_val( MapObject<SymbolicVal, SymbolicVal>& repl);

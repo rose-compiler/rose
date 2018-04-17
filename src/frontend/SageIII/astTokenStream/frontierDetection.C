@@ -17,9 +17,10 @@
 
 
 using namespace std;
+using namespace Rose;
 
 // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
-// Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
+// Test codes in the tests/nonsmoke/functional/roseTests/astTokenStreamTests directory turn on this 
 // variable so that all regression tests can be processed to mix the unparsing of 
 // the token stream with unparsing from the AST.
 ROSE_DLL_API bool ROSE_tokenUnparsingTestingMode = false;
@@ -201,7 +202,7 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
           printf ("ROSE_tokenUnparsingTestingMode = %s \n",ROSE_tokenUnparsingTestingMode ? "true" : "false");
 #endif
        // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
-       // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
+       // Test codes in the tests/nonsmoke/functional/roseTests/astTokenStreamTests directory turn on this 
        // variable so that all regression tests can be processed to mix the unparsing of 
        // the token stream with unparsing from the AST.
           if (ROSE_tokenUnparsingTestingMode == true)
@@ -1303,7 +1304,9 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 FrontierDetectionForTokenStreamMappingAttribute::
 FrontierDetectionForTokenStreamMappingAttribute(SgNode* n, std::string name, std::string options)
-   : node(n), name(name), options(options)
+// DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+// : node(n), 
+   : name(name), options(options)
    {
 #if 0
      printf ("In FrontierDetectionForTokenStreamMappingAttribute constructor! name = %s options = %s \n",name.c_str(),options.c_str());
@@ -1371,6 +1374,16 @@ FrontierDetectionForTokenStreamMappingAttribute::copy() const
      return NULL;
 #endif
    }
+
+// DQ (11/14/2017): This addition is not portable, should not be specified outside of the class definition, 
+// and fails for C++11 mode on the GNU 4.8.5 compiler and the llvm (some version that Craig used).
+// DQ (6/11/2017): Added virtual function now required to eliminate warning at runtime.
+AstAttribute::OwnershipPolicy
+FrontierDetectionForTokenStreamMappingAttribute::getOwnershipPolicy() const // ROSE_OVERRIDE 
+   {
+     return CONTAINER_OWNERSHIP;
+   }
+
 
 #if 0
 void

@@ -56,9 +56,11 @@ namespace SageInterface
   bool isScalarType( SgType* t)
   {
     ROSE_ASSERT(t);
+    // We want to strip off typedef chain, and const modifiers etc.
+    t = t->stripTypedefsAndModifiers();
     switch(t->variantT()) {
-      case V_SgTypedefType:
-         return isScalarType(isSgTypedefType(t)->get_base_type());
+//      case V_SgTypedefType:
+//         return isScalarType(isSgTypedefType(t)->get_base_type());
       case V_SgTypeChar :
       case V_SgTypeSignedChar :
       case V_SgTypeUnsignedChar :
@@ -76,7 +78,13 @@ namespace SageInterface
       case V_SgTypeUnsignedLong :
 
       case V_SgTypeVoid :
+
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
       case V_SgTypeFloat:
       case V_SgTypeDouble:
 
@@ -342,6 +350,11 @@ bool isPointerToNonConstType(SgType* type)
       current_type = isSgArrayType(current_type)->get_base_type()->stripTypedefsAndModifiers();
     if (current_type->variantT() == V_SgTypeString)
       return SgTypeChar::createType();
+    if (isSgArrayType(current_type))
+    {
+      cerr<<"Error in getArrayElementType(): returning an array type for input type:"<<t->class_name()<<endl;
+      ROSE_ASSERT (false);
+    }
     return current_type;  
   }
 
@@ -467,6 +480,9 @@ bool isPointerToNonConstType(SgType* type)
         return false;
         break;
 
+   // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+      case V_SgTypeSigned128bitInteger:
+
         // DQ (8/27/2006): Changed name of SgComplex to make it more consistant with other 
         // type names and added SgTypeImaginary IR node (for C99 complex support).
       case V_SgTypeComplex:
@@ -497,6 +513,11 @@ bool isPointerToNonConstType(SgType* type)
       case V_SgTypeUnsignedShort:
       case V_SgTypeVoid:
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
         return true;
         break;
 
@@ -524,6 +545,7 @@ bool isCopyConstructible(SgType* type)
         case V_SgFunctionType:
         case V_SgMemberFunctionType:
         case V_SgTypeEllipse:
+        case V_SgDeclType:
             return false;
             break;
 
@@ -613,6 +635,9 @@ bool isCopyConstructible(SgType* type)
             return isCopyConstructible(isSgTypedefType(type)->get_base_type());
             break;
 
+     // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+        case V_SgTypeSigned128bitInteger:
+
         case V_SgReferenceType:
             // DQ (8/27/2006): Changed name of SgComplex to make it more consistent with other 
             // type names and added SgTypeImaginary IR node (for C99 complex support).
@@ -631,6 +656,7 @@ bool isCopyConstructible(SgType* type)
         case V_SgTypeLong:
         case V_SgTypeLongDouble:
         case V_SgTypeLongLong:
+        case V_SgTypeNullptr:
         case V_SgTypeShort:
         case V_SgTypeSignedChar:
         case V_SgTypeSignedInt:
@@ -644,6 +670,11 @@ bool isCopyConstructible(SgType* type)
         case V_SgTypeUnsignedShort:
         case V_SgTypeVoid:
         case V_SgTypeWchar:
+
+     // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+        case V_SgTypeChar16:
+        case V_SgTypeChar32:
+
             return true;
             break;
 
@@ -653,6 +684,8 @@ bool isCopyConstructible(SgType* type)
     }
     return true;
 }
+
+
   // Is a type assignable?  This may not quite work properly.
   // Liao, 3/3/2009 based on the code for isCopyConstructible()
   // TYPE a, b; is a=b; allowed ?
@@ -670,6 +703,7 @@ bool isCopyConstructible(SgType* type)
       case V_SgMemberFunctionType:
       case V_SgReferenceType: //I think C++ reference types cannot be reassigned. 
       case V_SgTypeEllipse:
+      case V_SgDeclType:
         return false;
         break;
 
@@ -728,6 +762,9 @@ bool isCopyConstructible(SgType* type)
         return isAssignable(isSgTypedefType(type)->get_base_type());
         break;
 
+     // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+        case V_SgTypeSigned128bitInteger:
+
       case V_SgTypeComplex: // C99 complex is assignable
       case V_SgTypeImaginary:
       case V_SgEnumType:
@@ -743,6 +780,7 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeLong:
       case V_SgTypeLongDouble:
       case V_SgTypeLongLong:
+      case V_SgTypeNullptr:
       case V_SgTypeShort:
       case V_SgTypeSignedChar:
       case V_SgTypeSignedInt:
@@ -756,6 +794,11 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeUnsignedShort:
       case V_SgTypeVoid:
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
         return true;
         break;
 
@@ -769,6 +812,10 @@ bool isCopyConstructible(SgType* type)
   // Does a type have a trivial (built-in) destructor?
   bool hasTrivialDestructor(SgType* t) {
     switch (t->variantT()) {
+
+     // DQ (9/7/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
+        case V_SgTypeSigned128bitInteger:
+
       // DQ (8/27/2006): Changed name of SgComplex to make it more consistant with other 
       // type names and added SgTypeImaginary IR node (for C99 complex support).
       case V_SgTypeComplex:
@@ -797,6 +844,11 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeUnsignedShort:
       case V_SgTypeVoid:
       case V_SgTypeWchar:
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+      case V_SgTypeChar32:
+
       case V_SgFunctionType:
       case V_SgTypeString:
       case V_SgEnumType:
@@ -1089,6 +1141,16 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeWchar:
         result += "w";
         break;
+
+   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+      case V_SgTypeChar16:
+        result += "c16";
+        break;
+
+      case V_SgTypeChar32:
+        result += "c32";
+        break;
+
       case V_SgTypeBool:
         result += "b";
         break;

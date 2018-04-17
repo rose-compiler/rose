@@ -86,7 +86,10 @@ BooleanQuery::evaluateSynthesizedAttribute (
   // This function assemble the elements of the input list (a list of lists) to form the output (a single list)
 
   // Build up a return value
-     BooleanQuerySynthesizedAttributeType returnValue;
+
+  // DQ (3/27/2017): Eliminate Clang warning by initializing this value.
+  // BooleanQuerySynthesizedAttributeType returnValue;
+     BooleanQuerySynthesizedAttributeType returnValue = false;
 
 #if 0
      printf ("TOP of BooleanQueryAssemblyFunction (astNode->sage_class_name() = %s,synthesizedAttributeList.size() = %d) \n",

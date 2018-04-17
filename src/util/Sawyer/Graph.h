@@ -16,6 +16,9 @@
 #include <Sawyer/Optional.h>                            // for Sawyer::Nothing
 #include <Sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <boost/unordered_map.hpp>
 #include <ostream>
 #if 1 /*DEBUGGING [Robb Matzke 2014-04-21]*/
@@ -655,21 +658,18 @@ private:
         }
 
         bool isSingleton(EdgePhase phase) const {
-            ASSERT_this();
             ASSERT_require(phase < N_PHASES);
             ASSERT_require((next_[phase]==this && prev_[phase]==this) || (next_[phase]!=this && prev_[phase]!=this));
             return next_[phase]==this;
         }
 
         bool isEmpty(EdgePhase phase) const {
-            ASSERT_this();
             ASSERT_require(isHead());
             ASSERT_require((next_[phase]==this && prev_[phase]==this) || (next_[phase]!=this && prev_[phase]!=this));
             return next_[phase]==this;
         }
 
         void insert(EdgePhase phase, VirtualList *newNode) { // insert newNode before this
-            ASSERT_this();
             ASSERT_require(phase < N_PHASES);
             ASSERT_not_null(newNode);
             ASSERT_forbid(newNode->isHead());
@@ -681,7 +681,6 @@ private:
         }
 
         void remove(EdgePhase phase) {                  // Remove this node from the list
-            ASSERT_this();
             ASSERT_require(phase < N_PHASES);
             ASSERT_forbid(isHead());
             prev_[phase]->next_[phase] = next_[phase];
@@ -695,13 +694,11 @@ private:
         const VirtualList& prev(EdgePhase phase) const { return *prev_[phase]; }
 
         T& dereference() {                              // Return the Edge to which this VirtualList node belongs
-            ASSERT_this();
             ASSERT_forbid(isHead());                    // list head contains no user-data
             return *(T*)this;                           // depends on VirtualList being at the beginning of Edge
         }
 
         const T& dereference() const {
-            ASSERT_this();
             ASSERT_forbid(isHead());
             return *(const T*)this;
         }
@@ -776,7 +773,7 @@ public:                                                 // public only for the s
             return *derived();
         }
         Derived operator++(int) {
-            Derived old = *this;
+            Derived old = *derived();
             ++*this;
             return old;
         }
@@ -797,7 +794,7 @@ public:                                                 // public only for the s
             return *derived();
         }
         Derived operator--(int) {
-            Derived old = *this;
+            Derived old = *derived();
             --*this;
             return old;
         }
@@ -1285,6 +1282,69 @@ private:
     VertexList vertices_;                               // all vertices with integer ID numbers and O(1) insert/erase
     EdgeIndex edgeIndex_;                               // optional mapping between EdgeValue and ConstEdgeIterator
     VertexIndex vertexIndex_;                           // optional mapping between VertexValue and ConstVertexIterator
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    friend class boost::serialization::access;
+
+    struct SerializableEdge {
+        size_t srcId, tgtId;
+        EdgeValue value;
+
+        SerializableEdge()
+            : srcId(-1), tgtId(-1) {}
+
+        SerializableEdge(size_t srcId, size_t tgtId, const EdgeValue &value)
+            : srcId(srcId), tgtId(tgtId), value(value) {}
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(srcId);
+            s & BOOST_SERIALIZATION_NVP(tgtId);
+            s & BOOST_SERIALIZATION_NVP(value);
+        }
+    };
+
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        size_t nv = nVertices();
+        s <<BOOST_SERIALIZATION_NVP(nv);
+        for (size_t i=0; i<nv; ++i)
+            s <<boost::serialization::make_nvp("vertex", findVertex(i)->value());
+                                               
+        size_t ne = nEdges();
+        s <<BOOST_SERIALIZATION_NVP(ne);
+        for (size_t i=0; i<ne; ++i) {
+            ConstEdgeIterator edge = findEdge(i);
+            SerializableEdge se(edge->source()->id(), edge->target()->id(), edge->value());
+            s <<BOOST_SERIALIZATION_NVP(se);
+        }
+    }
+
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        clear();
+        size_t nv = 0;
+        s >>BOOST_SERIALIZATION_NVP(nv);
+        for (size_t i=0; i<nv; ++i) {
+            VertexValue vv;
+            s >>boost::serialization::make_nvp("vertex", vv);
+            insertVertex(vv);
+        }
+
+        size_t ne = 0;
+        s >>BOOST_SERIALIZATION_NVP(ne);
+        for (size_t i=0; i<ne; ++i) {
+            SerializableEdge se;
+            s >>BOOST_SERIALIZATION_NVP(se);
+            ASSERT_require(se.srcId < nv && se.tgtId < nv);
+            insertEdge(findVertex(se.srcId), findVertex(se.tgtId), se.value);
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

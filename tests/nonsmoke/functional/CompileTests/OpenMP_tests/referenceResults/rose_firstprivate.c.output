@@ -1,0 +1,2 @@
+#pragma omp parallel  firstprivate(i) reduction(+ : sum)
+#pragma omp parallel  private(i) reduction(+ : sum)

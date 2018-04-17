@@ -1,7 +1,8 @@
 
 #include "sage3basic.h"
 #include "TransitionGraph.h"
-#include "Analyzer.h"
+#include "IOAnalyzer.h"
+#include "CodeThornException.h"
 
 using namespace CodeThorn;
 
@@ -19,6 +20,10 @@ string Transition::toString() const {
   string s2=edge.toString();
   string s3=target->toString();
   return string("(")+s1+", "+s2+", "+s3+")";
+}
+
+size_t Transition::memorySize() const {
+  return sizeof(*this);
 }
 
 TransitionHashFun::TransitionHashFun() {
@@ -39,7 +44,13 @@ bool TransitionEqualToPred::operator()(Transition* t1, Transition* t2) const {
   * \author Markus Schordan
   * \date 2012.
  */
-TransitionGraph::TransitionGraph():_startLabel(Label()),_numberOfNodes(0),_preciseSTG(true), _completeSTG(true),_modeLTLDriven(false) {
+TransitionGraph::TransitionGraph():
+  _startLabel(Label()),
+  _numberOfNodes(0),
+  _preciseSTG(true), 
+  _completeSTG(true),
+  _modeLTLDriven(false),
+  _forceQuitExploration(false) {
 }
 
 LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
@@ -69,12 +80,12 @@ void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
  */
 void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
   size_t todo=toReduce.size();
-  if(boolOptions["post-semantic-fold"])
+  if(args.getBool("post-semantic-fold"))
     cout << "STATUS: remaining states to fold: "<<todo<<endl;
   for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
     reduceEState2(*i);
     todo--;
-    if(todo%10000==0 && boolOptions["post-semantic-fold"]) {
+    if(todo%10000==0 && args.getBool("post-semantic-fold")) {
       cout << "STATUS: remaining states to fold: "<<todo<<endl;
     }
   }
@@ -86,7 +97,7 @@ void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
  */
 
 TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
-  assert(estate);
+  ROSE_ASSERT(estate);
 #if 1
   return _inEdges[estate];
 #else
@@ -126,27 +137,35 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
   ROSE_ASSERT(estate);
   if(getModeLTLDriven()) {
     ROSE_ASSERT(_analyzer);
+    if (_forceQuitExploration) {
+      return TransitionGraph::TransitionPtrSet();
+    }
     if(_outEdges[estate].size()==0) {
-
       ROSE_ASSERT(_analyzer);
-      Analyzer::SubSolverResultType subSolverResult=_analyzer->subSolver(estate);
+      IOAnalyzer::SubSolverResultType subSolverResult;
+      if(IOAnalyzer* iOAnalyzer = dynamic_cast<IOAnalyzer*>(_analyzer)) {
+	subSolverResult = iOAnalyzer->subSolver(estate);
+      } else {
+	throw CodeThorn::Exception("Used analyzer must be an instance of \"IOAnalyzer\" in order to run the sub solver.");
+      }
       EStateWorkList& deferedWorkList=subSolverResult.first;
-      EStateSet& existingEStateSet=subSolverResult.second;
+      EStatePtrSet& existingEStateSet=subSolverResult.second;
       EStatePtrSet succNodes;
       for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
         succNodes.insert(*i);
       }
-      for(EStateSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {
+      for(EStatePtrSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {
         succNodes.insert(*i);
       }
       //cout<<"DEBUG: succ:"<<deferedWorkList.size()<<","<<existingEStateSet.size()<<":"<<succNodes.size()<<endl;
       for(EStatePtrSet::iterator j=succNodes.begin();j!=succNodes.end();++j) {
+        ROSE_ASSERT(*j);
         Edge newEdge(estate->label(),EDGE_PATH,(*j)->label());
         Transition t(estate,newEdge,*j);
         add(t);
       }
     }
-    //if(_outEdges[estate].size()>0) cout<<"DEBUG: #out-edges="<<_outEdges[estate].size()<<endl;
+    //if(_outEdges[estate].size()>0) cerr<<"DEBUG: #out-edges="<<_outEdges[estate].size()<<endl;
   }
   return _outEdges[estate];
 }
@@ -484,7 +503,32 @@ bool TransitionGraph::isComplete() {
   return _completeSTG;
 }
 
+void TransitionGraph::setForceQuitExploration(bool v) {
+  _forceQuitExploration=v;
+  setIsComplete(false);
+}
 
+size_t TransitionGraph::memorySize() const {
+  size_t mem = HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred>::memorySize();
+  // The size of the Transition objects has been counted by the HSetMaintainer already.
+  // However, the additional pointers in the _inEdges and _outEdges maps need to be considered too.
+  for (map<const EState*,TransitionPtrSet >::const_iterator i=_inEdges.begin(); i!=_inEdges.end(); ++i) {
+    for (TransitionPtrSet::const_iterator k=(*i).second.begin(); k!=(*i).second.end(); ++k) {
+      mem+=sizeof(*k);
+    }
+    mem+=sizeof(*i);
+  }
+  for (map<const EState*,TransitionPtrSet >::const_iterator i=_outEdges.begin(); i!=_outEdges.end(); ++i) {
+    for (TransitionPtrSet::const_iterator k=(*i).second.begin(); k!=(*i).second.end(); ++k) {
+      mem+=sizeof(*k);
+    }
+    mem+=sizeof(*i);
+  }
+  for(set<const EState*>::const_iterator i=_recomputedestateSet.begin(); i!= _recomputedestateSet.end(); ++i) {
+    mem+=sizeof(*i);
+  }
+  return mem + sizeof(*this);  // TODO: check if sizeof(base class HSetMaintainer) is now counted twice
+}
 
 /*! 
   * \author Markus Schordan
@@ -522,6 +566,6 @@ Transition TransitionGraph::getStartTransition() {
   if(foundElementIter!=end())
     return **foundElementIter;
   else {
-    throw "TransitionGraph: no start transition found.";
+    throw CodeThorn::Exception("TransitionGraph: no start transition found.");
   }
 }

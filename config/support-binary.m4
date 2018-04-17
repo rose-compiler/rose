@@ -47,6 +47,10 @@ if test "$support_binaries_frontend" == "yes" -a "$link_iostreams" != "yes"; the
 ***           "-sNO_COMPRESSION=1" switch when configuring boost.])
 fi
 
+# Boost serialization library is optional -- used for save/restore of binary data structures
+# The headers must always be present.
+AX_BOOST_SERIALIZATION
+
 
 dnl  ==================================================================================
 dnl   Check for optional packages that binary analysis in librose can use if available
@@ -89,11 +93,9 @@ ROSE_SUPPORT_INTEL_PIN
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_INTEL_PIN,test ! "$with_IntelPin" = no)
 
-# Call supporting macro to DWARF (libdwarf)
+# Call supporting macro to DWARF (libdwarf), which depends on libelf
+ROSE_SUPPORT_ELF
 ROSE_SUPPORT_DWARF
-
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
 
 # Xen and Ether [RPM 2009-10-28]
 AC_ARG_WITH(ether,
@@ -101,17 +103,30 @@ AC_ARG_WITH(ether,
                       Xen is a hypervisor for running virtual machines (http://www.xen.org)
                       Ether is a layer on top of Xen for accessing Windows XP OS-level data
                       structures (http://ether.gtisc.gatech.edu)],
-        [AC_DEFINE(ROSE_USE_ETHER, 1, [Defined if Ether from Georgia Tech is available.])
-         if test "$with_ether" = "yes"; then ETHER_PREFIX=/usr; else ETHER_PREFIX="$with_ether"; fi],
+        [],
         [with_ether=no])
+AS_IF([test "$with_ether" != no],
+        [AC_DEFINE(ROSE_USE_ETHER, 1, [Defined if Ether from Georgia Tech is available.])
+         if test "$with_ether" = "yes"; then ETHER_PREFIX=/usr; else ETHER_PREFIX="$with_ether"; fi])
 AC_SUBST(ETHER_PREFIX)
 AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
 # libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
-AC_CHECK_HEADERS(gcrypt.h,[HAVE_GCRYPT=yes],[HAVE_GCRYPT=no])
-AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
-AC_CHECK_LIB(gcrypt,gcry_check_version)
-AM_CONDITIONAL([HAS_LIBRARY_GCRYPT], [test "x$HAVE_GCRYPT" = "xyes"])
+ROSE_SUPPORT_LIBGCRYPT
+
+dnl http://dlib.net
+AC_ARG_WITH(dlib,
+        [  --with-dlib=PATH Installation prefix for optional dlib (http://dlib.net) library.
+                            Dlib requires no installation; just untar its source and specify
+                            the name of the directory that was created (e.g., "dlib-18.17") and
+                            which contains the "dlib" subdirectory.],
+        [],
+	[with_dlib=no])
+AS_IF([test "$with_dlib" != "no"],
+        [AC_DEFINE(ROSE_HAVE_DLIB, 1, [Defined if dlib is available.])
+         if test "$with_dlib" = "yes"; then DLIB_PREFIX=/usr; else DLIB_PREFIX="$with_dlib"; fi])
+AC_SUBST(DLIB_PREFIX)
+AM_CONDITIONAL(ROSE_HAVE_DLIB, test "$with_dlib" != "no")
 
 # Check for POSIX threads.  Just because we have POSIX threads does not necessarily mean that the user wants ROSE
 # to be compiled with multi-thread support.  See also "--with-boost-thread" configure switch.
@@ -131,31 +146,7 @@ AC_CHECK_TYPE(user_desc,
               [#include <asm/ldt.h>])
 
 # Check whether PostgreSQL is supported
-AC_CHECK_HEADERS([pqxx/version.hxx])
-
-AC_MSG_CHECKING([for libpqxx])
-old_libs="$LIBS"
-LIBS="$LIBS -lpqxx"
-AC_LANG_PUSH([C++])
-AC_LINK_IFELSE([
-    AC_LANG_SOURCE([
-            #include <pqxx/connection>
-            #include <pqxx/transaction>
-            #include <pqxx/tablewriter>
-            #include <string>
-            int main() {
-                (void)pqxx::connection(std::string());
-            }
-    ])],
-    [
-        AC_MSG_RESULT(yes)
-        AC_DEFINE(ROSE_HAVE_LIBPQXX, [], [Defined if the pqxx library is available])
-    ],
-    [
-        AC_MSG_RESULT(no)
-        LIBS="$old_libs"
-    ])
-AC_LANG_POP([C++])
+ROSE_SUPPORT_LIBPQXX
 
 # Look for an SMT solver
 TEST_SMT_SOLVER=""

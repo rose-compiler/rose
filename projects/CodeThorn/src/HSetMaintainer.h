@@ -6,15 +6,8 @@
  * Author   : Markus Schordan                                *
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
-//#define USE_CUSTOM_HSET
-#ifdef USE_CUSTOM_HSET
-#include "HSet.h"
-using namespace br_stl;
-#else
 #include <boost/unordered_set.hpp>
-#endif
 
-//#include "/usr/include/valgrind/memcheck.h"
 //#define HSET_MAINTAINER_DEBUG_MODE
 
 /*! 
@@ -23,33 +16,47 @@ using namespace br_stl;
  */
 template<typename KeyType,typename HashFun, typename EqualToPred>
 class HSetMaintainer 
-#ifdef USE_CUSTOM_HSET
-  : public HSet<KeyType*,HashFun,EqualToPred>
-#else
   : public boost::unordered_set<KeyType*,HashFun,EqualToPred>
-#endif
   {
 public:
   typedef pair<bool,const KeyType*> ProcessingResult;
+
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
+  HSetMaintainer() { _keepStatesDuringDeconstruction = false; }
+
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
+  HSetMaintainer(bool keepStates) { _keepStatesDuringDeconstruction = keepStates; }
+
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
+  virtual ~HSetMaintainer() {
+    if (!_keepStatesDuringDeconstruction){
+      typename HSetMaintainer::iterator i;
+      for (i=this->begin(); i!=this->end(); ++i) {
+	delete (*i);
+      } 
+    }
+  }
+
   bool exists(KeyType& s) { 
     return determine(s)!=0;
   }
 
   size_t id(const KeyType& s) {
-#ifdef USE_CUSTOM_HSET
-    typename HSet<KeyType*,HashFun,EqualToPred>::const_iterator i;
-#else
     typename boost::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator i;
-#endif
     i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(s);
     if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
       // in lack of operator '-' we compute the distance
       size_t pos=0;
-#ifdef USE_CUSTOM_HSET
-      typename HSet<KeyType*,HashFun,EqualToPred>::const_iterator b;
-#else
       typename boost::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator b;
-#endif
       b=HSetMaintainer<KeyType,HashFun,EqualToPred>::begin();
       while(b!=i) {
         pos++;
@@ -68,21 +75,12 @@ public:
     typename HSetMaintainer<KeyType,HashFun,EqualToPred>::iterator i;
 #pragma omp critical(HASHSET)
     {
-#ifdef USE_CUSTOM_HSET
-      i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(s);
-      if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
-        ret=const_cast<KeyType*>(&(*i));
-      } else {
-        ret=0;
-      }
-#else
       i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(&s);
       if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
         ret=const_cast<KeyType*>(*i);
       } else {
         ret=0;
       }
-#endif
     }
     return ret;
   }
@@ -92,21 +90,12 @@ public:
     typename HSetMaintainer<KeyType,HashFun,EqualToPred>::iterator i;
 #pragma omp critical(HASHSET)
     {
-#ifdef USE_CUSTOM_HSET
-      i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(s);
-      if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
-        ret=&(*i);
-      } else {
-        ret=0;
-      }
-#else
       i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(const_cast<KeyType*>(&s));
       if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
         ret=const_cast<KeyType*>(*i);
       } else {
         ret=0;
       }
-#endif
     }
     return ret;
   }
@@ -151,6 +140,14 @@ public:
       KeyType* keyPtr=new KeyType();
       *keyPtr=key;
       res=this->insert(keyPtr);
+      if (!res.second) {
+	// this case should never occur, condition "iter!=this->end()" above would have been satisfied and 
+	// this else branch would have therefore been ignored
+	cerr << "ERROR: HSetMaintainer: Element was not inserted even though it could not be found in the set." << endl;
+	ROSE_ASSERT(0);
+	delete keyPtr;
+	keyPtr = NULL; 
+      } 
     }
 #ifdef HSET_MAINTAINER_DEBUG_MODE
     std::pair<typename HSetMaintainer::iterator, bool> res1;
@@ -169,6 +166,7 @@ public:
     }
     return res2;
   }
+
   const KeyType* processNew(KeyType& s) {
     //std::pair<typename HSetMaintainer::iterator, bool> res=process(s);
     ProcessingResult res=process(s);
@@ -181,17 +179,15 @@ public:
     }
     return res.second;
   }
+
   const KeyType* processNewOrExisting(KeyType& s) {
     ProcessingResult res=process(s);
     return res.second;
   }
+
   long numberOf() { return HSetMaintainer<KeyType,HashFun,EqualToPred>::size(); }
 
   long maxCollisions() {
-#ifdef USE_CUSTOM_HSET
-    return HSetMaintainer<KeyType,HashFun,EqualToPred>::max_collisions();
-#else
-    //MS:2012
     size_t max=0;
     for(size_t i=0; i<HSetMaintainer<KeyType,HashFun,EqualToPred>::bucket_count();++i) {
       if(HSetMaintainer<KeyType,HashFun,EqualToPred>::bucket_size(i)>max) {
@@ -199,7 +195,6 @@ public:
       }
     }
     return max;
-#endif
   }
 
   double loadFactor() {
@@ -213,12 +208,14 @@ public:
         i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end();
         ++i) {
       mem+=(*i)->memorySize();
+      mem+=sizeof(*i);
     }
     return mem+sizeof(*this);
   }
 
  private:
   //const KeyType* ptr(KeyType& s) {}
+  bool _keepStatesDuringDeconstruction;
 };
 
 #endif

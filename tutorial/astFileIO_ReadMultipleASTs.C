@@ -6,6 +6,9 @@ using namespace std;
 int
 main ( int argc, char * argv[] )
    {
+  // Initialize and check compatibility. See Rose::initialize
+     ROSE_INITIALIZE;
+
      assert ( 1 < argc );
      int numFiles = argc -1;
      std::vector<std::string> fileNames;

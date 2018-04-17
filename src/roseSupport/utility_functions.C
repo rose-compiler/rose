@@ -7,10 +7,11 @@
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
-// #include "wholeAST.h"
 
 #ifdef _MSC_VER
 #include <direct.h>     // getcwd
+#else
+#include "plugin.h"  // dlopen() is not available on Windows
 #endif
 
 #include <time.h>
@@ -35,8 +36,12 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
+// DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+#include<signal.h>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace Rose;
 
 // global variable for turning on and off internal debugging
 int ROSE_DEBUG = 0;
@@ -56,9 +61,84 @@ const int roseTargetCacheLineSize = 32;
 #endif
 
 // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
-// bool rose::verbose                 = false;
+// bool Rose::verbose                 = false;
 // DQ (8/11/2004): build a global state here
-// int rose::roseVerbose = 0;
+// int Rose::roseVerbose = 0;
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+Rose::Options Rose::global_options;
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+Rose::Options::Options()
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = false;
+     frontend_warnings = false;
+     backend_notes     = false;
+     backend_warnings  = false;
+   }
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+Rose::Options::Options(const Options & X)
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = X.frontend_notes;
+     frontend_warnings = X.frontend_warnings;
+     backend_notes     = X.backend_notes;
+     backend_warnings  = X.backend_warnings;
+   }
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+Options & Rose::Options::operator= (const Options & X)
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = X.frontend_notes;
+     frontend_warnings = X.frontend_warnings;
+     backend_notes     = X.backend_notes;
+     backend_warnings  = X.backend_warnings;
+
+     return *this;
+   }
+
+bool Rose::Options::get_frontend_notes()
+   {
+     return frontend_notes;
+   }
+
+void Rose::Options::set_frontend_notes(bool flag)
+   {
+     frontend_notes = flag;
+   }
+
+bool Rose::Options::get_frontend_warnings()
+   {
+     return frontend_warnings;
+   }
+
+void Rose::Options::set_frontend_warnings(bool flag)
+   {
+     frontend_warnings = flag;
+   }
+
+bool Rose::Options::get_backend_notes()
+   {
+     return backend_notes;
+   }
+
+void Rose::Options::set_backend_notes(bool flag)
+   {
+     backend_notes = flag;
+   }
+
+bool Rose::Options::get_backend_warnings()
+   {
+     return backend_warnings;
+   }
+
+void Rose::Options::set_backend_warnings(bool flag)
+   {
+     backend_warnings = flag;
+   }
 
 
 #define OUTPUT_TO_FILE true
@@ -66,24 +146,44 @@ const int roseTargetCacheLineSize = 32;
 
 
 // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-std::map<SgNode*,TokenStreamSequenceToNodeMapping*> rose::tokenSubsequenceMap;
+std::map<SgNode*,TokenStreamSequenceToNodeMapping*> Rose::tokenSubsequenceMap;
 
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
-// std::vector<FrontierNode*> rose::frontierNodes;
-std::map<SgStatement*,FrontierNode*> rose::frontierNodes;
+// std::vector<FrontierNode*> Rose::frontierNodes;
+std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
 
 // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-std::map<SgNode*,PreviousAndNextNodeData*> rose::previousAndNextNodeMap;
+std::map<SgNode*,PreviousAndNextNodeData*> Rose::previousAndNextNodeMap;
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-std::multimap<int,SgStatement*> rose::redundantlyMappedTokensToStatementMultimap;
-std::set<int> rose::redundantTokenEndingsSet;
+std::multimap<int,SgStatement*> Rose::redundantlyMappedTokensToStatementMultimap;
+std::set<int> Rose::redundantTokenEndingsSet;
 
 // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-std::map<SgScopeStatement*,SgStatement*> rose::representativeWhitespaceStatementMap;
+std::map<SgScopeStatement*,SgStatement*> Rose::representativeWhitespaceStatementMap;
 
 // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-std::map<SgStatement*,MacroExpansion*> rose::macroExpansionMap;
+std::map<SgStatement*,MacroExpansion*> Rose::macroExpansionMap;
+
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace Rose::Diagnostics;
+
+// DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
+Sawyer::Message::Facility Rose::ir_node_mlog;
+
+void Rose::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+       // printf ("In Rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
+          ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", Rose::Diagnostics::destination);
+          Rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
+       // printf ("In Rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
+        }
+   }
 
 
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.
@@ -177,7 +277,7 @@ std::string version_message()
   // with -h and --version, similar to GNU compilers, as I recall.
   // outputPredefinedMacros();
 
-     // A more human-friendly time stamp (ISO 8601 format is recognized around the world, so use that)
+  // A more human-friendly time stamp (ISO 8601 format is recognized around the world, so use that)
      time_t scm_timestamp = rose_scm_version_date();
      std::string scm_timestamp_human;
      if (struct tm *tm = gmtime(&scm_timestamp)) {
@@ -190,6 +290,30 @@ std::string version_message()
          scm_timestamp_human = StringUtility::numberToString(scm_timestamp) + " unix epoch";
      }
 
+#if 0
+  // DQ (12/13/2016): Adding backend compiler and version info.
+     printf ("Using backend C++ compiler (without path): %s version: %d.%d \n",BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH,BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+     printf ("Using backend C/C++ compiler (with path):  %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+     printf ("Using backend  C  compiler (with path):    %s version: %d.%d \n",BACKEND_C_COMPILER_NAME_WITH_PATH,BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+
+     printf ("ROSE_COMPILE_TREE_PATH = %s \n",ROSE_COMPILE_TREE_PATH);
+     printf ("ROSE_INSTALLATION_PATH = %s \n",ROSE_INSTALLATION_PATH);
+#endif
+
+     string backend_Cxx_compiler_without_path = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+     string backend_Cxx_compiler_with_path    = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+     string backend_C_compiler_without_path   = BACKEND_C_COMPILER_NAME_WITH_PATH;
+     string backend_C_compiler_with_path      = BACKEND_C_COMPILER_NAME_WITH_PATH;
+     string backend_Cxx_compiler_version      = StringUtility::numberToString(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+
+#ifdef USE_CMAKE
+     string build_tree_path                   = "CMake does not set: ROSE_COMPILE_TREE_PATH";
+     string install_path                      = "CMake does not set: ROSE_INSTALLATION_PATH";
+#else
+     string build_tree_path                   = ROSE_COMPILE_TREE_PATH;
+     string install_path                      = ROSE_INSTALLATION_PATH;
+#endif
+
      return
        // "ROSE (pre-release beta version: " + version_number() + ")" +
           "ROSE (version: " + version_number() + ")" +
@@ -199,6 +323,12 @@ std::string version_message()
           "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
           "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
           "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
+          "\n  --- using backend C compiler: " + backend_C_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+          "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
+          "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+          "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
+          "\n  --- using original build tree path: " + build_tree_path +
+          "\n  --- using instalation path: " + install_path +
           "\n  --- using GNU readline version: " + readlineVersionString() +
           "\n  --- using libmagic version: " + libmagicVersionString() +
           "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
@@ -319,6 +449,12 @@ frontend (int argc, char** argv, bool frontendConstantFolding )
 SgProject*
 frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
+  // DQ (4/11/2017): Call this as early as possible (usually good enough if it is here).
+  // Note that there are ROSE-based tools that are calling the SgProject constructor directly, 
+  // and these are not covered by placing ROSE_INITIALIZE here (examples are: loopProcessor).
+  // But most are older examples of tools built using ROSE.
+     ROSE_INITIALIZE;
+
   // DQ (6/14/2007): Added support for timing of high level frontend function.
      TimingPerformance timer ("ROSE frontend():");
 
@@ -328,15 +464,24 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // make sure that there is some sort of commandline (at least a file specified)
      if (argv.size() == 1)
         {
-       // rose::usage(1);      // Print usage and exit with exit status == 1
+       // Rose::usage(1);      // Print usage and exit with exit status == 1
           SgFile::usage(1);      // Print usage and exit with exit status == 1
         }
 
   // printf ("In frontend(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
 
+  // We parse plugin related command line options before calling project();
+     std::vector<std::string> argv2= argv;  // workaround const argv
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::processPluginCommandLine () ...\n");
+#else
+     Rose::processPluginCommandLine(argv2);
+#endif
+
   // Error code checks and reporting are done in SgProject constructor
   // return new SgProject (argc,argv);
-     SgProject* project = new SgProject (argv,frontendConstantFolding);
+     SgProject* project = new SgProject (argv2,frontendConstantFolding);
      ROSE_ASSERT (project != NULL);
 
   // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
@@ -353,9 +498,18 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // checkIsModifiedFlag(project);
      unsetNodesMarkedAsModified(project);
 
+   
   // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
+
+  // Connect to Ast Plugin Mechanism
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::obtainAndExecuteActions ()\n");
+#else  
+     Rose::obtainAndExecuteActions(project);
+#endif
      return project;
    }
 
@@ -467,6 +621,23 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
      int finalCombinedExitStatus = 0;
 
+     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+        {
+          printf ("Inside of backend(SgProject*) \n");
+        }
+
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+  // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+  // signal(SIG_DFL,NULL);
+     signal(SIGABRT,SIG_DFL);
+#endif
+
+#if 0
+  // DQ (9/8/2017): Debugging ROSE_ASSERT.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      if (project->get_binary_only() == true)
         {
           ROSE_ASSERT(project != NULL);
@@ -477,9 +648,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
           project->skipfinalCompileStep(true);
         }
-
-     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-          printf ("Inside of backend(SgProject*) \n");
 
   // printf ("   project->get_useBackendOnly() = %s \n",project->get_useBackendOnly() ? "true" : "false");
      if (project->get_useBackendOnly() == false)
@@ -605,7 +773,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
   // Note that the command generated may have to be fixup later to include more subtle details 
   // required to link libraries, etc.  At present this function only handles the support required
   // to build an object file.
-     string commandLineToGenerateObjectFile;
+     SgStringList commandLineToGenerateObjectFile;
 
      enum language_enum
         {
@@ -634,15 +802,15 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
      switch (language)
         {
-          case e_c       : commandLineToGenerateObjectFile = BACKEND_C_COMPILER_NAME_WITH_PATH;       break;
-          case e_cxx     : commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;     break;
-          case e_fortran : commandLineToGenerateObjectFile = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH; break;
+        case e_c       : commandLineToGenerateObjectFile.push_back(BACKEND_C_COMPILER_NAME_WITH_PATH);       break;
+        case e_cxx     : commandLineToGenerateObjectFile.push_back(BACKEND_CXX_COMPILER_NAME_WITH_PATH);     break;
+        case e_fortran : commandLineToGenerateObjectFile.push_back(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH); break;
 
           default:
              {
-            // Note that the default is C++, and that if there are no SgFile objects then there is no place to hold the default
-            // since the SgProject does not have any such state to hold this information.  A better idea might be to give the
-            // SgProject state so that it can hold if it is used with -rose:C or -rose:Cxx or -rose:Fortran on the command line.
+                 // Note that the default is C++, and that if there are no SgFile objects then there is no place to hold the default
+                 // since the SgProject does not have any such state to hold this information.  A better idea might be to give the
+                 // SgProject state so that it can hold if it is used with -rose:C or -rose:Cxx or -rose:Fortran on the command line.
 
                printf ("Default reached in switch in backendCompilesUsingOriginalInputFile() \n");
                printf ("   Note use options: -rose:C or -rose:Cxx or -rose:Fortran to specify which language backend compiler to link object files. \n");
@@ -655,7 +823,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
        // DQ (11/3/2011): Mark this as being called from ROSE (even though the backend compiler is being used).
        // This will help us detect where strings handed in using -D options may have lost some outer quotes.
        // There may also be a better fix to detect quoted strings and requote them, so this should be considered also.
-          commandLineToGenerateObjectFile += " -DUSE_ROSE ";
+            commandLineToGenerateObjectFile.push_back("-DUSE_ROSE");
         }
 
      int finalCombinedExitStatus = 0;
@@ -673,35 +841,42 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
           if (it != originalCommandLineArgumentList.end())
                it++;
 
-       // Make a list of the remaining command line arguments
+       // JL (03/15/2018) Changed system to systemFromVector so that
+       // command line arguments will be handled correctly ROSE-813
           for (SgStringList::iterator i = it; i != originalCommandLineArgumentList.end(); i++)
-             {
-               commandLineToGenerateObjectFile += " " + *i;
-             }
-       // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+          {
+              commandLineToGenerateObjectFile.push_back(*i);
+          }
 
           if ( SgProject::get_verbose() >= 1 )
-             {
-               printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
-             }
+          {
+              printf("Compile Line: ");                 
+              for (SgStringList::iterator i = it; i != commandLineToGenerateObjectFile.end(); i++)
+              {
+                  printf("%s ", (*i).c_str());
+              }
+              printf("\n");                 
+          }
+          
 
        // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
        // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
-       // for which the tests/testTokenGeneration.C translator uses this function to generate object files.
+       // for which the tests/nonsmoke/functional/testTokenGeneration.C translator uses this function to generate object files.
        // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
           if (project->get_skipfinalCompileStep() == false)
-             {
-               finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
-             }
+          {
+              finalCombinedExitStatus = systemFromVector (commandLineToGenerateObjectFile);
+          }
         }
        else
         {
        // Note that in general it is not possible to tell whether to use gcc, g++, or gfortran to do the linking.
        // When we just have a list of object files then we can't assume anything (and project->get_C_only() will be false).
-
        // Note that commandLineToGenerateObjectFile is just the name of the backend compiler to use!
-       // finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
-          finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
+       // JL (03/15/2018) Put in ROSE_ASSERT to verify command line is just the linker
+       //Thats all link is supposed to take
+            ROSE_ASSERT(commandLineToGenerateObjectFile.size() == 1);
+            finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile[0]);
         }
 
      return finalCombinedExitStatus;
@@ -830,6 +1005,25 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
         }
    }
 
+
+void
+generateDOT ( SgNode* node, std::string filename )
+   {
+  // DQ (9/22/2017): This function is being provided to support the generation of a dot file from any subtree.
+  // The more imediate use for this function is to support generation of dot files from trees built using the ROSE Untyped nodes.
+
+  // DQ (6/14/2007): Added support for timing of the generateDOT() function.
+     TimingPerformance timer ("ROSE generateDOT():");
+
+     AstDOTGeneration astdotgen;
+
+  // This used to be the default, but it would output too much data (from include files).
+  // std::string filenamePostfix = ".dot";
+     std::string filenamePostfix = "";
+     astdotgen.generate(node, filename, DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP, filenamePostfix);
+   }
+
+
 void
 generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfix )
    {
@@ -924,11 +1118,11 @@ pdfPrintAbstractSyntaxTreeEDG ( SgFile *file )
   // Use the PDF file declared in the EDG/src/displayTree.C
      extern PDF* pdfGlobalFile;
 
-     printf ("rose::getWorkingDirectory() = %s \n",rose::getWorkingDirectory());
-     sprintf(filename,"%s/%s.edg.pdf",rose::getWorkingDirectory(),rose::utility_stripPathFromFileName(rose::getFileName(file)));
+     printf ("Rose::getWorkingDirectory() = %s \n",Rose::getWorkingDirectory());
+     sprintf(filename,"%s/%s.edg.pdf",Rose::getWorkingDirectory(),Rose::utility_stripPathFromFileName(Rose::getFileName(file)));
      printf ("filename = %s \n",filename);
 
-     ifstream sourceFile (rose::getFileName(file));
+     ifstream sourceFile (Rose::getFileName(file));
      if (!sourceFile)
           cerr << "ERROR opening sourceFile" << endl;
      ROSE_ASSERT (sourceFile);
@@ -1054,7 +1248,7 @@ generatePDFofEDG ( const SgProject & project )
 
 #if 1
 int
-rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
+Rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1074,7 +1268,7 @@ rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 int
-rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
+Rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1094,7 +1288,7 @@ rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 std::string
-rose::getFileName ( SgLocatedNode* locatedNodePointer )
+Rose::getFileName ( SgLocatedNode* locatedNodePointer )
    {
   // Get the filename from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1104,7 +1298,7 @@ rose::getFileName ( SgLocatedNode* locatedNodePointer )
      if (locatedNodePointer->get_file_info() != NULL)
         {
           ROSE_ASSERT (locatedNodePointer->get_file_info() != NULL);
-       // printf ("In rose::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
+       // printf ("In Rose::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           fileName = fileInfo->get_filenameString();
         }
@@ -1113,7 +1307,7 @@ rose::getFileName ( SgLocatedNode* locatedNodePointer )
    }
 #endif
 #if 1
-bool rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
+bool Rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 {
   bool result = false;
   Sg_File_Info *fileInfo = locatedNodePointer->get_file_info();
@@ -1124,7 +1318,7 @@ bool rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 #endif
 
 std::string
-rose::getFileNameWithoutPath ( SgStatement* statementPointer )
+Rose::getFileNameWithoutPath ( SgStatement* statementPointer )
    {
   // Get the filename from the Sage III statement object
      ROSE_ASSERT (statementPointer != NULL);
@@ -1138,7 +1332,7 @@ rose::getFileNameWithoutPath ( SgStatement* statementPointer )
 
 #if 1
 std::string
-rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
+Rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
    {
      size_t pos = fileNameWithPath.rfind('/');
      if (pos == std::string::npos || pos == fileNameWithPath.size() - 1) {
@@ -1151,7 +1345,7 @@ rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
 
 #if 0
 std::string
-rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
+Rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
    {
   // This function is not sophisticated enough to handle binaries with paths such as:
   //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
@@ -1177,7 +1371,7 @@ rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
 #if 1
 // DQ (3/15/2005): New, simpler and better implementation suggested function from Tom, thanks Tom!
 string
-rose::getPathFromFileName ( const string fileName )
+Rose::getPathFromFileName ( const string fileName )
    {
      size_t pos = fileName.rfind('/');
      if (pos == std::string::npos) {
@@ -1193,14 +1387,14 @@ rose::getPathFromFileName ( const string fileName )
 #if 0
  //! get the source directory (requires an input string currently)
 char*
-rose::getSourceDirectory ( char* fileNameWithPath )
+Rose::getSourceDirectory ( char* fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
 #else
  //! get the source directory (requires an input string currently)
 string
-rose::getSourceDirectory ( string fileNameWithPath )
+Rose::getSourceDirectory ( string fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
@@ -1209,7 +1403,7 @@ rose::getSourceDirectory ( string fileNameWithPath )
 #if 0
  //! get the current directory
 char*
-rose::getWorkingDirectory ()
+Rose::getWorkingDirectory ()
    {
      int i = 0;  // index variable declaration
 
@@ -1224,8 +1418,8 @@ rose::getWorkingDirectory ()
      ROSE_ASSERT (returnString != NULL);
 
   // The semantics of the getcwd is that these should be the same (see if they are)
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",returnString);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",returnString);
 
   // live with the possible memory leak for now
   // delete currentDirectory;
@@ -1236,7 +1430,7 @@ rose::getWorkingDirectory ()
 #else
  //! get the current directory
 string
-rose::getWorkingDirectory ()
+Rose::getWorkingDirectory ()
    {
   // DQ (9/5/2006): Increase the buffer size
   // const int maxPathNameLength = 1024;
@@ -1261,7 +1455,7 @@ rose::getWorkingDirectory ()
 #endif
 
 SgName
-rose::concatenate ( const SgName & X, const SgName & Y )
+Rose::concatenate ( const SgName & X, const SgName & Y )
    {
      return X + Y;
    }
@@ -1269,7 +1463,7 @@ rose::concatenate ( const SgName & X, const SgName & Y )
 #if 0
 // DQ (9/5/2008): Try to remove this function!
 std::string
-rose::getFileName ( const SgFile* file )
+Rose::getFileName ( const SgFile* file )
    {
   // Get the filename from the Sage II file object
      ROSE_ASSERT (file != NULL);
@@ -1285,7 +1479,7 @@ rose::getFileName ( const SgFile* file )
 #if 1
 // DQ (9/5/2008): Try to remove this function!
 string
-rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
+Rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
    {
      string returnString;
 
@@ -1312,7 +1506,7 @@ rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
           ROSE_ASSERT (file != NULL);
           if (file != NULL)
              {
-            // returnString = rose::getFileName(file);
+            // returnString = Rose::getFileName(file);
                returnString = file->getFileName();
              }
 
@@ -1325,20 +1519,20 @@ rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
 #endif
 
 void
-rose::usage (int status)
+Rose::usage (int status)
    {
      SgFile::usage(status);
   // exit(status);
    }
 
 int 
-rose::containsString ( const std::string& masterString, const std::string& targetString )
+Rose::containsString ( const std::string& masterString, const std::string& targetString )
    {
      return masterString.find(targetString) != string::npos;
    }
 
 void
-rose::filterInputFile ( const string inputFileName, const string outputFileName )
+Rose::filterInputFile ( const string inputFileName, const string outputFileName )
    {
   // This function filters the input file to remove ^M characters and expand tabs etc.
   // Any possible processing of the input file, before being compiled, should be done
@@ -1348,7 +1542,7 @@ rose::filterInputFile ( const string inputFileName, const string outputFileName 
    }
 
 SgStatement*
-rose::getNextStatement ( SgStatement *currentStatement )
+Rose::getNextStatement ( SgStatement *currentStatement )
    {
      ROSE_ASSERT (currentStatement  != NULL);
   // CI (1/3/2007): This used to be not implemented ,,, here is my try
@@ -1385,7 +1579,7 @@ rose::getNextStatement ( SgStatement *currentStatement )
                break;
              }
 
-       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
+       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
           case V_SgLabelStatement:
             {
               SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);
@@ -1486,7 +1680,7 @@ rose::getNextStatement ( SgStatement *currentStatement )
 
          
 SgStatement*
-rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
+Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
    {
      ROSE_ASSERT (targetStatement  != NULL);
 
@@ -1507,10 +1701,10 @@ rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
      ROSE_ASSERT (scope != targetStatement);
 
 #if 0
-     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
-     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
-     printf ("@@@@@ In rose::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
-     printf ("@@@@@ In rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
+     printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
+     printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
+     printf ("@@@@@ In Rose::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
+     printf ("@@@@@ In Rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
 #endif
 
      switch (targetStatement->variantT())

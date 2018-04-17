@@ -1,0 +1,8 @@
+Bconcrete::getp ->
+BconcreteSubclass::getp1 ->
+Bthis < double > ::getp ->
+Bthis < int > ::getp ->
+BtryInt < double > ::getInt ->
+Busing < int > ::getp ->
+Csub::getp ->
+foo ->

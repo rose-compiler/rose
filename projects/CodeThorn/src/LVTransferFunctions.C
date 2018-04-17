@@ -23,14 +23,9 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
 
   // KILL
   // (for programs with pointers we require a set here)
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());
   ROSE_ASSERT(_pointerAnalysisInterface);
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
 
-  if(_pointerAnalysisInterface->hasDereferenceOperation(node)) {
-    VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
-    // union sets
-    defVarIds+=modVarIds;
-  }
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information
   } else if(defVarIds.size()==1) {
@@ -39,7 +34,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
     element.removeVariableId(var);
   }
   // GEN
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*getVariableIdMapping());  
+  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }
@@ -55,10 +50,12 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information add information
-    assert(0);
+
+    // schroder3 (2016-08-22): Commented out assertion because this case can happen (e.g. "int i; int i2 = (i = 1);").
+    //  assert(0);
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();

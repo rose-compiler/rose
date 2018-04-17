@@ -851,7 +851,11 @@ void cfgRWTransaction::do_insertBefore(SgNode* n, SgExpression* newNode)
         else if(isSgReturnStmt(n))
         {
                 // split out the target expression using the comma operator
-                SgVarRefExp* replacement;
+
+             // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=maybe-uninitialized.
+             // SgVarRefExp* replacement;
+                SgVarRefExp* replacement = NULL;
+
                 //SgAssignInitializer* init = splitExpression_GB(isSgReturnStmt(n)->get_expression(), replacement, "", getAccessType(n)!=readAccess);
                 insertBeforeExpression(replacement, newNode);
         }
@@ -983,7 +987,11 @@ void cfgRWTransaction::do_insertAfter(SgNode* n, SgExpression* newNode)
                                 //printf("insertAfter Node: (other) <%s | %s>\n", n->unparseToString().c_str(), n->class_name().c_str());
                                 
                                 // split out the target expression using the comma operator
-                                SgVarRefExp* replacement;
+
+                             // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=maybe-uninitialized.
+                             // SgVarRefExp* replacement;
+                                SgVarRefExp* replacement = NULL;
+
                                 //SgAssignInitializer* init = splitExpression_GB(isSgExpression(n), replacement, "", getAccessType(n)!=readAccess);
                                 insertBeforeExpression(replacement, newNode);
                         }

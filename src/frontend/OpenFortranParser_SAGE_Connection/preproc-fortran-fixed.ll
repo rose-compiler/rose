@@ -57,6 +57,14 @@ functions/variables.
 #define yytext Rose_Fortran_fixed_format_text
 #define yylex Rose_Fortran_fixed_format_lex 
 
+
+/* DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
+   See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
+ */
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
+
 #include "sage3basic.h"
 #include <iostream>
 #include <stdio.h>
@@ -88,6 +96,10 @@ struct stream_element
     struct file_pos_info ending_fpi;
 };
 #endif
+
+// DQ (3/19/2017): Define this so that we can avoid output spew from generated rule #36 
+// in generated file which maps to %% on line 468 of this file.
+#define ECHO
 
 
 LexTokenStreamTypePointer ROSE_Fortran_fixed_format_token_stream_pointer = NULL;
@@ -246,14 +258,21 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
 %{
 #undef Rose_Fortran_Fixed_Format_wrap
           int line_no = 1;
-          int start_line_no = line_no;
+
+       /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+       /* int start_line_no = line_no; */
+
           int column_no = 1;
-          int start_column_no = column_no;
+
+       /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+       /* int start_column_no = column_no; */
+
           BEGIN NORMAL;
 %}
 <NORMAL>^C.*\n    {
-                    start_line_no=line_no; 
-                    start_column_no=column_no; 
+                 /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+                 /* start_line_no=line_no; */
+                 /* start_column_no=column_no; */
                     curr_beginning.line_num = line_no;
                     curr_beginning.column_num = column_no;
                     column_no+=1; 
@@ -262,8 +281,9 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                  // BEGIN FORT_COMMENT; 
                }
 <NORMAL>[^C]....  {
-                    start_line_no=line_no; 
-                    start_column_no=column_no; 
+                 /* DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable. */
+                 /* start_line_no=line_no; */
+                 /* start_column_no=column_no; */
                     curr_beginning.line_num = line_no;
                     curr_beginning.column_num = column_no;
                     column_no+=1; 
@@ -501,6 +521,7 @@ getFortranFixedFormatPreprocessorDirectives( std::string fileName )
             // exit(0);
                yyin = fp; 
                yylex(); 
+
             /*
                char s[100];
                while(fgets(s, 100, fp))
@@ -579,8 +600,7 @@ static void clean_up_stream()
         {
             cout<<"## ????Unrecognized element in the token stream##"; 
         }
-        cout<<"\n"; 
- 
+        cout<<"\n";  
     }
 #endif
 }

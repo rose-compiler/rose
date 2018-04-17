@@ -2,7 +2,7 @@
 #include "stringify.h"
 #include "sideEffect.h"
 #include "SqliteDatabaseGraph.h"
-#include "string_functions.h"
+#include "StringUtility.h"
 
 #include <iostream>
 #include <cstring>
@@ -12,7 +12,7 @@
 #include "sqlite3x.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace sqlite3x;
 using namespace StringUtility;
 

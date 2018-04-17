@@ -1,0 +1,2 @@
+#pragma omp parallel  private(j)
+#pragma omp for  schedule(static , 2)

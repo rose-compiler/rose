@@ -1,0 +1,3 @@
+#pragma omp parallel 
+#pragma omp for  ordered schedule(static , 5)
+#pragma omp ordered 

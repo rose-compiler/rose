@@ -6,7 +6,7 @@
 
 #include <boost/foreach.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -25,6 +25,11 @@ BasicBlock::init(const Partitioner *partitioner) {
 void
 BasicBlock::clearSuccessors() {
     successors_.clear();
+}
+
+void
+BasicBlock::successors(const Successors &successors) {
+    successors_ = successors;
 }
 
 void
@@ -202,6 +207,22 @@ BasicBlock::pop() {
         optionalPenultimateState_ = Sawyer::Nothing();
     }
     clearCache();
+}
+
+AddressIntervalSet
+BasicBlock::insnAddresses() const {
+    AddressIntervalSet retval;
+    BOOST_FOREACH (SgAsmInstruction *insn, insns_)
+        retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
+    return retval;
+}
+
+AddressIntervalSet
+BasicBlock::dataAddresses() const {
+    AddressIntervalSet retval;
+    BOOST_FOREACH (const DataBlock::Ptr &db, dblocks_)
+        retval.insert(db->extent());
+    return retval;
 }
 
 rose_addr_t

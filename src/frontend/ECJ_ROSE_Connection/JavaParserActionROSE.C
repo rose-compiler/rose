@@ -152,6 +152,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
     SgClassDefinition *class_definition = astJavaScopeStack.popClassDefinition();
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable (define a valid usage).
+    ROSE_ASSERT(class_definition != NULL);
 }
 
 
@@ -161,7 +164,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jstring java_external_name, jboolean java_user_defined_class, jboolean java_is_interface, jboolean java_is_enum, jboolean java_is_anonymous, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_name);
 //    SgName external_name = convertJavaStringToCxxString(env, java_external_name);
-    bool user_defined_class = java_user_defined_class;
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // bool user_defined_class = java_user_defined_class;
+
     bool is_interface = java_is_interface;
     bool is_enum = java_is_enum;
     bool is_anonymous = java_is_anonymous;
@@ -495,7 +501,11 @@ cout << "Could not locate type "
     // Take care of the super types, if any.
     //
     SgBaseClassPtrList& bases = parameter_definition -> get_inheritances();
-    ROSE_ASSERT(bases.size() == num_bounds);
+
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+ // ROSE_ASSERT(bases.size() == num_bounds);
+    ROSE_ASSERT(bases.size() == (size_t)num_bounds);
+
     string type_parameter_bounds_name = "";
     for (int i = 0, k = num_bounds - 1; i < num_bounds; i++, k--) {
         SgNamedType *bound_type = isSgNamedType(astJavaComponentStack.popType());
@@ -808,18 +818,29 @@ cout.flush();
     }
 
     SgBaseClassPtrList &super_type_list = class_definition -> get_inheritances();
-if (super_type_list.size() != num_super_types){
-cout << "Completing processing of class " << class_definition -> get_qualified_name().getString()
-<< "; super_type_list.size() = "
-<< super_type_list.size()
-<< "; num_super_types = "
-<< num_super_types
-<< endl;
-for (int i = 0; i < super_type_list.size(); i++)
-cout << "    -> " << super_type_list[i] -> get_base_class() -> get_qualified_name() << endl;
-cout.flush();
-}
-    ROSE_ASSERT(super_type_list.size() == num_super_types);
+
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+ // if (super_type_list.size() != num_super_types)
+    if (super_type_list.size() != (size_t)num_super_types)
+       {
+         cout << "Completing processing of class " << class_definition -> get_qualified_name().getString()
+              << "; super_type_list.size() = "
+              << super_type_list.size()
+              << "; num_super_types = "
+              << num_super_types
+              << endl;
+
+      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+      // for (int i = 0; i < super_type_list.size(); i++)
+         for (size_t i = 0; i < super_type_list.size(); i++)
+              cout << "    -> " << super_type_list[i] -> get_base_class() -> get_qualified_name() << endl;
+         cout.flush();
+       }
+
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+ // ROSE_ASSERT(super_type_list.size() == num_super_types);
+    ROSE_ASSERT(super_type_list.size() == (size_t)num_super_types);
+
     std::list<SgNode *> extension_list;
     for (int i = 0; i < num_super_types; i++) {
          SgNamedType *type = (SgNamedType *) astJavaComponentStack.popType();
@@ -859,16 +880,23 @@ cout.flush();
     //
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("extensions");
     ROSE_ASSERT(attribute);
-// TODO: Remove this!
-if (attribute -> size() != extension_list.size()) {
-cout << "attribute -> size() = "
-<< attribute -> size()
-<< "; extension_list.size() = "
-<< extension_list.size()
-<< endl;
-cout.flush();
-}
-    ROSE_ASSERT(attribute -> size() == extension_list.size());
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+ // TODO: Remove this!
+ // if (attribute -> size() != extension_list.size()) 
+    if ((size_t)(attribute -> size()) != extension_list.size()) 
+       {
+         cout << "attribute -> size() = "
+              << attribute -> size()
+              << "; extension_list.size() = "
+              << extension_list.size()
+              << endl;
+         cout.flush();
+       }
+
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+ // ROSE_ASSERT(attribute -> size() == extension_list.size());
+    ROSE_ASSERT((size_t)(attribute -> size()) == extension_list.size());
+
     int k = 0;
     for (list<SgNode *>::iterator extension = extension_list.begin(); extension != extension_list.end(); extension++, k++) {
         SgType *type = isSgType(*extension);
@@ -1266,7 +1294,9 @@ cout.flush();
 //if (!array_type)
 //cout << "The type is a " << (isSgClassType(argument_type) ? isSgClassType(argument_type) -> get_qualified_name().getString() : argument_type -> class_name()) << endl;
         ROSE_ASSERT(array_type);
-        SgType *element_type = array_type -> get_base_type();
+
+     // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+     // SgType *element_type = array_type -> get_base_type();
 
         alias_name -> setAttribute("var_args", new AstRegExAttribute(""));
         alias_name -> setAttribute("type", new AstRegExAttribute(argument_type_name)); // getTypeName(element_type) + "..."));
@@ -2133,6 +2163,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd(JNIE
     ROSE_ASSERT(! astJavaScopeStack.empty());
     SgClassDefinition *package = astJavaScopeStack.popPackage();
 
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable (define a valid usage).
+    ROSE_ASSERT(package != NULL);
+
 // TODO: Remove this!
 /*
     //
@@ -2358,7 +2391,9 @@ cout.flush();
          class_declaration -> get_declarationModifier().setFinal();
     else class_declaration -> get_declarationModifier().unsetFinal();
     if (is_strictfp)
+      {
         ; // charles4 - TODO: there is currently no place to hang this information.
+      }
 
     class_declaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
     if (is_private) {
@@ -2585,8 +2620,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
 
     // DQ (7/31/2011): Add more precise handling of the statement stack.
     // This does not count (include) explicit constructor calls...
-    int number_of_type_parameters = java_numberOfTypeParameters;
-    int numberOfArguments = java_numberOfArguments;
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // int number_of_type_parameters = java_numberOfTypeParameters;
+ // int numberOfArguments = java_numberOfArguments;
+
     int numberOfThrownExceptions = java_numberOfThrownExceptions;
 
     //
@@ -2719,7 +2757,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
     if (SgProject::get_verbose() > 0)
         printf ("Build a explicit constructor function call END \n");
 
-    bool is_implicit_super = java_is_implicit_super;
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // bool is_implicit_super = java_is_implicit_super;
+
     bool is_super = java_is_super;
     bool has_qualification = java_has_qualification;
     SgName package_name = convertJavaStringToCxxString(env, java_package_name),
@@ -2945,8 +2985,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
     bool isPrivate      = java_is_private;
     bool isStrictfp     = java_is_strictfp;
 
-    int number_of_type_parameters = java_numberOfTypeParameters;
-    int numberOfArguments         = java_numberOfArguments;
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // int number_of_type_parameters = java_numberOfTypeParameters;
+ // int numberOfArguments         = java_numberOfArguments;
+
     int numberOfThrownExceptions  = java_numberOfThrownExceptions;
 
     //
@@ -5059,7 +5101,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jclas
     for (int i = 0; i < num_initializations; i++) {
         for_init_statement -> prepend_init_stmt(astJavaComponentStack.popStatement());
     }
-    ROSE_ASSERT(init_statements.size() == num_initializations);
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=sign-compare.
+ // ROSE_ASSERT(init_statements.size() == num_initializations);
+    ROSE_ASSERT(init_statements.size() == (size_t)num_initializations);
 
     for_statement -> set_test(test_statement);
     test_statement -> set_parent(for_statement);
@@ -5254,7 +5298,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, jboolean java_is_static, jstring java_string, jint initializer_index, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_string);
-    bool isStatic = java_is_static;
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // bool isStatic = java_is_static;
 
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(class_definition);
@@ -5265,14 +5311,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, j
     // start by pushing a VOID return type to make it look like a method.
     //
     //    astJavaComponentStack.push(SgTypeVoid::createType()); 
-/*
-    SgMemberFunctionDeclaration *method_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, name, 0 /* no arguments */ /*);
+
+#if 0
+ // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=comment.
+    SgMemberFunctionDeclaration *method_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, name, 0 /* no arguments */);
     ROSE_ASSERT(method_declaration != NULL);
 
     // This is not a defining function declaration so we can't identify the SgFunctionDefinition and push it's body onto the astJavaScopeStack.
     SgFunctionDefinition *method_definition = method_declaration -> get_definition();
     ROSE_ASSERT(method_definition != NULL);
-*/
+#endif
 
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
     ROSE_ASSERT(attribute);

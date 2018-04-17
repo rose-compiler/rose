@@ -1,5 +1,6 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <LoopTree.h>
 #include <LoopTreeObserver.h>
 #include <LoopTreeBuild.h>
@@ -211,7 +212,7 @@ AstNodePtr LoopTreeNode :: CodeGen() const
 
 std::string LoopTreeStmtNode :: toString() const
 {
-  return AstToString( start );
+  return AstInterface::AstToString( start );
 }
 
 AstNodePtr LoopTreeStmtNode :: CodeGen( const AstNodePtr& c) const

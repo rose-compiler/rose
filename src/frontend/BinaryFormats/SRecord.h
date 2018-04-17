@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryFormats_SRecord_H
 #define ROSE_BinaryFormats_SRecord_H
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Motorola S-Record.
@@ -103,10 +103,12 @@ public:
      *
      *  The specified S-Records are loaded into the memory map.  If @p createSegments is true then a minimal number of segments
      *  are created to hold the S-Record data, otherwise the destinations must already be mapped or a MemoryMap::NotMapped
-     *  exception is thrown.  When new segments are created they are given access permissions specified by @p
-     *  accessPerms. Access permissions are not consulted and do not cause errors when writing S-Record data into the map. */
-    static rose_addr_t load(const std::vector<SRecord>&, MemoryMap&, bool createSegments=true,
-                            unsigned accessPerms=MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE);
+     *  exception is thrown.  When new segments are created they are given access permissions specified by @p accessPerms and
+     *  the name specified by @p newSegmentNames (or "S-Records"). Access permissions are not consulted and do not cause errors
+     *  when writing S-Record data into the map. */
+    static rose_addr_t load(const std::vector<SRecord>&, const MemoryMap::Ptr&, bool createSegments=true,
+                            unsigned accessPerms=MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE,
+                            const std::string &newSegmentNames = "S-Records");
 
     /** Compute the checksum for the data.
      *
@@ -127,7 +129,7 @@ public:
      *  indicate 16-, 24-, or 32-bit addresses. The output is not prefixed with an SREC_HEADER record nor terminated with
      *  SREC_COUNT or SREC_START records.  An <code>std::runtime_error</code> is thrown if an address in the memory map cannot
      *  be encoded in the specified @p addrSize number of bytes. Returns the number of records emitted. */
-    static size_t dump(const MemoryMap&, std::ostream&, size_t addrSize=4);
+    static size_t dump(const MemoryMap::Ptr&, std::ostream&, size_t addrSize=4);
 };
 
 } // namespace

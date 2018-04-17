@@ -33,10 +33,14 @@ testLinkedListTestCode: cgraphpp
 	./cgraphpp -rose:gall $(srcdir)/linkedListTestCode.C
 
 # This rule is run after automake's internal check rule (which we don't want to use)
-check-local: testLinkedListTestCode
+conditional-check-local: testLinkedListTestCode
 	@echo "*************************************************************************************************"
 	@echo "****** ROSE/projects/dataStructureGraphing: make check rule complete (terminated normally) ******"
 	@echo "*************************************************************************************************"
+
+else
+
+conditional-check-local:
 
 endif
 
@@ -48,6 +52,8 @@ include_HEADERS = \
      helpFunctions.h
 
 EXTRA_DIST = linkedListTestCode.C
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files

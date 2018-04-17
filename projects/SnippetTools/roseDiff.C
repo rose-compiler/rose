@@ -1,4 +1,5 @@
 #include <rose.h>
+#include <CommandLine.h>
 #include <FileSystem.h>
 
 #include <Sawyer/CommandLine.h>
@@ -6,7 +7,7 @@
 #include <string>
 #include <vector>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
@@ -26,7 +27,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
         .doc("description",
              "Scans the two specified directories and creates a recursive, unified diff of the ROSE-generated files "
              "in those directories.")
-        .with(CommandlineProcessing::genericSwitches());
+        .with(Rose::CommandLine::genericSwitches());
 
     return parser.parse(argc, argv).apply();
 }
@@ -42,9 +43,8 @@ copyRoseFiles(const FileSystem::Path &root) {
 int
 main(int argc, char *argv[]) {
     // Initialize libraries
-    Diagnostics::initialize();
-    mlog = Diagnostics::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command line
     Settings settings;

@@ -3,9 +3,13 @@
 #include "interproceduralCFG.h"
 #include <string>
 using namespace std;
+using namespace Rose;
 
 int main(int argc, char *argv[]) 
 {
+  // Initialize and check compatibility. See Rose::initialize
+  ROSE_INITIALIZE;
+
   // Build the AST used by ROSE
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL); 

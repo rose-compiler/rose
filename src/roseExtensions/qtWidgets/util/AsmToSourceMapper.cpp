@@ -8,7 +8,7 @@
 
 using namespace std;
 
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
 struct compare_address
 {
     compare_address()
@@ -47,7 +47,7 @@ AsmToSourceMapper::AsmToSourceMapper( SgBinaryComposite *file_ )
 
 void AsmToSourceMapper::addFile()
 {
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
     typedef std::vector<SgNode *>::iterator nodeIterator;
 
     // obtaining a vector with all the dwarf Information
@@ -182,7 +182,7 @@ void AsmToSourceMapper::annotate( SgSourceFile *srcFile )
 
     addAttribute<AstSourceNodeLink>( file, id.str(), srcFile, 0 );
 
-#if USE_ROSE_DWARF_SUPPORT
+#ifdef ROSE_HAVE_LIBDWARF
     
     for( size_t idx( 0 ); idx < srcFile->get_numberOfTraversalSuccessors(); ++idx )
     {

@@ -1,0 +1,4 @@
+#pragma omp parallel  private(j) num_threads(4)
+#pragma omp parallel  num_threads(4)
+#pragma omp parallel  num_threads(4)
+#pragma omp parallel  num_threads(4)

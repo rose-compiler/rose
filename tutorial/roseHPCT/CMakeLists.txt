@@ -28,7 +28,6 @@ target_link_libraries(attachMetrics
 #
 #include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #
-#LDADD = $(LIBS_WITH_RPATH) $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
 #
 ## HPCToolkit-generated files.
 #HPCT_FILES = PAPI_FP_OPS.xml \

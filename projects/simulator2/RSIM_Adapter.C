@@ -6,7 +6,7 @@
 #include "RSIM_Adapter.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 /******************************************************************************************************************************
  *                                      Adapter Base Class

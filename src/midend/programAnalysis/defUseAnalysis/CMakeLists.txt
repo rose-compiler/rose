@@ -32,7 +32,7 @@ install(FILES  DefUseAnalysis.h  BottomUpTraversalLiveness.h DefUseAnalysis_perF
 #
 #noinst_LTLIBRARIES = libDefUseAnalysis.la
 #
-## DQ (11/8/2007): The runTest.cpp file was moved to tests/roseTests/programAnalysisTests/defUseAnalysisTests/runTest.C by Thomas.
+## DQ (11/8/2007): The runTest.cpp file was moved to tests/nonsmoke/functional/roseTests/programAnalysisTests/defUseAnalysisTests/runTest.C by Thomas.
 ## libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp $(srcdir)/runTest.cpp
 #libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp $(srcdir)/LivenessAnalysis.cpp $(srcdir)/DefUseAnalysisAbstract.cpp
 #

@@ -39,7 +39,7 @@ FixupPrettyFunctionVariables::evaluateInheritedAttribute ( SgNode* node, FixupPr
 
   // We are looking for the variable "__assert_fail" which EDG has used instead of "__PRETTY_FUNCTION__".
   // An example from CPP is:
-  // ((!"Inside of struct Y::foo1 (using assert)") ? static_cast<void> (0) : (__assert_fail ("!\"Inside of struct Y::foo1 (using assert)\"", "/home/dquinlan/ROSE/git-dq-main-rc/tests/CompileTests/Cxx_tests/test2010_07.C", 21, __PRETTY_FUNCTION__), static_cast<void> (0)));
+  // ((!"Inside of struct Y::foo1 (using assert)") ? static_cast<void> (0) : (__assert_fail ("!\"Inside of struct Y::foo1 (using assert)\"", "/home/dquinlan/ROSE/git-dq-main-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2010_07.C", 21, __PRETTY_FUNCTION__), static_cast<void> (0)));
   // But EDG will substitute "__PRETTY_FUNCTION__" with "__assert_fail", as is clearly documented in the EDG_3.3/Changes file (EDG ChangeLog).
   // So we have to back this out so that we can allow ROSE to generate the same code that GNU would (and other compilers).
 

@@ -9,10 +9,11 @@
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
+#include <boost/serialization/access.hpp>
 #include <list>
 #include <ostream>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -23,6 +24,24 @@ class CfgVertex {
     BasicBlock::Ptr bblock_;                            // basic block, or null if only a place holder
     FunctionSet owningFunctions_;                       // functions to which vertex belongs
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(startVa_);
+        s & BOOST_SERIALIZATION_NVP(bblock_);
+        s & BOOST_SERIALIZATION_NVP(owningFunctions_);
+    }
+#endif
+
+public:
+    // intentionally undocumented. Necessary for serialization of Sawyer::Container::Graph
+    CfgVertex()
+        : type_(V_USER_DEFINED), startVa_(0) {}
+    
 public:
     /** Construct a basic block placeholder vertex. */
     explicit CfgVertex(rose_addr_t startVa): type_(V_BASIC_BLOCK), startVa_(startVa) {}
@@ -146,6 +165,18 @@ class CfgEdge {
 private:
     EdgeType type_;
     Confidence confidence_;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(confidence_);
+    }
+#endif
+
 public:
     CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
     /*implicit*/ CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
@@ -272,13 +303,34 @@ CfgConstVertexSet findCalledFunctions(const ControlFlowGraph &cfg, const Control
 /** Return outgoing call-return edges.
  *
  *  A call-return edge represents a short-circuit control flow path across a function call, from the call site to the return
- *  target. */
+ *  target.
+ *
+ *  If a partitioner and control flow graph are specified, then this returns all edges of type @ref E_CALL_RETURN. If a vertex
+ *  is specified, then it returns only those call-return edges that emanate from said vertex.
+ *
+ * @{ */
+CfgConstEdgeSet findCallReturnEdges(const Partitioner&, const ControlFlowGraph&);
 CfgConstEdgeSet findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
+/** @} */
 
-/** Find function return vertices.
+/** Find all function return vertices.
  *
  *  Returns the list of vertices with outgoing E_FUNCTION_RETURN edges. */
 CfgConstVertexSet findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &beginVertex);
+
+/** Find function return edges organized by function.
+ *
+ *  Finds all control flow graph edges that are function return edges and organizes them according to the function from
+ *  which they emanate.  Note that since a basic block can be shared among several functions (usually just one though), an
+ *  edge may appear multiple times in the returned map.
+ *
+ *  If a control flow graph is supplied, it must be compatible with the specified partitioner. If no control flow graph
+ *  is specified then the partitioner's own CFG is used.
+ *
+ * @{ */
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> findFunctionReturnEdges(const Partitioner&);
+Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> findFunctionReturnEdges(const Partitioner&, const ControlFlowGraph&);
+/** @} */
 
 /** Erase multiple edges.
  *
@@ -309,6 +361,48 @@ CfgConstVertexSet forwardMapped(const CfgConstVertexSet&, const CfgVertexMap&);
  *  Given a set of iterators and a vertex map, return the corresponding iterators by following the reverse mapping. Any vertex
  *  in the argument that is not present in the mapping is silently ignored. */
 CfgConstVertexSet reverseMapped(const CfgConstVertexSet&, const CfgVertexMap&);
+
+/** Rewrite function return edges.
+ *
+ *  Given a graph that has function return edges (@ref E_FUNCTION_RETURN) that point to the indeterminate vertex, replace them
+ *  with function return edges that point to the return sites. The return sites are the vertices pointed to by the call-return
+ *  (@ref E_CALL_RETURN) edges emanating from the call sites for said function.  The graph is modified in place. The resulting
+ *  graph will usually have more edges than the original graph. */
+void expandFunctionReturnEdges(const Partitioner&, ControlFlowGraph &cfg/*in,out*/);
+
+/** Generate a function control flow graph.
+ *
+ *  A function control flow graph is created by erasing all parts of the global control flow graph (@p gcfg) that aren't
+ *  owned by the specified function.  The resulting graph will contain an indeterminate vertex if the global CFG contains
+ *  an indeterminate vertex and the function has any edges to the indeterminate vertex that are not E_FUNCTION_RETURN
+ *  edges. In other words, the indeterminate vertex is excluded unless there are things like branches or calls whose target
+ *  address is a register.
+ *
+ *  Upon return, the @p entry iterator points to the vertex of the return value that serves as the function's entry point.
+ *
+ *  Note that this method of creating a function control flow graph can be slow since it starts with a global control flow
+ *  graph. It has one benefit over @ref functionCfgByReachability though: it will find all vertices that belong to the
+ *  function even if they're not reachable from the function's entry point, or even if they're only reachable by traversing
+ *  through a non-owned vertex. */
+ControlFlowGraph functionCfgByErasure(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+                                      ControlFlowGraph::VertexIterator &entry/*out*/);
+
+/** Generate a function control flow graph.
+ *
+ *  A function control flow graph is created by traversing the specified global control flow grap (@p gcfg) starting at
+ *  the specified vertex (@p gcfgEntry). The traversal follows only vertices that are owned by the specified function, and
+ *  the indeterminate vertex. The indeterminate vertex is only reachable through edges of types other than @ref 
+ *  E_FUNCTION_RETURN.
+ *
+ *  The function control flow graph entry point corresponding to @p gcfgEntry is always vertex number zero in the return
+ *  value.  However, if @p gcfgEntry points to a vertex not owned by @p function, or @p gcfg is empty then the returned
+ *  graph is also empty.
+ *
+ *  Note that this method of creating a function control graph can be much faster than @ref functionCfgByErasure since
+ *  it only traverses part of the global CFG, but the drawback is that the return value won't include vertices that are
+ *  not reachable from the return value's entry vertex. */
+ControlFlowGraph functionCfgByReachability(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+                                           const ControlFlowGraph::ConstVertexIterator &gcfgEntry);
 
 } // namespace
 } // namespace

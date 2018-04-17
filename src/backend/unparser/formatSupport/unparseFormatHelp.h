@@ -48,8 +48,8 @@ class ROSE_DLL_API UnparseFormatHelp
          public:
              struct Args {
                  SgFile *fileNode;                      // file that was unparsed
-                 rose::FileSystem::Path outputName;           // name of output file
-                 Args(SgFile *fileNode, const rose::FileSystem::Path &outputName): fileNode(fileNode), outputName(outputName) {}
+                 Rose::FileSystem::Path outputName;           // name of output file
+                 Args(SgFile *fileNode, const Rose::FileSystem::Path &outputName): fileNode(fileNode), outputName(outputName) {}
              };
              virtual bool operator()(bool chain, const Args&) { return chain; }
          };

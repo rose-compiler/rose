@@ -14,10 +14,11 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "DispatcherX86.h"
+#include "BinaryUnparserX86.h"
 
 #include <sstream>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 
@@ -48,16 +49,21 @@ namespace BinaryAnalysis {
  *========================================================================================================================*/
 
 bool
-DisassemblerX86::can_disassemble(SgAsmGenericHeader *header) const
+DisassemblerX86::canDisassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     if (isSgAsmDOSFileHeader(header))
-        return 2==get_wordsize();
+        return 2==wordSizeBytes();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family)
-        return 4==get_wordsize();
+        return 4==wordSizeBytes();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family)
-        return 8==get_wordsize();
+        return 8==wordSizeBytes();
     return false;
+}
+
+Unparser::BasePtr
+DisassemblerX86::unparser() const {
+    return Unparser::X86::instance();
 }
 
 void
@@ -69,6 +75,7 @@ DisassemblerX86::init(size_t wordsize)
     size_t addrWidth=0;
     switch (wordsize) {
         case 2:
+            name("i286");
             addrWidth = 16;
             insnSize = x86_insnsize_16;
 #if 0 // [Robb P. Matzke 2015-06-23]
@@ -85,20 +92,24 @@ DisassemblerX86::init(size_t wordsize)
             REG_SS = *regdict->lookup("ss");
             break;
         case 4:
+            name("i386");
             addrWidth = 32;
             insnSize = x86_insnsize_32;
             regdict = RegisterDictionary::dictionary_pentium4();
             REG_IP = *regdict->lookup("eip");
             REG_SP = *regdict->lookup("esp");
             REG_SS = *regdict->lookup("ss");
+            callingConventions(CallingConvention::dictionaryX86());
             break;
         case 8:
+            name("amd64");
             addrWidth = 64;
             insnSize = x86_insnsize_64;
             regdict = RegisterDictionary::dictionary_amd64();
             REG_IP = *regdict->lookup("rip");
             REG_SP = *regdict->lookup("rsp");
             REG_SS = *regdict->lookup("ss");
+            callingConventions(CallingConvention::dictionaryAmd64());
             break;
         default:
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
@@ -107,13 +118,9 @@ DisassemblerX86::init(size_t wordsize)
     d->set_register_dictionary(regdict);                // so register cache is initialized
     p_proto_dispatcher = d; 
 
-    set_registers(regdict);
-    set_wordsize(wordsize);
-    set_alignment(1);
-    set_sex(ByteOrder::ORDER_LSB);
-    ASSERT_not_null(get_registers());
-
-    callingConventions(CallingConvention::dictionaryX86());
+    registerDictionary(regdict);
+    wordSizeBytes(wordsize);
+    byteOrder(ByteOrder::ORDER_LSB);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */
@@ -121,7 +128,7 @@ DisassemblerX86::init(size_t wordsize)
 }
 
 SgAsmInstruction *
-DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     /* The low-level disassembly function don't understand MemoryMap mappings. Therefore, remap the next few bytes (enough
      * for at least one instruction) into a temporary buffer. The longest x86 instruction is 15 bytes in 16-bit mode and 13
@@ -133,7 +140,7 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
      * In theory, by adding all appropriate prefix bytes you can obtain an instruction that is up to 16 bytes long. However,
      * the x86 CPU will generate an exception if the instruction length exceeds 15 bytes, and so will the getByte method. */
     unsigned char temp[16];
-    size_t tempsz = map->at(start_va).limit(sizeof temp).require(get_protection()).read(temp).size();
+    size_t tempsz = map->at(start_va).limit(sizeof temp).require(MemoryMap::EXECUTABLE).read(temp).size();
 
     /* Disassemble the instruction */
     startInstruction(start_va, temp, tempsz);
@@ -147,12 +154,11 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
         successors->insert(suc2.begin(), suc2.end());
     }
 
-    update_progress(insn);
     return insn;
 }
 
 SgAsmInstruction *
-DisassemblerX86::make_unknown_instruction(const Exception &e)
+DisassemblerX86::makeUnknownInstruction(const Exception &e)
 {
     SgAsmX86Instruction *insn = makeInstruction(x86_unknown_instruction, "unknown");
     insn->set_raw_bytes(e.bytes);
@@ -535,10 +541,10 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
     ASSERT_forbid(name.empty());
 
     /* Now that we have a register name, obtain the register descriptor from the dictionary. */
-    ASSERT_not_null(get_registers());
-    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    ASSERT_not_null(registerDictionary());
+    const RegisterDescriptor *rdesc = registerDictionary()->lookup(name);
     if (!rdesc)
-        throw Exception("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name());
+        throw Exception("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name());
 
     /* Construct the return value. */
     SgAsmRegisterReferenceExpression *rre = NULL;
@@ -5892,6 +5898,7 @@ DisassemblerX86::decodeGroup15()
             if (modeField == 3) {
                 return makeInstruction(x86_sfence, "sfence");
             } else {
+                fillInModRM(rmReturnNull, BYTET);
                 return makeInstruction(x86_clflush, "clflush", modrm);
             }
         default:
@@ -5929,3 +5936,7 @@ DisassemblerX86::decodeGroupP()
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::DisassemblerX86);
+#endif

@@ -3,6 +3,9 @@
 #include <rose.h>
 
 #include <BinaryNoOperation.h>
+#include <BinaryYicesSolver.h>
+#include <BinaryZ3Solver.h>
+#include <CommandLine.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
@@ -15,7 +18,6 @@
 #include <SymbolicSemantics2.h>
 #include <TestSemantics2.h>
 #include <TraceSemantics2.h>
-#include <YicesSolver.h>
 
 //=============================================================================================================================
 //                                      User-contributed semantics
@@ -50,11 +52,11 @@
 //                                      End of user-contributed semantics
 //=============================================================================================================================
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Sawyer::Message::Common;                // DEBUG, INFO, WARN, ERROR etc.
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 
@@ -64,7 +66,6 @@ struct Settings {
     std::string rstateClassName;                        // name of register state class, abbreviated
     std::string mstateClassName;                        // name of memory state class, abbreviated
     std::string opsClassName;                           // name of RiscOperators class, abbreviated
-    std::string solverName;                             // name of SMT solver
     bool trace;                                         // use TraceSemantics?
     bool showInitialValues;                             // show initial values in register states?
     bool showStates;                                    // show register and memory state after each instruction?
@@ -98,6 +99,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup sem("Semantics class switches");
+    sem.name("class");
+    sem.doc("These switches control which classes are used when constructing the instruction semantics framework.");
+
     sem.insert(Switch("value")
                .argument("class", anyParser(settings.valueClassName))
                .doc("Name of the class that represents semantic values. If not specified, use the default value class for "
@@ -124,10 +128,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup ctl("Semantics control switches");
-    ctl.insert(Switch("solver")
-               .argument("name", anyParser(settings.solverName))
-               .doc("Enables use of an SMT solver of the specified class.  See \"@s{solver} list\" for the list of "
-                    "recognized names.\n"));
+    ctl.name("ctl");
+    ctl.doc("These switches control various operational characteristics of the instruction semantics framework. The "
+            "applicability of some of these switches depends on the classes used to construct the framework.");
 
     ctl.insert(Switch("trace")
                .intrinsicValue(true, settings.trace)
@@ -171,7 +174,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .doc("Allows the RegisterStateGeneric::accessModifiesExistingLocations property to be turned on or off based "
                     "on the contents of the stack pointer register.  While the stack pointer contains the value "
                     "0x137017c1 the set of stored register locations is not allowed to change. E.g., reading AL when the "
-                    "register state is storing AX will not cause it to start sorting AL and AH instead of AX. The "
+                    "register state is storing AX will not cause it to start storing AL and AH instead of AX. The "
                     "@s{no-test-adaptive-registers} switch disables this feature. The default is to " +
                     std::string(settings.testAdaptiveRegisterState?"":"not ") + " operate in this mode."));
     ctl.insert(Switch("no-test-adaptive-registers")
@@ -205,6 +208,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     //------------------------------------------------
     SwitchGroup out("Output switches");
+    out.name("out");
+    out.doc("These switches control what kind of output is produced.");
+
     out.insert(Switch("show-states")
                .intrinsicValue(true, settings.showStates)
                .doc("Turns on display of state information after each instruction is processed.  State output can be "
@@ -242,21 +248,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     return parser.with(sem).with(ctl).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
-static SMTSolver *
+static SmtSolverPtr
 makeSolver(const Settings &settings) {
-    if (settings.solverName == "list") {
-        std::cout <<"SMT solver names:\n"
-                  <<"  yices            rose::BinaryAnalysis::YicesSolver\n";
-        exit(0);
-    } else if (settings.solverName == "") {
-        return NULL;                                    // solvers are optional
-    } else if (settings.solverName == "yices") {
-        YicesSolver *solver = new YicesSolver;
-        solver->set_linkage(YicesSolver::LM_LIBRARY);
-        return solver;
-    } else {
-        throw std::runtime_error("unrecognized SMT solver name \"" + settings.solverName + "\"; see --solver=list\n");
-    }
+    return SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 }
 
 static BaseSemantics::SValuePtr
@@ -267,13 +261,13 @@ makeProtoVal(const Settings &settings) {
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::SValue\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::SValue\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::SValue\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::SValue\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::SValue\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue\n";
-        exit(0);
+                  <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue\n"
+                  <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::SValue\n"
+                  <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::SValue\n"
+                  <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::SValue\n"
+                  <<"  partitioner2     Rose::BinaryAnalysis::Partitioner2::Semantics::SValue\n"
+                  <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue\n";
+        return BaseSemantics::SValuePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
         return com::example::semantics::SValue::instance();
@@ -303,15 +297,15 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RegisterState\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  generic          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RegisterState\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  x86              rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateX86\n";
-        exit(0);
+                  <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  generic          Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
+                  <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  partitioner2     Rose::BinaryAnalysis::Partitioner2::Semantics::RegisterState\n"
+                  <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  x86              Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateX86\n";
+        return BaseSemantics::RegisterStatePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
         return com::example::semantics::RegisterState::instance(protoval, regdict);
@@ -338,23 +332,23 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 }
 
 static BaseSemantics::MemoryStatePtr
-makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protoval, const BaseSemantics::SValuePtr &protoaddr,
-                const RegisterDictionary *regdict) {
+makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSemantics::SValuePtr &protoval,
+                const BaseSemantics::SValuePtr &protoaddr, const RegisterDictionary *regdict) {
     const std::string &className = settings.mstateClassName;
     if (className == "list") {
         std::cout <<"memory state class names:\n"
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::MemoryState\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::MemoryState\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
-                  <<"  p2-list          rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState\n"
-                  <<"  p2-map           rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState\n"
-                  <<"  symbolic-list    rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
-                  <<"  symbolic-map     rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
-        exit(0);
+                  <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::MemoryState\n"
+                  <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
+                  <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
+                  <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
+                  <<"  p2-list          Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState\n"
+                  <<"  p2-map           Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState\n"
+                  <<"  symbolic-list    Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
+                  <<"  symbolic-map     Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
+        return BaseSemantics::MemoryStatePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
         return com::example::semantics::MemoryState::instance(protoval, protoaddr);
@@ -369,9 +363,13 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
         BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
-        return P2::Semantics::MemoryListState::instance(protoval, protoaddr);
+        P2::Semantics::MemoryListStatePtr m = P2::Semantics::MemoryListState::instance(protoval, protoaddr);
+        m->memoryMap(engine.memoryMap()->shallowCopy());
+        return m;
     } else if (className == "p2-map") {
-        return P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
+        P2::Semantics::MemoryMapStatePtr m = P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
+        m->memoryMap(engine.memoryMap()->shallowCopy());
+        return m;
     } else if (className == "symbolic-list" || className == "symbolic") {
         return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
     } else if (className == "symbolic-map") {
@@ -387,12 +385,12 @@ listRiscOperators() {
 #ifdef EXAMPLE_EXTENSIONS
               <<"  example          com::example::semantics::RiscOperators\n"
 #endif
-              <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
-              <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
-              <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
-              <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
-              <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
-              <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
+              <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
+              <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
+              <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
+              <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
+              <<"  partitioner2     Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
+              <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
 }
 
 static BaseSemantics::RiscOperatorsPtr
@@ -401,11 +399,11 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     if (className.empty())
         throw std::runtime_error("--semantics switch is required");
     
-    SMTSolver *solver = makeSolver(settings);
+    SmtSolverPtr solver = makeSolver(settings);
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
-    BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, protoval, protoval, regdict);
+    BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, engine, protoval, protoval, regdict);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(rstate, mstate);
 
     if (0) {
@@ -422,7 +420,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     } else if (className == "partial") {
         PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(state, solver);
         if (settings.useMemoryMap)
-            ops->set_memory_map(new MemoryMap(engine.memoryMap()));
+            ops->set_memory_map(engine.memoryMap()->shallowCopy());
         return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
@@ -491,12 +489,12 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
                           PartialSymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName == "partitioner2") {
-            TestSemantics<P2::Semantics::SValuePtr, P2::Semantics::RegisterStateGenericPtr,
+            TestSemantics<P2::Semantics::SValuePtr, P2::Semantics::RegisterStatePtr,
                           P2::Semantics::MemoryListStatePtr, P2::Semantics::StatePtr,
                           P2::Semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName == "symbolic") {
-            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStatePtr,
                           SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
@@ -535,6 +533,12 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
                    settings.rstateClassName=="symbolic" && settings.mstateClassName=="symbolic-map") {
             TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                           SymbolicSemantics::MemoryMapStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
+                   settings.rstateClassName=="symbolic" && settings.mstateClassName=="symbolic-list") {
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else {
@@ -614,7 +618,9 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         try {
             dispatcher->processInstruction(insn);
         } catch (const BaseSemantics::Exception &e) {
-            std::cout <<e <<"\n";
+            std::cout <<"Semantics error: " <<e <<"\n";
+        } catch (const SmtSolver::Exception &e) {
+            std::cout <<"SMT solver error: " <<e.what() <<"\n";
         }
         if (settings.showStates)
             std::cout <<(*ops+formatter) <<"\n";
@@ -634,19 +640,37 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
-    ::mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line to load, disassemble, and partition the specimen
     P2::Engine engine;
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
     adjustSettings(settings);
+
+    // Perhaps the user is only asking us to list available values for some switches
+    bool listAndExit = false;
+    if (settings.valueClassName == "list") {
+        (void) makeProtoVal(settings);
+        listAndExit = true;
+    }
+    if (settings.rstateClassName == "list") {
+        (void) makeRegisterState(settings, BaseSemantics::SValuePtr(), NULL);
+        listAndExit = true;
+    }
+    if (settings.mstateClassName == "list") {
+        (void) makeMemoryState(settings, engine, BaseSemantics::SValuePtr(), BaseSemantics::SValuePtr(), NULL);
+        listAndExit = true;
+    }
     if (settings.opsClassName == "list") {
         listRiscOperators();
-        exit(0);
+        listAndExit = true;
     }
+    if (listAndExit)
+        exit(0);
+
+    // Validate the command-line now that we know we're not just listing stuff
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 

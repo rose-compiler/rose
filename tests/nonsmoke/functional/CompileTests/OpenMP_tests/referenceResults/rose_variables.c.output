@@ -1,0 +1,8 @@
+#pragma omp threadprivate (m)
+//#pragma omp threadprivate(mm)
+#pragma omp parallel  private(i,mm) firstprivate(k_3) reduction(+ : gi,gj)
+//#pragma omp for shared(mm) 
+#pragma omp for 
+#pragma omp single 
+#pragma omp critical 
+#pragma omp atomic 

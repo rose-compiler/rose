@@ -6,7 +6,22 @@ SUBDIRS = Compass_C_tests Compass_Cxx_tests Compass_OpenMP_tests
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = exampleTest_1.C 
+# TESTCODES = exampleTest_1.C 
+TESTCODES = 
+
+if ROSE_USE_EDG_VERSION_4_9
+if USING_GNU_COMPILER
+if ROSE_USING_GCC_VERSION_LATER_6_1
+TESTCODES += exampleTest_1.C 
+else
+if !ROSE_USING_GCC_VERSION_LATER_4_8
+TESTCODES += exampleTest_1.C 
+else
+# GNU Compiler version numbers 4.8 and and greater and strictly less than 6.1
+endif
+endif
+endif
+endif
 
 # This test just takes a long time and is not critical now that we have seperate C and C++ test directories.
 # exampleTest_2.C 
@@ -14,7 +29,16 @@ TESTCODES = exampleTest_1.C
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 TEST_Objects = ${TESTCODES:.C=.o}
 

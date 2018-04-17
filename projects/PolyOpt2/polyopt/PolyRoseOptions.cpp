@@ -28,12 +28,17 @@ PolyRoseOptions::initialize()
   // Polyopt options.
   polyopt_generate_pragmas = false; // Default: do not generate
 				    // omp/ivdep pragmas
+  polyopt_pocc_past2past = false;
+  polyopt_highorderstencil = false;
+  polyopt_histencil_optfilename = NULL;
+
 
   // Verbose option.
   pr_verbose = false;
   polyopt_quiet = false;
 
   // Scop Extraction options.
+  polyopt_single_function_name = NULL;
   sc_generic_scop_extractor = false;
   sc_scop_extractor_verbose_level = 0;
   sc_strict_scop_extractor = false;
@@ -42,9 +47,8 @@ PolyRoseOptions::initialize()
 				   // effect.
   sc_approximate_scop_extractor = false;
   sc_f2c_scop_extractor = false;
-
   sc_allow_math_func = false;
-
+  sc_with_pragmas_only = false;
 
   // Annotation functions.
   polyopt_annotate_only = false;
@@ -60,6 +64,7 @@ PolyRoseOptions::initialize()
   polyopt_fixed_tiling = false;
   polyopt_parametric_tiling = false;
   polyopt_parallel_only = false;
+  polyopt_tilingapi_only = false;
 
   // Codegen options.
   polyopt_codegen_use_past = true;
@@ -132,6 +137,13 @@ if (! strcmp (x, y)) {				\
   continue;					\
 }
 
+#define check_opt_arg(x,y,z)			\
+  if (! strncmp (x, y, strlen(y))) {		\
+  z;						\
+  continue;					\
+}
+
+
 void
 print_help ()
 {
@@ -141,16 +153,22 @@ print_help ()
   fprintf (stderr, "--polyopt-verbose\n");
   fprintf (stderr, "--polyopt-quiet\n");
   fprintf (stderr, "Main optimization paths: \n");
+  fprintf (stderr, "--polyopt-high-order-stencil\n");
   fprintf (stderr, "--polyopt-fixed-tiling\n");
   fprintf (stderr, "--polyopt-parametric-tiling\n");
   fprintf (stderr, "--polyopt-parallel-only\n");
+  fprintf (stderr, "Option passing related options: \n");
+  fprintf (stderr, "--polyopt-histencil-optfilename=<filename>\n");
   fprintf (stderr, "Scop extraction related options: \n");
+  fprintf (stderr, "--polyopt-extract-function=<func_name>\n");
   fprintf (stderr, "--polyopt-generic-scop-extractor\n");
-  // fprintf (stderr, "--polyopt-strict-scop-extractor\n");
-  // fprintf (stderr, "--polyopt-unsafe-scop-extractor\n");
+  fprintf (stderr, "--polyopt-strict-scop-extractor\n");
+  fprintf (stderr, "--polyopt-unsafe-scop-extractor\n");
   fprintf (stderr, "--polyopt-approximate-scop-extractor\n");
   fprintf (stderr, "--polyopt-safe-math-func\n");
-  // fprintf (stderr, "--polyopt-f2c-scop-extractor\n");
+  fprintf (stderr, "--polyopt-scop-pragmas-only\n");
+  fprintf (stderr, "--polyopt-scop-in-separate-file\n");
+  fprintf (stderr, "--polyopt-f2c-scop-extractor\n");
   fprintf (stderr, "--polyopt-scop-extractor-verbose=1\n");
   fprintf (stderr, "--polyopt-scop-extractor-verbose=2\n");
   fprintf (stderr, "--polyopt-scop-extractor-verbose=3\n");
@@ -172,35 +190,35 @@ print_help ()
   fprintf (stderr, "--polyopt-pocc-verbose\n");
   fprintf (stderr, "--polyopt-pluto\n");
   fprintf (stderr, "--polyopt-pluto-tile\n");
-  // fprintf (stderr, "--polyopt-pluto-l2tile\n");
+  fprintf (stderr, "--polyopt-pluto-l2tile\n");
   fprintf (stderr, "--polyopt-pluto-parallel\n");
-  // fprintf (stderr, "--polyopt-pluto-unroll\n");
-  // fprintf (stderr, "--polyopt-pluto-ufactor <value>\n");
+  fprintf (stderr, "--polyopt-pluto-unroll\n");
+  fprintf (stderr, "--polyopt-pluto-ufactor <value>\n");
   fprintf (stderr, "--polyopt-pluto-prevector\n");
   fprintf (stderr, "--polyopt-pluto-fuse-<maxfuse,smartfuse,nofuse>\n");
   fprintf (stderr, "--polyopt-pluto-rar\n");
   fprintf (stderr, "--polyopt-pluto-lastwriter\n");
-  // fprintf (stderr, "--polyopt-pluto-multipipe\n");
-  // fprintf (stderr, "--polyopt-pluto-scalpriv\n");
-  // fprintf (stderr, "--polyopt-pluto-ft <value>\n");
-  // fprintf (stderr, "--polyopt-pluto-lt <value>\n");
-  // fprintf (stderr, "--polyopt-pluto-bee\n");
-  // fprintf (stderr, "--polyopt-pluto-context\n");
-  // fprintf (stderr, "--polyopt-letsee\n");
-  // fprintf (stderr, "--polyopt-letsee-space <schedule,precut>\n");
-  // fprintf (stderr, "--polyopt-letsee-traversal <exhaust,dh,random,m1,skip,ga>\n");
-  // fprintf (stderr, "--polyopt-letsee-normspace\n");
-  // fprintf (stderr, "--polyopt-letsee-prune-precut\n");
-  // fprintf (stderr, "--polyopt-letsee-backtrack-multi\n");
-  // fprintf (stderr, "--polyopt-letsee-rtries <value>\n");
-  // fprintf (stderr, "--polyopt-letsee-ilb <value>\n");
-  // fprintf (stderr, "--polyopt-letsee-iUb <value>\n");
-  // fprintf (stderr, "--polyopt-letsee-plb <value>\n");
-  // fprintf (stderr, "--polyopt-letsee-pUb <value>\n");
-  // fprintf (stderr, "--polyopt-letsee-clb <value>\n");
-  // fprintf (stderr, "--polyopt-letsee-cUb <value>\n");
-  // fprintf (stderr, "--polyopt-vectorizer\n");
-  // fprintf (stderr, "--polyopt-storage-compaction\n");
+  fprintf (stderr, "--polyopt-pluto-multipipe\n");
+  fprintf (stderr, "--polyopt-pluto-scalpriv\n");
+  fprintf (stderr, "--polyopt-pluto-ft <value>\n");
+  fprintf (stderr, "--polyopt-pluto-lt <value>\n");
+  fprintf (stderr, "--polyopt-pluto-bee\n");
+  fprintf (stderr, "--polyopt-pluto-context\n");
+  fprintf (stderr, "--polyopt-letsee\n");
+  fprintf (stderr, "--polyopt-letsee-space <schedule,precut>\n");
+  fprintf (stderr, "--polyopt-letsee-traversal <exhaust,dh,random,m1,skip,ga>\n");
+  fprintf (stderr, "--polyopt-letsee-normspace\n");
+  fprintf (stderr, "--polyopt-letsee-prune-precut\n");
+  fprintf (stderr, "--polyopt-letsee-backtrack-multi\n");
+  fprintf (stderr, "--polyopt-letsee-rtries <value>\n");
+  fprintf (stderr, "--polyopt-letsee-ilb <value>\n");
+  fprintf (stderr, "--polyopt-letsee-iUb <value>\n");
+  fprintf (stderr, "--polyopt-letsee-plb <value>\n");
+  fprintf (stderr, "--polyopt-letsee-pUb <value>\n");
+  fprintf (stderr, "--polyopt-letsee-clb <value>\n");
+  fprintf (stderr, "--polyopt-letsee-cUb <value>\n");
+  fprintf (stderr, "--polyopt-vectorizer\n");
+  fprintf (stderr, "--polyopt-storage-compaction\n");
 
   exit (1);
 }
@@ -215,7 +233,15 @@ PolyRoseOptions::parse(int argc, char** argv)
       if (! strcmp (argv[i], "--polyopt-help"))
 	print_help ();
 
+      // histencil relate options.
+      check_opt_arg(argv[i], "--polyopt-histencil-optfilename=",
+		    polyopt_histencil_optfilename = strdup (argv[i] + strlen ("--polyopt-histencil-optfilename=")));
+
+
       // Scop extraction options.
+      check_opt_arg(argv[i], "--polyopt-extract-function=",
+		    polyopt_single_function_name = strdup (argv[i] + strlen ("--poltopt-extract-function=")));
+
       check_opt(argv[i], "--polyopt-generic-scop-extractor",
 		sc_generic_scop_extractor = true);
       check_opt(argv[i], "--polyopt-strict-scop-extractor",
@@ -227,6 +253,10 @@ PolyRoseOptions::parse(int argc, char** argv)
 		sc_approximate_scop_extractor = true);
       check_opt(argv[i], "--polyopt-safe-math-func",
 		sc_allow_math_func = true);
+      check_opt(argv[i], "--polyopt-scop-pragmas-only",
+		sc_with_pragmas_only = true);
+      check_opt(argv[i], "--polyopt-scop-in-separate-file",
+		polyopt_scop_in_separate_files = true);
       check_opt(argv[i], "--polyopt-f2c-scop-extractor",
 		sc_f2c_scop_extractor = true);
       check_opt(argv[i], "--polyopt-f2c-scop-extractor",
@@ -264,6 +294,8 @@ PolyRoseOptions::parse(int argc, char** argv)
 
 
       // Main optimization primitives.
+      check_opt(argv[i], "--polyopt-high-order-stencil",
+		polyopt_highorderstencil = true);
       check_opt(argv[i], "--polyopt-fixed-tiling",
 		polyopt_fixed_tiling = true);
       check_opt(argv[i], "--polyopt-parametric-tiling",
@@ -386,6 +418,10 @@ PolyRoseOptions::parse(int argc, char** argv)
     }
 
   // Deal with generic options.
+  if (polyopt_highorderstencil)
+    {
+      polyopt_pocc_past2past = true;
+    }
   if (polyopt_fixed_tiling)
     {
       polyopt_codegen_use_ptile = false;
@@ -427,6 +463,9 @@ PolyRoseOptions::buildPoccOptions()
   options->clan_bounded_context = pocc_clan_bounded_context;
   options->inscop_fakepoccarray = pocc_inscop_fakepoccarray;
   options->names_are_strings = 0;
+
+  options->histencil = polyopt_highorderstencil;
+  options->histencil_optfilename = polyopt_histencil_optfilename;
 
   // Codegen options.
   if (polyopt_codegen_use_ptile)
@@ -710,3 +749,84 @@ PolyRoseOptions::getScalarPrivatization()
 }
 
 
+
+void
+PolyRoseOptions::setPoCC_Past2Past(bool val)
+{
+  polyopt_pocc_past2past = val;
+}
+
+bool
+PolyRoseOptions::getPoCC_Past2Past()
+{
+  return polyopt_pocc_past2past;
+
+}
+
+void
+PolyRoseOptions::setHighOrderStencil(bool val)
+{
+  polyopt_highorderstencil = val;
+}
+
+bool
+PolyRoseOptions::getHighOrderStencil()
+{
+  return polyopt_highorderstencil;
+}
+
+void
+PolyRoseOptions::setExtractorFunctionName(char* val)
+{
+  polyopt_single_function_name = val;
+}
+
+char*
+PolyRoseOptions::getExtractorFunctionName()
+{
+  return polyopt_single_function_name;
+}
+
+
+void
+PolyRoseOptions::setHistencilOptfilename(char* val)
+{
+  polyopt_histencil_optfilename = val;
+}
+
+char* PolyRoseOptions::getHistencilOptfilename()
+{
+  return polyopt_histencil_optfilename;
+}
+
+
+bool PolyRoseOptions::isTilingAPIOnly()
+{
+  return polyopt_tilingapi_only;
+}
+
+void PolyRoseOptions::setTilingAPIOnly(bool val)
+{
+  polyopt_tilingapi_only = val;
+}
+
+bool PolyRoseOptions::getScWithPragmaOnly()
+{
+  return sc_with_pragmas_only;
+}
+
+void PolyRoseOptions::setScWithPragmaOnly(bool val)
+{
+  sc_with_pragmas_only = val;
+}
+
+
+bool PolyRoseOptions::getScopInSeparateFile()
+{
+  return polyopt_scop_in_separate_files;
+}
+
+void PolyRoseOptions::setScopInSeparateFile(bool val)
+{
+  polyopt_scop_in_separate_files = val;
+}

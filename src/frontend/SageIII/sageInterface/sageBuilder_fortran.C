@@ -1,5 +1,5 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
-// test cases are put into tests/roseTests/astInterfaceTests
+// test cases are put into tests/nonsmoke/functional/roseTests/astInterfaceTests
 #include "sage3basic.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT

@@ -1,0 +1,21 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph) <_start>
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: b8 00 03 c1 bb          |.....   |<sp+0 >   mov    eax, 0xbbc10300
+0x080480a5: b9 00 00 00 05          |.....   |<sp+0 >   mov    ecx, 0x05000000
+0x080480a5: Outgoing stack delta: +0
+0x080480a5: Successor blocks: 0x080480aa
+
+0x080480a3: Basic block reasons: 
+0x080480a3: c1 bb b9 00 00 00 05    |....... |<sp+0 >   sar    dword ds:[ebx + 0x000000b9], 0x05
+0x080480a3: Outgoing stack delta: +0
+0x080480a3: Successor blocks: 0x080480aa
+
+0x080480aa: Basic block reasons: 
+0x080480aa: 01 c8                   |..      |<sp+0 >   add    eax, ecx
+0x080480ac: e9 f0 ff ff ff          |.....   |<sp+0 >   jmp    0x080480a1<<Insn>>
+0x080480a1: 00 03                   |..      |<sp+0 >   add    byte ds:[ebx], al
+0x080480a1: Outgoing stack delta: +0
+0x080480a1: Successor blocks: 0x080480a3
+

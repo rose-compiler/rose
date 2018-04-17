@@ -5,7 +5,7 @@
 #include <SourceAstSemantics2.h>
 #include <TraceSemantics2.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Convert binary to low-level C source code.

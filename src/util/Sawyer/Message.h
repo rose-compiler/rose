@@ -1,4 +1,4 @@
-// See also rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h
+// See also Rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
 //          https://github.com/matzke1/sawyer.
@@ -955,17 +955,25 @@ public:
  *
  *  Thread safety: All methods in this class are thread safe. */
 class Gang: public HighWater, public SharedObject {
+    // Gangs are intentionally leaked. I played with an implementation that removed them from the gangs_ map when they were
+    // destroyed (which also required a GangMap that didn't use shared pointers), but it turned out to not work.  The problem
+    // is that some streams are static objects and there's no portable way to control the order that those objects are
+    // destroyed. What was happening was that boost::thread support was destroyed before the static Sawyer::Message::Stream
+    // objects, so when it came time to destroy their Gang objects we could no longer reliably lock classMutex_.
     typedef Sawyer::Container::Map<int, GangPtr> GangMap;
     static GangMap *gangs_;                             /**< Gangs indexed by file descriptor or other ID. */
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
+    static const int NO_GANG_ID = -2;                   /**< Arbitrary ID used for default-constructed objects. */
     static SAWYER_THREAD_TRAITS::Mutex classMutex_;     /**< Mutex for class data. */
 protected:
     Gang() {}
 public:
-    static GangPtr instance() { return GangPtr(new Gang); }
+    static GangPtr instance();                          /**< New non-shared gang with NO_GANG_ID. */
     static GangPtr instanceForId(int id);               /**< The gang for the specified ID, creating a new one if necessary. */
     static GangPtr instanceForTty();                    /**< Returns the gang for streams that are emitting to a tty. */
-    static void removeInstance(int id);                 /**< Remove specified gang from global list. */
+    static void shutdownNS();                           /**< Reset to initial state to free memory. */
+private:
+    static GangPtr createNS(int id);                    // non-synchronized implementation for instance methods
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1463,7 +1471,7 @@ public:
     // We'd like bool context to return a value that can't be used in arithmetic or comparison operators, but unfortunately
     // we need to also work with the super class (std::basic_ios) that has an implicit "void*" conversion which conflicts with
     // the way Sawyer normally handles this (see SharedPointer for an example).  We therefore override the super-class'
-    // void* conversion and "!" operator instead.
+    // void* conversion and "!" operator instead. We also need to override operator bool if there is one.
 
     /** Returns true if this stream is enabled.
      *
@@ -1488,6 +1496,11 @@ public:
     }
 #if __cplusplus >= 201103L
     explicit operator bool() const {
+        return enabled();
+    }
+#else
+    // Needed on macOS
+    operator bool() const {
         return enabled();
     }
 #endif
@@ -1863,6 +1876,12 @@ public:
     Facilities& disable() { return enable(false); }
     /** @} */
 
+    /** Reset facilities to initial state.
+     *
+     *  This function resets each referenced @ref Facility object to its default-constructed state in preparation for program
+     *  exit. */
+    void shutdown();
+
     /** Print the list of facilities and their states.
      *
      *  This is mostly for debugging purposes. The output may have internal line feeds and will end with a line feed.
@@ -1899,6 +1918,9 @@ private:
     static Importance importanceFromString(const std::string&);
     static std::list<ControlTerm> parseImportanceList(const std::string &facilityName, const char* &input, bool isGlobal);
 
+    // Remove Facility objects that have apparently been destroyed
+    void eraseDestroyedNS();
+
 };
 
 
@@ -1925,6 +1947,15 @@ SAWYER_EXPORT extern Facilities mfacilities;
  *     Sawyer::Message::assertionStream = Sawer::Message::mlog[FATAL];
  * @endcode */
 SAWYER_EXPORT extern SProxy assertionStream;
+
+/** Reset global variables to initial states.
+ *
+ *  This function resets global variables such as @ref merr, @ref mlog, and @ref mfacilities to their default-constructed
+ *  state. Sometimes it's necessary to do this during program exit, otherwise the C++ runtime might terminate the Boost
+ *  thread synchronization library before Sawyer, which leads to exceptions or segmentation faults when Sawyer's stream
+ *  destructors run.  In fact, @ref initializeLibrary arranges for this shutdown function to be called by exit. */
+SAWYER_EXPORT void shutdown();
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Facilities guard
@@ -1971,7 +2002,14 @@ private:
  *
  *  This namespace exists so that users can say <code>using namespace Sawyer::Message::Common</code> to be able to use the most
  *  important message types without name qualification and without also bringing in all the things that are less frequently
- *  used.  In particular, this does not include Sawyer::Message::mlog since users often name their own facilities "mlog". */
+ *  used.
+ *
+ *  @li The message importance levels: @ref Message::DEBUG "DEBUG", @ref Message::TRACE "TRACE", @ref Message::WHERE "WHERE",
+ *      @ref Message::MARCH "MARCH", @ref Message::INFO "INFO", @ref Message::WARN "WARN", @ref Message::ERROR "ERROR",
+ *      and @ref Message::FATAL "FATAL".
+ *  @li The types @ref Message::Stream "Stream", @ref Message::Facility "Facility", and @ref Message::Facilities "Facilities".
+ *
+ *  In particular, this does not include @ref Sawyer::Message::mlog since users often name their own facilities "mlog". */
 namespace Common {
 
 using Message::DEBUG;

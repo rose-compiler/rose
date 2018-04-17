@@ -1,0 +1,51 @@
+FILE: grammar.C
+
+TOPIC: Marking of language construct (planned)
+  UntypedNodes (currently explicitly detected)
+  C (planned)
+  C++ (planned)
+  Fortran (planned)
+  GNUExtension (StatementExpression; planned)
+
+TOPIC: Non-essential data members (not required when reading in AST):
+
+  FEATURE: Token-based unparsing: only used by unparser
+    IGNORE: bool:isModified, bool:containsTransformation
+
+  FEATURE: Source position information:
+    IGNORE: ListStarOfSg_File_Info:startOfConstruct
+    IGNORE: ListStarOfSg_File_Info:endOfConstruct
+    IGNORE: Sg_File_Info:operatorPosition
+
+  FEATURE: Using translation units as input/output:
+    IGNORE: AttachedPreprocessingInfoType:attachedPreprocessingInfoPtr
+
+  FEATURE: source-to-source details
+    IGNORE: bool:uses_operator_syntax
+
+  FEATURE: language property flags (can be recomputed)
+    IGNORE: bool:lvalue
+
+TOPIC: Constructor generation:
+  $CONSTRUCTOR_ALL_DATA_MEMBERS
+  FUNCTION: Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+            ->buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
+              ->buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node )
+
+  FUNCTION: buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+            ->buildConstructor (node);
+              ->constructorLoopBody(...,node,...)
+                ->node.buildConstructorBodyForAllDataMembers();
+
+  FUNCTION: Grammar::isFilteredMemberVariable: 
+    function is shared in grammar generation and constructor generation. This enforces the matching of parameters.
+
+  FUNCTION: Grammar::editSubstitution:
+    all $variables in grammarConstructorDefinitionMacros.macro must be set as well (including $CONSTRUCTOR_ALL_DATA_MEMBERS).
+
+  FILE: buildConstructorWithoutSourcePositionInformation.C: (copy&paste from grammar.C)
+    one more case of CONSTRUCTOR_ALL_DATA_MEMBERS
+
+  OUTPUT:
+    generated C++ header with additional constructors: src/frontend/SageIII/Cxx_Grammar.C (ESSENTIAL DATA MEMBERS)
+

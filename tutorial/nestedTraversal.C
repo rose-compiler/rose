@@ -41,6 +41,9 @@ void nestedVisitorTraversal::visit(SgNode* n)
 int
 main ( int argc, char* argv[] )
    {
+  // Initialize and check compatibility. See Rose::initialize
+     ROSE_INITIALIZE;
+
      if (SgProject::get_verbose() > 0)
           printf ("In visitorTraversal.C: main() \n");
 

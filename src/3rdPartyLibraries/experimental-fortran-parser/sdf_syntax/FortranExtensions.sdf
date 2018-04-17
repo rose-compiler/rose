@@ -1,0 +1,24 @@
+%%%%%%%%%%
+%% Fortran non-standard extensions
+%%%%%%%%%%
+
+module FortranExtensions
+
+imports Main
+
+exports
+
+sorts
+
+  CrayPointerStmt                     %% ER550
+  CrayPointerDecl                     %% ER551
+
+context-free syntax
+
+%% ER550 Cray pointers
+%%
+  CrayPointerStmt                                           -> OtherSpecificationStmt
+  OptLabel 'POINTER' {CrayPointerDecl ','}+             EOS -> CrayPointerStmt {cons("CrayPointerStmt")}
+
+%% ER551
+  '(' ObjectName ',' ObjectName OptArraySpec ')'            -> CrayPointerDecl {cons("CrayPointerDecl")}

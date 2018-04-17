@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TESTPATH1=../../../tests/CompileTests/Cxx_tests
-TESTPATH2=../../../tests/CompileTests/Cxx11_tests
+TESTPATH1=../../../tests/nonsmoke/functional/CompileTests/Cxx_tests
+TESTPATH2=../../../tests/nonsmoke/functional/CompileTests/Cxx11_tests
 PARSER1=sglr
 PARSER2=sglri
 

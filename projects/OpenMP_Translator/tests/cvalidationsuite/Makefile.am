@@ -107,9 +107,11 @@ main_SOURCES=$(TESTCODES)
 check_PROGRAMS = main
 TESTS = $(check_PROGRAMS)
 
+conditional-check-local:
+
 else
 #check-local:$(PASSING_TEST_Objects)
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -129,6 +131,8 @@ endif
 # endif
 
 EXTRA_DIST = omp_my_sleep.h omp_testsuite.h $(ALL_TESTCODES)
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.[cC] main test.log

@@ -152,6 +152,8 @@ LoopLevelProcessing::evaluateSynthesizedAttribute(SgNode* node,InhNestingLevel n
 }
 
 int main ( int argc, char** argv) {
+   // Initialize and check compatibility. See Rose::initialize
+   ROSE_INITIALIZE;
 
    // command line parameters are passed to EDG
    // non-EDG parameters are passed (through) to ROSE (and the vendor compiler)

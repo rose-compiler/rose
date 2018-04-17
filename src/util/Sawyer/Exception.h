@@ -54,9 +54,45 @@ public:
 
     /** Constructor taking a description of the error. */
     AlreadyExists(const std::string &mesg)
-        : DomainError(mesg) {
-    }
+        : DomainError(mesg) {}
 };
+
+/** Error when a cycle is detected.
+ *
+ *  This error is thrown by algorithms that operate only on acyclic data structures if the data structure on which they're
+ *  invoked contains a cycle. */
+class SAWYER_EXPORT ContainsCycle: public DomainError {
+public:
+    ~ContainsCycle() throw () {}
+
+    /** Constructor taking a description of the error. */
+    ContainsCycle(const std::string &mesg)
+        : DomainError(mesg) {}
+};
+
+/** Error related to the file system.
+ *
+ *  These errors are thrown for things like file-not-found, etc. */
+class SAWYER_EXPORT FilesystemError: public RuntimeError {
+public:
+    ~FilesystemError() throw () {}
+
+    /** Constructor taking a description of the error. */
+    FilesystemError(const std::string &mesg)
+        : RuntimeError(mesg) {}
+};
+
+/** Error in parsing something. */
+class SAWYER_EXPORT SyntaxError: public RuntimeError {
+public:
+    ~SyntaxError() throw () {
+    }
+
+    /** Constructor taking a description of the error. */
+    SyntaxError(const std::string &mesg)
+        : RuntimeError(mesg) {}
+};
+
 
 } // namespace
 } // namespace

@@ -5,7 +5,7 @@
 #include <MemoryCellList.h>
 #include <Sawyer/Set.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 // Forwards
@@ -160,7 +160,7 @@ typedef std::set<PointerDescriptor, PointerDescriptorLessp> PointerDescriptors;
     
 /** Pointer analysis.
  *
- *  This class is the main analysis class for pointer detection.  See the @ref rose::BinaryAnalysis::PointerDetection namespace
+ *  This class is the main analysis class for pointer detection.  See the @ref Rose::BinaryAnalysis::PointerDetection namespace
  *  for details. */
 class Analysis {
 public:

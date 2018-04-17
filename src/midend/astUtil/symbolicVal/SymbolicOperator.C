@@ -74,6 +74,14 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
   default:
     assert(false);
   }
+
+// DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
+// DQ (12/11/2016): It appears that printf() is not declared here on some versions of Linux (even RH).
+   std::cerr << "Exiting at a previously undefined function return location. " << std::endl;
+   assert(false);
+
+// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
+   return r;
 }
 
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2)
@@ -561,8 +569,20 @@ class SplitFraction : public SymbolicVisitor
   SymbolicVal *inp, *frp;
   bool hasfrac;
  public:
-  virtual void Default0(const SymbolicVal& v)
+  virtual void Default(const SymbolicVal& v)
    { if (inp != 0) *inp = v; }
+  virtual void VisitConst( const SymbolicConst &v) 
+   {
+     std::string t = v.GetTypeName();
+     if (t == "int") { 
+          if (inp != 0) *inp = v; 
+          hasfrac=false; 
+     }
+     else if (t == "fraction") {
+        if (frp != 0) *frp = v; 
+        hasfrac = true;
+     } 
+   }
   virtual void VisitFunction( const SymbolicFunction &v)  
    {
      bool _hasfrac = hasfrac;
@@ -684,7 +704,7 @@ class SplitFraction : public SymbolicVisitor
       return hasfrac;
    }
 };
-
+// extract fraction from v, save integral/rac if the last two pointers are not NULL
 bool HasFraction(const SymbolicVal& v, SymbolicVal* integral, 
                     SymbolicVal* frac)
 {

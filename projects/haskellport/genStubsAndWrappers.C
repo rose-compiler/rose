@@ -3,6 +3,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace Rose;
 
 /*
    This program generates "stubs" and "wrappers" using the supplied

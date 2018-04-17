@@ -204,7 +204,7 @@ is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
       HasValueDescriptor curval = cur.second;
       if (repl(curval)) {
          if (DebugValuePropogate()) {
-             std::cerr << "found restrict value : " << AstToString(curast) << ":" << AstToString(exp);
+             std::cerr << "found restrict value : " << AstInterface::AstToString(curast) << ":" << AstInterface::AstToString(exp);
              curval.Dump();
              std::cerr << std::endl;
           }
@@ -212,7 +212,7 @@ is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
       }
       else {
         if (DebugValuePropogate()) {
-             std::cerr << "discard restrict value : " << AstToString(curast) << ":" << AstToString(exp);
+             std::cerr << "discard restrict value : " << AstInterface::AstToString(curast) << ":" << AstInterface::AstToString(exp);
              curval.Dump();
              std::cerr << std::endl;
           }

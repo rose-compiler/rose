@@ -98,7 +98,7 @@ cout.flush();
     //
     if (sourcefile -> get_import_list()) {
         vector<SgJavaImportStatement *> &import_list = sourcefile -> get_import_list() -> get_java_import_list();
-        for (int i = 0; i < import_list.size(); i++) {
+        for (size_t i = 0; i < import_list.size(); i++) {
             SgJavaImportStatement *import_declaration = import_list[i];
 // TODO: Remove this !
 /*
@@ -121,7 +121,7 @@ cout.flush();
     //
     if (sourcefile -> get_class_list()) {
         vector<SgClassDeclaration *> &type_list = sourcefile -> get_class_list() -> get_java_class_list();
-        for (int i = 0; i < type_list.size(); i++) {
+        for (size_t i = 0; i < type_list.size(); i++) {
             SgClassDeclaration *type_declaration = type_list[i];
 // TODO: Remove this !
 /*
@@ -350,9 +350,9 @@ Unparse_Java::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
 #if 1
                     << currentStatement->get_file_info()->displayString()
 #else
-                    << rose::getLineNumber(currentStatement)
+                    << Rose::getLineNumber(currentStatement)
                     << " getFileName(currentStatement) = " 
-                    << rose::getFileName(currentStatement)
+                    << Rose::getFileName(currentStatement)
 #endif
                     << " unp->cur_index = " 
                     << unp->cur_index
@@ -638,6 +638,8 @@ Unparse_Java::unparseCaseOrDefaultBasicBlockStmt(SgStatement* stmt, SgUnparse_In
      // curprint_indented ("}", info);
    }
 
+#if 0
+ // DQ (3/28/2017): Eliminate warning about unused function from Clang.
 
 // Determine how many "else {}"'s an outer if that has an else clause needs to
 // prevent dangling if problems
@@ -670,6 +672,8 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
     default: return 0;
   }
 }
+#endif
+
 
 void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
@@ -1232,7 +1236,7 @@ cout.flush();
      SgClassDefinition *class_def = classdecl_stmt -> get_definition();
      ROSE_ASSERT(class_def != NULL);
 
-     SgBaseClassPtrList& bases = class_def -> get_inheritances();
+     // SgBaseClassPtrList& bases = class_def -> get_inheritances();
 
      //
      // TODO: This can't work for type parameters as an SgJavaParameterizedType is not mapped one-to-one and onto
@@ -1692,7 +1696,7 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
     // If an Enum type contains enum constants, they must appear first in the body.
     //
     int last_enum_constant_index = members.size(); // assume all the members are enum-constants or a compiler-generated member
-    for (int i = 0; i < members.size(); i++) {
+    for (size_t i = 0; i < members.size(); i++) {
         SgDeclarationStatement *member = members[i];
 
         //
@@ -1748,7 +1752,7 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
                 vector<SgExpression *> args = init -> get_args() -> get_expressions();
                 if (args.size() > 0) {
                     curprint(" (");
-                    for (int i = 0; i < args.size(); i++) {
+                    for (size_t i = 0; i < args.size(); i++) {
                         unparseExpression(args[i], info);
                         if (i + 1 < args.size())
                             curprint(", ");
@@ -1784,7 +1788,7 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
     // Now, process the remaining members of the Enum body following the Enum constants.
     //
     info.inc_nestingLevel();
-    for (int i = last_enum_constant_index; i < members.size(); i++) {
+    for (size_t i = last_enum_constant_index; i < members.size(); i++) {
         SgDeclarationStatement *member = members[i];
         unparseStatement(member, info);
     }

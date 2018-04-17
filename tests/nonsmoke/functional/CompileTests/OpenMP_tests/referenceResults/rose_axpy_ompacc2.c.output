@@ -1,0 +1,8 @@
+      #pragma omp target device (gpu0) map(x, y) 
+#pragma omp target  device(gpu0) map(tofrom : y[0:n]) map(to : x[0:n],a,n)
+#pragma omp parallel  shared(x,y,n,a)
+#pragma omp for  private(i)
+#pragma omp parallel  num_threads(ndev)
+#pragma omp target  device(devid) map(tofrom : y[starti:endi]) map(to : x[starti:endi],a,partsize)
+#pragma omp parallel  shared(x,y,partsize,a)
+#pragma omp for  private(i)

@@ -1,3 +1,4 @@
+if (enable-binary-analysis)
 add_library(roseBinaryFormats OBJECT
   ### Utilities ###
   ByteOrder.C
@@ -47,6 +48,12 @@ add_library(roseBinaryFormats OBJECT
   ExecNE.C
   ExecLE.C
 )
+else()
+add_library(roseBinaryFormats OBJECT
+  dummyFunctions.C
+)
+endif()
+
 add_dependencies(roseBinaryFormats rosetta_generated)
 
 
@@ -54,5 +61,5 @@ add_dependencies(roseBinaryFormats rosetta_generated)
 
 install(
   FILES  DataConversion.h IntelPinSupport.h MemoryMap.h ByteOrder.h
-         SRecord.h WorkLists.h
+         SRecord.h WorkLists.h SgSharedVector.h StatSerializer.h
   DESTINATION include)

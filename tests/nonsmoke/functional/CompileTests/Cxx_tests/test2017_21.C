@@ -1,0 +1,2 @@
+
+enum { Yes } xxx, yyy;

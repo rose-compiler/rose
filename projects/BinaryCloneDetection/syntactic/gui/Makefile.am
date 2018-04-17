@@ -16,16 +16,12 @@ if !ROSE_BUILD_OS_IS_OSX
 endif
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 
 compass_parameters:
 	cd .. && $(MAKE) compass_parameters
 	cp -f ../compass_parameters .
-
-check-local:
-	@echo "************************************************************************************"
-	@echo "*** ROSE/projects/compass/tools/compass/gui: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************"
 
 CLEANFILES = 
 

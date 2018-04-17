@@ -319,7 +319,7 @@ Multiplexer::bakeDestinations(const MesgProps &props, BakedDestinations &baked) 
 // Multiplexors are never included in baked results (they control baking instead), so messages should never be posted directly
 // to multiplexers.
 SAWYER_EXPORT void
-Multiplexer::post(const Mesg &mesg, const MesgProps &props) {
+Multiplexer::post(const Mesg &/*mesg*/, const MesgProps &/*props*/) {
     assert(!"messages should not be posted to multiplexers");
 }
 
@@ -615,11 +615,15 @@ Gang::GangMap *Gang::gangs_ = NULL;
 
 // class method; thread-safe
 GangPtr
+Gang::instance() {
+    return GangPtr(new Gang);
+}
+
+// class method; thread-safe
+GangPtr
 Gang::instanceForId(int id) {
     SAWYER_THREAD_TRAITS::LockGuard lock(classMutex_);
-    if (!gangs_)
-        gangs_ = new GangMap;
-    return gangs_->insertMaybe(id, Gang::instance());
+    return createNS(id);
 }
 
 // class method; thread-safe
@@ -628,13 +632,25 @@ Gang::instanceForTty() {
     return instanceForId(TTY_GANG);
 }
 
-// class method; thread-safe
-void
-Gang::removeInstance(int id) {
-    SAWYER_THREAD_TRAITS::LockGuard lock(classMutex_);
+// class method; not synchronized
+GangPtr
+Gang::createNS(int id) {
+    ASSERT_require(id != NO_GANG_ID);
     if (!gangs_)
         gangs_ = new GangMap;
-    gangs_->erase(id);
+    GangPtr gang = gangs_->getOrDefault(id);
+    if (!gang) {
+        gang = GangPtr(new Gang);
+        gangs_->insert(id, gang);
+    }
+    return gang;
+}
+
+// class method to reset to initial state prior to exit
+void
+Gang::shutdownNS() {
+    delete gangs_;
+    gangs_ = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -654,44 +670,17 @@ Prefix::silentInstance() {
 // thread-safe (assuming Windows API is thread-safe)
 SAWYER_EXPORT void
 Prefix::setProgramName() {
-#ifdef BOOST_WINDOWS
-# if 0 // [Robb Matzke 2014-06-13] temporarily disable for ROSE linking error (needs psapi.lib in Windows)
-    if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
-        TCHAR buffer[MAX_PATH];
-        if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) { // requires linking with MinGW's psapi.a
-            std::string name = buffer;
-            size_t slash_idx = name.rfind('\\');
-            if (slash_idx != std::string::npos)
-                name = name.substr(slash_idx+1);
-            if (name.size()>4 && 0==name.substr(name.size()-4, 4).compare(".exe"))
-                name = name.substr(0, name.size()-4);
-            programName_ = name;
-        }
-        CloseHandle(handle);
-    }
-# else
-    programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
-# endif
-#elif defined(__APPLE__) && defined(__MACH__)
-    programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
-#else
-    // no synchronization necessary for this global state
-    if (FILE *f = fopen("/proc/self/cmdline", "r")) {
-        std::string name;
-        int c;
-        while ((c = fgetc(f)) > 0)
-            name += (char)c;
-        fclose(f);
-        size_t slash_idx = name.rfind('/');
-        if (slash_idx != std::string::npos)
-            name = name.substr(slash_idx+1);
+    std::string name = thisExecutableName();
+    if (name.empty()) {
+        programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
+    } else {
+        size_t slashIdx = name.rfind('/');
+        if (slashIdx != std::string::npos)
+            name = name.substr(slashIdx+1);
         if (name.size()>3 && 0==name.substr(0, 3).compare("lt-"))
             name = name.substr(3);
         programName_ = name;
     }
-#endif
-    if (programName_.orElse("").empty())
-        throw std::runtime_error("cannot obtain program name for message prefixes");
 }
 
 SAWYER_EXPORT const Optional<double>
@@ -725,7 +714,7 @@ Prefix::initFromSystem() {
 }
 
 SAWYER_EXPORT std::string
-Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
+Prefix::toString(const Mesg &/*mesg*/, const MesgProps &props) const {
     std::ostringstream retval;
     std::string separator = "";
 
@@ -805,7 +794,7 @@ UnformattedSink::init() {
     defaultPropertiesNS().isBuffered = false;
     defaultPropertiesNS().completionStr = "";
     defaultPropertiesNS().interruptionStr = "...";
-    defaultPropertiesNS().cancelationStr = "... [CANCELD]";
+    defaultPropertiesNS().cancelationStr = "... [CANCELED]";
     defaultPropertiesNS().lineTermination = "\n";
     defaultPropertiesNS().useColor = true;
 }
@@ -857,7 +846,7 @@ UnformattedSink::prefix(const PrefixPtr &p) {
 
 // not thread-safe
 SAWYER_EXPORT std::string
-UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &props) {
+UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &/*props*/) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (gang()->isValid() && gang()->id() != mesg.id()) {
@@ -880,7 +869,7 @@ UnformattedSink::maybePrefix(const Mesg &mesg, const MesgProps &props) {
 
 // not thread-safe
 SAWYER_EXPORT std::string
-UnformattedSink::maybeBody(const Mesg &mesg, const MesgProps &props) {
+UnformattedSink::maybeBody(const Mesg &mesg, const MesgProps &/*props*/) {
     std::string retval;
     if (!mesg.isEmpty())
         retval = mesg.text().substr(gang()->ntext());
@@ -1060,19 +1049,19 @@ public:
     Stream *stream_;                                    // Points back to the Stream that owns this
     bool enabled_;                                      // Whether this stream is enabled.
     MesgProps dflt_props_;                              // Default properties for new messages.
-    Mesg message_;                                      // Current message, never in an @ref isComplete state.
+    MultiInstanceTls<Mesg> message_;                    // Current message, never in an @ref isComplete state.
     DestinationPtr destination_;                        // Where messages should be sent.
-    BakedDestinations baked_;                           // Destinations baked at the start of each message.
-    bool isBaked_;                                      // True if @c baked_ is initialized.
-    bool anyUnbuffered_;                                // True if any baked destinations are unbuffered.
+    MultiInstanceTls<BakedDestinations> baked_;         // Destinations baked at the start of each message.
+    MultiInstanceTls<bool> isBaked_;                    // True if @c baked_ is initialized.
+    MultiInstanceTls<bool> anyUnbuffered_;              // True if any baked destinations are unbuffered.
 
     StreamBuf(Stream *owner): stream_(owner), enabled_(true), isBaked_(false), anyUnbuffered_(false) {}
-    ~StreamBuf() { cancelMessage(); }
+    virtual ~StreamBuf() { cancelMessage(); }
     void owner(Stream *s) {
         assert(stream_==NULL || stream_==s);
         stream_ = s;
     }
-    virtual std::streamsize xsputn(const char *s, std::streamsize &n) /*override*/;
+    virtual std::streamsize xsputn(const char *s, std::streamsize n) /*override*/;
     virtual int_type overflow(int_type c = traits_type::eof()) /*override*/;
 
     void completeMessage();                             // Complete and post message, then start a new one.
@@ -1084,21 +1073,21 @@ public:
 // not synchronized
 void
 StreamBuf::post() {
-    if (enabled_ && message_.hasText() && (message_.isComplete() || anyUnbuffered_)) {
+    if (enabled_ && message_->hasText() && (message_->isComplete() || anyUnbuffered_)) {
         assert(isBaked_);
-        message_.post(baked_);
+        message_->post(baked_);
     }
 }
 
 // not synchronized
 void
 StreamBuf::completeMessage() {
-    if (!message_.isEmpty()) {
-        message_.complete();
+    if (!message_->isEmpty()) {
+        message_->complete();
         post();
     }
     message_ = Mesg(dflt_props_);
-    baked_.clear();
+    baked_->clear();
     isBaked_ = false;
     anyUnbuffered_ = false;
 }
@@ -1106,12 +1095,12 @@ StreamBuf::completeMessage() {
 // not synchronized
 void
 StreamBuf::cancelMessage() {
-    if (!message_.isEmpty()) {
-        message_.cancel();
+    if (!message_->isEmpty()) {
+        message_->cancel();
         post();
     }
     message_ = Mesg(dflt_props_);
-    baked_.clear();
+    baked_->clear();
     isBaked_ = false;
     anyUnbuffered_ = false;
 }
@@ -1120,9 +1109,9 @@ StreamBuf::cancelMessage() {
 void
 StreamBuf::bake() {
     if (!isBaked_) {
-        destination_->bakeDestinations(message_.properties(), baked_/*out*/);
+        destination_->bakeDestinations(message_->properties(), *baked_/*out*/);
         anyUnbuffered_ = false;
-        for (BakedDestinations::const_iterator bi=baked_.begin(); bi!=baked_.end() && !anyUnbuffered_; ++bi)
+        for (BakedDestinations::const_iterator bi=baked_->begin(); bi!=baked_->end() && !anyUnbuffered_; ++bi)
             anyUnbuffered_ = !bi->second.isBuffered;
         isBaked_ = true;
     }
@@ -1130,7 +1119,7 @@ StreamBuf::bake() {
 
 // thread-safe
 std::streamsize
-StreamBuf::xsputn(const char *s, std::streamsize &n) {
+StreamBuf::xsputn(const char *s, std::streamsize n) {
     static const char termination_symbol = '\n';
 
     // This is called from std::ostream::operator<< (and possibly others), so we need to acquire a lock. Since this object is
@@ -1142,7 +1131,7 @@ StreamBuf::xsputn(const char *s, std::streamsize &n) {
         if (termination_symbol==s[i]) {
             completeMessage();
         } else if ('\r'!=s[i]) {
-            message_.insert(s[i]);
+            message_->insert(s[i]);
             for (std::streamsize i=0; i<n; ++i) {
                 if (isgraph(s[i])) {
                     bake();
@@ -1169,7 +1158,7 @@ StreamBuf::overflow(int_type c) {
 
 SAWYER_EXPORT
 Stream::Stream(const std::string facilityName, Importance imp, const DestinationPtr &destination)
-    : std::ostream(new StreamBuf(this)), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL) {
     streambuf_ = dynamic_cast<StreamBuf*>(rdbuf());
     assert(streambuf_!=NULL);
     streambuf_->owner(this);
@@ -1177,25 +1166,26 @@ Stream::Stream(const std::string facilityName, Importance imp, const Destination
     streambuf_->dflt_props_.facilityName = facilityName;
     streambuf_->dflt_props_.importance = imp;
     streambuf_->destination_ = destination;
-    streambuf_->message_.properties() = streambuf_->dflt_props_;
+    streambuf_->message_->properties() = streambuf_->dflt_props_;
 }
 
 SAWYER_EXPORT
 Stream::Stream(const MesgProps &props, const DestinationPtr &destination)
-    : std::ostream(new StreamBuf(this)), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL) {
     streambuf_ = dynamic_cast<StreamBuf*>(rdbuf());
     assert(streambuf_!=NULL);
     streambuf_->owner(this);
     assert(destination!=NULL);
     streambuf_->dflt_props_ = props;
     streambuf_->destination_ = destination;
-    streambuf_->message_.properties() = streambuf_->dflt_props_;
+    streambuf_->message_->properties() = streambuf_->dflt_props_;
 }
 
 // thread-safe: locks other, but no need to lock this
 SAWYER_EXPORT
 Stream::Stream(const Stream &other)
-    : std::ostream(new StreamBuf(this)), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL)
+{
     SAWYER_THREAD_TRAITS::LockGuard lock(other.mutex_);
     initFromNS(other);
 }
@@ -1211,7 +1201,7 @@ Stream::operator=(const Stream &other) {
 // thread-safe: locks other, but no need to lock this
 SAWYER_EXPORT
 Stream::Stream(const std::ostream &other_)
-    : std::ostream(rdbuf()), nrefs_(0), streambuf_(NULL) {
+    : std::ios(new StreamBuf(this)), std::ostream(std::ios::rdbuf()), nrefs_(0), streambuf_(NULL) {
     const Stream *other = dynamic_cast<const Stream*>(&other_);
     if (!other)
         throw "Sawyer::Message::Stream initializer is not a Sawyer::Message::Stream (only a std::ostream)";
@@ -1256,7 +1246,7 @@ Stream::initFromNS(const Stream &other) {
     streambuf_->destination_ = other.streambuf_->destination_;
 
     // Swap message-related stuff in order to move ownership of the message to this.
-    streambuf_->message_.properties() = streambuf_->dflt_props_;
+    streambuf_->message_->properties() = streambuf_->dflt_props_;
     std::swap(streambuf_->message_, other.streambuf_->message_);
     std::swap(streambuf_->baked_, other.streambuf_->baked_);
     std::swap(streambuf_->isBaked_, other.streambuf_->isBaked_);
@@ -1307,7 +1297,7 @@ Stream::enable(bool b) {
 SAWYER_EXPORT void
 Stream::completionString(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().completionStr = s;
+    streambuf_->message_->properties().completionStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.completionStr = s;
     } else if (streambuf_->isBaked_) {
@@ -1319,7 +1309,7 @@ Stream::completionString(const std::string &s, bool asDefault) {
 SAWYER_EXPORT void
 Stream::interruptionString(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().interruptionStr = s;
+    streambuf_->message_->properties().interruptionStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.interruptionStr = s;
     } else if (streambuf_->isBaked_) {
@@ -1331,7 +1321,7 @@ Stream::interruptionString(const std::string &s, bool asDefault) {
 SAWYER_EXPORT void
 Stream::cancelationString(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().cancelationStr = s;
+    streambuf_->message_->properties().cancelationStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.cancelationStr = s;
     } else if (streambuf_->isBaked_) {
@@ -1343,7 +1333,7 @@ Stream::cancelationString(const std::string &s, bool asDefault) {
 SAWYER_EXPORT void
 Stream::facilityName(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().facilityName = s;
+    streambuf_->message_->properties().facilityName = s;
     if (asDefault) {
         streambuf_->dflt_props_.facilityName = s;
     } else if (streambuf_->isBaked_) {
@@ -1442,6 +1432,8 @@ Facility::Facility(const Facility &other) {
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::operator=(const Facility &other) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
+    assert(other.isConstructed());
     SAWYER_THREAD_TRAITS::LockGuard lock(other.mutex_);
     constructed_ = CONSTRUCTED_MAGIC;
     name_ = other.name_;
@@ -1452,6 +1444,7 @@ Facility::operator=(const Facility &other) {
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::initStreams(const DestinationPtr &destination) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (streams_.empty()) {
         for (int i=0; i<N_IMPORTANCE; ++i)
@@ -1466,6 +1459,7 @@ Facility::initStreams(const DestinationPtr &destination) {
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::renameStreams(const std::string &name) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     for (size_t i=0; i<streams_.size(); ++i)
         streams_[i]->facilityName(name.empty() ? name_ : name);
@@ -1475,6 +1469,7 @@ Facility::renameStreams(const std::string &name) {
 // thread-safe
 SAWYER_EXPORT Stream&
 Facility::get(Importance imp) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
@@ -1500,13 +1495,16 @@ Facility::get(Importance imp) {
         // |
         // |int main() {
         // |    mlog = Sawyer::Message::Facility("tool");
-        // 
-        // ROSE users: librose does not currently (2014-09-09) initialize libsawyer until the ROSE frontend() is called. If
-        // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by
-        // invoking rose::Diagnostics::initialize() early in "main". This will cause all of ROSE's Facility objects to be
-        // constructed.
+        //
+        // ROSE users: librose does not currently (2017-04-10) initialize libsawyer until the ROSE frontend() is called. If
+        // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by using
+        // adding "ROSE_INITIALIZE;" or "rose::initialize(ROSE_CONFIG_TOKEN)" to the beginning of your "main" function. This
+        // will cause all of ROSE's Facility objects (among other things) to be constructed.
         std::ostringstream ss;
-        ss <<"stream " <<stringifyImportance(imp) <<" in facility " <<this <<" is default constructed";
+        ss <<"Sawyer stream " <<stringifyImportance(imp) <<" in facility " <<this <<" is default constructed";
+#ifdef COMPILING_ROSE
+        ss <<" (likely \"ROSE_INITIALIZE;\" is required at the start of your ROSE-based tool)";
+#endif
         throw std::runtime_error(ss.str());
     }
 
@@ -1516,6 +1514,7 @@ Facility::get(Importance imp) {
 // thread-safe
 SAWYER_EXPORT std::string
 Facility::name() const {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return name_;
 }
@@ -1526,7 +1525,11 @@ Facility::name() const {
 SAWYER_EXPORT
 Facilities::Facilities(const Facilities &other) {
     SAWYER_THREAD_TRAITS::LockGuard lock(other.mutex_);
-    facilities_ = other.facilities_;
+    facilities_.clear();
+    BOOST_FOREACH (const FacilityMap::Node &otherNode, other.facilities_.nodes()) {
+        if (otherNode.value()->isConstructed())
+            facilities_.insert(otherNode.key(), otherNode.value());
+    }
     impset_ = other.impset_;
     impsetInitialized_ = other.impsetInitialized_;
 }
@@ -1535,7 +1538,11 @@ Facilities::Facilities(const Facilities &other) {
 SAWYER_EXPORT Facilities&
 Facilities::operator=(const Facilities &other) {
     LockGuard2<SAWYER_THREAD_TRAITS::Mutex> lock(mutex_, other.mutex_);
-    facilities_ = other.facilities_;
+    facilities_.clear();
+    BOOST_FOREACH (const FacilityMap::Node &otherNode, other.facilities_.nodes()) {
+        if (otherNode.value()->isConstructed())
+            facilities_.insert(otherNode.key(), otherNode.value());
+    }
     impset_ = other.impset_;
     impsetInitialized_ = other.impsetInitialized_;
     return *this;
@@ -1649,13 +1656,17 @@ Facilities::erase(Facility &facility) {
 SAWYER_EXPORT Facility&
 Facilities::facility(const std::string &name) const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return *facilities_[name];
+    Facility *retval = facilities_[name];
+    if (!retval->isConstructed())
+        throw std::domain_error("key lookup failure; key is not in map domain");
+    return *retval;
 }
 
 // thread-safe
 SAWYER_EXPORT Facilities&
 Facilities::reenable() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     BOOST_FOREACH (const FacilityMap::Node &node, facilities_.nodes()) {
         for (int i=0; i<N_IMPORTANCE; ++i) {
             Importance imp = (Importance)i;
@@ -1669,12 +1680,15 @@ Facilities::reenable() {
 SAWYER_EXPORT Facilities&
 Facilities::reenableFrom(const Facilities &other) {
     LockGuard2<SAWYER_THREAD_TRAITS::Mutex> lock(mutex_, other.mutex_);
+    eraseDestroyedNS();
     BOOST_FOREACH (const FacilityMap::Node &src, other.facilities_.nodes()) {
-        FacilityMap::NodeIterator fi_dst = facilities_.find(src.key());
-        if (fi_dst!=facilities_.nodes().end()) {
-            for (int i=0; i<N_IMPORTANCE; ++i) {
-                Importance imp = (Importance)i;
-                fi_dst->value()->get(imp).enable(src.value()->get(imp).enabled());
+        if (src.value()->isConstructed()) {
+            FacilityMap::NodeIterator fi_dst = facilities_.find(src.key());
+            if (fi_dst!=facilities_.nodes().end()) {
+                for (int i=0; i<N_IMPORTANCE; ++i) {
+                    Importance imp = (Importance)i;
+                    fi_dst->value()->get(imp).enable(src.value()->get(imp).enabled());
+                }
             }
         }
     }
@@ -1685,6 +1699,7 @@ Facilities::reenableFrom(const Facilities &other) {
 SAWYER_EXPORT Facilities&
 Facilities::enable(const std::string &switch_name, bool b) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     FacilityMap::NodeIterator found = facilities_.find(switch_name);
     if (found != facilities_.nodes().end()) {
         if (b) {
@@ -1704,6 +1719,7 @@ Facilities::enable(const std::string &switch_name, bool b) {
 SAWYER_EXPORT Facilities&
 Facilities::enable(Importance imp, bool b) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     return enableNS(imp, b);
 }
 
@@ -1724,6 +1740,7 @@ Facilities::enableNS(Importance imp, bool b) {
 SAWYER_EXPORT Facilities&
 Facilities::enable(bool b) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     BOOST_FOREACH (Facility *facility, facilities_.values()) {
         if (b) {
             for (int i=0; i<N_IMPORTANCE; ++i) {
@@ -1933,6 +1950,7 @@ Facilities::parseImportanceList(const std::string &facilityName, const char *&st
 SAWYER_EXPORT std::string
 Facilities::control(const std::string &ss) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     const char *start = ss.c_str();
     const char *s = start;
     std::list<ControlTerm> terms;
@@ -2011,14 +2029,16 @@ Facilities::configuration() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     std::string retval;
     BOOST_FOREACH (const FacilityMap::Node &facility, facilities_.nodes()) {
-        retval += (retval.empty()?"":",") + facility.key() + "(";
-        for (int imp=0; imp<N_IMPORTANCE; ++imp) {
-            retval += (imp==0 ? "" : ",");
-            if (!(*facility.value())[(Importance)imp]) 
-                retval += "!";
-            retval += stringifyImportance((Importance)imp);
+        if (facility.value()->isConstructed()) {
+            retval += (retval.empty()?"":",") + facility.key() + "(";
+            for (int imp=0; imp<N_IMPORTANCE; ++imp) {
+                retval += (imp==0 ? "" : ",");
+                if (!(*facility.value())[(Importance)imp]) 
+                    retval += "!";
+                retval += stringifyImportance((Importance)imp);
+            }
+            retval += ")";
         }
-        retval += ")";
     }
     return retval;
 }
@@ -2031,6 +2051,27 @@ Facilities::facilityNames() const {
     BOOST_FOREACH (const std::string &name, facilities_.keys())
         allNames.push_back(name);
     return allNames;
+}
+
+SAWYER_EXPORT void
+Facilities::eraseDestroyedNS() {
+    for (FacilityMap::ValueIterator iter = facilities_.values().begin(); iter != facilities_.values().end(); /*void*/) {
+        if (!(*iter)->isConstructed()) {
+            facilities_.eraseAt(iter++);
+        } else {
+            ++iter;
+        }
+    }
+}
+
+SAWYER_EXPORT void
+Facilities::shutdown() {
+    eraseDestroyedNS();
+    BOOST_FOREACH (Facility *f, facilities_.values()) {
+        if (f != NULL)
+            *f = Facility();
+    }
+    facilities_.clear();
 }
 
 // thread-safe
@@ -2053,9 +2094,13 @@ Facilities::print(std::ostream &log) const {
 
             // A short easy to read format. Letters indicate the importances that are enabled; dashes keep them aligned.
             // Sort of like the format 'ls -l' uses to show permissions.
-            for (int i=0; i<N_IMPORTANCE; ++i) {
-                Importance mi = (Importance)i;
-                log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
+            if (!facility->isConstructed()) {
+                log <<std::setw(N_IMPORTANCE) <<"DELETED";
+            } else {
+                for (int i=0; i<N_IMPORTANCE; ++i) {
+                    Importance mi = (Importance)i;
+                    log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
+                }
             }
             log <<" " <<fnode.key() <<"\n";
         }
@@ -2069,7 +2114,7 @@ Facilities::print(std::ostream &log) const {
 void
 FacilitiesGuard::save() {
     BOOST_FOREACH (const std::string &facilityName, facilities_.facilityNames()) {
-        std::vector<bool> facilityState = state_.insertMaybeDefault(facilityName);
+        std::vector<bool> &facilityState = state_.insertMaybeDefault(facilityName);
         facilityState.resize(N_IMPORTANCE, false);
         Facility &facility = facilities_.facility(facilityName);
         for (int i=0; i<N_IMPORTANCE; ++i)
@@ -2080,6 +2125,7 @@ FacilitiesGuard::save() {
 void
 FacilitiesGuard::restore() {
     BOOST_FOREACH (const State::Node &saved, state_.nodes()) {
+        ASSERT_require(saved.value().size() == N_IMPORTANCE);
         try {
             Facility &facility = facilities_.facility(saved.key());
             for (int i=0; i<N_IMPORTANCE; ++i)
@@ -2129,6 +2175,14 @@ initializeLibrary() {
     }
 #endif
     return true;
+}
+
+SAWYER_EXPORT void
+shutdown() {
+    Gang::shutdownNS();
+    mlog = Facility();
+    mfacilities.shutdown();
+    merr = DestinationPtr();
 }
 
 } // namespace

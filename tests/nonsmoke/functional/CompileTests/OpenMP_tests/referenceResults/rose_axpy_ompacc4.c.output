@@ -1,0 +1,6 @@
+#pragma omp parallel  shared(x,y,n,a)
+#pragma omp for  private(i)
+#pragma omp target  device('*') map(tofrom : y_ompacc[0:n] dist_data(BLOCK)) map(to : x[0:n] dist_data(BLOCK),a,n)
+#pragma omp parallel  shared(x,y_ompacc,n,a)
+#pragma omp for  private(i)
+#pragma omp parallel  shared(num_threads)

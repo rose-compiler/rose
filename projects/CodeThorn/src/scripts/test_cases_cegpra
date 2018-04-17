@@ -37,6 +37,12 @@ echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*"
 
 $BUILDDIR/codethorn ${PROBLEMDIR}/${1}_opt.c --edg:no_warnings --input-values=${INPUT_VALUES} ${LTL_ALPHABET} --rersmode=yes --check-ltl="$SRCDIR/tests/rers/${LTLS}" --exploration-mode=loop-aware --cegpra-ltl=${PROPERTY} --cegpra-max-iterations=${MAX_ITER} --csv-spot-ltl="${MC_LOG_DIR}/${1}_ltl_results${MC}.csv" --with-counterexamples=${ERROR_STATES}
 
+if [ ! $? -eq 0 ] 
+then 
+    eval echo "ERROR: CodeThorn returned non-zero value."
+    exit 1 
+fi
+
 echo "._____________________________________."
 echo "| finished running CodeThorn (CEGPRA) |"
 echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*"

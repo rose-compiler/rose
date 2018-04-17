@@ -4,7 +4,9 @@
 ################################################################################
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
 MOSTLYCLEANFILES =
+PHONIES =
 
 SUBDIRS = Clang
 DIST_SUBDIRS = Clang
@@ -33,11 +35,15 @@ EDGBIN_SIGNATURE      = $(shell cat $(EDGBIN_SIGNATURE_FILE) 2>/dev/null)
 # not to use EDGBIN_NAME as a target or dependency in this makefile since make needs to parse those before the
 # $(EDGBIN_SIGNATURE_FILE) can be created.
 EDGBIN_NAME_PREFIX = roseBinaryEDG-@ROSE_EDG_MAJOR_VERSION_NUMBER@-@ROSE_EDG_MINOR_VERSION_NUMBER@
+if ROSE_USE_MICROSOFT_EXTENSIONS
+EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(FRONTEND_CXX_VENDOR_AND_VERSION2)-microsoft
+else
 EDGBIN_NAME_SUFFIX = $(build_triplet_without_redhat)-$(FRONTEND_CXX_VENDOR_AND_VERSION2)
+endif
 EDGBIN_NAME        = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 # All the .PHONY's need to be outside any automake "if" statements otherwise automake complains.
-.PHONY: edg-prerequisites binary_edg_tarball upload_edg_binary check-network download-edg show-edg-name show-edg-url show-edg-hash
+PHONIES += edg-prerequisites binary_edg_tarball upload_edg_binary check-network download-edg show-edg-name show-edg-url show-edg-hash
 
 # Phony target to build EDG dependencies. We have to build EDG's prerequisites in order to compute the EDG hash.
 #(see above): .PHONY: edg-prerequisites
@@ -190,6 +196,14 @@ endif
 
 # Cleanup
 MOSTLYCLEANFILES += EDG/libroseEDG.la
-clean-local:
-	rm -rf EDG/.libs $(EDGBIN_NAME_PREFIX)-*.tar.gz
 endif
+
+clean-local:
+# DQ (3/1/2017): Need to be able to run make clean whenClang frontend support is defined.
+#	rm -rf EDG/.libs $(EDGBIN_NAME_PREFIX)-*.tar.gz
+	rm -rf EDG/.libs 
+if !ROSE_USE_CLANG_FRONTEND
+	rm -rf $(EDGBIN_NAME_PREFIX)-*.tar.gz
+endif
+
+.PHONY: $(PHONIES)

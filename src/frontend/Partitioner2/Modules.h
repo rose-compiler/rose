@@ -9,7 +9,7 @@
 
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -160,6 +160,12 @@ namespace Modules {
  * @sa ModulesPe::systemFunctionName and possibly other OS-specific formatters. */
 std::string canonicalFunctionName(const std::string&);
 
+/** Demangle all function names.
+ *
+ *  Run the name demangler on all functions that have a non-empty name and no demangled name. Assign the result as each
+ *  function's demangled name if it's different than the true name. */
+void demangleFunctionNames(const Partitioner&);
+
 /** Follow basic block ghost edges.
  *
  *  If this callback is registered as a partitioner basic block callback then the partitioner will follow ghost edges when
@@ -186,6 +192,40 @@ class PreventDiscontiguousBlocks: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
     virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+};
+
+/** Callback to limit basic block size.
+ *
+ *  This basic block callback limits the number of instructions in a basic block. During basic block discovery when
+ *  instructions are repeatedly appended to a block, if the number of instructions reaches the limit then the block is forced
+ *  to terminate.  This is useful when instruction semantics are enabled since large basic blocks can slow down the semantic
+ *  analysis. */
+class BasicBlockSizeLimiter: public BasicBlockCallback {
+    size_t maxInsns_;
+
+protected:
+    BasicBlockSizeLimiter(size_t maxInsns)
+        : maxInsns_(maxInsns) {}
+
+public:
+    /** Shared-ownership pointer to a @ref BasicBlockSizeLimiter. See @ref heap_object_shared_ownership. */
+    typedef Sawyer::SharedPointer<BasicBlockSizeLimiter> Ptr;
+
+    /** Constructor. */
+    static Ptr instance(size_t maxInsns) {
+        return Ptr(new BasicBlockSizeLimiter(maxInsns));
+    }
+
+    /** Property: Maximum size of block.
+     *
+     *  A value of zero means no maximum, effectively disabling this callback without removing it from the callback list.
+     *
+     * @{ */
+    size_t maxInstructions() const { return maxInsns_; }
+    void maxInstructions(size_t maxInsns) { maxInsns_ = maxInsns; }
+    /** @} */
+
+    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
 
 /** List some instructions at a certain time.
@@ -308,7 +348,8 @@ public:
  *  each interval.
  *
  *  If @p threshold is zero or the @p leaveAtFront and @p leaveAtBack sum to at least @p threshold then nothing happens. */
-AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront=16, size_t leaveAtBack=1);
+AddressIntervalSet deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold,
+                                  size_t leaveAtFront=16, size_t leaveAtBack=1);
 
 /** Give labels to addresses that are symbols.
  *

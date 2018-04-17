@@ -6,7 +6,7 @@ die "usage: $0 SPECIMEN\n" unless -r $specimen;
 my $top_blddir = $ENV{ROSEGIT_BLD} || $ENV{ROSE_BUILD};
 die "ROSEGIT_BLD or ROSE_BUILD should be defined in your environment\n" unless -d $top_blddir;
 
-my $disassemble = $top_blddir . "/tests/roseTests/binaryTests/disassemble";
+my $disassemble = $top_blddir . "/tests/nonsmoke/functional/roseTests/binaryTests/disassemble";
 die "$disassemble does not exist or is not executable\n" unless -e $disassemble;
 
 my $dflags = "--disassemble=dp --raw=0 -rose:disassembler_search unused,deadend";

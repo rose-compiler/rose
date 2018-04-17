@@ -10,7 +10,7 @@
 #include <set>
 #include <iterator>
 
-using namespace rose;
+using namespace Rose;
 
 std::string argv0;
 

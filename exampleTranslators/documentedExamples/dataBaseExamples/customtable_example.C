@@ -9,32 +9,35 @@ DEFINE_TABLE_2( testtable,  string,name,  double,number );
 //-----------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
-	GlobalDatabaseConnection db;
-	int initOk =  db.initialize();
-	assert( initOk==0 );
+  // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
+  // any warning message using the message looging feature in ROSE will fail).
+     ROSE_INITIALIZE;
 
-	TableAccess< testtableRowdata > testtable( &db );
-	testtable.initialize();
+     GlobalDatabaseConnection db;
+     int initOk =  db.initialize();
+     assert( initOk==0 );
 
-	// add a row
-	testtableRowdata testrow( UNKNOWNID, "name", 1.0 );
-	testtable.insert( &testrow );
+     TableAccess< testtableRowdata > testtable( &db );
+     testtable.initialize();
 
-	// select & modify
-	vector<testtableRowdata> results = testtable.select( 
-			" number=1.0 " );
-	assert( results.size() > 0 );
-	results[0].set_name( string("newname") );
-	results[0].set_number( 2.0 );
-	testtable.modify( &results[0] ); // this uses the ID of the row
+  // add a row
+     testtableRowdata testrow( UNKNOWNID, "name", 1.0 );
+     testtable.insert( &testrow );
 
-	// remove entry
-	testtable.remove( &results[0] );
+  // select & modify
+     vector<testtableRowdata> results = testtable.select(" number=1.0 ");
+     assert( results.size() > 0 );
+     results[0].set_name( string("newname") );
+     results[0].set_number( 2.0 );
+     testtable.modify( &results[0] ); // this uses the ID of the row
 
-	// add again for next run...
-	testtable.insert( &results[0] );
+  // remove entry
+     testtable.remove( &results[0] );
 
-	db.shutdown();
-	return( 0 );
-}
+  // add again for next run...
+     testtable.insert( &results[0] );
+
+     db.shutdown();
+     return( 0 );
+   }
 

@@ -1,0 +1,5 @@
+#pragma omp parallel  private(i,j,lock_index)
+#pragma omp for  schedule(dynamic , 1)
+#pragma omp critical 
+#pragma omp for  schedule(dynamic , 1)
+#pragma omp for  reduction(+ : sum)

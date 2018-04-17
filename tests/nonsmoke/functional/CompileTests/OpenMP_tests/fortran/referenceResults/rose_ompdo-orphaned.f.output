@@ -1,0 +1,4 @@
+!$omp parallel 
+!$omp end parallel 
+!$omp do  private(j) schedule(static , 2)
+!$omp end do 

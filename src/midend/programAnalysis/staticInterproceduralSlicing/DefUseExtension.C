@@ -379,7 +379,10 @@ namespace DUVariableAnalysisExt
                                          * current=node;
                 bool finished=false;                    
                 bool indirect=false,def[2]={false,false},use[2]={false,false};
-                bool addressOf=false;
+
+             // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+             // bool addressOf=false;
+
                 bool isVariable=true;   
                 finished=isSgStatement(parent);
                 while(!finished)
@@ -464,10 +467,13 @@ namespace DUVariableAnalysisExt
                 //              if (!isSgExprListExp(parent->get_parent()))
                         //      {
                                         cerr<<"the & operator is used on a variable"<<endl;
-                                        addressOf=true;
-                                        // from this point on this may be anything!!!
-          use[0]=use[1]=1;
-                def[0]=def[1]=1;
+
+                                     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+                                     // addressOf=true;
+
+                     // from this point on this may be anything!!!
+                        use[0]=use[1]=1;
+                        def[0]=def[1]=1;
 //                      cerr<<"the & operator is not impleted for cases other than passing addresses to functions"<<endl;
 //                      exit(-1);
                                         
@@ -528,8 +534,11 @@ namespace DUVariableAnalysisExt
         {
                 SgNode * parent=node->get_parent(),
                                          * current=node;
-                bool finished=false;                    
-                finished=isSgStatement(parent);
+
+             // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+             // bool finished=false;
+             // finished=isSgStatement(parent);
+
                 while(parent!=call)
                 {
                 //      cout <<"\t"<<depth<<": "<<parent->unparseToString()<<endl;

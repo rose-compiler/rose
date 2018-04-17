@@ -1,0 +1,324 @@
+
+
+
+==================== Interpretation Listing ====================
+
+va 0x08048000 + 0x00000034 = 0x08048034 r-xp at buffer aaa.A + 0x00000000 access=0x00000200 buffer2.bin(LOAD#2)
+va 0x08048034 + 0x000000e0 = 0x08048114 r-xp at buffer aab.A + 0x00000000 access=0x00000200 buffer2.bin(PHDR#0)
+va 0x08048114 + 0x00000013 = 0x08048127 r--p at buffer aac.A + 0x00000000 access=0x00000200 buffer2.bin(.interp)
+va 0x08048127 + 0x00000001 = 0x08048128 r-xp at buffer aaa.A + 0x00000127 access=0x00000200 buffer2.bin(LOAD#2)
+va 0x08048128 + 0x00000020 = 0x08048148 r--p at buffer aad.A + 0x00000000 access=0x00000200 buffer2.bin(.note.ABI-tag)
+va 0x08048148 + 0x0000002c = 0x08048174 r--- at buffer aah.S + 0x00000148 access=0x00000200 buffer2.bin(.hash)
+va 0x08048174 + 0x00000060 = 0x080481d4 r--- at buffer aai.S + 0x00000174 access=0x00000200 buffer2.bin(.dynsym)
+va 0x080481d4 + 0x00000060 = 0x08048234 r--- at buffer aaj.S + 0x000001d4 access=0x00000200 buffer2.bin(.dynstr)
+va 0x08048234 + 0x0000000c = 0x08048240 r--- at buffer aak.S + 0x00000234 access=0x00000200 buffer2.bin(.gnu.version)
+va 0x08048240 + 0x00000020 = 0x08048260 r--- at buffer aal.S + 0x00000240 access=0x00000200 buffer2.bin(.gnu.version_r)
+va 0x08048260 + 0x00000008 = 0x08048268 r--- at buffer aam.S + 0x00000260 access=0x00000200 buffer2.bin(.rel.dyn)
+va 0x08048268 + 0x00000010 = 0x08048278 r--- at buffer aan.S + 0x00000268 access=0x00000200 buffer2.bin(.rel.plt)
+va 0x08048278 + 0x00000017 = 0x0804828f r-x- at buffer aao.S + 0x00000278 access=0x00000200 buffer2.bin(.init)
+va 0x0804828f + 0x00000001 = 0x08048290 r-xp at buffer aaa.A + 0x0000028f access=0x00000200 buffer2.bin(LOAD#2)
+va 0x08048290 + 0x00000030 = 0x080482c0 r-x- at buffer aap.S + 0x00000290 access=0x00000200 buffer2.bin(.plt)
+va 0x080482c0 + 0x000001d4 = 0x08048494 r-x- at buffer aaq.S + 0x000002c0 access=0x00000200 buffer2.bin(.text)
+va 0x08048494 + 0x0000001a = 0x080484ae r-x- at buffer aar.S + 0x00000494 access=0x00000200 buffer2.bin(.fini)
+va 0x080484ae + 0x00000002 = 0x080484b0 r-xp at buffer aaa.A + 0x000004ae access=0x00000200 buffer2.bin(LOAD#2)
+va 0x080484b0 + 0x00000008 = 0x080484b8 r--- at buffer aas.S + 0x000004b0 access=0x00000200 buffer2.bin(.rodata)
+va 0x080484b8 + 0x00000004 = 0x080484bc r--- at buffer aat.S + 0x000004b8 access=0x00000200 buffer2.bin(.eh_frame)
+va 0x080484bc + 0x00000b44 = 0x08049000 r-xp at buffer aaa.A + 0x000004bc access=0x00000200 buffer2.bin(LOAD#2)
+va 0x08049000 + 0x000004bc = 0x080494bc rw-p at buffer aaf.A + 0x00000000 access=0x00000200 buffer2.bin(LOAD#3)
+va 0x080494bc + 0x00000008 = 0x080494c4 rw-- at buffer aau.S + 0x000004bc access=0x00000200 buffer2.bin(.ctors)
+va 0x080494c4 + 0x00000008 = 0x080494cc rw-- at buffer aav.S + 0x000004c4 access=0x00000200 buffer2.bin(.dtors)
+va 0x080494cc + 0x00000004 = 0x080494d0 rw-- at buffer aaw.S + 0x000004cc access=0x00000200 buffer2.bin(.jcr)
+va 0x080494d0 + 0x000000c8 = 0x08049598 rw-p at buffer aag.A + 0x00000000 access=0x00000200 buffer2.bin(.dynamic)
+va 0x08049598 + 0x00000004 = 0x0804959c rw-- at buffer aax.S + 0x00000598 access=0x00000200 buffer2.bin(.got)
+va 0x0804959c + 0x00000014 = 0x080495b0 rw-- at buffer aay.S + 0x0000059c access=0x00000200 buffer2.bin(.got.plt)
+va 0x080495b0 + 0x0000000c = 0x080495bc rw-- at buffer aaz.S + 0x000005b0 access=0x00000200 buffer2.bin(.data)
+va 0x080495bc + 0x00000004 = 0x080495c0 rw-p at buffer aba.A + 0x00000000 access=0x00000200 buffer2.bin(.bss)
+va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aae.A + 0x00000004 access=0x00000200 buffer2.bin(LOAD#3)
+
+0x08048278: ================================== Function (function call, symbol, graph) <_init>
+0x08048278: Function stack delta: +4
+
+0x08048278: 55                      |U       | F08048278 E.....    push   ebp
+0x08048279: 89 e5                   |..      |                     mov    ebp, esp
+0x0804827b: 83 ec 08                |...     |                     sub    esp, 0x08
+0x0804827e: e8 61 00 00 00          |.a...   |                     call   0x080482e4<(func)call_gmon_start>
+
+0x08048283: e8 b8 00 00 00          |.....   | F08048278 ......    call   0x08048340<(func)frame_dummy>
+
+0x08048288: e8 d3 01 00 00          |.....   | F08048278 ......    call   0x08048460<(func)__do_global_ctors_aux>
+
+0x0804828d: c9                      |.       | F08048278 ......    leave  
+0x0804828e: c3                      |.       |                     ret    
+
+Skipping 1 byte
+0x08048290: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
+
+0x08048290: ff 35 a0 95 04 08       |.5....  | F08048290 EH....    push   dword ds:[0x080495a0<.got.plt+4>]
+0x08048296: ff 25 a4 95 04 08       |.%....  |                     jmp    dword ds:[0x080495a4<.got.plt+8>]
+
+Skipping 4 bytes
+0x080482a0: ================================== Function (function call, import, graph) <malloc@plt>
+0x080482a0: Function stack delta: +4
+
+0x080482a0: ff 25 a8 95 04 08       |.%....  | F080482a0 E.....    jmp    dword ds:[0x080495a8<.got.plt+0x0c>]
+
+Skipping 10 bytes
+0x080482b0: ================================== Function (function call, import, graph) <__libc_start_main@plt>
+0x080482b0: Function stack delta: +4
+
+0x080482b0: ff 25 ac 95 04 08       |.%....  | F080482b0 E.....    jmp    dword ds:[0x080495ac<.got.plt+0x10>]
+
+Skipping 10 bytes
+0x080482c0: ================================== Function (entry point, graph) <_start>
+0x080482c0: Function does not return to caller.
+
+0x080482c0: 31 ed                   |1.      | F080482c0 EH....    xor    ebp, ebp
+0x080482c2: 5e                      |^       |                     pop    esi
+0x080482c3: 89 e1                   |..      |                     mov    ecx, esp
+0x080482c5: 83 e4 f0                |...     |                     and    esp, 0xf0<-16>
+0x080482c8: 50                      |P       |                     push   eax
+0x080482c9: 54                      |T       |                     push   esp
+0x080482ca: 52                      |R       |                     push   edx
+0x080482cb: 68 14 84 04 08          |h....   |                     push   0x08048414<(func)__libc_csu_fini>
+0x080482d0: 68 c0 83 04 08          |h....   |                     push   0x080483c0<(func)__libc_csu_init>
+0x080482d5: 51                      |Q       |                     push   ecx
+0x080482d6: 56                      |V       |                     push   esi
+0x080482d7: 68 64 83 04 08          |hd...   |                     push   0x08048364<(func)main>
+0x080482dc: e8 cf ff ff ff          |.....   |                     call   0x080482b0<__libc_start_main@plt>
+
+0x080482e1: f4                      |.       | F080482c0 ......    hlt    
+
+Skipping 2 bytes
+0x080482e4: ================================== Function (function call, symbol, graph) <call_gmon_start>
+0x080482e4: Function stack delta: +4
+
+0x080482e4: 55                      |U       | F080482e4 E.....    push   ebp
+0x080482e5: 89 e5                   |..      |                     mov    ebp, esp
+0x080482e7: 53                      |S       |                     push   ebx
+0x080482e8: e8 00 00 00 00          |.....   |                     call   0x080482ed<<Insn>>
+0x080482ed: 5b                      |[       |                     pop    ebx
+0x080482ee: 81 c3 af 12 00 00       |......  |                     add    ebx, 0x000012af<4783>
+0x080482f4: 52                      |R       |                     push   edx
+0x080482f5: 8b 83 fc ff ff ff       |......  |                     mov    eax, dword ds:[ebx + 0xfffffffc<-4>]
+0x080482fb: 85 c0                   |..      |                     test   eax, eax
+0x080482fd: 74 02                   |t.      |                     je     0x08048301<<BBlock>>
+
+0x080482ff: ff d0                   |..      | F080482e4 ......    call   eax
+
+0x08048301: 58                      |X       | F080482e4 ......    pop    eax
+0x08048302: 5b                      |[       |                     pop    ebx
+0x08048303: c9                      |.       |                     leave  
+0x08048304: c3                      |.       |                     ret    
+
+Skipping 11 bytes
+0x08048310: ================================== Function (function call, symbol, graph) <__do_global_dtors_aux>
+0x08048310: Function stack delta: +4
+
+0x08048310: 55                      |U       | F08048310 E.....    push   ebp
+0x08048311: 89 e5                   |..      |                     mov    ebp, esp
+0x08048313: 83 ec 08                |...     |                     sub    esp, 0x08
+0x08048316: 80 3d bc 95 04 08 00    |.=..... |                     cmp    byte ds:[0x080495bc<_edata>], 0x00
+0x0804831d: 74 0c                   |t.      |                     je     0x0804832b<<BBlock>>
+
+0x0804831f: eb 1c                   |..      | F08048310 ......    jmp    0x0804833d<<BBlock>>
+
+0x08048321: 83 c0 04                |...     | F08048310 ......    add    eax, 0x04
+0x08048324: a3 b8 95 04 08          |.....   |                     mov    dword ds:[0x080495b8<(data)p.5608>], eax
+0x08048329: ff d2                   |..      |                     call   edx
+
+0x0804832b: a1 b8 95 04 08          |.....   | F08048310 ......    mov    eax, dword ds:[0x080495b8<(data)p.5608>]
+0x08048330: 8b 10                   |..      |                     mov    edx, dword ds:[eax]
+0x08048332: 85 d2                   |..      |                     test   edx, edx
+0x08048334: 75 eb                   |u.      |                     jne    0x08048321<<BBlock>>
+
+0x08048336: c6 05 bc 95 04 08 01    |....... | F08048310 ......    mov    byte ds:[0x080495bc<_edata>], 0x01
+
+0x0804833d: c9                      |.       | F08048310 ......    leave  
+0x0804833e: c3                      |.       |                     ret    
+
+Skipping 1 byte
+0x08048340: ================================== Function (function call, symbol, graph) <frame_dummy>
+0x08048340: Function stack delta: +4
+
+0x08048340: 55                      |U       | F08048340 E.....    push   ebp
+0x08048341: 89 e5                   |..      |                     mov    ebp, esp
+0x08048343: 83 ec 08                |...     |                     sub    esp, 0x08
+0x08048346: a1 cc 94 04 08          |.....   |                     mov    eax, dword ds:[0x080494cc<(data)__JCR_END__>]
+0x0804834b: 85 c0                   |..      |                     test   eax, eax
+0x0804834d: 74 12                   |t.      |                     je     0x08048361<<BBlock>>
+
+0x0804834f: b8 00 00 00 00          |.....   | F08048340 ......    mov    eax, 0x00000000
+0x08048354: 85 c0                   |..      |                     test   eax, eax
+0x08048356: 74 09                   |t.      |                     je     0x08048361<<BBlock>>
+
+0x08048358: c7 04 24 cc 94 04 08    |..$.... | F08048340 ......    mov    dword ss:[esp], 0x080494cc<(data)__JCR_END__>
+0x0804835f: ff d0                   |..      |                     call   eax
+
+0x08048361: c9                      |.       | F08048340 ......    leave  
+0x08048362: c3                      |.       |                     ret    
+
+Skipping 1 byte
+0x08048364: ================================== Function (symbol, graph) <main>
+
+0x08048364: 8d 4c 24 04             |.L$.    | F08048364 EH....    lea    ecx, [esp + 0x04]
+0x08048368: 83 e4 f0                |...     |                     and    esp, 0xf0<-16>
+0x0804836b: ff 71 fc                |.q.     |                     push   dword ds:[ecx + 0xfc<-4>]
+0x0804836e: 55                      |U       |                     push   ebp
+0x0804836f: 89 e5                   |..      |                     mov    ebp, esp
+0x08048371: 51                      |Q       |                     push   ecx
+0x08048372: 83 ec 14                |...     |                     sub    esp, 0x14
+0x08048375: c7 04 24 28 00 00 00    |..$(... |                     mov    dword ss:[esp], 0x00000028
+0x0804837c: e8 1f ff ff ff          |.....   |                     call   0x080482a0<malloc@plt>
+
+0x08048381: 89 45 f0                |.E.     | F08048364 ......    mov    dword ss:[ebp + 0xf0<-16>], eax
+0x08048384: c7 45 f4 00 00 00 00    |.E..... |                     mov    dword ss:[ebp + 0xf4<-12>], 0x00000000
+0x0804838b: c7 45 f4 00 00 00 00    |.E..... |                     mov    dword ss:[ebp + 0xf4<-12>], 0x00000000
+0x08048392: eb 12                   |..      |                     jmp    0x080483a6<<BBlock>>
+
+0x08048394: 8b 45 f4                |.E.     | F08048364 ......    mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x08048397: c1 e0 02                |...     |                     shl    eax, 0x02
+0x0804839a: 03 45 f0                |.E.     |                     add    eax, dword ss:[ebp + 0xf0<-16>]
+0x0804839d: c7 00 05 00 00 00       |......  |                     mov    dword ds:[eax], 0x00000005
+0x080483a3: ff 45 f4                |.E.     |                     inc    dword ss:[ebp + 0xf4<-12>]
+
+0x080483a6: 83 7d f4 09             |.}..    | F08048364 ......    cmp    dword ss:[ebp + 0xf4<-12>], 0x09
+0x080483aa: 7e e8                   |~.      |                     jle    0x08048394<<BBlock>>
+
+0x080483ac: 8b 45 f0                |.E.     | F08048364 ......    mov    eax, dword ss:[ebp + 0xf0<-16>]
+0x080483af: 83 c0 30                |..0     |                     add    eax, 0x30
+0x080483b2: 8b 00                   |..      |                     mov    eax, dword ds:[eax]
+0x080483b4: 89 45 f8                |.E.     |                     mov    dword ss:[ebp + 0xf8<-8>], eax
+0x080483b7: 83 c4 14                |...     |                     add    esp, 0x14
+0x080483ba: 59                      |Y       |                     pop    ecx
+0x080483bb: 5d                      |]       |                     pop    ebp
+0x080483bc: 8d 61 fc                |.a.     |                     lea    esp, [ecx + 0xfc<-4>]
+0x080483bf: c3                      |.       |                     ret    
+
+0x080483c0: ================================== Function (symbol, graph) <__libc_csu_init>
+0x080483c0: Function stack delta: +4
+
+0x080483c0: 55                      |U       | F080483c0 EH....    push   ebp
+0x080483c1: 89 e5                   |..      |                     mov    ebp, esp
+0x080483c3: 57                      |W       |                     push   edi
+0x080483c4: 56                      |V       |                     push   esi
+0x080483c5: 53                      |S       |                     push   ebx
+0x080483c6: 83 ec 0c                |...     |                     sub    esp, 0x0c
+0x080483c9: e8 00 00 00 00          |.....   |                     call   0x080483ce<<Insn>>
+0x080483ce: 5b                      |[       |                     pop    ebx
+0x080483cf: 81 c3 ce 11 00 00       |......  |                     add    ebx, 0x000011ce<4558>
+0x080483d5: e8 9e fe ff ff          |.....   |                     call   0x08048278<(func)_init>
+
+0x080483da: 8d 83 20 ff ff ff       |.. ...  | F080483c0 ......    lea    eax, [ebx + 0xffffff20<-224>]
+0x080483e0: 8d 93 20 ff ff ff       |.. ...  |                     lea    edx, [ebx + 0xffffff20<-224>]
+0x080483e6: 89 45 f0                |.E.     |                     mov    dword ss:[ebp + 0xf0<-16>], eax
+0x080483e9: 29 d0                   |).      |                     sub    eax, edx
+0x080483eb: 31 f6                   |1.      |                     xor    esi, esi
+0x080483ed: c1 f8 02                |...     |                     sar    eax, 0x02
+0x080483f0: 39 c6                   |9.      |                     cmp    esi, eax
+0x080483f2: 73 16                   |s.      |                     jae    0x0804840a<<BBlock>>
+
+0x080483f4: 89 d7                   |..      | F080483c0 ......    mov    edi, edx
+0x080483f6: 89 f6                   |..      |                     mov    esi, esi
+
+0x080483f8: ff 14 b2                |...     | F080483c0 ......    call   dword ds:[edx + esi*0x04]
+
+0x080483fb: 8b 4d f0                |.M.     | F080483c0 ......    mov    ecx, dword ss:[ebp + 0xf0<-16>]
+0x080483fe: 29 f9                   |).      |                     sub    ecx, edi
+0x08048400: 46                      |F       |                     inc    esi
+0x08048401: c1 f9 02                |...     |                     sar    ecx, 0x02
+0x08048404: 39 ce                   |9.      |                     cmp    esi, ecx
+0x08048406: 89 fa                   |..      |                     mov    edx, edi
+0x08048408: 72 ee                   |r.      |                     jb     0x080483f8<<BBlock>>
+
+0x0804840a: 83 c4 0c                |...     | F080483c0 ......    add    esp, 0x0c
+0x0804840d: 5b                      |[       |                     pop    ebx
+0x0804840e: 5e                      |^       |                     pop    esi
+0x0804840f: 5f                      |_       |                     pop    edi
+0x08048410: c9                      |.       |                     leave  
+0x08048411: c3                      |.       |                     ret    
+
+Skipping 2 bytes
+0x08048414: ================================== Function (symbol, graph) <__libc_csu_fini>
+0x08048414: Function stack delta: +4
+
+0x08048414: 55                      |U       | F08048414 EH....    push   ebp
+0x08048415: 89 e5                   |..      |                     mov    ebp, esp
+0x08048417: 57                      |W       |                     push   edi
+0x08048418: 56                      |V       |                     push   esi
+0x08048419: 53                      |S       |                     push   ebx
+0x0804841a: e8 00 00 00 00          |.....   |                     call   0x0804841f<<Insn>>
+0x0804841f: 5b                      |[       |                     pop    ebx
+0x08048420: 81 c3 7d 11 00 00       |..}...  |                     add    ebx, 0x0000117d<4477>
+0x08048426: 8d 83 20 ff ff ff       |.. ...  |                     lea    eax, [ebx + 0xffffff20<-224>]
+0x0804842c: 8d bb 20 ff ff ff       |.. ...  |                     lea    edi, [ebx + 0xffffff20<-224>]
+0x08048432: 29 f8                   |).      |                     sub    eax, edi
+0x08048434: c1 f8 02                |...     |                     sar    eax, 0x02
+0x08048437: 83 ec 0c                |...     |                     sub    esp, 0x0c
+0x0804843a: 8d 70 ff                |.p.     |                     lea    esi, [eax + 0xff<-1>]
+0x0804843d: eb 05                   |..      |                     jmp    0x08048444<<BBlock>>
+
+0x0804843f: 90                      |.       | F08048414 .H....    nop    
+
+0x08048440: ff 14 b7                |...     | F08048414 ......    call   dword ds:[edi + esi*0x04]
+
+0x08048443: 4e                      |N       | F08048414 ......    dec    esi
+
+0x08048444: 83 fe ff                |...     | F08048414 ......    cmp    esi, 0xff<-1>
+0x08048447: 75 f7                   |u.      |                     jne    0x08048440<<BBlock>>
+
+0x08048449: e8 46 00 00 00          |.F...   | F08048414 ......    call   0x08048494<(func)_fini>
+
+0x0804844e: 83 c4 0c                |...     | F08048414 ......    add    esp, 0x0c
+0x08048451: 5b                      |[       |                     pop    ebx
+0x08048452: 5e                      |^       |                     pop    esi
+0x08048453: 5f                      |_       |                     pop    edi
+0x08048454: c9                      |.       |                     leave  
+0x08048455: c3                      |.       |                     ret    
+
+Skipping 10 bytes
+0x08048460: ================================== Function (function call, symbol, graph) <__do_global_ctors_aux>
+0x08048460: Function stack delta: +4
+
+0x08048460: 55                      |U       | F08048460 E.....    push   ebp
+0x08048461: 89 e5                   |..      |                     mov    ebp, esp
+0x08048463: 53                      |S       |                     push   ebx
+0x08048464: bb bc 94 04 08          |.....   |                     mov    ebx, 0x080494bc<__preinit_array_start>
+0x08048469: 83 ec 04                |...     |                     sub    esp, 0x04
+0x0804846c: a1 bc 94 04 08          |.....   |                     mov    eax, dword ds:[0x080494bc<__preinit_array_start>]
+0x08048471: 83 f8 ff                |...     |                     cmp    eax, 0xff<-1>
+0x08048474: 74 16                   |t.      |                     je     0x0804848c<<BBlock>>
+
+0x08048476: 8d 76 00                |.v.     | F08048460 ......    lea    esi, [esi + 0x00]
+0x08048479: 8d bc 27 00 00 00 00    |..'.... |                     lea    edi, [edi + 0x00000000]
+
+0x08048480: 83 eb 04                |...     | F08048460 ......    sub    ebx, 0x04
+0x08048483: ff d0                   |..      |                     call   eax
+
+0x08048485: 8b 03                   |..      | F08048460 ......    mov    eax, dword ds:[ebx]
+0x08048487: 83 f8 ff                |...     |                     cmp    eax, 0xff<-1>
+0x0804848a: 75 f4                   |u.      |                     jne    0x08048480<<BBlock>>
+
+0x0804848c: 58                      |X       | F08048460 ......    pop    eax
+0x0804848d: 5b                      |[       |                     pop    ebx
+0x0804848e: 5d                      |]       |                     pop    ebp
+0x0804848f: 90                      |.       |                     nop    
+0x08048490: c3                      |.       |                     ret    
+
+Skipping 3 bytes
+0x08048494: ================================== Function (function call, symbol, graph) <_fini>
+0x08048494: Function stack delta: +4
+
+0x08048494: 55                      |U       | F08048494 E.....    push   ebp
+0x08048495: 89 e5                   |..      |                     mov    ebp, esp
+0x08048497: 53                      |S       |                     push   ebx
+0x08048498: e8 00 00 00 00          |.....   |                     call   0x0804849d<<Insn>>
+0x0804849d: 5b                      |[       |                     pop    ebx
+0x0804849e: 81 c3 ff 10 00 00       |......  |                     add    ebx, 0x000010ff<4351>
+0x080484a4: 50                      |P       |                     push   eax
+0x080484a5: e8 66 fe ff ff          |.f...   |                     call   0x08048310<(func)__do_global_dtors_aux>
+
+0x080484aa: 59                      |Y       | F08048494 ......    pop    ecx
+0x080484ab: 5b                      |[       |                     pop    ebx
+0x080484ac: c9                      |.       |                     leave  
+0x080484ad: c3                      |.       |                     ret    
+Assembled 192 instructions

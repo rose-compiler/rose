@@ -20,8 +20,10 @@ deleteNodes ( set<SgNode*> & listToDelete )
         {
 #if 0
           Sg_File_Info* fileInfo = (*i)->get_file_info();
-          printf ("In deleteNodes(): listToDelete result: i = %p = %s = %s at file = %s \n",
-               *i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
+       // printf ("In deleteNodes(): listToDelete result: i = %p = %s = %s at file = %s \n",
+       //      *i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
+          printf ("In deleteNodes(): listToDelete result: i = %p = %s at file = %s \n",
+               *i,(*i)->class_name().c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
 #endif
 
 #if 1

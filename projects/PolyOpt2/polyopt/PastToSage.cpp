@@ -31,6 +31,7 @@
 
 
 #include <past/past_api.h>
+#include <past/pprint.h>
 
 static
 void traversePast (s_past_node_t* s, void* args)
@@ -42,11 +43,11 @@ void traversePast (s_past_node_t* s, void* args)
       std::vector<void*>::const_iterator i;
       for (i = its->begin(); i != its->end(); ++i)
 	if (f->iterator &&
-	    f->iterator->symbol->is_char_data &&
-	    ! strcmp ((char*)*i, (char*) f->iterator->symbol->data))
+	    f->iterator->name_str &&
+	    ! strcmp ((char*)*i, (char*) f->iterator->name_str))
 	  break;
       if (i == its->end())
-	its->push_back(f->iterator->symbol->data);
+	its->push_back(f->iterator->name_str);
     }
   else if (past_node_is_a (s, past_statement))
     {
@@ -55,19 +56,19 @@ void traversePast (s_past_node_t* s, void* args)
       if (past_node_is_a (ps->body, past_assign))
 	{
 	  PAST_DECLARE_TYPED(binary, pb, ps->body);
-	  if (past_node_is_a (pb->lhs, past_variable))
+	  if (past_node_is_a (pb->lhs, past_varref))
 	    {
-	      PAST_DECLARE_TYPED(variable, pv, pb->lhs);
-	      if (pv->symbol->is_char_data &&
-		  pv->symbol->data && ((char*)(pv->symbol->data))[0] == 'c')
+	      PAST_DECLARE_TYPED(varref, pv, pb->lhs);
+	      if (pv->symbol->name_str &&
+		  pv->symbol->name_str && ((char*)(pv->symbol->name_str))[0] == 'c')
 		{
 		  std::vector<void*>* iters = (std::vector<void*>*)args;
 		  std::vector<void*>::const_iterator i;
 		  for (i = iters->begin(); i != iters->end(); ++i)
-		    if (! strcmp ((char*)*i, (char*)pv->symbol->data))
+		    if (! strcmp ((char*)*i, (char*)pv->symbol->name_str))
 		      break;
 		  if (i == iters->end())
-		    iters->push_back((char*)pv->symbol->data);
+		    iters->push_back((char*)pv->symbol->name_str);
 		}
 	    }
 	}
@@ -93,9 +94,8 @@ PastToSage::createNewIterators(std::vector<void*> vars,
   std::vector<void*>::const_iterator i;
   for (i = vars.begin(); i != vars.end(); ++i)
     {
-      std::string availablename = getAvailableName(std::string((char*)(*i)));
       SgVariableDeclaration* decl =
-	SageBuilder::buildVariableDeclaration(availablename,
+	SageBuilder::buildVariableDeclaration(std::string((char*)*i),
 					      SageBuilder::buildIntType(),
 					      NULL, scope);
       std::pair<void*, SgVariableDeclaration*> newelt(*i, decl);
@@ -308,8 +308,8 @@ PastToSage::createTileSizeParameters(s_symbol_table_t* symtable,
   ROSE_ASSERT(allsyms);
   for (i = 0, tmp = symtable->symbols; tmp; tmp = tmp->next)
     // Only symbol with char data type that are not iterators are tile size parameters.
-    if (tmp->is_char_data && ! isIterator(tmp->data) && tmp->data
-	&& ((char*)tmp->data)[0] == 'T')
+    if (tmp->name_str && ! isIterator(tmp->name_str) && tmp->name_str
+	&& ((char*)tmp->name_str)[0] == 'T')
       allsyms[i++] = tmp;
   allsyms[i] = NULL;
 
@@ -318,12 +318,12 @@ PastToSage::createTileSizeParameters(s_symbol_table_t* symtable,
   char* tile_size_array = NULL;
   for (i = 0; allsyms[i]; ++i)
     {
-      std::string availablename = getAvailableName(std::string((char*)allsyms[i]->data));
-      if (strcmp(availablename.c_str(), (char*)allsyms[i]->data))
+      std::string availablename = getAvailableName(std::string((char*)allsyms[i]->name_str));
+      if (strcmp(availablename.c_str(), (char*)allsyms[i]->name_str))
 	{
 	  // Change the symbol name in the symbol table.
-	  free (allsyms[i]->data);
-	  allsyms[i]->data = strdup (availablename.c_str());
+	  free (allsyms[i]->name_str);
+	  allsyms[i]->name_str = strdup (availablename.c_str());
 	}
     }
 
@@ -345,10 +345,10 @@ PastToSage::createTileSizeParameters(s_symbol_table_t* symtable,
 	 SageBuilder::buildFloatType());
 
       SgVariableDeclaration* decl =
-	SageBuilder::buildVariableDeclaration(std::string((char*)allsyms[i]->data),
+	SageBuilder::buildVariableDeclaration(std::string((char*)allsyms[i]->name_str),
 					      SageBuilder::buildFloatType(),
 					      init, scope);
-      std::pair<void*, SgVariableDeclaration*> newelt(allsyms[i]->data, decl);
+      std::pair<void*, SgVariableDeclaration*> newelt(allsyms[i]->name_str, decl);
       res.insert(newelt);
     }
 
@@ -396,7 +396,6 @@ PastToSage::PastToSage(SgScopeStatement* scopScope,
   // where XX is an integer.
   _scoplibIterators = collectAllIterators(root);
 
-  
   // 2- Create the basic block containing the transformed scop.
   SgBasicBlock* bb = SageBuilder::buildBasicBlock();
   bb->set_parent(scopRoot->get_parent());
@@ -516,17 +515,24 @@ std::string PastToSage::getAvailableName(std::string templatestr)
 	  ROSE_ASSERT(annot);
 	  std::map<std::string, SgVariableSymbol*> fakeSymbolMap =
 	    annot->fakeSymbolMap;
-	  std::vector<SgVarRefExp*> vrefs = 
-	    SageInterface::querySubTree<SgVarRefExp>(stmt, V_SgVarRefExp);
-	  std::vector<SgNode*> varrefs;
-	  for (std::vector<SgVarRefExp*>::iterator i = vrefs.begin();
-	       i != vrefs.end(); ++i)
-	    varrefs.push_back(*i);
-	  usedSymbols =
-	    SageTools::convertToSymbolSet(varrefs, fakeSymbolMap);
-	  std::set<SgVariableSymbol*>::const_iterator i;
-	  for (i = usedSymbols.begin(); i != usedSymbols.end(); ++i)
-	    _usedSymbols.push_back(std::string((*i)->get_name().str()));
+	  std::vector<SgNode*> readRefs;
+	  std::vector<SgNode*> writeRefs;
+	  bool collect =
+	    SageTools::collectReadWriteRefs(stmt, readRefs, writeRefs, 1);
+	  ROSE_ASSERT(collect);
+	  if (collect)
+	    {
+	      std::set<SgVariableSymbol*> readSymbs =
+		SageTools::convertToSymbolSet(readRefs, fakeSymbolMap);
+	      std::set<SgVariableSymbol*> writeSymbs =
+		SageTools::convertToSymbolSet(writeRefs, fakeSymbolMap);
+	      std::set<SgVariableSymbol*>::const_iterator i;
+	      set_union(readSymbs.begin(), readSymbs.end(),
+			writeSymbs.begin(), writeSymbs.end(),
+			std::inserter(usedSymbols, usedSymbols.begin()));
+	      for (i = usedSymbols.begin(); i != usedSymbols.end(); ++i)
+		_usedSymbols.push_back(std::string((*i)->get_name().str()));
+	    }
 	}
     }
 
@@ -808,7 +814,7 @@ SgStatement* PastToSage::buildFor(s_past_for_t* forStmt)
 
   SgVarRefExp* iteratorVar =
     SageBuilder::buildVarRefExp
-    (_sageIterators.find(forStmt->iterator->symbol->data)->second);
+    (_sageIterators.find(forStmt->iterator->name_str)->second);
   SgExprStatement* initAssignStmt = NULL;
   SgExprStatement* testStmt = NULL;
   SgExpression* incrExpr = NULL;
@@ -865,24 +871,39 @@ SgStatement* PastToSage::buildUserStatement(s_past_cloogstmt_t* statement)
 
   AttachedPreprocessingInfoType* attached =
     retStmt->getAttachedPreprocessingInfo();
-  if(attached != NULL)
+  if (attached != NULL)
     {
-//      attached->clear();
-      for(Rose_STL_Container<PreprocessingInfo * >::iterator it = attached->begin(); it != attached->end(); ++it)
+      // attached->clear();
+      for (Rose_STL_Container<PreprocessingInfo * >::iterator it = attached->begin();
+	   it != attached->end(); ++it)
       {
-        if((*it)->getTypeOfDirective() != PreprocessingInfo::C_StyleComment)
-        {
-           if (! _polyoptions.getQuiet())
-            {
-	       std::cout << "[PastToSage] Warning:  SCoP statement has attached"
-	         " preprocessing info!  It will be cleared." << std::endl;
-               std::cout << "[PastToSage]   Offending Statement: " <<
-	       origStatement->unparseToCompleteString() << std::endl;
-	    }
-          attached->erase(it);
-        }
+        if ((*it)->getTypeOfDirective() != PreprocessingInfo::C_StyleComment)
+	  {
+	    if (! _polyoptions.getQuiet())
+	      {
+		std::cout << "[PastToSage] Warning:  SCoP statement has attached"
+		  " preprocessing info!  It will be cleared." << std::endl;
+		std::cout << "[PastToSage]   Offending Statement: " <<
+		  origStatement->unparseToCompleteString() << std::endl;
+	      }
+	    // attached->erase(it);
+	  }
       }  
     }
+  /// LNP: Old version, to be deleted.
+  // AttachedPreprocessingInfoType* attached =
+  //   retStmt->getAttachedPreprocessingInfo();
+  // if(attached != NULL)
+  //   {
+  //     if (! _polyoptions.getQuiet())
+  // 	{
+  // 	  std::cout << "[PastToSage] Warning:  SCoP statement has attached"
+  // 	    " preprocessing info!  It will be cleared." << std::endl;
+  // 	  std::cout << "[PastToSage]   Offending Statement: " <<
+  // 	    origStatement->unparseToCompleteString() << std::endl;
+  // 	}
+  //     attached->clear();
+  //   }
 
   // Perform variable substitution
   // 1- Iterate on all iterators.
@@ -930,16 +951,16 @@ SgStatement* PastToSage::buildUserStatement(s_past_cloogstmt_t* statement)
  *
  *
  */
-SgExpression* PastToSage::buildVariableReference(s_past_variable_t* varref)
+SgExpression* PastToSage::buildVariableReference(s_past_varref_t* varref)
 {
   IF_PLUTO_ROSE_VERBOSE(std::cout << "[PastToSage] Starting name" << std::endl;)
 
   ROSE_ASSERT(varref);
   ROSE_ASSERT(varref->symbol);
-
+  
   SgExpression* var;
   // Check if it is a fake symbol (eg, a.b).
-  if (! varref->symbol->is_char_data)
+  if (! varref->symbol->name_str)
     {
       std::map<std::string, SgVariableSymbol*>::const_iterator i;
       for (i = _fakeSymbolMap.begin(); i != _fakeSymbolMap.end(); ++i)
@@ -980,26 +1001,28 @@ SgExpression* PastToSage::buildVariableReference(s_past_variable_t* varref)
 	}
     }
   // If the name is an iterator, simply create a reference to its declaration.
-  if (varref->symbol->is_char_data && isIterator(varref->symbol->data))
+  if (varref->symbol->name_str && isIterator(varref->symbol->name_str))
       var = SageBuilder::buildVarRefExp
-	(_sageIterators.find(varref->symbol->data)->second);
+	(_sageIterators.find(varref->symbol->name_str)->second);
   // Else if the name is a parameter, create a reference using its
   // existing symbol.
-  else if (! varref->symbol->is_char_data &&
+  // else if (! varref->symbol->name_str &&
+  // 	   isSgVariableSymbol((SgNode*)(varref->symbol->data)) != NULL)
+  else if (varref->symbol && varref->symbol->data &&
 	   isSgVariableSymbol((SgNode*)(varref->symbol->data)) != NULL)
     var = SageBuilder::buildVarRefExp
       (isSgVariableSymbol((SgNode*)(varref->symbol->data)));
   // Else this is a tile parameter created by PTile, create an opaque
   // reference.
-  else if (isTileSizeParameter(varref->symbol->data))
+  else if (isTileSizeParameter(varref->symbol->name_str))
     var = SageBuilder::buildVarRefExp
-      (_sageTileSizeParameters.find(varref->symbol->data)->second);
+      (_sageTileSizeParameters.find(varref->symbol->name_str)->second);
   else
     {
       std::cerr << "[PolyOpt][WARNING] Unattached symbol" << std::endl;
       ROSE_ASSERT(0);
       var =
-	SageBuilder::buildOpaqueVarRefExp((const char*)varref->symbol->data,
+	SageBuilder::buildOpaqueVarRefExp((const char*)varref->symbol->name_str,
 					  m_scope);
     }
   IF_PLUTO_ROSE_VERBOSE(std::cout << "[PastToSage] Finished name  (" <<
@@ -1086,9 +1109,9 @@ SgExpression* PastToSage::buildExpressionTree(s_past_node_t* node)
       pasttosage_traverse_funcunop(round);
       pasttosage_traverse_funcunop(sqrt);
     }
-  else if (past_node_is_a(node, past_variable))
+  else if (past_node_is_a(node, past_varref))
     {
-      return buildVariableReference((s_past_variable_t*) node);
+      return buildVariableReference((s_past_varref_t*) node);
     }
   else if (past_node_is_a(node, past_value))
     {
@@ -1332,15 +1355,15 @@ void traverse_iters(s_past_node_t* node, void* args)
   if (past_node_is_a (node, past_for))
     {
       PAST_DECLARE_TYPED(for, pf, node);
-      if (pf->iterator->symbol->is_char_data)
+      if (pf->iterator->name_str)
 	{
 	  std::vector<char*>* iters = (std::vector<char*>*)args;
 	  std::vector<char*>::const_iterator i;
 	  for (i = iters->begin(); i != iters->end(); ++i)
-	    if (! strcmp (*i, (char*)pf->iterator->symbol->data))
+	    if (! strcmp (*i, (char*)pf->iterator->name_str))
 	      break;
 	  if (i == iters->end())
-	    iters->push_back((char*)pf->iterator->symbol->data);
+	    iters->push_back((char*)pf->iterator->name_str);
 	}
     }
   else if (past_node_is_a (node, past_statement))
@@ -1350,19 +1373,19 @@ void traverse_iters(s_past_node_t* node, void* args)
       if (past_node_is_a (ps->body, past_assign))
 	{
 	  PAST_DECLARE_TYPED(binary, pb, ps->body);
-	  if (past_node_is_a (pb->lhs, past_variable))
+	  if (past_node_is_a (pb->lhs, past_varref))
 	    {
-	      PAST_DECLARE_TYPED(variable, pv, pb->lhs);
-	      if (pv->symbol->is_char_data &&
-		  pv->symbol->data && ((char*)(pv->symbol->data))[0] == 'c')
+	      PAST_DECLARE_TYPED(varref, pv, pb->lhs);
+	      if (pv->symbol->name_str &&
+		  pv->symbol->name_str && ((char*)(pv->symbol->name_str))[0] == 'c')
 		{
 		  std::vector<char*>* iters = (std::vector<char*>*)args;
 		  std::vector<char*>::const_iterator i;
 		  for (i = iters->begin(); i != iters->end(); ++i)
-		    if (! strcmp (*i, (char*)pv->symbol->data))
+		    if (! strcmp (*i, (char*)pv->symbol->name_str))
 		      break;
 		  if (i == iters->end())
-		    iters->push_back((char*)pv->symbol->data);
+		    iters->push_back((char*)pv->symbol->name_str);
 		}
 	    }
 	}

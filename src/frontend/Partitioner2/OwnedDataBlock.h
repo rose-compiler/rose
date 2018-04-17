@@ -8,9 +8,10 @@
 
 #include <Sawyer/Map.h>
 
-#include <vector>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -26,6 +27,19 @@ class OwnedDataBlock {
     DataBlock::Ptr dblock_;                             // the data block, non-null
     std::vector<Function::Ptr> functions_;              // functions that own this data block, sorted
     std::vector<BasicBlock::Ptr> bblocks_;              // basic blocks that own this data block, sorted
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(dblock_);
+        s & BOOST_SERIALIZATION_NVP(functions_);
+        s & BOOST_SERIALIZATION_NVP(bblocks_);
+    }
+#endif
+
 public:
     /** Default constructed null ownership.
      *

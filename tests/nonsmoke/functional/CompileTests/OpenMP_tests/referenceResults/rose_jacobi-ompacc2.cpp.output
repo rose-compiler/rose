@@ -1,0 +1,10 @@
+//#pragma omp parallel for private(xx,yy,j,i)
+//#pragma omp target map(to:n, m, omega, ax, ay, u[0:n][0:m],f[0:n][0:m]) map(alloc:uold[0:n][0:m])
+//#pragma omp parallel
+#pragma omp target  map(to : n,m,u[0:n][0:m]) map(from : uold[0:n][0:m])
+#pragma omp parallel 
+#pragma omp for  private(j,i)
+#pragma omp target  map(to : n,m,omega,ax,ay,b,f[0:n][0:m],uold[0:n][0:m]) map(from : u[0:n][0:m])
+#pragma omp parallel 
+#pragma omp for  private(resid,j,i) reduction(+ : error)
+//#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error)

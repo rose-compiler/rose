@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = dotGenerator dotGeneratorWholeASTGraph
 
@@ -8,7 +9,7 @@ dotGenerator_SOURCES = dotGenerator.C
 
 dotGeneratorWholeASTGraph_SOURCES = dotGeneratorWholeASTGraph.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD = $(ROSE_LIBS)
 
 # changes to the templates in ../src/midend/astRewriteMechanism/rewriteTreeTraversal.C
 # should force several files using those templates to be recompiled.

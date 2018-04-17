@@ -1,5 +1,7 @@
 #include "SymbolicExpr.h"
-
+//store condition for a variable
+// coeff*variable + result Relation 0
+// e.g.   5*i+1 <=0
 struct VarRestr
 {
   SymbolicVal coeff, result;
@@ -8,6 +10,9 @@ struct VarRestr
    : coeff(co), result(res), rel(r) {}
   bool IsNIL() const { return rel == REL_UNKNOWN; }
 };
+//extract a condition to be the form of 
+//  left*pivot rel right
+//  e.g. 5*i <= 0
 class UnwrapCond : public SymbolicVisitor
 {
   SymbolicVar pivot;
@@ -25,22 +30,22 @@ class UnwrapCond : public SymbolicVisitor
    { 
      SymbolicVal cur;
      SymbolicExpr::OpdIterator iter = v.GetOpdIterator();
-     while ( !iter.ReachEnd()) {
+     while ( !iter.ReachEnd()) { // find the first term using pivot variable like 2*i
          cur = v.Term2Val(iter.Current());
          if (FindVal( cur, pivot))
             break;
          ++iter;
      }
      if (iter.ReachEnd()) return;
-     SymbolicTerm p = iter.Current(); 
+     SymbolicTerm p = iter.Current(); // look ahead for next term without using pivot
      switch (v.GetOpType()) {
-     case SYMOP_MULTIPLY:
+     case SYMOP_MULTIPLY: // expression is multiplication of terms
           for (iter.Advance(); !iter.ReachEnd(); iter++) {
              if (FindVal( v.Term2Val(iter.Current()), pivot))
                 break;
           }
-          if (!iter.ReachEnd()) return;
-          left = 1;
+          if (!iter.ReachEnd()) return; //still found later terms using pivot? return
+          left = 1; // Now we know the begin and end offset of all terms using privot, multiply them together.
           for (iter=v.GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {
               if (iter.Current() != p )
                  left = left * v.Term2Val(iter.Current());
@@ -89,13 +94,13 @@ class UnwrapCond : public SymbolicVisitor
    }
  public:
   UnwrapCond( const SymbolicVar &var) : pivot(var) {}
-  VarRestr operator()( const SymbolicCond &cond)
+  VarRestr operator()( const SymbolicCond &cond)  // normalize condition to be  Left_is_func(x) Relation const_exp
    { 
      left = cond.GetLeftVal();
      right = cond.GetRightVal();
      rel = cond.GetRelType();
      succ = false;
-
+// try to find pivot variable on left and right sides
      bool b1 = FindVal(left, pivot), b2 = FindVal(right, pivot);
      if (!b1 && !b2) 
         rel = REL_NONE;
@@ -109,7 +114,7 @@ class UnwrapCond : public SymbolicVisitor
         else if (b1 && b2) {
            left = left - right;
            right = 0;
-        } 
+        }   // if (b1 && !b2), left and right are kept intact?
         SymbolicVal tmp = left; // need to create a temporary because left may be re-assigned, causing memory error
         tmp.Visit(this); 
         if (!succ)
@@ -118,7 +123,8 @@ class UnwrapCond : public SymbolicVisitor
      return VarRestr( left, right, rel);
    }
 };
-
+// normalize and extract condition expression: left-Relation-right,  right side does not contain pivot variable
+// Depending on the relation type, save result into a bound
 SymbolicVal UnwrapVarCond( const SymbolicCond& cond, const SymbolicVar &pivot, SymbolicBound& pivotBound)
 {
   VarRestr res = UnwrapCond(pivot)(cond);

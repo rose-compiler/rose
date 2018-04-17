@@ -1,0 +1,2 @@
+#pragma omp parallel  if(1)
+#pragma omp for  ordered reduction(+ : sum) schedule(dynamic , 5)

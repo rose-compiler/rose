@@ -3,7 +3,7 @@
 
 #include <EditDistance/Levenshtein.h>
 
-namespace rose {
+namespace Rose {
 namespace EditDistance {
 
 /** Damerau-Levenshtein edit distance.

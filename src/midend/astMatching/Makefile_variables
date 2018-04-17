@@ -6,7 +6,8 @@ mAstMatching_la_sources=\
 	$(mAstMatchingPath)/matcherparser.C \
 	$(mAstMatchingPath)/RoseAst.C \
 	$(mAstMatchingPath)/AstMatching.C \
-	$(mAstMatchingPath)/MatchOperation.C
+	$(mAstMatchingPath)/MatchOperation.C \
+	$(mAstMatchingPath)/AstTerm.C
 
 mAstMatching_libadd=\
 	$(CXX_TEMPLATE_OBJECTS)
@@ -16,7 +17,8 @@ mAstMatching_includeHeaders=\
 	$(mAstMatchingPath)/matcherparser_decls.h \
 	$(mAstMatchingPath)/matcherparser.h \
 	$(mAstMatchingPath)/AstMatching.h \
-	$(mAstMatchingPath)/MatchOperation.h
+	$(mAstMatchingPath)/MatchOperation.h \
+	$(mAstMatchingPath)/AstTerm.h
 
 mAstMatching_extraDist=\
 	$(mAstMatchingPath)/CMakeLists.txt \

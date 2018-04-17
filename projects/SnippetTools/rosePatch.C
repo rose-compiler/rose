@@ -1,12 +1,13 @@
 #include <rose.h>
 
+#include <CommandLine.h>
 #include <FileSystem.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <string>
 #include <vector>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
@@ -25,7 +26,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
         .purpose("applies ROSE patches on the fly")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .doc("Synopsis",
              "@prop{programName} --identity=@v{directory} --translated=@v{directory} --top=@v{directory} "
              "-- @v{compiler_arguments}")
@@ -124,9 +125,8 @@ struct Patcher: UnparseFormatHelp::PostOutputCallback {
 int
 main(int argc, char *argv[]) {
     // Initialize libraries
-    Diagnostics::initialize();
-    mlog = Diagnostics::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command line
     Settings settings;

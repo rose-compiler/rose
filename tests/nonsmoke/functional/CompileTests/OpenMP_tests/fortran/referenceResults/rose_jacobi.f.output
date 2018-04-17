@@ -1,0 +1,14 @@
+!$omp parallel 
+!$omp do  private(xx,yy)
+!$omp end do 
+!$omp end parallel 
+!$omp parallel 
+!$omp do 
+!$omp end do 
+!$omp do  private(resid) reduction(+ : error)
+!$omp end do  nowait
+!$omp end parallel 
+!$omp parallel 
+!$omp do  private(xx,yy,temp) reduction(+ : error)
+!$omp end do 
+!$omp end parallel 

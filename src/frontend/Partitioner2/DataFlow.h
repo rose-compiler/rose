@@ -8,7 +8,7 @@
 #include <Partitioner2/Function.h>
 #include <Sawyer/Graph.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -36,18 +36,23 @@ private:
     Type type_;
     BasicBlock::Ptr bblock_;                            // attached to BBLOCK vertices
     Function::Ptr callee_;                              // function represented by FAKED_CALL
+    Function::Ptr parentFunction_;                      // function "owning" this vertex
+    size_t inliningId_;                                 // invocation ID for inlining functions during inter-procedural
 
 public:
     /** Construct a basic block vertex.  The basic block pointer should not be a null pointer. */
-    explicit DfCfgVertex(const BasicBlock::Ptr &bblock): type_(BBLOCK), bblock_(bblock) {
+    explicit DfCfgVertex(const BasicBlock::Ptr &bblock, const Function::Ptr &parentFunction, size_t inliningId)
+        : type_(BBLOCK), bblock_(bblock), parentFunction_(parentFunction), inliningId_(inliningId) {
         ASSERT_not_null(bblock);
     }
 
     /** Construct a faked call vertex. The function may be null if indeterminate. */
-    explicit DfCfgVertex(const Function::Ptr &function): type_(FAKED_CALL), callee_(function) {}
-    
+    explicit DfCfgVertex(const Function::Ptr &function, const Function::Ptr &parentFunction, size_t inliningId)
+        : type_(FAKED_CALL), callee_(function), parentFunction_(function), inliningId_(inliningId) {}
+
     /** Construct a vertex of specified type that takes no auxiliary data. */
-    explicit DfCfgVertex(Type type): type_(type) {
+    explicit DfCfgVertex(Type type, const Function::Ptr &parentFunction, size_t inliningId)
+        : type_(type), parentFunction_(parentFunction), inliningId_(inliningId) {
         ASSERT_require2(BBLOCK!=type && FAKED_CALL!=type, "use a different constructor");
     }
 
@@ -64,6 +69,20 @@ public:
 
     /** Function represented by faked call. */
     const Function::Ptr& callee() const { return callee_; }
+
+    /** Function owning this vertex.
+     *
+     *  Pointer to the function to which this vertex belongs. For basic blocks, it's a function to which the basic block
+     *  belongs; for faked calls, its the caller function; for function returns, it's the function returning; for the
+     *  indeterminate vertex it's a null pointer. */
+    Function::Ptr parentFunction() const { return parentFunction_; }
+
+    /** Inlining invocation number.
+     *
+     *  For a graph constructed for interprocedural data-flow, some function calls are replaced by the called function's
+     *  body. Each time this inlining happens, a counter is incremented and all new vertices are created using this
+     *  counter. The counter starts at zero. */
+    size_t inliningId() const { return inliningId_; }
 };
 
 /** Control flow graph used by data-flow analysis.
@@ -131,6 +150,25 @@ void dumpDfCfg(std::ostream&, const DfCfg&);
  *  functions own the target block of a function call edge then we need to choose the "best" function to use. */
 Function::Ptr bestSummaryFunction(const FunctionSet &functions);
 
+/** Find the return vertex.
+ *
+ *  Finds the FUNCRET vertex. Function returns all flow into this special vertex, but if there are no function return blocks
+ *  then this vertex also doesn't exist (in which case the end iterator is returned).  Do not call this if there's a chance
+ *  that the data-flow CFG has more than one FUNCRET vertex. */
+template<class DfCfg>
+typename Sawyer::Container::GraphTraits<DfCfg>::VertexIterator
+findReturnVertex(DfCfg &dfCfg) {
+    using namespace Sawyer::Container;
+    typename GraphTraits<DfCfg>::VertexIterator retval = dfCfg.vertices().end();
+    for (typename GraphTraits<DfCfg>::VertexIterator vi = dfCfg.vertices().begin(); vi != dfCfg.vertices().end(); ++vi) {
+        if (vi->value().type() == DfCfgVertex::FUNCRET) {
+            ASSERT_require(retval == dfCfg.vertices().end());
+            retval = vi;
+        }
+    }
+    return retval;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Transfer function
 //
@@ -144,13 +182,14 @@ class TransferFunction {
     BaseSemantics::DispatcherPtr cpu_;
     BaseSemantics::SValuePtr callRetAdjustment_;
     const RegisterDescriptor STACK_POINTER_REG;
-    const CallingConvention::Definition *defaultCallingConvention_;
+    const RegisterDescriptor INSN_POINTER_REG;
+    CallingConvention::DefinitionPtr defaultCallingConvention_;
 public:
     /** Construct from a CPU.
      *
      *  Constructs a new transfer function using the specified @p cpu. */
     explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), defaultCallingConvention_(NULL) {
+        : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()) {
         size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
         callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
     }
@@ -166,35 +205,30 @@ public:
     /** Property: Default calling convention.
      *
      *  The default calling convention is used whenever a call is made to a function that has no calling convention
-     *  information. It specifies which registers should be clobbered by the call and how the stack is adjusted when returning
-     *  from the call.  The default calling convention may be a null pointer to indicate that absolutely nothing is known about
-     *  the convention of non-analyzed functions.
+     *  information. It specifies which registers should be clobbered by the call and how the stack and instruction poniter
+     *  are adjusted when returning from the call.  The default calling convention may be a null pointer to indicate that
+     *  absolutely nothing is known about the convention of non-analyzed functions.
      *
      * @{ */
-    const CallingConvention::Definition* defaultCallingConvention() const { return defaultCallingConvention_; }
-    void defaultCallingConvention(const CallingConvention::Definition *x) { defaultCallingConvention_ = x; }
+    CallingConvention::DefinitionPtr defaultCallingConvention() const { return defaultCallingConvention_; }
+    void defaultCallingConvention(const CallingConvention::DefinitionPtr &x) { defaultCallingConvention_ = x; }
     /** @} */
 
-    // Required by data-flow engine: should return a deep copy of the state
-    BaseSemantics::StatePtr operator()(const BaseSemantics::StatePtr &incomingState) const {
-        return incomingState ? incomingState->clone() : BaseSemantics::StatePtr();
-    }
+    // Required by data-flow engine
+    std::string printState(const BaseSemantics::StatePtr &state);
 
     // Required by data-flow engine: compute new output state given a vertex and input state.
     BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
 };
 
+/** Data-flow merge function.
+ *
+ *  Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
+ *  state changed. */
+typedef Rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
+
 /** Data-Flow engine. */
-typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction> Engine;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Merge function
-//
-// Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
-// state changed.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
+typedef Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, MergeFunction> Engine;
 
 /** Returns the list of all known stack variables.
  *

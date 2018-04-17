@@ -30,7 +30,6 @@ install(FILES  LoopNestingInfoProcessing.h DESTINATION ${INCLUDE_INSTALL_DIR})
 #printLoopInfo_SOURCES = printLoopInfo.C LoopNestingInfoProcessing.C
 #printLoopInfo_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 #
-#LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #
 ## testing (generate output, dot file, pdf file)
 #

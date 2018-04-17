@@ -6,7 +6,7 @@
 
 #include "AsmUnparser_compat.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {                      // documented elsewhere
 
 /** A vertex property writer for instruction-based CFGs.  This causes vertex names to be instructions rather than

@@ -26,9 +26,9 @@ an open standard to program heterogeneous system, managed by the Khronos Group}.
 	To build and test the CUDA/OpenCL support with your version of ROSE: \\
 	\$ ROSE\_SRC\_TREE/configure --enable-edg-version=4.0 --enable-cuda --enable-edg-cuda --enable-opencl --enable-edg-opencl [...] \\
 	\$ make \\
-	\$ make -Ctests/CompileTests/NewEDGInterface\_C\_tests check \# tests EDG 4.0 \\
-	\$ make -Ctests/CompileTests/CudaTests check \# tests CUDA support \\
-	\$ make -Ctests/CompileTests/OpenCLTests check \# tests OpenCL support \\
+	\$ make -Ctests/nonsmoke/functional/CompileTests/NewEDGInterface\_C\_tests check \# tests EDG 4.0 \\
+	\$ make -Ctests/nonsmoke/functional/CompileTests/CudaTests check \# tests CUDA support \\
+	\$ make -Ctests/nonsmoke/functional/CompileTests/OpenCLTests check \# tests OpenCL support \\
 	\\
 	You can look on the test directories to see the current state of CUDA/OpenCL support.
 	

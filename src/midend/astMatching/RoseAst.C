@@ -135,7 +135,6 @@ RoseAst::iterator::current_node_id() const {
 
 std::string
 RoseAst::iterator::parent_node_id() const {
-  stack_element e=_stack.top();
   std::stringstream ss;
   ss << parent(); // MS: a parent cannot be null, therefore the address is sufficient.
   return ss.str();

@@ -4,7 +4,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesM68k {

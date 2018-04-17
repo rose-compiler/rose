@@ -4,6 +4,7 @@
 #include "sageInterface.h"
 
 using namespace std;
+using namespace Rose;
 using namespace SageInterface;
 
 namespace AbstractMemoryObject {
@@ -125,7 +126,7 @@ namespace AbstractMemoryObject {
     {
       try
       {
-        const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
+        //const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
         return true; // may equal to an unknown index set
       }
       catch (bad_cast & bc)
@@ -150,7 +151,7 @@ namespace AbstractMemoryObject {
     {
       try
       {
-        const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
+        //const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
         return false; // cannot decide if it is a must relation
       }
       catch (bad_cast & bc)
@@ -461,7 +462,7 @@ namespace AbstractMemoryObject {
     return rt;
   }
   //------------------
-  std::set<SgType*> ScalarExprObj::getType() const
+  std::set<SgType*> ScalarExprObj::getType() 
   {
     std::set<SgType*> rt;
     rt.insert (ExprObj::getType());
@@ -493,7 +494,7 @@ namespace AbstractMemoryObject {
     return rt;
   }
   //------------------
-  std::set<SgType*> FunctionExprObj::getType() const
+  std::set<SgType*> FunctionExprObj::getType() 
   {
     std::set<SgType*> rt;
     rt.insert (ExprObj::getType());
@@ -845,8 +846,11 @@ namespace AbstractMemoryObject {
     // three cases:
     try
     { // case 1:
-      NamedObj o1 = * this; 
-      const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2);
+
+   // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+   // NamedObj o1 = *this;
+
+      //const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2);
       return false; //TODO accurate alias analysis can answer this question better. For now, we cannot decide. 
     }
     catch (bad_cast & bc)
@@ -1071,7 +1075,7 @@ namespace AbstractMemoryObject {
 
 
   //------------------
-  std::set<SgType*> PointerNamedObj::getType() const
+  std::set<SgType*> PointerNamedObj::getType()
   {
     std::set<SgType*> rt;
     rt.insert (NamedObj::getType());
@@ -1478,7 +1482,9 @@ namespace AbstractMemoryObject {
     {
       try
       {
-        const NamedObj named_o2 = dynamic_cast <const NamedObj&> (o2); 
+     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+     // const NamedObj named_o2 = dynamic_cast <const NamedObj&> (o2);
+
         return false; //  no way they can be equal mem object
       } 
       catch (bad_cast & bc)
@@ -1507,7 +1513,7 @@ namespace AbstractMemoryObject {
     return (o1.mustEqual(o2));
   }
 
-  bool PointerAliasedObj::equalPoints(const Pointer & that)
+  bool PointerAliasedObj::equalPoints(Pointer & that)
   {
     SgType* this_type = *(this->getType().begin()); 
     SgType* that_type = *(that.getType().begin());

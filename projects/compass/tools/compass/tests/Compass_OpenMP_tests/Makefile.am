@@ -47,13 +47,22 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
+# DQ (3/1/2017): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
 VALGRIND =
+endif
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(top_srcdir)/src/frontend/SageIII
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code -I$(top_srcdir)/src/frontend/SageIII
 
 ROSE_FLAGS = -rose:openmp -rose:openmp:ast_only
 
@@ -64,8 +73,8 @@ ROSE_FLAGS = -rose:openmp -rose:openmp:ast_only
 $(TEST_Objects): ../../compassMain ../../compass_parameters
 #	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 #	echo "Copy the file to the local build tree so that the we can process it with compass (not required by compass) ..."
-#	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.c)
-	env COMPASS_PARAMETERS=../../compass_parameters $(VALGRIND) ../../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -rose:includeFile $(@:.o=)  -c $(srcdir)/$(@:.o=.C) && touch $@
+#	cp $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.c)
+	env COMPASS_PARAMETERS=../../compass_parameters $(VALGRIND) ../../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -rose:includeFile $(@:.o=)  -c $(srcdir)/$(@:.o=.C) && touch $@
 
 ../../compass_parameters:
 	cd ../..; $(MAKE) compass_parameters

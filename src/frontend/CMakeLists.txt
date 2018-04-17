@@ -1,5 +1,4 @@
 add_subdirectory(SageIII)
-add_subdirectory(BinaryDisassembly)
 add_subdirectory(BinaryLoader)
 add_subdirectory(BinaryFormats)
 add_subdirectory(Disassemblers)

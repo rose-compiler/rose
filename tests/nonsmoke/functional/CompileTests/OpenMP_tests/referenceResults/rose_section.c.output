@@ -1,0 +1,5 @@
+#pragma omp parallel 
+#pragma omp sections  reduction(+ : sum) private(i) lastprivate(j) firstprivate(k)
+#pragma omp section 
+#pragma omp section 
+#pragma omp section 

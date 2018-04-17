@@ -1,0 +1,50 @@
+CFG dominators for function 0x00400498:
+  dominator of 0x004004ab<0> is 0x004004a6<1>
+  dominator of 0x004004a6<1> is 0x004004a1<2>
+  dominator of 0x004004a1<2> is 0x00400498<3>
+  dominator of 0x00400498<3> is none
+CFG dominators for function 0x004004b0 "DYNAMIC_LINKER_TRAMPOLINE":
+  dominator of 0x004004b0<0> is none
+CFG dominators for function 0x004004c0 "__libc_start_main@plt":
+  dominator of 0x004004c0<0> is none
+CFG dominators for function 0x004004d0 "read@plt":
+  dominator of 0x004004d0<0> is none
+CFG dominators for function 0x004004e0 "write@plt":
+  dominator of 0x004004e0<0> is none
+CFG dominators for function 0x004004f0 "open@plt":
+  dominator of 0x004004f0<0> is none
+CFG dominators for function 0x00400500 "exit@plt":
+  dominator of 0x00400500<0> is none
+CFG dominators for function 0x00400510 "close@plt":
+  dominator of 0x00400510<0> is none
+CFG dominators for function 0x00400520 "_start":
+  dominator of 0x0040054a<0> is 0x00400520<1>
+  dominator of 0x00400520<1> is none
+CFG dominators for function 0x0040054c:
+  dominator of 0x0040055e<0> is 0x0040054c<2>
+  dominator of 0x0040055c<1> is 0x0040054c<2>
+  dominator of 0x0040054c<2> is none
+CFG dominators for function 0x00400570:
+  dominator of 0x00400570<0> is none
+CFG dominators for function 0x00400577:
+  dominator of 0x0040057d<0> is 0x00400577<6>
+  dominator of 0x0040057f<1> is none
+  dominator of 0x0040058d<2> is 0x00400577<6>
+  dominator of 0x00400580<3> is 0x0040058d<2>
+  dominator of 0x0040059c<4> is 0x0040058d<2>
+  dominator of 0x004005a3<5> is 0x00400577<6>
+  dominator of 0x00400577<6> is none
+CFG dominators for function 0x004005b0:
+  dominator of 0x004005c8<0> is 0x004005be<2>
+  dominator of 0x004005d4<1> is 0x004005b0<3>
+  dominator of 0x004005be<2> is 0x004005b0<3>
+  dominator of 0x004005b0<3> is none
+CFG dominators for function 0x00400700:
+  dominator of 0x00400719<0> is none
+  dominator of 0x00400726<1> is 0x00400720<4>
+  dominator of 0x0040072f<2> is 0x00400729<5>
+  dominator of 0x00400700<3> is none
+  dominator of 0x00400720<4> is 0x00400729<5>
+  dominator of 0x00400729<5> is 0x00400700<3>
+CFG dominators for function 0x00400b3c:
+  dominator of 0x00400b3c<0> is none

@@ -4684,7 +4684,11 @@ string ineq2Str(const string& x, const string& y, const string& rel, const int& 
 string normV(const varID& v) {
         string n = v.str(true);
         Dbg::dbg << "Pre: "<<n<<"\n";
-        for(int i=0; i<n.length(); i++) if(n[i] == ':' || n[i] == '-') n[i] = '_';
+
+     // DQ (12/6/2016): Fixed compiler warning: -Wsign-compare
+     // for(int i=0; i<n.length(); i++) if(n[i] == ':' || n[i] == '-') n[i] = '_';
+        for(size_t i=0; i<n.length(); i++) if(n[i] == ':' || n[i] == '-') n[i] = '_';
+
         Dbg::dbg << "Post: "<<n<<"\n";
         return n;
 }
@@ -4692,7 +4696,10 @@ string normV(const varID& v) {
 // Returns a normalized version of this variable's name with annotations that can be consumed by DOT
 string normAV(const varID& v) {
         string n = v.str(false);
-        for(int i=0; i<n.length(); i++) if(n[i] == ':' || n[i] == '-') n[i] = '_';
+
+     // DQ (12/6/2016): Fixed compiler warning: -Wsign-compare
+        for(size_t i=0; i<n.length(); i++) if(n[i] == ':' || n[i] == '-') n[i] = '_';
+
         return n;
 }
 

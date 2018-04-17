@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#include "OmpAttribute.h"
 
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
@@ -62,7 +63,18 @@ ROSE_DLL_API std::string getVariantName (VariantT v);
  *  numerous types of operations that are common to general analysis and transformation of the AST. */
 namespace SageInterface
    {
-  // DQ (4/3/2014): Added general AST support seperate from the AST.
+  // Liao 6/22/2016: keep records of loop init-stmt normalization, later help undo it to support autoPar.
+  struct Transformation_Record
+  {
+    // a lookup table to check if a for loop has been normalized for its c99-style init-stmt
+    std::map <SgForStatement* , bool > forLoopInitNormalizationTable; 
+    // Detailed record about the original declaration (1st in the pair) and the normalization generated new declaration (2nd in the pair)
+    std::map <SgForStatement* , std::pair<SgVariableDeclaration*, SgVariableDeclaration*>  >  forLoopInitNormalizationRecord;
+  } ;
+
+  ROSE_DLL_API extern Transformation_Record trans_records;
+
+  // DQ (4/3/2014): Added general AST support separate from the AST.
 
   // Container and API for analysis information that is outside of the AST and as a result
   // prevents frequent modification of the IR.
@@ -86,9 +98,9 @@ namespace SageInterface
 
         };
 
-  // DQ (4/3/2014): This constucts a data structure that holds analysis information about
-  // the AST that is seperate from the AST.  This is intended to be a general mechanism 
-  // to support analysis information without constantly modifing the IR.
+  // DQ (4/3/2014): This constructs a data structure that holds analysis information about
+  // the AST that is separate from the AST.  This is intended to be a general mechanism 
+  // to support analysis information without constantly modifying the IR.
      DeclarationSets* buildDeclarationSets(SgNode*);
 
 //! An internal counter for generating unique SgName
@@ -415,6 +427,10 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+   //! Save AST into a pdf file. Start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
+   void saveToPDF(SgNode* node, std::string filename);
+   void saveToPDF(SgNode* node); // enable calling from gdb
+
  // DQ (2/12/2012): Added some diagnostic support.
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
    void whereAmI(SgNode* node);
@@ -573,8 +589,8 @@ class StatementGenerator {
 //! Return the left hand, right hand expressions and if the left hand variable is also being read
   bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
 
-//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
-ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current);
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. For Dot and Arrow Expressions, their lhs is used to obtain SgInitializedName (coarse grain) by default. Otherwise, fine-grain rhs is used. 
+ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current, bool coarseGrain=true);
 
 //! Build an abstract handle from an AST node, reuse previously built handle when possible
 ROSE_DLL_API AbstractHandle::abstract_handle* buildAbstractHandle(SgNode*);
@@ -618,7 +634,9 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
 //  std::string version();  // utility_functions.h, version number
   /*! Brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
+  ROSE_DLL_API bool is_Ada_language ();
   ROSE_DLL_API bool is_C_language ();
+  ROSE_DLL_API bool is_Cobol_language ();
   ROSE_DLL_API bool is_OpenMP_language ();
   ROSE_DLL_API bool is_UPC_language ();
   //! Check if dynamic threads compilation is used for UPC programs
@@ -626,6 +644,7 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   ROSE_DLL_API bool is_C99_language ();
   ROSE_DLL_API bool is_Cxx_language ();
   ROSE_DLL_API bool is_Java_language ();
+  ROSE_DLL_API bool is_Jovial_language ();
   ROSE_DLL_API bool is_Fortran_language ();
   ROSE_DLL_API bool is_CAF_language ();
   ROSE_DLL_API bool is_PHP_language();
@@ -797,7 +816,10 @@ void setSourcePositionPointersToNull(SgNode *node);
   ROSE_DLL_API void setSourcePositionForTransformation (SgNode * root);
 
 //! Set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
-  ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
+//  ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
+
+//! Check if a node is from a system header file
+  ROSE_DLL_API bool insideSystemHeader (SgLocatedNode* node);
 
 //! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.
 // ROSE_DLL_API void setSourcePosition (SgLocatedNode * locatedNode);
@@ -906,10 +928,10 @@ ROSE_DLL_API size_t getArrayElementCount(SgArrayType* t);
 //! Get the number of dimensions of an array type
 ROSE_DLL_API int getDimensionCount(SgType* t);
 
-//! Get the element type of an array
+//! Get the element type of an array. It recursively find the base type for multi-dimension array types
 ROSE_DLL_API SgType* getArrayElementType(SgType* t);
 
-//! Get the element type of an array, pointer or string, or NULL if not applicable
+//! Get the element type of an array, pointer or string, or NULL if not applicable. This function only check one level base type. No recursion.
 ROSE_DLL_API SgType* getElementType(SgType* t);
 
 
@@ -1026,6 +1048,11 @@ ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrLis
 //! Test for equivalence of types independent of access permissions (private or protected modes for members of classes).
 ROSE_DLL_API bool isEquivalentType (const SgType* lhs, const SgType* rhs);
 
+
+//! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
+//! They may differ in one SgTemplateType pointer but identical otherwise. 
+ROSE_DLL_API bool isEquivalentFunctionType (const SgFunctionType* lhs, const SgFunctionType* rhs);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1097,6 +1124,9 @@ ROSE_DLL_API void setLoopStride(SgNode* loop, SgExpression* stride);
 //! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
 ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 
+//! Undo the normalization of for loop's C99 init declaration. Previous record of normalization is used to ease the reverse transformation.
+ROSE_DLL_API bool unnormalizeForLoopInitDeclaration(SgForStatement* loop);
+
 //! Normalize a for loop, return true if successful. Generated constants will be fold by default.
 //!
 //! Translations are :
@@ -1150,18 +1180,33 @@ bool getForLoopInformations(
 //! Query a subtree to get all nodes of a given type, with an appropriate downcast.
 template <typename NodeType>
 std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)NodeType::static_variant)
-{
-  Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
-  std::vector<NodeType*> result(nodes.size(), NULL);
-  int count = 0;
-  for (Rose_STL_Container<SgNode*>::const_iterator i = nodes.begin();
-       i != nodes.end(); ++i, ++count) {
-    NodeType* node = dynamic_cast<NodeType*>(*i);
-    ROSE_ASSERT (node);
-    result[count] = node;
-  }
-  return result;
-}
+   {
+#if 0
+     printf ("Top of SageInterface::querySubTree() \n");
+#endif
+
+     Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
+     std::vector<NodeType*> result(nodes.size(), NULL);
+     int count = 0;
+#if 0
+     printf ("In SageInterface::querySubTree(): before initialization loop \n");
+#endif
+
+     for (Rose_STL_Container<SgNode*>::const_iterator i = nodes.begin(); i != nodes.end(); ++i, ++count) 
+        {
+#if 0
+          printf ("In SageInterface::querySubTree(): in loop: count = %d \n",count);
+#endif
+          NodeType* node = dynamic_cast<NodeType*>(*i);
+          ROSE_ASSERT (node);
+          result[count] = node;
+        }
+#if 0
+     printf ("Leaving SageInterface::querySubTree(): after initialization loop \n");
+#endif
+
+     return result;
+   }
   /*! \brief Returns STL vector of SgFile IR node pointers.
 
       Demonstrates use of restricted traversal over just SgFile IR nodes.
@@ -1208,8 +1253,8 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
 */
 ROSE_DLL_API SgFunctionDeclaration* findMain(SgNode* currentNode);
 
-//! Find the last declaration statement within a scope (if any). This is often useful to decide where to insert another declaration statement
-SgStatement* findLastDeclarationStatement(SgScopeStatement * scope);
+//! Find the last declaration statement within a scope (if any). This is often useful to decide where to insert another variable declaration statement. Pragma declarations are not treated as a declaration by default in this context. 
+SgStatement* findLastDeclarationStatement(SgScopeStatement * scope, bool includePragma = false);
 
           //midend/programTransformation/partialRedundancyElimination/pre.h
 //! Find referenced symbols within an expression
@@ -1270,8 +1315,9 @@ T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* sc
              }
             else // Liao 2/9/2010. We should allow NULL scope
              {
-               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
 #if 0
+            // DQ (12/6/2016): Include this into the debugging code to aboid compiler warning about unused variable.
+               SgSymbol* symbol = decl->search_for_symbol_from_symbol_table();
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table() = %p \n",symbol);
                printf ("In findDeclarationStatement(): decl->search_for_symbol_from_symbol_table()->get_name() = %s \n",symbol->get_name().str());
 #endif
@@ -1563,6 +1609,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
   //! Find the closest switch outside a given statement (normally used for case and default statements)
   ROSE_DLL_API SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
+
+  //! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+  ROSE_DLL_API SgOmpClauseBodyStatement* findEnclosingOmpClauseBodyStatement(SgStatement* s);
 
   //! Find the closest loop outside the given statement; if fortranLabel is not empty, the Fortran label of the loop must be equal to it
   ROSE_DLL_API SgScopeStatement* findEnclosingLoop(SgStatement* s, const std::string& fortranLabel = "", bool stopOnSwitches = false);
@@ -1972,14 +2021,14 @@ ROSE_DLL_API void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, Sg
 ROSE_DLL_API bool
 collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse=false);
 
-//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars);
+//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default. 
+ROSE_DLL_API bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars, bool coarseGrain=true);
 
-//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars);
+//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default.
+ROSE_DLL_API void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars, bool coarseGrain=true);
 
-//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols);
+//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default.
+ROSE_DLL_API void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols, bool coarseGrain=true);
 
 //! Check if a variable reference is used by its address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
 ROSE_DLL_API bool isUseByAddressVariableRef(SgVarRefExp* ref);
@@ -1996,13 +2045,13 @@ ROSE_DLL_API void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop,
 #endif
 
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
-ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);
+ROSE_DLL_API void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum> > & results);
 
 //! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable). Please be advised that constant folding on floating point computation may decrease the accuracy of floating point computations!
 /*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */
 ROSE_DLL_API void constantFolding(SgNode* r);
 
-//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted.
+//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements (with duplicated statement s) and return expressions with side effects. Return the number of statements inserted.
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement.
  */
 ROSE_DLL_API int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s);
@@ -2112,8 +2161,8 @@ bool isBodyStatement (SgStatement* s);
 //! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
 void changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody = true);
 
-//! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
-void changeAllLoopBodiesToBlocks(SgNode* top);
+// The same as changeAllBodiesToBlocks(SgNode* top). Phased out.
+//void changeAllLoopBodiesToBlocks(SgNode* top);
 
 //! Make a single statement body to be a basic block. Its parent is if, while, catch, or upc_forall etc.
 SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
@@ -2472,7 +2521,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       SgType *  UnderlyingType(SgType *type);
 
 // DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
-   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
+//   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
 
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
@@ -2505,6 +2554,87 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
       ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
 #endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+
+
+
+// DQ (8/31/2016): Making this a template function so that we can have it work with user defined filters.
+//! This function detects template instantiations that are relevant when filters are used.
+/*!
+    EDG normalizes some in-class template functions and member functions to be redefined outside of a class. this causes the associated template instantiations
+    to be declared outside of the class, and to be marked as compiler generated (since the compiler generated form outside of the class declaration).
+    ROSE captures the function definitions, but in the new location (defined outside of the class declaration).  This can confuse some simple tests
+    for template instantiations that are a part of definitions in a file, thus we have this function to detect this specific normalization.
+ */
+template < class T >
+bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionDeclaration* function, T* filter )
+   {
+  // DQ (9/1/2016): This function is called in the Call graph generation to avoid filtering out EDG normalized 
+  // function template instnatiations (which come from normalized template functions and member functions).
+  // Note that because of the EDG normailzation the membr function is moved outside of the class, and 
+  // thus marked as compiler generated.  However the template instantiations are always marked as compiler 
+  // generated (if not specializations) and so we want to include a template instantiation that is marked 
+  // as compiler generated, but is from a template declaration that satisfyied a specific user defined filter.
+  // The complexity of this detection is isolated here, but knowing that it must be called is more complex.
+  // This function is call in the CG.C file of tests/nonsmoke/functional/roseTests/programAnalysisTests/testCallGraphAnalysis.
+
+     bool retval = false;
+
+#define DEBUG_TEMPLATE_NORMALIZATION_DETECTION 0
+
+#if DEBUG_TEMPLATE_NORMALIZATION_DETECTION
+     printf ("In isNormalizedTemplateInstantiation(): function = %p = %s = %s \n",function,function->class_name().c_str(),function->get_name().str());
+#endif
+
+  // Test for this to be a template instantation (in which case it was marked as 
+  // compiler generated but we may want to allow it to be used in the call graph, 
+  // if it's template was a part was defined in the current directory).
+     SgTemplateInstantiationFunctionDecl*       templateInstantiationFunction       = isSgTemplateInstantiationFunctionDecl(function);
+     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(function);
+
+     if (templateInstantiationFunction != NULL)
+        {
+       // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+          templateInstantiationFunction = isSgTemplateInstantiationFunctionDecl(templateInstantiationFunction->get_firstNondefiningDeclaration());
+          SgTemplateFunctionDeclaration* templateFunctionDeclaration = templateInstantiationFunction->get_templateDeclaration();
+          if (templateFunctionDeclaration != NULL)
+             {
+               retval = filter->operator()(templateFunctionDeclaration);
+             }
+            else
+             {
+             // Assume false.
+             }
+
+#if DEBUG_TEMPLATE_NORMALIZATION_DETECTION
+          printf ("   --- case of templateInstantiationFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+        }
+       else
+        {
+          if (templateInstantiationMemberFunction != NULL)
+             {
+            // When the defining function has been normalized by EDG, only the non-defining declaration will have a source position.
+               templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(templateInstantiationMemberFunction->get_firstNondefiningDeclaration());
+               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = templateInstantiationMemberFunction->get_templateDeclaration();
+               if (templateMemberFunctionDeclaration != NULL)
+                  {
+                    retval = filter->operator()(templateMemberFunctionDeclaration);
+                  }
+                 else
+                  {
+                 // Assume false.
+                  }
+
+#if DEBUG_TEMPLATE_NORMALIZATION_DETECTION
+               printf ("   --- case of templateInstantiationMemberFunction: retval = %s \n",retval ? "true" : "false");
+#endif
+             }
+        }
+
+     return retval;
+   }
+
+
 
 }// end of namespace
 

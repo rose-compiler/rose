@@ -103,6 +103,9 @@ protected:
 };
 
 int main(int argc, char **argv) {
+    // Initialize and check compatibility. See Rose::initialize
+    ROSE_INITIALIZE;
+
     SgProject *project = frontend(argc, argv);
 
     /* Must be called before any distributed memory analyses are performed. */

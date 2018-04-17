@@ -13,11 +13,12 @@
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
-#include <set>
-#include <string>
-#include <vector>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -35,7 +36,7 @@ typedef Sawyer::SharedPointer<class Function> FunctionPtr;
  *  A function may exist as part of the partitioner's control flow graph, or in a detached state.  When a function is
  *  represented by the control flow graph then it is in a frozen state, meaning that its basic blocks and data blocks cannot be
  *  adjusted adjusted; one must use the partitioner interface to do so. */
-class Function: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
+class Function: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Manner in which a function owns a block. */
     enum Ownership { OWN_UNOWNED=0,                     /**< Function does not own the block. */
@@ -49,12 +50,14 @@ public:
 private:
     rose_addr_t entryVa_;                               // entry address; destination for calls to this function
     std::string name_;                                  // optional function name
+    std::string demangledName_;                         // optional demangled name
     std::string comment_;                               // optional multi-line, plain-text, commment
     unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
     CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
+    CallingConvention::Definition::Ptr ccDefinition_;   // best definition or null
     StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
     InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
 
@@ -66,8 +69,34 @@ private:
     void clearCache() {
         isNoop_.clear();
     }
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not stored
+        s & BOOST_SERIALIZATION_NVP(entryVa_);
+        s & BOOST_SERIALIZATION_NVP(name_);
+        s & BOOST_SERIALIZATION_NVP(demangledName_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(reasons_);
+        s & BOOST_SERIALIZATION_NVP(bblockVas_);
+        s & BOOST_SERIALIZATION_NVP(dblocks_);
+        s & BOOST_SERIALIZATION_NVP(isFrozen_);
+        s & BOOST_SERIALIZATION_NVP(ccAnalysis_);
+        s & BOOST_SERIALIZATION_NVP(ccDefinition_);
+        s & BOOST_SERIALIZATION_NVP(stackDeltaAnalysis_);
+        s & BOOST_SERIALIZATION_NVP(stackDeltaOverride_);
+    }
+#endif
     
 protected:
+    // Needed for serialization
+    Function()
+        : entryVa_(0), reasons_(0), isFrozen_(false) {}
+
     // Use instance() instead
     explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
         : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false) {
@@ -92,9 +121,21 @@ public:
 
     /** Optional function name.
      *
+     *  This is the official name. See also @ref demangledName, which can also return the value of this @ref name property.
+     *
      *  @{ */
     const std::string& name() const { return name_; }
     void name(const std::string &name) { name_ = name; }
+    /** @} */
+
+    /** Optional demangled name.
+     *
+     *  This property holds the override string to use as the demangled name. If set to the empty string, then reading this
+     *  property returns the true @ref name instead.
+     *
+     * @{ */
+    const std::string& demangledName() const;
+    void demangledName(const std::string &name) { demangledName_ = name; }
     /** @} */
 
     /** Optional function comment.
@@ -245,8 +286,23 @@ public:
     CallingConvention::Analysis& callingConventionAnalysis() { return ccAnalysis_; }
     /** @} */
 
-    /** A printable name for the function.  Returns a string like 'function 0x10001234 "main"'.  The function name is not
-     *  included if the name is empty. */
+    /** Property: Best calling convention definition.
+     *
+     *  This is the best calling convention definition for this function. Calling conventions have two parts: (1) the behavior
+     *  of the function such as which locations serve as inputs (read-before-write) and outputs (write-last), and callee-saved
+     *  locations (read-before-write and write-last and same initial and final value), and (2) a list of well-known calling
+     *  convention definitions that match the function's behavior.  More than one definition can match. This property holds one
+     *  defintion which is usually the "best" one.
+     *
+     * @{ */
+    CallingConvention::Definition::Ptr callingConventionDefinition() { return ccDefinition_; }
+    void callingConventionDefinition(const CallingConvention::Definition::Ptr &ccdef) { ccDefinition_ = ccdef; }
+    /** @} */
+
+    /** A printable name for the function.
+     *
+     *  Returns a string like 'function 0x10001234 "main"'.  The function name is not included if this function has neither a
+     *  demangled name nor a true name. The @ref demangledName overrides the true @ref name. */
     std::string printableName() const;
 
     /** Cached results of function no-op analysis.

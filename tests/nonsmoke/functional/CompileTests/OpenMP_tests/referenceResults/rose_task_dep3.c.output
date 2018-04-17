@@ -1,0 +1,1 @@
+#pragma omp task  private(ii,jj,kk) depend(in : A[i:BS][k:BS],B[k:BS][j:BS]) depend(inout : C[i:BS][j:BS])

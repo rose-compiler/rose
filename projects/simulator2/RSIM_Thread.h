@@ -349,7 +349,7 @@ public:
      *  sets the value which will eventually be returned.
      *
      *  @{ */
-    void syscall_return(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value);
+    void syscall_return(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value);
     void syscall_return(uint64_t value);
     /** @} */
 
@@ -576,7 +576,7 @@ public:
 
     RSIM_Semantics::RiscOperatorsPtr operators() const;
 
-    rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
+    Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
     
     /**************************************************************************************************************************
      *                                  Dynamic Linking

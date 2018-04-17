@@ -5,49 +5,12 @@
 #include "rosedll.h"
 #include <list>
 #define Rose_STL_Container std::vector
-#include <Sawyer/CommandLine.h>
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
-
+//! Command line processing utility functions. Functions in this namespace are in the ROSE Utilities library and
+//  therefore are unable to call other functions in the ROSE library. See also, Rose::CommandLine for higher-level functions.
 namespace CommandlineProcessing
    {
-          /** Generic command-line components.
-           *
-           *  Returns a description of the switches that should be available for all ROSE tools. To make a command-line
-           *  parser that recognizes these switches, add the switches to the parser using its @c with method.  For example:
-           *
-           * @code
-           *  static Sawyer::CommandLine::ParserResult
-           *  parseCommandLine(int argc, char *argv[]) {
-           *      Sawyer::CommandLine::Parser parser;
-           *      return parser
-           *          .with(CommandlineProcessing::genericSwitches()) // these generic switches
-           *          .with(mySwitches)                               // my own switches, etc.
-           *          .parse(argc, argv)                              // parse without side effects
-           *          .apply();                                       // apply parser results
-           *  }
-           * @endcode
-           *
-           *  See any recent tool for more examples. */
-          ROSE_UTIL_API Sawyer::CommandLine::SwitchGroup genericSwitches();
-
-          /** Type for storing generic switch arguments.
-           *
-           *  For instance, the "--threads=N" switch takes an integer that should be stored somewhere. */
-          struct GenericSwitchArgs {
-              unsigned int threads;                     // The "--threads" switch. 0 means number of hardware threads
-
-              GenericSwitchArgs()
-                  : threads(1) {}
-          };
-
-          /** Global location for parsed generic command-line switches.
-           *
-           *  This global variable holds the results of command-line parsing using @ref genericSwitches.  Normally these
-           *  settings are passed per command-line parsing request, but the interface in ROSE doesn't have that ability yet, so
-           *  we use a global variable. */
-          ROSE_UTIL_API extern GenericSwitchArgs genericSwitchArgs;
-              
       //! Separate a string into individual parameters and store them into a string vector
           ROSE_UTIL_API Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
 
@@ -152,6 +115,12 @@ namespace CommandlineProcessing
           ROSE_UTIL_API bool isPHPFileNameSuffix ( const std::string & suffix );
 
           ROSE_UTIL_API bool isPythonFileNameSuffix ( const std::string & suffix );
+
+       // DQ (28/8/2017): Adding language support.
+          ROSE_UTIL_API bool isCsharpFileNameSuffix ( const std::string & suffix );
+          ROSE_UTIL_API bool isAdaFileNameSuffix    ( const std::string & suffix );
+          ROSE_UTIL_API bool isJovialFileNameSuffix ( const std::string & suffix );
+          ROSE_UTIL_API bool isCobolFileNameSuffix  ( const std::string & suffix );
 
        // TV (05/17/2010) Support for CUDA
           ROSE_UTIL_API bool isCudaFileNameSuffix ( const std::string & suffix );

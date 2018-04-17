@@ -65,7 +65,7 @@ static std::string toStringForRTI(const std::vector<std::pair<F,S> >& x) {
   return ss.str();
 }
 
-
+#if 0 // not used
 static std::string toStringForRTI(const ExtentMap &x)
 {
     std::ostringstream ss;
@@ -78,7 +78,7 @@ static std::string toStringForRTI(const ExtentMap &x)
     ss <<"]";
     return ss.str();
 }
-
+#endif
 // DQ (8/29/2008): Added the support for the Robb's SgSharedVector class.
 template <typename T>
 static std::string toStringForRTI(const SgSharedVector<T>& x)

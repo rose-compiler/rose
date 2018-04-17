@@ -29,6 +29,7 @@ class SgOmpClause;
 class SgOmpBodyStatement;
 class SgOmpThreadBodyStatement;
 class SgOmpFlushStatement;
+class SgOmpDeclareSimdStatement;
 class SgOmpBarrierStatement;
 class SgOmpTaskwaitStatement;
 class SgNamespaceDefinitionStatement;
@@ -295,6 +296,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseCompInit                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseConInit                 (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseAssnInit                (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (11/15/2016): Adding support for braced initializer node.
+          virtual void unparseBracedInit              (SgExpression* expr, SgUnparse_Info& info);
+
           virtual void unparseThrowOp                 (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarArgStartOp           (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarArgStartOneOperandOp (SgExpression* expr, SgUnparse_Info& info);
@@ -317,6 +322,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (9/3/2014): Adding C++11 Lambda expression support.
           virtual void unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (11/21/2017): Adding support for GNU C extension for computed goto.
+          virtual void unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info& info);
+
       //! unparse statement functions implememted in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
        // virtual void unparseStatement        (SgStatement* stmt, SgUnparse_Info& info);
@@ -331,7 +339,12 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseForStmt          (SgStatement* stmt, SgUnparse_Info& info);
+
+       // DQ (3/26/2018): Adding support for C++11 IR node (previously missed).
+          virtual void unparseRangeBasedForStmt(SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseFuncDeclStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseMFuncDeclStmt    (SgStatement* stmt, SgUnparse_Info& info);
@@ -387,6 +400,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
        // DQ (9/7/2014): Support for unparsing of the template header within template declarations (I think this only applies to template member and non-member functions).
           virtual void unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info);
+
+       // DQ (9/11/2016): Adding symetric support for template class declarations.
+          virtual void unparseTemplateHeader(SgClassDeclaration* classDeclaration, SgUnparse_Info& info);
 
        // DQ (12/26/2011): Supporting function for all template declarations (initially at least).
           template<class T> void unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info);
@@ -472,6 +488,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 //       virtual void unparseOmpTaskwaitStatement(SgOmpTaskwaitStatement* stmt, SgUnparse_Info& info);
 
          virtual void unparseOmpForStatement          (SgStatement* stmt, SgUnparse_Info& info);
+         virtual void unparseOmpForSimdStatement      (SgStatement* stmt, SgUnparse_Info& info);
          virtual void unparseOmpBeginDirectiveClauses (SgStatement* stmt, SgUnparse_Info& info);
        // DQ (8/13/2007): This should go into the Unparser class
       //! begin the unparser (unparser.C)
@@ -496,6 +513,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (2/8/2014): The name of the constructor call for a SgConstructorInitializer must 
        // be output differently for the GNU g++ 4.5 version compiler and later.
           SgName trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName);
+
+       // DQ (1/21/2018): Added support for lambda function capture variables in annonymous compiler generated classes passed as template arguments
+          bool isAnonymousClass(SgType* templateArgumentType);
 
 #if 0
        // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.

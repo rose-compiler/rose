@@ -106,12 +106,12 @@ bool DepTestStatistics::CompareDepTests(unsigned int c, DepInfo a, DepInfo p, De
                         int tempDim = (a.rows() >= a.cols()) ? a.rows() : a.cols();
                         int commLevel = (a.rows() <= a.cols()) ? a.rows() : a.cols();
                         for (int i = 0; i < commLevel; i++)
-                        {                               
+                        {                                
                                 AddAdhocDV(RoseToPlatoDV(a.Entry( i, i)));
                                 AddPlatoDV(RoseToPlatoDV(p.Entry( i, i)));
                                 AddOmegaDV(RoseToPlatoDV(o.Entry( i, i)));
                                 if (a.Entry( i, i) != p.Entry( i, i) && a.Entry( i, i) != o.Entry( i, i))
-                                        isDiff = true;                          
+                                        isDiff = true;                                
                         }
                 }
                 break;
@@ -514,7 +514,7 @@ void DepTestStatistics::PrintResults(void)
       }
    }
    else if (CmdOptions::GetInstance()->HasOption("-depAnalOnlyPrintS"))
-   {
+  {
       std::cerr << buffer.str();
    }
 }

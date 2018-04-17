@@ -74,8 +74,8 @@ sub git_files {
 sub is_3rdparty {
   local($_) = @_;
   return 1 if m(/alt-mpi-headers/mpich-([\d\.]+)(p\d)?(/|$)); # in projects/compass/src/util/MPIAbstraction
-  return 1 if m(/LANL_POP/netcdf-4\.(\d+)\.(\d+)(/|$)); # in tests/RunTests/FortranTests
-  return 1 if m(/LANL_POP/pop-distro(/|$));             # in tests/RunTests/FortranTests
+  return 1 if m(/LANL_POP/netcdf-4\.(\d+)\.(\d+)(/|$)); # in tests/nonsmoke/functional/RunTests/FortranTests
+  return 1 if m(/LANL_POP/pop-distro(/|$));             # in tests/nonsmoke/functional/RunTests/FortranTests
   return 1 if m(/3rdPartyLibraries(/|$));
   return 0;
 }
@@ -98,6 +98,7 @@ sub is_generated {
   return 1 if m(/src/roseIndependentSupport/dot2gml/parseDotGrammar\.h$);
   return 1 if m(/\.#); # Emacs temporary file
   return 1 if m(~$); # Emacs backup file
+  return 1 if m(/\.git);
   return 0;
 }
 

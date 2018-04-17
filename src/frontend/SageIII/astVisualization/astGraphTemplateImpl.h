@@ -106,7 +106,10 @@ DataMemberPointersToIR<Functional1,Functional2>::generateGraph(SgNode* graphNode
          }else{ 
             edgeReturnValue = edgeFunctional(graphNode,edgeEndPoint);
 
-            if( (whichTraversal==memory_pool_traversal) ){
+         // DQ (3/25/2017): warning: equality comparison with extraneous parentheses [-Wparentheses-equality]
+         // if( (whichTraversal==memory_pool_traversal) )
+            if( whichTraversal==memory_pool_traversal )
+            {
                 //If the node the edge points to should not be graphed and the edge
                 //is to be graphed, do not graph the edge if the memory pool traversal
                 //is used. 

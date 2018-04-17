@@ -3,7 +3,12 @@
 
 #include "BaseSemantics2.h"
 
-namespace rose {
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/split_member.hpp>
+
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -16,38 +21,11 @@ namespace InstructionSemantics2 {
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
+public:
+    typedef BaseSemantics::Dispatcher Super;
+
 protected:
     X86InstructionSize processorMode_;
-
-    // Prototypical constructor
-    DispatcherX86()
-        : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
-          processorMode_(x86_insnsize_32) {}
-
-    // Prototypical constructor
-    DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
-        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
-
-    // Normal constructor
-    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
-        regcache_init();
-        iproc_init();
-        memory_init();
-    }
-
-public:
-
-    /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
-    void iproc_init();
-
-    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
-    void regcache_init();
-
-    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
-    void memory_init();
 
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
@@ -81,6 +59,59 @@ public:
     RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
     /** @}*/
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(processorMode_);
+    }
+    
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(processorMode_);
+        regcache_init();
+        iproc_init();
+        memory_init();
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+    
+protected:
+    // Prototypical constructor
+    DispatcherX86()
+        : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
+          processorMode_(x86_insnsize_32) {}
+
+    // Prototypical constructor
+    DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
+        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
+
+    // Normal constructor
+    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
+        regcache_init();
+        iproc_init();
+        memory_init();
+    }
+
+public:
+    /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
+    void iproc_init();
+
+    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
+    void regcache_init();
+
+    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    void memory_init();
+
+public:
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
      *  with the virtual @ref create method. */
     static DispatcherX86Ptr instance() {
@@ -141,16 +172,18 @@ public:
 
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
 
+    enum AccessMode { READ_REGISTER, PEEK_REGISTER };
+
     /** Architecture-specific read from register.
      *
      *  Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor, AccessMode mode = READ_REGISTER);
 
     /** Architecture-specific write to register.
      *
      *  Similar to RiscOperators::writeRegister, but might do additional architecture-specific things. For instance, writing to
      *  a 32-bit GPR such as "eax" on x86-64 will write zeros to the upper half of "rax". */
-    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr &result);
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &result);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);
@@ -273,5 +306,9 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
+#endif
 
 #endif

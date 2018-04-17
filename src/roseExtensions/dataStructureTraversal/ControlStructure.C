@@ -1,5 +1,8 @@
 #include "sage3basic.h"
 #include "ControlStructure.h"
+
+using namespace Rose;
+
 /*
  * The function
  *     queryNodePragmaDeclarationFromName()

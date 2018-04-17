@@ -6,6 +6,8 @@
 #include "sage3basic.h"
 #include <boost/foreach.hpp>
 
+using namespace Rose;
+
 Extent toExtent(const AddressInterval &x) {
     return x.isEmpty() ? Extent() : Extent::inin(x.least(), x.greatest());
 }

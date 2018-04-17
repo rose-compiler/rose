@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST =
 bin_PROGRAMS =
 MOSTLYCLEANFILES =
+TEST_TARGETS =
 
 if ROSE_ENABLE_PROJECT_TRACE_ANALYSIS
 
@@ -21,18 +22,20 @@ trace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 trace_SPECIMEN = $(srcdir)/vmp-hw-part.trace
 EXTRA_DIST += $(trace_SPECIMEN)
 
+TEST_TARGETS += trace.passed
 trace.passed: $(TEST_EXIT_STATUS) trace $(trace_SPECIMEN)
 	@$(RTH_RUN) CMD="./trace $(trace_SPECIMEN)" $< $@
 
 MOSTLYCLEANFILES += a.exe a.out trace.out
 MOSTLYCLEANFILES += trace.passed trace.failed
 
+endif
+
 #-------------------------------------------------------------------------------------------------------------------------------
 # The usual automake boilerplate
 
-check-local: trace.passed
+check-local: $(TEST_TARGETS)
 
 clean-local:
 	rm -rf -- $(MOSTLYCLEANFILES)
 
-endif

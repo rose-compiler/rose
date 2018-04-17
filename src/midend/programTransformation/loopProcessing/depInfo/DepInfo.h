@@ -29,7 +29,7 @@ class DepInfoImpl
    int commonlevel;
  protected:
    virtual ~DepInfoImpl() {}
-   DepInfoImpl( int dim1, int dim2, bool p, int cl) 
+   DepInfoImpl( int dim1, int dim2, bool p, int cl)  // p: precise or not
         : edd( dim1, dim2, (dim1 == 0 || dim2 == 0)? 0 : 1) ,
           precise(p), commonlevel(cl) {}
 
@@ -62,7 +62,7 @@ class DepInfoImpl
 
 inline DepInfoImpl* Clone(const DepInfoImpl& that) { return that.Clone(); }
 
-class ROSE_DLL_API DepInfo : protected CountRefHandle <DepInfoImpl>
+class DepInfo : protected CountRefHandle <DepInfoImpl>
 {
   DepInfo( DepInfoImpl *impl) : CountRefHandle<DepInfoImpl>(impl) {}
  public:

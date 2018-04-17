@@ -4,7 +4,7 @@
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 #include "CPAstAttributeInterface.h"
-#include "AType.h"
+#include "AbstractValue.h"
 
 using namespace SPRAY;
 

@@ -1,0 +1,16 @@
+!$omp parallel 
+!$omp do  schedule(auto)
+!$omp end do 
+!$omp end parallel 
+!$omp parallel 
+!$omp do  schedule(static)
+!$omp end do 
+!$omp end parallel 
+!$omp parallel 
+!$omp do  schedule(guided , n)
+!$omp end do 
+!$omp end parallel 
+!$omp parallel 
+!$omp do  schedule(dynamic , 5)
+!$omp end do 
+!$omp end parallel 

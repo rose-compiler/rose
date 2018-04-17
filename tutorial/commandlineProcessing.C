@@ -4,10 +4,14 @@
 #include "rose.h"
 
 using namespace std;
+using namespace Rose;
 
 int
 main ( int argc, char* argv[] )
    {
+  // Initialize and check compatibility. See Rose::initialize
+     ROSE_INITIALIZE;
+
      Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
      printf ("Preprocessor (before): argv = \n%s \n",StringUtility::listToString(l).c_str());
 

@@ -5,7 +5,9 @@
 #include <Disassembler.h>
 #include <Sawyer/Map.h>
 
-namespace rose {
+#include <boost/serialization/access.hpp>
+
+namespace Rose {
 namespace BinaryAnalysis {
 
 // Forwards
@@ -56,6 +58,25 @@ private:
     SValuePairPerAddress insnStackPtrs_;                // Per-instruction initial and final stack pointers
     DeltasPerAddress insnDeltas_;                       // Stack delta per instruction (net effect of insn on stack ptr)
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(cpu_);
+        s & BOOST_SERIALIZATION_NVP(initialConcreteStackPointer_);
+        s & BOOST_SERIALIZATION_NVP(hasResults_);
+        s & BOOST_SERIALIZATION_NVP(didConverge_);
+        s & BOOST_SERIALIZATION_NVP(functionStackPtrs_);
+        s & BOOST_SERIALIZATION_NVP(functionDelta_);
+        s & BOOST_SERIALIZATION_NVP(bblockStackPtrs_);
+        s & BOOST_SERIALIZATION_NVP(bblockDeltas_);
+        s & BOOST_SERIALIZATION_NVP(insnStackPtrs_);
+        s & BOOST_SERIALIZATION_NVP(insnDeltas_);
+    }
+#endif
+    
 public:
     /** Default constructor.
      *

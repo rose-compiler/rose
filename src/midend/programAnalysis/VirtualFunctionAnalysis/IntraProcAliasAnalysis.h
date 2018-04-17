@@ -103,7 +103,8 @@ protected:
     /**
      * Protected Destructor to make sure the client code can't delete it 
      */
-    ~CompReprBase(){
+ // DQ (12/6/2016): Aded virtual to fix compiler warning that we want to considered an error: -Wdelete-non-virtual-dtor
+    virtual ~CompReprBase(){
         delete graph;
         graph = NULL;
     }
@@ -374,8 +375,9 @@ public:
     //! Initialized the Analysis
     void init() { }
     
+ // DQ (12/6/2016): Aded virtual to fix compiler warning that we want to considered an error: -Wdelete-non-virtual-dtor
     //! Destructor
-    ~IntraProcAliasAnalysis();
+    virtual ~IntraProcAliasAnalysis();
     
     //! Meet_data for intra procedural dataflow analysis. This function is called when two path
     //! merges in CFG

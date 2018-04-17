@@ -1,13 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Later add EDG_1.4, EDG_3.3, Open64, SAGE_III
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection Open64_SAGE_Connection BinaryDisassembly
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection BinaryDisassembly
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection OpenFortranParser_SAGE_Connection BinaryDisassembly ObjdumpDisassembler
-# SUBDIRS = SageIII BinaryDisassembly ObjdumpDisassembler OpenFortranParser_SAGE_Connection EDG EDG_SAGE_Connection
-# SUBDIRS = SageIII CxxFrontend OpenFortranParser_SAGE_Connection BinaryDisassembly Disassemblers BinaryFormats BinaryLoader PHPFrontend
-
 SUBDIRS = \
   SageIII \
   X10_ROSE_Connection
@@ -15,6 +7,11 @@ SUBDIRS = \
 # Note that CXX and C are either both defined or both undefined.
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += CxxFrontend
+endif
+
+# Rasmussen (01/21/2018): Adding general support for experimental languages
+if ROSE_BUILD_ATERM_SUPPORT
+   SUBDIRS += Experimental_General_Language_Support
 endif
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -25,16 +22,30 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    SUBDIRS += Experimental_OpenFortranParser_ROSE_Connection
 endif
 
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+   SUBDIRS += Experimental_Csharp_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+   SUBDIRS += Experimental_Ada_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+   SUBDIRS += Experimental_Jovial_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+   SUBDIRS += Experimental_Cobol_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+   SUBDIRS += Experimental_Matlab_ROSE_Connection
+endif
+
 
 SUBDIRS += ECJ_ROSE_Connection
 
-SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader Partitioner2
-
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#   SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
-#else
-#  SUBDIRS += BinaryFormats
-#endif
+SUBDIRS += Disassemblers BinaryFormats BinaryLoader Partitioner2
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPFrontend
@@ -42,10 +53,6 @@ endif
 
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
-endif
-
-if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-   SUBDIRS += MatlabFrontend
 endif
 
 SUBDIRS += DLX

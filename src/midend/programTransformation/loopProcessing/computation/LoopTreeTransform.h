@@ -2,12 +2,13 @@
 #define TRANSFORM_LOOP_TREE_H
 
 #include <vector>
+#include <list>
 #include <LoopTree.h>
 #include <LoopTreeHoldNode.h>
 #include <DepRel.h>
 
 class ObserveTransform;
-class ROSE_DLL_API LoopTreeTransform
+class LoopTreeTransform
 {
   protected:
     void UnlinkNode( LoopTreeNode* n) { n->Unlink(); }
@@ -19,22 +20,23 @@ class ROSE_DLL_API LoopTreeTransform
     LoopTreeNode* InsertLoop( LoopTreeNode* l,LoopTreeNode *pos, int opt);
 };
 
-class ROSE_DLL_API LoopTreeDistributeNode : public LoopTreeTransform
+class LoopTreeDistributeNode : public LoopTreeTransform
 {
   typedef RoseSelectObject<LoopTreeNode*>& SelectLoopTreeNode;
   LoopTreeNode* Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, 
-                            ObserveTransform &ob, LoopTreeNode** loc=0);
+                 int pos, /*-1: before n; 1: after n*/
+                 ObserveTransform &ob, LoopTreeNode** loc=0);
   /* QY: distribute the parent of loc to separate all children before loc */
   LoopTreeNode* DistributeBefore(LoopTreeNode* parent, LoopTreeNode* loc);
 
  public:
-  typedef enum {BEFORE, AFTER, ORIG} Location;
+  typedef enum {BEFORE, AFTER} Location;
   /* QY: distribute n; put the distributed node before/after n or based on
      on original locations of split children */
   LoopTreeNode* operator () (LoopTreeNode *n, SelectLoopTreeNode sel, Location config=BEFORE);
 };
 
-class ROSE_DLL_API LoopTreeSplitStmt : public LoopTreeTransform
+class LoopTreeSplitStmt : public LoopTreeTransform
 { 
   LoopTreeNode* operator() (LoopTreeNode *stmt, LoopTreeNode* restr1, LoopTreeNode* restr2);
  public: 
@@ -43,25 +45,25 @@ class ROSE_DLL_API LoopTreeSplitStmt : public LoopTreeTransform
   LoopTreeNode* operator() ( LoopTreeNode *stmt, LoopTreeNode* loop, const SymbolicVal& split);
 };
 
-class ROSE_DLL_API LoopTreeMergeLoop : public LoopTreeTransform
+class LoopTreeMergeLoop : public LoopTreeTransform
 { public: void operator () (LoopTreeNode *ancs,LoopTreeNode *desc, int align);
 };
 
-class ROSE_DLL_API LoopTreeMergeStmtLoop : public LoopTreeTransform
+class LoopTreeMergeStmtLoop : public LoopTreeTransform
 { public: void operator () (LoopTreeNode *ancs, LoopTreeNode *desc,
                               LoopTreeNode *stmt, int align);
 };
 
-class ROSE_DLL_API LoopTreeBlockLoop : public LoopTreeTransform
+class LoopTreeBlockLoop : public LoopTreeTransform
 { public: 
     LoopTreeNode* operator() ( LoopTreeNode *n, SymbolicVar bvar, SymbolicVal b);
 };
 
-class ROSE_DLL_API LoopTreeSwapNodePos : public LoopTreeTransform
+class LoopTreeSwapNodePos : public LoopTreeTransform
 { public: void operator () ( LoopTreeNode *n1, LoopTreeNode *n2);
 };
 
-class ROSE_DLL_API LoopTreeEmbedStmt :  public LoopTreeTransform
+class LoopTreeEmbedStmt :  public LoopTreeTransform
 { public: void operator () (LoopTreeNode *loop, LoopTreeNode* stmt, SymbolicVal selIter);
 };
 
@@ -75,7 +77,7 @@ std::string CopyArrayOpt2String( CopyArrayOpt opt);
 
 
 /*QY: descriptor for copying array elements to a buffer space */
-class ROSE_DLL_API SelectArray
+class SelectArray
 {
  public:
   /* QY: the array dimension to copy; support only rectangle copy regions */
@@ -195,7 +197,7 @@ class ROSE_DLL_API SelectArray
   friend class SelectArray::const_iterator;
 };
 
-class ROSE_DLL_API CopyArrayConfig
+class CopyArrayConfig
 {
  public:
   CopyArrayConfig(AstInterface& fa, const SelectArray& sel, 
@@ -218,7 +220,7 @@ class ROSE_DLL_API CopyArrayConfig
   CopyArrayOpt opt;
 };
 
-class ROSE_DLL_API LoopTreeCopyArrayToBuffer :  public LoopTreeTransform
+class LoopTreeCopyArrayToBuffer :  public LoopTreeTransform
 { 
  public: 
   void operator()( LoopTreeNode* repl,
@@ -226,7 +228,7 @@ class ROSE_DLL_API LoopTreeCopyArrayToBuffer :  public LoopTreeTransform
                   CopyArrayConfig& c);
 };
 
-class ROSE_DLL_API LoopTreeReplaceAst :  public LoopTreeTransform
+class LoopTreeReplaceAst :  public LoopTreeTransform
 {
  public:
   LoopTreeNode* operator()( LoopTreeNode* h,

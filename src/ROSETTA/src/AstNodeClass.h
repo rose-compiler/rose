@@ -4,7 +4,7 @@
 #include "ROSETTA_macros.h"
 
 #include <string>
-#include "string_functions.h"
+#include "FileUtility.h"
 
 class Grammar;
 class GrammarString;
@@ -90,6 +90,12 @@ class AstNodeClass
 
   // Source code string lists (local and subtree definitions)
   std::vector<GrammarString *> memberFunctionSourceList[2][2];
+
+  // String representation of '#if' that surrounds the class. If empty, then emits "#if 1"
+  std::string cppCondition;
+
+  // Wher class supports boost::serialization
+  bool p_isBoostSerializable;
 
   enum locationInTree
   {
@@ -224,7 +230,7 @@ class AstNodeClass
   std::string buildConstructorBody( bool withInitializers, ConstructParamEnum config );
 
   // builds a constructor body for passing all data members as parameters
-  std::string buildConstructorBodyForAllDataMembers();
+  std::string buildConstructorBodyForEssentialDataMembers();
 
   // AJ ( 10/26/2004)
   // Builds the destructor body
@@ -270,8 +276,8 @@ class AstNodeClass
   bool generateCopyFunction() const;
 
 // char* buildCopyMemberFunctionSource ();
-  StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ();
-  StringUtility::FileWithLineNumbers buildCopyMemberFunctionHeader ();
+  Rose::StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ();
+  Rose::StringUtility::FileWithLineNumbers buildCopyMemberFunctionHeader ();
 
 // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
   std::string buildPointerInMemoryPoolCheck ();
@@ -346,6 +352,16 @@ class AstNodeClass
   
   // DQ (10/12/2014): output the name associated with the TypeEvaluation enum values.
   std::string typeEvaluationName ( TypeEvaluation x );
+
+  /** C preprocessor condition for class declaration.
+   * @{ */
+  const std::string& getCppCondition() const;
+  void setCppCondition(const std::string&);
+  /** @} */
+
+  /** Whether node supports boost::serialization. */
+  bool isBoostSerializable() const;
+  void isBoostSerializable(bool b);
   
   /* JH (10/28/2005): declaration of the source building methods for the storage classes
      concenrning the ast file IO. More about them one can find in the AstNodeClass.C file. They
@@ -387,6 +403,16 @@ class AstNodeClass
   
   // MS (5/27/2015)
   std::string outputFields();
+
+ public:
+  // MS (5/25/2016)
+  void setGenerateEssentialDataMembersConstructorImplementation(bool);
+  void setGenerateEnforcedDefaultConstructorImplementation(bool);
+  bool getGenerateEssentialDataMembersConstructorImplementation();
+  bool getGenerateEnforcedDefaultConstructorImplementation();
+ private:
+  bool generateEssentialDataMembersConstructorImplementation;
+  bool generateEnforcedDefaultConstructorImplementation;
 };
 
 #endif

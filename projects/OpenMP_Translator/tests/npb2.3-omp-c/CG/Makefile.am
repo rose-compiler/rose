@@ -52,7 +52,7 @@ run_qm_gui:
 	cd QMTest; qmtest gui
 
 if ROSE_USE_OMNI_OPENMP
-check-local:
+conditional-check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -61,7 +61,7 @@ check-local:
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 else
-check-local:
+conditional-check-local:
 	@echo "OpenMP tests NOT run.  To run these reconfigure with:"
 	@echo "****************************************************************************"
 	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
@@ -69,6 +69,8 @@ check-local:
 endif
 
 EXTRA_DIST = README.carefully npbparams.h $(ALL_TESTCODES)
+
+check-local: conditional-check-local
 
 clean-local:
 	rm -f *.o rose_*.[cC] runme test.log

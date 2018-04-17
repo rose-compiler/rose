@@ -908,7 +908,6 @@ GLUT_LIBS = ${glut_path}
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/frontend/PHPFrontend \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/frontend/PythonFrontend \
-@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/frontend/BinaryDisassembly \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/frontend/BinaryFormats \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/frontend/BinaryLoader \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/frontend/Disassemblers \
@@ -969,7 +968,6 @@ GLUT_LIBS = ${glut_path}
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programAnalysis/defUseAnalysis \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programAnalysis/distributedMemoryAnalysis \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
-@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programAnalysis/graphAnalysis \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
@@ -1034,7 +1032,6 @@ GLUT_LIBS = ${glut_path}
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I"$(JAVA_HOME)/include" \
-@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/frontend/BinaryDisassembly \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/frontend/BinaryFormats \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/frontend/BinaryLoader \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/frontend/Disassemblers \
@@ -1522,7 +1519,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS
 @USE_ROSE_IN_BUILD_TREE_VAR_TRUE@export ROSE_IN_BUILD_TREE=$(top_builddir)
 
 $(PASSING_REGRESSION_TEST_Output): ./shiftCalculusCompiler
-	./shiftCalculusCompiler $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.passing=.C)
+	./shiftCalculusCompiler $(ROSE_FLAGS) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passing=.C)
 
 test1: shiftCalculusCompiler
 	./shiftCalculusCompiler -c $(srcdir)/identity.cpp

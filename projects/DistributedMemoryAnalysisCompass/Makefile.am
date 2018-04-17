@@ -74,7 +74,7 @@ CLEANFILES = gmon.out *.parse *.run *.ast *.ti compass_parameters
 
 include_HEADERS = LoadSaveAST.h parallel_compass.h
 
-check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass $(srcdir)/buffer2.c compass_parameters
+conditioanl-check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass $(srcdir)/buffer2.c compass_parameters
 	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(srcdir)/buffer2.c
 	mpirun -l -np 2 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(srcdir)/buffer2.c
 #	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(srcdir)/buffer2.c -shared
@@ -97,7 +97,11 @@ compass_parameters:
 	cp $(compass_build_tooldir)/compass/compass_parameters .
 #	$(LN_S) ../compass/compass_parameters compass_parameters
 
+else
+conditional-check-local:
 endif
+
+check-local: conditional-check-local
 
 EXTRA_DIST = create_checkers.py run.sh LoadSaveAST.h parallel_compass.h parallel_functionBased_dynamicBalance.C parallel_file_compass.C parallel_compass.C parallel_functionBased_ASTBalance.C exampleBuildcxxgrammar.run parseLine_irs.parse exampleBuildIRS.run parseLine_smg2000.parse exampleBuildSMG2000.run
 

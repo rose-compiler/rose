@@ -48,7 +48,7 @@ generatedFiles = inputCode_OutlineLoop$(EXEEXT) \
 # DQ (6/25/2011): This was the version that worked around a outliner and
 # name qualification bug (two bugs, I think).  The name qualification bug
 # is now fixed.  This is the same bug as for the moreTest3.C code in the
-# tests/roseTests/astOutliningTests directory.
+# tests/nonsmoke/functional/roseTests/astOutliningTests directory.
 OLD_generatedFiles = 	inputCode_OutlineNonLocalJumps$(EXEEXT) \
 	rose_inputCode_OutlineNonLocalJumps.cc \
 	inputCode_OutlineNonLocalJumps.out \
@@ -84,22 +84,24 @@ INDENT_ARGS = -npsl
 # Build demo translators
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(OUTLINER_INCS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+
 # We install a copy
 bin_PROGRAMS = outline
 noinst_PROGRAMS = outlineIfs outlinePreproc outlineIfs2
 
 outline_SOURCES = outline.cc
-outline_LDFLAGS = $(OUTLINER_LIBS)
+outline_LDADD = $(OUTLINER_LIBS)
 
 outlineIfs_SOURCES = outlineIfs.cc
-outlineIfs_LDFLAGS = $(OUTLINER_LIBS)
+outlineIfs_LDADD = $(OUTLINER_LIBS)
 
 # A variant using structure wrapper
 outlineIfs2_SOURCES = outlineIfs2.C
-outlineIfs2_LDFLAGS = $(OUTLINER_LIBS)
+outlineIfs2_LDADD = $(OUTLINER_LIBS)
 
 outlinePreproc_SOURCES = outlinePreproc.cc
-outlinePreproc_LDFLAGS = $(OUTLINER_LIBS)
+outlinePreproc_LDADD = $(OUTLINER_LIBS)
 
 #==========================================================================
 # Example 1: Basic outlining of a nested loop

@@ -1,6 +1,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "markTransformationsForOutput.h"
+
 void
 markTransformationsForOutput( SgNode* node )
    {
@@ -109,6 +110,23 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
                     printf ("MarkTransformationsForOutput: Reset the subtree to be a transformation \n");
 #endif
                     returnAttribute.insideTransformationToOutput = true;
+#if 1
+                 // DQ (5/16/2017): Test if this is the cause of the fortran code generation issue (for the outliner).  It IS!
+                 // DQ (5/17/2017): Liao helped with a better fix, which was to not build a prototype in the AST where the 
+                 // outliner is being used on Frotran code.
+                 // DQ (5/9/2017): We also have to mark the root of the subtree.
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL)
+                       {
+                      // DQ (5/9/2017): Use the updated (simpler) API for this.
+                      // ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
+                      // locatedNode->get_startOfConstruct()->setTransformation();
+                      // ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
+                      // locatedNode->get_endOfConstruct()->setTransformation();
+                         locatedNode->setTransformation();
+                         locatedNode->setOutputInCodeGeneration();
+                       }
+#endif
                   }
              }
 

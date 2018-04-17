@@ -1,5 +1,7 @@
 #include "smtPragmaPathLib.h"
 
+using namespace Rose;
+
 int initializeScopeInformation(SgProject*);
 std::vector<std::string> pragma_suffix; 
 class visitorTraversal : public SgGraphTraversal<CFGforT>

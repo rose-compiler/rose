@@ -1,1 +1,4 @@
-../../compassSupport/compass_parameters
+# This is a comment
+#
+# This is commented out but shows the way parameters are specified.
+# LineLengthChecker.maximumLineLength=80

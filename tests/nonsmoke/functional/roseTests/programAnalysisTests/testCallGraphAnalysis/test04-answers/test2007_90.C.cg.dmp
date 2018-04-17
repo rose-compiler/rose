@@ -1,0 +1,2 @@
+NS_MIN < size_type >  ->
+nsString::Right -> NS_MIN < size_type > 

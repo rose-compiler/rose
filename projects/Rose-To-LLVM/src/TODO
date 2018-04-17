@@ -1,0 +1,13 @@
+TODO: work left to do:
+
+   . bit-field (Rose does not seem to support this)
+   . Complete global initialization.
+
+   * boolean conversions to integral type when required (This should have been done during semantic analysis in Rose.)
+     Add extension attribute for such boolean expressions where needed:
+   * switch statement
+
+legend:
+    "." - to be done
+    "*" - done but might need to be reviewed...
+    "+" - would be nice but not necessary

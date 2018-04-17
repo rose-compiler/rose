@@ -2,7 +2,7 @@
 
 #include "Diagnostics.h"
 
-using namespace rose;
+using namespace Rose;
 
 Sawyer::Message::Facility SgAsmExecutableFileFormat::mlog;
 
@@ -11,7 +11,6 @@ SgAsmExecutableFileFormat::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Ast", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Ast");
     }
 }

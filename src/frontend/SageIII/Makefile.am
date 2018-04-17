@@ -109,6 +109,8 @@ GENERATED_SOURCE = \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
 	Cxx_GrammarTreeTraversalAccessEnums.h \
 	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarSerialization.C \
+	Cxx_GrammarSerialization.h \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
 	Cxx_GrammarTraverseMemoryPool.C \
@@ -121,8 +123,8 @@ GENERATED_SOURCE = \
 else
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
-	Cxx_GrammarAtermSupport.C \
 	Cxx_Grammar.C \
+	Cxx_GrammarAtermSupport.C \
 	Cxx_GrammarRTI.C \
 	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \
@@ -130,6 +132,8 @@ GENERATED_SOURCE = \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
 	Cxx_GrammarTreeTraversalAccessEnums.h \
 	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarSerialization.C \
+	Cxx_GrammarSerialization.h \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
 	Cxx_GrammarTraverseMemoryPool.C \
@@ -285,12 +289,23 @@ roseh:
 
 else
 # DQ (2/11/2009): This is part of the support for Precompiled Headers (PCH) using GNU g++
+roseh_v_at_0 = @
+roseh_v_at_1 =
+roseh_v_at_  = $(roseh_v_at_0)
+roseh_v_at   = $(roseh_v_at_$(V))
+
+roseh_v_echo_0 = @echo " COMPILE sage3basic.h.gch"
+roseh_v_echo_1 =
+roseh_v_echo_  = $(roseh_v_echo_0)
+roseh_v_echo   = $(roseh_v_echo_$(V))
+
 roseh:
 #	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
 #       TPS (23 Feb 2009): Hardcoded -fpic and -DPIC for now because 
 #       for some reason it is used by most files although not specified on configure
-	@echo "  COMPILE sage3basic.h.gch"
-	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o sage3basic.h.gch $(top_srcdir)/src/frontend/SageIII/sage3basic.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	$(roseh_v_echo)
+	$(roseh_v_at)$(CXX) -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o sage3basic.h.gch \
+		$(top_srcdir)/src/frontend/SageIII/sage3basic.h -I$(top_builddir) $(ROSE_INCLUDES) 
 endif
 else
 # default, do nothing.
@@ -311,6 +326,7 @@ pkginclude_HEADERS = \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h atermSupport.h \
    omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h \
+   Cxx_GrammarSerialization.h \
    $(fSageSupport_includeHeaders)
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).

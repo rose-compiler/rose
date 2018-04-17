@@ -10,6 +10,7 @@
 int
 main(int argc, char *argv[]) {
     //! [commandline]
+    ROSE_INITIALIZE;                                    // see Rose::initialize
     std::string purpose = "disassembles a binary specimen";
     std::string description =
         "This tool disassembles the specified file and presents the results "
@@ -19,12 +20,12 @@ main(int argc, char *argv[]) {
     //! [commandline]
 
     //! [disassembly]
-    rose::BinaryAnalysis::Partitioner2::Engine engine;
+    Rose::BinaryAnalysis::Partitioner2::Engine engine;
     SgAsmBlock *gblock = engine.frontend(argc, argv, purpose, description);
     //! [disassembly]
 
     //! [unparsing]
-    rose::BinaryAnalysis::AsmUnparser unparser;
+    Rose::BinaryAnalysis::AsmUnparser unparser;
     unparser.unparse(std::cout, gblock);
     //! [unparsing]
 }

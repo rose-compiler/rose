@@ -3,19 +3,20 @@
 
 #include <BaseSemantics2.h>
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
 #include <RegisterStateGeneric.h>
 #include <Sawyer/ProgressBar.h>
 #include <integerOps.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace StackDelta {
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 
 Sawyer::Message::Facility mlog;
@@ -25,19 +26,18 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::StackDelta", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::StackDelta");
     }
 }
 
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
-        const RegisterDictionary *regdict = disassembler->get_registers();
+        const RegisterDictionary *regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SMTSolver *solver = NULL;
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = NullSemantics::MemoryState::instance(protoval, protoval);
@@ -99,11 +99,6 @@ public:
             newState->writeRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
         }
         return newState;
-    }
-    
-    // Required by data-flow engine: deep-copy the state
-    BaseSemantics::State::Ptr operator()(const BaseSemantics::State::Ptr &incomingState) const {
-        return P2::DataFlow::TransferFunction::operator()(incomingState);
     }
 
     // Required by data-flow engine: compute next state from current state and dfCfg vertex
@@ -167,7 +162,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     const CallingConvention::Dictionary &ccDefs = partitioner.instructionProvider().callingConventions();
     P2::DataFlow::MergeFunction merge(cpu_);
     TransferFunction xfer(this);
-    xfer.defaultCallingConvention(ccDefs.empty() ? NULL : &ccDefs.front());
+    xfer.defaultCallingConvention(ccDefs.empty() ? CallingConvention::Definition::Ptr() : ccDefs.front());
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
@@ -183,13 +178,17 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     try {
         // Use this rather than runToFixedPoint because it lets us show a progress report
         Sawyer::ProgressBar<size_t> progress(maxIterations, mlog[MARCH], function->printableName());
-        dfEngine.reset(startVertexId, initialState);
+        dfEngine.reset(BaseSemantics::StatePtr());
+        dfEngine.insertStartingVertex(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
     } catch (const DataFlow::NotConverging &e) {
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
     } catch (const BaseSemantics::Exception &e) {
+        mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
+        converged = false;
+    } catch (const SmtSolver::Exception &e) {
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
     }

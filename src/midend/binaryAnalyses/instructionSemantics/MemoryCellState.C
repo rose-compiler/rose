@@ -2,7 +2,7 @@
 
 #include <MemoryCellState.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -16,3 +16,7 @@ MemoryCellState::clear() {
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellState);
+#endif

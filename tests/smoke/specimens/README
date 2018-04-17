@@ -1,0 +1,26 @@
+This directory hierarchy contains shared specimens for smoke
+tests. This hierarchy should NOT contain checkers or tests.
+
+=== Definitions ===
+
+A "Specimen" is some kind of input for a "checker". The input could be
+source code, binaries, tables, config files, etc.  This directory
+contains mainly specimens that serve as inputs for more than one
+checker found in multiple other directories.
+
+"Smoke tests" are the minimal set of small, fast, simple tests run by
+end users via "make check" to test that ROSE basically functions. All
+smoke tests _together_ should take no more than a couple minutes on
+average hardware.
+
+A "checker" is a shell script or compiled program that reads a
+specimen. A "test" is a makefile target that runs a particular checker
+with a particular specimen to verify some ROSE capability.
+
+=== Additionally ===
+
+Each directory should contain a make include file named
+"Specimens.inc" that defines variables that contain lists of specimen
+names.  All such variables for a particular directory should have a
+common prefix to prevent conflicts with similar variables in other
+directories.

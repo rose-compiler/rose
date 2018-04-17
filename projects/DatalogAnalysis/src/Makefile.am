@@ -47,10 +47,6 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) DBFactories/libDBFactories.la $(GENERATE
 
 noinst_HEADERS = CFGVisitor.hh ChildVisitor.hh
 
-check-local:
-	@echo "********************************************************************************************"
-	@echo "*** ROSE/projects/DatalogAnalysis/src: make check rule complete (terminated normally) ***"
-	@echo "********************************************************************************************"
 endif
 
 EXTRA_DIST = CFGVisitor.cc  main.cc  misc.cc ChildVisitor.cc CFGVisitor.hh ChildVisitor.hh

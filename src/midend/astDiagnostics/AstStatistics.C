@@ -150,7 +150,7 @@ AstNodeMemoryPoolStatistics::AstNodeMemoryPoolStatistics()
      printf ("Total memory used = %d \n",totalMemoryUsed);
      printf ("numberOfNodes = %" PRIuPTR " \n",numberOfNodes());
 
-  // DQ (5/6/2011): Insure++ reports this as an error in the tests/RunTests/AstDeleteTests
+  // DQ (5/6/2011): Insure++ reports this as an error in the tests/nonsmoke/functional/RunTests/AstDeleteTests
      counter = 0;
    }
 
@@ -689,10 +689,19 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgOmpOrderedClause)
           IR_NODE_VISIT_CASE(SgOmpNowaitClause)
           IR_NODE_VISIT_CASE(SgOmpUntiedClause)
+          IR_NODE_VISIT_CASE(SgOmpMergeableClause)
           IR_NODE_VISIT_CASE(SgOmpDefaultClause)
           IR_NODE_VISIT_CASE(SgOmpCollapseClause)
           IR_NODE_VISIT_CASE(SgOmpIfClause)
+          IR_NODE_VISIT_CASE(SgOmpFinalClause)
+          IR_NODE_VISIT_CASE(SgOmpPriorityClause)
           IR_NODE_VISIT_CASE(SgOmpNumThreadsClause)
+          IR_NODE_VISIT_CASE(SgOmpProcBindClause)
+          IR_NODE_VISIT_CASE(SgOmpSafelenClause)
+          IR_NODE_VISIT_CASE(SgOmpSimdlenClause)
+          IR_NODE_VISIT_CASE(SgOmpAtomicClause)
+          IR_NODE_VISIT_CASE(SgOmpInbranchClause)
+          IR_NODE_VISIT_CASE(SgOmpNotinbranchClause)
           IR_NODE_VISIT_CASE(SgOmpExpressionClause)
           IR_NODE_VISIT_CASE(SgOmpCopyprivateClause)
           IR_NODE_VISIT_CASE(SgOmpPrivateClause)
@@ -703,6 +712,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgOmpReductionClause)
           IR_NODE_VISIT_CASE(SgOmpVariablesClause)
           IR_NODE_VISIT_CASE(SgOmpScheduleClause)
+          IR_NODE_VISIT_CASE(SgOmpDependClause)
           IR_NODE_VISIT_CASE(SgOmpClause)
           IR_NODE_VISIT_CASE(SgRenamePair)
           IR_NODE_VISIT_CASE(SgInterfaceBody)

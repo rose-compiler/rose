@@ -19,7 +19,7 @@
 using namespace std;
 
 // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
-// Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
+// Test codes in the tests/nonsmoke/functional/roseTests/astTokenStreamTests directory turn on this 
 // variable so that all regression tests can be processed to mix the unparsing of 
 // the token stream with unparsing from the AST.
 // ROSE_DLL_API bool ROSE_tokenUnparsingTestingMode = false;
@@ -367,7 +367,11 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
   // fdTraversal.traverse(sourceFile,inheritedAttribute);
   // FrontierDetectionForTokenStreamMapping_SynthesizedAttribute topAttribute = fdTraversal.traverse(sourceFile,inheritedAttribute);
   // FrontierDetectionForTokenStreamMapping_SynthesizedAttribute topAttribute = fdTraversal.traverseInputFiles(sourceFile,inheritedAttribute);
-     SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute topAttribute = fdTraversal.traverseWithinFile(sourceFile,inheritedAttribute);
+
+  // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+  // Note return value not used.
+  // SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute topAttribute = fdTraversal.traverseWithinFile(sourceFile,inheritedAttribute);
+     fdTraversal.traverseWithinFile(sourceFile,inheritedAttribute);
 
 #if 0
   // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.

@@ -27,7 +27,7 @@
 #endif
 
 using namespace std;                                    // DQ (12/31/2005): This is OK if not declared in a header file
-using namespace rose;                                   // until this file is all moved into the rose namespace
+using namespace Rose;                                   // until this file is all moved into the rose namespace
 
 void
 AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, string filenamePostfix)
@@ -37,7 +37,16 @@ AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, stri
      this->filenamePostfix=filenamePostfix;
      DOTInheritedAttribute ia;
      traverse(node,ia);
-     string filename2=string("./")+filename+"."+filenamePostfix+".dot";
+
+  // DQ (9/22/2017): Fixed this to allow for an empty filenamePostfix string (and avoid output of ".." in the filename.
+  // string filename2=string("./")+filename+"."+filenamePostfix+".dot";
+     string filename2=string("./")+filename;
+     if (filenamePostfix != "")
+        {
+          filename2 += "." + filenamePostfix + ".dot";
+        }
+     filename2 += ".dot";
+
      dotrep.writeToFileAsGraph(filename2);
    }
 
@@ -336,7 +345,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SubTreeSynthesizedAttributes::iterator iter;
      ROSE_ASSERT(node);
 
-  // printf ("AstDOTGeneration::evaluateSynthesizedAttribute(): node = %s \n",node->class_name().c_str());
+#if 0
+     printf ("AstDOTGeneration::evaluateSynthesizedAttribute(): node = %s \n",node->class_name().c_str());
+#endif
 
   // DQ (5/3/2006): Skip this IR node if it is specified as such in the inherited attribute
      if (ia.skipSubTree == true)
@@ -536,6 +547,16 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           ROSE_ASSERT(type != NULL);
           string unparsedTypeString = type->unparseToString();
           nodelabel += string("\\n type = ") + unparsedTypeString;
+        }
+#endif
+
+#if 1
+  // DQ (4/6/2018): Adding support to output lvvalue information.
+     SgExpression* expression = isSgExpression(node);
+     if (expression != NULL)
+        {
+          bool is_lvalue = expression->get_lvalue();
+          nodelabel += string("\\n lvalue = ") + (is_lvalue ? "true" : "false");
         }
 #endif
 
@@ -885,8 +906,8 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                string original_filename = file->getFileName();
 
             // DQ (7/4/2008): Fix filenamePostfix to go before the "."
-            // string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
-               string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+            // string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+               string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
 
             // printf ("generated filename for dot file (from SgSourceFile or SgBinaryComposite) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
 
@@ -956,7 +977,7 @@ generateFileLineColumnString (Sg_File_Info* fileInfo)
 
      ROSE_ASSERT(fileInfo != NULL);
      string file = fileInfo->get_filename();
-     file = rose::utility_stripPathFromFileName(file);
+     file = Rose::utility_stripPathFromFileName(file);
 
      int line    = fileInfo->get_line();
      int column  = fileInfo->get_col();
@@ -975,6 +996,17 @@ generateFileLineColumnString (Sg_File_Info* fileInfo)
      ss += " (physical line=";
      ss += StringUtility::numberToString(physical_line);
      ss += ")";
+
+#if 1
+  // DQ (12/21/2014): Adding the physical line number (used by the token mapping).
+     int raw_line    = fileInfo->get_raw_line();
+     int raw_column  = fileInfo->get_raw_col();
+     ss += " (raw line:col=";
+     ss += StringUtility::numberToString(raw_line);
+     ss += ":";
+     ss += StringUtility::numberToString(raw_column);
+     ss += ")";
+#endif
 
      ss += "\\n";
 
@@ -998,6 +1030,10 @@ sourcePositionInformation (SgNode* node)
                   {
                     ss += "compiler generated\\n";
                     hasSpecialMode = true;
+
+                 // DQ (9/7/2016): Add output of raw source position to check on EDG normalized ctor pre-initialization list in templates.
+                    ss += generateFileLineColumnString(locatedNode->get_startOfConstruct());
+                    ss += generateFileLineColumnString(locatedNode->get_endOfConstruct());
                   }
                  else
                   {
@@ -1108,10 +1144,15 @@ commentAndCppInformation (SgNode* node)
      if (locatedNode != NULL)
         {
           AttachedPreprocessingInfoType* commentsAndCppDirectives = locatedNode->getAttachedPreprocessingInfo();
-          size_t numberofCommentsAndCppDirectives = 0;
+
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // size_t numberofCommentsAndCppDirectives = 0;
+
           if (commentsAndCppDirectives != NULL)
              {
-               numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+            // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+
                // MS 11/12/2015: disabled this test as size_t is unsigned;
                // this test is always true and compilers issue a
                // warning

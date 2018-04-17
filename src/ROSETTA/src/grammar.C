@@ -6,12 +6,14 @@
 #include "grammar.h"
 #include "AstNodeClass.h"
 #include "grammarString.h"
+#include <cctype>
 #include <sstream>
 #include <fstream>
 #include <map>
 #include <iostream>
 
 using namespace std;
+using namespace Rose;
 
 // MS: temporary (TODO: move to processing class)
 static string RTIContainerName = "rtiContainer";  // put this into the respective processing class as private member
@@ -325,7 +327,8 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
        // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.cpp for an example.
-          printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
+          if (verbose)
+              printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           system(command.c_str());
 
        // retry opening the file...
@@ -1161,6 +1164,259 @@ Grammar::buildStringForDataDeclaration ( AstNodeClass & node )
 }
 
 
+// DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
+// bool Grammar::generate_override_keyword( string variableNameString )
+bool
+generate_override_keyword( AstNodeClass & node, GrammarString & data )
+   {
+     bool returnResult = true;
+
+     string variableNameString = string(data.variableNameString);
+     string nodeName = node.baseName;
+
+#if 0
+     printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
+#endif
+
+  // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
+  // Rasmussen (10/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+
+  // Except in the root class for the virtual access function.
+     if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
+          (nodeName == "XXXPragma"                  && variableNameString == "endOfConstruct")    ||
+          (nodeName == "IfStmt"                     && variableNameString == "end_numeric_label") ||
+          (nodeName == "WhileStmt"                  && variableNameString == "end_numeric_label") ||
+          (nodeName == "SwitchStatement"            && variableNameString == "end_numeric_label") ||
+          (nodeName == "FortranDo"                  && variableNameString == "end_numeric_label") ||
+          (nodeName == "ForAllStatement"            && variableNameString == "end_numeric_label") ||
+          (nodeName == "InterfaceStatement"         && variableNameString == "end_numeric_label") ||
+          (nodeName == "DerivedTypeStatement"       && variableNameString == "end_numeric_label") ||
+          (nodeName == "ModuleStatement"            && variableNameString == "end_numeric_label") ||
+          (nodeName == "ProgramHeaderStatement"     && variableNameString == "end_numeric_label") ||
+          (nodeName == "ProcedureHeaderStatement"   && variableNameString == "end_numeric_label") ||
+          (nodeName == "WhereStatement"             && variableNameString == "end_numeric_label") ||
+          (nodeName == "QualifiedName"              && variableNameString == "scope") ||
+          (nodeName == "InitializedName"            && variableNameString == "scope") ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
+          (nodeName == "UntypedFile"                && variableNameString == "scope") ||
+          (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
+          (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
+          (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
+          (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
+          (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
+          (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
+          (nodeName == "AsmExpression"              && variableNameString == "type")  ||
+          (nodeName == "AsmGenericSymbol"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfSegmentTableEntry"    && variableNameString == "type")  ||
+          (nodeName == "AsmElfRelocEntry"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfNoteEntry"            && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "SymbolTable"                && variableNameString == "name")  ||
+          (nodeName == "Attribute"                  && variableNameString == "name")  ||
+          (nodeName == "Directory"                  && variableNameString == "name")  ||
+          (nodeName == "Graph"                      && variableNameString == "name")  ||
+          (nodeName == "GraphNode"                  && variableNameString == "name")  ||
+          (nodeName == "GraphEdge"                  && variableNameString == "name")  ||
+          (nodeName == "TemplateType"               && variableNameString == "name")  ||
+          (nodeName == "TypeDefault"                && variableNameString == "name")  ||
+          (nodeName == "TypeLabel"                  && variableNameString == "name")  ||
+          (nodeName == "InitializedName"            && variableNameString == "name")  ||
+          (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
+          (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
+          (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "UseStatement"               && variableNameString == "name")  ||
+          (nodeName == "NamespaceDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "InterfaceStatement"         && variableNameString == "name")  ||
+          (nodeName == "NamespaceAliasDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "name")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "name")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "JavaPackageStatement"       && variableNameString == "name")  ||
+          (nodeName == "InquireStatement"           && variableNameString == "name")  ||
+          (nodeName == "OmpCriticalStatement"       && variableNameString == "name")  ||
+          (nodeName == "EnumVal"                    && variableNameString == "name")  ||
+          (nodeName == "IOItemExpression"           && variableNameString == "name")  ||
+          (nodeName == "AsmOp"                      && variableNameString == "name")  ||
+          (nodeName == "UnknownArrayOrFunctionReference" && variableNameString == "name")  ||
+          (nodeName == "TypeTraitBuiltinOperator"   && variableNameString == "name")  ||
+          (nodeName == "AsmFunction"                && variableNameString == "name")  ||
+          (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
+          (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverNeededAux"      && variableNameString == "name")  ||
+          (nodeName == "AsmPESectionTableEntry"     && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverDefinedAux"     && variableNameString == "name")  ||
+          (nodeName == "AsmPEExportDirectory"       && variableNameString == "name")  ||
+          (nodeName == "AsmDwarfConstruct"          && variableNameString == "name")  ||
+          (nodeName == "AsmPEImportItem"            && variableNameString == "name")  ||
+          (nodeName == "Aterm"                      && variableNameString == "name")  )
+       {
+         returnResult = false;
+#if 0
+         printf ("Exiting as a test! \n");
+         ROSE_ASSERT(false);
+#endif
+       }
+
+     return returnResult;
+   }
+
+// DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
+// bool Grammar::generate_override_keyword( string variableNameString )
+bool
+generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString & data )
+   {
+     bool returnResult = true;
+
+     string variableNameString = string(data.variableNameString);
+     string nodeName = node.baseName;
+
+#if 0
+     printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
+#endif
+
+  // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
+  // Rasmussen (9/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+
+  // Except in the root class for the virtual access function.
+     if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
+          (nodeName == "Pragma"                     && variableNameString == "endOfConstruct")     ||
+          (nodeName == "File"                       && variableNameString == "startOfConstruct")   ||
+          (nodeName == "File"                       && variableNameString == "endOfConstruct")     ||
+          (nodeName == "LocatedNode"                && variableNameString == "startOfConstruct")   ||
+          (nodeName == "LocatedNode"                && variableNameString == "endOfConstruct")     ||
+          (nodeName == "QualifiedName"              && variableNameString == "scope") ||
+          (nodeName == "InitializedName"            && variableNameString == "scope") ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
+          (nodeName == "UntypedFile"                && variableNameString == "scope") ||
+          (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
+          (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
+          (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
+          (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
+          (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
+          (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
+          (nodeName == "FunctionTypeSymbol"         && variableNameString == "type")  ||
+          (nodeName == "DefaultSymbol"              && variableNameString == "type")  ||
+          (nodeName == "AsmExpression"              && variableNameString == "type")  ||
+          (nodeName == "AsmGenericSymbol"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfSegmentTableEntry"    && variableNameString == "type")  ||
+          (nodeName == "JavaTypeExpression"         && variableNameString == "type")  ||
+          (nodeName == "TypeExpression"             && variableNameString == "type")  ||
+          (nodeName == "AsmElfRelocEntry"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfNoteEntry"            && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "SymbolTable"                && variableNameString == "name")  ||
+          (nodeName == "Attribute"                  && variableNameString == "name")  ||
+          (nodeName == "Directory"                  && variableNameString == "name")  ||
+          (nodeName == "Graph"                      && variableNameString == "name")  ||
+          (nodeName == "GraphNode"                  && variableNameString == "name")  ||
+          (nodeName == "GraphEdge"                  && variableNameString == "name")  ||
+          (nodeName == "TemplateType"               && variableNameString == "name")  ||
+          (nodeName == "TypeDefault"                && variableNameString == "name")  ||
+          (nodeName == "TypeLabel"                  && variableNameString == "name")  ||
+          (nodeName == "InitializedName"            && variableNameString == "name")  ||
+          (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
+          (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
+          (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "UseStatement"               && variableNameString == "name")  ||
+          (nodeName == "NamespaceDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "InterfaceStatement"         && variableNameString == "name")  ||
+          (nodeName == "NamespaceAliasDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "name")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "name")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "JavaPackageStatement"       && variableNameString == "name")  ||
+          (nodeName == "InquireStatement"           && variableNameString == "name")  ||
+          (nodeName == "OmpCriticalStatement"       && variableNameString == "name")  ||
+          (nodeName == "EnumVal"                    && variableNameString == "name")  ||
+          (nodeName == "IOItemExpression"           && variableNameString == "name")  ||
+          (nodeName == "AsmOp"                      && variableNameString == "name")  ||
+          (nodeName == "UnknownArrayOrFunctionReference" && variableNameString == "name")  ||
+          (nodeName == "TypeTraitBuiltinOperator"   && variableNameString == "name")  ||
+          (nodeName == "FunctionTypeSymbol"         && variableNameString == "name")  ||
+          (nodeName == "AsmFunction"                && variableNameString == "name")  ||
+          (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
+          (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverNeededAux"      && variableNameString == "name")  ||
+          (nodeName == "AsmPESectionTableEntry"     && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverDefinedAux"     && variableNameString == "name")  ||
+          (nodeName == "AsmPEExportDirectory"       && variableNameString == "name")  ||
+          (nodeName == "AsmDwarfConstruct"          && variableNameString == "name")  ||
+          (nodeName == "AsmPEImportItem"            && variableNameString == "name")  ||
+          (nodeName == "Aterm"                      && variableNameString == "name")  )
+       {
+         returnResult = false;
+#if 0
+         printf ("Exiting as a test! \n");
+         ROSE_ASSERT(false);
+#endif
+       }
+
+     return returnResult;
+   }
+
+
 StringUtility::FileWithLineNumbers
 Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
    {
@@ -1185,7 +1441,47 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
           dataMemberIterator++ )
         {
           GrammarString & data = **dataMemberIterator;
-          StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(data.getDataAccessFunctionPrototypeString(), "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
+
+          string codeString = data.getDataAccessFunctionPrototypeString();
+#if 0
+          printf ("codeString = %s \n",codeString.c_str());
+#endif
+       // DQ (3/22/2017): Do the edits for the data member access function protytypes to add "override" keyword.
+          bool use_override_keyword = generate_override_keyword(node,data);
+#if 0
+          printf ("In Grammar::buildStringForDataAccessFunctionDeclaration(): use_override_keyword = %s \n",use_override_keyword ? "true" : "false");
+#endif
+          if (use_override_keyword == false)
+             {
+               codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", "");
+#if 0
+               printf ("Modified (get) codeString = %s \n",codeString.c_str());
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+          bool use_override_keyword_for_set_functions = generate_override_keyword_for_set_functions(node,data);
+          if (use_override_keyword_for_set_functions == false)
+             {
+               codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", "");
+#if 0
+               printf ("Modified (set) codeString = %s \n",codeString.c_str());
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+       // And surviving references to $ROSE_OVERRIDE_GET and $ROSE_OVERRIDE_SET should be edited to be ROSE_OVERRIDE.
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", " ROSE_OVERRIDE");
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", " ROSE_OVERRIDE");
+
+       // StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(data.getDataAccessFunctionPrototypeString(), "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
+          StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(codeString, "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
           returnString += tempString;
         }
 
@@ -1241,8 +1537,7 @@ Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarStri
 // this function is used when creating the prototype for the all-data-members constructor.
 // it creates the string that is inserted into classname::classname(<string-goes-here>)
 string
-Grammar::buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & node ) {
-  //return "int,int,int,int /*FAKE, TODO for all parameters*/";
+Grammar::buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass& node, bool withInitializers) {
   string result;
   vector<GrammarString *> includeList;
   vector<GrammarString *> excludeList;
@@ -1250,19 +1545,28 @@ Grammar::buildConstructorParameterListStringForAllDataMembers ( AstNodeClass & n
   generateStringListsFromLocalLists ( node, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList );
   
   int generatedParam=0;
+  //cout<<"DEBUG: includeList.size()="<<includeList.size()<<" :: ";
   for(vector<GrammarString *>::iterator gIt = includeList.begin(); gIt != includeList.end(); gIt++) {
     GrammarString *memberFunctionCopy= *gIt;
     ROSE_ASSERT (memberFunctionCopy != NULL);
     GrammarString& dataMember = **gIt;
-    string dataMemberParameter=dataMember.getConstructorPrototypeParameterString();
-    string filter="static";
-    if(dataMemberParameter.substr(0,filter.size())!=filter) {
+
+    string dataMemberParameter;
+    if(withInitializers)
+      dataMemberParameter=dataMember.getConstructorPrototypeParameterString();
+    else
+      dataMemberParameter=dataMember.getConstructorSourceParameterString();
+
+    //string filter="static";
+    //bool dataMemberIsStatic=dataMemberParameter.substr(0,filter.size())!=filter;
+    if(!isFilteredMemberVariable(dataMember.variableNameString)/*&&!dataMemberIsStatic*/) {
       if(generatedParam>0)
-        result+=",";
+        result+=", ";
       result+=dataMemberParameter;
       generatedParam++;
     }
   }
+  //cout<<"RESULT:"<<result<<endl;
   return result;
 }
 
@@ -1349,13 +1653,28 @@ Grammar::buildDataMemberVariableDeclarations ( AstNodeClass & node )
 StringUtility::FileWithLineNumbers
 Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
    {
+
   // This function builds a single string containing:
   //    1) Data Access function prototypes (e.g. "void set_data( int data ); int get_data(void); ..." )
   //    2) Constructor prototype (e.g. "$CLASSNAME ( data = 0, $Data* someSageData = NULL );" )
-
      StringUtility::FileWithLineNumbers dataAccessFunctionPrototypeString = buildStringForDataAccessFunctionDeclaration(node);
 
-  // printf ("dataAccessFunctionPrototypeString = \n%s\n",dataAccessFunctionPrototypeString.c_str());
+     if (node.baseName == "IfStmt")
+        {
+            if (verbose)
+                printf ("In buildMemberAccessFunctionPrototypesAndConstuctorPrototype(): node.name = %s \n",node.name.c_str());
+#if 0
+          for (size_t i = 0; i < dataAccessFunctionPrototypeString.size(); i++)
+             {
+               printf ("In buildMemberAccessFunctionPrototypesAndConstuctorPrototype(): dataAccessFunctionPrototypeString[%zu] = \n%s\n",i,dataAccessFunctionPrototypeString[i].toString().c_str());
+             }
+#endif
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
      string className = node.getName();
 
@@ -1404,11 +1723,22 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
-               /* generate constructor prototype only for UntypedNode classes.*/ 
-               string typeNameOfInterest="SgUntyped";
-               if(className.substr(0,typeNameOfInterest.size())==typeNameOfInterest) {
-                 string constructorParameterString_3 = buildConstructorParameterListStringForAllDataMembers(node);
-                 constructorPrototype = constructorPrototype + "/* NEW CONSTRUCTOR:TODO      " + string(className) + "(" + constructorParameterString_3 + ");*/ \n";
+               /* ESSENTIAL DATA MEMBERS CONSTRUCTOR: generate prototype for all data members constructor */ 
+               if(nameHasPrefix(className,"SgUntyped")) {
+                 string constructorParameterString_3 = buildConstructorParameterListStringForEssentialDataMembers(node,false);
+                 // ensure that the already generated constructor is not generated again
+                 if(constructorParameterString_2!="") {
+                   constructorPrototype+=string(className) + "();\n";
+                   node.setGenerateEnforcedDefaultConstructorImplementation(true);
+                 } else {
+                   node.setGenerateEnforcedDefaultConstructorImplementation(false);
+                 }
+                 if(constructorParameterString_3!=constructorParameterString_2) {
+                   constructorPrototype += string(className) + "(" + constructorParameterString_3 + ");\n";
+                   node.setGenerateEssentialDataMembersConstructorImplementation(true);
+                 } else {
+                   node.setGenerateEssentialDataMembersConstructorImplementation(false);
+                 }
                }
                
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
@@ -1438,6 +1768,12 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
              }
 
           dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<constructor>" */, 1));
+        } else {
+       // no constructor (only generate default constructor)
+          if(nameHasPrefix(className,"SgUntyped")) {
+            string constructorPrototype=className+"::"+className+"() {}\n";
+            //dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "", 1));
+          }
         }
 
   // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (we want it generated independe of if (node.generateConstructor() == true)).
@@ -1461,8 +1797,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
 
 void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& complete, const StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, AstNodeClass& node, StringUtility::FileWithLineNumbers& returnString) {
   StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
-  if (node.getBaseClass() != NULL)
-  {
+  if (node.getBaseClass() != NULL) {
     string parentClassName = node.getBaseClass()->getName();
     // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
     // printf ("Calling base class default constructor (should call paramtererized version) \n");
@@ -1475,9 +1810,7 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     preInitializationString = ": " + preInitializationString;
     preInitializationString = GrammarString::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
     constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST",preInitializationString);
-  }
-  else
-  {
+  } else {
     constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
   }
 
@@ -1487,22 +1820,39 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CLASSNAME",node.getName());
 
-  if (config == NO_CONSTRUCTOR_PARAMETER)
-  {
+  if (config == NO_CONSTRUCTOR_PARAMETER) {
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
-  }
-  else
-  {
+  } else {
     string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
   }
 
-  // NEW CONSTRUCTOR
-  string constructorAllDataMembers="/* NEW CONSTRUCTOR: IMPLEMENTATION TODO:\n";
-  constructorAllDataMembers+=node.buildConstructorBodyForAllDataMembers();
-  constructorAllDataMembers+=" */";
-  constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ALL_DATA_MEMBERS",constructorAllDataMembers);
-
+  // NEW CONSTRUCTOR: generate IMPLEMENTATION
+  string constructorEssentialDataMembers;
+  // generate new constructor only for Untyped nodes.
+  if(node.baseName.substr(0,7)=="Untyped") {
+    string className=node.getName();
+    string constructorClassName=className+"::"+className;
+    if(node.getGenerateEnforcedDefaultConstructorImplementation()) {
+      constructorEssentialDataMembers+=constructorClassName+" () /* ESSENTIAL DATA MEMBERS ENFORCED DEFAULT CONSTRUCTOR */ {}\n";
+    }
+    if(node.getGenerateEssentialDataMembersConstructorImplementation()) {
+      //cout<<"Generating constructor implementation for "<<node.baseName<<endl;
+      string constructorParameters
+        =buildConstructorParameterListStringForEssentialDataMembers(node,false);
+      // check whether constructor already exists
+      if(constructorParameters!="") {
+        string constructorImpl=node.buildConstructorBodyForEssentialDataMembers();
+        constructorEssentialDataMembers+=
+           constructorClassName
+           +"("+constructorParameters+")"
+           +" /* ESSENTIAL DATA MEMBERS CONSTRUCTOR */ "
+           +"{\n"+constructorImpl+"}\n";
+      }
+    }
+  }
+  constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS",constructorEssentialDataMembers);
+  
   returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
 }
 
@@ -1802,6 +2152,12 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // This should be fixed!
      StringUtility::FileWithLineNumbers editStringStart = GrammarString::copyEdit (headerBeforeInsertion,"$BASECLASS",derivedClassString);
 
+  // C preprocessor condition wrapping this entire class declaration.
+     string cppCondition = node.getCppCondition();
+     if (cppCondition.empty())
+         cppCondition = "1";
+     editStringStart = GrammarString::copyEdit(editStringStart, "$CPP_CONDITION", cppCondition);
+
   // calls to GrammarString::copyEdit() now centralized in editSubstitution()
   // BP : 10/24/2001, keep track of memory being freed
      editStringStart = GrammarString::copyEdit (editStringStart,"$CLASSNAME",className);
@@ -1861,6 +2217,20 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
      StringUtility::FileWithLineNumbers postdeclarationString(1, StringUtility::StringWithLineNumber(node.getPostdeclarationString(), "" /* "<getPostdeclarationString " + node.getToken().getName() + ">" */, 1));
      editedHeaderFileString = GrammarString::copyEdit (editedHeaderFileString,"$POSTDECLARATIONS",postdeclarationString);     
 
+#if 0
+     printf ("In Grammar::buildHeaderFiles(): className = %s \n",className.c_str());
+#endif
+
+  // DQ (3/21/2017): Modify code generation to eliminate Clang C++11 override warning.
+     if (className == "SgNode")
+        {
+          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", "");
+        }
+       else
+        {
+          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", " ROSE_OVERRIDE");
+        }
+
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
 
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
@@ -1909,6 +2279,7 @@ Grammar::editSubstitution ( AstNodeClass & node, const StringUtility::FileWithLi
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterListString);
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_BODY",constructorBodyString);
      editString = GrammarString::copyEdit (editString,"$CLASSTAG",node.getTagName());
+     editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS","");
 
   // edit the suffix of the $CLASSNAME (separate from the $GRAMMAR_PREFIX_)
   // printf ("node.getToken().getName() = %s \n",node.getToken().getBaseName());
@@ -2464,10 +2835,7 @@ Grammar::extractStringFromFile (
 
   // If this is false then the MARKER_*_START strings were not located in the file
      if (found == false)
-        {
-          printf ("Error: could not locate startMarker = %s in file = %s \n",startMarker.c_str(),filename.c_str());
-        }
-     ROSE_ASSERT (found);
+         throw std::runtime_error("Error: could not locate startMarker = " + startMarker + " in file = " + filename);
 
      found = false;
      for (unsigned int i = 0; i < fileString.size(); ++i)
@@ -2570,6 +2938,7 @@ static void SetBitInClassHierarchyCastTable(size_t row, size_t col){
     classHierarchyCastTable[row][bytePosition] |=  (1 << bitPosition);
 }
 
+#if 0 // [Robb P Matzke 2016-11-06]: unused, so commenting out to avoid compiler warning
 // Get the correct bit value from classHierarchyCastTable correspinding to the given row and column
 static bool GetBitInClassHierarchyCastTable(size_t row, size_t col){
     size_t bytePosition = col  >> 3;
@@ -2577,6 +2946,7 @@ static bool GetBitInClassHierarchyCastTable(size_t row, size_t col){
     bool val = classHierarchyCastTable[row][bytePosition] &  bitMask;
     return val;
 }
+#endif
 
 // Gets the number of rows in classHierarchyCastTable
 size_t Grammar::getRowsInClassHierarchyCastTable(){
@@ -2773,6 +3143,72 @@ Grammar::buildVariantEnumNames() {
   return s;
 }
 
+// Build the file for supporting boost::serialization
+void
+Grammar::buildSerializationSupport(std::ostream &declarations, std::ostream &definitions, const std::string &headerName) {
+
+    // Header prologue
+    std::string includeOnce = "ROSE_" + headerName;               // no boost
+    for (size_t i=0; i<includeOnce.size(); ++i) {
+        if (!isalnum(includeOnce[i]))
+            includeOnce[i] = '_';
+    }
+    if (includeOnce.size()>2 && includeOnce.substr(includeOnce.size()-2)=="_h")
+        includeOnce[includeOnce.size()-1] = 'H';
+    declarations <<"// Declarations and templates for supporting boost::serialization of Sage IR nodes.\n"
+                 <<"#ifndef " <<includeOnce <<"\n"
+                 <<"#define " <<includeOnce <<"\n"
+                 <<"\n"
+                 <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+                 <<"\n"
+                 <<"// sage3basic.h or rose.h must be inlucded first from a .C file (don't do it here!)\n"
+                 <<"#include <boost/serialization/export.hpp>\n\n";
+
+    // BOOST_CLASS_EXPORT_KEY
+    declarations <<"// The declaration half of exporting polymorphic classes.\n";
+    for (size_t i=0; i<terminalList.size(); ++i) {
+        if (terminalList[i]->isBoostSerializable())
+            declarations <<"BOOST_CLASS_EXPORT_KEY(" <<terminalList[i]->name <<");\n";
+    }
+    declarations <<"\n\n";
+
+    // roseAstSerializationRegistration
+    declarations <<"/** Register all Sage IR node types for serialization.\n"
+                 <<" *\n"
+                 <<" *  This function should be called before any Sage IR nodes are serialized or deserialized. It\n"
+                 <<" *  registers all SgNode subclasses that might be serialized through a base pointer. Note that\n"
+                 <<" *  registration is required but not sufficient for serialization: the \"serialize\" member\n"
+                 <<" *  function template must also be defined. */\n"
+                 <<"template<class Archive>\n"
+                 <<"void roseAstSerializationRegistration(Archive &archive) {\n";
+    for (size_t i=0; i<terminalList.size(); ++i) {
+        if (terminalList[i]->isBoostSerializable())
+            declarations <<"    archive.template register_type<" <<terminalList[i]->name <<">();\n";
+    }
+    declarations <<"}\n";
+
+    // BOOST_CLASS_EXPORT_IMPLEMENT
+    definitions <<"#include <sage3basic.h>\n"
+                <<"#include <" <<headerName <<">\n"
+                <<"\n"
+                <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+                <<"\n"
+                <<"#include <boost/serialization/export.hpp>\n"
+                <<"\n\n"
+                <<"// Register SgNode and all subclasses so that subclasses can be serialized through a base class pointer.\n";
+    for (size_t i=0; i<terminalList.size(); ++i) {
+        if (terminalList[i]->isBoostSerializable())
+            definitions <<"BOOST_CLASS_EXPORT_IMPLEMENT(" <<terminalList[i]->name <<");\n";
+    }
+    definitions <<"\n"
+                <<"#endif\n";
+
+    // Header epilogue
+    declarations <<"\n"
+                 <<"#endif\n"
+                 <<"#endif\n";
+}
+
 // PC: new implementation of ReferenceToPointerHandler.  This implementation
 // allows you to use a subclass to override the template function
 // ReferenceToPointerHandler::apply, which is not usually possible.
@@ -2810,6 +3246,8 @@ Grammar::buildReferenceToPointerHandlerCode()
         {
           s +=  "     void apply(" + terminalList[i]->name + " *&r, const SgName &n, bool traverse)\n"
                 "        {\n"
+                "          ROSE_ASSERT(this != NULL);\n"
+             // "          ROSE_ASSERT(r != NULL);\n"
                 "          static_cast<ImplClass *>(this)->genericApply(r, n, traverse);\n"
                 "        }\n\n";
         }
@@ -2822,9 +3260,25 @@ Grammar::buildReferenceToPointerHandlerCode()
           "     void genericApply(NodeSubclass*& r, const SgName& n, bool traverse)\n"
           "        {\n"
           "          SgNode* sgn = r;\n"
-          "          (*this)(sgn, n, traverse);\n"
-          "          ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));\n"
-          "          r = dynamic_cast<NodeSubclass*>(sgn);\n"
+          "          (*this)(sgn, n, traverse);\n\n"
+          "       // DQ (9/7/2016): Make this more specific.\n"
+          "       // ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));\n"
+       // "          printf (\"sgn = %p \\n\",sgn);\n"
+       // "          ROSE_ASSERT (sgn != NULL);\n"
+       // DQ (9/8/2016): This is not alowed since in the header file the template where
+       // this code lives comes before the definitions of the ROSE IR node classes.
+       // "          printf (\"sgn->class_name() = %s \\n\",sgn->class_name().c_str());\n"
+       // "          ROSE_ASSERT (dynamic_cast<NodeSubclass*>(sgn) != NULL);\n\n"
+       // "          r = dynamic_cast<NodeSubclass*>(sgn);\n"
+          "          if (r != NULL) \n"
+          "             {\n"
+          "               r = dynamic_cast<NodeSubclass*>(sgn);\n"
+          "             }\n"
+       // "            else\n"
+       // "             {\n"
+       // "               printf (\"sgn = %p \\n\",sgn);\n"
+       // "               printf (\"dynamic_cast<NodeSubclass*>(sgn) = %p \\n\",dynamic_cast<NodeSubclass*>(sgn));\n"
+       // "             }\n"
           "        }\n\n"
 
           "     virtual void operator()(SgNode*&, const SgName&, bool) = 0;\n"
@@ -3044,7 +3498,17 @@ Grammar::buildCode ()
      includeHeaderString += defines2;
      includeHeaderString += defines3;
 
+  // DQ (3/5/2017): Add message stream support for diagnostic messge from the ROSE IR nodes.
+  // This allows us to easily convert printf() functions to mprintf() functions that contain
+  // the more sophisticated Saywer support for diagnostic messages.
+  // Insert:
+  //    #undef mprintf
+  //    #define mprintf Rose::Diagnostics::mfprintf(Rose::mlog[Rose::Diagnostics::DEBUG])
 
+     string defines4 = "#undef mprintf\n";
+     includeHeaderString += defines4;
+     string defines5 = "#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])\n\n";
+     includeHeaderString += defines5;
 
 
      includeHeaderString += "\nusing namespace std;\n";
@@ -3069,7 +3533,8 @@ Grammar::buildCode ()
 #else
      buildSourceFiles(*rootNode,ROSE_ArrayGrammarSourceFile);
 #endif
-     cout << "DONE: buildSourceFiles()" << endl;
+     if (verbose)
+         cout << "DONE: buildSourceFiles()" << endl;
 
   // DQ (5/24/2005): Support for evaluation of memory sizes of IR nodes
      string memoryStorageEvaluationSupport = buildMemoryStorageEvaluationSupport();
@@ -3117,7 +3582,8 @@ Grammar::buildCode ()
 #else
      buildNewAndDeleteOperators(*rootNode,ROSE_NewAndDeleteOperatorSourceFile);
 #endif
-     cout << "DONE: buildNewAndDeletOperators()" << endl;
+     if (verbose)
+         cout << "DONE: buildNewAndDeletOperators()" << endl;
 
   // printf ("Exiting after building new and delete operators \n");
   // ROSE_ASSERT(false);
@@ -3144,7 +3610,8 @@ Grammar::buildCode ()
 #else
      buildTraverseMemoryPoolSupport(*rootNode,ROSE_TraverseMemoryPoolSourceFile);
 #endif
-     cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
 
   // printf ("Exiting after building traverse memory pool functions \n");
   // ROSE_ASSERT(false);
@@ -3168,7 +3635,8 @@ Grammar::buildCode ()
 #else
      buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile);
 #endif
-     cout << "DONE: buildStringForCheckingIfDataMembersAreInMemoryPoolSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForCheckingIfDataMembersAreInMemoryPoolSupport()" << endl;
 
   // printf ("Exiting after building code to check data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
@@ -3191,7 +3659,8 @@ Grammar::buildCode ()
      ROSE_returnClassHierarchySubTreeSourceFile << buildClassHierarchySubTreeFunction();
      // Include the classHierarchyCastTable in the file for fast casting between compatible types
      ROSE_returnClassHierarchySubTreeSourceFile << generateClassHierarchyCastTable();
-     cout << "DONE: buildClassHierarchySubTreeFunction()" << endl;
+     if (verbose)
+         cout << "DONE: buildClassHierarchySubTreeFunction()" << endl;
      ROSE_returnClassHierarchySubTreeSourceFile.close();
 
   // printf ("Exiting after building code to return data members which are pointers to IR nodes \n");
@@ -3211,7 +3680,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      ROSE_memoryPoolTraversalSourceFile << buildMemoryPoolBasedVariantVectorTraversalSupport();
-     cout << "DONE: buildMemoryPoolBasedVariantVectorTraversalSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildMemoryPoolBasedVariantVectorTraversalSupport()" << endl;
      ROSE_memoryPoolTraversalSourceFile.close();
 
   // printf ("Exiting after building code to return data members which are pointers to IR nodes \n");
@@ -3231,7 +3701,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      buildStringForReturnDataMemberPointersSupport(*rootNode,ROSE_ReturnDataMemberPointersSourceFile);
-     cout << "DONE: buildStringForReturnDataMemberPointersSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForReturnDataMemberPointersSupport()" << endl;
 
   // printf ("Exiting after building code to return data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
@@ -3249,7 +3720,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      buildStringForProcessDataMemberReferenceToPointersSupport(*rootNode,ROSE_ProcessDataMemberReferenceToPointersSourceFile);
-     cout << "DONE: buildStringForProcessDataMemberReferenceToPointersSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForProcessDataMemberReferenceToPointersSupport()" << endl;
 
   // printf ("Exiting after building code to return references data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
@@ -3269,7 +3741,8 @@ Grammar::buildCode ()
   // DQ(10/22/2007): fixed missed variable renaming.
   // buildStringForGetChildIndexSupport(*rootNode,ROSE_ReturnDataMemberReferenceToPointersSourceFile);
      buildStringForGetChildIndexSupport(*rootNode,ROSE_GetChildIndexSourceFile);
-     cout << "DONE: buildStringForGetChildIndexSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForGetChildIndexSupport()" << endl;
 
   // printf ("Exiting after building code to get the child index from any IR node \n");
   // ROSE_ASSERT(false);
@@ -3291,7 +3764,8 @@ Grammar::buildCode ()
 #else
      buildCopyMemberFunctions(*rootNode,ROSE_CopyMemberFunctionsSourceFile);
 #endif
-     cout << "DONE: buildCopyMemberFunctions()" << endl;
+     if (verbose)
+         cout << "DONE: buildCopyMemberFunctions()" << endl;
 
   // printf ("Exiting after copy member functions \n");
   // ROSE_ASSERT(false);
@@ -3303,7 +3777,8 @@ Grammar::buildCode ()
   // generate a function for each node in the AST to return the node's successors of the traversal   
   // ---------------------------------------------------------------------------------------------
      StringUtility::FileWithLineNumbers ROSE_treeTraversalFunctionsSourceFile;
-     cout << "Calling buildTreeTraversalFunctions() ..." << endl;
+     if (verbose)
+         cout << "Calling buildTreeTraversalFunctions() ..." << endl;
   // Write header string to file (it's the same string as above, we just reuse it)
      ROSE_treeTraversalFunctionsSourceFile << includeHeaderString;
 
@@ -3312,7 +3787,8 @@ Grammar::buildCode ()
 
   // Generate the implementations of the tree traversal functions
      buildTreeTraversalFunctions(*rootNode, ROSE_treeTraversalFunctionsSourceFile);
-     cout << "DONE: buildTreeTraversalFunctions()" << endl;
+     if (verbose)
+         cout << "DONE: buildTreeTraversalFunctions()" << endl;
      Grammar::writeFile(ROSE_treeTraversalFunctionsSourceFile, target_directory, getGrammarName() + "TreeTraversalSuccessorContainer", ".C");
 
   // DQ (10/4/2014): Adding ATerm support via ROSETTA.
@@ -3320,7 +3796,8 @@ Grammar::buildCode ()
   // generate a function for each node in the AST to support ATerm read and write operations.
   // ---------------------------------------------------------------------------------------------
      StringUtility::FileWithLineNumbers ROSE_ATermSupportSourceFile;
-     cout << "Calling buildAtermSupportFunctions() ..." << endl;
+     if (verbose)
+         cout << "Calling buildAtermSupportFunctions() ..." << endl;
   // Write header string to file (it's the same string as above, we just reuse it)
      ROSE_ATermSupportSourceFile << includeHeaderString;
 
@@ -3332,7 +3809,8 @@ Grammar::buildCode ()
   // Generate the implementations of the ATerm support functions
      buildAtermSupportFunctions(*rootNode, ROSE_ATermSupportSourceFile);
 #endif
-     cout << "DONE: buildAtermSupportFunctions()" << endl;
+     if (verbose)
+         cout << "DONE: buildAtermSupportFunctions()" << endl;
      Grammar::writeFile(ROSE_ATermSupportSourceFile, target_directory, getGrammarName() + "AtermSupport", ".C");
 
 #if 0
@@ -3343,7 +3821,8 @@ Grammar::buildCode ()
   // ---------------------------------------------------------------------------------------------
   // generate what is necessary for SAGE support in AstProcessing classes
   // ---------------------------------------------------------------------------------------------
-     cout << "building TreeTraversalAccessEnums ... ";
+     if (verbose)
+         cout << "building TreeTraversalAccessEnums ... ";
      string treeTraversalClassHeaderFileName = getGrammarName();
      treeTraversalClassHeaderFileName += "TreeTraversalAccessEnums.h";
      ofstream ROSE_treeTraversalClassHeaderFile(string(target_directory+"/"+treeTraversalClassHeaderFileName).c_str());
@@ -3351,7 +3830,8 @@ Grammar::buildCode ()
      ROSE_treeTraversalClassHeaderFile << "// GENERATED HEADER FILE --- DO NOT MODIFY!"
                                        << endl << endl;
      ROSE_treeTraversalClassHeaderFile <<  naiveTraverseGrammar(*rootNode, &Grammar::EnumStringForNode);
-     cout << "finished." << endl;
+     if (verbose)
+         cout << "finished." << endl;
 
   // --------------------------------------------
   // generate code for variantT enum names
@@ -3365,6 +3845,19 @@ Grammar::buildCode ()
      variantEnumNamesFile << "\n#include \"rosedll.h\"\n ROSE_DLL_API const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
 
   // --------------------------------------------
+  // generate code for boost::serialization support
+  // --------------------------------------------
+     {
+         string declarationsFileName = string(getGrammarName()) + "Serialization.h";
+         string definitionsFileName = string(getGrammarName()) + "Serialization.C";
+         ofstream declarationsFile(string(target_directory+"/"+declarationsFileName).c_str());
+         ofstream definitionsFile(string(target_directory+"/"+definitionsFileName).c_str());
+         ROSE_ASSERT(declarationsFile.good());
+         ROSE_ASSERT(definitionsFile.good());
+         buildSerializationSupport(declarationsFile, definitionsFile, declarationsFileName);
+     }
+
+  // --------------------------------------------
   // generate code for RTI support
   // --------------------------------------------
      string rtiFunctionsSourceFileName = string(getGrammarName())+"RTI.C";
@@ -3375,7 +3868,8 @@ Grammar::buildCode ()
      rtiFile << "\n// Simplify code by using std namespace (never put into header files since it effects users) \nusing namespace std;\n\n";
 
      buildRTIFile(rootNode, rtiFile);
-     cout << "DONE: buildRTIFile" << endl;
+     if (verbose)
+         cout << "DONE: buildRTIFile" << endl;
      Grammar::writeFile(rtiFile, target_directory, getGrammarName() + "RTI", ".C");
 
 #if 0
@@ -3396,15 +3890,18 @@ Grammar::buildCode ()
      ofstream GrammarDotFile("grammar.dot");
      ROSE_ASSERT (GrammarDotFile.good());
      buildGrammarDotFile(rootNode, GrammarDotFile);
-     cout << "DONE: buildGrammarDotFile" << endl;
+     if (verbose)
+         cout << "DONE: buildGrammarDotFile" << endl;
      ofstream AbstractTreeGrammarFile("generated_abstractcppgrammar.atg");
      ROSE_ASSERT (AbstractTreeGrammarFile.good());
      buildAbstractTreeGrammarFile(rootNode, AbstractTreeGrammarFile);
-     cout << "DONE: buildAbstractTreeGrammarFile" << endl;
+     if (verbose)
+         cout << "DONE: buildAbstractTreeGrammarFile" << endl;
      ofstream sdfTreeGrammarFile("generated_sdf_tree_grammar.rtg");
      ROSE_ASSERT (sdfTreeGrammarFile.good());
      buildSDFTreeGrammarFile(rootNode, sdfTreeGrammarFile);
-     cout << "DONE: buildSDFTreeGrammarFile" << endl;
+     if (verbose)
+         cout << "DONE: buildSDFTreeGrammarFile" << endl;
 
 #if 1
    // JH (01/18/2006)
@@ -3422,7 +3919,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      buildIRNodeConstructorOfStorageClassSource(*rootNode,ROSE_ConstructorTakingStorageClassSourceFile);
-     cout << "DONE: buildConstructorTakingStorageClass()" << endl;
+     if (verbose)
+         cout << "DONE: buildConstructorTakingStorageClass()" << endl;
 
   // printf ("Exiting after building traverse memory pool functions \n");
   // ROSE_ASSERT(false);
@@ -3436,7 +3934,8 @@ Grammar::buildCode ()
      ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderStringWithoutROSE, "", 1));
      ROSE_ASSERT (rootNode != NULL);
      buildStringForMemoryPoolSupport(rootNode,ROSE_MemoryPoolSupportFile);
-     cout << "DONE: buildStringForMemoryPoolSupport()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForMemoryPoolSupport()" << endl;
      Grammar::writeFile(ROSE_MemoryPoolSupportFile, target_directory, getGrammarName() + "MemoryPoolSupport", ".h");
   // --------------------------------------------
   // generate code for memory pool support source
@@ -3445,7 +3944,8 @@ Grammar::buildCode ()
      ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
      ROSE_ASSERT (rootNode != NULL);
      buildStringForMemoryPoolSupportSource(rootNode,ROSE_MemoryPoolSupportFile);
-     cout << "DONE: buildStringForMemoryPoolSupportSource()" << endl;
+     if (verbose)
+         cout << "DONE: buildStringForMemoryPoolSupportSource()" << endl;
      Grammar::writeFile(ROSE_MemoryPoolSupportFile, target_directory, getGrammarName() + "MemoryPoolSupport", ".C");
 #endif
 
@@ -3491,7 +3991,8 @@ Grammar::buildCode ()
      ofstream ROSE_outputClassesAndFieldsSourceFile(string(target_directory+"/"+outputClassesAndFieldsSourceFileName).c_str());
      ROSE_ASSERT (ROSE_outputClassesAndFieldsSourceFile.good() == true);
 
-     printf ("Building OutputClassesAndFields() \n");
+     if (verbose)
+         printf ("Building OutputClassesAndFields() \n");
   // outputClassesAndFields ( *rootNode, ROSE_outputClassesAndFieldsSourceFile);
      ROSE_outputClassesAndFieldsSourceFile << outputClassesAndFields ( *rootNode );
 #endif
@@ -3518,12 +4019,6 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
       stringListIterator++) {
     if ( (*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL) {
       string stype=typeStringOfGrammarString(*stringListIterator);
-   // GB (8/16/2007): Fixed this condition. It did not count SgProject::p_fileList, which is a pointer to a container, and
-   // possibly other pointers to containers.
-   // if( (stype.find("*") == string::npos) // not found, not a pointer
-   // && (stype.find("List") == stype.size()-4) ) // postfix
-   // MS 2013: fixed: Pointers to containers are not containers but singleDataMembers instead)
-   //   if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
       if (isSTLContainer(stype.c_str())) {
         info.numContainerMembers++;
       } else {
@@ -3571,13 +4066,14 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpSimdStatement"
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
+        ||nodeName == "SgOmpForSimdStatement"
+        ||nodeName == "SgOmpForSimdStatement"
         ||nodeName == "SgOmpDoStatement"
+        ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp");
   }
   return info;
 }
-
-//#include "grammarGenerator.C"
 
 /////////////////////////
 // RTI CODE GENERATION //
@@ -3871,7 +4367,10 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                     outputFile << "if (idx == 0) return p_body;\n"
@@ -3977,7 +4476,9 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                      outputFile << "if (child == p_body) return 0;\n"
@@ -4503,4 +5004,8 @@ AstNodeClass* lookupTerminal(const vector<AstNodeClass*>& tl, const std::string&
 
 // DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
   return NULL;
+}
+
+bool Grammar::nameHasPrefix(string name, string prefix) {
+  return name.substr(0,prefix.size())==prefix;
 }

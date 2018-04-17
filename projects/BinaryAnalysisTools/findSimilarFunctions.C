@@ -1,5 +1,6 @@
 #include <rose.h>
 
+#include <CommandLine.h>
 #include <Disassembler.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <EditDistance/LinearEditDistance.h>
@@ -17,11 +18,11 @@
 #include <dlib/matrix.h>
 #include <dlib/optimization.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Command line
@@ -73,6 +74,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen1} [--] @v{specimen2}");
 
     SwitchGroup tool("Switches for this tool");
+    tool.name("tool");
 
     tool.insert(Switch("metric")
                 .argument("name", enumParser(settings.metric)
@@ -410,17 +412,16 @@ struct AddressRenderer: SqlDatabase::Renderer<rose_addr_t> {
 int
 main(int argc, char *argv[]) {
     // Initialization
-    rose::Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
     Stream info(mlog[INFO]);
 
     // Parse command-line
     P2::Engine engine;
     Settings settings;
-    CommandlineProcessing::genericSwitchArgs.threads = 0; // we want multi-threading by default
+    Rose::CommandLine::genericSwitchArgs.threads = 0; // we want multi-threading by default
     std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, engine, settings);
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
     

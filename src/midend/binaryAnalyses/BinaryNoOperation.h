@@ -4,7 +4,7 @@
 #include <BaseSemantics2.h>
 #include <Sawyer/Message.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 class Disassembler;
@@ -60,6 +60,7 @@ private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     StateNormalizer::Ptr normalizer_;
     Sawyer::Optional<rose_addr_t> initialSp_;
+    bool ignoreTerminalBranches_;
 
 public:
     static Sawyer::Message::Facility mlog;              /**< Diagnostic streams. */
@@ -69,11 +70,12 @@ public:
      *
      *  Since this default constructor has no information about the virtual CPU, it will assume that all instructions have an
      *  effect. */
-    NoOperation() {}
+    NoOperation()
+        : ignoreTerminalBranches_(true) {}
 
     /** Construct a new analysis with specified virtual CPU. */
     explicit NoOperation(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), normalizer_(StateNormalizer::instance()) {}
+        : cpu_(cpu), normalizer_(StateNormalizer::instance()), ignoreTerminalBranches_(true) {}
 
     /** Construct a new analysis for a specific disassembler.
      *
@@ -103,6 +105,16 @@ public:
      * @{ */
     const Sawyer::Optional<rose_addr_t> initialStackPointer() const { return initialSp_; }
     void initialStackPointer(const Sawyer::Optional<rose_addr_t> &v) { initialSp_ = v; }
+    /** @} */
+
+    /** Property: Whether terminal branches can be no-ops.
+     *
+     *  If set (the default) then branch instructions that appear as the last instruction of a basic block, and which have one
+     *  constant, known successor which is not the fall-through address are not considered to be part of any no-op sequence.
+     *
+     * @{ */
+    bool ignoreTerminalBranches() const { return ignoreTerminalBranches_; }
+    void ignoreTerminalBranches(bool b) { ignoreTerminalBranches_ = b; }
     /** @} */
 
     /** Determines if an instruction is a no-op. */

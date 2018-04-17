@@ -20,8 +20,8 @@ endif()
 
 # Detect compiler by asking GCC what version it is
 set(compiler "")
-set(min_supported "4.0")
-set(max_supported "4.4")
+set(min_supported "4.4")
+set(max_supported "5.2")
 execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
                 OUTPUT_VARIABLE GCC_version)
 # strip patch version; we only care about major & minor
@@ -33,16 +33,24 @@ if(GCC_version VERSION_GREATER max_supported OR
     "ROSE only supports GCC versions ${min_supported} to ${max_supported}.\n"
     "<gcc -dumpversion> reported ${GCC_version}")
 endif()
-if(GCC_version VERSION_EQUAL 4.4)
-  set(compiler "GNU-4.4")
-elseif(GCC_version VERSION_EQUAL 4.3)
-  set(compiler "GNU-4.3")
-elseif(GCC_version VERSION_EQUAL 4.2)
-  set(compiler "GNU-4.2")
-elseif(GCC_version VERSION_EQUAL 4.1)
-  set(compiler "GNU-4.1")
-elseif(GCC_version VERSION_EQUAL 4.0)
-  set(compiler "GNU-4.0")
+if(GCC_version VERSION_EQUAL 5.2)
+  set(compiler "gnu-5.2")
+elseif(GCC_version VERSION_EQUAL 5.1)
+  set(compiler "gnu-5.1")
+elseif(GCC_version VERSION_EQUAL 5.0)
+  set(compiler "gnu-5.0")
+elseif(GCC_version VERSION_EQUAL 4.9)
+  set(compiler "gnu-4.9")
+elseif(GCC_version VERSION_EQUAL 4.8)
+  set(compiler "gnu-4.8")
+elseif(GCC_version VERSION_EQUAL 4.7)
+  set(compiler "gnu-4.7")
+elseif(GCC_version VERSION_EQUAL 4.6)
+  set(compiler "gnu-4.6")
+elseif(GCC_version VERSION_EQUAL 4.5)
+  set(compiler "gnu-4.5")
+elseif(GCC_version VERSION_EQUAL 4.4)
+  set(compiler "gnu-4.4")
 endif()
 if(compiler STREQUAL "")
   message(FATAL_ERROR
@@ -50,23 +58,50 @@ if(compiler STREQUAL "")
 endif()
 
 # Get binary compatibility signature
-execute_process(
-  COMMAND "${PROJECT_SOURCE_DIR}/scripts/edg-generate-sig" "--find" "--progress"
-  OUTPUT_VARIABLE signature)
-string(STRIP ${signature} signature)
+set(EDG_SIG_OUTPUT
+  "${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/edg-generate-sig.output"
+)
+#ADD_CUSTOM_COMMAND(TARGET EDG_tarball
+#  PRE_BUILD
+#  COMMAND "${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig" "${CMAKE_SOURCE_DIR}" " ${CMAKE_BINARY_DIR}" " >" ${EDG_SIG_OUTPUT}
+#  COMMAND "cat" ${EDG_SIG_OUTPUT}  ">" signature
+#  DEPENDS roseutil rosetta_generated "${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig"
+#)
+add_custom_target(get_EDG_name
+#  COMMENT "EDG NAME: ${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
+#    > ${EDG_SIG_OUTPUT}"
+  COMMAND ${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
+    > ${EDG_SIG_OUTPUT}
+  DEPENDS roseutil rosetta_generated)
+#set(signature "")
 
-set(tarball_site "http://www.rosecompiler.org/edg_binaries")
-set(tarball_filename "roseBinaryEDG-${Local_EDG_Version}-${platform}-${compiler}-${signature}.tar.gz")
+add_custom_target( EDGSignature
+#    COMMENT "EDGSignature arguments ${EDG_SIG_OUTPUT} ${Local_EDG_Version} ${platform} ${compiler}"
+    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ProcessEDGBinary.cmake ${EDG_SIG_OUTPUT} ${Local_EDG_Version} ${platform} ${compiler} 
+    DEPENDS get_EDG_name
+)
 
-ExternalProject_Add("EDG_tarball"
-  URL ${tarball_site}/${tarball_filename}
-  SOURCE_DIR ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  )
+#set(tarball_site "http://www.rosecompiler.org/edg_binaries")
+#set(tarball_filename "roseBinaryEDG-${Local_EDG_Version}-${platform}-${compiler}-${signature}.tar.gz")
+
+#add_custom_target(EDG_tarball
+#COMMAND wget ${tarball_site}/roseBinaryEDG-${Local_EDG_Version}-${platform}-${compiler}-${signature}.tar.gz ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz
+#COMMENT "Untar EDG"
+#COMMAND tar zxvf ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz -C ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend 
+#DEPENDS EDGSignature
+#)
+#ExternalProject_Add(EDG_tarball
+#  COMMENT "EDG signature = ${signature}"
+#  URL ${tarball_site}/roseBinaryEDG-${Local_EDG_Version}-${platform}-${compiler}-${signature}.tar.gz
+#  SOURCE_DIR ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG
+#  CONFIGURE_COMMAND ""
+#  BUILD_COMMAND ""
+#  INSTALL_COMMAND ""
+#  DEPENDS EDGSignature 
+#  )
 
 add_library(EDG STATIC IMPORTED)
+add_dependencies(EDG EDGSignature)
 set_property(TARGET EDG PROPERTY IMPORTED_LOCATION
   ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
 

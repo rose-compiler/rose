@@ -5,7 +5,7 @@ using namespace std;
 namespace  AbstractMemoryObject
 {
   // There should be no implementation code since only abstractions are provided
-  std::set<SgType*> ObjSet::getType() const 
+  std::set<SgType*> ObjSet::getType() 
   {
     std::set<SgType*> rt;
     cerr<<"Error. Direct call to base class's getType() is not allowed."<<endl;
@@ -275,7 +275,7 @@ namespace  AbstractMemoryObject
     return 0;
    }
 
-   bool Pointer::equalPoints( const Pointer & that)
+   bool Pointer::equalPoints(Pointer & that)
    {
      cerr<<"Error. Direct call to base class (Pointer)'s equalPoints( ) is not allowed."<<endl;
      assert (false);

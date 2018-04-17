@@ -129,8 +129,6 @@
 
 # src/midend/programAnalysis/distributedMemoryAnalysis/Makefile.am: distributedMemoryAnalysis
 
-# src/midend/programAnalysis/graphAnalysis/Makefile.am: SB_GraphAnalysis
-
 # src/midend/programAnalysis/pointerAnal/Makefile.am: pointerAnal
 
 # src/midend/programAnalysis/proceduralSlicing/Makefile.am: alternativeProgramSlicing
@@ -178,8 +176,6 @@ set(dominance_STAT_SRCS
 # src/midend/astInlining/Makefile.am: astinlining
 
 # src/midend/ompLowering/Makefile.am: ompLowering
-
-# src/frontend/BinaryDisassembly/Makefile.am: binaryFrontend
 
 # src/frontend/SageIII/astMerge/Makefile.am: astMerge
 

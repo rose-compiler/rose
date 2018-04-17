@@ -1,35 +1,27 @@
 #ifndef SPECIALIZATION_H
-#define SPECIALIZATOIN_H
+#define SPECIALIZATION_H
 
 #include "VariableIdMapping.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "ArrayElementAccessData.h"
 #include "Analyzer.h"
 #include "ExprAnalyzer.h"
 #include "RewriteSystem.h"
+#include "ReadWriteData.h"
+#include "Visualizer.h"
+#include "LoopInfo.h"
+#include "CollectionOperators.h"
+
+// BOOST includes
+#include "boost/lexical_cast.hpp"
+
 #include <iostream>
 
 using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
-enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR };
-struct LoopInfo {
-  VariableId iterationVarId;
-  IterVarType iterationVarType;
-  SgStatement* initStmt;
-  SgExpression* condExpr;
-  SgForStatement* forStmt;
-  VariableIdSet outerLoopsVarIds;
-  void computeOuterLoopsVarIds(VariableIdMapping* variableIdMapping);
-  void computeLoopLabelSet(Labeler* labeler);
-  bool isInAssociatedLoop(const EState* estate);
-  LabelSet loopLabelSet;
-  static VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
-};
-
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
-typedef vector< LoopInfo > LoopInfoSet;
 
 struct EStateExprInfo {
   const EState* first;
@@ -43,16 +35,6 @@ EStateExprInfo(const EState* estate,SgExpression* originalExpr, SgExpression* tr
 };
 
 typedef vector<EStateExprInfo> ArrayUpdatesSequence;
-
-struct ReadWriteData {
-  ArrayElementAccessDataSet writeArrayAccessSet;
-  VariableIdSet writeVarIdSet;
-  ArrayElementAccessDataSet readArrayAccessSet;
-  VariableIdSet readVarIdSet;
-};
-
-typedef vector<int> IndexVector;
-typedef map<IndexVector,ReadWriteData> IndexToReadWriteDataMap;
 
 enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
 
@@ -111,14 +93,15 @@ private:
 class Specialization {
  public:
   Specialization();
+
+  static void initDiagnostics();
+ 
   void transformArrayProgram(SgProject* root, Analyzer* analyzer);
   void extractArrayUpdateOperations(Analyzer* ana,
                                     ArrayUpdatesSequence& arrayUpdates,
                                     RewriteSystem& rewriteSystem,
                                     bool useConstExprSubstRule=true
                                     );
-  // computes number of race conditions in update sequence (0:OK, >0:race conditions exist).
-  int verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
@@ -126,9 +109,10 @@ class Specialization {
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping);
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping);
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
-  static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
-  void setCheckAllLoops(bool val);
+  void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem);
+
  private:
+  static Sawyer::Message::Facility logger;
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
@@ -143,19 +127,16 @@ class Specialization {
   // replace each use of a SgVarRefExp according to constReporter
   int substituteVariablesWithConst(SgNode* node, ConstReporter* constReporter);
 
-  bool isAtMarker(Label lab, const EState* estate);
   SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping);
   SgNode* findDefAssignOfUse(SgVarRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping);
   void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
-  void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode);
   //SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, VariableIdMapping* variableIdMapping);
   string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping);
   void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping);
-
-  SgFunctionDefinition* _specializedFunctionRootNode;
-
-  // for data race check of all loops independent on whether they are marked as parallel loops
-  bool _checkAllLoops;
+  
+  SgFunctionDefinition* _specializedFunctionRootNode=0;
+  long _maxNumberOfExtractedUpdates=-1;
 };
+
 
 #endif

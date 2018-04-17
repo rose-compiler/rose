@@ -76,9 +76,9 @@ ProgressBarImpl::makeBar(double ratio, bool isBackward) {
     if (!prefix_.empty())
         prefix = prefix_ + ": ";
     if (shouldSpin_) {
-        int centerIdx = nUpdates_ % (2*width_);
+        int centerIdx = (int)(nUpdates_ % (2*width_));
         if (centerIdx >= (int)width_)
-            centerIdx = 2*width_ - centerIdx - 1;
+            centerIdx = (int)(2*width_ - centerIdx - 1);
         assert(centerIdx>=0 && (size_t)centerIdx < width_);
         int indicatorWidth = boost::numeric::converter<int, double>::convert(ceil(0.3 * width_));
         int indicatorIdx = centerIdx - indicatorWidth/2;

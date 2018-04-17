@@ -2,9 +2,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
-/** Adds the newly constructed entry to the dynamic section. */
 void
 SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
 {
@@ -18,7 +17,6 @@ SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
     set_parent(dynsec->get_entries());
 }
 
-/** Initialize a dynamic section entry by parsing something stored in the file. */
 void
 SgAsmElfDynamicEntry::parse(ByteOrder::Endianness sex, const Elf32DynamicEntry_disk *disk)
 {
@@ -32,7 +30,6 @@ SgAsmElfDynamicEntry::parse(ByteOrder::Endianness sex, const Elf64DynamicEntry_d
     p_d_val = ByteOrder::disk_to_host(sex, disk->d_val);
 }
 
-/** Encode a native entry back into disk format */
 void *
 SgAsmElfDynamicEntry::encode(ByteOrder::Endianness sex, Elf32DynamicEntry_disk *disk) const
 {
@@ -48,7 +45,6 @@ SgAsmElfDynamicEntry::encode(ByteOrder::Endianness sex, Elf64DynamicEntry_disk *
     return disk;
 }
 
-/** Convert Dynamic Entry Tag to a string */
 std::string
 SgAsmElfDynamicEntry::to_string(EntryType t) 
 {
@@ -61,7 +57,6 @@ SgAsmElfDynamicEntry::to_string(EntryType t)
 
 }
 
-/** Set name and adjust parent */
 void
 SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
 {
@@ -77,7 +72,6 @@ SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
     }
 }
 
-/** Print some debugging info */
 void
 SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -104,7 +98,6 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/** Non-parsing constructor */
 void
 SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *strings)
 {
@@ -114,7 +107,6 @@ SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *strings)
     p_linked_section = strings;
 }
 
-/** Parse an existing section of a file in order to initialize this ELF Dynamic Section. */
 SgAsmElfDynamicSection *
 SgAsmElfDynamicSection::parse()
 {
@@ -165,7 +157,6 @@ SgAsmElfDynamicSection::parse()
     return this;
 }
 
-/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -178,7 +169,6 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_
                            entsize, required, optional, entcount);
 }
     
-/** Finish initializing the section entries. */
 void
 SgAsmElfDynamicSection::finish_parsing() 
 {
@@ -246,7 +236,6 @@ SgAsmElfDynamicSection::finish_parsing()
     }
 }
 
-/** Called prior to unparse to make things consistent. */
 bool
 SgAsmElfDynamicSection::reallocate()
 {
@@ -280,7 +269,6 @@ SgAsmElfDynamicSection::reallocate()
     return reallocated;
 }
 
-/** Write the dynamic section back to disk */
 void
 SgAsmElfDynamicSection::unparse(std::ostream &f) const
 {
@@ -321,7 +309,6 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/** Print some debugging info */
 void
 SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

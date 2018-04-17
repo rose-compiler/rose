@@ -2,12 +2,14 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
+#include <CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Set.h>
 #include <SqlDatabase.h>
 
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {
@@ -48,7 +50,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .argument("uri", anyParser(settings.databaseUri))
               .doc("URI specifying which database to use." + SqlDatabase::uriDocumentation()));
 
-    return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 typedef Sawyer::Container::Map<std::string /*key*/, std::string /*colname*/> DependencyNames;
@@ -100,9 +102,8 @@ displayTableHeader(const std::vector<std::string> &keysSelected, const std::vect
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);

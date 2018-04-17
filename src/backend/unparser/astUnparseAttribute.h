@@ -66,7 +66,7 @@ class AstUnparseAttribute : public AstAttribute
           bool replacementStringExists();
 
        //! This will output all the strings (mostly for debugging).
-          virtual std::string toString();
+          virtual std::string toString() ROSE_OVERRIDE;
 
        //! This is selective in putting out only the strings that match a specific location.
           virtual std::string toString( RelativePositionType inputlocation );

@@ -8,6 +8,7 @@
 #include <boost/tokenizer.hpp>
 
 using namespace std;
+using namespace boost;
 using namespace SPRAY;
 
 size_t PragmaHandler::handlePragmas(SgProject* sageProject, CodeThorn::Analyzer* analyzer) {
@@ -79,7 +80,6 @@ size_t PragmaHandler::extractAndParsePragmas(SgNode* root, CodeThorn::Analyzer* 
     //option_specialize_fun_const_list.push_back(16);
     analyzer->setSkipSelectedFunctionCalls(true);
     analyzer->setSkipArrayAccesses(true);
-    //boolOptions.registerOption("verify-update-sequence-race-conditions",true);
     return numPragmas;
   }
   return 0;

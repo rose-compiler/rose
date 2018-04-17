@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <string>
 #include "grammar.h"
-#include "string_functions.h"
+#include "StringUtility.h"
+#include "FileUtility.h"
 
 #include <iostream>
 
@@ -131,11 +132,14 @@ class GrammarString
 
   // BP : 10/10/2001, five functions moved from Grammar class
   static std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
-  static inline StringUtility::FileWithLineNumbers copyEdit ( const StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken ) {return StringUtility::copyEdit(inputString, oldToken, newToken);}
-  static inline StringUtility::FileWithLineNumbers copyEdit ( const StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const StringUtility::FileWithLineNumbers& newToken ) {return StringUtility::copyEdit(inputString, oldToken, newToken);}
+  static inline Rose::StringUtility::FileWithLineNumbers copyEdit ( const Rose::StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken ) {return Rose::StringUtility::copyEdit(inputString, oldToken, newToken);}
+  static inline Rose::StringUtility::FileWithLineNumbers copyEdit ( const Rose::StringUtility::FileWithLineNumbers& inputString, const std::string& oldToken, const Rose::StringUtility::FileWithLineNumbers& newToken ) {return Rose::StringUtility::copyEdit(inputString, oldToken, newToken);}
   static bool isContainedIn ( const std::string& longString, const std::string& shortString );
   // A smarter string concatination function (corrects for space in the target automatically)
   static std::string stringConcatenate ( const std::string& target, const std::string& endingString );
+
+// DQ (3/22/2017): Added to support use of override keyword to remove warnings from Clang.
+  bool generate_override_keyword( std::string variableNameString ) const;
 
 };
 

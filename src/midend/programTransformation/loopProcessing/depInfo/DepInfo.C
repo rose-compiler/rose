@@ -7,7 +7,7 @@ class DepEDDTypeInfo : public DepInfoImpl
 {
   DepType t;
  public:
-  DepEDDTypeInfo( DepType _t, int dim1, int dim2, bool p, int cl)
+  DepEDDTypeInfo( DepType _t, int dim1, int dim2, bool p, int cl)  // p: precise or not,  cl: common level
     : DepInfoImpl( dim1, dim2,p, cl) { t = _t; }
   DepEDDTypeInfo( const DepEDDTypeInfo &that) 
     : DepInfoImpl( that ) { t = that.t; }
@@ -25,7 +25,7 @@ public:
   virtual AstNodePtr SrcRef() const { return src; }
   virtual AstNodePtr SnkRef() const { return snk; }
   DepEDDRefInfo( DepType _t, int dim1, int dim2, 
-                 AstNodePtr _src, const AstNodePtr& _snk, bool p, int cl)
+                 AstNodePtr _src, const AstNodePtr& _snk, bool p, int cl) // dim1, dim2 are rows and cols for the matrix, p cl is common level
     : DepEDDTypeInfo(_t, dim1, dim2,p,cl), src(_src),  snk(_snk) {}
   DepEDDRefInfo( const DepEDDRefInfo &that) : DepEDDTypeInfo(that), 
        src(that.SrcRef()), snk(that.SnkRef()) {}
@@ -99,12 +99,14 @@ std::string DepInfo :: toString() const
   int num1, num2;
   CarryLevels(num1,num2);
   std::stringstream out;
-  out << rows() << "*" << cols()<<" ";
+  out <<this<< " Distance Matrix size:"<< rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
-  out << "CarryLevel = ("<<num1 << "," << num2 << ") ";
+  out << "CarryLevel = ("<<num1 << "," << num2 << ") \n";
   if (is_precise()) 
       out << " Is precise ";
-  out << AstToString(SrcRef())<<getAstLocation(SrcRef())<<"->" << AstToString(SnkRef())<<getAstLocation(SnkRef())<<" ";
+  else
+      out<<  " Not precise ";
+  out << AstInterface::AstToString(SrcRef())<<AstInterface::getAstLocation(SrcRef())<<"->" << AstInterface::AstToString(SnkRef())<<AstInterface::getAstLocation(SnkRef())<<"\n"; 
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
        out << Entry( i, j).toString() << ";";

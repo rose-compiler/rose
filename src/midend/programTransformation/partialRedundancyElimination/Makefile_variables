@@ -2,12 +2,12 @@
 
 mptPartialRedundancyElimination_la_sources = \
 	$(mptPartialRedundancyEliminationPath)/pre.C \
-	$(mptPartialRedundancyEliminationPath)/controlFlowGraph.C \
+	$(mptPartialRedundancyEliminationPath)/preControlFlowGraph.C \
 	$(mptPartialRedundancyEliminationPath)/expressionTreeEqual.C
 
 mptPartialRedundancyElimination_includeHeaders = \
 	$(mptPartialRedundancyEliminationPath)/pre.h \
-	$(mptPartialRedundancyEliminationPath)/controlFlowGraph.h \
+	$(mptPartialRedundancyEliminationPath)/preControlFlowGraph.h \
 	$(mptPartialRedundancyEliminationPath)/expressionTreeEqual.h
 
 mptPartialRedundancyElimination_extraDist = \

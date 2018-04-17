@@ -6,6 +6,7 @@
 
 #include <BinaryDebugger.h>
 #include <Combinatorics.h>
+#include <CommandLine.h>
 #include <Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 
@@ -22,11 +23,11 @@
 # define INSTRUCTION_POINTER eip
 #endif
 
-using namespace rose;
+using namespace Rose;
 using namespace StringUtility;
 using namespace BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
@@ -51,7 +52,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     using namespace Sawyer::CommandLine;
 
     // Generic switches
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
 
     // Switches for this tool
     SwitchGroup tool("Tool-specific switches");
@@ -92,7 +93,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                      std::string(settings.performLink?"":"not ") + "perform the linking step.\n\n"
 
                      "Note that ROSE's internal dynamic linking algorithm doesn't usually produce the same memory map as "
-                     "the Linux loader/dynamic linker.  Even with @man(setarch)[8] the mappings are different.  The "
+                     "the Linux loader/dynamic linker.  Even with @man(setarch){8} the mappings are different.  The "
                      "result of using linking in ROSE is therefore twofold: (1) any random function or instruction address that "
                      "this tool chooses from a dynamic library is likely not the same address in the natively loaded "
                      "specimen and will likely result in an immediate segmentation fault, and (2) if the "
@@ -178,7 +179,7 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
             const P2::Partitioner &partitioner, rose_addr_t randomAddress) {
     Stream debug(mlog[DEBUG]);
 
-    BinaryDebugger debugger(specimenName);
+    BinaryDebugger debugger(specimenName, BinaryDebugger::CLOSE_FILES);
     if (debugger.isTerminated()) {
         mlog[FATAL] <<"child " <<debugger.isAttached() <<" " <<debugger.howTerminated() <<" before we could gain control\n";
         exit(1);
@@ -253,9 +254,8 @@ isUnnamed(const P2::Function::Ptr &function) {
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;
@@ -292,7 +292,7 @@ main(int argc, char *argv[]) {
     P2::Partitioner partitioner = engine.partition();
     if (settings.showMaps) {
         std::cout <<"ROSE loader specimen memory map:\n";
-        partitioner.memoryMap().dump(std::cout);
+        partitioner.memoryMap()->dump(std::cout);
     }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
     info <<"; completed in " <<partitionTimer <<" seconds.\n";

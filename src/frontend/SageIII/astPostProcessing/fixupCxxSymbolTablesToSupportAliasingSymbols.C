@@ -9,7 +9,7 @@
 #define ALIAS_SYMBOL_DEBUGGING 0
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Message logging mechanism.
 Sawyer::Message::Facility FixupAstSymbolTablesToSupportAliasedSymbols::mlog;
@@ -51,8 +51,7 @@ void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("FixupAstSymbolTablesToSupportAliasedSymbols", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::FixupAstSymbolTablesToSupportAliasedSymbols");
         }
    }
 
@@ -628,7 +627,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                  else
                   {
                  // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
-                 // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
+                 // (see tests/nonsmoke/functional/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
                  // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
                     namespaceDefinition->set_nextNamespaceDefinition(NULL);
                     namespaceDefinition->set_previousNamespaceDefinition(NULL);
@@ -638,7 +637,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                   }
 #else
             // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
-            // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
+            // (see tests/nonsmoke/functional/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
             // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
                namespaceDefinition->set_nextNamespaceDefinition(NULL);
                namespaceDefinition->set_previousNamespaceDefinition(NULL);

@@ -46,7 +46,9 @@ use Policies;
 my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
-    if ($filename=~/\.(h|hh|hpp|code2|macro)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
+    # utility_functionsImpl.C is misnamed--it's actually a header file.
+    if (($filename=~/\.(h|hh|hpp|code2|macro)$/ || $filename=~/\/utility_functionsImpl.C$/) &&
+        !is_disabled($filename) && open FILE, "<", $filename) {
 	while (<FILE>) {
 	    if (/^\s*#\s*include\s*["<]((rose|sage3|sage3basic|rose_config)\.h)[>"]/ && !/\bPOLICY_OK\b/) {
 		print $desc unless $nfail++;
@@ -55,7 +57,8 @@ while (my $filename = $files->next_file) {
 	    }
 	}
 	close FILE;
-    } elsif ($filename =~ /\.(C|cpp)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
+    } elsif ($filename =~ /\.(C|cpp)$/ && $filename !~ /\/utility_functionsImpl.C$/ &&
+             !is_disabled($filename) && open FILE, "<", $filename) {
 	while (<FILE>) {
 	    if (/^\s*#\s*include\s*["<](rose\.h)[>"]/ && !/\bPOLICY_OK\b/) {
 		print $desc unless $nfail++;

@@ -348,8 +348,10 @@ std::string File::toString() const
   return result;
 }
 
-Procedure::Procedure (long int i, const std::string& name, long int l) :
-    id(i), IRNode (name), Located(l, l)
+Procedure::Procedure (long int i, const std::string& name, long int l) 
+// DQ (12/6/2016): Eliminate warning we want to consider to be an error: -Wreorder.
+// : id(i), IRNode (name), Located(l, l)
+   : IRNode (name), Located(l, l), id(i)
 {
 }
 
@@ -403,14 +405,20 @@ Statement::Statement (void): id(0)
 }
 
 // Statement::Statement (const Statement& s): id(s.getId()), hasMatchedSgNode(s.hasMatchingSgNode()), Located (s)
-Statement::Statement (const Statement& s): id(s.getId()), Located (s)
+Statement::Statement (const Statement& s)
+// DQ (12/6/2016): Eliminate warning we want to consider to be an error: -Wreorder.
+// : id(s.getId()), Located (s)
+   : Located (s), id(s.getId())
 {
     setHasMatchingSgNode(s.hasMatchingSgNode());
 }
 
 // Statement::Statement (const std::string& name, id_t i, size_t l):
 //         id(i), hasMatchedSgNode(false), IRNode (name), Located(l, l)
-Statement::Statement (const std::string& name, id_t i, size_t l): id(i), IRNode (name), Located(l, l)
+Statement::Statement (const std::string& name, id_t i, size_t l)
+// DQ (12/6/2016): Eliminate warning we want to consider to be an error: -Wreorder.
+// : id(i), IRNode (name), Located(l, l)
+   : IRNode (name), Located(l, l), id(i)
 {
 }
 

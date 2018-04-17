@@ -5,7 +5,7 @@ include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 #SAF_BUILD_ROOT = $(top_builddir)/projects/symbolicAnalysisFramework
 noinst_PROGRAMS = factPlacer latticePlacer scalarFWDataflow liveDeadVarAnalysisSelfTest dominatorAnalysisSelfTest divAnalysisSelfTest genInterestingCFG genCFG  #pathSensitive sequenceStructAnalysisSelfTest 
 
-# DQ (9/28/2011): These test have been moved to the tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests directory.
+# DQ (9/28/2011): These test have been moved to the tests/nonsmoke/functional/roseTests/programAnalysisTests/generalDataFlowAnalysisTests directory.
 # constantPropagationTest taintedFlowAnalysisTest
 
 # runtimeBoundAnalysis.C  scalarFWDataflow_example.C
@@ -20,7 +20,7 @@ divAnalysisSelfTest_SOURCES = divAnalysisSelfTest.C
 genInterestingCFG_SOURCES = genInterestingCFG.C
 genCFG_SOURCES = genCFG.C
 
-# DQ (9/28/2011): These test have been moved to the tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests directory.
+# DQ (9/28/2011): These test have been moved to the tests/nonsmoke/functional/roseTests/programAnalysisTests/generalDataFlowAnalysisTests directory.
 #constantPropagationTest_SOURCES = constantPropagationTest.C
 #taintedFlowAnalysisTest_SOURCES = taintedFlowAnalysisTest.C
 

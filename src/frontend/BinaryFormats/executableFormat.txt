@@ -98,7 +98,6 @@ Build these specific IR nodes so far:
    SgAsmGenericSection
    SgAsmGenericHeader
    SgAsmGenericFile
-   SgAsmGenericArchitecture
    SgAsmGenericSectionList
    SgAsmGenericSegmentList
    SgAsmGenericSupport
@@ -179,13 +178,7 @@ that we have?  And then test it to make sure it is identical.
    PROT_READ, MAP_PRIVATE) we also treat the buffer as constant (const
    unsigned char*). (RPM 8/14/2008)
 
-3) The following IR nodes will be removed soon:
-      SgAsmProgramHeader
-      SgAsmProgramHeaderList
-      SgAsmSectionHeader
-      SgAsmSectionHeaderList
-   Because they are redundant with the new IR node design for binary executable file
-   formats using Robb's work.
+3) (no longer applicable)
 
 4) It might be that SgAsmExecutableFileFormat should be derived from SgAsmFile instead of
    SgAsmNode.  But upon reflection the file format is not an executable file it is the

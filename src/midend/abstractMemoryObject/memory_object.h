@@ -49,7 +49,7 @@ namespace AbstractMemoryObject
       // The types that all elements of the set may/must have. 
       // If the set of types this abstract object may have is unknown or very large, returned list contains an object of SgTypeUnknown. 
       // If the set of types the object must have is unknown or very large, returns an empty list.
-      virtual std::set<SgType*> getType() const;  //TODO remove it
+      virtual std::set<SgType*> getType() ;  //TODO remove it
 
 
       //   Object overlap relations: TODO skipped for the first implementation
@@ -205,7 +205,7 @@ namespace AbstractMemoryObject
     public:
       virtual ObjSet* getDereference () ;
       // Returns true if this pointer refers to the same abstract object as that pointer.
-      virtual bool equalPoints(const Pointer & that);
+      virtual bool equalPoints(Pointer & that);
       // Returns true if this object and that object may/must refer to the same pointer memory object.
       //virtual bool operator== (const Pointer & that) const;
       //virtual bool operator < (const Pointer & that) const;

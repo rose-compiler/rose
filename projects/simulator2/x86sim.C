@@ -7,6 +7,7 @@
 #include <RSIM_Private.h>
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
+#include <CommandLine.h>                                // ROSE command-line
 #include <RSIM_Debugger.h>                              // Interactive debugger for the simulator
 #include <RSIM_ColdFire.h>                              // FreeScale ColdFire/m68k naked hardware simulator
 #include <RSIM_Linux32.h>                               // Operating system simulation for Linux-x86
@@ -17,9 +18,9 @@
 #include <Sawyer/CommandLine.h>                         // Command-line parsing. Sawyer is distributed with ROSE sources.
 #include <Sawyer/Message.h>                             // Diagnostic output streams
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 Sawyer::Message::Facility mlog;                         // This tool's diagnostic streams
 
@@ -151,7 +152,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     return parser
         .errorStream(::mlog[FATAL])
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .with(sg)                                       // tool-specific
         .with(RSIM_Simulator::commandLineSwitches(settings.simSettings))
         .parse(argc, argv).apply().unreachedArgs();
@@ -191,9 +192,8 @@ simulate(const Settings &settings, const std::vector<std::string> &args, char *e
 int
 main(int argc, char *argv[], char *envp[]) {
     // Initialization
-    Diagnostics::initialize();
-    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Command-line parsing
     Settings settings;

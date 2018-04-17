@@ -74,30 +74,34 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
       if test "x$build_vendor" = xapple; then
           OS_vendor=$build_vendor
           case $build_os in
-            darwin8*)
-               OS_release=10.4
-               ;;
-            darwin9*)
-               OS_release=10.5
-               ;;
-            darwin10*)
-               OS_release=10.6
-               ;;
-            darwin11*)
-               OS_release=10.7
-               ;;
-            darwin12*)
-               OS_release=10.8
-               ;;
             darwin13*)
                OS_release=10.9
                ;;
+            darwin14*)
+               OS_release=10.10
+               ;;
+            darwin15*)
+               OS_release=10.11
+               ;;
+            darwin16*)
+               OS_release=10.12
+               ;;
+            darwin17*)
+               OS_release=10.13
+               ;;
             *)
-             echo "Error: Apple Mac OSX version not recognized as either darwin8 or darwin9 ... (build_os = $build_os)";
+             echo "Error: Apple Mac OSX version not recognized as either darwin13 through darwin17 (OSX 10.9-10.13) ... (build_os = $build_os)";
              exit 1;
              OS_release="";;
           esac
       fi
+
+    # DQ (12/3/2016): Added debugging info for Mac OSX support.
+      echo "OS_vendor = $OS_vendor"
+      echo "OS_release = $OS_release"
+    # echo "Exiting after getting the OS_release."
+    # exit 1;
+
   else
       OS_vendor=`lsb_release -is`
       OS_release=`lsb_release -rs`

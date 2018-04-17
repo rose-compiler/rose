@@ -8,12 +8,13 @@
 // the integer order of visit).
 
 #include <rose.h>
+#include <CommandLine.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stopwatch.h>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // #include "labelTrace.h"
 #include "treeIsomorphism.h"
@@ -29,7 +30,7 @@ using namespace rose;
 Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
     SwitchGroup tool = toolCommandLineSwitches(settings);
 
     Parser parser;
@@ -50,7 +51,7 @@ int
 main(int argc, char** argv)
    {
      ios::sync_with_stdio();                            // Syncs C++ and C I/O subsystems!
-     rose::Diagnostics::initialize();                   // because librose doesn't initialize itself until frontend()
+     ROSE_INITIALIZE;
 
      Settings settings;
      std::vector<std::string> roseArgs = parseCommandLine(argc, argv, settings).unreachedArgs();

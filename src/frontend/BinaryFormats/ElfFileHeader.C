@@ -3,13 +3,8 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-/** Construct a new ELF File Header with default values. The new section is placed at file offset zero and the size is
- *  initially one byte (calling parse() will extend it as necessary). Setting the initial size of non-parsed sections to a
- *  positive value works better when adding sections to the end-of-file since the sections will all have different starting
- *  offsets and therefore SgAsmGenericFile::shift_extend will know what order the sections should be in when they are
- *  eventually resized. */
 void
 SgAsmElfFileHeader::ctor()
 {
@@ -43,7 +38,6 @@ SgAsmElfFileHeader::ctor()
     p_e_ident_padding = SgUnsignedCharList(9, '\0');
 }
 
-/** Return true if the file looks like it might be an ELF file according to the magic number. */
 bool
 SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *file)
 {
@@ -65,7 +59,6 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *file)
     return true;
 }
 
-/** Convert ELF "machine" identifier to generic instruction set architecture value. */
 SgAsmExecutableFileFormat::InsSetArchitecture
 SgAsmElfFileHeader::machine_to_isa(unsigned machine) const
 {
@@ -92,7 +85,6 @@ SgAsmElfFileHeader::machine_to_isa(unsigned machine) const
     }
 }
 
-/** Convert architecture value to an ELF "machine" value. */
 unsigned
 SgAsmElfFileHeader::isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const
 {
@@ -117,13 +109,10 @@ SgAsmElfFileHeader::isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture
     }
 }
 
-/** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
- *  header. Since the size of the ELF File Header is determined by the contents of the ELF File Header as stored in the file,
- *  the size of the ELF File Header will be adjusted upward if necessary. The ELF File Header should have been constructed
- *  such that SgAsmElfFileHeader::ctor() was called. */
 SgAsmElfFileHeader*
 SgAsmElfFileHeader::parse()
 {
+    // The ELF File Header should have been constructed such that SgAsmElfFileHeader::ctor() was called.
     SgAsmGenericHeader::parse();
 
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
@@ -311,9 +300,6 @@ SgAsmElfFileHeader::parse()
     return this;
 }
 
-/** Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts
- *  of the file are mapped into the process address space those parts must be aligned (both in the file and in memory) on the
- *  largest possible page boundary so that any smaller page boundary will also work correctly. */
 uint64_t
 SgAsmElfFileHeader::max_page_size()
 {
@@ -325,7 +311,6 @@ SgAsmElfFileHeader::max_page_size()
     return 4*1024;
 }
 
-/** Get the list of sections defined in the ELF Section Table */
 SgAsmGenericSectionPtrList
 SgAsmElfFileHeader::get_sectab_sections()
 {
@@ -339,7 +324,6 @@ SgAsmElfFileHeader::get_sectab_sections()
     return retval;
 }
 
-/** Get the list of sections defined in the ELF Segment Table */
 SgAsmGenericSectionPtrList
 SgAsmElfFileHeader::get_segtab_sections()
 {
@@ -353,7 +337,6 @@ SgAsmElfFileHeader::get_segtab_sections()
     return retval;
 }
 
-/** Encode Elf header disk structure */
 void *
 SgAsmElfFileHeader::encode(ByteOrder::Endianness sex, Elf32FileHeader_disk *disk) const
 {
@@ -440,7 +423,6 @@ SgAsmElfFileHeader::encode(ByteOrder::Endianness sex, Elf64FileHeader_disk *disk
     return disk;
 }
 
-/** Update prior to unparsing */
 bool
 SgAsmElfFileHeader::reallocate()
 {
@@ -521,7 +503,6 @@ SgAsmElfFileHeader::reallocate()
     return reallocated;
 }
 
-/** Write ELF contents back to a file. */
 void
 SgAsmElfFileHeader::unparse(std::ostream &f) const
 {
@@ -558,7 +539,6 @@ SgAsmElfFileHeader::unparse(std::ostream &f) const
     write(f, 0, struct_size, disk);
 }
 
-/** Print some debugging info */
 void
 SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -601,4 +581,9 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmElfFileHeader) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+const char *
+SgAsmElfFileHeader::format_name() const {
+    return "ELF";
 }

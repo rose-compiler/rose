@@ -37,20 +37,22 @@ extern "C" void yyerror(const char* msg);
 class POETCode;
 class LocalVar;
 
-template <class TableEntry>
+template <class T>
 class SymbolTable {
  protected:
-  std:: map<POETCode*, TableEntry, std:: less<POETCode*> > codemap;
+  std:: map<POETCode*, T, std:: less<POETCode*> > *codemap;
  public:
-  typedef typename std:: map<POETCode*,TableEntry,std::less<POETCode*> >::iterator iterator;
-  iterator begin() { return codemap.begin(); }
-  iterator end() { return codemap.end(); }
-  iterator find (POETCode* from) { return codemap.find(from); }
+  SymbolTable() { codemap = new std:: map<POETCode*, T, std:: less<POETCode*> >(); }
+  ~SymbolTable() { /* QY: std map has memory errors, not not freeing the map */ }
+  typedef typename std:: map<POETCode*,T,std::less<POETCode*> >::iterator iterator;
+  iterator begin() { return codemap->begin(); }
+  iterator end() { return codemap->end(); }
+  iterator find (POETCode* from) { return codemap->find(from); }
   iterator insert(POETCode* from)
     { 
-      return codemap.insert(std::pair<POETCode*,TableEntry>(from,TableEntry())).first; 
+      return codemap->insert(std::pair<POETCode*,T>(from,T())).first; 
     }
-  int size() const { return codemap.size(); }
+  int size() const { return codemap->size(); }
 };
 
 class LvarSymbolTable {
@@ -80,7 +82,7 @@ class LvarSymbolTable {
          case LVAR_TRACE_OUTDATE:
             if (!copycurrent) code = 0;  break;
          case LVAR_ATTR:
-            if (!copycurrent) code = restr;
+            //if (!copycurrent) code = restr;
          default: ; /* do nothing */
         }
     }
@@ -102,12 +104,12 @@ class LvarSymbolTable {
  public:
   LvarSymbolTable() {}
   class Entry {
-    SymbolTable<TableEntry>::iterator impl;
+    typedef std:: map<POETCode*,TableEntry,std::less<POETCode*> >::iterator iterator;
+    iterator impl;
     void set_var(LocalVar* v) { (*impl).second.var = v; }
    public:
-    Entry(const SymbolTable<TableEntry>::iterator& p, LocalVarType _t) 
-       : impl(p) { (*p).second.t = _t; }
-    Entry(const SymbolTable<TableEntry>::iterator& p) : impl(p) {}
+    Entry(const iterator& p, LocalVarType _t) : impl(p) { (*p).second.t = _t; }
+    Entry(const iterator& p) : impl(p) {}
     POETCode* get_name() const { return (*impl).first; }  
     POETCode* get_code() const { return (*impl).second.code; }
     void set_code(POETCode* c) { (*impl).second.code = c; }
@@ -172,9 +174,10 @@ class XvarSymbolTable {
  public:
   XvarSymbolTable() {}
   class Entry {
-    SymbolTable<TableEntry>::iterator impl;
+    typedef std:: map<POETCode*,TableEntry,std::less<POETCode*> >::iterator iterator;
+    iterator impl;
    public:
-    Entry(const SymbolTable<TableEntry>::iterator& p) : impl(p) {}
+    Entry(const iterator& p) : impl(p) {}
     Entry() {}
     POETCode* get_name() const { return (*impl).first; }  
     POETCode* get_code() const { return (*impl).second.code; }
@@ -201,21 +204,21 @@ class CvarSymbolTable {
   struct TableEntry {
     POETCode *code;
     POETCode *param;
-    LocalVar* inherit;
     std::vector<LocalVar*> attr;
     LvarSymbolTable* symTable;
     POETCode *parse;
     int lookahead;
-    TableEntry() : code(0), param(0),inherit(0),symTable(0),parse(0),lookahead(1) {}
+    TableEntry() : code(0), param(0),symTable(0),parse(0),lookahead(1) {}
   };
  private:
   SymbolTable<TableEntry> impl;
  public:
   CvarSymbolTable() {}
   class Entry {
-    SymbolTable<TableEntry>::iterator impl;
+    typedef std:: map<POETCode*,TableEntry,std::less<POETCode*> >::iterator iterator;
+    iterator impl;
    public:
-    Entry(const SymbolTable<TableEntry>::iterator& p) : impl(p) {}
+    Entry(const iterator& p) : impl(p) {}
     Entry() {}
     POETCode* get_name() const { return (*impl).first; }  
     POETCode* get_code() const { return (*impl).second.code; }
@@ -228,8 +231,6 @@ class CvarSymbolTable {
           { assert((*impl).second.symTable == 0); (*impl).second.symTable=t;}
     POETCode* get_param() { return (*impl).second.param; }
     void set_param(POETCode* c) { (*impl).second.param = c; }
-    LocalVar* get_inherit_var() { return (*impl).second.inherit; }
-    void set_inherit_var(LocalVar* v) { (*impl).second.inherit = v; }
     POETCode* get_parse() const { return (*impl).second.parse; }
     void set_parse(POETCode* c) { (*impl).second.parse = c; }
     int get_lookahead() const { return  (*impl).second.lookahead; }

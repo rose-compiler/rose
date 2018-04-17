@@ -35,10 +35,6 @@ $(generated_relation_source_code): main.py Relations.py  Visitor.py
 
 all: $(generated_relation_source_code)
 
-check-local:
-	@echo "********************************************************************************************"
-	@echo "*** ROSE/projects/DocumentationGenerator: make check rule complete (terminated normally) ***"
-	@echo "********************************************************************************************"
 endif
 
 EXTRA_DIST = main.py  Relations.py  Visitor.py

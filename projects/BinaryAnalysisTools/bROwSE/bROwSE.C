@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <bROwSE/bROwSE.h>
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -48,8 +48,8 @@ Context::init() {
 }
 
 // Convert colors from one representation to another
-Wt::WColor toWt(const rose::Color::RGB &rgb) {
-    using namespace rose::Color;
+Wt::WColor toWt(const Rose::Color::RGB &rgb) {
+    using namespace Rose::Color;
     int r = (int)round(clip(rgb.r())*255);
     int g = (int)round(clip(rgb.g())*255);
     int b = (int)round(clip(rgb.b())*255);

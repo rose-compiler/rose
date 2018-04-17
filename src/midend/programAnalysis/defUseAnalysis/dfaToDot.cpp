@@ -53,7 +53,6 @@ std::string ToString(T t) {
     std::string retStr = "";
     SgNode* n = cfg.getNode();
     retStr = " ( " + ToString(dfa->getIntForSgNode(n)) + " )  - [";
-    retStr += RoseBin_support::ToString(n);
     retStr +="] ";
     SgInitializedName* init = isSgInitializedName(n);
     if (init) {
@@ -130,8 +129,7 @@ std::string ToString(T t) {
         outS += init->get_name().str();
         outS += ",";
       }
-      retStr = outS+"\n   visited : "+
-        RoseBin_support::ToString(live->getVisited(n))+"\n"+inS+"\n";
+      retStr = outS+"\n";
 
       typedef std::vector < std::pair < SgInitializedName* , SgNode*>  > multitype;
       std::vector < std::pair <SgInitializedName*, SgNode*> > multi = dfa->getDefMultiMapFor(n);

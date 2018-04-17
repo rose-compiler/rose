@@ -7,7 +7,7 @@
 #include <Wt/WTextArea>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
+using namespace Rose;
 
 namespace bROwSE {
 

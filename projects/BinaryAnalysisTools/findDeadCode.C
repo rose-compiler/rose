@@ -10,9 +10,9 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 namespace P2 = Partitioner2;
 
@@ -59,6 +59,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     parser.errorStream(::mlog[FATAL]);
 
     SwitchGroup analysis("Dead code analysis switches");
+    analysis.name("dc");
 
     analysis.insert(Switch("reachable-address")
                     .argument("addresses", P2::addressIntervalParser(settings.reachableVas))
@@ -122,6 +123,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                          "zero (the default) will assume addresses are the same as the architecture's word size."));
 
     SwitchGroup output("Output switches");
+    output.name("out");
 
     output.insert(Switch("show-map")
                   .intrinsicValue(true, settings.showMap)
@@ -196,7 +198,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     output.insert(Switch("show-hexdump")
                   .intrinsicValue(true, settings.showHexDump)
-                  .doc("Show unused addresses in @man{hexdump}(1) style. The @s{no-show-hexdump} disables this feature. The "
+                  .doc("Show unused addresses in @man{hexdump}{1} style. The @s{no-show-hexdump} disables this feature. The "
                        "default is to " + std::string(settings.showHexDump?"":"not ") + "show this output."));
     output.insert(Switch("no-show-hexdump")
                   .key("show-hexdump")
@@ -315,12 +317,13 @@ findImmediateValues(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
 //   5. We need to be careful of addresses that are 2^32 (or 2^64) to avoid overflow when incrementing
 static void
 insertAddressesFromMemory(AddressIntervalSet &reachable /*in,out*/, const P2::Partitioner &partitioner,
-                          const MemoryMap &map, size_t bytesPerWord, size_t alignment, ByteOrder::Endianness sex) {
+                          const MemoryMap::Ptr &map, size_t bytesPerWord, size_t alignment, ByteOrder::Endianness sex) {
     ASSERT_require(bytesPerWord <= sizeof(rose_addr_t));
+    ASSERT_not_null(map);
     alignment = std::max(alignment, (size_t)1);
     uint8_t buf[4096];                                  // arbitrary size
-    rose_addr_t bufVa = map.hull().least();
-    while (map.atOrAfter(bufVa).next().assignTo(bufVa)) {
+    rose_addr_t bufVa = map->hull().least();
+    while (map->atOrAfter(bufVa).next().assignTo(bufVa)) {
 
         {
             rose_addr_t tmp = alignUp(bufVa, alignment);
@@ -328,10 +331,10 @@ insertAddressesFromMemory(AddressIntervalSet &reachable /*in,out*/, const P2::Pa
                 break;                                  // overflow
             bufVa = tmp;
         }
-        size_t bufSize = map.at(bufVa).limit(sizeof buf).read(buf).size();
+        size_t bufSize = map->at(bufVa).limit(sizeof buf).read(buf).size();
         if (bufSize < bytesPerWord) {
             bufVa += bytesPerWord;
-            if (bufVa <= map.hull().least())
+            if (bufVa <= map->hull().least())
                 break;                                  // overflow
             continue;
         }
@@ -388,7 +391,7 @@ insertReachableByImmediates(AddressIntervalSet &reachable /*in,out*/, const P2::
 // Run a data-flow analysis on a whole function to generate a list of concrete values that are stored in registers or memory.
 static std::set<rose_addr_t>
 findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     std::set<rose_addr_t> retval;
     BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
@@ -522,9 +525,8 @@ int main(int argc, char *argv[]) {
     //---------------------------------------------
     // Initialization, parsing, disassembly, etc.
     //---------------------------------------------
-    Diagnostics::initialize();
-    ::mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&::mlog, "tool");
     Diagnostics::Stream info(::mlog[INFO]);
 
     // Use a partitioning engine since this makes this tool much easier to write.
@@ -543,7 +545,7 @@ int main(int argc, char *argv[]) {
     Sawyer::Stopwatch timer;
     engine.loadSpecimens(specimenNames);
     if (settings.showMap)
-        engine.memoryMap().dump(std::cout);
+        engine.memoryMap()->dump(std::cout);
     info <<"; took " <<timer <<" seconds\n";
 
     // Run the partitioner
@@ -558,8 +560,9 @@ int main(int argc, char *argv[]) {
         ::mlog[WARN] <<"no starting points for recursive disassembly; perhaps you need --start?\n";
 
     // Keep track of where instructions _might_ exist.
+    ASSERT_not_null(engine.memoryMap());
     AddressIntervalSet executableSpace;
-    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap().nodes()) {
+    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap()->nodes()) {
         if ((node.value().accessibility() & MemoryMap::EXECUTABLE)!=0)
             executableSpace.insert(node.key());
     }
@@ -600,11 +603,11 @@ int main(int argc, char *argv[]) {
         using InstructionSemantics2::BaseSemantics::DispatcherPtr;
         info <<"scanning memory for addresses";
         timer.restart();
-        MemoryMap readable = engine.memoryMap();
-        readable.any().changeAccess(0, MemoryMap::READABLE);
+        MemoryMap::Ptr readable = engine.memoryMap()->shallowCopy();
+        readable->any().changeAccess(0, MemoryMap::READABLE);
         BOOST_FOREACH (const AddressInterval &interval, settings.readableVas)
-            readable.within(interval).changeAccess(MemoryMap::READABLE, 0);
-        readable.require(MemoryMap::READABLE).keep();
+            readable->within(interval).changeAccess(MemoryMap::READABLE, 0);
+        readable->require(MemoryMap::READABLE).keep();
         ByteOrder::Endianness sex = ByteOrder::ORDER_LSB;// FIXME[Robb P Matzke 2015-08-29]
         insertAddressesFromMemory(reachable /*in,out*/, partitioner, readable,
                                   settings.addressSize, settings.addressAlignment, sex);
@@ -690,7 +693,7 @@ int main(int argc, char *argv[]) {
                 size_t bufsz = std::min((rose_addr_t)sizeof(buf), nRemain);
                 if (va % 16)                            // partial first line in order to align the rest
                     bufsz = std::min(bufsz, 16 - va%16);
-                size_t nRead = engine.memoryMap().at(va).limit(bufsz).read(buf).size();
+                size_t nRead = engine.memoryMap()->at(va).limit(bufsz).read(buf).size();
                 std::cout <<fmt.prefix;
                 SgAsmExecutableFileFormat::hexdump(std::cout, va, buf, nRead, fmt);
                 std::cout <<"\n";

@@ -31,6 +31,8 @@ FindVariableDeclarations::visit ( SgNode* astNode )
 int
 main ( int argc, char * argv[] )
    {
+     ROSE_INITIALIZE;
+
      SgProject* project = frontend(argc,argv);
 
      FindVariableDeclarations treeTraversal;

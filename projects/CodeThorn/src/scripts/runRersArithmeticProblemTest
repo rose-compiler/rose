@@ -1,0 +1,52 @@
+#!/bin/bash
+
+#$1: CodeThorn's src directory
+#$2: CodeThorn's build directory
+
+SRCDIR=$1
+BUILDDIR=$2
+
+MAKE_CHECK="_make_check"
+
+echo ".===========================================================."
+echo "| testing RERS problem 1402 (arithemtic problem, 4 threads) |"
+echo "*===========================================================*"
+
+#create a temp directory
+CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
+TEMP_DIR="make_check_log_"${CURRENT_TIME}
+mkdir ${2}/${TEMP_DIR}
+echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+
+#check problem specific ltl formulae/reachability of failing assertions and generate the results. Use 4 threads
+./codethorn $SRCDIR/tests/rers/Problem1402_opt.c --edg:no_warnings --config=$SRCDIR/tests/rers/rersArithmeticProblemTest.config --check-ltl=$SRCDIR/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="${2}/${TEMP_DIR}/Problem1402_ltl_results_maxtrans_50000_n_la${MAKE_CHECK}.csv" --csv-assert="${2}/${TEMP_DIR}/Problem1402_assert_results_maxtrans_50000_n_la${MAKE_CHECK}.csv" 
+
+#compare with regression data
+$SRCDIR/scripts/check_consistency ${2}/${TEMP_DIR}/Problem1402_ltl_results_maxtrans_50000_n_la${MAKE_CHECK}.csv $SRCDIR/regressiondata2/Problem1402_ltl_solutions.csv 2>&1
+if [ ! $? -eq 0 ] 
+then 
+  echo "ERROR: RERS LTL regression data could not be correctly reproduced."
+  echo "(Please take a look at directory <CodeThorn build dir>/src/${TEMP_DIR} for files that could not be matched)"
+  exit 1 
+else
+  echo "Success: all results for verified/falsified properties are correct."
+fi
+
+$SRCDIR/scripts/check_consistency ${2}/${TEMP_DIR}/Problem1402_assert_results_maxtrans_50000_n_la${MAKE_CHECK}.csv $SRCDIR/regressiondata2/Problem1402_reachability_solutions.csv 2>&1
+if [ ! $? -eq 0 ] 
+then 
+  echo "ERROR: RERS reachability regression data could not be correctly reproduced."
+  echo "(Please take a look at directory <CodeThorn build dir>/src/${TEMP_DIR} for files that could not be matched)"
+  exit 1 
+else
+  echo "Success: all results for unreachable/reachable failing assertions are correct."
+fi
+
+#remove temp directory, including files
+rm -rf ${2}/${TEMP_DIR}
+echo "removed directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+    
+echo ".======================================================================."
+echo "| RERS problem 1402 tested succesfully (arithemtic problem, 4 threads) |"
+echo "*======================================================================*"
+

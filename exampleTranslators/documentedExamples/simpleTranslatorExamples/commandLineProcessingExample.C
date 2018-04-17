@@ -8,7 +8,7 @@ main ( int argc, char* argv[] )
      if( optionCount > 0 )
         {
           printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-          rose::usage(0);
+          Rose::usage(0);
           exit(0);
         }
 

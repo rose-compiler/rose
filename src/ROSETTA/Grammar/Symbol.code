@@ -36,13 +36,14 @@ HEADER_NON_X_SYMBOL_END
 
 
 HEADER_GET_TYPE_START
-          SgType* get_type() const;
+       // DQ (3/23/2017): ROSETTA macro expansion
+          SgType* get_type() const $ROSE_OVERRIDE;
        // SgNode* get_symbol_basis() const; // from GET_TYPE
 HEADER_GET_TYPE_END
 
 HEADER_GET_NAME_START
-          SgName get_name() const;
-          SgNode* get_symbol_basis() const; // from GET_NAME
+          SgName get_name() const $ROSE_OVERRIDE;
+          SgNode* get_symbol_basis() const $ROSE_OVERRIDE; // from GET_NAME
 HEADER_GET_NAME_END
 
 
@@ -50,7 +51,7 @@ HEADER_DECLARATION_START
           SgMemberFunctionDeclaration* get_declaration() const;
 
        // DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
-          SgClassDefinition *get_scope() const ROSE_DEPRECATED_FUNCTION;
+          SgClassDefinition *get_scope() const $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
 
        // SgNode* get_symbol_basis() const; // from DECLARATION
 HEADER_DECLARATION_END
@@ -97,7 +98,7 @@ HEADER_ALIAS_SYMBOL_START
           SgAliasSymbol( const SgAliasSymbol & X );
 
        // DQ (2/28/2015): Add this function so that we can check and for alias of SgAliasSymbol.
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
       //! For a chain of aliased symbols, this function returns the last (non-aliased) symbol.
           SgSymbol* get_base() const;
@@ -115,7 +116,7 @@ HEADER_RENAME_SYMBOL_START
 HEADER_RENAME_SYMBOL_END
 
 HEADER_NAMESPACE_SYMBOL_START
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_NAMESPACE_SYMBOL_END
 
 
@@ -282,7 +283,7 @@ SgSymbol::get_mangled_name() const
                if (labelStatement == NULL)
                   {
                     assert(symbol->get_numeric_label_value() >= 0);
-                    mangledName = StringUtility::numberToString(symbol->get_numeric_label_value());
+                    mangledName = Rose::StringUtility::numberToString(symbol->get_numeric_label_value());
                   }
                  else
                   {
@@ -341,7 +342,7 @@ SgSymbol::get_mangled_name() const
           case V_SgTypedefSymbol:
              {
                const SgTypedefSymbol* symbol = isSgTypedefSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                SgTypedefDeclaration* typedefDeclaration = symbol->get_declaration();
 
             // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
@@ -354,7 +355,7 @@ SgSymbol::get_mangled_name() const
           case V_SgVariableSymbol:
              {
                const SgVariableSymbol* symbol = isSgVariableSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                SgInitializedName* initializedName = symbol->get_declaration();
 
             // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
@@ -367,7 +368,7 @@ SgSymbol::get_mangled_name() const
           case V_SgAliasSymbol:
              {
                const SgAliasSymbol* symbol = isSgAliasSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
@@ -376,7 +377,7 @@ SgSymbol::get_mangled_name() const
           case V_SgTemplateFunctionSymbol:
              {
                const SgTemplateFunctionSymbol* symbol = isSgTemplateFunctionSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
@@ -384,7 +385,7 @@ SgSymbol::get_mangled_name() const
           case V_SgTemplateClassSymbol:
              {
                const SgTemplateClassSymbol* symbol = isSgTemplateClassSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
@@ -393,11 +394,51 @@ SgSymbol::get_mangled_name() const
           case V_SgTemplateMemberFunctionSymbol:
              {
                const SgTemplateMemberFunctionSymbol* symbol = isSgTemplateMemberFunctionSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
 
+#if 1
+       // DQ (2/28/2018): Added support for C++11 specific symbol.
+          case V_SgTemplateTypedefSymbol:
+             {
+               const SgTemplateTypedefSymbol* symbol = isSgTemplateTypedefSymbol(symbolFromTable);
+               ROSE_ASSERT(symbol != NULL);
+               ROSE_ASSERT(symbol->get_declaration() != NULL);
+
+#if 0
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(typedefDeclaration != NULL);
+
+               mangledName = typedefDeclaration->get_mangled_name();
+#else
+            // DQ (2/28/2018): We need to handle the association of the symbol with either a 
+            // SgTemplateTypedefDeclaration or a SgTemplateInstantiationTypedefDeclaration IR node.
+
+               SgTemplateTypedefDeclaration* typedefDeclaration = isSgTemplateTypedefDeclaration(symbol->get_declaration());
+               if (typedefDeclaration != NULL)
+                  {
+                    mangledName = typedefDeclaration->get_mangled_name();
+                  }
+                 else
+                  {
+                    printf ("In SgSymbol::get_mangled_name(): symbol->get_declaration() = %p = %s \n",symbol->get_declaration(),symbol->get_declaration()->class_name().c_str());
+
+                    SgTemplateInstantiationTypedefDeclaration* typedefInstantiationDeclaration = isSgTemplateInstantiationTypedefDeclaration(symbol->get_declaration());
+                    if (typedefInstantiationDeclaration != NULL)
+                       {
+                         mangledName = typedefInstantiationDeclaration->get_mangled_name();
+                       }
+                      else
+                       {
+                         printf ("ERROR: In SgSymbol::get_mangled_name(): symbol->get_declaration() = %p = %s \n",symbol->get_declaration(),symbol->get_declaration()->class_name().c_str());
+                       }
+                  }
+#endif
+               break;
+             }
+#endif
           default:
              {
                mangledName = "unknown mangled name";
@@ -592,12 +633,12 @@ SgLabelSymbol::get_name() const
           int numericLabel = get_numeric_label_value();
        // printf ("SgLabelSymbol::get_name(): numericLabel = %d \n",numericLabel);
 
-          name = StringUtility::numberToString(numericLabel);
+          name = Rose::StringUtility::numberToString(numericLabel);
 #else
           if (fortranStatement != NULL)
              {
                int numericLabel = get_numeric_label_value();
-               name = StringUtility::numberToString(numericLabel);
+               name = Rose::StringUtility::numberToString(numericLabel);
              }
             else
              {

@@ -27,8 +27,5 @@ else
    AC_DEFINE([USE_ROSE_SSL_SUPPORT],1,[Controls use of ROSE support for SSL (libssl -- MD5) library (incompatable with Java, so disables Fortran support).])
 fi
 
-# AC_SUBST(dwarf_path)
-
-# End macro ROSE_SUPPORT_DWARF.
 ]
 )

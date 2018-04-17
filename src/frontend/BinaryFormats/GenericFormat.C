@@ -3,9 +3,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
-/* Print some debugging info */
 void
 SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

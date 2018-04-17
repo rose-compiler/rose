@@ -1,0 +1,5 @@
+#pragma omp parallel  private(i,j)
+#pragma omp single  copyprivate(j)
+/*      #pragma omp barrier */
+#pragma omp critical 
+#pragma omp barrier 

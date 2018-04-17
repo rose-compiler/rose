@@ -71,9 +71,9 @@ namespace Rose {
                 extern jmethodID createTempNamedDirectoryMethod;
 
             } // ::Rose::Frontend::Java::Ecj
-        }// ::rose::frontend::java
-    }// ::rose::frontend
-}// ::rose
+        }// ::Rose::frontend::java
+    }// ::Rose::frontend
+}// ::Rose
 
 using namespace Rose::Frontend::Java::Ecj;
 
@@ -100,6 +100,7 @@ typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+using namespace Rose;
 using namespace SageBuilder;
 
 
@@ -7214,7 +7215,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
   // If there are comments and/or CPP directives then those comments and/or CPP directives will
   // be moved to a new SgStatement.  The new SgStatement is selected using the findSurroundingStatementFromSameFile()
   // function and if there is not statement found then the SgGlobal IR node will be selected.
-  // this work is tested by the tests/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
+  // this work is tested by the tests/nonsmoke/functional/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
   // translator and a number of input codes that represent a range of contexts which exercise different
   // cases in the code below.
 
@@ -7891,12 +7892,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
  SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
 {
 // reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
-  return rose::getNextStatement(currentStmt);
+  return Rose::getNextStatement(currentStmt);
 }
 
   SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt)
 {
-  return rose::getPreviousStatement(currentStmt);
+  return Rose::getPreviousStatement(currentStmt);
 }
 
 bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
@@ -11885,7 +11886,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
                  // if (*j != func)
                     if (func_decl != func)
                        {
-                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+                      // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
                       // isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
                          if (func_decl->get_firstNondefiningDeclaration() == NULL)
                             {
@@ -11902,7 +11903,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
 #if 0
                printf ("In SageInterface::updateDefiningNondefiningLinks(): (case 2) Testing func = %p set_firstNondefiningDeclaration(%p) \n",func,isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
 #endif
-            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/roseTests/astInterface_tests).
+            // DQ (11/18/2013): Modified to only set if not already set (see buildIfStmt.C in tests/nonsmoke/functional/roseTests/astInterface_tests).
             // func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
                if (func->get_firstNondefiningDeclaration() == NULL)
                   {
@@ -14321,7 +14322,7 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
 
                     SgFunctionDeclaration* copy_nondefiningDeclaration = isSgFunctionDeclaration(copy_node);
                     copy_nondefiningDeclaration->set_firstNondefiningDeclaration(copy_nondefiningDeclaration);
-                    //ROSE_ASSERT(copy_nondefiningDeclaration->get_definingDeclaration() == NULL); // TODO: Liao 12/14/2012. this needs more investigation. It fails on tests/roseTests/astOutliningTests/moreTest2.cpp. We need a special version of AST copy (collectDependentDeclarationsCopyType) to do just shallow copy of function prototypes
+                    //ROSE_ASSERT(copy_nondefiningDeclaration->get_definingDeclaration() == NULL); // TODO: Liao 12/14/2012. this needs more investigation. It fails on tests/nonsmoke/functional/roseTests/astOutliningTests/moreTest2.cpp. We need a special version of AST copy (collectDependentDeclarationsCopyType) to do just shallow copy of function prototypes
 
                  // DQ (2/25/2009): Added assertion.
                     ROSE_ASSERT(copy_nondefiningDeclaration->get_scope() == functionDeclaration->get_scope());
@@ -14687,7 +14688,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   //   developersScratchSpace/Dan/translator_tests/reverseTraversal.C
 
   // To test this run: "rm moreTest2.o ; make moreTest2.o"
-  // in directory: tests/roseTests/astOutliningTests
+  // in directory: tests/nonsmoke/functional/roseTests/astOutliningTests
 
   // ***** Also move different loop IR nodes into a common base class *****
 

@@ -2,6 +2,7 @@
 
 #include <AsmUnparser.h>
 #include <cstring>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <FileSystem.h>
 #include <iostream>
@@ -16,10 +17,10 @@
 #include <string>
 #include <vector>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 
@@ -38,7 +39,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
         .purpose("compares disassembler results")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .with(CommandlineProcessing::genericSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .doc("synopsis",
              "@prop{programName} [@v{switches}] @v{csv1} @v{csv2}")
         .doc("description",
@@ -161,7 +162,7 @@ showStats(const std::string &label1, const FunctionByAddress &code1, const Funct
 }
 
 static void
-listInstructions(const InstructionProvider::Ptr &insns, const MemoryMap &map,
+listInstructions(const InstructionProvider::Ptr &insns, const MemoryMap::Ptr &map,
                  const FunctionByAddress &code1, FunctionByAddress &code2) {
     std::ostream &out = std::cout;
     static const size_t insnWidth = 110;
@@ -177,8 +178,8 @@ listInstructions(const InstructionProvider::Ptr &insns, const MemoryMap &map,
             out <<"\n";                                 // visual cue that addresses are not sequential here
         std::ostringstream ss;
         size_t size;
-        if (!map.at(va).require(MemoryMap::EXECUTABLE).exists()) {
-            ss <<StringUtility::addrToString(va) <<": " <<(map.at(va).exists() ? "not executable" : "not mapped");
+        if (!map->at(va).require(MemoryMap::EXECUTABLE).exists()) {
+            ss <<StringUtility::addrToString(va) <<": " <<(map->at(va).exists() ? "not executable" : "not mapped");
             size = 1;
         } else if (SgAsmInstruction *insn = (*insns)[va]) {
             unparser.unparse(ss, insn);
@@ -214,15 +215,14 @@ listInstructions(const InstructionProvider::Ptr &insns, const MemoryMap &map,
         FunctionByAddress::ConstIntervalIterator i2 = code2.upperBound(va);
         if (i2!=code2.nodes().end() && i2->least() < next)
             next = i2->least();
-        if (!map.atOrAfter(next).next().assignTo(va))
+        if (!map->atOrAfter(next).next().assignTo(va))
             break;
     }
 }
 
 int main(int argc, char *argv[]) {
-    Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command line
     Settings settings;
@@ -242,9 +242,9 @@ int main(int argc, char *argv[]) {
     // Parse the specimen
     if (!settings.specimenName.empty()) {
         P2::Engine engine;
-        MemoryMap map = engine.loadSpecimens(settings.specimenName);
+        MemoryMap::Ptr map = engine.loadSpecimens(settings.specimenName);
         InstructionProvider::Ptr insns = InstructionProvider::instance(engine.obtainDisassembler(), map);
-        map.dump(std::cout);
+        map->dump(std::cout);
         listInstructions(insns, map, code1, code2);
     }
 }

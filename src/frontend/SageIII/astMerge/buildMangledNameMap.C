@@ -302,7 +302,8 @@ MangledNameMapTraversal::addToMap ( string key, SgNode* node)
           addAssociatedNodes(node,setOfNodesToDelete,false,matchingNodeInMergedAST);
 #else
 #ifndef _MSC_VER
-   #warning "Skipping call to addAssociatedNodes()"
+       // DQ (3/25/2017): Removed this warning (it appears to be related to old code).
+       // #warning "Skipping call to addAssociatedNodes()"
 #endif
                   // printf ("Skipping call to addAssociatedNodes() \n");
 #endif
@@ -369,7 +370,7 @@ MangledNameMapTraversal::visit ( SgNode* node)
              {
             // Since we abstract out the generation of the key we can simplify this code!
 #if 1
-            // DQ (7/11/2010): This fails for tests/CompileTests/mergeAST_tests/mergeTest_06.C, I don't know why!
+            // DQ (7/11/2010): This fails for tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_06.C, I don't know why!
                case V_SgFunctionDeclaration:
 #endif
 #if 1

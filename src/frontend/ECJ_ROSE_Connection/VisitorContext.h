@@ -45,7 +45,8 @@ public:
 
 class CallVisitorContext : public VisitorContext {
 private:
-                bool has_receiver;
+     // DQ (3/25/2017): Eliminate Clang warning for unused variables.
+     // bool has_receiver;
 
 public:
         CallVisitorContext(unsigned int nb_args);
@@ -58,9 +59,12 @@ public:
 
 class ForVisitorContext : public VisitorContext {
 private:
-                bool has_cond;
-                unsigned int nb_init;
-                unsigned int nb_incr;
+        bool has_cond;
+
+     // DQ (3/25/2017): Eliminate Clang warning for unused variables.
+     // unsigned int nb_init;
+     // unsigned int nb_incr;
+
 public:
         ForVisitorContext(unsigned int nb_init, bool has_cond, unsigned int nb_incr);
         virtual ~ForVisitorContext();

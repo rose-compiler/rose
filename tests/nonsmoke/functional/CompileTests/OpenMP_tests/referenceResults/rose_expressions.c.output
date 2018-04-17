@@ -1,0 +1,8 @@
+#pragma omp task  if(99)
+#pragma omp task  if(i)
+#pragma omp task  if(i == 0)
+#pragma omp task  if(i += 0)
+#pragma omp task  if(i == 0)
+#pragma omp task  if(i != 0)
+#pragma omp task  if(i < 0)
+#pragma omp task  if(i > 0)

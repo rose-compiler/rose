@@ -1,7 +1,7 @@
 /********************************
-*       FILE: PlatoOmegaInterface.C
-*       AUTHOR: Mike Stiles
-*       University of Texas at San Antonio 2007
+*        FILE: PlatoOmegaInterface.C
+*        AUTHOR: Mike Stiles
+*        University of Texas at San Antonio 2007
 *********************************/
 
 #ifdef HAVE_CONFIG_H
@@ -35,27 +35,27 @@ extern DepTestStatistics DepStats;
 
 namespace PlatoOmegaInterface {
 
-int     debug_determine_function_arity = 0,
-                debug_GetStdVarU = 0,
-                debug_RenameDupedVars = 0,              
-                debug_AddSubscripts = 0,
-                debug_AddCommonLoopIndices = 0,
+int        debug_determine_function_arity = 0,
+                  debug_GetStdVarU = 0,
+                 debug_RenameDupedVars = 0,                
+                  debug_AddSubscripts = 0,
+                 debug_AddCommonLoopIndices = 0,
                 debug_AddLocalLoopIndices = 0,
-                debug_AddLoopBounds = 0,
-                debug_ComputeArrayDep = 0,
+                 debug_AddLoopBounds = 0,
+                 debug_ComputeArrayDep = 0,
                 debug_doHierarchy = 0,
-                debug_VisitVar = 0,
-                debug_VisitExpr = 0,
+                  debug_VisitVar = 0,
+                  debug_VisitExpr = 0,
                 debug_VisitConst = 0,
                 debug_ParseVal = 0,
-                debug_GetRationalExpression = 0,
-                debug_GetNewRelationFromDV = 0,
-                debug_AddConstraintsImposedByDV = 0;
+                  debug_GetRationalExpression = 0,
+                  debug_GetNewRelationFromDV = 0,
+                 debug_AddConstraintsImposedByDV = 0;
 
 DEP_TEST_CHOICE curr_DEP_TEST_CHOICE;
 
-/**     This needs to be called before calling ComputeArrayDep.
-*               Called in DepInfoPlato.C line 322.
+/**         This needs to be called before calling ComputeArrayDep.
+*                Called in DepInfoPlato.C line 322.
 */
 
 void SetDepChoice(DEP_TEST_CHOICE new_choice)
@@ -211,13 +211,13 @@ plato::RationalExpression PlatoOmegaDepTesting ::
    }
 }
 
-/**     This function returns the loop level at which the
-*               variable is being referenced. It does not (at present)
-*               determine whether it is a write or a read, merely whether
-*               if it has been referenced.
+/**        This function returns the loop level at which the
+*                variable is being referenced. It does not (at present)
+*                determine whether it is a write or a read, merely whether
+*                if it has been referenced.
 *
-*               For omega, returns 0 or the level.
-*               For plato, returns -1 or the level - but not 0.
+*                For omega, returns 0 or the level.
+*                For plato, returns -1 or the level - but not 0.
 */
 
 int PlatoOmegaDepTesting::ReturnVarianceLevel(const std::string name)
@@ -260,7 +260,7 @@ void PlatoOmegaDepTesting::print_omega_vars(void)
                                                 iter->second->ReturnOmegaStdVar()->get_position() << std::endl;
                         }
                         break;
-                        case Set_Var :                          
+                        case Set_Var :                                
                         {
                                 std::cerr << " Set_Var " << std::endl;
                         }
@@ -312,7 +312,7 @@ void PlatoOmegaDepTesting::print_omega_vars(void)
                                                 iter->second->ReturnOmegaStdVar()->get_position() << std::endl;
                         }
                         break;
-                        case Set_Var :                          
+                        case Set_Var :                                
                         {
                                 std::cerr << " Set_Var " << std::endl;
                         }
@@ -354,8 +354,8 @@ void PlatoOmegaDepTesting::print_omega_vars(void)
         std::cerr << std::endl << std::endl;
 }
 
-/**     Returns the STD_VAR_U union which contains either an omega Variable_ID
-*               or a plato Variable.
+/**         Returns the STD_VAR_U union which contains either an omega Variable_ID
+*                or a plato Variable.
 **/
 
 STD_VAR_U *PlatoOmegaDepTesting::GetStdVarU(const std::string name, bool is_input)
@@ -452,9 +452,9 @@ STD_VAR_U *PlatoOmegaDepTesting::GetStdVarU(const std::string name, bool is_inpu
                 {
                         int arity = ReturnVarianceLevel(name);
 
-                        /**     For plato, we set both the inner_var->_plato_var and
-                        *               the inner_var_id->_plato_var_id to the same
-                        *               PLATO_STD_VAR.
+                        /**         For plato, we set both the inner_var->_plato_var and
+                        *                the inner_var_id->_plato_var_id to the same
+                        *                PLATO_STD_VAR.
                         */
 
                         FREE_VAR_U *free_var_u = new FREE_VAR_U();
@@ -564,8 +564,8 @@ void PlatoOmegaDepTesting::VisitExpr( const SymbolicExpr& v) {
                                                         {
                                                                 PLATO_STD_VAR *tempID = GetPlatoStdVar(name,_is_input_expr);
                                                                 plato::RationalExpression *v1 = new plato::RationalExpression(*tempID);
-                        plato::RationalExpression *v2 = new plato::RationalExpression(value);
-                        *_re = *_re + *v1 * *v2;
+                             plato::RationalExpression *v2 = new plato::RationalExpression(value);
+                             *_re = *_re + *v1 * *v2;
                                                         }
                      operandsCount = 0;
                   }
@@ -593,8 +593,8 @@ void PlatoOmegaDepTesting::VisitExpr( const SymbolicExpr& v) {
                                                 {
                                                         PLATO_STD_VAR *tempID = GetPlatoStdVar(name,_is_input_expr);
                                                         plato::RationalExpression *v1 = new plato::RationalExpression(*tempID);
-                        plato::RationalExpression *v2 = new plato::RationalExpression(value);
-                        *_re = *_re + *v1 + *v2;
+                          plato::RationalExpression *v2 = new plato::RationalExpression(value);
+                          *_re = *_re + *v1 + *v2;
                                                 }
                }
                break;
@@ -623,7 +623,7 @@ void PlatoOmegaDepTesting::VisitExpr( const SymbolicExpr& v) {
                                                         else
                                                         {
                                                                 plato::RationalExpression *v1 = new plato::RationalExpression(value);
-                        *_re = *_re * *v1;
+                             *_re = *_re * *v1;
                                                         }
                      operandsCount = 0;
                   }                  
@@ -644,7 +644,7 @@ void PlatoOmegaDepTesting::VisitExpr( const SymbolicExpr& v) {
                                                 else
                                                 {
                                                         plato::RationalExpression *v1 = new plato::RationalExpression(value);
-                        *_re = *_re + *v1;
+                          *_re = *_re + *v1;
                                                 }
                }
                break;
@@ -747,11 +747,11 @@ plato::RationalExpression *PlatoOmegaDepTesting::ParseVal( const SymbolicVal &v,
         return(_re);
 }
 
-/**     Adds all the index variables in the common (to both array refs) loops.
-*               This function makes a big assumption in that both the _info1->ivars
-*               and _info2->ivars have exactly the same entries up to the
-*               least dim - either _dim1 or _dim2. Then the loop stops
-*               and further entries are picked up in the AddLocalLoopIndices.
+/**        Adds all the index variables in the common (to both array refs) loops.
+*                This function makes a big assumption in that both the _info1->ivars
+*                and _info2->ivars have exactly the same entries up to the
+*                least dim - either _dim1 or _dim2. Then the loop stops
+*                and further entries are picked up in the AddLocalLoopIndices.
 **/
  
 void PlatoOmegaDepTesting::AddCommonLoopIndices(void)
@@ -800,7 +800,7 @@ void PlatoOmegaDepTesting::AddCommonLoopIndices(void)
                         std_var_u_out->_plato_std_var = std_var_u_in->_plato_std_var;
                         _plato_output_vars->insert(make_pair(index.toString(),new StandardVar(std_var_u_out)));
                         //_plato_relation->addSymbolicVariable(*(std_var_u->_plato_std_var));
-                }                                       
+                }                                        
                 i++;
                 iter1++;
                 iter2++;
@@ -812,11 +812,11 @@ void PlatoOmegaDepTesting::AddCommonLoopIndices(void)
         print_debug("AddCommonLoopIndices","exiting",debug_AddCommonLoopIndices);
 }
 
-/**     AddLocalLoopIndices adds all the loop indicies that surround the common
-*               loops, and have not been added yet. The function makes the assumption
-*               that if it hasn't been added yet, then that dimension is larger than the
-*               other and a free variable will be made and it will be added to the
-*               proper map.
+/**        AddLocalLoopIndices adds all the loop indicies that surround the common
+*                loops, and have not been added yet. The function makes the assumption
+*                that if it hasn't been added yet, then that dimension is larger than the
+*                other and a free variable will be made and it will be added to the
+*                proper map.
 **/
 
 void PlatoOmegaDepTesting::AddLocalLoopIndices(void/*DepInfoAnal::LoopDepInfo info, bool is_input*/)
@@ -849,7 +849,7 @@ void PlatoOmegaDepTesting::AddLocalLoopIndices(void/*DepInfoAnal::LoopDepInfo in
                         {
                                 if ((!added(_omega_input_vars,index.toString()) && is_input) ||
                                                         (!added(_omega_output_vars,index.toString()) && !is_input))
-                                {               
+                                {                
                                         FREE_VAR_U *free_var_u = new FREE_VAR_U();
                                         assert(free_var_u);
                                         free_var_u->_omega_free_var = new OMEGA_FREE_VAR(StringToChar(index.toString()));
@@ -875,11 +875,11 @@ void PlatoOmegaDepTesting::AddLocalLoopIndices(void/*DepInfoAnal::LoopDepInfo in
                                         }
                                 }
                         }
-                        /**     -------------- PLATO ONLY --------------
-                        *               Here we are assuming that all of the common loop indices have
-                        *               been added already, so any other enclosing loop indices
-                        *               have to added as Symbolic Variables instead of common
-                        *               loop variables.
+                        /**        -------------- PLATO ONLY --------------
+                        *                 Here we are assuming that all of the common loop indices have
+                        *                been added already, so any other enclosing loop indices
+                        *                have to added as Symbolic Variables instead of common
+                        *                loop variables.
                         **/
                         else if ((!added(_plato_input_vars,index.toString()) && is_input) ||
                                                         (!added(_plato_output_vars,index.toString()) && !is_input))
@@ -933,7 +933,7 @@ void PlatoOmegaDepTesting::AddLoopBounds(void /*DepInfoAnal::LoopDepInfo info, b
         {
                 if (h == 0)
                 {
-                        info = _info1;
+                         info = _info1;
                         dim = _dim1;
                         is_input = true;
                 }
@@ -985,7 +985,7 @@ void PlatoOmegaDepTesting::AddLoopBounds(void /*DepInfoAnal::LoopDepInfo info, b
                                 plato::RationalExpression *lowBound;
                                 plato::RationalExpression *upBound;
 
-                                /**     Pick up any variables that might have been missed so far thru **/
+                                /**        Pick up any variables that might have been missed so far thru **/
 
                                 index = GetPlatoStdVar(info->ivars[i].GetVarName(),is_input);
 
@@ -993,12 +993,12 @@ void PlatoOmegaDepTesting::AddLoopBounds(void /*DepInfoAnal::LoopDepInfo info, b
                                 
                                 upBound = ParseVal(*ub,false,is_input,true,false);
 
-                                /**     here **/
+                                /**        here **/
 
-                                /**     ---------------PLATO ONLY-------------
-                                *               Here we add the common loop indices and bounds.
-                                *               Any other enclosing loop indices were already
-                                *               added in the AddLocalLoopIndices function.
+                                /**        ---------------PLATO ONLY-------------
+                                *                Here we add the common loop indices and bounds.
+                                *                Any other enclosing loop indices were already
+                                *                added in the AddLocalLoopIndices function.
                                 **/
                                 /*if (is_input && i < _commLevel)
                                 {
@@ -1069,7 +1069,7 @@ void PlatoOmegaDepTesting::AddSubscripts(void)
                 else
                 {
                         plato::RationalExpression val1 = GetRationalExpression(*_fa,s1,true);
-        plato::RationalExpression val2 = GetRationalExpression(*_fa,s2,false);
+              plato::RationalExpression val2 = GetRationalExpression(*_fa,s2,false);
                         print_debug("AddSubscripts","about to add plato subscripts",debug_AddSubscripts);
                         _plato_relation->addSubscript(val1,val2);
                 }
@@ -1077,14 +1077,14 @@ void PlatoOmegaDepTesting::AddSubscripts(void)
         if (debug_AddSubscripts && UseOmega())
         {
                 _omega_relation->print();
-        }       
+        }        
         print_debug("AddSubscripts","exiting",debug_AddSubscripts);
 }
 
-/**     ----------------OMEGA ONLY--------------
-*               Adds constraints imposed by the given direction vector.
-*               This routine is only used by the routines that use the
-*               omega library.
+/**        ----------------OMEGA ONLY--------------
+*                Adds constraints imposed by the given direction vector.
+*                This routine is only used by the routines that use the
+*                omega library.
 **/
 
 void PlatoOmegaDepTesting::AddConstraintsImposedByDV(Relation &relation,
@@ -1127,7 +1127,7 @@ void PlatoOmegaDepTesting::AddConstraintsImposedByDV(Relation &relation,
                                 lt_constraint.update_coef(output_var, 1);
 
                                 if (dir == (DDLES | DDEQU))
-                                        lt_constraint.update_const(-1);                 
+                                        lt_constraint.update_const(-1);                        
                         }
                         break;
 
@@ -1139,7 +1139,7 @@ void PlatoOmegaDepTesting::AddConstraintsImposedByDV(Relation &relation,
                                 gt_constraint.update_coef(output_var, -1);
 
                                 if (dir == (DDGRT | DDEQU))
-                                        gt_constraint.update_const(-1);                 
+                                        gt_constraint.update_const(-1);                        
                         }
                         break;
 
@@ -1171,10 +1171,10 @@ void PlatoOmegaDepTesting::AddConstraintsImposedByDV(Relation &relation,
         print_debug("AddConstraintsImposedByDV","exiting",debug_AddConstraintsImposedByDV);
 }
 
-/**     ----------------OMEGA ONLY--------------
-*               Returns a relation with the same number of input and output variables
-*               as my relation and with constraints imposed upon these variables by
-*               the given direction vector.
+/**        ----------------OMEGA ONLY--------------
+*                Returns a relation with the same number of input and output variables
+*                as my relation and with constraints imposed upon these variables by
+*                the given direction vector.
 **/
 
 Relation PlatoOmegaDepTesting::GetNewRelationFromDV(const plato::dddir &dv)
@@ -1233,28 +1233,28 @@ void SetBounds(int *lower_bound, int *upper_bound)
                 *upper_bound = -*upper_bound;
 }
 */
-/**     ---------------OMEGA ONLY------------
-*               This function tests all the direction vectors.
-*               It is only used when the omega library is being used.
-*               Omega   LowBnd  Up Bnd  ***     Rose    Align
-*               =               0                       0                                       =               0
-*               <                                       = 0                             
+/**        ---------------OMEGA ONLY------------
+*                This function tests all the direction vectors.
+*                It is only used when the omega library is being used.
+*                Omega        LowBnd        Up Bnd        ***        Rose        Align
+*                =                0                        0                                        =                0
+*                <                                        = 0                                
 **/
 
 void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::dddir dv, int level, DepRel& rel)
-{                                       // Recursive data dependence test
+{                                        // Recursive data dependence test
         static plato::dddir dirtab[] = {DDLES, DDEQU, DDGRT};
         plato::dddir newdv,savedv;
-        int i, j, sharedLevel, precise; 
+        int i, j, sharedLevel, precise;        
         DepRel tempRel = rel, *relPtr;
         int tempDim = (_dim1 > _dim2) ? _dim1 : _dim2;
         
         sharedLevel = _commLevel;
 
-        /**     Recursively construct all of the direction vectors.
-        *               After they are all constructed by calling this
-        *               this algorithm recursively, then process
-        *               each direction vector.
+        /**         Recursively construct all of the direction vectors.
+        *                After they are all constructed by calling this
+        *                this algorithm recursively, then process
+        *                each direction vector.
         **/
 
         if (level <= sharedLevel)
@@ -1308,14 +1308,14 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
                                 }
                                 else if (lower_bound >= 0 && level > sharedLevel)
                                 {
-                                        dddirset(_saved_dv,DDGRT,i+1);                                  
+                                        dddirset(_saved_dv,DDGRT,i+1);                                        
                                         if (upper_bound != posInfinity)
                                         {
                                                 rel |= DepRel(DEPDIR_EQ,lower_bound,upper_bound);
                                                 //rel.UnionUpdate(rel,DepRel(DEPDIR_EQ,lower_bound,upper_bound));
                                                 setdep[i][j] = rel;
                                                 if (DebugDep() || debug_doHierarchy)
-                                                        std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " assigned DEPDIR_EQ " << lower_bound << " " << upper_bound << std::endl;                                              
+                                                        std::cerr << "i " << i << " " << " _commLevel " << _commLevel << " assigned DEPDIR_EQ " << lower_bound << " " << upper_bound << std::endl;                                                
                                                 precise = true;
                                         }
                                         else
@@ -1339,7 +1339,7 @@ void PlatoOmegaDepTesting::doHierarchy(SetDep& setdep, DepInfo &result, plato::d
                                                 //rel.UnionUpdate(rel,DepRel(DEPDIR_EQ,lower_bound,upper_bound));
                                                 setdep[i][j] = rel;
                                                 if (DebugDep() || debug_doHierarchy)
-                                                        std::cerr << "i " << i << " " << " _commLevel " << _commLevel  << " assigned DEPDIR_EQ " << lower_bound << " " << upper_bound << std::endl;                                             
+                                                        std::cerr << "i " << i << " " << " _commLevel " << _commLevel  << " assigned DEPDIR_EQ " << lower_bound << " " << upper_bound << std::endl;                                                
                                                 precise = true;
                                         }
                                         else
@@ -1404,7 +1404,7 @@ void PlatoOmegaDepTesting::CleanUp(void)
         delete(_free_vars);
 }
 
-/**     This function is under construction
+/**        This function is under construction
 **/
 
 void PlatoOmegaDepTesting::RenameDupedVars(void)
@@ -1420,10 +1420,9 @@ void PlatoOmegaDepTesting::RenameDupedVars(void)
 
         print_debug("RenameDupedVars","entering",debug_RenameDupedVars);
 
-        LoopTransformInterface fa((LoopTransformInterface &) *_fa);
         MakeUniqueVar::ReverseRecMap varmap;
-        MakeUniqueVar varop(_anal->GetModifyVariableInfo(),varmap);
-        MakeUniqueVarGetBound boundop(varmap, (LoopTransformInterface &) *_fa, *_anal);
+          MakeUniqueVar varop(_anal->GetModifyVariableInfo(),varmap);
+          MakeUniqueVarGetBound boundop(varmap, *_anal);
 
         for (i = 0; i < _dim1; ++i)
                 _bounds->push_back(_info1->ivarbounds[i]);
@@ -1446,10 +1445,10 @@ void PlatoOmegaDepTesting::RenameDupedVars(void)
                 print_debug("RenameDupedVars","starting loop",debug_RenameDupedVars);
                 s1 = *iter1; s2 = *iter2;
                 SymbolicVal val1 = SymbolicValGenerator::GetSymbolicVal(*_fa, s1);
-        SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(*_fa, s2);
+            SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(*_fa, s2);
                 std::vector<SymbolicVal> cur;
                 SymbolicVal left1 = DecomposeAffineExpression(fa, val1, _info1->ivars, cur,_dim1);
-        SymbolicVal left2 = DecomposeAffineExpression(fa, -val2, _info2->ivars,cur,_dim2);
+            SymbolicVal left2 = DecomposeAffineExpression(fa, -val2, _info2->ivars,cur,_dim2);
                 for (i = 0; i < _dim1; ++i)
                 {
                         print_debug("RenameDupedVars","fixing to varop",debug_RenameDupedVars);
@@ -1496,10 +1495,10 @@ double my_time()
         return( (double)(ruse.ru_utime.tv_sec+ruse.ru_utime.tv_usec*1.0e-6) );
 }
 
-DepInfo 
-PlatoOmegaDepTesting::ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& anal,
+DepInfo PlatoOmegaDepTesting::
+ComputeArrayDep(DepInfoAnal& anal,
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype)
-{       
+{        
    if ((DebugDep() || debug_ComputeArrayDep) && UseOmega())
         {
       std::cerr << "OmegaDependenceTesting compute array dep between " << AstToString(ref.r1.ref) << " and " << \
@@ -1511,9 +1510,9 @@ PlatoOmegaDepTesting::ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& a
          AstToString(ref.r2.ref) << std::endl;
         }
 
-   /**  info1 and info2 contains both a vector of the induction variables of
-   *            the surrounding loops and a vector of the bounds of the induction variables
-   *            See definition for LoopDepInfo in DepInfoAnal.h
+   /**        info1 and info2 contains both a vector of the induction variables of
+   *                the surrounding loops and a vector of the bounds of the induction variables
+   *                See definition for LoopDepInfo in DepInfoAnal.h
    **/
   
    const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(fa,ref.r1.stmt);
@@ -1527,35 +1526,35 @@ PlatoOmegaDepTesting::ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& a
         _bounds = new std::vector<SymbolicBound>;
 
         MakeUniqueVar::ReverseRecMap varmap;
-        MakeUniqueVar varop(anal.GetModifyVariableInfo(),varmap);
-        MakeUniqueVarGetBound boundop(varmap, fa, anal);
+          MakeUniqueVar varop(anal.GetModifyVariableInfo(),varmap);
+          MakeUniqueVarGetBound boundop(varmap, fa, anal);
 
         _varmap = &varmap;
         _varop = &varop;
         _boundop = &boundop;
 
-   /**  info1.domain and info2.domain are matrices of direction entries
-   *            that model the relations of the induction variables surrounding each stmt.
-   *            _dim1 and _dim2 are the numbers of loops surrounding r1 and r2 respectively
+   /**         info1.domain and info2.domain are matrices of direction entries
+   *                that model the relations of the induction variables surrounding each stmt.
+   *                _dim1 and _dim2 are the numbers of loops surrounding r1 and r2 respectively
    **/
         
    _dim1 = info1.domain.NumOfLoops(), _dim2 = info2.domain.NumOfLoops();
 
-        _commLevel = _ref->commLevel;   
+        _commLevel = _ref->commLevel;        
         
         if (!UseOmega())
         {
                 PLATO_STD_VAR::resetVars();
         }
 
-   /**  'precise' is set to be true to indicate a 'yes' answer from testing.
-   *            should be reset to false if the testing result is 'maybe'
+   /**        'precise' is set to be true to indicate a 'yes' answer from testing.
+   *                should be reset to false if the testing result is 'maybe'
    **/
         
    int precise = true;
 
-        /**     result contains a new DepInfo object that will remember the dependence
-   *            relations between r1 and r2
+        /**        result contains a new DepInfo object that will remember the dependence
+   *                relations between r1 and r2
    **/
    DepInfo result =DepInfoGenerator::GetDepInfo(_dim1, _dim2, deptype, ref.r1.ref, ref.r2.ref, false, ref.commLevel);
     
@@ -1632,7 +1631,7 @@ PlatoOmegaDepTesting::ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& a
                 
                 plato::dddir dv = DDALLDV;
                 int tempDim = (_dim1 >= _dim2) ? _dim1 : _dim2;
-                _saved_dv = 0;  
+                _saved_dv = 0;        
                 if (UseOmega())
                 {
                         DepRel rel = DepRel(DEPDIR_NONE);
@@ -1689,7 +1688,7 @@ PlatoOmegaDepTesting::ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& a
                                 case DDALL :
                                 {
                                         setdep[i][j] = DepRel(DEPDIR_ALL);
-                                }                               
+                                }                                
                                 break;
                                 case 0 :
                                 {
@@ -1717,13 +1716,13 @@ PlatoOmegaDepTesting::ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& a
                         result.set_precise();
         }
 
-   /**  the finalize function is called to impose as much restrictions as possible
-   *            to the DepInfo result
+   /**        the finalize function is called to impose as much restrictions as possible
+   *                to the DepInfo result
    **/
    setdep.finalize();
    
    if (DebugDep() || debug_ComputeArrayDep)
-        std::cerr << "after restrictions from stmt domain, result =: \n" << result.toString() << std::endl;
+           std::cerr << "after restrictions from stmt domain, result =: \n" << result.toString() << std::endl;
 
    return result;
 }

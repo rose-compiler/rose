@@ -1,0 +1,7 @@
+START
+PROGRAM integerprimary ;
+  BEGIN
+    ivar = 13 ;
+    ivar = jv ;
+  END
+TERM

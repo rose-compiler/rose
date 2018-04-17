@@ -1,0 +1,4 @@
+#pragma omp parallel 
+#pragma omp sections 
+#pragma omp section 
+#pragma omp section 

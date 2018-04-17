@@ -22,7 +22,20 @@ int ArrayElementAccessData::getDimensions() const {
 string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) const {
   if(isValid()) {
     stringstream ss;
-    ss<< variableIdMapping->uniqueShortVariableName(varId);
+    ss<< variableIdMapping->uniqueVariableName(varId);
+    for(vector<int>::const_iterator i=subscripts.begin();i!=subscripts.end();++i) {
+      ss<<"["<<*i<<"]";
+    }
+    return ss.str();
+  } else {
+    return "$non-valid-array-access$";
+  }
+}
+
+string ArrayElementAccessData::toStringNoSsaSubscript(VariableIdMapping* variableIdMapping) const {
+  if(isValid()) {
+    stringstream ss;
+    ss<< variableIdMapping->variableName(varId);
     for(vector<int>::const_iterator i=subscripts.begin();i!=subscripts.end();++i) {
       ss<<"["<<*i<<"]";
     }
@@ -44,7 +57,7 @@ ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdM
   SageInterface::isArrayReference(ref, &arrayNameExp, &subscripts);
   //cout<<"Name:"<<arrayNameExp->unparseToString()<<" arity"<<subscripts->size()<<"subscripts:";
   varId=variableIdMapping->variableId(SageInterface::convertRefToInitializedName(ref));
-  //cout<<"NameCheck:"<<variableIdMapping->uniqueShortVariableName(access.varId)<<" ";
+  //cout<<"NameCheck:"<<variableIdMapping->uniqueVariableName(access.varId)<<" ";
   for(size_t i=0;i<(*subscripts).size();++i) {
     //cout<<(*subscripts)[i]<<":"<<(*subscripts)[i]->unparseToString()<<" ";
     if(SgIntVal* subscriptint=isSgIntVal((*subscripts)[i])) {

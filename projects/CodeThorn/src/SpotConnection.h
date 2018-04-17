@@ -1,17 +1,19 @@
 #ifndef SPOT_CONNECTION_H
 #define SPOT_CONNECTION_H
 
-//to-do: license, author etc.
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cassert>
 #include <algorithm>
 
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 //CodeThorn includes
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "SpotTgba.h"
+#include "ParProSpotTgba.h"
 #include "PropertyValueTable.h"
 
 //SPOT includes
@@ -37,6 +39,9 @@
 #include "ltlast/formula.hh"
 #include "tgbaalgos/replayrun.hh"
 #include "tgbaalgos/projrun.hh"
+#include "ltlvisit/simplify.hh"
+#include "ltlvisit/relabel.hh"
+//#include "ltlast/atomic_prop.hh"
 
 //BOOST includes
 #include "boost/algorithm/string.hpp"
@@ -54,23 +59,27 @@ namespace CodeThorn {
     bool expectedRes;
   };
 
-  // define LtlProperty std::pair<int, std::string>
   struct LtlProperty {
     int propertyNumber;
     std::string ltlString;
   };
 
-  typedef std::list<FormulaPlusResult*> ltlData;
-  
-  // an interface used to test LTL formulas on CodeThorns TransitionGraphs
+  /*! 
+   * \brief Checks LTL properties on CodeThorn's TransitionGraph using the SPOT library.
+   * \author Marc Jasper
+   * \date 2014, 2015, 2016, 2017.
+   */
   class SpotConnection {
     public:
-      SpotConnection() {};
-      //constructor with automatic initialization
-      SpotConnection(std::string ltl_formulae_file) {init(ltl_formulae_file);};
+      SpotConnection();
+      //constructors with automatic initialization
+      SpotConnection(std::string ltl_formulae_file);
+      SpotConnection(std::list<std::string> ltl_formulae);
       //an initilaization that reads in a text file with ltl formulae (RERS 2014 format). Extracts the behaviorProperties
       // and creates an ltlResults table of the respective size (all results initialized to be "unknown").
       void init(std::string ltl_formulae_file);
+      // initializes the SpotConnection to check the ltl formulae that are passed in as a list of strings.
+      void init(std::list<std::string> ltl_formulae);
       //Takes a CodeThorn STG as a model and checks for all ltl formulae loaded into this SpotConnection object wether or not the model
       // satisfies them. Writes results into the "ltlResults" member of this object, only checks properties for which no results exist yet.
       // "inVals" and "outVals" refer to the input and output alphabet of the ltl formulae to be checked.
@@ -79,18 +88,14 @@ namespace CodeThorn {
       // that are not precise.)
       void checkLtlProperties(TransitionGraph& stg,
 					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
+      // variant for model checking the state space of parallel automata
+      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
       // similar to "checkLtlProperties" above, but only checks a single property (property id specified as a parameter)
       void checkSingleProperty(int propertyNum, TransitionGraph& stg,
 						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
-      //takes a SPOT TGBA text file and a file containing LTL formulae plus expected solutions (see RERS solutions examples).
-      // utilizes the SPOT library to check whether the expected solutions are correct on the given model tgba.
-      // deprecated, the interfaced version below is now used.
-      void compareResults(std::string tgba_file, std::string ltl_fsPlusRes_file);
-      // same purpose as compareResults(...) above. This version provides a dynamic link to the SPOT library for possible
-      // on-the-fly computation. "inVals" and "outVals" refer to the input and output alphabet of the ltl formulae 
-      // that will be checked.
-      void compareResults(TransitionGraph& stg, std::string ltl_fsPlusRes_file, 
-					std::set<int> inVals, std::set<int> outVals);
+      // model checking of "ltlProperty" on "stg"
+      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
+      ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
       // returns a pointer to the LTL results table.
       PropertyValueTable* getLtlResults();
       // resets the LTL results table to all unknown properties.
@@ -101,19 +106,26 @@ namespace CodeThorn {
       // and 'o' for "maxIntVal" to 26 (RERS format)
       std::string int2PropName(int ioVal, int maxInVal);
       void setModeLTLDriven(bool ltlDriven);
+      // read in an LTL formula string and return a formula with the same semantics in SPIN's syntax
+      std::string spinSyntax(std::string ltlFormula);
+      // returns a set of strings that represent the atomic propositions used in "ltlFormula"
+      std::set<std::string> atomicPropositions(std::string ltlFormula);
+
     private:
       //Removes every "WU" in a string with 'W". Necessary because only accepts this syntax.
       string& parseWeakUntil(std::string& ltl_string);
       // surrounds a string with "!( ... )", therefore negating its represented formula
       void negateFormula(std::string& ltl_string);
+      // returns the set of atomic propositions (boolean variables in the LTL formulae) in the list of LTL properties
+      spot::ltl::atomic_prop_set* getAtomicProps();
+      // returns the set of atomic propositions (boolean variables in the LTL formulae) in "ltlFormula"
+      spot::ltl::atomic_prop_set* getAtomicProps(std::string ltlFormula);
       // returns a set of atomic propositions (variables in the LTL formulae) representing the given "ioVals" I/O values.
       // "maxInputVal" determines the greatest value to be prepended with an 'i' for input. Every integer greater than that
       // will be prepended with 'o'
       spot::ltl::atomic_prop_set* getAtomicProps(std::set<int> ioVals, int maxInputVal);
       // reads in a list of LTL formulas (file in RERS format, meaining only lines containing formulae begin with '(')
       std::list<std::string>* loadFormulae(istream& input);
-      // takes a text file of RERS solutions and parses the formulae with their corresponding solutions (true/false)
-      ltlData* parseSolutions(istream& input);
 
       // check a single LTL property and update the results table
       void checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tgba, TransitionGraph& stg, 
@@ -122,8 +134,6 @@ namespace CodeThorn {
       // The dict parameter is the model_tgba's dictionary of atomic propsitions. ce_ptr is an out parameter 
       // for a counter-example in case one is found by SPOT.
       bool checkFormula(spot::tgba* ct_tgba, std::string ltl_string, spot::bdd_dict* dict, std::string** ce_ptr = 0);
-      // returns a string statement about how SPOT's verification result compares to the expected result.
-      std::string comparison(bool spotRes, bool expectedRes, std::string& ltlFormula, std::string& ce);
 
       //returns a SPOT run (used for counter-examples). condensed information (IO only and Input only)
       std::string* formatRun(std::string& run);
@@ -133,16 +143,49 @@ namespace CodeThorn {
       std::string* filter_run_IO_only(string& spotRun, bool inputOnly = false);
       //small helper function for filter_run_IO_only
       std::string formatIOChar(std::string prop, bool firstEntry, bool cycleStart);
-
-      //returns a list of all those properties that still have an unknown value as of now. The returned
-      // list has to be deleted by the calling function.
-      std::list<LtlProperty>* getUnknownFormulae();
       
       //a list of all properties 
-      std::list<LtlProperty> behaviorProperties; 
+      //      std::list<LtlProperty> behaviorProperties; 
       //a container for the results of the LTL property evaluation
-      PropertyValueTable* ltlResults;
-      bool modeLTLDriven;
+      PropertyValueTable* ltlResults=nullptr;
+      bool modeLTLDriven=false;
+  };
+};
+#else
+
+#include "TransitionGraph.h"
+#include "ParProTransitionGraph.h"
+#include "PropertyValueTable.h"
+
+namespace CodeThorn {
+
+  class ParProSpotTgba;
+
+  class SpotConnection {
+    public:
+      SpotConnection();
+      SpotConnection(std::string ltl_formulae_file);
+      SpotConnection(std::list<std::string> ltl_formulae);
+      void init(std::string ltl_formulae_file);
+      void init(std::list<std::string> ltl_formulae);
+      void checkLtlProperties(TransitionGraph& stg,
+					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
+      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
+      void checkSingleProperty(int propertyNum, TransitionGraph& stg,
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
+      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
+      ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
+      PropertyValueTable* getLtlResults();
+      void resetLtlResults();
+      void resetLtlResults(int property);
+      std::string int2PropName(int ioVal, int maxInVal);
+      void setModeLTLDriven(bool ltlDriven);
+      std::string spinSyntax(std::string ltlFormula);
+      std::set<std::string> atomicPropositions(std::string ltlFormula);
+  private:
+      void reportUndefinedFunction();
   };
 };
 #endif
+
+#endif // end of "#ifndef SPOT_CONNECTION_H"

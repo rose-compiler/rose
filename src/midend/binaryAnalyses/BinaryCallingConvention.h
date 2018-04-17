@@ -3,17 +3,21 @@
 
 #include <BaseSemantics2.h>
 #include <BinaryStackVariable.h>
+#include <Partitioner2/BasicTypes.h>
 #include <RegisterParts.h>
 
-namespace rose {
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
+
+namespace Rose {
 namespace BinaryAnalysis {
 
 // Forwards
 class Disassembler;
-namespace Partitioner2 {
-    class Partitioner;
-    class Function;
-}
 
 /** Support for binary calling conventions.
  *
@@ -94,6 +98,22 @@ private:
         rose_addr_t va_;                            // Absolute address
     };
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(reg_);
+        if (STACK==type_) {
+            s & BOOST_SERIALIZATION_NVP(offset_);
+        } else {
+            s & BOOST_SERIALIZATION_NVP(va_);
+        }
+    }
+#endif
+    
 public:
     /** Default constructed no-location.
      *
@@ -104,11 +124,11 @@ public:
         : type_(NO_LOCATION), offset_(0) {}
 
     /** Constructs a parameter in a register location. */
-    explicit ParameterLocation(const RegisterDescriptor &reg)
+    explicit ParameterLocation(RegisterDescriptor reg)
         : type_(REGISTER), reg_(reg), offset_(0) {}
 
     /** Constructs a parameter at a register-relative memory address. */
-    ParameterLocation(const RegisterDescriptor &reg, int64_t offset)
+    ParameterLocation(RegisterDescriptor reg, int64_t offset)
         : type_(STACK), reg_(reg), offset_(offset) {}
 
     /** Constructs a parameter at a fixed memory address. */
@@ -130,7 +150,7 @@ public:
      *  Returns the register where the parameter is stored (for register parameters) or the register holding the base
      *  address for register-relative memory parameters.  Returns an invalid (default constructed) register descriptor when
      *  invoked on a default constructed location or a fixed memory addresses. */
-    const RegisterDescriptor& reg() const {
+    RegisterDescriptor reg() const {
         return reg_;
     }
 
@@ -188,10 +208,18 @@ public:
 //                                      Definition
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Reference counting pointer to calling convention definition. */
+typedef Sawyer::SharedPointer<class Definition> DefinitionPtr;
+
 /** Information about calling conventions.
  *
  *  A definition typically comes from external documentation rather than direct analysis. */
-class Definition {
+class Definition: public Sawyer::SharedObject {
+public:
+    /** Reference counting pointer to calling convention definition. */
+    typedef Sawyer::SharedPointer<Definition> Ptr;
+
+private:
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
     size_t wordWidth_;                                  // Natural width word size in bits
@@ -208,27 +236,31 @@ class Definition {
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
     std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
 
-    // Predefined calling conventions.
-public:
-    /** Returns a predefined, cached calling convention.
-     *
-     * @{ */
-    static const Definition& x86_32bit_cdecl();
-    static const Definition& x86_64bit_cdecl();
-    static const Definition& x86_32bit_stdcall();
-    static const Definition& x86_64bit_stdcall();
-    static const Definition& x86_32bit_fastcall();
-    /** @} */
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
 
-    /** Constructs a new pre-defined calling convention based on a register dictionary.
-     *
-     * @{ */
-    static Definition x86_cdecl(const RegisterDictionary*);
-    static Definition x86_stdcall(const RegisterDictionary*);
-    static Definition x86_fastcall(const RegisterDictionary*);
-    /** @} */
-
-public:
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(name_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(wordWidth_);
+        s & BOOST_SERIALIZATION_NVP(regDict_);
+        s & BOOST_SERIALIZATION_NVP(inputParameters_);
+        s & BOOST_SERIALIZATION_NVP(outputParameters_);
+        s & BOOST_SERIALIZATION_NVP(stackParameterOrder_);
+        s & BOOST_SERIALIZATION_NVP(stackPointerRegister_);
+        s & BOOST_SERIALIZATION_NVP(nonParameterStackSize_);
+        s & BOOST_SERIALIZATION_NVP(stackAlignment_);
+        s & BOOST_SERIALIZATION_NVP(stackDirection_);
+        s & BOOST_SERIALIZATION_NVP(stackCleanup_);
+        s & BOOST_SERIALIZATION_NVP(thisParameter_);
+        s & BOOST_SERIALIZATION_NVP(calleeSavedRegisters_);
+        s & BOOST_SERIALIZATION_NVP(scratchRegisters_);
+    }
+#endif
+    
+protected:
     /** Default constructor.
      *
      *  Constructs a new calling convention with no name or parameters. */
@@ -246,6 +278,32 @@ public:
           nonParameterStackSize_(0), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
         ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
     }
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regs) {
+        return Ptr(new Definition(wordWidth, name, comment, regs));
+    }
+
+public:
+    /** Returns a predefined, cached calling convention.
+     *
+     * @{ */
+    static Ptr x86_32bit_cdecl();
+    static Ptr x86_64bit_cdecl();
+    static Ptr x86_32bit_stdcall();
+    static Ptr x86_64bit_stdcall();
+    static Ptr x86_32bit_fastcall();
+    static Ptr x86_64bit_sysv();
+    /** @} */
+
+    /** Constructs a new pre-defined calling convention based on a register dictionary.
+     *
+     * @{ */
+    static Ptr x86_cdecl(const RegisterDictionary*);
+    static Ptr x86_stdcall(const RegisterDictionary*);
+    static Ptr x86_fastcall(const RegisterDictionary*);
+    /** @} */
 
     /** Property: Register dictionary.
      *
@@ -326,10 +384,10 @@ public:
      *
      * @{ */
     void appendInputParameter(const ParameterLocation&);
-    void appendInputParameter(const RegisterDescriptor &reg) {
+    void appendInputParameter(RegisterDescriptor reg) {
         appendInputParameter(ParameterLocation(reg));
     }
-    void appendInputParameter(const RegisterDescriptor &reg, int64_t offset) {
+    void appendInputParameter(RegisterDescriptor reg, int64_t offset) {
         appendInputParameter(ParameterLocation(reg, offset));
     }
     void appendInputParameter(rose_addr_t va) {
@@ -361,10 +419,10 @@ public:
      *
      * @{ */
     void appendOutputParameter(const ParameterLocation&);
-    void appendOutputParameter(const RegisterDescriptor &reg) {
+    void appendOutputParameter(RegisterDescriptor reg) {
         appendOutputParameter(ParameterLocation(reg));
     }
-    void appendOutputParameter(const RegisterDescriptor &reg, int64_t offset) {
+    void appendOutputParameter(RegisterDescriptor reg, int64_t offset) {
         appendOutputParameter(ParameterLocation(reg, offset));
     }
     void appendOutputParameter(rose_addr_t va) {
@@ -394,7 +452,7 @@ public:
      *
      * @{ */
     const RegisterDescriptor stackPointerRegister() const { return stackPointerRegister_; }
-    void stackPointerRegister(const RegisterDescriptor &r) { stackPointerRegister_ = r; }
+    void stackPointerRegister(RegisterDescriptor r) { stackPointerRegister_ = r; }
     /** @} */
 
     /** Property: Size of non-parameter stack area.
@@ -460,10 +518,10 @@ public:
      * @{ */
     const ParameterLocation& thisParameter() const { return thisParameter_; }
     void thisParameter(const ParameterLocation &x) { thisParameter_ = x; }
-    void thisParameter(const RegisterDescriptor &reg) {
+    void thisParameter(RegisterDescriptor reg) {
         thisParameter(ParameterLocation(reg));
     }
-    void thisParameter(const RegisterDescriptor &reg, int64_t offset) {
+    void thisParameter(RegisterDescriptor reg, int64_t offset) {
         thisParameter(ParameterLocation(reg, offset));
     }
     void thisParameter(rose_addr_t va) {
@@ -587,15 +645,11 @@ public:
             case ParameterLocation::STACK: return THIS_FIRST_PARAM; // assume its the first parameter
             case ParameterLocation::ABSOLUTE: return THIS_UNKNOWN; // not supported in old API
         }
+        ASSERT_not_reachable("invalid location type");
     }
     // We can't set the location type independent of the location.
     //void set_this_location(ThisPointerLocation loc) ROSE_DEPRECATED("use thisParameter property instead") {
 
-    const RegisterDescriptor* get_this_register() const ROSE_DEPRECATED("use thisParameter property instead") {
-        if (thisParameter().type() != ParameterLocation::REGISTER)
-            return NULL;
-        return &thisParameter().reg();
-    }
     void set_this_register(const RegisterDescriptor *reg) ROSE_DEPRECATED("use thisParameter property instead") {
         if (NULL == reg) {
             thisParameter(ParameterLocation());         // no location
@@ -626,13 +680,6 @@ public:
     // We can't set the return value location type independent of the location.
     // void set_retval_location(ReturnValueLocation loc) ROSE_DEPRECATED("use appendOutputParameter instead");
 
-    const RegisterDescriptor* get_retval_register() const ROSE_DEPRECATED("use outputParameters property instead") {
-        if (outputParameters().empty())
-            return NULL;
-        if (outputParameters().front().type() != ParameterLocation::REGISTER)
-            return NULL;
-        return &outputParameters().front().reg();
-    }
     void set_retval_register(const RegisterDescriptor *reg) ROSE_DEPRECATED("use appendOutputParameter instead") {
         clearOutputParameters();
         if (NULL != reg)
@@ -697,7 +744,10 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** A ordered collection of calling convention definitions. */
-typedef std::vector<Definition> Dictionary;
+typedef std::vector<Definition::Ptr> Dictionary;
+
+/** Common calling conventions for amd64 (x86-64). */
+const Dictionary& dictionaryAmd64();
 
 /** Common calling conventions for ARM. */
 const Dictionary& dictionaryArm();
@@ -711,8 +761,9 @@ const Dictionary& dictionaryMips();
 /** Common calling conventions for PowerPC. */
 const Dictionary& dictionaryPowerpc();
 
-/** Common calling conventions for x86. */
+/** Common calling conventions for 32-bit x86. */
 const Dictionary& dictionaryX86();
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Analysis
@@ -725,7 +776,7 @@ class Analysis {
 private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     const RegisterDictionary *regDict_;                 // Names for the register parts
-    const Definition *defaultCc_;                       // Default calling convention for called functions
+    Definition::Ptr defaultCc_;                         // Default calling convention for called functions
 
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data members valid (else only approximations)?
@@ -735,7 +786,27 @@ private:
     StackVariables inputStackParameters_;               // Stack variables serving as function inputs
     StackVariables outputStackParameters_;              // Stack variables serving as possible return values
     Sawyer::Optional<int64_t> stackDelta_;              // Change in stack across entire function
-    // Don't forget to update clearResults() if you add more.
+    // Don't forget to update clearResults() and serialize() if you add more.
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(cpu_);
+        s & BOOST_SERIALIZATION_NVP(regDict_);
+        s & BOOST_SERIALIZATION_NVP(defaultCc_);
+        s & BOOST_SERIALIZATION_NVP(hasResults_);
+        s & BOOST_SERIALIZATION_NVP(didConverge_);
+        s & BOOST_SERIALIZATION_NVP(restoredRegisters_);
+        s & BOOST_SERIALIZATION_NVP(inputRegisters_);
+        s & BOOST_SERIALIZATION_NVP(outputRegisters_);
+        s & BOOST_SERIALIZATION_NVP(inputStackParameters_);
+        s & BOOST_SERIALIZATION_NVP(outputStackParameters_);
+        s & BOOST_SERIALIZATION_NVP(stackDelta_);
+    }
+#endif
 
 public:
     /** Default constructor.
@@ -759,7 +830,7 @@ public:
      *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
      *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
-     *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
+     *  defaults used by @ref InstructionSemantics2::SymbolicSemantics. */
     explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
@@ -770,8 +841,8 @@ public:
      *  convention's definition determines how the called function modifies the current function's data-flow state.
      *
      * @{ */
-    const Definition* defaultCallingConvention() const { return defaultCc_; }
-    void defaultCallingConvention(const Definition *x) { defaultCc_ = x; }
+    Definition::Ptr defaultCallingConvention() const { return defaultCc_; }
+    void defaultCallingConvention(const Definition::Ptr &x) { defaultCc_ = x; }
     /** @} */
 
     /** Analyze one function.
@@ -853,7 +924,7 @@ public:
     /** Determine whether a definition matches.
      *
      *  Returns true if the specified definition is compatible with the results of this analysis. */
-    bool match(const Definition&) const;
+    bool match(const Definition::Ptr&) const;
 
     /** Find matching calling convention definitions.
      *
@@ -862,8 +933,11 @@ public:
      *  those in the specified dictionary. */
     Dictionary match(const Dictionary&) const;
 
-    /** Print information about the analysis results. */
-    void print(std::ostream&) const;
+    /** Print information about the analysis results.
+     *
+     *  The output is a single line of comma-separated values if @p multiLine is true. Otherwise, the top-level commas are
+     *  replaced by linefeeds. */
+    void print(std::ostream&, bool multiLine=false) const;
 
 private:
     // Finish constructing

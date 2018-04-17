@@ -2,7 +2,7 @@
 
 #include <Partitioner2/Reference.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

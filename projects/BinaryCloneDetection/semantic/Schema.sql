@@ -20,7 +20,7 @@ drop table if exists semantic_binaries;
 drop table if exists semantic_cg_caller_fkey;
 drop table if exists equivalent_classes;
 drop table if exists semantic_rg;
-drop table if exists semantic_functions CASCADE;
+drop table if exists semantic_functions; -- CASCADE; # SQLite doesn't support cascade
 drop table if exists semantic_specfiles;
 drop table if exists semantic_files;
 drop table if exists semantic_faults;

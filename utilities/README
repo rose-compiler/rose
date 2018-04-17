@@ -1,0 +1,14 @@
+ALL utilities in this directory provide a command line interface that conforms
+to the GNU standard. For every tool --help gives you a brief description
+of the command line parameters and available options.
+
+Utilities are used for maintaining ROSE. They may be also helpful when
+implementing ROSE based tools.
+
+* Visualization  used in the documentation generation
+
+lsviz : visualizes a directory structure as a graph (by using dot) and
+        generates files in various formats like postscript, gif, jpeg, etc.
+        It translates the output of ls to a dot tree description and 
+        invokes dot. Several parameters allow to restrict and customize the
+        output.

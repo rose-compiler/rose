@@ -2,6 +2,8 @@ dnl Tests for presence of doxygen and some ROSE-specific switches for
 dnl configuring documentation.
 AC_DEFUN([ROSE_SUPPORT_DOXYGEN],
 [
+    ROSE_CONFIGURE_SECTION([Doxygen])
+
     DOXYGEN_DISABLE_HOWTO="Use --without-doxygen to disable generation of ROSE API documentation."
 
     dnl Find the doxygen program

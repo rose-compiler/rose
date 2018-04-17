@@ -23,4 +23,9 @@
  *
  *  @section installing_python_ubuntu1404 Ubuntu 14.04 "Trusty Tahr"
  *
- *  Run <code>apt-get install python3-dev</code> as the administrator. */
+ *  Run <code>apt-get install python3-dev</code> as the administrator.
+ *
+ *  @section installing_python_ubuntu1604 Ubuntu 16.04 "Xenial Xerus"
+ *
+ *  Run <code>apt-get install python3-dev</code> as the administrator.
+ */

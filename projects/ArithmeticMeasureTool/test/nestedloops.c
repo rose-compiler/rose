@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #define SIZE 10 
 
 // Instrumentation 1: add a few global variables
@@ -40,5 +41,8 @@ int main()
   }
   //Instrumentation 4: pass in loop iteration for the loop to be counted
   printf ("chflops =%lu chloads =%lu chstores=%lu\n", chflops, chloads, chstores);
+  assert (chflops== 401000);
+  assert (chloads== 800000);
+  assert (chstores== 8000);
   return 0;
 }

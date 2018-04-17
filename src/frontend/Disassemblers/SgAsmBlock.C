@@ -4,10 +4,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
-/** Fall-through virtual address.  A block's fall-through address is the virtual address that follows the last byte of the
- *  block's last instruction.  The block must have instructions (e.g., it cannot be a strict data block). */
 rose_addr_t
 SgAsmBlock::get_fallthrough_va()
 {
@@ -17,9 +15,6 @@ SgAsmBlock::get_fallthrough_va()
     return last->get_address() + last->get_size();
 }
 
-/** Determins if a block contains instructions.  Returns true if the block has instructions, false otherwise. We look only at
- *  the immediate descendants of this block.  See also, SageInterface::querySubTree() in order to get the list of all
- *  instructions or to consider all descendants. */
 bool
 SgAsmBlock::has_instructions() const
 {
@@ -31,8 +26,6 @@ SgAsmBlock::has_instructions() const
     return false;
 }
 
-/** Returns a multi-line string describing the letters used for basic block reasons.  The letters are returned by the padding
- *  version of reason_str(). */
 std::string
 SgAsmBlock::reason_key(const std::string &prefix)
 {
@@ -42,16 +35,12 @@ SgAsmBlock::reason_key(const std::string &prefix)
             prefix + "1 = first CFG traversal 2 = second CFG traversal 3 = third CFG traversal\n");
 }
 
-/** Returns reason string for this block. */
 std::string
 SgAsmBlock::reason_str(bool do_pad) const
 {
     return reason_str(do_pad, get_reason());
 }
 
-/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
- *  SgAsmBlock::Reason bits.  Some of the positions in the padded return value are used for more than one bit.  For instance,
- *  the first character can be "L" for leftovers, "N" for padding, "E" for entry point, or "-" for none of the above. */
 std::string
 SgAsmBlock::reason_str(bool do_pad, unsigned r)
 {
@@ -105,13 +94,6 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
     return result;
 }
 
-/** Returns true if basic block appears to be a function call.  If the target address is known and is a single value then it is
- * stored in the @p target_va argument, otherwise we store the maximum 64-bit address.  If the return address for the function
- * call is known then it is stored in the @p return_va argument, otherwise @p return_va will contain the maximum 64-bit
- * address. The return address is usually the fall-through address of the basic block.
- *
- * Note: Use this function in preference to SgAsmInstruction::isFunctionCallSlow() because the latter is intended to be used by
- * the Partitioner before an AST is created and might not be as accurate. */
 bool
 SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va) 
 {
@@ -156,3 +138,35 @@ SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va)
     }
     return retval;
 }
+
+void
+SgAsmBlock::append_statement( SgAsmStatement* statement )
+   {
+     p_statementList.push_back(statement);
+   }
+
+void
+SgAsmBlock::remove_children(  )
+   {
+     p_statementList.clear();
+   }
+
+void
+SgAsmBlock::remove_statement( SgAsmStatement* statement )
+   {
+     SgAsmStatementPtrList::iterator l = p_statementList.begin();
+     for (;l!=p_statementList.end();l++) {
+        SgAsmStatement* st = *l;
+        if (st==statement) {
+             break;
+        }
+     }  
+        if (l!=p_statementList.end())
+            p_statementList.erase(l);
+   }
+
+SgAsmFunction *
+SgAsmBlock::get_enclosing_function() const {
+        return SageInterface::getEnclosingNode<SgAsmFunction>(this);
+}
+

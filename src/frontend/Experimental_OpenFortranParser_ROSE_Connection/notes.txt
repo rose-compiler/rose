@@ -14,3 +14,19 @@ January 2016:
          OFP now included the unparsing of the Aterm representation back to Fortran code so that
          round trip testing is now possible.
 
+
+December 2017:
+   1) Coarray type support
+        a. SgCAFCoExpression
+        b. SgExprListExp coarraySpec = entityAttr.buildDimensionInfo()
+            - entityAttr.setCodimExp
+            - entityAttr.setHasCodimesion(true)
+            - DeclAttributes
+            - arrayType->set_dim_info(expressionList isa SgExprListExp)
+   2) SgArrayType
+       - set_index(SgExpression*)
+       - set_dim_info(SgExprListExp*)
+       - set_rank(int)  # should be size_t
+       - set_is_variable_length_array(bool)
+       - set_base_type(SgType*) 
+   3) Experimental_General_Language_Support

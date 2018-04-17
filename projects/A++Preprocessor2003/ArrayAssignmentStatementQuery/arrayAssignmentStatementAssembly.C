@@ -7,6 +7,8 @@
 
 #include "arrayPreprocessor.h"
 
+using namespace Rose;
+
 // ********************************************************************************************
 // Support for Query to build string representing the transformation of an expression statement
 // ********************************************************************************************
@@ -1492,7 +1494,7 @@ evaluateRewriteSynthesizedAttribute (
                SgName variableName = initializedName->get_name();
 
             // copy the string to avoid corruption of the AST's version of the string
-            // returnString = rose::stringDuplicate(variableName.str());
+            // returnString = Rose::stringDuplicate(variableName.str());
             // printf ("returnString (variable name) = %s \n",returnString);
 
                string buffer;
@@ -1582,7 +1584,7 @@ evaluateRewriteSynthesizedAttribute (
                  // printf("Not an A++ array object \n");
 
                  // variable is of some other type wo just output the variable name as an unparser would
-                 // returnString = rose::stringDuplicate(variableName.str());
+                 // returnString = Rose::stringDuplicate(variableName.str());
                     returnString = variableName.str();
                   }
 

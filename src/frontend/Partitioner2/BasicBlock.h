@@ -11,15 +11,17 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedPointer.h>
 
-#include <set>
-#include <string>
-#include <vector>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 /** Basic block information.
  *
@@ -29,7 +31,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
  *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
-class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
+class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
@@ -40,6 +42,24 @@ public:
         Semantics::SValuePtr expr_;
         EdgeType type_;
         Confidence confidence_;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(expr_);
+            s & BOOST_SERIALIZATION_NVP(type_);
+            s & BOOST_SERIALIZATION_NVP(confidence_);
+        }
+#endif
+
+    protected:
+        // intentionally undocumented; needed for serialization
+        Successor()
+            : type_(E_USER_DEFINED), confidence_(ASSUMED) {}
+
     public:
         explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED)
             : expr_(expr), type_(type), confidence_(confidence) {}
@@ -49,6 +69,7 @@ public:
 
         /** Type of successor. */
         EdgeType type() const { return type_; }
+        void type(EdgeType t) { type_ = t; }
 
         /** Confidence level of this successor.  Did we prove that this is a successor, or only assume it is?
          *
@@ -105,11 +126,45 @@ public:
         isFunctionReturn_ = other->isFunctionReturn_;
         mayReturn_ = other->mayReturn_;
     }
-    
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Serialization
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not saved
+        s & BOOST_SERIALIZATION_NVP(isFrozen_);
+        s & BOOST_SERIALIZATION_NVP(startVa_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(insns_);
+        s & BOOST_SERIALIZATION_NVP(dispatcher_);       // FIXME[Robb P Matzke 2016-11-07]
+        s & BOOST_SERIALIZATION_NVP(operators_);        // FIXME[Robb P Matzke 2016-11-07]
+        s & BOOST_SERIALIZATION_NVP(initialState_);
+        s & BOOST_SERIALIZATION_NVP(usingDispatcher_);
+        s & BOOST_SERIALIZATION_NVP(optionalPenultimateState_);
+        s & BOOST_SERIALIZATION_NVP(dblocks_);
+        s & BOOST_SERIALIZATION_NVP(insnAddrMap_);
+        s & BOOST_SERIALIZATION_NVP(successors_);
+        s & BOOST_SERIALIZATION_NVP(ghostSuccessors_);
+        s & BOOST_SERIALIZATION_NVP(isFunctionCall_);
+        s & BOOST_SERIALIZATION_NVP(isFunctionReturn_);
+        s & BOOST_SERIALIZATION_NVP(mayReturn_);
+    }
+#endif
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
+    BasicBlock()                                        // needed for serialization
+        : isFrozen_(false), startVa_(0), usingDispatcher_(false) {}
+
     // use instance() instead
     BasicBlock(rose_addr_t startVa, const Partitioner *partitioner)
         : isFrozen_(false), startVa_(startVa), usingDispatcher_(true) { init(partitioner); }
@@ -163,6 +218,12 @@ public:
      *  the instruction with the lowest address, but rather the instruction which is always executed first by the basic
      *  block. */
     rose_addr_t address() const { return startVa_; }
+
+    /** Get all instruction addresses.
+     *
+     *  The return value is the set of all virtual addresses for both instruction starting addresses and the internal addresses
+     *  of instructions. */
+    AddressIntervalSet insnAddresses() const;
 
     /** Get the address after the end of the final instruction.
      *
@@ -228,6 +289,11 @@ public:
 public:
     /** Get the number of data blocks owned. */
     size_t nDataBlocks() const { return dblocks_.size(); }
+
+    /** Addresses that are part of static data.
+     *
+     *  Returns all addresses that are part of static data. */
+    AddressIntervalSet dataAddresses() const;
 
     /** Determine if this basic block contains the specified data block.
      *
@@ -305,8 +371,12 @@ public:
      *  The control flow successors indicate how control leaves the end of a basic block. These successors should be the
      *  most basic level of information; e.g., a basic block that results in an unconditional function call should not have
      *  an edge representing the return from that call. The successors are typically computed in the partitioner and cached
-     *  in the basic block. */
+     *  in the basic block.
+     *
+     *  @{ */
     const Sawyer::Cached<Successors>& successors() const { return successors_; }
+    void successors(const Successors&);
+    /** @} */
 
     /** Ghost successors.
      *

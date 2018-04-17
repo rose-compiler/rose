@@ -1,0 +1,1 @@
+#pragma omp parallel  default(shared) private(i)

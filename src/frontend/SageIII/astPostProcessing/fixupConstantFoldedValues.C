@@ -412,12 +412,17 @@ RemoveConstantFoldedValue::handleTheSynthesizedAttribute( SgNode* node, const Re
              {
 #if 0
                printf ("Found an originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
+               printf ("   --- node = %p = %s \n",node,node->class_name().c_str());
 #endif
                if (node == value->get_parent())
                   {
                  // What kind of IR node are we at presently? Replace the expression representing the SgValueExp with the Expression representing the original subtree.
 #if 0
                     printf ("Current IR node with SgExpression child = %p = %s originalExpressionTree = %p = %s \n",node,node->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
+#endif
+#if 0
+                    node->get_startOfConstruct()->display("handleTheSynthesizedAttribute(): node source position: debug");
+                    value->get_startOfConstruct()->display("handleTheSynthesizedAttribute(): value source position: debug");
 #endif
                     bool traceReplacement = true;
                     ConstantFoldedValueReplacer r(traceReplacement, value);
@@ -488,7 +493,13 @@ RemoveConstantFoldedValue::evaluateSynthesizedAttribute ( SgNode* node, SubTreeS
 #endif
             // Make sure that the traversal will see the nested subtrees of any originalExpressionTree (since they may have constant folded subexpresions).
                RemoveConstantFoldedValue nestedOriginalExpressionTreeTraversal;
-               RemoveConstantFoldedValueSynthesizedAttribute nestedSynthesizedAttribute = nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
+
+            // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
+            // RemoveConstantFoldedValueSynthesizedAttribute nestedSynthesizedAttribute = nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
+
+            // DQ (12/8/2016): Note return value is not used.
+               nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
+
 #if 0
             // DQ (10/8/2011): We should not handl this here, I think.
                handleTheSynthesizedAttribute(node,nestedSynthesizedAttribute);

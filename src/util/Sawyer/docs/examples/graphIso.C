@@ -8,7 +8,7 @@ using namespace Sawyer::Container::Algorithm;
 // A graph with no user data, only connectivity info.
 typedef Sawyer::Container::Graph<> MyGraph;
 
-static void
+static CsiNextAction
 printSolution(const MyGraph &g1, const std::vector<size_t> &g1VertIds,
               const MyGraph &g2, const std::vector<size_t> &g2VertIds) {
     std::cout <<"  solution graph has " <<g1.nVertices() <<" vertices\n";
@@ -22,6 +22,8 @@ printSolution(const MyGraph &g1, const std::vector<size_t> &g1VertIds,
     MyGraph subgraph2 = graphCopySubgraph(g2, g2VertIds);
     std::cout <<"    subgraph2 has " <<subgraph2.nEdges() <<" edges"
               <<" and is " <<(graphIsConnected(subgraph2) ? "" : "not ") <<"connected\n";
+
+    return CSI_CONTINUE;                                // find more solutions
 }
 
 int main() {

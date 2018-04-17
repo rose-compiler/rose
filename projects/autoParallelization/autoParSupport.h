@@ -31,17 +31,22 @@
 #include <map>
 namespace AutoParallelization
 {
-  //Handle annotation, debugging flags
-  void autopar_command_processing(std::vector<std::string>&argvList);
+  //Handle annotation, debugging flags, no longer used, replaced by using Sawyer command line processing
+  //  void autopar_command_processing(std::vector<std::string>&argvList);
 
   // Required analysis and their initialization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
-  extern bool enable_debug; 
+  extern bool enable_debug; // maximum debugging output to the screen
+  extern bool keep_going; 
+  extern bool enable_verbose;  // verbose mode, print out loop info. for successful or failed parallelization attempts . Default is true
+  extern bool no_aliasing;  // assuming aliasing or not
   extern bool enable_patch; // an option to control the generation of patch files
   extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.
   extern bool b_unique_indirect_index; // assume all arrays used as indirect indices has unique elements(no overlapping)
   extern bool enable_distance; // print out absolute dependence distance for a dependence relation preventing from parallelization
+  extern bool dump_annot_file; // print out annotation file's content
+  extern std::vector<std::string> annot_filenames;
 
   extern bool keep_c99_loop_init; // avoid normalize C99 style loop init statement: for (int i=0; ...)
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
@@ -73,7 +78,8 @@ namespace AutoParallelization
   void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, LoopTreeDepGraph* depgraph);
 
   // Recognize reduction variables for a loop
-  std::vector<SgInitializedName*> RecognizeReduction(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars); 
+  // Refactored into SageInterface
+ // std::vector<SgInitializedName*> RecognizeReduction(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars); 
 
   // Collect all classified variables from an OmpAttribute attached to a loop node,regardless their omp type
   void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result);
@@ -95,6 +101,15 @@ namespace AutoParallelization
 
   //! Output the difference between user-defined OpenMP and compiler-generated OpenMP
   void diffUserDefinedAndCompilerGeneratedOpenMP(SgSourceFile* sfile);
+
+  //! Check if two expressions access different memory locations. If in double, return false
+  //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
+  //TODO: move to SageInterface when ready
+  bool differentMemoryLocation(SgExpression* e1, SgExpression* e2);
+
+  //! Check if a loop has any unsupported language features so we can skip them for now
+  bool useUnsupportedLanguageFeatures(SgNode* loop, VariantT* blackConstruct);
+
 } //end namespace
 
 #endif //auto_par_support_INCLUDED

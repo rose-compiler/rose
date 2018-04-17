@@ -1242,9 +1242,6 @@ checkfast:	runtimeCheck \
 # DQ (7/16/2011): These are the tests that are failing with the new name qualification.
 #				$(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS))
 
-clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp rted_source
-
 # DQ (7/16/2011): These are isolated tests that fail for the new name qualification (some progress).
 # test_name_qualification_1: $(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS))
 # test_name_qualification_1: $(patsubst $(srcdir)/%, run/%, $(srcdir)/tests/Cxx/io)
@@ -1256,7 +1253,7 @@ test_name_qualification_2: run/C++/array_index_out_of_bound
 
 if ROSE_USE_RTED
 # run/C/floating_point_errors
-check-local: runtimeCheck checkfast \
+conditional-check-local: runtimeCheck checkfast \
 				run/C/allocation_deallocation_errors \
 				run/C/array_index_out_of_bound \
 				run/C/C99_specific_errors \
@@ -1282,7 +1279,7 @@ else
 # DQ (11/10/2009): Comment out, with permission from Thomas, the RTED test until we
 # can explore the RedHat version 5 problem, 32-bit problem, and Mac OSX problem.
 # check-local: runtimeCheck checkfast
-check-local:
+conditional-check-local:
 	@echo "\n RTED short tests not run (Commented out temporarily):"
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/runtimeErrorCheck: make check not run here: configure --enable-rted=<RTED Path> ******"
@@ -1292,3 +1289,9 @@ endif
 
 endif
 #endif
+
+check-local: conditional-check-local
+
+clean-local:
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp rted_source
+

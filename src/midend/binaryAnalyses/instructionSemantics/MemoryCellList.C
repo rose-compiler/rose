@@ -1,7 +1,7 @@
 #include <sage3basic.h>
 #include <MemoryCellList.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -39,6 +39,20 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
     return retval;
 }
 
+// identical to readMemory but without side effects
+SValuePtr
+MemoryCellList::peekMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    CellList::iterator cursor = get_cells().begin();
+    CellList cells = scan(cursor /*in,out*/, addr, dflt->get_width(), addrOps, valOps);
+    SValuePtr retval = mergeCellValues(cells, dflt, addrOps, valOps);
+
+    // If there's no must_equal match and at least one may_equal match, then merge the default into the return value.
+    if (!cells.empty() && cursor == get_cells().end())
+        retval = retval->createMerged(dflt, merger(), valOps->solver());
+
+    return retval;
+}
+
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {
@@ -67,6 +81,19 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
     // Insert the new cell
     cells.push_front(newCell);
     latestWrittenCell_ = newCell;
+}
+
+bool
+MemoryCellList::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps, RiscOperators *valOps) const {
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    for (size_t offset = 0; offset < nBytes; ++offset) {
+        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->get_width(), offset));
+        CellList::const_iterator cursor = get_cells().begin();
+        if (scan(cursor/*in,out*/, byteAddress, 8, addrOps, valOps).empty())
+            return false;
+    }
+    return true;
 }
 
 bool
@@ -313,3 +340,7 @@ MemoryCellList::traverse(MemoryCell::Visitor &v) {
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellList);
+#endif

@@ -5,7 +5,7 @@
 #include "fixupDeclarationScope.h"
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Message logging mechanism.
 Sawyer::Message::Facility FixupAstDeclarationScope::mlog;
@@ -114,8 +114,7 @@ void FixupAstDeclarationScope::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          mlog = Sawyer::Message::Facility("FixupAstDeclarationScope", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::FixupAstDeclarationScope");
         }
    }
 

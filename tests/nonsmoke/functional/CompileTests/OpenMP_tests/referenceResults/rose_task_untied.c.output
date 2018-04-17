@@ -1,0 +1,4 @@
+#pragma omp parallel 
+#pragma omp single 
+#pragma omp task  untied
+#pragma omp task  if(1)

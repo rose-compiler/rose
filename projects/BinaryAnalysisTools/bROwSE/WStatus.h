@@ -13,7 +13,7 @@ public:
     enum Column {
         SequenceColumn,                                 // sequence number of message (not the message ID)
         ArrivalColumn,                                  // Time the message arrived
-        FacilityColumn,                                 // like "rose::BinaryAnalysis::Partitioner2"
+        FacilityColumn,                                 // like "Rose::BinaryAnalysis::Partitioner2"
         ImportanceColumn,                               // DEBUG, INFO, WARN, ERROR, etc.
         MessageColumn,                                  // The message text
         NColumns

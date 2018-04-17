@@ -3,7 +3,7 @@
 
 #include <boost/graph/depth_first_search.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /* See header file for documentation. */

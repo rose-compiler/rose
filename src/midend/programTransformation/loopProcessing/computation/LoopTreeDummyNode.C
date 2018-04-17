@@ -397,7 +397,7 @@ std::string LoopTreeCopyArray::toString() const
 
 std::string LoopTreeReplAst::toString() const
 {
-  return "replace " + AstToString(orig) + " -> " + AstToString(repl);
+  return "replace " + AstInterface::AstToString(orig) + " -> " + AstInterface::AstToString(repl);
 }
 
 AstNodePtr LoopTreeReplAst::CodeGen( ) const

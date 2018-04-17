@@ -1,10 +1,7 @@
 // -*- c++ -*-
 
-/** @page rosetools ROSE-Based Tools
- *  A List of Program Transformation Tools Built On Top Of ROSE
+/** @page rosetools_page ROSE-Based Tools
  *
- * @ref declaration_move "Declaration Move Tool" Re-scoping variable declarations 
- * 
+ * List of some available analysis and transformation tools.
  *
- *  This page is generated from $ROSE/docs/Rose/Tools/roseBasedTools.dox */
-
+ * See @ref rosetools. */

@@ -15,7 +15,7 @@ class LoopPar;
 class CopyArrayOperator;
 class AstNodePtr;
 class LoopTransformInterface;
-class ROSE_DLL_API LoopTransformOptions 
+class LoopTransformOptions 
 {
  public:
   class OptRegistryType
@@ -41,7 +41,7 @@ class ROSE_DLL_API LoopTransformOptions
   CopyArrayOperator* cpOp;
   unsigned cacheline, reuseDist, splitlimit, defaultblocksize, parblocksize;
   LoopTransformOptions();
-  ~LoopTransformOptions();
+  virtual ~LoopTransformOptions();
 
  public:
   static LoopTransformOptions* GetInstance () ;

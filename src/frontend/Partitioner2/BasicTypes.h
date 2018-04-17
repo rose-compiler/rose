@@ -1,12 +1,17 @@
 #ifndef ROSE_Partitioner2_BasicTypes_H
 #define ROSE_Partitioner2_BasicTypes_H
 
-// Define this if you want extra invariant checks that are quite expensive. This only makes a difference if NDEBUG and
-// SAWYER_NDEBUG are both undefined--if either one of them are defined then no expensive (or inexpensive) checks are
-// performed.
-//#define ROSE_PARTITIONER_EXPENSIVE_CHECKS
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+#include <string>
+#include <vector>
 
-namespace rose {
+// Define this as one if you want extra invariant checks that are quite expensive, or define as zero. This only makes a
+// difference if NDEBUG and SAWYER_NDEBUG are both undefined--if either one of them are defined then no expensive (or
+// inexpensive) checks are performed.
+#define ROSE_PARTITIONER_EXPENSIVE_CHECKS 0
+
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -96,6 +101,15 @@ struct AstConstructionSettings {
      *  parent pointer will always return the same basic block. */
     bool copyAllInstructions;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & allowEmptyGlobalBlock & allowFunctionWithNoBasicBlocks & allowEmptyBasicBlocks & copyAllInstructions;
+    }
+
+public:
     /** Default constructor. */
     AstConstructionSettings()
         : allowEmptyGlobalBlock(false), allowFunctionWithNoBasicBlocks(false), allowEmptyBasicBlocks(false),
@@ -179,6 +193,15 @@ struct LoaderSettings {
     LoaderSettings()
         : deExecuteZerosThreshold(0), deExecuteZerosLeaveAtFront(16), deExecuteZerosLeaveAtBack(1),
           memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false) {}
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & deExecuteZerosThreshold & deExecuteZerosLeaveAtFront & deExecuteZerosLeaveAtBack;
+        s & memoryDataAdjustment & memoryIsExecutable;
+    }
 };
 
 /** Settings that control the disassembler.
@@ -188,6 +211,14 @@ struct DisassemblerSettings {
     std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
                                                      *   ISA name will override the architecture that's chosen from the
                                                      *   binary container(s) such as ELF or PE. */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & isaName;
+    }
 };
 
 /** Controls whether the function may-return analysis runs. */
@@ -202,17 +233,44 @@ enum FunctionReturnAnalysis {
                                                      *   may-return analysis. */
 };
 
-/** Settings that control the partitioner.
+/** Settings that directly control a partitioner.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
-struct PartitionerSettings {
-    std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
-                                                     *   addresses are in addition to entry addresses, addresses from
-                                                     *   symbols, addresses from configuration files, etc. */
+ *  These settings are specific to a @ref Partitioner object. */
+struct BasePartitionerSettings {
     bool usingSemantics;                            /**< Whether instruction semantics are used. If semantics are used,
                                                      *   then the partitioner will have more accurate reasoning about the
                                                      *   control flow graph.  For instance, semantics enable the detection
                                                      *   of certain kinds of opaque predicates. */
+    bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
+    bool basicBlockSemanticsAutoDrop;               /**< Conserve memory by dropping semantics for attached basic blocks. */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(usingSemantics);
+        s & BOOST_SERIALIZATION_NVP(checkingCallBranch);
+        s & BOOST_SERIALIZATION_NVP(basicBlockSemanticsAutoDrop);
+    }
+
+public:
+    BasePartitionerSettings()
+        : usingSemantics(false), checkingCallBranch(false), basicBlockSemanticsAutoDrop(true) {}
+};
+
+/** Settings that control the engine partitioning.
+ *
+ *  These switches are used by the engine to control how it partitions addresses into instructions and static data,
+ *  instructions into basic blocks, and basic blocks and static data into functions.  Some of these settings are copied into a
+ *  @ref Partitioner object while others affect the @ref Engine directly.
+ *
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
+struct PartitionerSettings {
+    BasePartitionerSettings base;
+    std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
+                                                     *   addresses are in addition to entry addresses, addresses from
+                                                     *   symbols, addresses from configuration files, etc. */
     bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
                                                      *   is a CFG edge that is apparent from the instruction but which is
                                                      *   not taken according to semantics. For instance, a branch
@@ -229,6 +287,7 @@ struct PartitionerSettings {
     rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
     bool findingIntraFunctionCode;                  /**< Suck up unused addresses as intra-function code. */
     bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
+    bool findingInterFunctionCalls;                 /**< Look for function calls between functions. */
     AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
     bool doingPostAnalysis;                         /**< Perform enabled post-partitioning analyses? */
     bool doingPostFunctionMayReturn;                /**< Run function-may-return analysis if doingPostAnalysis is set? */
@@ -237,19 +296,54 @@ struct PartitionerSettings {
     bool doingPostFunctionNoop;                     /**< Find and name functions that are effectively no-ops. */
     FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
     bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
+    bool findingCodeFunctionPointers;               /**< Look for function pointers in instructions. */
     bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
     bool splittingThunks;                           /**< Split thunks into their own separate functions. */
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
     bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
     bool namingStrings;                             /**< Give labels to constants that are string literal addresses. */
+    bool demangleNames;                             /**< Run all names through a demangling step. */
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & base;
+        s & startingVas;
+        s & followingGhostEdges;
+        s & discontiguousBlocks;
+        s & findingFunctionPadding;
+        s & findingDeadCode;
+        s & peScramblerDispatcherVa;
+        s & findingIntraFunctionCode;
+        s & findingIntraFunctionData;
+        s & findingInterFunctionCalls;
+        s & interruptVector;
+        s & doingPostAnalysis;
+        s & doingPostFunctionMayReturn;
+        s & doingPostFunctionStackDelta;
+        s & doingPostCallingConvention;
+        s & doingPostFunctionNoop;
+        s & functionReturnAnalysis;
+        s & findingDataFunctionPointers;
+        s & findingCodeFunctionPointers;
+        s & findingThunks;
+        s & splittingThunks;
+        s & semanticMemoryParadigm;
+        s & namingConstants;
+        s & namingStrings;
+    }
+
+public:
     PartitionerSettings()
-        : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
+        : followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
-          doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
-          doingPostCallingConvention(false), doingPostFunctionNoop(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
-          findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false),
-          semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
+          findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
+          doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
+          functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingCodeFunctionPointers(false),
+          findingThunks(true), splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true),
+          namingStrings(true), demangleNames(true) {}
 };
 
 /** Settings for controling the engine behavior.
@@ -258,10 +352,29 @@ struct PartitionerSettings {
  *  descriptions and command-line parser for these switches can be obtained from @ref engineBehaviorSwitches. */
 struct EngineSettings {
     std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
+    bool exitOnError;                               /**< If true, emit error message and exit non-zero, else throw. */
+
+    EngineSettings()
+        : exitOnError(true) {}
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & configurationNames;
+        s & exitOnError;
+    }
 };
 
 // Additional declarations w/out definitions yet.
 class Partitioner;
+class Function;
+typedef Sawyer::SharedPointer<Function> FunctionPtr;
+class BasicBlock;
+typedef Sawyer::SharedPointer<BasicBlock> BasicBlockPtr;
+class DataBlock;
+typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
 
 } // namespace
 } // namespace

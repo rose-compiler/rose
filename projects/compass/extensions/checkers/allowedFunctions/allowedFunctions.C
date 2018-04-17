@@ -9,6 +9,8 @@
 #ifndef COMPASS_ALLOWED_FUNCTIONS_H
 #define COMPASS_ALLOWED_FUNCTIONS_H
 
+using namespace Rose;
+
 namespace CompassAnalyses
    { 
      namespace AllowedFunctions
@@ -100,7 +102,7 @@ namespace CompassAnalyses
 #include "compass.h"
 // #include "allowedFunctions.h"
 
-using namespace StringUtility;
+using namespace Rose::StringUtility;
 using namespace boost::algorithm;
 
 namespace CompassAnalyses

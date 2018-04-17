@@ -10,7 +10,7 @@
 
 #ifdef TEMPLATE_ONLY
 
-ROSE_DLL_API bool DebugDefUseChain();
+bool DebugDefUseChain();
 
 template <class Node>
 class BuildDefUseChain 
@@ -73,7 +73,7 @@ class ProcessGenInfo
     std::string varname;
     AstNodePtr scope;
     if (DebugDefUseChain()) {
-      std::cerr << "processing gen mod info : " << AstToString(mod.first) << " : " << AstToString(mod.second) << std::endl;
+      std::cerr << "processing gen mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
       DumpDefSet(BuildDefUseChain<Node>::defvec,in);
     }
 
@@ -88,7 +88,7 @@ class ProcessGenInfo
       BuildDefUseChain<Node>::g->add_unknown_def( in, mod);
     }
     if (DebugDefUseChain()) {
-      std::cerr << "finish processing gen mod info : " << AstToString(mod.first) << " : " << AstToString(mod.second) << std::endl;
+      std::cerr << "finish processing gen mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
       DumpDefSet(BuildDefUseChain<Node>::defvec,in);
     }
     return true;
@@ -114,7 +114,7 @@ class ProcessKillInfo
     std::string varname;
     AstNodePtr scope;
     if (DebugDefUseChain()) {
-      std::cerr << "processing kill mod info : " << AstToString(mod.first) << " : " << AstToString(mod.second) << std::endl;
+      std::cerr << "processing kill mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
       DumpDefSet(BuildDefUseChain<Node>::defvec,in);
     }
     if (BuildDefUseChain<Node>::fa.IsVarRef(mod.first, 0, &varname, &scope)) {
@@ -123,7 +123,7 @@ class ProcessKillInfo
       in &= kill;
     }
     if (DebugDefUseChain()) {
-      std::cerr << "finish processing kill mod info : " << AstToString(mod.first) << " : " << AstToString(mod.second) << std::endl;
+      std::cerr << "finish processing kill mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
       DumpDefSet(BuildDefUseChain<Node>::defvec,in);
     }
     return true;
@@ -148,7 +148,7 @@ class ProcessUseInfo
   bool operator()( const std::pair<AstNodePtr, AstNodePtr>& read)
   {
     if (DebugDefUseChain())  {
-       std::cerr << "processind read info : " << AstToString(read.first) << " : " << AstToString(read.second) << std::endl;
+       std::cerr << "processind read info : " << AstInterface::AstToString(read.first) << " : " << AstInterface::AstToString(read.second) << std::endl;
          DumpDefSet(BuildDefUseChain<Node>::defvec,in);
     }
     Node* cur = BuildDefUseChain<Node>::graph->CreateNode( BuildDefUseChain<Node>::fa, read.first, read.second, false);
@@ -211,7 +211,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
   for (ReachingDefinitionBase::iterator p = base.begin(); p != base.end(); ++p) {
     std::pair<AstNodePtr,AstNodePtr> cur = base.get_ref(p);
     if (DebugDefUseChain()) 
-       std::cerr << "creating def node : " << AstToString(cur.first) << " : " << AstToString(cur.second) << std::endl;
+       std::cerr << "creating def node : " << AstInterface::AstToString(cur.first) << " : " << AstInterface::AstToString(cur.second) << std::endl;
     Node* n = CreateNode( fa, cur.first, cur.second, true);
     assert(n != 0);
     defvec.push_back(n);
@@ -239,7 +239,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
            ++p) {
         AstNodePtr cur = *p;
         if (DebugDefUseChain())  
-            std::cerr << "processing stmt : " << AstToString(cur) << std::endl;
+            std::cerr << "processing stmt : " << AstInterface::AstToString(cur) << std::endl;
         collect(fa, cur, &opgen, &opread, &opkill); 
       }
   }
@@ -323,7 +323,7 @@ void DefUseChainNode::Dump() const
     std::cerr << "definition: ";
   else
     std::cerr << "use: ";
-  std::cerr << AstToString(ref) << " : " << AstToString(stmt) << std::endl;
+  std::cerr << AstInterface::AstToString(ref) << " : " << AstInterface::AstToString(stmt) << std::endl;
 }
 
 std::string DefUseChainNode::toString() const
@@ -333,7 +333,7 @@ std::string DefUseChainNode::toString() const
      result = "definition:";
   else
     result = "use:";
-  result = result + AstToString(ref) + ":" + AstToString(stmt) + " ";
+  result = result + AstInterface::AstToString(ref) + ":" + AstInterface::AstToString(stmt) + " ";
   return result;
 }
 

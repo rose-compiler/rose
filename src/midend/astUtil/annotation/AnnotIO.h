@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <string>
-#include "rosedll.h"
 
 bool is_space( char c);
 bool is_num( char c);
@@ -23,8 +22,6 @@ void read_id( std::istream& in, const std::string& s);
 
 std::string read_num( std::istream& in );
 std::string read_operator( std::istream& in );
-
-ROSE_DLL_API bool DebugAnnot();
 
 class ReadError { 
  public:

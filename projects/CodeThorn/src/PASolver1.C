@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include "PASolver1.h"
+#include "Timer.h"
 
 SPRAY::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPreInfo,
@@ -24,6 +25,14 @@ SPRAY::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 
 void
 SPRAY::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
+  if(!_flow.contains(lab)) {
+    // schroder3 (2016-07-07): If the label does not exist in the CFG, then
+    //  it does not have predecessors and the given pre-info therefore does
+    //  not change. This check is necessary if Flow::pred(Label) uses the
+    //  Sawyer graph as underlying datastructure because Flow::pred then
+    //  expects that the given label exists in the CFG.
+    return;
+  }
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
     Lattice* predInfo=_initialElementFactory.create();
@@ -42,12 +51,31 @@ SPRAY::PASolver1::computePostInfo(Label lab,Lattice& info) {
 // runs until worklist is empty
 void
 SPRAY::PASolver1::runSolver() {
+  Timer solverTimer;
   cout<<"INFO: solver 1 started."<<endl;
-  ROSE_ASSERT(!_workList.isEmpty());
+  solverTimer.start();
+  //ROSE_ASSERT(!_workList.isEmpty()); empty files (programs of zero length)
   while(!_workList.isEmpty()) {
     Edge edge=_workList.take();
-    Label lab0=edge.source;
-    Label lab1=edge.target;
+    Label lab0=edge.source();
+    Label lab1=edge.target();
+
+    // schroder3 (2016-08-05): Set up the combine and approximatedBy member functions according
+    //  to the edge type.
+    void(Lattice::*combineMemFunc)(Lattice&);
+    bool(Lattice::*approximatedByMemFunc)(Lattice&);
+    if(edge.isType(EDGE_BACKWARD)) {
+      combineMemFunc = &Lattice::combineAsymmetric;
+      approximatedByMemFunc = &Lattice::approximatedByAsymmetric;
+      if(_trace) {
+        cout << "TRACE: BACKWARD edge" << endl;
+      }
+    }
+    else {
+      combineMemFunc = &Lattice::combine;
+      approximatedByMemFunc = &Lattice::approximatedBy;
+    }
+
     //if(_trace)
     //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
@@ -56,14 +84,14 @@ SPRAY::PASolver1::runSolver() {
     if(info->isBot()) {
       if(_trace) {
         cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
-        cout<<"-> cancel (because of bot)";
+        cout<<" ==> cancel (because of bot)";
         cout<<endl;
       }
       // do nothing (non-reachable code)
     } else {
       if(_trace) {
         cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
-        cout<<"->"<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+        cout<<" ==> "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
         cout<<endl;
       }
       _transferFunctions.transfer(edge,*info);
@@ -75,7 +103,8 @@ SPRAY::PASolver1::runSolver() {
         cout<<endl;
       }
       
-      bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
+      // schroder3 (2016-08-05): Check whether the combine below will change something.
+      bool isApproximatedBy=(info->*approximatedByMemFunc)(*_analyzerDataPreInfo[lab1.getId()]);
       if(!isApproximatedBy) {
         if(_trace) {
           cout<<"TRACE: old df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
@@ -86,7 +115,7 @@ SPRAY::PASolver1::runSolver() {
           cout<<endl;
         }
 
-        _analyzerDataPreInfo[lab1.getId()]->combine(*info);
+        (_analyzerDataPreInfo[lab1.getId()]->*combineMemFunc)(*info);
         
         if(_trace) {
           cout<<"TRACE: new df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
@@ -94,7 +123,9 @@ SPRAY::PASolver1::runSolver() {
         }
         
         Flow outEdges=_flow.outEdges(lab1);
-        _workList.add(outEdges);
+	for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
+	  _workList.add(*i);
+	}
         if(_trace)
           cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
       } else {
@@ -105,7 +136,7 @@ SPRAY::PASolver1::runSolver() {
     }
     delete info;
   }
-  cout<<"INFO: solver 1 finished."<<endl;
+  cout<<"INFO: solver 1 finished after " << static_cast<unsigned long>(solverTimer.getElapsedTimeInMilliSec()) << "ms."<<endl;
 }
 
 #endif

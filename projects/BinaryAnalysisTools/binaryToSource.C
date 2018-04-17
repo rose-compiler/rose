@@ -5,9 +5,9 @@
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 // Global settings adjusted from the command-line
 struct Settings {
@@ -27,6 +27,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     Parser parser = engine.commandLineParser(purpose, description);
 
     SwitchGroup tool("Tool-specific switches");
+    tool.name("tool");
+
     tool.insert(Switch("trace-generation")
                 .intrinsicValue(true, settings.generator.traceRiscOps)
                 .doc("Cause the source generation phase to emit information about the basic RISC-like steps performed for "

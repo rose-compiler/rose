@@ -24,7 +24,7 @@ distclean-local:
 pkginclude_HEADERS = DebugTool.h  DefUseExtension.h  DependenceGraph.h  InterproceduralInfo.h  SimpleDirectedGraph.h  SlicingInfo.h EDefUse.h SDGLibraryExtender.h CreateSlice.h CreateSliceSet.h ControlFlowGraph.h
 
 # New files (not yet used) and representing bug fixes from University of Wisc not yet passing
-# "make check" rule in tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests
+# "make check" rule in tests/nonsmoke/functional/roseTests/programAnalysisTests/staticInterproceduralSlicingTests
 # This is an intermediate step to getting this into place.
 NEW_SDG = NEW_ControlDependenceGraph.C  NEW_CreateSliceSet.C  NEW_CreateSliceSet.h  NEW_DataDependenceGraph.C  NEW_DependenceGraph.C  NEW_DependenceGraph.h  NEW_EDefUse.C  NEW_EDefUse.h  NEW_MergedDependenceGraph.C  NEW_SystemDependenceGraph.C
 

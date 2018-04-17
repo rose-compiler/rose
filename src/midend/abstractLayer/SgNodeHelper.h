@@ -33,6 +33,9 @@ namespace SgNodeHelper {
   //! returns the declaration statement found for a given variable symbol.
   SgDeclarationStatement* findVariableDeclarationWithVariableSymbol(SgNode* node);
 
+  //! returns the function declaration statement found for a given function symbol.
+  SgFunctionDeclaration* findFunctionDeclarationWithFunctionSymbol(SgNode* node);
+
   //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
   std::string sourceFilenameLineColumnToString(SgNode* node);
 
@@ -130,11 +133,24 @@ namespace SgNodeHelper {
   //! checks whether the node 'node' is the root node of the AST by using the get_parent function.
   bool isAstRoot(SgNode* node);
 
+  //! is true if 'node' is the root node of the AST representing a Loop construct (While, DoWhile, For).
+  bool isLoopStmt(SgNode* node);
+
   //! is true if 'node' is the root node of the AST representing the condition of a Loop construct (While, DoWhile, For).
   bool isLoopCond(SgNode* node);
 
+  //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, CondExp, switch.
+  bool isCondStmtOrExpr(SgNode* node);
+
+  //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, switch.
+  bool isCondStmt(SgNode* node);
+
   //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, CondExp, switch.
   bool isCond(SgNode* node);
+
+  //! sets 'cond' as the root node of the AST representing the condition in statements if, while, dowhile, for, switch.
+  void setCond(SgStatement* stmt, SgNode* cond);
+
 
   //! returns true for --Expr and ++Expr, otherwise false.
   bool isPrefixIncDecOp(SgNode* node);
@@ -145,8 +161,14 @@ namespace SgNodeHelper {
   //! returns the SgSymbol* of the variable in a variable declaration
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
+  //! returns the SgSymbol* of the variable in a function declaration
+  SgFunctionSymbol* getSymbolOfFunctionDeclaration(SgFunctionDeclaration* decl);
+
   //! returns the SgSymbol* of the variable in a SgVarRefExp
   SgSymbol* getSymbolOfVariable(SgVarRefExp* varRefExp);
+
+  //! returns the SgSymbol* of the function in a SgFunctionRefExp
+  SgFunctionSymbol* getSymbolOfFunction(SgFunctionRefExp* funcRefExp);
 
   //! returns the SgSymbol* of a SgInitializedName
   SgSymbol* getSymbolOfInitializedName(SgInitializedName* initName);
@@ -178,13 +200,28 @@ namespace SgNodeHelper {
      (=relevant) loop. This function can be used for:
      SgWhile,SgDoWhile,SgForStatement, SgSwitch.
   */
-  std::set<SgNode*> LoopRelevantBreakStmtNodes(SgNode* node);
+  std::set<SgNode*> loopRelevantBreakStmtNodes(SgNode* node);
+  std::set<SgContinueStmt*> loopRelevantContinueStmtNodes(SgNode* node);
+
+  //! collects all case labels from the switch it started in (excludes nested switch stmts)
+  std::set<SgCaseOptionStmt*> switchRelevantCaseStmtNodes(SgNode* node);
+
+  /*! returns the default stmt if it exists. Otherwise return 0 and can
+     be used to test whether a default stmt exists in a given switch
+     stmt. */
+  SgDefaultOptionStmt* switchRelevantDefaultStmtNode(SgNode* node);
 
   //! returns the first child of an arbitrary AST node (throws exception if numChildren==0)
   SgNode* getFirstChild(SgNode* node);
 
   //! return a function-call's argument list
   SgExpressionPtrList& getFunctionCallActualParameterList(SgNode* node);
+
+  // schroder3 (2016-07-27): Returns the callee of the given call expression
+  SgExpression* getCalleeOfCall(/*const*/ SgFunctionCallExp* call);
+
+  // schroder3 (2016-06-24): Returns the function type of the callee of the given call expression
+  SgFunctionType* getCalleeFunctionType(/*const*/SgFunctionCallExp* call);
 
   //! return a function-definition's list of formal paramters
   SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);
@@ -194,6 +231,9 @@ namespace SgNodeHelper {
 
   //! returns the set of all local variable-declarations of a function
   std::set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
+
+  //! schroder3 (2016-07-22): Returns the closest function definition that contains the given node
+  SgFunctionDefinition* getClosestParentFunctionDefinitionOfLocatedNode(SgLocatedNode* locatedNode);
 
   //! returns the child of SgExprStatement (which is guaranteed to be unique and to exist)
   SgNode* getExprStmtChild(SgNode* node);
@@ -275,6 +315,49 @@ namespace SgNodeHelper {
 
   // checks for float, double, long double
   bool isFloatingPointType(SgType* type);
+
+  // schroder3 (2016-07-22): Modified version of SageInterface::isPointerType(...) that returns the
+  //  underlying pointer type.
+  const SgPointerType* isPointerType(const SgType* t);
+
+  // schroder3 (2016-08-17): Added support for rvalue reference types. See isLvalueReferenceType(...)
+  //  if only lvalue references are desired.
+  // schroder3 (2016-07-22): Modified version of SageInterface::isReferenceType(...) that
+  //  returns the underlying reference type.
+  //
+  // Returns the underlying (without typedefs and mofifiers) rvalue OR lvalue reference type if the
+  //  given type is such a reference type. Returns 0 otherwise.
+  const SgType* isReferenceType(const SgType* t);
+
+  // schroder3 (2016-08-22): Modified version of SageInterface::isReferenceType(...) that
+  //  returns the underlying LVALUE reference type.
+  const SgReferenceType* isLvalueReferenceType(const SgType* t);
+
+  // schroder3 (2016-08-22): Returns the underlying RVALUE reference type if the given type is a
+  //  rvalue reference type. Returns 0 otherwise.
+  const SgRvalueReferenceType* isRvalueReferenceType(const SgType* t);
+
+  // schroder3 (2016-08-22): Wrapper around SgReferenceType::get_base_type(...) and
+  //  SgRvalueReferenceType::get_base_type(...) that works for both reference types.
+  //  (This is a workaround for the missing mutual base class of SgReferenceType and
+  //  SgRvalueReferenceType.)
+  SgType* getReferenceBaseType(const SgType* t);
+
+  // schroder3 (2016-07-26): Returns the given type as a SgPointerType if it is a
+  //  function pointer type. Returns 0 otherwise.
+  const SgPointerType* isFunctionPointerType(const SgType* type);
+
+  // schroder3 (2016-07-26): Returns the (underlying) function type of the given type if the given
+  //  type is eligible for function-to-pointer conversion. Returns 0 otherwise.
+  const SgFunctionType* isTypeEligibleForFunctionToPointerConversion(const SgType* type);
+
+  // schroder3 (2016-07-27): Returns the underlying function type of the given expression if it
+  //  is callable. Returns 0 otherwise.
+  SgFunctionType* isCallableExpression(/*const*/ SgExpression* expr);
+
+  // schroder3 (2016-07-27): Returns the underlying function type if the given type
+  //  is callable i.e. a expression of this type could be called. Returns 0 otherwise.
+  SgFunctionType* isCallableType(/*const*/ SgType* type);
 
   // determines whether decl declares an array
   bool isArrayDeclaration(SgVariableDeclaration* decl);

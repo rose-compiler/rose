@@ -1,107 +1,34 @@
 #include "rose.h"
 #include "autoParSupport.h"
-
+#include "keep_going.h"
 #include <iterator> // ostream_iterator
 #include <algorithm> // for set union, intersection etc.
 #include <fstream>
 #include <iostream>
 #include <map>
+#include "RoseAst.h"
 
 using namespace std;
+using namespace Rose;
 using namespace OmpSupport;
+using namespace SageInterface;
 // Everything should go into the name space here!!
 namespace AutoParallelization
 {
   bool enable_debug;
+  bool enable_verbose;
   bool enable_patch;
+  bool keep_going;
   bool enable_diff;
   bool b_unique_indirect_index;
   bool enable_distance;
+  bool no_aliasing=false; // assuming no pointer aliasing
   bool keep_c99_loop_init = false; // no longer in use. 
+  std::vector<std::string> annot_filenames; 
+  bool dump_annot_file=false;
 
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
-
-  void autopar_command_processing(vector<string>&argvList)
-  {
-    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_debug",true))
-    {
-      cout<<"Enabling debugging mode for auto parallelization ..."<<endl;
-      enable_debug= true;
-    }
-    else
-      enable_debug= false;
-
-    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_patch",true))
-    {
-      cout<<"Enabling generating patch files for auto parallelization ..."<<endl;
-      enable_patch= true;
-    }
-    else
-      enable_patch= false;
-
-    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","unique_indirect_index",true))
-    {
-      cout<<"Assuming all arrays used as indirect indices have unique elements (no overlapping) ..."<<endl;
-      b_unique_indirect_index= true;
-    }
-    else
-      b_unique_indirect_index= false;
-
-
-    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_diff",true))
-    {
-      cout<<"Enabling compare user defined OpenMP pragmas to auto parallelization generated ones ..."<<endl;
-      enable_diff = true;
-    }
-    else
-      enable_diff = false;
-
-    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_distance",true))
-    {
-      cout<<"Enabling compare user defined OpenMP pragmas to auto parallelization generated ones ..."<<endl;
-      enable_distance = true;
-    }
-    else
-      enable_distance = false;
-#if 0
-    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","keep_loop_init",true))
-    {
-      cout<<" Keep C99 style loop initialization like for (int i=0;...)..."<<endl;
-      keep_c99_loop_init = true;
-    }
-    else
-      keep_c99_loop_init = false;
-#endif
-
-    //Save -debugdep, -annot file .. etc, 
-    // used internally in ReadAnnotation and Loop transformation
-    CmdOptions::GetInstance()->SetOptions(argvList);
-    bool dumpAnnot = CommandlineProcessing::isOption(argvList,"","-dumpannot",true);
-
-    //Read in annotation files after -annot 
-    ArrayAnnotation* annot = ArrayAnnotation::get_inst();
-    annot->register_annot();
-    ReadAnnotation::get_inst()->read();
-    if (dumpAnnot)  
-      annot->Dump();
-    //Strip off custom options and their values to enable backend compiler 
-    CommandlineProcessing::removeArgsWithParameters(argvList,"-annot");
-    // keep --help option after processing, let other modules respond also
-    if ((CommandlineProcessing::isOption (argvList,"--help","",false)) ||
-        (CommandlineProcessing::isOption (argvList,"-help","",false)))
-    {
-      cout<<"Auto parallelization-specific options"<<endl;
-      cout<<"\t-rose:autopar:enable_debug          run automatic parallelization in a debugging mode"<<endl;
-      cout<<"\t-rose:autopar:enable_patch          additionally generate patch files for translations"<<endl;
-      cout<<"\t-rose:autopar:unique_indirect_index assuming all arrays used as indirect indices have unique elements (no overlapping)"<<endl;
-      cout<<"\t-rose:autopar:enable_distance       report the absolute dependence distance of a dependence relation preventing parallelization"<<endl;
-      cout<<"\t-annot filename                     specify annotation file for semantics of abstractions"<<endl;
-      cout<<"\t-dumpannot                          dump annotation file content"<<endl;
-      cout <<"---------------------------------------------------------------"<<endl;
-    }
-
-  }
 
   bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
   {
@@ -174,6 +101,7 @@ namespace AutoParallelization
   // TODO generate dep graph for the entire function and reuse it for all loops
   LoopTreeDepGraph*  ComputeDependenceGraph(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
+
     ROSE_ASSERT(loop && array_interface&& annot);
     //TODO check if its a canonical loop
 
@@ -189,12 +117,18 @@ namespace AutoParallelization
     LoopTransformInterface::set_arrayInfo(array_interface);
     LoopTransformInterface::set_aliasInfo(array_interface);
     LoopTransformInterface::set_sideEffectInfo(annot);
-    LoopTreeDepCompCreate* comp = new LoopTreeDepCompCreate(head);// TODO when to release this?
+    LoopTreeDepCompCreate* comp = new LoopTreeDepCompCreate(head,true,true);
+    // the third parameter sets supportNonFortranLoop to true
+       // TODO when to release this?
     // Retrieve dependence graph here!
     if (enable_debug) 
     {
-      cout<<"Debug: Dump the dependence graph for the loop in question:"<<endl; 
+      SgStatement* stmt = isSgStatement(loop);
+      ROSE_ASSERT (stmt != NULL);
+      cout<<"--------------------------------------------------------"<<endl;
+      cout<<"Debug: ComputeDependenceGraph() dumps the dependence graph for the loop at line :"<< stmt->get_file_info()->get_line()<<endl; 
       comp->DumpDep();
+      cout<<"--------------------------------------------------------"<<endl;
     }
 
     // The following code was used when an entire function body with several loops
@@ -384,6 +318,7 @@ namespace AutoParallelization
   // Return NULL if the loop is not canonical
   SgInitializedName* getLoopInvariant(SgNode* loop)
   {
+#if 0    
     AstInterfaceImpl faImpl(loop);
     AstInterface fa(&faImpl);
     AstNodePtr ivar2 ;
@@ -391,11 +326,18 @@ namespace AutoParallelization
     bool result=fa.IsFortranLoop(loop2, &ivar2);
     if (!result)
       return NULL;
-    SgVarRefExp* invar = isSgVarRefExp(AstNodePtrImpl(ivar2).get_ptr());
+   SgVarRefExp* invar = isSgVarRefExp(AstNodePtrImpl(ivar2).get_ptr());
     ROSE_ASSERT(invar);
     SgInitializedName* invarname = invar->get_symbol()->get_declaration();
     // cout<<"debug ivar:"<<invarname<< " name "
     // <<invarname->get_name().getString()<<endl;
+#endif
+     // Qing's IsFortranLoop does not check the structured block requirement
+    // We use our own isCanonicalLoop instead.
+    SgInitializedName* invarname = NULL; 
+    if (!SageInterface::isCanonicalForLoop(loop, &invarname) )
+      return NULL;
+ 
     return invarname;
   }
 
@@ -579,11 +521,14 @@ namespace AutoParallelization
     GetLiveVariables(sg_node,liveIns0,liveOuts0, false);
     // Remove loop invariant variable, which is always private 
     SgInitializedName* invarname = getLoopInvariant(sg_node);
+    SgForStatement* for_stmt = isSgForStatement(sg_node);
+    ROSE_ASSERT (for_stmt !=NULL);
+
     remove(liveIns0.begin(),liveIns0.end(),invarname);
     remove(liveOuts0.begin(),liveOuts0.end(),invarname);
 
     std::vector<SgInitializedName*> allVars,depVars, invariantVars, privateVars,lastprivateVars, 
-      firstprivateVars,reductionVars, reductionResults;
+      firstprivateVars,reductionVars; // reductionResults;
     // Only consider scalars for now
     CollectVisibleVaribles(sg_node,allVars,invariantVars,true);
     sort(allVars.begin(), allVars.end());
@@ -634,12 +579,48 @@ namespace AutoParallelization
       privateVars.push_back(*iter);
     if(enable_debug)
       cout<<"Debug dump private:"<<endl;
+    bool hasNormalization = trans_records.forLoopInitNormalizationTable[for_stmt];
+    SgVariableSymbol* ndecl_sym = NULL; 
+    if( hasNormalization)
+    {
+      // get the normalization generated declaration
+      SgVariableDeclaration* ndecl = trans_records.forLoopInitNormalizationRecord[for_stmt].second; 
+      ndecl_sym = getFirstVarSym (ndecl);
+    }
+
     for (std::vector<SgInitializedName*>::iterator iter = privateVars.begin(); iter!= privateVars.end();iter++) 
     {
-      attribute->addVariable(OmpSupport::e_private ,(*iter)->get_name().getString(), *iter);
+      // Liao 6/22/2016. 
+      // Loop normalization will convert C99 loop init-stmt into two statements and rename the loop index variable.
+      // This causes problem for patch generation since an additional loop variable (e.g. i_norm_1) shows up in the private () clause.
+      // To workaround this problem, we skip recording the loop index variable generated by loop normalization. 
+      string var_name = (*iter)->get_name().getString();
+      bool skipAdd = false;
+      // This does not work unless the normalized c99 init-stmt is undone!!
+      // The same attribute is used for both patch generation and code generation!
+      // Even worse, a previous workaround changed the name convention of normalized loop variables:
+      // The name will be kept the same when possible to have cosmetic improvements.
+      // https://github.com/rose-compiler/rose-develop/commit/a69182fbbac8d95bf577e3a9d7361bb57d03eb0f
+      //
+      // To solve this problem, we record loop normalization for c99 init-stmt and use symbol comparison to be sure.
+      //
+      // Another concern is skipping this loop variable in private() may impact dependence elimination later on.
+      // This concern is not valid so far based on testing.
+#if 1      
+        // this is a variable generated by loop normalization
+        // the current rule is originalName_norm_id; 
+        if (hasNormalization && ndecl_sym == (*iter)->search_for_symbol_from_symbol_table ())
+        {
+          skipAdd = true; 
+        }
+#endif
+      if (!skipAdd)
+      {
+        attribute->addVariable(OmpSupport::e_private , var_name , *iter);
 
-      if(enable_debug)
-        cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+        if(enable_debug)
+          cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+      }  
     }
 
     //lastprivate: liveOuts - LiveIns 
@@ -667,7 +648,23 @@ namespace AutoParallelization
         inserter(reductionVars, reductionVars.begin()));
     RecognizeReduction(sg_node,attribute, reductionVars);
 #else
-    reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
+   
+    //reductionResults = RecognizeReduction(sg_node,attribute, liveIns);
+    // Using the better SageInterface version , Liao 9/14/2016
+    std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > reductionResults;
+    SageInterface::ReductionRecognition ( isSgForStatement (sg_node), reductionResults);
+    if(enable_debug)
+      cout<<"Debug dump reduction:"<<endl;
+    for (std::set< std::pair <SgInitializedName*, OmpSupport::omp_construct_enum > > ::iterator 
+            iter = reductionResults.begin(); iter!= reductionResults.end();iter++) 
+    {
+       SgInitializedName* iname = (*iter).first;
+       OmpSupport::omp_construct_enum optype = (*iter).second;
+       attribute->addVariable (optype,iname->get_name().getString(), iname); 
+       if(enable_debug)
+        cout<< iname->get_qualified_name().getString()<<endl;
+    }
+
 #endif   
 
 #if 0
@@ -711,6 +708,8 @@ namespace AutoParallelization
     }
   } // end AutoScoping()
 
+
+#if 0 // refactored into SageInterface ReductionRecognition ()
   // Recognize reduction variables for a loop
   /* 
    * Algorithms:
@@ -734,11 +733,15 @@ namespace AutoParallelization
     {
       std::vector<SgInitializedName*> *resultVars = new std::vector<SgInitializedName*>;
       ROSE_ASSERT(loop && isSgForStatement(loop)&& attribute);
+      // No candidate variables, return
+      // TODO: this is not necessary, if a reduction idiom is matched, the variable should be a candidate
+      // Depending on liveness analysis is not a good idea.
       if (candidateVars.size()==0) 
         return *resultVars;
+
       //Store the times of references for each variable
       std::map <SgInitializedName*, vector<SgVarRefExp* > > var_references;
-
+      // have to consider the entire loop, including loop header
       Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(loop, V_SgVarRefExp);
       Rose_STL_Container<SgNode*>::iterator iter = reflist.begin();
       for (; iter!=reflist.end(); iter++)
@@ -752,13 +755,14 @@ namespace AutoParallelization
           var_references[initname].push_back(ref_exp);
         }
       }
-      //Consider variables referenced at most twice
+      // Iterate through all candidates
       std::vector<SgInitializedName*>::iterator niter=candidateVars.begin();
       for (; niter!=candidateVars.end(); niter++)
       {
         SgInitializedName* initname = *niter;
         bool isReduction = false;
-        // referenced once only
+        //Consider variables referenced at most twice
+        // 1. Referenced once only
         if (var_references[initname].size()==1) 
         {
           if(enable_debug)
@@ -838,7 +842,7 @@ namespace AutoParallelization
             }// end if on left side  
           } 
         } 
-        // referenced twice within a same statement
+        //2. Referenced twice within a same statement
         else if (var_references[initname].size()==2)
         {
           if(enable_debug)
@@ -847,6 +851,7 @@ namespace AutoParallelization
           SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
           SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
           SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
+
           if (stmt != stmt2) 
             continue;
           // must be assignment statement using 
@@ -944,8 +949,8 @@ namespace AutoParallelization
                   default:
                     break;
                 }  
-              } // end matching associative operations
-            }  
+              } // end matching binary operations
+            } // end if showing up in both sides  
           } // end if assignop  
         }// end referenced twice
         if (isReduction)
@@ -953,7 +958,7 @@ namespace AutoParallelization
       }// end for ()  
       return *resultVars;
     } // end RecognizeReduction()
-
+#endif 
   // Collect all classified variables from an OmpAttribute attached to a loop node
   void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result)
   {
@@ -999,10 +1004,41 @@ namespace AutoParallelization
     result.erase(new_end,result.end());
   }
 
+  //! Check if a reference is an array reference of statically declared arrays
+  // SgPntrArrRefExp -> lhs_operand_i() → SgVarRefExp -> SgVariableSymbol -> SgInitializedName → typeptr → SgArrayType 
+  static bool isStaticArrayRef (SgNode* ref)
+  {
+    bool ret = false; 
+    ROSE_ASSERT (ref !=NULL);
+    
+    if (SgPntrArrRefExp* aref = isSgPntrArrRefExp(ref))
+    {
+      // for multidimensional array references, getting the nested child SgPntrArrRef
+      if (SgPntrArrRefExp* nestRef = isSgPntrArrRefExp(aref->get_lhs_operand_i()))
+        return isStaticArrayRef (nestRef);
+
+      SgVarRefExp* lhs = isSgVarRefExp (aref->get_lhs_operand_i());
+      if (lhs != NULL)
+      {
+        SgVariableSymbol * varSym = isSgVariableSymbol (lhs->get_symbol());
+        if (varSym!=NULL)
+        {
+          SgInitializedName * iname = varSym->get_declaration();
+          if (isSgArrayType (iname->get_type()))
+            ret = true; 
+        }
+      }
+    }
+
+    return ret;
+  }
+
   // Algorithm, eliminate the following dependencies
   // *  caused by locally declared variables: already private to each iteration
   // *  commonlevel ==0, no common enclosing loops
-  // *  carry level !=0, loop independent,
+  // *  carry level !=0, loop independent. This is valid since we run dep analysis on each level of loop.
+  //    For a current loop to be considered, only the dependences carried by the current loop matters.
+  //    The current loop is always the outermost level loop , carry level id is 0. 
   // *  either source or sink variable is thread local variable 
   // *  dependencies caused by autoscoped variables (private, firstprivate, lastprivate, reduction)
   // *  two array references, but SCALAR_DEP or SCALAR_BACK_DEP dependencies
@@ -1013,6 +1049,11 @@ namespace AutoParallelization
   {
     //LoopTreeDepGraph * depgraph =  comp.GetDepGraph(); 
     LoopTreeDepGraph::NodeIterator nodes = depgraph->GetNodeIterator();
+    if (enable_debug)
+    {  
+      cout<<"Entering DependenceElimination ()"<<endl;
+      cout<<"----------------------------------"<<endl;
+    }  
     // For each node
     for (; !nodes.ReachEnd(); ++ nodes) 
     {
@@ -1025,23 +1066,36 @@ namespace AutoParallelization
         for (; !edges.ReachEnd(); ++edges) 
         { 
           LoopTreeDepGraph::Edge *e= *edges;
-          // cout<<"Debug: dependence edge: "<<e->toString()<<endl;
           DepInfo info =e->GetInfo();
+          if (enable_debug)
+           cout<<"-------------->>> Considering a new dependence edge's info:\n"<<info.toString()<<endl;
 
-         SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
+          SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
+          // two variables will be set if source or snk nodes are variable references nodes
+          SgVarRefExp* src_var_ref = NULL; 
+          SgVarRefExp* snk_var_ref = NULL; 
+
           // x. Ignore dependence caused by locally declared variables: declared within the loop    
           if (src_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(src_node);
             if (var_ref)
             {  
+	      src_var_ref = var_ref; 
               varscope= var_ref->get_symbol()->get_scope();
               src_name = var_ref->get_symbol()->get_declaration();
               if (SageInterface::isAncestor(currentscope,varscope))
+              {
+                if (enable_debug)
+                {
+                   cout<<"Eliminating a dep relation due to locally declared src variable"<<endl; 
+                   info.Dump();
+                }
                 continue;
+              }
             } //end if(var_ref)
           } // end if (src_node)
 
@@ -1056,28 +1110,50 @@ namespace AutoParallelization
           if (snk_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(snk_node);
+	    snk_var_ref = var_ref; 
             if (var_ref)
             {  
               varscope= var_ref->get_symbol()->get_scope();
               snk_name = var_ref->get_symbol()->get_declaration();
               if (SageInterface::isAncestor(currentscope,varscope))
+              {
+                if (enable_debug)
+                {
+                  cout<<"Eliminating a dep relation due to locally declared sink variable"<<endl; 
+                  info.Dump();
+                }
                 continue;
+              }
             } //end if(var_ref)
           } // end if (snk_node)
 #endif
+          if (enable_debug)
+            cout<<"Neither source nor sink node is locally decalared variables."<<endl;
+
           //x. Eliminate a dependence if it is empty entry
           // -----------------------------------------------
           // Ignore possible empty depInfo entry
           if (src_node==NULL||snk_node==NULL)
+          {
+            if (enable_debug)
+            {
+              cout<<"Eliminating a dep relation due to empty entry for either src or sink variables or both"<<endl; 
+              info.Dump();
+            }
             continue;
+          }
 
+          if (enable_debug)
+            cout<<"Neither source nor sink node is empty entry."<<endl;
+
+#if 1
           //x. Eliminate a dependence if scalar type dependence involving array references.
           // -----------------------------------------------
           // At least one of the source and sink variables are array references (not scalar) 
           // But the dependence type is scalar type
           //   * array-to-array, but scalar type dependence
           //   * scalar-to-array dependence.  
-          //    We essentially assume no aliasing between arrays and scalars here!!
+          // RISKY!!   We essentially assume no aliasing between arrays and scalars here!!
           //    I cannot think of a case in which a scalar and array element can access the same memory location otherwise.
           // According to Qing:  
           //   A scalar dep is simply the dependence between two scalar variables.
@@ -1095,6 +1171,7 @@ namespace AutoParallelization
             LoopTransformInterface::set_astInterface(fa);
             LoopTransformInterface::set_arrayInfo(array_interface);
             LoopTransformInterface::set_sideEffectInfo(annot);
+
             isArray1= LoopTransformInterface::IsArrayAccess(info.SrcRef());
             isArray2= LoopTransformInterface::IsArrayAccess(info.SnkRef());
           }
@@ -1103,12 +1180,69 @@ namespace AutoParallelization
             isArray1= fa.IsArrayAccess(info.SrcRef());
             isArray2= fa.IsArrayAccess(info.SnkRef());
           }
+
           //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
           if (isArray1 || isArray2)
           {
+            if (enable_debug)
+              cout<<"Either source or sink reference is an array reference..."<<endl;
+
             if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
-              continue;
+            {
+              if (enable_debug)
+                cout<<"\t Dep type is scalar or backscalar "<<endl;
+              if (src_var_ref || snk_var_ref) // at least one is a scalar: we have scalar vs. array
+              {
+               if (enable_debug)
+                 cout<<"Either source or sink reference is a scalar reference..."<<endl;
+                // we have to check the type of the scalar: 
+                //  integer type? skip
+                //  pointer type, skip if no-aliasing is specified
+                SgVarRefExp* one_var= src_var_ref?src_var_ref:snk_var_ref;
+
+                // non-pointer type or pointertype && no_aliasing, we skip it
+                if (!isPointerType(one_var->get_type()) ||AutoParallelization::no_aliasing )
+                {
+                  if (enable_debug)
+                  {
+                    if (AutoParallelization::no_aliasing)
+                      cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
+                    else
+                      cout<<"Found a non-pointer scalar, eliminating a dep relation due to the scalar dep type between a scalar and an array"<<endl; 
+                    info.Dump();
+                  }
+
+                  continue;
+                }
+              }
+              else // both are arrays
+              {
+                if (enable_debug)
+                  cout<<"\t both are arrray references "<<endl;
+                if (AutoParallelization::no_aliasing) 
+                {
+                  if (enable_debug)
+                  {
+                    cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
+                    info.Dump();
+                  }
+                  continue;
+                }
+                // both are arrays and both are statically allocated ones
+                else if (isStaticArrayRef (src_node) && isStaticArrayRef (snk_node))
+                {
+                  if (enable_debug)
+                  {
+                    cout<<"Eliminating a dep relation due to both references are references to static allocated arrays "<<endl; 
+                    info.Dump();
+                  }
+                  continue; 
+                }
+              } // end both are arrays  
+            }
           }
+#endif
+
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1124,7 +1258,14 @@ namespace AutoParallelization
             if (snk_name)
               hit2=find(scoped_vars.begin(),scoped_vars.end(),snk_name);
             if (hit1!=scoped_vars.end() || (hit2!=scoped_vars.end()))
+            {
+              if (enable_debug)
+              {
+                cout<<"Eliminating a dep relation due to at least one autoscoped variables"<<endl; 
+                info.Dump();
+              }
               continue;
+            }
           }
 
           //x. Eliminate dependencies caused by a pair of indirect indexed array reference,
@@ -1137,23 +1278,80 @@ namespace AutoParallelization
            if (b_unique_indirect_index ) 
            { 
              if (indirect_table[src_node] && indirect_table[snk_node])
+             {
+               if (enable_debug)
+               {
+                 cout<<"Eliminating a dep relation due to unique indirect indexed array references"<<endl; 
+                 info.Dump();
+               }
                continue;
+             }
            }
+#if 1 
+           // This is useful for since two data member accesses will point to the same variable symbol
+           // even when they are from different objects of the same class. 
+           // The current dependence analysis will treat them as the same memory access
+           //
+           // We check objects are the same or not
+           // this can be useful for some input code
+           //
+           // Liao, 7/6/2016
+          // x. Eliminate dependencies between two different memory locations
+          // -----------------------------------------------
+
+          SgExpression* src_exp = isSgExpression(src_node);
+          SgExpression* snk_exp = isSgExpression(snk_node);
+          if (src_exp && snk_exp)
+          {
+            if (differentMemoryLocation (src_exp, snk_exp))
+            {
+              if (enable_debug)
+              {
+                cout<<"Eliminating a dep relation between two instances of the same data member from different parent aggregate data"<<endl; 
+                info.Dump();
+              }
+              continue;
+            }
+          }
+#endif
           // x. Eliminate dependencies  without common enclosing loop nests
           // -----------------------------------------------
           if (info.CommonLevel()==0) 
+          {
+            if (enable_debug)
+            {
+              cout<<"Eliminating a dep relation due to lack of common enclosing loop nests: common level ==0"<<endl; 
+              info.Dump();
+            }
             continue;
+          }
            
           // x. Eliminate loop-independent dependencies: 
           // -----------------------------------------------
           // loop independent dependencies: privatization can eliminate most of them
           if (info.CarryLevel()!=0) 
+          {
+            if (enable_debug)
+            {
+              cout<<"Eliminating a dep relation due to carryLevel != 0 (not carried by current loop level in question)"<<endl; 
+              info.Dump();
+            }
             continue;
+          }
           // Save the rest dependences which can not be ruled out 
+          if (enable_debug)
+            cout<<"\t this dep relation cannot be eliminated. saved into remaining depedence set."<<endl;
           remainings.push_back(info); 
         } //end iterator edges for a node
       } // end if has edge
     } // end of iterate dependence graph 
+
+    if (enable_debug)
+    {  
+      cout<<"Exiting DependenceElimination ()"<<endl;
+      cout<<"----------------------------------"<<endl;
+    }  
+ 
   }// end DependenceElimination()
 
 /*
@@ -1171,13 +1369,16 @@ namespace AutoParallelization
 
   Cases of multiple dimensions, multiple levels of indirections are also handled.  
 
-  We uniform them into a single form (Form 2) to simplify later recognition of indirect indexed array refs
+  We uniform them into a single form (Form 1) to simplify later recognition of indirect indexed array refs
+
    For Form 2: if the rhs operand is a variable
       find the reaching definition of the index based on data flow analysis
         case 1: if it is the current loop's index variable, nothing to do further. stop
+                what if it is another loop's index variable??
         case 2: outside the current loop's scope: for example higher level loop's index. stop
         case 3: the definition is within the  current loop ?  
                  replace the rhs operand with its reaching definition's right hand value.
+                    if rhs is another array references??
                 one assignment to another array with the current  (?? higher level is considered at its own level) loop index
  
 Algorithm: Replace the index variable with its right hand value of its reaching definition,
@@ -1186,6 +1387,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
 */
  static void uniformIndirectIndexedArrayRefs (SgForStatement* for_loop)
  {
+   if (enable_debug)
+     cout<<"Entering uniformIndirectIndexedArrayRefs() ..."<<endl;
    ROSE_ASSERT (for_loop != NULL);
    ROSE_ASSERT (for_loop->get_loop_body() != NULL);
    SgInitializedName * loop_index_name = NULL;
@@ -1195,21 +1398,23 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
    // prepare def/use analysis, it should already exist as part of initialize_analysis()
    //SgProject * project = getProject();
    ROSE_ASSERT (defuse != NULL);  
+
+   // For each array reference:
    Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(for_loop->get_loop_body(), V_SgPntrArrRefExp);
    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
    {
-     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i));
+     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i)); 
      ROSE_ASSERT (aRef != NULL); 
      SgExpression* rhs = aRef-> get_rhs_operand_i();
      switch (rhs->variantT())
      {
-       case V_SgVarRefExp:
+       case V_SgVarRefExp: // the index of the array is a variable reference
          {
            // SgVarRefExp * varRef = isSgVarRefExp(rhs);
            // trace back to the 'root' value of rhs according to def/use analysis
            // Initialize the end value to the current rhs of the array reference expression
            SgExpression * the_end_value = rhs; 
-           while (isSgVarRefExp(the_end_value))
+           while (isSgVarRefExp(the_end_value)) // the applications we care only have one level of value transfer.
            {
              SgVarRefExp * varRef = isSgVarRefExp(the_end_value);
              SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
@@ -1260,8 +1465,12 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
                break;
              }
            } // end while() to trace down to root definition expression
-           //replace rhs with its root value if rhs != end_value
-           if (rhs != the_end_value)
+
+           //Replace rhs with its root value if rhs != end_value
+           // We should only do the replacement if the end value is array reference!
+           // Otherwise, an inner loop variable j's initialization value 0 will be used to replace j in the array reference!
+           // Liao, 12/20/2017
+           if (isSgPntrArrRefExp (the_end_value) && rhs != the_end_value)
            {
              SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
              //TODO use replaceExpression() instead
@@ -1452,32 +1661,58 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     //X. Eliminate irrelevant dependence relations.
     vector<DepInfo>  remainingDependences;
     DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute, indirect_array_table,  array_interface, annot);
+    SgSourceFile* file = getEnclosingSourceFile(sg_node);
+    string  filename = sg_node->get_file_info()->get_filename(); 
+    int lineno= sg_node->get_file_info()->get_line(); 
+    int colno= sg_node->get_file_info()->get_col(); 
+
     if (remainingDependences.size()>0)
     {
+      // write log entries for failed attempts
       isParallelizable = false;
-      cout<<"\nUnparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
-        " due to the following dependencies:"<<endl;
-      for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
-          iter != remainingDependences.end(); iter ++ )
+      ostringstream oss;
+      oss<<"Unparallelizable loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      Rose::KeepGoing::File2StringMap[file]+= oss.str();
+
+      //if (!enable_diff|| enable_debug) // diff user vs. autopar needs cleaner output
+      if (enable_debug||enable_verbose) // diff user vs. autopar needs cleaner output
       {
-        DepInfo di = *iter; 
-        cout<<di.toString()<<endl;
-        if (enable_distance)
+
+        cout<<"====================================================="<<endl;
+        cout<<"Unparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
+          " due to the following dependencies:"<<endl;
+        for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
+            iter != remainingDependences.end(); iter ++ )
         {
-          if (di.rows()>0 && di.cols()>0)
+          DepInfo di = *iter; 
+          cout<<di.toString()<<endl;
+          if (enable_distance)
           {
-            int dist = abs((di.Entry(0,0)).GetAlign());
-            if (dist < dep_dist)
-              dep_dist = dist;
+            if (di.rows()>0 && di.cols()>0)
+            {
+              int dist = abs((di.Entry(0,0)).GetAlign());
+              if (dist < dep_dist)
+                dep_dist = dist;
+            }
           }
         }
+        if (enable_distance)
+          cout<<"The minimum dependence distance of all dependences for the loop is:"<<dep_dist<<endl;
       }
-      if (enable_distance)
-         cout<<"The minimum dependence distance of all dependences for the loop is:"<<dep_dist<<endl;
     }
     else
     {
-      cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
+      // write log entries for success
+      ostringstream oss;
+      oss<<"Auto parallelized a loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      Rose::KeepGoing::File2StringMap[file]+= oss.str();
+
+      //if (!enable_diff || enable_debug)
+      if (enable_debug || enable_verbose)
+      {
+        cout<<"====================================================="<<endl;
+        cout<<"Automatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
+      }
     }
 
     // comp.DetachDepGraph();// TODO release resources here
@@ -1486,9 +1721,16 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     {
       //= OmpSupport::buildOmpAttribute(OmpSupport::e_parallel_for,sg_node);
       omp_attribute->setOmpDirectiveType(OmpSupport::e_parallel_for);
-      //cout<<"debug autoParSupport.C attaching att to sg_node "<<sg_node<<endl;
-      //cout<<"at line "<<isSgLocatedNode(sg_node)->get_file_info()->get_line()<<endl;
+      if (enable_debug)
+      {
+        cout<<"attaching auto generated OMP att to sg_node "<<sg_node->class_name();
+        cout<<" at line "<<isSgLocatedNode(sg_node)->get_file_info()->get_line()<<endl;
+      }
       OmpSupport::addOmpAttribute(omp_attribute,sg_node);
+
+      // Output patch text to the log also
+      Rose::KeepGoing::File2StringMap[file]+= OmpSupport::generateDiffTextFromOmpAttribute (sg_node);
+
       // 6. Generate and insert #pragma omp parallel for 
       // Liao, 2/12/2010
       // In the enable_diff mode, we don't want to generate pragmas from compiler-generated OmpAttribute.
@@ -1496,11 +1738,30 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       if (! enable_diff) 
         OmpSupport::generatePragmaFromOmpAttribute(sg_node);
     }
-    else
+    else // Not parallelizable, release resources.
     {
       delete omp_attribute;
     }
     return isParallelizable;
+  }
+
+  // We maintain a blacklist of language features, put them into a set
+  bool useUnsupportedLanguageFeatures(SgNode* loop, VariantT* blackConstruct)
+  {
+    std::set<VariantT> blackListDict; 
+    blackListDict.insert(V_SgRshiftOp);
+    blackListDict.insert(V_SgLshiftOp);
+
+    // build a dictionary of language constructs shown up in the loop, then query it
+    RoseAst ast (loop);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+         if (blackListDict.find( (*i)->variantT()) != blackListDict.end())
+         {
+           *blackConstruct = (*i)->variantT(); 
+           return true; 
+         }
+    }
+    return false;
   }
 
   // Generate a normal patch file representing the addition of OpenMP pragmas
@@ -1519,6 +1780,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     // this output file name can be any file name, we just choose rose_file.c
     string ofilename= "rose_"+StringUtility::stripPathFromFileName(filename); 
     diff_header += " "+ ofilename+"\n";
+    if (enable_debug)
+    {
+      cout<<"generating patch file ... "<< endl;
+    }
 
     //debug only
     //cout<<"diff_header\n"<<diff_header<<endl;
@@ -1530,7 +1795,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(sfile, V_SgStatement);
     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
     {
-      patchContent += OmpSupport::generateDiffTextFromOmpAttribute (*i);
+     patchContent += OmpSupport::generateDiffTextFromOmpAttribute (*i);
     }
 
     //cout<<"patch content is\n"<<patchContent<<endl;
@@ -1538,6 +1803,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     ofstream patchFile (patch_file_name.c_str(), ios::out);
     patchFile <<diff_header << patchContent ;
   }
+
   //! Output the difference between user-defined OpenMP and compiler-generated OpenMP
   /*
    AST layout for a loop with both user-defined and compiler-introduced OmpAttribute
@@ -1554,7 +1820,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
             diff the output:
     ** if attached to loop:  autoPar generated
         search for a possible user defined attributes
-          find preceding pragma--> attrbiute
+          find preceding pragma--> attribiute
         diff them
    */
   void diffUserDefinedAndCompilerGeneratedOpenMP(SgSourceFile* sfile)
@@ -1579,6 +1845,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       vector <OmpAttribute* >::iterator i2 = ompattlist.begin();
       for (; i2!=ompattlist.end(); i2++)
       {
+       if (enable_debug)
+         cout<<"diffUserDefinedAndCompilerGeneratedOpenMP() finds OmpAttribute attached to "
+             <<stmt->class_name()<<"@" << stmt->get_file_info()->get_line() <<endl;
+ 
         OmpAttribute* oa = *i2;
         if (attributeTable[oa])
            continue; // processed already , used as one of the pair being compared
@@ -1586,6 +1856,9 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
           attributeTable[oa] = true; // tag it as being processed
        std::string user_pragma_str, compiler_pragma_str;   
        OmpAttribute* user_attr = NULL, * compiler_attr =NULL;
+       if (enable_debug)
+         cout<<"diffUserDefinedAndCompilerGeneratedOpenMP() processes OmpAttribute attached to "
+             <<stmt->class_name()<<"@" << stmt->get_file_info()->get_line() <<endl;
        // user defined, try to grab a compiler generated attributed attached to the affected loop, etc.
         if (isUserDefined)
         {
@@ -1601,7 +1874,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
              {
                vector <OmpAttribute* > ompattlist2 = next_attlist->ompAttriList;
                // there should could be more than one OmpAttribute attached 
-               // To facilitate outlining a loop with user defined pragma, we redundantly attach OmpAttribute
+               // To facilitate outlining a loop with user defined pragma, we redundantly attach the user-introduced OmpAttribute
                // to both the pragma and the affected loop
                  //cout<<"Warning: found a loop attached with multiple OmpAttribute s"<<endl;
                  //cout<<"memory address:"<<next_stmt<<endl;
@@ -1618,7 +1891,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
                     }
                   } 
                //ROSE_ASSERT (ompattlist2.size() == 1) ; 
-               compiler_pragma_str = theone->toOpenMPString(); 
+               if (theone!=NULL)
+                 compiler_pragma_str = theone->toOpenMPString(); 
                compiler_attr = theone;
                attributeTable[theone] = true; // tag the counterpart as processed also
              }
@@ -1660,33 +1934,216 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         if (compiler_pragma_str.size()!=0)
           compiler_pragma_str = "#pragma omp "+compiler_pragma_str;
         //if (user_pragma_str != compiler_pragma_str)
+        //Only output semantically different OMP attributes.
         if (!isEquivalentOmpAttribute(user_attr, compiler_attr))
          {
-            cout<<"<<<<<<<<"<<endl;
-           if (isUserDefined)
+             // the stmt may come from an included header. 
+             // In this case, we show the header file name
+             if (file_info->get_filename()!= sfile->getFileName())
+               cout<<"User vs. AutoPar @"<<Rose::StringUtility::stripPathFromFileName(file_info->get_filename())<<":"<<file_info->get_line()<<endl;
+             else 
+               cout<<"User vs. AutoPar @"<<file_info->get_line()<<endl;
+             cout<<"< "<<user_pragma_str<<endl;
+             cout<<"---"<<endl;
+             cout<<"> "<<compiler_pragma_str<<endl;
+         }
+         else
+         {
+           if (enable_debug)
            {
-             cout<<file_info->get_filename()<<":"<<file_info->get_line()<<endl;
-             cout<<"user defined      :";
-             cout<<user_pragma_str<<endl;
-             cout<<"--------"<<endl;
-             cout<<"compiler generated:";
-             cout<<compiler_pragma_str<<endl;
-             }
-           else
-           {
-             cout<<"user defined      :";
-             cout<<user_pragma_str<<endl;
-             cout<<"--------"<<endl;
-             cout<<file_info->get_filename()<<":"<<file_info->get_line()<<endl;
-             cout<<"compiler generated:";
-             cout<<compiler_pragma_str<<endl;
+             cout<<"skipping semantically equivalent user and compiler-generated OmpAttributes:"<<endl;
+             cout<< "user attribute:\n\t"<< user_attr->toOpenMPString()<<endl;
+             cout<< "compiler attribute:\n\t"<< compiler_attr->toOpenMPString()<<endl;
            }
-           cout<<">>>>>>>>"<<endl<<endl;
-         } 
+         }
       } // end for omp attribute within a att list   
 
     } // end for (stmt)
 
   } //end diffUserDefinedAndCompilerGeneratedOpenMP()
+
+  // Not in use since we care about top level variables now
+  //TODO: move to SageInterface later
+  // strip off arrow, dot expressions and get down to smallest data member access expression
+  SgExpression* getBottomVariableAccess(SgExpression* e)
+  {
+    SgExpression* ret = NULL;
+    ROSE_ASSERT (e!= NULL);
+    if (isSgVarRefExp(e))
+      ret = e; 
+    else if (SgDotExp* dot_exp = isSgDotExp(e))
+    {
+      ret = getBottomVariableAccess (dot_exp->get_rhs_operand());
+    }
+    else if (SgArrowExp* a_exp = isSgArrowExp(e))
+    {
+      ret = getBottomVariableAccess (a_exp->get_rhs_operand());
+    } 
+    else if (SgPntrArrRefExp* arr_exp = isSgPntrArrRefExp(e))
+    {
+      ret=getBottomVariableAccess (arr_exp->get_lhs_operand_i());
+    }
+
+    if (ret == NULL)
+    {
+      cerr<<"getBottomVariableAccess() reached unhandled expression type:"<<e->class_name() <<endl;
+      e->get_file_info()->display();
+      ROSE_ASSERT (false);
+    }
+
+    return ret ; 
+  }
+
+  //For an expression, check if it is a data member of an aggregate data object (except array element access?)
+  // If so, return the parent aggregate data object's reference.
+  // This is done recursively when possible.
+  // TODO: move to SageInterface when ready
+  //
+  // if already DotExp, return getTVA(lhs)
+  // if rhs, return getTVA()
+  /*
+  Nested structures
+  
+  mygun.mag.capacity
+  
+     SgDotExp
+      /      \
+   SgDotExp  capacity     
+     /   \ 
+  mygun  mag
+    * */
+ SgExpression* getTopVariableAccess(SgExpression* e)
+  {
+    // default: self is the top already.
+    SgExpression* ret = e;
+    ROSE_ASSERT (e!= NULL);
+
+    // check if it is a SgDotExp or ArrowExp first,
+    // if So, walk to its left child
+    if (SgDotExp* de= isSgDotExp(e) )
+    {
+       ret = getTopVariableAccess (de->get_lhs_operand());  // recursive call to handle multiple levels 
+    }
+    else if (SgArrowExp* ae= isSgArrowExp(e) )
+    {
+       ret = getTopVariableAccess (ae->get_lhs_operand());  // recursive call to handle multiple levels 
+    }
+    // otherwise, it could be either lhs or rhs of Dot or Arrow Exp   
+    else if ( SgExpression* parent = isSgExpression(e->get_parent()))
+    {
+      if (SgDotExp* dot_exp = isSgDotExp(parent))
+      {
+        // a.b ?  call on DotExp
+        if (dot_exp->get_rhs_operand() == e)
+          ret = getTopVariableAccess(dot_exp); // recursive call to handle multiple levels of aggregate data types
+      }
+      else if (SgArrowExp* a_exp = isSgArrowExp(parent))
+      {
+        // a-> b?  call on ArrowExp
+        if (a_exp->get_rhs_operand() == e)
+          ret = getTopVariableAccess(a_exp);
+      }
+    }
+    return ret; 
+  }
+
+  // Obtain the underneath symbol from an expression, such as SgVarRefExp, SgThisExp, etc...
+  // This function is used to find top level symbol
+  // So when encountering dot or arrow expression, return the lhs symbol
+  // TODO: move to SageInterface when ready
+  SgSymbol* getSymbol (SgExpression* exp)
+  {
+    SgSymbol* s = NULL;
+
+    ROSE_ASSERT (exp !=NULL);
+
+    if (SgVarRefExp* e = isSgVarRefExp(exp))    
+    {
+      s= e->get_symbol();
+    }
+    else if (SgThisExp* e = isSgThisExp(exp))
+      s = e->get_class_symbol();
+    else if (SgPntrArrRefExp* e = isSgPntrArrRefExp(exp))
+    { // a[i]
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+    else if (SgDotExp* e = isSgDotExp(exp))
+    { 
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgArrowExp* e = isSgArrowExp(exp))
+    { 
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgPointerDerefExp* e = isSgPointerDerefExp(exp))
+    { 
+      s = getSymbol(e->get_operand_i()); // recursive call here
+    }
+     else if (SgAddOp* e = isSgAddOp(exp)) // * (address + offset) //TODO better handling here
+    { 
+      s = getSymbol(e->get_lhs_operand()); // recursive call here
+    }
+     else if (SgCastExp* e = isSgCastExp(exp))
+    { 
+      s = getSymbol(e->get_operand_i()); // recursive call here
+    }
+    else if (SgFunctionCallExp* e = isSgFunctionCallExp(exp))
+      s = e->getAssociatedFunctionSymbol();
+    else if (SgFunctionRefExp* e = isSgFunctionRefExp(exp))
+      s = e->get_symbol_i();
+    else if (SgMemberFunctionRefExp* e = isSgMemberFunctionRefExp(exp))
+      s = e->get_symbol_i();
+    else if (SgLabelRefExp* e = isSgLabelRefExp(exp))
+      s = e->get_symbol();
+    else if (isSgConstructorInitializer(exp)) // void reportAlgorithmStats(const std::string& err="");
+    { // temporary initializer on the right hand , assigned by value to left side, it has persistent no mem location is concerned.
+      s = NULL; 
+    }
+    else
+    {
+      cerr<<"Error. getSymbol(SgExpression* exp) encounters unhandled exp:"<< exp->class_name()<<endl;
+      ROSE_ASSERT (false);
+    }  
+// We allow NULL symbol here. Naturally eliminate some strange expressions in the dependence pair.
+//    ROSE_ASSERT (s!=NULL);
+
+    return s; 
+  }
+  
+  //! Check if two expressions access different memory locations from the same aggregate types. 
+  // If in double, return false (not certain, may alias to each other).
+  //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
+  //TODO: move to SageInterface when ready
+  //For example:  class VectorXY {int y} may have two different objects o1 and o2. 
+  //But o1.y and o2.y will be recognized as the same references to symbol y. 
+  // We need to get their parent objects and compare them. 
+  bool differentMemoryLocation(SgExpression* e1, SgExpression* e2)
+  {
+    bool retval = false; 
+    // if same expressions, not different then
+    if (e1 == e2)
+      return false;
+    if( (e1 == NULL)|| (e2==NULL))
+    {
+      return false;
+    }
+
+   // now get down to the lowest level   
+    SgExpression* var1 = getTopVariableAccess(e1);
+    SgExpression* var2 = getTopVariableAccess(e2);
+    
+    // at this stage, dot or arrow expressions should be stripped off.
+    ROSE_ASSERT (isSgDotExp(var1)== NULL);
+    ROSE_ASSERT (isSgArrowExp(var1)== NULL);
+    ROSE_ASSERT (isSgDotExp(var2)== NULL);
+    ROSE_ASSERT (isSgArrowExp(var2)== NULL);
+
+    if (var1 != NULL && var2 !=NULL)
+    { // We must check if e1's top variable is itself: If yes, no aggregate types are involved. e1 and e2 may be pointer scalars aliasing to each other
+      if (getSymbol(var1)!= getSymbol(var2)  && (e1!=var1 && e2!=var2) )
+        retval = true; // pointing to two different parent symbols? 
+    }
+    return retval;
+  }
 
 } // end namespace

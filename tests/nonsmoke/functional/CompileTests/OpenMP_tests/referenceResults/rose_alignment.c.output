@@ -1,0 +1,3 @@
+#pragma omp parallel 
+#pragma omp for  schedule(dynamic) private(i,n,si,sj,len1,m)
+#pragma omp task  untied private(i,gg,len2,mm_score) firstprivate(m,n,si,sj,len1) shared(nseqs,bench_output,seqlen_array,seq_array,gap_pos1,gap_pos2,pw_ge_penalty,pw_go_penalty,mat_avscore)

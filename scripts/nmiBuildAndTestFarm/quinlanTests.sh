@@ -111,7 +111,7 @@ echo "**************************************************************************
 # DQ (9/9/2009): This platform will be removed, redundant, please consider just building on x86_rhas_4
 # DQ (9/7/2009): Error in testCallGraphAnalysis
 # make[6]: *** [test2006_02.C.dot] Segmentation fault
-# make[6]: Leaving directory `/home/condor/execute/dir_32311/userdir/build/tests/roseTests/programAnalysisTests/testCallGraphAnalysis'
+# make[6]: Leaving directory `/home/condor/execute/dir_32311/userdir/build/tests/nonsmoke/functional/roseTests/programAnalysisTests/testCallGraphAnalysis'
 # ./submit.sh build_configs/x86_cent_4.2/minimal_default &
 
 echo "***********************************************"
@@ -119,7 +119,6 @@ echo "* Failing test on Suse Linux version 9 (link problem multiple definition o
 echo "***********************************************"
 
 # DQ (10/1/2009): Reconfirmed 9/9/2000 error!
-# DQ (9/15/2009): Progress! New error -- tclsh: command not found in: src/frontend/BinaryDisassembly
 # DQ (9/11/2009): Same error!
 # DQ (9/9/2009): New error: 
 # src/frontend/CxxFrontend/EDG_3.3/src/preproc.c:99: multiple definition of `__i686.get_pc_thunk.bx'

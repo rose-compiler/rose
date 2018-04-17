@@ -12,7 +12,7 @@
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -37,23 +37,28 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 class SValue: public BaseSemantics::SValue {
 protected:
     Intervals intervals_;
+    bool isBottom_;
 
 protected:
     // Protected constructors. See base class and public members for documentation
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
+    explicit SValue(size_t nbits):
+        BaseSemantics::SValue(nbits), isBottom_(false){
         intervals_.insert(Interval::hull(0, IntegerOps::genMask<uint64_t>(nbits)));
     }
-    SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
+    SValue(size_t nbits, uint64_t number)
+        : BaseSemantics::SValue(nbits), isBottom_(false) {
         number &= IntegerOps::genMask<uint64_t>(nbits);
         intervals_.insert(number);
     }
-    SValue(size_t nbits, uint64_t v1, uint64_t v2): BaseSemantics::SValue(nbits) {
+    SValue(size_t nbits, uint64_t v1, uint64_t v2):
+        BaseSemantics::SValue(nbits), isBottom_(false) {
         v1 &= IntegerOps::genMask<uint64_t>(nbits);
         v2 &= IntegerOps::genMask<uint64_t>(nbits);
         ASSERT_require(v1<=v2);
         intervals_.insert(Interval::hull(v1, v2));
     }
-    SValue(size_t nbits, const Intervals &intervals): BaseSemantics::SValue(nbits) {
+    SValue(size_t nbits, const Intervals &intervals):
+        BaseSemantics::SValue(nbits), isBottom_(false) {
         ASSERT_require(!intervals.isEmpty());
         ASSERT_require((intervals.greatest() <= IntegerOps::genMask<uint64_t>(nbits)));
         intervals_ = intervals;
@@ -67,28 +72,44 @@ public:
         return SValuePtr(new SValue(1));
     }
 
-    /** Instantiate a new undefined value of particular size. */
-    static SValuePtr instance(size_t nbits) {
+    /** Instantiate a new data-flow-bottom value of specified width. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        SValue *self = new SValue(nbits);
+        self->isBottom_ = true;
+        return SValuePtr(self);
+    }
+
+    /** Instantiate a new undefined value of particular width.  Currently, there is no distinction between an unspecified
+     *  value, an undefined value, and an interval that can represent any value of the specified size. */
+    static SValuePtr instance_undefined(size_t nbits) {
         return SValuePtr(new SValue(nbits));
     }
 
-    /** Instantiate a new concrete value of particular size. */
-    static SValuePtr instance(size_t nbits, uint64_t number) {
+    /** Instantiate a new unspecified value of specific width.
+     *
+     *  Currently, there is no distinction between an unspecified value, an undefined value, and an interval that can represent
+     *  any value of the specified size. */
+    static SValuePtr instance_unspecified(size_t nbits) {
+        return SValuePtr(new SValue(nbits));
+    }
+
+    /** Instantiate a new concrete value of particular width. */
+    static SValuePtr instance_integer(size_t nbits, uint64_t number) {
         return SValuePtr(new SValue(nbits, number));
     }
 
     /** Instantiate a new value from a set of intervals. */
-    static SValuePtr instance(size_t nbits, const Intervals &intervals) {
+    static SValuePtr instance_intervals(size_t nbits, const Intervals &intervals) {
         return SValuePtr(new SValue(nbits, intervals));
     }
 
     /** Instantiate a new value that's constrained to be between two unsigned values, inclusive. */
-    static SValuePtr instance(size_t nbits, uint64_t v1, uint64_t v2) {
+    static SValuePtr instance_hull(size_t nbits, uint64_t v1, uint64_t v2) {
         return SValuePtr(new SValue(nbits, v1, v2));
     }
 
     /** Instantiate a new copy of an existing value. */
-    static SValuePtr instance(const SValuePtr &other) {
+    static SValuePtr instance_copy(const SValuePtr &other) {
         return SValuePtr(new SValue(*other));
     }
     
@@ -106,17 +127,17 @@ public:
     // Virtual allocating constructors inherited from the super class
 public:
     virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_bottom(nbits);
     }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
     }
     virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_unspecified(nbits);
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t number) const ROSE_OVERRIDE {
-        return instance(nbits, number);
+        return instance_integer(nbits, number);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
@@ -126,20 +147,21 @@ public:
     }
 
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
+                        const SmtSolverPtr&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors first defined at this level of the class hierarchy
 public:
     /** Construct a ValueType that's constrained to be between two unsigned values, inclusive. */
     virtual SValuePtr create(size_t nbits, uint64_t v1, uint64_t v2) {
-        return instance(nbits, v1, v2);
+        return instance_hull(nbits, v1, v2);
     }
 
     /** Construct a ValueType from a rangemap. Note that this does not truncate the rangemap to contain only values that would
      *  be possible for the ValueType size--see unsignedExtend() for that. */
     virtual SValuePtr create(size_t nbits, const Intervals &intervals) {
-        return instance(nbits, intervals); 
+        return instance_intervals(nbits, intervals); 
     }
 
     /** Generate ranges from bits. Given the set of bits that could be set, generate a range.  We have to be careful here
@@ -153,18 +175,20 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
 
     virtual bool isBottom() const ROSE_OVERRIDE {
-        return false;
+        return isBottom_;
     }
 
     virtual bool is_number() const ROSE_OVERRIDE {
         return 1==intervals_.size();
     }
     
-    virtual uint64_t get_number() const {
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_require(1==intervals_.size());
         return intervals_.least();
     }
@@ -269,6 +293,13 @@ public:
     readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
+    /** Read a byte from memory without side effects.
+     *
+     *  In order to read a multi-byte value, use RiscOperators::peekMemory(). */
+    virtual BaseSemantics::SValuePtr
+    peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+               BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
@@ -297,13 +328,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(protoval, solver) {
         name("Interval");
         (void) SValue::promote(protoval); // make sure its dynamic type is an IntervalSemantics::SValue or subclass thereof
     }
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(state, solver) {
         name("Interval");
         (void) SValue::promote(state->protoval());      // dynamic type must be IntervalSemantics::SValue or subclass thereof
@@ -314,7 +345,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      *  IntervalSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -324,13 +355,13 @@ public:
 
     /** Instantiates a new RiscOperators object with specified prototypical value. An SMT solver may be specified as the second
      *  argument for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators with specified state. An SMT solver may be specified as the second argument for
      *  convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -338,12 +369,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -411,7 +442,7 @@ public:
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/);
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
                                                   const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
@@ -425,11 +456,14 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
-    virtual void writeMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;

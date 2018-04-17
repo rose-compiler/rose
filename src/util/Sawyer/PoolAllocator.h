@@ -163,7 +163,9 @@ private:
         Pool(const Pool&);                              // nonsense
 
     public:
-        Pool(): cellSize_(0) {}
+        Pool(): cellSize_(0) {
+            memset(freeLists_, 0, sizeof freeLists_);
+        }
 
         void init(size_t cellSize) {
             assert(cellSize_ == 0);
@@ -431,7 +433,7 @@ public:
      *  equally between all free lists, and since allocations randomly select free lists from which to satisfy requests, one
      *  should reserve slightly more than what will be needed. Reserving storage is entirely optional. */
     void reserve(size_t objectSize, size_t nObjects) {
-        ASSERT_require(objectSize > 0);
+        ASSERT_always_require(objectSize > 0); // so objectSize is always used
         size_t pn = poolNumber(nObjects);
         if (pn >= nPools)
             return;

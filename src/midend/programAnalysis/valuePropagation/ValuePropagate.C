@@ -43,7 +43,7 @@ void HasValueMap:: set_val( const AstNodePtr& ast, const HasValueDescriptor& val
     else
       (*p).second.merge(val);
     if (DebugValuePropogate())  {
-       std::cerr << "set value for " << ast.get_ptr() << ":" << AstToString(ast) << " : ";
+       std::cerr << "set value for " << ast.get_ptr() << ":" << AstInterface::AstToString(ast) << " : ";
        valmap[ast].Dump();
        std::cerr << std::endl;
     }
@@ -126,7 +126,7 @@ class AppendValueNode : public Collect2Object< AstNodePtr, HasValueDescriptor >
              (*nodeCollect)( (*p).second);
          }
          if (DebugValuePropogate()) {
-            std::cerr << "found node for ref: " << AstToString(curast) << std::endl;
+            std::cerr << "found node for ref: " << AstInterface::AstToString(curast) << std::endl;
             (*p).second->Dump();
          } 
       }
@@ -289,7 +289,7 @@ copy_value( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy
   if (has_value( orig, &desc)) {
      set_val(copy, desc); 
      if (DebugValuePropogate()) {
-        std::cerr << "copying ast: " << AstToString(copy) << copy.get_ptr() 
+        std::cerr << "copying ast: " << AstInterface::AstToString(copy) << copy.get_ptr() 
                  << " to have value " << desc.toString() << std::endl;
      }
   }

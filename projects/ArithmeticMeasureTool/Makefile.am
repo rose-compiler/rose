@@ -13,29 +13,38 @@ AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src #-I$(ROSE_INSTALL)/include/rose 
 
 SUBDIRS = src . 
 
-bin_PROGRAMS = measureTool
+bin_PROGRAMS = measureTool codeInstrumentor
 measureTool_SOURCES = measureTool.cpp 
+codeInstrumentor_SOURCES = codeInstrumentor.cpp
 
 $(builddir)/src/libarithemeticMeasurement.a:
 	make -C $(builddir)/src
 
 #LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 measureTool_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(builddir)/src/libarithemeticMeasurement.a 
+codeInstrumentor_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
-## Input testcode for your translator
+## Test input testcode with manual instrumentation already
 C_TESTCODE= \
     jacobi-v3.c \
-    nestedloops.c
+    nestedloops.c \
+    test1-annot.c \
+    test2-nested-annot.c
 
+TESTS = rose_jacobi-v3.out \
+        rose_nestedloops.out \
+	rose_test1-annot.out \
+	rose_test2-nested-annot.out
+
+# test files for static counting mode. No changes to the input file at all
 C_Analysis_Only_TESTCODE = \
-   jacobi.c
-
-TESTS = jacobi-v3.out nestedloops.out
-jacobi-v3.out:rose_jacobi-v3.c
-	gcc -O3 rose_jacobi-v3.c -o jacobi-v3.out -lm
-
-nestedloops.out:rose_nestedloops.c
-	gcc -O3 rose_nestedloops.c -o nestedloops.out -lm
+   jacobi.c \
+   test-1d-1.c \
+   test1.c \
+   bzip2.c \
+   switch.c \
+   gzip.c \
+   oggenc.c
 
 # loop001.cpp hello.cpp
 # compilation error for some f files
@@ -52,25 +61,61 @@ Fortran_Tests = \
    InterpF_002.f \
    AverageCodimF.f90
 
+# rose_test.c will be the target
 C_Analysis_TESTCODE_RESULTS = $(addprefix rose_, ${C_Analysis_Only_TESTCODE})
 
 C_TESTCODE_RESULTS = $(addprefix rose_, ${C_TESTCODE})
 F_TESTCODE_RESULTS = $(addprefix rose_, ${Fortran_Tests})
 
-$(C_Analysis_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
-	./measureTool -c -static-counting-only -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
+check_PROGRAM = ${C_TESTCODE_RESULTS:.c=.out}
+
+# this does not work somehow ??
+#TESTS = ${check_PROGRAM}
+%.out: %.c
+	gcc $^ -o $@ -lm
+#jacobi-v3.out:rose_jacobi-v3.c
+#	gcc -O3 rose_jacobi-v3.c -o jacobi-v3.out -lm
+#
+#nestedloops.out:rose_nestedloops.c
+#	gcc -O3 rose_nestedloops.c -o nestedloops.out -lm
+
+$(C_Analysis_TESTCODE_RESULTS): ./measureTool 
+	./measureTool -c -static-counting-only -use-algorithm-v2 -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
 # test the translator
-$(C_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
+$(C_TESTCODE_RESULTS):./measureTool 
 	./measureTool -c -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
-$(F_TESTCODE_RESULTS):measureTool $(srcdir)/test/fortran/$(@:rose_%=%) 
+$(F_TESTCODE_RESULTS):./measureTool
 	./measureTool -c -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/fortran/$(@:rose_%=%)
 
+# test for RAJA loop support, static counting mode
+rose_rajaloop.cpp:./measureTool 
+	./measureTool -c -static-counting-only -support_raja_loops -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/rajaloop.cpp
+
+# test for code instrumentor---------------------
+#Generate the loop count info. file , using the translator's loop_counting mode
+instrumentor_lib.o: $(srcdir)/src/instrumentor_lib.c
+	gcc -c -o $@ $^
+instrumentor_lib.a: instrumentor_lib.o
+	ar r $@ $^
+bt-loop-count.log: codeInstrumentor
+	./codeInstrumentor -c -I$(srcdir)/src $(srcdir)/test/bt_single.c -exe_mode=loop_counting -file-for-loop-count bt-loop-count.log -o rose_bt_single_v.c
+# generate the instrumented code, using the loop count info. file and the translator's instrumenting mode (default one)
+rose_bt_single.c: bt-loop-count.log  $(srcdir)/test/bt_single.c
+	./codeInstrumentor -c -I$(srcdir)/src $(srcdir)/test/bt_single.c -file-for-loop-count bt-loop-count.log -file-for-loop-iteration-count bt-iter-count.log
+#compile the instrumented code: avoid using rose translator as the linker!! conflicting binary analysis when .a file is present!!
+rose_bt_single.out: rose_bt_single.c instrumentor_lib.a
+	gcc $< instrumentor_lib.a -lm -o $@
+# In the end, we want the information about loops' iteration count	
+bt-iter-count.log:rose_bt_single.out
+	./rose_bt_single.out
 ftest: $(F_TESTCODE_RESULTS)
 
-check: $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS)
+check-static: $(C_Analysis_TESTCODE_RESULTS)
+
+check: rose_rajaloop.cpp $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS) bt-iter-count.log
 clean:
-	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out *.log *.trs ai_tool_report.txt
+	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out *.log *.trs ai_tool_report.txt bt-loop-count.log bt-iter-count.log instrumentor_lib.a
 
 EXTRA_DIST=build cleanup.sh test	

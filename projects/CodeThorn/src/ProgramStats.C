@@ -125,8 +125,8 @@ SPRAY::ComputationInfo SPRAY::ProgramStatistics::computeComputationInfo(Label la
   Flow inEdges=icfg->inEdges(lab);
   inEdges.deleteEdges(EDGE_BACKWARD); // only exists for loop-conditions, join-nodes of branch-stmts may not have any backward-edge
   if(inEdges.size()>1) {
-    for(EdgeSet::iterator i=inEdges.begin();i!=inEdges.end();++i) {
-      computationInfo[(*i).source.getId()].numJmp++;
+    for(Flow::iterator i=inEdges.begin();i!=inEdges.end();++i) {
+      computationInfo[(*i).source().getId()].numJmp++;
     }
   }
   Flow specialEdges=icfg->edgesOfType(EDGE_BACKWARD);
@@ -134,8 +134,8 @@ SPRAY::ComputationInfo SPRAY::ProgramStatistics::computeComputationInfo(Label la
   Flow callreturnEdges=icfg->edgesOfType(EDGE_CALLRETURN);
   specialEdges+=callEdges;
   specialEdges+=callreturnEdges;
-  for(EdgeSet::iterator i=specialEdges.begin();i!=specialEdges.end();++i) {
-    computationInfo[(*i).source.getId()].numJmp++;
+  for(Flow::iterator i=specialEdges.begin();i!=specialEdges.end();++i) {
+    computationInfo[(*i).source().getId()].numJmp++;
   }
   floatIntStats(node,ci);
   return ci;

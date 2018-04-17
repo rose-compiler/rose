@@ -13,6 +13,7 @@
 \usepackage{color}
 \usepackage[pdftex]{graphicx}
 
+% DQ (3/20/2017): This style file is not available to me any more, but it appears that we do need it.
 \usepackage{moreverb}
 
 \usepackage{hyperref}

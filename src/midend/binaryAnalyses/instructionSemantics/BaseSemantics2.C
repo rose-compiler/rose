@@ -4,7 +4,7 @@
 #include "Diagnostics.h"
 #include "RegisterStateGeneric.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -17,8 +17,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::InstructionSemantics2", Diagnostics::destination);
-        Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::InstructionSemantics2");
     }
 }
 
@@ -95,7 +94,7 @@ std::ostream& operator<<(std::ostream &o, const RiscOperators::WithFormatter &x)
 void
 Exception::print(std::ostream &o) const
 {
-    o <<"rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
+    o <<"Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
     if (insn)
         o <<": " <<unparseInstructionWithAddress(insn);
     o <<"\n";
@@ -106,7 +105,7 @@ Exception::print(std::ostream &o) const
  *******************************************************************************************************************************/
 
 std::string
-RegisterStateX86::initialValueName(const RegisterDescriptor &reg) const {
+RegisterStateX86::initialValueName(RegisterDescriptor reg) const {
     std::string s;
     if (regdict!=NULL) {
         s = regdict->lookup(reg);
@@ -169,7 +168,7 @@ RegisterStateX86::zero()
 }
 
 SValuePtr
-RegisterStateX86::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops)
+RegisterStateX86::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops)
 {
     // "dflt" is not used because this state doesn't distinguish between registers that have never been accessed and registers
     // that have only been read; all registers were initialized with some value when the state was created.
@@ -198,7 +197,12 @@ RegisterStateX86::readRegister(const RegisterDescriptor &reg, const SValuePtr &d
 }
 
 SValuePtr
-RegisterStateX86::readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
+    return readRegister(reg, dflt, ops);                // readRegister has no side effects in this class
+}
+
+SValuePtr
+RegisterStateX86::readRegisterGpr(RegisterDescriptor reg, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_not_null(ops);
@@ -223,7 +227,7 @@ RegisterStateX86::readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *
 }
 
 SValuePtr
-RegisterStateX86::readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::readRegisterFlag(RegisterDescriptor reg, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_not_null(ops);
@@ -244,7 +248,7 @@ RegisterStateX86::readRegisterFlag(const RegisterDescriptor &reg, RiscOperators 
 }
 
 SValuePtr
-RegisterStateX86::readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::readRegisterSeg(RegisterDescriptor reg, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_not_null(ops);
@@ -260,7 +264,7 @@ RegisterStateX86::readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *
 }
 
 SValuePtr
-RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::readRegisterIp(RegisterDescriptor reg, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_not_null(ops);
@@ -278,7 +282,7 @@ RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *o
 }
 
 SValuePtr
-RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::readRegisterSt(RegisterDescriptor reg, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_st);
     ASSERT_require(reg.get_minor()<8);
@@ -291,7 +295,7 @@ RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *o
 }
 
 SValuePtr
-RegisterStateX86::readRegisterXmm(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::readRegisterXmm(RegisterDescriptor reg, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_xmm);
     ASSERT_require(reg.get_minor()<8);
@@ -303,7 +307,7 @@ RegisterStateX86::readRegisterXmm(const RegisterDescriptor &reg, RiscOperators *
 }
 
 SValuePtr
-RegisterStateX86::readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::readRegisterFpStatus(RegisterDescriptor reg, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_flags);
     ASSERT_require(reg.get_minor()==x86_flags_fpstatus);
@@ -315,7 +319,7 @@ RegisterStateX86::readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperat
 }
 
 void
-RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     switch (reg.get_major()) {
         case x86_regclass_gpr:
@@ -342,7 +346,7 @@ RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &
 }
 
 void
-RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegisterGpr(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_require(reg.get_major()==x86_regclass_gpr);
@@ -371,7 +375,7 @@ RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePt
 }
 
 void
-RegisterStateX86::writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegisterFlag(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_require(reg.get_major()==x86_regclass_flags);
@@ -394,7 +398,7 @@ RegisterStateX86::writeRegisterFlag(const RegisterDescriptor &reg, const SValueP
 }
 
 void
-RegisterStateX86::writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegisterSeg(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_require(reg.get_major()==x86_regclass_segment);
@@ -409,7 +413,7 @@ RegisterStateX86::writeRegisterSeg(const RegisterDescriptor &reg, const SValuePt
 }
 
 void
-RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegisterIp(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
     ASSERT_require(reg.get_major()==x86_regclass_ip);
@@ -427,7 +431,7 @@ RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr
 }
 
 void
-RegisterStateX86::writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegisterSt(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_st);
     ASSERT_require(reg.get_minor()<8);
@@ -439,7 +443,7 @@ RegisterStateX86::writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr
 }
 
 void
-RegisterStateX86::writeRegisterXmm(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegisterXmm(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_xmm);
     ASSERT_require(reg.get_minor()<8);
@@ -451,7 +455,7 @@ RegisterStateX86::writeRegisterXmm(const RegisterDescriptor &reg, const SValuePt
 }
 
 void
-RegisterStateX86::writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateX86::writeRegisterFpStatus(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_flags);
     ASSERT_require(reg.get_minor()==x86_flags_fpstatus);
@@ -649,15 +653,23 @@ State::clear_memory() {
 }
 
 SValuePtr
-State::readRegister(const RegisterDescriptor &desc, const SValuePtr &dflt, RiscOperators *ops) {
+State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_require(desc.is_valid());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
     return registers_->readRegister(desc, dflt, ops);
 }
 
+SValuePtr
+State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
+    ASSERT_require(desc.is_valid());
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(ops);
+    return registers_->peekRegister(desc, dflt, ops);
+}
+
 void
-State::writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
+State::writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops) {
     ASSERT_require(desc.is_valid());
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
@@ -673,6 +685,15 @@ State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
     return memory_->readMemory(address, dflt, addrOps, valOps);
 }
 
+SValuePtr
+State::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(address);
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    return memory_->peekMemory(address, dflt, addrOps, valOps);
+}
+    
 void
 State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(addr);
@@ -938,7 +959,7 @@ RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
 }
 
 SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt_) {
+RiscOperators::readRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
     SValuePtr dflt = dflt_;
     ASSERT_not_null(currentState_);
     ASSERT_not_null(dflt);
@@ -948,6 +969,14 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt
         dflt = initialState()->readRegister(reg, dflt, this);
 
     return currentState_->readRegister(reg, dflt, this);
+}
+
+SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
+    SValuePtr dflt = dflt_;
+    ASSERT_not_null(currentState_);
+    ASSERT_not_null(dflt);
+    return currentState_->peekRegister(reg, dflt, this);
 }
 
 /*******************************************************************************************************************************
@@ -1026,7 +1055,7 @@ Dispatcher::iproc_get(int key)
     return iproc_table[key];
 }
 
-const RegisterDescriptor &
+RegisterDescriptor
 Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing) const
 {
     const RegisterDictionary *regdict = get_register_dictionary();
@@ -1061,7 +1090,7 @@ Dispatcher::decrementRegisters(SgAsmExpression *e)
         T1(const RiscOperatorsPtr &ops): ops(ops) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                const RegisterDescriptor &reg = rre->get_descriptor();
+                RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() < 0) {
                     SValuePtr adj = ops->number_(64, (int64_t)rre->get_adjustment());
                     if (reg.get_nbits() <= 64) {
@@ -1085,7 +1114,7 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
         T1(const RiscOperatorsPtr &ops): ops(ops) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                const RegisterDescriptor &reg = rre->get_descriptor();
+                RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() > 0) {
                     SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.get_nbits());
                     ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
@@ -1109,7 +1138,7 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         retval = effectiveAddress(mre->get_address(), nbits);
     } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        const RegisterDescriptor &reg = rre->get_descriptor();
+        RegisterDescriptor reg = rre->get_descriptor();
         retval = operators->readRegister(reg);
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);

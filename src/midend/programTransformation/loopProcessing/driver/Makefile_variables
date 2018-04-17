@@ -10,7 +10,8 @@ mptlpDriver_la_sources=\
 	$(mptlpDriverPath)/TypedFusionImpl.C \
 	$(mptlpDriverPath)/ParallelizeLoop.C \
 	$(mptlpDriverPath)/LoopTransformInterface.C \
-	$(mptlpDriverPath)/NormalizeCPP.C
+	$(mptlpDriverPath)/NormalizeCPP.C \
+	$(mptlpDriverPath)/AutoTuningInterface.C
 
 mptlpDriver_includeHeaders=\
 	$(mptlpDriverPath)/BlockingAnal.h \

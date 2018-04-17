@@ -45,6 +45,9 @@ extern int _ompc_section_id();
 
 extern double omp_get_wtick();
 
+// DQ (12/6/2016): We want to provide n explicit declaration of this function to avoid implicit function declaration warning: -Wimplicit-function-declaration.
+extern void _ompc_init_ordered(int lb,int step);
+
 #ifdef __cplusplus
  }
 #endif

@@ -32,7 +32,6 @@
 #endif
 
 #include "BinaryLoader.h"
-#include "Partitioner.h"
 #include "sageBuilder.h"
 
 #include "CollectionHelper.h"

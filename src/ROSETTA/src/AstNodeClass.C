@@ -8,6 +8,7 @@
 #include "grammarString.h"
 
 using namespace std;
+using namespace Rose;
 
 #define BOOL2STR(b) ((b) ? "true" : "false")
 
@@ -54,7 +55,10 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      automaticGenerationOfConstructor(true),
      automaticGenerationOfDataAccessFunctions(true),
      automaticGenerationOfCopyFunction(true),
-     associatedGrammar(&X)
+     associatedGrammar(&X),
+     p_isBoostSerializable(false),
+     generateEssentialDataMembersConstructorImplementation(false),
+     generateEnforcedDefaultConstructorImplementation(false)
    {
      for (size_t i = 0; i < subclasses.size(); ++i) {
        // If the next assertion fails, it's probably because you have an IR type that appears in more than one
@@ -66,6 +70,26 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      X.addGrammarElement(*this);
      ROSE_ASSERT(associatedGrammar != NULL);
    }
+
+const std::string&
+AstNodeClass::getCppCondition() const {
+    return cppCondition;
+}
+
+void
+AstNodeClass::setCppCondition(const std::string &s) {
+    cppCondition = s;
+}
+
+bool
+AstNodeClass::isBoostSerializable() const {
+    return p_isBoostSerializable;
+}
+
+void
+AstNodeClass::isBoostSerializable(bool b) {
+    p_isBoostSerializable = b;
+}
 
 void
 AstNodeClass::setBaseClass(AstNodeClass* bc) {baseClass = bc;}
@@ -253,14 +277,23 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
    }
 
 string
-AstNodeClass::buildConstructorBodyForAllDataMembers() {
+AstNodeClass::buildConstructorBodyForEssentialDataMembers() {
   string returnString;
-  vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
-  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
-       stringListIterator != localList.end();
+  //vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+
+  vector<GrammarString *> includeList;
+  vector<GrammarString *> excludeList;
+  // now generate the additions to the lists from the parent node subtree lists
+  associatedGrammar->generateStringListsFromLocalLists ( *this, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList );
+
+  //  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
+  for( vector<GrammarString *>::iterator stringListIterator = includeList.begin();
+       stringListIterator != includeList.end();
        stringListIterator++ ) {
     string variableNameString = (*stringListIterator)->getVariableNameString();
-    returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+    if(!associatedGrammar->isFilteredMemberVariable(variableNameString)) {
+      returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+    }
   }
   return returnString;
 }
@@ -280,7 +313,19 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionHeader (
        // DQ (10/13/2007): Make this the function prototype for the copy mechanism.
        // This also fixes a bug where the code above was causing more than just the 
        // prototype to be output in the Cxx_Grammar.h header file.
-          returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
+
+       // printf ("In AstNodeClass::buildCopyMemberFunctionHeader(): baseName = %s \n",this->baseName.c_str());
+
+       // DQ (3/21/2017): Added support to eliminate override warning in Clang C++11 mode.
+       // returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
+          if (baseName == "Node")
+             {
+               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
+             }
+            else
+             {
+               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const ROSE_OVERRIDE;", "" /* "<copy member function>" */, 1));
+             }
         }
        else
         {
@@ -641,26 +686,54 @@ AstNodeClass::setFunctionPrototype ( const GrammarString & inputMemberFunction )
           inputMemberFunction);
    }
 
-#define SETUP_MARKER_STRINGS_MACRO   \
-     string startSuffix = "_START";   \
-     string endSuffix   = "_END";     \
-     string startMarkerString = markerString + startSuffix; \
-     string endMarkerString   = markerString + endSuffix; \
-     string directory = "";                    \
-     string functionString = StringUtility::toString(Grammar::extractStringFromFile ( startMarkerString, endMarkerString, filename, directory )); \
-     GrammarString* codeString = new GrammarString(functionString);                  \
-     codeString->setVirtual(pureVirtual);
+// This was originally a CPP macro instead of a function! I'm not aware of the reason for that, so I'm leaving it. [Matzke]
+#define SETUP_MARKER_STRINGS_MACRO                                                                                             \
+    string functionString;                                                                                                     \
+    string errorMessage;                                                                                                       \
+    /* First try the new approach where we locate everything at one place instead of five places; the five being: */           \
+    /*   (1) The #include's located at the top of src/ROSETTA/Grammar/xxx.code files */                                        \
+    /*   (2) The class declaration and its properties in src/ROSETTA/src/xxx.C files */                                        \
+    /*   (3) Extra declarations that aren't needed by ROSETTA, in the middle src/ROSETTA/Grammar/xxx.code files */             \
+    /*   (4) Definitions for the extra members, at the end of src/ROSETTA/Grammar/xxx.code files */                            \
+    /*   (5) Documentation for the ROSETTA members in docs/testDoxygen/xxx.docs files. */                                      \
+    /* We have to use try/catch because Grammar::extractStringFromFile throws (used to abort) if it can't find the string. */  \
+    try {                                                                                                                      \
+        /* Can't use boost::regex here due to policy prohibition against boost dependencies in ROSETTA */                      \
+        string startMarkerString = "#if defined(" + markerString + ") || defined(DOCUMENTATION)";                              \
+        string endMarkerString = "#endif // " + markerString;                                                                  \
+        string directory;                                                                                                      \
+        functionString = StringUtility::toString(Grammar::extractStringFromFile(startMarkerString, endMarkerString,            \
+                                                                                filename, directory));                         \
+    } catch (const std::runtime_error &e) {                                                                                    \
+        if (strstr(e.what(), "could not locate startMarker") == NULL) {                                                        \
+            errorMessage = e.what();                                                                                           \
+        }                                                                                                                      \
+    }                                                                                                                          \
+    /* If new way didn't work, then try the old way, looking for START and END tags */                                         \
+    if (functionString.empty() && errorMessage.empty()) {                                                                      \
+        string startSuffix = "_START";                                                                                         \
+        string endSuffix   = "_END";                                                                                           \
+        string startMarkerString = markerString + startSuffix;                                                                 \
+        string endMarkerString = markerString + endSuffix;                                                                     \
+        string directory;                                                                                                      \
+        try {                                                                                                                  \
+            functionString = StringUtility::toString(Grammar::extractStringFromFile(startMarkerString, endMarkerString,        \
+                                                                                        filename, directory));                 \
+        } catch (const std::runtime_error &e) {                                                                                \
+            errorMessage = e.what();                                                                                           \
+        }                                                                                                                      \
+    }                                                                                                                          \
+    /* Print the error message that was originally emitted by extractStringFromFile just before it aborted. */                 \
+    if (!errorMessage.empty()) {                                                                                               \
+        fprintf(stderr, "%s\n", errorMessage.c_str());                                                                         \
+        ROSE_ASSERT(false);                                                                                                    \
+    }                                                                                                                          \
+    GrammarString* codeString = new GrammarString(functionString);                                                             \
+    codeString->setVirtual(pureVirtual);
 
 GrammarString* AstNodeClass::setupMarkerStrings(string markerString,string filename, bool pureVirtual) {
-  string startSuffix = "_START";
-  string endSuffix   = "_END";
-  string startMarkerString = markerString + startSuffix;
-  string endMarkerString   = markerString + endSuffix;
-  string directory = "";
-  string functionString = StringUtility::toString(Grammar::extractStringFromFile ( startMarkerString, endMarkerString, filename, directory ));
-  GrammarString* codeString = new GrammarString(functionString);
-  codeString->setVirtual(pureVirtual);
-  return codeString;
+    SETUP_MARKER_STRINGS_MACRO;
+    return codeString;
 }
 
 void
@@ -1958,9 +2031,13 @@ AstNodeClass::buildProcessDataMemberReferenceToPointers ()
 
                     if ( (varTypeString == "$CLASSNAME *" ) || ( ( ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) || ( varTypeString.substr(0,2) == "Sg" ) ) && typeIsStarPointer ) )
                        {
+                      // DQ (9/8/2016): Added assertion as part of debugging C++11 test2016_49.C
+                      // s += "     ROSE_ASSERT(p_" + varNameString + " != NULL);\n";
+                      // s += "     printf (\"ROSETTA varNameString generated debugging: p_" + varNameString + " = %p \\n\",p_" + varNameString + ");\n";
+
                       // AS Checks to see if the pointer is a data member. Because the mechanism for generating access to variables
                       // is the same as the one accessing access member functions. We do not want the last case to show up here.
-                         s += "          handler->apply(p_" + varNameString + ",SgName(\""+varNameString+"\"), " + BOOL2STR(traverse) + ");\n";
+                         s += "     handler->apply(p_" + varNameString + ",SgName(\""+varNameString+"\"), " + BOOL2STR(traverse) + ");\n";
                        }
                       else
                        {
@@ -2273,3 +2350,18 @@ AstNodeClass::typeEvaluationName ( TypeEvaluation x )
      return s;
    }
 
+void AstNodeClass::setGenerateEssentialDataMembersConstructorImplementation(bool flag) {
+  generateEssentialDataMembersConstructorImplementation=flag;
+}
+
+void AstNodeClass::setGenerateEnforcedDefaultConstructorImplementation(bool flag) {
+  generateEnforcedDefaultConstructorImplementation=flag;
+}
+
+bool AstNodeClass::getGenerateEssentialDataMembersConstructorImplementation() {
+  return generateEssentialDataMembersConstructorImplementation;
+}
+
+bool AstNodeClass::getGenerateEnforcedDefaultConstructorImplementation() {
+  return generateEnforcedDefaultConstructorImplementation;
+}

@@ -21,6 +21,8 @@ void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
   getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
   _labeler=new Labeler(root);
+  _functionIdMapping=new FunctionIdMapping();
+  getFunctionIdMapping()->computeFunctionSymbolMapping(root);
 }
 
 SPRAY::Labeler* SPRAY::ProgramAbstractionLayer::getLabeler(){
@@ -31,4 +33,9 @@ SPRAY::Labeler* SPRAY::ProgramAbstractionLayer::getLabeler(){
 SPRAY::VariableIdMapping* SPRAY::ProgramAbstractionLayer::getVariableIdMapping(){
   ROSE_ASSERT(_variableIdMapping!=0);
   return _variableIdMapping;
+}
+
+SPRAY::FunctionIdMapping* SPRAY::ProgramAbstractionLayer::getFunctionIdMapping(){
+  ROSE_ASSERT(_functionIdMapping!=0);
+  return _functionIdMapping;
 }

@@ -1,7 +1,7 @@
 #include "rosePublicConfig.h"
 #include "Combinatorics.h"
 
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
 #include <stdint.h>
@@ -32,7 +32,7 @@ sha1_digest(const std::string &data)
 ROSE_UTIL_API std::vector<uint8_t>
 sha1_digest(const uint8_t *data, size_t size)
 {
-#ifndef ROSE_HAVE_GCRYPT_H
+#ifndef ROSE_HAVE_LIBGCRYPT
     return std::vector<uint8_t>();
 #else
     gcry_md_hd_t md; // message digest

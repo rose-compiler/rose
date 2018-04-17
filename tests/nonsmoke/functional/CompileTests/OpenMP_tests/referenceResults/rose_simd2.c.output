@@ -1,0 +1,3 @@
+#pragma omp simd private(tmp) reduction(+ : sum)
+#pragma omp for  private(tmp) reduction(+ : sum)
+#pragma omp for simd  collapse(2) private(tmp)

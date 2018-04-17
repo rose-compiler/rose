@@ -2,15 +2,16 @@
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <x86InstructionProperties.h>
 
 #include <boost/foreach.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesElf {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 size_t
 findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
@@ -52,41 +53,73 @@ findErrorHandlingFunctions(SgAsmInterpretation *interp) {
 bool
 PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     nBytesMatched_ = 0;
+    gotEntryVa_ = 0;
+    gotEntry_ = 0;
+
+    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
     SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
     SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn);
 
-    // FIXME[Robb P. Matzke 2014-08-23]: Only i386 is supported for now
-    static bool warned = false;
-    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-    if (insn && !insnX86 && !warned && REG_IP.get_nbits()!=32) {
-        mlog[WARN] <<"ModulesElf::pltEntryMatcher does not yet support this ISA\n";
-        warned = true;
-    }
+    // Look for the PLT entry.
+    if (insnX86) {
+        if (!x86InstructionIsUnconditionalBranch(insnX86) || 1!=insn->get_operandList()->get_operands().size())
+            return false;
 
-    if (!insnX86 || !x86InstructionIsUnconditionalBranch(insnX86) || 1!=insn->get_operandList()->get_operands().size())
-        return false;
-    SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
-    SgAsmExpression *addr = mref ? mref->get_address() : NULL;
-    if (SgAsmBinaryExpression *binExpr = isSgAsmBinaryExpression(addr)) {
-        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(binExpr->get_lhs());
-        SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(binExpr->get_rhs());
-        if (rre && offset) {
-            if (rre->get_descriptor()==REG_IP) {
-                memAddress_ = baseVa_ + offset->get_absoluteValue() + insn->get_address() + insn->get_size();
+        SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
+        if (SgAsmExpression *addr = mref ? mref->get_address() : NULL) {
+            ASSERT_not_null(mref->get_type());
+            gotEntryNBytes_ = mref->get_type()->get_nBytes();
+            if (SgAsmBinaryAdd *binExpr = isSgAsmBinaryAdd(addr)) {
+                SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(binExpr->get_lhs());
+                SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(binExpr->get_rhs());
+                if (rre && offset) {
+                    if (rre->get_descriptor()==REG_IP) {
+                        gotEntryVa_ = baseVa_ + offset->get_absoluteValue() + insn->get_address() + insn->get_size();
+                        nBytesMatched_ = insn->get_size();
+                    } else if (rre->get_descriptor().get_major()==x86_regclass_gpr) {
+                        gotEntryVa_ = baseVa_ + offset->get_absoluteValue();
+                        nBytesMatched_ = insn->get_size();
+                    }
+                }
+            } else if (SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(addr)) {
+                gotEntryVa_ = offset->get_absoluteValue();      // do not add baseVa_ to these
                 nBytesMatched_ = insn->get_size();
-                return true;
-            } else if (rre->get_descriptor().get_major()==x86_regclass_gpr) {
-                memAddress_ = baseVa_ + offset->get_absoluteValue();
-                nBytesMatched_ = insn->get_size();
-                return true;
             }
         }
-    } else if (SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(addr)) {
-        memAddress_ = offset->get_absoluteValue();      // do not add baseVa_ to these
-        nBytesMatched_ = insn->get_size();
-        return true;
+    } else {
+        // FIXME[Robb P. Matzke 2014-08-23]: Architecture is not supported yet
+        static bool warned = false;
+        if (!warned) {
+            mlog[WARN] <<"ModulesElf::pltEntryMatcher does not yet support this ISA\n";
+            warned = true;
+        }
     }
-    return false;
+        
+
+    // Read the GOT entry if it's mapped
+    if (nBytesMatched_ > 0 && partitioner.memoryMap() != NULL) {
+        switch (gotEntryNBytes_) {
+            case 0:
+                gotEntry_ = 0;
+                break;
+            case 1:
+                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint8_t>(gotEntryVa_).orElse(0);
+                break;
+            case 2:
+                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint16_t>(gotEntryVa_).orElse(0);
+                break;
+            case 4:
+                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint32_t>(gotEntryVa_).orElse(0);
+                break;
+            case 8:
+                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint64_t>(gotEntryVa_).orElse(0);
+                break;
+            default:
+                ASSERT_not_reachable("invalid GOT entry size: " + StringUtility::numberToString(gotEntryNBytes_));
+        }
+    }
+
+    return nBytesMatched_ > 0;
 }
 
 size_t
@@ -112,7 +145,11 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, 
     size_t nInserted = 0;
     rose_addr_t pltOffset = 14; /* skip the first entry (PUSH ds:XXX; JMP ds:YYY; 0x00; 0x00)--the JMP is not a function*/
     while (pltOffset<plt->get_mapped_size()) {
+#if 0 // [Robb P Matzke 2016-10-14]: it seems the base address needs to be zero most of the time, at least for amd64 gcc
         PltEntryMatcher matcher(elfHeader->get_base_va() + gotplt->get_mapped_preferred_rva());
+#else
+        PltEntryMatcher matcher(elfHeader->get_base_va());
+#endif
         rose_addr_t pltEntryVa = plt->get_mapped_actual_va() + pltOffset;
         if (!matcher.match(partitioner, pltEntryVa)) {
             ++pltOffset;
@@ -160,6 +197,58 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, 
         ++nInserted;
 
     return nInserted;
+}
+
+bool
+isImport(const Partitioner &partitioner, const Function::Ptr &function) {
+    if (!function)
+        return false;
+    if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
+        return false;
+    PltEntryMatcher matcher(0);
+    return matcher.match(partitioner, function->address());
+}
+
+bool
+isLinkedImport(const Partitioner &partitioner, const Function::Ptr &function) {
+    // Is function an import?
+    if (!function)
+        return false;
+    if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
+        return false;
+    PltEntryMatcher matcher(0);
+    if (!matcher.match(partitioner, function->address()))
+        return false;
+    if (matcher.gotEntryVa() == 0)
+        return false;
+    SgAsmInstruction *insn = partitioner.instructionProvider()[function->address()];
+    if (!insn)
+        return false;
+
+    // Is the import linked?
+    rose_addr_t fallthrough = insn->get_address() + insn->get_size();
+    return matcher.gotEntry() != 0 && matcher.gotEntry() != fallthrough;
+}
+
+bool
+isUnlinkedImport(const Partitioner &partitioner, const Function::Ptr &function) {
+    // Is function an import?
+    if (!function)
+        return false;
+    if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
+        return false;
+    PltEntryMatcher matcher(0);
+    if (!matcher.match(partitioner, function->address()))
+        return false;
+    if (matcher.gotEntryVa() == 0)
+        return false;
+    SgAsmInstruction *insn = partitioner.instructionProvider()[function->address()];
+    if (!insn)
+        return false;
+
+    // Is function NOT linked?
+    rose_addr_t fallthrough = insn->get_address() + insn->get_size();
+    return matcher.gotEntry() == 0 || matcher.gotEntry() == fallthrough;
 }
 
 std::vector<Function::Ptr>

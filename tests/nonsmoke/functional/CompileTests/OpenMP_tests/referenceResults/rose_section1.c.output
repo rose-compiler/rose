@@ -1,0 +1,6 @@
+#pragma omp parallel 
+#pragma omp single 
+#pragma omp sections  nowait
+#pragma omp section 
+#pragma omp section 
+#pragma omp section 

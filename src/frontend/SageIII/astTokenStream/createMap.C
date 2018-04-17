@@ -40,9 +40,18 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
     ROSE_ASSERT(ast != NULL);
     ROSE_ASSERT(token != NULL);
+
+  // DQ (11/1/2016): Fixup to allow compilation with the --enable-advanced-warnings option.
+#ifndef _GLIBCXX_CONCEPT_CHECKS
     vector<separator>& astScopeMapForThisScope   = ast->sub_separators;
     vector<separator>& tokenBraceMapForThisScope = token->sub_separators;
+#else
+    vector<separator> astScopeMapForThisScope;
+    vector<separator> tokenBraceMapForThisScope;
 
+    printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
+    ROSE_ASSERT(false);
+#endif
 
     //std::cout << "SubSeparator AST size: " << astScopeMapForThisScope.size() << std::endl;
     //std::cout << "SubSeparator token size: " << tokenBraceMapForThisScope.size() << std::endl;

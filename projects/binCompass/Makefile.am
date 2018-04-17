@@ -5,10 +5,11 @@ EXTRA_DIST = buffer2.bin
 SUBDIRS = analyses graphanalyses
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I. $(LTDLINCL)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = binCompassMain 
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl $(LIBLTDL)
+LDADD = $(ROSE_LIBS) -ldl $(LIBLTDL)
 
 binCompassMain_SOURCES = binCompassMain.cpp  
 
@@ -41,7 +42,7 @@ check-local: binCompassMain$(EXEEXT)
 	@echo " *** 	./binCompassMain buffer2.bin -checkGraph -inter ****************************************************"
 	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -checkGraph -inter > output
 	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
+	@echo "*** ROSE/tests/nonsmoke/functional/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
 CLEANFILES = *.dot dfg.dot thomas.dot cfg.dot unparsed.s dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*

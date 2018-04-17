@@ -1,0 +1,6 @@
+!$omp parallel 
+!$omp do  private(j,k) collapse(2) lastprivate(jlast,klast)
+!$omp end do 
+!$omp single 
+!$omp end single 
+!$omp end parallel 

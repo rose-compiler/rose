@@ -7,6 +7,8 @@
 
 #include "arrayPreprocessor.h"
 
+using namespace Rose;
+
 // *****************************************************************
 //      Interface function for Array Assignment Statement Query
 // *****************************************************************

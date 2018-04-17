@@ -54,7 +54,7 @@ class LoopInfo  : public VarInfo
          { return ReverseEnum()? GetBound().lb : GetBound().ub;}
 };
 
-class ROSE_DLL_API LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
+class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
 {
   LoopTreeObserveImpl *impl;
  protected:

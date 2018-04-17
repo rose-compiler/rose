@@ -1,0 +1,163 @@
+digraph CFG {
+ graph [  ];
+ node  [  ];
+ edge  [  ];
+
+subgraph cluster_0x08048278 { label="function 0x08048278 \"_init\"" fillcolor="#f2f2f2" href="0x08048278" style=filled
+V_0x08048278 [ label=<08048278  ?? push   ebp<br align="left"/>08048279  ?? mov    ebp, esp<br align="left"/>0804827b  ?? sub    esp, 0x08<br align="left"/>0804827e  ?? call   0x080482e4&lt;(func)call_gmon_start&gt;<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048278" shape=box style=filled ];
+V_0x08048283 [ label=<08048283  ?? call   0x08048340&lt;(func)frame_dummy&gt;<br align="left"/>> fontname=Courier href="0x08048283" shape=box ];
+V_0x08048288 [ label=<08048288  ?? call   0x08048460&lt;(func)__do_global_ctors_aux&gt;<br align="left"/>> fontname=Courier href="0x08048288" shape=box ];
+V_0x0804828d [ label=<0804828d  ?? leave  <br align="left"/>0804828e  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x0804828d" shape=box style=filled ];
+}
+
+subgraph cluster_0x08048290 { label="function 0x08048290 \"DYNAMIC_LINKER_TRAMPOLINE\"" fillcolor="#f2f2f2" href="0x08048290" style=filled
+V_0x08048290 [ label=<08048290  ?? push   dword ds:[0x080495a0]<br align="left"/>08048296  ?? jmp    dword ds:[0x080495a4]<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048290" shape=box style=filled ];
+}
+
+subgraph cluster_0x080482a0 { label="function 0x080482a0 \"malloc@plt\"" fillcolor="#f2f2f2" href="0x080482a0" style=filled
+V_0x080482a0 [ label=<080482a0  ?? jmp    dword ds:[0x080495a8]<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482a0" shape=box style=filled ];
+}
+
+subgraph cluster_0x080482b0 { label="function 0x080482b0 \"__libc_start_main@plt\"" fillcolor="#f2f2f2" href="0x080482b0" style=filled
+V_0x080482b0 [ label=<080482b0  ?? jmp    dword ds:[0x080495ac]<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482b0" shape=box style=filled ];
+}
+
+subgraph cluster_0x080482c0 { label="function 0x080482c0 \"_start\"" fillcolor="#f2f2f2" href="0x080482c0" style=filled
+V_0x080482c0 [ label=<080482c0  ?? xor    ebp, ebp<br align="left"/>080482c2  ?? pop    esi<br align="left"/>080482c3  ?? mov    ecx, esp<br align="left"/>080482c5  ?? and    esp, 0xf0&lt;-16&gt;<br align="left"/>080482c8  ?? push   eax<br align="left"/>080482c9  ?? push   esp<br align="left"/>080482ca  ?? push   edx<br align="left"/>080482cb  ?? push   0x08048414&lt;(func)__libc_csu_fini&gt;<br align="left"/>080482d0  ?? push   0x080483c0&lt;(func)__libc_csu_init&gt;<br align="left"/>080482d5  ?? push   ecx<br align="left"/>080482d6  ?? push   esi<br align="left"/>080482d7  ?? push   0x08048364&lt;(func)main&gt;<br align="left"/>080482dc  ?? call   0x080482b0<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482c0" shape=box style=filled ];
+V_0x080482e1 [ label=<080482e1  ?? hlt    <br align="left"/>> fontname=Courier href="0x080482e1" shape=box ];
+}
+
+subgraph cluster_0x080482e4 { label="function 0x080482e4 \"call_gmon_start\"" fillcolor="#f2f2f2" href="0x080482e4" style=filled
+V_0x080482e4 [ label=<080482e4  ?? push   ebp<br align="left"/>080482e5  ?? mov    ebp, esp<br align="left"/>080482e7  ?? push   ebx<br align="left"/>080482e8  ?? call   0x080482ed<br align="left"/>080482ed  ?? pop    ebx<br align="left"/>080482ee  ?? add    ebx, 0x000012af&lt;4783&gt;<br align="left"/>080482f4  ?? push   edx<br align="left"/>080482f5  ?? mov    eax, dword ds:[ebx + 0xfffffffc&lt;-4&gt;]<br align="left"/>080482fb  ?? test   eax, eax<br align="left"/>080482fd  ?? je     0x08048301<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482e4" shape=box style=filled ];
+V_0x080482ff [ label=<080482ff  ?? call   eax<br align="left"/>> fontname=Courier href="0x080482ff" shape=box ];
+V_0x08048301 [ label=<08048301  ?? pop    eax<br align="left"/>08048302  ?? pop    ebx<br align="left"/>08048303  ?? leave  <br align="left"/>08048304  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x08048301" shape=box style=filled ];
+}
+
+subgraph cluster_0x08048310 { label="function 0x08048310 \"__do_global_dtors_aux\"" fillcolor="#f2f2f2" href="0x08048310" style=filled
+V_0x08048310 [ label=<08048310  ?? push   ebp<br align="left"/>08048311  ?? mov    ebp, esp<br align="left"/>08048313  ?? sub    esp, 0x08<br align="left"/>08048316  ?? cmp    byte ds:[0x080495bc&lt;_edata&gt;], 0x00<br align="left"/>0804831d  ?? je     0x0804832b<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048310" shape=box style=filled ];
+V_0x0804831f [ label=<0804831f  ?? jmp    0x0804833d<br align="left"/>> fontname=Courier href="0x0804831f" shape=box ];
+V_0x0804832b [ label=<0804832b  ?? mov    eax, dword ds:[0x080495b8&lt;(data)p.5608&gt;]<br align="left"/>08048330  ?? mov    edx, dword ds:[eax]<br align="left"/>08048332  ?? test   edx, edx<br align="left"/>08048334  ?? jne    0x08048321<br align="left"/>> fontname=Courier href="0x0804832b" shape=box ];
+V_0x08048321 [ label=<08048321  ?? add    eax, 0x04<br align="left"/>08048324  ?? mov    dword ds:[0x080495b8&lt;(data)p.5608&gt;], eax<br align="left"/>08048329  ?? call   edx<br align="left"/>> fontname=Courier href="0x08048321" shape=box ];
+V_0x08048336 [ label=<08048336  ?? mov    byte ds:[0x080495bc&lt;_edata&gt;], 0x01<br align="left"/>> fontname=Courier href="0x08048336" shape=box ];
+V_0x0804833d [ label=<0804833d  ?? leave  <br align="left"/>0804833e  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x0804833d" shape=box style=filled ];
+}
+
+subgraph cluster_0x08048340 { label="function 0x08048340 \"frame_dummy\"" fillcolor="#f2f2f2" href="0x08048340" style=filled
+V_0x08048340 [ label=<08048340  ?? push   ebp<br align="left"/>08048341  ?? mov    ebp, esp<br align="left"/>08048343  ?? sub    esp, 0x08<br align="left"/>08048346  ?? mov    eax, dword ds:[0x080494cc&lt;(data)__JCR_END__&gt;]<br align="left"/>0804834b  ?? test   eax, eax<br align="left"/>0804834d  ?? je     0x08048361<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048340" shape=box style=filled ];
+V_0x0804834f [ label=<0804834f  ?? mov    eax, 0x00000000<br align="left"/>08048354  ?? test   eax, eax<br align="left"/>08048356  ?? je     0x08048361<br align="left"/>> fontname=Courier href="0x0804834f" shape=box ];
+V_0x08048361 [ label=<08048361  ?? leave  <br align="left"/>08048362  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x08048361" shape=box style=filled ];
+V_0x08048358 [ label=<08048358  ?? mov    dword ss:[esp], 0x080494cc&lt;(data)__JCR_END__&gt;<br align="left"/>0804835f  ?? call   eax<br align="left"/>> fontname=Courier href="0x08048358" shape=box ];
+}
+
+subgraph cluster_0x08048364 { label="function 0x08048364 \"main\"" fillcolor="#f2f2f2" href="0x08048364" style=filled
+V_0x08048364 [ label=<08048364  ?? lea    ecx, [esp + 0x04]<br align="left"/>08048368  ?? and    esp, 0xf0&lt;-16&gt;<br align="left"/>0804836b  ?? push   dword ds:[ecx + 0xfc&lt;-4&gt;]<br align="left"/>0804836e  ?? push   ebp<br align="left"/>0804836f  ?? mov    ebp, esp<br align="left"/>08048371  ?? push   ecx<br align="left"/>08048372  ?? sub    esp, 0x14<br align="left"/>08048375  ?? mov    dword ss:[esp], 0x00000028<br align="left"/>0804837c  ?? call   0x080482a0<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048364" shape=box style=filled ];
+V_0x08048381 [ label=<08048381  ?? mov    dword ss:[ebp + 0xf0&lt;-16&gt;], eax<br align="left"/>08048384  ?? mov    dword ss:[ebp + 0xf4&lt;-12&gt;], 0x00000000<br align="left"/>0804838b  ?? mov    dword ss:[ebp + 0xf4&lt;-12&gt;], 0x00000000<br align="left"/>08048392  ?? jmp    0x080483a6<br align="left"/>> fontname=Courier href="0x08048381" shape=box ];
+V_0x08048394 [ label=<08048394  ?? mov    eax, dword ss:[ebp + 0xf4&lt;-12&gt;]<br align="left"/>08048397  ?? shl    eax, 0x02<br align="left"/>0804839a  ?? add    eax, dword ss:[ebp + 0xf0&lt;-16&gt;]<br align="left"/>0804839d  ?? mov    dword ds:[eax], 0x00000005<br align="left"/>080483a3  ?? inc    dword ss:[ebp + 0xf4&lt;-12&gt;]<br align="left"/>> fontname=Courier href="0x08048394" shape=box ];
+V_0x080483ac [ label=<080483ac  ?? mov    eax, dword ss:[ebp + 0xf0&lt;-16&gt;]<br align="left"/>080483af  ?? add    eax, 0x30<br align="left"/>080483b2  ?? mov    eax, dword ds:[eax]<br align="left"/>080483b4  ?? mov    dword ss:[ebp + 0xf8&lt;-8&gt;], eax<br align="left"/>080483b7  ?? add    esp, 0x14<br align="left"/>080483ba  ?? pop    ecx<br align="left"/>080483bb  ?? pop    ebp<br align="left"/>080483bc  ?? lea    esp, [ecx + 0xfc&lt;-4&gt;]<br align="left"/>080483bf  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x080483ac" shape=box style=filled ];
+V_0x080483a6 [ label=<080483a6  ?? cmp    dword ss:[ebp + 0xf4&lt;-12&gt;], 0x09<br align="left"/>080483aa  ?? jle    0x08048394<br align="left"/>> fontname=Courier href="0x080483a6" shape=box ];
+}
+
+subgraph cluster_0x080483c0 { label="function 0x080483c0 \"__libc_csu_init\"" fillcolor="#f2f2f2" href="0x080483c0" style=filled
+V_0x080483c0 [ label=<080483c0  ?? push   ebp<br align="left"/>080483c1  ?? mov    ebp, esp<br align="left"/>080483c3  ?? push   edi<br align="left"/>080483c4  ?? push   esi<br align="left"/>080483c5  ?? push   ebx<br align="left"/>080483c6  ?? sub    esp, 0x0c<br align="left"/>080483c9  ?? call   0x080483ce<br align="left"/>080483ce  ?? pop    ebx<br align="left"/>080483cf  ?? add    ebx, 0x000011ce&lt;4558&gt;<br align="left"/>080483d5  ?? call   0x08048278&lt;(func)_init&gt;<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080483c0" shape=box style=filled ];
+V_0x080483da [ label=<080483da  ?? lea    eax, [ebx + 0xffffff20&lt;-224&gt;]<br align="left"/>080483e0  ?? lea    edx, [ebx + 0xffffff20&lt;-224&gt;]<br align="left"/>080483e6  ?? mov    dword ss:[ebp + 0xf0&lt;-16&gt;], eax<br align="left"/>080483e9  ?? sub    eax, edx<br align="left"/>080483eb  ?? xor    esi, esi<br align="left"/>080483ed  ?? sar    eax, 0x02<br align="left"/>080483f0  ?? cmp    esi, eax<br align="left"/>080483f2  ?? jae    0x0804840a<br align="left"/>> fontname=Courier href="0x080483da" shape=box ];
+V_0x080483f4 [ label=<080483f4  ?? mov    edi, edx<br align="left"/>080483f6  ?? mov    esi, esi<br align="left"/>> fontname=Courier href="0x080483f4" shape=box ];
+V_0x0804840a [ label=<0804840a  ?? add    esp, 0x0c<br align="left"/>0804840d  ?? pop    ebx<br align="left"/>0804840e  ?? pop    esi<br align="left"/>0804840f  ?? pop    edi<br align="left"/>08048410  ?? leave  <br align="left"/>08048411  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x0804840a" shape=box style=filled ];
+V_0x080483fb [ label=<080483fb  ?? mov    ecx, dword ss:[ebp + 0xf0&lt;-16&gt;]<br align="left"/>080483fe  ?? sub    ecx, edi<br align="left"/>08048400  ?? inc    esi<br align="left"/>08048401  ?? sar    ecx, 0x02<br align="left"/>08048404  ?? cmp    esi, ecx<br align="left"/>08048406  ?? mov    edx, edi<br align="left"/>08048408  ?? jb     0x080483f8<br align="left"/>> fontname=Courier href="0x080483fb" shape=box ];
+V_0x080483f8 [ label=<080483f8  ?? call   dword ds:[edx + esi*0x04]<br align="left"/>> fontname=Courier href="0x080483f8" shape=box ];
+}
+
+subgraph cluster_0x08048414 { label="function 0x08048414 \"__libc_csu_fini\"" fillcolor="#f2f2f2" href="0x08048414" style=filled
+V_0x08048414 [ label=<08048414  ?? push   ebp<br align="left"/>08048415  ?? mov    ebp, esp<br align="left"/>08048417  ?? push   edi<br align="left"/>08048418  ?? push   esi<br align="left"/>08048419  ?? push   ebx<br align="left"/>0804841a  ?? call   0x0804841f<br align="left"/>0804841f  ?? pop    ebx<br align="left"/>08048420  ?? add    ebx, 0x0000117d&lt;4477&gt;<br align="left"/>08048426  ?? lea    eax, [ebx + 0xffffff20&lt;-224&gt;]<br align="left"/>0804842c  ?? lea    edi, [ebx + 0xffffff20&lt;-224&gt;]<br align="left"/>08048432  ?? sub    eax, edi<br align="left"/>08048434  ?? sar    eax, 0x02<br align="left"/>08048437  ?? sub    esp, 0x0c<br align="left"/>0804843a  ?? lea    esi, [eax + 0xff&lt;-1&gt;]<br align="left"/>0804843d  ?? jmp    0x08048444<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048414" shape=box style=filled ];
+V_0x08048440 [ label=<08048440  ?? call   dword ds:[edi + esi*0x04]<br align="left"/>> fontname=Courier href="0x08048440" shape=box ];
+V_0x08048449 [ label=<08048449  ?? call   0x08048494&lt;(func)_fini&gt;<br align="left"/>> fontname=Courier href="0x08048449" shape=box ];
+V_0x08048443 [ label=<08048443  ?? dec    esi<br align="left"/>> fontname=Courier href="0x08048443" shape=box ];
+V_0x08048444 [ label=<08048444  ?? cmp    esi, 0xff&lt;-1&gt;<br align="left"/>08048447  ?? jne    0x08048440<br align="left"/>> fontname=Courier href="0x08048444" shape=box ];
+V_0x0804844e [ label=<0804844e  ?? add    esp, 0x0c<br align="left"/>08048451  ?? pop    ebx<br align="left"/>08048452  ?? pop    esi<br align="left"/>08048453  ?? pop    edi<br align="left"/>08048454  ?? leave  <br align="left"/>08048455  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x0804844e" shape=box style=filled ];
+V_0x0804843f [ label=<0804843f  ?? nop    <br align="left"/>> fontname=Courier href="0x0804843f" shape=box ];
+}
+
+subgraph cluster_0x08048460 { label="function 0x08048460 \"__do_global_ctors_aux\"" fillcolor="#f2f2f2" href="0x08048460" style=filled
+V_0x08048460 [ label=<08048460  ?? push   ebp<br align="left"/>08048461  ?? mov    ebp, esp<br align="left"/>08048463  ?? push   ebx<br align="left"/>08048464  ?? mov    ebx, 0x080494bc&lt;__preinit_array_start&gt;<br align="left"/>08048469  ?? sub    esp, 0x04<br align="left"/>0804846c  ?? mov    eax, dword ds:[0x080494bc&lt;__preinit_array_start&gt;]<br align="left"/>08048471  ?? cmp    eax, 0xff&lt;-1&gt;<br align="left"/>08048474  ?? je     0x0804848c<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048460" shape=box style=filled ];
+V_0x08048476 [ label=<08048476  ?? lea    esi, [esi + 0x00]<br align="left"/>08048479  ?? lea    edi, [edi + 0x00000000]<br align="left"/>> fontname=Courier href="0x08048476" shape=box ];
+V_0x0804848c [ label=<0804848c  ?? pop    eax<br align="left"/>0804848d  ?? pop    ebx<br align="left"/>0804848e  ?? pop    ebp<br align="left"/>0804848f  ?? nop    <br align="left"/>08048490  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x0804848c" shape=box style=filled ];
+V_0x08048485 [ label=<08048485  ?? mov    eax, dword ds:[ebx]<br align="left"/>08048487  ?? cmp    eax, 0xff&lt;-1&gt;<br align="left"/>0804848a  ?? jne    0x08048480<br align="left"/>> fontname=Courier href="0x08048485" shape=box ];
+V_0x08048480 [ label=<08048480  ?? sub    ebx, 0x04<br align="left"/>08048483  ?? call   eax<br align="left"/>> fontname=Courier href="0x08048480" shape=box ];
+}
+
+subgraph cluster_0x08048494 { label="function 0x08048494 \"_fini\"" fillcolor="#f2f2f2" href="0x08048494" style=filled
+V_0x08048494 [ label=<08048494  ?? push   ebp<br align="left"/>08048495  ?? mov    ebp, esp<br align="left"/>08048497  ?? push   ebx<br align="left"/>08048498  ?? call   0x0804849d<br align="left"/>0804849d  ?? pop    ebx<br align="left"/>0804849e  ?? add    ebx, 0x000010ff&lt;4351&gt;<br align="left"/>080484a4  ?? push   eax<br align="left"/>080484a5  ?? call   0x08048310&lt;(func)__do_global_dtors_aux&gt;<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048494" shape=box style=filled ];
+V_0x080484aa [ label=<080484aa  ?? pop    ecx<br align="left"/>080484ab  ?? pop    ebx<br align="left"/>080484ac  ?? leave  <br align="left"/>080484ad  ?? ret    <br align="left"/>> fillcolor="#cdccfe" fontname=Courier href="0x080484aa" shape=box style=filled ];
+}
+indeterminate [ label="indeterminate" fillcolor="#ff9999" shape=box style=filled ];
+V_0x08048290 -> indeterminate [ label="other"  ];
+V_0x080482a0 -> indeterminate [ label="other"  ];
+V_0x080482b0 -> indeterminate [ label="other"  ];
+V_0x080482c0 -> V_0x080482b0 [ label="call" color="#05ff00" ];
+V_0x080484aa -> indeterminate [ label="return" color="#0500ff" ];
+V_0x080482e4 -> V_0x08048301 [ label=""  ];
+V_0x0804832b -> V_0x08048336 [ label="" style=dotted ];
+V_0x08048340 -> V_0x08048361 [ label=""  ];
+V_0x080483a6 -> V_0x080483ac [ label="" style=dotted ];
+V_0x080483f8 -> V_0x080483fb [ label="cret\nassumed" style=dotted ];
+V_0x08048440 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048460 -> V_0x0804848c [ label=""  ];
+V_0x08048358 -> V_0x08048361 [ label="cret\nassumed" style=dotted ];
+V_0x0804848c -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048460 -> V_0x08048476 [ label="" style=dotted ];
+V_0x0804844e -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048444 -> V_0x08048449 [ label="" style=dotted ];
+V_0x08048440 -> V_0x08048443 [ label="cret\nassumed" style=dotted ];
+V_0x0804828d -> indeterminate [ label="return" color="#0500ff" ];
+V_0x0804834f -> V_0x08048361 [ label=""  ];
+V_0x08048340 -> V_0x0804834f [ label="" style=dotted ];
+V_0x08048361 -> indeterminate [ label="return" color="#0500ff" ];
+V_0x0804834f -> V_0x08048358 [ label="" style=dotted ];
+V_0x08048321 -> V_0x0804832b [ label="cret\nassumed" style=dotted ];
+V_0x08048336 -> V_0x0804833d [ label="" style=dotted ];
+V_0x08048310 -> V_0x0804831f [ label="" style=dotted ];
+V_0x08048310 -> V_0x0804832b [ label=""  ];
+V_0x080482ff -> V_0x08048301 [ label="cret\nassumed" style=dotted ];
+V_0x0804832b -> V_0x08048321 [ label=""  ];
+V_0x0804831f -> V_0x0804833d [ label=""  ];
+V_0x0804833d -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048301 -> indeterminate [ label="return" color="#0500ff" ];
+V_0x080482e4 -> V_0x080482ff [ label="" style=dotted ];
+V_0x080482c0 -> V_0x080482e1 [ label="cret" style=dotted ];
+V_0x08048278 -> V_0x08048283 [ label="cret" style=dotted ];
+V_0x08048278 -> V_0x080482e4 [ label="call" color="#05ff00" ];
+V_0x08048283 -> V_0x08048288 [ label="cret" style=dotted ];
+V_0x08048283 -> V_0x08048340 [ label="call" color="#05ff00" ];
+V_0x08048288 -> V_0x0804828d [ label="cret" style=dotted ];
+V_0x08048288 -> V_0x08048460 [ label="call" color="#05ff00" ];
+V_0x080483ac -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048364 -> V_0x080482a0 [ label="call" color="#05ff00" ];
+V_0x08048364 -> V_0x08048381 [ label="cret" style=dotted ];
+V_0x08048381 -> V_0x080483a6 [ label=""  ];
+V_0x08048394 -> V_0x080483a6 [ label="" style=dotted ];
+V_0x080483a6 -> V_0x08048394 [ label=""  ];
+V_0x080483da -> V_0x0804840a [ label=""  ];
+V_0x080483c0 -> V_0x08048278 [ label="call" color="#05ff00" ];
+V_0x080483c0 -> V_0x080483da [ label="cret" style=dotted ];
+V_0x0804840a -> indeterminate [ label="return" color="#0500ff" ];
+V_0x080483da -> V_0x080483f4 [ label="" style=dotted ];
+V_0x08048494 -> V_0x080484aa [ label="cret" style=dotted ];
+V_0x08048494 -> V_0x08048310 [ label="call" color="#05ff00" ];
+V_0x080482ff -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048321 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048358 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x080483f4 -> V_0x080483f8 [ label="" style=dotted ];
+V_0x080483fb -> V_0x0804840a [ label="" style=dotted ];
+V_0x080483fb -> V_0x080483f8 [ label=""  ];
+V_0x080483f8 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048414 -> V_0x08048444 [ label=""  ];
+V_0x08048443 -> V_0x08048444 [ label="" style=dotted ];
+V_0x08048444 -> V_0x08048440 [ label=""  ];
+V_0x08048449 -> V_0x0804844e [ label="cret" style=dotted ];
+V_0x08048449 -> V_0x08048494 [ label="call" color="#05ff00" ];
+V_0x08048476 -> V_0x08048480 [ label="" style=dotted ];
+V_0x08048485 -> V_0x0804848c [ label="" style=dotted ];
+V_0x08048485 -> V_0x08048480 [ label=""  ];
+V_0x08048480 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048480 -> V_0x08048485 [ label="cret\nassumed" style=dotted ];
+V_0x0804843f -> V_0x08048440 [ label="" style=dotted ];
+}

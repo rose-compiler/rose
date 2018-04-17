@@ -85,8 +85,10 @@ int main (void)
   }
 #endif
   driver ( ) ;
-  printf ("chloads =%lu chostores =%lu, chflops=%lu\n",chloads, chstores, chflops);
+  printf ("chflops=%lu, chloads =%lu, chostores =%lu\n", chflops, chloads, chstores);
   assert (chflops == 16120260000);
+  assert (chloads== 29840320000);
+  assert (chstores== 19920160000);
   return 0;
 }
 

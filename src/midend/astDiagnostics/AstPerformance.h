@@ -23,7 +23,7 @@
 
     The use of these performance monitors is designed to be simple to use, support
     hierarchies of timers, and to generate simple reports.  Tests of the performance 
-    monitors are in the ROSE/tests/roseTests/astPerformanceTests directory.
+    monitors are in the ROSE/tests/nonsmoke/functional/roseTests/astPerformanceTests directory.
 
     Possible uses:
     -#) timing performance,

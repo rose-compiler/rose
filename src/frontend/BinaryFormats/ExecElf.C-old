@@ -1,9 +1,0 @@
-/* Copyright 2008 Lawrence Livermore National Security, LLC */
-
-#include "rose.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-    
-/* Truncate an address, ADDR, to be a multiple of the alignment, ALMNT, where ALMNT is a power of two and of the same
- * unsigned datatype as the address. */
-#define ALIGN(ADDR,ALMNT) ((ADDR) & ~((ALMNT)-1))

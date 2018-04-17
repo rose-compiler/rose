@@ -1,6 +1,7 @@
 #ifndef PROGRAM_ABSTRACTION_LAYER_H
 #define PROGRAM_ABSTRACTION_LAYER_H
 
+#include "FunctionIdMapping.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 
@@ -15,12 +16,14 @@ namespace SPRAY {
     virtual void initialize(SgProject* root);
     Labeler* getLabeler();
     VariableIdMapping* getVariableIdMapping();
+    FunctionIdMapping* getFunctionIdMapping();
     void setModeArrayElementVariableId(bool val);
     bool getModeArrayElementVariableId();
   private:
     bool _modeArrayElementVariableId;;
     Labeler* _labeler;
     VariableIdMapping* _variableIdMapping;
+    FunctionIdMapping* _functionIdMapping;
   };
 
 } // end of namespace SPRAY

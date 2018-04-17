@@ -3,7 +3,7 @@
 
 #include <Partitioner2/Utility.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

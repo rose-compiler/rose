@@ -4,15 +4,16 @@ AC_DEFUN([ROSE_SUPPORT_EDG],
 
 # DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
 AC_ARG_ENABLE(edg-version,
-[  --enable-edg_version     major.minor version number for EDG (e.g. 4.4, \[4.7\], 4.8, 4.9).],
+[  --enable-edg_version     major.minor version number for EDG (e.g. 4.4, \[4.7\], 4.8, 4.9, 4.12).],
 [ echo "Setting up EDG version"
 ])
 
 echo "enable_edg_version = $enable_edg_version"
 if test "x$enable_edg_version" = "x"; then
-   echo "Default version of EDG used (4.7)"
+# DQ (5/22/2016): Changed the default version of EDG to 4.9.
+   echo "Default version of EDG used (4.9)"
    edg_major_version_number=4
-   edg_minor_version_number=7
+   edg_minor_version_number=9
 else
    echo "Specifying EDG version is not recommended"
    edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
@@ -44,8 +45,26 @@ if test "x$edg_major_version_number" = "x4"; then
           enable_edg_version49=yes
           AC_DEFINE([ROSE_USE_EDG_VERSION_4_9], [], [Whether to use the new EDG version 4.9])
         else
-          echo "ERROR: Could not identify the EDG minor version number."
-          exit 1
+          if test "x$edg_minor_version_number" = "x11"; then
+            echo "Recognized an accepted minor version number."
+            enable_edg_version411=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_4_11], [], [Whether to use the new EDG version 4.11])
+          else
+            if test "x$edg_minor_version_number" = "x12"; then
+              echo "Recognized an accepted minor version number."
+              enable_edg_version412=yes
+              AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
+            else
+              if test "x$edg_minor_version_number" = "x14"; then
+                echo "Recognized an accepted minor version number."
+                enable_edg_version414=yes
+                AC_DEFINE([ROSE_USE_EDG_VERSION_4_14], [], [Whether to use the new EDG version 4.14])
+              else
+                echo "ERROR: Could not identify the EDG minor version number."
+                exit 1
+              fi
+            fi
+          fi
         fi
       fi
     fi
@@ -77,6 +96,9 @@ AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_4, [test "x$enable_edg_version44" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_7, [test "x$enable_edg_version47" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_8, [test "x$enable_edg_version48" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_9, [test "x$enable_edg_version49" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_11, [test "x$enable_edg_version411" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_12, [test "x$enable_edg_version412" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_14, [test "x$enable_edg_version414" = xyes])
 ]
 )
 

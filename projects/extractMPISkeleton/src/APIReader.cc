@@ -84,7 +84,7 @@ APISpec *readAPISpec(string fname, uint32_t typeCode) {
 APISpecs readAPISpecCollection(string fname) {
   APISpecs theSpecs;
   uint32_t typeCode = 1;
-  string path = rose::getPathFromFileName(fname);
+  string path = Rose::getPathFromFileName(fname);
 
   // parse the file into an s-expression
   SExpr *sx = SExpr::parse_file(fname);

@@ -33,6 +33,7 @@ libroseutil_la_SOURCES =			\
 	FileSystem.C				\
 	LinearCongruentialGenerator.C		\
 	processSupport.C			\
+	Progress.C				\
 	rose_getline.C				\
 	rose_strtoull.C
 nodist_libroseutil_la_SOURCES = rose_paths.C
@@ -57,8 +58,12 @@ pkginclude_HEADERS =				\
 	GraphUtility.h				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
+	timing.h				\
 	ParallelSort.h				\
 	processSupport.h			\
+	Progress.h				\
+	RecursionCounter.h			\
+	rose_isnan.h				\
 	rose_getline.h				\
 	rose_override.h				\
 	rose_paths.h				\
@@ -72,13 +77,18 @@ EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 # rules for the Sawyer subdirectory
 
 noinst_LTLIBRARIES += libroseSawyer.la
+libroseSawyer_la_CPPFLAGS = $(ROSE_INCLUDES) -DCOMPILING_ROSE
 libroseSawyer_la_SOURCES =			\
 	Sawyer/Assert.C				\
 	Sawyer/Attribute.C			\
 	Sawyer/CommandLine.C			\
+	Sawyer/CommandLineBoost.C		\
+	Sawyer/DocumentBaseMarkup.C		\
+	Sawyer/DocumentMarkup.C			\
+	Sawyer/DocumentPodMarkup.C		\
+	Sawyer/DocumentTextMarkup.C		\
 	Sawyer/GraphTraversal.C			\
-	Sawyer/Markup.C				\
-	Sawyer/MarkupPod.C			\
+	Sawyer/LineVector.C			\
 	Sawyer/Message.C			\
 	Sawyer/ProgressBar.C			\
 	Sawyer/Sawyer.C				\
@@ -100,10 +110,16 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Cached.h				\
 	Sawyer/Callbacks.h			\
 	Sawyer/CommandLine.h			\
+	Sawyer/CommandLineBoost.h		\
 	Sawyer/DefaultAllocator.h		\
 	Sawyer/DenseIntegerSet.h		\
 	Sawyer/DistinctList.h			\
+	Sawyer/DocumentBaseMarkup.h		\
+	Sawyer/DocumentMarkup.h			\
+	Sawyer/DocumentPodMarkup.h		\
+	Sawyer/DocumentTextMarkup.h		\
 	Sawyer/Exception.h			\
+	Sawyer/FileSystem.h			\
 	Sawyer/Graph.h				\
 	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
@@ -113,10 +129,10 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/IntervalMap.h			\
 	Sawyer/IntervalSet.h			\
 	Sawyer/IntervalSetMap.h			\
+	Sawyer/Lexer.h				\
+	Sawyer/LineVector.h			\
 	Sawyer/Map.h				\
 	Sawyer/MappedBuffer.h			\
-	Sawyer/Markup.h				\
-	Sawyer/MarkupPod.h			\
 	Sawyer/Message.h			\
 	Sawyer/NullBuffer.h			\
 	Sawyer/Optional.h			\
@@ -124,13 +140,17 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/ProgressBar.h			\
 	Sawyer/Sawyer.h				\
 	Sawyer/Set.h				\
+	Sawyer/SharedObject.h			\
 	Sawyer/SharedPointer.h			\
 	Sawyer/SmallObject.h			\
 	Sawyer/Stack.h				\
+	Sawyer/StackAllocator.h			\
 	Sawyer/StaticBuffer.h			\
 	Sawyer/Stopwatch.h			\
 	Sawyer/Synchronization.h		\
 	Sawyer/ThreadWorkers.h			\
+	Sawyer/Trace.h				\
+	Sawyer/Type.h				\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h
 

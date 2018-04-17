@@ -4,9 +4,10 @@
 #include "SymbolicPlus.h"
 #include "SymbolicSelect.h"
 
+#include <list>
 #include <stdio.h>
 #include <sstream>
-
+using namespace std; 
 void SymbolicValImpl :: Dump() const
 { std::cerr << toString(); }
 
@@ -74,7 +75,7 @@ AstNodePtr SymbolicAstWrap::CodeGen( AstInterface &fa) const
 
 std::string SymbolicAstWrap::toString() const
 {
-   return "AstWrap(" + AstToString(ast) + ")";
+   return "AstWrap(" + AstInterface::AstToString(ast) + ")";
 }
 
 void SymbolicAstWrap::Dump() const
@@ -118,19 +119,22 @@ bool SymbolicFunction:: operator == (const SymbolicFunction& that) const
 
 AstNodePtr SymbolicFunction :: CodeGen( AstInterface &_fa) const
 {
-  AstInterface::AstNodeList l;
+  AstNodeList l;
   for (const_iterator i = args.begin(); i != args.end(); ++i) {
      SymbolicVal cur = *i;
      AstNodePtr curast = cur.CodeGen(_fa); 
-     l.push_back(curast);
+     l.push_back(curast.get_ptr());
   }
   if (t == AstInterface::OP_NONE) {
-     return _fa.CreateFunctionCall( op, l);
+     return _fa.CreateFunctionCall( op, l.begin(), l.end());
   }
   else if (t == AstInterface::OP_ARRAY_ACCESS) {
-        AstNodePtr arr = l.front();
-        l.pop_front();
-        return _fa.CreateArrayAccess(arr, l);
+        AstNodeList::const_iterator b = l.begin();
+        AstNodePtr arr = *b;
+        for (++b; b != l.end(); ++b) {
+           arr =  _fa.CreateArrayAccess(arr, *b);
+        }
+        return arr;
      }
   else if (t == AstInterface::OP_ASSIGN && l.size() == 2) {
         return _fa.CreateAssignment(l.front(), l.back());
@@ -149,13 +153,13 @@ AstNodePtr SymbolicSelect:: CodeGen(  AstInterface &fa ) const
       AstInterface::AstNodeList list;
       for (OpdIterator iter = GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {
            AstNodePtr p = Term2Val(iter.Current()).CodeGen(fa);
-           list.push_back(p);
+           list.push_back(p.get_ptr());
            ++size;
       }
       assert( size > 1);
       std::string func = (opt< 0)? "min" : "max";
 
-      return fa.CreateFunctionCall(func, list);
+      return fa.CreateFunctionCall(func, list.begin(), list.end());
    }
 
 void SymbolicBound:: 
@@ -301,9 +305,12 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
   else if (fa.IsBinaryOp(exp, &opr, &s1, &s2)) {
      SymbolicVal v1 = GetSymbolicVal( fa, s1 ), v2 = GetSymbolicVal(fa, s2);
      switch (opr) {
-     case AstInterface::BOP_TIMES: return v1 * v2;
-     case AstInterface::BOP_PLUS: return v1 + v2;
-     case AstInterface::BOP_MINUS: return v1 - v2;
+     case AstInterface::BOP_TIMES: 
+         return v1 * v2;
+     case AstInterface::BOP_PLUS: 
+         return v1 + v2;
+     case AstInterface::BOP_MINUS: 
+         return v1 - v2;
      case AstInterface::BOP_DOT_ACCESS:
      case AstInterface::BOP_ARROW_ACCESS: 
      case AstInterface::BOP_DIVIDE:
@@ -325,7 +332,10 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
      case AstInterface::BOP_OR:
         return new SymbolicFunction( opr, "||", v1,v2);
      default:
+     {
+         cerr<<"Error in SymbolicValGenerator::GetSymbolicVal(): unhandled type of binary operator "<< AstInterface::toString(opr) <<endl;
         assert(false);
+     }
      }
   }
   else if (fa.IsUnaryOp(exp, &opr, &s1)) {
@@ -348,7 +358,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
     case AstInterface::UOP_INCR1:
         return new SymbolicFunction( opr, "++", v);
     default:
-       std::cerr << "Cannot handle " << AstToString(exp) << ":" << opr << "\n";
+       std::cerr << "Cannot handle " << AstInterface::AstToString(exp) << ":" << opr << "\n";
        assert(false);
      }
   }

@@ -1081,7 +1081,7 @@ markTemplateInstantiationsForOutput( SgNode* node )
      if (file != NULL)
         {
        // *************************************************************
-       // Collect template instantiations that used and MIGHT be output
+       // Collect template instantiations that are used and MIGHT be output
        // *************************************************************
 
 #if 0
@@ -1286,7 +1286,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
                  // This node has a position is some source code so we can check if it is part of the current file!
 #if 0
                     printf ("   --- In MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute(): currentFile = %s IR node from %s at line %d \n",
-                         currentFile->getFileName(),fileInfo->get_filename(),fileInfo->get_line());
+                            currentFile->getFileName().c_str(),fileInfo->get_filename(),fileInfo->get_line());
 #endif
                     if ( (fileInfo->isSameFile(currentFile) == true) && (isSgGlobal(node) == NULL) )
                        {
@@ -1308,7 +1308,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
                  else
                   {
 #if 0
-                    printf ("fileInfo->hasPositionInSource() == true \n");
+                    printf ("fileInfo->hasPositionInSource() == false \n");
 #endif
                   }
              }
@@ -1336,7 +1336,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
         {
 #if 0
           printf ("In MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute(): node = %p = %s = %s process = %s \n",
-                  node,node->sage_class_name(),SageInterface::get_name(node).c_str(),
+                  node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),
                (inheritedAttribute.insideDeclarationToOutput == true) ? "true" : "false");
 #endif
 

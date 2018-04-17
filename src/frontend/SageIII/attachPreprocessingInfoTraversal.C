@@ -69,11 +69,10 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0
-
 
 //It is needed because otherwise, the default destructor breaks something.
 
@@ -679,7 +678,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           //AS(4/3/09): FIXME: We are doing this quick fix because the fileNameForDirectivesAndComments is
           //incorrect for Fortran
           //PC(08/17/2009): Now conditional on the output language, otherwise breaks -rose:collectAllCommentsAndDirectives
-          if (sourceFile->get_outputLanguage() == SgFile::e_Fortran_output_language)
+          if (sourceFile->get_outputLanguage() == SgFile::e_Fortran_language)
              {
                fileNameForDirectivesAndComments = sourceFile->get_sourceFileNameWithPath();
                fileNameForTokenStream           = fileNameForDirectivesAndComments;
@@ -719,6 +718,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                     lex_token_stream = getFortranFixedFormatPreprocessorDirectives( fileNameForTokenStream );
 #endif
                     ROSE_ASSERT(lex_token_stream != NULL);
+
+                    if ( SgProject::get_verbose() > 1 )
+                       {
+                         printf ("DONE: getFortranFixedFormatPreprocessorDirectives() \n");
+                       }
 
                  // Attach the token stream to the AST
                     returnListOfAttributes->set_rawTokenStream(lex_token_stream);
@@ -1158,7 +1162,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        {
           SgLocatedNode* currentLocNodePtr = NULL;
           int line = 0;
-          int col  = 0;
+
+       // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // int col  = 0;
 
        // The following should always work since each statement is a located node
           currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
@@ -1239,7 +1245,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // on the command line
                  // line = currentLocNodePtr->get_file_info()->get_line();
                     line = currentLocNodePtr->get_file_info()->get_physical_line();
-                    col  = currentLocNodePtr->get_file_info()->get_col();
+
+                 // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+                 // col  = currentLocNodePtr->get_file_info()->get_col();
 #if 0
                     printf ("Insert any comment before %p = %s = %s (compilerGenerate=%s) at line = %d col = %d \n",
                           currentLocNodePtr,currentLocNodePtr->class_name().c_str(),SageInterface::get_name(currentLocNodePtr).c_str(),
@@ -1330,6 +1338,13 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // These used to be a problem, so we can continue to test these specific cases.
   // ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
      SgCaseOptionStmt* caseOptionStm = isSgCaseOptionStmt(n);
+
+  // DQ (11/25/2017): Added debugging info to support new switch implementation.
+     if (caseOptionStm != NULL && caseOptionStm->get_body() == NULL)
+        {
+          printf ("Error: In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm = %p \n",caseOptionStm);
+          caseOptionStm->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm: debug");
+        }
      ROSE_ASSERT (caseOptionStm == NULL || caseOptionStm->get_body() != NULL);
 
   // DQ (3/4/2016): Klocworks reports a problem with "isSgClassDeclaration(n)->get_endOfConstruct() != NULL".

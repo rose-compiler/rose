@@ -6,7 +6,7 @@
 #include <vector>
 #include "rosedll.h"
 
-namespace rose {
+namespace Rose {
 
 /** Functions for operating on files in a filesystem. */
 namespace FileSystem {
@@ -46,7 +46,7 @@ ROSE_UTIL_API bool isNotSymbolicLink(const Path &path);
  *  expression is "rose_.*", with a dot):
  *
  * @code
- *  using namespace rose::FileSystem;
+ *  using namespace Rose::FileSystem;
  *  Path top = "/foo/bar"; // where the search starts
  *  std::vector<Path> roseFiles = findAllNames(top, baseNameMatches(boost::regex("rose_.*")));
  * @endcode */

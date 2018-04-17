@@ -1,7 +1,10 @@
-#ifndef ROSE_BINARYLOADERELFOBJ_H
-#define ROSE_BINARYLOADERELFOBJ_H
+#ifndef ROSE_BinaryAnalysis_BinaryLoaderElfObj_H
+#define ROSE_BinaryAnalysis_BinaryLoaderElfObj_H
 
 #include "BinaryLoaderElf.h"
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** A loader suitable for ELF object files.
  *
@@ -28,12 +31,15 @@ public:
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*);
 
     /** Same as super class but relaxes alignment constraints for sections that are ELF Sections but not ELF Segments. */
-    virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
+    virtual MappingContribution align_values(SgAsmGenericSection*, const MemoryMap::Ptr&,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
                                              ConflictResolution *resolve);
 };
+
+} // namespace
+} // namespace
 
 #endif /*ROSE_BINARYLOADERELFOBJ_H*/

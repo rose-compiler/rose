@@ -1,9 +1,0 @@
-tps 1Dec 2008
-
-
-to make the connection work, I needed to run moc to produce slide_moc
-
-moc slide.h > slide_moc.cpp
-and then include slide_moc.cpp in the makefile
-
-moc is part of qt

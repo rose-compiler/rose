@@ -3,6 +3,7 @@
 
 #include "rose.h"
 
+using namespace Rose;
 using namespace SageBuilder;
 using namespace SageInterface;
 

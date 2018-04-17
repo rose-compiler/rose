@@ -1,0 +1,9 @@
+#pragma omp parallel 
+#pragma omp for  private(is)
+#pragma omp parallel 
+#pragma omp for  firstprivate(is)
+#pragma omp parallel 
+#pragma omp for  lastprivate(is)
+//#pragma omp parallel for lastprivate(is)
+#pragma omp parallel 
+#pragma omp for  schedule(static , 30) firstprivate(is) lastprivate(is)

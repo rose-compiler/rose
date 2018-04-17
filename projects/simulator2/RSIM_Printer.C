@@ -5,7 +5,8 @@
 
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 Printer::~Printer() {
     out_ <<onDestruction_;

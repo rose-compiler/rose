@@ -59,7 +59,7 @@ all: $(executableFiles)
 # the "-lrose -ledg" libraries, and one using the many separate ROSE libraries.
 $(executableFiles):
 #	g++ -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_LIBS)
-#	g++ -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#	g++ -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(ROSE_LIBS)
 #	/bin/sh @top_builddir@/libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(LDFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(ROSE_LIBS)
 	/bin/sh @top_builddir@/libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(LDFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_DWARF_INCLUDES) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 

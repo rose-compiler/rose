@@ -49,7 +49,11 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseContinueStmt(SgContinueStmt*, SgUnparse_Info&);
           virtual void unparseDeleteExp(SgDeleteExp*, SgUnparse_Info&);
           virtual void unparseDictionaryComprehension(SgDictionaryComprehension*, SgUnparse_Info&);
-          virtual void unparseDoubleVal(SgDoubleVal*, SgUnparse_Info&);
+
+       // DQ (3/28/2017): This should take a SgExpression* to match the base class virtual function signature.
+       // virtual void unparseDoubleVal(SgDoubleVal*, SgUnparse_Info&);
+          virtual void unparseDoubleVal(SgExpression* e, SgUnparse_Info&);
+ 
           virtual void unparseExecStatement(SgExecStatement*, SgUnparse_Info&);
           virtual void unparseExprStatement(SgExprStatement*, SgUnparse_Info&);
           virtual void unparseExprListExp(SgExprListExp*, SgUnparse_Info&);
@@ -67,7 +71,11 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseLambdaRefExp(SgLambdaRefExp*, SgUnparse_Info&);
           virtual void unparseListExp(SgListExp*, SgUnparse_Info&);
           virtual void unparseListComprehension(SgListComprehension*, SgUnparse_Info&);
-          virtual void unparseLongLongIntVal(SgLongLongIntVal* val, SgUnparse_Info& info);
+
+       // DQ (3/28/2017): This should take a SgExpression* to match the base class virtual function signature.
+       // virtual void unparseLongLongIntVal(SgLongLongIntVal* val, SgUnparse_Info& info);
+          virtual void unparseLongLongIntVal(SgExpression* e, SgUnparse_Info& info);
+
           virtual void unparseNaryOp(SgNaryOp*, SgUnparse_Info&);
           virtual void unparsePassStatement(SgPassStatement*, SgUnparse_Info&);
           virtual void unparsePntrArrRefExp(SgPntrArrRefExp*, SgUnparse_Info&);

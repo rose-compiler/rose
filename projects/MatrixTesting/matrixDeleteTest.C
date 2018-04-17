@@ -2,10 +2,12 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <SqlDatabase.h>
 
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {
@@ -45,14 +47,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .argument("uri", anyParser(settings.databaseUri))
               .doc("Uniform resource locator for the database." + SqlDatabase::uriDocumentation()));
 
-    return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 int
 main(int argc, char *argv[]) {
-    Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
-    Sawyer::Message::mfacilities.insertAndAdjust(mlog);
+    ROSE_INITIALIZE;
+    Diagnostics::initAndRegister(&mlog, "tool");
     mlog[INFO].enable();
 
     Settings settings;

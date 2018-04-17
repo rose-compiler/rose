@@ -466,8 +466,9 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
     const DepCompAstRef& initInfo = initcut->GetInfo();
 
     AstNodePtr lhs;
-    bool is_init = ai.IsAssignment(initInfo.stmt->GetOrigStmt(), &lhs) 
-                   && (lhs == initcut->GetInfo().orig);
+    bool readlhs = false;
+    bool is_init = ai.IsAssignment(initInfo.stmt->GetOrigStmt(), &lhs,0,&readlhs) 
+                   && !readlhs && (lhs == initcut->GetInfo().orig);
     AstNodeType inittype;
     if (ai.IsExpression(initInfo.orig, &inittype)==AST_NULL)
       assert(false);

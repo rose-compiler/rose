@@ -83,10 +83,13 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
 //        virtual void unparseAssnExpr                (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseExprRoot                (SgExpression* expr, SgUnparse_Info& info);
 
-//        virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
+       // DQ (3/28/2017): Switched this back to match the base class virtual function signature as part of fixing warnings.
+       // Plus it appears that the additional function argument was always false.
+       // virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
        // DQ (8/14/2007): Accept the use of the bool for now, but swith to information communicated through info object!
        // This function is different from the base class version (and it should be the same).
-          virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info, bool paren);
+       // virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info, bool paren);
+          virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseVarRef                  (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseClassRef                (SgExpression* expr, SgUnparse_Info& info);

@@ -9,6 +9,11 @@
 #define Sawyer_Optional_H
 
 #include <Sawyer/Sawyer.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/type_traits/aligned_storage.hpp>
+#include <boost/type_traits/type_with_alignment.hpp>
 
 #include <stdexcept>
 
@@ -43,9 +48,10 @@ public:
 template<typename T>
 class Optional {
 
-    // Done this way to avoid aliasing warnings from GCC
+    // Done as a union to avoid aliasing warnings from GCC
     union SAWYER_MAY_ALIAS MayAlias {
         unsigned char data_[sizeof(T)];
+        BOOST_DEDUCED_TYPENAME boost::type_with_alignment<boost::alignment_of<T>::value >::type aligner_;
     } mayAlias_;
 
     bool isEmpty_;
@@ -53,6 +59,29 @@ class Optional {
     void *address() { return &mayAlias_; }
     const void*address() const { return &mayAlias_; }
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        s <<BOOST_SERIALIZATION_NVP(isEmpty_);
+        if (!isEmpty_)
+            s <<boost::serialization::make_nvp("value", get());
+    }
+
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        *this = Nothing();
+        bool skip = false;
+        s >>boost::serialization::make_nvp("isEmpty_", skip);
+        if (!skip) {
+            *this = T();
+            s >>boost::serialization::make_nvp("value", get());
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+        
 public:
     /** Type of stored value. */
     typedef T Value;

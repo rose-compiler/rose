@@ -22,8 +22,6 @@ SgAsmPERVASizePair::encode(RVASizePair_disk *disk) const {
     return disk;
 }
 
-/** Sets or removes the section associated with an RVA/size pair. Setting or removing the section also updates the RVA and size
- *  according to the preferred mapping address and mapped size of the section. */
 void
 SgAsmPERVASizePair::set_section(SgAsmGenericSection *section)
 {
@@ -39,8 +37,6 @@ SgAsmPERVASizePair::set_section(SgAsmGenericSection *section)
     }
 }
 
-/** Returns the section associated with an RVA/size pair. This is the same as the ROSETTA-generated accessor, but we need a
- * custom version of set_section(). */
 SgAsmGenericSection *
 SgAsmPERVASizePair::get_section() const
 {

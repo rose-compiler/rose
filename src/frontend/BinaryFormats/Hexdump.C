@@ -27,8 +27,6 @@ str_printf(const char *fmt, ...)
  *                                                      C++ Stream Output
  *************************************************************************************************************************/
 
-/** Prints binary data similar to the Unix hexdump command.  The output is configurable via the HexdumpFormat argument.  This
- *  is the most general hexdump function. All others should be implemented in terms of this one. */
 void
 SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const unsigned char *data,
                                    size_t n, const HexdumpFormat &fmt)

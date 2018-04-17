@@ -1,0 +1,2 @@
+#pragma omp task  shared(x) mergeable final(x > 0)
+#pragma omp taskwait 

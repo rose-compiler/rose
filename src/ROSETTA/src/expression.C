@@ -95,6 +95,10 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CompoundInitializer,    "CompoundInitializer",    "COMPOUND_INIT" );
      NEW_TERMINAL_MACRO (ConstructorInitializer, "ConstructorInitializer", "CONSTRUCTOR_INIT" );
      NEW_TERMINAL_MACRO (AssignInitializer,      "AssignInitializer",      "ASSIGN_INIT" );
+
+  // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
+     NEW_TERMINAL_MACRO (BracedInitializer,      "BracedInitializer",      "BRACED_INIT" );
+
      NEW_TERMINAL_MACRO (ExpressionRoot,         "ExpressionRoot",         "EXPRESSION_ROOT" );
      NEW_TERMINAL_MACRO (MinusOp,                "MinusOp",                "UNARY_MINUS_OP" );
      NEW_TERMINAL_MACRO (UnaryAddOp,             "UnaryAddOp",             "UNARY_ADD_OP" );
@@ -165,6 +169,11 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CharVal,                "CharVal",                "CHAR_VAL" );
      NEW_TERMINAL_MACRO (UnsignedCharVal,        "UnsignedCharVal",        "UNSIGNED_CHAR_VAL" );
      NEW_TERMINAL_MACRO (WcharVal,               "WcharVal",               "WCHAR_VAL" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     NEW_TERMINAL_MACRO (Char16Val,              "Char16Val",              "CHAR16_VAL" );
+     NEW_TERMINAL_MACRO (Char32Val,              "Char32Val",              "CHAR32_VAL" );
+
      NEW_TERMINAL_MACRO (UnsignedShortVal,       "UnsignedShortVal",       "UNSIGNED_SHORT_VAL" );
      NEW_TERMINAL_MACRO (IntVal,                 "IntVal",                 "INT_VAL" );
      NEW_TERMINAL_MACRO (EnumVal,                "EnumVal",                "ENUM_VAL" );
@@ -192,6 +201,10 @@ Grammar::setUpExpressions ()
 
   // DQ (8/27/2006): Added support for complex values (We will use a ComplexVal to stand for a imaginary number as well).
      NEW_TERMINAL_MACRO (ComplexVal,             "ComplexVal",             "COMPLEX_VAL" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // NEW_TERMINAL_MACRO (LabelAddressVal,        "LabelAddressVal",             "LABEL_ADDRESS_VAL" );
 
   // DQ (12/13/2005): Added support for empty expression (and empty statement).
      NEW_TERMINAL_MACRO (NullExpression,         "NullExpression",             "NULL_EXPR" );
@@ -337,7 +350,8 @@ Grammar::setUpExpressions ()
      
     
      NEW_NONTERMINAL_MACRO (Initializer,
-                            AggregateInitializer | CompoundInitializer | ConstructorInitializer | AssignInitializer | DesignatedInitializer,
+                            AggregateInitializer | CompoundInitializer | ConstructorInitializer | 
+                            AssignInitializer | DesignatedInitializer | BracedInitializer,
                             "Initializer","EXPR_INIT", false);
 
   // User defined operator for Fortran named operators.
@@ -368,7 +382,7 @@ Grammar::setUpExpressions ()
           PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
 
-          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/      | ElementwiseOp        | PowerOp        |
+          NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
           LeftDivideOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
@@ -377,14 +391,15 @@ Grammar::setUpExpressions ()
           NaryBooleanOp  | NaryComparisonOp,
           "NaryOp","NARY_EXPRESSION", false);
 
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp           | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal             | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
           LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal            | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
-          TemplateParameterVal | NullptrValExp,
+          DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
+          TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val /* | LabelAddressVal */,
           "ValueExp","ValueExpTag", false);
-
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
           ListExp  | TupleExp | MatrixExp,
@@ -422,7 +437,7 @@ Grammar::setUpExpressions ()
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | NoexceptOp, "Expression", "ExpressionTag", false);
+          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp, "Expression", "ExpressionTag", false);
        // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
@@ -801,6 +816,11 @@ Grammar::setUpExpressions ()
      LambdaExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      SuperExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ClassExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1482,11 +1502,22 @@ Grammar::setUpExpressions ()
   // DQ (2/15/2015): This will call cycles in the AST if it is allowed to be defined in the AST traversal.
   // LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
   //             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#if 0
+  // Original code (design).
      LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (4/27/2017): I think it might be better to traverse the class directly and mark the operator() 
+  // member function to not be traversed via the lambda function (becasue it is in the lambda closure class).
+     LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DQ (4/27/2017): This points to the non defining declaration, so it is OK to traverse it.
+     LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
      LambdaExp.setDataPrototype ( "bool", "is_mutable", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LambdaExp.setDataPrototype ( "bool", "capture_default", "= false",
@@ -1560,7 +1591,21 @@ Grammar::setUpExpressions ()
      WcharVal.setDataPrototype ( "unsigned long", "valueUL", "= 0",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      WcharVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
-                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionPrototype ( "HEADER_CHAR16_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Char16Val.setDataPrototype ( "unsigned short", "valueUL", "= 0",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Char16Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char32Val.setFunctionPrototype ( "HEADER_CHAR32_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Char32Val.setDataPrototype ( "unsigned int", "valueUL", "= 0",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Char32Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UnsignedShortVal.setFunctionPrototype ( "HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
      UnsignedShortVal.setDataPrototype ( "unsigned short", "value", "= 0",
@@ -1686,6 +1731,12 @@ Grammar::setUpExpressions ()
   // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
      ComplexVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionPrototype ("HEADER_LABEL_ADDRESS_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+  // LabelAddressVal.setDataPrototype ( "SgLabelStatement*", "label_statement", "= NULL",
+  //                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Liao 6/18/2008, UPC THREADS, MYTHREAD 
      UpcThreads.setFunctionPrototype ( "HEADER_UPC_THREADS_EXPRESSION", "../Grammar/Expression.code" );
@@ -1894,14 +1945,22 @@ Grammar::setUpExpressions ()
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JavaTypeExpression.setFunctionPrototype ( "HEADER_JAVA_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (3/23/2017): We need to change the name to simplify the support for the virtual get_type() 
+  // function elsewhere in ROSE (and to support the "override" keyword).
   // DQ (3/7/2014): Added support to build access functions for type to be reset in snippet support.
      JavaTypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // JavaTypeExpression.setDataPrototype ( "SgType*", "internal_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
      TypeExpression.setFunctionPrototype ( "HEADER_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (3/23/2017): We need to change the name to simplify the support for the virtual get_type() 
+  // function elsewhere in ROSE (and to support the "override" keyword).
      TypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TypeExpression.setDataPrototype ( "SgType*", "internal_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/13/2014): Added Java support for Java annotations.
      JavaMarkerAnnotation.setFunctionPrototype ( "HEADER_JAVA_MARKER_ANNOTATION", "../Grammar/Expression.code" );
@@ -2251,33 +2310,75 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+  // DQ (3/22/2018): Revert back to the previous implementation and pursue changing the name qualification support code.
+  // The new version below with the names NOT using the "_for_type" version was a problem for the unparser support
+  // (which reuses the same code for SgInitializedName, SgTemplateArgument, and SgAggregateInitializer).  So it might
+  // be better to just fixup the name qualification support and reuse the unparsing support then to reuse the name 
+  // qualification support and implement new unparsing support.  It appears that we can not quite do both, unless 
+  // I figure that out next.
+
+  // DQ (3/22/2018): The names of the data members have been renamed to support the name qualification support 
+  // using the same support as for the SgConstructor initializer.  The name qualification that is supported for
+  // an aggregate initializer is just that for the C++11 specific type specifier that is sometime required 
+  // (for an example of this see Cxx11_tests/test2018_47.C).  Since it is the type name that is qualified
+  // it does make sens to use the original names (e.g. name_qualification_length_for_type), but it would be
+  // inconsistant with the constructor initializer support, and eliminate the opportunity to reuse that
+  // supporting name qualification code.
+#define USE_NAME_QUALIFICATION_THROUGH_TYPE 1
+
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (8/1/2014): Added to support C++11 constexpr constructors that can generate an originalExpressionTree in ROSE.
      AggregateInitializer.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
@@ -2377,6 +2478,21 @@ Grammar::setUpExpressions ()
      AssignInitializer.setDataPrototype     ( "bool"    , "need_paren"     , "= true",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
+     BracedInitializer.setFunctionPrototype ( "HEADER_BRACED_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
+  // BracedInitializer.setDataPrototype     ( "SgExpression*", "operand_i"      , "= NULL",
+  //                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     BracedInitializer.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     BracedInitializer.editSubstitute       ( "LIST_NAME", "initializer" );
+     BracedInitializer.setDataPrototype     ( "SgExprListExp*", "initializers", "= NULL",
+                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     BracedInitializer.setDataPrototype     ( "SgType*"      , "expression_type", "= NULL",
+                                              CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Not certain that I want this data member since it is redundant with the list of initializers being lenght zero.
+  // This would make a better member function that tested the list size than a new data member.
+  // BracedInitializer.setDataPrototype     ( "bool", "is_empty_braced_initializer", "= false",
+  //                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      NullExpression.setFunctionPrototype    ( "HEADER_NULL_EXPRESSION", "../Grammar/Expression.code" );
   // NullExpression.setDataPrototype        ( "SgType*", "expression_type", "= NULL",
@@ -2702,6 +2818,11 @@ Grammar::setUpExpressions ()
      CharVal.setFunctionSource ( "SOURCE_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource ( "SOURCE_UNSIGNED_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      WcharVal.setFunctionSource ( "SOURCE_WCHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionSource ( "SOURCE_CHAR16_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     Char32Val.setFunctionSource ( "SOURCE_CHAR32_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
      UnsignedShortVal.setFunctionSource ( "SOURCE_UNSIGNED_SHORT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      IntVal.setFunctionSource ( "SOURCE_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
      EnumVal.setFunctionSource ( "SOURCE_ENUM_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -2724,6 +2845,11 @@ Grammar::setUpExpressions ()
      LambdaExp.setFunctionSource ( "SOURCE_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionSource ( "SOURCE_LABEL_ADDRESS_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
 
      FunctionCallExp.setFunctionSource ( "SOURCE_FUNCTION_CALL_EXPRESSION","../Grammar/Expression.code" );
@@ -2840,6 +2966,9 @@ Grammar::setUpExpressions ()
      ConstructorInitializer.setFunctionSource ( "SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      AssignInitializer.setFunctionSource ( "SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
 
+  // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
+     BracedInitializer.setFunctionSource ( "SOURCE_BRACED_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
+
      ConcatenationOp.setFunctionSource  ( "SOURCE_CONCATENATION_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
 
@@ -2954,6 +3083,11 @@ Grammar::setUpExpressions ()
      CharVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      WcharVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     Char32Val.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
      UnsignedShortVal.setFunctionSource       ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      IntVal.setFunctionSource                 ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      EnumVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -2966,6 +3100,10 @@ Grammar::setUpExpressions ()
      DoubleVal.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
   // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
   // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,
@@ -2984,7 +3122,13 @@ Grammar::setUpExpressions ()
      CharVal.editSubstitute        ( "GENERIC_TYPE", "SgTypeChar" );
 
      UnsignedCharVal.editSubstitute        ( "GENERIC_TYPE", "SgTypeUnsignedChar" );
+
      WcharVal.editSubstitute               ( "GENERIC_TYPE", "SgTypeWchar" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.editSubstitute              ( "GENERIC_TYPE", "SgTypeChar16" );
+     Char32Val.editSubstitute              ( "GENERIC_TYPE", "SgTypeChar32" );
+
      UnsignedShortVal.editSubstitute       ( "GENERIC_TYPE", "SgTypeUnsignedShort" );
      IntVal.editSubstitute                 ( "GENERIC_TYPE", "SgTypeInt" );
 
@@ -3002,6 +3146,10 @@ Grammar::setUpExpressions ()
      DoubleVal.editSubstitute              ( "GENERIC_TYPE", "SgTypeDouble" );
      LongDoubleVal.editSubstitute          ( "GENERIC_TYPE", "SgTypeLongDouble" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Unclear what the type of a label address value expression should be (though in the test2017_73.C it is "void*").
+  // LabelAddressVal.editSubstitute        ( "GENERIC_TYPE", "void*" );
 
   // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
   // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,

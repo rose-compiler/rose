@@ -13,6 +13,7 @@
 SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
+using namespace Rose;
 
 std::list<SgInterfaceStatement*> astInterfaceStack;
 
@@ -22,10 +23,15 @@ Token_t *create_token(int line, int col, int type, const char *text)
   {
          Token_t *tmp_token = NULL;
 
+      // DQ (11/5/2016): Can't use C++ "delete" in token.c file from OFP jar file since it is compiled using a C compiler (so use malloc here).
+      // DQ (11/5/2016): Updated the token.c file in the OFP jar file to fix this bug and make the new (here) consistant with the delete (there).
+      // DQ (11/4/2016): Since in the OFP this is deleted using free (token.c in the build tree), we want 
+      // to allocate it using the associated C style malloc (bug caught using address sanitizer).
       // DQ (9/11/2011): We want to use the C++ new and delete memory allocation 
       // and not mix C's malloc/free with C++'s new/delete mechanisms.
       // tmp_token = (Token_t*) malloc(sizeof(Token_t));
-         tmp_token = new Token_t();
+      // tmp_token = new Token_t();
+         tmp_token = (Token_t*) malloc(sizeof(Token_t));
 
          tmp_token->line = line;
          tmp_token->col = col;
@@ -521,10 +527,13 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct() != NULL);
      ROSE_ASSERT(sourceLocatedNode->get_endOfConstruct() != NULL);
 
+  // DQ (3/19/2017): Commented out to cleanup output spew.
      if (sourceLocatedNode->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
         {
           printf ("WARNING: resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+#if 0
           sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
+#endif
         }
   // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
 
@@ -532,9 +541,11 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      if (sourceLocatedNode->get_startOfConstruct()->get_line() == 0)
         {
           printf ("WARNING: resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+#if 0
           sourceLocatedNode->get_startOfConstruct()->display("get_line() == 0: debug");
+#endif
         }
-  // DQ (3/4/2013): We can't assert this since ti fails to some test codes (e.g. test2010_120.f90).
+  // DQ (3/4/2013): We can't assert this since it fails to some test codes (e.g. test2010_120.f90).
   // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_line() != 0);
 
   // Remove the existing Sg_File_Info objects, they will be reset below
@@ -672,11 +683,28 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
         {
        // printf ("Resetting the ending line number from %d to %d \n",oldLineNumber,newLineNumber);
           targetLocatedNode->get_endOfConstruct()->set_line(newLineNumber);
-          // this  fails if file info is compiler generated or transformation generated. (get_line() always return zero )
-          ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_line () == newLineNumber);
+       // this  fails if file info is compiler generated or transformation generated. (get_line() always return zero )
 
        // If this is a different filename then change the filename as well.
           string currentFilename = getCurrentFilename();
+#if 0
+       // DQ (3/19/2017): Debugging new support to have undefined value (0) returned for frontend specific file info IR nodes.
+          if (targetLocatedNode->get_endOfConstruct()->get_line () != newLineNumber)
+             {
+#if 1
+               printf ("##### currentFilename = %s \n",currentFilename.c_str());
+               printf ("##### targetLocatedNode->get_endOfConstruct()->get_filenameString() = %s \n",targetLocatedNode->get_endOfConstruct()->get_filenameString().c_str());
+#endif
+               printf ("In resetEndingSourcePosition(): targetLocatedNode = %p = %s \n",targetLocatedNode,targetLocatedNode->class_name().c_str());
+               printf ("In resetEndingSourcePosition(): newLineNumber = %d \n",newLineNumber);
+               targetLocatedNode->get_startOfConstruct()->display("targetLocatedNode->get_startOfConstruct()->get_line () != newLineNumber: debug");
+               targetLocatedNode->get_endOfConstruct()->display("targetLocatedNode->get_endOfConstruct()->get_line () != newLineNumber: debug");
+             }
+#endif
+       // DQ (3/19/2017): Only check the raw position due to new support to have undefined value (0) returned for frontend specific file info IR nodes.
+       // ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_line () == newLineNumber);
+          ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_raw_line () == newLineNumber);
+
           if (targetLocatedNode->get_endOfConstruct()->get_filenameString() != currentFilename)
              {
 #if 0
@@ -690,6 +718,18 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
                ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->get_filenameString() == currentFilename);
              }
         }
+
+  // DQ (3/19/2017): Added debugging code to catch where isSourcePositionUnavailableInFrontend() == true after calling set_line() and set_filenameString() functions.
+     if (targetLocatedNode->get_startOfConstruct()->isSourcePositionUnavailableInFrontend() == true)
+        {
+          targetLocatedNode->get_startOfConstruct()->display("targetLocatedNode->get_startOfConstruct()->get_line () != newLineNumber: debug");
+        }
+     if (targetLocatedNode->get_endOfConstruct()->isSourcePositionUnavailableInFrontend() == true)
+        {
+          targetLocatedNode->get_endOfConstruct()->display("targetLocatedNode->get_endOfConstruct()->get_line () != newLineNumber: debug");
+        }
+     ROSE_ASSERT(targetLocatedNode->get_endOfConstruct()->isSourcePositionUnavailableInFrontend() == false);
+     ROSE_ASSERT(targetLocatedNode->get_startOfConstruct()->isSourcePositionUnavailableInFrontend() == false);
 
   // DQ (10/10/2010): See example test2007_17.f90 of if statment on a single line for were we can't enforce this.
   // ROSE_ASSERT(targetLocatedNode->get_endOfConstruct()->get_line() != targetLocatedNode->get_startOfConstruct()->get_line());
@@ -1408,7 +1448,10 @@ buildLabelRefExp(SgExpression* expression)
           Token_t* format_label = create_token(1,0,0,name.str());
           SgLabelSymbol* labelSymbol = buildNumericLabelSymbol(format_label);
 
-          delete format_label;
+       // DQ (11/5/2016): The token support is using C style malloc, so we need to use C style free to be consistant.
+       // delete format_label;
+          free(format_label);
+
           format_label = NULL;
 
           labelSymbol->set_label_type(SgLabelSymbol::e_start_label_type);
@@ -2907,7 +2950,8 @@ isImplicitNoneScope()
   // Default is that we are NOT in an implicit none scope.
      bool isImplicitNoneScope = false;
 
-     bool foundFunctionDefinition = false;
+  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+  // bool foundFunctionDefinition = false;
 
      std::list<SgScopeStatement*>::iterator i = astScopeStack.begin();
      while ( i != astScopeStack.end() )
@@ -2918,7 +2962,8 @@ isImplicitNoneScope()
           SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(*i);
           if (functionDefinition != NULL)
              {
-               foundFunctionDefinition = true;
+            // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+            // foundFunctionDefinition = true;
                std::vector<SgStatement*>::iterator j = functionDefinition->get_body()->get_statements().begin();
                while ( j != functionDefinition->get_body()->get_statements().end() )
                   {
@@ -4455,7 +4500,7 @@ convertExpressionOnStackToFunctionCallExp()
 SgArrayType*
 convertTypeOnStackToArrayType( int count )
    {
-  // This function uses the entry on the top of the type stach and the expressions on the astExpressionStack
+  // This function uses the entry on the top of the type stack and the expressions on the astExpressionStack
   // and replaced the top o the typeStack with a SgArrayType.  This conversion of base type to array type is
   // required because we often find out later after having declarated a variable that it is an array (either
   // in the process of building the variable declaration or because an "allocatable statement" is seen after

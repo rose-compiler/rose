@@ -5,7 +5,7 @@
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Optional.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Suport for finding strings in memory.
@@ -85,7 +85,7 @@ namespace BinaryAnalysis {
  *
  * @code
  *  #include <rose/BinaryString.h>              // binary analysis string support
- *  using namespace rose::BinaryAnalysis::Strings;
+ *  using namespace Rose::BinaryAnalysis::Strings;
  *  MemoryMap map = ...;                        // initialized elsewhere
  *
  *  StringFinder finder;                        // holds settings
@@ -115,7 +115,7 @@ namespace BinaryAnalysis {
  *
  * @code
  *  #include <rose/BinaryString.h>
- *  using namespace rose::BinaryAnalysis::Strings;
+ *  using namespace Rose::BinaryAnalysis::Strings;
  *  MemoryMap map = ...;                        // initialized elsewhere
  *  rose_addr_t stringVa = ...;                 // starting address of string
  *
@@ -143,7 +143,7 @@ namespace BinaryAnalysis {
  *
  * @code
  *  #include <rose/BinaryString.h>
- *  using namespace rose::BinaryAnalysis::Strings;
+ *  using namespace Rose::BinaryAnalysis::Strings;
  *  std::vector<Octet> octets = ...; // initialized elsewhere
  *
  *  // Instantiate the encoder/decoder. These things are all reference
@@ -205,7 +205,7 @@ enum State {
 /** Returns true for COMPLETED_STATE or FINAL_STATE. */
 bool isDone(State st);
 
-/** Initialize the diagnostics facility. This is called by @ref rose::Diagnostics::initialize. */
+/** Initialize the diagnostics facility. This is called by @ref Rose::Diagnostics::initialize. */
 void initDiagnostics();
 
 /** Defines mapping between code points and code values.
@@ -798,7 +798,7 @@ public:
  *  This analysis searches user-specified parts of a binary specimen's memory space to find strings encoded in various formats
  *  specfieid by the user.
  *
- *  See the @ref rose::BinaryAnalysis::Strings "Strings" namespace for details. */
+ *  See the @ref Rose::BinaryAnalysis::Strings "Strings" namespace for details. */
 class ROSE_DLL_API StringFinder {
 public:
     /** Settings and properties.
@@ -943,7 +943,7 @@ public:
      *  and "bar" cannot share their last for bytes):
      *
      * @code
-     *  using namespace rose::BinaryAnalysis::String;
+     *  using namespace Rose::BinaryAnalysis::String;
      *  MemoryMap map = ...;
      *  StringFinder sf;
      *  sf.encoder(nulTerminatedPrintableAscii());

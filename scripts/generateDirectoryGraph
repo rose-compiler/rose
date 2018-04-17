@@ -1,5 +1,5 @@
 #!/bin/sh
-/home/dquinlan/ROSE/NEW_ROSE/tools/lsviz ROSE > RoseProposedDirectoryStructure.dot
+/home/dquinlan/ROSE/NEW_ROSE/utilities/lsviz ROSE > RoseProposedDirectoryStructure.dot
 dotgenLetter RoseProposedDirectoryStructure.dot
 # dot -Gratio=compact -Gfontname="Helvetica" $input -Tps -o $output -Gordering="out" -Gsize="7.5,10"
 # dot -Gratio=compact -Gfontname="Helvetica" RoseProposedDirectoryStructure.dot -Tps -o test.ps -Gordering="out" -Gsize="7.5,10"

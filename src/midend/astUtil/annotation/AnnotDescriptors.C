@@ -141,9 +141,9 @@ void CloseDescriptor<Descriptor, left, right> ::write(ostream& out) const
 // "class" is already processed by ReadAnnotation::read() before this function is called.
 bool TypeDescriptor:: read(istream& in)
 {
-  if (!StringDescriptor::read(in))
+  if (!StringDescriptor::read(in))// read the first string
         return false;
-  if (get_name() == "const")
+  if (get_name() == "const" || get_name() == "struct")  // it could be a modifier + type, like const, struct, etc
      get_name() = get_name() + read_id(in);
   char c = peek_ch(in);
   while ( c == ':' && peek_next(in,2) == "::") {
@@ -159,6 +159,22 @@ bool TypeDescriptor:: read(istream& in)
   }
   return true;
 }
+
+//! Read in a variable name, supporting qualified names
+bool NameDescriptor:: read(istream& in)
+{
+  if (!StringDescriptor::read(in))// read the first string
+        return false;
+  char c = peek_ch(in);
+  while ( c == ':' && peek_next(in,2) == "::") {
+     read_ch(in,':');
+     read_ch(in,':');
+     get_name() = get_name() + "::" + read_id(in);
+     c = peek_ch(in);
+  } 
+ return true;
+}
+
 #endif
 
 

@@ -1,0 +1,3 @@
+#pragma omp for  schedule(dynamic)
+#pragma omp parallel 
+#pragma omp single 

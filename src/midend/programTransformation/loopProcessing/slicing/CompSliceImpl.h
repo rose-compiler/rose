@@ -196,6 +196,7 @@ inline void CompSliceLoop:: UpdateDistNode( const DistNodeInfo &info )
 {
  LoopTreeNode * n = info.GetNewNode();
  const LoopTreeNode *orig = info.GetObserveNode();
+ int pos = info.get_pos();
 
  CompSliceLoop *that = 0;
  for (LoopTreeNode *s = FirstChild(); s != 0; ) {
@@ -208,13 +209,16 @@ inline void CompSliceLoop:: UpdateDistNode( const DistNodeInfo &info )
     if (c1 == n) {
        if (that == 0) {
            that = static_cast<CompSliceLoop*>( CloneNode(n) );
-           that->Link( this, AsPrevSibling);
+           if (pos < 0)
+              that->Link( this, AsPrevSibling);
+           else 
+              that->Link( this, AsNextSibling);
        }
        ss->SetSliceLoop(that, ss->GetSliceAlign());
     }
  }
  if (that != 0) {
-    DistNodeInfo info1(this, that);
+    DistNodeInfo info1(this, that, pos);
     Notify(info1);
  }
  if (ChildCount() == 0)

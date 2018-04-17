@@ -9,7 +9,7 @@
 
 #include "lsh.h"
 
-using namespace rose;
+using namespace Rose;
 
 std::string argv0;
 

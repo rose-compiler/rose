@@ -41,13 +41,15 @@ class DFAnalysisBase {
   void setBackwardAnalysis();
   bool isForwardAnalysis();
   bool isBackwardAnalysis();
+  bool getNoTopologicalSort();
+  void setNoTopologicalSort(bool);
   // computes state for global variable initializations
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   // initializes an element with the combined global initialization state and the extremal value
   virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
   virtual void initializeSolver();
-  void determineExtremalLabels(SgNode*);
+  void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
   void run();
   //virtual PropertyState* createPropertyState();
 
@@ -61,6 +63,7 @@ class DFAnalysisBase {
   Labeler* getLabeler();
   CFAnalysis* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
+  FunctionIdMapping* getFunctionIdMapping();
   Flow* getFlow() { return &_flow; }
   Lattice* getPreInfo(Label lab);
   Lattice* getPostInfo(Label lab);
@@ -108,6 +111,7 @@ class DFAnalysisBase {
   PropertyStateFactory* _initialElementFactory;
   SPRAY::PASolver1* _solver;
   AnalysisType _analysisType;
+  bool _no_topological_sort;
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
   SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation;

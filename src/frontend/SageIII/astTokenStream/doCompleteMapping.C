@@ -16,7 +16,13 @@ separator::separator(int bp, int ep){
 separator::separator(int bp, int ep, std::vector<separator> ss ){
         begin_pos = bp;
         end_pos   = ep;
+     // DQ (11/1/2016): Fixup to allow compilation with the --enable-advanced-warnings option.
+#ifndef _GLIBCXX_CONCEPT_CHECKS
         sub_separators = ss;
+#else
+        printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
+        ROSE_ASSERT(false);
+#endif
 } 
 
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
@@ -33,10 +39,16 @@ void separator::outputValues(token_container& tokenStream, int counter ){
                 << " matches " << tokenStream[end_pos].get_position().get_line() << endl;
 
 
+     // DQ (11/1/2016): Fixup to allow compilation with the --enable-advanced-warnings option.
+#ifndef _GLIBCXX_CONCEPT_CHECKS
         for(std::vector<separator>::iterator sub_it= sub_separators.begin(); 
                         sub_it != sub_separators.end(); ++sub_it  ){
                 sub_it->outputValues(tokenStream,counter+1);
         }
+#else
+        printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
+        ROSE_ASSERT(false);
+#endif
 }
 // #endif
 #endif
@@ -55,11 +67,17 @@ void separator::outputValues(std::vector<SgNode*>& linearizedAST, int counter ){
 
     if( linearizedAST[begin_pos]->get_file_info()->isCompilerGenerated() == true)
     cout << " is compiler generated" << std::endl;
+
+     // DQ (11/1/2016): Fixup to allow compilation with the --enable-advanced-warnings option.
+#ifndef _GLIBCXX_CONCEPT_CHECKS
         for(std::vector<separator>::iterator sub_it= sub_separators.begin(); 
                         sub_it != sub_separators.end(); ++sub_it  ){
                 sub_it->outputValues(linearizedAST,counter+1);
         }
-
+#else
+        printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
+        ROSE_ASSERT(false);
+#endif
 }
 
 
@@ -140,7 +158,14 @@ separator* mapSeparatorsAST(std::vector<SgNode*>& linearizedAST){
 
         ROSE_ASSERT(tmp_curlyBraceStackAST.size()==1);
         ROSE_ASSERT(tmp_curlyBraceStackAST[0].size()==1);
+
+     // DQ (11/1/2016): Fixup to allow compilation with the --enable-advanced-warnings option.
+#ifndef _GLIBCXX_CONCEPT_CHECKS
         globalScope->sub_separators =   (tmp_curlyBraceStackAST[0])[0].sub_separators;
+#else
+        printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
+        ROSE_ASSERT(false);
+#endif
 
         return globalScope; 
 
@@ -199,7 +224,13 @@ separator* mapSeparatorsTokenStream(token_container& tokenStream){
         //Match scope statements in the AST to left and right braces in the token stream
         ROSE_ASSERT(tmp_stackOfSeparators.size()==1);
 
+     // DQ (11/1/2016): Fixup to allow compilation with the --enable-advanced-warnings option.
+#ifndef _GLIBCXX_CONCEPT_CHECKS
         globalScope->sub_separators = tmp_stackOfSeparators[0];
+#else
+        printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
+        ROSE_ASSERT(false);
+#endif
 
         return globalScope; 
 }

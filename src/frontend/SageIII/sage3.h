@@ -52,7 +52,6 @@
 
 //Liao, 2/8/2008. SAGE III node building interface
 #include "sageBuilder.h"
-#include "sageBuilderAsm.h"
 
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT

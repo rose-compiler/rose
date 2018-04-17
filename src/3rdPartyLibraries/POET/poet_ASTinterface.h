@@ -43,10 +43,11 @@ public:
   typedef std::vector<AstType>  AstTypeList;
 
   static std::string Ast2String(const Ast & n);
-  static std::string unparseToString(const Ast & n);
+  static std::string AstTypeName(const Ast& n);
+  static void unparse(const Ast& n, std::ostream& out, int align);
 
-  static AstList GetChildrenList( const Ast &n);
-  static bool MatchAstTypeName(const Ast& n, const std::string& tname, std::vector<POETCode*>* children=0);
+  static Ast MatchAstTypeName(const Ast& n, const std::string& tname, POETCode* args);
+  static POETCode* visitAstChildren(const Ast& n, POETCodeVisitor* visitor);
 
   static void set_Ast2POET(const Ast& n, POETCode* p)
     { codeMap[n] = p; }
@@ -56,15 +57,7 @@ public:
       if (p != codeMap.end()) { return (*p).second; }
       return 0;
     }
-  static POETCode* Ast2POET(const Ast& n) 
-    { 
-      POETCode* res = find_Ast2POET(n);
-      if (res == 0) {
-         res = new POETCode_ext(n);
-         codeMap[n] = res;
-      }
-      return res;
-    }
+  static POETCode* Ast2POET(const Ast& n) ;
 };
 
 #endif

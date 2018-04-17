@@ -17,6 +17,8 @@ using namespace VirtualCFG;
 
 bool virtualInterproceduralControlFlowGraphs = false;
 
+#define DEBUG_CALLGRAPH 0
+
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
 unsigned int
@@ -168,7 +170,7 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // Only handles next-statement control flow
   SgNode* parent = n->get_parent();
 
-#if 0
+#if DEBUG_CALLGRAPH
   printf ("In getNodeJustAfterInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
 #endif
 
@@ -183,6 +185,96 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
     return CFGNode(decl->get_definition(), 2);
   }
 
+  // DQ (1/8/2018): Fixing the case for the case option statement.
+  if (isSgCaseOptionStmt(n)) {
+
+#if 0
+ // SgScopeStatement* scopeStatement = isSgScopeStatement(parent);
+ // ROSE_ASSERT (scopeStatement);
+    SgNode* tmp_parent = parent;
+    SgSwitchStatement* switchStatement = isSgSwitchStatement(tmp_parent);
+    while (switchStatement == NULL)
+       {
+         ROSE_ASSERT(tmp_parent != NULL);
+         tmp_parent = tmp_parent->get_parent();
+         switchStatement = isSgSwitchStatement(tmp_parent);
+       }
+    ROSE_ASSERT(switchStatement != NULL);
+
+    printf ("In getNodeJustAfterInContainer(): found SgCaseOptionStmt: not clear how to proceed \n");
+ // ROSE_ASSERT(false);
+#endif
+
+ // return CFGNode(scopeStatement, 1);
+ // return CFGNode(scopeStatement, 0);
+ // return CFGNode(switchStatement, 2);
+    unsigned int idx = parent->cfgFindNextChildIndex(n);
+
+#if DEBUG_CALLGRAPH
+    printf ("In getNodeJustAfterInContainer(): found SgCaseOptionStmt: idx = %u \n",idx);
+#endif
+
+    return CFGNode(parent, idx);
+  }
+
+  // DQ (1/16/2018): Handle the case of where the input node is a SgLabelStatement.
+     SgLabelStatement* labelStatement = isSgLabelStatement(n);
+
+  // DQ (1/18/2018): Fortran does not use the statement data member of the SgLabelStatement.
+  // if (labelStatement != NULL)
+     if (labelStatement != NULL && labelStatement->get_statement() != NULL)
+        {
+       // unsigned int idx = parent->cfgFindNextChildIndex(n);
+          unsigned int idx = 0;
+
+#if DEBUG_CALLGRAPH
+          printf ("In getNodeJustAfterInContainer(): found SgLabelStatement: idx = %u \n",idx);
+#endif
+       // return CFGNode(parent, idx);
+       // return CFGNode(labelStatement, labelStatement->get_statement());
+       // return CFGNode(labelStatement, idx);
+
+          ROSE_ASSERT(labelStatement->get_statement() != NULL);
+          return CFGNode(labelStatement->get_statement(), idx);
+        }
+       else
+        {
+          if (labelStatement != NULL)
+             {
+               unsigned int idx = parent->cfgFindNextChildIndex(n);
+#if DEBUG_CALLGRAPH
+               printf ("In getNodeJustAfterInContainer(): FORTRAN case: labelStatement->get_statement() == NULL: idx = %u \n",idx);
+#endif
+             }
+        }
+
+  // DQ (1/16/2018): Handle the case of where the parent is a SgLabelStatement.
+     SgLabelStatement* parentLabelStatement = isSgLabelStatement(parent);
+     if (parentLabelStatement != NULL)
+        {
+#if DEBUG_CALLGRAPH
+          printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: parentLabelStatement = %p = %s \n",parentLabelStatement,parentLabelStatement->class_name().c_str());
+#endif
+          parent = parentLabelStatement->get_parent();
+
+       // unsigned int idx = parent->cfgFindNextChildIndex(n);
+       // unsigned int idx = 0;
+       // unsigned int idx = parentLabelStatement->cfgFindNextChildIndex(parent);
+          unsigned int idx = parent->cfgFindNextChildIndex(parentLabelStatement);
+#if DEBUG_CALLGRAPH
+          printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: idx = %u \n",idx);
+#endif
+       // return CFGNode(parent, idx);
+       // return CFGNode(labelStatement, labelStatement->get_statement());
+       // return CFGNode(labelStatement, idx);
+       // parent = parentLabelStatement->get_parent();
+       // ROSE_ASSERT(labelStatement->get_statement() != NULL);
+       // return CFGNode(labelStatement->get_statement(), idx);
+       // return CFGNode(parentLabelStatement, idx);
+          return CFGNode(parent, idx);
+        }
+
+
 // DQ (10/12/2012): Added assertion.
   ROSE_ASSERT(parent != NULL);
 
@@ -193,6 +285,7 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
       std::cerr << parent->get_file_info()->get_filename() << ":" << parent->get_file_info()->get_line() << std::endl;
       std::cerr << parent->unparseToString() << std::endl;
     }
+    printf ("Error: idx <= parent->cfgIndexForEnd() failed: idx = %u n = %p = %s parent = %p = %s \n",idx,n,n->class_name().c_str(),parent,parent->class_name().c_str());
     ROSE_ASSERT (!"Bad index in getNodeJustAfterInContainer");
   }
   return CFGNode(parent, idx);
@@ -202,7 +295,7 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
   SgNode* parent = n->get_parent();
   ROSE_ASSERT (parent);
 
-#if 0
+#if DEBUG_CALLGRAPH
   printf ("In getNodeJustBeforeInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
 #endif
 
@@ -231,18 +324,69 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
 #else
     if (isSgTemplateMemberFunctionDeclaration(decl) != NULL)
        {
-         printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
+         if ( SgProject::get_verbose() > 1 )
+           printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
        }
 #endif
 
     return CFGNode(decl->get_definition(), 1);
   }
+
   if (isSgFunctionParameterList(n)) {
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgFunctionParameterList(n)->get_parent());
     ROSE_ASSERT (decl);
     return CFGNode(decl->get_definition(), 0);
   }
+
+  // DQ (1/16/2018): Handle the case of where the parent is a SgLabelStatement.
+     SgLabelStatement* parentLabelStatement = isSgLabelStatement(parent);
+     if (parentLabelStatement != NULL)
+        {
+#if DEBUG_CALLGRAPH
+          printf ("In getNodeJustBeforeInContainer(): found parent as SgLabelStatement: parentLabelStatement = %p = %s \n",parentLabelStatement,parentLabelStatement->class_name().c_str());
+#endif
+       // parent = parentLabelStatement->get_parent();
+
+       // unsigned int idx = parent->cfgFindNextChildIndex(n);
+       // unsigned int idx = 0;
+       // unsigned int idx = parentLabelStatement->cfgFindNextChildIndex(parent);
+       // unsigned int idx = parent->cfgFindNextChildIndex(parentLabelStatement);
+       // unsigned int idx = parent->cfgFindChildIndex(n);
+       // unsigned int idx = parent->cfgFindChildIndex(parentLabelStatement);
+
+       // printf ("In getNodeJustBeforeInContainer(): found parent as SgLabelStatement: idx = %u \n",idx);
+
+       // return CFGNode(parent, idx);
+       // return CFGNode(labelStatement, labelStatement->get_statement());
+       // return CFGNode(labelStatement, idx);
+       // parent = parentLabelStatement->get_parent();
+       // ROSE_ASSERT(labelStatement->get_statement() != NULL);
+       // return CFGNode(labelStatement->get_statement(), idx);
+       // return CFGNode(parentLabelStatement, idx);
+       // return CFGNode(parent, idx);
+       // return CFGNode(parent, 1);
+          return CFGNode(parentLabelStatement, 0);
+        }
+       else
+        {
+          if (isSgLabelStatement(n) != NULL)
+             {
+               if (SageInterface::is_Fortran_language() == true)
+                  {
+                    unsigned int idx = parent->cfgFindChildIndex(n);
+#if DEBUG_CALLGRAPH
+                    printf ("In getNodeJustBeforeInContainer(): FORTRAN case: idx = %u \n",idx);
+#endif
+                  }
+             }
+        }
+
   unsigned int idx = parent->cfgFindChildIndex(n);
+  if ( idx > parent->cfgIndexForEnd() )
+     {
+       printf ("Error: idx <= parent->cfgIndexForEnd() failed: idx = %u n = %p = %s parent = %p = %s \n",idx,n,n->class_name().c_str(),parent,parent->class_name().c_str());
+     }
+
   ROSE_ASSERT( idx <= parent->cfgIndexForEnd() );
   return CFGNode(parent, idx);
 }
@@ -329,16 +473,66 @@ std::vector<CFGEdge> SgBasicBlock::cfgOutEdges(unsigned int idx) {
   return result;
 }
 
-std::vector<CFGEdge> SgBasicBlock::cfgInEdges(unsigned int idx) {
-  std::vector<CFGEdge> result;
-  addIncomingFortranGotos(this, idx, result);
-  if (idx == 0) {
-    makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
-  } else if (idx <= this->get_statements().size()) {
-    makeEdge(this->get_statements()[idx - 1]->cfgForEnd(), CFGNode(this, idx), result);
-  } else ROSE_ASSERT (!"Bad index for SgBasicBlock");
-  return result;
-}
+std::vector<CFGEdge> SgBasicBlock::cfgInEdges(unsigned int idx) 
+   {
+     std::vector<CFGEdge> result;
+     addIncomingFortranGotos(this, idx, result);
+
+#if DEBUG_CALLGRAPH
+     printf ("In SgBasicBlock::cfgInEdges(): idx = %u \n",idx);
+#endif
+
+     if (idx == 0) 
+        {
+          makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+        } 
+       else
+        {
+#if DEBUG_CALLGRAPH
+          printf ("In SgBasicBlock::cfgInEdges(): this->get_statements().size() = %zu \n",this->get_statements().size());
+#endif
+
+          if (idx <= this->get_statements().size())
+             {
+               SgStatement* statement = this->get_statements()[idx - 1];
+#if DEBUG_CALLGRAPH
+               printf ("In SgBasicBlock::cfgInEdges(): idx = %u Compute the starting node: statement = %p = %s \n",idx,statement,statement->class_name().c_str());
+#endif
+               SgLabelStatement* labelStatement = isSgLabelStatement(statement);
+
+            // DQ (1/18/2018): Fortran does not use the statement data member of the SgLabelStatement.
+            // if (labelStatement != NULL)
+               if (labelStatement != NULL && labelStatement->get_statement() != NULL)
+                  {
+                    statement = labelStatement->get_statement();
+                    ROSE_ASSERT(statement != NULL);
+                  }
+                 else
+                  {
+                    if (labelStatement != NULL)
+                       {
+#if DEBUG_CALLGRAPH
+                         printf ("In SgBasicBlock::cfgInEdges(): This should be the case of a fortran program \n");
+#endif
+
+                       }
+                  }
+
+            // makeEdge(this->get_statements()[idx - 1]->cfgForEnd(), CFGNode(this, idx), result);
+               makeEdge(statement->cfgForEnd(), CFGNode(this, idx), result);
+             }
+            else
+             {
+               ROSE_ASSERT (!"Bad index for SgBasicBlock");
+             }
+        }
+
+#if DEBUG_CALLGRAPH
+     printf ("Leaving SgBasicBlock::cfgInEdges(): idx = %u \n",idx);
+#endif
+
+     return result;
+   }
 
 unsigned int
 SgIfStmt::cfgIndexForEnd() const
@@ -573,6 +767,152 @@ static void addInEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, Sg
     makeEdge(CFGNode(me, idx - 1), CFGNode(me, idx), result);
   }
 }
+
+
+unsigned int
+SgRangeBasedForStatement::cfgIndexForEnd() const 
+   {
+  // DQ (3/25/2018): The range based for statement has one less children than the more common for statement.
+  // return 4;
+     return 3;
+   }
+
+bool SgRangeBasedForStatement::cfgIsIndexInteresting(unsigned int idx) const 
+   {
+  // DQ (3/25/2018): The range based for statement has one less children than the more common for statement.
+  // Not clear if this is the correct value. I think it should be 1 instaed of 2, but not clear.
+  // return idx == 2;
+     return idx == 1;
+   }
+
+unsigned int SgRangeBasedForStatement::cfgFindChildIndex(SgNode* n)
+   {
+  // DQ (8/24/2006): Could be rewritten as:
+  // Make sure that this is either the conditional, true body, or the false body
+  // ROSE_ASSERT (n == this->get_for_init_stmt() || n == this->get_test() || n == this->get_loop_body() || n == this->get_increment_expr_root() );
+  // return (n == this->get_conditional()) ? 0 : ((n == this->get_test()) ? 1 : ((n == this->get_loop_body()) ? 2 : 3) );
+
+     if (n == this->get_iterator_declaration())
+        {
+          return 0;
+        }
+       else
+        {
+          if (n == this->get_range_declaration())
+             {
+               return 1;
+             }
+            else
+             {
+               if (n == this->get_begin_declaration())
+                  {
+                    return 2;
+                  }
+                 else
+                  {
+                    if (n == this->get_end_declaration())
+                       {
+                         return 2;
+                       }
+                      else
+                       {
+                         if (n == this->get_not_equal_expression())
+                            {
+                              return 2;
+                            }
+                           else
+                            {
+                              if (n == this->get_increment_expression())
+                                 {
+                                   return 2;
+                                 }
+                                else
+                                 {
+                                   if (n == this->get_loop_body())
+                                      {
+                                        return 2;
+                                      }
+                                     else
+                                      {
+                                        cerr << "Error: SgForStatement::cfgFindChildIndex(): cannot find a matching child for SgNode n:";
+                                        cerr << n->class_name() << endl;
+                                        if (isSgLocatedNode(n))
+                                           {
+                                             isSgLocatedNode(n)->get_file_info()->display();
+                                           }
+                                        ROSE_ASSERT (!"Bad child in range based for statement");
+                                      }
+                                 }
+                            }
+                       }
+                  }
+             }
+        }
+
+  // DQ (8/24/2006): Added to avoid compiler warning
+     return 0;
+   }
+
+unsigned int SgRangeBasedForStatement::cfgFindNextChildIndex(SgNode* n)
+   {
+     unsigned int parentIndex = this->cfgFindChildIndex(n);
+
+  // DQ (8/24/2006): Modified function to avoid compiler warning about no return value
+     unsigned int returnValue;
+  // if (parentIndex == 3) return 1; else return parentIndex + 1;
+     if (parentIndex == 3) 
+          returnValue = 1;
+       else
+          returnValue = parentIndex + 1;
+
+     return returnValue;
+   }
+
+std::vector<CFGEdge> SgRangeBasedForStatement::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_iterator_declaration()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), this->get_range_declaration()->cfgForBeginning(), result); break;
+    case 2: makeEdge(CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
+            makeEdge(CFGNode(this, idx), CFGNode(this, 4), result); break;
+ // case 3: makeEdge(CFGNode(this, idx), this->get_increment_expr_root()->cfgForBeginning(), result); break;
+ // case 3: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
+    case 4: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgRangeBasedForStatement");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> SgRangeBasedForStatement::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_iterator_declaration()->cfgForEnd(), CFGNode(this, idx), result);
+            makeEdge(this->get_range_declaration()->cfgForEnd(), CFGNode(this, idx), result);
+            break;
+ // case 2: makeEdge(this->get_test()->cfgForEnd(), CFGNode(this, idx), result); break;
+    case 3: {
+      makeEdge(this->get_loop_body()->cfgForEnd(), CFGNode(this, idx), result);
+      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_loop_body(), "");
+      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
+        makeEdge(CFGNode(continueStmts[i], 0), CFGNode(this, idx), result);
+      }
+      break;
+    }
+    case 4: {
+      makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_loop_body(), "");
+      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
+        makeEdge(CFGNode(breakStmts[i], 0), CFGNode(this, idx), result);
+      }
+      break;
+    }
+    default: ROSE_ASSERT (!"Bad index for SgRangeBasedForStatement");
+  }
+  return result;
+}
+
 
 // Forall CFG layout:
 // forall:0 -> header -> forall:1 (representing initial assignments)
@@ -991,6 +1331,11 @@ std::vector<CFGEdge> SgExprStatement::cfgOutEdges(unsigned int idx) {
 std::vector<CFGEdge> SgExprStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
+
+#if DEBUG_CALLGRAPH
+  printf ("In SgExprStatement::cfgInEdges(): idx = %u \n",idx);
+#endif
+
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
  // case 1: makeEdge(this->get_expression_root()->cfgForEnd(), CFGNode(this, idx), result); break;
@@ -1000,19 +1345,126 @@ std::vector<CFGEdge> SgExprStatement::cfgInEdges(unsigned int idx) {
   return result;
 }
 
+
+#if 1
 unsigned int
 SgLabelStatement::cfgIndexForEnd() const
    {
      return 0;
    }
 
+// DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+unsigned int SgLabelStatement::cfgFindChildIndex(SgNode* n) {
+  ROSE_ASSERT (n == this->get_statement());
+  return 0;
+}
+
 std::vector<CFGEdge> SgLabelStatement::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
+
+#if DEBUG_CALLGRAPH
+     printf ("In SgLabelStatement::cfgOutEdges(): idx = %u \n",idx);
+#endif
+
      switch (idx)
         {
+       // DQ (1/16/2018): Original code before using the label to contain the following statement.
+       // case 0: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
           case 0: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
           default: ROSE_ASSERT (!"Bad index for SgLabelStatement");
+        }
+
+     return result;
+   }
+
+std::vector<CFGEdge> SgLabelStatement::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+
+#if DEBUG_CALLGRAPH
+     printf ("In SgLabelStatement::cfgInEdges(): idx = %u \n",idx);
+#endif
+
+     addIncomingFortranGotos(this, idx, result);
+     switch (idx)
+        {
+          case 0:
+             {
+            // DQ (1/16/2018): Original code before using the label to contain the following statement.
+            // makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+               makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+#if 1
+            // Find all gotos to this label, functionwide
+               SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+               std::vector<SgGotoStatement*> gotos = SageInterface::findGotoStmts(thisFunction, this);
+               for (unsigned int i = 0; i < gotos.size(); ++i)
+                  {
+                    makeEdge(CFGNode(gotos[i], 0), CFGNode(this, idx), result);
+                  }
+#endif
+               break;
+            }
+
+          default: ROSE_ASSERT (!"Bad index for SgLabelStatement");
+        }
+     return result;
+   }
+
+#else
+
+#error "DEAD CODE!"
+
+unsigned int
+SgLabelStatement::cfgIndexForEnd() const
+   {
+// DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+  // return 0;
+#if 0
+     return 1;
+#else
+  // DQ (1/15/2018): This was the original code (might be required for Fortran AST).
+     return 0;
+#endif
+   }
+
+// DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+unsigned int SgLabelStatement::cfgFindChildIndex(SgNode* n) {
+  ROSE_ASSERT (n == this->get_statement());
+  return 0;
+}
+
+std::vector<CFGEdge> SgLabelStatement::cfgOutEdges(unsigned int idx)
+   {
+  // DQ (1/15/2018): Note that there really should only be a single edge out of a label.
+  // It used to be the next statement, but now it should be the statement data member of 
+  // the SgLabelStatement for C/C++, and in Fortran I think it is still the next statement
+  // (which is the current statement (or maybe the next statement) for Fortran since every 
+  // statement can have a label in Fortran (specifically the SgLabelStatement is not used 
+  // or is implicit)).  I am not clear on if a label can have an associated null statement
+  // for the case of C/C++, but I don't think this is possible.
+
+     std::vector<CFGEdge> result;
+     switch (idx)
+        {
+       // DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+       // case 0: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+#if 0
+       // case 0: makeEdge(CFGNode(this, idx), this->get_statement(), result); break;
+       // case 0: makeEdge(CFGNode(this, idx), CFGNode(this->get_statement(),0), result); break;
+          case 0: makeEdge(CFGNode(this, idx), this->get_statement()->cfgForBeginning(), result); break;
+          case 1: makeEdge(CFGNode(this, idx), CFGNode(this->get_statement(),0), result); break;
+#else
+       // DQ (1/15/2018): This was the original code (might be required for Fortran AST).
+       // case 0: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+
+          case 0:
+               ROSE_ASSERT(this->get_statement() != NULL);
+               makeEdge(CFGNode(this, idx), this->get_statement()->cfgForBeginning(), result); break;
+#endif
+          default:
+               printf ("In SgLabelStatement::cfgOutEdges(): idx = %u \n",idx); 
+               ROSE_ASSERT (!"Bad index for SgLabelStatement");
         }
 
      return result;
@@ -1037,10 +1489,18 @@ std::vector<CFGEdge> SgLabelStatement::cfgInEdges(unsigned int idx)
                break;
             }
 
-          default: ROSE_ASSERT (!"Bad index for SgLabelStatement");
+       // DQ (1/8/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+          case 1: makeEdge(this->get_statement()->cfgForEnd(), CFGNode(this, idx), result); break;
+
+          default:
+               printf ("In SgLabelStatement::cfgInEdges(): idx = %u \n",idx); 
+               ROSE_ASSERT (!"Bad index for SgLabelStatement");
         }
      return result;
    }
+#endif
+
+
 
 bool SgWhileStmt::cfgIsIndexInteresting(unsigned int idx) const {
   return idx == 1;
@@ -1222,7 +1682,14 @@ std::vector<CFGEdge> SgSwitchStatement::cfgInEdges(unsigned int idx) {
 
 unsigned int
 SgCaseOptionStmt::cfgIndexForEnd() const {
-  return 1;
+#if 0
+  // return 1;
+     return 1;
+#else
+  // Original code:
+  // DQ (1/15/2018): This was the original code (might be required for both C/C++ and Fortran AST).
+     return 1;
+#endif
 }
 
 
@@ -1237,9 +1704,30 @@ unsigned int SgCaseOptionStmt::cfgFindChildIndex(SgNode* n) {
 
 std::vector<CFGEdge> SgCaseOptionStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
+
+#if 0
+  printf ("In SgCaseOptionStmt::cfgOutEdges(): idx = %u \n",idx);
+#endif
+
   switch (idx) {
+#if 0
+ // Original code:
+ // case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+ // case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+ // DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+ // case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+ // case 1: makeEdge(CFGNode(this, idx), CFGNode(this->get_body(),0), result); break;
+ // case 1: makeEdge(CFGNode(this, idx), CFGNode(this->get_body(),1), result); break;
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+#else
+ // DQ (1/15/2018): This was the original code (might be required for both C/C++ and Fortran AST).
+    case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+ // case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+#endif
+
     default: ROSE_ASSERT (!"Bad index for SgCaseOptionStmt");
   }
   return result;
@@ -1380,7 +1868,14 @@ std::vector<CFGEdge> SgDefaultOptionStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+
+ // DQ (1/15/2018): Use the original version of the code.
+ // DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+ // case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+ // case 1: makeEdge(CFGNode(this, idx), this->get_body(), result); break;
+ // case 1: makeEdge(CFGNode(this, idx), CFGNode(this->get_body(),0), result); break;
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+ 
     default: ROSE_ASSERT (!"Bad index for SgDefaultOptionStmt");
   }
   return result;
@@ -1636,6 +2131,34 @@ std::vector<CFGEdge> SgNullStatement::cfgInEdges(unsigned int idx) {
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
   return result;
 }
+
+unsigned int   // straight line statement, start==end
+SgStaticAssertionDeclaration::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+bool SgStaticAssertionDeclaration::cfgIsIndexInteresting(unsigned int idx) const {
+  return idx == 1;
+}
+
+std::vector<CFGEdge> SgStaticAssertionDeclaration::cfgOutEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  return result;
+}
+
+std::vector<CFGEdge>
+SgStaticAssertionDeclaration::cfgInEdges(unsigned int idx)
+   {
+     ROSE_ASSERT (idx == 0);
+     std::vector<CFGEdge> result;
+     addIncomingFortranGotos(this, idx, result);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
 
 unsigned int
 SgTypedefDeclaration::cfgIndexForEnd() const
@@ -4088,13 +4611,39 @@ SgAggregateInitializer::cfgInEdges(unsigned int idx)
    }
 
 std::vector<CFGEdge>
+SgBracedInitializer::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(CFGNode(this, idx), this->get_initializers()->cfgForBeginning(), result); break;
+       case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+       default: ROSE_ASSERT (!"Bad index for SgBracedInitializer");
+     }
+
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgBracedInitializer::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+       case 1: makeEdge(this->get_initializers()->cfgForEnd(), CFGNode(this, idx), result); break;
+       default: ROSE_ASSERT (!"Bad index for SgBracedInitializer");
+     }
+
+     return result;
+   }
+
+std::vector<CFGEdge>
 SgCompoundInitializer::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      switch (idx) {
        case 0: makeEdge(CFGNode(this, idx), this->get_initializers()->cfgForBeginning(), result); break;
        case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
-       default: ROSE_ASSERT (!"Bad index for SgAggregateInitializer");
+       default: ROSE_ASSERT (!"Bad index for SgCompoundInitializer");
      }
 
      return result;
@@ -5010,20 +5559,35 @@ bool SgFunctionCallExp::isLValue() const
         // Liao 10/20/2015 . We may encounter a function pointer, strip the pointer       
         type = type->stripType (SgType::STRIP_POINTER_TYPE);
         SgFunctionType* ftype = isSgFunctionType(type);
-        if (!ftype)
+        if (ftype)
         {
-                //cout<<this->get_file_info()->get_filename()<<":"<< this->get_file_info()->get_line()<<endl;;
+            if (SageInterface::isReferenceType(ftype->get_return_type()))
+                    return true;
+            else
+                    return false;
+        }
+        else if (isSgClassType (type))
+        {
+          // Liao, 4/19/2017. Support calls to class member functions. 
+          SgExpression* func = get_function();
+          if (isSgDotExp(func) || isSgArrowExp(func) || isSgVarRefExp (func) )
+            return func->isLValue();
+          else if (isSgConstructorInitializer(func)) //TODO: double check this. Now assume it is similar to SgVarRefExp::isLValue(). 
+            return true; 
+          else
+          {
+             cerr<<"SgFunctionCallExp function class name:"<<func->class_name()<<endl;
+             ROSE_ASSERT(!"Error when handling a member function call in SgFunctionCallExp::isLValue");  
+          }
+        }
+        else  
+        {
+               //cout<<this->get_file_info()->get_filename()<<":"<< this->get_file_info()->get_line()<<endl;;
                 this->get_file_info()->display();
                 cerr<<"SgFunctionCallExp function base type:"<<type->class_name()<<endl;
                 ROSE_ASSERT(!"Error calling a function through a non-function type in isLValue on SgFunctionCallExp");
                 return true;
-        }
-        else
-        {
-                if (SageInterface::isReferenceType(ftype->get_return_type()))
-                        return true;
-                else
-                        return false;
+ 
         }
 }
 

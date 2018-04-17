@@ -1,0 +1,11 @@
+This directory hierarchy contains unit nonsmoke tests.
+
+=== Definitions ===
+
+"Unit tests" have the following characteristics:
+   * Test a single interface (API or private interface)
+   * Use only interfaces that are previously tested
+   * Run entirely in memory (no I/O)
+   * Are single threaded (except for those whose sole purpose is to test thread APIs)
+   * Are fast
+

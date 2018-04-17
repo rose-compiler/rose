@@ -2,9 +2,8 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
-/** Adds the newly constructed symbol to the specified ELF Symbol Table. */
 void
 SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
 {
@@ -25,7 +24,6 @@ SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
     set_st_size(0);
 }
 
-/** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
 SgAsmElfSymbol::parse(ByteOrder::Endianness sex, const Elf32SymbolEntry_disk *disk)
 {
@@ -43,7 +41,6 @@ SgAsmElfSymbol::parse(ByteOrder::Endianness sex, const Elf32SymbolEntry_disk *di
     parse_common();
 }
 
-/** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
 SgAsmElfSymbol::parse(ByteOrder::Endianness sex, const Elf64SymbolEntry_disk *disk)
 {
@@ -136,7 +133,6 @@ SgAsmElfSymbol::get_elf_type() const
     return (ElfSymType)(p_st_info & 0xf);
 }
 
-/** Encode a symbol into disk format */
 void *
 SgAsmElfSymbol::encode(ByteOrder::Endianness sex, Elf32SymbolEntry_disk *disk) const
 {
@@ -164,7 +160,6 @@ SgAsmElfSymbol::encode(ByteOrder::Endianness sex, Elf64SymbolEntry_disk *disk) c
     return disk;
 }
 
-/** Print some debugging info. The 'section' is an optional section pointer for the st_shndx member. */
 void
 SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSection *section) const
 {
@@ -195,7 +190,6 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     }
 }
 
-/** Non-parsing constructor */
 void
 SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
 {
@@ -205,7 +199,6 @@ SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
     p_linked_section = strings;
 }
 
-/** Initializes this ELF Symbol Section by parsing a file. */
 SgAsmElfSymbolSection *
 SgAsmElfSymbolSection::parse()
 {
@@ -244,7 +237,6 @@ SgAsmElfSymbolSection::parse()
     return this;
 }
 
-/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -257,15 +249,6 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t
                            entsize, required, optional, entcount);
 }
 
-/** Update section pointers for locally-bound symbols since we know that the section table has been read and all
- *  non-synthesized sections have been created.
- * 
- *  The st_shndx is the index (ID) of the section to which the symbol is bound. Special values are:
- *   0x0000        no section (section table entry zero should be all zeros anyway)
- *   0xff00-0xffff reserved values, not an index
- *   0xff00-0xff1f processor specific values
- *   0xfff1        symbol has absolute value not affected by relocation
- *   0xfff2        symbol is fortran common or unallocated C extern */
 void
 SgAsmElfSymbolSection::finish_parsing()
 {
@@ -281,7 +264,6 @@ SgAsmElfSymbolSection::finish_parsing()
     }
 }
 
-/** Given a symbol, return its index in this symbol table. */
 size_t
 SgAsmElfSymbolSection::index_of(SgAsmElfSymbol *symbol)
 {
@@ -292,7 +274,6 @@ SgAsmElfSymbolSection::index_of(SgAsmElfSymbol *symbol)
     throw FormatError("symbol is not in symbol table");
 }
 
-/** Called prior to unparsing. Updates symbol entries with name offsets */
 bool
 SgAsmElfSymbolSection::reallocate()
 {
@@ -307,7 +288,6 @@ SgAsmElfSymbolSection::reallocate()
     return reallocated;
 }
 
-/** Write symbol table sections back to disk */
 void
 SgAsmElfSymbolSection::unparse(std::ostream &f) const
 {
@@ -348,7 +328,6 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/** Print some debugging info */
 void
 SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

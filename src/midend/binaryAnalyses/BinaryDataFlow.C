@@ -4,7 +4,7 @@
 #include "BinaryDataFlow.h"
 #include "Diagnostics.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;
@@ -17,8 +17,7 @@ DataFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::DataFlow", Diagnostics::destination);
-        rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        Rose::Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::DataFlow");
     }
 }
 

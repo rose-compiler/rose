@@ -2,8 +2,11 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCell_H
 
 #include <BaseSemantics2.h>
+#include <Sawyer/Set.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/list.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -61,8 +64,25 @@ private:
     InputOutputPropertySet ioProperties_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(address_);
+        s & BOOST_SERIALIZATION_NVP(value_);
+        s & BOOST_SERIALIZATION_NVP(writers_);
+        s & BOOST_SERIALIZATION_NVP(ioProperties_);
+    }
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    MemoryCell() {}                                     // for serialization
+
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
         : address_(address), value_(value) {
         ASSERT_not_null(address);
@@ -70,7 +90,8 @@ protected:
     }
 
     // deep-copy cell list so modifying this new one doesn't alter the existing one
-    MemoryCell(const MemoryCell &other) {
+    MemoryCell(const MemoryCell &other)
+        : boost::enable_shared_from_this<MemoryCell>(other) {
         address_ = other.address_->copy();
         value_ = other.value_->copy();
         writers_ = other.writers_;

@@ -749,14 +749,17 @@ _mm_unpacklo_ps (__m128 __A, __m128 __B)
 static __inline __m128 __attribute__((__always_inline__))
 _mm_loadh_pi (__m128 __A, __m64 const *__P)
 {
-  return (__m128) __builtin_ia32_loadhps ((__v4sf)__A, (__v2si *)__P);
+  // DQ (9/12/2016): Modification for C++11.
+  // return (__m128) __builtin_ia32_loadhps ((__v4sf)__A, (__v2si *)__P);
+  return __m128();
 }
 
 /* Stores the upper two SPFP values of A into P.  */
 static __inline void __attribute__((__always_inline__))
 _mm_storeh_pi (__m64 *__P, __m128 __A)
 {
-  __builtin_ia32_storehps ((__v2si *)__P, (__v4sf)__A);
+  // DQ (9/12/2016): Modification for C++11.
+  //  __builtin_ia32_storehps ((__v2si *)__P, (__v4sf)__A);
 }
 
 /* Moves the upper two values of B into the lower two values of A.  */
@@ -778,14 +781,17 @@ _mm_movelh_ps (__m128 __A, __m128 __B)
 static __inline __m128 __attribute__((__always_inline__))
 _mm_loadl_pi (__m128 __A, __m64 const *__P)
 {
-  return (__m128) __builtin_ia32_loadlps ((__v4sf)__A, (__v2si *)__P);
+  // DQ (9/12/2016): Modification for C++11.
+  // return (__m128) __builtin_ia32_loadlps ((__v4sf)__A, (__v2si *)__P);
+  return __m128();
 }
 
 /* Stores the lower two SPFP values of A into P.  */
 static __inline void __attribute__((__always_inline__))
 _mm_storel_pi (__m64 *__P, __m128 __A)
 {
-  __builtin_ia32_storelps ((__v2si *)__P, (__v4sf)__A);
+  // DQ (9/12/2016): Modification for C++11.
+  // __builtin_ia32_storelps ((__v2si *)__P, (__v4sf)__A);
 }
 
 /* Creates a 4-bit mask from the most significant bits of the SPFP values.  */

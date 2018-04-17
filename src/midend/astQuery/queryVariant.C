@@ -161,8 +161,9 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
 #if 0
                                    printf ("----- internal type = %s \n",(*i)->class_name().c_str());
 #endif
-                                // DQ (1/16/2011): This causes a test in tests/roseTests/programAnalysisTests/variableLivenessTests 
-                                // to fail with error "Error :: Number of nodes = 37  should be : 36"
+                                // DQ (1/16/2011): This causes a test in
+                                // tests/nonsmoke/functional/roseTests/programAnalysisTests/variableLivenessTests to fail with
+                                // error "Error :: Number of nodes = 37 should be : 36"
 
                                 // Add this type to the return list of types.
                                    pushNewNode (returnNodeList,targetVariantVector,*i);

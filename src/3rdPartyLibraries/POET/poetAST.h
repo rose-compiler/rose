@@ -704,6 +704,9 @@ class POETProgram : public POETCode
           ext = filename.substr(pos, filename.size()-pos+1); 
     } 
 
+// DQ (12/6/2016): Added explicit virtual destructor to eliminate warning: -Wdelete-non-virtual-dtor
+   virtual ~POETProgram() {}
+
   static POETString* make_string(const std::string& r);
   static POETIconst* make_Iconst(int val);
   static POETOperator* make_dummyOperator(POETOperatorType t);

@@ -202,6 +202,23 @@ message(STATUS "The ROSE SCM version identifier is ${ROSE_SCM_VERSION_ID}")
 message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_DATE}")
 
 #-------------------------------------------------------------------------------
+# Configuration synopsis used by Rose::initialize.  The ROSE_CONFIG_TOKEN is
+# #define'd as a string in rose_config.h and ultimately rosePublicConfig.h and
+# the string is a synopsis of some important configuration details. This string
+# is passed by user code to the Rose::initialize function which compares it
+# against the same macro compiled into the ROSE library. If their contents differ
+# it means that the ROSE header files being used by the user are not the same
+# as the ROSE header files that were used to compile librose being linked by the
+# user and bad things will probably happen.
+#
+# The CMake ROSE_CONFIG_TOKEN variable is the string that becomes the eventual
+# value of the ROSE_CONFIG_TOKEN C preprocessor macro.  We initialize it here,
+# but other parts of the CMake file might augment its value with additional
+# information (e.g., adding the boost version number).
+#-------------------------------------------------------------------------------
+set(ROSE_CONFIG_TOKEN "rose-${ROSE_SCM_VERSION_ID}")
+
+#-------------------------------------------------------------------------------
 # Boost C++ Libraries
 #-------------------------------------------------------------------------------
 set(Boost_USE_STATIC_LIBS FALSE)        
@@ -237,13 +254,15 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 endif (WIN32)
 
 # Ensure that Boost is found. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
-SET(Boost_ADDITIONAL_VERSIONS "1.59.0" "1.55.0" "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
-find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
+#SET(Boost_ADDITIONAL_VERSIONS "1.59.0" "1.55.0" "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
+find_package( Boost 1.36.0 COMPONENTS chrono date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
+
+set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} boost-${Boost_VERSION}")
 
 # If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or whatever
 # is appropriate for the system.  With GCC it is not sufficient to just add "-lpthread" to the link commands--the "-pthread"
@@ -251,6 +270,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 find_package(Threads)
 if(CMAKE_COMPILER_IS_GNUCXX AND "${CMAKE_USE_PTHREADS_INIT}")
   add_definitions(-pthread)
+  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread")
 endif()
 
 
@@ -296,8 +316,11 @@ if (WIN32)
   # /0s small files
   # /wd4716 to turn no return to a warning and not an error
   set( CMAKE_BUILD_TYPE Release )
-  set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
-  set( CMAKE_C_FLAGS "   /wd4541 " )
+# DQ (11/6/2016): Suggested fix by Pei-Hung for new branch including 
+# EDG 4.11 and EDG 4.12, plus fix for mergeAST_tests directory.
+# set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716 /bigobj" )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   /wd4541 " )
   set( CMAKE_SHARED_LINKER_FLAGS_DEBUG " ${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
   set( CMAKE_SHARED_LINKER_FLAGS_RELEASE " ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )
   set( CMAKE_MODULE_LINKER_FLAGS_DEBUG " ${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
@@ -308,8 +331,8 @@ if (WIN32)
   set( CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} /INCREMENTAL:NO")
   set( CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} /INCREMENTAL:NO")
 else (WIN32)
-  set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
-  set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fexceptions -DHAVE_CONFIG_H -fPIC" )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC" )
   #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
   #set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
   #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
@@ -327,7 +350,8 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # --------- please do all system, platform, software tests here --------------
 
 # Setup EDG version
-set(EDG_VERSION "4.7" CACHE STRING
+# Set default EDG version to 4.9
+set(EDG_VERSION "4.9" CACHE STRING
   "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
 string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
@@ -345,6 +369,9 @@ if ("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
   if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "7")
     set(ROSE_USE_EDG_VERSION_4_7 1)
   endif()
+  if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "9")
+    set(ROSE_USE_EDG_VERSION_4_9 1)
+  endif()
 endif()
 
 # Check if we need to download the EDG binary tarball
@@ -355,16 +382,21 @@ else()
   set(edg_lib "")
   set(BINARY_EDG 1)
   if (NOT WIN32)
-  # no need to display this message after the file has been downloaded
-  if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
-    message(WARNING
-      "At build time, CMake will attempt to download a required library "
-      "tarball.\n"
-      "Please note that this EDG binary tarball is currently only available "
-      "for the GCC compiler.\n" )
-  endif()
-  include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
-  set(edg_lib EDG)
+    if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
+      execute_process(
+      COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
+    else()
+    # no need to display this message after the file has been downloaded
+      if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
+        message(WARNING
+          "At build time, CMake will attempt to download a required library "
+          "tarball.\n"
+          "Please note that this EDG binary tarball is currently only available "
+          "for the GCC compiler.\n" )
+      endif()
+      include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+      set(edg_lib EDG)
+    endif()
   endif()
 endif()
 
@@ -397,6 +429,9 @@ if (enable-c)
 endif()
 
 option(enable-cuda "Enable cuda support in ROSE." ON)
+if (APPLE)
+  set(enable-cuda OFF)
+endif (APPLE)
 if (enable-cuda)
   find_package(CUDA REQUIRED)
   set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
@@ -466,6 +501,18 @@ if (enable-x10)
   set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
 endif()
 
+option(enable-ada "Enable Ada language support in ROSE." OFF)
+if (enable-ada)
+  # TODO:
+  set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
+endif()
+
+option(enable-jovial "Enable Jovial language support in ROSE." OFF)
+if (enable-jovial)
+  # TODO:
+  set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
+endif()
+
 # Other configuration options
 
 option(disable-binary-analysis-tests
@@ -492,6 +539,9 @@ option(enable-assembly-semantics
   "Enable semantics-based analysis of assembly code" OFF)
 
 option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
+if (APPLE)
+  set(enable-binary-analysis OFF)
+endif (APPLE)
 if (enable-binary-analysis)
   set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
 endif()
@@ -577,6 +627,9 @@ if(enable-scoplib)
   find_path(with-scoplib "include/scolib.h"
     DOC "Path to a valid ScopLib installation")
 endif()
+
+option(enable-poet
+  "Enable POET support" OFF)
 
 option(enable-yices "Use the Yices Satisfiability Modulo Theories (SMT)")
 if(enable-yices)
@@ -892,12 +945,18 @@ endif(NOT BISON_FOUND)
 
 if (NOT WIN32)
   find_library(M_LIB m)
+if(NOT APPLE)
   find_library(RT_LIB rt)
+endif (NOT APPLE)
 endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 if (NOT WIN32)
+if(NOT APPLE)
   set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
+else (NOT APPLE)
+  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${CMAKE_THREAD_LIBS_INIT})
+endif (NOT APPLE)
 else (NOT WIN32)
   set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib psapi.lib)
 endif (NOT WIN32)
@@ -908,7 +967,7 @@ include(roseChooseBackendCompiler)
 include(roseGenerateBackendCompilerSpecificHeaders)
 
 # Install the directories within <bin>/include-staging
-install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include/edg)
 
 # --------- finish all fundamental tests, now set derivative variables
 # Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
@@ -957,7 +1016,6 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/PythonFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryLoader
-     ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
      ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
      ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats
      ${ROSE_TOP_SRC_DIR}/src/frontend
@@ -970,6 +1028,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/AdaCodeGeneration
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JovialCodeGeneration
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 
@@ -1004,14 +1064,13 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/ompLowering 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CFG 
-     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/OAWrap 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/bitvectorDataflow 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/defUseAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis 
-     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/graphAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/pointerAnal 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticSingleAssignment
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing 
@@ -1028,11 +1087,15 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets  
-     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET
      ${ROSE_TOP_SRC_DIR}/projects/dataBase 
      ${ROSE_TOP_SRC_DIR}/src/util/graphs 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface )
+
+if(enable-poet)
+set( ROSE_INCLUDES ${ROSE_INCLUDES}
+     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
+endif()
 
 IF(WIN32) 
 set( ROSE_INCLUDES ${ROSE_INCLUDES}
@@ -1111,7 +1174,6 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
 
 add_subdirectory(config)
 add_subdirectory(src)
-add_subdirectory(demo)
 add_subdirectory(exampleTranslators)
 add_subdirectory(scripts)
 add_subdirectory(tools)
@@ -1140,27 +1202,22 @@ configure_file(
 
 #TODO: better support for other compilers & operating systems
 set(C_INCLUDE_STRING
-  "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
-  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
+  "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
+
 set(CXX_INCLUDE_STRING
-  "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
-  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
+  "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
 find_program(shell sh)
 if(shell AND CMAKE_COMPILER_IS_GNUCXX)
+  execute_process(
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
+    OUTPUT_VARIABLE C_includeString
+  )
+  string(STRIP "${C_includeString}" C_includeString)
+  execute_process(
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
+    OUTPUT_VARIABLE CXX_includeString
+  )
+  string(STRIP "${CXX_includeString}" CXX_includeString)
   execute_process(
 # DQ (2/4/2016): Need additional parameters.
 #   COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc
@@ -1180,11 +1237,13 @@ if(shell AND CMAKE_COMPILER_IS_GNUCXX)
     string(STRIP "${C_include_dir}" C_include_dir)
     set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
   endforeach()
+  set(C_INCLUDE_STRING "${C_INCLUDE_STRING} ${C_includeString}, \"/usr/include\"")
 
   foreach(CXX_include_dir ${CXX_backend_includes})
     string(STRIP "${CXX_include_dir}" CXX_include_dir)
     set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")
   endforeach()
+  set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}, \"/usr/include\"")
 
   # In the Autools build system, ROSE stores compiler specific headers in two
   # distinct locations:

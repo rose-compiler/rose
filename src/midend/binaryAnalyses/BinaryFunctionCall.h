@@ -5,7 +5,7 @@
 
 class SgAsmFunction;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Binary function call analysis.
@@ -32,7 +32,7 @@ public:
      *  specifics about what is included in such a graph.
      *
      *  Another way to represent function calls is to adapt a global control flow graph
-     *  (rose::BinaryAnalysis::ControlFlowGraph) to include only the edges (and their incident vertices) that flow from one
+     *  (Rose::BinaryAnalysis::ControlFlowGraph) to include only the edges (and their incident vertices) that flow from one
      *  function to another.  The advantage of using a control flow graph to represent function call information is that each
      *  call site will be included in the function call graph due to the fact that the control flow graph vertices are blocks
      *  (SgAsmBlock) rather than functions (SgAsmFunction).
@@ -185,7 +185,7 @@ public:
      *  may be different):
      *
      *  @code
-     *  using namespace rose::BinaryAnalysis;
+     *  using namespace Rose::BinaryAnalysis;
      *  typedef FunctionCall::Graph CG;
      *  typedef ControlFlow::Graph  CFG;
      *  SgAsmNode *node = ...;

@@ -7,7 +7,7 @@
 #include <LinearCongruentialGenerator.h>
 #endif
 
-namespace rose {
+namespace Rose {
 namespace FileSystem {
 
 const char *tempNamePattern = "rose-%%%%%%%-%%%%%%%";
