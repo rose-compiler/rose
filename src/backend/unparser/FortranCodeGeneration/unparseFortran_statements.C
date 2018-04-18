@@ -18,6 +18,7 @@
 #endif
 
 using namespace std;
+using namespace Rose;
 
 inline bool
 namesMatch ( const string &x, const string &y )
@@ -365,8 +366,9 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
 
      if (usingGfortran)
         {
+       // DQ (3/17/2017): Fixed this to support GNU 5.1.
           if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
-               ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
+               ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
              {
             // gfortran versions before 4.2 can not handle absolute path names in the Fortran specific include mechanism.
 
@@ -1980,13 +1982,17 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
 
   // FIXME: we may need to do something analagous for modules?
   // Check to see if this is an object defined within a class
-     int inClass = false;
+
+  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+  // int inClass = false;
+
      SgName inCname;
      ROSE_ASSERT(vardecl->get_parent());
      SgClassDefinition *cdefn = isSgClassDefinition(vardecl->get_parent());
      if (cdefn)
         {
-          inClass = true;
+       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+       // inClass = true;
           inCname = cdefn->get_declaration()->get_name();
           if (cdefn->get_declaration()->get_class_type()        == SgClassDeclaration::e_class)
                ninfo.set_CheckAccess();
@@ -2050,7 +2056,9 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
      if (u_rename)
         {
           curprint(",");
-          unparseExprList(u_rename, info, false /*paren*/);
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(u_rename, info, false /*paren*/);
+          unparseExprList(u_rename, info);
         }
        else
         {
@@ -2884,10 +2892,14 @@ FortranCodeGeneration_locatedNode::unparseStopOrPauseStmt(SgStatement* stmt, SgU
      if (kind == SgStopOrPauseStatement::e_stop)
         {
           curprint("STOP ");
-       // curprint(sp_stmt->get_code().str());
           unparseExpression(sp_stmt->get_code(), info);
         }
-       else
+     else if (kind == SgStopOrPauseStatement::e_error_stop)
+        {
+          curprint("ERROR STOP ");
+          unparseExpression(sp_stmt->get_code(), info);
+        }
+     else
         {
           ROSE_ASSERT(kind == SgStopOrPauseStatement::e_pause);
           curprint("PAUSE ");
@@ -3002,7 +3014,11 @@ FortranCodeGeneration_locatedNode::unparseIOStmt(SgStatement* stmt, SgUnparse_In
         }
      
      curprint(" ");
-     unparseExprList(iolist, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
+
      unp->cur.insert_newline(1); 
    }
 #endif
@@ -3156,7 +3172,10 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
         }
 
      SgExprListExp* iolist = printStatement->get_io_stmt_list();
-     unparseExprList(iolist, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
 
      unp->cur.insert_newline(1); 
    }
@@ -3270,7 +3289,10 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
           curprint(") ");
         }
 
-     unparseExprList(iolist, info, false /*paren*/);
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3296,7 +3318,11 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
      curprint(") ");
 
      SgExprListExp* iolist = writeStatement->get_io_stmt_list();
-     unparseExprList(iolist, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(iolist, info, false /*paren*/);
+     unparseExprList(iolist, info);
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3426,7 +3452,12 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
 
      SgExprListExp* iolist = inquireStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3445,7 +3476,11 @@ FortranCodeGeneration_locatedNode::unparseFlushStatement(SgStatement* stmt, SgUn
 
      SgExprListExp* iolist = flushStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
      unp->cur.insert_newline(1); 
    }
 
@@ -3464,7 +3499,12 @@ FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgU
 
      SgExprListExp* iolist = rewindStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3483,7 +3523,11 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
 
      SgExprListExp* iolist = backspaceStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
      unp->cur.insert_newline(1); 
    }
 
@@ -3502,7 +3546,12 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
 
      SgExprListExp* iolist = endfileStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
+
      unp->cur.insert_newline(1); 
    }
 
@@ -3521,7 +3570,11 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
 
      SgExprListExp* iolist = waitStatement->get_io_stmt_list();
      if (iolist != NULL)
-          unparseExprList(iolist, info, false /*paren*/);
+        {
+       // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+       // unparseExprList(iolist, info, false /*paren*/);
+          unparseExprList(iolist, info);
+        }
 
      unp->cur.insert_newline(1); 
    }
@@ -3585,6 +3638,9 @@ FortranCodeGeneration_locatedNode::unparseExprStmt(SgStatement* stmt, SgUnparse_
 
   // Never unparse class definition in expression stmt
      ninfo.set_SkipClassDefinition();
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo.set_SkipEnumDefinition();
 
   // curprint("!what line an I on?!");
 
@@ -3882,6 +3938,38 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                curprint(", EXTERNAL");
              }
 
+       // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isContiguous() == true)
+             {
+               curprint(", CONTIGUOUS");
+             }
+
+       // Rasmussen (02/06/2018): Fortran CUDA support
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaDeviceMemory() == true)
+             {
+               curprint(", device");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaManaged() == true)
+             {
+               curprint(", managed");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaConstant() == true)
+             {
+               curprint(", constant");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaShared() == true)
+             {
+               curprint(", shared");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaPinned() == true)
+             {
+               curprint(", pinned");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaTexture() == true)
+             {
+               curprint(", texture");
+             }
+
        // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() == true)
              {
@@ -4169,187 +4257,191 @@ FortranCodeGeneration_locatedNode::printStorageModifier(SgDeclarationStatement* 
    }
 
 // void FortranCodeGeneration_locatedNode::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
-	void
+void
 FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
-{
+   {
+  // Sage node corresponds to Fortran procedure program unit
 
-	/*
-	   if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() == true)
-	   {                                                                                                                                  // The BIND keyword is only permitted within Modules
-	   if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
-	   {                                                                                                                                  // I think that bind implies "BIND(C)"
-	   curprint(", BIND(C)");
-	   }
-	   else
-	   {
-	   printf ("Warning: statement marked as bind in non-module scope \n");
-	   }
-	   }
-	 */
-	// Sage node corresponds to Fortran procedure program unit
+  // printf ("Inside of unparseProcHdrStmt() \n");
+     SgProcedureHeaderStatement* procedureHeader = isSgProcedureHeaderStatement(stmt);
+     ROSE_ASSERT(procedureHeader != NULL);
 
-	SgProcedureHeaderStatement* procedureHeader = isSgProcedureHeaderStatement(stmt);
-	printf ("Inside of unparseProcHdrStmt(%s) \n",procedureHeader->get_name().str());
-	ROSE_ASSERT(procedureHeader != NULL);
+  // Sage node corresponds to Fortran program
+  // SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
+  // ROSE_ASSERT(functionDeclaration != NULL);
 
-	// Sage node corresponds to Fortran program
-	// SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
-	// ROSE_ASSERT(functionDeclaration != NULL);
+  // ROSE_ASSERT(procedureHeader->get_functionModifier().isPure() == true);
 
-	// ROSE_ASSERT(procedureHeader->get_functionModifier().isPure() == true);
+     string typeOfFunction;
+     if (procedureHeader->isFunction() == true)
+        {
+          typeOfFunction = " FUNCTION";
+        }
+       else
+        {
+          if (procedureHeader->isSubroutine() == true)
+             {
+               typeOfFunction = "SUBROUTINE";
+             }
+            else
+             {
+               ROSE_ASSERT (procedureHeader->isBlockData() == true);
+               typeOfFunction = "BLOCK DATA";
+             }
+        }
 
-	string typeOfFunction;
-	if (procedureHeader->isFunction() == true)
-	{
-		typeOfFunction = " FUNCTION";
-	}
-	else
-	{
-		if (procedureHeader->isSubroutine() == true)
-		{
-			typeOfFunction = "SUBROUTINE";
-		}
-		else
-		{
-			ROSE_ASSERT (procedureHeader->isBlockData() == true);
-			typeOfFunction = "BLOCK DATA";
-		}
-	}
+     if (!procedureHeader->isForward() && procedureHeader->get_definition() != NULL && !info.SkipFunctionDefinition())
+        {
+       // Output the function declaration with definition
+       // printf ("Output the SgProgramHeaderStatement declaration with definition \n");
+       // curprint ("! Output the function declaration with definition \n ");
 
-	if (!procedureHeader->isForward() && procedureHeader->get_definition() != NULL && !info.SkipFunctionDefinition())
-	{
-		// Output the function declaration with definition
-		// printf ("Output the SgProgramHeaderStatement declaration with definition \n");
-		// curprint ("! Output the function declaration with definition \n ");
+       // The unparsing of the definition will cause the unparsing of the declaration (with SgUnparse_Info
+       // flags set to just unparse a forward declaration!)
+          SgUnparse_Info ninfo(info);
 
-		// The unparsing of the definition will cause the unparsing of the declaration (with SgUnparse_Info
-		// flags set to just unparse a forward declaration!)
-		SgUnparse_Info ninfo(info);
+       // To avoid end of statement formatting (added CR's) we call the unparseFuncDefnStmt directly
+       // unparseStatement(proghdr->get_definition(), ninfo);
+          unparseFuncDefnStmt(procedureHeader->get_definition(), ninfo);
 
-		// To avoid end of statement formatting (added CR's) we call the unparseFuncDefnStmt directly
-		// unparseStatement(proghdr->get_definition(), ninfo);
-		unparseFuncDefnStmt(procedureHeader->get_definition(), ninfo);
+          unp->cur.insert_newline(1);
 
-		unp->cur.insert_newline(1);
+       // DQ (8/19/2007): The "END" has just been output by the unparsing of the SgFunctionDefinition 
+       // so we just want to finish it off with "PROGRAM <name>".
 
-		// DQ (8/19/2007): The "END" has just been output by the unparsing of the SgFunctionDefinition 
-		// so we just want to finish it off with "PROGRAM <name>".
+       // printf ("Need to add data member for end_numeric_label for SgFunctionDeclaration \n");
+          unparseStatementNumbersSupport(procedureHeader->get_end_numeric_label(),info);
+       // curprint("END FUNCTION ");
+          curprint("END " + typeOfFunction + " ");
+          if (procedureHeader->get_named_in_end_statement() == true)
+             {
+               curprint(procedureHeader->get_name().str());
+             }
 
-		// printf ("Need to add data member for end_numeric_label for SgFunctionDeclaration \n");
-		unparseStatementNumbersSupport(procedureHeader->get_end_numeric_label(),info);
-		// curprint("END FUNCTION ");
-		curprint("END " + typeOfFunction + " ");
-		if (procedureHeader->get_named_in_end_statement() == true)
-		{
-			curprint(procedureHeader->get_name().str());
-		}
+       // Output 2 new lines to better separate functions visually in the output
+          unp->cur.insert_newline(1);
+          unp->cur.insert_newline(2); //FMZ
+        }
+       else
+        {
+       // Code generation support for "pure" attribute
+          if (procedureHeader->get_functionModifier().isPure() == true)
+             {
+               curprint("PURE ");
+             }
 
-		// Output 2 new lines to better separate functions visually in the output
-		unp->cur.insert_newline(1);
-		unp->cur.insert_newline(2); //FMZ
-	}
-	else
-	{
-	printf ("Inside Unparse Header Else Branch(%s) \n",procedureHeader->get_name().str());
-		// Code generation support for "pure" attribute
-		if (procedureHeader->get_functionModifier().isPure() == true)
-		{
-			curprint("pure ");
-		}
+          if (procedureHeader->get_functionModifier().isElemental() == true)
+             {
+               curprint("ELEMENTAL ");
+             }
 
-		if (procedureHeader->get_functionModifier().isElemental() == true)
-		{
-			curprint("elemental ");
-		}
+          if (procedureHeader->get_functionModifier().isRecursive() == true)
+             {
+               curprint("RECURSIVE ");
+             }
 
-		if (procedureHeader->get_functionModifier().isRecursive() == true)
-		{
-			curprint("recursive ");
-		}
+       // Rasmussen (02/06/2018): CUDA function modifiers (prefix)
 
-		// Output the forward declaration only
-		// printf ("Output the forward declaration only \n");
-		// curprint ("! Output the forward declaration only \n ");
+          if (procedureHeader->get_functionModifier().isCudaHost() == true)
+             {
+               curprint("attributes(host) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaGlobalFunction() == true)
+             {
+               curprint("attributes(global) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaDevice() == true)
+             {
+               curprint("attributes(device) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaGridGlobal() == true)
+             {
+               curprint("attributes(grid_global) ");
+             }
 
-		//FMZ (5/13/2010): If there is declaration of "result", we need to check if the 
-		//                 type of the function is already declared by the "result"
-		bool need_type = true;
-		string result_name_str;
+       // Output the forward declaration only
+       // printf ("Output the forward declaration only \n");
+       // curprint ("! Output the forward declaration only \n ");
 
-		if (procedureHeader->get_result_name() != NULL) {
-			SgInitializedName* rslt_name = procedureHeader->get_result_name();
-			SgDeclarationStatement* rslt_decl = rslt_name->get_definition();
+       //FMZ (5/13/2010): If there is declaration of "result", we need to check if the 
+       //                 type of the function is already declared by the "result"
+          bool need_type = true;
+          string result_name_str;
+          
+          if (procedureHeader->get_result_name() != NULL) {
+              SgInitializedName* rslt_name = procedureHeader->get_result_name();
+              SgDeclarationStatement* rslt_decl = rslt_name->get_definition();
 
-			// check declaraion stmts
-			if (rslt_decl !=NULL) {
-				need_type = false;
-				result_name_str = rslt_name->get_name().str();
-			}
+              // check declaraion stmts
+              if (rslt_decl !=NULL) {
+                   need_type = false;
+                   result_name_str = rslt_name->get_name().str();
+              }
+   
+          } 
 
-		} 
 
+          if (procedureHeader->isFunction() == true && need_type == true)
+             {
+            // DQ (12/18/2007): Unparse the return type
+               SgFunctionType* functionType = procedureHeader->get_type();
+               ROSE_ASSERT(functionType != NULL);
+               SgType* returnType = functionType->get_return_type();
+               ROSE_ASSERT(returnType != NULL);
 
-		if (procedureHeader->isFunction() == true && need_type == true)
-		{
-			// DQ (12/18/2007): Unparse the return type
-			SgFunctionType* functionType = procedureHeader->get_type();
-			ROSE_ASSERT(functionType != NULL);
-			SgType* returnType = functionType->get_return_type();
-			ROSE_ASSERT(returnType != NULL);
+               unp->u_fortran_type->unparseType(returnType,info);
+             }
 
-			unp->u_fortran_type->unparseType(returnType,info);
-		}
+       // Are there possible qualifiers that we are missing?
+          curprint(typeOfFunction + " ");
+          curprint(procedureHeader->get_name().str());
 
-		// Are there possible qualifiers that we are missing?
-		curprint(typeOfFunction + " ");
-		curprint(procedureHeader->get_name().str());
+          SgUnparse_Info ninfo2(info);
+          ninfo2.set_inArgList();
 
-		SgUnparse_Info ninfo2(info);
-		ninfo2.set_inArgList();
-
-		// Fortran Block Data statements don't have operands (I think)
-		if (procedureHeader->isBlockData() == false)
-		{
-			curprint("(");
-			unparseFunctionArgs(procedureHeader,ninfo2);     
-			curprint(")");
-		}
+       // Fortran Block Data statements don't have operands (I think)
+          if (procedureHeader->isBlockData() == false)
+             {
+               curprint("(");
+               unparseFunctionArgs(procedureHeader,ninfo2);     
+               curprint(")");
+             }
 
 #if 1
-		unparseBindAttribute(procedureHeader);
+          unparseBindAttribute(procedureHeader);
 
-		// Unparse the result(<name>) suffix if present
-		if (procedureHeader->get_result_name() != NULL &&
-				procedureHeader->get_name()!= procedureHeader->get_result_name()->get_name())
-		{
-			curprint(" result(");
-			curprint(procedureHeader->get_result_name()->get_name());
-			curprint(")");
-		}
+       // Unparse the result(<name>) suffix if present
+          if (procedureHeader->get_result_name() != NULL &&
+                  procedureHeader->get_name()!= procedureHeader->get_result_name()->get_name())
+             {
+               curprint(" result(");
+               curprint(procedureHeader->get_result_name()->get_name());
+               curprint(")");
+             }
 #else
-		// Code generation support for "bind" attribute
-		// if (procedureHeader->get_functionModifier().isBind() == true)
-		if (procedureHeader->get_declarationModifier().isBind() == true)
-		{
-			curprint(" bind(");
+       // Code generation support for "bind" attribute
+       // if (procedureHeader->get_functionModifier().isBind() == true)
+          if (procedureHeader->get_declarationModifier().isBind() == true)
+             {
+               curprint(" bind(");
 
-			// DQ (11/23/2007): We now use the linkage string to hold the bind_languag information.
-			// curprint(procedureHeader->get_bind_language());
-			curprint(procedureHeader->get_linkage());
+            // DQ (11/23/2007): We now use the linkage string to hold the bind_languag information.
+            // curprint(procedureHeader->get_bind_language());
+               curprint(procedureHeader->get_linkage());
 
-			if (procedureHeader->get_binding_label().empty() == false)
-			{
-				curprint(",NAME=\"");
-				curprint(procedureHeader->get_binding_label());
-				curprint("\"");
-			}
-			curprint(")");
-		}
+               if (procedureHeader->get_binding_label().empty() == false)
+                  {
+                    curprint(",NAME=\"");
+                    curprint(procedureHeader->get_binding_label());
+                    curprint("\"");
+                  }
+               curprint(")");
+             }
 #endif
-		// Output 1 new line so that new statements will appear on their own line after the SgProgramHeaderStatement declaration.
-		unp->cur.insert_newline(1);
-	}
-}
+       // Output 1 new line so that new statements will appear on their own line after the SgProgramHeaderStatement declaration.
+          unp->cur.insert_newline(1);
+        }
+   }
 
 #if 0
 void
@@ -4945,6 +5037,9 @@ FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdec
   // Using this C++ constraint avoids building a more complex mechanism to turn it off.
      ninfo2.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo2.set_SkipEnumDefinition();
+
      curprint("(");
 
      unparseFunctionArgs(funcdecl_stmt,ninfo2);
@@ -5011,7 +5106,6 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
           (info.SkipClassDefinition() == true) ? "true" : "false",classdecl_stmt->get_name().str());
 #endif
 
-     printf("Unparsing Fortran Stuff\n");
      if (!classdecl_stmt->isForward() && classdecl_stmt->get_definition() && !info.SkipClassDefinition())
         {
           SgUnparse_Info ninfox(info);
@@ -5224,6 +5318,9 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
 
      ninfo.set_SkipClassDefinition();
 
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo.set_SkipEnumDefinition();
+
   // DQ (10/13/2006): test2004_133.C demonstrates where we need to unparse qualified names for class definitions (defining declaration).
   // DQ (10/11/2006): Don't generate qualified names for the class name of a defining declaration
   // ninfo.set_SkipQualifiedNames();
@@ -5253,6 +5350,9 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
   // ninfo.unset_SkipQualifiedNames();
 
      ninfo.unset_SkipClassDefinition();
+
+  // DQ (9/9/2016): These should have been setup to be the same.
+     ninfo.unset_SkipEnumDefinition();
 
   // curprint ( string("/* END: Print out class declaration */ \n";
 
@@ -5345,7 +5445,10 @@ FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, S
      ROSE_ASSERT(exprList != NULL);
 
      curprint("allocate( ");
-     unparseExprList(exprList, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(exprList, info, false /*paren*/);
+     unparseExprList(exprList, info);
 
      if (s->get_stat_expression() != NULL)
         {
@@ -5377,7 +5480,10 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
      ROSE_ASSERT(exprList != NULL);
 
      curprint("deallocate( ");
-     unparseExprList(exprList, info, false /*paren*/);
+
+  // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+  // unparseExprList(exprList, info, false /*paren*/);
+     unparseExprList(exprList, info);
 
      if (s->get_stat_expression() != NULL)
         {
