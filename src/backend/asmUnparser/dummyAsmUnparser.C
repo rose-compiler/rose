@@ -2,6 +2,7 @@
 // we have to still define some of the functions they use.
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
+
 // Dummy declaration for the Rose::BinaryAnalysis namespace
 namespace Rose {
 namespace BinaryAnalysis {

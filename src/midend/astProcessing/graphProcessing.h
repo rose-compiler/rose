@@ -57,7 +57,6 @@ AS WRITTEN, THESE FUNCTIONS WILL ONLY WORK WITH GRAPHS THAT ARE IMPLEMENTED IN T
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
-#include <boost/utility.hpp> // required to TIE support
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/reverse_graph.hpp>
@@ -1300,7 +1299,7 @@ These should NOT be used by the user. They are simply for writing interesting in
             {
                 printCFGNode(vertintmap[*v], mf);
             }
-            for (boost::tie(e, eend) = edges(*gc); e != eend; ++e)
+            for (tie(e, eend) = edges(*gc); e != eend; ++e)
             {
                 printCFGEdge(edgeintmap[*e], g, mf);
             }
@@ -1321,7 +1320,7 @@ These should NOT be used by the user. They are simply for writing interesting in
             mf << "digraph defaultName { \n";
             vertex_iterator v, vend;
             edge_iterator e, eend;
-            for (boost::tie(v, vend) = vertices(*gc); v != vend; ++v)
+            for (tie(v, vend) = vertices(*gc); v != vend; ++v)
             {
                 if (nodeStrings.find(vertintmap[*v]) != nodeStrings.end()) {
                     int nn = vertintmap[*v];
@@ -1331,7 +1330,7 @@ These should NOT be used by the user. They are simply for writing interesting in
                     printCFGNodeGeneric(vertintmap[*v], "noprop", mf);
                 }
             }
-           for (boost::tie(e, eend) = edges(*gc); e != eend; ++e)
+           for (tie(e, eend) = edges(*gc); e != eend; ++e)
             {
                 printCFGEdge(edgeintmap[*e], g, mf);
             }
@@ -1397,8 +1396,13 @@ SgGraphTraversal<CFG>::
 findClosuresAndMarkersAndEnumerate(CFG*& g)
 {
  // DQ (4/11/2017): Fix Klockworks issue of uninitialized variables.
+#if 1
     edge_iterator e, eend;
-    for (boost::tie(e, eend) = edges(*g); e != eend; ++e) {
+#else
+    edge_iterator e    = edges(*g).begin();
+    edge_iterator eend = e;
+#endif
+    for (tie(e, eend) = edges(*g); e != eend; ++e) {
         intedgemap[nextEdge] = *e;
         edgeintmap[*e] = nextEdge;
         nextEdge++;
