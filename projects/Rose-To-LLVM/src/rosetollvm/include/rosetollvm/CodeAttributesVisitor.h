@@ -29,6 +29,8 @@ protected:
 
     std::vector<SgSourceFile *> sourceFiles;
 
+    bool isTrivialCast(SgType *type1, SgType *type2);
+    
     void processVariableDeclaration(SgInitializedName *);
 
     /**
@@ -49,6 +51,8 @@ protected:
             return NULL;
         return getFunctionDefinition(scope -> get_scope());
     }
+
+    long long computeCaseValue(SgExpression *);
 
     void checkVariableDeclaration(SgVarRefExp *);
     void checkFunctionDeclaration(SgFunctionRefExp *);

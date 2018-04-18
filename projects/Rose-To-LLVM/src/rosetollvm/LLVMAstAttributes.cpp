@@ -241,81 +241,140 @@ const string LLVMAstAttributes::getGlobalStringReference(int index) {
     return out.str();
 }
 
-const string LLVMAstAttributes::filter(const string in) {
+LLVMAstAttributes::StringLiteral LLVMAstAttributes::preprocessString(SgStringVal *string_val) {
     stringstream out;
-    for (int i = 0; i < in.length(); i++) {
-        out << in[i];
-        if (in[i] == '\\') {
-            // LLVM escape sequences always look like \xx where each x
-            // is a hexadecimal digit.
-            if (in[i + 1] == 'n') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\n');
-            }
-            else if (in[i + 1] == 't') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\t');
-            }
-            else if (in[i + 1] == 'b') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\b');
-            }
-            else if (in[i + 1] == 'r') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\r');
-            }
-            else if (in[i + 1] == 'f') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\f');
-            }
-            else if (in[i + 1] == 'v') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\v');
-            }
-            else if (in[i + 1] == 'a') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\a');
-            }
-            else if (in[i + 1] == '?') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) '\?');
-            }
-            else if (in[i + 1] == '\"' || in[i + 1] == '\'' || in[i + 1] == '\\') {
-                i++;
-                prepFor2DigitHex(out);
-                out << ((int) in[i]);
-            }
-            else if (isdigit(in[i + 1]) && isdigit(in[i + 2]) && isdigit(in[i + 3])) {
-                istringstream strm(in.substr(i + 1, 3));
-                int v;
-                strm >> std::oct >> v;
-                prepFor2DigitHex(out);
-                out << v;
-                i += 3;
+    int size = 0;
+
+    if (string_val -> get_is16bitString() || string_val -> get_is32bitString()) {
+cout << "*** Encountered "
+     << (string_val -> get_wcharString() ? "Wchar " : "ASCII ")
+     << (string_val -> get_is16bitString() ? "16 bits " : "")
+     << (string_val -> get_is32bitString() ? "32 bits " : "")
+     << (string_val -> get_isRawString() ? "raw " : "")
+     << "string : \""
+     << string_val -> get_value()
+     << "\" with raw value \""
+     << string_val -> get_raw_string_value()
+     << "\""
+     << endl;
+cout.flush();
+        ROSE2LLVM_ASSERT(! "yet support wchar_t strings");
+    }
+    else {
+        const string in = string_val -> get_value();
+// TODO: Remove this !!!
+/*	      
+cout << "*** Encountered "
+     << (string_val -> get_wcharString() ? "Wchar " : "ASCII ")
+     << (string_val -> get_is16bitString() ? "16 bits " : "")
+     << (string_val -> get_is32bitString() ? "32 bits " : "")
+     << (string_val -> get_isRawString() ? "raw " : "")
+     << " string : \"" << in << "\"" << endl;
+cout.flush();
+*/
+        for (int i = 0; i < in.length(); i++) {
+            size++;
+            out << in[i];
+            if (in[i] == '\\') {
+                // LLVM escape sequences always look like \xx where each x
+                // is a hexadecimal digit.
+                if (in[i + 1] == 'n') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\n');
+                }
+                else if (in[i + 1] == 't') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\t');
+                }
+                else if (in[i + 1] == 'b') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\b');
+                }
+                else if (in[i + 1] == 'r') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\r');
+                }
+                else if (in[i + 1] == 'f') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\f');
+                }
+                else if (in[i + 1] == 'v') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\v');
+                }
+                else if (in[i + 1] == 'a') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\a');
+                }
+                else if (in[i + 1] == '?') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) '\?');
+                }
+                else if (in[i + 1] == '\"' || in[i + 1] == '\'' || in[i + 1] == '\\') {
+                    i++;
+                    prepFor2DigitHex(out);
+                    out << ((int) in[i]);
+                }
+                //
+                //            Rose emits a 3 digit sequence for '\0'.
+                //
+                else if (isdigit(in[i + 1]) && isdigit(in[i + 2]) && isdigit(in[i + 3])) {
+                    istringstream strm(in.substr(i + 1, 3));
+                    int v;
+                    strm >> std::oct >> v;
+                    prepFor2DigitHex(out);
+                    out << v;
+                    i += 3;
+                }
             }
         }
+
+        size++;
+        out << "\\00";
     }
 
-    out << "\\00";
-    return out.str();
+// TODO: Remove this !!!
+/*
+cout << "*** Outputting string : \"" << out.str() << "\" with size " << size << endl;
+cout.flush();
+*/
+  
+    return (StringLiteral) {out.str(), size};
 }
 
-const string LLVMAstAttributes::filter(const string in, int size) {
-    string out = filter(in);
-    for (int i = in.size() + 1; i < size; i++) { // +1 because filter() already added a \0 gate to the string.
-        out += "\\00";
+int LLVMAstAttributes::insertString(SgStringVal *string_val) {
+    StringLiteral literal = preprocessString(string_val);
+    return string_table.insert(literal.value.c_str(), literal.size);
+}
+
+int LLVMAstAttributes::insertString(SgStringVal *string_val, int size) {
+    StringLiteral literal = preprocessString(string_val);
+
+if(size < literal.size){
+  cout << "** Request to insert string \""
+       << string_val -> get_value() << "\" which was preprocessed as \""
+       << literal.value << "\" with size " << literal.size
+       << "; The requested final output size is " << size
+    << endl;
+  cout.flush();
+}
+    ROSE2LLVM_ASSERT(size >= literal.size);
+    for (int i = literal.size; i < size; i++) {
+        literal.value += "\\00";
     }
-    return out;
+
+    return string_table.insert(literal.value.c_str(), size);
 }
 
+/*
 int LLVMAstAttributes::getLength(const char *in) {
     int length = 0;
     for (const char *p = in; *p; p++) {
@@ -326,13 +385,14 @@ int LLVMAstAttributes::getLength(const char *in) {
 
     return length;
 }
+*/
 
 const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
+    ROSE2LLVM_ASSERT(type != NULL);
+
     StringAstAttribute *attr = (StringAstAttribute *) type -> getAttribute(Control::LLVM_TYPE);
     string str;
     int size = -1;
-
-    ROSE2LLVM_ASSERT(type != NULL);
 
     if (attr != NULL) {
         str = attr -> getValue();
@@ -362,7 +422,7 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0"));
         }
-        else if (dynamic_cast<SgTypeShort *>(type) || dynamic_cast<SgTypeUnsignedShort *>(type)) {
+        else if (dynamic_cast<SgTypeShort *>(type) || dynamic_cast<SgTypeSignedShort *>(type) || dynamic_cast<SgTypeUnsignedShort *>(type)) {
             size = sizeof(short); // compute the size of a short on this machine.
             str = getIntegerBitSize(size);
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
@@ -370,7 +430,7 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0"));
         }
-        else if (dynamic_cast<SgTypeInt *>(type) || dynamic_cast<SgTypeUnsignedInt *>(type) || dynamic_cast<SgEnumType *>(type)) {
+        else if (dynamic_cast<SgTypeInt *>(type) || dynamic_cast<SgTypeSignedInt *>(type) || dynamic_cast<SgTypeUnsignedInt *>(type) || dynamic_cast<SgEnumType *>(type)) {
             size = sizeof(int);
             str = getIntegerBitSize(size);
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
@@ -378,8 +438,7 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0"));
         }
-        else if (dynamic_cast<SgTypeLong *>(type) ||
-                 dynamic_cast<SgTypeUnsignedLong *>(type)) {
+        else if (dynamic_cast<SgTypeLong *>(type) || dynamic_cast<SgTypeSignedLong *>(type) || dynamic_cast<SgTypeUnsignedLong *>(type)) {
             size = sizeof(long);
             str = getIntegerBitSize(size);
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
@@ -387,7 +446,7 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0"));
         }
-        else if (dynamic_cast<SgTypeLongLong *>(type) || dynamic_cast<SgTypeUnsignedLongLong *>(type)) {
+        else if (dynamic_cast<SgTypeLongLong *>(type) || dynamic_cast<SgTypeSignedLongLong *>(type) || dynamic_cast<SgTypeUnsignedLongLong *>(type)) {
             size = sizeof(long long);
             str = getIntegerBitSize(size);
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
@@ -401,7 +460,7 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_TYPE, new StringAstAttribute(str));
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
-            control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0.0e+00"));
+            control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute(Control::FloatToString(0.0)));
         }
         else if (dynamic_cast<SgTypeDouble *>(type)) {
             size = sizeof(double);
@@ -409,7 +468,7 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_TYPE, new StringAstAttribute(str));
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
-            control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0.0e+00"));
+            control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute(Control::DoubleToString(0.0)));
         }
         else if (dynamic_cast<SgTypeLongDouble *>(type)) {
             size = sizeof(long double);
@@ -417,30 +476,52 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_TYPE, new StringAstAttribute(str));
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
-            control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0.0e+00"));
+            control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute(Control::LongDoubleToString(0.0)));
         }
         else if (dynamic_cast<SgTypeComplex *>(type)) {
             SgTypeComplex* complex_type = isSgTypeComplex(type);
             SgType *component_type = complex_type -> get_base_type();
             string component_type_name = setLLVMTypeName(component_type);
+// TODO: Remove this !!!
+/*	      
+cout << "***Processing ";
+*/
             if (isSgTypeFloat(component_type)) {
+// TODO: Remove this !!!
+/*	      
+cout << "Float Complex type of size ";
+*/
                 size = sizeof(complex<float>);
             }
             else if (isSgTypeDouble(component_type)) {
+// TODO: Remove this !!!
+/*	      
+cout << "Double Complex type of size ";
+*/
                 size = sizeof(complex<double>);
             }
             else if (isSgTypeLongDouble(component_type)) {
+// TODO: Remove this !!!
+/*	      
+cout << "Long Double Complex type of size ";
+*/
                 size = sizeof(complex<long double>);
             }
             else {
                 ROSE2LLVM_ASSERT(! "know how to process this kind of complex type");
             }
             str = "complex";
+// TODO: Remove this !!!
+/*	      
+cout << size
+     << endl;
+cout.flush();
+*/
             control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_TYPE, new StringAstAttribute(str));
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
             control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute("0.0e+00"));
-            ROSE2LLVM_ASSERT(! "yet support complex type");
+//            ROSE2LLVM_ASSERT(! "yet support complex type");
         }
         else if (dynamic_cast<SgArrayType *>(type)) {
             SgArrayType* array_type = isSgArrayType(type);
@@ -591,6 +672,25 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
                 control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute(((StringAstAttribute *) base_type -> getAttribute(Control::LLVM_DEFAULT_VALUE)) -> getValue()));
             }
         }
+        else if (dynamic_cast<SgTypeOfType *>(type)) {
+            SgTypeOfType *n = isSgTypeOfType(type);
+            SgType *base_type = n -> get_base_type();
+            str = setLLVMTypeName(base_type);
+
+            /**
+             * TODO: probably need a more systematic way to "inherit" all the type attributes from another type?
+             */
+            control.SetAttribute(type, Control::LLVM_TYPE, new StringAstAttribute(str));
+            if (base_type -> attributeExists(Control::LLVM_SIZE)) {
+                control.SetAttribute(type, Control::LLVM_SIZE, new IntAstAttribute(((IntAstAttribute *) base_type -> getAttribute(Control::LLVM_SIZE)) -> getValue()));
+            }
+            if (base_type -> attributeExists(Control::LLVM_ALIGN_TYPE)) {
+                control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(((IntAstAttribute *) base_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue()));
+            }
+            if (base_type -> attributeExists(Control::LLVM_DEFAULT_VALUE)) {
+                control.SetAttribute(type, Control::LLVM_DEFAULT_VALUE, new StringAstAttribute(((StringAstAttribute *) base_type -> getAttribute(Control::LLVM_DEFAULT_VALUE)) -> getValue()));
+            }
+        }
         else if (dynamic_cast<SgClassType *>(type)) {
             SgClassType *n = isSgClassType(type);
 
@@ -629,7 +729,7 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
         else if (dynamic_cast<SgTypeDefault *>(type)) { // This type is only used internally by Rose.
             size = sizeof(void *);  // Align it on the same boundary as a pointer.
             SgTypeDefault *n = isSgTypeDefault(type);
-            str = type -> class_name(); // Just do something, anything!
+            str = "..."; // TODO: Confirm that SgTypeDefault always maps into the ellipsis type!
             control.SetAttribute(type, Control::LLVM_TYPE, new StringAstAttribute(str));
             control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(size));
         }
@@ -671,7 +771,7 @@ void LLVMAstAttributes::processClassDeclaration(SgClassType *n)
          */
         int size = 0,
             first_field_size = 0,
-            alignment = 0;
+            alignment = 1; // default alignment is 1
 
         vector<SgType *> pointer_decls;
 
@@ -747,18 +847,18 @@ void LLVMAstAttributes::processClassDeclaration(SgClassType *n)
             }
         }
 
-        int pad_size = 0;
-        if (alignment > 0) {
-            control.SetAttribute(n, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(alignment));
 
-            /**
-             * Always pad the structure so that its size is a multiple of the alignment.
-             */
-            if (size % alignment) {
-                pad_size = alignment - (size % alignment);
-                size += pad_size;
-            }
+	control.SetAttribute(n, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(alignment));
+
+        /**
+         * Always pad the structure so that its size is a multiple of the alignment.
+         */
+        int pad_size = 0;
+        if (size % alignment) {
+            pad_size = alignment - (size % alignment);
+            size += pad_size;
         }
+	
         if (defining_declaration -> get_class_type() == SgClassDeclaration::e_union) {
             pad_size = size - first_field_size;
         }
@@ -806,7 +906,8 @@ std::string LLVMAstAttributes::addBundleMetadata(SgNode *node) {
     std::ostringstream bundle_str;
     bundle_str << ", !bun !";
     bundle_str << addMetadata(bundle);
-/*
+// TODO: Remove this !!!
+/*	      
 cout << "Returning bundle: "
      << bundle_str.str()
      << endl;
@@ -860,7 +961,8 @@ std::string LLVMAstAttributes::addIsParallelMetadata(SgNode *node) {
     llvm::MDNode *noivdep_md = llvm::MDNode::get(context, vals, 1);
     std::ostringstream noivdep;
     noivdep << ", !noivdep !" << addMetadata(noivdep_md);
-/*
+// TODO: Remove this !!!
+/*	      
 cout << "Returning Parallel metadata: "
      << noivdep.str()
      << endl;
@@ -1041,7 +1143,8 @@ std::string LLVMAstAttributes::addDebugMetadata(SgNode const *node, FunctionAstA
       strm << ", !dbg !";
     }
     strm << addMetadata(position_node);
-/*
+// TODO: Remove this !!!
+/*	      
 cout << "Returning Debug metadata: "
      << strm.str()
      << endl;
@@ -1090,7 +1193,9 @@ void LLVMAstAttributes::generateMetadataNodes() {
             llvm::raw_string_ostream strm(str);
             strm << *mdNodes[i];
         }
-/*
+
+// TODO: Remove this !!!
+/*	      
 cout << "Original Debug String is: "
      << str
      << endl;
@@ -1098,14 +1203,16 @@ cout.flush();
 */
         int k = str.find("= ");
         str = str.substr(k + 2);
-/*
+
+// TODO: Remove this !!!
+/*	      
 cout << "After clean up, k = " << k
      << "; Debug String is: "
      << str
      << endl;
 cout.flush();
 */
-	
+
         // Hopefully, "MD_REF:" will not be the start of any legitimate
         // metadata string before the switch to IRBuilder.
         size_t md_ref;
@@ -1116,7 +1223,9 @@ cout.flush();
             ROSE2LLVM_ASSERT(md_ref != string::npos);
             str.replace(md_ref, 1, ""); // remove close quote
         }
-/*
+
+// TODO: Remove this !!!
+/*	      
 cout << "Emitting Debug String: "
      << str
      << endl;

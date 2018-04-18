@@ -46,7 +46,8 @@ librosetollvm_la_SOURCES = \
 	LLVMAstAttributes.cpp \
 	Option.cpp \
 	Control.cpp \
-	StringSet.cpp
+	StringSet.cpp \
+	llc.cpp
 
 librosetollvm_la_CPPFLAGS	= \
 	-I$(srcdir)/include \

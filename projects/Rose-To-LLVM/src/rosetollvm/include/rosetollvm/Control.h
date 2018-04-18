@@ -94,8 +94,9 @@ public:
                       *LLVM_SWITCH_EXPRESSION,
                       *LLVM_CASE_INFO,
                       *LLVM_DEFAULT_LABEL,
+      //                      *LLVM_STRING_SIZE,
+                      *LLVM_STRING_INDEX,
                       *LLVM_STRING_INITIALIZATION,
-                      *LLVM_STRING_SIZE,
                       *LLVM_POINTER_TO_INT_CONVERSION,
                       *LLVM_ARRAY_TO_POINTER_CONVERSION,
                       *LLVM_INTEGRAL_PROMOTION,
@@ -167,9 +168,10 @@ public:
     template <typename T>
     T *ownNode(T *n) { owned_nodes.push_back(n); return n; }
 
-    static std::string FloatToString(llvm::APFloat &);
+    static std::string APFloatToString(llvm::APFloat &);
     static std::string FloatToString(float f);
-    static std::string FloatToString(double d);
+    static std::string DoubleToString(double d);
+    static std::string LongDoubleToString(long double x);
     static std::string IntToString(long l);
     static bool isIntegerType(SgType *t);
     static bool isFloatingType(SgType *t);

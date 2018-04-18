@@ -1,6 +1,7 @@
 #include "rosetollvm/Control.h"
 #include "rosetollvm/LLVMAstAttributes.h"
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Format.h"
@@ -58,8 +59,9 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_SWITCH_EXPRESSION = "L",
            *Control::LLVM_CASE_INFO = "M",
            *Control::LLVM_DEFAULT_LABEL = "N",
-           *Control::LLVM_STRING_INITIALIZATION = "O",
-           *Control::LLVM_STRING_SIZE = "P",
+   //           *Control::LLVM_STRING_SIZE = "O",
+           *Control::LLVM_STRING_INDEX = "O",
+           *Control::LLVM_STRING_INITIALIZATION = "P",
            *Control::LLVM_POINTER_TO_INT_CONVERSION = "Q",
            *Control::LLVM_ARRAY_TO_POINTER_CONVERSION = "R",
            *Control::LLVM_INTEGRAL_PROMOTION = "T",
@@ -149,6 +151,9 @@ void Control::SetAttribute(SgNode *n, const char *code) {
 void Control::SetAttribute(SgNode *n, const char *code, RootAstAttribute *attribute) {
     ManagerAstAttribute *manager = (ManagerAstAttribute *) n -> getAttribute(Control::LLVM_MANAGER_ATTRIBUTE);
     if (! manager) {
+//cout << "*** Allocating a manager on encountering node " << n -> class_name()
+//  << endl;
+//cout.flush();
         manager = new ManagerAstAttribute(n, Control::LLVM_MANAGER_ATTRIBUTE);
         n -> addNewAttribute(Control::LLVM_MANAGER_ATTRIBUTE, manager);
         manager_attributes.push_back(manager);
@@ -195,8 +200,7 @@ void Control::emitLLVM(string &file_prefix, llvm::Module *module) {
 }
 
 
-//extern int llc(int argc, char **argv);
-//extern int compileModule(char *argv0, LLVMContext &Context, std::unique_ptr<Module> &M);
+extern int llc(vector<string> &, char *);
 
 /**
  * Process the list of intermediate files and generate the output.
@@ -216,7 +220,7 @@ std::vector<llvm::Module*> Control::generateOutput() {
          * Assemble
          */
         ROSE2LLVM_ASSERT(llvm_streams[i]);
-	std::string llvm_string = llvm_streams[i] -> str(); // copy the string from the stream.
+        std::string llvm_string = llvm_streams[i] -> str(); // copy the string from the stream.
         StringRef llvm_string_ref(llvm_string); // Wrap it in a string ref.
         std::unique_ptr<llvm::Module> module = parseAssemblyString(llvm_string_ref, error, context);
         if (! module.get()) {
@@ -241,11 +245,11 @@ std::vector<llvm::Module*> Control::generateOutput() {
             WriteBitcodeToFile(module.get(), bc_ostream);
             bc_ostream.close();
 
-            int ret = system(("llc -filetype=obj " + bc_name).c_str());
+            int ret = llc(option.llcOptions(), (char *) bc_name.c_str()); // system(("llc -filetype=obj " + bc_name).c_str());
             if (ret != 0) {
                 cout << "***rose2llvm error: llc could not generate object file." << endl;
-	        cout.flush();
-		exit(ret);
+                cout.flush();
+                exit(ret);
             }
 
             if (! option.isCompileOnly()) {
@@ -267,10 +271,10 @@ std::vector<llvm::Module*> Control::generateOutput() {
          */
         res.push_back(module.get()); // TODO: Push module here !!!
 
-	//
+        //
         // Every time we convert the file to a new form, we immediately
         // delete the last form in order to minimize memory usage.
-	//
+        //
         delete llvm_streams[i];
         llvm_streams[i] = NULL;
     }
@@ -279,8 +283,11 @@ std::vector<llvm::Module*> Control::generateOutput() {
      * If we need to link the program, we do so here.
      */
     if (link_command.size()) {
-        link_command = (string) "gcc" + " " + option.optimizationLevel() + " " + option.outputFilename() + link_command;
-cout << "***Issuing Link command: " << link_command << endl;
+        link_command = (string) "gcc" + " " + option.otherOptions() + option.outputFilename() + link_command;
+cout << "***Issuing Link command: " << link_command
+     << endl
+     << "*** Compile only?  ... " << (option.isCompileOnly() ? "yes!" : "no!")
+     << endl;
 cout.flush();
         int ret = system(link_command.c_str());
         if (ret != 0) {
@@ -289,12 +296,12 @@ cout.flush();
             exit(ret);
         }
     }
-	
+    
     return res;
 }
 
 /**
- * Convert a float to its string representation.
+ * Convert a long to its string representation.
  */
 string Control::IntToString(long l) {
     stringstream out;
@@ -306,43 +313,181 @@ string Control::IntToString(long l) {
  * Convert a float to its string representation.
  */
 string Control::FloatToString(float x) {
-    APFloat f(x);
-    string s = FloatToString(f);
+    APFloat f(APFloat::IEEEsingle(), x);
+    string s = APFloatToString(f);
     return s;
 }
 
 /**
  * Convert a double to its string representation.
  */
-string Control::FloatToString(double x) {
-    APFloat f(x);
-    string s = FloatToString(f);
+string Control::DoubleToString(double x) {
+    APFloat f(APFloat::IEEEdouble(), x);
+    string s = APFloatToString(f);
+    return s;
+}
+
+/**
+ * Convert a double to its string representation.
+ */
+string Control::LongDoubleToString(long double x) {
+    APFloat f(APFloat::x87DoubleExtended(), x);
+    string s = APFloatToString(f);
     return s;
 }
 
 /**
  *
  */
-string Control::FloatToString(APFloat &f) {
-    SmallString<128> Str;
-  
+string Control::APFloatToString(APFloat &f) {
+/*
+    SmallString<256> Str;
+
     f.toString(Str, 0, 0);
     
     return Str.str().str();
+*/
+  
+/**
+ * This code was copied from llvm-4.0.1 AsmWriter and altered slightly here...
+ *
+ * AsmWriter.cpp:
+ *
+ *     static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
+ *                                       TypePrinting &TypePrinter,
+ *                                       SlotTracker *Machine,
+ *                                       const Module *Context) { ... }
+ */
+
+    string output_string;
+    llvm::raw_string_ostream out(output_string);
+
+    if (&(f.getSemantics()) == &APFloat::IEEEsingle() ||
+        &(f.getSemantics()) == &APFloat::IEEEdouble()) {
+        // We would like to output the FP constant value in exponential notation,
+        // but we cannot do this if doing so will lose precision.  Check here to
+        // make sure that we only output it in exponential format if we can parse
+        // the value back and get the same value.
+        //
+        bool ignored;
+        bool isDouble = &(f.getSemantics()) == &APFloat::IEEEdouble();
+        bool isInf = f.isInfinity();
+        bool isNaN = f.isNaN();
+        if (!isInf && !isNaN) {
+            double Val = isDouble ? f.convertToDouble() :
+                                    f.convertToFloat();
+            //
+            // TODO: THIS NEEDS TO BE FIXED !!!
+            //
+            /*    
+            SmallString<256> StrVal;
+            raw_svector_ostream(StrVal) << Val;
+
+            // Check to make sure that the stringized number is not some string like
+            // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
+            // that the string matches the "[-+]?[0-9]" regex.
+            //
+            if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+                ((StrVal[0] == '-' || StrVal[0] == '+') &&
+                 (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
+                // Reparse stringized version!
+                if (APFloat(APFloat::IEEEdouble(), StrVal).convertToDouble() == Val) {
+                    return StrVal.str().str();
+                }
+            }
+            */
+
+            out << Val;
+            string result = out.str(); // call to str() is required in order to flush buffer ...
+
+            // Check to make sure that the stringized number is not some string like
+            // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
+            // that the string matches the "[-+]?[0-9]" regex.
+            //
+            if (result.length() >= 2) {
+                if ((result[0] >= '0' && result[0] <= '9') ||
+                    ((result[0] == '-' || result[0] == '+') &&
+                     (result[1] >= '0' && result[1] <= '9'))) {
+                    // Reparse stringized version!
+                    if (APFloat(APFloat::IEEEdouble(), result/* StrVal*/).convertToDouble() == Val) {
+                        return result;
+                    }
+                }
+            }
+        }
+ 
+        output_string = ""; // Clear the string...
+
+        // Otherwise we could not reparse it to exactly the same value, so we must
+        // output the string in hexadecimal format!  Note that loading and storing
+        // floating point types changes the bits of NaNs on some hosts, notably
+        // x86, so we must not use these types.
+        static_assert(sizeof(double) == sizeof(uint64_t),
+                      "assuming that double is 64 bits!");
+        APFloat apf = f;
+        // Floats are represented in ASCII IR as double, convert.
+        if (!isDouble)
+            apf.convert(APFloat::IEEEdouble(), APFloat::rmNearestTiesToEven,
+                              &ignored);
+        out << format_hex(apf.bitcastToAPInt().getZExtValue(), 0, /*Upper=*/true);
+        return out.str();
+    }
+
+    // Either half, or some form of long double.
+    // These appear as a magic letter identifying the type, then a
+    // fixed number of hex digits.
+    out << "0x";
+    APInt API = f.bitcastToAPInt();
+    if (&(f.getSemantics()) == &APFloat::x87DoubleExtended()) {
+        out << 'K';
+
+        out << format_hex_no_prefix(API.getHiBits(16).getZExtValue(), 4,
+                                    /*Upper=*/true);
+        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+    }
+    else if (&(f.getSemantics()) == &APFloat::x87DoubleExtended()) {
+        out << 'L';
+        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+        out << format_hex_no_prefix(API.getHiBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+    }
+    else if (&(f.getSemantics()) == &APFloat::PPCDoubleDouble()) {
+        out << 'M';
+        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+        out << format_hex_no_prefix(API.getHiBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+    }
+    else if (&(f.getSemantics()) == &APFloat::IEEEhalf()) {
+        out << 'H';
+        out << format_hex_no_prefix(API.getZExtValue(), 4,
+                                    /*Upper=*/true);
+    }
+    else
+        llvm_unreachable("Unsupported floating point type");
+
+    return out.str();
 }
 
 bool Control::isIntegerType(SgType *t) {
     return (t != NULL) &&
            (isSgTypeBool(t) ||
             isSgTypeChar(t) ||
+            isSgTypeSignedChar(t) ||
             isSgTypeUnsignedChar(t) ||
             isSgTypeShort(t) ||
+            isSgTypeSignedShort(t) ||
             isSgTypeUnsignedShort(t) ||
             isSgTypeInt(t) ||
+            isSgTypeSignedInt(t) ||
             isSgTypeUnsignedInt(t) ||
             isSgTypeLong(t) ||
+            isSgTypeSignedLong(t) ||
             isSgTypeUnsignedLong(t) ||
             isSgTypeLongLong(t) ||
+            isSgTypeSignedLongLong(t) ||
             isSgTypeUnsignedLongLong(t));
 }
 
@@ -433,43 +578,43 @@ std::string Control::primitiveSource(SgValueExp *n, SgType *t) {
     else if (isSgFloatVal(n)) {
         if (isSgTypeFloat(t)) {
             APFloat f(APFloat::IEEEsingle(), isSgFloatVal(n) -> get_valueString());
-            str = FloatToString(f);
+            str = APFloatToString(f);
         }
         else if (isSgTypeDouble(t)) {
             APFloat f(APFloat::IEEEdouble(), isSgFloatVal(n) -> get_valueString());
-            str = FloatToString(f);
+            str = APFloatToString(f);
         }
         else {
-            APFloat f(APFloat::IEEEquad(), isSgFloatVal(n) -> get_valueString());
-            str = FloatToString(f);
+            APFloat f(APFloat::x87DoubleExtended(), isSgFloatVal(n) -> get_valueString());
+            str = APFloatToString(f);
         }
     }
     else if (isSgDoubleVal(n)) {
         if (isSgTypeFloat(t)) {
             APFloat f(APFloat::IEEEsingle(), isSgDoubleVal(n) -> get_valueString());
-            str = FloatToString(f);
+            str = APFloatToString(f);
         }
         else if (isSgTypeDouble(t)) {
             APFloat f(APFloat::IEEEdouble(), isSgDoubleVal(n) -> get_valueString());
-            str = FloatToString(f);
+            str = APFloatToString(f);
         }
         else {
-            APFloat f(APFloat::IEEEquad(), isSgDoubleVal(n) -> get_valueString());
-            str = FloatToString(f);
+            APFloat f(APFloat::x87DoubleExtended(), isSgDoubleVal(n) -> get_valueString());
+            str = APFloatToString(f);
         }
     }
     else if (isSgLongDoubleVal(n)) {
         if (isSgTypeFloat(t)) {
             APFloat f(APFloat::IEEEsingle(), isSgLongDoubleVal(n) -> get_valueString());
-            str = FloatToString(f);
+            str = APFloatToString(f);
         }
         else if (isSgTypeDouble(t)) {
             APFloat f(APFloat::IEEEdouble(), isSgLongDoubleVal(n) -> get_valueString());
-            str = FloatToString(f);
+            str = APFloatToString(f);
         }
         else {
-            APFloat f(APFloat::IEEEquad(), isSgLongDoubleVal(n) -> get_valueString());
-            str = FloatToString(f);
+            APFloat f(APFloat::x87DoubleExtended(), isSgLongDoubleVal(n) -> get_valueString());
+            str = APFloatToString(f);
         }
     }
 
@@ -522,12 +667,17 @@ std::string Control::floatingValue(SgValueExp *n, SgType *t) {
 
 
     if (isSgTypeFloat(t)) {
-        APFloat f((float) d);
-        return FloatToString(f);
+        APFloat f(APFloat::IEEEsingle(), (float) d);
+        return APFloatToString(f);
     }
-
-    APFloat f((double) d);
-    return FloatToString(f);
+    else if (isSgTypeDouble(t)) {
+        APFloat f(APFloat::IEEEdouble(), (double) d);
+        return APFloatToString(f);
+    }
+    
+    ROSE2LLVM_ASSERT(isSgTypeLongDouble(t));
+    APFloat f(APFloat::x87DoubleExtended(), (long double) d);
+    return APFloatToString(f);
 }
 
 
@@ -583,6 +733,10 @@ std::string Control::primitiveCast(SgValueExp *node, SgType *type) {
         return integerValue(node, type);
     }
     else {
+if(! (isIntegerValue(node) && isFloatingType(type))) {
+cout << "About to crash on value " << node -> class_name() << " with type " << type -> class_name() << endl;
+cout.flush();
+}
         ROSE2LLVM_ASSERT(isIntegerValue(node) && isFloatingType(type));
         return floatingValue(node, type);
     }
