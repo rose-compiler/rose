@@ -65,14 +65,16 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #endif
 
 
-#if 0 //FMZ (6/8/2008): caused core dump when read in a .rmod file
+#if 0
+       // FMZ (6/8/2008): caused core dump when read in a .rmod file
           if (definingDeclaration == NULL && firstNondefiningDeclaration == NULL)  
              {
                printf ("Error: declaration = %p = %s definingDeclaration         = %p \n",declaration,declaration->sage_class_name(),definingDeclaration);
                printf ("Error: declaration = %p = %s firstNondefiningDeclaration = %p \n",declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
              }
-          ROSE_ASSERT(definingDeclaration != NULL || firstNondefiningDeclaration != NULL);
 #endif
+       // DQ (4/18/18): Moved this outside of the comment section.
+          ROSE_ASSERT(definingDeclaration != NULL || firstNondefiningDeclaration != NULL);
 
 
 
@@ -130,7 +132,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
                   {
                  // We have identified an inconsistantcy where the defining function pointer has not be uniformally setup.
-#if 1
+#if 0
                     printf ("Warning: Fixup defining declarations: We have identified an inconsistantcy where the defining declaration has not be uniformally setup \n");
 #endif
                     declaration->set_definingDeclaration(firstNondefiningDeclaration->get_definingDeclaration());
@@ -224,7 +226,20 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),definingScope);
                          printf ("Removing symbol = %p from scope = %p \n",symbolToMove,nondefiningScope);
 #endif
-                         nondefiningScope->remove_symbol(symbolToMove);
+                      // DQ (4/18/2018): Modified to avoid removing the symbol if it is not present.  This might be 
+                      // related to a bug fix to support symbols in namespaces and record them in both the namespace 
+                      // definition where they are placed plus the global copy of the namespace definition.
+                      // nondefiningScope->remove_symbol(symbolToMove);
+                         if (nondefiningScope->symbol_exists(symbolToMove) == true)
+                            {
+                              nondefiningScope->remove_symbol(symbolToMove);
+                            }
+                           else
+                            {
+#if 0
+                              printf ("AST Fixup: this symbol does not exist \n");
+#endif
+                            }
 
                       // DQ (2/25/2007): There could be multiple non-defining declarations such that the symbol might 
                       // already exist in the definingScope's symbol table.  (Confirmed to be true).
