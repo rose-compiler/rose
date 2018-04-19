@@ -3311,11 +3311,12 @@ SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(S
    }
 
 
-SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+// Rasmussen (4/18/2018): Added target_expression so that the goto statement has a place to go to.
+SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* target_expression)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedGotoStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedGotoStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* target_expression): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedGotoStatement* returnNode = NULL;
@@ -3759,7 +3760,6 @@ SgUntypedNamedStatement* SgUntypedNamedStatement::build_node_from_nonlist_childr
      return returnNode;
    }
 
-//TODO: Rasmussen - figure out how to get this file generated
 SgUntypedExpressionStatement* SgUntypedExpressionStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* statement_expression )
    {
 #if 0
