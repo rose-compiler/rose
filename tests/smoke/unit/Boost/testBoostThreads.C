@@ -2,7 +2,7 @@
 #include <boost/cstdint.hpp>
 
 #define NWORKERS 12ul
-#define WORKER_MAJOR 1000000ul
+#define WORKER_MAJOR 10000ul
 #define WORKER_MINOR 1000ul
 
 boost::mutex globalAccumulatorMutex;
@@ -33,7 +33,7 @@ main() {
 
     // Done this way for 32-bit compilers
     return
-        (( globalAccumulator        & 0xfffffffful) == 0x6a404300ul &&
-         ((globalAccumulator >> 32) & 0xfffffffful) == 0xfb6991b8ul)
+        (( globalAccumulator        & 0xfffffffful) == 0xe257aec0ul &&
+         ((globalAccumulator >> 32) & 0xfffffffful) == 0x0a31b218ul)
         ? 0 : 1;
 }
