@@ -22,6 +22,7 @@ int func2()
    {
      namespace1::t_Class1< 0 > *var2;
      t_func1< struct1 >([=] { var2->func3(); } );
+  // { var2->func3(); }
    }
 
  
