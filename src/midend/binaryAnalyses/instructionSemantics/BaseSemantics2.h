@@ -492,8 +492,11 @@ typedef Sawyer::SharedPointer<class Merger> MergerPtr;
  *  objects. Therefore they have no public C++ constructors but instead use factory methods named "instance". Users should not
  *  explicitly delete these objects -- they will be deleted automatically. */
 class Merger: public Sawyer::SharedObject {
+    bool memoryAddressesMayAlias_;
+    bool memoryMergeDebugging_;
+
 protected:
-    Merger() {}
+    Merger(): memoryAddressesMayAlias_(true), memoryMergeDebugging_(false) {}
 
 public:
     /** Shared ownership pointer for @ref Merger. See @ref heap_object_shared_ownership. */
@@ -503,6 +506,27 @@ public:
     static Ptr instance() {
         return Ptr(new Merger);
     }
+
+    /** Whether memory addresses can alias one another.
+     *
+     *  If true and the memory state supports it, then merging of two states will check for addresses that can alias one
+     *  another and adjust the merge accordingly.
+     *
+     * @{ */
+    bool memoryAddressesMayAlias() const { return memoryAddressesMayAlias_; }
+    void memoryAddressesMayAlias(bool b) { memoryAddressesMayAlias_ = b; }
+    /** @} */
+
+    /** Turn on output for memory merge debugging.
+     *
+     *  If set and the @c Rose::BinaryAnalysis::InstructionSemantics2 diagnostic stream is also enabled, then memory merge
+     *  operations produce debugging diagnostics to that stream.  Memory merge debugging is not normally enabled even if the
+     *  stream is enabled because it can produce a very large amount of output.
+     *
+     *  @{ */
+    bool memoryMergeDebugging() const { return memoryMergeDebugging_; }
+    void memoryMergeDebugging(bool b) { memoryMergeDebugging_ = b; }
+    /** @} */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

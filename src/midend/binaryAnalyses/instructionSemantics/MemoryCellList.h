@@ -164,6 +164,18 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
 public:
+    /** Merge two states without aliasing.
+     *
+     *  The @p other state is merged into this state without considering any aliasing. Returns true if this state changed,
+     *  false otherwise. */
+    bool mergeNoAliasing(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
+
+    /** Merge two states with aliasing.
+     *
+     *  The @p other state is merged into this state while considering any aliasing. Returns true if this state changed,
+     *  false otherwise. */
+    bool mergeWithAliasing(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
+
     /** Predicate to determine whether all bytes are present.
      *
      *  Returns true if bytes at the specified address and the following consecutive addresses are all present in this

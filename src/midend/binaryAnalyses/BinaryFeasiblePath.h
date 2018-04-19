@@ -20,8 +20,21 @@ class FeasiblePath {
 public:
     enum SearchMode { SEARCH_SINGLE_DFS, SEARCH_SINGLE_BFS, SEARCH_MULTI };
 
+    /** Organization of semantic memory. */
+    enum SemanticMemoryParadigm {
+        LIST_BASED_MEMORY,                              /**< Precise but slow. */
+        MAP_BASED_MEMORY                                /**< Fast but not precise. */
+    };
+
+    /** Read or write operation. */
+    enum IoMode { READ, WRITE };
+
+    /** Types of comparisons. */
+    enum MayOrMust { MAY, MUST };
+
     /** Settings that control this analysis. */
     struct Settings {
+        // Path feasibility
         SearchMode searchMode;                          /**< Method to use when searching for feasible paths. */
         Sawyer::Optional<rose_addr_t> initialStackPtr;  /**< Concrete value to use for stack pointer register initial value. */
         size_t vertexVisitLimit;                        /**< Max times to visit a particular vertex in one path. */
@@ -31,11 +44,24 @@ public:
         std::vector<SymbolicExpr::Ptr> postConditions;  /**< Additional constraints to be satisifed at the end of a path. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
+        std::string solverName;                         /**< Type of SMT solver. */
+        SemanticMemoryParadigm memoryParadigm;          /**< Type of memory state when there's a choice to be made. */
+
+        // Null dereferences
+        struct NullDeref {
+            bool check;                                 /**< If true, look for null dereferences along the paths. */
+            MayOrMust mode;                             /**< Check for addrs that may or must be null. */
+            bool constOnly;                             /**< If true, check only constants or sets of constants. */
+
+            NullDeref()
+                : check(false), mode(MUST), constOnly(false) {}
+        } nullDeref;                                    /**< Settings for null-dereference analysis. */
 
         /** Default settings. */
         Settings()
             : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
-              maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true) {}
+              maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
+              memoryParadigm(LIST_BASED_MEMORY) {}
     };
 
     /** Diagnostic output. */
@@ -76,10 +102,25 @@ public:
         };
 
         virtual ~PathProcessor() {}
+
+        /** Function invoked whenever a complete path is found. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const std::vector<SymbolicExpr::Ptr> &pathConditions,
                              const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
                              const SmtSolverPtr &solver) = 0;
+
+        /** Function invoked whenever a null pointer dereference is detected.
+         *
+         *  The @p ioMode indicates whether the null address was read or written, and the @p addr is the address that was
+         *  accessed. The address might not be the constant zero depending on other settings (for example, it could be an
+         *  unknown value represented as a variable if "may" analysis is used and the comparison is not limited to only
+         *  constant expressions).
+         *
+         *  The instruction during which the null dereference occurred is also passed as an argument, but it may be a null
+         *  pointer in some situations. For instance, the instruction will be null if the dereference occurs when popping the
+         *  return address from the stack for a function that was called but whose implementation is not present (such as when
+         *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
+        virtual void nullDeref(IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -169,7 +210,7 @@ public:
      *  specified partitioner and augments it with a "path" pseudo-register that holds a symbolic expressions on which the
      *  current CFG path depends. */
     virtual InstructionSemantics2::BaseSemantics::DispatcherPtr
-    buildVirtualCpu(const Partitioner2::Partitioner&);
+    buildVirtualCpu(const Partitioner2::Partitioner&, PathProcessor*);
 
     /** Initialize state for first vertex of path.
      *
@@ -258,11 +299,11 @@ public:
      *  conditions is returned via @p pathConditions argument, which can also initially contain preconditions. */
     virtual boost::tribool
     isPathFeasible(const Partitioner2::CfgPath &path, const SmtSolverPtr&,
-                   const std::vector<SymbolicExpr::Ptr> &postConditions,
+                   const std::vector<SymbolicExpr::Ptr> &postConditions, PathProcessor *pathProcessor,
                    std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 
-
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for describing the search space
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
