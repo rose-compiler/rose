@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "ProgramAbstractionLayer.h"
+#include "Lowering.h"
 
 SPRAY::ProgramAbstractionLayer::ProgramAbstractionLayer()
   :_modeArrayElementVariableId(true),_labeler(0),_variableIdMapping(0) {
@@ -17,6 +18,11 @@ bool SPRAY::ProgramAbstractionLayer::getModeArrayElementVariableId() {
 }
 
 void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
+  Lowering lowering;
+  lowering.setInliningOption(getInliningOption());
+  if(getLoweringOption()) {
+    lowering.transformAst(root);
+  }
   _variableIdMapping=new VariableIdMapping();
   getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
@@ -38,4 +44,20 @@ SPRAY::VariableIdMapping* SPRAY::ProgramAbstractionLayer::getVariableIdMapping()
 SPRAY::FunctionIdMapping* SPRAY::ProgramAbstractionLayer::getFunctionIdMapping(){
   ROSE_ASSERT(_functionIdMapping!=0);
   return _functionIdMapping;
+}
+
+void SPRAY::ProgramAbstractionLayer::setLoweringOption(bool flag) {
+  _loweringOption=flag;
+}
+
+bool SPRAY::ProgramAbstractionLayer::getLoweringOption() {
+  return _loweringOption;
+}
+
+void SPRAY::ProgramAbstractionLayer::setInliningOption(bool flag) {
+  _inliningOption=flag;
+}
+
+bool SPRAY::ProgramAbstractionLayer::getInliningOption() {
+  return _inliningOption;
 }

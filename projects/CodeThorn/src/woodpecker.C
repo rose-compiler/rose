@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
   if(args.getBool("lowering")) {
     logger[TRACE] <<"STATUS: Lowering started."<<endl;
     SPRAY::Lowering lowering;
-    lowering.lowerAst(root);
+    lowering.transformAst(root);
     logger[TRACE] <<"STATUS: Lowering finished."<<endl;
     root->unparse(0,0);
     exit(0);
@@ -291,11 +291,11 @@ int main(int argc, char* argv[]) {
   }
 
   if(args.getBool("normalize")) {
-    logger[TRACE] <<"STATUS: Lowering started."<<endl;
+    logger[TRACE] <<"STATUS: normalization of compound statements started."<<endl;
     RewriteSystem rewriteSystem;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
-    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
+    logger[TRACE] <<"STATUS: normalization of compound statements finished."<<endl;
   }
 
   logger[TRACE] <<"STATUS: performing flow-insensitive const analysis."<<endl;

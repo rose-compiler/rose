@@ -92,6 +92,8 @@ bool option_csv_stable=false;
 bool option_no_topological_sort=false;
 bool option_annotate_source_code=false;
 bool option_ignore_unknown_functions=false;
+bool option_inlining=false;
+bool option_normalize=false;
 //boost::program_options::variables_map args;
 
 void writeFile(std::string filename, std::string data) {
@@ -304,9 +306,6 @@ string getScopeAsMangledStableString(SgLocatedNode* stmt) {
 }
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
-
-  //SPRAY::DFAnalysisBase::normalizeProgram(root);
-
   if(option_fi_constanalysis) {
     FIConstAnalysis fiConstAnalysis(variableIdMapping);
     fiConstAnalysis.runAnalysis(root);
@@ -800,6 +799,9 @@ int main(int argc, char* argv[]) {
       ("start-function",po::value< string >(), "set name of function where analysis is supposed to start (default is 'main').")
       ("ignore-unknown-functions","ignore unknown functions (assume those functions are side effect free)")
       ("csv-stable", "only output csv data that is stable/portable across environments.")
+      ("normalize", "normalize program (transform into lower-level IR).")
+      ("inline", "inline functions (can increase precision of analysis).")
+      ("unparse", "generate source code from internal representation.")
       ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -922,6 +924,16 @@ int main(int argc, char* argv[]) {
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
+  if(args.count("inline")) {
+    programAbstractionLayer->setInliningOption(true);
+  }
+  if(args.count("normalize")) {
+    programAbstractionLayer->setLoweringOption(true);
+  }
+  if(programAbstractionLayer->getInliningOption() && !programAbstractionLayer->getLoweringOption()) {
+    cerr<<"Error: inlining option requires normalization option to be provided as well."<<endl;
+    return 0;
+  }
   programAbstractionLayer->initialize(root);
   if (args.count("print-varid-mapping-array")) {
     programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
@@ -977,6 +989,11 @@ int main(int argc, char* argv[]) {
 
   if(option_annotate_source_code) {
     cout << "INFO: generating annotated source code."<<endl;
+    root->unparse(0,0);
+  }
+
+  if(args.count("unparse")) {
+    cout << "INFO: generating source code from internal representation."<<endl;
     root->unparse(0,0);
   }
 
