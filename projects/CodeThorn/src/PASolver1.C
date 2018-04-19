@@ -54,7 +54,7 @@ SPRAY::PASolver1::runSolver() {
   Timer solverTimer;
   cout<<"INFO: solver 1 started."<<endl;
   solverTimer.start();
-  ROSE_ASSERT(!_workList.isEmpty());
+  //ROSE_ASSERT(!_workList.isEmpty()); empty files (programs of zero length)
   while(!_workList.isEmpty()) {
     Edge edge=_workList.take();
     Label lab0=edge.source();

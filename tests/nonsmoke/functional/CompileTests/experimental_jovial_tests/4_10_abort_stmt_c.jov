@@ -1,0 +1,10 @@
+START
+PROGRAM main ;
+BEGIN
+ label1 : label2 :
+ ABORT ;
+ label3 :
+ abort ;
+ Abort ;
+END
+TERM
