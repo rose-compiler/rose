@@ -4199,7 +4199,10 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
      bool suppressOutputOfImplicitArrowExp = false;
 
 #if 0
-     printf ("In isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s info.supressImplicitThisOperator = %s \n",expr,expr->class_name().c_str(),info.supressImplicitThisOperator() ? "true" : "false");
+     printf ("&&&&&&&&&&&&& In isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s info.supressImplicitThisOperator = %s \n",expr,expr->class_name().c_str(),info.supressImplicitThisOperator() ? "true" : "false");
+#endif
+#if 0
+     curprint (" /* &&&&&&&&&&&&& In isImplicitArrowExpWithinLambdaFunction() */ ");
 #endif
 
      if (info.supressImplicitThisOperator() == true)
@@ -4267,7 +4270,10 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
         }
 
 #if 0
-     printf ("Leaving isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",expr,expr->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
+     printf ("&&&&&&&&&&&&& Leaving isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",expr,expr->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
+#if 0
+     curprint (" /* &&&&&&&&&&&&& Leaving isImplicitArrowExpWithinLambdaFunction() */ ");
 #endif
 
      return suppressOutputOfImplicitArrowExp;
@@ -4281,6 +4287,8 @@ partOfArrowOperatorChain(SgExpression* expr)
    {
 #define DEBUG_ARROW_OPERATOR_CHAIN 0
 
+#error "DEAD CODE!"
+
      SgBinaryOp* binary_op = isSgBinaryOp(expr);
      ROSE_ASSERT(binary_op != NULL);
 
@@ -4290,10 +4298,14 @@ partOfArrowOperatorChain(SgExpression* expr)
      printf ("Inside of partOfArrowOperatorChain(): binary_op = %p = %s \n",binary_op,binary_op->class_name().c_str());
 #endif
 
+#error "DEAD CODE!"
+
   // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
   // required in places even though we have historically defaulted to the generation of the 
   // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
      SgNode* possibleParentFunctionCall = binary_op->get_parent();
+
+#error "DEAD CODE!"
 
   // DQ (4/9/2013): This fails for test2006_92.C.
   // ROSE_ASSERT(possibleFunctionCall != NULL);
@@ -4303,6 +4315,9 @@ partOfArrowOperatorChain(SgExpression* expr)
      bool parent_function_call_is_compiler_generated   = false;
      if (possibleParentFunctionCall != NULL)
         {
+
+#error "DEAD CODE!"
+
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
           if (functionCallExp != NULL)
              {
@@ -4326,6 +4341,9 @@ partOfArrowOperatorChain(SgExpression* expr)
                        }
                   }
 #endif
+
+#error "DEAD CODE!"
+
                if (parent_function_is_overloaded_arrow_operator == true)
                   {
                     SgExpression* expression = isSgExpression(functionCallExp->get_parent());
@@ -4345,6 +4363,8 @@ partOfArrowOperatorChain(SgExpression* expr)
                        {
                          result = false;
                        }
+#error "DEAD CODE!"
+
                   }
                  else
                   {
@@ -4352,6 +4372,8 @@ partOfArrowOperatorChain(SgExpression* expr)
                   }
              }
         }
+
+#error "DEAD CODE!"
 
      return result;
    }
@@ -4378,6 +4400,27 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
      bool suppressOutputOfDotExp           = isDotExprWithAnonymousUnion(expr);
      bool suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(expr,info);
 
+  // DQ (4/15/2018): Fixup for Cxx11_tests/test2018_85.C
+     SgArrowExp* arrowExp = isSgArrowExp(expr);
+     if (suppressOutputOfImplicitArrowExp == true && arrowExp != NULL)
+        {
+          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+          if (memberFunctionRefExp != NULL)
+             {
+            // If this is a member function, then we will need to include that reference to the calling class through the arrow operator.
+#if 0
+               printf ("In unparseBinaryExpr(): Set suppressOutputOfImplicitArrowExp = false: as special case of a member function reference: memberFunctionRefExp = %p = %s \n",memberFunctionRefExp,memberFunctionRefExp->class_name().c_str());
+#endif
+               suppressOutputOfImplicitArrowExp = false;
+             }
+            else
+             {
+#if 0
+               printf ("In unparseBinaryExpr(): arrowExp->get_rhs_operand() = %p = %s \n",arrowExp->get_rhs_operand(),arrowExp->get_rhs_operand()->class_name().c_str());
+#endif
+             }
+        }
+
 #if 0
   // DQ (2/12/2018): Debuging Cxx11_tests/test2018_10.C
      printf ("In unparseBinaryExpr(): suppressOutputOfImplicitArrowExp: expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",
@@ -4385,6 +4428,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
      curprint ("/* In unparseBinaryExpr(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
      curprint ("/* In unparseBinaryExpr(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " rhs = " + binary_op->get_rhs_operand()->class_name() + " */\n ");
      curprint ("/* In unparseBinaryExpr(): suppressOutputOfImplicitArrowExp: suppressOutputOfImplicitArrowExp = " + string(suppressOutputOfImplicitArrowExp ? "true" : "false") + " */\n");
+  // suppressOutputOfImplicitArrowExp = false;
   // suppressOutputOfImplicitArrowExp = false;
 #endif
 
