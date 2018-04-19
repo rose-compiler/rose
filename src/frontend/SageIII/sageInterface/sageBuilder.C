@@ -2436,7 +2436,9 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
      printf ("AFTER: type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
 #endif
 
-     type_decl->set_templateName(type_decl->get_name());
+  // DQ (4/15/2018): I don't think we want to reset the template name and certainly not to a name that 
+  // includes template arguments (which is inconsistant with all other usage).
+  // type_decl->set_templateName(type_decl->get_name());
 
 #if 0
      printf ("AFTER: type_decl->set_templateName(): type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());

@@ -604,6 +604,19 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                     break;
                   }
 
+            // DQ (4/14/2018): Added case for template typedef instantiations (see test2018_83.C for an example where name qualification of the template arguments is required).
+               case V_SgTemplateInstantiationTypedefDeclaration:
+                  {
+                    SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(declaration);
+                    ROSE_ASSERT(templateInstantiationTypedefDeclaration != NULL);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                    printf ("$$$$$$$$$ --- templateInstantiationTypedefDeclaration = %p \n",templateInstantiationTypedefDeclaration);
+#endif
+                 // Evaluate all template arguments.
+                    evaluateNameQualificationForTemplateArgumentList (templateInstantiationTypedefDeclaration->get_templateArguments(),currentScope,positionStatement);
+                    break;
+                  }
+
 
                default:
                   {
@@ -1556,7 +1569,21 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                  }
 #endif
                             }
-
+#if 0
+                      // DQ (4/14/2018): I think that this code might not be required here, noting to do at this location.
+                         SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(typedefDeclaration);
+                         if (templateInstantiationTypedefDeclaration != NULL)
+                            {
+                              printf ("$$$$$$$$$$$$$$$$$$ Processing a SgTemplateInstantiationTypedefDeclaration $$$$$$$$$$$$$$$$$$$$$ \n");
+                           // Found a SgTemplateInstantiationTypedefDeclaration, we need to at least check the template arguments for name qualification.
+                              printf ("Found a SgTemplateInstantiationTypedefDeclaration, we need to at least check the template arguments for name qualification \n");
+                              printf ("$$$$$$$$$$$$$$$$$$ DONE: Processing a SgTemplateInstantiationTypedefDeclaration $$$$$$$$$$$$$$$$$$$$$ \n");
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+#endif
                          break;
                        }
 
@@ -2269,15 +2296,33 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
              }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          printf ("Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",
+               declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
 
        // Refactored this code to another member function so that it could also support evaluation of declarations found in types (more generally).
           evaluateTemplateInstantiationDeclaration(declaration,currentScope,positionStatement);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("DONE: Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          printf ("DONE: Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",
+               declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+#endif
+
+#if 0
+       // DQ (4/14/2018): I think that this code might not be required here, noting to do at this location.
+          SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(typedefDeclaration);
+          if (templateInstantiationTypedefDeclaration != NULL)
+             {
+               printf ("$$$$$$$$$$$$$$$$$$ Processing a SgTemplateInstantiationTypedefDeclaration $$$$$$$$$$$$$$$$$$$$$ \n");
+            // Found a SgTemplateInstantiationTypedefDeclaration, we need to at least check the template arguments for name qualification.
+               printf ("Found a SgTemplateInstantiationTypedefDeclaration, we need to at least check the template arguments for name qualification \n");
+               printf ("$$$$$$$$$$$$$$$$$$ DONE: Processing a SgTemplateInstantiationTypedefDeclaration $$$$$$$$$$$$$$$$$$$$$ \n");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
 #endif
 
 #if 0
@@ -5719,6 +5764,27 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
           printf ("DONE: Calling traverseType on SgTypedefDeclaration = %p name = %s \n",typedefDeclaration,typedefDeclaration->get_name().str());
 #endif
+
+       // DQ (4/14/2018): Adding support for name qualification of template arguments (though it should not be requirted for the tyepdef directly).
+          SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(typedefDeclaration);
+          if (templateInstantiationTypedefDeclaration != NULL)
+             {
+            // This point of calling this function is to just have the template arguments evaluated for name qualification (see Cxx11_tests/test2018_68.C).
+               int amountOfNameQualificationRequired = nameQualificationDepth(templateInstantiationTypedefDeclaration,currentScope,templateInstantiationTypedefDeclaration);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+               printf ("SgTemplateInstantiationTypedefDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+            // DQ (4/14/2018): Report anything that is unusual, i.e. non-zero name qualification length.
+               if (amountOfNameQualificationRequired > 0)
+                  {
+                    printf ("Warning: name qualification length should be zero for a templateInstantiationTypedefDeclaration declared in the same scope: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+
+                    printf ("templateInstantiationTypedefDeclaration = %p = %s = %s \n",templateInstantiationTypedefDeclaration,templateInstantiationTypedefDeclaration->class_name().c_str(),functionDeclaration->get_mangled_name().str());
+                  }
+#endif
+             }
         }
 
   // Handle references in SgUsingDirectiveStatement...
