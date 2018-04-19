@@ -72,9 +72,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                printf ("Error: declaration = %p = %s definingDeclaration         = %p \n",declaration,declaration->sage_class_name(),definingDeclaration);
                printf ("Error: declaration = %p = %s firstNondefiningDeclaration = %p \n",declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
              }
-#endif
-       // DQ (4/18/18): Moved this outside of the comment section.
+       // DQ (4/18/18): This can't be used for Fortran code.
           ROSE_ASSERT(definingDeclaration != NULL || firstNondefiningDeclaration != NULL);
+#endif
 
 
 
