@@ -15,5 +15,8 @@ int main() {
   if(x!=10) {
     printf("%d",x);
   }
+  if(x==10) {
+    printf("ok! %d",x);
+  }
   return 0;
 }

@@ -19,11 +19,17 @@ namespace SPRAY {
     FunctionIdMapping* getFunctionIdMapping();
     void setModeArrayElementVariableId(bool val);
     bool getModeArrayElementVariableId();
+    void setLoweringOption(bool flag);
+    bool getLoweringOption();
+    void setInliningOption(bool flag);
+    bool getInliningOption();
   private:
     bool _modeArrayElementVariableId;;
     Labeler* _labeler;
     VariableIdMapping* _variableIdMapping;
     FunctionIdMapping* _functionIdMapping;
+    bool _loweringOption=false;
+    bool _inliningOption=false;
   };
 
 } // end of namespace SPRAY

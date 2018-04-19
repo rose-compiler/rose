@@ -83,7 +83,7 @@ void DFAnalysisBase::setInitialElementFactory(PropertyStateFactory* pf) {
   _initialElementFactory=pf;
 }
 
-void DFAnalysisBase::setExtremalLabels(set<Label> extremalLabels) {
+void DFAnalysisBase::setExtremalLabels(LabelSet extremalLabels) {
   _extremalLabels=extremalLabels;
 }
 
@@ -143,14 +143,6 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   _globalVariablesState=elem;
   return elem;
 }
-
-void
-DFAnalysisBase::normalizeProgram(SgProject* root) {
-  cout<<"STATUS: Normalizing program."<<endl;
-  SPRAY::Lowering lowering;
-  lowering.lowerAst(root);
-}
-
 
 void
 DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/* = false*/) {
@@ -475,3 +467,4 @@ void DFAnalysisBase::setSkipSelectedFunctionCalls(bool defer) {
     _transferFunctions->setSkipSelectedFunctionCalls(defer);
   }
 }
+

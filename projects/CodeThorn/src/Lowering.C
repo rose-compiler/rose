@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "SingleStatementToBlockNormalization.h"
+
 #include "Lowering.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
@@ -15,6 +16,11 @@ namespace SPRAY {
   int32_t Lowering::labelNr=1;
   string Lowering::labelPrefix="__label";
 
+  void Lowering::normalizeSingleStatementsToBlocks(SgNode* root) {
+    SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
+    singleStatementToBlockNormalizer.Normalize(root);
+  }
+
   void Lowering::setLabelPrefix(std::string prefix) {
     Lowering::labelPrefix=prefix;
   }
@@ -23,8 +29,21 @@ namespace SPRAY {
     return labelPrefix + StringUtility::numberToString(Lowering::labelNr++);
   }
 
-  void Lowering::lowerAst(SgNode* root) {
-    normalizeBlocks(root);
+  void Lowering::normalizeAst(SgNode* root) {
+    normalizeSingleStatementsToBlocks(root);
+
+    // TODO1: normalize AST such that all empty blocks contain a null
+    // statement this is only necessary to be able to eliminate
+    // begin/end labels of blocks and avoid true+false edges between
+    // the same nodes in the CFG generation
+
+    // TODO2: normalize AST such that every expression in a statement has as root a SgExpressionRoot node
+    // this allows to transform any expression without updating the corresponding child pointer in the enclosing statement
+    // normalizeExpressionRootNodes(root);
+  }
+
+  void Lowering::transformAst(SgNode* root) {
+    normalizeAst(root);
     convertAllForsToWhiles(root);
     changeBreakStatementsToGotos(root);
     createLoweringSequence(root);
@@ -33,6 +52,14 @@ namespace SPRAY {
     inlineFunctions(root);
   }
 
+  void Lowering::setInliningOption(bool flag) {
+    _inliningOption=flag;
+  }
+
+  bool Lowering::getInliningOption() {
+    return _inliningOption;
+  }
+  
   void Lowering::createLoweringSequence(SgNode* node) {
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -49,11 +76,6 @@ namespace SPRAY {
       loweringOp->analyse();
       loweringOp->transform();
     }
-  }
-
-  void Lowering::normalizeBlocks(SgNode* root) {
-    SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
-    singleStatementToBlockNormalizer.Normalize(root);
   }
 
   void Lowering::convertAllForsToWhiles (SgNode* top) {
@@ -142,6 +164,9 @@ namespace SPRAY {
       SgVariableDeclaration* tmpVarDeclaration = 0;
       SgExpression* tmpVarReference = 0;
       SgScopeStatement* scope=stmt->get_scope();
+      if(isSgFunctionCallExp(expr)) {
+        cout<<"TODO: normalization: function call in declaration: "<<expr->unparseToString()<<endl;
+      }
       tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
       tmpVarDeclaration->set_parent(scope);
       ROSE_ASSERT(tmpVarDeclaration!= 0);
@@ -171,6 +196,9 @@ namespace SPRAY {
   }
   
   size_t Lowering::inlineFunctions(SgNode* root) {
+    if(!getInliningOption()) {
+      return 0;
+    }
     // Inline one call at a time until all have been inlined.  Loops on recursive code.
     //SgProject* project=isSgProject(root);
     //ROSE_ASSERT(project);

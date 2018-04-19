@@ -29,13 +29,9 @@ namespace SPRAY {
 
 class DFAnalysisBase {
  public:
-  /* normalizes a C++ program to a C++ subset. The transformed program is a C++ program, but with additional
-     temporary variables and additional statements. E.g. "f(g())" becomes "int t=g(); f(t);"
-  */
-  static void normalizeProgram(SgProject*);
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
-  void setExtremalLabels(set<Label> extremalLabels);
+  void setExtremalLabels(LabelSet extremalLabels);
   void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
   void setForwardAnalysis();
   void setBackwardAnalysis();
@@ -76,7 +72,6 @@ class DFAnalysisBase {
   // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
   void setSkipSelectedFunctionCalls(bool defer);
-
  protected:
   SPRAY::PointerAnalysisInterface* getPointerAnalysis();
 
@@ -84,7 +79,7 @@ class DFAnalysisBase {
   virtual void solve();
   ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
   CFAnalysis* _cfanalyzer=nullptr;
-  set<Label> _extremalLabels;
+  LabelSet _extremalLabels;
   Flow _flow;
   // following members are initialized by function initialize()
   long _numberOfLabels=0;
@@ -113,6 +108,7 @@ class DFAnalysisBase {
   SPRAY::PASolver1* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
+
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
   SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
