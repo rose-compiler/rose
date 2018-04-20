@@ -173,6 +173,10 @@ int main (int argc, char* argv[])
             tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varName);
           } else if(typeName=="long double") {
             tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varName);
+          } else if(typeName=="AD_real") {
+            string typeName="AD_real";
+            SgScopeStatement* scope=funDef->get_scope();
+            tt.addToTransformationList(list,SageBuilder::buildOpaqueType(typeName, scope),funDef,varName);
           } else {
             cerr<<"Error: unknown type "<<typeName<<" in file "<<changeFileName<<" in line "<<lineNr<<"."<<endl;
           }
