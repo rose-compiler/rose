@@ -183,6 +183,8 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   LoopInfo.h                       \
   LoopInfo.C                       \
+  Lowering.h                       \
+  Lowering.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   PhiAttribute.h \

@@ -16,6 +16,34 @@ namespace SPRAY {
   int32_t Lowering::labelNr=1;
   string Lowering::labelPrefix="__label";
 
+  void Lowering::normalizeAllVariableDeclarations(SgNode* root) {
+    RoseAst ast(root);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      SgNode* node=*i;
+      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+        cout<<"DEBUG: found variable declaration: "<<varDecl->unparseToString()<<endl;
+        normalizeVariableDeclaration(varDecl);
+        i.skipChildrenOnForward();
+      } else {
+        cout<<"DEBUG: NOT a variable declaration: "<<node->class_name()<<endl;
+      }
+    }
+  }
+
+  void Lowering::normalizeVariableDeclaration(SgVariableDeclaration* varDecl) {
+    ROSE_ASSERT(varDecl);
+    SgExpression* declInitializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    // if there is no initializer, the declaration remains unchanged
+    if(declInitializer) {
+      SgInitializedName* declInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+      varDecl->reset_initializer(0); // detach initializer from declaration
+      SgVarRefExp* declVarRefExp=SageBuilder::buildVarRefExp(declInitName,varDecl->get_declarationScope());
+      SgAssignOp* varAssignOp=SageBuilder::buildAssignOp(declVarRefExp,declInitializer);
+      SgStatement* varAssignStatement=SageBuilder::buildExprStatement(varAssignOp);
+      SageInterface::insertStatementAfter(varDecl, varAssignStatement);
+    }
+  }
+
   void Lowering::normalizeSingleStatementsToBlocks(SgNode* root) {
     SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
     singleStatementToBlockNormalizer.Normalize(root);
@@ -48,8 +76,11 @@ namespace SPRAY {
     changeBreakStatementsToGotos(root);
     createLoweringSequence(root);
     applyLoweringSequence();
-    normalizeExpressions(root);
-    inlineFunctions(root);
+    //normalizeExpressions(root);
+    if(getInliningOption()) {
+      inlineFunctions(root);
+    }
+    normalizeAllVariableDeclarations(root);
   }
 
   void Lowering::setInliningOption(bool flag) {
@@ -164,15 +195,24 @@ namespace SPRAY {
       SgVariableDeclaration* tmpVarDeclaration = 0;
       SgExpression* tmpVarReference = 0;
       SgScopeStatement* scope=stmt->get_scope();
-      if(isSgFunctionCallExp(expr)) {
-        cout<<"TODO: normalization: function call in declaration: "<<expr->unparseToString()<<endl;
-      }
-      tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
-      tmpVarDeclaration->set_parent(scope);
-      ROSE_ASSERT(tmpVarDeclaration!= 0);
-      SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
-      SageInterface::replaceExpression(expr, tmpVarReference);
-
+#if 0
+      if(false || isSgFunctionCallExp(expr)) {
+        cout<<"normalization: function call in declaration: "<<expr->unparseToString()<<endl;
+        tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
+        tmpVarDeclaration->set_parent(scope);
+        ROSE_ASSERT(tmpVarDeclaration!= 0);
+        SgAssignOp* tmpVarAssignOp=SageBuilder::buildAssignOp(tmpVarReference,expr);
+        SgStatement* tmpVarAssignStatement=SageBuilder::buildExprStatement(tmpVarAssignOp);
+        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        SageInterface::insertStatementBefore(stmt, tmpVarAssignStatement);
+      } else {
+#endif
+        tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
+        tmpVarDeclaration->set_parent(scope);
+        ROSE_ASSERT(tmpVarDeclaration!= 0);
+        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        SageInterface::replaceExpression(expr, tmpVarReference);
+        //      }
       cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
       tmpVarNr++;
     }
@@ -196,9 +236,6 @@ namespace SPRAY {
   }
   
   size_t Lowering::inlineFunctions(SgNode* root) {
-    if(!getInliningOption()) {
-      return 0;
-    }
     // Inline one call at a time until all have been inlined.  Loops on recursive code.
     //SgProject* project=isSgProject(root);
     //ROSE_ASSERT(project);

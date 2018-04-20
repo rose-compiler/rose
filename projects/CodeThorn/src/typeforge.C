@@ -105,6 +105,8 @@ int main (int argc, char* argv[])
   if(args.isUserProvided("explicit")) {
     tt.makeAllCastsExplicit(sageProject);
     cout<<"Converted all implicit casts to explicit casts."<<endl;
+    backend(sageProject);
+    return 0;
   }
 
   if(args.isUserProvided("stats")) {

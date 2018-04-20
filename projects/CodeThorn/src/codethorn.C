@@ -52,6 +52,7 @@
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
+#include "Lowering.h"
 
 // test
 #include "SSAGenerator.h"
@@ -357,6 +358,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
 
   experimentalOptions.add_options()
     ("normalize", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize AST before analysis .")
+    ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >()->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
@@ -1224,6 +1226,13 @@ int main( int argc, char * argv[] ) {
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
+
+    // perform inlining before variable ids are computed, because variables are duplicated by inlining.
+    if(args.count("inline")) {
+      Lowering lowering;
+      size_t numInlined=lowering.inlineFunctions(sageProject);
+      logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
+    }
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
 

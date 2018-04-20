@@ -527,8 +527,6 @@ Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
   * \date 2013.
  */
 int CFAnalysis::inlineTrivialFunctions(Flow& flow) {
-  //cerr<<"Error: inlineTrivialFunctions is deactivated."<<endl;
-  //exit(1);
   // 1) compute all functions that are called exactly once (i.e. number of pred in ICFG is 1)
   //    AND have the number of formal parameters is 0 AND have void return type.
   // 2) inline function

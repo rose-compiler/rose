@@ -1,7 +1,8 @@
 #include <cstdio>
 
 int f(int x) {
-  return x;
+  int y=0;
+  return x+y;
 }
 
 int g() {
@@ -11,12 +12,13 @@ int g() {
 int main() {
   int x=1;
   x=x;
-  x=f(4)*g()+f(g());
+  //x=f(4)*g()+f(g());
   if(x!=10) {
     printf("%d",x);
   }
   if(x==10) {
-    printf("ok! %d",x);
+    int z=f(0);
+    f(z);
   }
   return 0;
 }
