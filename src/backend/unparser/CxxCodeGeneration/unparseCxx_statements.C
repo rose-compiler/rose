@@ -10355,6 +10355,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
      printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
 #endif
 
+#error "DEAD CODE!"
+
   // Check to see if this is an object defined within a class
      ROSE_ASSERT (template_stmt->get_parent() != NULL);
      SgClassDefinition *cdefn = isSgClassDefinition(template_stmt->get_parent());
@@ -10366,6 +10368,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
              }
         }
 
+#error "DEAD CODE!"
+
   // Output access modifiers
      unp->u_sage->printSpecifier1(template_stmt, info);
 
@@ -10373,6 +10377,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
 
   // DQ (1/21/2004): Use the string class to simplify the previous version of the code
      string templateString = template_stmt->get_string().str();
+
+#error "DEAD CODE!"
 
   // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
      if (template_stmt->get_declarationModifier().isExport())
@@ -10698,11 +10704,23 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // Substitute " decltype" with " __decltype" to fix this.
        // templateString.subst(" decltype"," __decltype");
           string denormalizedTemplateString = replaceString (templateString," decltype"," __decltype");
+
+       // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
+       // Not clear if this is only a C++11 issue or a C++14 issue as well.
+       // denormalizedTemplateString = replaceString (denormalizedTemplateString," __ALIGNOF__"," __alignof__");
 #if 0
           printf ("denormalizedTemplateString = %s \n",denormalizedTemplateString.c_str());
 #endif
           templateString = denormalizedTemplateString;
         }
+
+  // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
+  // Not clear if this is only a C++11 issue or a C++14 issue as well.
+     string denormalizedAlignofTemplateString = replaceString (templateString," __ALIGNOF__"," __alignof__");
+#if 0
+     printf ("denormalizedAlignofTemplateString = %s \n",denormalizedAlignofTemplateString.c_str());
+#endif
+     templateString = denormalizedAlignofTemplateString;
 
   // DQ (9/6/2014): if this is only a partial string then ignore unparsing this function (until we are done with the implementation of the function header).
      if (string_represents_function_body == true)
