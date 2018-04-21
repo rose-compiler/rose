@@ -97,7 +97,7 @@ void foo2(double* x, int jp, int kp, int begin, int end, double rh1)
 }
 
 
-// Negative test: not double type
+// integer types allowed now.
 // -------------------------------------------
 void foo3(int * x, int jp, int kp, int begin, int end, int rh1)
 {
