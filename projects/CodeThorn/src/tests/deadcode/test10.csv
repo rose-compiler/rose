@@ -1,0 +1,9 @@
+9,dummy();
+16,dummy();
+15,int x;
+22,printLine("Hello");
+29,printLine("Hello");
+28,int x;
+36,x = 1;
+41,x = 3;
+39,x = 2;

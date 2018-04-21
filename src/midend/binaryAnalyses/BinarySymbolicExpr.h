@@ -607,14 +607,14 @@ public:
     bool operator()(const Ptr &a, const Ptr &b);
 };
 
-/** Mapping from hash to expression. */
+/** Mapping from expression to expression. */
 class ExprExprHashMap: public boost::unordered_map<SymbolicExpr::Ptr, SymbolicExpr::Ptr,
                                                    ExprExprHashMapHasher, ExprExprHashMapCompare> {
 public:
     ExprExprHashMap invert() const;
 };
 
-/** Set of expressions. */
+/** Set of expressions ordered by hash. */
 typedef Sawyer::Container::Set<Ptr, ExpressionLessp> ExpressionSet;
 
 

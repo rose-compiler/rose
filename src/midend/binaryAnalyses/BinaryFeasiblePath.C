@@ -5,6 +5,7 @@
 #include <BinaryYicesSolver.h>
 #include <CommandLine.h>
 #include <Partitioner2/GraphViz.h>
+#include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <SymbolicMemory2.h>
@@ -124,28 +125,32 @@ class RiscOperators: public SymbolicSemantics::RiscOperators {
 public:
     size_t pathInsnIndex_;                              // current location in path, or -1
     const P2::Partitioner *partitioner_;
+    FeasiblePath *fpAnalyzer_;
+    FeasiblePath::PathProcessor *pathProcessor_;
 
 protected:
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
-        : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
+        : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL),
+          pathProcessor_(NULL) {
         name("FindPath");
     }
 
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
-        : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
+        : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL), pathProcessor_(NULL) {
         name("FindPath");
     }
 
 public:
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
-                                     FeasiblePath::SearchMode searchMode,
+                                     FeasiblePath *fpAnalyzer, FeasiblePath::PathProcessor *pathProcessor,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
+        ASSERT_not_null(fpAnalyzer);
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory;
-        switch (searchMode) {
+        switch (fpAnalyzer->settings().searchMode) {
             case FeasiblePath::SEARCH_MULTI:
                 // If we're sending multiple paths at a time to the SMT solver then we need to provide the SMT solver with
                 // detailed information about how memory is affected on those different paths.
@@ -155,12 +160,25 @@ public:
             case FeasiblePath::SEARCH_SINGLE_BFS:
                 // We can perform memory-related operations and simplifications inside ROSE, which results in more but smaller
                 // expressions being sent to the SMT solver.
-                memory = SymbolicSemantics::MemoryState::instance(protoval, protoval);
+                switch (fpAnalyzer->settings().memoryParadigm) {
+                    case FeasiblePath::LIST_BASED_MEMORY:
+                        memory = SymbolicSemantics::MemoryListState::instance(protoval, protoval);
+                        break;
+                    case FeasiblePath::MAP_BASED_MEMORY:
+                        memory = SymbolicSemantics::MemoryMapState::instance(protoval, protoval);
+                        break;
+                    default:
+                        ASSERT_not_reachable("invalid memory paradigm");
+                        break;
+                }
                 break;
         }
         ASSERT_not_null(memory);
         BaseSemantics::StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
+        RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
+        ops->fpAnalyzer_ = fpAnalyzer;
+        ops->pathProcessor_ = pathProcessor;
+        return ops;
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
@@ -265,6 +283,56 @@ private:
         return retval;
     }
 
+    // True if the expression contains only constants.
+    bool isConstExpr(const SymbolicExpr::Ptr &expr) {
+        ASSERT_not_null(expr);
+
+        struct VarFinder: SymbolicExpr::Visitor {
+            bool hasVariable;
+
+            VarFinder(): hasVariable(false) {}
+
+            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) ROSE_OVERRIDE {
+                if (node->isLeafNode() && !node->isLeafNode()->isNumber()) {
+                    hasVariable = true;
+                    return SymbolicExpr::TERMINATE;
+                } else {
+                    return SymbolicExpr::CONTINUE;
+                }
+            }
+
+            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr &node) ROSE_OVERRIDE {
+                return SymbolicExpr::CONTINUE;
+            }
+        } varFinder;
+        expr->depthFirstTraversal(varFinder);
+        return !varFinder.hasVariable;
+    }
+
+    bool isNullDeref(const BaseSemantics::SValuePtr &addr) {
+        SymbolicExpr::Ptr expr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+        return isNullDeref(expr);
+    }
+
+    bool isNullDeref(const SymbolicExpr::Ptr &expr) {
+        ASSERT_not_null(expr);
+        switch (fpAnalyzer_->settings().nullDeref.mode) {
+            case FeasiblePath::MAY:
+                if (fpAnalyzer_->settings().nullDeref.constOnly) {
+                    return isConstExpr(expr) && expr->mayEqual(SymbolicExpr::makeInteger(expr->nBits(), 0));
+                } else {
+                    return expr->mayEqual(SymbolicExpr::makeInteger(expr->nBits(), 0));
+                }
+            case FeasiblePath::MUST:
+                if (fpAnalyzer_->settings().nullDeref.constOnly) {
+                    return isConstExpr(expr) && expr->mustEqual(SymbolicExpr::makeInteger(expr->nBits(), 0));
+                } else {
+                    return expr->mustEqual(SymbolicExpr::makeInteger(expr->nBits(), 0));
+                }
+        }
+        ASSERT_not_reachable("invalid null-dereference mode");
+    }
+    
 public:
     virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
         ASSERT_not_null(partitioner_);
@@ -315,6 +383,10 @@ public:
         if (cond->is_number() && !cond->get_number())
             return dflt_;
 
+        // Check for null pointer dereferences
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr))
+            pathProcessor_->nullDeref(FeasiblePath::READ, addr, currentInstruction());
+        
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
         if (addr->is_number() && nBytes < sizeof(buf) &&
@@ -356,6 +428,10 @@ public:
         if (cond->is_number() && !cond->get_number())
             return;
         Super::writeMemory(segreg, addr, value, cond);
+
+        // Check for null pointer dereferences
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr))
+            pathProcessor_->nullDeref(FeasiblePath::WRITE, addr, currentInstruction());
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
@@ -417,7 +493,7 @@ FeasiblePath::virtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &ve
 }
 
 BaseSemantics::DispatcherPtr
-FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
+FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, PathProcessor *pathProcessor) {
     // Augment the register dictionary with a "path" register that holds the expression describing how the location is
     // reachable along some path.
     if (NULL == registers_) {
@@ -442,7 +518,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
 
     // Create the RiscOperators and Dispatcher.
     SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-    RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, settings_.searchMode, solver);
+    RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, pathProcessor, solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
     ASSERT_not_null(cpu);
@@ -630,12 +706,13 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 
 boost::logic::tribool
 FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver,
-                             const std::vector<SymbolicExpr::Ptr> &endConstraints,
+                             const std::vector<SymbolicExpr::Ptr> &endConstraints, PathProcessor *pathProcessor,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
                              BaseSemantics::DispatcherPtr &cpu /*out*/) {
     static const char *prefix = "      ";
     ASSERT_not_null2(partitioner_, "analysis is not initialized");
-    cpu = buildVirtualCpu(partitioner());
+    ASSERT_not_null(solver);
+    cpu = buildVirtualCpu(partitioner(), pathProcessor);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
 
@@ -821,18 +898,25 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
     if ((size_t)callDepth >= settings_.maxCallDepth)
         return false;
 
+    // Don't inline if there's no function
+    if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
+        return false;
+    P2::Function::Ptr callee = cfgCallTarget->value().isEntryBlock();
+    if (!callee)
+        return false;
+
     // Don't let recursion get too deep
     if (settings_.maxRecursionDepth < (size_t)(-1)) {
-        if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
-            return false;
-        P2::Function::Ptr callee = cfgCallTarget->value().isEntryBlock();
-        if (!callee)
-            return false;
         ssize_t callDepth = path.callDepth(callee);
         ASSERT_require(callDepth >= 0);
         if ((size_t)callDepth >= settings_.maxRecursionDepth)
             return false;
     }
+
+    // Don't inline imported functions that aren't linked -- we'd just get bogged down deep inside the
+    // dynamic linker without ever being able to resolve the actual function's instructions.
+    if (P2::ModulesElf::isUnlinkedImport(*partitioner_, callee))
+        return false;
 
     return true;
 }
@@ -913,6 +997,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
         P2::CfgPath path(pathsBeginVertex);
+        SmtSolverPtr solver = SmtSolver::instance(settings_.solverName);
+        ASSERT_always_not_null(solver);
         while (!path.isEmpty()) {
             if (debug) {
                 debug <<"  path vertices (" <<path.nVertices() <<"):";
@@ -934,8 +1020,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             if (atEndOfPath)
                 postConditions = settings_.postConditions;
             BaseSemantics::DispatcherPtr cpu;
-            SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
-            boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions,
+            boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions, &pathProcessor,
                                                               pathConditions /*in,out*/, cpu /*out*/);
             if (debug) {
                 if (isFeasible) {
@@ -967,7 +1052,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
             // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
             if (path.nVisits(backVertex) > settings_.vertexVisitLimit) {
-                mlog[WARN] <<indent <<"max visits (" <<settings_.vertexVisitLimit <<") reached for vertex " <<backVertex->id() <<"\n";
+                mlog[WARN] <<indent <<"max visits (" <<settings_.vertexVisitLimit <<") reached"
+                           <<" for vertex " <<backVertex->id() <<"\n";
                 doBacktrack = true;
             }
 
