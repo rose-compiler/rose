@@ -6,7 +6,7 @@ extern void Advance_Iterator(int *);
 void foo(int dimensions)
 {
   int itr;
-  for (Initialize_Iterator(&itr); Check_Iterator(&itr); Advance_Iterator(&itr)) {
+  for (Initialize_Iterator((&itr)); Check_Iterator((&itr)); Advance_Iterator((&itr))) {
     printf("hi\n");
   }
 }
