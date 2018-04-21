@@ -174,10 +174,10 @@ void uInt64_toAscii(char *outbuf,UInt64 *n)
   Int32 nBuf = 0;
   UInt64 n_copy =  *n;
   do {
-    Int32 q = uInt64_qrm10((&n_copy));
+    Int32 q = uInt64_qrm10(&n_copy);
     buf[nBuf] = (q + '0');
     nBuf++;
-  }while (!(uInt64_isZero((&n_copy))));
+  }while (!(uInt64_isZero(&n_copy)));
   outbuf[nBuf] = 0;
   for (Int32 i = 0; i < nBuf; i++) 
     outbuf[i] = buf[nBuf - i - 1];
