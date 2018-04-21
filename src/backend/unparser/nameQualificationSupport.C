@@ -4368,7 +4368,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   {
                  // currentScope is that of the parent of the templateInstantiationDirectiveStatement
                     currentScope = isSgScopeStatement(templateInstantiationDirectiveStatement->get_parent());
-
+#if 0
+                 // DQ (4/20/2018): Added debugging support.
+                    printf ("In name qualification: processing SgClassDeclaration: found SgTemplateInstantiationDirectiveStatement \n");
+#endif
                  // I think this has to be true.
                     ROSE_ASSERT(currentScope != NULL);
 #if 0
@@ -5044,7 +5047,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (templateInstantiationDirectiveStatement != NULL)
                   {
                     currentScope = isSgScopeStatement(templateInstantiationDirectiveStatement->get_parent());
-
+#if 0
+                 // DQ (4/20/2018): Added debugging support.
+                    printf ("In name qualification support: processing SgFunctionDeclaration (non-member): found SgTemplateInstantiationDirectiveStatement \n");
+#endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("Case of (functionDeclaration != NULL && isSgMemberFunctionDeclaration(n) == NULL): reset using SgTemplateInstantiationDirectiveStatement: currentScope = %p \n",currentScope);
 #endif
@@ -5359,8 +5365,22 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     printf ("@@@@@@@@@@@@@@@@@@ Process the function parameter syntax @@@@@@@@@@@@@@@@@@ \n");
                     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
-                    ROSE_ASSERT(functionDeclaration->get_parameterList_syntax() != NULL);
-                    generateNestedTraversalWithExplicitScope(functionDeclaration->get_parameterList_syntax(),currentScope);
+
+                 // DQ (4/20/2018): This is an error reported by Charles, but in a reproducer testcode that does 
+                 // not generated the error for me.  I expect that it might be an issue of not recompiling the 
+                 // build tree after the header files have been changed between versions that fixed a previous 
+                 // bug (unrelated) and was checked in recently. I prefer the assertion, but I will remove it and 
+                 // support a conditional check for now (before I leave on vacation).
+                 // ROSE_ASSERT(functionDeclaration->get_parameterList_syntax() != NULL);
+                 // generateNestedTraversalWithExplicitScope(functionDeclaration->get_parameterList_syntax(),currentScope);
+                    if (functionDeclaration->get_parameterList_syntax() != NULL)
+                       {
+                         generateNestedTraversalWithExplicitScope(functionDeclaration->get_parameterList_syntax(),currentScope);
+                       }
+                      else
+                       {
+                      // We might want to output a message here, but I will avoid doing so now.
+                       }
 #if 0
                     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@######@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
                     printf ("@@@@@@@@@@@@@@@@@@ DONE: Process the function parameter syntax @@@@@@@@@@@@@@@@@@ \n");
@@ -5409,6 +5429,32 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
           printf ("case SgMemberFunctionDeclaration: currentScope = %p \n",currentScope);
 #endif
+
+       // DQ (4/20/2018): Added new code to support where member functions are used in SgTemplateInstantiationDirectiveStatement.
+       // DQ (4/20/2018): When the parent is not a scope, it could be a SgTemplateInstantiationDirectiveStatement, in which
+       // case we want the parent of that. See test2017_66.C (and previously test2006_08.C) for an example of this case.
+          if (currentScope == NULL)
+             {
+               SgTemplateInstantiationDirectiveStatement* templateInstantiationDirectiveStatement = isSgTemplateInstantiationDirectiveStatement(memberFunctionDeclaration->get_parent());
+               if (templateInstantiationDirectiveStatement != NULL)
+                  {
+                    currentScope = isSgScopeStatement(templateInstantiationDirectiveStatement->get_parent());
+#if 0
+                 // DQ (4/20/2018): Added debugging support.
+                    printf ("In name qualification support: processing SgMemberFunctionDeclaration: found SgTemplateInstantiationDirectiveStatement \n");
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Case of (memberFunctionDeclaration != NULL): reset using SgTemplateInstantiationDirectiveStatement: currentScope = %p \n",currentScope);
+#endif
+                 // Now we should have a valid currentScope.
+                    ROSE_ASSERT(currentScope != NULL);
+                  }
+             }
+
+#if 0
+          printf ("currentScope = %p \n",currentScope);
+#endif
+
        // ROSE_ASSERT(currentScope != NULL);
           if (currentScope != NULL)
              {

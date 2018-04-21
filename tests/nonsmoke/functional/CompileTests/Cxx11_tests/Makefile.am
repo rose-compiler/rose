@@ -207,6 +207,7 @@ test2018_82.C \
 test2018_83.C \
 test2018_84.C \
 test2018_85.C \
+test2018_86.C \
 test2018_88.C \
 test2018_89.C \
 test2018_90.C \
