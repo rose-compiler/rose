@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher varp1 typeforge astinfo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher varp1 typeforge astinfo cldemo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo cldemo
 
 CLEANFILES = 
 
@@ -568,6 +568,11 @@ typeforge_DEPENDENCIES=libspray.la
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TypeTransformer.C CastGraphVis.C CppStdUtilities.C
+
+cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+cldemo_SOURCES = cldemo.C
+
 
 check-typeforge: typeforge
 	rm -f typegraph.dot

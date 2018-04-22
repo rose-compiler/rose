@@ -2,32 +2,32 @@
 static const char *purpose = "purpose-text";
 static const char *description = "description-text";
 
-#include <rose/rose.h>
-#include <rose/CommandLine.h>
+#include <rose.h>
+#include <CommandLine.h>
 #include <Sawyer/CommandLine.h>
 
 bool opt1 = false;
 bool opt2 = true;
-bool boolflag1 = false;
-std::string name;
+bool opt3 = false;
+std::string argswitch1name;
 
 std::vector<std::string>
 parseCommandLine(int argc, char *argv[]) {
   using namespace Sawyer::CommandLine;
   
-  SwitchGroup sg("Switches for Markus");
-  sg.name("markus");                                  // optional (see --help output)
+  SwitchGroup sg("SwitchesGroup1");
+  sg.name("switchesgroup1"); // optional (see --help output)
   
   // boolean switches. Descriptions can be arbitrarily long.
   // These are just wrappers around sg.insert(Switch(....)).
-  Rose::CommandLine::insertBooleanSwitch(sg, "opt1", opt1, "This switch does something.");
-  Rose::CommandLine::insertBooleanSwitch(sg, "opt2", opt2, "This switch does something.");
-  Rose::CommandLine::insertBooleanSwitch(sg, "boolflag1", boolflag1, "This switch does something.");
+  Rose::CommandLine::insertBooleanSwitch(sg, "bool1", opt1, "This optional bool switch 1 does something.");
+  Rose::CommandLine::insertBooleanSwitch(sg, "bool2", opt2, "This optional bool switch 2 does something.");
+  Rose::CommandLine::insertBooleanSwitch(sg, "bool3", opt3, "This mandatory bool switch 3 does something.");
   
-  // A switch that takes exactly one argument. The one-char switch name is optional.
-  sg.insert(Switch("name", 'n')
-            .argument("some_name", anyParser(name))
-            .doc("Causes @v{some_name} to be the name used for analysis."));
+  // switch with one argument. The one-char switch name is optional.
+  sg.insert(Switch("argswitch1", 'a')
+            .argument("argswitch1name", anyParser(argswitch1name))
+            .doc("Causes @v{argswitch1name} to be the name used for analysis."));
 
   // parsing
   Parser parser = Rose::CommandLine::createEmptyParserStage(purpose, description);
@@ -37,12 +37,15 @@ parseCommandLine(int argc, char *argv[]) {
 
 int
 main(int argc, char *argv[]) {
-    std::vector<std::string> roseArgs = parseCommandLine(argc, argv);
-
-    std::cout <<"opt1      = " <<opt1 <<"\n"
-              <<"opt2      = " <<opt2 <<"\n"
-              <<"boolflag1 = " <<boolflag1 <<"\n"
-              <<"name      = \"" <<Rose::StringUtility::cEscape(name) <<"\"\n";
-    for (size_t i = 0; i < roseArgs.size(); ++i)
-        std::cout <<"arg[" <<i <<"]    = \"" <<Rose::StringUtility::cEscape(roseArgs[i]) <<"\"\n";
+  for (int i = 0; i < argc; ++i) {
+        std::cout <<"arg[" <<i <<"]    = \"" <<Rose::StringUtility::cEscape(argv[i]) <<"\"\n";
+  }
+  std::vector<std::string> nonToolArgs = parseCommandLine(argc, argv);
+  std::cout <<"opt1      = " <<opt1 <<"\n"
+	    <<"opt2      = " <<opt2 <<"\n"
+	    <<"opt3      = " <<opt3 <<"\n"
+	    <<"name      = \"" <<Rose::StringUtility::cEscape(argswitch1name) <<"\"\n";
+  for (size_t i = 0; i < nonToolArgs.size(); ++i) {
+    std::cout <<"nontoolarg[" <<i <<"]    = \"" <<Rose::StringUtility::cEscape(nonToolArgs[i]) <<"\"\n";
+  }
 }
