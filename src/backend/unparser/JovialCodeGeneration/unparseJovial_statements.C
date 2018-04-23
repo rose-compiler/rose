@@ -78,6 +78,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
+          case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
 
           case V_SgExprStatement:              unparseExprStmt(stmt, info);         break;
 
@@ -192,6 +193,23 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (10/6/2008): This does not appear to be required (passes all tests).
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
 #endif
+   }
+
+void
+Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgStopOrPauseStatement* sp_stmt = isSgStopOrPauseStatement(stmt);
+     ROSE_ASSERT(sp_stmt != NULL);
+
+     SgStopOrPauseStatement::stop_or_pause_enum kind = sp_stmt->get_stop_or_pause();
+
+     if (kind == SgStopOrPauseStatement::e_stop)
+        {
+          curprint("STOP ");
+          unparseExpression(sp_stmt->get_code(), info);
+          curprint(";");
+          unp->cur.insert_newline(1);
+        }
    }
 
 void

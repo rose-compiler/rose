@@ -32,11 +32,13 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeUnsignedInt: curprint("U"); unparseTypeSize(type, info);  break;
           case V_SgTypeFloat:       curprint("F"); unparseTypeSize(type, info);  break;
           case V_SgTypeBool:        curprint("B"); unparseTypeSize(type, info);  break;
+          case V_SgTypeChar:        curprint("C"); unparseTypeSize(type, info);  break;
+          case V_SgTypeString:      curprint("C"); unparseTypeSize(type, info);  break;
 
           case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
 
           default:
-               cout << "Unparse_Jovial::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
+               cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
                ROSE_ASSERT(false);
                break;
         }
@@ -46,6 +48,17 @@ void
 Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    {
       SgExpression* size = type->get_type_kind();
+
+      if (size == NULL)
+         {
+         // look for a character length
+            SgTypeString * string_type = isSgTypeString(type);
+            if (string_type != NULL)
+               {
+                  size = string_type->get_lengthExpression();
+               }
+         }
+
       if (size != NULL)
          {
             curprint(" ");

@@ -1,6 +1,8 @@
 #include <sage3basic.h>
 #include <MemoryCellList.h>
 
+using namespace Sawyer::Message::Common;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -97,12 +99,38 @@ MemoryCellList::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperat
 }
 
 bool
-MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) {
+    if (!merger() || merger()->memoryAddressesMayAlias()) {
+        return mergeWithAliasing(other, addrOps, valOps);
+    } else {
+        return mergeNoAliasing(other, addrOps, valOps);
+    }
+}
+
+bool
+MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
+
     MemoryCellListPtr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
     ASSERT_not_null(other);
     bool changed = false;
 
+    if (debug) {
+        debug <<"MemoryCellList::mergeWithAliasing\n";
+        debug <<"  merge into:\n";
+        BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+            debug <<"    addr=" <<*cell->get_address() <<" value=" <<*cell->get_value() <<"\n";
+        debug <<"  merging from:\n";
+        BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells())
+            debug <<"    addr=" <<*cell->get_address() <<" value=" <<*cell->get_value() <<"\n";
+    }
+
     BOOST_REVERSE_FOREACH (const MemoryCellPtr &otherCell, other->get_cells()) {
+        SAWYER_MESG(debug) <<"  merging from cell"
+                                 <<" addr=" <<*otherCell->get_address()
+                                 <<" value=" <<*otherCell->get_value() <<"\n";
+
         // Is there some later-in-time (earlier-in-list) cell that occludes this one? If so, then we don't need to process this
         // cell.
         bool isOccluded = false;
@@ -113,8 +141,10 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
                 isOccluded = true;
             }
         }
-        if (isOccluded)
+        if (isOccluded) {
+            SAWYER_MESG(debug) <<"    occluded by earlier cell (skipping)\n";
             continue;
+        }
 
         // Read the value, writers, and properties without disturbing the states
         SValuePtr address = otherCell->get_address();
@@ -124,12 +154,16 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
         SValuePtr otherValue = mergeCellValues(otherCells, valOps->undefined_(8), addrOps, valOps);
         AddressSet otherWriters = mergeCellWriters(otherCells);
         InputOutputPropertySet otherProps = mergeCellProperties(otherCells);
+        SAWYER_MESG(debug) <<"    scan found " <<StringUtility::plural(otherCells.size(), "cells") <<"\n"
+                           <<"    condensed scan value=" <<*otherValue <<"\n";
 
         CellList::iterator thisCursor = get_cells().begin();
         CellList thisCells = scan(thisCursor /*in,out*/, address, 8, addrOps, valOps);
 
         // Merge cell values
         if (thisCells.empty()) {
+            SAWYER_MESG(debug) <<"    no matching values in destination\n"
+                               <<"    writing source cell to destination state\n";
             writeMemory(address, otherValue, addrOps, valOps);
             latestWrittenCell_->setWriters(otherWriters);
             latestWrittenCell_->ioProperties() = otherProps;
@@ -138,8 +172,14 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
             bool cellChanged = false;
             SValuePtr thisValue = mergeCellValues(thisCells, valOps->undefined_(8), addrOps, valOps);
             SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
-            if (mergedValue)
+            SAWYER_MESG(debug) <<"    " <<StringUtility::plural(thisCells.size(), "matching values") <<" in destination\n"
+                               <<"    matching values condensed to " <<*thisValue <<"\n";
+            if (mergedValue) {
+                SAWYER_MESG(debug) <<"    merged source and destination value=" <<*mergedValue <<"\n";
                 cellChanged = true;
+            } else {
+                SAWYER_MESG(debug) <<"    destination value unchanged\n";
+            }
 
             AddressSet thisWriters = mergeCellWriters(thisCells);
             AddressSet mergedWriters = otherWriters | thisWriters;
@@ -159,6 +199,119 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
                 latestWrittenCell_->ioProperties() = mergedProps;
                 changed = true;
             }
+
+            if (debug) {
+                debug <<"    new destination state:\n";
+                BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+                    debug <<"      addr=" <<*cell->get_address() <<" value=" <<*cell->get_value() <<"\n";
+            }
+        }
+    }
+    return changed;
+}
+
+bool
+MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
+
+    MemoryCellListPtr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
+    ASSERT_not_null(other);
+    bool changed = false;
+
+    if (debug) {
+        debug <<"MemoryCellList::mergeNoAliasing:\n"
+                    <<"  merging into:\n";
+        BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+            debug <<"    addr=" <<*cell->get_address() <<" value=" <<*cell->get_value() <<"\n";
+        debug <<"  merging from:\n";
+        BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells())
+            debug <<"    addr=" <<*cell->get_address() <<" value=" <<*cell->get_value() <<"\n";
+    }
+    
+    BOOST_REVERSE_FOREACH (const MemoryCellPtr &otherCell, other->get_cells()) {
+        // Read the value, writers, and properties without disturbing the states
+        SValuePtr otherAddress = otherCell->get_address();
+        SValuePtr otherValue = otherCell->get_value();
+        AddressSet otherWriters = otherCell->getWriters();
+        InputOutputPropertySet otherProps = otherCell->ioProperties();
+        SAWYER_MESG(debug) <<"  merging from cell addr=" <<*otherAddress <<" value=" <<*otherValue <<"\n";
+
+        // Is there some later-in-time (earlier-in-list) cell that occludes this one? If so, then we don't need to process this
+        // cell.
+        bool isOccluded = false;
+        BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells()) {
+            if (cell == otherCell) {
+                break;
+            } else if (otherAddress->must_equal(cell->get_address(), addrOps->solver())) {
+                isOccluded = true;
+            }
+        }
+        if (isOccluded) {
+            SAWYER_MESG(debug) <<"    occluded by earlier cell (skipping)\n";
+            continue;
+        }
+
+        // If otherAddress is must_equal to something in the destination state, modify the destination state.
+        SAWYER_MESG(debug) <<"    looking for must_equal match in destination state\n";
+        bool foundExactMatchingAddress = false;
+        BOOST_FOREACH (const MemoryCellPtr &thisCell, get_cells()) {
+            SValuePtr thisAddress = thisCell->get_address();
+            SValuePtr thisValue = thisCell->get_value();
+            AddressSet thisWriters = otherCell->getWriters();
+            InputOutputPropertySet thisProps = thisCell->ioProperties();
+            SAWYER_MESG(debug) <<"      destination cell addr=" <<*thisAddress <<" value=" <<*thisValue <<"\n";
+
+            if (otherAddress->must_equal(thisCell->get_address(), addrOps->solver())) {
+                bool cellChanged = false;
+                SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
+                if (mergedValue)
+                    cellChanged = true;
+                AddressSet mergedWriters = otherWriters | thisWriters;
+                if (mergedWriters != thisWriters)
+                    cellChanged = true;
+                InputOutputPropertySet mergedProps = otherProps | thisProps;
+                if (mergedProps != thisProps)
+                    cellChanged = true;
+
+                if (cellChanged) {
+                    if (mergedValue)
+                        thisCell->set_value(mergedValue);
+                    thisCell->setWriters(mergedWriters);
+                    thisCell->ioProperties() = mergedProps;
+                    changed = true;
+                }
+
+                if (debug) {
+                    debug <<"      address is an exact match\n";
+                    if (mergedValue) {
+                        debug <<"      merged value=" <<*mergedValue <<"\n";
+                    } else {
+                        debug <<"      values are equal (no change)\n";
+                    }
+                    debug <<"      new destination state:\n";
+                    BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+                        debug <<"        addr=" <<*cell->get_address() <<" value=" <<*cell->get_value() <<"\n";
+                }
+                
+                foundExactMatchingAddress = true;
+                break;                                  // don't need to search for any more matches in destination state
+            }
+        }
+        if (foundExactMatchingAddress)
+            continue;                                   // process the next source cell
+
+        // We didn't find an exact match of the source address in the destination state.
+        SAWYER_MESG(debug) <<"    no exact match found\n"
+                                 <<"    inserting source cell into destination state\n";
+        writeMemory(otherAddress, otherValue->copy(), addrOps, valOps);
+        latestWrittenCell_->setWriters(otherWriters);
+        latestWrittenCell_->ioProperties() = otherProps;
+        changed = true;
+        if (debug) {
+            debug <<"    new destination state:\n";
+            BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+            debug <<"      addr=" <<*cell->get_address() <<" value=" <<*cell->get_value() <<"\n";
         }
     }
     return changed;

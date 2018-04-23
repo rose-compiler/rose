@@ -5802,6 +5802,35 @@ SgScopeStatement::find_symbol_from_declaration(const T* node) const
      printf ("In SgScopeStatement::find_symbol_from_declaration(): calling p_symbol_table->find(node): node %p = %s \n",node,node->class_name().c_str());
 #endif
 
+  // DQ (4/14/2018): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find(node);
+          SgSymbol* symbolFromGlobalNamespace = globalNamespaceDefinitionStatement->get_symbol_table()->find(node);
+          if (symbolFromGlobalNamespace != NULL)
+             {
+            // Check is this is a alias symbol (it should be).
+               SgAliasSymbol* alias = isSgAliasSymbol(symbolFromGlobalNamespace);
+               if (alias != NULL)
+                  {
+                    symbolFromGlobalNamespace = alias->get_alias();
+
+                 // This should not be an alias (chains of alias symbol are not allowed by design).
+                    alias = isSgAliasSymbol(symbolFromGlobalNamespace);
+                    ROSE_ASSERT(alias == NULL);
+                  }
+#if 0
+               printf ("Found symbol for node = %p = %s in global namespace: returning symbolFromGlobalNamespace = %p = %s \n",
+                    node,node->class_name().c_str(),symbolFromGlobalNamespace,symbolFromGlobalNamespace->class_name().c_str());
+#endif
+               return symbolFromGlobalNamespace;
+             }
+        }
+
      return p_symbol_table->find(node);
    }
 

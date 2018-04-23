@@ -188,7 +188,31 @@ test2018_60.C \
 test2018_61.C \
 test2018_62.C \
 test2018_65.C \
+test2018_67.C \
 test2018_68.C \
+test2018_69.C \
+test2018_70.C \
+test2018_71.C \
+test2018_72.C \
+test2018_73.C \
+test2018_74.C \
+test2018_75.C \
+test2018_76.C \
+test2018_77.C \
+test2018_78.C \
+test2018_79.C \
+test2018_80.C \
+test2018_81.C \
+test2018_82.C \
+test2018_83.C \
+test2018_84.C \
+test2018_85.C \
+test2018_86.C \
+test2018_88.C \
+test2018_89.C \
+test2018_90.C \
+$(PREVIOUSLY_FAILING_TESTS) \
+test2016_40.C \
 last.C
 
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
@@ -228,10 +252,15 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 # test2016_40.C
 
 # DQ (7/31/2017): Failing test after newest fix for classes built from template parameters (might not be related).
-FAILING_TEST += \
-test2016_40.C 
+# FAILING_TEST += 
+# test2016_40.C 
 
 endif
+
+# DQ (4/7/2018): This is a failing test (only one we have presently for C++11).
+FAILING_TEST += \
+test2014_85.C \
+last.C
 
 
 if !OS_MACOSX
@@ -270,10 +299,25 @@ endif
 # test2014_53.C 
 
 # These are incomplete non-compilable code fragments
-TESTCODE_CURRENTLY_FAILING = \
+# TESTCODE_CURRENTLY_FAILING = 
+PREVIOUSLY_FAILING_TESTS = \
 test2012_03.C \
 test2012_04.C \
 test2012_06.C \
+test2012_21.C \
+test2012_22.C \
+test2012_25.C \
+test2012_26.C \
+test2012_28.C \
+test2012_31.C \
+test2014_03.C \
+test2014_82.C \
+test2014_88.C \
+test2017_10.C \
+last.C
+
+# DQ (4/7/2018): These test appear to not be valid C++11 code.
+TESTCODE_CURRENTLY_FAILING = \
 test2012_07.C \
 test2012_08.C \
 test2012_09.C \
@@ -288,25 +332,14 @@ test2012_17.C \
 test2012_18.C \
 test2012_19.C \
 test2012_20.C \
-test2012_21.C \
-test2012_22.C \
 test2012_23.C \
 test2012_24.C \
-test2012_25.C \
-test2012_26.C \
 test2012_27.C \
-test2012_28.C \
 test2012_29.C \
 test2012_30.C \
-test2012_31.C \
 test2012_32.C \
 test2012_33.C \
 test2012_34.C \
-test2014_03.C \
-test2014_82.C \
-test2014_85.C \
-test2014_88.C \
-test2017_10.C \
 last.C
 
 # Note: last.C just simplifies the Makefile.am it

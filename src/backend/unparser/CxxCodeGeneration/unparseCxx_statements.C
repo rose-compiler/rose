@@ -43,6 +43,7 @@ using namespace Rose;
 
 #define HIGH_FEDELITY_TOKEN_UNPARSING 1
 
+#define OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES 0
 
 Unparse_ExprStmt::Unparse_ExprStmt(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
@@ -676,7 +677,9 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      printf ("In unparseFunctionParameterDeclaration(): TOP \n");
      printf ("   --- funcdecl_stmt                                 = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
      printf ("   --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
+     printf ("   --- initializedName                               = %p = %s \n",initializedName,initializedName->get_name().str());
      printf ("   --- initializedName->get_name()                   = %s \n",initializedName->get_name().str());
+     printf ("   --- initializedName->get_type()                   = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
 #endif
 
 #if 1
@@ -685,6 +688,11 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
   // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
      if (funcdecl_stmt->get_type_syntax_is_available() == true)
         {
+#if 0
+       // DQ (4/13/2018): Since the API permits the specification of the correct SgInitializedName we don't need this code
+       // which incedentally also set the type to be used incorectly (not matching the type syntax and initialized name 
+       // used in the original syntax of the function prototype).
+
        // Here we want to use the type syntax that originally appears with this function declaration in the original code.
           SgFunctionType* function_type = funcdecl_stmt->get_type_syntax();
           ROSE_ASSERT(function_type != NULL);
@@ -695,8 +703,18 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           SgFunctionParameterTypeList* type_argument_list = function_type->get_argument_list();
           ROSE_ASSERT(type_argument_list != NULL);
 
+       // DQ (4/13/2018): I think it is awkward that we need to introduce this test here (there might be a better API for this function).
        // find the associated index from the initializedName.
-          SgFunctionParameterList* name_argument_list = funcdecl_stmt->get_parameterList();
+       // SgFunctionParameterList* name_argument_list = funcdecl_stmt->get_parameterList();
+          SgFunctionParameterList* name_argument_list = NULL;
+          if (funcdecl_stmt->get_type_syntax_is_available() == true)
+             {
+               name_argument_list = funcdecl_stmt->get_parameterList_syntax();
+             }
+            else
+             {
+               name_argument_list = funcdecl_stmt->get_parameterList();
+             }
           ROSE_ASSERT(name_argument_list != NULL);
 
           SgInitializedNamePtrList & name_list = name_argument_list->get_args();
@@ -718,8 +736,10 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
        // SgTypePtrList & get_arguments()
           tmp_type = type_argument_list->get_arguments()[counter];
+#endif
+
 #if 0
-          printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+          printf ("Resetting tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
 #if 0
           printf ("In unparseFunctionParameterDeclaration(): (funcdecl_stmt->get_type_syntax_is_available() == true): exiting as a test! \n");
@@ -1052,7 +1072,15 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      bool outputFunctionParameters = true;
 #endif
 
-     SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
+     SgInitializedNamePtrList::iterator p        = funcdecl_stmt->get_args().begin();
+
+  // DQ (4/13/2018): I want to initialize this iterator, but it is not clea what to initialize it to...
+     SgInitializedNamePtrList::iterator p_syntax = funcdecl_stmt->get_args().begin();
+     if (funcdecl_stmt->get_type_syntax_is_available() == true)
+        {
+          p_syntax = funcdecl_stmt->get_parameterList_syntax()->get_args().begin();
+        }
+
      while ( p != funcdecl_stmt->get_args().end() )
         {
         // Liao 11/9/2010, 
@@ -1070,11 +1098,33 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
        // if (outputFunctionParameters == true)
           if ( (outputFunctionParameters == true) || (funcdecl_stmt->get_oldStyleDefinition() == true) )
              {
-               unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+#if 0
+               printf ("In unparseFunctionArgs(): Calling unparseFunctionParameterDeclaration() \n");
+#endif
+            // DQ (4/13/2018): If we have saved the original syntax then use it, else use the default (which is matching the defining function declaration).
+            // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+               if (funcdecl_stmt->get_type_syntax_is_available() == true)
+                  {
+                 // DQ (4/13/2018): One question would be are we using the correct name qualification for any type referenced.
+#if 0
+                    printf ("In unparseFunctionArgs(): Output the syntax for function parameters: (*p_syntax)->get_name() = %s \n",(*p_syntax)->get_name().str());
+#endif
+                    unparseFunctionParameterDeclaration (funcdecl_stmt,*p_syntax,false,info);
+                  }
+                 else
+                  {
+                    unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+                  }
              }
 
        // Move to the next argument
           p++;
+
+       // DQ (4/13/2018): Increment the type syntax iterator in unison.
+          if (funcdecl_stmt->get_type_syntax_is_available() == true)
+             {
+               p_syntax++;
+             }
 
        // Check if this is the last argument (output a "," separator if not)
           if (p != funcdecl_stmt->get_args().end())
@@ -1336,7 +1386,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
         }
 #endif
 
-#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
+#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE || 0
      printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
 #endif
 
@@ -1866,7 +1916,18 @@ Unparse_ExprStmt::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, 
 #endif
      curprint ( nameQualifier);
 
-     curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
+  // DQ (4/9/2018): Added support for aliases of namespace alias namespaces.
+  // curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
+     if (namespaceAliasDeclaration->get_is_alias_for_another_namespace_alias() == false)
+        {
+          curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
+        }
+       else
+        {
+       // DQ (4/9/2018): This is the case of an alis to a namespace alias (see Cxx_tests/test2018_26.C).
+          curprint ( namespaceAliasDeclaration->get_namespaceAliasDeclaration()->get_name().str());
+        }
+
      curprint ( string(";\n"));
    }
 
@@ -2563,6 +2624,12 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
           if (skipforwardDeclarationOfTemplateSpecialization == true)
              {
             // This is a compiler generated forward function declaration of a template instatiation, so skip it!
+#if 0
+               printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
+#endif
+#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
+               curprint("\n/* Skipping output of compiler generated forward function declaration of a template specialization */");
+#endif
 #if PRINT_DEVELOPER_WARNINGS || 0
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
                curprint ( string("\n/* Skipping output of compiler generated forward function declaration of a template specialization */"));
@@ -2576,7 +2643,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // skip output of inlined templates since these are likely to have been used 
             // previously and would be defined too late if provided as an inline template 
             // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS || 0
+#if PRINT_DEVELOPER_WARNINGS || 1
                printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
                curprint ( string("\n/* Skipping output of inlined template specialization */"));
 #endif
@@ -2767,6 +2834,15 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
             // printf ("Output this member function \n");
                outputMemberFunctionTemplateInstantiation = true;
              }
+            else
+             {
+#if 0
+               printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): function has no definition, so skip output! \n");
+#endif
+#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
+               curprint (" /* function has no definition, so skip output */ ");
+#endif
+             }
         }
        else
         {
@@ -2826,6 +2902,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
 #if 0
                printf ("Declaration does NOT appear in the current source file (templateInstantiationMemberFunctionDeclaration = %p = %s) \n",
                     templateInstantiationMemberFunctionDeclaration, templateInstantiationMemberFunctionDeclaration->get_qualified_name().str());
+               printf ("   templateInstantiationMemberFunctionDeclaration->get_name() = %s \n",templateInstantiationMemberFunctionDeclaration->get_name().str());
                printf ("   isSpecialization() = %s \n",templateInstantiationMemberFunctionDeclaration->isSpecialization() ? "true" : "false");
 #endif
              }
@@ -2855,7 +2932,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
                  // It is built in ROSE/src/roseSupport/templateSupport.C void fixupInstantiatedTemplates ( SgProject* project ).
                  // The forward declaration is placed directly after the template declaration so that no uses of the function can exist
                  // prior to its declaration.  Output a message into the gnerated source code identifying this transformation.
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 0
                     curprint ( string("\n/* ROSE generated forward declaration of the ROSE generated member template specialization */"));
 #endif
                   }
@@ -2866,7 +2943,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
                  // at the end of file and may be defined there because a forward declaration for the 
                  // specialization was output directly after the template declaration (before any use of 
                  // the function could have been made ???).
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 0
                     curprint ( string("\n/* ROSE generated member template specialization */"));
 #endif
                   }
@@ -2880,8 +2957,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
 
        // DQ (8/29/2005): This is now output by the Unparse_ExprStmt::outputTemplateSpecializationSpecifier() member function
        // curprint ( string("\ntemplate <> ";
-
-       // printf ("Calling unparseMFuncDeclStmt() \n");
+#if 0
+          printf ("Calling unparseMFuncDeclStmt() \n");
+#endif
           unparseMFuncDeclStmt(memberFunctionDeclaration,info);
         }
        else
@@ -5524,7 +5602,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt */ \n"); 
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_NAME
+#if OUTPUT_DEBUGGING_FUNCTION_NAME || 0
      printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
          mfuncdecl_stmt->get_qualified_name().str(), isTransformed (mfuncdecl_stmt) ? "true" : "false", (mfuncdecl_stmt->get_definition() == NULL) ? "true" : "false");
 #endif
@@ -5564,7 +5642,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // this needs to be handled better in the future!
      if (isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt) != NULL)
         {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 0
           printf ("DQ (11/23/2004): Experiment with skipping the output of specialized template member functions! \n");
 #endif
 
@@ -5699,9 +5777,15 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #else
        // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
        // ninfo.set_forceQualifiedNames();
+
+#error "DEAD CODE!"
+
 #if 0
           curprint("/* force output of qualified names */\n ");
 #endif
+
+#error "DEAD CODE!"
+
        // DQ (10/17/2004): Added code to form skipping enum definitions.
        // DQ (10/7/2004): Skip output of class definition for return type! C++ standard does not permit 
        // a defining declaration within a return type, function parameter, or sizeof expression. 
@@ -5718,6 +5802,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // JJW 10-23-2007 This member function is declared inside the
             // class, so its name should never be qualified
 
+#error "DEAD CODE!"
+
             // printf ("mfuncdecl_stmt->get_declarationModifier().isFriend() = %s \n",mfuncdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
                if (mfuncdecl_stmt->get_declarationModifier().isFriend() == false)
                   {
@@ -5729,10 +5815,14 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_SkipClassDefinition();
           ninfo.set_SkipEnumDefinition();
 
+#error "DEAD CODE!"
+
        // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
        // the declaration (so that exceptions to qualification can be tracked).
           ninfo.set_declstatement_ptr(NULL);
           ninfo.set_declstatement_ptr(mfuncdecl_stmt);
+
+#error "DEAD CODE!"
 
        // if (!(mfuncdecl_stmt->isConstructor() || mfuncdecl_stmt->isDestructor() || mfuncdecl_stmt->isConversion()))
           if ( !( mfuncdecl_stmt->get_specialFunctionModifier().isConstructor() || 
@@ -5740,6 +5830,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   mfuncdecl_stmt->get_specialFunctionModifier().isConversion() ) )
              {
             // printf ("In unparser: NOT a constructor, destructor or conversion operator \n");
+
+#error "DEAD CODE!"
 
             // printf ("mfuncdecl_stmt->get_orig_return_type() = %p \n",mfuncdecl_stmt->get_orig_return_type());
 
@@ -5765,6 +5857,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // the declaration (so that exceptions to qualification can be tracked).
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 
+#error "DEAD CODE!"
+
             // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
             // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
             // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
@@ -5780,6 +5874,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // ninfo2.set_forceQualifiedNames();
                     ninfo_for_type.set_requiresGlobalNameQualification();
                   }
+
+#error "DEAD CODE!"
 
             // DQ (5/30/2011): Added support for name qualification.
                ninfo_for_type.set_reference_node_for_qualification(mfuncdecl_stmt);
@@ -5797,6 +5893,9 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
             else
              {
+
+#error "DEAD CODE!"
+
             // DQ (9/17/2004): What can we assume about the return type of a constructor, destructor, or conversion operator?
                if (mfuncdecl_stmt->get_orig_return_type() == NULL)
                   {
@@ -5830,9 +5929,51 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( nameQualifier.str() );
 
 #if 0
+       // DQ (4/2/2018): Older version of code didn't use support to get the template arguments unparsed with name qualification.
+#if 0
           printf ("mfuncdecl_stmt->get_name() for member function = %s \n",mfuncdecl_stmt->get_name().str());
 #endif
           curprint ( mfuncdecl_stmt->get_name().str());
+#else
+       // DQ (4/2/2018): Adding support for alternative and more sophisticated handling of the function name 
+       // (e.g. with template arguments correctly qualified, etc.).
+          if (isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt) != NULL)
+             {
+#if 0
+               printf ("Calling unparseTemplateMemberFunctionName() \n");
+               curprint(" /* In unparse_helper(): Calling unparseTemplateMemberFunctionName() */ \n");
+#endif
+
+            // unp->u_exprStmt->unparseTemplateFunctionName(isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt),ninfo);
+               unp->u_exprStmt->unparseTemplateMemberFunctionName(isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt),ninfo);
+
+#if 0
+               printf ("Done: unparseTemplateMemberFunctionName() \n");
+               curprint(" /* In unparse_helper(): Done: unparseTemplateMemberFunctionName() */ \n");
+#endif
+             }
+            else
+             {
+#if 0
+               printf ("mfuncdecl_stmt->get_name() for member function = %s \n",mfuncdecl_stmt->get_name().str());
+#endif
+               curprint ( mfuncdecl_stmt->get_name().str());
+             }
+#endif
+
+#if 0
+       // DQ (4/1/2018): We need to output the member functions template name and the template arguments directly, 
+       // so that any computed name qualification can be included.  Just the template instatiation member function 
+       // name will fail to have the computed name qualification. 
+          if (isSgTemplateInstantiationMemberFunctionDecl(mfuncdecl_stmt) != NULL)
+             {
+               printf ("WARNING: We cannot use the SgTemplateInstantiationMemberFunctionDecl stored name, e.g. get_name() function, since it will fail to have name qualification for template arguments \n");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
 
           SgUnparse_Info ninfo2(info);
 
@@ -10248,6 +10389,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
      printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
 #endif
 
+#error "DEAD CODE!"
+
   // Check to see if this is an object defined within a class
      ROSE_ASSERT (template_stmt->get_parent() != NULL);
      SgClassDefinition *cdefn = isSgClassDefinition(template_stmt->get_parent());
@@ -10259,6 +10402,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
              }
         }
 
+#error "DEAD CODE!"
+
   // Output access modifiers
      unp->u_sage->printSpecifier1(template_stmt, info);
 
@@ -10266,6 +10411,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
 
   // DQ (1/21/2004): Use the string class to simplify the previous version of the code
      string templateString = template_stmt->get_string().str();
+
+#error "DEAD CODE!"
 
   // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
      if (template_stmt->get_declarationModifier().isExport())
@@ -10604,12 +10751,24 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // Substitute " decltype" with " __decltype" to fix this.
        // templateString.subst(" decltype"," __decltype");
           string denormalizedTemplateString = replaceString (templateString," decltype"," __decltype");
+
+       // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
+       // Not clear if this is only a C++11 issue or a C++14 issue as well.
+       // denormalizedTemplateString = replaceString (denormalizedTemplateString," __ALIGNOF__"," __alignof__");
 #if 0
           printf ("denormalizedTemplateString = %s \n",denormalizedTemplateString.c_str());
 #endif
           templateString = denormalizedTemplateString;
         }
 
+  // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
+  // Not clear if this is only a C++11 issue or a C++14 issue as well.
+     string denormalizedAlignofTemplateString = replaceString (templateString," __ALIGNOF__"," __alignof__");
+#if 0
+     printf ("denormalizedAlignofTemplateString = %s \n",denormalizedAlignofTemplateString.c_str());
+#endif
+     templateString = denormalizedAlignofTemplateString;
+ 
      if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
         {
           if (templateMemberFunctionDeclaration != NULL) {
@@ -10861,6 +11020,13 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
             else
              {
             // DQ (9/7/2014): This is the typical case.
+#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
+            // DQ (4/5/2018): For debugging, output something so that we know why nothing is output.
+               if (templateString.size() == 0)
+                  {
+                    curprint (" /* Output the templateString: templateString.size() = " + StringUtility::numberToString(templateString.size()) + " */ ");
+                  }
+#endif
 #if 0
                printf ("In unparseTemplateDeclarationStatment_support(): Output the templateString = %s \n",templateString.c_str());
 #endif
@@ -10897,7 +11063,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
                printf ("DONE: In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
 
                SgUnparse_Info ninfox(info);
-#if 1
+#if 0
                printf ("In unparseTemplateDeclarationStatment_support(): calling ninfox.unset_SkipSemiColon() \n");
 #endif
                ninfox.unset_SkipSemiColon();

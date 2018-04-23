@@ -181,6 +181,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
+#if 0
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
     size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
@@ -188,6 +189,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
     int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (reduced nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
+#endif
 
   ROSE_ASSERT(_initialElementFactory);
   for(long l=0;l<getLabeler()->numberOfLabels();++l) {

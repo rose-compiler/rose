@@ -355,6 +355,10 @@ NEW_TESTCODES = \
    test2016_12.C \
    test2016_13.C \
    test2016_14.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
    test2016_19.C \
    test2016_21.C \
    test2016_25.C \
@@ -368,6 +372,7 @@ NEW_TESTCODES = \
    test2016_33.C \
    test2016_34.C \
    test2016_36.C \
+   test2016_37.C \
    test2016_38.C \
    test2016_40.C \
    test2016_41.C \
@@ -399,6 +404,7 @@ NEW_TESTCODES = \
    test2016_68.C \
    test2016_69.C \
    test2016_70.C \
+   test2016_71.C \
    test2016_80.C \
    test2016_81.C \
    test2016_83.C \
@@ -408,11 +414,17 @@ NEW_TESTCODES = \
    test2016_88.C \
    test2016_91.C \
    test2016_93.C \
+   test2017_01.C \
+   test2017_02.C \
+   test2017_03.C \
    test2017_04.C \
    test2017_09.C \
    test2017_10.C \
    test2017_11.C \
    $(NEW_2017_TESTS)
+
+# DQ (4/8/2018): Commented out test2017_05.C which fails when using EDG 4.9.
+# DQ (4/7/2018): Added test2017_01.C through test2017_05.C into list above.
 
 NEW_2017_TESTS = \
    test2017_13.C \
@@ -459,6 +471,8 @@ NEW_2017_TESTS = \
    test2017_65.C \
    test2017_66.C \
    test2017_68.C \
+   test2017_70.C \
+   test2017_71.C \
    test2017_72.C \
    test2017_73.C \
    test2017_74.C \
@@ -513,8 +527,10 @@ NEW_2017_TESTS = \
    test2018_19.C \
    test2018_20.C \
    test2018_21.C \
+   test2018_24.C \
    test2018_27.C \
    test2018_29.C \
+   test2018_30.C \
    test2018_32.C \
    test2018_33.C \
    test2018_34.C \
@@ -527,16 +543,42 @@ NEW_2017_TESTS = \
    test2018_41.C \
    test2018_42.C \
    test2018_43.C \
-   test2018_44.C
+   test2018_44.C \
+   test2018_45.C \
+   test2018_46.C \
+   test2018_47.C \
+   test2018_48.C \
+   test2018_49.C \
+   test2018_50.C \
+   test2018_51.C \
+   test2018_52.C \
+   test2018_53.C \
+   test2018_54.C \
+   test2018_55.C \
+   test2018_56.C \
+   test2018_57.C \
+   test2018_58.C \
+   test2018_59.C \
+   test2018_60.C \
+   test2018_61.C 
 
 
-
+# DQ (4/7/2018): Updating failing tests.
 # DQ (12/18/2017): These are perhaps not valid C++ code (might be C code using GNU extensions).
 FAILING_2017_TESTS = \
+   test2017_20.C \
+   test2017_24.C \
    test2017_59.C \
-   test2017_67.C \
-   test2017_70.C \
-   test2017_71.C 
+   test2017_67.C 
+
+FAILING_PLUM_HALL_TESTS = \
+   test2018_22.C \
+   test2018_23.C \
+   test2018_25.C \
+   test2018_26.C \
+   test2018_28.C \
+   test2018_31.C 
+
 
 # DQ (1/2/2018): This is a translator test code that should not be in the regression tests.
 TRANSLATOR_TEST_CODE = \
@@ -607,17 +649,13 @@ endif
 # DQ (3/8/2017): These test codes have not been integrated yet. test2017_01.C is moved to C++11_tests, test2017_02 
 # is an example of nonconforming C++ code, and test2017_03.C passes, but is not yet integrated for general testing.
 TESTCODES_NOT_INTEGRATED = \
-   test2017_01.C \
-   test2017_02.C \
-   test2017_03.C \
-   test2017_03.C \
    test2017_05.C \
    test2017_06.C \
    test2017_07.C \
    test2017_08.C
 
 # DQ (11/14/2016): Test codes not yet passing.
-#  test2016_91.C 
+#  test2016_90.C 
 #  test2016_92.C (this does not compile with EDG 4.9, but works with EDG 4.11).
 #  test2016_94.C (this does not compile with EDG 4.9, but works with EDG 4.11).
 #  test2016_95.C (this does not compile with EDG 4.9, but works with EDG 4.11).
@@ -792,10 +830,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_115.C \
    test2015_116.C \
    test2015_148.C \
-   test2016_16.C \
-   test2016_17.C \
-   test2016_18.C \
-   test2016_15.C \
    test2016_89.C 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \

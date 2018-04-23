@@ -372,10 +372,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    else if (traverse_BitItemDescription(term, type)) {
       // MATCHED BitItemDescription
    }
-#if 0
    else if (traverse_CharacterItemDescription(term, type)) {
       // MATCHED CharacterItemDescription
    }
+#if 0
    else if (traverse_StatusItemDescription(term, type)) {
       // MATCHED StatusItemDescription
    }
@@ -620,6 +620,36 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitItemDescription(ATerm term, Sg
    if (traverse_OptItemSize(t_size, &has_size, &size)) {
       (*type)->set_has_kind(has_size);
       (*type)->set_type_kind(size);
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_CharacterItemDescription(ATerm term, SgUntypedType** type)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CharacterItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_size;
+   bool has_size;
+   SgUntypedExpression* size;
+
+   if (ATmatch(term, "CharacterItemDescription(<term>)", &t_size)) {
+      // MATCHED CharacterItemDescription
+   } else return ATfalse;
+
+   if (traverse_OptItemSize(t_size, &has_size, &size)) {
+      if (has_size) {
+         *type = UntypedBuilder::buildType(SgUntypedType::e_string);
+         (*type)->set_char_length_expression(size);
+      }
+      else {
+         *type = UntypedBuilder::buildType(SgUntypedType::e_char);
+      }
    } else return ATfalse;
 
    return ATtrue;
@@ -988,14 +1018,24 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       //  ReturnStatement             -> SimpleStatement
       //  GotoStatement               -> SimpleStatement
       //  ExitStatement               -> SimpleStatement
-      //  StopStatement               -> SimpleStatement
-      //  AbortStatement              -> SimpleStatement
 
       else if (traverse_NullStatement(t_stmt, stmt_list)) {
          // MATCHED NullStatement
       }
       else return ATfalse;
    }
+
+// This subsumes the labels in statements, eventually all SimpleStatements will take this path
+   else if (ATmatch(term, "SimpleStatement(<term>)", &t_stmt)) {
+      if (traverse_AbortStatement(t_stmt, stmt_list)) {
+         // MATCHED AbortStatement
+      }
+      else if (traverse_StopStatement(t_stmt, stmt_list)) {
+         // MATCHED StopStatement
+      }
+      else return ATfalse;
+   }
+
    else return ATfalse;
 
    return ATtrue;
@@ -1023,13 +1063,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector
 #endif
 
    ATerm t_labels;
+   char * label;
+
    if (ATmatch(term, "LabelList(<term>)" , &t_labels)) {
       ATermList tail = (ATermList) ATmake("<term>", t_labels);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         // TODO - match label
-         return ATfalse;
+         if (ATmatch(head, "Label(<str>)", &label)) {
+            labels.push_back(label);
+         } else return ATfalse;
       }
    } else return ATfalse;
 
@@ -1060,8 +1103,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
          // MATCHED Formula
       } else return ATfalse;
 
-      std::cout << "ASSIGNMENT STMT\n";
-
       assert(labels.size() <= 1);
       assert(  vars.size() == 1);
       assert(expr);
@@ -1076,6 +1117,73 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
 
 
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 4.9 STOP STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StopStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels, t_stop_code;
+   std::vector<std::string> labels;
+   SgUntypedExpression* stop_code = NULL;
+
+   if (ATmatch(term, "StopStatement(<term>,<term>)", &t_labels, &t_stop_code)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+      if (ATmatch(t_stop_code, "no-integer-formula()")) {
+         // No StopCode
+         stop_code = new SgUntypedNullExpression();
+         setSourcePositionUnknown(stop_code);
+      }
+      else if (traverse_IntegerFormula(t_stop_code, &stop_code)) {
+         // MATCHED IntegerFormula
+      } else return ATfalse;
+
+      SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;
+      SgUntypedExpressionStatement* stop_stmt = new SgUntypedExpressionStatement("", keyword, stop_code);
+      setSourcePosition(stop_stmt, term);
+
+      stmt_list->get_stmt_list().push_back(stop_stmt);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 4.10 ABORT STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_AbortStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AbortStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels;
+   std::vector<std::string> labels;
+
+   if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+      // TODO - construct untyped node for AbortStatement
+      // SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
+      // setSourcePosition(abort_stmt, term);
+      // TODO - add new node to stmt_list
+      // stmt_list->get_stmt_list().push_back(abort_stmt);
+      return ATfalse;
+   }
+   else return ATfalse;
 
    return ATtrue;
 }

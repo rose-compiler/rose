@@ -2765,6 +2765,13 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
 #else
 
 #if 0
+            // DQ (4/14/2018): Check if this is associated with the template instantiation.
+               SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(tdecl);
+               if (templateInstantiationTypedefDeclaration != NULL)
+                  {
+                    printf ("Part 1: We need to process the template arguments (and name qualification) for this SgTemplateInstantiationTypedefDeclaration \n");
+                    curprint ("/* Part 1: We need to process the template arguments to include name qualification */ ");
+                  }
                printf ("In unparseTypedefType(): info.get_reference_node_for_qualification() = %p \n",info.get_reference_node_for_qualification());
 #endif
             // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
@@ -2783,6 +2790,11 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
                   {
                     SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
                     curprint(nameQualifier.str());
+
+                 // DQ (4/14/2018): This is not the correct way to handle the output of template instantations since this uses the internal name (with unqualified template arguments).
+
+#if 0
+                 // DQ (4/15/2018): Original code (which unparsed using the name which would embedd template arguments, but without name qualification).
                     SgName nm = typedef_type->get_name();
                     if (nm.getString() != "")
                        {
@@ -2791,6 +2803,39 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
 #endif
                          curprint ( nm.getString() + " ");
                        }
+#else
+                 // DQ (4/15/2018): New code (which unparses the template name (without template arguments, and unparsed the template arguments with name qualification).
+                 // DQ (4/2/2018): Adding support for alternative and more sophisticated handling of the function name 
+                 // (e.g. with template arguments correctly qualified, etc.).
+                    SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(tdecl);
+                    if (templateInstantiationTypedefDeclaration != NULL)
+                       {
+#if 0
+                         printf ("Calling unparseTemplateTypedefName() \n");
+                         curprint(" /* In unparseTypedefType(): Calling unparseTemplateTypedefName() */ \n");
+#endif
+                         unparseTemplateTypedefName(templateInstantiationTypedefDeclaration,info);
+#if 0
+                         printf ("Done: unparseTemplateTypedefName() \n");
+                         curprint(" /* In unparseTypedefType(): Done: unparseTemplateTypedefName() */ \n");
+#endif
+                       }
+                      else
+                       {
+#if 0
+                         printf ("typedef_type->get_name() for non-template instantiation typedef = %s \n",typedef_type->get_name().str());
+#endif
+                      // curprint ( typedef_type->get_name().str());
+                         SgName nm = typedef_type->get_name();
+                         if (nm.getString() != "")
+                            {
+#if 0
+                              printf ("In unparseTypedefType(): Output qualifier of current types to the name = %s \n",nm.str());
+#endif
+                              curprint ( nm.getString() + " ");
+                            }
+                       }
+#endif
                   }
 #endif
 #endif
@@ -2847,6 +2892,21 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
                curprint ( typedef_type->get_name().str() + " ");
              }
 #endif
+
+
+#if 0
+       // DQ (4/14/2018): Check if this is associated with the template instantiation.
+          SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(tdecl);
+          if (templateInstantiationTypedefDeclaration != NULL)
+             {
+               printf ("We need to process the template arguments (and name qualification) for this SgTemplateInstantiationTypedefDeclaration \n");
+               curprint ("/* We need to process the template arguments to include name qualification */ ");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
         }
 
 #if DEBUG_TYPEDEF_TYPE
@@ -2856,6 +2916,69 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      curprint("\n/* Leaving Unparse_Type::unparseTypedefType */ \n");
 #endif
    }
+
+
+
+
+
+void
+Unparse_Type::unparseTemplateTypedefName(SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration, SgUnparse_Info& info)
+   {
+  // DQ (6/21/2011): Generated this function from refactored call to unparseTemplateArgumentList
+     ROSE_ASSERT (templateInstantiationTypedefDeclaration != NULL);
+
+#if 0
+     printf ("In unparseTemplateTypedefName(): templateInstantiationTypedefDeclaration->get_name() = %s \n",templateInstantiationTypedefDeclaration->get_name().str());
+     printf ("In unparseTemplateTypedefName(): templateInstantiationTypedefDeclaration->get_templateName() = %s \n",templateInstantiationTypedefDeclaration->get_templateName().str());
+#endif
+
+     unp->u_exprStmt->curprint(templateInstantiationTypedefDeclaration->get_templateName().str());
+
+  // DQ (4/15/2018): Not clear if this level of information is available for template teypdef instantiations.
+  // bool unparseTemplateArguments = templateInstantiationTypedefDeclaration->get_template_argument_list_is_explicit();
+     bool unparseTemplateArguments = true;
+
+#if 0
+  // DQ (6/29/2013): This controls if the template arguments for the function should be unparsed.
+  // printf ("In unparseTemplateFunctionName(): templateInstantiationFunctionDeclaration->get_template_argument_list_is_explicit() = %s \n",
+  //      templateInstantiationFunctionDeclaration->get_template_argument_list_is_explicit() ? "true" : "false");
+     printf ("In unparseTemplateTypedefName(): name = %s unparse template arguments = %s \n",
+          templateInstantiationTypedefDeclaration->get_templateName().str(),unparseTemplateArguments ? "true" : "false");
+#endif
+
+  // DQ (6/29/2013): Use the information recorded in the AST as to if this function has been used with 
+  // template arguments in the original code.  If so then we always unparse the template arguments, if 
+  // not then we never unparse the template arguments.  See test2013_242.C for an example of where this 
+  // is significant in the generated code.  Note that this goes a long way toward making the generated
+  // code look more like the original input code (where before we have always unparsed template arguments
+  // resulting in some very long function calls in the generated code).  Note that if some template
+  // arguments are specified and some are not then control over not unparsing template arguments that
+  // where not explicit in the original code will be handled seperately in the near future (in the 
+  // SgTemplateArgument IR nodes).
+  // unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
+     if (unparseTemplateArguments == true)
+        {
+#if 0
+          SgTemplateArgumentPtrList & templateArgList = templateInstantiationTypedefDeclaration->get_templateArguments();
+          printf ("In unparseTemplateTypedefName(): templateArgList.size() = %zu \n",templateArgList.size());
+          for (size_t i = 0; i < templateArgList.size(); i++)
+             {
+               printf ("--- templateArgList[%zu] = %p \n",i,templateArgList[i]);
+             }
+#endif
+          unp->u_exprStmt->unparseTemplateArgumentList(templateInstantiationTypedefDeclaration->get_templateArguments(),info);
+        }
+   }
+
+
+
+
+
+
+
+
+
+
 
 
 string
