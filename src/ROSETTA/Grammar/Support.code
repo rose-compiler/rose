@@ -7456,6 +7456,13 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgNonrealDecl:
+             {
+               const SgNonrealDecl* nrdecl = isSgNonrealDecl(node);
+               name = nrdecl->get_name();
+               break;
+             }
+
           default:
              {
                printf ("SgSymbolTable::get_name(SgNode*) undefined for %s \n",node->class_name().c_str());

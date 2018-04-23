@@ -212,6 +212,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (11/21/2017): Adding support for GNU C/C++ extension for computed goto 
        // (and using what was previously only a Fortran IR node to support this).
           case LABEL_REF:              { unparseLabelRefExpression(expr, info); break; }
+          case NONREAL_REF:            { unparseNonrealRefExpression(expr, info); break; }
 
           default:
              {
@@ -251,6 +252,16 @@ Unparse_ExprStmt::unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info& 
      curprint(name);
    }
 
+void
+Unparse_ExprStmt::unparseNonrealRefExpression(SgExpression* expr, SgUnparse_Info& info) {
+  SgNonrealRefExp * nr_refexp = isSgNonrealRefExp(expr);
+  ROSE_ASSERT(nr_refexp != NULL);
+
+  SgNonrealSymbol * nrsym = nr_refexp->get_symbol();
+  ROSE_ASSERT(nrsym != NULL);
+
+  curprint(nrsym->get_name().str());
+}
 
 void
 Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& info)
@@ -969,41 +980,13 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
-            // DQ (9/9/2014): Note that this is now constrcuted to be a SgClassType were ever possible.
-            // This allows the name qualification to be resolved when unparsing template declarations.
-               SgTemplateType* templateType = isSgTemplateType(type);
-            // ROSE_ASSERT(templateType != NULL);
-               if (templateType == NULL)
-                  {
-#if 0
-                    printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: (templateType == NULL): type = %p = %s \n",type,type->class_name().c_str());
-#endif
-                 // When unparsing a template paramter we only want to use the name.
-                    SgClassType* classType = isSgClassType(type);
-                    if (classType != NULL)
-                       {
-                         string name = classType->get_name();
-                         if (is_template_header) curprint(" typename ");
-                         curprint(name);
-                       }
-                      else
-                       {
-                         SgUnparse_Info ninfo(info);
-                         unp->u_type->unparseType(type,ninfo);
-                       }
-                  }
-                 else
-                  {
-                    string name = templateType->get_name();
-#if 0
-                    printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
-#endif
-                    // Liao 12/15/2016, we need explicit typename here
-                    // TV (03/20/2018) only if it is a template header (not a specialization)
-                    // TV (03/23/2018): could either be class or typename: where is the info in EDG? where to store it in the AST?
-                    if (is_template_header) curprint(" typename ");
-                    curprint(name);
-                  }
+            // TV (04/17/2018): Not clear what the use case for other type of type is so let see where it breaks...
+               SgNonrealType * nrtype = isSgNonrealType(type);
+               ROSE_ASSERT(nrtype != NULL);
+
+               if (is_template_header)
+                 curprint("typename ");
+               curprint(nrtype->get_name());
 
                SgType* default_type = templateParameter->get_defaultTypeParameter();
                if (default_type != NULL)

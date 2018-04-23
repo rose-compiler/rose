@@ -325,6 +325,8 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (11/21/2017): Adding support for GNU C extension for computed goto.
           virtual void unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info& info);
 
+          virtual void unparseNonrealRefExpression(SgExpression* expr, SgUnparse_Info& info);
+
       //! unparse statement functions implememted in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
        // virtual void unparseStatement        (SgStatement* stmt, SgUnparse_Info& info);

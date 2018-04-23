@@ -380,6 +380,8 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // Allow this as an IR node into the AST.
           case V_SgPartialFunctionType:
 #endif
+       // TV (04/16/2018): Ignore non-real type for now
+          case V_SgNonrealType:
              {
             // Ignore these cases (they contain no base types)...
                nodeList.insert(type);
@@ -2303,6 +2305,51 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
            break;
            }
 #endif
+
+           case V_SgNonrealDecl:
+             {
+               SgNonrealDecl * nrdecl = isSgNonrealDecl(node);
+               ROSE_ASSERT(nrdecl != NULL);
+               nodeList.insert(nrdecl);
+
+               SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
+               if (nrscope != NULL)
+                 addAssociatedNodes(nrscope,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               SgNonrealType * nrtype = nrdecl->get_type();
+               if (nrtype != NULL)
+                 addAssociatedNodes(nrtype,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
+               for (auto it = tpl_args.begin(); it != tpl_args.end(); it ++) {
+                 addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+
+               SgTemplateArgumentPtrList & part_spec_tpl_args = nrdecl->get_part_spec_tpl_args();
+               for (auto it = part_spec_tpl_args.begin(); it != part_spec_tpl_args.end(); it ++) {
+                 addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+
+               break;
+             }
+           case V_SgNonrealType:
+             {
+               SgType* type = isSgType(node);
+               ROSE_ASSERT(type != NULL);
+               addAssociatedNodes(type,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               break;
+             }
+           case V_SgNonrealSymbol:
+             {
+               SgNonrealSymbol * symbol = isSgNonrealSymbol(node);
+               ROSE_ASSERT(symbol != NULL);
+               nodeList.insert(symbol);
+
+               addAssociatedNodes(symbol->get_declaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+
+               break;
+             }
 
        // Rasmussen 6/14/2017: Ignore SgUntyped nodes for now.  Untyped nodes are currently used in
        // parsing Fortran as a temporary conversion mechanism to store node information before complete

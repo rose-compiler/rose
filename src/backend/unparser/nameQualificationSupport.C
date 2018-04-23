@@ -485,6 +485,15 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                break;
              }
 
+          case V_SgNonrealType:
+             {
+               SgNonrealType * nrtype = isSgNonrealType(strippedType);
+               ROSE_ASSERT(nrtype != NULL);
+               return_declaration = nrtype->get_declaration();
+               ROSE_ASSERT(return_declaration != NULL);
+               break;
+             }
+
        // Catch anything that migh have been missed (and exit so it can be identified and fixed).
           default:
              {
@@ -862,6 +871,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      positionStatement->get_startOfConstruct()->display("positionStatement");
 #endif
 
+     SgNonrealDecl*                   nonrealDecl          = isSgNonrealDecl(declaration);
      SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
      SgVariableDeclaration*           variableDeclaration  = isSgVariableDeclaration(declaration);
      SgFunctionDeclaration*           functionDeclaration  = isSgFunctionDeclaration(declaration);
@@ -887,12 +897,13 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
   // ROSE_ASSERT(classDefinition != NULL || namespaceDefinition != NULL);
   // ROSE_ASSERT((classDefinition != NULL && classDeclaration != NULL) || (namespaceDefinition != NULL && namespaceDeclaration != NULL));
   // ROSE_ASSERT(classDeclaration != NULL || namespaceDeclaration != NULL);
-     ROSE_ASSERT(classDeclaration != NULL || namespaceDeclaration != NULL || variableDeclaration != NULL || functionDeclaration != NULL || typedefDeclaration != NULL || templateDeclaration != NULL || enumDeclaration != NULL );
+     ROSE_ASSERT(classDeclaration != NULL || namespaceDeclaration != NULL || variableDeclaration != NULL || functionDeclaration != NULL || typedefDeclaration != NULL || templateDeclaration != NULL || enumDeclaration != NULL || nonrealDecl != NULL);
 
   // ROSE_ASSERT((classDeclaration != NULL && classDefinition != NULL) || (namespaceDeclaration != NULL && namespaceDefinition != NULL) || variableDeclaration != NULL);
 
   // SgName name = (classDeclaration != NULL) ? classDeclaration->get_name() : ((namespaceDeclaration != NULL) ? namespaceDeclaration->get_name() : "unknown");
-     SgName name = (classDeclaration     != NULL) ? classDeclaration->get_name()     : 
+     SgName name = (nonrealDecl          != NULL) ? nonrealDecl->get_name()          : 
+                   (classDeclaration     != NULL) ? classDeclaration->get_name()     : 
                    (namespaceDeclaration != NULL) ? namespaceDeclaration->get_name() : 
                    (variableDeclaration  != NULL) ? SageInterface::getFirstInitializedName(variableDeclaration)->get_name() : 
                    (functionDeclaration  != NULL) ? functionDeclaration->get_name()  : 
@@ -3308,19 +3319,28 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
           skipThisType = true;
         }
  
-  // TV (04/03/2018): Look for SgTemplateType
+  // TV (04/03/2018): Traverse type structure associated with non-real "stuff" (template parameters and their members)
      SgType * btype = type->stripType();
-     SgTemplateType * tpl_type = isSgTemplateType(btype);
-     if (tpl_type != NULL) {
-       if (tpl_type->get_tpl_args().size() > 0) {
-         evaluateNameQualificationForTemplateArgumentList(tpl_type->get_tpl_args(), currentScope, positionStatement);
+     SgNonrealType * nrtype = isSgNonrealType(btype);
+     if (nrtype != NULL) {
+       SgNonrealDecl * nrdecl = isSgNonrealDecl(nrtype->get_declaration());
+       ROSE_ASSERT(nrdecl != NULL);
+       if (nrdecl->get_tpl_args().size() > 0) {
+         evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, positionStatement);
        }
-       if (tpl_type->get_part_spec_tpl_args().size() > 0) {
-         evaluateNameQualificationForTemplateArgumentList(tpl_type->get_part_spec_tpl_args(), currentScope, positionStatement);
+       if (nrdecl->get_part_spec_tpl_args().size() > 0) {
+         evaluateNameQualificationForTemplateArgumentList(nrdecl->get_part_spec_tpl_args(), currentScope, positionStatement);
        }
-       if (tpl_type->get_parent_class_type() != NULL) {
-         traverseType(tpl_type->get_parent_class_type(), nodeReferenceToType, currentScope, positionStatement);
+#if 0
+       ROSE_ASSERT(nrdecl->get_nonreal_decl_scope());
+       SgNonrealDecl * parent_nrdecl = isSgNonrealDecl(nrdecl->get_nonreal_decl_scope()->get_parent());
+       if (parent_nrdecl != NULL) {
+         SgType * tmp = parent_nrdecl->get_type();
+         ROSE_ASSERT(tmp != NULL);
+         ROSE_ASSERT(isSgNonrealType(tmp) != NULL);
+//       traverseType(parent_nrdecl->get_type(), nodeReferenceToType, currentScope, positionStatement);
        }
+#endif
      }
 
 #if 0

@@ -453,6 +453,13 @@ string get_type_name(SgType* t)
 
           case T_ELLIPSE: return "...";
 
+          case T_TEMPLATE:
+             {
+               SgTemplateType * tpl_type = isSgTemplateType(t);
+               ROSE_ASSERT(tpl_type != NULL);
+               return tpl_type->get_name();
+             }
+
           default:
              {
                printf("Error: unparse_type.C get_type_name(): Default case reached in switch: Unknown type \n");
@@ -490,7 +497,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
 
 #if 0
-     printf ("In Unparse_Type::unparseType(): type = %p = %s \n",type,type->class_name().c_str());
+     printf ("In Unparse_Type::unparseType(): type = %p = %s (%s/%s)\n",type,type->class_name().c_str(), info.isTypeFirstPart() ? "true" : "false", info.isTypeSecondPart() ? "true" : "false");
 #endif
 
 #if 0
@@ -808,6 +815,12 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_TYPEOF_TYPE:
                   {
                     unparseTypeOfType(type, info);
+                    break;
+                  }
+
+               case T_NONREAL:
+                  {
+                    unparseNonrealType(type, info);
                     break;
                   }
 
@@ -3686,6 +3699,9 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
    {
+  // TV (04/17/2018): dead code
+     ROSE_ASSERT(false);
+
   // This has to be able to select the kind of type being used (likely a template parameter, and unparse it by name).
   // I think that this is non-trivial, since the type might be more than just a name...
   // I am unclear if it can be something that has a first and second part such as some of the other types above (e.g. SgArrayType).
@@ -3780,6 +3796,74 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
 #if 0
      printf ("Leaving Unparse_Type::unparseTemplateType() \n");
 #endif
+   }
+
+void
+Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info)
+   {
+     SgNonrealType * nrtype = isSgNonrealType(type);
+     ROSE_ASSERT(nrtype != NULL);
+
+#if 0
+     printf("In unparseNonrealType(type = %p): name = %s\n", type, nrtype->get_name().str());
+#endif
+
+     SgNonrealDecl * nrdecl = isSgNonrealDecl(nrtype->get_declaration());
+     ROSE_ASSERT(nrdecl != NULL);
+     SgNode * parent = nrdecl->get_parent();
+     ROSE_ASSERT(parent != NULL);
+     SgDeclarationScope * nrscope = isSgDeclarationScope(parent);
+     if (nrscope == NULL) {
+       printf("Found a SgNonrealDecl (%p) whose parent is a %s (%p)\n", nrdecl, parent->class_name().c_str(), parent);
+       ROSE_ASSERT(false);
+     }
+
+#if 0
+    printf("  nrscope = %p\n", nrscope);
+#endif
+
+     SgNode * parent_nrscope = nrscope->get_parent();
+//   ROSE_ASSERT(parent_nrscope != NULL); // Fails as unparseToString is called from the parser
+
+     SgNonrealDecl * nrparent_nrscope = isSgNonrealDecl(parent_nrscope);
+
+     SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
+     SgTemplateArgumentPtrList & part_spec_tpl_args = nrdecl->get_part_spec_tpl_args();
+
+  // TV (03/29/2018): either first part is requested, or neither if called from unparseToString.
+     bool unparse_type = info.isTypeFirstPart() || ( !info.isTypeFirstPart() && !info.isTypeSecondPart() );
+     if (unparse_type) {
+       // if the scope is non-real then recursively prepend the neccessary qualification
+       if (nrparent_nrscope != NULL) {
+         unparseNonrealType(nrparent_nrscope->get_type(), info);
+         curprint("::");
+       }
+
+       // if template argument are provided then the "template" keyword has to be added
+       if (tpl_args.size() > 0 || part_spec_tpl_args.size() > 0) curprint("template ");
+
+       // output the name of the non-real type
+       curprint(nrtype->get_name());
+
+       // unparse template argument list
+       if (tpl_args.size() > 0) {
+         SgUnparse_Info ninfo(info);
+         ninfo.set_SkipClassDefinition();
+         ninfo.set_SkipEnumDefinition();
+         ninfo.set_SkipClassSpecifier();
+         unp->u_exprStmt->unparseTemplateArgumentList(tpl_args, ninfo);
+       }
+       // unparse partial specialiation template arguments (FIXME do we need to keep both list or are they mutually exclusive?)
+       if (part_spec_tpl_args.size() > 0) {
+         SgUnparse_Info ninfo(info);
+         ninfo.set_SkipClassDefinition();
+         ninfo.set_SkipEnumDefinition();
+         ninfo.set_SkipClassSpecifier();
+         unp->u_exprStmt->unparseTemplateArgumentList(part_spec_tpl_args, ninfo);
+       }
+
+       curprint(" ");
+     }
    }
 
 #if 0

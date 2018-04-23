@@ -2785,7 +2785,13 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
 
 HEADER_TYPEDEF_DECLARATION_STATEMENT_END
 
+HEADER_NONREAL_DECL_START
 
+          SgName get_mangled_name (void) const;
+
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
+
+HEADER_NONREAL_DECL_END
 
 HEADER_TEMPLATE_DECLARATION_STATEMENT_START
        // void post_construction_initialization();
@@ -7008,6 +7014,7 @@ SgScopeStatement::generateStatementList() const
      printf ("In $CLASSNAME::generateStatementList() containsOnlyDeclarations() = %s \n",
           containsOnlyDeclarations() ? "true" : "false");
 #endif
+
 
      SgStatementPtrList returnList;
      if (containsOnlyDeclarations() == true)
@@ -14314,6 +14321,22 @@ SgClassDeclaration::set_global_qualification_required ( bool global_qualificatio
    }
 
 SOURCE_CLASS_DECLARATION_STATEMENT_END
+
+SOURCE_NONREAL_DECL_START
+
+void
+SgNonrealDecl::post_construction_initialization() {}
+
+SgName
+SgNonrealDecl::get_mangled_name (void) const {
+    return get_name();
+}
+
+SgSymbol* SgNonrealDecl::get_symbol_from_symbol_table() const {
+  return get_scope()->find_symbol_from_declaration(this);
+}
+
+SOURCE_NONREAL_DECL_END
 
 SOURCE_STMT_DECLARATION_STATEMENT_START
 

@@ -499,6 +499,10 @@ SgNoexceptOp
 SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
+SgNonrealDecl
+SgNonrealRefExp
+SgNonrealSymbol
+SgNonrealType
 SgNullExpression
 SgNullptrValExp
 SgNullStatement
