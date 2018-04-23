@@ -1105,5 +1105,8 @@ Unparse_Python::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
     else if (assoc == e_assoc_left  && exprPrecedence >= parentPrecedence) return false;
     else if (assoc == e_assoc_left  && exprPrecedence <  parentPrecedence) return true;
     else if (assoc == e_assoc_right && exprPrecedence <= parentPrecedence) return true;
-    else ROSE_ASSERT(!"cannot determine if parens are required in UnparseLanguageIndependentConstructs::requiresParentheses");
+    else {
+        ROSE_ASSERT(!"cannot determine if parens are required in UnparseLanguageIndependentConstructs::requiresParentheses");
+        abort(); // in case ROSE_ASSERT is disabled
+    }
 }
