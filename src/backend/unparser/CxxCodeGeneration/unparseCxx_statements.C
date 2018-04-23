@@ -5509,10 +5509,10 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                  // TV (03/27/2018): whether or not to add "typename"
                     bool prepend_typename = type_needs_typename && function_or_method_outside_class_scope && !isOperator;
 #if 0
-		    printf ("  type_needs_typename = %s \n", type_needs_typename ? "true" : "false");
-		    printf ("  parent_is_scope = %s \n", parent_is_scope ? "true" : "false");
-		    printf ("  method_outside_class_scope = %s \n", method_outside_class_scope ? "true" : "false");
-		    printf ("  function_or_method_outside_class_scope = %s \n", function_or_method_outside_class_scope ? "true" : "false");
+                    printf ("  type_needs_typename = %s \n", type_needs_typename ? "true" : "false");
+                    printf ("  parent_is_scope = %s \n", parent_is_scope ? "true" : "false");
+                    printf ("  method_outside_class_scope = %s \n", method_outside_class_scope ? "true" : "false");
+                    printf ("  function_or_method_outside_class_scope = %s \n", function_or_method_outside_class_scope ? "true" : "false");
                     printf ("  isOperator = %s \n",isOperator ? "true" : "false");
                     printf ("  prepend_typename = %s \n", prepend_typename ? "true" : "false");
 #endif
