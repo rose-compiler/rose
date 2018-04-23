@@ -2321,12 +2321,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                  addAssociatedNodes(nrtype,nodeList,markMemberNodesDefinedToBeDeleted);
 
                SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
-               for (auto it = tpl_args.begin(); it != tpl_args.end(); it ++) {
+               for (SgTemplateArgumentPtrList::iterator it = tpl_args.begin(); it != tpl_args.end(); it ++) {
                  addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
                }
 
                SgTemplateArgumentPtrList & part_spec_tpl_args = nrdecl->get_part_spec_tpl_args();
-               for (auto it = part_spec_tpl_args.begin(); it != part_spec_tpl_args.end(); it ++) {
+               for (SgTemplateArgumentPtrList::iterator it = part_spec_tpl_args.begin(); it != part_spec_tpl_args.end(); it ++) {
                  addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
                }
 
