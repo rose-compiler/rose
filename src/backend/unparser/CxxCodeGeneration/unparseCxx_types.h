@@ -76,7 +76,12 @@ class Unparse_Type
           template <class T>
           void outputType(T* referenceNode, SgType* referenceNodeType, SgUnparse_Info & info);
 
-          void foobar( SgUnparse_Info & info );
+       // DQ (4/15/2018): Adding support for output of template instantiations from template typedefs with template arguments with name qualification.
+          void unparseTemplateTypedefName(SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration, SgUnparse_Info& info);
+
+       // DQ (4/15/2018): This was part of a test (it can be removed now).
+       // void foobar( SgUnparse_Info & info );
+
    };
 
 #endif

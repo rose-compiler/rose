@@ -3181,10 +3181,12 @@ TestAstSymbolTables::visit ( SgNode* node )
                SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(declarationNode);
 #if 0
                if (declarationStatement != NULL)
+                  {
                     printf ("declarationStatement = %p = %s definingDeclaration = %p \n",declarationStatement,declarationStatement->class_name().c_str(),declarationStatement->get_definingDeclaration());
+                  }
 #endif
 #if 0
-               printf ("symbol = %p = %s = %s \n",symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str());
+               printf ("AST consistency test: symbol = %p = %s = %s \n",symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str());
 #endif
 
             // DQ (12/9/2007): Skip symbols that come from labels since they are often 
@@ -3238,7 +3240,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                            //      name = template_class2 < int  , double  >
                            //             template_class2 < int , double >
 
-                              printf ("The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
+                              printf ("Error (AST consistency test): The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
                                    declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str(),
                                    symbol,symbol->class_name().c_str(),SageInterface::get_name(scope).c_str(),
                                    scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
@@ -4562,6 +4564,10 @@ TestMangledNames::visit ( SgNode* node )
         {
        // DQ (1/12/13): Added fix for scopes that may have been deleted (happens where astDelete mechanism is used)
        // mangledName = declarationStatement->get_mangled_name().getString();
+          if (declarationStatement->get_scope() == NULL)
+             {
+               printf ("ERROR: TestMangledNames::visit(): declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+             }
           ROSE_ASSERT(declarationStatement->get_scope() != NULL);
 #if 0
           printf ("TestMangledNames::visit(): declarationStatement->get_scope() = %p = %s \n",declarationStatement->get_scope(),declarationStatement->get_scope()->class_name().c_str());

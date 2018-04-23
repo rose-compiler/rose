@@ -1177,6 +1177,14 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "bool","type_syntax_is_available", "= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/12/2018): This is the parameter list that is used to support function prototypes where the 
+  // function parameter type or parameter names are different from the defining declaration (see example
+  // in C_tests/test2018_32.c).  This data member is only non-null when type_syntax_is_available == true.
+  // FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList_syntax", "= NULL",
+  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList_syntax", "= NULL",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/26/2014): Added support for C11 "_Noreturn" keyword (alternative noreturn specification).
   // This could maybe be moved to the SgFunctionModifier.
      FunctionDeclaration.setDataPrototype("bool","using_C11_Noreturn_keyword","= false",
@@ -2917,6 +2925,14 @@ Grammar::setUpStatements ()
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NamespaceAliasDeclarationStatement.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/8/2018): WE need to add a new data member to support a namespace alias to another namespace alias (see test2018_26.C).
+  // Note that the namespaceDeclaration data member represents the semantics, but a namespaceAliasDeclaration will support
+  // the structure of the original source code.  Not clear if this should be traversed within the AST (not for now).
+     NamespaceAliasDeclarationStatement.setDataPrototype("bool","is_alias_for_another_namespace_alias","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NamespaceAliasDeclarationStatement.setDataPrototype ("SgNamespaceAliasDeclarationStatement*", "namespaceAliasDeclaration", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      NamespaceDefinitionStatement.setFunctionPrototype ( "HEADER_NAMESPACE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
