@@ -380,6 +380,10 @@ HEADER_CLASS_TYPE_START
           SgClassType ( const SgClassType & X );
 HEADER_CLASS_TYPE_END
 
+HEADER_NONREAL_TYPE_START
+          SgNonrealType ( const SgNonrealType & X );
+HEADER_NONREAL_TYPE_END
+
 
 HEADER_JAVA_PARAMETERIZED_TYPE_START
           SgJavaParameterizedType ( const SgJavaParameterizedType & X );
@@ -3536,6 +3540,29 @@ $CLASSNAME::get_mangled(SgUnparse_Info&)
 
 SOURCE_CLASS_TYPE_END
 
+SOURCE_NONREAL_TYPE_START
+
+SgNonrealType::SgNonrealType ( const SgNonrealType & X )
+   : SgNamedType(X)
+   {
+   }
+
+SgName
+SgNonrealType::get_mangled(void) const
+   {
+     return get_name();
+   }
+
+SgName
+SgNonrealType::get_name() const {
+  SgDeclarationStatement * decl_stmt = get_declaration();
+  ROSE_ASSERT(decl_stmt != NULL);
+  SgNonrealDecl * nonreal_decl = isSgNonrealDecl(decl_stmt);
+  ROSE_ASSERT(nonreal_decl != NULL);
+  return nonreal_decl->get_name();
+}
+
+SOURCE_NONREAL_TYPE_END
 
 SOURCE_JAVA_PARAMETERIZED_TYPE_START
 SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType & X )
@@ -7256,6 +7283,20 @@ SgTemplateType::createType(SgTemplateDeclaration* cd, SgExpression* optional_for
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_NONREAL_TYPE_START
+
+SgNonrealType*
+SgNonrealType::createType(SgNonrealDecl* decl, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(decl != NULL);
+
+     printf ("SgNonrealType::createType(SgTemplateDeclaration*,SgExpression*) implemented to return NULL \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+
+SOURCE_CREATE_TYPE_FOR_NONREAL_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_START
 // SgPointerType* SgPointerType::createType(SgType* base_type)

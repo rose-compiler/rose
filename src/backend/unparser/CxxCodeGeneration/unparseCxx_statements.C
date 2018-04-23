@@ -5417,10 +5417,8 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
 
                     ROSE_ASSERT(classType == NULL || assoc_decl_stmt != NULL);
 
-                 // TV (03/27/2018): "typename" is needed if the base-type is a template-type or the class-type of a template decl
-                    bool class_type_needs_typename = classType != NULL && isSgTemplateClassDeclaration(assoc_decl_stmt);
-                    bool tpl_type_needs_typename = templateType != NULL && templateType->get_template_parameter_position() == 0;
-                    bool type_needs_typename = tpl_type_needs_typename || class_type_needs_typename;
+                 // TV (03/27/2018): "typename" is needed if the base-type is a non-real declaration
+                    bool type_needs_typename = isSgNonrealDecl(assoc_decl_stmt);
 
                  // TV (03/27/2018): Only for function template or methods outside of their classes
                     bool parent_is_scope = funcdecl_stmt->get_parent() == funcdecl_stmt->get_scope();
@@ -5433,8 +5431,6 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                  // TV (03/27/2018): whether or not to add "typename"
                     bool prepend_typename = type_needs_typename && function_or_method_outside_class_scope && !isOperator;
 #if 0
-		    printf ("  class_type_needs_typename = %s \n", class_type_needs_typename ? "true" : "false");
-		    printf ("  template_type_needs_typename = %s \n", tpl_type_needs_typename ? "true" : "false");
 		    printf ("  type_needs_typename = %s \n", type_needs_typename ? "true" : "false");
 		    printf ("  parent_is_scope = %s \n", parent_is_scope ? "true" : "false");
 		    printf ("  method_outside_class_scope = %s \n", method_outside_class_scope ? "true" : "false");
@@ -5455,14 +5451,6 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
 
                SgUnparse_Info ninfo_for_type(ninfo);
 
-       // DQ (5/30/2011): Added support for name qualification.
-          ninfo_for_type.set_reference_node_for_qualification(funcdecl_stmt);
-          ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
-
-          ninfo_for_type.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length_for_return_type());
-          ninfo_for_type.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required_for_return_type());
-          ninfo_for_type.set_type_elaboration_required(funcdecl_stmt->get_type_elaboration_required_for_return_type());
-
             // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
             // the declaration (so that exceptions to qualification can be tracked).
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
@@ -5470,23 +5458,33 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
             // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
             // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
             // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
+#if 0
                printf ("funcdecl_stmt->get_requiresNameQualificationOnReturnType() = %s \n",funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false");
+#endif
             // curprint ( string("\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " + (mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") + " */ \n";
-            // if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true)
-               if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true || isSgTemplateType(rtype->stripType()))
+               if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true)
+            // if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true || isSgNonrealType(rtype->stripType()))
                   {
                  // Output the name qualification for the type in the variable declaration.
                  // But we have to do so after any modifiers are output, so in unp->u_type->unparseType().
                  // printf ("In Unparse_ExprStmt::unparseMemberFunctionDeclaration(): This return type requires a global qualifier \n");
 
+#if 0
+                    printf("  Requires for global name qualification\n");
+#endif
                  // Note that general qualification of types is separated from the use of globl qualification.
-                 // ninfo2.set_forceQualifiedNames();
                     ninfo_for_type.set_requiresGlobalNameQualification();
                   }
 
             // DQ (5/30/2011): Added support for name qualification.
                ninfo_for_type.set_reference_node_for_qualification(funcdecl_stmt);
                ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
+
+#if 0
+               printf("  funcdecl_stmt->get_name_qualification_length_for_return_type() = %d\n", funcdecl_stmt->get_name_qualification_length_for_return_type());
+               printf("  funcdecl_stmt->get_global_qualification_required_for_return_type() = %s\n", funcdecl_stmt->get_global_qualification_required_for_return_type() ? "true" : "false");
+               printf("  funcdecl_stmt->get_type_elaboration_required_for_return_type() = %s\n", funcdecl_stmt->get_type_elaboration_required_for_return_type() ? "true" : "false");
+#endif
 
                ninfo_for_type.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length_for_return_type());
                ninfo_for_type.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required_for_return_type());

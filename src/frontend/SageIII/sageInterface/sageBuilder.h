@@ -473,6 +473,12 @@ ROSE_DLL_API SgTemplateType* buildTemplateType(SgName name="");
 //! template_parameter_enum { parameter_undefined = 0, type_parameter = 1, nontype_parameter = 2,  template_parameter = 3}
 ROSE_DLL_API SgTemplateParameter * buildTemplateParameter (SgTemplateParameter::template_parameter_enum parameterType, SgType*);
 
+//! Build a declaration of a non-real class or class-member representing template parameters and their members
+ROSE_DLL_API SgNonrealDecl * buildNonrealDecl(const SgName & name, SgDeclarationScope * scope);
+
+//! Build a reference to the non-real declaration of a member of a non-real class
+ROSE_DLL_API SgNonrealRefExp * buildNonrealRefExp_nfi(SgNonrealSymbol * sym);
+
 //! Build UPC THREADS (integer expression)
 ROSE_DLL_API SgUpcThreads* buildUpcThreads();
 ROSE_DLL_API SgUpcThreads* buildUpcThreads_nfi();

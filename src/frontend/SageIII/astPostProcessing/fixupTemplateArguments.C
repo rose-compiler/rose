@@ -246,6 +246,7 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
 #endif
           ROSE_ASSERT(type != NULL);
 
+
        // Make sure this is not a simple template type (else we will have infinite recursion).
        // if (type != NULL && type->isIntegerType() == false && type->isFloatType() == false)
        // if (type != NULL)
@@ -267,7 +268,11 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
        // DQ (2/16/2017): This is a case causeing many C codes to fail.
           SgTypeOfType* typeOfType = isSgTypeOfType(type);
 
-          if (type != NULL && templateType == NULL && classType == NULL && voidType == NULL && rvalueReferenceType == NULL && 
+       // TV (04/23/2018): deprecated SgTemplateType. Now using the notion of non-real declaration (and associated declaration, symbol, and reference expression)
+          ROSE_ASSERT(templateType == NULL);
+          SgNonrealType*         typeNonreal         = isSgNonrealType(type);
+
+          if (type != NULL && typeNonreal  == NULL && classType == NULL && voidType == NULL && rvalueReferenceType == NULL && 
                               functionType == NULL && declType  == NULL && enumType == NULL && typeEllipse         == NULL && 
                               typeUnknown  == NULL && typeComplex == NULL && typeOfType == NULL)
              {

@@ -1592,6 +1592,14 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+          case V_SgNonrealDecl:
+             {
+               const SgNonrealDecl * nrdecl = isSgNonrealDecl(declaration);
+               ROSE_ASSERT(nrdecl != NULL);
+               name = nrdecl->get_name();
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";

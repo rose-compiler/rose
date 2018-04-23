@@ -1430,6 +1430,11 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
+                    case V_SgNonrealType:
+                       {
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error case default in switch (callType = %s) \n",callType->sage_class_name());
@@ -2362,6 +2367,8 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
 
                     break;
                   }
+               case V_SgDeclarationScope:
+                  break;
                default:
                     statementList = scope->generateStatementList();
              }
@@ -3544,6 +3551,14 @@ TestAstSymbolTables::visit ( SgNode* node )
                          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
                          ROSE_ASSERT(aliasSymbol != NULL);
                          ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
+                         break;
+                       }
+
+                    case V_SgNonrealSymbol:
+                       {
+                         SgNonrealSymbol * nrsymbol = isSgNonrealSymbol(symbol);
+                         ROSE_ASSERT(nrsymbol != NULL);
+                         ROSE_ASSERT(nrsymbol->get_declaration() != NULL);
                          break;
                        }
 

@@ -854,6 +854,13 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                break;
              }
 #endif
+
+          case V_SgNonrealDecl:
+             {
+               templateArgumentsList = &(isSgNonrealDecl(decl)->get_tpl_args());
+               break;
+             }
+
           default:
              {
                printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
@@ -950,6 +957,12 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
           case V_SgTemplateTypedefDeclaration:
              {
                templateParameterList = &(isSgTemplateTypedefDeclaration(decl)->get_templateParameters());
+               break;
+             }
+
+          case V_SgNonrealDecl:
+             {
+               templateParameterList = NULL;
                break;
              }
 
@@ -4515,6 +4528,10 @@ SageBuilder::buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* 
 SgTemplateFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateParameterPtrList* templateParameterList)
    {
+#if 0
+  printf("In SageBuilder::buildNondefiningTemplateFunctionDeclaration(name = %s):\n", name.str());
+#endif
+
   // DQ (8/15/2013): Note that we don't need template arguments because teplate functions can't support partial specialization.
 
   // DQ (11/25/2011): Adding support for template declarations in the AST.
@@ -4586,6 +4603,17 @@ SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, S
         }
 #endif
   // ROSE_ASSERT(result->get_firstNondefiningDeclaration() == result);
+
+  // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template function
+     if (result->get_firstNondefiningDeclaration() == result) {
+       SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+       nonreal_decl_scope->set_parent(result);
+       result->set_nonreal_decl_scope(nonreal_decl_scope);
+       SageInterface::setSourcePosition(nonreal_decl_scope);
+       nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+       nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+    // printf("  nrscope = %p (new)\n", nonreal_decl_scope);
+     }
 
      return result;
    }
@@ -4740,6 +4768,10 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
 SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateParameterPtrList* templateParameterList)
    {
+#if 0
+  printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s):\n", name.str());
+#endif
+
   // This function only builds template member function declarations.
 
   // SgTemplateMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,NULL,NULL);
@@ -4851,6 +4883,17 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
           detectTransformations_local(result);
         }
 #endif
+
+  // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template member function
+     if (result == result->get_firstNondefiningDeclaration()) {
+       SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+       nonreal_decl_scope->set_parent(result);
+       result->set_nonreal_decl_scope(nonreal_decl_scope);
+       SageInterface::setSourcePosition(nonreal_decl_scope);
+       nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+       nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+    // printf("  nrscope = %p (new)\n", nonreal_decl_scope);
+     }
 
      return result;
    }
@@ -6757,6 +6800,51 @@ SgTemplateParameterVal* SageBuilder::buildTemplateParameterVal_nfi(int template_
   return templateParameterValue;
 }
 
+SgNonrealDecl * SageBuilder::buildNonrealDecl(const SgName & name, SgDeclarationScope * scope) {
+#if 0
+  printf("In SageBuilder::buildNonrealDecl(name = %s):\n", name.str());
+#endif
+
+  SgNonrealDecl * result = NULL;
+
+  // check that `scope` is valid: parent is a template declaration (function, class, method) or non-real
+  ROSE_ASSERT(scope != NULL);
+
+  SgSymbol * found_symbol = scope->lookup_symbol(name);
+  if (found_symbol != NULL) {
+    SgNonrealSymbol * symbol = isSgNonrealSymbol(found_symbol);
+    ROSE_ASSERT(symbol != NULL);
+    result = symbol->get_declaration();
+    ROSE_ASSERT(result != NULL);
+  }
+  else {
+    result = new SgNonrealDecl(name);
+    SageInterface::setSourcePosition(result);
+    result->set_firstNondefiningDeclaration(result);
+
+    SgNonrealSymbol * symbol = new SgNonrealSymbol(result);
+    scope->insert_symbol(name, symbol);
+
+    SgNonrealType * type = new SgNonrealType();
+    type->set_declaration(result);
+    // FIXME (???) insert `type` in `scope`
+
+    SgDeclarationScope * nrscope = new SgDeclarationScope();
+    nrscope->set_parent(result);
+
+    SageInterface::setSourcePosition(nrscope);
+    nrscope->get_startOfConstruct()->setCompilerGenerated();
+    nrscope->get_endOfConstruct()->setCompilerGenerated();
+
+    result->set_nonreal_decl_scope(nrscope);
+
+    result->set_type(type);
+
+ // printf("  nrscope = %p (new)\n", nrscope);
+  }
+  return result;
+}
+
 //! Build UPC THREADS (integer expression)
 SgUpcThreads* SageBuilder::buildUpcThreads()
 {
@@ -7839,6 +7927,15 @@ SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym)
 #endif
 
      return varRef;
+   }
+
+SgNonrealRefExp *
+SageBuilder::buildNonrealRefExp_nfi(SgNonrealSymbol * sym)
+   {
+     SgNonrealRefExp * refexp = new SgNonrealRefExp(sym);
+     ROSE_ASSERT(refexp != NULL);
+     setOneSourcePositionNull(refexp);
+     return refexp;
    }
 
 //!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType();
@@ -13627,6 +13724,10 @@ SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL
 SgTemplateClassDeclaration*
 SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
    {
+#if 0
+  printf("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(XXX_name = %p):\n", XXX_name.str());
+#endif
+
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
@@ -13716,6 +13817,17 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
           nondefdecl->set_firstNondefiningDeclaration(mysymbol->get_declaration());
           ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != NULL);
 
+      // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template classes
+          if (nondefdecl == nondefdecl->get_firstNondefiningDeclaration()) {
+            SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+            nonreal_decl_scope->set_parent(nondefdecl);
+            nondefdecl->set_nonreal_decl_scope(nonreal_decl_scope);
+            SageInterface::setSourcePosition(nonreal_decl_scope);
+            nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+            nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+         // printf("  nrscope = %p (new)\n", nonreal_decl_scope);
+          }
+
 #if 1
        // DQ (9/16/2012): This newly refactored function can only be called after firstNondefiningDeclaration is set.
        // This also sets the template argument parents to the firstNondefiningDeclaration.
@@ -13782,6 +13894,16 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
 
        // DQ (9/16/2012): Moved this initialization of firstNondefiningDeclaration from farther down in this branch.
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+
+       // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template classes
+          SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+          nonreal_decl_scope->set_parent(nondefdecl);
+          nondefdecl->set_nonreal_decl_scope(nonreal_decl_scope);
+          SageInterface::setSourcePosition(nonreal_decl_scope);
+          nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+          nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+       // printf("  nrscope = %p (new)\n", nonreal_decl_scope);
+
 #if 1
        // DQ (9/16/2012): This newly refactored function can only be called after firstNondefiningDeclaration is set.
        // This also sets the template argument parents to the firstNondefiningDeclaration.
@@ -14228,6 +14350,15 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
           nondefdecl->set_definingDeclaration(defdecl);
+
+       // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template classes
+          SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+          nonreal_decl_scope->set_parent(nondefdecl);
+          nondefdecl->set_nonreal_decl_scope(nonreal_decl_scope);
+          SageInterface::setSourcePosition(nonreal_decl_scope);
+          nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+          nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+       // printf("  nrscope = %p (new)\n", nonreal_decl_scope);
 
        // DQ (9/10/2012): Initialize the template parameter list.
           ROSE_ASSERT(templateParameterList != NULL);
