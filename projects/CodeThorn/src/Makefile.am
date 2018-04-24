@@ -581,9 +581,9 @@ check-typeforge: typeforge
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
 	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
-	./typeforge --command-file=$(srcdir)/tests/casttest3-commands.csv --trace $(srcdir)/tests/casttest3.C 
+	./typeforge --command-file=$(srcdir)/tests/casttest3.tyf --trace $(srcdir)/tests/casttest3.C 
 
-	g++ -Wall rose_casttest1.C
+	g++ -Wall rose_casttest3.C
 
 	rm -f a.out
 

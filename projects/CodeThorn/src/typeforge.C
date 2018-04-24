@@ -41,6 +41,30 @@ public:
 
 string toolName="typeforge";
 
+bool isComment(string s) {
+  return s.size()>=2 && s[0]=='/' && s[1]=='/';
+}
+
+SgType* buildTypeFromStringSpec(string typeName,SgFunctionDefinition* funDef) {
+  SgType* newType=nullptr;
+  if(typeName=="float") {
+    newType=SageBuilder::buildFloatType();
+  } else if(typeName=="double") {
+    newType=SageBuilder::buildDoubleType();
+  } else if(typeName=="long double") {
+    newType=SageBuilder::buildLongDoubleType();
+  } else if(typeName=="AD_real") {
+    string typeName="AD_real";
+    SgScopeStatement* scope=funDef->get_scope();
+    newType=SageBuilder::buildOpaqueType(typeName, scope);
+  } else {
+    cerr<<"Error: unsupported type: "<<typeName<<"."<<endl;
+    exit(1);
+  }
+  return newType;
+}
+
+
 int main (int argc, char* argv[])
 {
   ROSE_INITIALIZE;
@@ -83,7 +107,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.2.0"<<endl;
+    cout<<toolName<<" version 0.3.0"<<endl;
     return 0;
   }
 
@@ -138,55 +162,60 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("command-file")) {
-    string changeFileName=args.getString("command-file");
+    string commandFileName=args.getString("command-file");
     CppStdUtilities::DataFileVector lines;
-    bool fileOK=CppStdUtilities::readDataFile(changeFileName,lines);
+    bool fileOK=CppStdUtilities::readDataFile(commandFileName,lines);
     if(fileOK) {
       TypeTransformer::VarTypeVarNameTupleList list;
       int lineNr=0;
       for (auto line : lines) {
         lineNr++;
         std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
-        string functionName,varName,typeName;
-        if(splitLine.size()>=2) {
-          functionName=splitLine[0];
-          varName=splitLine[1];
-        } 
-        if(splitLine.size()==3) {
-          typeName=splitLine[2];
-        } else {
-          typeName="float";
-        }
-        if(splitLine.size()>3) {
-          cerr<<"Error: wrong input format in file "<<changeFileName<<". Wrong number of entries in line "<<lineNr<<"."<<endl;
+        string commandName,functionName,varName,typeName;
+        size_t numEntries=splitLine.size();
+        if(numEntries<=2 || numEntries>=5) {
+          cerr<<"Error: wrong input format in file "<<commandFileName<<". Wrong number of entries in line "<<lineNr<<"."<<endl;
           return 1;
         }
-        if(functionName.size()>=2&&functionName[0]=='/' && functionName[1]=='/') {
+        commandName=splitLine[0];
+        functionName=splitLine[1];
+        if(isComment(commandName)) {
           // line is commented out (skip)
-          cout<<"Skipping "<<functionName<<","<<varName<<","<<typeName<<endl;
-        } else {
+          cout<<"Skipping line "<<lineNr<<endl;
+          continue;
+        }
+        if(commandName=="replace_vartype") {
+          varName=splitLine[2];
+          if(numEntries==4) {
+            typeName=splitLine[3];
+          } else {
+            typeName="float";
+          }
           RoseAst completeast(sageProject);
           SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
-          if(typeName=="float") {
-            tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varName);
-          } else if(typeName=="double") {
-            tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varName);
-          } else if(typeName=="long double") {
-            tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varName);
-          } else if(typeName=="AD_real") {
-            string typeName="AD_real";
-            SgScopeStatement* scope=funDef->get_scope();
-            tt.addToTransformationList(list,SageBuilder::buildOpaqueType(typeName, scope),funDef,varName);
-          } else {
-            cerr<<"Error: unknown type "<<typeName<<" in file "<<changeFileName<<" in line "<<lineNr<<"."<<endl;
+          if(funDef==0) {
+            cerr<<"Error: function "<<functionName<<" does not exist in file."<<endl;
+            return 1;
           }
+          SgType* newType=buildTypeFromStringSpec(typeName,funDef);
+          if(newType==nullptr) {
+            cerr<<"Error: unknown type "<<typeName<<" in command file "<<commandFileName<<" in line "<<lineNr<<"."<<endl;
+            return 1;
+          } else {
+            tt.addToTransformationList(list,newType,funDef,varName);
+          }
+        } else if(commandName=="replace_type") {
+          cout<<"INFO: replace_type mode: "<< "in line "<<lineNr<<"."<<endl;
+        } else {
+          cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
+          return 1;
         }
-      } 
+      }
       tt.transformCommandLineFiles(sageProject,list);
       backend(sageProject);
       return 0;
     } else {
-      cerr<<"Error: could not access file "<<changeFileName<<endl;
+      cerr<<"Error: could not access file "<<commandFileName<<endl;
       return 1;
     }
   }

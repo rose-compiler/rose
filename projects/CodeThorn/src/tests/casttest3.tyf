@@ -1,0 +1,4 @@
+replace_vartype,main,f1,double
+replace_vartype,main,d1,float
+replace_vartype,function1,d1,float
+replace_vartype,main,varDoesNotExistTest,long double
