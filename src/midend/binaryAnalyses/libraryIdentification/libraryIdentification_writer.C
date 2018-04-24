@@ -15,6 +15,7 @@
 using namespace std;
 using namespace Rose;
 
+
 #if 0
 // Example of now to use the SQL DataBase
   FunctionIdentification ident("test.db");
@@ -463,13 +464,13 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
           startOffset = startAddress - section->get_mapped_preferred_rva() + section->get_offset();
           endOffset   = endAddress - section->get_mapped_preferred_rva() + section->get_offset();
 #else
-          MemoryMap *map = asmInterpretation->get_map(); /*map that was used durring disassembly*/
+          BinaryAnalysis::MemoryMap::Ptr map = asmInterpretation->get_map(); /*map that was used durring disassembly*/
           ROSE_ASSERT(map!=NULL);
           ROSE_ASSERT(map->at(startAddress).exists());
-          const MemoryMap::Node &me1 = *(map->at(startAddress).findNode());
+          const BinaryAnalysis::MemoryMap::Node &me1 = *(map->at(startAddress).findNode());
           startOffset = me1.value().offset() + startAddress - me1.key().least();
           ROSE_ASSERT(map->at(endAddress).exists());
-          const MemoryMap::Node &me2 = *(map->at(endAddress).findNode());
+          const BinaryAnalysis::MemoryMap::Node &me2 = *(map->at(endAddress).findNode());
           endOffset = me2.value().offset() + endAddress - me2.key().least();
 #endif
 
