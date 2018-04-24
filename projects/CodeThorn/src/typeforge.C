@@ -31,6 +31,8 @@
 #include <utility>
 #include <functional>
 
+#include <algorithm>
+
 using namespace std;
 
 class TestTraversal : public AstSimpleProcessing {
@@ -64,6 +66,17 @@ SgType* buildTypeFromStringSpec(string typeName,SgFunctionDefinition* funDef) {
   return newType;
 }
 
+// some simple string type tests (until parser is available)
+size_t pointerLevelOfType(string type) {
+  return std::count(type.begin(),type.end(),'*');
+}
+bool isReferenceType(string type) {
+  return 1==std::count(type.begin(),type.end(),'&');
+}
+bool isConstReferenceType(string type) {
+  size_t nPos = type.find("const", 0);
+  return nPos!=string::npos && isReferenceType(type);
+}
 
 int main (int argc, char* argv[])
 {
@@ -205,7 +218,23 @@ int main (int argc, char* argv[])
             tt.addToTransformationList(list,newType,funDef,varName);
           }
         } else if(commandName=="replace_type") {
-          cout<<"INFO: replace_type mode: "<< "in line "<<lineNr<<"."<<endl;
+          if(numEntries!=3) {
+            cerr<<"Error: wrong number of arguments in line "<<lineNr<<"."<<endl;
+            return 1;
+          }
+          if(tt.getTraceFlag()) cout<<"TRACE: replace_type mode: "<< "in line "<<lineNr<<"."<<endl;
+          string functionSpec=splitLine[1];
+          string typeReplaceSpec=splitLine[2];
+          std::vector<std::string> functionSpecSplit=CppStdUtilities::splitByRegex(functionSpec,":");
+          if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier in line "<<lineNr<<":"<<functionSpec<<endl; exit(1);}
+          string functionName=functionSpecSplit[0];
+          string functionConstructSpec=functionSpecSplit[1];
+          std::vector<std::string> typeReplaceSpecSplit=CppStdUtilities::splitByRegex(typeReplaceSpec,"\\s*=>\\s*");
+          if(typeReplaceSpecSplit.size()!=2) { cerr<<"Error: wrong type replace specifier in line "<<lineNr<<":"<<typeReplaceSpec<<endl; exit(1);}
+          string oldTypeSpec=typeReplaceSpecSplit[0];
+          string newTypeSpec=typeReplaceSpecSplit[1];
+          if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionName<<" "<<functionConstructSpec<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
+          
         } else {
           cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
           return 1;

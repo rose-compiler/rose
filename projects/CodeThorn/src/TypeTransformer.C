@@ -56,28 +56,49 @@ void TypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
   _castTransformer.transformCommandLineFiles(project);
 }
 
-int TypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* type) {
-  RoseAst ast(root);
-  bool foundVar=0;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-      SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-      if(varInitName) {
-	SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
-	if(varSym) {
-	  string varName=SgNodeHelper::symbolToString(varSym);
-	  if(varName==varNameToFind) {
-            string funName;
-            if(isSgFunctionDefinition(root)) 
-              funName=SgNodeHelper::getFunctionName(root);
-	    trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+type->unparseToString()+".");
-	    SgTypeFloat* ft=SageBuilder::buildFloatType();
-	    varInitName->set_type(ft);
-            foundVar++;
-	  }
-	}
+
+int TypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
+                                               SgNode* root,
+                                               string varNameToFind,
+                                               SgType* newType) {
+  int foundVar=0;
+  if(varInitName) {
+    SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
+    if(varSym) {
+      string varName=SgNodeHelper::symbolToString(varSym);
+      if(varName==varNameToFind) {
+        string funName;
+        if(isSgFunctionDefinition(root)) 
+          funName=SgNodeHelper::getFunctionName(root);
+        trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString()+".");
+        varInitName->set_type(newType);
+        foundVar++;
       }
     }
+  }
+  return foundVar;
+}
+
+int TypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType) {
+  RoseAst ast(root);
+  bool foundVar=0;
+  // need to process formal params explicitly because not found in traversal (?)
+  if(SgFunctionDefinition* funDef=isSgFunctionDefinition(root)) {
+    SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+    for(auto varInitName : initNamePtrList) {
+      foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType);
+    }
+  }
+
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgInitializedName* varInitName=nullptr;
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+    }
+    //   else if(SgInitializedName* varInitName0=isSgInitializedName(*i)) {
+    //  varInitName=varInitName0;
+    //}
+    foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType);
   }
   return foundVar;
 }
@@ -138,6 +159,10 @@ void TypeTransformer::annotateImplicitCastsAsComments(SgProject* root) {
 
 void TypeTransformer::setTraceFlag(bool traceFlag) {
   _traceFlag=traceFlag;
+}
+
+bool TypeTransformer::getTraceFlag() {
+  return _traceFlag;
 }
 
 void TypeTransformer::trace(string s) {

@@ -28,7 +28,7 @@ namespace CppStdUtilities {
   // splits a given string 'input' into a vector of strings, using the
   // regular expression 'regex' (e.g. "a,b,c" is split into a vector
   // of 3 strings)
-  std::vector<std::string> mysplit(const std::string& input, const std::string& regex);
+  std::vector<std::string> splitByRegex(const std::string& input, const std::string& regex);
 }
 
 #endif
