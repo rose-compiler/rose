@@ -299,7 +299,12 @@ workInParallel(const DependencyGraph &dependencies, size_t nWorkers, Functor fun
     workers.start(dependencies, nWorkers, functor);
     while (!workers.isFinished()) {
         monitor(dependencies, nWorkers, workers.runningTasks());
+#if BOOST_VERSION >= 1050000
         boost::this_thread::sleep_for(period);
+#else
+        // For ROSE's sake, don't make this a compile-time error just yet. [Robb Matzke 2018-04-24]
+        ASSERT_not_reachable("this old version of boost is not supported");
+#endif
     }
     monitor(dependencies, nWorkers, std::set<size_t>());
     workers.wait();
