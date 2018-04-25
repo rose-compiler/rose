@@ -629,7 +629,7 @@ context-free syntax
   FixedTypeDescription        -> ItemTypeDescription
   BitTypeDescription          -> ItemTypeDescription
   CharacterTypeDescription    -> ItemTypeDescription
-  StatusTypeDescription       -> ItemTypeDescription
+  StatusTypeDescription       -> ItemTypeDescription     {prefer}
   PointerTypeDescription      -> ItemTypeDescription
 
   ItemTypeName                -> ItemTypeDescription     {cons("ItemTypeName")}  %% Fixes ambiguity with type names  
@@ -640,9 +640,13 @@ context-free syntax
   IntegerItemDescription      -> IntegerTypeDescription  {prefer}
   IntegerTypeName             -> IntegerTypeDescription
 
-  'S' OptRoundOrTruncate
+%%  'S'
+  SignedTypeDesc
+      OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescription")}
-  'U' OptRoundOrTruncate
+%%  'U'
+  UnsignedTypeDesc
+      OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescriptionU")}
 
   CompileTimeIntegerFormula   -> IntegerSize             {cons("ItemSize")}
@@ -658,6 +662,8 @@ context-free syntax
 
   FloatingItemDescription     -> FloatingTypeDescription {prefer}
   FloatingTypeName            -> FloatingTypeDescription
+
+%% 'F'
 
   'F' OptRoundOrTruncate
       Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
@@ -699,7 +705,9 @@ context-free syntax
   BitItemDescription          -> BitTypeDescription       {prefer}
   BitTypeName                 -> BitTypeDescription
 
-  'B' OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
+%%  'B'
+  BitTypeDesc
+      OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
 
   CompileTimeIntegerFormula   -> BitSize                  {cons("ItemSize")}
 
@@ -752,7 +760,7 @@ context-free syntax
 
   Name                       -> Status
   Letter                     -> Status
-  ReservedWord               -> Status
+  ReservedWord               -> Status  {prefer}       %%fixes ambiguity between Name and ReservedWord
 
   ItemTypeName               -> StatusTypeName
 
@@ -767,11 +775,13 @@ context-free syntax
   PointerItemDescription      -> PointerTypeDescription  {prefer}
   PointerTypeName             -> PointerTypeDescription
 
-  'P' OptTypeName             -> PointerItemDescription  {cons("PointerItemDescription")}
+%%  'P'
+  PointerTypeDesc
+      OptTypeName             -> PointerItemDescription  {cons("PointerItemDescription")}
 
   ItemTypeName                -> PointerTypeName         {cons("PointerTypeName")}
 
-  ItemTypeName                -> TypeName
+  ItemTypeName                -> TypeName  {prefer}      %%fixes ambiguity between ItemTypeName, TableTypeName, and BlockTypeName
   TableTypeName               -> TypeName
   BlockTypeName               -> TypeName
 
@@ -951,7 +961,7 @@ context-free syntax
   % empty %                       -> OptItemPreset           {cons("no-item-preset")}
 
   CompileTimeFormula              -> ItemPresetValue
-  LocFunction                     -> ItemPresetValue
+  LocFunction                     -> ItemPresetValue  {prefer}  %%fixes many different ambiguities with and within LocFunction in 2.1.1.7 Pointer Type tests
 
   ItemPresetValue                 -> OptItemPresetValue
   % empty %                       -> ItemPresetValue         {cons("no-item-preset-value")}
@@ -1042,7 +1052,7 @@ context-free syntax
 
 %% 2.3 STATEMENT NAME DECLARATIONS
 %%
-'LABEL' {StatementName ','}+ ':'  -> StatementNameDeclaration {cons("StatementNameDeclaration")}
+'LABEL' {StatementName ','}+ ';'  -> StatementNameDeclaration {cons("StatementNameDeclaration")}
 
 %% 2.4 DEFINE DECLARATIONS
 %%
@@ -1274,9 +1284,9 @@ context-free syntax
   IfStatement                 -> SimpleStatement
   CaseStatement               -> SimpleStatement
   ProcedureCallStatement      -> SimpleStatement       {reject} %%AMBIGUOUS with AssignmentStatement
-  ReturnStatement             -> SimpleStatement
-  GotoStatement               -> SimpleStatement
-  ExitStatement               -> SimpleStatement
+  ReturnStatement             -> LabeledSimpleStatement
+  GotoStatement               -> LabeledSimpleStatement
+  ExitStatement               -> LabeledSimpleStatement
   StopStatement               -> LabeledSimpleStatement
   AbortStatement              -> LabeledSimpleStatement
   NullStatement               -> SimpleStatement
@@ -1287,11 +1297,16 @@ context-free syntax
     LabelList
   'END'                       -> NullStatement         {cons("NullBlockStatement")}
 
-  StatementName ':'           -> Label                 {cons("Label")}
+%% StatementName changed to Name when cons("Name") was added to StatementName
+%% Otherwise terms like Name(Label("label_string")) would appear.
+%%
+%% StatementName ':'          -> Label                 {cons("Label")}
+%%
+  Name ':'                    -> Label                 {cons("Label")}
 
   Label*                      -> LabelList             {cons("LabelList")}
 
-  Name                        -> StatementName
+  Name                        -> StatementName         {cons("Name")}
 
   'BEGIN'
     Statement+
@@ -1453,17 +1468,17 @@ context-free syntax
 %% 4.6 RETURN STATEMENTS
 %%
 
-  'RETURN' ';'               -> ReturnStatement        {cons("ReturnStatement")}
+  LabelList 'RETURN' ';'                  -> ReturnStatement        {cons("ReturnStatement")}
 
 %% 4.7 GOTO STATEMENTS
 %%
 
-  'GOTO' StatementName       -> GotoStatement          {cons("GotoStatement")}
+  LabelList 'GOTO' StatementName ';'      -> GotoStatement          {cons("GotoStatement")}
 
 %% 4.8 EXIT STATEMENTS
 %%
 
-  'EXIT' ';'                 -> ExitStatement          {cons("ExitStatement")}
+  LabelList 'EXIT' ';'                    -> ExitStatement          {cons("ExitStatement")}
 
 %% 4.9 STOP STATEMENTS
 %%
