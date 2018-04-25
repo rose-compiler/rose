@@ -3,39 +3,96 @@ include Loops.incl
 <define VAR_DECL CODE.VarDecl/>
 <define stencil_index 0/>
 
-<define STENCIL_DIM 0/>
 <define STENCIL_REF CODE.FunctionCall|CODE.ArrayAccess/>
-<define STENCIL_old_array ""/>
-<define STENCIL_array ""/>
-<define STENCIL_DIM_SPEC NULL/>
-<define STENCIL_DIM 0/>
-<define STENCIL_TYPE ""/>
+<define STENCIL_old_array NULL/>
+<define STENCIL_array NULL/>
+<define STENCIL_DATA_INFO NULL/>
 <define STENCIL_HALLO ""/>
+<define STENCIL_TIME_IVARS NULL/>
+<define STENCIL_DATA_IVARS_INFO ""/>
+<define STENCIL_CP_DIMS NULL/>
+
+<xform gen_local_loc pars=(dim)>
+ res=NULL; 
+ for (i=dim-1;i>=0;i=i-1) { res = "local"::res; } 
+ res
+</xform>
+
+<xform gen_linearized_ref pars=(ivars, sizes)>
+      access=0; vs = NULL;
+      for (p = ivars; p != NULL; p = cdr(p)) {
+         t= Reduce_listExp("*",vs);
+         access =  ( "(" car(p) ")") ((vs==NULL)? "" : ( "*" t + access));
+         if (sizes != NULL) 
+           { vs = AppendList(vs, car(sizes)); sizes = cdr(sizes); }
+      }
+      access
+</xform>
+
+<code stencil_macro  pars=(dim,ivars,ivars_macro)>
+#define local_index@dim@D(@ExpList#ivars@,@ExpList#ivars_macro@) @gen_linearized_ref(ivars,ivars_macro)@
+#define otherCore_index@dim@D(@ExpList#ivars@,@ExpList#ivars_macro@) @gen_linearized_ref(ivars,ivars_macro)@
+</code>
+
+<code manycore_stencil_local_arr pars=(arr_name, dim, sub) >
+@for (i=0; i < dim-1; i=i+1) { sub=AppendList(sub,CODE.manycore_stencil_size#(i,gen_local_loc(dim))); }
+CODE.LocalArrayName#arr_name@[local_index@dim@D(@ExpList#sub@)]
+</code>
 
 <*** the driver functions ****>
-<xform gen_manycore_stencil pars=(type, body, extra, params) /> 
+<xform gen_manycore_stencil pars=(body, repl_data, params) /> 
 
-<code manycore_stencil_size pars=(dim_index,loc) dim=GLOBAL.STENCIL_DIM match=CODE.Name /> 
+<code manycore_stencil_size pars=(dim_index,loc) match=CODE.Name /> 
 
 <code VariableNameList pars=(names) /> 
-<code is_boundary_core pars=(dim_idx,side)/>
-<code stencil_manycore_main pars=(dimsizes, local, boundary, params) T="T" />
+<code is_boundary_core pars=(dim_idx,side,dim)/>
 <code stencil_kernel_call pars=(localrepl, dimsizes, params)/> 
-<code stencil_manycore_kernel pars=(dimsizes, body, params) T="T" />
 
-<code StencilDim pars=(i,lo,hi,dist,par) 
-  match=((par=="S")?CODE.Loop#(i,lo,hi,dist):CODE.LoopBound#(i,lo,hi)) /> 
 <code LocalStencil pars=(dim_spec,dim_index, body) />
 <code LocalIndexInit pars=(var, index) />
 
 <xform OuterName pars=(array)> 
-(array : VariableNameList#(first second))? first : array
+(array : (first second))? first : array
 </xform>
 
 <xform InnerName pars=(array)> 
-(array : VariableNameList#(first second))? second : array
+((array : (first second)) && second != NULL)? second : array
 </xform>
 
-<xform gen_manycore_stencil_local pars=(type,dimsizes, body) /> 
+<xform gen_manycore_stencil_local pars=(body) /> 
 <xform gen_manycore_stencil_boundary pars=(loclist, dim,dim_idx,local) />
 
+<code precopy_check_time >
+#ifdef CHECK_TIME
+    clock_gettime(CLOCK_REALTIME, &ctime2);
+    printf("pre-copy time: %f\n", diff(ctime1,ctime2).tv_sec +  diff(ctime1,ctime2).tv_nsec/1e9);
+    clock_gettime(CLOCK_REALTIME, &ctime1);
+#endif 
+</code>
+
+<code postcopy_check_time >
+#ifdef CHECK_TIME
+    clock_gettime(CLOCK_REALTIME, &ctime2);
+    printf("post-copy time: %f\n", diff(ctime1,ctime2).tv_sec +  diff(ctime1,ctime2).tv_nsec/1e9);
+#endif
+</code>
+
+<code process_check_time>
+#ifdef CHECK_TIME
+    clock_gettime(CLOCK_REALTIME, &ctime2);
+    printf("process time: %f\n", diff(ctime1,ctime2).tv_sec +  diff(ctime1,ctime2).tv_nsec/1e9);
+    clock_gettime(CLOCK_REALTIME, &ctime1);
+#endif
+</code>
+
+<code TimingInit >
+#ifdef TIMING
+    timespec time1[numberOfCores], time2[numberOfCores];
+    timespec bdyExecTime[numberOfCores];
+    timespec ctrExecTime[numberOfCores];
+#endif
+#ifdef CHECK_TIME
+    timespec ctime1, ctime2;
+    clock_gettime(CLOCK_REALTIME, &ctime1);
+#endif
+</code>

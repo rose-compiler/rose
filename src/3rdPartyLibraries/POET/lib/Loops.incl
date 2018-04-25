@@ -36,7 +36,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 
 <code Nest pars=(ctrl, body) annot="" />
 <code StmtBlock pars=(stmts) annot="" />
-<code Loop pars=(i,start,stop,step)  maxiternum="" tag="" origstep="" origivar=""/>
+<code Loop pars=(i,start,stop,step)  testop="<" maxiternum="" tag="" origstep="" origivar=""/>
 <code Assign/>
 <code ExpStmt/>
 <code If pars=(condition) tag=""/>
@@ -244,6 +244,7 @@ Rebuild a loop/if-then/Unroll nest; skip empty controls;
 *********************>
 <xform BuildNest pars=(loops,body) trace=""  annot="" >
   if (body == "")  RETURN "";
+  if (cdr(body) == NULL) body = car(body);
 switch (loops) {
 case "":   REPLACE(ERASE(trace),body,trace) 
 case If#TRUE: REPLACE(ERASE(trace),body,trace)
@@ -252,20 +253,30 @@ case (first rest):
    BuildNest(first, BuildNest[annot="";trace=((trace:Nest#(_,t1))?t1:"")](rest, body))
 case UnrolledLoop#(i, start, plus, step, ur) : 
        if (ur : UnrolledLoopTileEnd#(bloop,new_ur)) ur = new_ur;
-       else {
-           bloop="";
-           if (! (ur : INT)) ERROR("Expecting an integer but get: " ur);
+       else bloop="";
+       assert(ur : INT);
+       for ( (repl = NULL; j = ur-1 ); j >= 0; j = j - 1 ) { 
+          repl = XFORM.RebuildBop(plus,start,j*step)::repl; 
        }
-       for ( (repl = ""; j = ur-1 ); j >= 0; j = j - 1 ) { 
-           repl = BuildList(XFORM.RebuildBop(plus,start,j*step),repl); 
-        }
        if (bloop != "") {
           tag=bloop[Loop.tag];
           if ( (s =loops[UnrolledLoop.check_start]) != "") {
             body=Nest#(CODE.LoopStartCheck#(tag, i,s), body);
           }
        }
-       stmt = DUPLICATE(i, repl,   body);
+       old_body = REPLACE(i, car(repl), COPY(body));
+       repl = cdr(repl);
+       foreach decl=DeclStmt#(typeinfos) \in body do
+          replace_list = NULL;
+          foreach TypeInfo#(_, CLEAR variable, CODE.VarInit#(CLEAR exp)) \in typeinfos do
+             replace_list = ExpStmt#(Assign#(variable, exp))::replace_list;
+          enddo
+          body = REPLACE(decl, replace_list, body);
+       enddo
+       if (repl != NULL)
+         stmt = old_body::DUPLICATE(i, repl, body);
+       else stmt = old_body;
+       <<*stmt = DUPLICATE(i,repl,body);
        if (bloop != "" && ur > 1)  {
           p_stmt = cdr stmt; stmt = (car stmt) :: "";
           for ( p_i=1 ; p_i < ur; (p_i+=1; p_stmt=cdr p_stmt)) 

@@ -215,11 +215,7 @@ class CodeGenVisitor : public CollectInfoVisitor
      }
   virtual void visitUnknown(POETCode_ext* e)
     {
-<<<<<<< HEAD
       POETAstInterface::unparse(e->get_content(), out, start_pos);
-=======
-      POETAstInterface::unparse(e, out, start_pos);
->>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
     }
   virtual void visitString(POETString* s) 
      {  output(s); }
@@ -281,7 +277,7 @@ class CodeGenVisitor : public CollectInfoVisitor
          listsep = 0; listelem=0;
          f = e.get_code();
          if (f == 0) { 
-               if (parse==0) { CODE_SYNTAX_UNDEFINED(v->toString()); }
+               if (parse==0) { CODE_SYNTAX_UNDEFINED(e.get_name()->toString()); }
                else f = v->get_args(); 
          }
          else {

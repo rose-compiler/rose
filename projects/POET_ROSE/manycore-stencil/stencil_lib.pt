@@ -3,28 +3,40 @@ include OptHighLevel.pi
 <parameter cp_lmem type=0..1 default=0 />
 <parameter use_reg type=0..1 default=0 />
 <parameter cp_num type=INT default=0 />
+<parameter add_timing type=0|1 default=0 message="whether to insert timing information" />
+<parameter gpu default=0 message="whether to target GPU"/>
 
+<code Both pars=(dim_idx, v1)> @v1@ </code>
+<code LB pars=(dim_idx, v1)> @v1@ </code>
+<code StencilDim pars=(i,lo,hi,dist,dim)/>
 
-<xform gen_local_loc pars=(dim)>
- res=NULL; 
- for (i=dim-1;i>=0;i=i-1) { res = "local"::res; } 
- res
-</xform>
-
-<xform gen_remote_loc pars=(dim_idx,loc) 
-       dim=GLOBAL.STENCIL_DIM old_loc="" >
+<xform gen_remote_loc pars=(dim,dim_idx,loc) 
+       old_loc="" >
  if (old_loc == "") old_loc = gen_local_loc(dim);
- res=NULL;  i = dim-1;
- for (p_loc=ReverseList(old_loc); p_loc != NULL; (p_loc=cdr(p_loc); i=i-1))  
+ res=NULL;  i = 0;
+ for (p_loc=old_loc; p_loc != NULL; (p_loc=cdr(p_loc); i=i+1))  
  { res = ((i==dim_idx)? loc : (car p_loc))::res; } 
  res
 </xform>
 
-<xform gen_local_refs pars=(body) old_array=GLOBAL.STENCIL_old_array array=GLOBAL.STENCIL_array >
+<xform convert_linearized_subscript pars=(sub)>
+     if (cdr(sub)==NULL) {
+        dimspec = GLOBAL.STENCIL_CP_DIMS;
+        sub = REBUILD(sub);
+        (succ, is_const, is_pos, offset, left) = DimOffset(sub, dimspec);
+        assert(succ && left == 0);
+        sub = ReverseList(offset);
+     }
+     sub
+</xform>
+
+
+<xform gen_local_refs pars=(old_array, array, dim,body) >
   repl=NULL;
   foreach_r (body : (cur=GLOBAL.STENCIL_REF#( (cur_array=old_array|array), CLEAR sub)): TRUE) {
       <* find each stencil array reference in the code, replace it with local array reference*>
-     repl = (cur, CODE.manycore_stencil_local_arr#(cur_array,sub)) :: repl;  
+     sub = convert_linearized_subscript(sub);
+     repl = (cur, CODE.manycore_stencil_local_arr#(cur_array,dim,sub)) :: repl;  
   }
   if (repl != NULL)
       body=REPLACE(repl,body); <* perform the replacement transformation *>
@@ -37,19 +49,20 @@ include OptHighLevel.pi
         dimsizes: stencil dimensions; 
         body: stencil code
 *********************************>
-<xform gen_manycore_stencil_local pars=(type, dimsizes, body) hallo=GLOBAL.STENCIL_HALLO >
-  index = 0; init=NULL; dim = LEN(dimsizes);
+<xform gen_manycore_stencil_local pars=(body) 
+       ivarinfo=GLOBAL.STENCIL_DATA_IVARS_INFO hallo="">
+  (ivars,_,_) = ivarinfo;
+  init=NULL; len = LEN(ivars); index = len-1; 
   <*traverse each stencil dimension  *>
-  for (p = dimsizes; p != NULL; (p = cdr(p),index=index+1)) { 
+  for (p = ivars; p != NULL && p != ""; (p = cdr(p),index=index-1)) { 
      <* current dimension information *>
-     CODE.StencilDim#(i,lo,hi,_,par) = car p; 
-     if (par == "D") <* current dimension is parallelized *>
-     {
-        <*replace global loop with local loop *>
-       foreach n=Nest#(Loop#(i,_,_,_)|CODE.For#(VarDecl#(_,VarInit#(i,_)),_,_),b1=_) \in body do break; enddo
-       body = REPLACE( n,CODE.LocalStencil#(p, index,b1), body);
-       init = LocalIndexInit#(i,index)::init;
-     }
+     i = car(p);
+     <*replace global loop with local loop *>
+     foreach n=Nest#((ctrl=Loop#(i,lo=_,hi=_,dist=_)|CODE.For#(VarDecl#(_,VarInit#(i,_)),_,_)),b1=_) \in body do 
+       body = REPLACE( n,CODE.LocalStencil#(StencilDim#(i,REBUILD(lo-dist),hi,dist,len), len-index-1,b1), body);
+       break; 
+     enddo
+     init = LocalIndexInit#(i,index)::init;
   }
   if (hallo != "") {
     for (p = hallo; p != NULL; (p = cdr(p),index=index+1)) {
@@ -68,22 +81,38 @@ include OptHighLevel.pi
         i: stencil index
         disp: displacement
 *>
-<xform at_stencil_boundary pars=(sub, dim_idx, i, disp)>
-  local_loc = gen_local_loc(dim_idx);
-  if (disp > 0) {
-      if (sub : CODE.Bop#("+",i,dist=_) | CODE.Bop#("+",dist=_,i) |
-            CODE.Bop#("+",CODE.manycore_stencil_size#(i, local_loc),dist=_) |
-            CODE.Bop#("+",dist=_,CODE.manycore_stencil_size#(i,local_loc)))
-       {  dist }
-      else { 0 }
-   }
-   else {
-      if (sub : CODE.Bop#("-",i,dist=_) | CODE.Bop#("+",Uop#("-",dist=_),i) |
-            CODE.Bop#("-",CODE.manycore_stencil_size#(i,local_loc),dist=_) |
-            CODE.Bop#("+",Uop#("-",dist=_),CODE.manycore_stencil_size#(i,local_loc)))
-       { dist }
-      else { 0 }
-    }
+<xform at_stencil_boundary pars=(sub, dim, dim_idx, disp)>
+  local_loc = gen_local_loc(dim);
+  sub = REBUILD(sub);  
+  switch (sub) {
+     case CODE.manycore_stencil_size#(dim_idx, local_loc): 
+         if (disp > 0) { 1 } else { 0 }
+     case CODE.Bop#("+",CODE.manycore_stencil_size#(dim_idx, local_loc),dist=_) |
+           CODE.Bop#("+",dist=_,CODE.manycore_stencil_size#(dim_idx,local_loc)): 
+         if (disp > 0) { (dist < 0)? 0 : (dist >= 0)? dist+1 : (print ("dist=" dist); assert(0)) }
+         else { 0 }
+     case CODE.Bop#("+",CODE.LB#(dim_idx,lb=_),dist=_) 
+         | CODE.Bop#("+",dist=_,CODE.LB#(dim_idx,lb=_)): 
+         dist = lb + dist;
+         if (disp > 0) { (dist < 0)? 0 : (dist >= 0)? dist+1 : (print ("dist=" dist); assert(0)) }
+         else { (dist < 0)? -dist : 0 }
+     case CODE.Bop#("+",CODE.Both#(dim_idx,_),dist=_) | CODE.Bop#("+",dist=_,CODE.Both#(dim_idx,_)): 
+         if (disp > 0) { (dist < 0)? 0 : (dist >= 0)? dist : (print ("dist=" dist); assert(0)) }
+         else { (dist < 0)? -dist : 0 }
+     case CODE.Bop#("-",CODE.manycore_stencil_size#(dim_idx,local_loc)|CODE.Both#(dim_idx,_),dist=_) :
+         if (disp > 0) { 0 } 
+         else { (dist >= 0)? 0 : (dist < 0)? -dist :  (print ("dist=" dist); assert(0)) }
+     case LB#(dim_idx,dist=INT): 
+       if (disp > 0) { 0 }
+       else { (dist < 0)? -dist : 0 }
+     case dist=INT:   
+       if (disp > 0) { 0 }
+       else { (dist < 0)? -dist : 0 }
+     case Both#(dim_idx,dist=INT): 
+       if (disp > 0) { 0 }
+       else { (dist < 0)? -dist : 0 }
+     default:  <*print(dim_idx ":" sub);*> 0
+  }
 </xform>
 
 <********************************* 
@@ -95,36 +124,39 @@ include OptHighLevel.pi
       res: result
 **********************************>
 
-<xform replace_boundary_arr_accesses pars=(loclist, array, dim_spec, dim_idx, res) dim=GLOBAL.STENCIL_DIM >
+<xform replace_boundary_arr_accesses pars=(loclist, array, dim_spec, dim_idx, res)  >
+  dim=(car GLOBAL.STENCIL_DATA_INFO)[1];
 
+ arr_name=InnerName(GLOBAL.STENCIL_array);
  CODE.StencilDim#(i,_,_,_,_) = dim_spec;
 
- target = DELAY{CODE.manycore_stencil_remote_arr#(CLEAR old_loc, CLEAR sub) 
+ target = DELAY{CODE.manycore_stencil_remote_arr_access#(CODE.manycore_stencil_remote_arr#(arr_name,CLEAR old_loc), CLEAR sub) 
                 | (old_loc=""; GLOBAL.STENCIL_REF#(array, CLEAR sub))};
  cp_res = NULL;
  foreach (ERASE(res) : (cur=target): TRUE) {
+    sub = convert_linearized_subscript(sub);
     remote_loc = "";
     for (p_loc = loclist; p_loc != NULL && remote_loc==""; p_loc=cdr(p_loc)) {
       loc = car(p_loc);
-        disp = (loc:"left")? -1 : 1;
-        nsub = sub;  
-        for (p_sub = sub; p_sub != NULL; p_sub = cdr(p_sub)) 
+        disp = (loc:"left")? -1 : 1; 
+        sub_idx = 0; 
+        for (p_sub = sub; p_sub != NULL && sub_idx <= dim_idx; p_sub = cdr(p_sub)) 
         { 
-          curdim = car(p_sub);
-          dist = at_stencil_boundary(curdim, dim_idx, i, disp);
-          if (dist != 0) {
-             if (remote_loc == "") {
-                remote_loc = gen_remote_loc[old_loc=old_loc](dim_idx,loc);
-                nsub = REPLACE(curdim, ((disp< 0)?manycore_stencil_size#(dim_idx,remote_loc)-dist : dist-1), nsub);
-             }
-             if (old_loc != "") {
-                nsub = REPLACE(old_loc, remote_loc, nsub);
-             }
+          curdim = car(p_sub); 
+          sub_idx = sub_idx+1;
+        }
+        nsub = sub; 
+        dist = at_stencil_boundary(curdim, dim, dim_idx, disp);
+        if (dist != 0) {
+           remote_loc = gen_remote_loc[old_loc=old_loc](dim,dim_idx,loc);
+           nsub = REPLACE(curdim, ((disp< 0)?manycore_stencil_size#(dim_idx,remote_loc)-dist : dist-1), nsub);
+           if (old_loc != "") {
+              nsub = REPLACE(old_loc, remote_loc, nsub);
            }
          }
     }
     if (remote_loc != "") {
-           res = REPLACE(cur, CODE.manycore_stencil_remote_arr#(remote_loc, nsub), res); 
+           res = REPLACE(cur, CODE.manycore_stencil_remote_arr_access#(CODE.manycore_stencil_remote_arr#(arr_name,remote_loc), nsub), res); 
       }
  }
  res 
@@ -133,9 +165,9 @@ include OptHighLevel.pi
 <xform gen_stencil_boundary_condition pars=(dim, dim_index, loclist)>
   res = NULL;
   for (p = ReverseList(loclist); p != NULL; p = cdr(p)) {
-    remote_loc=gen_remote_loc(dim_index, car p); 
+    remote_loc=gen_remote_loc(dim,dim_index, car p); 
     c = Bop#("&&", Bop#(">",manycore_stencil_size#(dim_index,remote_loc),0), 
-                Uop#("!",is_boundary_core#(dim_index, car p))); 
+                Uop#("!",is_boundary_core#(dim_index, car p,dim))); 
     if (res == NULL)  res = c;
     else res = Bop#("&&", c, res);
   }
@@ -150,42 +182,53 @@ include OptHighLevel.pi
       dim_idx: the index of the current stencil dimension 
       local: local stencil computation 
 *********************************>
-<xform gen_stencil_boundary_help pars=(loc,p_dim,dim_idx,st_local)  
-  oldarray=GLOBAL.STENCIL_old_array array=GLOBAL.STENCIL_array
-  dim=GLOBAL.STENCIL_DIM >
+<xform gen_stencil_boundary_help pars=(loc,p_dim,dim_idx,st_local) > 
+  dim=(car GLOBAL.STENCIL_DATA_INFO)[1]; 
+  oldarray=InnerName(GLOBAL.STENCIL_old_array);
+  array=InnerName(GLOBAL.STENCIL_array);
   cur_dim = car(p_dim);
-  CODE.StencilDim#(i,lo,hi,_,par) = cur_dim;
-  if (par != "D") { RETURN ""; } <<*if dimension is not parallelized, do nothing
 
   <* find the loop that traverses the current dimension and remove it from local*>
   res=st_local; 
-  foreach (ERASE(st_local) : (cur=CODE.LocalStencil#(p_dim,_,CLEAR body)):FALSE) { 
-    res = REPLACE(cur, body, res); 
-    break;
+  if (!Lookup(CODE.LocalStencil,st_local)) return res; 
+  foreach (ERASE(st_local) : (cur=CODE.LocalStencil#(d=_,_,CLEAR body)):FALSE) {
+    CODE.StencilDim#(i,lo,hi,dist,_) = d;
+    if (i == cur_dim) { res = REPLACE(cur, body, res); break; }
   }
-
-  <* Replace st_local stencil array references with remote neighbor accesses*>
-   res = replace_boundary_arr_accesses(loc, array, cur_dim, dim_idx, res); 
 
    <* Translate st_local index variable to boundary value  *>
-  CODE.StencilDim#(i,lo,hi,_,_) = cur_dim;
-  switch (car loc) {
-  case "left": res = REPLACE(i, lo, res); 
+  assert(dist>0); body1 = body; nbody = NULL;
+  switch (loc) {
+  case "left": 
+      for (v = 0; v < dist; v=v+1) 
+         nbody = REPLACE(i, LB#(dim_idx,REBUILD(lo+v)), body1)::nbody; 
   case "right": 
-        res = REPLACE(i, manycore_stencil_size#(dim_idx,gen_local_loc(dim))-1, res);
+      for (v = 1; v <= dist; v=v+1) 
+        nbody = REPLACE(i, manycore_stencil_size#(dim_idx,gen_local_loc(dim))-v, body1)::nbody;
+  case ("left" "right"):
+      for (v = 0; v < dist; v=v+1) 
+        nbody = REPLACE(i, Both#(dim_idx,REBUILD(lo+v)), body1)::nbody;
   }
+  res = REPLACE(body,nbody,res);
+  <* Replace st_local stencil array references with remote neighbor accesses*>
+   res = replace_boundary_arr_accesses(loc, array, d, dim_idx, res); 
+
   res
 </xform>
 
-<xform gen_stencil_boundary pars=(p_dim, index, st_local) res=NULL dim=GLOBAL.STENCIL_DIM do_corners=1 > 
-   cur_dim = car(p_dim);
-   if (cur_dim[StencilDim.par] == "D") {
+<xform gen_stencil_boundary pars=(p_dim, index, st_local) 
+       do_corners=1 > 
+      cur_dim = car(p_dim); res = NULL; dim=(car GLOBAL.STENCIL_DATA_INFO)[1];
+    
       res1=NULL;
       for ( p=("right" "left"); p != NULL; p = cdr(p)) {
          cur_loc = car(p);
          edge = gen_stencil_boundary_help(cur_loc,p_dim,index,st_local);
-         if (do_corners) 
-           edge = AppendList(edge,XFORM.gen_stencil_boundaries[index=index+1](cdr(p_dim), edge)); 
+         if (do_corners) {
+           edge1 = XFORM.gen_stencil_boundaries
+                 [datainfo=(cdr(p_dim),"","");index=index+1](edge);
+           edge = AppendList(edge, edge1);
+         }
          if (edge != NULL)
             res1 = Nest#(If#(gen_stencil_boundary_condition(dim, index, cur_loc)), edge) :: res1;
       }
@@ -193,18 +236,20 @@ include OptHighLevel.pi
          res1=Nest#(If#(Bop#(">",manycore_stencil_size#(index,gen_local_loc(dim)),1)),res1);
          cur_loc = ("left" "right");
          res2=gen_stencil_boundary_help(cur_loc,p_dim,index,st_local);
-         if (do_corners) res2 = AppendList(res2,gen_stencil_boundaries(cdr(p_dim), res2));  <<* corners 
-         res=res1 :: Nest#(CODE.Else#("",res2), Nest#(If#(gen_stencil_boundary_condition(dim,index,cur_loc)), res2)) :: res;
+         if (do_corners) res2 = AppendList(res2,gen_stencil_boundaries
+               [datainfo=(cdr(p_dim),"","");index=index+1](res2));  <<* corners 
+         res=AppendList(res,res1 :: Nest#(CODE.Else#("",res2), Nest#(If#(gen_stencil_boundary_condition(dim,index,cur_loc)), res2))); 
       }
-   }
    res
 </xform>
 
-<xform gen_stencil_boundaries pars=(dimsizes,st_local) 
-       dim=GLOBAL.STENCIL_DIM index=0 old_array=GLOBAL.STENCIL_old_array array=GLOBAL.STENCIL_array >
+<xform gen_stencil_boundaries pars=(st_local)  index = 0
+       datainfo=GLOBAL.STENCIL_DATA_IVARS_INFO 
+       old_array=GLOBAL.STENCIL_old_array array=GLOBAL.STENCIL_array >
+ (ivars_data,_,_) = datainfo;
  res=NULL; 
- for (p_dim=dimsizes; p_dim != NULL; p_dim = cdr(p_dim)) {
-   res = gen_stencil_boundary[res=res](p_dim, index, st_local);
+ for (p_dim=ivars_data; p_dim != NULL && p_dim != ""; p_dim = cdr(p_dim)) {
+   res = AppendList(res, gen_stencil_boundary(p_dim, index, st_local));
    index = index + 1;
   }
   res
@@ -214,26 +259,29 @@ include OptHighLevel.pi
 
 <xform copy_boundary_arr_accesses pars=(input)  
         how_much_to_copy=GLOBAL.cp_num
-        copynum = GLOBAL.REMOTE_COPY_NUM
-        array=GLOBAL.STENCIL_array dim=GLOBAL.STENCIL_DIM dim_spec=GLOBAL.STENCIL_DIM_SPEC >
+        copynum = GLOBAL.REMOTE_COPY_NUM >
+ (stencil_type,dim,_,dim_spec)=car GLOBAL.STENCIL_DATA_INFO;
+  (ivars,_,_) = GLOBAL.STENCIL_DATA_IVARS_INFO;
+ 
  if (GLOBAL.REMOTE_COPY_NUM >= how_much_to_copy) return ("",input);
+ array=InnerName(GLOBAL.STENCIL_array); 
 
  cp_res = input; init_res=NULL; done=MAP{}; permute=NULL;
- for (index=0; index<GLOBAL.STENCIL_DIM; index=index+1) permute=(index+1)::permute;
+ for (index=0; index<dim; index=index+1) permute=(index+1)::permute;
 
- foreach ref = CODE.manycore_stencil_remote_arr#(CLEAR loc, CLEAR sub) \in cp_res do 
+ arr_name=InnerName(GLOBAL.STENCIL_array);
+ foreach ref = CODE.manycore_stencil_remote_arr_access#(CODE.manycore_stencil_remote_arr#(arr_name,CLEAR loc), CLEAR sub) \in cp_res do 
    if (done[loc] == 1) continue; 
    nref = ref; dims=NULL; tocopy = TRUE;
-   for ((index=GLOBAL.STENCIL_DIM-1;p1 = sub;p2=ReverseList(dim_spec);p3=ReverseList(loc)); p1 != NULL; (p1 = cdr(p1);p2=cdr(p2);p3=cdr(p3);index=index-1)) {
-     ivar =car (p1);
-     CODE.StencilDim#(i,lo,hi,dist,par) = car(p2);
-     cur_loc=car(p3);
+   for ((index=dim-1;p1 = sub;p2=ivars;p3=ReverseList(loc)); p1 != NULL; (p1 = cdr(p1);p2=cdr(p2);p3=cdr(p3);index=index-1)) {
+     ivar =car (p1); i = car(p2); cur_loc=car(p3); 
+     foreach CODE.StencilDim#(i,lo=_,hi=_,dist=_,_) \in input do break; enddo
      if (ivar : Bop#("+"|"-",i, INT)) {
          nref = REPLACE(ivar, i, nref);
          ivar = i;
      }
      if (cur_loc == "local") {
-        if (ivar == i) dims = CopyDim#(i,lo,CODE.manycore_stencil_size#(index,loc),dist)::dims;
+        if (ivar == i) dims = CopyDim#(i,lo,CODE.manycore_stencil_size#(index,loc),1)::dims;
         else { tocopy =FALSE; break; }
      }
      else if (GLOBAL.STENCIL_HALLO : CODE.HalloDim#(i=_,lo=_,hi=_,dist=_)) {
@@ -242,9 +290,9 @@ include OptHighLevel.pi
      else  { dims = CopyDim#(i,ivar,1, 1)::dims; }
    }
   if (tocopy) {
-    <<*print (nref ":" dims);
+   <<* print (nref ":" dims);
     done[loc]=1;
-    TRACE(init_res cp_res,CopyRepl[init=1;trace_init=init_res;trace_decl=init_res;save=0;prefix=(loc"_cp");data_type=GLOBAL.STENCIL_TYPE;arr_ref_type=manycore_stencil_remote_arr;permute=(3 2 1)](nref, dims, cp_res));
+    TRACE(init_res cp_res,CopyRepl[init=1;trace_init=init_res;trace_decl=init_res;save=0;prefix=(loc"_cp");data_type=stencil_type;arr_ref_type=CODE.manycore_stencil_remote_arr_access;permute=(3 2 1)](nref, dims, cp_res));
     GLOBAL.REMOTE_COPY_NUM = GLOBAL.REMOTE_COPY_NUM +1;
     if (GLOBAL.REMOTE_COPY_NUM >= how_much_to_copy) break;
   }
@@ -252,65 +300,134 @@ include OptHighLevel.pi
  (StmtList#init_res,cp_res)
 </xform>
 
-<xform gen_manycore_stencil pars=(type, body,extra, params) dimsizes=GLOBAL.STENCIL_DIM_SPEC
-  oldarray=GLOBAL.STENCIL_old_array newarray=GLOBAL.STENCIL_array
-  target=GLOBAL.TRACE_TARGET 
+<xform gen_manycore_stencil pars=(body,repl_data,params) 
+  trace=GLOBAL.TRACE_TARGET 
   trace_incl=GLOBAL.TRACE_INCL 
   trace_decl=GLOBAL.TRACE_DECL
+  ivarinfo=GLOBAL.STENCIL_DATA_IVARS_INFO
   > 
+  (stencil_type,dim,dimsizes,rdimsizes) = car GLOBAL.STENCIL_DATA_INFO;
+  ivars = ivarinfo[0];
   <*3.5-D Blocking Optimization for Stencil Computations on Modern CPUs and GPUs.  by Anthony Nguyen et al. Intel Corporation*>
-
-   origbody=body;
-   if (body : CODE.Pragma#(p1=_,body1=_)) {
+  origbody=body;
+  if (body : CODE.Pragma#(p1=_,body1=_)) {
             body = body1;
-   }
-
-  if (params : CODE.ParamDeclList#p) params=p;
-  switch (extra) {
-  case CODE.StencilExtra#(CODE.Iterative#(rep,rep_lo,rep_hi)) : 
-         if (rep_lo : ID) params = TypeInfo#(CODE.IntType#"int", rep_lo, "") :: params;
-         if (rep_hi : ID) params = TypeInfo#(CODE.IntType#"int", rep_hi, "") :: params;
-         StencilDim#(outer_i,_, _,_,_) = car(dimsizes);
-         foreach (ERASE(body) : (inner_stencil=Nest#(Loop#(outer_i,_,_,_),_)) : TRUE);
-
-  case "" | CODE.StencilExtra#"manycore": inner_stencil=body;
-  }
-  (init,local)=gen_manycore_stencil_local(type,dimsizes,inner_stencil);
-  boundary = gen_stencil_boundaries(dimsizes,local);
-
-  if (GLOBAL.cp_num > 0) {
-     (init1, res1) = XFORM.copy_boundary_arr_accesses(boundary);
-     local = AppendList(init1,local);
-     boundary=res1;
   }
 
-  local=gen_local_refs(local); 
-  boundary=gen_local_refs(boundary);
-  localrepl=TRACE((StmtList#init)::local);
-
-  newname = InnerName(newarray); oldname=InnerName(oldarray);
-  arrdims = dimsizes;
-
-  if (GLOBAL.cp_lmem == 1 || GLOBAL.use_reg==1)
-      for ((cp_scope=local; cp_dims=dimsizes); cp_scope : CODE.LocalStencil#(_,_,CLEAR cpbody); 
-           (cp_scope=cpbody; cp_dims=cdr(cp_dims)) ) {""}
-  if (GLOBAL.cp_lmem == 1 && cp_dims != NULL) {
-      foreach_r (local : (aref=GLOBAL.STENCIL_REF#(oldname,CLEAR sub)) : TRUE) {
+  if (repl_data == 0) {
+     inner_stencil=body; 
+  }
+  else {
+     inner_stencil = "";
+     foreach inner_stencil=Nest#(Loop#(i=_,_,_,_),_) \in ERASE(body) s.t. 0 do  
+        if (Lookup(i,ivars)) break;
+        else inner_stencil="";
+     enddo
+  }
+  rdimsizes = ReverseList(dimsizes);
+  if (inner_stencil != "") {
+    (init,local)=gen_manycore_stencil_local(inner_stencil);
+    boundary = gen_stencil_boundaries(local);
+    if (GLOBAL.cp_num > 0) {
+       (init1, res1) = XFORM.copy_boundary_arr_accesses(boundary);
+       local = AppendList(init1,local);
+       boundary=res1;
+    }
+    old_array=InnerName(GLOBAL.STENCIL_old_array) ;
+    array=InnerName(GLOBAL.STENCIL_array) ;
+    local=gen_local_refs(old_array, array, dim,local); 
+    boundary=gen_local_refs(old_array, array, dim,boundary);
+    localrepl=TRACE((StmtList#init)::local);
+    arrdims = ivars;
+    if (GLOBAL.cp_lmem == 1 || GLOBAL.use_reg==1)
+      for ((cp_scope=local; cp_dims=ivars); cp_scope : CODE.LocalStencil#(_,_,CLEAR cpbody); 
+           (cp_scope=cpbody; cp_dims=cdr(cp_dims)) ) { }
+    if (GLOBAL.cp_lmem == 1 && cp_dims != NULL) {
+      foreach_r (local : (aref=GLOBAL.STENCIL_REF#(array,CLEAR sub)) : TRUE) {
          index=CODE.SharedDataCopyIndex#dimsizes;
-         cp_scope=CopyRepl[prefix="s_data_buf";buf_init=Bop#("+","s_data",index);data_type=type;trace=localrepl;init=1](aref, cp_dims, cp_scope);
-         oldname="s_data";
+         cp_scope=CopyRepl[prefix="s_data_buf";buf_init=Bop#("+","s_data",index);data_type=stencil_type;trace=localrepl;init=1](aref, cp_dims, cp_scope);
+         array="s_data";
          arrdims = cp_dims;
          break;
       }
-  } 
-  if (GLOBAL.use_reg == 1) {
+    } 
+    if (GLOBAL.use_reg == 1) {
       if (cp_scope : Nest#(_,cp_body)) cp_scope=cp_body;
-      ScalarRepl[data_type=type;trace=localrepl;init=1](oldname, arrdims, cp_scope);
+      ScalarRepl[data_type=stencil_type;trace=localrepl;init=1](array, arrdims, cp_scope);
+    }
+    nbody= REPLACE(inner_stencil, stencil_kernel_call#(localrepl,dimsizes, params), body);
   }
-  nbody= REPLACE(inner_stencil, stencil_kernel_call#(localrepl,dimsizes, params), body);
-  main=CODE.stencil_manycore_main[T=type]#(dimsizes,nbody,boundary,params);
-  REPLACE(origbody, main, target);
-  kernel = CODE.stencil_manycore_kernel[T=type]#(dimsizes, localrepl, params);
-  Append_Include[trace=trace_incl](kernel);
+  else {
+    nbody=body;
+    boundary = "";
+  }
+  main=XFORM.gen_stencil_manycore_main(nbody,boundary,params, repl_data);
+  REPLACE(origbody, main, trace);
+  if (!Lookup(CODE.ManycoreLibInclude,trace_incl))
+     Append_Include[trace=trace_incl](CODE.ManycoreLibInclude);
+</xform>
+
+<xform gen_stencil_manycore_main pars=(local, boundary, params, repl_data) 
+          global_old_array=GLOBAL.STENCIL_old_array 
+          global_array = GLOBAL.STENCIL_array 
+          ivarinfo=GLOBAL.STENCIL_DATA_IVARS_INFO
+          hallo=GLOBAL.STENCIL_HALLO 
+          add_timing=GLOBAL.add_timing
+         >
+   datainfo=car GLOBAL.STENCIL_DATA_INFO;
+   datainfo1=cdr GLOBAL.STENCIL_DATA_INFO;
+  (stencil_type,dim,dimsizes,rdimsizes)=datainfo;
+  (ivars, ivarsmacro, dataaccess)=ivarinfo;
+  array=(OuterName(global_array));
+  old_array=(OuterName(global_old_array)) ;
+  old_array_inner=(InnerName(global_old_array)) ; array_inner=(InnerName(global_array)); 
+  init1=init2="";
+  if (repl_data != 0) {
+    init2 = StmtList#(CODE.copy_stencil_manycore#(old_array,CODE.stencil_init_stmt#(old_array,ivarinfo,datainfo),ivars,datainfo) CODE.copy_stencil_manycore#(array,CODE.stencil_init_stmt#(array,ivarinfo,datainfo),ivars,datainfo) CODE.precopy_check_time); 
+    init1 = CODE.StmtList#(CODE.ManycoreAllocateArray#(old_array,stencil_type, dimsizes)::CODE.ManycoreAllocateArray#(array,stencil_type, dimsizes)); 
+    if (boundary != "" && !GLOBAL.gpu) { <<* replace inlined code
+       local = REPLACE(old_array, Uop#("&",Name#("_" old_array)), local);
+       local = REPLACE(array, Uop#("&", Name#("_" array)), local);
+    }
+    else { <<* replace function calls
+       local = REPLACE(old_array, Name#("_" old_array), local);
+       local = REPLACE(array, Name#("_" array), local);
+    }
+    local = StmtList#(local CODE.process_check_time);
+    if (array_inner != array) {
+       init2 = CODE.StmtList#(CODE.ManycoreArrayPtr#(old_array_inner,stencil_type)::CODE.ManycoreArrayPtr#(array_inner,stencil_type)::init2); 
+       (local,boundary) = REPLACE(array_inner, Name#("_" array_inner), (local,boundary));
+       (local,boundary) = REPLACE(old_array_inner, Name#("_" old_array_inner), (local,boundary));
+    }
+    finalize=StmtList#(CODE.copy_stencil_manycore#(old_array,CODE.stencil_copyback_stmt#(old_array,ivarinfo,datainfo),ivars,datainfo) CODE.copy_stencil_manycore#(array,CODE.stencil_copyback_stmt#(array,ivarinfo,datainfo),ivars,datainfo) CODE.postcopy_check_time CODE.free_resources);
+    array_inner = Name#("_" array_inner);
+    old_array_inner = Name#("_" old_array_inner);
+    array = Name#("_" array);
+  }
+  else { 
+      array = array_inner; old_array=old_array_inner;
+      finalize=""; init2=""; 
+  }
+  if (hallo != "") { ivars = hallo[HalloDim.i]::ivars; }
+  foreach inner=stencil_kernel_call#(localrepl,_,_) \in local do 
+     (init st_local) = localrepl; 
+     kernel = CODE.inner_stencil_manycore#(GLOBAL.STENCIL_TIME_IVARS, ivars,GLOBAL.STENCIL_DATA_INFO,params, st_local,boundary,old_array_inner,array_inner);
+     if (!GLOBAL.gpu) 
+        local=REPLACE(inner, kernel, local);
+     else {
+        Append_Include(kernel);
+     }
+     break;
+  enddo
+
+  Append_Include(CODE.stencil_macro#(dim,ivars,ivarsmacro)); 
+  res = init1
+      :: CODE.InitNumOfCores#(array,dimsizes,ivars)
+      :: (if (add_timing) { CODE.TimingInit } else {""}) 
+      :: init2
+      :: local
+      :: finalize
+      ;
+  return StmtList#res;
 </xform>
 

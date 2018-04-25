@@ -1,3 +1,4 @@
+#include <sage3.h>
 
 #include <StmtInfoCollect.h>
 #include <AstInterface_ROSE.h>
@@ -7,8 +8,6 @@
 #include <iostream>
 #include <CommandOptions.h>
 #include <GraphIO.h>
-#include <sage3.h>
-
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
@@ -94,14 +93,14 @@ main ( int argc,  char * argv[] )
          return -1;
      }
 
-     SgProject *sageProject = new SgProject ( (int)argc,argv);
-     SageInterface::changeAllLoopBodiesToBlocks(sageProject);
+     SgProject sageProject ( (int)argc,argv);
+     SageInterface::changeAllBodiesToBlocks(&sageProject);
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 
-   int filenum = sageProject->numberOfFiles();
+   int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
+     SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
      ROSE_ASSERT(sageFile != NULL);
      SgGlobal *root = sageFile->get_globalScope();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();

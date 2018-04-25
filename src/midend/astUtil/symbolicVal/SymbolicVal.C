@@ -310,6 +310,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
      case AstInterface::BOP_MINUS: return v1 - v2;
      case AstInterface::BOP_DOT_ACCESS:
      case AstInterface::BOP_ARROW_ACCESS: 
+        return new SymbolicAstWrap(exp);
      case AstInterface::BOP_DIVIDE:
         return new SymbolicFunction( opr, "/", v1,v2);
      case AstInterface::BOP_EQ: 
@@ -328,6 +329,10 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         return new SymbolicFunction( opr, "&&", v1,v2);
      case AstInterface::BOP_OR:
         return new SymbolicFunction( opr, "||", v1,v2);
+     case AstInterface::BOP_BIT_RSHIFT:
+        return new SymbolicFunction( opr, ">>", v1,v2);
+     case AstInterface::BOP_BIT_LSHIFT:
+        return new SymbolicFunction( opr, "<<", v1,v2);
      default:
         assert(false);
      }

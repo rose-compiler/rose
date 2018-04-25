@@ -712,7 +712,7 @@ int initialize(int argc, char** argv)
      else if (*p == 'm' && *(p+1) == 'd')
           redefine_code=true;
      else if (*p == 'v')
-          std::cerr << "pcg version: " << POET_VERSION << "\n";
+          std::cerr << "pcg version: " << "1.07.01" << "\n";
      else if (*p == 's')
           silent = true;
      else if (*p == 'p') {
@@ -762,11 +762,7 @@ POETProgram* process_file(const char* fname)
   std::string name;
   if (fname == 0 || *fname==0)  {
     if (lexState==LEX_SYNTAX) { return 0; }
-<<<<<<< HEAD
     if (!silent) std::cerr << "Reading " << filetype << " from stdin\n";
-=======
-    std::cerr << "Reading " << filetype << " from stdin\n";
->>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
     yyin = stdin;
   }
   else {

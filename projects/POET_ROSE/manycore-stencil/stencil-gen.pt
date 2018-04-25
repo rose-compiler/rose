@@ -1,35 +1,127 @@
+include utils.incl
 include stencil_lib.pi
 include stencil_ROSE.incl
+
+<parameter manycore default=1 message="whether to use manycore lib from ROSE"/>
+<parameter gpu default=0 message="whether to target GPU"/>
 
 <parameter in message="input file name"/>
 <parameter out message="output file name"/>
 <define ManycoreLib ("core"".""h")|("multicore"".""h") />
 
-<code StmtList parse=LIST(_,"\n") />
-
 <trace target/>
+<input from=in to=target/>  <<* use ROSE parser
 <define TRACE_TARGET target/>
 <define TRACE_INCL target/>
 
-<input from=in to=target/>  <<* use ROSE parser
+<xform sort_pragma pars=(new, old)>
+  if (old == "") return new;
+  (f=FunctionDecl, p, basetype,body) = new;
+  res = NULL; done = 0;
+  for (pold = old; pold != NULL && !done; pold=cdr(pold)) {
+     c = (f1=FunctionDecl, p1, basetype1, body1) = car(pold);
+     
+     if (f1 == f && Lookup(p, body1)) { res = AppendList(res, (f, AppendList(p1,p), basetype1,  body1)); AppendList(res, cdr(pold)); done = 1; } 
+     else if (Lookup(f1, body)) 
+       { res = AppendList(AppendList(res, new),pold); done = 1; }
+     else { res = AppendList(res, c); }
+ }
+ if (done == 0) res = AppendList(res, new); 
+ return res;
+</xform>
 
 <eval
-   change = 0;
-   foreach CODE.Pragma#(pragma=_,body=_) \in ERASE(target) s.t. pragma ==> cur=StencilPragma do
-      StencilPragma#(type,oldarray,newarray,dimsizes,hallo) = cur; 
-      STENCIL_TYPE=type;
-      STENCIL_DIM=LEN(dimsizes);
-      STENCIL_DIM_SPEC=dimsizes;
-      STENCIL_old_array=oldarray;
-      STENCIL_array = newarray;
-      STENCIL_HALLO = hallo;
-      gen_manycore_stencil(type,body,"", "");
-      change = 1;
+   pragma_map = MAP{}; fun = ""; 
+   foreach p=FunctionDecl#(_,_,body=_)|CODE.Pragma#(pragma=_,body=_) \in ERASE(target) s.t. 0 do
+      if (p : FunctionDecl) {
+         exit_block(); exit_block();
+         enter_block(p); enter_block(body);
+         fun = p;
+      }
+      else if (pragma : cur=CODE.StencilPragma || (SPLIT("",(pragma => STRING)) ==> cur=CODE.StencilPragma)) {
+        s=StencilPragma#(name, dim, ivars, dimsizes, arrays, hallo) = cur;
+        if ((pragma_map[name "type"] == "" || fun != p) && arrays != "") {
+           ((CODE.ArrayType#(base=_)) | (CODE.PtrType#(base=_)) | (CODE.RefType#(base=_))) = get_type(car(arrays[StencilArray.names]));
+           if (base : TypeName#("MulticoreArray",TemplateInstantiation#(base1=_)))
+              base = base1;
+           basetype = base;
+        }
+        if (GLOBAL.gpu != 0) {
+          params = pragma_map[name "params"];
+          if (params == "") {
+             params = NULL;
+             foreach CODE.TypeInfo#(t=_,v=_,_) \in fun do 
+                if (!Lookup(v, (arrays ivars dimsizes)) && Lookup(v, body)) params=TypeInfo#(t,v,"") :: params;
+             enddo
+           }
+           else {
+             res = NULL;
+             foreach t=TypeInfo#(t,v,_) \in reverse(params) do
+                if (!Lookup(v, (arrays ivars dimsizes)))
+                  res = t :: res; 
+             enddo
+             params = res;
+           }
+           pragma_map[name "params"] = params;
+        }
+        pragma_map[name]=sort_pragma((fun,s,basetype,body),pragma_map[name]);
+     }
    enddo
-<* skip here because searching for include directives within ROSE AST is not yet supported
-   if (change) {
-     if (!Lookup(GLOBAL.ManycoreLib,target)) { target= CODE.ManycoreLibInclude :: ERASE(target); } } *>
+   foreach e=(name=ID,pragmas=_) \in pragma_map do  
+     stencil_params=pragma_map[name"params"];
+     ivars_data = ivars_time = NULL; 
+     foreach e1=(fcur=_,cur=_,stencil_type=_,xbody=_) \in pragmas do
+        ivars_time = ivars_data=NULL;
+        foreach StencilPragma#(_, dimtype=_, ivars=_, datadim=_, arrays=_, hallo=_) \in cur do 
+           switch(dimtype){
+             case "time": ivars_time=AppendList(ivars_time,ivars);
+             case "data": ivars_data=AppendList(ivars_data,ivars);
+           } 
+           if (datadim : CODE.StencilSizes#(dimsizes=_)) {
+              rdimsizes = ReverseList(dimsizes);
+              STENCIL_DATA_INFO=(stencil_type, LEN(dimsizes), dimsizes, rdimsizes);
+           }
+           if (arrays : CODE.StencilArray#(a=_)) {
+              STENCIL_old_array=AppendList(STENCIL_old_array,car(a));
+              STENCIL_array = AppendList(STENCIL_array,car(cdr(a)));
+           }
+           STENCIL_TIME_IVARS=ivars_time;
+           STENCIL_HALLO = hallo;
+         enddo 
+       if (ivars_data == NULL) {
+          for (i = 0; i < LEN(dimsizes); i=i+1) {
+             ivars_data = ("__"^i) :: ivars_data;
+          }
+       }
+       ivars_macro=NULL;
+       for (p = ivars_data; p != NULL; p = cdr(p)) {
+          v = car(p) ^ "_s"; 
+          if (cdr(p) != NULL) ivars_macro=AppendList(ivars_macro,v);
+       }
+       cpdims = NULL; t = 1;
+       for ( (p=dimsizes; p1=ivars_data); p != NULL && p1!=NULL; (p = cdr(p);p1=cdr(p1))) {
+            cpdims = CODE.CopyDim#(car(p1),0,car(p),t) :: cpdims;
+            t= t * (car p);
+        }
+       STENCIL_DATA_IVARS_INFO=(ivars_data,ivars_macro,XFORM.gen_linearized_ref(ivars_macro,dimsizes));
+       STENCIL_CP_DIMS = cpdims;
+       if (fcur != (car(pragmas))[0]) {
+         fparam=fcur[FunctionDecl.params]; fparam2= fparam;
+         foreach t=TypeInfo#(t2=CODE.PtrType#(t1=_),n=_,_) \in fparam do
+           if (Lookup(n, (STENCIL_old_array STENCIL_array))) {
+             t2 = REPLACE(t2, CODE.RefType#(CODE.MulticoreArray#t1), t);
+             fparam2 = REPLACE(t, t2, fparam2); 
+           }
+         enddo
+         f2 = REPLACE(fparam, fparam2, fcur);
+         REPLACE(fcur, f2, target);
+       }
+       res = from = xbody;
+       TRACE(res, gen_manycore_stencil[trace=res](from, ivars_time != NULL, stencil_params));
+       REPLACE(from, res, target);
+   enddo
+  enddo
 />
 
-<output to=out from=target />
-
+<output cond=manycore from=(target) syntax=("stencil_manycore.code") to=out/>
+<output cond=gpu from=(target) syntax=("stencil_gpu.code") to=out/>

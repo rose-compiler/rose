@@ -1,13 +1,24 @@
+<xform get_type_decl pars=(input) >
+ assert(0);
+return input;
+</xform>
+
 <code IntegerType> int </code>
+
+<code ArrayAccess pars=(array,subscript)> @array@[@subscript@] </code>
+
+<code StmtList pars=(s:LIST(_,"\n")) > @s@ </code>
+
+<code VarInit pars=(val)> = @val@ </code>
 
 <code TypeInfo pars=(type, name, init) >
 @type@ @name init@
 </code>
 
-<code DeclStmt pars=(decl : LIST(TypeInfo,";"))> @decl@; </code>
 <code ExpStmt pars=(exp)> @exp@; </code>
+<code DeclStmt pars=(decl)> @decl@; </code>
 
-<code Nest pars=(ctrl, body:CODE.SingleStmt) annot="" >
+<code Nest pars=(ctrl, body) annot="" >
 @annot ctrl@ 
   @body@
 </code>
@@ -20,26 +31,11 @@
 @var@@op@
 </code>
 
-<code SingleStmt pars=(content) 
-      output=((content:(first second))? (CODE.StmtBlock#content) : content)>
-@content@ 
-</code>
-
-<code StmtBlock pars=(stmts:LIST(_, "\n"))>
-{
-  @stmts@
-}
-</code>
-
-<code FunctionCall pars=(function, args : LIST(EXP,","))>
+<code FunctionCall pars=(function, args : LIST(_,","))>
 @function@(@args@)
 </code>
 
-<code ArraySubscript pars=(e:EXP) > [@e@] </code>
-
-<code ArrayAccess pars=(array:EXP,subscript:LIST(CODE.ArraySubscript,"")) >
-@array subscript@ 
-</code>
+<code ArraySubscript pars=(e:_) > [@e@] </code>
 
 <code If pars=(condition)>
 if (@condition@)

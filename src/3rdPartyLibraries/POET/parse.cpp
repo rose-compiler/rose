@@ -142,11 +142,7 @@ void EvaluatePOET::
 compute_lookaheadInfo(POETCode* cur, std::vector<POETCode*>& res, unsigned need, POETCode* next)
 {
  try {
-<<<<<<< HEAD
     assert (cur != 0);
-=======
-    assert(cur != 0);
->>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
     int size = 0;
     if (debug_lookahead()) {
        std::cerr << "try compute lookahead for: " << cur->toString() << "; need " << need << "\n";
@@ -229,11 +225,7 @@ compute_lookaheadInfo(POETCode* cur, std::vector<POETCode*>& res, unsigned need,
      if (size < need) {
          need = need - size;
          if (next == 0) { LOOKAHEAD_AMBIGUOUS(EMPTY); }
-<<<<<<< HEAD
          else if (res.size() == 0) {
-=======
-         if (res.size() == 0) {
->>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
             compute_lookaheadInfo(next, res, need, 0);
          }
          else {
@@ -504,6 +496,7 @@ inline POETCode* SubList(POETCode* l1, POETCode* stop, POETCode*& rest) {
 }
 
 inline POETCode* MergeList(POETCode* l1, POETCode* l2) {
+  if (l2 == 0) return l1;
   POETList* ll2 = dynamic_cast<POETList*>(l2);
   if (ll2 == 0 && l2 != EMPTY) {
       ll2 = ASTFactory::inst()->new_list(l2, 0);
@@ -571,7 +564,7 @@ class ParseMatchVisitor  : public EvaluatePOET, public POETCodeVisitor
     if (r1_head->get_enum() == SRC_OP && static_cast<POETUop*>(r1_head)->get_op() == POET_OP_ANNOT) {
        r1 = SkipEmpty(get_tail(r1), &lineno);
        POETCode* leftOver = 0;
-       POETCode* r1_arg=static_cast<POETUop*>(r1_head)->get_arg();
+       POETCode* r1_arg=SkipEmpty(static_cast<POETUop*>(r1_head)->get_arg(), &lineno);
        POETCode* nres = apply(r1_arg,EMPTY,&leftOver);
        if (leftOver == 0) r1 = nres;
        else r1 = fac->new_list(nres,leftOver); 

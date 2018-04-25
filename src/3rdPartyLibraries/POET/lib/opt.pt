@@ -36,18 +36,18 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 <***********************************************>
 <code Loop pars=(i,start,stop,step) maxiternum="" tag="" origstep="" origivar=""/>
 
-<code Nest pars=(ctrl, body) 
+<code Nest pars=(ctrl, body)
            rebuild=(BuildNest[annot=annot](ctrl,body))/>
 
-<code CopyIvarName pars=(buf)>
+<code CopyIvarName pars=(buf) match=CODE.Name>
 @buf@_index
 </code>
 
-<code UnrollIvarName pars=(ivar)>
+<code UnrollIvarName pars=(ivar) match=CODE.Name>
 @ivar@_unroll
 </code>
 
-<code BufferPtr pars=(buf)>
+<code BufferPtr pars=(buf) match=CODE.Name>
 @buf@_ptr
 </code>
 
@@ -58,10 +58,10 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 <xform PermuteLoops pars=(inner,input) order=0 trace=GLOBAL.TRACE_TARGET>
   (order == 0)? input
-  : (! (input : Nest#(loop,body)) )?  ( ERROR("Input is not a loop nest!") ) 
-  : ( 
+  : (! (input : Nest#(loop,body)) )?  ( ERROR("Input is not a loop nest!") )
+  : (
       (loops,nests) = FindLoopsInNest(inner, input);
-      if (LEN(loops) != LEN(order)) 
+      if (LEN(loops) != LEN(order))
          ERROR("Incorrect reordering indices: " order "\n Loops are: " loops);
       nloops = PERMUTE (order, loops);
       res = BuildNest(nloops, inner);
@@ -87,7 +87,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
   else ERROR( "Expecting input to be a sequence: " input);
 </xform>
 
-<xform EmbedStmts pars=(nest,input) trace=0 >
+<xform EmbedStmts pars=(nest,input) trace=GLOBAL.TRACE_TARGET >
   res = EmbedStmtHelp(nest,input);
   if (trace == "") trace = input;
   REPLACE(ERASE(input), res, trace);
@@ -99,7 +99,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
   res = NULL; cur_input=input;
   for ( split2 = bodiesToDist; (cur_input != "" && split2 != NULL); ) {
-      split1 = car(split2); split2 = cdr(split2); 
+      split1 = car(split2); split2 = cdr(split2);
       (before, inner, after) = FissionHelp(split1,cur_input);
       if (before != "") res = before :: res;
       if (inner != "") res = inner :: res;
@@ -107,19 +107,19 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
   }
   if (cur_input != "") res = cur_input :: res;
   res = ReverseList(res); <<* reverse the original res, which was built backward
-  for ( (p_res=res; p_dist = trace_dist); 
+  for ( (p_res=res; p_dist = trace_dist);
          p_dist != NULL; (p_res = cdr(p_res); p_dist = cdr(p_dist))) {
        cur_res = car(p_res); cur_dist = car(p_dist);
        cur_handle=ModifyTraceHandle(cur_dist, cur_res);
        res = REPLACE(cur_res, cur_handle, res);
-  } 
+  }
   if (trace == "") trace = input;
   REPLACE(ERASE(input),res,trace);
   res
 </xform>
 
 <xform DistributeLoop pars=(statement, input)
-      trace_dist="" trace=GLOBAL.TRACE_TARGET 
+      trace_dist="" trace=GLOBAL.TRACE_TARGET
       outer_nest="" statement_to_split="" private=NULL private_size="" data_type=GLOBAL.ARRAY_ELEM_TYPE>
   if (input : Nest#(Loop#(dim,min,max,step),loop_body)) {
     if (min : ID | INT)
@@ -129,7 +129,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
     ERROR ("Unsupported array size in DistributeLoop");
   }
 
-  element_arr = MAP(_,_);  
+  element_arr = MAP(_,_);
   for (ets = private; ets != NULL; ets = cdr(ets)) {
       cur_ets = car(ets);
       element_arr[Name#(cur_ets)] = Name#(cur_ets "_array");
@@ -188,10 +188,10 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         } else {
           ERROR("Unsupported Loop Nest in DistributeLoop");
         }
-        BREAK; 
+        BREAK;
       } else {
         new_res = cur_res :: new_res;
-      } 
+      }
     } else {
       ERROR ("Unsupported cur_res Type in DistributeLoop");
     }
@@ -228,73 +228,75 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
   res
 </xform>
 
-<xform gen_call_stmt pars=(call, input) rtype="" trace="" name="" stmt=""  >
-  switch (input) {
-    case ExpStmt#(call | Assign#(_, call)): input 
-    case call: 
-        if (stmt=="") ERROR("[gen_call_stmt]: Cannot find call stmt for " call);
-        if (trace=="") ERROR("[gen_call_stmt]: Cannot modify call context for " call);
-        if (rtype == "") ERROR("[gen_call_stmt]: Does not have return type for " call);
-        rname="ret_"^name; 
-        (rtype,init) = gen_default_init(rtype);
-        decl=DeclStmt#(CODE.TypeInfo#(rtype,rname,init)); 
-        res = ExpStmt#(Assign#(rname,call));
-        REPLACE(ERASE(stmt), decl::res::REPLACE(call,rname,stmt), trace);
-        res 
-    case Return#(body) | CODE.DeclStmt#(body) | ExpStmt#(body): 
-         gen_call_stmt[stmt=input](call,body)
-    case Nest#(ctrl,body): 
-       r1 = gen_call_stmt[stmt=input](call,ctrl);
-       if (r1 == "") { gen_call_stmt[stmt=body](call,body) }
-       else { r1 } 
-    case FunctionDecl#(_,_,_,body) | StmtBlock#(body) | TypeInfo#(_,_,body)
-         | VarInit#(body) | FunctionCall#(_,body) | For#(body,_,_)
-         | PtrAccess#(body,_) | While#(body)|If#(body):
-        gen_call_stmt(call,body)
-    case CODE.Bop#(_,x1,x2) | (x1 x2) | Assign#(x1,x2):
-       r1 = gen_call_stmt(call,x1);
-       if (r1 == "") { gen_call_stmt(call,x2) }
-       else { r1 } 
-    case CODE.Break|CODE.NewAlloc|CODE.Name|ID|INT|Else|""|NULL : ""
+<xform InlineFunction pars=(function_definition, input) parameters_to_replace=NULL trace=GLOBAL.TRACE_TARGET>
+  if (function_definition : CODE.TemplateDecl#(template_par=_, tmp=_)) {
+     function_definition = tmp;
+     template_arg=NULL;
   }
-</xform>
-
-<xform InlineFunction pars=(function_definition, input) parameters_to_replace="" trace=GLOBAL.TRACE_TARGET>
+  else template_par = template_arg=NULL;
+  if (function_definition : CODE.InlineDecl#(tmp=_)) function_definition=tmp;
   FunctionDecl#(fname, CLEAR fpara, CLEAR ftype, CLEAR fbody) = function_definition;
+  foreach FunctionCall#(fname2=CODE.TypeName#(fname, CODE.TemplateInstantiation#(template_arg=_))|fname, callpara=_) \in input do
+        break;
+  enddo
   if (fname : CODE.ScopedName#a) fname = car(cdr(a));
-  if (input : ExpStmt) call_stmt=input;
+  if (fname : Bop#(".",var=_,n=_)) {
+      parameters_to_replace=("this",var) :: parameters_to_replace;
+  }
+  if (input : CODE.DeclStmt#e|CODE.ExpStmt#e|CODE.StmtBlock#e) { call_stmt=input; input=e; }
+  else if (trace != "") {
+    call_stmt="";
+    foreach c=CODE.Stmt \in ERASE(trace) s.t. FALSE do
+      if (Lookup(input, c)) { call_stmt=c; }
+    enddo
+  }
+  else call_stmt=""; 
+  if (car(input) : CODE.Assign#(ret_orig=_,c)|CODE.TypeInfo#(_,ret_orig=_,VarInit#(c=_))) { input = c; ret_decl=""; }
+  else if (call_stmt : ExpStmt#input || ftype == "" || fbody : CODE.ExpStmt) { ret_orig = ""; ret_decl=""; }
   else {
-     call_stmt=gen_call_stmt[name=fname;trace=trace;rtype=ftype](input,ERASE(trace));
-  }
-  ret_orig = "";
-  ExpStmt#(FunctionCall#(fname2, function_para) |
-           Assign#(ret_orig, FunctionCall#(fname2,function_para))) 
-     = call_stmt;
-  if (fname2 != fname) {
-    ERROR("[InlineFunction]: mismatching function definition and function call:" fname2 " vs. " fname);
+         (t,v) = XFORM.gen_default_init(ftype);
+         ret_orig = gen_return_var(""); ret_decl=DeclStmt#(TypeInfo#(t,ret_orig, v)); 
   }
 
+  if (template_arg != "") {
+      for ( (p1=template_par; p2=template_arg); p1 != NULL; (p1=cdr(p1);p2=cdr(p2))) {
+         TemplateParameterDecl#(_,n1) = car p1;
+         fbody = REPLACE(n1, car p2, fbody);
+      }
+  }
   res1=NULL;
-  para_map = MAP(_,_);
-  if (fpara != "") {
-    for ((para = ReverseList(fpara); rpara = ReverseList(function_para));
-       (para != NULL && rpara != NULL);
-       (para = cdr(para); rpara = cdr(rpara))) {
-    cpara = car(para); crpara = car(rpara);
-    CODE.TypeInfo#(CLEAR type, CLEAR var, _) = cpara;
-    if (LookupList(var, parameters_to_replace) == FALSE) {
-      if (var != crpara) 
-        res1 = CODE.DeclStmt#(CODE.TypeInfo#(type, var, CODE.VarInit#crpara))::res1;
-    } else {
-        para_map[var] = crpara;
-    }
-   }
+  if (fpara != "" && fpara != NULL) {
+    need_inline_copy = FALSE;
+  
+    args = callpara;
+    foreach cpara = CODE.TypeInfo#(type=_,var=_,_) \in fpara do
+        if (args == NULL) { print ("Error: insufficient fcall argument:" input); assert(0); }
+        cur_arg = car(args); args=cdr(args);
+        if (type : ArrayType#(t1=_, (CODE.ArrayDim#"" NULL)))
+               type = PtrType#t1;
+        if (type : CODE.RefType || CODE.PtrType) {
+               parameters_to_replace=(var,cur_arg) :: parameters_to_replace;
+        } 
+        else {
+              arg_tmp = REPLACE(var, "", cur_arg);
+              if ((arg_tmp != cur_arg)&&(var != cur_arg)){
+                 res1 = CODE.DeclStmt#(CODE.TypeInfo#(type, var, CODE.VarInit#(var^"_inline_copy")))::res1;
+                 res1 = CODE.DeclStmt#(CODE.TypeInfo#(type, var^"_inline_copy", CODE.VarInit#cur_arg))::res1;
+              } else {
+                 res1 = CODE.DeclStmt#(CODE.TypeInfo#(type, var, CODE.VarInit#cur_arg))::res1;
+              }
+            }
+     enddo
   }
 
-  res = eliminate_early_return[var=ret_orig](fbody[StmtBlock.stmts],ftype);
-  <* there should be only one return now *> 
+  if (fbody : CODE.StmtBlock)
+     res = eliminate_early_return[var=ret_orig](fbody[StmtBlock.stmts],ftype);
+  else if (fbody : ExpStmt#(e=_)) { res=e; }
+  else res = fbody;
+  if (ret_decl != "") res = ret_decl :: res;
+  <* there should be only one return now *>
   foreach (COPY(res) : (cur=CODE.Return#(CLEAR exp)) : TRUE) {
-    if (ret_orig == "" || exp == ret_orig)  
+    if (ret_orig == "" || exp == ret_orig)
        res=REPLACE(cur, "", res);
     else {
        res=REPLACE(cur, CODE.ExpStmt#(CODE.Assign#(ret_orig,exp)), res);
@@ -302,13 +304,30 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
   }
 
   for (para = parameters_to_replace; para != NULL; para = cdr(para)) {
-    cpara = car(para);
-    res = REPLACE(cpara, para_map[cpara], res);
+    cur = car(para);
+    res = REPLACE(cur[0], cur[1], res);
   }
 
   if (res1 != NULL) res = AppendList(res1, res);
 
-  REPLACE(ERASE(call_stmt), StmtBlock#res, trace);
+  if (trace != "") {
+    if (ret_orig == "") REPLACE(call_stmt, StmtBlock#res, trace);
+    else if (call_stmt : CODE.DeclStmt) {
+      foreach TypeInfo#(t=_,v=_,init=CODE.VarInit) \in call_stmt do
+        if (Lookup(input, init)) {
+          (t,init2) = gen_default_init(t);
+          nc1=REPLACE(init, init2, call_stmt);
+          if (v != ret_orig)
+             res=res::ExpStmt#(Assign#(v, ret_orig));
+          REPLACE(call_stmt, nc1 :: StmtBlock#(res), trace);
+        }
+      enddo
+    }
+    else {
+      nc = REPLACE(input,ret_orig, call_stmt);
+      REPLACE(call_stmt, StmtBlock#(res nc), trace);
+    }
+  }
   res
 </xform>
 
@@ -414,7 +433,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 <xform SRFloatconstant pars=(constant, data_type, input) trace=GLOBAL.TRACE_TARGET>
     var = Name#("_float_constant_"Name#FloatConstantIndex);
     FloatConstantIndex = FloatConstantIndex + 1;
-    res = CODE.DeclStmt#(CODE.TypeInfo#(data_type, var, VarInit#(CODE.CastExp#(data_type, NULL, constant))));
+    res = CODE.DeclStmt#(CODE.TypeInfo#(data_type, var, VarInit#(CODE.CastExp#(data_type, constant))));
     REPLACE(ERASE(constant), var, input);
     res = res :: input;
     REPLACE(ERASE(input), res, input);
@@ -457,7 +476,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
                 ERROR ("[SRShiftOperation] Unsupported shift operation: " op2);
             tres = CODE.ExpStmt#(Assign#(left, Bop#("&", opd11, ArrayAccess#(array, opd22))));
             REPLACE(ERASE(cstmt), tres, input);
-        } else 
+        } else
             ERROR("[SRShiftOperation] Unsupported expression type: " right);
     }
     res = res :: input;
@@ -494,7 +513,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
       res = CODE.StmtBlock#else_body;
     else
       res = "";
-  } else 
+  } else
     ERROR("[REBranchNeverTaken] Unsupported redudant branch flag: " redundant_branch_flag);
 
   REPLACE(ERASE(input), res, input);
@@ -671,7 +690,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             } else {
                 exp
             }
-        } else 
+        } else
             ERROR("[REBranches_ExtractExp] Unsupported type: " cond1);
     } else {
         ERROR("[REBranches_ExtractExp] Unsupported expression type: " exp);
@@ -701,7 +720,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         1
     } else {
         0
-    } 
+    }
 </xform>
 
 <xform REBranches pars=(branch_statement, input) >
@@ -715,7 +734,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
     Bop#(":", Bop#("?", Bop#(CLEAR op, CLEAR left, CLEAR right), CLEAR first), CLEAR second) = exp1;
 
-    stmt1 = ExpStmt#(Assign#(left1, right1)); 
+    stmt1 = ExpStmt#(Assign#(left1, right1));
     stmt2 = ExpStmt#(Assign#(left2, right2));
 
     t1 = REPLACE(ERASE(exp1), first, stmt1);
@@ -731,7 +750,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
     if (same == 1)
         t4 = REPLACE(ERASE(exp2), second, stmt2);
     else
-        t4 = REPLACE(ERASE(exp2), first, stmt2); 
+        t4 = REPLACE(ERASE(exp2), first, stmt2);
 
     res = Nest#( (prev=If#(Bop#(op, left, right))), t1::t2);
     res = res :: Nest#(Else#("",prev), t3::t4);
@@ -792,14 +811,14 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 <xform SwapLoopOutside pars=(ivar,input) outside=NULL >
   switch (input) {
-  case Nest#((loop=CODE.Loop#(ivar,_,_,_)),body) : 
+  case Nest#((loop=CODE.Loop#(ivar,_,_,_)),body) :
           for (p = outside; p != NULL; p = cdr p) { body = Nest#(car p, body); }
           MoveTraceHandle(input,Nest#(loop, body))
-  case Nest#(ctrl,body) : 
+  case Nest#(ctrl,body) :
           MoveTraceHandle(input,SwapLoopOutside[outside=BuildList(ctrl,outside)](ivar,body))
-  case (first second) : 
+  case (first second) :
        SwapLoopOutside(ivar,first)::SwapLoopOutside(ivar,second)
-  default: 
+  default:
        for (p = outside; p != NULL; p = cdr p) { input = Nest#(car p, input); }
        input
   }
@@ -813,18 +832,18 @@ switch (lb1)
        StripmineTileStart#(_,bvar,tstart2) = lb2;
        (r1,r2,r3) = LowerLoopBound(tstart,tstart2);
        (StripmineTileStart#(btag,bvar,r1),r2,r3)
-  case MIN#(d1,d2): 
+  case MIN#(d1,d2):
        (l1,l2,l3) = LowerLoopBound(d1,lb2);
        (r1,r2,r3) = LowerLoopBound(d2,lb2);
        (l2 == "" || r2 == "")? (l1,"",lb2)
         : (RebuildBop(MIN,l1,r1),lb1, lb2)
-  case MAX#(d1,d2): 
+  case MAX#(d1,d2):
        (l1,l2,l3) = LowerLoopBound(d1,lb2);
        (r1,r2,r3) = LowerLoopBound(d2,lb2);
        (l3 == "" || r3 == "")? (lb2,lb1,"")
         : (RebuildBop(MAX,l1,r1),lb1, lb2)
-  default: 
-       if(lb2 : MIN|MAX) 
+  default:
+       if(lb2 : MIN|MAX)
           { (r1,r2,r3)=(LowerLoopBound(lb2,lb1)); RETURN (r1,r3,r2);}
       (RebuildBop(MIN,lb1,lb2),lb1,lb2)
 }
@@ -835,7 +854,7 @@ switch (ub1)
 {
   case BlockLoopTileEnd#(btag,bvar,stop):
        BlockLoopTileEnd#(_,bvar,stop2) = ub2;
-       (BlockLoopTileEnd#(btag,bvar,RebuildBop(MAX, stop,stop2)),stop,stop2) 
+       (BlockLoopTileEnd#(btag,bvar,RebuildBop(MAX, stop,stop2)),stop,stop2)
   default: (RebuildBop(MAX,ub1,ub2),ub1,ub2)
 }
 </xform>
@@ -881,7 +900,7 @@ switch (ub1)
         if (input2 : Nest#(If#(CLEAR cond2), CLEAR body2)) {
             if (cond1 != cond2) {0} else {CheckBody(body1, body2)}
         } else { 0 }
-    } else if (input1 : ExpStmt#(CLEAR stmt1)) { 
+    } else if (input1 : ExpStmt#(CLEAR stmt1)) {
         if (input2 : ExpStmt#(CLEAR stmt2)) {
             if (stmt1 == stmt2) {1} else {0}
         } else { 0 }
@@ -956,7 +975,7 @@ fuseBody = "";
 nestsToFuse=SwapLoopOutside(pi, nestsToFuse);
 nestsToFuse=FlattenList(nestsToFuse);
 for (nestp = nestsToFuse; nestp != NULL; ) {
-     curNest=car nestp; nestp = cdr(nestp);  
+     curNest=car nestp; nestp = cdr(nestp);
      Nest#((curLoop=Loop#(ci,clb,cub,_)), curBody) = curNest;
      if (ci != pi) ERROR("Could not find loop " pi " in " curNest);
     <* QY: need to modify nestp here to avoid side effects from trace handles *>
@@ -979,7 +998,7 @@ res = Nest#(pivotLoop, fuseBody);
 if (trace_fusion : VAR) REPLACE(ERASE(trace_fusion), res, trace_fusion);
 else trace_fusion = res;
 REPLACE(ERASE(pivot), trace_fusion, trace);
-if (move_handle_inside) { 
+if (move_handle_inside) {
   MoveTraceHandle[trace=trace;nested_handle=0](pivot, pivotBody);
 }
 res
@@ -998,7 +1017,7 @@ res
       repl = BuildList(cur, repl);
     }
     if (repl != "") res = REPLACE(repl, res);
-  } 
+  }
   if (trace : VAR) REPLACE(input,res,trace);
 res
 </xform>
@@ -1010,14 +1029,14 @@ res
 <xform SplitStmt_buildname  pars=(v) prefix="" iReuse=0 >
               if (prefix=="") {
                  switch (v) {
-                 case Name#(CLEAR str):  prefix1 = str; 
+                 case Name#(CLEAR str):  prefix1 = str;
                  case ID: prefix1 = v;
-                 case ArrayAccess#(CLEAR arr, CLEAR sub): 
+                 case ArrayAccess#(CLEAR arr, CLEAR sub):
                       prefix1 = arr;
                  }
               }
               else prefix1=prefix;
-              rv = iReuse? v : BuildName(prefix1 "_split");
+              rv = iReuse? v : Name#(BuildName(prefix1 "_split"));
    rv
 </xform>
 
@@ -1035,19 +1054,19 @@ if(new == "") {
     foreach_r ( rhs : (cop=Bop#((CLEAR op),(CLEAR opd1),(CLEAR opd2))): FALSE) {
        for ( p = vars; p != NULL; p = cdr p) {
             v = car p;
-            if ( (v == opd1) || (v == opd2)) { 
+            if ( (v == opd1) || (v == opd2)) {
               rv = SplitStmt_buildname[prefix=prefix;iReuse=iReuse](v);
               if (rv != v && !Lookup(rv,nvars)) nvars = BuildList(rv,nvars);
-              repl1=BuildList( (cop,rv),repl1); 
+              repl1=BuildList( (cop,rv),repl1);
               if (v : CODE.ArrayAccess) {
-                 cop = REPLACE(v, rv, cop);  
+                 cop = REPLACE(v, rv, cop);
                  insert=ExpStmt#(Assign#(rv,v))::BuildList(ExpStmt#(Assign#(rv,cop)), insert);
               }
               else {
                  insert=BuildList(ExpStmt#(Assign#(rv,cop)), insert);
               }
            }
-           
+
        }
     }
     if (rv_lhs != "") {
@@ -1055,12 +1074,12 @@ if(new == "") {
           repl1= (lhs,rv_lhs)::BuildList((lhs,rv_lhs), repl1);
           insert=BuildList(ExpStmt#(Assign#(rv_lhs,lhs)),insert);
           append=BuildList(ExpStmt#(Assign#(lhs,rv_lhs)),append);
-    } 
+    }
     if (insert != "" || append != "") {
        repl = BuildList( (cur, BuildList(insert,BuildList(REPLACE(repl1,cur),append))), repl);
     }
   }
-  repl? (
+  (repl != "")? (
       AppendVar[trace=trace_newVars](nvars);
       if (var_type != "") {
         AppendDecl[trace=trace_decl](var_type, nvars);
@@ -1076,11 +1095,11 @@ if(new == "") {
   i=0;
   foreach_r (input : (cur = ExpStmt#_) : TRUE) {
     value = (cur : ExpStmt#(Assign#(Name#(CLEAR str),(Uop#("*",CLEAR bop)))))? bop : "";
-    if(value)  
+    if(value)
       CONTINUE;
-    
+
     repl1=""; insert="";
-    
+
     insert = cur;
     <<*i = (i==1)? 0:1;
     TRACE((insert nvars),TransformThreeAddress[counter=i;nvars=nvars](insert));
@@ -1090,7 +1109,7 @@ if(new == "") {
       repl = BuildList( (cur, insert), repl);
     }
   }
-  
+
   if(nvars != "") AppendVar[trace=trace_newVars](nvars);
   if(var_type != "") {
     AppendDecl[trace=trace_decl](var_type,nvars);
@@ -1103,32 +1122,32 @@ if(new == "") {
 <***********************************************>
 <xform TransformTwoAddress pars=(input) trace=GLOBAL.TRACE_TARGET>
   repl = "";
-  
+
   foreach_r ( input : (cur = ExpStmt#Assign#((CLEAR name),(CLEAR bop))): TRUE) {
     insert = "";
     curbop = (bop: Bop#((CLEAR op),(CLEAR opd1),(CLEAR opd2)));
 
     insert = BuildList(ExpStmt#(Assign#(name,RebuildBop(op,name,opd2))),insert);
-    
+
     if(name != opd1)
       insert = BuildList(ExpStmt#(Assign#(name,opd1)),insert);
-    
+
     if(insert) {
       repl = BuildList((cur,insert),repl);
     }
-    
+
   }
-  
+
   if(trace == "") trace = input;
-  
+
   REPLACE(repl,trace);
-  
+
 </xform>
 <***********************************************>
 <xform TransformThreeAddress pars=(input) counter=0 nvars="" trace=GLOBAL.TRACE_TARGET >
 
   input: ExpStmt#(Assign#((CLEAR lhs),(CLEAR rhs)));
-  
+
   input2 = ExpStmt#(Assign#(lhs,rhs));
   nvars2 = nvars;
   cur = "";
@@ -1136,19 +1155,19 @@ if(new == "") {
   foreach(rhs: (cur = Bop) : FALSE) {
     stack = (stack == "") ? cur : BuildList(cur,stack);
   }
-  
+
   end = LEN(stack);
   stack2="";
   j = counter;
-  
+
   nameList = "";
 
   for(i = 0; i < end; i = i + 1) {
     HEAD(stack) : (cur = Bop);
-    
+
     if(cur != rhs) {
-      name = BuildName("temp"j);
-      temp = ExpStmt#(Assign#(BuildName("temp"j),cur));
+      name = Name#(BuildName("temp"j));
+      temp = ExpStmt#(Assign#(Name#(BuildName("temp"j),cur)));
       nameList = (nameList == "") ? name : BuildList(name,nameList);
       j = j + 1;
     } else {
@@ -1162,13 +1181,13 @@ if(new == "") {
 
   insert = "";
   foreach_r(stack2:(cur = ExpStmt#(Assign#((CLEAR lhs),(CLEAR rhs)))) : FALSE) {
-    
+
     isBop = "";
     rhs : (isBop = Bop#((CLEAR op),(CLEAR opd1),(CLEAR opd2)));
-    
+
     if(isBop == "")
       CONTINUE;
-      
+
     if(!(opd1 : Bop) && !(opd2 : Bop)) {
       temp = cur;
     } else if((opd1 : Bop) && !(opd2 : Bop)) {
@@ -1200,46 +1219,46 @@ if(new == "") {
       }
       temp = ExpStmt#(Assign#(lhs,RebuildBop(op,nopd1,nopd2)));
     }
-    
+
     if(insert == "") {
       insert = temp;
     } else {
       insert = insert::temp;
     }
   }
-  
+
   if(trace == "")
     trace = input;
-  
+
   REPLACE(ERASE(trace),insert,trace);
   REPLACE(ERASE(nvars),nameList,nvars);
 </xform>
 
 <***********************************************>
-<xform PrefetchHelp pars=(var, addr, nests, dist) 
+<xform PrefetchHelp pars=(var, addr, nests, dist)
                     pref=0 output=(_res,_nvar) trace=GLOBAL.TRACE_TARGET >
   switch (nests) {
   case (first rest):   {
      dist1 = car dist;
      (res,nvar1) =PrefetchHelp [pref=0] (var, addr, first, car dist);
-     if (nvar1=="") 
+     if (nvar1=="")
          ERROR( "Incorrect configuration for prefetch:" first);
      (res,nvar2) =PrefetchHelp[pref=1](nvar1, nvar1, rest, cdr dist);
      res = (res, BuildList(nvar1, nvar2))
    }
    case (pinit,pincr): {
-     if (dist=="") 
+     if (dist=="")
         ERROR("parameter mismatch. dist should not be empty");
-     for ((init=pinit; incr=pincr; nvar = ""; pvar=var; paddr=addr); 
+     for ((init=pinit; incr=pincr; nvar = ""; pvar=var; paddr=addr);
            paddr!=NULL; (pvar=cdr pvar; paddr=cdr paddr)) {
-        cvar = BuildName( (car pvar) 0); 
+        cvar = Name#(BuildName( (car pvar) 0));
         caddr = car paddr;
         init = BuildList(ExpStmt#(Assign#(cvar, caddr)), init);
         if (pref) {
             incr = BuildList( ExpStmt#(Assign#(cvar, REBUILD(cvar+ dist))), incr);
             incr = BuildList( ExpStmt#(AddrPrefetch#cvar), incr);
         }
-        else 
+        else
            incr = BuildList( incr, ExpStmt#(Assign#(cvar, REBUILD(cvar+ dist))));
      }
      res = REPLACE(pinit,init,trace);
@@ -1257,37 +1276,37 @@ if(new == "") {
   }
  }
 res
-</xform> 
+</xform>
 
 <***********************************************>
-<xform Prefetch pars=(addr, nests, dist) 
+<xform Prefetch pars=(addr, nests, dist)
                 trace=GLOBAL.TRACE_TARGET trace_include=GLOBAL.TRACE_INCL  trace_decl=GLOBAL.TRACE_DECL data_type=GLOBAL.ARRAY_ELEM_TYPE  var="">
   if (var == "") var="pref";
   (res,nvar) = PrefetchHelp[pref=1;trace=trace](var,addr,nests,dist);
   Append_Include[trace=trace_include](InclPrefetch);
-  if (data_type != "") 
+  if (data_type != "")
      AppendDecl[trace=trace_decl](data_type, nvar);
   res
-</xform> 
+</xform>
 
 <xform ReplString pars=(n1,n2,input)>
    repl="";
    foreach_r (input : (cur = (Name#_ | n1)) : TRUE) {
-      if (cur == n1) 
+      if (cur == n1)
         repl=BuildList( (cur, n2), repl);
       else
         repl=BuildList( (cur, cur), repl);
    }
    (repl != "")?
-      REBUILD(REPLACE(repl, input)) 
+      REBUILD(REPLACE(repl, input))
    : input
 </xform>
 
 <xform ScaleLoop pars=(time, nest)>
 repl="";
 if (nest : Nest#(Loop#(i,start,stop,step),body)) {
-   repl = ((start, REBUILD(start/time)) 
-          (stop, REBUILD(stop/time)) 
+   repl = ((start, REBUILD(start/time))
+          (stop, REBUILD(stop/time))
           (step, REBUILD(step/time))
           (body, ReplString(i, REBUILD(i*time),body)));
 }
@@ -1297,8 +1316,8 @@ if (nest : Nest#(Loop#(i,start,stop,step),body)) {
 <xform ShiftLoop pars=(offset, nest)>
 repl="";
 if (nest : Nest#(Loop#(i,start,stop,step),body)) {
-  repl = ((start, REBUILD(start-offset)) 
-          (stop, REBUILD(stop-offset)) 
+  repl = ((start, REBUILD(start-offset))
+          (stop, REBUILD(stop-offset))
           (body, ReplString(i,REBUILD(i+offset),body)));
 }
 (repl == "")? nest : REPLACE(repl,nest)

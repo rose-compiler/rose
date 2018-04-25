@@ -1,14 +1,13 @@
-#include <fstream>
 
-#include <CFGImpl.h>
+#include <sage3.h>
+
 #include <AstInterface_ROSE.h>
 #include <string>
 #include <iostream>
 #include <CommandOptions.h>
 #include <GraphIO.h>
 #include <GraphDotOutput.h>
-#include <sage3.h>
-
+#include <CFGImpl.h>
 //#define TEMPLATE_ONLY
 //#include <CFG_OA.C>
 //#undef TEMPLATE_ONLY
@@ -121,7 +120,7 @@ main ( int argc,  char * argv[] )
 
      SgProject sageProject ( (int)argc,argv);
 
-     SageInterface::changeAllLoopBodiesToBlocks(&sageProject);
+     SageInterface::changeAllBodiesToBlocks(&sageProject);
 
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 

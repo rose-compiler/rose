@@ -30,20 +30,20 @@ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGEN
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
 *>
 <***********************************************************
-  POET syntax descriptions for The C language 
+  POET syntax descriptions for The C language
 ***********************************************************>
 
 <**********
 TOKENS
 ***********>
-<code INT_UL pars=(content:INT) rebuild=(content)> @content@UL </code>
-<code INT_0x pars=(content:INT) parse=FALSE> 0x@content@ </code> 
+<code INT_UL pars=(content:INT) rebuild=(content) > @content@UL </code>
+<code INT_0x pars=(content:STRING) parse=FALSE match=INT_UL> 0x@content@ </code>
 <define Save_Comment "" />
 <code Comment pars=(content:(((~"*/")...)"*/")) rebuild=(GLOBAL.Save_Comment=content;"") > /*@content@ </code>
-<code Comment2 pars=(content:(~"\n")...) 
+<code Comment2 pars=(content:(~"\n")...)
   rebuild=(GLOBAL.Save_Comment=content;"") > //@content@ </code>
 
-<define C_TOKENS ((":" ":") ("." ".") ("+" "+") ("-" "-") ("=""=") CODE.Comment2 CODE.Comment ("<""=") (">""=") ("!""=") ("+""=") ("-""=") ("*""=") ("/""=") ("&""&") ("|""|") ("-"">") ("<""<") (">"">") ("*" "/") CODE.INT_UL CODE.EXPO CODE.Char CODE.INT_0x CODE.String)/>
+<define C_TOKENS ((":" ":") ("." ".") ("+" "+") ("-" "-") ("=""=") CODE.Comment2 CODE.Comment ("<""=") (">""=") ("!""=") ("+""=") ("-""=") ("*""=") ("&""=") (">" ">" "=") ("/""=") ("&""&") ("|""|") ("-"">") ("<""<") (">"">") ("*" "/") CODE.INT_UL CODE.EXPO CODE.Char CODE.INT_0x CODE.String)/>
 
 <define TOKEN C_TOKENS/>
 
@@ -51,105 +51,121 @@ TOKENS
 Parsing Macros
 ************>
 <define TOKEN C_TOKENS />
-<define KEYWORDS ("template" "new" "float" "double" "int" "unsigned" "long" "char" "struct" "union" "extern" "static" "const" "restrict" "register" "if" "else" "switch" "case" "default" "continue" "break" "for" "while" "goto" "operator")/>
+<define KEYWORDS ("template" "inline" "new" "float" "double" "int" "unsigned" "long" "char" "struct" "union" "extern" "static" "const" "restrict" "register" "if" "else" "switch" "case" "default" "continue" "break" "for" "while" "goto" "operator" "using")/>
 
-<define C_DECLARATION CODE.StaticDecl | CODE.ExternDecl 
+<define C_DECLARATION CODE.ExternDecl
                    | CODE.Macro |CODE.TypeDef| CODE.TypeInfoDeclParse />
 <define DECLARATION C_DECLARATION/>
 <define VAR_INIT CODE.VarInit />
 <define TYPE_NAME ID/>
-<define FUNCTION_NAME ID />
+<define FUNCTION_NAME ID/>
 
+<code ScopedName  match=(CODE.VarRefParse)
+  pars=(names:LIST1(TYPE_NAME|FUNCTION_NAME|ID, "::"))
+  parse=(names eval(return( (names:GLOBAL.TYPE_NAME|STRING)? names
+                           : (cdr(names)==NULL)? (car names)
+                           : ScopedName#names))) >
+@names@ </code>
 <define VAR_UOP "++"|"--" />
-<define C_EXP_BASE (CODE.FLOAT_ext|INT|String|Char|CODE.SizeOf|CODE.INT_0x|CODE.CastExp|CODE.VarRefParse) />
+<define C_EXP_BASE (CODE.FLOAT_ext|INT|INT_UL|String|Char|CODE.SizeOf|CODE.INT_0x|CODE.CastExp|CODE.VarRefParse) />
 <define EXP_BASE C_EXP_BASE />
-<define EXP_BOP ( ("?" ":") (">>" "<<") ("=" "+=" "-=" "*=" "/=" "%=") ("&" "|") ("&&" "||") ("==" ">=" "<=" "!=" ">" "<") ("+" "-") ("*" "%" "/") ("->" ".")) />
+<define EXP_BOP ( ("?" ":") (">>" "<<") ("=" "+=" "-=" "*=" "/=" "%=" "&=" ">>=") ("&" "|" "^") ("&&" "||") ("==" ">=" "<=" "!=" ">" "<") ("+" "-") ("*" "%" "/") ("->" ".")) />
 <define EXP_UOP ("++" "--" "&" "*" "~" "!" "+" "-")/>
 <define EXP_MATCH ID />
 
 <define CALL_STMT CODE.ExpStmt />
 
-<************** 
+<**************
 Abstract syntax tree nodes
 **************>
 <code DeclStmt match=CODE.Stmt
-  pars=(decl : LIST1(CODE.TypeInfo|CODE.FunctionDecl,";")) >
+  pars=(decl : LIST1(CODE.TypeInfo|CODE.TypeDecl,";"))
+  rebuild=((decl:""|NULL)?"":DeclStmt#(decl)) >
 @decl@; </code>
 
 <code TypeDecl pars=(type:CODE.Type)> @type@ </code>
 
-<code TypeInfo pars=(type, name, init)> 
+<code TypeInfo pars=(type, name, init)>
 @switch(type) {
  case CODE.ArrayType#(base,extra): type1=base;
  case CODE.FunctionType#(extra,ret) : type1=ret;
  default: extra=""; type1=type;
- } 
+ }
 type1@ @name extra init@ </code>
 
 <code FunctionDecl  symtab="" extra="" match=CODE.DeclStmt
-    pars=(name:CODE.Name|ID, 
-          params:LIST(CODE.ParamDeclParse,","), 
+    pars=(name:CODE.Name|ID,
+          params:LIST(CODE.ParamDeclParse,","),
           ret:CODE.Type, body:CODE.StmtBlock|EmptyStmt)
-    parse=(eval(XFORM.enter_block("")) 
+    parse=(eval(XFORM.enter_block(""))
            ret name "(" params ")" body
            eval(return(FunctionDecl[symtab=XFORM.exit_block(params)]#(name,params,ret,body))))
-    > 
+    >
 @ret@ @name@(@params@) @extra body@
 </code>
 
-<************** 
-start  parsing 
+<**************
+start  parsing
 **************>
 <define PARSE CODE.DeclarationBlock />
 <define BUILD_BOP XFORM.C_buildBop />
 <define UNPARSE CODE.FinalOutput/>
 
-<code DeclarationBlock symtab="" 
-  pars=(stmts : LIST(GLOBAL.DECLARATION|CODE.EmptyStmt|CODE.DeclStmt,"\n")) 
+<code DeclarationBlock symtab=""
+  pars=(stmts : LIST(GLOBAL.DECLARATION|CODE.EmptyStmt|CODE.DeclStmt,"\n"))
   parse=(eval(XFORM.enter_block("")) stmts
          eval(return(DeclarationBlock[symtab=XFORM.exit_block(stmts)]#stmts)))
   >
 @stmts@
 </code>
 
-<code FinalOutput pars=(res : CODE.DeclarationBlock)>
-@(if (XFORM.Lookup(GLOBAL.NEED_MIN_MAX,res)) {@#define max(a,b) (((a) < (b))? (b) : (a))
+<code Include_MaxMin >
+#define max(a,b) (((a) < (b))? (b) : (a))
 #define min(a,b) (((a) < (b))? (a) : (b))
-@}) res@
+</code>
+
+<define INSERT_MAX_MIN ""/>
+
+<code FinalOutput pars=(res) pat=GLOBAL.INSERT_MAX_MIN>
+@(if (XFORM.Lookup(GLOBAL.NEED_MIN_MAX,res)) {
+  p = NULL;
+  if (pat != "") {
+    foreach p=pat \in res do break; enddo
+  }
+  if (p == NULL) { CODE.Include_MaxMin :: "\n" :: CODE.DeclarationBlock#res }
+  else { REPLACE(p, (CODE.Include_MaxMin "\n" p), CODE.DeclarationBlock#res) }
+  }
+else { CODE.DeclarationBlock#res })@
 
 </code>
 
 <********************************Types **************************>
 <define C_TYPE_BASE CODE.VoidType
-                   |CODE.IntType 
-                   |CODE.IntType1 
+                   |CODE.IntType
+                   |CODE.IntType1
                    |CODE.RegisterType
                    |CODE.FloatType
                    |CODE.StructType
-                   |CODE.UnionType 
+                   |CODE.UnionType
                    |CODE.EnumType
-                   |CODE.ConstType/> 
-<define C_TYPE_ANNOT "restrict"|"const"|"*"|"&" />
+                   |CODE.StaticType
+                   |CODE.ConstType/>
+<define C_TYPE_ANNOT "restrict"|"const"|"*"|"&"|CODE.ArraySubscript  />
 <define TYPE_REBUILD XFORM.C_RebuildType />
 <define TYPE_BASE C_TYPE_BASE/>  <*QY: allow redefinition of type base*>
 <define TYPE_ANNOT C_TYPE_ANNOT/>  <*QY: allow redefinition of type annot*>
 
 <code Type parse=((cur=(GLOBAL.TYPE_BASE|CODE.ScopedName)) eval(insert_typeInfo("",cur); return(cur))) />
-<code ScopedName  match=(CODE.VarRefParse) 
-  pars=(names:LIST1(TYPE_NAME|FUNCTION_NAME|ID, "::"))
-  parse=(names eval(return( (names:GLOBAL.TYPE_NAME|STRING)? names 
-                           : (cdr(names)==NULL)? (car names)
-                           : ScopedName#names))) >
-@names@ </code>
 <code ConstType pars=(base:CODE.Type)> const @base@ </code>
+<code StaticType pars=(base:CODE.Type) > static @base@ </code>
+
 <code RestrictType pars=(base:CODE.Type)> restrict @base@ </code>
 <code RegisterType pars=(base:CODE.Type)> register @base@ </code>
-<code PtrType pars=(base:CODE.Type) > @base@* </code> 
-<code RefType pars=(base:CODE.Type) > @base@& </code> 
+<code PtrType pars=(base:CODE.Type) > @base@* </code>
+<code RefType pars=(base:CODE.Type) > @base@& </code>
 <code VoidType> void </code>
 <code IntType pars=(name:"char"|"int") > @name@ </code>
-<code IntType1 pars=(annot:"unsigned"|"long",name:"char"|"int"|"long"|"") > 
-@annot@ @name@ </code>
+<code IntType1 pars=(content:LIST1("unsigned"|"long"|"char"," ")) > @content@ </code>
 <code FloatType pars=(name:"float"|"double")> @name@ </code>
 
 <code ArrayType pars=(base:CODE.Type, dim:CODE.ArrayDimList) > @base dim@ </code>
@@ -162,7 +178,7 @@ start  parsing
 
 <code EnumTypeName pars=(name:ID) > enum @name@ </code>
 
-<code StructType pars=(name:ID|"",body:CODE.StructBody|"") 
+<code StructType pars=(name:ID|"",body:CODE.StructBody|"")
   parse= ("struct" name body eval(return(StructType#(name,body)))) >
 struct @name ((body == "")? "" : StructBody#(body))@
  </code>
@@ -175,15 +191,18 @@ struct @name ((body == "")? "" : StructBody#(body))@
 }
 </code>
 
-<code CastExp pars=(t : CODE.Type, a : CODE.TypeAnnot, e : EXP)
- rebuild=(if (a == "") {
-           switch (e) {
-             case Uop#((op=("+"|"-")),e1): Bop#(op,t,e1)
-             default: CastExp#(t,a,e)
-           }
-          } else { CastExp#(t,a,e) })
+<code CastExp pars=(t : CODE.Type, e : EXP)
+ parse=("(" t (a=CODE.TypeAnnot) ")" e eval(return (
+        (switch (e) {
+         case Uop#((op=("+"|"-")),e1=_):
+             Bop#(op, XFORM.C_RebuildType(t,a), e1) 
+         case CODE.ArraySubscript : ArrayAccess#(XFORM.C_RebuildType(t,a),e)
+         default: 
+            CastExp#(XFORM.C_RebuildType(t,a),e)
+          }))))
+ output = ((e : ID|CODE.FunctionCall)? ("(" t ")"e) :  ("(" t ")""("e")"))
  >
-(@t a@)@e@
+(@t@)@e@
 </code>
 
 
@@ -191,12 +210,13 @@ struct @name ((body == "")? "" : StructBody#(body))@
 switch (annot)
 {
 case (first rest) : GLOBAL.TYPE_REBUILD(GLOBAL.TYPE_REBUILD(base, first), rest)
-case "" : base
+case ""|NULL : base
 case "*" : PtrType#base
 case "&" : RefType#base
 case "const" : CODE.ConstType#base
 case "restrict" : CODE.RestrictType#base
 case "register" : RegisterType#base
+case ArraySubscript#e : ArrayAccess#(base, e)
 }
 </xform>
 
@@ -205,30 +225,26 @@ case "register" : RegisterType#base
 <code TypeDef pars=(decl : TypeInfoDeclParse)>
 typedef @decl@ </code>
 
-<code StaticDecl pars=(content:CODE.TypeInfoDeclParse) >
-static @content@ 
-</code>
-
 <code ExternDecl pars=(content:CODE.TypeInfoDeclParse) >
-extern @content@ 
+extern @content@
 </code>
 
-<code TypeInfoDeclParse 
+<code TypeInfoDeclParse
   parse=(CODE.Type (r=CODE.VariableDeclParseStmt) eval(return r)) />
 
-<code VariableDeclParseStmt 
-  parse=((v=CODE.VariableDeclParse) 
-         eval((v : CODE.FunctionDecl)? "" : INHERIT) 
-         (end=CODE.EndVariableDeclParse) 
-         eval(return (DeclStmt#(v::end))))/> 
+<code VariableDeclParseStmt
+  parse=((v=CODE.VariableDeclParse)
+         eval((v : CODE.FunctionDecl)? "" : INHERIT)
+         (end=CODE.EndVariableDeclParse)
+         eval(return ((v : CODE.FunctionDecl)? (v::end) : DeclStmt#(v::end))))/>
 
 <code VariableDeclParse
-  parse=((annot1=CODE.TypeAnnot) eval(TYPE_REBUILD(INHERIT,annot1)) 
+  parse=((annot1=CODE.TypeAnnot) eval(TYPE_REBUILD(INHERIT,annot1))
          (var=CODE.VariableParse) eval(return(var)))
 />
 
-<code EndVariableDeclParse 
-  parse=(("," eval(INHERIT) (res=CODE.VariableDeclParse) 
+<code EndVariableDeclParse
+  parse=(("," eval(INHERIT) (res=CODE.VariableDeclParse)
          eval(INHERIT) (next=CODE.EndVariableDeclParse) eval(return (res::next)))
          | (";" eval(return NULL))
          | INHERIT eval(return NULL))
@@ -236,8 +252,8 @@ extern @content@
 
 <code TypeAnnot parse=LIST(TYPE_ANNOT, " ") />
 
-<code VariableParse  
-  parse=(( (name=(CODE.ScopedName|CODE.FunctionPtr)) 
+<code VariableParse
+  parse=(( (name=(CODE.ScopedName|CODE.FunctionPtr))
           eval(INHERIT,name) (t=CODE.VariableAnnot)
           eval(XFORM.insert_typeInfo("",t); return t))
        | ("" eval(return(CODE.TypeDecl#(INHERIT)))))
@@ -245,35 +261,36 @@ extern @content@
 
 <code FunctionPtr pars=(name:ID) lookahead=2 > (*@name@) </code>
 
-<code VariableAnnot 
-   parse=( ((t=CODE.ArrayDecl) eval(return t)) 
+<code VariableAnnot
+   parse=( ((t=CODE.ArrayDecl) eval(return t))
          | ((t=FunctionParameterDecl) eval(return t))
          | ((t=GLOBAL.VAR_INIT) eval(return t))
          | ("" eval(return (CODE.TypeInfo#(INHERIT[0],INHERIT[1],"")))))
 />
 
-<code VarInit pars=(value:EXP) 
-   parse=("=" value 
-          eval(return(CODE.TypeInfo#(INHERIT[0],INHERIT[1],VarInit#value)))) 
+<code VarInit pars=(value:EXP)
+   parse=("=" value
+          eval(return(CODE.TypeInfo#(INHERIT[0],INHERIT[1],VarInit#value))))
 >
-@(value : Bop#("==",_,_) || value : Bop#(":",_,_)) ? ("=("value")") : ("="value)@
+@(value : Bop#("==",_,_) || value : Bop#(":",_,_)) ? ("=("value")")
+: (value : CODE.FunctionCallParameter)? (value) :  ("="value)@
 </code>
 
-<code ArrayDecl 
-  parse=( (dim=CODE.ArrayDimList) (init=(CODE.ArrayInit|"")) 
+<code ArrayDecl
+  parse=( (dim=CODE.ArrayDimList) (init=(CODE.ArrayInit|""))
     eval(return(CODE.TypeInfo#(ArrayType#(INHERIT[0], dim),INHERIT[1],init))))
 />
 
-<code FunctionParameterDecl 
+<code FunctionParameterDecl
   pars=(params: LIST(CODE.ParamDeclParse|CODE.ParamExtra,","),
         extra:"const"|LIST(CODE.TypeInfoDeclParse,""),
-        body : CODE.StmtBlock|"")
-  parse=("(" params ")" extra body 
+        body : CODE.StmtBlock|EmptyStmt)
+  parse=("(" params ")" extra body
         eval( (t,n)|FunctionCall#(t,Uop#("*",n))=INHERIT; return(CODE.FunctionDecl[extra=extra]#(n,params,t,body))))
   />
 
-<code ParamDeclParse 
-  parse=(CODE.Type (v=CODE.VariableDeclParse) eval(return v)) /> 
+<code ParamDeclParse
+  parse=(CODE.Type (v=CODE.VariableDeclParse) eval(return v)) />
 
 <code ParamExtra> ... </code>
 
@@ -284,16 +301,16 @@ extern @content@
 
 <***************** statements ******************************>
 
-<define C_STMT_BASE CODE.EmptyStmt|CODE.Break|CODE.Continue|CODE.Return|CODE.SwitchStmt|CODE.Nest|CODE.StaticDecl|CODE.ExternDecl|CODE.Macro|CODE.TypeDef|CODE.GotoStmt|CODE.LabelStmt|CODE.ExpOrVarDeclStmt/>
+<define C_STMT_BASE CODE.EmptyStmt|CODE.Break|CODE.Continue|CODE.Return|CODE.SwitchStmt|CODE.Nest|CODE.ExternDecl|CODE.Macro|CODE.TypeDef|CODE.GotoStmt|CODE.LabelStmt|CODE.ExpOrVarDeclStmt/>
 
 <code EmptyStmt > ; </code>
 <code Break> break; </code>
 <code Continue> continue; </code>
-<code Return pars=(exp:EXP|"")> return @exp@; </code>
+<code Return pars=(exp:EXP|"") match=Stmt> return @exp@; </code>
 
-<code StmtBlock pars=(stmts:LIST(CODE.Stmt,"\n")) symtab="" 
+<code StmtBlock pars=(stmts:LIST(CODE.Stmt,"\n")) symtab=""
   match=CODE.SingleStmt
-  parse=(eval(XFORM.enter_block("")) "{" stmts "}" 
+  parse=(eval(XFORM.enter_block("")) "{" stmts "}"
          eval(return(StmtBlock[symtab=XFORM.exit_block(stmts)]#stmts)))
   >
 {
@@ -301,26 +318,29 @@ extern @content@
 }
 </code>
 
-<code ExpOrVarDeclStmt 
-  parse=( (GLOBAL.TYPE_BASE (v=CODE.VariableDeclParseStmt) eval(return v)) 
+<code ExpOrVarDeclStmt
+  parse=( (GLOBAL.TYPE_BASE (v=CODE.VariableDeclParseStmt) eval(return v))
       | (CODE.ScopedName (r=CODE.AfterTypeNameStmt) eval(return r))
       | ((e=CODE.ExpStmt) eval(return(e)))) />
 
-<code AfterTypeNameStmt 
+<code AfterTypeNameStmt
     parse=( ((r=CODE.AfterExpStmt) eval(return r))
           | ((v=CODE.VariableDeclParseStmt) eval(return v)))/>
 
 <code AfterExpStmt
   parse=( (";" eval(return((INHERIT:FunctionDecl)?INHERIT:ExpStmt#(INHERIT))))
-        | ("=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,e))))
+        | ("," (e=EXP) eval(AppendList(INHERIT,e)) (r=AfterExpStmt) eval(return r))
+        | ("=" (e=EXP) eval(Assign#(INHERIT,e)) (r=AfterExpStmt) eval(return r))
         | ("+=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,Bop#("+",INHERIT,e)))))
         | ("-=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,Bop#("-",INHERIT,e)))))
         | ("*=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,Bop#("*",INHERIT,e)))))
+        | ("&=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,Bop#("&",INHERIT,e)))))
+        | (">>=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,Bop#(">>",INHERIT,e)))))
         | ("/=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,Bop#("/",INHERIT,e)))))
         | ("%=" (e=EXP) ";" eval(return ExpStmt#(Assign#(INHERIT,Bop#("%",INHERIT,e)))))
         | ("<<" (e=CODE.ExpList) ";" eval(return ExpStmt#(Bop#("<<",INHERIT,ExpList#e))))
         | ((v=CODE.VarRefRHS1) (r=CODE.AfterTypeNameStmt) eval(return r))
-        |((e=CODE.FunctionCallParameter) (eval((INHERIT : FunctionDecl#(p=_,"",t,""))? FunctionDecl#(p,e,t,"") : (e : Uop#("*",p=_))? FunctionDecl#(p,"",INHERIT,"") : FunctionCall#(INHERIT,e))) (r=CODE.AfterFunctionCallStmt) eval(return r))
+        |((e=CODE.FunctionCallParameter) (eval((INHERIT : FunctionDecl#(p=_,"",t,CODE.EmptyStmt))? FunctionDecl#(p,e,t,EmptyStmt) : (e : Uop#("*",p=_))? FunctionDecl#(p,"",INHERIT,EmptyStmt) : FunctionCall#(INHERIT,e))) (r=CODE.AfterFunctionCallStmt) eval(return r))
         ) />
 
 <code AfterFunctionCallStmt
@@ -335,7 +355,7 @@ extern @content@
 
 <code Stmt parse=(CODE.StmtBlock|GLOBAL.STMT_BASE) />
 
-<code SingleStmt pars=(content:CODE.NestBody|GLOBAL.STMT_BASE) 
+<code SingleStmt pars=(content:CODE.NestBody|GLOBAL.STMT_BASE)
            rebuild=content
            output=(StmtBlock#content) >
 @content@ </code>
@@ -346,54 +366,54 @@ extern @content@
 }
 </code>
 
-<code CondExp pars=(c : EXP, e1 : EXP, e2 : EXP) 
+<code CondExp pars=(c : EXP, e1 : EXP, e2 : EXP)
         parse=("?" e1 ":" e2 eval(return(CondExp#(INHERIT,e1,e2))))>
 @c@?@e1@:@e2@
 </code>
 
-<code ExpStmt pars=(exp:LIST1(EXP,",")) match=CODE.Stmt > 
+<code ExpStmt pars=(exp:LIST1(EXP,",")) match=CODE.Stmt >
 @exp@;
 </code>
 
 <code SwitchStmt/>
 
-<code Loop pars=(i:CODE.Name,start:EXP, stop:EXP, step:EXP) decl="" 
-  match=CODE.Ctrl >
-for (@decl ((decl=="")? "" : " ") i@=@start@; @i@<@stop@; @i@+=@step@)
+<code Loop pars=(i:CODE.Name,start:EXP, stop:EXP, step:EXP) decl=""
+  match=CODE.Ctrl testop="<" >
+for (@decl ((decl=="")? "" : " ") i@=@start@; @i testop stop@; @i@+=@step@)
 </code>
 
-<code Loop_r pars=(i:ID,start:EXP, stop:EXP, step:EXP) >
-for (@i@=@start@; @i@>@stop@; @i@-=@step@)
+<code Loop_r pars=(i:ID,start:EXP, stop:EXP, step:EXP) decl="" >
+for (@decl ((decl=="")? "" : " ") i@=@start@; @i@>@stop@; @i@-=@step@)
 </code>
 
 <xform RebuildLoop pars=(start:EXP, stop:EXP, incr:EXP)>
   decl="";
-  if (start : (ExpStmt#(CODE.Assign#(ivar, lb))|(CODE.DeclStmt#(CODE.TypeInfo#((decl=CODE.IntType), ivar, CODE.VarInit#lb))))) {  
+  if (start : (ExpStmt#(CODE.Assign#(ivar, lb))|(CODE.DeclStmt#(CODE.TypeInfo#((decl=CODE.IntType), ivar, CODE.VarInit#lb))))) {
      if (stop : Bop#(compare,ivar,ub)) {
          switch (compare) {
          case "<":
-            ((incr : Assign#(ivar,Bop#("+",step,ivar)))? 
+            ((incr : Assign#(ivar,Bop#("+",step,ivar)))?
                  Loop[decl=decl]#(ivar,lb,ub,step)
            : (incr : Uop#("++",ivar) || VarRef#(ivar,"++"))?
                  Loop[decl=decl]#(ivar,lb,ub,1)
            :     CODE.For#(start,stop,incr))
          case "<=":
-            ((incr : Assign#(ivar,Bop#("+",ivar,step)|Bop#("+",step,ivar)))? 
+            ((incr : Assign#(ivar,Bop#("+",ivar,step)|Bop#("+",step,ivar)))?
                   Loop[decl=decl]#(ivar,lb,REBUILD(ub+1),step)
-           : (incr : Uop#("++",ivar)|VarRef#(ivar,"++"))?  
+           : (incr : Uop#("++",ivar)|VarRef#(ivar,"++"))?
                   Loop[decl=decl]#(ivar,lb,REBUILD(ub+1),1)
            :      CODE.For#(start,stop,incr))
          case ">=":
-            ((incr : Assign#(ivar,Bop#("-",ivar,step)))? 
-                  Loop_r#(ivar,lb,REBUILD(ub-1),step)
-           : (incr : Uop#("--",ivar)|VarRef#(ivar,"--"))?  
-                  Loop_r#(ivar,lb,REBUILD(ub-1),1)
+            ((incr : Assign#(ivar,Bop#("-",ivar,step)))?
+                  Loop_r[decl=decl]#(ivar,lb,REBUILD(ub-1),step)
+           : (incr : Uop#("--",ivar)|VarRef#(ivar,"--"))?
+                  Loop_r[decl=decl]#(ivar,lb,REBUILD(ub-1),1)
            :      CODE.For#(start,stop,incr))
          case ">":
-            ((incr : Assign#(ivar,Bop#("-",ivar,step)))? 
-                 Loop_r#(ivar,lb,ub,step)
-           : (incr : Uop#("--",ivar)|VarRef#(ivar,"--"))?  
-                 Loop_r#(ivar,lb,ub,1)
+            ((incr : Assign#(ivar,Bop#("-",ivar,step)))?
+                 Loop_r[decl=decl]#(ivar,lb,ub,step)
+           : (incr : Uop#("--",ivar)|VarRef#(ivar,"--"))?
+                 Loop_r[decl=decl]#(ivar,lb,ub,1)
            :     CODE.For#(start,stop,incr))
         }
      }
@@ -410,7 +430,7 @@ else @curIf@
 </code>
 
 <code While pars=(condition:EXP) >
-while (@condition@) 
+while (@condition@)
 </code>
 
 <code GotoStmt pars=(target:EXP) >
@@ -424,22 +444,22 @@ goto @target@;
 <code ID_assign pars=(e : EXP) opd1=INHERIT rebuild=(CODE.Assign#(opd1,e))>
 = @e@;
 </code>
-<code ID_init pars=(opd1 : "int"|ID, opd2: ID_assign|VariableParse) rebuild=opd2> 
-@opd1@ @opd2@ 
+<code ID_init pars=(opd1 : "int"|ID, opd2: ID_assign|VariableParse) rebuild=opd2>
+@opd1@ @opd2@
 </code>
 
 <code For pars=(init:CODE.ExpOrVarDeclStmt|CODE.EmptyStmt,
-                test:EXP|"",incr:EXP|"") 
+                test:EXP|"",incr:LIST(EXP,","))
           rebuild=(RebuildLoop(init,test,incr)) >
 for (@init@ @test@; @incr@)
 </code>
 
 <code Ctrl parse=If|While|For|Else />
 
-<code Nest pars=(ctrl : Ctrl, body : CODE.SingleStmt) 
+<code Nest pars=(ctrl : Ctrl, body : CODE.SingleStmt)
   match=CODE.Stmt
   annot="" comment="" >
-@annot ctrl@ 
+@annot ctrl@
   @body@
 </code>
 
@@ -451,7 +471,7 @@ switch (@condition@)
 }
 </code>
 
-<code CaseLabel pars=(label : INT|ID, stmt:LIST(CODE.Stmt,"\n"))>
+<code CaseLabel pars=(label : INT|ID|Char, stmt:LIST(CODE.Stmt,"\n"))>
 case @label@:
   @stmt@
 </code>
@@ -465,9 +485,9 @@ default: @stmt@
 <**************************** Expressions *********************>
 
 <* Base Expressions*>
-<code FLOAT_ext 
-  pars=(content:FLOAT|EXPO,ext:"f"|"d"|"") 
-  rebuild=((ext=="")?content:FLOAT_ext#(content,ext))> 
+<code FLOAT_ext
+  pars=(content:FLOAT|EXPO,ext:"f"|"d"|"")
+  rebuild=((ext=="")?content:FLOAT_ext#(content,ext))>
 @content ext@ </code>
 
 <code P_EXP parse=( "(" (e=EXP) ")" eval(return(e))) />
@@ -478,40 +498,40 @@ default: @stmt@
 
 <code MAX pars=(first,second)> max(@first@,@second@) </code>
 
-<code VarRef pars=(var:EXP, op:GLOBAL.VAR_UOP) 
-            match=(CODE.Assign#(var,Bop#(((op=="++")?"+":"-"),var,1))) > 
+<code VarRef pars=(var:EXP, op:GLOBAL.VAR_UOP)
+            match=(CODE.Assign#(var,Bop#(((op=="++")?"+":"-"),var,1))) >
 @var op@ </code>
 
 <code ArraySubscript pars=(e:EXP) > [@e@] </code>
 
 <code ArrayAccess pars=(array:EXP,subscript:LIST(CODE.ArraySubscript,""))
     parse=(array subscript eval(return(ArrayAccess#(array,subscript)))) >
-@((array:Uop#("*",_))?("("array")") : array)@@subscript@ </code>
+@((array:Uop#("*",_)|Bop#(_,_,_))?("("array")") : array)@@subscript@ </code>
 
 <code ObjAccess pars=(obj:EXP,fd:ID)> @obj@.@fd@ </code>
 <code PtrAccess pars=(ptr:EXP,fd:ID)> @ptr@->@fd@ </code>
 
-<code VarRefParse  
+<code VarRefParse
   parse=( CODE.ScopedName (v=CODE.VarRefRHS) eval(return(v))) />
 
-<code VarRefRHS 
+<code VarRefRHS
   parse=( ( (r=VarRefRHS1) eval(return r))
-        | ("" eval(return(INHERIT)))) /> 
+        | ("" eval(return(INHERIT)))) />
 
 <code VarRefRHS1 parse=
-        ( ((op=GLOBAL.VAR_UOP) eval(return(CODE.VarRef#(INHERIT,op)))) 
-        | ("[" (sub=EXP) "]" eval(CODE.ArrayAccess#(INHERIT,sub)) 
+        ( ((op=GLOBAL.VAR_UOP) eval(return(CODE.VarRef#(INHERIT,op))))
+        | ("[" (sub=EXP) "]" eval(CODE.ArrayAccess#(INHERIT,sub))
            (v=CODE.VarRefRHS) eval(return(v)))
-        | ("->" (ref=ID) eval(CODE.PtrAccess#(INHERIT,ref))  
+        | ("->" (ref=ID) eval(CODE.PtrAccess#(INHERIT,ref))
            (v=CODE.VarRefRHS) eval(return(v)))
-        | ("." (ref=ID) eval(CODE.ObjAccess#(INHERIT,ref)) 
+        | ("." (ref=ID) eval(CODE.ObjAccess#(INHERIT,ref))
            (v=CODE.VarRefRHS) eval(return(v)))) />
 
-<code Min pars=(s1,s2) > 
+<code Min pars=(s1,s2) >
 ((@s1@ < @s2@)? @s1@ : @s2@)
 </code>
 
-<code Max pars=(s1,s2) > 
+<code Max pars=(s1,s2) >
 ((@s1@ < @s2@)? @s2@ : @s1@)
 </code>
 
@@ -526,7 +546,7 @@ default: @stmt@
 
 <xform C_buildBop pars=(op, lhs, rhs) c_only=1 >
 switch (op) {
-case "=" : 
+case "=" :
     for (""; lhs : CODE.Assign#(CLEAR lhs1, CLEAR rhs1); lhs=lhs1) {
                 rhs = CODE.Assign#(rhs1, rhs)
     }
@@ -535,6 +555,7 @@ case "+=": if (c_only) { Assign#(lhs, lhs+rhs) } else { Bop#(op,lhs,rhs)}
 case "-=": if (c_only) { Assign#(lhs, lhs-rhs) } else { Bop#(op,lhs,rhs)}
 case "*=": if (c_only) { Assign#(lhs, lhs*rhs) } else { Bop#(op,lhs,rhs)}
 case "/=": if (c_only) { Assign#(lhs, lhs/rhs) } else { Bop#(op,lhs,rhs)}
+case ">>==": if (c_only) { Assign#(lhs, Bop#(">>",lhs,rhs)) } else { Bop#(op,lhs,rhs)}
 default: Bop#(op,lhs,rhs)
 }
 </xform>
@@ -546,7 +567,7 @@ default: Bop#(op,lhs,rhs)
 <code FunctionCall pars=(function:EXP_BASE,
                          args : CODE.FunctionCallParameter)>
 @((function : CODE.PtrAccess|Uop#("*",_)) ? ("("function")") : function)@@args@
-</code> 
+</code>
 
 
 <********************************code templates from opt.pi ***************>
@@ -619,7 +640,6 @@ vec_mov_rm_a(reg@reg@,@ptr@)
 vec_mov_mr_a(@ptr@,reg@reg@)
 </code>
 
-
 <code VecRegMul pars=(reg1,reg2)>
 vec_mul_rr(reg@reg1@,reg@reg2@)
 </code>
@@ -634,6 +654,10 @@ vec_div_rr(reg@reg1@,reg@reg2@)
 
 <code VecRegMinus pars=(reg1,reg2)>
 vec_sub_rr(reg@reg1@,reg@reg2@)
+</code>
+
+<code VecRegBitAnd pars=(reg1,reg2)>
+vec_bitand_rr(reg@reg1@,reg@reg2@)
 </code>
 
 <*****************************************
@@ -675,6 +699,33 @@ vec_mov_rm_1(reg@reg@,@ptr@)
 vzeroupper()
 </code>
 
+<*****************************************
+* Adding 4 operands sse code template
+*****************************************>
+<code VecRegCmpNLE pars=(reg1,reg2,reg3,scalar)>
+gen_cmp_nle(reg@reg1@,reg@reg2@,reg@reg3@,@scalar@)
+</code>
+
+<code VecRegCmpNGE pars=(reg1,reg2,reg3,scalar)>
+gen_cmp_nge(reg@reg1@,reg@reg2@,reg@reg3@,@scalar@)
+</code>
+
+<code VecRegCmpNLT pars=(reg1,reg2,reg3,scalar)>
+gen_cmp_nlt(reg@reg1@,reg@reg2@,reg@reg3@,@scalar@)
+</code>
+
+<code VecRegCmpNGT pars=(reg1,reg2,reg3,scalar)>
+gen_cmp_ngt(reg@reg1@,reg@reg2@,reg@reg3@,@scalar@)
+</code>
+
+<code VecRegCmpEQ pars=(reg1,reg2,reg3,scalar)>
+gen_cmp_eq(reg@reg1@,reg@reg2@,reg@reg3@,@scalar@)
+</code>
+
+<code VecRegCmpNEQ pars=(reg1,reg2,reg3,scalar)>
+gen_cmp_neq(reg@reg1@,reg@reg2@,reg@reg3@,@scalar@)
+</code>
+
 <*******************************************>
 
 <code AddrAlign pars=(addr, elemsize)>
@@ -686,9 +737,9 @@ ATL_pfl1R(@addr@)
 </code>
 
 <code SSEincl pars=(pre, reg_len)>
-@ ((pre=="d")? @#define SSE2@ : @#define SSE @)@
+@ if(pre=="d") @#define SSE2@;@
 @ ((reg_len == 16)?@#include <SSE3Dnow.h>@:@#include <ASMHead.h> @)@
-#include <stdlib.h>
+
 </code>
 
 <code Include_Allocate>
