@@ -173,6 +173,12 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          pConverter->convertSgUntypedOtherStatement(ut_stmt, currentScope);
          break;
       }
+    case V_SgUntypedReturnStatement:
+      {
+         SgUntypedReturnStatement* ut_stmt = dynamic_cast<SgUntypedReturnStatement*>(node);
+         pConverter->convertSgUntypedReturnStatement(ut_stmt, currentScope);
+         break;
+      }
 
     default:
       {

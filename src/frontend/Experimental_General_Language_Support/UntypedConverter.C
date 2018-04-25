@@ -1226,6 +1226,17 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
       return sg_stmt;
    }
 
+SgNullStatement*
+UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      SgNullStatement* nullStatement = new SgNullStatement();
+      setSourcePositionFrom(nullStatement, ut_stmt);
+
+      scope->append_statement(nullStatement);
+
+      return nullStatement;
+   }
+
 SgStatement*
 UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
    {
@@ -1242,15 +1253,18 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
        }
    }
 
-SgNullStatement*
-UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
+SgStatement*
+UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgScopeStatement* scope)
    {
-      SgNullStatement* nullStatement = new SgNullStatement();
-      setSourcePositionFrom(nullStatement, ut_stmt);
+      SgReturnStmt* return_stmt = SageBuilder::buildReturnStmt();
+      ROSE_ASSERT(return_stmt != NULL);
 
-      scope->append_statement(nullStatement);
+      setSourcePositionFrom(return_stmt, ut_stmt);
 
-      return nullStatement;
+      scope->append_statement(return_stmt);
+      convertLabel(ut_stmt, return_stmt);
+
+      return return_stmt;
    }
 
 
