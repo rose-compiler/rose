@@ -37,8 +37,9 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 
 <* architecture-specific parameters*>
 <define REG_NO 16/>   <*# of SSE registers *>
-<define REG_LEN 16/>  <*# of bytes that can be held by each SSE register*>
+<parameter REG_LEN default=16 /> <*# of bytes that can be held by each SSE register*>
 <define FMA 0/>
+<define _variant_map MAP{} />
 
 <* language-specific parameters *>
 <** whether to use pointer arithmetics when possible; affect array copying **>
@@ -189,7 +190,7 @@ $pivot$ in the original $input$
  The $input$ indicates the function call to inline.
  The $function_definition$ denotes the definition of the function.
 ********************************************************************>
-<xform InlineFunction pars=(function_definition, input) parameters_to_replace="" trace=GLOBAL.TRACE_TARGET/>
+<xform InlineFunction pars=(function_definition, input) parameters_to_replace=NULL trace=GLOBAL.TRACE_TARGET/>
 
 <***********************************************************************
  Strength Reduction optimizations
@@ -428,43 +429,48 @@ the blocked loops.
 
 <**********************************************************************
  peel the first $numOfItersToPeel$ of iterations off the input $loopNestToPeel$ 
-<xform PeelLoop pars=(numOfItersToPeel, loopNestToPeel) 
-                peel_at_end=0 precise_split=1 trace=GLOBAL.TRACE_TARGET trace_peel=""/>
-
 *********************************************************************> 
+<xform PeelLoop pars=(numOfItersToPeel, loopNestToPeel) 
+                peel_at_end=0 precise_split=1 trace=GLOBAL.TRACE_TARGET trace_peel=NULL />
+
 
 <***********************************************************************
  embed stmts that are at the same level of $nest$ to be within $nest$ 
-<xform EmbedStmts pars=(nest,input) trace=GLOBAL.TRACE_TARGET/>
 ********************************************************************>
+<xform EmbedStmts pars=(nest,input) trace=GLOBAL.TRACE_TARGET/>
+
+<*******************************************************************
+compute the subscript at each dimension of a data copying transformation
+*********************************************************************>
+<xform DimOffset pars=(offset, dim_copy)  
+                 output=(_succ,_isconst,_ispositive,_buf,_left)/>
 
 <*******************************************************************
 Replace the memory referenced by $exp$ with references from a new $buf$
-in $input$.
-Parameter values: see CopyRepl.
+in $input$.  Parameter values: see CopyRepl.
+*********************************************************************>
 <xform ReplExp pars=(buf, exp, sub, dim, input)  buf_size="inf"
                prefix="" scalar=0 block="" permute="" addi_vars="" trace=GLOBAL.TRACE_TARGET />
-*********************************************************************>
 
 <*******************************************************************
  replace the memory referenced through $oldval$ with a new value $nval$ 
    within $input$, where the $sub$ and $dim$ defines the size of 
    array-referenced values to be replaced (see CopyRepl for more details).
-<xform ValueRepl pars=(nval, oldval, sub, dim, input) /> 
 *********************************************************************>
+<xform ValueRepl pars=(nval, oldval, sub, dim, input) /> 
 
 <*******************************************************************
  Scale the induction variable of $nest$ by factor $time$. 
   e.g., if $nest$ is "for (i = 2; i < 20; i+=2) { a[i] = b[i]; }", 
      then ScaleLoop(2,nest) => "for (i=1;i<10;i+=1) { a[2*i] = b[2*i]; }" 
-<xform ScaleLoop pars=(time, nest)/>
 *********************************************************************>
+<xform ScaleLoop pars=(time, nest)/>
 
 <*******************************************************************
  Shift the induction variable of $nest$ by $offset$.
   e.g., if $nest$ is "for (i = 2; i < 20; i+=2) { a[i] = b[i]; }", 
         then ShiftLoop(2,nest) => "for (i=0;i<18;i+=2) { a[i+2]=b[i+2]; } 
-<xform ShiftLoop pars=(offset, nest)/>
 *********************************************************************>
+<xform ShiftLoop pars=(offset, nest)/>
 
 <** EOF **>

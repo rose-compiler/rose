@@ -244,6 +244,7 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs)
       if (DebugLocalInfoCollect()) {
           std::cerr << "appending modifying " << AstInterface::AstToString(mod) << " = " << AstInterface::AstToString(rhs) << std::endl;
       }
+if(curstmt == 0) return;
        assert(curstmt != AST_NULL);
        if (killcollect != 0 && rhs != AST_NULL)
             (*killcollect)( std::pair<AstNodePtr,AstNodePtr>(mod, curstmt));

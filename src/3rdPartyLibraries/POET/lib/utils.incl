@@ -111,6 +111,28 @@ Treating a list of IDs as a single name
   else { FALSE }
 </xform>
 
+<xform contain_common_prefix pars=(first, second) peel_ptr=1 >
+  switch (first) {
+  case (first1 second1) : contain_common_prefix(first1,second) || contain_common_prefix(second1, second)
+  default: 
+      if (peel_ptr) {
+         for (p=first; p : CODE.ArrayAccess#(CLEAR name,_)|CODE.PtrAccess#(CLEAR name,_); "") p = name;
+      }
+      else { p = first; }
+      if (XFORM.Lookup(p, second)) { TRUE }
+      else { FALSE }
+  }
+</xform>
+
+<xform intersect_nested_list pars=(first, second) >
+  switch (first) {
+  case (first1 second1) : XFORM.AppendList(intersect_nested_list(first1,second), intersect_nested_list(second1, second))
+  default: 
+             if (XFORM.Lookup_nested_list(first, second)) { first }
+             else { NULL }
+  }
+</xform>
+
 <xform replace_nested_list pars=(from, to, input)>
   switch (input) {
   case (first second) : replace_nested_list(from, to, first) :: replace_nested_list(from, to,second)
@@ -180,7 +202,8 @@ collect and returns a list of code within $input$ that matches
 
 <xform MapList pars=(op, input)>
 if (input : "" | NULL) RETURN NULL;
-first = op(car(input));
+if (op : CODE) { first = op#(car(input)); }
+else { first = op(car(input)); }
 first :: MapList(op, cdr(input))
 </xform>
 
@@ -224,19 +247,15 @@ switch (first)
 Append the second list at the end of the first list 
 ********>
 <xform AppendList pars=(first,second) erase_replicate=FALSE >
-switch (first) {
- case  (elem1 elem2) :  
-    r2 =  AppendList(elem2, second); 
-    AppendList(elem1,r2)
- case NULL: second 
- default : 
-    if (erase_replicate) {
+ if (first == NULL) return second;
+ r2 =  AppendList(cdr(first), second); 
+ e = car(first);
+ if (erase_replicate) {
        for (p = second; p != NULL; p = cdr(p)) {
-         if (car(p) == first) return second;
+         if (car(p) == e) return r2;
        }
-    }
-    first :: second
-}
+ }
+ e :: r2
 </xform>
 
 <*******
@@ -266,11 +285,15 @@ else {
 
 <****** 
 *******>
-<xform gen_cartesian_product pars=(l1,l2)>
+<xform gen_cartesian_product pars=(op, l1,l2) >
   res=NULL;
   for (p1 = ReverseList(l1); p1 != NULL; p1 = cdr(p1)) {
     for (p2 = ReverseList(l2); p2 != NULL; p2 = cdr(p2)) {
-       res = (car(p1)::car(p2)) :: res;
+       switch (op) {
+       case XFORM: res = (op(car(p1),car(p2))) :: res;
+       case CODE: res = (op#(car(p1), car(p2))) :: res;
+       case "::": res = (car(p1)::car(p2)) :: res;
+       }
     }
   }
   res

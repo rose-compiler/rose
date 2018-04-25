@@ -29,6 +29,7 @@ class DepRel
   DepDirType GetDirType() const;
   int GetMinAlign() const;
   int GetMaxAlign() const;
+  int GetAlign() const {return align; };
   std:: string toString() const;
   void Dump() const { std:: cerr << toString() << std:: endl; }
   bool IsTop() const;
@@ -42,6 +43,7 @@ class DepRel
   bool operator != (const DepRel &that) const
     { return ! operator ==(that); }
 
+  static std::string toString(int entry_type);
   static bool IntersectUpdate(DepRel& e1, const DepRel &that);
   static bool UnionUpdate(DepRel& e1, const DepRel &that);
 };

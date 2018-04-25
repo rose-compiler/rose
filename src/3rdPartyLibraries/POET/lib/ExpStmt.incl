@@ -30,8 +30,8 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 parsing of floating point numbers
 ********>
 
-<code EXPO pars=(base: FLOAT, expo: (("e"|"E") INT)) 
-             parse=FALSE> @base expo@ </code>
+<code EXPO pars=(base: FLOAT|INT, expo: INT) 
+             parse=FALSE> @base@e@expo@ </code>
 
 <*******
 Type Processing
@@ -53,6 +53,7 @@ Type Processing
 <code TypeInfo pars=(type,name,init) />
 <code DeclStmt pars=(decl) /> 
 <code StmtBlock pars=(stmts) symtab="" /> 
+<code DeclarationBlock pars=(stmts) symtab="" /> 
 <code StructBody pars=(stmts) symtab="" />
 
 <***** Variables and declarations ***>
@@ -60,12 +61,20 @@ Type Processing
 <define TRACE_VARS ""/> <<* trace new local variables being created
 
 <xform BuildName pars=(indexList)>
-result = "";
-foreach_r (indexList : (cur=(INT | STRING | CODE.UnrollIvarName)) : TRUE) {
-  if (cur != "_" && cur != "")
-     result = BuildList("_", BuildList(cur, result));
+if (indexList : NULL) return NULL;
+cur = car(indexList);
+result = BuildName(cdr(indexList));
+switch (cur) {
+ case (first rest) | CODE.ArrayAccess#(first, rest):
+   result = AppendList(BuildName(first), AppendList(BuildName(rest), result));
+ case Name#n: result = AppendList(n, result);
+ case "_"|""|NULL:  ""
+ case INT|ID|CODE.UnrollIvarName|CODE.CopyBufName: result = "_" :: (cur :: result);
+ default:
+   print ("unrecognized structure:" cur); assert(0);
+   result = "_":: (cur :: result);
 }
-Name#(result)
+result
 </xform>
 
 <xform AppendVar trace=GLOBAL.TRACE_VARS pars=(var)>
@@ -91,7 +100,7 @@ Name#(result)
 </xform>
 
 <xform Append_Include trace=GLOBAL.TRACE_TARGET pars=(incl)>
-    if (trace == "" || !(LookupList(incl, trace)))
+    if (trace == "" || !Lookup(incl, trace))
        { REPLACE(ERASE(trace), incl::ERASE(trace), trace) }
     else {trace}
 </xform>
@@ -198,6 +207,8 @@ by applying $op$ to all elements in the list
     Routine implementations 
 *******************************************>
 
+<code Tuple pars=(elems : CODE.ExpList) > _(@elems@) </code>
+
 <xform EvalCall pars=(op,opd)>
  len = LEN(opd);
  ismin=("min"^len); ismax = ("max"^len);
@@ -208,27 +219,38 @@ by applying $op$ to all elements in the list
  case ismax : 
          opd1 = MAX#(car(opd), car(cdr(opd)));
          return (len==2)? opd1 : MAX#(opd1, car(cdr(cdr(opd))));
+ case "_" : return CODE.Tuple#(opd);
  default: return (CODE.FunctionCall#(op,opd));
  }
 </xform>
 
 <xform IntDiv pars=(exp, div) output=(_quotiant,_remainder)>
 if (exp : INT && div : INT) { if (exp == 0) { (0,0) } else if (div != 0) { (exp / div, exp % div) } else { ERROR("[IntDiv:] Division by zero:" exp "/" div); } }
-else if (div == 1) { (exp,0) }
-else 
-switch (exp) {
-  case Uop#("-", arg) : res1 = IntDiv(arg,div); (-res1[0], -res1[1]) 
-  case (Bop#("+", opd1, opd2)) : 
+else { 
+  switch (div) {
+  case 1:  (exp,0) 
+  case Bop#("*",d1,d2):
+      (q1,r1) = IntDiv(exp, d1);
+      (q2,r2) = IntDiv(q1, d2);
+      (q2, Bop#("+", r1, RebuildBop("*",r2,d1)))
+  case ID|CODE.Name|INT: 
+     switch (exp) {
+       case Uop#("-", arg) : res1 = IntDiv(arg,div); (-res1[0], -res1[1]) 
+       case (Bop#("+", opd1, opd2)) : 
            res1 = IntDiv(opd1, div); 
            res2 = IntDiv(opd2, div);
            (res1[0] + res2[0], res1[1] + res2[1])
-  case (Bop#("*", opd1, opd2) ):
-           (opd1 == div)? (opd2,0)
-           : (opd2 == div)? (opd1, 0)
-           : (0, exp)
-  case div : (1,0)
-  default: (0,exp)
-}
+       case (Bop#("*", opd1, opd2) ):
+           (q1,r1) = IntDiv(opd1, div); 
+           if (q1 != 0) return (q1*opd2,r1 * opd2);
+           (q2,r2) = IntDiv(opd2, div);
+           if (q2 != 0) { (opd1*q2, opd1*r2) }
+           else  { (0, exp) }
+       case div : (1,0)
+       default: (0,exp)
+     }
+  }
+ }
 </xform>
 
 <xform UnionComparison pars=(first,second) not="!">
@@ -529,8 +551,11 @@ else { exp }
 </xform>
 
 <xform Reduce_listExp pars=(op, opds) >
-res = car opds;
-for (p_opds = cdr opds; p_opds != NULL; p_opds = cdr p_opds)
+switch (op){
+case "*" : res = 1;
+case "+" : res = 0;
+}
+for (p_opds = opds; p_opds != NULL; p_opds = cdr p_opds)
   res = RebuildExp(BUILD_BOP(op, res, car p_opds));
 res
 </xform>
