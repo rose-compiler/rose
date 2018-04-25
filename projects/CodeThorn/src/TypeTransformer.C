@@ -46,7 +46,7 @@ void TypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNam
       }
       cout<<endl;
     } else if(numChanges>1) {
-      cout<<"Warning: Found more than one instance of variable "<<varName<<endl;
+      cout<<"Warning: Found more than one declaration of variable "<<varName<<endl;
     }
     transformCommandLineFiles(project);
   }

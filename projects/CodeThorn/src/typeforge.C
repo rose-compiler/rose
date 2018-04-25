@@ -30,8 +30,9 @@
 #include "CppStdUtilities.h"
 #include <utility>
 #include <functional>
-
+#include <regex>
 #include <algorithm>
+#include <list>
 
 using namespace std;
 
@@ -47,23 +48,112 @@ bool isComment(string s) {
   return s.size()>=2 && s[0]=='/' && s[1]=='/';
 }
 
-SgType* buildTypeFromStringSpec(string typeName,SgFunctionDefinition* funDef) {
-  SgType* newType=nullptr;
-  if(typeName=="float") {
-    newType=SageBuilder::buildFloatType();
-  } else if(typeName=="double") {
-    newType=SageBuilder::buildDoubleType();
-  } else if(typeName=="long double") {
-    newType=SageBuilder::buildLongDoubleType();
-  } else if(typeName=="AD_real") {
-    string typeName="AD_real";
-    SgScopeStatement* scope=funDef->get_scope();
-    newType=SageBuilder::buildOpaqueType(typeName, scope);
-  } else {
-    cerr<<"Error: unsupported type: "<<typeName<<"."<<endl;
-    exit(1);
+SgType* checkType(SgInitializedName* varInitName,string typeName) {
+  SgType* varInitType=varInitName->get_type();
+  SgType* baseType=varInitType->findBaseType();
+  if(baseType) {
+    if(SgNamedType* namedType=isSgNamedType(baseType)) {
+      string nameTypeString=namedType->get_name();
+      if(nameTypeString==typeName) {
+        cout<<"DEBUG: Found user-defined type:"<<typeName<<endl;
+        return baseType;
+      }
+    }
   }
+  return nullptr;
+}
+
+// search for user defined types in function parameters and variable declarations in provided function
+SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefinedTypeName) {
+  // (1) formal function parameters, (2) declared variables
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+  for(auto varInitName : initNamePtrList) {
+    if(SgType* type=checkType(varInitName,userDefinedTypeName))
+      return type;
+  }
+  RoseAst ast(funDef);
+  for (auto node : ast) {
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+      SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+      if(SgType* type=checkType(varInitName,userDefinedTypeName))
+        return type;
+    }
+  }
+  return nullptr;
+}
+
+// experimental "parser" for building types from string
+SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
+  SgType* newType=nullptr;
+  std::regex e("[_A-Za-z]+|\\*|&|const|\\s");
+  // default constructor = end-of-sequence
+  std::regex_token_iterator<std::string::iterator> rend;
+  std::regex_token_iterator<std::string::iterator> a ( type.begin(), type.end(), e );
+  bool buildConstType=false;
+  while (a!=rend) {
+    string typePart=*a++;
+    cout<<"DEBUG: typepart: >"<<typePart<<"<"<<endl;
+    if(typePart=="float") {
+      newType=SageBuilder::buildFloatType();
+    } else if(typePart=="double") {
+      newType=SageBuilder::buildDoubleType();
+    } else if(typePart=="long double") {
+      newType=SageBuilder::buildLongDoubleType();
+    } else if(typePart==" ") {
+    cout<<"DEBUG: skipping white space"<<endl;
+    continue;
+    } else if(typePart=="*") {
+      cout<<"DEBUG: building pointer type"<<endl;
+      if(newType==nullptr) goto parseerror;
+      newType=SageBuilder::buildPointerType(newType);
+    } else if(typePart=="&") {
+      cout<<"DEBUG: building reference type"<<endl;
+      if(newType==nullptr) goto parseerror;
+      newType=SageBuilder::buildReferenceType(newType);
+    } else if(typePart=="const") {
+      cout<<"DEBUG: building const type"<<endl;
+      buildConstType=true;
+    } else if(std::regex_match(typePart, std::regex("^[_A-Za-z]+$"))) {
+      // found a type name
+      if(funDef) {
+        cout<<"DEBUG: found type name:"<<typePart<<endl;
+        SgScopeStatement* scope=funDef->get_scope();
+        // check whether provided type name is a name of a user-defined type
+        SgType* userDefinedType=findUserDefinedTypeByName(funDef,typePart);
+        if(userDefinedType) {
+          cout<<"DEBUG: --> found user defined type :"<<typePart<<endl;
+          newType=userDefinedType;
+        } else {
+          newType=SageBuilder::buildOpaqueType(typePart, scope);
+        }
+      } else {
+        cout<<"WARNING: no function def for scope. not building new type:"<<typePart<<endl;
+      }
+    } else {
+    parseerror:
+      cerr<<"Error: unsupported type: "<<type<<", unresolved:"<<typePart<<"."<<endl;
+      exit(1);
+    }
+  }
+  if(buildConstType)
+    newType=SageBuilder::buildConstType(newType);
+
   return newType;
+}
+
+list<SgInitializedName*> findVariablesByType(SgNode* root, SgType* type) {
+  list<SgInitializedName*> list;
+  RoseAst ast(root);
+  for (auto node : ast) {
+    if(SgInitializedName* initName=isSgInitializedName(node)) {
+      SgType* varInitNameType=initName->get_type();
+      if(varInitNameType==type) {
+        cout<<"DEBUG: found variable by type! :"<<initName->unparseToString()<<endl;
+        list.push_back(initName);
+      }
+    }
+  }
+  return list;
 }
 
 // some simple string type tests (until parser is available)
@@ -224,17 +314,58 @@ int main (int argc, char* argv[])
           }
           if(tt.getTraceFlag()) cout<<"TRACE: replace_type mode: "<< "in line "<<lineNr<<"."<<endl;
           string functionSpec=splitLine[1];
-          string typeReplaceSpec=splitLine[2];
           std::vector<std::string> functionSpecSplit=CppStdUtilities::splitByRegex(functionSpec,":");
           if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier in line "<<lineNr<<":"<<functionSpec<<endl; exit(1);}
           string functionName=functionSpecSplit[0];
           string functionConstructSpec=functionSpecSplit[1];
+          string typeReplaceSpec=splitLine[2];
           std::vector<std::string> typeReplaceSpecSplit=CppStdUtilities::splitByRegex(typeReplaceSpec,"\\s*=>\\s*");
           if(typeReplaceSpecSplit.size()!=2) { cerr<<"Error: wrong type replace specifier in line "<<lineNr<<":"<<typeReplaceSpec<<endl; exit(1);}
           string oldTypeSpec=typeReplaceSpecSplit[0];
           string newTypeSpec=typeReplaceSpecSplit[1];
           if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionName<<" "<<functionConstructSpec<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
-          
+          RoseAst completeast(sageProject);
+          SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
+          SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
+          SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
+          cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" ==> "<<newBuiltType->unparseToString()<<endl;
+
+          if(functionConstructSpec=="args") {
+            // change types of arguments
+            SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+            for(auto varInitName : initNamePtrList) {
+              SgType* varInitNameType=varInitName->get_type();
+              if(varInitNameType==oldBuiltType) {
+                varInitName->set_type(newBuiltType);
+              }
+            }
+          } else if(functionConstructSpec=="ret") {
+            // change type of return type if it matches provided type. If no type is provided always change.
+            SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
+            SgFunctionDeclaration* funDecl=funDef->get_declaration();
+            if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
+              SgFunctionType* funType=funDecl->get_type();
+              funType->set_orig_return_type(newBuiltType);
+            }
+          } else if(functionConstructSpec=="body") {
+            // finds all variables in body of function and replaces type
+            std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
+            for (auto initName : varInitList) {
+              initName->set_type(newBuiltType);
+            }
+          } else {
+            cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
+          }
+          //tt.addToTransformationList(list,newType,funDef,varName);
+        } else if(commandName=="transform") {
+          if(splitLine.size()!=4) {
+            cerr<<"Error in line "<<lineNr<<": wrong number of arguments: "<<splitLine.size()<<" (should be 4)."<<endl;
+          }
+          if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
+          string functionName=splitLine[1];
+          string accesstype=splitLine[2];
+          string transformationName=splitLine[3];
+          if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
         } else {
           cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
           return 1;
