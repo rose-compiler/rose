@@ -562,12 +562,12 @@ matcher_SOURCES = Timer.cpp matcher.C
 varp1_DEPENDENCIES=libspray.la
 varp1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varp1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-varp1_SOURCES = Timer.cpp varp1.C
+varp1_SOURCES = Timer.cpp varp1.C TFTransformation.C
 
 typeforge_DEPENDENCIES=libspray.la
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TypeTransformer.C CastGraphVis.C CppStdUtilities.C
+typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C
 
 cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize

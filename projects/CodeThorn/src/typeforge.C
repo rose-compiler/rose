@@ -33,6 +33,7 @@
 #include <regex>
 #include <algorithm>
 #include <list>
+#include "TFTransformation.h"
 
 using namespace std;
 
@@ -93,6 +94,7 @@ SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
   while (a!=rend) {
     string typePart=*a++;
     cout<<"DEBUG: typepart: >"<<typePart<<"<"<<endl;
+    // TODO: refine introduction of const with new parser
     if(typePart=="float") {
       newType=SageBuilder::buildFloatType();
     } else if(typePart=="double") {
@@ -134,10 +136,11 @@ SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
       cerr<<"Error: unsupported type: "<<type<<", unresolved:"<<typePart<<"."<<endl;
       exit(1);
     }
+    if(buildConstType && newType) {
+      newType=SageBuilder::buildConstType(newType);
+      buildConstType=false;
+    }
   }
-  if(buildConstType)
-    newType=SageBuilder::buildConstType(newType);
-
   return newType;
 }
 
@@ -268,6 +271,7 @@ int main (int argc, char* argv[])
     string commandFileName=args.getString("command-file");
     CppStdUtilities::DataFileVector lines;
     bool fileOK=CppStdUtilities::readDataFile(commandFileName,lines);
+    RoseAst completeAst(sageProject);
     if(fileOK) {
       TypeTransformer::VarTypeVarNameTupleList list;
       int lineNr=0;
@@ -294,8 +298,7 @@ int main (int argc, char* argv[])
           } else {
             typeName="float";
           }
-          RoseAst completeast(sageProject);
-          SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
+          SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
           if(funDef==0) {
             cerr<<"Error: function "<<functionName<<" does not exist in file."<<endl;
             return 1;
@@ -324,8 +327,7 @@ int main (int argc, char* argv[])
           string oldTypeSpec=typeReplaceSpecSplit[0];
           string newTypeSpec=typeReplaceSpecSplit[1];
           if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionName<<" "<<functionConstructSpec<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
-          RoseAst completeast(sageProject);
-          SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
+          SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
           SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
           SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
           cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" ==> "<<newBuiltType->unparseToString()<<endl;
@@ -363,9 +365,22 @@ int main (int argc, char* argv[])
           }
           if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
           string functionName=splitLine[1];
-          string accesstype=splitLine[2];
+          //string accessType=splitLine[2]; // not used yet
           string transformationName=splitLine[3];
-          if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
+          SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
+          if(funDef) {
+            if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
+            TFTransformation tfTransformation;
+            if(transformationName=="readwrite_access_transformation") {
+              tfTransformation.transformHancockAccess(funDef);
+            } else {
+              cerr<<"Error in line "<<lineNr<<": unsupported transformation: "<<transformationName<<endl;
+              return 1;
+            }
+          } else {
+            cerr<<"Error: line "<<lineNr<<": function "<<functionName<<" not found."<<endl;
+            return 1;
+          }
         } else {
           cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
           return 1;
