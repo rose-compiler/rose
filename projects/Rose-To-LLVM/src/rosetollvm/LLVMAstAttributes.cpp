@@ -20,8 +20,7 @@ using namespace std;
 
 const string LLVMAstAttributes::getTemp(TEMP_KIND k) {
     stringstream out;
-    switch(k)
-    {
+    switch(k) {
         case TEMP_INT:
             out << "%";
             break;
@@ -184,11 +183,34 @@ const string LLVMAstAttributes::getTemp(TEMP_KIND k) {
         case TEMP_POINTER_DIFFERENCE_DIVISION:
             out << "%sub.ptr.div";
             break;
+        case TEMP_LABEL: // just needs a number
+            break;
         default:
             out << "%.tmp";
             break;
     }
     out << (k == TEMP_INT ? tmp_int_count++ : tmp_count++);
+    return out.str();
+}
+
+
+/**
+ *
+ */
+string LLVMAstAttributes::findLabel(SgLabelStatement *n) {
+    string label = ((SgName) n -> get_label()).getString();
+
+    map<string, int>::iterator itr = label_map.find(label);
+    int label_index;
+    if (itr == label_map.end()) {
+        label_index = tmp_count++;
+        label_map[label] = label_index;
+    }
+    else label_index = itr->second;
+
+    stringstream out;
+    out << "label." << label_index;
+
     return out.str();
 }
 
@@ -241,9 +263,10 @@ const string LLVMAstAttributes::getGlobalStringReference(int index) {
     return out.str();
 }
 
-LLVMAstAttributes::StringLiteral LLVMAstAttributes::preprocessString(SgStringVal *string_val) {
+LLVMAstAttributes::StringLiteral LLVMAstAttributes::preprocessString(SgStringVal *string_val, int string_size) {
     stringstream out;
-    int size = 0;
+    int length = 0,
+        size = 0;
 
     if (string_val -> get_is16bitString() || string_val -> get_is32bitString()) {
 cout << "*** Encountered "
@@ -263,7 +286,7 @@ cout.flush();
     else {
         const string in = string_val -> get_value();
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "*** Encountered "
      << (string_val -> get_wcharString() ? "Wchar " : "ASCII ")
      << (string_val -> get_is16bitString() ? "16 bits " : "")
@@ -272,10 +295,13 @@ cout << "*** Encountered "
      << " string : \"" << in << "\"" << endl;
 cout.flush();
 */
-        for (int i = 0; i < in.length(); i++) {
+        for (int i = 0; size < string_size && i < in.length(); i++) {
+            length++;
             size++;
             out << in[i];
             if (in[i] == '\\') {
+                length += 2; // There will be 2 more characters
+
                 // LLVM escape sequences always look like \xx where each x
                 // is a hexadecimal digit.
                 if (in[i + 1] == 'n') {
@@ -336,9 +362,6 @@ cout.flush();
                 }
             }
         }
-
-        size++;
-        out << "\\00";
     }
 
 // TODO: Remove this !!!
@@ -346,31 +369,37 @@ cout.flush();
 cout << "*** Outputting string : \"" << out.str() << "\" with size " << size << endl;
 cout.flush();
 */
-  
-    return (StringLiteral) {out.str(), size};
+    ROSE2LLVM_ASSERT(size <= string_size);
+      
+    return (StringLiteral) {out.str(), length, size};
 }
 
 int LLVMAstAttributes::insertString(SgStringVal *string_val) {
-    StringLiteral literal = preprocessString(string_val);
+    StringLiteral literal = preprocessString(string_val, string_val -> get_value().size());
+    literal.value += "\\00";
+    literal.length += 3;
+    literal.size++;
     return string_table.insert(literal.value.c_str(), literal.size);
 }
 
 int LLVMAstAttributes::insertString(SgStringVal *string_val, int size) {
-    StringLiteral literal = preprocessString(string_val);
+    StringLiteral literal = preprocessString(string_val, size);
 
-if(size < literal.size){
-  cout << "** Request to insert string \""
-       << string_val -> get_value() << "\" which was preprocessed as \""
-       << literal.value << "\" with size " << literal.size
-       << "; The requested final output size is " << size
+if (size < literal.size) {
+cout << "** Request to insert string \""
+     << string_val -> get_value() << "\" which was preprocessed as \""
+     << literal.value << "\" with size " << literal.size
+     << "; The requested final output size is " << size
     << endl;
-  cout.flush();
+cout.flush();
 }
-    ROSE2LLVM_ASSERT(size >= literal.size);
+
     for (int i = literal.size; i < size; i++) {
         literal.value += "\\00";
+	literal.length += 3;
+	literal.size++;
     }
-
+ 
     return string_table.insert(literal.value.c_str(), size);
 }
 
@@ -483,26 +512,26 @@ const string LLVMAstAttributes::setLLVMTypeName(SgType *type) {
             SgType *component_type = complex_type -> get_base_type();
             string component_type_name = setLLVMTypeName(component_type);
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "***Processing ";
 */
             if (isSgTypeFloat(component_type)) {
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Float Complex type of size ";
 */
                 size = sizeof(complex<float>);
             }
             else if (isSgTypeDouble(component_type)) {
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Double Complex type of size ";
 */
                 size = sizeof(complex<double>);
             }
             else if (isSgTypeLongDouble(component_type)) {
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Long Double Complex type of size ";
 */
                 size = sizeof(complex<long double>);
@@ -512,7 +541,7 @@ cout << "Long Double Complex type of size ";
             }
             str = "complex";
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << size
      << endl;
 cout.flush();
@@ -541,7 +570,7 @@ cout.flush();
             //            SgUnsignedLongVal *specified_size = isSgUnsignedLongVal(array_type -> get_index());
             //            size_t array_size = (specified_size ? specified_size -> get_value() : 1); // compute number of elements in this array.
             SgIntVal *specified_size = isSgIntVal(array_type -> get_index());
-            size_t array_size = (specified_size ? specified_size -> get_value() : 1); // compute number of elements in this array.
+            size_t array_size = (specified_size ? specified_size -> get_value() : 0); // compute number of elements in this array.
             int element_size = ((IntAstAttribute *) element_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
             std::ostringstream out;
             out << "[" << array_size << " x " << element_type_name << "]";
@@ -623,6 +652,7 @@ cout.flush();
             str.append(" ");
             str.append(args_signature);
             control.SetAttribute(type, Control::LLVM_TYPE, new StringAstAttribute(str));
+            control.SetAttribute(type, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(sizeof(void *)));
         }
         else if (dynamic_cast<SgTypeString *>(type)) { // This type is only used internally by Rose.
             size = sizeof(void *);
@@ -848,7 +878,7 @@ void LLVMAstAttributes::processClassDeclaration(SgClassType *n)
         }
 
 
-	control.SetAttribute(n, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(alignment));
+        control.SetAttribute(n, Control::LLVM_ALIGN_TYPE, new IntAstAttribute(alignment));
 
         /**
          * Always pad the structure so that its size is a multiple of the alignment.
@@ -858,7 +888,7 @@ void LLVMAstAttributes::processClassDeclaration(SgClassType *n)
             pad_size = alignment - (size % alignment);
             size += pad_size;
         }
-	
+
         if (defining_declaration -> get_class_type() == SgClassDeclaration::e_union) {
             pad_size = size - first_field_size;
         }
@@ -907,7 +937,7 @@ std::string LLVMAstAttributes::addBundleMetadata(SgNode *node) {
     bundle_str << ", !bun !";
     bundle_str << addMetadata(bundle);
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Returning bundle: "
      << bundle_str.str()
      << endl;
@@ -962,7 +992,7 @@ std::string LLVMAstAttributes::addIsParallelMetadata(SgNode *node) {
     std::ostringstream noivdep;
     noivdep << ", !noivdep !" << addMetadata(noivdep_md);
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Returning Parallel metadata: "
      << noivdep.str()
      << endl;
@@ -1144,7 +1174,7 @@ std::string LLVMAstAttributes::addDebugMetadata(SgNode const *node, FunctionAstA
     }
     strm << addMetadata(position_node);
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Returning Debug metadata: "
      << strm.str()
      << endl;
@@ -1195,7 +1225,7 @@ void LLVMAstAttributes::generateMetadataNodes() {
         }
 
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Original Debug String is: "
      << str
      << endl;
@@ -1205,7 +1235,7 @@ cout.flush();
         str = str.substr(k + 2);
 
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "After clean up, k = " << k
      << "; Debug String is: "
      << str
@@ -1225,7 +1255,7 @@ cout.flush();
         }
 
 // TODO: Remove this !!!
-/*	      
+/*      
 cout << "Emitting Debug String: "
      << str
      << endl;

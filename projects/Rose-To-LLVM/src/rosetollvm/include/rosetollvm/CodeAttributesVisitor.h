@@ -65,6 +65,7 @@ protected:
     virtual void preVisit(SgNode *);
     virtual void preVisitExit(SgNode *);
 
+    void addBooleanCast(SgExpression *);
     void addBooleanExtensionAttributeIfNeeded(SgExpression *);
     void addConversionAttributeIfNeeded(SgBinaryOp *);
     void checkIntegralOperation(SgBinaryOp *);

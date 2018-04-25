@@ -62,6 +62,11 @@ class LLVMAstAttributes : public RootAstAttribute {
     std::map<llvm::MDNode *, int> mdIndices;
     std::map<std::string, int> functionPragmaMetadataIndices;
 
+    /**
+     * This map is used to map each label into a unique number.
+     */
+    std::map<std::string, int> label_map;
+
     bool isHex(char c) { return isdigit(c) || ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')); }
 
     void processClassDeclaration(SgClassType *);
@@ -83,8 +88,8 @@ public:
 
         typeVoid = SgTypeVoid::createType();
         voidStarType = SgPointerType::createType(typeVoid);
-	setLLVMTypeName(voidStarType);
-	    
+        setLLVMTypeName(voidStarType);
+    
         if (byte_size == sizeof(int)) {
             pointerSizeIntegerType = SgTypeInt::createType();
         }
@@ -159,7 +164,8 @@ public:
         TEMP_COERCE,
         TEMP_AGGREGATE,
         TEMP_POINTER_DIFFERENCE_ARITHMETIC_SHIFT_RIGHT,
-        TEMP_POINTER_DIFFERENCE_DIVISION 
+        TEMP_POINTER_DIFFERENCE_DIVISION,
+        TEMP_LABEL
     };
     long tmp_count,
          tmp_int_count;
@@ -167,16 +173,19 @@ public:
     const std::string getTemp(TEMP_KIND k);
     const std::string getFunctionTemp(std::string, std::string);
 
+    std::string findLabel(SgLabelStatement *);
+
     bool needsMemcopy() { return needs_memcopy; }
     void setNeedsMemcopy() { needs_memcopy = true; }
 
     class StringLiteral {
     public:
         std::string value;
+        int length;
         int size;
     };
     
-    StringLiteral preprocessString(SgStringVal *);
+    StringLiteral preprocessString(SgStringVal *, int);
 
     int insertString(SgStringVal *); 
     
@@ -213,7 +222,7 @@ public:
 */
 
     void insertFunction(std::string f) {
-        used_function_table.insert(f.c_str());
+        used_function_table.insert(f.c_str(), f.size());
     }
 
     int numFunctions() { return used_function_table.size(); }
@@ -244,7 +253,7 @@ public:
 
     SgNode *getGlobalDeclaration(int i) { return global_declaration[i]; }
 
-    void insertDefinedFunction(std::string f) { defined_function_table.insert(f.c_str()); }
+    void insertDefinedFunction(std::string f) { defined_function_table.insert(f.c_str(), f.size()); }
     bool isDefinedFunction(const char *fname) { return defined_function_table.contains(fname); }
 
     int numRemoteGlobalDeclarations() { return remote_global_declarations.size(); }

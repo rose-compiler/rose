@@ -1235,7 +1235,11 @@ void CodeGeneratorVisitor::genGlobalAggregateInitialization(SgInitializedName *d
     (*codeOut) << (array_type ? " [" : " <{ ");
     vector<SgExpression *> exprs = aggregate -> get_initializers() -> get_expressions();
     DeclarationsAstAttribute *class_attribute = (class_type ? attributes -> class_map[class_type -> get_qualified_name().getString()] : NULL);
-    int type_limit = (array_type ? (isSgIntVal(array_type -> get_index()) ? isSgIntVal(array_type -> get_index()) -> get_value() : exprs.size())
+    int type_limit = (array_type ? (array_type -> get_is_variable_length_array()
+                                                ? exprs.size()
+                                                : (isSgIntVal(array_type -> get_index())
+                                                        ? isSgIntVal(array_type -> get_index()) -> get_value()
+                                                        : 0))
                                  : class_attribute -> numSgInitializedNames());
     if (class_type && isSgClassDeclaration(class_type->get_declaration())->get_class_type() == SgClassDeclaration::e_union) {
         type_limit = 1;
@@ -1369,15 +1373,22 @@ void CodeGeneratorVisitor::genZeroCompareOperation(SgExpression *node, string co
     string code = (is_float ? "u" /* unordered */ : "");
     code += "ne";
 
-    string result_name   = ((StringAstAttribute *) node -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue(),
-           lhs_name      = ((StringAstAttribute *) node -> getAttribute(Control::LLVM_NAME)) -> getValue(),
+    StringAstAttribute *result_attribute = (StringAstAttribute *) node -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME);
+
+    string result_name   = ((StringAstAttribute *) node -> getAttribute(Control::LLVM_BOOLEAN_CAST)) -> getValue(),
+           lhs_name      = (((isSgPlusPlusOp(node)   && isSgPlusPlusOp(node) -> get_mode() == SgUnaryOp::postfix) ||
+                             (isSgMinusMinusOp(node) && isSgMinusMinusOp(node) -> get_mode() == SgUnaryOp::postfix))
+                             ? result_attribute
+                             : ((StringAstAttribute *) node -> getAttribute(Control::LLVM_NAME))) -> getValue(),
            lhs_type_name = ((StringAstAttribute *) lhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
            rhs_name      = ((! is_float) ? (isSgPointerType(lhs_type) ? "null" : "0")
                                          : isSgTypeLongDouble(lhs_type) ? Control::LongDoubleToString(0.0)
                                                                         : isSgTypeDouble(lhs_type) ? Control::DoubleToString(0.0)
                                                                                                    : Control::FloatToString(0.0));
-     (*codeOut) << CodeEmitter::indent() << result_name << " = " << (is_float ? "f" : "i")
-                << "cmp " << code << " " << lhs_type_name << " " << lhs_name << ", " << rhs_name << debug_md << endl;
+    (*codeOut) << CodeEmitter::indent() << result_name << " = " << (is_float ? "f" : "i")
+               << "cmp " << code << " " << lhs_type_name << " " << lhs_name << ", " << rhs_name << debug_md << endl;
+
+    result_attribute -> resetValue(result_name);
 }
 
 
@@ -1455,7 +1466,6 @@ void CodeGeneratorVisitor::genAddOrSubtractOperation(SgBinaryOp *node, string op
                  rhs_name = negation_name;
              }
 
-             ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
 // TODO: Remove this !!!
 /*
 cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
@@ -1463,6 +1473,7 @@ cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.leng
      << endl;
 cout.flush();
 */
+             ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
              (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << lhs_type_name.substr(0, lhs_type_name.length() - 1) << ", " << lhs_type_name << " " <<  lhs_name << ", " << rhs_type_name << " " << rhs_name << debug_md << endl;
          }
      }
@@ -1734,10 +1745,14 @@ bool CodeGeneratorVisitor::preVisitEnter(SgNode *node) {
      }
 
      /**
-      * Special case for conditional true and false expressions
+      * Special case for expressions
       */
      if (dynamic_cast<SgExpression *>(node)) {
          SgExpression *n = isSgExpression(node);
+
+         /**
+          * Special case for conditional true and false expressions
+          */
          if (n -> attributeExists(Control::LLVM_CONDITIONAL_COMPONENT_LABELS)) {
              ConditionalComponentAstAttribute *attribute = (ConditionalComponentAstAttribute *) n -> getAttribute(Control::LLVM_CONDITIONAL_COMPONENT_LABELS);
              codeOut -> emitLabel(current_function_decls, attribute -> getLabel());
@@ -1784,7 +1799,7 @@ void CodeGeneratorVisitor::preVisit(SgNode *node) {
      //         SgName
      //         SgSymbolTable
      //         SgInitializedName
-     else if (dynamic_cast<SgInitializedName *>(node)) {
+     else if (dynamic_cast<SgInitializedName *>(node)) { // preVisit
          SgInitializedName *n = isSgInitializedName(node);
 
          /**
@@ -1804,7 +1819,7 @@ void CodeGeneratorVisitor::preVisit(SgNode *node) {
      //         Sg_File_Info
      //         SgFile:
      //             SgSourceFile
-     else if (dynamic_cast<SgSourceFile *> (node)) {
+     else if (dynamic_cast<SgSourceFile *>(node)) { // preVisit
          SgSourceFile *n = isSgSourceFile(node);
 
          if (option.isQuery() && (! node -> attributeExists(Control::LLVM_TRANSLATE))) {
@@ -1901,11 +1916,11 @@ void CodeGeneratorVisitor::preVisit(SgNode *node) {
      //                 SgGlobal
      //                 SgBasicBlock
      //                 SgIfStmt
-     else if (dynamic_cast<SgIfStmt *> (node)) {
+     else if (dynamic_cast<SgIfStmt *>(node)) { // preVisit
          SgIfStmt *n = isSgIfStmt(node);
      }
      //                 SgForStatement
-     else if (dynamic_cast<SgForStatement *> (node)) {
+     else if (dynamic_cast<SgForStatement *>(node)) { // preVisit
          SgForStatement *n = isSgForStatement(node);
 
          scopeStack.push(n);
@@ -1914,7 +1929,7 @@ void CodeGeneratorVisitor::preVisit(SgNode *node) {
      //                 SgClassDefinition:
      //                     SgTemplateInstantiationDefn
      //                 SgWhileStmt
-     else if (dynamic_cast<SgWhileStmt *> (node)) {
+     else if (dynamic_cast<SgWhileStmt *>(node)) { // preVisit
          SgWhileStmt *n = isSgWhileStmt(node);
 
          scopeStack.push(n);
@@ -1924,7 +1939,7 @@ void CodeGeneratorVisitor::preVisit(SgNode *node) {
          codeOut -> emitLabel(current_function_decls, attribute -> getConditionLabel());
      }
      //                 SgDoWhileStmt
-     else if (dynamic_cast<SgDoWhileStmt *> (node)) {
+     else if (dynamic_cast<SgDoWhileStmt *>(node)) { // preVisit
          SgDoWhileStmt *n = isSgDoWhileStmt(node);
 
          scopeStack.push(n);
@@ -1934,7 +1949,7 @@ void CodeGeneratorVisitor::preVisit(SgNode *node) {
          codeOut -> emitLabel(current_function_decls, attribute -> getBodyLabel());
      }
      //                 SgSwitchStatement
-     else if (dynamic_cast<SgSwitchStatement *>(node)) {
+     else if (dynamic_cast<SgSwitchStatement *>(node)) { // preVisit
          SgSwitchStatement *n = isSgSwitchStatement(node);
 
          scopeStack.push(n);
@@ -1984,7 +1999,7 @@ void CodeGeneratorVisitor::preVisit(SgNode *node) {
      //             SgNamelistStatement
      //             SgImportStatement
      //             SgFunctionDeclaration:
-     else if (dynamic_cast<SgFunctionDeclaration *>(node)) {
+     else if (dynamic_cast<SgFunctionDeclaration *>(node)) { // preVisit
          SgFunctionDeclaration *n = isSgFunctionDeclaration(node);
          if ((! n -> get_definition()) || // A function header without definition
              (option.isQuery() && (! n -> attributeExists(Control::LLVM_TRANSLATE))) || // a query translation that is not applicable to this function
@@ -2204,7 +2219,7 @@ alignment = 8;
      //             SgOmpThreadprivateStatement
      //             SgFortranIncludeLine
      //             SgExprStatement
-     else if (dynamic_cast<SgExprStatement *>(node)) {
+     else if (dynamic_cast<SgExprStatement *>(node)) { // preVisit
          SgExprStatement *n = isSgExprStatement(node);
 
          if (n -> attributeExists(Control::LLVM_DO_LABELS)) {
@@ -2214,8 +2229,13 @@ alignment = 8;
          }
      }
      //             SgLabelStatement
+     else if (dynamic_cast<SgLabelStatement *>(node)) { // preVisit
+         SgLabelStatement *n = isSgLabelStatement(node);
+         codeOut -> emitUnconditionalBranch(attributes -> findLabel(n), attributes->addDebugMetadata(node, current_function_decls));
+         codeOut -> emitLabel(current_function_decls, attributes -> findLabel(n));
+     }
      //             SgCaseOptionStmt
-     else if (dynamic_cast<SgCaseOptionStmt *>(node)) {
+     else if (dynamic_cast<SgCaseOptionStmt *>(node)) { // preVisit
          SgCaseOptionStmt *n = isSgCaseOptionStmt(node);
          CaseAstAttribute *attribute = (CaseAstAttribute *) n -> getAttribute(Control::LLVM_CASE_INFO);
          ROSE2LLVM_ASSERT(attribute);
@@ -2226,7 +2246,7 @@ alignment = 8;
      }
      //             SgTryStmt
      //             SgDefaultOptionStmt
-     else if (dynamic_cast<SgDefaultOptionStmt *>(node)) {
+     else if (dynamic_cast<SgDefaultOptionStmt *>(node)) { // preVisit
          SgDefaultOptionStmt *n = isSgDefaultOptionStmt(node);
          string default_label = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_DEFAULT_LABEL)) -> getValue();
          codeOut -> emitUnconditionalBranch(default_label, attributes->addDebugMetadata(node, current_function_decls));
@@ -2238,7 +2258,7 @@ alignment = 8;
      //             SgGotoStatement
      //             SgSpawnStmt
      //             SgNullStatement
-     else if (dynamic_cast<SgNullStatement *>(node)) {
+     else if (dynamic_cast<SgNullStatement *>(node)) { // preVisit
          SgNullStatement *n = isSgNullStatement(node);
          // TODO: Do nothing for now!!!
      }
@@ -2301,7 +2321,7 @@ alignment = 8;
      //                 SgPlusPlusOp
      //                 SgBitComplementOp
      //                 SgCastExp
-     else if (dynamic_cast<SgCastExp *>(node)) {
+     else if (dynamic_cast<SgCastExp *>(node)) { // preVisit
          SgCastExp *n = isSgCastExp(node);
 
          /**
@@ -2321,11 +2341,11 @@ alignment = 8;
      //                 SgUserDefinedUnaryOp
      //             SgBinaryOp:
      //                 SgArrowExp
-     else if (dynamic_cast<SgArrowExp *>(node)) {
+     else if (dynamic_cast<SgArrowExp *>(node)) { // preVisit
          SgArrowExp *n = isSgArrowExp(node);
      }
      //                 SgDotExp
-     else if (dynamic_cast<SgDotExp *>(node)) {
+     else if (dynamic_cast<SgDotExp *>(node)) { // preVisit
          SgDotExp *n = isSgDotExp(node);
      }
      //                 SgDotStarOp
@@ -2398,7 +2418,7 @@ alignment = 8;
      //                 SgUpcLocalsizeof
      //                 SgUpcBlocksizeof
      //                 SgUpcElemsizeof
-     else if (dynamic_cast<SgSizeOfOp *>(node)) {
+     else if (dynamic_cast<SgSizeOfOp *>(node)) { // preVisit
          SgSizeOfOp *n = isSgSizeOfOp(node);
          visit_suspended_by_node = node;
      }
@@ -2434,13 +2454,13 @@ alignment = 8;
                         SgUpcBlocksizeof
                         SgUpcElemsizeof
           */
-     else if (dynamic_cast<SgValueExp *>(node)) {
+     else if (dynamic_cast<SgValueExp *>(node)) { // preVisit
          SgValueExp *n = isSgValueExp(node);
          visit_suspended_by_node = node;
      }
      //             SgTypeIdOp
      //             SgConditionalExp
-     else if (dynamic_cast<SgConditionalExp *>(node)) {
+     else if (dynamic_cast<SgConditionalExp *>(node)) { // preVisit
          SgConditionalExp *n = isSgConditionalExp(node);
      }
      //             SgNewExp
@@ -2825,7 +2845,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //         SgName
      //         SgSymbolTable
      //         SgInitializedName
-     else if (dynamic_cast<SgInitializedName *>(node)) {
+     else if (dynamic_cast<SgInitializedName *>(node)) { // postVisit
          SgInitializedName *n = isSgInitializedName(node);
          SgInitializer *init = n -> get_initializer();
          if (init && (! n -> attributeExists(Control::LLVM_GLOBAL_DECLARATION))) {
@@ -2890,7 +2910,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
                  //
                  ROSE2LLVM_ASSERT(aggregate -> getAttribute(Control::LLVM_BIT_CAST));
                  string target_bit_name = ((StringAstAttribute *) aggregate -> getAttribute(Control::LLVM_BIT_CAST)) -> getValue();
-                 string aggregate_type_name = (array_type && isSgIntVal(array_type -> get_index())
+                 string aggregate_type_name = (array_type && (! array_type -> get_is_variable_length_array())
                                                            ? (StringAstAttribute *) array_type -> getAttribute(Control::LLVM_TYPE)
                                                            : (StringAstAttribute *) aggregate -> getAttribute(Control::LLVM_TYPE)) -> getValue();
                  string global_constant_name =  ((StringAstAttribute *) n -> getAttribute(Control::LLVM_GLOBAL_CONSTANT_NAME)) -> getValue();
@@ -2925,7 +2945,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      }
      //         SgAttribute:
      //             SgPragma
-     else if (dynamic_cast<SgPragma *> (node)) {
+     else if (dynamic_cast<SgPragma *>(node)) { // postVisit
      }
      //             SgBitAttribute:
      //                 SgFuncDecl_attr
@@ -2933,7 +2953,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //         Sg_File_Info
      //         SgFile:
      //             SgSourceFile
-     else if (dynamic_cast<SgSourceFile *> (node)) {
+     else if (dynamic_cast<SgSourceFile *>(node)) { // postVisit
          SgSourceFile *n = isSgSourceFile(node);
 
          if ((! option.isQuery()) || node -> attributeExists(Control::LLVM_TRANSLATE)) {
@@ -2948,7 +2968,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //             SgBinaryFile
      //             SgUnknownFile
      //         SgProject
-     else if (dynamic_cast<SgProject*>(node)) {
+     else if (dynamic_cast<SgProject*>(node)) { // postVisit
        // This is encountered when translateExternal_ is set in
        // RoseToLLVM because it causes the entire AST to be traversed.
      }
@@ -2960,7 +2980,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //         SgTemplateArgument
      //         SgDirectory
      //         SgFileList
-     else if (dynamic_cast<SgFileList*>(node)) {
+     else if (dynamic_cast<SgFileList*>(node)) { // postVisit
        // This is encountered when translateExternal_ is set in
        // RoseToLLVM because it causes the entire AST to be traversed.
      }
@@ -3037,21 +3057,21 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //         SgStatement:
      //             SgScopeStatement:
      //                 SgGlobal
-     else if (dynamic_cast<SgGlobal *>(node)) {
+     else if (dynamic_cast<SgGlobal *>(node)) { // postVisit
          SgGlobal *n = isSgGlobal(node);
      }
      //                 SgBasicBlock
-     else if (dynamic_cast<SgBasicBlock *>(node)) {
+     else if (dynamic_cast<SgBasicBlock *>(node)) { // postVisit
          SgBasicBlock *n = isSgBasicBlock(node);
      }
      //                 SgIfStmt
-     else if (dynamic_cast<SgIfStmt *> (node)) {
+     else if (dynamic_cast<SgIfStmt *>(node)) { // postVisit
          SgIfStmt *n = isSgIfStmt(node);
          IfAstAttribute *attribute = (IfAstAttribute *) n -> getAttribute(Control::LLVM_IF_LABELS);
          codeOut -> emitLabel(current_function_decls, attribute -> getEndLabel());
      }
      //                 SgForStatement
-     else if (dynamic_cast<SgForStatement *> (node)) {
+     else if (dynamic_cast<SgForStatement *>(node)) { // postVisit
          SgForStatement *n = isSgForStatement(node);
          string debug_md = attributes->addDebugMetadata(node, current_function_decls);
 
@@ -3073,16 +3093,16 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          codeOut -> emitLabel(current_function_decls, attribute -> getEndLabel());
      }
      //                 SgFunctionDefinition
-     else if (dynamic_cast<SgFunctionDefinition *>(node)) {
+     else if (dynamic_cast<SgFunctionDefinition *>(node)) { // postVisit
          SgFunctionDefinition *n = isSgFunctionDefinition(node);
      }
      //                 SgClassDefinition:
-     else if (dynamic_cast<SgClassDefinition *>(node)) {
+     else if (dynamic_cast<SgClassDefinition *>(node)) { // postVisit
          SgClassDefinition *n = isSgClassDefinition(node);
      }
      //                     SgTemplateInstantiationDefn
      //                 SgWhileStmt
-     else if (dynamic_cast<SgWhileStmt *> (node)) {
+     else if (dynamic_cast<SgWhileStmt *>(node)) { // postVisit
          SgWhileStmt *n = isSgWhileStmt(node);
 
          ROSE2LLVM_ASSERT(scopeStack.top() == n);
@@ -3093,14 +3113,14 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          codeOut -> emitLabel(current_function_decls, attribute -> getEndLabel());
      }
      //                 SgDoWhileStmt
-     else if (dynamic_cast<SgDoWhileStmt *> (node)) {
+     else if (dynamic_cast<SgDoWhileStmt *>(node)) { // postVisit
          SgDoWhileStmt *n = isSgDoWhileStmt(node);
 
          ROSE2LLVM_ASSERT(scopeStack.top() == n);
          scopeStack.pop();
      }
      //                 SgSwitchStatement
-     else if (dynamic_cast<SgSwitchStatement *>(node)) {
+     else if (dynamic_cast<SgSwitchStatement *>(node)) { // postVisit
          SgSwitchStatement *n = isSgSwitchStatement(node);
 
          ROSE2LLVM_ASSERT(scopeStack.top() == n);
@@ -3124,11 +3144,11 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //             SgFunctionTypeTable
      //             SgDeclarationStatement:
      //                 SgFunctionParameterList
-     else if (dynamic_cast<SgFunctionParameterList *>(node)) {
+     else if (dynamic_cast<SgFunctionParameterList *>(node)) { // postVisit
          SgFunctionParameterList *n = isSgFunctionParameterList(node);
      }
      //                 SgVariableDeclaration
-     else if (dynamic_cast<SgVariableDeclaration *>(node)) {
+     else if (dynamic_cast<SgVariableDeclaration *>(node)) { // postVisit
          SgVariableDeclaration *n = isSgVariableDeclaration(node);
      }
      //                 SgVariableDefinition
@@ -3136,7 +3156,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //                     SgClinkageStartStatement
      //                     SgClinkageEndStatement
      //             SgEnumDeclaration
-     else if (dynamic_cast<SgEnumDeclaration *>(node)) {
+     else if (dynamic_cast<SgEnumDeclaration *>(node)) { // postVisit
          SgEnumDeclaration *n = isSgEnumDeclaration(node);
      }
      //             SgAsmStmt
@@ -3152,17 +3172,17 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //             SgNamespaceAliasDeclarationStatement
      //             SgCommonBlock
      //             SgTypedefDeclaration
-     else if (dynamic_cast<SgTypedefDeclaration *>(node)) {
+     else if (dynamic_cast<SgTypedefDeclaration *>(node)) { // postVisit
          SgTypedefDeclaration *n = isSgTypedefDeclaration(node);
      }
      //             SgStatementFunctionStatement
      //             SgCtorInitializerList
      //             SgPragmaDeclaration
-     else if (dynamic_cast<SgPragmaDeclaration *> (node)) {
+     else if (dynamic_cast<SgPragmaDeclaration *>(node)) { // postVisit
      }
      //             SgUsingDirectiveStatement
      //             SgClassDeclaration:
-     else if (dynamic_cast<SgClassDeclaration *>(node)) {
+     else if (dynamic_cast<SgClassDeclaration *>(node)) { // postVisit
          SgClassDeclaration *n = isSgClassDeclaration(node);
      }
      //                 SgTemplateInstantiationDecl
@@ -3173,7 +3193,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //             SgNamelistStatement
      //             SgImportStatement
      //             SgFunctionDeclaration:
-     else if (dynamic_cast<SgFunctionDeclaration *>(node)) {
+     else if (dynamic_cast<SgFunctionDeclaration *>(node)) { // postVisit
          SgFunctionDeclaration *n = isSgFunctionDeclaration(node);
 
          if (n -> get_definition() &&  // A function header with a definition that should not be ignored because ...
@@ -3258,7 +3278,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //             SgOmpThreadprivateStatement
      //             SgFortranIncludeLine
      //             SgExprStatement
-     else if (dynamic_cast<SgExprStatement *>(node)) {
+     else if (dynamic_cast<SgExprStatement *>(node)) { // postVisit
          SgExprStatement *n = isSgExprStatement(node);
 
          /**
@@ -3309,22 +3329,20 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          }
      }
      //             SgLabelStatement
-     else if (dynamic_cast<SgLabelStatement *>(node)) {
+     else if (dynamic_cast<SgLabelStatement *>(node)) { // postVisit
          SgLabelStatement *n = isSgLabelStatement(node);
-         codeOut -> emitUnconditionalBranch(n -> get_label().getString(), attributes->addDebugMetadata(node, current_function_decls));
-         codeOut -> emitLabel(current_function_decls, n -> get_label().getString());
      }
      //             SgCaseOptionStmt
-     else if (dynamic_cast<SgCaseOptionStmt *>(node)) {
+     else if (dynamic_cast<SgCaseOptionStmt *>(node)) { // postVisit
          SgCaseOptionStmt *n = isSgCaseOptionStmt(node);
      }
      //             SgTryStmt
      //             SgDefaultOptionStmt
-     else if (dynamic_cast<SgDefaultOptionStmt *>(node)) {
+     else if (dynamic_cast<SgDefaultOptionStmt *>(node)) { // postVisit
          SgDefaultOptionStmt *n = isSgDefaultOptionStmt(node);
      }
      //             SgBreakStmt
-     else if (dynamic_cast<SgBreakStmt *>(node)) {
+     else if (dynamic_cast<SgBreakStmt *>(node)) { // postVisit
          SgBreakStmt *n = isSgBreakStmt(node);
          SgScopeStatement *scope = scopeStack.top();
          if (dynamic_cast<SgForStatement *>(scope)) {
@@ -3349,7 +3367,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          }
      }
      //             SgContinueStmt
-     else if (dynamic_cast<SgContinueStmt *>(node)) {
+     else if (dynamic_cast<SgContinueStmt *>(node)) { // postVisit
          SgContinueStmt *n = isSgContinueStmt(node);
          SgScopeStatement *scope = scopeStack.top();
          if (dynamic_cast<SgForStatement *>(scope)) {
@@ -3369,7 +3387,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          }
      }
      //             SgReturnStmt
-     else if (dynamic_cast<SgReturnStmt *>(node)) {
+     else if (dynamic_cast<SgReturnStmt *>(node)) { // postVisit
          SgReturnStmt *n = isSgReturnStmt(node);
          SgExpression *expression = n -> get_expression();
          //
@@ -3408,24 +3426,26 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          }
      }
      //             SgGotoStatement
-     else if (dynamic_cast<SgGotoStatement *> (node)) {
+     else if (dynamic_cast<SgGotoStatement *>(node)) { // postVisit
          SgGotoStatement *n = isSgGotoStatement(node);
+         SgLabelStatement *label_statement = (SgLabelStatement *) n -> get_label();
+
          /**
           * The casts were added below to avoid confusion. Note that an SgGotoStatement contains a get_label()
           * metho that returns an SgLabelStatement. An SgLabelStatement also contains a get_label() method that
           * returns an SgName (name of the actual label).
           */
-         codeOut -> emitUnconditionalBranch(((SgName) ((SgLabelStatement *) n -> get_label()) -> get_label()).getString(), attributes->addDebugMetadata(node, current_function_decls));
+         codeOut -> emitUnconditionalBranch(attributes -> findLabel(label_statement), attributes->addDebugMetadata(node, current_function_decls));
      }
      //             SgSpawnStmt
      //             SgNullStatement
-     else if (dynamic_cast<SgNullStatement *>(node)) {
+     else if (dynamic_cast<SgNullStatement *>(node)) { // postVisit
          SgNullStatement *n = isSgNullStatement(node);
          // TODO: Do nothing for now!!!
      }
      //             SgVariantStatement
      //             SgForInitStatement
-     else if (dynamic_cast<SgForInitStatement *>(node)) {
+     else if (dynamic_cast<SgForInitStatement *>(node)) { // postVisit
          SgForInitStatement *n = isSgForInitStatement(node);
          ForAstAttribute *attribute = (ForAstAttribute *) n -> getAttribute(Control::LLVM_FOR_LABELS);
          codeOut -> emitUnconditionalBranch(attribute -> getConditionLabel(), attributes->addDebugMetadata(node, current_function_decls));
@@ -3480,23 +3500,23 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
      //             SgUnaryOp:
      //                 SgExpressionRoot
      //                 SgMinusOp
-     else if (dynamic_cast<SgMinusOp *> (node)) {
+     else if (dynamic_cast<SgMinusOp *>(node)) { // postVisit
          SgMinusOp *n = isSgMinusOp(node);
          SgType *type = n -> get_type();
          string result_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue(),
                 type_name = ((StringAstAttribute *) type -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
                 operand_name = ((StringAstAttribute *) n -> get_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue(),
                 default_value = ((StringAstAttribute *) type -> getAttribute(Control::LLVM_DEFAULT_VALUE)) -> getValue();
-         (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(n -> get_type()) ? "f" : "") << "sub" << " "
+         (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(type) ? "f" : "") << "sub" << " "
                     <<  type_name << " " << default_value << ", " << operand_name << attributes->addDebugMetadata(node, current_function_decls) << endl;
      }
      //                 SgUnaryAddOp
-     else if (dynamic_cast<SgUnaryAddOp *>(node)) {
+     else if (dynamic_cast<SgUnaryAddOp *>(node)) { // postVisit
          SgUnaryAddOp *n = isSgUnaryAddOp(node);
          // No need to do anything here.
      }
      //                 SgNotOp
-     else if (dynamic_cast<SgNotOp *>(node)) {
+     else if (dynamic_cast<SgNotOp *>(node)) { // postVisit
          SgNotOp *n = isSgNotOp(node);
          /**
           * Since Rose transforms the NotOp operation into a NotEqual operation.  We simply need to 
@@ -3507,7 +3527,7 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          (*codeOut) << CodeEmitter::indent() << result_name << " = xor i1 " << operand_name << ", true" << attributes->addDebugMetadata(node, current_function_decls) << endl;
      }
      //                 SgPointerDerefExp
-     else if (dynamic_cast<SgPointerDerefExp *>(node)) {
+     else if (dynamic_cast<SgPointerDerefExp *>(node)) { // postVisit
          SgPointerDerefExp *n = isSgPointerDerefExp(node);
          if (! n -> attributeExists(Control::LLVM_REFERENCE_ONLY)) {
              string result_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue(),
@@ -3531,12 +3551,12 @@ void CodeGeneratorVisitor::postVisit(SgNode *node) {
          }
      }
      //                 SgAddressOfOp
-     else if (dynamic_cast<SgAddressOfOp *>(node)) {
+     else if (dynamic_cast<SgAddressOfOp *>(node)) { // postVisit
          SgAddressOfOp *n = isSgAddressOfOp(node);
          // No need to do anything here.
      }
      //                 SgMinusMinusOp
-     else if (dynamic_cast<SgMinusMinusOp *>(node)) {
+     else if (dynamic_cast<SgMinusMinusOp *>(node)) { // postVisit
          SgMinusMinusOp *n = isSgMinusMinusOp(node);
          string result_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue(),
                 type_name = ((StringAstAttribute *) n -> get_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
@@ -3562,7 +3582,7 @@ cout.flush();
          (*codeOut) << CodeEmitter::indent() << "store " << type_name << " " << result_name << ", " << type_name << "* " << ref_name << debug_md << endl;
      }
      //                 SgPlusPlusOp
-     else if (dynamic_cast<SgPlusPlusOp *>(node)) {
+     else if (dynamic_cast<SgPlusPlusOp *>(node)) { // postVisit
          SgPlusPlusOp *n = isSgPlusPlusOp(node);
          string result_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue(),
                 type_name = ((StringAstAttribute *) n -> get_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
@@ -3588,7 +3608,7 @@ cout.flush();
          (*codeOut) << CodeEmitter::indent() << "store " << type_name << " " << result_name << ", " << type_name << "* " << ref_name << debug_md << endl;
      }
      //                 SgBitComplementOp
-     else if (dynamic_cast<SgBitComplementOp *>(node)) {
+     else if (dynamic_cast<SgBitComplementOp *>(node)) { // postVisit
          SgBitComplementOp *n = isSgBitComplementOp(node);
          string result_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue(),
                 operand_name = ((StringAstAttribute *) n -> get_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue(),
@@ -3596,7 +3616,7 @@ cout.flush();
          (*codeOut) << CodeEmitter::indent() << result_name << " = xor " << operand_type_name << " " << operand_name << ", -1" << attributes->addDebugMetadata(node, current_function_decls) << endl;
      }
      //                 SgCastExp
-     else if (dynamic_cast<SgCastExp *>(node)) {
+     else if (dynamic_cast<SgCastExp *>(node)) { // postVisit
          SgCastExp *n = isSgCastExp(node);
 
          //
@@ -3784,7 +3804,7 @@ cout.flush();
      //             SgBinaryOp:
      //                 SgArrowExp
      //                 SgDotExp
-     else if (dynamic_cast<SgArrowExp *>(node) || dynamic_cast<SgDotExp *>(node)) {
+     else if (dynamic_cast<SgArrowExp *>(node) || dynamic_cast<SgDotExp *>(node)) { // postVisit
          SgBinaryOp *n = isSgBinaryOp(node);
 
          SgType *lhs_type = attributes -> getExpressionType(n -> get_lhs_operand());
@@ -3837,63 +3857,63 @@ cout.flush();
      //                 SgDotStarOp
      //                 SgArrowStarOp
      //                 SgEqualityOp
-     else if (dynamic_cast<SgEqualityOp *> (node)) {
+     else if (dynamic_cast<SgEqualityOp *>(node)) { // postVisit
          SgEqualityOp *n = isSgEqualityOp(node);
          genBinaryCompareOperation(n, "eq", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgLessThanOp
-     else if (dynamic_cast<SgLessThanOp *>(node)) {
+     else if (dynamic_cast<SgLessThanOp *>(node)) { // postVisit
          SgLessThanOp *n = isSgLessThanOp(node);
          genBinaryCompareOperation(n, "lt", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgGreaterThanOp
-     else if (dynamic_cast<SgGreaterThanOp *>(node)) {
+     else if (dynamic_cast<SgGreaterThanOp *>(node)) { // postVisit
          SgGreaterThanOp *n = isSgGreaterThanOp(node);
          genBinaryCompareOperation(n, "gt", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgNotEqualOp
-     else if (dynamic_cast<SgNotEqualOp *> (node)) {
+     else if (dynamic_cast<SgNotEqualOp *>(node)) { // postVisit
          SgNotEqualOp *n = isSgNotEqualOp(node);
          genBinaryCompareOperation(n, "ne", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgLessOrEqualOp
-     else if (dynamic_cast<SgLessOrEqualOp *> (node)) {
+     else if (dynamic_cast<SgLessOrEqualOp *>(node)) { // postVisit
          SgLessOrEqualOp *n = isSgLessOrEqualOp(node);
          genBinaryCompareOperation(n, "le", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgGreaterOrEqualOp
-     else if (dynamic_cast<SgGreaterOrEqualOp *> (node)) {
+     else if (dynamic_cast<SgGreaterOrEqualOp *>(node)) { // postVisit
          SgGreaterOrEqualOp *n = isSgGreaterOrEqualOp(node);
          genBinaryCompareOperation(n, "ge", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgAddOp
-     else if (dynamic_cast<SgAddOp *>(node)) {
+     else if (dynamic_cast<SgAddOp *>(node)) { // postVisit
          SgAddOp *n = isSgAddOp(node);
          genAddOrSubtractOperation(n, "add", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgSubtractOp
-     else if (dynamic_cast<SgSubtractOp *>(node)) {
+     else if (dynamic_cast<SgSubtractOp *>(node)) { // postVisit
          SgSubtractOp *n = isSgSubtractOp(node);
          genAddOrSubtractOperation(n, "sub", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgMultiplyOp
-     else if (dynamic_cast<SgMultiplyOp *>(node)) {
+     else if (dynamic_cast<SgMultiplyOp *>(node)) { // postVisit
          SgMultiplyOp *n = isSgMultiplyOp(node);
          genBasicBinaryOperation(n, "mul", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgDivideOp
-     else if (dynamic_cast<SgDivideOp *>(node)) {
+     else if (dynamic_cast<SgDivideOp *>(node)) { // postVisit
          SgDivideOp *n = isSgDivideOp(node);
          genDivideBinaryOperation(n, "div", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgIntegerDivideOp
      //                 SgModOp
-     else if (dynamic_cast<SgModOp *>(node)) {
+     else if (dynamic_cast<SgModOp *>(node)) { // postVisit
          SgModOp *n = isSgModOp(node);
          genDivideBinaryOperation(n, "rem", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgAndOp
-     else if (dynamic_cast<SgAndOp *>(node)) {
+     else if (dynamic_cast<SgAndOp *>(node)) { // postVisit
          SgAndOp *n = isSgAndOp(node);
          string result_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue(),
                 lhs_name = ((StringAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue(),
@@ -3905,7 +3925,7 @@ cout.flush();
                     << "[" << rhs_name << ", %" << rhs_attribute -> getLastRhsLabel() << "]" << attributes->addDebugMetadata(node, current_function_decls) << endl;
      }
      //                 SgOrOp
-     else if (dynamic_cast<SgOrOp *>(node)) {
+     else if (dynamic_cast<SgOrOp *>(node)) { // postVisit
          SgOrOp *n = isSgOrOp(node);
          string result_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue(),
                 rhs_name = ((StringAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
@@ -3916,36 +3936,36 @@ cout.flush();
                     << "[" << rhs_name << ", %" << rhs_attribute -> getLastRhsLabel() << "]" << attributes->addDebugMetadata(node, current_function_decls) << endl;
      }
      //                 SgBitXorOp
-     else if (dynamic_cast<SgBitXorOp *>(node)) {
+     else if (dynamic_cast<SgBitXorOp *>(node)) { // postVisit
          SgBitXorOp *n = isSgBitXorOp(node);
          genBasicBinaryOperation(n, "xor", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgBitAndOp
-     else if (dynamic_cast<SgBitAndOp *>(node)) {
+     else if (dynamic_cast<SgBitAndOp *>(node)) { // postVisit
          SgBitAndOp *n = isSgBitAndOp(node);
          genBasicBinaryOperation(n, "and", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgBitOrOp
-     else if (dynamic_cast<SgBitOrOp *>(node)) {
+     else if (dynamic_cast<SgBitOrOp *>(node)) { // postVisit
          SgBitOrOp *n = isSgBitOrOp(node);
          genBasicBinaryOperation(n, "or", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgCommaOpExp
-     else if (dynamic_cast<SgCommaOpExp *>(node)) {
+     else if (dynamic_cast<SgCommaOpExp *>(node)) { // postVisit
          SgCommaOpExp *n = isSgCommaOpExp(node);
      }
      //                 SgLshiftOp
-     else if (dynamic_cast<SgLshiftOp *>(node)) {
+     else if (dynamic_cast<SgLshiftOp *>(node)) { // postVisit
          SgLshiftOp *n = isSgLshiftOp(node);
          genBasicBinaryOperation(n, "shl", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgRshiftOp
-     else if (dynamic_cast<SgRshiftOp *>(node)) {
+     else if (dynamic_cast<SgRshiftOp *>(node)) { // postVisit
          SgRshiftOp *n = isSgRshiftOp(node);
          genBasicBinaryOperation(n, (isUnsignedType(attributes -> getExpressionType(n -> get_lhs_operand())) ? "lshr" : "ashr"), attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgPntrArrRefExp
-     else if (dynamic_cast<SgPntrArrRefExp *> (node)) {
+     else if (dynamic_cast<SgPntrArrRefExp *>(node)) { // postVisit
          SgPntrArrRefExp *n = isSgPntrArrRefExp(node);
          string bundle_md = attributes->addBundleMetadata(node);
          string alignment = attributes->addVectorAlignment(node);
@@ -3993,7 +4013,7 @@ cout.flush();
      }
      //                 SgScopeOp
      //                 SgAssignOp
-     else if (dynamic_cast<SgAssignOp *>(node)) {
+     else if (dynamic_cast<SgAssignOp *>(node)) { // postVisit
          SgAssignOp *n = isSgAssignOp(node);
          string result_type_name = ((StringAstAttribute *) n -> get_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
                 rhs_name = ((StringAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
@@ -4022,52 +4042,52 @@ cout.flush();
          }
      }
      //                 SgPlusAssignOp
-     else if (dynamic_cast<SgPlusAssignOp *>(node)) {
+     else if (dynamic_cast<SgPlusAssignOp *>(node)) { // postVisit
          SgPlusAssignOp *n = isSgPlusAssignOp(node);
          genAddOrSubtractOperationAndAssign(n, "add", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgMinusAssignOp
-     else if (dynamic_cast<SgMinusAssignOp *>(node)) {
+     else if (dynamic_cast<SgMinusAssignOp *>(node)) { // postVisit
          SgMinusAssignOp *n = isSgMinusAssignOp(node);
          genAddOrSubtractOperationAndAssign(n, "sub", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgAndAssignOp
-     else if (dynamic_cast<SgAndAssignOp *>(node)) {
+     else if (dynamic_cast<SgAndAssignOp *>(node)) { // postVisit
          SgAndAssignOp *n = isSgAndAssignOp(node);
          genBasicBinaryOperationAndAssign(n, "and", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgIorAssignOp
-     else if (dynamic_cast<SgIorAssignOp *>(node)) {
+     else if (dynamic_cast<SgIorAssignOp *>(node)) { // postVisit
          SgIorAssignOp *n = isSgIorAssignOp(node);
          genBasicBinaryOperationAndAssign(n, "or", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgMultAssignOp
-     else if (dynamic_cast<SgMultAssignOp *>(node)) {
+     else if (dynamic_cast<SgMultAssignOp *>(node)) { // postVisit
          SgMultAssignOp *n = isSgMultAssignOp(node);
          genBasicBinaryOperationAndAssign(n, "mul", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgDivAssignOp
-     else if (dynamic_cast<SgDivAssignOp *>(node)) {
+     else if (dynamic_cast<SgDivAssignOp *>(node)) { // postVisit
          SgDivAssignOp *n = isSgDivAssignOp(node);
          genDivideBinaryOperationAndAssign(n, "div", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgModAssignOp
-     else if (dynamic_cast<SgModAssignOp *>(node)) {
+     else if (dynamic_cast<SgModAssignOp *>(node)) { // postVisit
          SgModAssignOp *n = isSgModAssignOp(node);
          genDivideBinaryOperationAndAssign(n, "rem", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgXorAssignOp
-     else if (dynamic_cast<SgXorAssignOp *>(node)) {
+     else if (dynamic_cast<SgXorAssignOp *>(node)) { // postVisit
          SgXorAssignOp *n = isSgXorAssignOp(node);
          genBasicBinaryOperationAndAssign(n, "xor", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgLshiftAssignOp
-     else if (dynamic_cast<SgLshiftAssignOp *>(node)) {
+     else if (dynamic_cast<SgLshiftAssignOp *>(node)) { // postVisit
          SgLshiftAssignOp *n = isSgLshiftAssignOp(node);
          genBasicBinaryOperationAndAssign(n, "shl", attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgRshiftAssignOp
-     else if (dynamic_cast<SgRshiftAssignOp *>(node)) {
+     else if (dynamic_cast<SgRshiftAssignOp *>(node)) { // postVisit
          SgRshiftAssignOp *n = isSgRshiftAssignOp(node);
          genBasicBinaryOperationAndAssign(n, (isUnsignedType(attributes -> getExpressionType(n -> get_lhs_operand())) ? "lshr" : "ashr"), attributes->addDebugMetadata(node, current_function_decls));
      }
@@ -4076,11 +4096,11 @@ cout.flush();
      //                 SgPointerAssignOp
      //                 SgUserDefinedBinaryOp
      //             SgExprListExp
-     else if (dynamic_cast<SgExprListExp *>(node)) {
+     else if (dynamic_cast<SgExprListExp *>(node)) { // postVisit
          SgExprListExp *n = isSgExprListExp(node);
      }
      //             SgVarRefExp
-     else if (dynamic_cast<SgVarRefExp *>(node)) {
+     else if (dynamic_cast<SgVarRefExp *>(node)) { // postVisit
          SgVarRefExp *n = isSgVarRefExp(node);
          if (! n -> attributeExists(Control::LLVM_CLASS_MEMBER)) { // class members are processed at DotExp or ArrowExp level
              SgVariableSymbol *sym = n -> get_symbol();
@@ -4114,81 +4134,81 @@ cout.flush();
      }
      //             SgClassNameRefExp
      //             SgFunctionRefExp
-     else if (dynamic_cast<SgFunctionRefExp *>(node)) {
+     else if (dynamic_cast<SgFunctionRefExp *>(node)) { // postVisit
          SgFunctionRefExp *n = isSgFunctionRefExp(node);
      }
      //             SgMemberFunctionRefExp
      //             SgValueExp:
      //                 SgBoolValExp
-     else if (dynamic_cast<SgBoolValExp *>(node)) {
+     else if (dynamic_cast<SgBoolValExp *>(node)) { // postVisit
          SgBoolValExp *b = isSgBoolValExp(node);
      }
      //                 SgStringVal
-     else if (dynamic_cast<SgStringVal*>(node)) {
+     else if (dynamic_cast<SgStringVal*>(node)) { // postVisit
          SgStringVal *sval = isSgStringVal(node);
      }
      //                 SgShortVal
-     else if (dynamic_cast<SgShortVal *>(node)) {
+     else if (dynamic_cast<SgShortVal *>(node)) { // postVisit
          SgShortVal *n = isSgShortVal(node);
      }
      //                 SgCharVal
-     else if (dynamic_cast<SgCharVal*>(node)) {
+     else if (dynamic_cast<SgCharVal*>(node)) { // postVisit
          SgCharVal *cval = isSgCharVal(node);
      }
      //                 SgUnsignedCharVal
-     else if (dynamic_cast<SgUnsignedCharVal *>(node)) {
+     else if (dynamic_cast<SgUnsignedCharVal *>(node)) { // postVisit
          SgUnsignedCharVal *n = isSgUnsignedCharVal(node);
      }
      //                 SgWcharVal
      //                 SgUnsignedShortVal
-     else if (dynamic_cast<SgUnsignedShortVal *>(node)) {
+     else if (dynamic_cast<SgUnsignedShortVal *>(node)) { // postVisit
          SgUnsignedShortVal *n = isSgUnsignedShortVal(node);
      }
      //                 SgIntVal
-     else if (dynamic_cast<SgIntVal*>(node)) {
+     else if (dynamic_cast<SgIntVal*>(node)) { // postVisit
          SgIntVal *ival = isSgIntVal(node);
      }
      //                 SgEnumVal
-     else if (dynamic_cast<SgEnumVal*>(node)) {
+     else if (dynamic_cast<SgEnumVal*>(node)) { // postVisit
          SgEnumVal *ival = isSgEnumVal(node);
      }
      //                 SgUnsignedIntVal
-     else if (dynamic_cast<SgUnsignedIntVal *>(node)) {
+     else if (dynamic_cast<SgUnsignedIntVal *>(node)) { // postVisit
          SgUnsignedIntVal *n = isSgUnsignedIntVal(node);
      }
      //                 SgLongIntVal
-     else if (dynamic_cast<SgLongIntVal *>(node)) {
+     else if (dynamic_cast<SgLongIntVal *>(node)) { // postVisit
          SgLongIntVal *n = isSgLongIntVal(node);
      }
      //                 SgLongLongIntVal
-     else if (dynamic_cast<SgLongLongIntVal *>(node)) {
+     else if (dynamic_cast<SgLongLongIntVal *>(node)) { // postVisit
          SgLongLongIntVal *n = isSgLongLongIntVal(node);
      }
      //                 SgUnsignedLongLongIntVal 
-     else if (dynamic_cast<SgUnsignedLongLongIntVal *>(node)) {
+     else if (dynamic_cast<SgUnsignedLongLongIntVal *>(node)) { // postVisit
          SgUnsignedLongLongIntVal *n = isSgUnsignedLongLongIntVal(node);
      }
      //                 SgUnsignedLongVal
-     else if (dynamic_cast<SgUnsignedLongVal *>(node)) {
+     else if (dynamic_cast<SgUnsignedLongVal *>(node)) { // postVisit
          SgUnsignedLongVal *n = isSgUnsignedLongVal(node);
      }
      //                 SgFloatVal
-     else if (dynamic_cast<SgFloatVal*>(node)) {
+     else if (dynamic_cast<SgFloatVal*>(node)) { // postVisit
          SgFloatVal *fval = isSgFloatVal(node);
      }
      //                 SgDoubleVal
-     else if (dynamic_cast<SgDoubleVal*>(node)) {
+     else if (dynamic_cast<SgDoubleVal*>(node)) { // postVisit
          SgDoubleVal *dval = isSgDoubleVal(node);
      }
      //                 SgLongDoubleVal
-     else if (dynamic_cast<SgLongDoubleVal *>(node)) {
+     else if (dynamic_cast<SgLongDoubleVal *>(node)) { // postVisit
          SgLongDoubleVal *n = isSgLongDoubleVal(node);
      }
      //                 SgComplexVal
      //                 SgUpcThreads
      //                 SgUpcMythread
      //                 SgFunctionCallExp
-     else if (dynamic_cast<SgFunctionCallExp *>(node)) {
+     else if (dynamic_cast<SgFunctionCallExp *>(node)) { // postVisit
          SgFunctionCallExp *n = isSgFunctionCallExp(node);
          string debug_md = attributes->addDebugMetadata(node, current_function_decls);
 
@@ -4421,7 +4441,7 @@ cout.flush();
          }
      }
      //                 SgSizeOfOp
-     else if (dynamic_cast<SgSizeOfOp *>(node)) {
+     else if (dynamic_cast<SgSizeOfOp *>(node)) { // postVisit
          SgSizeOfOp *n = isSgSizeOfOp(node);
      }
      //                 SgUpcLocalsizeof
@@ -4429,7 +4449,7 @@ cout.flush();
      //                 SgUpcElemsizeof
      //             SgTypeIdOp
      //             SgConditionalExp
-     else if (dynamic_cast<SgConditionalExp *>(node)) {
+     else if (dynamic_cast<SgConditionalExp *>(node)) { // postVisit
          SgConditionalExp *n = isSgConditionalExp(node);
 
          string result_name, true_name, false_name;
@@ -4472,12 +4492,12 @@ cout.flush();
      //             SgRefExp
      //             SgInitializer:
      //                 SgAggregateInitializer
-     else if (dynamic_cast<SgAggregateInitializer *>(node)) {
+     else if (dynamic_cast<SgAggregateInitializer *>(node)) { // postVisit
          SgAggregateInitializer *n = isSgAggregateInitializer(node);
      }
      //                 SgConstructorInitializer
      //                 SgAssignInitializer
-     else if (dynamic_cast<SgAssignInitializer *>(node)) {
+     else if (dynamic_cast<SgAssignInitializer *>(node)) { // postVisit
          SgAssignInitializer *n = isSgAssignInitializer(node);
      }
      //                 SgDesignatedInitializer
@@ -4487,7 +4507,7 @@ cout.flush();
      //             SgVarArgCopyOp
      //             SgVarArgStartOneOperandOp
      //             SgNullExpression
-     else if (dynamic_cast<SgNullExpression *>(node)) {
+     else if (dynamic_cast<SgNullExpression *>(node)) { // postVisit
          SgNullExpression *n = isSgNullExpression(node);
      }
      //             SgVariantExpression
