@@ -268,6 +268,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("command-file")) {
+    int numTypeReplace=0;
     string commandFileName=args.getString("command-file");
     CppStdUtilities::DataFileVector lines;
     bool fileOK=CppStdUtilities::readDataFile(commandFileName,lines);
@@ -330,7 +331,7 @@ int main (int argc, char* argv[])
           SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
           SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
           SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
-          cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" ==> "<<newBuiltType->unparseToString()<<endl;
+          cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
 
           if(functionConstructSpec=="args") {
             // change types of arguments
@@ -339,6 +340,7 @@ int main (int argc, char* argv[])
               SgType* varInitNameType=varInitName->get_type();
               if(varInitNameType==oldBuiltType) {
                 varInitName->set_type(newBuiltType);
+                numTypeReplace++;
               }
             }
           } else if(functionConstructSpec=="ret") {
@@ -348,12 +350,14 @@ int main (int argc, char* argv[])
             if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
               SgFunctionType* funType=funDecl->get_type();
               funType->set_orig_return_type(newBuiltType);
+              numTypeReplace++;
             }
           } else if(functionConstructSpec=="body") {
             // finds all variables in body of function and replaces type
             std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
             for (auto initName : varInitList) {
               initName->set_type(newBuiltType);
+              numTypeReplace++;
             }
           } else {
             cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
@@ -387,6 +391,7 @@ int main (int argc, char* argv[])
         }
       }
       tt.transformCommandLineFiles(sageProject,list);
+      cout<<"STATS: number of type replacements: "<<numTypeReplace<<endl;
       backend(sageProject);
       return 0;
     } else {
