@@ -48,6 +48,7 @@ void TypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNam
     } else if(numChanges>1) {
       cout<<"Warning: Found more than one declaration of variable "<<varName<<endl;
     }
+    _totalNumChanges+=numChanges;
     transformCommandLineFiles(project);
   }
 }
@@ -170,3 +171,8 @@ void TypeTransformer::trace(string s) {
     cout<<"TRACE: "<<s<<endl;
   }
 }
+
+int TypeTransformer::getTotalNumChanges() {
+  return _totalNumChanges;
+}
+

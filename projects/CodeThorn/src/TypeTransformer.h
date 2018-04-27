@@ -17,7 +17,9 @@ class TypeTransformer {
   void setTraceFlag(bool);
   bool getTraceFlag();
   static void trace(std::string s);
+  int getTotalNumChanges();
  private:
   CastTransformer _castTransformer;
   static bool _traceFlag;
+  int _totalNumChanges=0;
 };

@@ -93,8 +93,6 @@ SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
   bool buildConstType=false;
   while (a!=rend) {
     string typePart=*a++;
-    cout<<"DEBUG: typepart: >"<<typePart<<"<"<<endl;
-    // TODO: refine introduction of const with new parser
     if(typePart=="float") {
       newType=SageBuilder::buildFloatType();
     } else if(typePart=="double") {
@@ -102,28 +100,24 @@ SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
     } else if(typePart=="long double") {
       newType=SageBuilder::buildLongDoubleType();
     } else if(typePart==" ") {
-    cout<<"DEBUG: skipping white space"<<endl;
     continue;
     } else if(typePart=="*") {
-      cout<<"DEBUG: building pointer type"<<endl;
       if(newType==nullptr) goto parseerror;
       newType=SageBuilder::buildPointerType(newType);
     } else if(typePart=="&") {
-      cout<<"DEBUG: building reference type"<<endl;
       if(newType==nullptr) goto parseerror;
       newType=SageBuilder::buildReferenceType(newType);
     } else if(typePart=="const") {
-      cout<<"DEBUG: building const type"<<endl;
       buildConstType=true;
     } else if(std::regex_match(typePart, std::regex("^[_A-Za-z]+$"))) {
       // found a type name
       if(funDef) {
-        cout<<"DEBUG: found type name:"<<typePart<<endl;
+        //cout<<"DEBUG: found type name:"<<typePart<<endl;
         SgScopeStatement* scope=funDef->get_scope();
         // check whether provided type name is a name of a user-defined type
         SgType* userDefinedType=findUserDefinedTypeByName(funDef,typePart);
         if(userDefinedType) {
-          cout<<"DEBUG: --> found user defined type :"<<typePart<<endl;
+          //cout<<"DEBUG: --> found user defined type :"<<typePart<<endl;
           newType=userDefinedType;
         } else {
           newType=SageBuilder::buildOpaqueType(typePart, scope);
@@ -391,7 +385,8 @@ int main (int argc, char* argv[])
         }
       }
       tt.transformCommandLineFiles(sageProject,list);
-      cout<<"STATS: number of type replacements: "<<numTypeReplace<<endl;
+      cout<<"STATS: number of variable types changed (based on type-name): "<<numTypeReplace<<endl;
+      cout<<"STATS: number of variable types changed (based on var-name): "<<tt.getTotalNumChanges()<<endl;
       backend(sageProject);
       return 0;
     } else {
