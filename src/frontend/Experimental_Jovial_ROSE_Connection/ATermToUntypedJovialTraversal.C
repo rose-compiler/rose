@@ -1032,6 +1032,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       else if (traverse_StopStatement(t_stmt, stmt_list)) {
          // MATCHED StopStatement
       }
+      else if (traverse_ExitStatement(t_stmt, stmt_list)) {
+         // MATCHED ExitStatement
+      }
       else if (traverse_ReturnStatement(t_stmt, stmt_list)) {
          // MATCHED ReturnStatement
       }
@@ -1153,6 +1156,33 @@ ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUnt
       setSourcePosition(return_stmt, term);
 
       stmt_list->get_stmt_list().push_back(return_stmt);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 4.8 EXIT STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_ExitStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ExitStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels;
+   std::vector<std::string> labels;
+
+   if (ATmatch(term, "ExitStatement(<term>)", &t_labels)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+      SgUntypedExitStatement* exit_stmt = new SgUntypedExitStatement("");
+      setSourcePosition(exit_stmt, term);
+
+      stmt_list->get_stmt_list().push_back(exit_stmt);
    }
    else return ATfalse;
 

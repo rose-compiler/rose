@@ -14,6 +14,7 @@ JOVIAL_TESTCODES = \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
  4_6_return_stmt.jov                    \
+ 4_8_exit_stmt.jov                      \
  4_9_stop_stmt_a.jov                    \
  4_9_stop_stmt_b.jov                    \
  4_9_stop_stmt_c.jov                    \

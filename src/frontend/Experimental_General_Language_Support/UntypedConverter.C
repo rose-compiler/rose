@@ -1226,6 +1226,23 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
       return sg_stmt;
    }
 
+SgStatement*
+UntypedConverter::convertSgUntypedExitStatement (SgUntypedExitStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      SgExpression* exitExpression = new SgNullExpression();
+      SageInterface::setSourcePosition(exitExpression);
+
+      SgStopOrPauseStatement* exitStatement = new SgStopOrPauseStatement(exitExpression);
+      exitStatement->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
+      setSourcePositionFrom(exitStatement, ut_stmt);
+
+      exitExpression->set_parent(exitStatement);
+      scope->append_statement(exitStatement);
+      convertLabel(ut_stmt, exitStatement);
+
+      return exitStatement;
+   }
+
 SgNullStatement*
 UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
    {

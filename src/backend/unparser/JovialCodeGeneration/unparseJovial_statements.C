@@ -210,6 +210,11 @@ Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint(";");
           unp->cur.insert_newline(1);
         }
+     else if (kind == SgStopOrPauseStatement::e_exit)
+        {
+          curprint("EXIT ;");
+          unp->cur.insert_newline(1);
+        }
    }
 
 void

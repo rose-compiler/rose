@@ -98,6 +98,9 @@ ATbool traverse_AssignmentStatement(ATerm term, std::vector<std::string> & label
 // 4.6 RETURN STATEMENTS
 ATbool traverse_ReturnStatement(ATerm term, SgUntypedStatementList* stmt_list);
 
+// 4.8 EXIT STATEMENTS
+ATbool traverse_ExitStatement(ATerm term, SgUntypedStatementList* stmt_list);
+
 // 4.9 STOP STATEMENTS
 ATbool traverse_StopStatement(ATerm term, SgUntypedStatementList* stmt_list);
 
