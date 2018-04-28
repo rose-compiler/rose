@@ -272,6 +272,7 @@ int main (int argc, char* argv[])
       int lineNr=0;
       for (auto line : lines) {
         lineNr++;
+        //std::vector<std::string> splitLine=CppStdUtilities::splitByRegex(line,";");
         std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
         string commandName,functionName,varName,typeName;
         size_t numEntries=splitLine.size();
