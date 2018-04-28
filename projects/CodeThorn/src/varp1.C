@@ -44,7 +44,7 @@ int main (int argc, char* argv[])
   root=sageProject;
 
   TFTransformation tfTransformation;
-  tfTransformation.transformHancockAccess(root);
+  tfTransformation.transformHancockAccess("",root);
 #if 0
   std::cout << "TERM INFO OUTPUT: START\n";
   std::cout << astTermToMultiLineString(root,0);
