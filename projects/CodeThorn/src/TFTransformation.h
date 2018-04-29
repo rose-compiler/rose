@@ -7,13 +7,14 @@ class SgNode;
 
 class TFTransformation {
  public:
-  void transformHancockAccess(std::string exprTypeName, SgNode* root);
+  void transformHancockAccess(SgType* exprTypeName, SgNode* root);
   int readTransformations=0;
   int writeTransformations=0;
   int statementTransformations=0;
   bool trace=false;
-  void transformRhs(std::string exprTypeName, SgNode* rhsRoot);
-  void checkAndTransformVarAssignments(std::string exprTypeName,SgNode* root);
+  void transformRhs(SgType* accessType, SgNode* rhsRoot);
+  void checkAndTransformVarAssignments(SgType* accessType,SgNode* root);
+  void checkAndTransformNonAssignments(SgType* accessType,SgNode* root);
 };
 
 

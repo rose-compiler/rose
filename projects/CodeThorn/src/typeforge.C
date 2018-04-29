@@ -364,10 +364,11 @@ int main (int argc, char* argv[])
           }
           if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
           string functionName=splitLine[1];
-          string accessType=splitLine[2]; // not used yet
+          string accessTypeName=splitLine[2];
           string transformationName=splitLine[3];
           SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
           if(funDef) {
+            SgType* accessType=buildTypeFromStringSpec(accessTypeName,funDef);
             if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
             TFTransformation tfTransformation;
             if(transformationName=="readwrite_access_transformation") {
