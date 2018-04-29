@@ -6,21 +6,56 @@
 
 using namespace std;
 
+SgType* getElementType(SgType* type) {
+  if(SgPointerType* ptrType=isSgPointerType(type)) {
+    return getElementType(ptrType->get_base_type());
+  } else {
+    return type;
+  }
+}
+
+SgType* getExprType(SgExpression* exp) {
+  if(exp) {
+    SgType* type=exp->get_type();
+    return type->findBaseType();
+    //if(SgArrayType* arrayType=isSgArrayType(type)) {
+    //  return arrayType->findBaseType()
+        //}
+    return type;
+  } else {
+    return nullptr;
+  }
+}
+
+string exprTypeToString(SgExpression* exp) {
+  return getExprType(exp)->unparseToString();
+}
+
 // SgPntrArrRefExp(SgPntrArrRefExp($DS,$E1),$E2) ==> $DS+".get("+$E1+","+$E2+")";
 void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
   // transform RHS:
-  std::string matchexpressionRHSAccess="$RHSPattern=SgPntrArrRefExp(SgPntrArrRefExp($DS,$E1),$E2)";
+  std::string matchexpressionRHSAccess="$ArrayAccessPattern=SgPntrArrRefExp(SgPntrArrRefExp($DS,$E1),$E2)";
   AstMatching mRHS;
   MatchResult rRHS=mRHS.performMatching(matchexpressionRHSAccess,rhsRoot);
   for(MatchResult::iterator j=rRHS.begin();j!=rRHS.end();++j) {
-    if(true ||trace) {
-      cout<<"RHS-MATCHING ROOT2: "<<rhsRoot->unparseToString()<<endl;
-      cout<<"RHS-MATCHING TYPE : "<<AstTerm::astTermWithNullValuesAndTypesToString(rhsRoot)<<endl;
-    }
     // rhsTypeName is not the type of var[i][j]
-    SgType* rhsType=isSgExpression((*j)["$RHSPattern"])->get_type();
+    //SgType* rhsType=isSgExpression((*j)["$DS"])->get_type();
+    SgExpression* matchedPattern=isSgExpression((*j)["$ArrayAccessPattern"]);
+    SgType* rhsType=nullptr;
+    //SgType* rhsType=getExprType(isSgExpression((*j)["$DS"]));
+    if(SgVarRefExp* varRefExp=isSgVarRefExp((*j)["$DS"])) {
+      rhsType=varRefExp->get_type();
+      rhsType=getElementType(rhsType);
+    } else {
+      rhsType=matchedPattern->get_type();
+    }
     
-    if(true || rhsType==accessType) {
+    if(true ||trace) {
+      cout<<"RHS-MATCHING ROOT: "<<matchedPattern->unparseToString()<<endl;
+      cout<<"RHS-MATCHING TYPE: "<<rhsType->unparseToString()<<endl;
+      cout<<"RHS-MATCHING ROOTAST: "<<AstTerm::astTermWithNullValuesToString(matchedPattern)<<endl;
+    }
+    if(rhsType==accessType) {
       readTransformations++;
 #if 0
       // fix: check for addressOf operator
@@ -39,12 +74,12 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
       string ds=(*j)["$DS"]->unparseToString();
       string e1=(*j)["$E1"]->unparseToString();
       string e2=(*j)["$E2"]->unparseToString();
-      string oldCode0=(*j)["$RHSPattern"]->unparseToString();
+      string oldCode0=(*j)["$ArrayAccessPattern"]->unparseToString();
       string newCode0=ds+".get("+e1+","+e2+")";
       string newCode=newCode0; // ';' is unparsed as part of the statement that contains the assignop
-      SgNodeHelper::replaceAstWithString((*j)["$RHSPattern"], newCode);
+      SgNodeHelper::replaceAstWithString((*j)["$ArrayAccessPattern"], newCode);
       std::cout << std::endl;
-      std::string lineCol=SgNodeHelper::sourceLineColumnToString((*j)["$RHSPattern"]);
+      std::string lineCol=SgNodeHelper::sourceLineColumnToString((*j)["$ArrayAccessPattern"]);
       if(trace) {
         cout <<"RHS-TRANSFORMATION: "<<lineCol<<" OLD:"<<oldCode0<<endl;
         cout <<"RHS-TRANSFORMATION: "<<lineCol<<" NEW:"<<newCode0<<endl;
@@ -80,16 +115,7 @@ void TFTransformation::checkAndTransformNonAssignments(SgType* accessType,SgNode
     transformRhs(accessType,root);
   }
 }
-
-SgType* getExprType(SgExpression* exp) {
-  SgType* type=exp->get_type();
-  return type;
-}
-
-string exprTypeToString(SgExpression* exp) {
-  return getExprType(exp)->unparseToString();
-}
-		    
+	    
 /*
   transform assignments:
   $var1->$var2[$IDX1][$IDX2] = $RHS where basetype($var2)==TYPE 
@@ -137,7 +163,7 @@ void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
     transformRhs(accessType,rhsRoot);
     // transform LHS: work -> dV[IDX1][IDX2] = RHS; ==> work -> dV.set(IDX1,IDX2,RHS);
     string newCode0;
-    string oldCode="/* OLD: "+oldCode0+"; */\n";
+    string oldCode;
     if((*i)["$LHS"]) {
       SgExpression* lhsExp=isSgExpression((*i)["$LHS"]);
       string lhsTypeName=lhsExp->get_type()->unparseToString();
@@ -159,18 +185,17 @@ void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
         string e2=(*i)["$IDX2"]->unparseToString();
         string rhs=(*i)["$RHS"]->unparseToString();
 
+        writeTransformations++;
         if(workLhs)
           newCode0=work+" -> "+ds+".set("+e1+","+e2+","+rhs+")";
         else
           newCode0=ds+".set("+e1+","+e2+","+rhs+")";
       } else {
         cout<<"DEBUG: lhs-matches, but type does not. skipping."<<lhsTypeName<<"!="<<accessType->unparseToString()<<endl;
-        // var=$RHS
-        //  string rhs=(*i)["$RHS"]->unparseToString();
-        //newCode0=((*i)["$LHS"])->unparseToString()+rhs;
       }
       string newCode="      "+newCode0; // ';' is unparsed as part of the statement that contains the assignop
-      SgNodeHelper::replaceAstWithString((*i)["$Root"], oldCode+newCode);
+      string oldCode2="// OLD: "+oldCode0+";\n";
+      SgNodeHelper::replaceAstWithString((*i)["$Root"], oldCode2+newCode);
       std::cout << std::endl;
       std::string lineCol=SgNodeHelper::sourceLineColumnToString((*i)["$Root"]);
       if(trace) {
@@ -183,8 +208,6 @@ void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
   // var=$RHS
   checkAndTransformVarAssignments(accessType,root);
   checkAndTransformNonAssignments(accessType,root);
-
-
   //m.printMarkedLocations();
   //m.printMatchOperationsSequence();
   cout<<"Transformation statistics:"<<endl;
