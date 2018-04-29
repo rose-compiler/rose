@@ -12,11 +12,15 @@ void TFTransformation::transformRhs(string exprTypeName, SgNode* rhsRoot) {
   // transform RHS:
   std::string matchexpressionRHSAccess="$RHSPattern=SgPntrArrRefExp(SgPntrArrRefExp($DS,$E1),$E2)";
   AstMatching mRHS;
-  if(trace) cout<<"RHS-MATCHING ROOT2: "<<rhsRoot->unparseToString()<<endl;
+  if(true ||trace) {
+    cout<<"RHS-MATCHING ROOT2: "<<rhsRoot->unparseToString()<<endl;
+    cout<<"RHS-MATCHING TYPE : "<<AstTerm::astTermWithNullValuesAndTypesToString(rhsRoot)<<endl;
+  }
   MatchResult rRHS=mRHS.performMatching(matchexpressionRHSAccess,rhsRoot);
   for(MatchResult::iterator j=rRHS.begin();j!=rRHS.end();++j) {
     // rhsTypeName is not the type of var[i][j]
     string rhsTypeName=isSgExpression((*j)["$RHSPattern"])->get_type()->unparseToString();
+    
     if(true || rhsTypeName==exprTypeName) {
       readTransformations++;
       if(trace) {
@@ -81,6 +85,40 @@ void TFTransformation::checkAndTransformVarAssignments(string exprTypeName,SgNod
 #endif
 }
 
+SgType* getExprType(SgExpression* exp) {
+  SgType* type=exp->get_type();
+  return type;
+}
+
+string exprTypeToString(SgExpression* exp) {
+  return getExprType(exp)->unparseToString();
+}
+		    
+/*
+  transform assignments:
+  $var1->$var2[$E1][$E2] = $RHS where basetype($var2)==TYPE 
+    ==> $var1->$var2.set($E1,$E2,transformRhs($RHS))
+  SgVarRefExp=$RHS
+    ==> transformRhs($RHS)
+  $RHS (e.g. function call: transform all parameters)
+    ==> transformRhs($RHS)
+  $var[$E1,$E2] = $RHS 
+    where type($var)==HancockWorkArrays**
+          ||type($var)==FluxVector**
+    ==> $var.set($E1,$E2,transform($RHS))
+
+transform on lhs or rhs:
+  $var[$E1][$E2] where type($var)==HancockWorkArrays** 
+                       && (name($var)==v_max_x || (name($var)==v_max_y))
+    ==> $var($E1,$E2)
+  $var1[$E1][$E2].$var2 => $var1.$var2($E1,$E2) where name($var2) in {"rho","p"}
+  $var1[$E1][$E2].$var2[$E3] => $var1.$var2($E1,$E2) where name($var2)=="a"
+
+transformRhs(exp):
+  $var[$E1][$E2] where elementType(var)==TYPE
+    ==> $var.get($E1,$E2)
+
+ */
 void TFTransformation::transformHancockAccess(string exprTypeName,SgNode* root) {
   RoseAst ast(root);
   std::string matchexpression;
@@ -92,7 +130,6 @@ void TFTransformation::transformHancockAccess(string exprTypeName,SgNode* root) 
   if(trace) std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
     statementTransformations++;
-    if(trace) std::cout << "---------------------------------------------------------"<<endl;
     if(trace) std::cout << "MATCH-LHS: \n"; 
     //SgNode* n=(*i)["X"];
     for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
@@ -128,8 +165,15 @@ void TFTransformation::transformHancockAccess(string exprTypeName,SgNode* root) 
     string newCode0;
     string oldCode="/* OLD: "+oldCode0+"; */\n";
     if((*i)["$LHS"]) {
-      string lhsTypeName=isSgExpression((*i)["$LHS"])->get_type()->unparseToString();
-      cout<<"DEBUG: LHS-TYPE:"<<(*i)["$LHS"]->unparseToString()<<":"<<isSgExpression((*i)["$LHS"])->get_type()->unparseToString()<<endl;
+      SgExpression* lhsExp=isSgExpression((*i)["$LHS"]);
+      string lhsTypeName=lhsExp->get_type()->unparseToString();
+      SgType* lhsType=lhsExp->get_type();
+      cout<<"DEBUG: LHS-TYPE:"<<lhsExp->unparseToString()<<":"<<lhsType->unparseToString();
+      if(SgArrayType* lhsArrayType=isSgArrayType(lhsType)) {
+	SgType* lhsBaseType=lhsArrayType->get_base_type();
+	cout<<": basetype:"<<lhsBaseType->unparseToString();
+      }
+      cout<<endl;
       if(true || lhsTypeName==exprTypeName) {
         SgNode* workLhs=(*i)["$WORK"];
         string work;
