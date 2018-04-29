@@ -54,17 +54,44 @@ std::string AstTerm::astTermToMultiLineString(SgNode* node,int tab, int pos) {
   return s;
 }
 
+std::string AstTerm::astTermWithNullValuesAndTypesToString(SgNode* node) {
+  return astTermWithNullValuesToString(node,true,true);
+}
+
+std::string AstTerm::astTermWithNullValuesToString(SgNode* node) {
+  return astTermWithNullValuesToString(node,true,false);
+}
+
 std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumbers) {
+  return astTermWithNullValuesToString(node,withNumbers,false);
+}
+
+std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumbers, bool withTypes) {
   if(node==0)
     return "null";
   std::string s=nodeTypeName(node);
+  std::string typeTerm;
+  if(withTypes) {
+    // add type of expression
+    if(SgExpression* exp=isSgExpression(node)) {
+      SgType* expType=exp->get_type();
+      typeTerm+="type:"+astTermWithNullValuesAndTypesToString(expType);
+      if(SgArrayType* arrayType=isSgArrayType(expType)) {
+	typeTerm+=",basetype:"+astTermWithNullValuesAndTypesToString(arrayType->get_base_type());
+      }
+    }
+  }
   int arity=node->get_numberOfTraversalSuccessors();
   if(arity>0) {
     s+="(";
+    if(withTypes) {
+      s+=typeTerm+",";
+    }
     for(int i=0; i<arity;i++) {
       SgNode* child = node->get_traversalSuccessorByIndex(i);
-      if(i!=0) s+=",";
-      s+=astTermWithNullValuesToString(child);
+      if(i!=0)
+	s+=",";
+      s+=astTermWithNullValuesToString(child,withNumbers,withTypes);
     }
     s+=")";
   }

@@ -7,7 +7,7 @@ AstTermRepresentationAttribute::AstTermRepresentationAttribute(SgNode* node) : _
 }
 
 string AstTermRepresentationAttribute::toString() {
-  return "AstTerm: "+AstTerm::astTermWithNullValuesToString(_node);
+  return AstTerm::astTermWithNullValuesToString(_node);
 }
 	
 void AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(SgNode* node) {
