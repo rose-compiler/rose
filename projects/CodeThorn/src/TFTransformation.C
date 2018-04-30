@@ -155,14 +155,17 @@ void TFTransformation::transformArrayOfStructsAccesses(SgType* accessType,SgNode
   RoseAst ast(root);
   std::string matchexpression;
 
-  //$var1[$IDX1][$IDX2].$var2 => $var1.$var2($IDX1,$IDX2) where name($var2) in {"rho","p"}
-  matchexpression+="$AccessPattern=SgDotExp(SgPntrArrRefExp(SgPntrArrRefExp($VAR1,$IDX1),$IDX2),$VAR2)";
-  //$var1[$IDX1][$IDX2].$var2[$E3] => $var1.$var2[$E3]($IDX1,$IDX2) where name($var2)=="u"
-  //"| SgPntrArrRefExp(SgDotExp(SgPntrArrRefExp(SgPntrArrRefExp(SgVarRefExp,SgIntVal),SgVarRefExp),SgVarRefExp),SgIntVal)";;
+  //$VAR1[$IDX1][$IDX2].$VAR2[$IDX3] => $VAR1.$VAR2[$IDX3]($IDX1,$IDX2) where name($var2)=="u"
+  matchexpression+="$AccessPattern=SgPntrArrRefExp(SgDotExp(SgPntrArrRefExp(SgPntrArrRefExp($VAR1,$IDX1),$IDX2),$VAR2),$IDX3)";
+  //$VAR1[$IDX1][$IDX2].$VAR2 => $VAR1.$VAR2($IDX1,$IDX2) where name($var2) in {"rho","p"}
+  matchexpression+="| $AccessPattern=SgDotExp(SgPntrArrRefExp(SgPntrArrRefExp($VAR1,$IDX1),$IDX2),$VAR2)";
 
   AstMatching m;
   MatchResult r=m.performMatching(matchexpression,root);
   for(MatchResult::iterator j=r.begin();j!=r.end();++j) {
+    // resolve cases that both match expressions can be applied, but
+    // only one should be used if and only if the pattern2's parent is
+    // pattern1.
     SgExpression* matchedPattern=isSgExpression((*j)["$AccessPattern"]);
     SgType* rhsType=nullptr;
     if(SgVarRefExp* varRefExp=isSgVarRefExp((*j)["$VAR1"])) {
@@ -171,37 +174,39 @@ void TFTransformation::transformArrayOfStructsAccesses(SgType* accessType,SgNode
     } else {
       rhsType=matchedPattern->get_type();
     }
-    if(true ||trace) {
-      cout<<"ACCESS-MATCHING ROOT: "<<matchedPattern->unparseToString()<<endl;
-      cout<<"ACCESS-MATCHING TYPE: "<<rhsType->unparseToString()<<endl;
-      cout<<"ACCESS-MATCHING ROOTAST: "<<AstTerm::astTermWithNullValuesToString(matchedPattern)<<endl;
+    if(trace) {
+      cout<<"ARRAY STRUCT MATCHING ROOT: "<<matchedPattern->unparseToString()<<endl;
+      cout<<"ARRAY STRUCT TYPE: "<<rhsType->unparseToString()<<endl;
+      cout<<"ARRAY STRUCT ROOTAST: "<<AstTerm::astTermWithNullValuesToString(matchedPattern)<<endl;
     }
     if(rhsType==accessType) {
-      arrayStructTransformations++;
-      cout<<"DEBUG1"<<endl;
       string var1=(*j)["$VAR1"]->unparseToString();
       string var2=(*j)["$VAR2"]->unparseToString();
-      cout<<"DEBUG2"<<endl;
-      // check for struct variables (TODO: allow to specify vars as additional constraints on the basetype specifier)
-      if(var2!="rho" && var2!="p") {
-        cout<<"DEBUG2Exit"<<endl;
-        continue;
+      string idx1=(*j)["$IDX1"]->unparseToString();
+      string idx2=(*j)["$IDX2"]->unparseToString();
+      string oldCode0=matchedPattern->unparseToString();
+      string newCode0;
+      // check is 1st or 2nd match expression was matched (2nd match expression implies assignment of IDX3)
+      if((*j)["$IDX3"]==nullptr) {
+        // rule 2
+        if(var2!="rho" && var2!="p" && var2!="mass" && var2!="energy" && var2!="rho_E") {
+          continue;
+        }
+        newCode0=var1+"."+var2+"("+idx1+","+idx2+")";
+      } else {
+        // rule 1; not rule 1 is also applied for rule 2 matches, but
+        // test on 'u' filters those because it is the same struct's
+        // other data member name (disjunctive sets of data members).
+        if(var2!="u" && var2!="momentum" && var2!="rho_u") {
+          continue;
+        }
+        string idx3=(*j)["$IDX3"]->unparseToString();
+        newCode0=var1+"."+var2+"["+idx3+"]("+idx1+","+idx2+")";
       }
-      cout<<"DEBUG3"<<endl;
-      string e1=(*j)["$IDX1"]->unparseToString();
-      string e2=(*j)["$IDX2"]->unparseToString();
-      cout<<"DEBUG4"<<endl;
-      string oldCode0=(*j)["$AccessPattern"]->unparseToString();
-      string newCode0=var1+"."+var2+"("+e1+","+e2+")";
+      arrayOfStructsTransformations++;
       string newCode=newCode0; // ';' is unparsed as part of the statement that contains the assignop
-      cout<<"DEBUG5"<<endl;
-      SgNodeHelper::replaceAstWithString((*j)["$AccessPattern"], newCode);
-      cout<<"DEBUG6"<<endl;
-      std::string lineCol=SgNodeHelper::sourceLineColumnToString((*j)["$AccessPattern"]);
-      if(trace) {
-        cout <<"RHS-TRANSFORMATION: "<<lineCol<<" OLD:"<<oldCode0<<endl;
-        cout <<"RHS-TRANSFORMATION: "<<lineCol<<" NEW:"<<newCode0<<endl;
-      }
+      SgNodeHelper::replaceAstWithString(matchedPattern, newCode);
+      std::string lineCol=SgNodeHelper::sourceLineColumnToString(matchedPattern);
       //mRHS.printMarkedLocations();
       //mRHS.printMatchOperationsSequence();
     } else {

@@ -264,6 +264,7 @@ int main (int argc, char* argv[])
 
   if(args.isUserProvided("command-file")) {
     TFTransformation tfTransformation;
+    tfTransformation.trace=tt.getTraceFlag();
     int numTypeReplace=0;
     string commandFileName=args.getString("command-file");
     CppStdUtilities::DataFileVector lines;
@@ -374,10 +375,10 @@ int main (int argc, char* argv[])
             if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
             if(transformationName=="readwrite_access_transformation") {
               tfTransformation.transformHancockAccess(accessType,funDef);
-	    } else if(transformationName=="arrayofstructs_access_transformation") {
-	      tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
-	      //cout<<"ASTTERM:"<<AstTerm::astTermToMultiLineString(funDef,2);
-	    } else {
+            } else if(transformationName=="arrayofstructs_access_transformation") {
+              //cout<<"ASTTERM:"<<AstTerm::astTermWithNullValuesToString(funDef);
+              tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
+            } else {
               cerr<<"Error in line "<<lineNr<<": unsupported transformation: "<<transformationName<<endl;
               return 1;
             }

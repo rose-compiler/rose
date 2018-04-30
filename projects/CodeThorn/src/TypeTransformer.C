@@ -182,6 +182,7 @@ void TypeTransformer::generateCsvTransformationStats(std::string fileName,int nu
     <<","<<tt.getTotalNumChanges()
     <<","<<tfTransformation.readTransformations
     <<","<<tfTransformation.writeTransformations
+    <<","<<tfTransformation.arrayOfStructsTransformations
     <<endl;
   CppStdUtilities::writeFile(fileName,ss.str());
 }
@@ -192,11 +193,13 @@ void TypeTransformer::printTransformationStats(int numTypeReplace,TypeTransforme
   int numVarNameBasedReplacements=tt.getTotalNumChanges();
   int arrayReadAccesses=tfTransformation.readTransformations;
   int arrayWriteAccesses=tfTransformation.writeTransformations;
+  int arrayOfStructsAccesses=tfTransformation.arrayOfStructsTransformations;
   cout<<"STATS: number of variable types changed (based on type-name): "<<numTypeBasedReplacements<<endl;
   cout<<"STATS: number of variable types changed (based on var-name): "<<numVarNameBasedReplacements<<endl;
   cout<<"STATS: number of transformed array read accesses: "<<arrayReadAccesses<<endl;
   cout<<"STATS: number of transformed array write accesses: "<<arrayWriteAccesses<<endl;
-  int totalTransformations=numTypeBasedReplacements+numVarNameBasedReplacements+arrayReadAccesses+arrayWriteAccesses;
+  cout<<"STATS: number of transformed arrays of structs accesses: "<<arrayOfStructsAccesses<<endl;
+  int totalTransformations=numTypeBasedReplacements+numVarNameBasedReplacements+arrayReadAccesses+arrayWriteAccesses+arrayOfStructsAccesses;
   cout<<"STATS: total number of transformations: "<<totalTransformations<<endl;
 }
 

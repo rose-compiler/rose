@@ -11,7 +11,7 @@ class TFTransformation {
   int readTransformations=0;
   int writeTransformations=0;
   int statementTransformations=0;
-  int arrayStructTransformations=0;
+  int arrayOfStructsTransformations=0;
   bool trace=false;
   void transformRhs(SgType* accessType, SgNode* rhsRoot);
   void checkAndTransformVarAssignments(SgType* accessType,SgNode* root);
