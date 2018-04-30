@@ -14,23 +14,6 @@ SgType* getElementType(SgType* type) {
   }
 }
 
-SgType* getExprType(SgExpression* exp) {
-  if(exp) {
-    SgType* type=exp->get_type();
-    return type->findBaseType();
-    //if(SgArrayType* arrayType=isSgArrayType(type)) {
-    //  return arrayType->findBaseType()
-        //}
-    return type;
-  } else {
-    return nullptr;
-  }
-}
-
-string exprTypeToString(SgExpression* exp) {
-  return getExprType(exp)->unparseToString();
-}
-
 // SgPntrArrRefExp(SgPntrArrRefExp($DS,$E1),$E2) ==> $DS+".get("+$E1+","+$E2+")";
 void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
   // transform RHS:
@@ -49,7 +32,6 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
     } else {
       rhsType=matchedPattern->get_type();
     }
-    
     if(true ||trace) {
       cout<<"RHS-MATCHING ROOT: "<<matchedPattern->unparseToString()<<endl;
       cout<<"RHS-MATCHING TYPE: "<<rhsType->unparseToString()<<endl;
@@ -57,19 +39,6 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
     }
     if(rhsType==accessType) {
       readTransformations++;
-#if 0
-      // fix: check for addressOf operator
-      SgNode* p1=((*j)["$E2"])->get_parent();
-      cout<<"DEDEBUG "<<p1->unparseToString()<<endl;
-      cout<<"DEDEBUG:TERM:"<<AstTerm::astTermWithNullValuesToString(p1);
-      SgNode* p2=p1->get_parent();
-      cout<<"DEDEBUG:TERMp2:"<<AstTerm::astTermWithNullValuesToString(p1);
-      if(isSgAddressOfOp(p2)) {
-        // skip transformation here (would be wrong)
-        cout<<"DEBUG: detected adress of operator. Skipping transformation."<<endl;
-        continue;
-      }
-#endif
       //        string work=(*j)["$WORK"]->unparseToString();
       string ds=(*j)["$DS"]->unparseToString();
       string e1=(*j)["$E1"]->unparseToString();
@@ -134,7 +103,7 @@ transform on lhs or rhs:
                        && (name($var)==v_max_x || (name($var)==v_max_y))
     ==> $var($IDX1,$IDX2)
   $var1[$IDX1][$IDX2].$var2 => $var1.$var2($IDX1,$IDX2) where name($var2) in {"rho","p"}
-  $var1[$IDX1][$IDX2].$var2[$E3] => $var1.$var2($IDX1,$IDX2) where name($var2)=="a"
+  $var1[$IDX1][$IDX2].$var2[$E3] => $var1.$var2($IDX1,$IDX2)[$E3] where name($var2)=="a"
 
 transformRhs(exp):
   $var[$IDX1][$IDX2] where elementType(var)==TYPE
