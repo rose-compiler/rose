@@ -374,7 +374,10 @@ int main (int argc, char* argv[])
             if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
             if(transformationName=="readwrite_access_transformation") {
               tfTransformation.transformHancockAccess(accessType,funDef);
-            } else {
+	    } else if(transformationName=="arrayofstructs_access_transformation") {
+	      //tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
+	      cout<<"ASTTERM:"<<AstTerm::astTermToMultiLineString(funDef,2);
+	    } else {
               cerr<<"Error in line "<<lineNr<<": unsupported transformation: "<<transformationName<<endl;
               return 1;
             }
