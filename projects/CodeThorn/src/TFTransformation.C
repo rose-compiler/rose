@@ -107,12 +107,6 @@ void TFTransformation::transformArrayAssignments(SgType* accessType,SgNode* root
       SgExpression* lhsExp=isSgExpression((*i)["$LHS"]);
       string lhsTypeName=lhsExp->get_type()->unparseToString(); // used in error message
       SgType* lhsType=lhsExp->get_type();
-      //cout<<"DEBUG: LHS-TYPE:"<<lhsExp->unparseToString()<<":"<<lhsType->unparseToString();
-      //if(SgArrayType* lhsArrayType=isSgArrayType(lhsType)) {
-        //SgType* lhsBaseType=lhsArrayType->get_base_type();
-        //cout<<": basetype:"<<lhsBaseType->unparseToString();
-      //}
-      //cout<<endl;
       if(lhsType==accessType) {
         SgNode* workLhs=(*i)["$WORK"];
         string work;

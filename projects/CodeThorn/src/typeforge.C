@@ -275,8 +275,8 @@ int main (int argc, char* argv[])
       int lineNr=0;
       for (auto line : lines) {
         lineNr++;
-        //std::vector<std::string> splitLine=CppStdUtilities::splitByRegex(line,";");
-        std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
+        std::vector<std::string> splitLine=CppStdUtilities::splitByRegex(line,";");
+        //std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
         string commandName,functionName,varName,typeName;
         size_t numEntries=splitLine.size();
         if(numEntries<=2 || numEntries>=5) {
@@ -319,48 +319,51 @@ int main (int argc, char* argv[])
           std::vector<std::string> functionSpecSplit=CppStdUtilities::splitByRegex(functionSpec,":");
           if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier in line "<<lineNr<<":"<<functionSpec<<endl; exit(1);}
           string functionName=functionSpecSplit[0];
-          string functionConstructSpec=functionSpecSplit[1];
+          std::vector<std::string> functionConstructSpecList=CppStdUtilities::splitByRegex(functionSpecSplit[1],",");
           string typeReplaceSpec=splitLine[2];
           std::vector<std::string> typeReplaceSpecSplit=CppStdUtilities::splitByRegex(typeReplaceSpec,"\\s*=>\\s*");
           if(typeReplaceSpecSplit.size()!=2) { cerr<<"Error: wrong type replace specifier in line "<<lineNr<<":"<<typeReplaceSpec<<endl; exit(1);}
           string oldTypeSpec=typeReplaceSpecSplit[0];
           string newTypeSpec=typeReplaceSpecSplit[1];
-          if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionName<<" "<<functionConstructSpec<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
+          if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionName<<" "<<functionSpecSplit[1]<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
           SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
           SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
           SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
           cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
 
-          if(functionConstructSpec=="args") {
-            // change types of arguments
-            SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-            for(auto varInitName : initNamePtrList) {
-              SgType* varInitNameType=varInitName->get_type();
-              if(varInitNameType==oldBuiltType) {
-                varInitName->set_type(newBuiltType);
+          for(auto functionConstructSpec : functionConstructSpecList) {
+            if(functionConstructSpec=="args") {
+              // change types of arguments
+              SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+              for(auto varInitName : initNamePtrList) {
+                SgType* varInitNameType=varInitName->get_type();
+                if(varInitNameType==oldBuiltType) {
+                  varInitName->set_type(newBuiltType);
+                  numTypeReplace++;
+                }
+              }
+            } else if(functionConstructSpec=="ret") {
+              // change type of return type if it matches provided type. If no type is provided always change.
+              SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
+              SgFunctionDeclaration* funDecl=funDef->get_declaration();
+              if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
+                SgFunctionType* funType=funDecl->get_type();
+                funType->set_orig_return_type(newBuiltType);
                 numTypeReplace++;
               }
+            } else if(functionConstructSpec=="body") {
+              // finds all variables in body of function and replaces type
+              std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
+              for (auto initName : varInitList) {
+                initName->set_type(newBuiltType);
+                numTypeReplace++;
+              }
+            } else {
+              cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
+              exit(1);
             }
-          } else if(functionConstructSpec=="ret") {
-            // change type of return type if it matches provided type. If no type is provided always change.
-            SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
-            SgFunctionDeclaration* funDecl=funDef->get_declaration();
-            if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
-              SgFunctionType* funType=funDecl->get_type();
-              funType->set_orig_return_type(newBuiltType);
-              numTypeReplace++;
-            }
-          } else if(functionConstructSpec=="body") {
-            // finds all variables in body of function and replaces type
-            std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
-            for (auto initName : varInitList) {
-              initName->set_type(newBuiltType);
-              numTypeReplace++;
-            }
-          } else {
-            cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
-          }
-          //tt.addToTransformationList(list,newType,funDef,varName);
+            //tt.addToTransformationList(list,newType,funDef,varName);
+          } // end of loop on functionConstructSpecList
         } else if(commandName=="transform") {
           if(splitLine.size()!=4) {
             cerr<<"Error in line "<<lineNr<<": wrong number of arguments: "<<splitLine.size()<<" (should be 4)."<<endl;

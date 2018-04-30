@@ -1,1 +1,1 @@
-transform,main,SVector,arrayofstructs_access_transformation
+transform;main;SVector;arrayofstructs_access_transformation
