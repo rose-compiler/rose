@@ -105,14 +105,14 @@ void TFTransformation::transformArrayAssignments(SgType* accessType,SgNode* root
     string oldCode;
     if((*i)["$LHS"]) {
       SgExpression* lhsExp=isSgExpression((*i)["$LHS"]);
-      string lhsTypeName=lhsExp->get_type()->unparseToString();
+      string lhsTypeName=lhsExp->get_type()->unparseToString(); // used in error message
       SgType* lhsType=lhsExp->get_type();
-      cout<<"DEBUG: LHS-TYPE:"<<lhsExp->unparseToString()<<":"<<lhsType->unparseToString();
-      if(SgArrayType* lhsArrayType=isSgArrayType(lhsType)) {
-        SgType* lhsBaseType=lhsArrayType->get_base_type();
-        cout<<": basetype:"<<lhsBaseType->unparseToString();
-      }
-      cout<<endl;
+      //cout<<"DEBUG: LHS-TYPE:"<<lhsExp->unparseToString()<<":"<<lhsType->unparseToString();
+      //if(SgArrayType* lhsArrayType=isSgArrayType(lhsType)) {
+        //SgType* lhsBaseType=lhsArrayType->get_base_type();
+        //cout<<": basetype:"<<lhsBaseType->unparseToString();
+      //}
+      //cout<<endl;
       if(lhsType==accessType) {
         SgNode* workLhs=(*i)["$WORK"];
         string work;
@@ -131,6 +131,7 @@ void TFTransformation::transformArrayAssignments(SgType* accessType,SgNode* root
           newCode0=ds+".set("+e1+","+e2+","+rhs+")";
       } else {
         cout<<"DEBUG: lhs-matches, but type does not. skipping."<<lhsTypeName<<"!="<<accessType->unparseToString()<<endl;
+        continue;
       }
       string newCode="      "+newCode0; // ';' is unparsed as part of the statement that contains the assignop
       string oldCode2;
