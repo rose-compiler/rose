@@ -191,6 +191,7 @@ int main (int argc, char* argv[])
     ("trace", "print cast operations as they are performed.")
     ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("command-file", po::value< string >()," name of file where each line specifies how to change a variable's type: type-name function-name var-name.")
+    ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
     ("float-var", po::value< string >()," change type of var [arg] to float.")
     ("double-var", po::value< string >()," change type of var [arg] to double.")
     ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
@@ -262,6 +263,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("command-file")) {
+    TFTransformation tfTransformation;
     int numTypeReplace=0;
     string commandFileName=args.getString("command-file");
     CppStdUtilities::DataFileVector lines;
@@ -370,10 +372,12 @@ int main (int argc, char* argv[])
           if(funDef) {
             SgType* accessType=buildTypeFromStringSpec(accessTypeName,funDef);
             if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
-            TFTransformation tfTransformation;
             if(transformationName=="readwrite_access_transformation") {
               tfTransformation.transformHancockAccess(accessType,funDef);
-            } else {
+	    } else if(transformationName=="arrayofstructs_access_transformation") {
+	      //tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
+	      cout<<"ASTTERM:"<<AstTerm::astTermToMultiLineString(funDef,2);
+	    } else {
               cerr<<"Error in line "<<lineNr<<": unsupported transformation: "<<transformationName<<endl;
               return 1;
             }
@@ -387,8 +391,11 @@ int main (int argc, char* argv[])
         }
       }
       tt.transformCommandLineFiles(sageProject,list);
-      cout<<"STATS: number of variable types changed (based on type-name): "<<numTypeReplace<<endl;
-      cout<<"STATS: number of variable types changed (based on var-name): "<<tt.getTotalNumChanges()<<endl;
+      if(args.isUserProvided("csv-stats-file")) {
+	string csvFileName=args.getString("csv-stats-file");
+	tt.generateCsvTransformationStats(csvFileName,numTypeReplace,tt,tfTransformation);
+      }
+      tt.printTransformationStats(numTypeReplace,tt,tfTransformation);
       backend(sageProject);
       return 0;
     } else {

@@ -15,6 +15,8 @@ class TFTransformation {
   void transformRhs(SgType* accessType, SgNode* rhsRoot);
   void checkAndTransformVarAssignments(SgType* accessType,SgNode* root);
   void checkAndTransformNonAssignments(SgType* accessType,SgNode* root);
+  void transformArrayAssignments(SgType* accessType,SgNode* root);
+  void transformArrayOfStructsAccesses(SgType* accessType,SgNode* root);
 };
 
 
