@@ -1,5 +1,6 @@
 #include <string>
 #include "CastTransformer.h"
+#include "TFTransformation.h"
 
 class TypeTransformer {
  public:
@@ -18,6 +19,9 @@ class TypeTransformer {
   bool getTraceFlag();
   static void trace(std::string s);
   int getTotalNumChanges();
+  void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TypeTransformer& tt, TFTransformation& tfTransformation);
+  void printTransformationStats(int numTypeReplace,TypeTransformer& tt, TFTransformation& tfTransformation);
+
  private:
   CastTransformer _castTransformer;
   static bool _traceFlag;

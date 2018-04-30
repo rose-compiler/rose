@@ -38,11 +38,8 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
   AstMatching mRHS;
   MatchResult rRHS=mRHS.performMatching(matchexpressionRHSAccess,rhsRoot);
   for(MatchResult::iterator j=rRHS.begin();j!=rRHS.end();++j) {
-    // rhsTypeName is not the type of var[i][j]
-    //SgType* rhsType=isSgExpression((*j)["$DS"])->get_type();
     SgExpression* matchedPattern=isSgExpression((*j)["$ArrayAccessPattern"]);
     SgType* rhsType=nullptr;
-    //SgType* rhsType=getExprType(isSgExpression((*j)["$DS"]));
     if(SgVarRefExp* varRefExp=isSgVarRefExp((*j)["$DS"])) {
       rhsType=varRefExp->get_type();
       rhsType=getElementType(rhsType);
@@ -57,20 +54,6 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
     }
     if(rhsType==accessType) {
       readTransformations++;
-#if 0
-      // fix: check for addressOf operator
-      SgNode* p1=((*j)["$E2"])->get_parent();
-      cout<<"DEDEBUG "<<p1->unparseToString()<<endl;
-      cout<<"DEDEBUG:TERM:"<<AstTerm::astTermWithNullValuesToString(p1);
-      SgNode* p2=p1->get_parent();
-      cout<<"DEDEBUG:TERMp2:"<<AstTerm::astTermWithNullValuesToString(p1);
-      if(isSgAddressOfOp(p2)) {
-        // skip transformation here (would be wrong)
-        cout<<"DEBUG: detected adress of operator. Skipping transformation."<<endl;
-        continue;
-      }
-#endif
-      //        string work=(*j)["$WORK"]->unparseToString();
       string ds=(*j)["$DS"]->unparseToString();
       string e1=(*j)["$E1"]->unparseToString();
       string e2=(*j)["$E2"]->unparseToString();
@@ -91,7 +74,6 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
     }
   }
 }
-
 
 void TFTransformation::checkAndTransformVarAssignments(SgType* accessType,SgNode* root) {
   RoseAst ast(root);
@@ -115,33 +97,8 @@ void TFTransformation::checkAndTransformNonAssignments(SgType* accessType,SgNode
     transformRhs(accessType,root);
   }
 }
-	    
-/*
-  transform assignments:
-  $var1->$var2[$IDX1][$IDX2] = $RHS where basetype($var2)==TYPE 
-    ==> $var1->$var2.set($IDX1,$IDX2,transformRhs($RHS))
-  SgVarRefExp=$RHS
-    ==> transformRhs($RHS)
-  $RHS (e.g. function call: transform all parameters)
-    ==> transformRhs($RHS)
-  $var[$IDX1,$IDX2] = $RHS 
-    where type($var)==HancockWorkArrays**
-          ||type($var)==FluxVector**
-    ==> $var.set($IDX1,$IDX2,transform($RHS))
 
-transform on lhs or rhs:
-  $var[$IDX1][$IDX2] where type($var)==HancockWorkArrays** 
-                       && (name($var)==v_max_x || (name($var)==v_max_y))
-    ==> $var($IDX1,$IDX2)
-  $var1[$IDX1][$IDX2].$var2 => $var1.$var2($IDX1,$IDX2) where name($var2) in {"rho","p"}
-  $var1[$IDX1][$IDX2].$var2[$E3] => $var1.$var2($IDX1,$IDX2) where name($var2)=="a"
-
-transformRhs(exp):
-  $var[$IDX1][$IDX2] where elementType(var)==TYPE
-    ==> $var.get($IDX1,$IDX2)
-
- */
-void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
+void TFTransformation::transformArrayAssignments(SgType* accessType,SgNode* root) {
   RoseAst ast(root);
   std::string matchexpression;
   // $WORK->$ARR[$IDX1,$IDX2]=$RHS
@@ -209,16 +166,37 @@ void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
       }
     }
   }
+}
+					      
+/*
+  transform assignments:
+  $var1->$var2[$IDX1][$IDX2] = $RHS where basetype($var2)==TYPE 
+    ==> $var1->$var2.set($IDX1,$IDX2,transformRhs($RHS))
+  SgVarRefExp=$RHS
+    ==> transformRhs($RHS)
+  $RHS (e.g. function call: transform all parameters)
+    ==> transformRhs($RHS)
+  $var[$IDX1,$IDX2] = $RHS 
+    where type($var)==HancockWorkArrays**
+          ||type($var)==FluxVector**
+    ==> $var.set($IDX1,$IDX2,transform($RHS))
 
-  // var=$RHS
+transform on lhs or rhs:
+  $var[$IDX1][$IDX2] where type($var)==HancockWorkArrays** 
+                       && (name($var)==v_max_x || (name($var)==v_max_y))
+    ==> $var($IDX1,$IDX2)
+  $var1[$IDX1][$IDX2].$var2 => $var1.$var2($IDX1,$IDX2) where name($var2) in {"rho","p"}
+  $var1[$IDX1][$IDX2].$var2[$E3] => $var1.$var2($IDX1,$IDX2) where name($var2)=="a"
+
+transformRhs(exp):
+  $var[$IDX1][$IDX2] where elementType(var)==TYPE
+    ==> $var.get($IDX1,$IDX2)
+
+ */
+void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
+  transformArrayAssignments(accessType,root);
   checkAndTransformVarAssignments(accessType,root);
   checkAndTransformNonAssignments(accessType,root);
   //m.printMarkedLocations();
   //m.printMatchOperationsSequence();
-  cout<<"Transformation statistics:"<<endl;
-  cout<<"Number of statement transformations: "<<statementTransformations<<endl;
-  cout<<"STATS: Number of read access transformations: "<<readTransformations<<endl;
-  cout<<"STATS: Number of write access transformations: "<<writeTransformations<<endl;
-  int totalTransformations=readTransformations+writeTransformations;
-  cout<<"Total number of transformations: "<<totalTransformations<<endl;
 }
