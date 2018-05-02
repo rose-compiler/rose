@@ -719,7 +719,7 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver
     size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
         processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
-        RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
+        const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
         BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
         if (!settings_.nonAddressIsFeasible && !hasVirtualAddress(pathEdge->target())) {
             SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner_->edgeName(pathEdge)
@@ -994,6 +994,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             debug <<"  end   at vertex " <<partitioner_->vertexName(v) <<"\n";
     }
 
+    const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
+
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
         P2::CfgPath path(pathsBeginVertex);
@@ -1091,8 +1093,34 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     } else if (shouldInline(path, cfgCallEdge->target())) {
                         info <<indent <<"inlining function call paths at vertex " <<partitioner().vertexName(backVertex) <<"\n";
-                        P2::insertCalleePaths(paths_, backVertex, partitioner().cfg(),
-                                              cfgBackVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
+                        if (cfgCallEdge->target()->value().type() == P2::V_INDETERMINATE &&
+                            cfgBackVertex->value().type() == P2::V_BASIC_BLOCK) {
+                            // If the CFG has a vertex to an indeterminate function (e.g., from "call eax"), then instead of
+                            // inlining the indeterminate vertex, see if we can inline an actual function by using the
+                            // instruction pointer register. The cpu's currentState is the one at the beginning of the final
+                            // vertex of the path; we need the state at the end of the final vertex.
+                            BaseSemantics::StatePtr savedState = cpu->get_operators()->currentState()->clone();
+                            BaseSemantics::SValuePtr ip;
+                            try {
+                                BOOST_FOREACH (SgAsmInstruction *insn, cfgBackVertex->value().bblock()->instructions())
+                                    cpu->processInstruction(insn);
+                                ip = cpu->currentState()->peekRegister(IP, cpu->undefined_(IP.nBits()),
+                                                                       cpu->get_operators().get());
+                            } catch (const BaseSemantics::Exception &e) {
+                                mlog[ERROR] <<"semantics failed when trying to determine call target address: " <<e <<"\n";
+                            }
+                            cpu->get_operators()->currentState(savedState);
+                            if (ip->is_number() && ip->get_width() <= 64) {
+                                rose_addr_t targetVa = ip->get_number();
+                                P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner().findPlaceholder(targetVa);
+                                if (partitioner().cfg().isValidVertex(targetVertex))
+                                    P2::inlineOneCallee(paths_, backVertex, partitioner().cfg(),
+                                                        targetVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
+                            }
+                        } else {
+                            P2::inlineMultipleCallees(paths_, backVertex, partitioner().cfg(),
+                                                      cfgBackVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
+                        }
                     } else {
                         info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
