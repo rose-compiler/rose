@@ -10917,7 +10917,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
                   }
                  else
                   {
-#if 1
+#if 0
                  // DQ (9/13/2014): Turn this on until we have a few more bugs fixed.
                  // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
 #if 0
@@ -11020,7 +11020,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
             else
              {
             // DQ (9/7/2014): This is the typical case.
-#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
+#if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES || 1
             // DQ (4/5/2018): For debugging, output something so that we know why nothing is output.
                if (templateString.size() == 0)
                   {
@@ -11033,89 +11033,8 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
             // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
                curprint(string("\n") + templateString);
 
-              if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
-              {
-                // Liao 12/15/2016, experimental support to unparse transformation-generated template function declarations from AST
-                // templateString is NULL for transformation-generated one.
-                if  (templateFunctionDeclaration && templateString.empty())
-                {
-                  //printf ("Unparsing the template declaration from the AST (case of template function declaration) \n");
-                  unparseTemplateHeader (templateFunctionDeclaration, info); 
-                  if (templateFunctionDeclaration->get_definition()) // we may encounter prototype template (member) functions
-                  {
-                    unparseStatement(templateFunctionDeclaration->get_definition(), info); 
-                  }
-                }
-              }
-#if 0
-            // DQ (9/11/2016): Adding support for unparsing the template declaration from the AST.
-
-               printf ("Unparsing the template declaration from the AST (case of class template declaration) \n");
-
-               SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
-               ROSE_ASSERT(classDeclaration != NULL);
-
-               printf ("In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
-
-            // unparseTemplateHeader(stmt,info);
-               unparseTemplateHeader(classDeclaration,info);
-
-               printf ("DONE: In unparseTemplateDeclarationStatment_support(): calling unparseTemplateHeader() \n");
-
-               SgUnparse_Info ninfox(info);
-#if 0
-               printf ("In unparseTemplateDeclarationStatment_support(): calling ninfox.unset_SkipSemiColon() \n");
-#endif
-               ninfox.unset_SkipSemiColon();
-
-            // DQ (6/13/2007): Set to null before resetting to non-null value 
-               ninfox.set_declstatement_ptr(NULL);
-               ninfox.set_declstatement_ptr(classDeclaration);
-
-            // DQ (9/11/2016): We want to unparse the definition.
-            // unparseClassDeclStmt(classDeclaration,info);
-            // unparseStatement(classDeclaration->get_definition(), ninfox);
-               unparseClassDefnStmt(classDeclaration->get_definition(), ninfox);
-
-               if (!info.SkipSemiColon())
-                  {
-                    curprint(";");
-                  }
-
-               printf ("DONE: Unparsing the template declaration from the AST (case of class template declaration) \n");
-
-               curprint ("\n/* Exiting as a test! */\n\n");
-
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
              }
         }
-
-#if 0
-     if (string_represents_function_body == true)
-        {
-       // Unparse a function prototype header as a prefix to the generated string.
-          printf ("Unparse a function prototype header as a prefix to the generated string \n");
-
-#error "DEAD CODE!"
-
-       // Temporary code.
-       // curprint ("void foobar()");
-
-          SgDeclarationStatement* declaration = isSgDeclarationStatement(stmt);
-          ROSE_ASSERT(declaration != NULL);
-          SgDeclarationStatement* nondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
-          ROSE_ASSERT(declaration != nondefiningDeclaration);
-
-#error "DEAD CODE!"
-
-       // unparseStatement(nondefiningDeclaration,info);
-        }
-
-  // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
-     curprint ( string("\n" ) + templateString);
-#endif
 
 #if 0
       printf ("Leaving unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());

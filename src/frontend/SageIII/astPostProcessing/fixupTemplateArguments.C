@@ -277,12 +277,11 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
           SgTypeOfType* typeOfType = isSgTypeOfType(type);
 
        // TV (04/23/2018): deprecated SgTemplateType. Now using the notion of non-real declaration (and associated declaration, symbol, and reference expression)
-          ROSE_ASSERT(templateType == NULL);
           SgNonrealType*         typeNonreal         = isSgNonrealType(type);
 
           if (type != NULL && typeNonreal  == NULL && classType == NULL && voidType == NULL && rvalueReferenceType == NULL && 
                               functionType == NULL && declType  == NULL && enumType == NULL && typeEllipse         == NULL && 
-                              typeUnknown  == NULL && typeComplex == NULL && typeOfType == NULL)
+                              typeUnknown  == NULL && typeComplex == NULL && typeOfType == NULL && templateType == NULL)
              {
 #if DEBUG_PRIVATE_TYPE || 0
                printf ("found unwrapped type = %p = %s = %s (not a template class instantiaton) \n",type,type->class_name().c_str(),type->unparseToString().c_str());

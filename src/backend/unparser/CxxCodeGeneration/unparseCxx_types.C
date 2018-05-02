@@ -3822,103 +3822,16 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
    {
-  // TV (04/17/2018): dead code
-     ROSE_ASSERT(false);
-
-  // This has to be able to select the kind of type being used (likely a template parameter, and unparse it by name).
-  // I think that this is non-trivial, since the type might be more than just a name...
-  // I am unclear if it can be something that has a first and second part such as some of the other types above (e.g. SgArrayType).
+  // TV (05/01/2018): Continue to use SgTemplateType to handle the case of the auto-keyword in:
+  //                         "auto x = foo<int>();"
+  //                  where the return type of `foo` depends on the template argument:
+  //                         "template <class T> T foo();"
+  //                  In this case, the type is represented by a template-param which is unnamed without a parent scope.
 
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
-  // This is the code that we want to use, but it is not working.
-     SgName name = template_type->get_name();
-
-  // DQ (3/18/2017): Added support to unparse packing specification.
-     if (template_type->get_packed() == true)
-        {
-          name += "...";
-        }
-
-  // Add a space to seperate the type from other syntax.
-     name += " ";
-
-#if 0
-     printf ("In unparseTemplateType(): Unparsing the SgTemplateType as name = %s \n",name.str());
-#endif
-#if 0
-    // TV (03/29/2018): Working on unparsing of nonreal class and nonreal members of class
-    {
-       SgType * class_type = template_type->get_class_type();
-       printf("  class_type = %p (%s)\n", class_type, class_type ? class_type->class_name().c_str() : "");
-       SgType * parent_class_type = template_type->get_parent_class_type();
-       printf("  parent_class_type = %p (%s)\n", parent_class_type, parent_class_type ? parent_class_type->class_name().c_str() : "");
-       SgDeclarationStatement * tpl_decl = template_type->getAssociatedDeclaration();
-       printf("  tpl_decl = %p (%s)\n", tpl_decl, tpl_decl ? tpl_decl->class_name().c_str() : "");
-
-//     SgDeclarationStatement * assoc_tpl = template_type->get_assoc_tpl();
-//     printf("  assoc_tpl = %p (%s)\n", assoc_tpl, assoc_tpl ? assoc_tpl->class_name().c_str() : "");
-
-       SgTemplateArgumentPtrList & tpl_args = template_type->get_tpl_args();
-       printf("  tpl_args = \n");
-       for (unsigned int i = 0; i < tpl_args.size(); i++) {
-         printf("    [%d] %p (%s) : %s\n", i, tpl_args[i], tpl_args[i] ? tpl_args[i]->class_name().c_str() : "", tpl_args[i]->get_global_qualification_required() ? "true" : "false");
-       }
-
-       SgTemplateArgumentPtrList & part_spec_tpl_args = template_type->get_part_spec_tpl_args();
-       printf("  part_spec_tpl_args = \n");
-       for (unsigned int i = 0; i < part_spec_tpl_args.size(); i++) {
-         printf("    [%d] %p (%s)\n", i, part_spec_tpl_args[i], part_spec_tpl_args[i] ? part_spec_tpl_args[i]->class_name().c_str() : "");
-       }
-
-       SgScopeStatement * scope = SageBuilder::topScopeStack();
-       printf("  SageBuilder::topScopeStack() = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
-     }
-#endif
-
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
-     string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-     printf ("In Unparse_Type::unparseTemplateType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
-#endif
-
-     SgNode * name_qual_ref = info.get_reference_node_for_qualification();
-#if 0
-     printf("  name_qual_ref = %p (%s)\n", name_qual_ref, name_qual_ref ? name_qual_ref->class_name().c_str() : "");
-#endif
-
-  // TV (03/29/2018): either first part is requested, or neither if called from unparseToString.
-     bool unparse_type = info.isTypeFirstPart() || ( !info.isTypeFirstPart() && !info.isTypeSecondPart() );
-     if (unparse_type) {
-       SgType * parent_class_type = template_type->get_parent_class_type();
-       SgTemplateArgumentPtrList & tpl_args = template_type->get_tpl_args();
-       SgTemplateArgumentPtrList & part_spec_tpl_args = template_type->get_part_spec_tpl_args();
-       if (parent_class_type != NULL) {
-         unparseType(parent_class_type, info);
-         curprint("::");
-       }
-       if (tpl_args.size() > 0 || part_spec_tpl_args.size() > 0) curprint("template ");
-       curprint(name);
-       if (tpl_args.size() > 0) {
-         SgUnparse_Info ninfo(info);
-         ninfo.set_SkipClassDefinition();
-         ninfo.set_SkipEnumDefinition();
-         ninfo.set_SkipClassSpecifier();
-         unp->u_exprStmt->unparseTemplateArgumentList(tpl_args, ninfo);
-       }
-       if (part_spec_tpl_args.size() > 0) {
-         SgUnparse_Info ninfo(info);
-         ninfo.set_SkipClassDefinition();
-         ninfo.set_SkipEnumDefinition();
-         ninfo.set_SkipClassSpecifier();
-         unp->u_exprStmt->unparseTemplateArgumentList(part_spec_tpl_args, ninfo);
-       }
-     }
-
-#if 0
-     printf ("Leaving Unparse_Type::unparseTemplateType() \n");
-#endif
+  // Nothing to be done
    }
 
 void
