@@ -40,10 +40,10 @@ AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(SgProject* p
 SPRAY::VariableIdSet 
 AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
-  cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
+  //cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
   SPRAY::VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
-    cout<<"DEBUG: checking variable "<<(*i)->unparseToString();
+    //cout<<"DEBUG: checking variable "<<(*i)->unparseToString();
     VariableId id = variableIdMapping->variableId(*i);
     if(!id.isValid()) {
       ostringstream exceptionMsg;
