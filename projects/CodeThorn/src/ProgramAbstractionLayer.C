@@ -2,6 +2,10 @@
 #include "ProgramAbstractionLayer.h"
 #include "Lowering.h"
 
+#include <iostream>
+
+using namespace std;
+
 SPRAY::ProgramAbstractionLayer::ProgramAbstractionLayer()
   :_modeArrayElementVariableId(true),_labeler(0),_variableIdMapping(0) {
 }
@@ -21,6 +25,7 @@ void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
   Lowering lowering;
   lowering.setInliningOption(getInliningOption());
   if(getLoweringOption()) {
+    cout<<"DEBUG: PAL: lowering"<<endl;
     lowering.transformAst(root);
   }
   _variableIdMapping=new VariableIdMapping();

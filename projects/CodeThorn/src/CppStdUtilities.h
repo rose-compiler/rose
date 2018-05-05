@@ -6,6 +6,8 @@
 
 namespace CppStdUtilities {
 
+  // these utilities only use C++11 standard features. There are no other dependences.
+
   typedef std::vector<std::string> DataFileVector;
 
   // Read data file and add the lines in the provided vector. Chops off a newline if it is

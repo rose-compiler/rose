@@ -76,7 +76,7 @@ namespace SPRAY {
     void normalizeSingleStatementsToBlocks(SgNode* node);
     void normalizeAllVariableDeclarations(SgNode* node);
     // transforms T x=InitExp into: T x; x=InitExp;
-    void normalizeVariableDeclaration(SgVariableDeclaration* varDecl);
+    SgStatement* buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl);
     void createLoweringSequence(SgNode* root);
     void applyLoweringSequence();
     void normalizeExpression(SgExprStatement* stmt, SgExpression* node);

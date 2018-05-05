@@ -6,6 +6,7 @@
 #include "SgNodeHelper.h"
 #include "inliner.h"
 #include "CFAnalysis.h"
+#include <list>
 
 using namespace std;
 using namespace Rose;
@@ -18,30 +19,50 @@ namespace SPRAY {
 
   void Lowering::normalizeAllVariableDeclarations(SgNode* root) {
     RoseAst ast(root);
+    typedef std::list<std::pair<SgVariableDeclaration*,SgStatement*>> DeclAssignListType;
+    DeclAssignListType declAssignList;
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgNode* node=*i;
       if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
-        cout<<"DEBUG: found variable declaration: "<<varDecl->unparseToString()<<endl;
-        normalizeVariableDeclaration(varDecl);
+        if(SgStatement* newVarAssignment=buildNormalizedVariableDeclaration(varDecl)) {
+          declAssignList.push_back(std::make_pair(varDecl,newVarAssignment));
+        }
         i.skipChildrenOnForward();
       } else {
-        cout<<"DEBUG: NOT a variable declaration: "<<node->class_name()<<endl;
+        //cout<<"DEBUG: NOT a variable declaration: "<<node->class_name()<<endl;
       }
+    }
+    for(auto declAssign : declAssignList) {
+      SageInterface::insertStatementAfter(declAssign.first, declAssign.second);
     }
   }
 
-  void Lowering::normalizeVariableDeclaration(SgVariableDeclaration* varDecl) {
+  // Given 'Type x=init;' is transformed into 'Type x;' and returns 'x=init;'
+  // return nullptr if provided declaration is in global scope (cannot be normalized)
+  SgStatement* Lowering::buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl) {
     ROSE_ASSERT(varDecl);
-    SgExpression* declInitializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
-    // if there is no initializer, the declaration remains unchanged
-    if(declInitializer) {
-      SgInitializedName* declInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-      varDecl->reset_initializer(0); // detach initializer from declaration
-      SgVarRefExp* declVarRefExp=SageBuilder::buildVarRefExp(declInitName,varDecl->get_declarationScope());
-      SgAssignOp* varAssignOp=SageBuilder::buildAssignOp(declVarRefExp,declInitializer);
-      SgStatement* varAssignStatement=SageBuilder::buildExprStatement(varAssignOp);
-      SageInterface::insertStatementAfter(varDecl, varAssignStatement);
+    // check that variable is within a scope where it can be normalized
+    SgScopeStatement* scopeStatement=varDecl->get_scope();
+    ROSE_ASSERT(scopeStatement);
+    if(!isSgGlobal(scopeStatement)) {
+      //cout<<"DEBUG normalizing decl: "<<varDecl->unparseToString()<<endl;
+      SgExpression* declInitializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+      // if there is no initializer, the declaration remains unchanged
+      if(declInitializer) {
+        SgInitializedName* declInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+        // detach initializer from declaration such that is has no initializer
+        varDecl->reset_initializer(0); 
+        // build new variable
+        SgVarRefExp* declVarRefExp=SageBuilder::buildVarRefExp(declInitName,varDecl->get_declarationScope());
+        // build assignment with new variable and initializer from original declaration
+        SgAssignOp* varAssignOp=SageBuilder::buildAssignOp(declVarRefExp,declInitializer);
+        // build exprstatement from assignOp expression
+        SgStatement* varAssignStatement=SageBuilder::buildExprStatement(varAssignOp);
+        // insert new assignment statement after original variable declaration
+        return varAssignStatement;
+      }
     }
+    return nullptr;
   }
 
   void Lowering::normalizeSingleStatementsToBlocks(SgNode* root) {
@@ -76,7 +97,7 @@ namespace SPRAY {
     changeBreakStatementsToGotos(root);
     createLoweringSequence(root);
     applyLoweringSequence();
-    //normalizeExpressions(root);
+    normalizeExpressions(root);
     if(getInliningOption()) {
       inlineFunctions(root);
     }
@@ -285,7 +306,7 @@ namespace SPRAY {
 
   void LoweringOp::analyse() {
   }
-  void WhileStmtLoweringOp::analyse() {
+  void WhileStmtLoweringOp::analyse() {  
   }
   WhileStmtLoweringOp::WhileStmtLoweringOp(SgWhileStmt* node) {
     this->node=node;
