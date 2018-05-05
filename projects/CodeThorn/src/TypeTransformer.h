@@ -1,3 +1,6 @@
+#ifndef TYPE_TRANSFORMER_H
+#define TYPE_TRANSFORMER_H
+
 #include <string>
 #include "CastTransformer.h"
 #include "TFTransformation.h"
@@ -27,3 +30,5 @@ class TypeTransformer {
   static bool _traceFlag;
   int _totalNumChanges=0;
 };
+
+#endif
