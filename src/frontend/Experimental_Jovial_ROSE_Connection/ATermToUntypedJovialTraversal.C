@@ -1035,6 +1035,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       else if (traverse_ExitStatement(t_stmt, stmt_list)) {
          // MATCHED ExitStatement
       }
+      else if (traverse_GotoStatement(t_stmt, stmt_list)) {
+         // MATCHED GotoStatement
+      }
       else if (traverse_ReturnStatement(t_stmt, stmt_list)) {
          // MATCHED ReturnStatement
       }
@@ -1160,6 +1163,40 @@ ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUnt
    else return ATfalse;
 
    return ATtrue;
+}
+
+//========================================================================================
+// 4.7 GOTO STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_GotoStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_GotoStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels, t_name;
+   std::vector<std::string> labels;
+   std::string name;
+
+    if (ATmatch(term, "GotoStatement(<term>,<term>)", &t_labels, &t_name)) {
+       if (traverse_LabelList(t_labels, labels)) {
+          // MATCHED LabelList
+       } else return ATfalse;
+
+       if (traverse_Name(t_name, name)) {
+          // MATCHED Name
+       } else return ATfalse;
+
+      SgUntypedGotoStatement* goto_stmt = new SgUntypedGotoStatement("", name);
+      setSourcePosition(goto_stmt, term);
+
+      stmt_list->get_stmt_list().push_back(goto_stmt);
+   }
+
+   else return ATfalse;
+
+   return ATtrue;
+
 }
 
 //========================================================================================
