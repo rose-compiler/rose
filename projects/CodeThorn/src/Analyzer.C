@@ -33,7 +33,7 @@ void Analyzer::printStatusMessage(string s, bool newLineFlag) {
     if(args.getBool("status")) {
       cout<<s;
       if(newLineFlag) {
-        cout<<endl;
+        cout<<endl; // status output
       }
     }
   }
@@ -1231,7 +1231,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         logger[ERROR]<<AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
         exit(1);
       }
-      cout<<endl;
+      //cout<<endl;
     }
   }
 
