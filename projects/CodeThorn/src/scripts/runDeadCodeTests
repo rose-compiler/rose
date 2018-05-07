@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPTIONS=--normalization --inlining
+OPTIONS=--normalization --inline
 
 TESTDIR=$1
     echo "------------------------------------------------"

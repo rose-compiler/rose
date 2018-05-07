@@ -804,3 +804,37 @@ LabelSet FIConstAnalysis::getNonConstConditions() {
 void FIConstAnalysis::setDetailedOutput(bool flag) {
   detailedOutput=flag;
 }
+
+void FIConstAnalysis::printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
+  cout<<"Result:"<<endl;
+  VariableConstInfo vci(&variableIdMapping, &map);
+  for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
+    VariableId varId=(*i).first;
+    //string variableName=variableIdMapping.uniqueVariableName(varId);
+    string variableName=variableIdMapping.variableName(varId);
+    set<AbstractValue> valueSet=(*i).second;
+    stringstream setstr;
+    setstr<<"{";
+    for(set<AbstractValue>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+      if(i!=valueSet.begin())
+        setstr<<",";
+      setstr<<(*i).toString();
+    }
+    setstr<<"}";
+    cout<<variableName<<"="<<setstr.str()<<";";
+    cout<<"Range:"<<VariableConstInfo::createVariableValueRangeInfo(varId,map).toString();
+    cout<<" width: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).width().toString();
+    cout<<" top: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).isTop();
+    cout<<endl;
+    cout<<" isAny:"<<vci.isAny(varId)
+        <<" isUniqueConst:"<<vci.isUniqueConst(varId)
+        <<" isMultiConst:"<<vci.isMultiConst(varId);
+    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
+      cout<<" width:"<<vci.width(varId);
+    } else {
+      cout<<" width:unknown";
+    }
+    cout<<endl;
+  }
+  cout<<"---------------------"<<endl;
+}
