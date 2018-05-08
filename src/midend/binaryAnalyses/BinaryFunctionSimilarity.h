@@ -234,9 +234,13 @@ public:
      *  @li 2/3 if there are two neighbors
      *  @li 1.0 if there are more than two neigbors or any neighbor is indeterminate.
      *
+     *  If @p maxPoints is specified, then functions having more than the specified maximum number of CFG vertices will be
+     *  truncated arbititrarily to limit the number of vertices.
+     *
      * @{ */
     CategoryId declareCfgConnectivity(const std::string &categoryName);
-    void measureCfgConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
+    void measureCfgConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&,
+                                size_t maxPoints = (size_t)(-1));
     /** @} */
 
     /** Function calls.
@@ -379,8 +383,8 @@ public:
      *
      *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
      *  <code>--threads=N</code> switch. */
-    DistanceMatrix compareManyToManyMatrix(const std::vector<Partitioner2::Function::Ptr>&,
-                                           const std::vector<Partitioner2::Function::Ptr>&) const;
+    DistanceMatrix compareManyToManyMatrix(std::vector<Partitioner2::Function::Ptr>,
+                                           std::vector<Partitioner2::Function::Ptr>) const;
 
     /** Minimum cost 1:1 mapping.
      *
@@ -393,6 +397,15 @@ public:
      *  Exception if that support is missing. */
     std::vector<FunctionPair> findMinimumCostMapping(const std::vector<Partitioner2::Function::Ptr> &list1,
                                                      const std::vector<Partitioner2::Function::Ptr> &list2) const;
+
+    /** Compute distances between sets of functions.
+     *
+     *  This is a low-level function to compute the distance between all pairs of functions from list1 and list2 in
+     *  parallel. The return value contains the distances so that the distance between the function @c list1[i] and @c list2[j]
+     *  is at index <code>i * list2.size() + j</code> in the return value. */
+    std::vector<double> computeDistances(const std::vector<Partitioner2::Function::Ptr> &list1,
+                                         const std::vector<Partitioner2::Function::Ptr> &list2,
+                                         size_t nThreads) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Sorting

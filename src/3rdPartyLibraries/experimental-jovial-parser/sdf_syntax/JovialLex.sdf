@@ -9,7 +9,31 @@ exports
     ReservedWord               %% 8.2.2
     BeadSize Bead              %% 8.3.2
 
+    SignedTypeDesc             %% 2.1.1.1
+    UnsignedTypeDesc           %% 2.1.1.1
+    BitTypeDesc                %% 2.1.1.5
+    PointerTypeDesc            %% 2.1.1.7
+
   lexical syntax
+
+
+%%%%%%%%%%
+%% 2.1.1 ITEM DECLARATIONS AND TYPE DESCRIPTIONS
+%%%%%%%%%%
+
+%% 2.1.1.1
+%%
+    'S'                     -> SignedTypeDesc
+    'U'                     -> UnsignedTypeDesc
+
+%% 2.1.1.5
+%%
+    'B'                     -> BitTypeDesc
+
+%% 2.1.1.7
+%%
+    'P'                     -> PointerTypeDesc
+
 
 %%%%%%%%%%
 %% 8.0 BASIC ELEMENTS
@@ -56,11 +80,14 @@ exports
   'COMPOOL'                 -> ReservedWord
   'CONDITION*'              -> ReservedWord
 
-
 %% 8.3.2 BIT LITERALS
 %%
     [1-5]                   -> BeadSize
     [A-V]                   -> Bead
+
+%% 8.4
+%%
+   "%" ~[\n]+ "%"           -> LAYOUT
 
 %% 8.5 BLANKS
 %%
@@ -74,7 +101,13 @@ exports
     Name -/- [A-Za-z0-9]
 %% TODO think about Icon lexical restriction
 %%  Icon -/- [0-9]
+%% Trying to stop IntegerItemDescription from interferring with StatusItemDescription
+
+    SignedTypeDesc -/- [A-Za-z0-9]
+    UnsignedTypeDesc -/- [A-Za-z0-9]
+    BitTypeDesc -/- [A-Za-z0-9]
+    PointerTypeDesc -/- [A-Za-z0-9]
 
   context-free restrictions
 
-    LAYOUT? -/- [\ \t\n\r]
+    LAYOUT? -/- [\ \t\n\r\%]

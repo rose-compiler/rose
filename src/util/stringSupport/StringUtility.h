@@ -482,6 +482,8 @@ std::string plural(T n, const std::string &plural_word, const std::string &singu
     if (1==n) {
         if (!singular_word.empty()) {
             retval += singular_word;
+        } else if (plural_word == "vertices") {
+            retval = "vertex";
         } else if (plural_word.size()>3 && 0==plural_word.substr(plural_word.size()-3).compare("ies")) {
             // string ends with "ies", as in "parties", so emit "party" instead
             retval += plural_word.substr(0, plural_word.size()-3) + "y";

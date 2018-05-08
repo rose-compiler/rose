@@ -3312,11 +3312,11 @@ SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(S
 
 
 // Rasmussen (4/18/2018): Added target_expression so that the goto statement has a place to go to.
-SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* target_expression)
+SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string target_label)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedGotoStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* target_expression): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedGotoStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string target_label): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedGotoStatement* returnNode = NULL;

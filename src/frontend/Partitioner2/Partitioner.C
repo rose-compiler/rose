@@ -2582,9 +2582,12 @@ Partitioner::rebuildVertexIndices() {
                 ASSERT_not_reachable("user-defined vertices cannot be saved or restored");
         }
     }
-    unparser_ = instructionProvider().disassembler()->unparser()->copy();
-    insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
-    insnUnparser_->settings() = Unparser::Settings::minimal();
+    if (!isDefaultConstructed() && instructionProvider().disassembler()) {
+        unparser_ = instructionProvider().disassembler()->unparser()->copy();
+        insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
+    }
+    if (insnUnparser_)
+        insnUnparser_->settings() = Unparser::Settings::minimal();
 }
 
 } // namespace

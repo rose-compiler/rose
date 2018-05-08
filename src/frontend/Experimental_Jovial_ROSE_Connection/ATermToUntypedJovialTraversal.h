@@ -95,6 +95,15 @@ ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels);
 // 4.1 ASSIGNMENT STATEMENTS
 ATbool traverse_AssignmentStatement(ATerm term, std::vector<std::string> & labels, SgUntypedStatementList* stmt_list);
 
+// 4.6 RETURN STATEMENTS
+ATbool traverse_ReturnStatement(ATerm term, SgUntypedStatementList* stmt_list);
+
+// 4.7 GOTO STATEMENTS
+ATbool traverse_GotoStatement(ATerm term, SgUntypedStatementList* stmt_list);
+
+// 4.8 EXIT STATEMENTS
+ATbool traverse_ExitStatement(ATerm term, SgUntypedStatementList* stmt_list);
+
 // 4.9 STOP STATEMENTS
 ATbool traverse_StopStatement(ATerm term, SgUntypedStatementList* stmt_list);
 
