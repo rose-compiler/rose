@@ -1,1 +1,1 @@
-transform;main;float;ad_intermediate_instrumentation
+transform;*;float;ad_intermediate_instrumentation

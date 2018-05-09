@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "TypeforgeSpecFrontEnd.h"
+#include "TFSpecFrontEnd.h"
 #include "TFTransformation.h"
 #include <iostream>
 #include "CppStdUtilities.h"
@@ -13,8 +13,8 @@
 #include "SgNodeHelper.h"
 #include "AstProcessing.h"
 #include "AstMatching.h"
-#include "TypeTransformer.h"
-#include "TypeforgeSpecFrontEnd.h"
+#include "TFTypeTransformer.h"
+#include "TFSpecFrontEnd.h"
 #include "CastStats.h"
 #include "CastTransformer.h"
 #include "CastGraphVis.h"
@@ -148,7 +148,7 @@ bool isConstReferenceType(string type) {
   return nPos!=string::npos && isReferenceType(type);
 }
 
-bool TypeforgeSpecFrontEnd::run(std::string specFileName, SgProject* root, TypeTransformer& tt, TFTransformation& tfTransformation) {
+bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   int numTypeReplace=0;
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
@@ -208,74 +208,93 @@ bool TypeforgeSpecFrontEnd::run(std::string specFileName, SgProject* root, TypeT
 	string oldTypeSpec=typeReplaceSpecSplit[0];
 	string newTypeSpec=typeReplaceSpecSplit[1];
 	if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionName<<" "<<functionSpecSplit[1]<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
-	SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
-	SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
-	SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
-	cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
-	
-	for(auto functionConstructSpec : functionConstructSpecList) {
-	  if(functionConstructSpec=="args") {
-	    // change types of arguments
-	    SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-	    for(auto varInitName : initNamePtrList) {
-	      SgType* varInitNameType=varInitName->get_type();
-	      if(varInitNameType==oldBuiltType) {
-		varInitName->set_type(newBuiltType);
-		numTypeReplace++;
-	      }
-	    }
-	  } else if(functionConstructSpec=="ret") {
-	    // change type of return type if it matches provided type. If no type is provided always change.
-	    SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
+        std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
+        if(functionName=="*") {
+          // transformation is specified to be applied to all functions, create list of all functions
+          std::list<SgFunctionDefinition*> listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
+        } else {
+          SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
+          if(funDef==nullptr) {
+            cout<<"WARNING: function "<<functionName<<" does not exist."<<endl;
+          } else {
+            listOfFunctionDefinitions.push_back(funDef);
+          }
+        }
+        for (auto funDef : listOfFunctionDefinitions) {
+          SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
+          SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
+          //cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
+          
+          for(auto functionConstructSpec : functionConstructSpecList) {
+            if(functionConstructSpec=="args") {
+              // change types of arguments
+              SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+              for(auto varInitName : initNamePtrList) {
+                SgType* varInitNameType=varInitName->get_type();
+                if(varInitNameType==oldBuiltType) {
+                  varInitName->set_type(newBuiltType);
+                  numTypeReplace++;
+                }
+              }
+            } else if(functionConstructSpec=="ret") {
+              // change type of return type if it matches provided type. If no type is provided always change.
+              SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
               SgFunctionDeclaration* funDecl=funDef->get_declaration();
               if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
                 SgFunctionType* funType=funDecl->get_type();
                 funType->set_orig_return_type(newBuiltType);
                 numTypeReplace++;
               }
-	  } else if(functionConstructSpec=="body") {
-	    // finds all variables in body of function and replaces type
-	    std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
-	    for (auto initName : varInitList) {
-	      initName->set_type(newBuiltType);
-	      numTypeReplace++;
-	    }
-	  } else {
-	    cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
-	    exit(1);
-	  }
-	  //tt.addToTransformationList(list,newType,funDef,varName);
-	} // end of loop on functionConstructSpecList
+            } else if(functionConstructSpec=="body") {
+              // finds all variables in body of function and replaces type
+              std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
+              for (auto initName : varInitList) {
+                initName->set_type(newBuiltType);
+                numTypeReplace++;
+              }
+            } else {
+              cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
+              exit(1);
+            }
+            //tt.addToTransformationList(list,newType,funDef,varName);
+          } // end of loop on functionConstructSpecList
+        }
       } else if(commandName=="transform") {
-	if(splitLine.size()!=4) {
-	  cerr<<"Error in line "<<lineNr<<": wrong number of arguments: "<<splitLine.size()<<" (should be 4)."<<endl;
-	}
-	if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
-	string functionName=splitLine[1];
-	string accessTypeName=splitLine[2];
-	string transformationName=splitLine[3];
-	SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
-	if(funDef) {
-	  SgType* accessType=buildTypeFromStringSpec(accessTypeName,funDef);
-	  if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
-	  if(transformationName=="readwrite_access_transformation") {
-	    tfTransformation.transformHancockAccess(accessType,funDef);
-	  } else if(transformationName=="arrayofstructs_access_transformation") {
+        if(splitLine.size()!=4) {
+          cerr<<"Error in line "<<lineNr<<": wrong number of arguments: "<<splitLine.size()<<" (should be 4)."<<endl;
+        }
+        if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
+        string functionName=splitLine[1];
+        string accessTypeName=splitLine[2];
+        string transformationName=splitLine[3];
+        std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
+        if(functionName=="*") {
+          // transformation is specified to be applied to all functions, create list of all functions
+          listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
+        } else {
+          SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
+          if(funDef==nullptr) {
+            cerr<<"Error: line "<<lineNr<<": function "<<functionName<<" not found."<<endl;
+            return true;
+          } else {
+            listOfFunctionDefinitions.push_back(funDef);
+          }
+        }
+        for (auto funDef : listOfFunctionDefinitions) {
+          SgType* accessType=buildTypeFromStringSpec(accessTypeName,funDef);
+          if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
+          if(transformationName=="readwrite_access_transformation") {
+            tfTransformation.transformHancockAccess(accessType,funDef);
+          } else if(transformationName=="arrayofstructs_access_transformation") {
 	    //cout<<"ASTTERM:"<<AstTerm::astTermWithNullValuesToString(funDef);
-        tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
-      } else if(transformationName=="ad_intermediate_instrumentation") {
-        tfTransformation.instrumentADIntermediate(funDef);
-	  } else {
-	    cerr<<"Error in line "<<lineNr<<": unsupported transformation: "<<transformationName<<endl;
-	    return true;
-	  }
-	} else {
-	  cerr<<"Error: line "<<lineNr<<": function "<<functionName<<" not found."<<endl;
-	  return true;
-	}
+            tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
+          } else if(transformationName=="ad_intermediate_instrumentation") {
+            tfTransformation.instrumentADIntermediate(funDef);
+          }
+        }
       } else {
-	cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
-	return true;
+        cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
+        return true;
       }
     }
     return false;
@@ -286,11 +305,11 @@ bool TypeforgeSpecFrontEnd::run(std::string specFileName, SgProject* root, TypeT
   return true;
 }
 
-int TypeforgeSpecFrontEnd::getNumTypeReplace() {
+int TFSpecFrontEnd::getNumTypeReplace() {
   return numTypeReplace;
 }
 
-TypeTransformer::VarTypeVarNameTupleList
-TypeforgeSpecFrontEnd::getTransformationList() {
+TFTypeTransformer::VarTypeVarNameTupleList
+TFSpecFrontEnd::getTransformationList() {
   return _list;
 }

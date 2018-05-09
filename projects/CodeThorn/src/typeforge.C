@@ -14,8 +14,8 @@
 #include "AstProcessing.h"
 #include "AstMatching.h"
 #include "Sawyer/Graph.h"
-#include "TypeTransformer.h"
-#include "TypeforgeSpecFrontEnd.h"
+#include "TFTypeTransformer.h"
+#include "TFSpecFrontEnd.h"
 
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
@@ -106,7 +106,7 @@ int main (int argc, char* argv[])
   vector<string> argvList(argv, argv+argc);
   argvList.push_back("-rose:skipfinalCompileStep");
   SgProject* sageProject=frontend (argvList); 
-  TypeTransformer tt;
+  TFTypeTransformer tt;
 
   if(args.isUserProvided("explicit")) {
     tt.makeAllCastsExplicit(sageProject);
@@ -147,7 +147,7 @@ int main (int argc, char* argv[])
     string commandFileName=args.getString("command-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
-    TypeforgeSpecFrontEnd typeforgeSpecFrontEnd;
+    TFSpecFrontEnd typeforgeSpecFrontEnd;
     bool error=typeforgeSpecFrontEnd.run(commandFileName,sageProject,tt,tfTransformation);
     if(error) {
       exit(1);
@@ -169,7 +169,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var")) {
-    TypeTransformer::VarTypeVarNameTupleList list;
+    TFTypeTransformer::VarTypeVarNameTupleList list;
     SgFunctionDefinition* funDef=nullptr;
     if(args.isUserProvided("float-var")) {
       string varNames=args.getString("float-var");

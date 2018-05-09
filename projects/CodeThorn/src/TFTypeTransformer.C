@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "TypeTransformer.h"
+#include "TFTypeTransformer.h"
 #include "SgNodeHelper.h"
 #include "AstTerm.h"
 #include "AstMatching.h"
@@ -8,24 +8,24 @@
 using namespace std;
 
 // static member
-bool TypeTransformer::_traceFlag=false;
+bool TFTypeTransformer::_traceFlag=false;
 
-void TypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames) {
+void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames) {
   vector<string> varNamesVector=CppStdUtilities::splitByComma(varNames);
   for (auto name:varNamesVector) {
-    TypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name);
+    TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name);
     list.push_back(p);
   }
 }
 
-void TypeTransformer::transformCommandLineFiles(SgProject* project) {
+void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
   // make all floating point casts explicit
   makeAllCastsExplicit(project);
   // transform casts in AST
   transformCastsInCommandLineFiles(project);
 }
 
-void TypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNameTupleList& list) {
+void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNameTupleList& list) {
   for (auto typeNameTuple:list) {
     SgType* newVarType=std::get<0>(typeNameTuple);
     SgFunctionDefinition* funDef=std::get<1>(typeNameTuple);
@@ -53,12 +53,12 @@ void TypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNam
   }
 }
 
-void TypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
+void TFTypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
   _castTransformer.transformCommandLineFiles(project);
 }
 
 
-int TypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
+int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
                                                SgNode* root,
                                                string varNameToFind,
                                                SgType* newType) {
@@ -80,7 +80,7 @@ int TypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
   return foundVar;
 }
 
-int TypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType) {
+int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType) {
   RoseAst ast(root);
   bool foundVar=0;
   // need to process formal params explicitly because not found in traversal (?)
@@ -104,7 +104,7 @@ int TypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgTy
   return foundVar;
 }
 
-void TypeTransformer::makeAllCastsExplicit(SgProject* root) {
+void TFTypeTransformer::makeAllCastsExplicit(SgProject* root) {
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgCastExp* castExp=isSgCastExp(*i)) {
@@ -115,7 +115,7 @@ void TypeTransformer::makeAllCastsExplicit(SgProject* root) {
   }
 }
 
-void TypeTransformer::annotateImplicitCastsAsComments(SgProject* root) {
+void TFTypeTransformer::annotateImplicitCastsAsComments(SgProject* root) {
   RoseAst ast(root);
   std::string matchexpression="$CastNode=SgCastExp($CastOpChild)";
   AstMatching m;
@@ -158,25 +158,25 @@ void TypeTransformer::annotateImplicitCastsAsComments(SgProject* root) {
   cout<<"Number of compiler generated casts: "<<statementTransformations<<endl;
 }
 
-void TypeTransformer::setTraceFlag(bool traceFlag) {
+void TFTypeTransformer::setTraceFlag(bool traceFlag) {
   _traceFlag=traceFlag;
 }
 
-bool TypeTransformer::getTraceFlag() {
+bool TFTypeTransformer::getTraceFlag() {
   return _traceFlag;
 }
 
-void TypeTransformer::trace(string s) {
-  if(TypeTransformer::_traceFlag) {
+void TFTypeTransformer::trace(string s) {
+  if(TFTypeTransformer::_traceFlag) {
     cout<<"TRACE: "<<s<<endl;
   }
 }
 
-int TypeTransformer::getTotalNumChanges() {
+int TFTypeTransformer::getTotalNumChanges() {
   return _totalNumChanges;
 }
 
-void TypeTransformer::generateCsvTransformationStats(std::string fileName,int numTypeReplace,TypeTransformer& tt, TFTransformation& tfTransformation) {
+void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
   ss<<numTypeReplace
     <<","<<tt.getTotalNumChanges()
@@ -187,7 +187,7 @@ void TypeTransformer::generateCsvTransformationStats(std::string fileName,int nu
   CppStdUtilities::writeFile(fileName,ss.str());
 }
 
-void TypeTransformer::printTransformationStats(int numTypeReplace,TypeTransformer& tt, TFTransformation& tfTransformation) {
+void TFTypeTransformer::printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
   int numTypeBasedReplacements=numTypeReplace;
   int numVarNameBasedReplacements=tt.getTotalNumChanges();
