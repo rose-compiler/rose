@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_MemoryMap_H
 #define ROSE_BinaryAnalysis_MemoryMap_H
 
-#include "ByteOrder.h"
+#include <ByteOrder.h>
+#include <Combinatorics.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -446,6 +447,22 @@ public:
     void dump(std::ostream&, std::string prefix="") const;
     void print(std::ostream &o, std::string prefix="") const { dump(o, prefix); }
     /** @} */
+
+    /** Compute a hash of the entire memory contents.
+     *
+     *  This hashes the memory contents. Segment information (names, addresses, permissions, etc) are not included in the hash;
+     *  only the bytes stored in the map.  The user should supply a hasher whose @c append method will be called to add memory
+     *  map contents to the hash.  For instance, here's one way to hash the contents of a file without having to read the
+     *  entire file into memory first:
+     *
+     * @code
+     *  MemoryMap::Ptr file = MemoryMap::instance();
+     *  file->insertFile("/name/of/the/file", 0);
+     *  HasherSha1 hasher;
+     *  file->hash(hasher);
+     *  std::cout <<"file SHA1 hash is " <<hash <<"\n";
+     * @endcode */
+    Combinatorics::Hasher& hash(Combinatorics::Hasher&) const;
 
     /** Title of a segment when printing the map. */
     static std::string segmentTitle(const Segment&);
