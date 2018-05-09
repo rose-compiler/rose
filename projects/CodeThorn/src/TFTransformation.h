@@ -18,6 +18,9 @@ class TFTransformation {
   void checkAndTransformNonAssignments(SgType* accessType,SgNode* root);
   void transformArrayAssignments(SgType* accessType,SgNode* root);
   void transformArrayOfStructsAccesses(SgType* accessType,SgNode* root);
+  //Transformation ad_intermediate
+  void instrumentADIntermediate(SgNode* root);
+
 };
 
 

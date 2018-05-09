@@ -14,6 +14,41 @@ SgType* getElementType(SgType* type) {
   }
 }
 
+/*
+  transform assignments:
+  $var1->$var2[$IDX1][$IDX2] = $RHS where basetype($var2)==TYPE 
+    ==> $var1->$var2.set($IDX1,$IDX2,transformRhs($RHS))
+  SgVarRefExp=$RHS
+    ==> transformRhs($RHS)
+  $RHS (e.g. function call: transform all parameters)
+    ==> transformRhs($RHS)
+  $var[$IDX1,$IDX2] = $RHS 
+    where type($var)==HancockWorkArrays**
+          ||type($var)==FluxVector**
+    ==> $var.set($IDX1,$IDX2,transform($RHS))
+
+transform on lhs or rhs:
+  $var[$IDX1][$IDX2] where type($var)==HancockWorkArrays** 
+                       && (name($var)==v_max_x || (name($var)==v_max_y))
+    ==> $var($IDX1,$IDX2)
+
+  Transformation 2dArrayOfStructs to StructWithArray:
+  $var1[$IDX1][$IDX2].$var2 => $var1.$var2($IDX1,$IDX2) where name($var2) in {"rho","p"}
+  $var1[$IDX1][$IDX2].$var2[$E3] => $var1.$var2[$E3]($IDX1,$IDX2) where name($var2)=="u"
+
+transformRhs(exp):
+  $var[$IDX1][$IDX2] where elementType(var)==TYPE
+    ==> $var.get($IDX1,$IDX2)
+
+ */
+void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
+  transformArrayAssignments(accessType,root);
+  checkAndTransformVarAssignments(accessType,root);
+  checkAndTransformNonAssignments(accessType,root);
+  //m.printMarkedLocations();
+  //m.printMatchOperationsSequence();
+}
+
 // SgPntrArrRefExp(SgPntrArrRefExp($DS,$E1),$E2) ==> $DS+".get("+$E1+","+$E2+")";
 void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
   // transform RHS:
@@ -210,37 +245,34 @@ void TFTransformation::transformArrayOfStructsAccesses(SgType* accessType,SgNode
   }
 }
 
-/*
-  transform assignments:
-  $var1->$var2[$IDX1][$IDX2] = $RHS where basetype($var2)==TYPE 
-    ==> $var1->$var2.set($IDX1,$IDX2,transformRhs($RHS))
-  SgVarRefExp=$RHS
-    ==> transformRhs($RHS)
-  $RHS (e.g. function call: transform all parameters)
-    ==> transformRhs($RHS)
-  $var[$IDX1,$IDX2] = $RHS 
-    where type($var)==HancockWorkArrays**
-          ||type($var)==FluxVector**
-    ==> $var.set($IDX1,$IDX2,transform($RHS))
-
-transform on lhs or rhs:
-  $var[$IDX1][$IDX2] where type($var)==HancockWorkArrays** 
-                       && (name($var)==v_max_x || (name($var)==v_max_y))
-    ==> $var($IDX1,$IDX2)
-
-  Transformation 2dArrayOfStructs to StructWithArray:
-  $var1[$IDX1][$IDX2].$var2 => $var1.$var2($IDX1,$IDX2) where name($var2) in {"rho","p"}
-  $var1[$IDX1][$IDX2].$var2[$E3] => $var1.$var2[$E3]($IDX1,$IDX2) where name($var2)=="u"
-
-transformRhs(exp):
-  $var[$IDX1][$IDX2] where elementType(var)==TYPE
-    ==> $var.get($IDX1,$IDX2)
-
- */
-void TFTransformation::transformHancockAccess(SgType* accessType,SgNode* root) {
-  transformArrayAssignments(accessType,root);
-  checkAndTransformVarAssignments(accessType,root);
-  checkAndTransformNonAssignments(accessType,root);
-  //m.printMarkedLocations();
-  //m.printMatchOperationsSequence();
+//Transformation ad_intermediate
+void TFTransformation::instrumentADIntermediate(SgNode* root) {
+  RoseAst ast(root);
+  std::string matchexpression;
+  matchexpression+="$ASSIGNOP=SgAssignOp($VAR=SgVarRefExp,_)";
+  AstMatching m;
+  MatchResult r=m.performMatching(matchexpression,root);
+  for(MatchResult::iterator j=r.begin();j!=r.end();++j) {
+    SgExpression* assignOp=isSgExpression((*j)["$ASSIGNOP"]);
+    SgVarRefExp* varRefExp=isSgVarRefExp((*j)["$VAR"]);
+    SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
+    if(varRefExpSymbol) {
+      SgName varName=varRefExpSymbol->get_name();
+      string varNameString=varName;
+      string instrumentationString="AD_INTERMEDIATE("+varNameString+",\""+varNameString+"\");";
+      // locate root node of statement
+      SgNode* stmtSearch=assignOp;
+      while(!isSgStatement(stmtSearch)) {
+        stmtSearch=stmtSearch->get_parent();
+        if(!isSgStatement(stmtSearch)&&!isSgExpression(stmtSearch)) {
+          cerr<<"Error: Unsupported expression structure at "<<SgNodeHelper::sourceLineColumnToString(assignOp)<<endl;
+          exit(1);
+        }
+      }
+      // instrument now: insert empty statement and replace it with macro call
+      //cout<<"TRANSFORMATION: insert after "<< SgNodeHelper::sourceLineColumnToString(stmtSearch) <<" : "<<instrumentationString<<endl;
+      string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
+      SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+    }
+  }
 }
