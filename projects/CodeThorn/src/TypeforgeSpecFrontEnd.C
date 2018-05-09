@@ -262,9 +262,9 @@ bool TypeforgeSpecFrontEnd::run(std::string specFileName, SgProject* root, TypeT
 	    tfTransformation.transformHancockAccess(accessType,funDef);
 	  } else if(transformationName=="arrayofstructs_access_transformation") {
 	    //cout<<"ASTTERM:"<<AstTerm::astTermWithNullValuesToString(funDef);
-            tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
-          } else if(transformationName=="ad_intermediate_instrumentation") {
-            tfTransformation.instrumentADIntermediate(funDef);
+        tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
+      } else if(transformationName=="ad_intermediate_instrumentation") {
+        tfTransformation.instrumentADIntermediate(funDef);
 	  } else {
 	    cerr<<"Error in line "<<lineNr<<": unsupported transformation: "<<transformationName<<endl;
 	    return true;

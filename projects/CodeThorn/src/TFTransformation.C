@@ -259,7 +259,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
     if(varRefExpSymbol) {
       SgName varName=varRefExpSymbol->get_name();
       string varNameString=varName;
-      string instrumentationStmt="AD_INTERMEDIATE("+varNameString+",\""+varNameString+"\");";
+      string instrumentationString="AD_INTERMEDIATE("+varNameString+",\""+varNameString+"\");";
       // locate root node of statement
       SgNode* stmtSearch=assignOp;
       while(!isSgStatement(stmtSearch)) {
@@ -269,8 +269,10 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
           exit(1);
         }
       }
-      // instrument now
-      cout<<"(TODO): TRANSFORMATION: insert after "<< SgNodeHelper::sourceLineColumnToString(stmtSearch) <<" : "<<instrumentationStmt<<endl;
+      // instrument now: insert empty statement and replace it with macro call
+      //cout<<"TRANSFORMATION: insert after "<< SgNodeHelper::sourceLineColumnToString(stmtSearch) <<" : "<<instrumentationString<<endl;
+      string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
+      SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
     }
   }
 }
