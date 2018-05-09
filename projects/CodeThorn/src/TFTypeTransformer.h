@@ -5,7 +5,7 @@
 #include "CastTransformer.h"
 #include "TFTransformation.h"
 
-class TypeTransformer {
+class TFTypeTransformer {
  public:
   typedef std::tuple<SgType*,SgFunctionDefinition*,std::string> VarTypeVarNameTuple;
   typedef std::list<VarTypeVarNameTuple> VarTypeVarNameTupleList;
@@ -22,8 +22,8 @@ class TypeTransformer {
   bool getTraceFlag();
   static void trace(std::string s);
   int getTotalNumChanges();
-  void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TypeTransformer& tt, TFTransformation& tfTransformation);
-  void printTransformationStats(int numTypeReplace,TypeTransformer& tt, TFTransformation& tfTransformation);
+  void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
+  void printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
 
  private:
   CastTransformer _castTransformer;
