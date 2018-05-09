@@ -605,28 +605,54 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
     if (pathInsnIndex != size_t(-1))
         ops->pathInsnIndex(pathInsnIndex);
 
-    // Make the function return an unknown value
-    SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.get_nbits()));
-    VarDetail varDetail;
-    varDetail.returnFrom = summary.address;
-    varDetail.firstAccessIdx = ops->pathInsnIndex();
-    ops->varDetail(retval->get_expression()->isLeafNode()->toString(), varDetail);
-    ops->writeRegister(REG_RETURN_, retval);
+    Sawyer::Message::Stream debug(Rose::BinaryAnalysis::InstructionSemantics2::mlog[DEBUG]);
+    if (debug) {
+        SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
+        debug <<"summary semantics for " <<summary.name <<"\n";
+        debug <<"  +-------------------------------------------------\n"
+              <<"  | " <<summary.name <<"\n"
+              <<"  +-------------------------------------------------\n"
+              <<"    state before summarized function:\n"
+              <<(*ops->currentState() + fmt);
+    }
+    
+    SymbolicSemantics::SValuePtr retval;
+    if (functionSummarizer_ && functionSummarizer_->process(*this, summary, ops)) {
+        retval = functionSummarizer_->returnValue(*this, summary, ops);
+    } else {
+        // Make the function return an unknown value
+        retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.get_nbits()));
+        ops->writeRegister(REG_RETURN_, retval);
 
-    // Cause the function to return to the address stored at the top of the stack.
-    RegisterDescriptor SP = cpu->stackPointerRegister();
-    BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.get_nbits()));
-    BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
-                                                            ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
-    ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+        // Cause the function to return to the address stored at the top of the stack.
+        RegisterDescriptor SP = cpu->stackPointerRegister();
+        BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.get_nbits()));
+        BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
+                                                                ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
+        ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-    // Pop some things from the stack.
-    int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
-                 summary.stackDelta :
-                 returnTarget->get_width() / 8;
-    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
-    ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+        // Pop some things from the stack.
+        int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
+                     summary.stackDelta :
+                     returnTarget->get_width() / 8;
+        stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+        ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+    }
+
+    if (retval) {
+        VarDetail varDetail;
+        varDetail.returnFrom = summary.address;
+        varDetail.firstAccessIdx = ops->pathInsnIndex();
+        ops->varDetail(retval->get_expression()->isLeafNode()->toString(), varDetail);
+    }
+
+    if (debug) {
+        SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
+        debug <<"    state after summarized function:\n";
+        debug <<(*ops->currentState() + fmt);
+    }
 }
+
 
 void
 FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
@@ -936,6 +962,8 @@ FeasiblePath::insertCallSummary(const P2::ControlFlowGraph::ConstVertexIterator 
     int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
 
     FunctionSummary summary(cfgCallTarget, stackDelta);
+    if (functionSummarizer_)
+        functionSummarizer_->init(*this, summary /*in,out*/, function, cfgCallTarget);
     functionSummaries_.insert(summary.address, summary);
     summaryVertex->value().address(summary.address);
 }
@@ -1046,10 +1074,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     }
                 }
                 doBacktrack = true;
-#if 1 // Adding this because I think it should be here. [Robb P Matzke 2017-03-28]
             } else if (!isFeasible) {
-                doBacktrack = true;
-#endif
+                doBacktrack = true; // Adding this because I think it should be here. [Robb P Matzke 2017-03-28]
             }
 
             // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
