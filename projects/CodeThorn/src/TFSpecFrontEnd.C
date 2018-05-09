@@ -69,21 +69,34 @@ SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefin
 // experimental "parser" for building types from string
 SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
   SgType* newType=nullptr;
-  std::regex e("[_A-Za-z]+|\\*|&|const|\\s");
+  std::regex e("[_A-Za-z]+|\\*|&|const");
   // default constructor = end-of-sequence
   std::regex_token_iterator<std::string::iterator> rend;
   std::regex_token_iterator<std::string::iterator> a ( type.begin(), type.end(), e );
   bool buildConstType=false;
+  bool isLongType=false;
+  bool isShortType=false;
   while (a!=rend) {
-    string typePart=*a++;
+    string typePart=*a;
+    cout<<"DEBUG: typePart:start>"<<typePart<<"<end"<<endl;
+    a++;
     if(typePart=="float") {
+      if(isLongType||isShortType) {
+        cerr<<"Error: wrong type: float cannot be short or long."<<endl;
+        exit(1);
+      }
       newType=SageBuilder::buildFloatType();
     } else if(typePart=="double") {
-      newType=SageBuilder::buildDoubleType();
-    } else if(typePart=="long double") {
-      newType=SageBuilder::buildLongDoubleType();
+      if(!isLongType)
+        newType=SageBuilder::buildDoubleType();
+      else
+        newType=SageBuilder::buildLongDoubleType();
+    } else if(typePart=="short") {
+      isShortType=true;
+    } else if(typePart=="long") {
+      isLongType=true;
     } else if(typePart==" ") {
-    continue;
+      continue;
     } else if(typePart=="*") {
       if(newType==nullptr) goto parseerror;
       newType=SageBuilder::buildPointerType(newType);
