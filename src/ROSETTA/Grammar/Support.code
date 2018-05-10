@@ -4649,6 +4649,11 @@ HEADER_EXP_BASE_CLASS_START
           void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_EXP_BASE_CLASS_END
 
+HEADER_NONREAL_BASE_CLASS_START
+     public:
+          void post_construction_initialization() $ROSE_OVERRIDE;
+HEADER_NONREAL_BASE_CLASS_END
+
 
 HEADER_INITIALIZED_NAME_START
 
@@ -11769,6 +11774,13 @@ SgExpBaseClass::post_construction_initialization()
    {
    }
 SOURCE_EXP_BASE_CLASS_END
+
+SOURCE_NONREAL_BASE_CLASS_START
+void
+SgNonrealBaseClass::post_construction_initialization()
+   {
+   }
+SOURCE_NONREAL_BASE_CLASS_END
 
 SOURCE_X_INITIALIZED_NAME_START
 

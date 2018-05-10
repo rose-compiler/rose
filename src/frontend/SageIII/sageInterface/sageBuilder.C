@@ -2866,7 +2866,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
 
 
 SgMemberFunctionType*
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassType *classType, unsigned int mfunc_specifier)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier)
    {
   // DQ (8/19/2012): This is a refactored version of the buildMemberFunctionType() below so that we can
   // isolate out the part that uses a SgClassType from the version that uses the SgClassDefinition.
@@ -3096,7 +3096,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 //
 // insert into symbol table when not duplicated
 SgMemberFunctionType*
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassDefinition *struct_name, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgScopeStatement * struct_name, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
    {
   // This function has to first build a version of the SgMemberFunctionType so that it can generate a mangled name.
   // If the mangled name can be use to lookup a SgMemberFunctionType then the "just built" SgMemberFunctionType
@@ -3120,18 +3120,23 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
-     SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(struct_name);
+     SgClassDefinition* classDefinition = isSgClassDefinition(struct_name);
+     SgDeclarationScope* decl_scope = isSgDeclarationScope(struct_name);
+
+     ROSE_ASSERT(classDefinition != NULL || decl_scope != NULL);
 
      SgDeclarationStatement* declaration = NULL;
-     if (templateClassDefinition != NULL)
+     if (classDefinition != NULL)
         {
-          declaration = templateClassDefinition->get_declaration();
-          ROSE_ASSERT(declaration != NULL);
+          declaration = classDefinition->get_declaration();
+        }
+       else if (decl_scope != NULL)
+        {
+          declaration = isSgDeclarationStatement(decl_scope->get_parent());
         }
        else
         {
-          declaration = struct_name->get_declaration();
-          ROSE_ASSERT(declaration != NULL);
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(declaration != NULL);
@@ -3151,50 +3156,29 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           printf ("WARNING: typeList == NULL \n");
         }
 
-#if 0
-  // DQ (8/15/2013): I think that the function type is computed the same for templates as non-templates, and template
-  // instantiations.  The difference is now template arguments or templae parameters are used to distinquish the
-  // different symbols in the symbol table lookup.
-     if (isSgTemplateClassDeclaration(declaration) != NULL)
-        {
-          printf ("In buildMemberFunctionType(): Not clear how to handle case of SgTemplateClassDeclaration \n");
-        }
-#endif
-#if 0
-     if (isSgTemplateClassDeclaration(declaration) != NULL)
-        {
-          printf ("Not clear how to handle case of SgTemplateClassDeclaration \n");
-          ROSE_ASSERT(false);
-        }
-#endif
-
      SgClassDeclaration*         classDeclaration         = isSgClassDeclaration(declaration);
      SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(declaration);
+     SgNonrealDecl *             nrdecl                   = isSgNonrealDecl(declaration);
+
+     ROSE_ASSERT(classDeclaration != NULL || nrdecl != NULL);
 
      SgMemberFunctionType* funcType = NULL;
-  // ROSE_ASSERT(classDeclaration != NULL);
-
-  // DQ (8/15/2013): I think we can asert this under the new design where
-  // SgTemplateClassDeclaration is derived from SgClassDeclaration.
-     ROSE_ASSERT(classDeclaration != NULL);
 
   // DQ (12/4/2011): Modified SgClassType to support template declarations (SgTemplateClassDeclaration now contains a type set to SgClassType.
   // The SgClassType has been modified (browdened) to support a SgDeclarationStatement instead of a SgClassDeclaration.
   // SgClassType* classType = classDeclaration->get_type();
-     SgClassType* classType = NULL;
+     SgType* classType = NULL;
      if (classDeclaration != NULL)
         {
           classType = classDeclaration->get_type();
-          ROSE_ASSERT(classType != NULL);
+        }
+       else if (decl_scope != NULL)
+        {
+          classType = nrdecl->get_type();
         }
        else
         {
-          ROSE_ASSERT(templateClassDeclaration != NULL);
-          SgType* type = templateClassDeclaration->get_type();
-          ROSE_ASSERT(type != NULL);
-
-          classType = isSgClassType(type);
-          ROSE_ASSERT(classType != NULL);
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(classType != NULL);
@@ -3407,6 +3391,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         }
 #endif
 
+#if 1
+     printf ("In buildNondefiningFunctionDeclaration_T(): XXX_name = %s\n", XXX_name.str());
+#endif
+
   // argument verification
      if (scope == NULL)
         {
@@ -3515,16 +3503,12 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         {
        // func_type = buildMemberFunctionType(return_type,paralist,NULL,0);
        // func_type = buildFunctionType(return_type,paralist);
-#if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s build SgFunctionParameterTypeList \n",scope,scope->class_name().c_str());
+#if 1
+          printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s\n",scope,scope->class_name().c_str());
 #endif
-          SgClassDefinition *struct_name = isSgClassDefinition(scope);
-          ROSE_ASSERT(struct_name != NULL);
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
 
-       // DQ (11/6/2011): Modified function interfaces to support defining const and vaolatile functions (part of function type, but be built before types are shared).
-       // func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ 0);
-          func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ functionConstVolatileFlags);
+          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
 
        // printf ("Error: SgFunctionType built instead of SgMemberFunctionType \n");
        // ROSE_ASSERT(false);
@@ -6924,6 +6908,9 @@ SgNonrealDecl * SageBuilder::buildNonrealDecl(const SgName & name, SgDeclaration
   SgSymbol * found_symbol = scope->lookup_symbol(name);
   if (found_symbol != NULL) {
     SgNonrealSymbol * symbol = isSgNonrealSymbol(found_symbol);
+    if (symbol == NULL) {
+      printf("  found_symbol = %p (%s)\n", found_symbol, found_symbol->class_name().c_str());
+    }
     ROSE_ASSERT(symbol != NULL);
     result = symbol->get_declaration();
     ROSE_ASSERT(result != NULL);
@@ -6992,17 +6979,17 @@ SgUpcMythread* SageBuilder::buildUpcMythread_nfi()
   return result;
 }
 
-SgThisExp* SageBuilder::buildThisExp(SgClassSymbol* sym)
+SgThisExp* SageBuilder::buildThisExp(SgSymbol* sym)
 {
-  SgThisExp* result = new SgThisExp(sym, 0);
+  SgThisExp* result = new SgThisExp(isSgClassSymbol(sym), isSgNonrealSymbol(sym), 0);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   return result;
 }
 
-SgThisExp* SageBuilder::buildThisExp_nfi(SgClassSymbol* sym)
+SgThisExp* SageBuilder::buildThisExp_nfi(SgSymbol* sym)
 {
-  SgThisExp* result = new SgThisExp(sym, 0);
+  SgThisExp* result = new SgThisExp(isSgClassSymbol(sym), isSgNonrealSymbol(sym), 0);
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
@@ -15026,6 +15013,28 @@ SageBuilder::buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefin
      baseclass->set_parent(classDefinition);
 
   // DQ (6/21/2005): Notice that this is copied by value (the base class list should be a list of pointers to SgBaseClass (later)
+     classDefinition->append_inheritance(baseclass);
+
+     return baseclass;
+   }
+
+
+SgNonrealBaseClass*
+SageBuilder::buildNonrealBaseClass ( SgNonrealDecl* nrdecl, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect )
+   {
+     ROSE_ASSERT(nrdecl != NULL);
+     ROSE_ASSERT(classDefinition != NULL);
+
+     SgNonrealBaseClass * baseclass = new SgNonrealBaseClass ( NULL , isDirect , nrdecl );
+     ROSE_ASSERT(baseclass != NULL);
+
+     if (isVirtual == true)
+        {
+          baseclass->get_baseClassModifier().setVirtual();
+        }
+
+     baseclass->set_parent(classDefinition);
+
      classDefinition->append_inheritance(baseclass);
 
      return baseclass;

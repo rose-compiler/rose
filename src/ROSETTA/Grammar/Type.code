@@ -864,7 +864,7 @@ HEADER_MEMBER_FUNCTION_TYPE_START
        // DQ (12/6/2012): Adding member function specifier data (since this will be a part of the generated mangled name).
        // DQ (12/3/2011): Added better support for member function name mangling (symetric with SgFunctionType).
        // static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgClassType* classType );
-          static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgClassType* classType, unsigned int mfunc_specifier );
+          static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgType* classType, unsigned int mfunc_specifier );
 
       //! I forget why this is here.
           SgMemberFunctionType * mkAnotherType(SgType *);
@@ -5159,7 +5159,7 @@ SgMemberFunctionType::get_mangled_name (void) const
 
 // DQ (12/6/2012): Adding member function specifier data (since this will be a part of the generated mangled name).
 // SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList, SgClassType* classType )
-SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList, SgClassType* classType, unsigned int mfunc_specifier )
+SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList, SgType* classType, unsigned int mfunc_specifier )
    {
   // DQ (12/3/2011): Added this static function to simplify (refactor) how mangled names are generated).
   // The advantage of refactoring this code to a static function is that the managle name generated to

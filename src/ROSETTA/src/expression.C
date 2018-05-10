@@ -2223,6 +2223,8 @@ Grammar::setUpExpressions ()
      ThisExp.setFunctionPrototype ( "HEADER_THIS_EXPRESSION", "../Grammar/Expression.code" );
      ThisExp.setDataPrototype     ( "SgClassSymbol*", "class_symbol", "= NULL",
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ThisExp.setDataPrototype     ( "SgNonrealSymbol*", "nonreal_symbol", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/14/2006): This is a CC++ specific data member, but it is part of the 
   // constructor argument list so we will remove it later.
