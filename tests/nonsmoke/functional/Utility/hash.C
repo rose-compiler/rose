@@ -1,6 +1,7 @@
 // Tests various hash functions.
 
 #include <rose.h>
+#include <rosePublicConfig.h>
 #include <Combinatorics.h>
 #include <MemoryMap.h>
 #include <iostream>
@@ -124,6 +125,7 @@ testAllHashes() {
 static void
 testMemoryMap() {
     std::cout <<"MemoryMap hashing\n";
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     typedef Combinatorics::HasherFnv Hasher;              // this one doesn't depend on libgcrypt
 
     static const size_t dataSize = 3;
@@ -146,6 +148,9 @@ testMemoryMap() {
     std::cout <<"  direct hash = " <<hasher2 <<"\n";
 
     ASSERT_always_require(hasher1.toString() == hasher2.toString());
+#else
+    std::cout <<"  ROSE was not configured with binary analysis support\n";
+#endif
 }
 
 int
