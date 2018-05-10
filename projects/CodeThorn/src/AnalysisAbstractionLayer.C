@@ -49,10 +49,10 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
       ostringstream exceptionMsg;
       exceptionMsg << "AnalysisAbstractionLayer::usedVariablesInsideFunctions: Invalid variable id for SgVarRefExp "
                    << (*i)->unparseToString() << ", Symbol: " << (*i)->get_symbol() << endl;
-      cout<<" INVALID!"<<endl;
+      cerr<<exceptionMsg.str();
+      exit(1);
       //throw SPRAY::Exception(exceptionMsg.str());
     }
-    cout<<endl;
     setOfUsedVars.insert(id);
   }
   return setOfUsedVars;

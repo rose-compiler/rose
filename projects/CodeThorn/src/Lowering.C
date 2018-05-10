@@ -152,7 +152,7 @@ namespace SPRAY {
     tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
     tmpVarDeclaration->set_parent(scope);
     ROSE_ASSERT(tmpVarDeclaration!= 0);
-    cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
+    //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
     tmpVarNr++;
     transformationList.push_back(make_pair(stmt,expr));
   }
@@ -191,7 +191,7 @@ namespace SPRAY {
   
   void Lowering::normalizeExpressions(SgNode* node) {
     // TODO: if temporary variables are generated, the initialization-list
-    // must be put into a block, otherwise some generates gotos are
+    // must be put into a block, otherwise some generated gotos are
     // not legal (crossing initialization).
 
     // find all SgExprStatement, SgReturnStmt
@@ -199,14 +199,14 @@ namespace SPRAY {
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(SgExprStatement* exprStmt=isSgExprStatement(*i)) {
         if(!SgNodeHelper::isCond(exprStmt)) {
-          cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
+          //cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
           SgExpression* expr=exprStmt->get_expression();
           normalizeExpression(exprStmt,expr);
           i.skipChildrenOnForward();
         }
       }
       if(isSgReturnStmt(*i)) {
-        cout<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
+        //cout<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
         i.skipChildrenOnForward();
       }
     }
@@ -234,8 +234,8 @@ namespace SPRAY {
         SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
         SageInterface::replaceExpression(expr, tmpVarReference);
         //      }
-      cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
-      tmpVarNr++;
+        //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
+        tmpVarNr++;
     }
   }
 

@@ -618,7 +618,9 @@ check-matcher:
 
 CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-equivalence-checking check-data-races check-svcomp-witness
 
-CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
+#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
+CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven-reset-analyzer
+
 CHECK_WITH_SPOT=$(CHECK_DEFAULT) $(CHECK_WITH_SPOT_ONLY)
 
 if ROSE_WITH_SPOT
@@ -658,17 +660,24 @@ check-data-races:
 	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
-check-flow-insensitive:
+#check-flow-insensitive: check-analyterix check-const-analysis
+check-flow-insensitive: check-const-analysis
+
+check-analyterix:
 	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
 	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+
+check-const-analysis:
 	@echo ================================================================
 	@echo RUNNING CONST ANALYSIS CHECK
 	@echo ================================================================
 	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c 
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
+
+
 
 check-ltl:
 	@echo ================================================================
@@ -690,8 +699,12 @@ check-arrays:
 check-array-bounds: ./codethorn
 	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
 
+# seg-faults with --reset-analyzer=no. Works with --reset-analyzer=yes
 check-ltl-driven:
 	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=no
+
+check-ltl-driven-reset-analyzer:
+	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=yes
 
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
