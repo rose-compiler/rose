@@ -503,6 +503,7 @@ SgNonrealDecl
 SgNonrealRefExp
 SgNonrealSymbol
 SgNonrealType
+SgNonrealBaseClass
 SgNullExpression
 SgNullptrValExp
 SgNullStatement

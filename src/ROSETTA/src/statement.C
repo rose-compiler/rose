@@ -2045,6 +2045,11 @@ Grammar::setUpStatements ()
      TemplateVariableDeclaration.setDataPrototype("SgInitializedNamePtrList", "variables", "",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     TemplateVariableDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
   // *******************************************************************************
 
 
@@ -2057,6 +2062,11 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateTypedefDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     TemplateTypedefDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // DQ (11/4/2014): Adding IR support for the instantiation of a template typedef (for C++11 support).
   // All of these data members are generally required for any template instantiation.
