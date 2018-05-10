@@ -54,7 +54,7 @@ protected:
 
 std::vector<SelfTest::Ptr> selfTests;
 
-Sawyer::CommandLine::Parser
+ROSE_DLL_API Sawyer::CommandLine::Parser
 createEmptyParser(const std::string &purpose, const std::string &description) {
     Sawyer::CommandLine::Parser parser;
     parser.purpose(purpose);
@@ -73,7 +73,7 @@ createEmptyParser(const std::string &purpose, const std::string &description) {
     return parser;
 }
 
-Sawyer::CommandLine::Parser
+ROSE_DLL_API Sawyer::CommandLine::Parser
 createEmptyParserStage(const std::string &purpose, const std::string &description) {
     return createEmptyParser(purpose, description).skippingNonSwitches(true).skippingUnknownSwitches(true);
 }
@@ -84,7 +84,7 @@ GenericSwitchArgs genericSwitchArgs;
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
 // See header file for more documentation including examples.
-Sawyer::CommandLine::SwitchGroup
+ROSE_DLL_API Sawyer::CommandLine::SwitchGroup
 genericSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup gen("General switches");
@@ -152,7 +152,7 @@ genericSwitches() {
     return gen;
 }
 
-void
+ROSE_DLL_API void
 insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &switchName, bool &storageLocation,
                     const std::string &documentation) {
     using namespace Sawyer::CommandLine;
@@ -171,7 +171,7 @@ insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &swi
               .hidden(true));
 }
 
-void
+ROSE_DLL_API void
 runSelfTestsAndExit() {
     using namespace Rose::Diagnostics;
 

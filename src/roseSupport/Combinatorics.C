@@ -4,7 +4,7 @@
 namespace Rose {
 namespace Combinatorics {
 
-ROSE_UTIL_API bool
+ROSE_DLL_API bool
 flip_coin()
 {
     static LinearCongruentialGenerator rng;
@@ -35,17 +35,17 @@ Hasher::print(std::ostream &out) {
     out <<toString(digest());
 }
 
-ROSE_UTIL_API std::string digest_to_string(const uint8_t *data, size_t size) {
+ROSE_DLL_API std::string digest_to_string(const uint8_t *data, size_t size) {
     std::vector<uint8_t> digest(data+0, data+size);
     return Hasher::toString(digest);
 }
 
-ROSE_UTIL_API std::string
+ROSE_DLL_API std::string
 digest_to_string(const std::vector<uint8_t> &data) {
     return Hasher::toString(data);
 }
 
-ROSE_UTIL_API std::string
+ROSE_DLL_API std::string
 digest_to_string(const std::string &data) {
     const char *s = data.c_str();
     std::vector<uint8_t> digest(s, s + data.size());
@@ -56,7 +56,7 @@ digest_to_string(const std::string &data) {
 // SHA1 hashing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ROSE_UTIL_API std::vector<uint8_t>
+ROSE_DLL_API std::vector<uint8_t>
 sha1_digest(const std::vector<uint8_t> &data) {
     HasherSha1 hasher;
     if (!data.empty())
@@ -64,14 +64,14 @@ sha1_digest(const std::vector<uint8_t> &data) {
     return hasher.digest();
 }
 
-ROSE_UTIL_API std::vector<uint8_t>
+ROSE_DLL_API std::vector<uint8_t>
 sha1_digest(const std::string &data) {
     HasherSha1 hasher;
     hasher.insert(data);
     return hasher.digest();
 }
 
-ROSE_UTIL_API std::vector<uint8_t>
+ROSE_DLL_API std::vector<uint8_t>
 sha1_digest(const uint8_t *data, size_t size) {
     HasherSha1 hasher;
     hasher.append(data, size);
@@ -103,7 +103,7 @@ HasherFnv::append(const uint8_t *message, size_t messageSize) {
         partial_ = (partial_ ^ message[i]) * 0x100000001b3ull;
 }
 
-ROSE_UTIL_API uint64_t
+ROSE_DLL_API uint64_t
 fnv1a64_digest(const std::vector<uint8_t> &data) {
     HasherFnv hasher;
     if (!data.empty())
@@ -111,14 +111,14 @@ fnv1a64_digest(const std::vector<uint8_t> &data) {
     return hasher.partial();
 }
 
-ROSE_UTIL_API uint64_t
+ROSE_DLL_API uint64_t
 fnv1a64_digest(const std::string &data) {
     HasherFnv hasher;
     hasher.insert(data);
     return hasher.partial();
 }
 
-ROSE_UTIL_API uint64_t
+ROSE_DLL_API uint64_t
 fnv1a64_digest(const uint8_t *data, size_t size) {
     HasherFnv hasher;
     hasher.append(data, size);
@@ -129,7 +129,7 @@ fnv1a64_digest(const uint8_t *data, size_t size) {
 } // namespace
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream&
+ROSE_DLL_API std::ostream&
 operator<<(std::ostream &out, Rose::Combinatorics::Hasher &hasher) {
     hasher.print(out);
     return out;
