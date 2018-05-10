@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPTIONS=--normalization --inline
+OPTIONS="--normalize --inline"
 
 TESTDIR=$1
     echo "------------------------------------------------"
@@ -9,7 +9,7 @@ TESTDIR=$1
 
     # C++ tests
     for p in 1 2 3 4 5 6 7 8 9; do
-	./analyterix --csv-deadcode-unreachable=tmptest.csv $OPTIONS $TESTDIR/deadcode/test$p.C
+	./analyterix --csv-deadcode-unreachable=tmptest.csv ${OPTIONS} $TESTDIR/deadcode/test$p.C
 	echo -n "DEADCODE test${p}.C : "
 	diff tmptest.csv $TESTDIR/deadcode/test$p.csv
 	if [ ! $? -eq 0 ]
