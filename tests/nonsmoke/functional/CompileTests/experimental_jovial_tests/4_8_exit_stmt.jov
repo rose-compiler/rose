@@ -1,0 +1,9 @@
+START
+PROGRAM testexit ;
+BEGIN
+ label1: label2: Exit ;
+ label3:
+ EXIT ;
+ exit ;
+END
+TERM

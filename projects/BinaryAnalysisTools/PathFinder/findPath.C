@@ -1536,6 +1536,7 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     searching <<"; took " <<searchTime <<" seconds\n";
 }
 
+#if 0 // [Robb Matzke 2018-04-10]
 /** Merge states for multi-path feasibility analysis. Given two paths, such as when control flow merges after an "if"
  * statement, compute a state that represents both paths.  The new state that's returned will consist largely of ite
  * expressions. */
@@ -1592,7 +1593,9 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
 
     return ops->currentState()->create(mergedReg, mergedMem);
 }
+#endif
 
+#if 0 // [Robb Matzke 2018-04-10]
 // Merge all the predecessor outgoing states to create a new incoming state for the specified vertex.
 static BaseSemantics::StatePtr
 mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::ControlFlowGraph::ConstVertexIterator vertex,
@@ -1613,6 +1616,7 @@ mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::Con
     ASSERT_not_null(state);
     return state;
 }
+#endif
 
 class ReverseMultiVisitDfsTraversal {
     struct Node {

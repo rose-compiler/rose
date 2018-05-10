@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <CommandLine.h>
+#include <Diagnostics.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <BinarySmtCommandLine.h>
 #endif
@@ -31,6 +32,27 @@ protected:
         failedAssertionBehavior(handler);
     }
 };
+
+// Run self tests from the command-line, then exit.
+class SelfTests: public Sawyer::CommandLine::SwitchAction {
+protected:
+    SelfTests() {}
+
+public:
+    typedef Sawyer::SharedPointer<SelfTests> Ptr;
+
+    static Ptr instance() {
+        return Ptr(new SelfTests);
+    }
+
+protected:
+    void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
+        ASSERT_require(cmdline.have("self-test"));
+        runSelfTestsAndExit();
+    }
+};
+
+std::vector<SelfTest::Ptr> selfTests;
 
 Sawyer::CommandLine::Parser
 createEmptyParser(const std::string &purpose, const std::string &description) {
@@ -122,6 +144,11 @@ genericSwitches() {
                .doc(BinaryAnalysis::smtSolverDocumentationString(genericSwitchArgs.smtSolver)));
 #endif
 
+    gen.insert(Switch("self-test")
+               .action(SelfTests::instance())
+               .doc("Instead of doing any real work, run any self tests registered with this tool then exit with success "
+                    "or failure status depending on whether all such tests pass."));
+
     return gen;
 }
 
@@ -142,6 +169,39 @@ insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &swi
               .key(switchName)
               .intrinsicValue(false, storageLocation)
               .hidden(true));
+}
+
+void
+runSelfTestsAndExit() {
+    using namespace Rose::Diagnostics;
+
+    // Run each test sequentially
+    size_t npass=0, nfail=0;
+    BOOST_FOREACH (const SelfTest::Ptr &test, selfTests) {
+        if (test) {
+            mlog[DEBUG] <<"running self test \"" <<StringUtility::cEscape(test->name()) <<"\"...\n";
+            if ((*test)()) {
+                mlog[INFO] <<"passed: self test \"" <<StringUtility::cEscape(test->name()) <<"\"\n";
+                ++npass;
+            } else {
+                mlog[ERROR] <<"failed: self test \"" <<StringUtility::cEscape(test->name()) <<"\"\n";
+                ++nfail;
+            }
+        }
+    }
+
+    // Report results and exit
+    if (npass + nfail == 0) {
+        mlog[INFO] <<"no self tests available for this tool\n";
+        exit(0);
+    } else if (nfail > 0) {
+        mlog[FATAL] <<StringUtility::plural(nfail, "self tests") <<" failed; "
+                    <<StringUtility::plural(npass, "self tests") <<" passed\n";
+        exit(1);
+    } else {
+        mlog[INFO] <<"all self tests pass\n";
+        exit(0);
+    }
 }
 
 } // namespace

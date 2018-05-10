@@ -96,5 +96,33 @@ ROSE_UTIL_API std::string digest_to_string(const std::vector<uint8_t> &digest);
 ROSE_UTIL_API std::string digest_to_string(const std::string &data);
 /** @} */
 
+/** Convert two vectors to a vector of pairs.
+ *
+ *  If the two input vectors are not the same length, then the length of the result is the length of the shorter input vector. */
+template<class T, class U>
+std::vector<std::pair<T, U> >
+zip(const std::vector<T> &first, const std::vector<U> &second) {
+    size_t retvalSize = std::min(first.size(), second.size());
+    std::vector<std::pair<T, U> > retval;
+    retval.reserve(retvalSize);
+    for (size_t i = 0; i < retvalSize; ++i)
+        retval.push_back(std::pair<T, U>(first[i], second[i]));
+    return retval;
+}
+
+/** Convert a vector of pairs to a pair of vectors. */
+template<class T, class U>
+std::pair<std::vector<T>, std::vector<U> >
+unzip(const std::vector<std::pair<T, U> > &pairs) {
+    std::pair<std::vector<T>, std::vector<U> > retval;
+    retval.first.reserve(pairs.size());
+    retval.second.reserve(pairs.size());
+    for (size_t i = 0; i < pairs.size(); ++i) {
+        retval.first.push_back(pairs[i].first);
+        retval.second.push_back(pairs[i].second);
+    }
+    return retval;
+}
+
 } // namespace
 #endif

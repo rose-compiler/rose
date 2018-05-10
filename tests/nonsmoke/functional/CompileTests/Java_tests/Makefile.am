@@ -627,6 +627,7 @@ conditional-check-local:
 # but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
 # the compiler vendor and GNU compiler version).
 # Jave support is independent of EDG 4.9 or EDG 4.12 or later (run all tests independent of the C/C++ frontend).
+	mkdir -p "$(builddir)/javac-output-classes"
 if USING_GNU_COMPILER
 if !ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Some specific Java tests are skipped with any later GNU compiler (GNU 4.9 or later)."

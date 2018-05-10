@@ -140,8 +140,8 @@ CfgPath::callDepth(const Function::Ptr &function) const {
         if (edge->value().type() == E_FUNCTION_CALL) {
             if (!function) {
                 ++depth;
-            } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
-                       edge->source()->value().isOwningFunction(function)) {
+            } else if (edge->target()->value().type() == V_BASIC_BLOCK &&
+                       edge->target()->value().isOwningFunction(function)) {
                 ++depth;
             }
         } else if (edge->value().type() == E_FUNCTION_RETURN) {
@@ -164,8 +164,8 @@ CfgPath::maxCallDepth(const Function::Ptr &function) const {
         if (edge->value().type() == E_FUNCTION_CALL) {
             if (!function) {
                 ++depth;
-            } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
-                       edge->source()->value().isOwningFunction(function)) {
+            } else if (edge->target()->value().type() == V_BASIC_BLOCK &&
+                       edge->target()->value().isOwningFunction(function)) {
                 ++depth;
             }
         } else if (edge->value().type() == E_FUNCTION_RETURN) {

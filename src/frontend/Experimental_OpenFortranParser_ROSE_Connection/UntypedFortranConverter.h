@@ -22,8 +22,6 @@ namespace Untyped {
       convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
                    SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type, SgScopeStatement* label_scope=NULL);
 
-      virtual SgType* convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope);
-
       virtual SgProcedureHeaderStatement* convertSgUntypedSubroutineDeclaration   (SgUntypedSubroutineDeclaration*   ut_decl, SgScopeStatement* scope);
       virtual SgProcedureHeaderStatement* convertSgUntypedBlockDataDeclaration    (SgUntypedBlockDataDeclaration*    ut_decl, SgScopeStatement* scope);
 
