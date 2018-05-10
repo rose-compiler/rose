@@ -35,10 +35,12 @@
 
 /* Tokens.  */
 
-#ifdef _MSC_VER
+/* Rasmussen (4/30/2018): Added check for Apple OS X to fix compilation error. */
+#if defined(_MSC_VER) || (defined(__APPLE__) && defined(__MACH__))
     #undef TRUE
     #undef FALSE
 #endif
+
 
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
