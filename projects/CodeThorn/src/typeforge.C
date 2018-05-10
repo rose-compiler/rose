@@ -71,7 +71,7 @@ int main (int argc, char* argv[])
     ("stats", "print statistics on casts of built-in floating point types.")
     ("trace", "print cast operations as they are performed.")
     ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
-    ("command-file", po::value< string >()," name of file where each line specifies how to change a variable's type: type-name function-name var-name.")
+    ("spec-file", po::value< string >()," name of typeforge specification file.")
     ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
     ("float-var", po::value< string >()," change type of var [arg] to float.")
     ("double-var", po::value< string >()," change type of var [arg] to double.")
@@ -143,8 +143,8 @@ int main (int argc, char* argv[])
     tt.setTraceFlag(true);
   }
 
-  if(args.isUserProvided("command-file")) {
-    string commandFileName=args.getString("command-file");
+  if(args.isUserProvided("spec-file")) {
+    string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
     TFSpecFrontEnd typeforgeSpecFrontEnd;

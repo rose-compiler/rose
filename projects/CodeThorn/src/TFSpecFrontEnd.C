@@ -39,7 +39,7 @@ SgType* checkType(SgInitializedName* varInitName,string typeName) {
     if(SgNamedType* namedType=isSgNamedType(baseType)) {
       string nameTypeString=namedType->get_name();
       if(nameTypeString==typeName) {
-        cout<<"DEBUG: Found user-defined type:"<<typeName<<endl;
+        //cout<<"DEBUG: Found user-defined type:"<<typeName<<endl;
         return baseType;
       }
     }
@@ -77,9 +77,7 @@ SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
   bool isLongType=false;
   bool isShortType=false;
   while (a!=rend) {
-    string typePart=*a;
-    cout<<"DEBUG: typePart:start>"<<typePart<<"<end"<<endl;
-    a++;
+    string typePart=*a++;
     if(typePart=="float") {
       if(isLongType||isShortType) {
         cerr<<"Error: wrong type: float cannot be short or long."<<endl;
@@ -141,7 +139,7 @@ list<SgInitializedName*> findVariablesByType(SgNode* root, SgType* type) {
     if(SgInitializedName* initName=isSgInitializedName(node)) {
       SgType* varInitNameType=initName->get_type();
       if(varInitNameType==type) {
-        cout<<"DEBUG: found variable by type! :"<<initName->unparseToString()<<endl;
+        //cout<<"DEBUG: found variable by type! :"<<initName->unparseToString()<<endl;
         list.push_back(initName);
       }
     }
@@ -162,7 +160,6 @@ bool isConstReferenceType(string type) {
 }
 
 bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation) {
-  int numTypeReplace=0;
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
   RoseAst completeAst(root);
@@ -210,67 +207,85 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	  return true;
 	}
 	if(tt.getTraceFlag()) cout<<"TRACE: replace_type mode: "<< "in line "<<lineNr<<"."<<endl;
+        bool onlyGlobalVars=false;
+        std::list<SgVariableDeclaration*> listOfGlobalVars;
 	string functionSpec=splitLine[1];
-	std::vector<std::string> functionSpecSplit=CppStdUtilities::splitByRegex(functionSpec,":");
-	if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier in line "<<lineNr<<":"<<functionSpec<<endl; exit(1);}
-	string functionName=functionSpecSplit[0];
-	std::vector<std::string> functionConstructSpecList=CppStdUtilities::splitByRegex(functionSpecSplit[1],",");
+
+	string functionName;
+        std::vector<std::string> functionConstructSpecList;
+        std::vector<std::string> functionSpecSplit;
+        if(functionSpec=="global") {
+          onlyGlobalVars=true;
+        } else {
+          functionSpecSplit=CppStdUtilities::splitByRegex(functionSpec,":");
+          if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier in line "<<lineNr<<":"<<functionSpec<<endl; exit(1);}
+          functionName=functionSpecSplit[0];
+          functionConstructSpecList=CppStdUtilities::splitByRegex(functionSpecSplit[1],",");
+        }
+
 	string typeReplaceSpec=splitLine[2];
 	std::vector<std::string> typeReplaceSpecSplit=CppStdUtilities::splitByRegex(typeReplaceSpec,"\\s*=>\\s*");
 	if(typeReplaceSpecSplit.size()!=2) { cerr<<"Error: wrong type replace specifier in line "<<lineNr<<":"<<typeReplaceSpec<<endl; exit(1);}
 	string oldTypeSpec=typeReplaceSpecSplit[0];
 	string newTypeSpec=typeReplaceSpecSplit[1];
-	if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionName<<" "<<functionSpecSplit[1]<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
-        std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
-        if(functionName=="*") {
-          // transformation is specified to be applied to all functions, create list of all functions
-          std::list<SgFunctionDefinition*> listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
+	if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionSpec<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
+        if(onlyGlobalVars) {
+          listOfGlobalVars=SgNodeHelper::listOfGlobalVars(root);
+          cout<<"Found "<<listOfGlobalVars.size() <<" global variables."<<endl;
+          cout<<"Error: option 'global' not supported yet."<<endl;
+          exit(1);
         } else {
-          SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
-          if(funDef==nullptr) {
-            cout<<"WARNING: function "<<functionName<<" does not exist."<<endl;
+          std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
+          if(functionName=="*") {
+            // transformation is specified to be applied to all functions, create list of all functions
+            listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
           } else {
-            listOfFunctionDefinitions.push_back(funDef);
+            SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
+            if(funDef==nullptr) {
+              cout<<"WARNING: function "<<functionName<<" does not exist."<<endl;
+            } else {
+              listOfFunctionDefinitions.push_back(funDef);
+            }
           }
-        }
-        for (auto funDef : listOfFunctionDefinitions) {
-          SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
-          SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
-          //cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
-          
-          for(auto functionConstructSpec : functionConstructSpecList) {
-            if(functionConstructSpec=="args") {
-              // change types of arguments
-              SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-              for(auto varInitName : initNamePtrList) {
-                SgType* varInitNameType=varInitName->get_type();
-                if(varInitNameType==oldBuiltType) {
-                  varInitName->set_type(newBuiltType);
+          for (auto funDef : listOfFunctionDefinitions) {
+            SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
+            SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
+            //cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
+            
+            for(auto functionConstructSpec : functionConstructSpecList) {
+              if(functionConstructSpec=="args") {
+                // change types of arguments
+                SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+                for(auto varInitName : initNamePtrList) {
+                  SgType* varInitNameType=varInitName->get_type();
+                  if(varInitNameType==oldBuiltType) {
+                    varInitName->set_type(newBuiltType);
+                    numTypeReplace++;
+                  }
+                }
+              } else if(functionConstructSpec=="ret") {
+                // change type of return type if it matches provided type. If no type is provided always change.
+                SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
+                SgFunctionDeclaration* funDecl=funDef->get_declaration();
+                if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
+                  SgFunctionType* funType=funDecl->get_type();
+                  funType->set_orig_return_type(newBuiltType);
                   numTypeReplace++;
                 }
+              } else if(functionConstructSpec=="body") {
+                // finds all variables in body of function and replaces type
+                std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
+                for (auto initName : varInitList) {
+                  initName->set_type(newBuiltType);
+                  numTypeReplace++;
+                }
+              } else {
+                cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
+                exit(1);
               }
-            } else if(functionConstructSpec=="ret") {
-              // change type of return type if it matches provided type. If no type is provided always change.
-              SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
-              SgFunctionDeclaration* funDecl=funDef->get_declaration();
-              if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
-                SgFunctionType* funType=funDecl->get_type();
-                funType->set_orig_return_type(newBuiltType);
-                numTypeReplace++;
-              }
-            } else if(functionConstructSpec=="body") {
-              // finds all variables in body of function and replaces type
-              std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
-              for (auto initName : varInitList) {
-                initName->set_type(newBuiltType);
-                numTypeReplace++;
-              }
-            } else {
-              cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
-              exit(1);
-            }
-            //tt.addToTransformationList(list,newType,funDef,varName);
-          } // end of loop on functionConstructSpecList
+              //tt.addToTransformationList(list,newType,funDef,varName);
+            } // end of loop on functionConstructSpecList
+          }
         }
       } else if(commandName=="transform") {
         if(splitLine.size()!=4) {

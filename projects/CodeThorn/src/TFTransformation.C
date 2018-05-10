@@ -245,6 +245,15 @@ void TFTransformation::transformArrayOfStructsAccesses(SgType* accessType,SgNode
   }
 }
 
+// used to avoid transforming assignments in for-initializer expression
+bool isWithinBlockStmt(SgExpression* exp) {
+  SgNode* current=exp;
+  while(isSgExpression(current)||isSgExprStatement(current)) {
+    current=current->get_parent();
+  };
+  return isSgBasicBlock(current);
+}
+
 //Transformation ad_intermediate
 void TFTransformation::instrumentADIntermediate(SgNode* root) {
   RoseAst ast(root);
@@ -255,24 +264,27 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
   for(MatchResult::iterator j=r.begin();j!=r.end();++j) {
     SgExpression* assignOp=isSgExpression((*j)["$ASSIGNOP"]);
     SgVarRefExp* varRefExp=isSgVarRefExp((*j)["$VAR"]);
-    SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
-    if(varRefExpSymbol) {
-      SgName varName=varRefExpSymbol->get_name();
-      string varNameString=varName;
-      string instrumentationString="AD_INTERMEDIATE("+varNameString+",\""+varNameString+"\");";
-      // locate root node of statement
-      SgNode* stmtSearch=assignOp;
-      while(!isSgStatement(stmtSearch)) {
-        stmtSearch=stmtSearch->get_parent();
-        if(!isSgStatement(stmtSearch)&&!isSgExpression(stmtSearch)) {
-          cerr<<"Error: Unsupported expression structure at "<<SgNodeHelper::sourceLineColumnToString(assignOp)<<endl;
-          exit(1);
+    if(isWithinBlockStmt(assignOp)) {
+      SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
+      if(varRefExpSymbol) {
+        SgName varName=varRefExpSymbol->get_name();
+        string varNameString=varName;
+        string instrumentationString="AD_INTERMEDIATE("+varNameString+",\""+varNameString+"\");";
+        // locate root node of statement
+        SgNode* stmtSearch=assignOp;
+        while(!isSgStatement(stmtSearch)) {
+          stmtSearch=stmtSearch->get_parent();
+          if(!isSgStatement(stmtSearch)&&!isSgExpression(stmtSearch)) {
+            cerr<<"Error: Unsupported expression structure at "<<SgNodeHelper::sourceLineColumnToString(assignOp)<<endl;
+            exit(1);
+          }
         }
+        // instrument now: insert empty statement and replace it with macro call
+        //cout<<"TRANSFORMATION: insert after "<< SgNodeHelper::sourceLineColumnToString(stmtSearch) <<" : "<<instrumentationString<<endl;
+        string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
+        SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+        adIntermediateTransformations++;
       }
-      // instrument now: insert empty statement and replace it with macro call
-      //cout<<"TRANSFORMATION: insert after "<< SgNodeHelper::sourceLineColumnToString(stmtSearch) <<" : "<<instrumentationString<<endl;
-      string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
-      SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
     }
   }
 }
