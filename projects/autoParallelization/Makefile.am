@@ -10,6 +10,7 @@ bin_PROGRAMS = autoPar
 autoPar_SOURCES = autoPar.C autoParSupport.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+LDFLAGS = $(ROSE_RPATHS)
 
 EXTRA_DIST = README makefile.external autoParSupport.h
 

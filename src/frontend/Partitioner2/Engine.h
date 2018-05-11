@@ -1079,6 +1079,17 @@ public:
     virtual void discontiguousBlocks(bool b) { settings_.partitioner.discontiguousBlocks = b; }
     /** @} */
 
+    /** Property: Maximum size for basic blocks.
+     *
+     *  This property is the maximum size for basic blocks measured in number of instructions. Any basic block that would
+     *  contain more than this number of instructions is split into multiple basic blocks.  Having smaller basic blocks makes
+     *  some intra-block analysis faster, but they have less information.  A value of zero indicates no limit.
+     *
+     * @{ */
+    size_t maxBasicBlockSize() const /*final*/ { return settings_.partitioner.maxBasicBlockSize; }
+    virtual void maxBasicBlockSize(size_t n) { settings_.partitioner.maxBasicBlockSize = n; }
+    /** @} */
+
     /** Property: Whether to find function padding.
      *
      *  If set, then the partitioner will look for certain padding bytes appearing before the lowest address of a function and

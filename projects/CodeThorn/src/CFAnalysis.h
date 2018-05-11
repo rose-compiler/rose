@@ -29,7 +29,9 @@ class CFAnalysis {
   LabelSet functionCallLabels(Flow& flow);
   LabelSet functionEntryLabels(Flow& flow);
   LabelSet conditionLabels(Flow& flow);
+  // computes function exit label for a provided function entry label
   Label correspondingFunctionExitLabel(Label entryLabel);
+  // computes function return label for a provided function call label
   Label correspondingFunctionCallReturnLabel(Label callLabel);
   int numberOfFunctionParameters(Label entryNode);
   bool isVoidFunction(Label entryNode);

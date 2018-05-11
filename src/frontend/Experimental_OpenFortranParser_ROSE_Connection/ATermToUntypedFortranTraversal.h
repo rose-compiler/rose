@@ -64,6 +64,9 @@ ATbool traverse_Operator(ATerm term, SgUntypedExpression** var_expr);
 // R310
 ATbool traverse_DefinedOperator(ATerm term, std::string & name);
 
+// R405
+ATbool traverse_KindSelector(ATerm term, SgUntypedExpression** expr);
+
 // R422
 ATbool traverse_OptCharLength(ATerm term, SgUntypedExpression** expr);
 

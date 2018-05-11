@@ -1,0 +1,4 @@
+main,f1,double
+main,d1,float
+function1,d1,float
+main,xx,long double
