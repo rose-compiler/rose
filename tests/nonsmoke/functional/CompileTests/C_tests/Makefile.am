@@ -606,6 +606,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_33.c \
      test2018_35.c \
      test2018_36.c \
+     test2018_37.c \
+     test2018_41.c \
+     test2018_42.c \
+     test2018_43.c \
+     test2018_44.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 FAILING_2017_TESTS = \
@@ -617,7 +622,10 @@ FAILING_2017_TESTS = \
 FAILING_2018_TESTS = \
      test2018_26.c \
      test2018_27.c \
-     test2018_34.c 
+     test2018_34.c \
+     test2018_38.c \
+     test2018_39.c \
+     test2018_40.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
