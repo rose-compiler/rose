@@ -141,7 +141,37 @@ public:
     /** Summaries for multiple functions. */
     typedef Sawyer::Container::Map<rose_addr_t, FunctionSummary> FunctionSummaries;
 
+    /** Base class for callbacks for function summaries.
+     *
+     *  See the @ref functionSummarizer property. These objects are reference counted and allocated on the heap. */
+    class FunctionSummarizer: public Sawyer::SharedObject {
+    public:
+        /** Reference counting pointer. */
+        typedef Sawyer::SharedPointer<FunctionSummarizer> Ptr;
+    protected:
+        FunctionSummarizer() {}
+    public:
+        /** Invoked when a new summary is created. */
+        virtual void init(const FeasiblePath &analysis, FunctionSummary &summary /*in,out*/,
+                          const Partitioner2::Function::Ptr &function,
+                          Partitioner2::ControlFlowGraph::ConstVertexIterator cfgCallTarget) = 0;
 
+        /** Invoked when the analysis traverses the summary.
+         *
+         *  Returns true if the function was processed, false if we decline to process the function. If returning false, then
+         *  the caller will do some basic processing based on the calling convention. */
+        virtual bool process(const FeasiblePath &analysis, const FunctionSummary &summary,
+                             const InstructionSemantics2::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
+
+        /** Return value for function.
+         *
+         *  This is called after @ref process in order to obtain the primary return value for the function. If the function
+         *  doesn't return anything, then this method returns a null pointer. */
+        virtual InstructionSemantics2::SymbolicSemantics::SValuePtr
+        returnValue(const FeasiblePath &analysis, const FunctionSummary &summary,
+                    const InstructionSemantics2::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
+    };
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -157,6 +187,7 @@ private:
     Partitioner2::CfgConstVertexSet pathsEndVertices_;  // vertices of paths_ where searching stops
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
+    FunctionSummarizer::Ptr functionSummarizer_;         // user-defined function for handling function summaries
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,6 +295,17 @@ public:
     virtual bool
     shouldInline(const Partitioner2::CfgPath &path, const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget);
 
+    /** Property: Function summary handling.
+     *
+     *  As an alternative to creating a subclass to override the @ref processFunctionSummary, this property can contain an
+     *  object that will be called in various ways whenever a function summary is processed.  If non-null, then whenever a
+     *  function summary is created, the object's @c init method is called, and whenever a function summary is traversed its @c
+     *  process method is called.
+     *
+     *  @{ */
+    FunctionSummarizer::Ptr functionSummarizer() const { return functionSummarizer_; }
+    void functionSummarizer(const FunctionSummarizer::Ptr &f) { functionSummarizer_ = f; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Utilities

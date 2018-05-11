@@ -414,26 +414,27 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
 }
     
 bool
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
-                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
-                  std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices /*=NULL*/) {
+inlineMultipleCallees(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                      const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
+                      const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
+                      std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices /*=NULL*/) {
     bool somethingInserted = false;
     CfgConstEdgeSet cfgCallEdges = findCallEdges(cfgCallSite);
     BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, cfgCallEdges) {
-        if (insertCalleePaths(paths /*in,out*/, pathsCallSite, cfg, cfgCallEdge, cfgAvoidVertices, cfgAvoidEdges, newVertices))
+        if (inlineOneCallee(paths /*in,out*/, pathsCallSite, cfg, cfgCallEdge->target(), cfgAvoidVertices,
+                            cfgAvoidEdges, newVertices))
             somethingInserted = true;
     }
     return somethingInserted;
 }
 
 bool
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
-                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
-                  std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices /*=NULL*/) {
+inlineOneCallee(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallTarget,
+                const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
+                std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices /*=NULL*/) {
     ASSERT_require(paths.isValidVertex(pathsCallSite));
-    ASSERT_require(cfg.isValidEdge(cfgCallEdge));
+    ASSERT_require(cfg.isValidVertex(cfgCallTarget));
     ASSERT_require2(pathsCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
 
     // Most functions either don't return or have a single return target.  Functions like longjmp might have multiple return
@@ -448,7 +449,6 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
     // If this is a call to some indeterminate function, just copy another indeterminate vertex into the paths graph. Normally
     // a CFG will have only one indeterminate vertex and it will have no outgoing edges, but the paths graph is different. We
     // need separate indeterminate vertices so that each has its own function-return edge(s).
-    ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
     if (cfgCallTarget->value().type() == V_INDETERMINATE) {
         ControlFlowGraph::ConstVertexIterator indet = paths.insertVertex(CfgVertex(V_INDETERMINATE));
         if (newVertices)
@@ -611,8 +611,8 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
                     break;
                 case INLINE_NORMAL: {
                     std::vector<ControlFlowGraph::ConstVertexIterator> insertedVertices;
-                    insertCalleePaths(paths_, work.pathsVertex, partitioner.cfg(), cfgCallEdge,
-                                      calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
+                    inlineOneCallee(paths_, work.pathsVertex, partitioner.cfg(), cfgCallEdge->target(),
+                                    calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
                     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
                         if (isFunctionCall(partitioner, vertex) && !findCallReturnEdges(vertex).empty())
                             workList_.push_back(CallSite(vertex, work.callDepth+1));

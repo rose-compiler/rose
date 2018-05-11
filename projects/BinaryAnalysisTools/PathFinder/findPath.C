@@ -1095,8 +1095,8 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 } else if (shouldInline(path, cfgCallEdge->target())) {
                     info <<"inlining function call paths at vertex " <<partitioner.vertexName(backVertex) <<"\n";
-                    P2::insertCalleePaths(paths, backVertex,
-                                          partitioner.cfg(), cfgBackVertex, calleeCfgAvoidVertices, cfgAvoidEdges);
+                    P2::inlineMultipleCallees(paths, backVertex, partitioner.cfg(), cfgBackVertex,
+                                              calleeCfgAvoidVertices, cfgAvoidEdges);
                 } else {
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 }
@@ -1882,8 +1882,8 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
                 } else { // inline the function
                     ++nFuncsInlined;
                     std::vector<P2::ControlFlowGraph::ConstVertexIterator> insertedVertices;
-                    P2::insertCalleePaths(paths, work.vertex, partitioner.cfg(), cfgCallEdge,
-                                          calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
+                    P2::inlineOneCallee(paths, work.vertex, partitioner.cfg(), cfgCallEdge->target(),
+                                        calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
                     P2::eraseEdges(paths, P2::findCallReturnEdges(work.vertex));
                     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
                         ++nVertsProcessed;
