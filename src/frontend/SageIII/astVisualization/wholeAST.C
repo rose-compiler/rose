@@ -1546,9 +1546,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=blueviolet,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                 // DQ (5/10/2018): Added more debugging information now the we explicitly mark when a function is implicit.
+                    string implicitFlagString = (functionDeclaration->get_is_implicit_function() == true) ? "is_implicit_function" : "!is_implicit_function";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
                                           "\\n  " + forwardFlagString +
                                           "\\n  " + friendFlagString +
+                                          "\\n  " + implicitFlagString +
                                           "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
 #if 0
                     printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
@@ -1567,9 +1570,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=royalblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                 // DQ (5/10/2018): Added more debugging information now the we explicitly mark when a function is implicit.
+                    string implicitFlagString = (functionDeclaration->get_is_implicit_function() == true) ? "is_implicit_function" : "!is_implicit_function";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
                                           "\\n  " + forwardFlagString +
                                           "\\n  " + friendFlagString +
+                                          "\\n  " + implicitFlagString +
                                           "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
                  // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
                     break;
@@ -1583,9 +1589,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=lightseagreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                 // DQ (5/10/2018): Added more debugging information now the we explicitly mark when a function is implicit.
+                    string implicitFlagString = (functionDeclaration->get_is_implicit_function() == true) ? "is_implicit_function" : "!is_implicit_function";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
                                           "\\n  " + forwardFlagString +
                                           "\\n  " + friendFlagString +
+                                          "\\n  " + implicitFlagString +
                                           "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
                  // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
                     break;
