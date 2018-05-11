@@ -293,6 +293,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)).")
     ("solver",po::value< int >()->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ("relop-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for the expression analyzer .")
+    ("omp-ast", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
     ;
 
   passOnToRose.add_options()
@@ -1218,9 +1219,10 @@ int main( int argc, char * argv[] ) {
     timer.start();
 
     vector<string> argvList(argv,argv+argc);
-    if(args.getBool("data-race")) {
+    if(args.getBool("omp-ast")) {
       //TODO: new openmp-ast support not finished yet - using existing implementation
-      //argvList.push_back("-rose:OpenMP:ast_only");
+      cout<<"INFO: using OpenMP AST."<<endl;
+      argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();

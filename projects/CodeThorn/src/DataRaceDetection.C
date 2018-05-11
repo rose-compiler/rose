@@ -221,13 +221,13 @@ LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapp
   return loopInfoSet;
 }
 
-    // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
-    DataRaceDetection::ForStmtToOmpPragmaMap DataRaceDetection::createOmpPragmaForStmtMap(SgNode* root) {
-      //cout<<"PROGRAM:"<<root->unparseToString()<<endl;
-      ForStmtToOmpPragmaMap map;
-      RoseAst ast(root);
-      for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
-	if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
+// finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
+DataRaceDetection::ForStmtToOmpPragmaMap DataRaceDetection::createOmpPragmaForStmtMap(SgNode* root) {
+  //cout<<"PROGRAM:"<<root->unparseToString()<<endl;
+  ForStmtToOmpPragmaMap map;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
+    if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
       string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
       //cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
       if(foundPragmaKeyWord=="omp"||foundPragmaKeyWord=="simd") {
@@ -235,9 +235,9 @@ LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapp
         j.skipChildrenOnForward();
         ++j;
         if(SgForStatement* forStmt=isSgForStatement(*j)) {
-          map[forStmt]=pragmaDecl;
+              map[forStmt]=pragmaDecl;
         } else {
-          cout<<"WARNING: unsupported omp pragma: "<<(*i)->unparseToString()<<endl;
+              cout<<"WARNING: unsupported omp pragma: "<<(*i)->unparseToString()<<endl;
         }
       }
     }
