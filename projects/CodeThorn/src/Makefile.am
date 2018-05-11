@@ -679,18 +679,36 @@ check-const-analysis:
 
 
 
-check-ltl:
+#check-ltl: check-ltl-rers-different-versions check-ltl-rers-arithmetic check-ltl-rers-array check-ltl-rers-topify check-ltl-rers-timetout check-ltl-rers-loop-aware-sync check-ltl-cegpra
+check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-array check-ltl-rers-topify check-ltl-rers-timetout check-ltl-rers-loop-aware-sync check-ltl-cegpra
+
+check-ltl-start:
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	@rm -f *.consistent
+
+check-ltl-rers-different-versions:
 	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS Problem1 from 2012 in several versions and compare to previous results
+
+check-ltl-rers-arithmetic:
 	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
+
+check-ltl-rers-array:
 	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
+
+check-ltl-rers-topify:
 	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
-#	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+
+# SKIPPED
+check-ltl-rers-memory-bound:
+	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+
+check-ltl-rers-timetout:
 	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
+check-ltl-rers-loop-aware-sync:
 	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
+check-ltl-cegpra:
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
 
 check-arrays:
