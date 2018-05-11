@@ -1,5 +1,6 @@
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
+#include <iostream>
 
 #define NWORKERS 12ul
 #define WORKER_MAJOR 10000ul

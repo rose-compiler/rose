@@ -397,15 +397,17 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
    printf("... traverse_IntegerItemDescription: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_round_or_truncate, t_size;
+   ATerm t_type, t_round_or_truncate, t_size;
    bool has_round_or_truncate, has_size;
    SgUntypedExpression* size;
    General_Language_Translation::ExpressionKind modifier_enum;
 
-   if (ATmatch(term, "IntegerItemDescription (<term>,<term>)", &t_round_or_truncate,&t_size)) {
+// The first term, t_type, comes from the lexer and is direct user input: "S", "s", "U", "u".
+// We disambiguate it via terms IntegerItemDescription or IntegerItemDescriptionU.
+   if (ATmatch(term, "IntegerItemDescription(<term>,<term>,<term>)", &t_type,&t_round_or_truncate,&t_size)) {
       *type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
-   else if (ATmatch(term, "IntegerItemDescriptionU(<term>,<term>)", &t_round_or_truncate,&t_size)) {
+   else if (ATmatch(term, "IntegerItemDescriptionU(<term>,<term>,<term>)", &t_type,&t_round_or_truncate,&t_size)) {
       *type = UntypedBuilder::buildType(SgUntypedType::e_uint);
    }
    else return ATfalse;
@@ -1015,9 +1017,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       //  IfStatement                 -> SimpleStatement
       //  CaseStatement               -> SimpleStatement
       //%%ProcedureCallStatement      -> SimpleStatement  %%AMBIGUOUS with AssignmentStatement
-      //  ReturnStatement             -> SimpleStatement
-      //  GotoStatement               -> SimpleStatement
-      //  ExitStatement               -> SimpleStatement
 
       else if (traverse_NullStatement(t_stmt, stmt_list)) {
          // MATCHED NullStatement
@@ -1032,6 +1031,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       }
       else if (traverse_StopStatement(t_stmt, stmt_list)) {
          // MATCHED StopStatement
+      }
+      else if (traverse_ExitStatement(t_stmt, stmt_list)) {
+         // MATCHED ExitStatement
+      }
+      else if (traverse_GotoStatement(t_stmt, stmt_list)) {
+         // MATCHED GotoStatement
+      }
+      else if (traverse_ReturnStatement(t_stmt, stmt_list)) {
+         // MATCHED ReturnStatement
       }
       else return ATfalse;
    }
@@ -1122,6 +1130,103 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
 }
 
 //========================================================================================
+// 4.6 RETURN STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ReturnStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels;
+   std::vector<std::string> labels;
+
+   if (ATmatch(term, "ReturnStatement(<term>)", &t_labels)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+      std::string label("");
+      if (labels.size() == 1) {
+         label = labels[0];
+      }
+      else if (labels.size() > 1) {
+         cout << "ERROR: multiple labels unimplemented \n";
+         return ATfalse;
+      }
+
+      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label);
+      setSourcePosition(return_stmt, term);
+
+      stmt_list->get_stmt_list().push_back(return_stmt);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 4.7 GOTO STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_GotoStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_GotoStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels, t_name;
+   std::vector<std::string> labels;
+   std::string name;
+
+    if (ATmatch(term, "GotoStatement(<term>,<term>)", &t_labels, &t_name)) {
+       if (traverse_LabelList(t_labels, labels)) {
+          // MATCHED LabelList
+       } else return ATfalse;
+
+       if (traverse_Name(t_name, name)) {
+          // MATCHED Name
+       } else return ATfalse;
+
+      SgUntypedGotoStatement* goto_stmt = new SgUntypedGotoStatement("", name);
+      setSourcePosition(goto_stmt, term);
+
+      stmt_list->get_stmt_list().push_back(goto_stmt);
+   }
+
+   else return ATfalse;
+
+   return ATtrue;
+
+}
+
+//========================================================================================
+// 4.8 EXIT STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_ExitStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ExitStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels;
+   std::vector<std::string> labels;
+
+   if (ATmatch(term, "ExitStatement(<term>)", &t_labels)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+      SgUntypedExitStatement* exit_stmt = new SgUntypedExitStatement("");
+      setSourcePosition(exit_stmt, term);
+
+      stmt_list->get_stmt_list().push_back(exit_stmt);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 4.9 STOP STATEMENTS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntypedStatementList* stmt_list)
@@ -1181,6 +1286,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_AbortStatement(ATerm term, SgUnty
       // setSourcePosition(abort_stmt, term);
       // TODO - add new node to stmt_list
       // stmt_list->get_stmt_list().push_back(abort_stmt);
+
       return ATfalse;
    }
    else return ATfalse;

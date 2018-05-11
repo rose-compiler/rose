@@ -272,8 +272,9 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
  *  edge(s) but does not need any @ref E_FUNCTION_CALL edges.  The @p cfgCallSite is the vertex in the @p cfg corresponding to
  *  the @p pathsCallSite in the paths graph and provides information about which functions are called.
  *
- *  There are two versions of this function: one takes a specific function call edge and inlines only that single call. The
- *  other takes a call site vertex and inlines all functions called at that vertex.
+ *  There are two similar functions: one inlines all the functions called from a particular call site in the CFG, the other
+ *  inlines one specific function specified by its entry vertex.  In the latter case, the CFG doesn't actually need to have an
+ *  edge to the called function.
  *
  *  Usually, @p cfgCallSite has one outgoing @ref E_FUNCTION_CALL edge and @p pathsCallSite (and @p cfgCallSite) has one
  *  outgoing @ref E_CALL_RETURN edge. If the @p pathsCallSite has no @ref E_CALL_RETURN edge, or the called function has no
@@ -294,17 +295,16 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
  *
  * @{ */
 bool
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
-                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
-                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
-                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
-                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
+inlineMultipleCallees(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                      const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
+                      const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
+                      const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
+                      std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
 bool
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
-                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
-                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
-                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
-                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
+inlineOneCallee(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallTarget,
+                const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
+                std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices = NULL);
 /** @} */
 
 /** Binary inliner.

@@ -3487,11 +3487,13 @@ HEADER_USE_STATEMENT_END
 
 HEADER_STOP_OR_PAUSE_STATEMENT_START
      public:
+       // Rasmussen (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
           enum stop_or_pause_enum
              {
                e_unknown,
                e_stop,
                e_error_stop,
+               e_exit,
                e_pause
              };
 
@@ -4904,16 +4906,18 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
                          aliasSymbol = new SgAliasSymbol(s);
                        }
 #if 0
+                    printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                     printf ("In SgScopeStatement::insert_symbol(): Insert SgAliasSymbol = %p for input symbol = %p = %s into the globalScopeAcrossFiles = %p global_scope = %p \n",
                          aliasSymbol,s,s->class_name().c_str(),globalScopeAcrossFiles,global_scope);
+                    printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
                     globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
                   }
                  else
                   {
-#if 1
+// #if 1
                     printf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
-#endif
+// #endif
                   }
              }
             else
