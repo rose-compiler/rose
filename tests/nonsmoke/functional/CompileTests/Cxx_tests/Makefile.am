@@ -560,7 +560,8 @@ NEW_2017_TESTS = \
    test2018_58.C \
    test2018_59.C \
    test2018_60.C \
-   test2018_61.C 
+   test2018_61.C \
+   test2018_62.C 
 
 
 # DQ (4/7/2018): Updating failing tests.
