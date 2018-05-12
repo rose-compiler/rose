@@ -522,9 +522,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
             ROSE_ASSERT(correspondingNode);
             // Do not output scope statements ({ }, ...)
             if(!isSgScopeStatement(correspondingNode)) {
-              deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
-                              << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
-                              << endl;
+              int lineNr=correspondingNode->get_file_info()->get_line();
+              if(lineNr>0) {
+                deadCodeCsvFile << lineNr
+                                << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
+                                << endl;
+              }
             } else {
               //cout<<"DEBUG: EXCLUDING: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;
             }
