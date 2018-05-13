@@ -47,10 +47,6 @@ void Analyzer::printStatusMessageLine(string s) {
   printStatusMessage(s,true);
 }
 
-string Analyzer::lineColSource(SgNode* node) {
-  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
-}
-
 void Analyzer::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
@@ -60,7 +56,8 @@ void Analyzer::initDiagnostics() {
   }
 }
 
-string Analyzer::nodeToString(SgNode* node) {
+// TODO: move to flow analyzer (reports label,init,final sets)
+string Analyzer::astNodeInfoAttributeAndNodeToString(SgNode* node) {
   string textual;
   if(node->attributeExists("info"))
     textual=node->getAttribute("info")->toString()+":";
@@ -606,19 +603,6 @@ void Analyzer::swapWorkLists() {
   incIterations();
 }
 
-size_t Analyzer::memorySizeContentEStateWorkLists() {
-  size_t mem = 0;
-#pragma omp critical(ESTATEWL)
-  {
-    for (EStateWorkList::iterator i=estateWorkListOne.begin(); i!=estateWorkListOne.end(); ++i) {
-      mem+=sizeof(*i);
-    }
-    for (EStateWorkList::iterator i=estateWorkListTwo.begin(); i!=estateWorkListTwo.end(); ++i) {
-      mem+=sizeof(*i);
-    }
-  }
-  return mem;
-}
 
 const EState* Analyzer::addToWorkListIfNew(EState estate) {
   EStateSet::ProcessingResult res=process(estate);
@@ -816,22 +800,6 @@ EState Analyzer::createVerificationErrorEState(EState estate, Label target) {
   newEState.io.recordVerificationError();
   newEState.setLabel(target);
   return newEState;
-}
-
-list<SgNode*> Analyzer::listOfAssertNodes(SgProject* root) {
-  list<SgNode*> assertNodes;
-  list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
-  for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();
-      i!=funDefs.end();
-      ++i) {
-    RoseAst ast(*i);
-    for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
-      if(SgNodeHelper::Pattern::matchAssertExpr(*j)) {
-        assertNodes.push_back(*j);
-      }
-    }
-  }
-  return assertNodes;
 }
 
 void Analyzer::initLabeledAssertNodes(SgProject* root) {
@@ -1141,24 +1109,6 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   }
 
   logger[TRACE]<< "INIT: finished."<<endl;
-}
-
-set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
-  set<const EState*> estateSet;
-  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
-    if((*j)->source->label()==lab)
-      estateSet.insert((*j)->source);
-  }
-  return estateSet;
-}
-
-// PState is maintainted to allow for assignments on the rhs
-// TODO: change lhsVar to lhsAbstractValue
-PState Analyzer::analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
-  // TODO DECLARATION:SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgCastExp(SgIntVal))))
-  //                  rhs=SgCastExp(SgIntVal) // not handled yet in below function
-  //AbstractValue lhsValue=AbstractValue(lhsVar);
-  ROSE_ASSERT(false);
 }
 
 // TODO: this function should be implemented with a call of ExprAnalyzer::evaluateExpression
@@ -1636,49 +1586,49 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 #endif
         //logger[DEBUG]<< "Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
         if(rers_result<=-100) {
-	  // we found a failing assert
-	  // = rers_result*(-1)-100 : rers error-number
-	  // = -160 : rers globalError (2012 only)
-	  int index=((rers_result+100)*(-1));
-	  ROSE_ASSERT(index>=0 && index <=99);
-	  binaryBindingAssert[index]=true;
-	  //reachabilityResults.reachable(index); //previous location in code
-	  //logger[DEBUG]<<"found assert Error "<<index<<endl;
-	  ConstraintSet _cset=*estate->constraints();
-	  InputOutput _io;
-	  _io.recordFailedAssert();
-	  // error label encoded in the output value, storing it in the new failing assertion EState
-	  PState newPstate  = _pstate;
-	  //newPstate[globalVarIdByName("output")]=CodeThorn::AbstractValue(rers_result);
-	  newPstate.writeToMemoryLocation(globalVarIdByName("output"),
-                                       CodeThorn::AbstractValue(rers_result));
-	  EState _eState=createEState(edge.target(),newPstate,_cset,_io);
-	  return elistify(_eState);
+          // we found a failing assert
+          // = rers_result*(-1)-100 : rers error-number
+          // = -160 : rers globalError (2012 only)
+          int index=((rers_result+100)*(-1));
+          ROSE_ASSERT(index>=0 && index <=99);
+          binaryBindingAssert[index]=true;
+          //reachabilityResults.reachable(index); //previous location in code
+          //logger[DEBUG]<<"found assert Error "<<index<<endl;
+          ConstraintSet _cset=*estate->constraints();
+          InputOutput _io;
+          _io.recordFailedAssert();
+          // error label encoded in the output value, storing it in the new failing assertion EState
+          PState newPstate  = _pstate;
+          //newPstate[globalVarIdByName("output")]=CodeThorn::AbstractValue(rers_result);
+          newPstate.writeToMemoryLocation(globalVarIdByName("output"),
+                                          CodeThorn::AbstractValue(rers_result));
+          EState _eState=createEState(edge.target(),newPstate,_cset,_io);
+          return elistify(_eState);
         }
         RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
-	InputOutput newio;
-	if (rers_result == -2) {
-	  newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));	  
-	}
+        InputOutput newio;
+        if (rers_result == -2) {
+          newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));	  
+        }
         // TODO: _pstate[VariableId(output)]=rers_result;
         // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
         if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
-	  SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
-	  VariableId lhsVarId;
-	  bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
-	  ROSE_ASSERT(isLhsVar); // must hold
-	  // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
-	  //_pstate[lhsVarId]=AbstractValue(rers_result);
-	  _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
-	  ConstraintSet _cset=*estate->constraints();
-	  _cset.removeAllConstraintsOfVar(lhsVarId);
-	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
-	  return elistify(_eState);
-	} else {
-	  ConstraintSet _cset=*estate->constraints();
-	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
-	  return elistify(_eState);
-	}
+          SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
+          VariableId lhsVarId;
+          bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
+          ROSE_ASSERT(isLhsVar); // must hold
+          // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
+          //_pstate[lhsVarId]=AbstractValue(rers_result);
+          _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
+          ConstraintSet _cset=*estate->constraints();
+          _cset.removeAllConstraintsOfVar(lhsVarId);
+          EState _eState=createEState(edge.target(),_pstate,_cset,newio);
+          return elistify(_eState);
+        } else {
+          ConstraintSet _cset=*estate->constraints();
+          EState _eState=createEState(edge.target(),_pstate,_cset,newio);
+          return elistify(_eState);
+        }
         cout <<"PState:"<< _pstate<<endl;
         logger[ERROR] <<"RERS-MODE: call of unknown function."<<endl;
         exit(1);
@@ -2276,3 +2226,48 @@ SgTypeSizeMapping* Analyzer::getTypeSizeMapping() {
 void Analyzer::setCommandLineOptions(vector<string> clOptions) {
   _commandLineOptions=clOptions;
 }
+
+#if 0
+list<SgNode*> Analyzer::listOfAssertNodes(SgProject* root) {
+  list<SgNode*> assertNodes;
+  list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
+  for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();
+      i!=funDefs.end();
+      ++i) {
+    RoseAst ast(*i);
+    for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
+      if(SgNodeHelper::Pattern::matchAssertExpr(*j)) {
+        assertNodes.push_back(*j);
+      }
+    }
+  }
+  return assertNodes;
+}
+
+size_t Analyzer::memorySizeContentEStateWorkLists() {
+  size_t mem = 0;
+#pragma omp critical(ESTATEWL)
+  {
+    for (EStateWorkList::iterator i=estateWorkListOne.begin(); i!=estateWorkListOne.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+    for (EStateWorkList::iterator i=estateWorkListTwo.begin(); i!=estateWorkListTwo.end(); ++i) {
+      mem+=sizeof(*i);
+    }
+  }
+  return mem;
+}
+
+string Analyzer::lineColSource(SgNode* node) {
+  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
+}
+
+set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
+  set<const EState*> estateSet;
+  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
+    if((*j)->source->label()==lab)
+      estateSet.insert((*j)->source);
+  }
+  return estateSet;
+}
+#endif

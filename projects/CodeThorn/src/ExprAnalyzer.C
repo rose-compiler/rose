@@ -1102,7 +1102,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
   return listify(res);
 }
 
-
 bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds
   int arraySize=_variableIdMapping->getNumberOfElements(arrayVarId);
@@ -1114,12 +1113,3 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   }
   return true; // pass
 }
-
-// compute absolute variableId as encoded in the VariableIdMapping.
-// obsolete with new domain
-SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrValue) const {
-  VariableId arrayVarId2=abstrValue.getVariableId();
-  int index2=abstrValue.getIntValue();
-  return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
-}
-
