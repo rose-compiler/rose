@@ -74,8 +74,8 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
 
            *Control::LLVM_POINTER_DIFFERENCE_DIVIDER = "0",
            *Control::LLVM_EXPRESSION_RESULT_TYPE = "1",
-           *Control::LLVM_ARGUMENT_COERCE = "2",
-           *Control::LLVM_ARGUMENT_BIT_CAST = "3",
+           *Control::LLVM_CLASS_COERCE = "2",
+           *Control::LLVM_CLASS_BIT_CAST = "3",
            *Control::LLVM_ARGUMENT_EXPRESSION_RESULT_NAME = "4",
            *Control::LLVM_OP_AND_ASSIGN_INTEGRAL_PROMOTION = "5",
            *Control::LLVM_OP_AND_ASSIGN_INTEGRAL_DEMOTION = "6",
@@ -83,8 +83,8 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_OP_AND_ASSIGN_INT_TO_FP_DEMOTION = "LLVM_OP_AND_ASSIGN_INT_TO_FP_DEMOTION",
            *Control::LLVM_OP_AND_ASSIGN_FP_PROMOTION = "LLVM_OP_AND_ASSIGN_FP_PROMOTION",
            *Control::LLVM_OP_AND_ASSIGN_FP_DEMOTION = "LLVM_OP_AND_ASSIGN_FP_DEMOTION",
-           *Control::LLVM_ARGUMENT_INTEGRAL_PROMOTION = "9",
-           *Control::LLVM_ARGUMENT_INTEGRAL_DEMOTION = "~",
+           *Control::LLVM_ARRAY_BIT_CAST = "9",
+//           *Control::LLVM_ARGUMENT_INTEGRAL_DEMOTION = "~",
            *Control::LLVM_FUNCTION_VISITED = "`",
            *Control::LLVM_FUNCTION_NEEDS_REVISIT = "!",
            *Control::LLVM_STRUCTURE_PADDING = "@",
@@ -284,11 +284,14 @@ std::vector<llvm::Module*> Control::generateOutput() {
      */
     if (link_command.size()) {
         link_command = (string) "gcc" + " " + option.otherOptions() + option.outputFilename() + link_command;
+// TODO: Remove this !!!
+/*
 cout << "***Issuing Link command: " << link_command
      << endl
      << "*** Compile only?  ... " << (option.isCompileOnly() ? "yes!" : "no!")
      << endl;
 cout.flush();
+*/
         int ret = system(link_command.c_str());
         if (ret != 0) {
             cout << "***rose2llvm error: gcc could not generate executable file." << endl;

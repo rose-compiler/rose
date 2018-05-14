@@ -2,7 +2,7 @@
 #include <rosetollvm/LLVMAstAttributes.h>
 
 #include <llvm/ADT/ArrayRef.h>
-#include <llvm/Support/Dwarf.h> // For LLVMDebugVersion
+#include <llvm/BinaryFormat/Dwarf.h> // For LLVMDebugVersion
 
 #ifdef HAVE_LOOPUNROLLER_BUNDLEATTRIBUTE_H
 #  include <loopunroller/bundleAttribute.h>
@@ -228,7 +228,6 @@ const string LLVMAstAttributes::getFunctionName(SgFunctionSymbol *sym) {
 
 const string LLVMAstAttributes::getFunctionSignature(SgFunctionSymbol *sym) {
      stringstream out;
- 
      SgFunctionType *function_type = isSgFunctionType(sym -> get_type());
      ROSE2LLVM_ASSERT(function_type);
      SgType *return_type = function_type -> get_return_type();
@@ -396,8 +395,8 @@ cout.flush();
 
     for (int i = literal.size; i < size; i++) {
         literal.value += "\\00";
-	literal.length += 3;
-	literal.size++;
+        literal.length += 3;
+        literal.size++;
     }
  
     return string_table.insert(literal.value.c_str(), size);
@@ -570,6 +569,14 @@ cout.flush();
             //            SgUnsignedLongVal *specified_size = isSgUnsignedLongVal(array_type -> get_index());
             //            size_t array_size = (specified_size ? specified_size -> get_value() : 1); // compute number of elements in this array.
             SgIntVal *specified_size = isSgIntVal(array_type -> get_index());
+// TODO: Remove this !!!
+/*
+cout
+  << "*** The type of this array dimension is "
+  << (array_type -> get_index() ? array_type -> get_index() -> class_name() : " NULL???")
+  << endl;
+cout.flush();
+*/
             size_t array_size = (specified_size ? specified_size -> get_value() : 0); // compute number of elements in this array.
             int element_size = ((IntAstAttribute *) element_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
             std::ostringstream out;
@@ -594,6 +601,20 @@ cout.flush();
         }
         else if (dynamic_cast<SgFunctionType *>(type)) {
             SgFunctionType *n = isSgFunctionType(type);
+// TODO: Remove this !!!
+/*
+SgSymbol *symbol = n -> get_symbol_from_symbol_table();
+if (symbol) {
+  cout << "*** Processing symbol "
+       << symbol -> get_name().getString()
+       << endl;
+}
+else {
+  cout << "*** Did not find function symbol!"
+       << endl;
+}
+cout.flush();
+*/
             SgType *return_type = n -> get_return_type();
             ROSE2LLVM_ASSERT(return_type);
             ROSE2LLVM_ASSERT(return_type != type);
@@ -642,7 +663,30 @@ cout.flush();
              * If a compiler-generated function type declaration does not have a final argument with type SgTypeEllipsis, add that final argument
              * so that any function call to that function will look legitimate.
              */
-            if (n -> attributeExists(Control::LLVM_COMPILER_GENERATED) && (arg_type.size() == 0 || (! isSgTypeEllipse(arg_type[arg_type.size() - 1])))) {
+// TODO: Remove this !!!
+/*
+if (n -> get_has_ellipses()) {    
+  cout << "*** This function has ellipsis"
+       << endl;
+}
+else {
+  cout << "*** No ellipsis found"
+       << endl;
+}
+if (n -> attributeExists(Control::LLVM_COMPILER_GENERATED)) { // this function was declared inside a block?
+  cout << "*** This function is compiler-generated"
+       << endl;
+}
+else {
+  cout << "*** No ellipsis found"
+       << endl;
+}
+cout.flush();
+*/
+            if ((n -> get_has_ellipses() || n -> attributeExists(Control::LLVM_COMPILER_GENERATED)) && (arg_type.size() == 0 || (! isSgTypeEllipse(arg_type[arg_type.size() - 1])))) {
+                if (arg_type.size() > 0) {
+                    args_signature.append(",");
+                }
                 args_signature.append("...");
             }
 

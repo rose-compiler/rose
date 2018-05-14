@@ -28,6 +28,7 @@ pkginclude_HEADERS 	= \
 	include/rosetollvm/Option.h \
 	include/rosetollvm/Control.h \
 	include/rosetollvm/RoseToLLVM.hpp \
+	include/rosetollvm/SgCastAstAttribute.h \
 	include/rosetollvm/SgTypeAstAttribute.h \
 	include/rosetollvm/SizeOfAstAttribute.h \
 	include/rosetollvm/StringAstAttribute.h \

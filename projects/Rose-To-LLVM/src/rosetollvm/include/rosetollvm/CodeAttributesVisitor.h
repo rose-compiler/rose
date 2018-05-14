@@ -29,6 +29,8 @@ protected:
 
     std::vector<SgSourceFile *> sourceFiles;
 
+    std::vector<SgExpression *> extraExpressions;
+
     bool isTrivialCast(SgType *type1, SgType *type2);
     
     void processVariableDeclaration(SgInitializedName *);
@@ -66,7 +68,9 @@ protected:
     virtual void preVisitExit(SgNode *);
 
     void addBooleanCast(SgExpression *);
-    void addBooleanExtensionAttributeIfNeeded(SgExpression *);
+    void promoteExpression(SgExpression *n, SgType *target_type);
+    void demoteExpression(SgExpression *n, SgType *target_type);
+    void addBooleanExtensionAttributeIfNeeded(SgExpression *, SgType *target_type = NULL);
     void addConversionAttributeIfNeeded(SgBinaryOp *);
     void checkIntegralOperation(SgBinaryOp *);
 

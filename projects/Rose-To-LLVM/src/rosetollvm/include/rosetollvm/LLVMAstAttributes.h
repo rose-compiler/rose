@@ -16,6 +16,7 @@
 
 #include <rosetollvm/RootAstAttribute.h>
 #include <rosetollvm/ManagerAstAttribute.h>
+#include <rosetollvm/SgCastAstAttribute.h>
 #include <rosetollvm/SgTypeAstAttribute.h>
 #include <rosetollvm/IntAstAttribute.h>
 #include <rosetollvm/StringAstAttribute.h>
@@ -47,6 +48,7 @@ class LLVMAstAttributes : public RootAstAttribute {
 
     std::string intPointerTarget;
     SgType *pointerSizeIntegerType;
+    SgTypeInt *typeInt;
     SgTypeVoid *typeVoid;
     SgPointerType *voidStarType;
 
@@ -86,6 +88,9 @@ public:
     {
         int byte_size = sizeof(void *);
 
+        typeInt = SgTypeInt::createType();
+        setLLVMTypeName(typeInt);
+    
         typeVoid = SgTypeVoid::createType();
         voidStarType = SgPointerType::createType(typeVoid);
         setLLVMTypeName(voidStarType);
@@ -296,6 +301,10 @@ public:
         return pointerSizeIntegerType;
     }
 
+    SgType *getTypeInt() {
+        return typeInt;
+    }
+
     SgType *getVoidStarType() {
         return voidStarType;
     }
@@ -304,8 +313,14 @@ public:
      *
      */
     SgType *getExpressionType(SgExpression *expression) {
-        ROSE2LLVM_ASSERT(expression -> attributeExists(Control::LLVM_EXPRESSION_RESULT_TYPE));
-        return getSourceType(((SgTypeAstAttribute *) expression -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE)) -> getType());
+        SgTypeAstAttribute *attribute = (SgTypeAstAttribute *) expression -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+        if (! attribute) {
+            SgType *expression_type = getSourceType(expression -> get_type());
+            attribute = new SgTypeAstAttribute(expression_type);
+            control.SetAttribute(expression, Control::LLVM_EXPRESSION_RESULT_TYPE, attribute);
+            setLLVMTypeName(expression_type);
+        }
+        return attribute -> getType();
     }
 
     /**
