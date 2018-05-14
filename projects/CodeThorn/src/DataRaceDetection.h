@@ -33,11 +33,8 @@ class DataRaceDetection {
   void setCheckAllLoops(bool val);
   void setCheckAllDataRaces(bool val);
 
-  typedef map<SgForStatement*,SgPragmaDeclaration*> ForStmtToOmpPragmaMap;
-  static bool isInsideOmpParallelFor(SgNode* node, DataRaceDetection::ForStmtToOmpPragmaMap& forStmtToPragmaMap);
-  static bool isOmpParallelFor(SgForStatement* forNode, DataRaceDetection::ForStmtToOmpPragmaMap& forStmtToPragmaMap);
+  static bool isOmpParallelFor(SgForStatement* forNode);
   static LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler);
-  static ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root);
   static list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string pragmaKeyWord);
   static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
 

@@ -130,28 +130,15 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
   }
 }
 
-bool DataRaceDetection::isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragmaMap& forStmtToPragmaMap) {
-  ROSE_ASSERT(node);
-  while(!isSgForStatement(node)) {
-    if(isSgProject(node))
-      return false;
-    //cout<<"node: "<<node->class_name()<<endl;
-    node=node->get_parent();
-    ROSE_ASSERT(node);
+bool DataRaceDetection::isOmpParallelFor(SgForStatement* node) {
+  if(SgOmpForStatement* ompForStmt=isSgOmpForStatement(node->get_parent())) {
+    return isSgOmpParallelStatement(ompForStmt->get_parent());
   }
-  ROSE_ASSERT(!isSgProject(node));
-  // assuming only omp parallel exist in pragma map
-  return forStmtToPragmaMap.find(isSgForStatement(node))!=forStmtToPragmaMap.end();
-}
-
-bool DataRaceDetection::isOmpParallelFor(SgForStatement* node, ForStmtToOmpPragmaMap& forStmtToPragmaMap) {
-  return forStmtToPragmaMap.find(isSgForStatement(node))!=forStmtToPragmaMap.end();
+  return false;
 }
 
 LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler) {
   //cout<<"INFO: loop info set and determine iteration vars."<<endl;
-  ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
-  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
   LoopInfoSet loopInfoSet;
   RoseAst ast(root);
   AstMatching m;
@@ -194,7 +181,7 @@ LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapp
 #endif
       loopInfo.iterationVarId=variableIdMapping->variableId(node);
       loopInfo.forStmt=isSgForStatement(forNode);
-      loopInfo.iterationVarType=isOmpParallelFor(loopInfo.forStmt,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
+      loopInfo.iterationVarType=isOmpParallelFor(loopInfo.forStmt)?ITERVAR_PAR:ITERVAR_SEQ;
       if(loopInfo.forStmt) {
         const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
         ROSE_ASSERT(stmtList.size()==1);
@@ -219,30 +206,6 @@ LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapp
   }
   cout<<"INFO: found "<<DataRaceDetection::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
   return loopInfoSet;
-}
-
-// finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
-DataRaceDetection::ForStmtToOmpPragmaMap DataRaceDetection::createOmpPragmaForStmtMap(SgNode* root) {
-  //cout<<"PROGRAM:"<<root->unparseToString()<<endl;
-  ForStmtToOmpPragmaMap map;
-  RoseAst ast(root);
-  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
-    if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
-      string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
-      //cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
-      if(foundPragmaKeyWord=="omp"||foundPragmaKeyWord=="simd") {
-        RoseAst::iterator j=i;
-        j.skipChildrenOnForward();
-        ++j;
-        if(SgForStatement* forStmt=isSgForStatement(*j)) {
-              map[forStmt]=pragmaDecl;
-        } else {
-              cout<<"WARNING: unsupported omp pragma: "<<(*i)->unparseToString()<<endl;
-        }
-      }
-    }
-  }
-  return map;
 }
 
 // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
