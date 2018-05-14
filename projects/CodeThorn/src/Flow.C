@@ -518,6 +518,8 @@ string Flow::toDot(Labeler* labeler) {
         ss<<":";
       } else if(isSgDefaultOptionStmt(node)) {
         ss<<"default:";
+      } else if(isSgOmpBodyStatement(node)) {
+        ss<<node->class_name();
       } else {
         ss<<SgNodeHelper::nodeToString(node);
       }

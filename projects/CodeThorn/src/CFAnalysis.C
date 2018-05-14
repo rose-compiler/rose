@@ -272,13 +272,13 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
 
     // all omp statements
+  case V_SgOmpForStatement:
+  case V_SgOmpParallelStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
-  case V_SgOmpForStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
   case V_SgOmpSimdStatement:
@@ -470,14 +470,21 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
+  case V_SgOmpForStatement:
+  case V_SgOmpParallelStatement: {
+    // the final label is the final label of the child node's construct
+    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
+    LabelSet finalLabelSet=finalLabels(nextNestedStmt);
+    finalSet+=finalLabelSet;
+    return finalSet;
+  }
+    
     // all omp statements
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
-  case V_SgOmpForStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
   case V_SgOmpSimdStatement:
@@ -994,14 +1001,26 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgEnumDeclaration:
     return edgeSet;
 
+    // parallel nested omp constructs
+  case V_SgOmpParallelStatement:
+  case V_SgOmpForStatement: {
+    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
+    // need to compute flow of next stmt because it is nested (and not at basic-block level)
+    Flow nextNestedStmtFlow=flow(nextNestedStmt);
+    edgeSet+=nextNestedStmtFlow;
+
+    // the label is the final label (but function finalLabels cannot be used here because it gives the final labels of the entire nested construct)
+    Label lab=getLabel(node);
+    Edge edge1=Edge(lab,EDGE_FORWARD,initialLabel(nextNestedStmt));
+    edgeSet.insert(edge1);
+    return edgeSet;
+  }
     // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
-  case V_SgOmpForStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
   case V_SgOmpSimdStatement:
@@ -1187,7 +1206,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     SgNode* condNode=SgNodeHelper::getCond(node);
     if(!condNode)
-      throw SPRAY::Exception("Error: for-loop: empty condition not supported yet.");
+      throw SPRAY::Exception("Error: for-loop: empty condition not supported. Normalization required.");
     Flow flowInitToCond=flow(lastNode,condNode);
     edgeSet+=flowInitToCond;
     Label condLabel=getLabel(condNode);
@@ -1202,7 +1221,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     // Increment Expression:
     SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
     if(!incExp)
-      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported yet.");
+      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported. Normalization required.");
     ROSE_ASSERT(incExp);
     Label incExpLabel=getLabel(incExp);
     ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
