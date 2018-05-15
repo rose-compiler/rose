@@ -5674,7 +5674,9 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-  // curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
+#endif
+#if 0
+     curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
 #endif
 
   // todo: optimize this so that the qualified name is only printed when necessary.
@@ -5781,7 +5783,31 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
           if ( (enum_val->get_name().is_null() == false) && (isGeneratedName == false) )
              {
             // This is the typical case.
-               curprint(enum_val->get_name().str());
+            // curprint(enum_val->get_name().str());
+
+            // DQ (5/14/2018): For C++11 enum class declarations, the assocated enum value will 
+            // ALWAYS require an explicit cast or additional name qualification.
+               SgEnumDeclaration* enumDeclaration = enum_val->get_declaration();
+               if (enumDeclaration != NULL)
+                  {
+                    if (enumDeclaration->get_isScopedEnum() == true)
+                       {
+                      // curprint(enum_val->get_name().str());
+                         curprint(enumDeclaration->get_name().str());
+                         curprint("(");
+                         string valueString = StringUtility::numberToString(enum_val->get_value());
+                         curprint(valueString);
+                         curprint(")");
+                       }
+                      else
+                       {
+                         curprint(enum_val->get_name().str());
+                       }
+                  }
+                 else
+                  {
+                    curprint(enum_val->get_name().str());
+                  }
              }
             else
              {
@@ -5791,7 +5817,9 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-  // curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
+#endif
+#if 0
+     curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
 #endif
 
 #if 0
