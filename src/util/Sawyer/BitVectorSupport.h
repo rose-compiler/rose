@@ -273,7 +273,6 @@ void traverse2(Processor &processor, Word1 *vec1, const BitRange &range1, Word2 
     size_t offsetInWord = bitIndex<Word2>(range2.least());
     const size_t nWordsTmp = numberOfWords<Word2>(offsetInWord + range2.size());
     SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word1>::Base, tmp, nWordsTmp);
-    memset(tmp, 0, nWordsTmp*sizeof(*tmp));                         // only for making debugging easier
     BitRange tmpRange = BitRange::baseSize(offsetInWord, range1.size());
     nonoverlappingCopy(vec1, range1, tmp, tmpRange);
 
@@ -961,7 +960,6 @@ boost::uint64_t toInteger(const Word *words, const BitRange &range) {
     size_t nbits = std::min(range.size(), (size_t)64);
     size_t nTmpWords = numberOfWords<Word>(nbits);
     SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word>::Base, tmp, nTmpWords);
-    memset(tmp, 0, nTmpWords*sizeof(*tmp));
     BitRange lo = BitRange::baseSize(range.least(), nbits);
     copy(words, lo, tmp, BitRange::baseSize(0, nbits));
 
@@ -1122,6 +1120,20 @@ bool signExtend(const Word *vec1, const BitRange &range1, Word *vec2, const BitR
     }
 }
 
+/** Multiply by 10.
+ *
+ *  Treats the specified range of the vector as an unsigned integer and multiplies it by 10. */
+template<class Word>
+void multiply10(Word *vec, const BitRange &range) {
+    //  n * 10 == n * (8 + 2) == n*8 + n*2 == (n<<3) + (n<<1)
+    const size_t nWords = numberOfWords<Word>(range.size());
+    BitRange partRange = BitRange::baseSize(0, range.size());
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, part, nWords);
+    copy(vec, range, part, partRange);
+    shiftLeft(vec, range, 3);
+    shiftLeft(part, partRange, 1);
+    add(part, partRange, vec, range);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Numeric comparison
@@ -1391,24 +1403,40 @@ void fromString(Word *vec, const BitRange &range, const std::string &input) {
  *  strings more readable), or else an <code>std::runtime_error</code> is thrown. If the number of supplied digits is larger
  *  than what is required to initialize the specified sub-vector, then extra data is discarded.  On the other hand, if the
  *  length of the string is insufficient to initialize the entire sub-vector then the high order bits of the sub-vector are
- *  cleared.
- *
- *  @todo Conversion from a decimal string to a bit vector is not fully implemented. At this time, the decimal string must not
- *  parse to more than 64 bits. */
+ *  cleared. */
 template<class Word>
 void fromDecimal(Word *vec, const BitRange &range, const std::string &input) {
+    // First try parsing a value that fits in 64 bits.
     boost::uint64_t v = 0;
+    bool hadOverflow = false;
     BOOST_FOREACH (char ch, input) {
         if (isdigit(ch)) {
             boost::uint64_t tmp = v * 10 + (ch - '0');
-            if (tmp < v)
-                throw std::runtime_error("overflow parsing decimal string");
+            if (tmp < v) {
+                hadOverflow = true;
+                break;
+            }
             v = tmp;
         } else if (ch != '_') {
             throw std::runtime_error("invalid decimal digit \"" + std::string(1, ch) + "\"");
         }
     }
-    fromInteger(vec, range, v);
+    if (!hadOverflow) {
+        fromInteger(vec, range, v);
+        return;
+    }
+
+    // If 64 bits isn't wide enough, do it the slow way.
+    const size_t nWords = numberOfWords<Word>(range.size());
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, accumulator, nWords);
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, digit, nWords);
+    BitRange accumulatorRange = BitRange::baseSize(0, range.size());
+    BOOST_FOREACH (char ch, input) {
+        multiply10(accumulator, accumulatorRange);
+        fromInteger(digit, accumulatorRange, ch - '0');
+        add(digit, accumulatorRange, accumulator, accumulatorRange);
+    }
+    copy(accumulator, accumulatorRange, vec, range);
 }
 
 /** Obtain bits from a hexadecimal representation.
