@@ -5,6 +5,7 @@ exports
   sorts
 
     Letter Digit Mark Icon     %% 8.1        %% Icon added for IntegerLiteralConstant
+    CharString                 %% 8.1
     Name                       %% 8.2.1  
     ReservedWord               %% 8.2.2
     BeadSize Bead              %% 8.3.2
@@ -23,16 +24,16 @@ exports
 
 %% 2.1.1.1
 %%
-    'S'                     -> SignedTypeDesc
-    'U'                     -> UnsignedTypeDesc
+  'S'                       -> SignedTypeDesc
+  'U'                       -> UnsignedTypeDesc
 
 %% 2.1.1.5
 %%
-    'B'                     -> BitTypeDesc
+  'B'                       -> BitTypeDesc
 
 %% 2.1.1.7
 %%
-    'P'                     -> PointerTypeDesc
+  'P'                       -> PointerTypeDesc
 
 
 %%%%%%%%%%
@@ -41,22 +42,29 @@ exports
 
 %% 8.1 CHARACTERS
 %%
-    [A-Za-z]                -> Letter
-    [0-9]                   -> Digit
+  [A-Za-z]                    -> Letter
+  [0-9]                       -> Digit
+
+%% Character Constant
+%%
+  [\'] (~[\'] | "''")*  [\']  -> CharString
 
 %% Integer Constant
 %%
-    [0-9]+                  -> Icon
+  [0-9]+                    -> Icon
 
-    [\+\-\*\/\>\<]          -> Mark
-    [\=\@\.\:\,\;]          -> Mark
-    [\(\)\'\"\%\!]          -> Mark
-    [\$\ ]                  -> Mark
+  [\+\-\*\/\>\<]            -> Mark
+  [\=\@\.\:\,\;]            -> Mark
+  [\(\)\'\"\%\!]            -> Mark
+  [\$\ ]                    -> Mark
 
 %% 8.2.1 NAMES
 %%
-    [A-Za-z\$]
-    [A-Za-z0-9\$\']+        -> Name
+  [A-Za-z\$]
+  [A-Za-z0-9\$\']+          -> Name
+  'TRUE'                    -> Name     {reject}
+  'FALSE'                   -> Name     {reject}
+  'NULL'                    -> Name     {reject}
 
 %% 8.2.2 RESERVED WORDS
 %%
@@ -82,16 +90,17 @@ exports
 
 %% 8.3.2 BIT LITERALS
 %%
-    [1-5]                   -> BeadSize
-    [A-V]                   -> Bead
+  [1-5]                     -> BeadSize
+  [A-V]                     -> Bead
 
-%% 8.4
+%% 8.4 COMMENTS
 %%
-   "%" ~[\n]+ "%"           -> LAYOUT
+  [\%] ~[\%]+ [\%]          -> LAYOUT
+  [\"] ~[\"]+ [\"]          -> LAYOUT
 
 %% 8.5 BLANKS
 %%
-    [\ \t\n\r]              -> LAYOUT
+  [\ \t\n\r]                -> LAYOUT
 
 
   lexical restrictions
@@ -103,11 +112,12 @@ exports
 %%  Icon -/- [0-9]
 %% Trying to stop IntegerItemDescription from interferring with StatusItemDescription
 
-    SignedTypeDesc -/- [A-Za-z0-9]
+    SignedTypeDesc   -/- [A-Za-z0-9]
     UnsignedTypeDesc -/- [A-Za-z0-9]
-    BitTypeDesc -/- [A-Za-z0-9]
-    PointerTypeDesc -/- [A-Za-z0-9]
+    BitTypeDesc      -/- [A-Za-z0-9]
+
+    PointerTypeDesc  -/- [A-Za-z0-9]
 
   context-free restrictions
 
-    LAYOUT? -/- [\ \t\n\r\%]
+    LAYOUT? -/- [\ \t\n\r\%\"]
