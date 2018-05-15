@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <CommandLine.h>
+#include <Diagnostics.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <BinarySmtCommandLine.h>
 #endif
@@ -32,7 +33,28 @@ protected:
     }
 };
 
-Sawyer::CommandLine::Parser
+// Run self tests from the command-line, then exit.
+class SelfTests: public Sawyer::CommandLine::SwitchAction {
+protected:
+    SelfTests() {}
+
+public:
+    typedef Sawyer::SharedPointer<SelfTests> Ptr;
+
+    static Ptr instance() {
+        return Ptr(new SelfTests);
+    }
+
+protected:
+    void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
+        ASSERT_require(cmdline.have("self-test"));
+        runSelfTestsAndExit();
+    }
+};
+
+std::vector<SelfTest::Ptr> selfTests;
+
+ROSE_DLL_API Sawyer::CommandLine::Parser
 createEmptyParser(const std::string &purpose, const std::string &description) {
     Sawyer::CommandLine::Parser parser;
     parser.purpose(purpose);
@@ -51,7 +73,7 @@ createEmptyParser(const std::string &purpose, const std::string &description) {
     return parser;
 }
 
-Sawyer::CommandLine::Parser
+ROSE_DLL_API Sawyer::CommandLine::Parser
 createEmptyParserStage(const std::string &purpose, const std::string &description) {
     return createEmptyParser(purpose, description).skippingNonSwitches(true).skippingUnknownSwitches(true);
 }
@@ -62,7 +84,7 @@ GenericSwitchArgs genericSwitchArgs;
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
 // See header file for more documentation including examples.
-Sawyer::CommandLine::SwitchGroup
+ROSE_DLL_API Sawyer::CommandLine::SwitchGroup
 genericSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup gen("General switches");
@@ -122,10 +144,15 @@ genericSwitches() {
                .doc(BinaryAnalysis::smtSolverDocumentationString(genericSwitchArgs.smtSolver)));
 #endif
 
+    gen.insert(Switch("self-test")
+               .action(SelfTests::instance())
+               .doc("Instead of doing any real work, run any self tests registered with this tool then exit with success "
+                    "or failure status depending on whether all such tests pass."));
+
     return gen;
 }
 
-void
+ROSE_DLL_API void
 insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &switchName, bool &storageLocation,
                     const std::string &documentation) {
     using namespace Sawyer::CommandLine;
@@ -142,6 +169,39 @@ insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &swi
               .key(switchName)
               .intrinsicValue(false, storageLocation)
               .hidden(true));
+}
+
+ROSE_DLL_API void
+runSelfTestsAndExit() {
+    using namespace Rose::Diagnostics;
+
+    // Run each test sequentially
+    size_t npass=0, nfail=0;
+    BOOST_FOREACH (const SelfTest::Ptr &test, selfTests) {
+        if (test) {
+            mlog[DEBUG] <<"running self test \"" <<StringUtility::cEscape(test->name()) <<"\"...\n";
+            if ((*test)()) {
+                mlog[INFO] <<"passed: self test \"" <<StringUtility::cEscape(test->name()) <<"\"\n";
+                ++npass;
+            } else {
+                mlog[ERROR] <<"failed: self test \"" <<StringUtility::cEscape(test->name()) <<"\"\n";
+                ++nfail;
+            }
+        }
+    }
+
+    // Report results and exit
+    if (npass + nfail == 0) {
+        mlog[INFO] <<"no self tests available for this tool\n";
+        exit(0);
+    } else if (nfail > 0) {
+        mlog[FATAL] <<StringUtility::plural(nfail, "self tests") <<" failed; "
+                    <<StringUtility::plural(npass, "self tests") <<" passed\n";
+        exit(1);
+    } else {
+        mlog[INFO] <<"all self tests pass\n";
+        exit(0);
+    }
 }
 
 } // namespace

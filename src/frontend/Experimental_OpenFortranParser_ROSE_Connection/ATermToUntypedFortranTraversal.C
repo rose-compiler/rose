@@ -832,22 +832,82 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
    printf("... traverse_IntrinsicTypeSpec: %s\n", ATwriteToString(term));
 #endif
   
-  //TODO kind-type
-   std::cerr << "...TODO... implement kind-type in IntrinsictypeSpec" << std::endl;
+   ATerm t_type, t_kind;
 
-  if (ATmatch(term, "IntrinsicType(INTEGER())")) {
-     *type = UntypedBuilder::buildType(SgUntypedType::e_int);
-  }
-  else if (ATmatch(term, "IntrinsicType(REAL())")) {
-     *type = UntypedBuilder::buildType(SgUntypedType::e_float);
-  }
-  else if (ATmatch(term, "IntrinsicType(LOGICAL())")) {
-     *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
-  }
-  else {
-     std::cerr << "...TODO... implement additional types in IntrinsictypeSpec" << std::endl;
-     return ATfalse;
-  }
+   *type = NULL;
+
+   if (ATmatch(term, "IntrinsicType(<term>)", &t_type)) {
+      // MATCHED IntrinsicType
+   } else return ATfalse;
+
+// Check for type declarations without type-kind parameter
+   if (ATmatch(t_type, "INTEGER()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_int);
+   }
+   else if (ATmatch(t_type, "REAL()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+   else if (ATmatch(t_type, "DOUBLEPRECISION()")) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+   else if (ATmatch(t_type, "COMPLEX()")) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_complex);
+   }
+   else if (ATmatch(t_type, "CHARACTER()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_char);
+   }
+   else if (ATmatch(t_type, "LOGICAL()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+   else if (ATmatch(t_type, "DOUBLECOMPLEX()")) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+
+   if (*type != NULL) {
+   // have a type without a type-kind parameter, return
+      return ATtrue;
+   }
+
+// Only type declarations with a kind parameter or length parameters left
+// ----------------------------------------------------------------------
+
+   if (ATmatch(t_type, "INTEGER(<term>)", &t_kind)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_int);
+   }
+   else if (ATmatch(t_type, "REAL(<term>)", &t_kind)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
+   else if (ATmatch(t_type, "COMPLEX(<term>)", &t_kind)) {
+      //*type = UntypedBuilder::buildType(SgUntypedType::e_complex);
+      return ATfalse;
+   }
+   else if (ATmatch(t_type, "LOGICAL(<term>)", &t_kind)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+
+// Check for a type-kind parameter
+   if (*type != NULL) {
+      SgUntypedExpression* kind;
+      if (traverse_KindSelector(t_kind, &kind)) {
+      // add type kind expression
+         (*type)->set_has_kind(true);
+         (*type)->set_type_kind(kind);
+      }
+      else {
+         cerr << "ERROR: no expected kind-type parameter in IntrinsictypeSpec" << endl;
+         return ATfalse;
+      }
+   }
+   else {
+      cerr << "ERROR: unknown intrinsic type in IntrinsictypeSpec" << endl;
+      return ATfalse;
+   }
+
+// TODO - Check for a character string
+   if (*type != NULL) {
+   // have a type with a type-kind parameter, return
+      return ATtrue;
+   }
 
   return ATtrue;
 }
@@ -876,7 +936,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
    else if (ATmatch(term, "IntVal(<str>,<term>)", &arg1,&t_kind)) {
       SgUntypedExpression* kind;
       if (traverse_Expression(t_kind, &kind)) {
-         // MATCHED KindParam
+         // MATCHED Expression
       } else return ATfalse;
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
@@ -971,6 +1031,26 @@ ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedEx
    setSourcePosition(*var_expr, term);
 
   return ATtrue;
+}
+
+//========================================================================================
+// R405 kind-selector
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_KindSelector(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_KindSelector: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_kind;
+
+   if (ATmatch(term, "Kind(<term>)", &t_kind)) {
+      if (traverse_Expression(t_kind, expr)) {
+         // MATCHED type-kind expression
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
 }
 
 //========================================================================================

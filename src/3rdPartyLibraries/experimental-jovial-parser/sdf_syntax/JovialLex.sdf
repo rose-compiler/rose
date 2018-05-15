@@ -5,11 +5,36 @@ exports
   sorts
 
     Letter Digit Mark Icon     %% 8.1        %% Icon added for IntegerLiteralConstant
+    CharString                 %% 8.1
     Name                       %% 8.2.1  
     ReservedWord               %% 8.2.2
     BeadSize Bead              %% 8.3.2
 
+    SignedTypeDesc             %% 2.1.1.1
+    UnsignedTypeDesc           %% 2.1.1.1
+    BitTypeDesc                %% 2.1.1.5
+    PointerTypeDesc            %% 2.1.1.7
+
   lexical syntax
+
+
+%%%%%%%%%%
+%% 2.1.1 ITEM DECLARATIONS AND TYPE DESCRIPTIONS
+%%%%%%%%%%
+
+%% 2.1.1.1
+%%
+  'S'                       -> SignedTypeDesc
+  'U'                       -> UnsignedTypeDesc
+
+%% 2.1.1.5
+%%
+  'B'                       -> BitTypeDesc
+
+%% 2.1.1.7
+%%
+  'P'                       -> PointerTypeDesc
+
 
 %%%%%%%%%%
 %% 8.0 BASIC ELEMENTS
@@ -17,22 +42,29 @@ exports
 
 %% 8.1 CHARACTERS
 %%
-    [A-Za-z]                -> Letter
-    [0-9]                   -> Digit
+  [A-Za-z]                    -> Letter
+  [0-9]                       -> Digit
+
+%% Character Constant
+%%
+  [\'] (~[\'] | "''")*  [\']  -> CharString
 
 %% Integer Constant
 %%
-    [0-9]+                  -> Icon
+  [0-9]+                    -> Icon
 
-    [\+\-\*\/\>\<]          -> Mark
-    [\=\@\.\:\,\;]          -> Mark
-    [\(\)\'\"\%\!]          -> Mark
-    [\$\ ]                  -> Mark
+  [\+\-\*\/\>\<]            -> Mark
+  [\=\@\.\:\,\;]            -> Mark
+  [\(\)\'\"\%\!]            -> Mark
+  [\$\ ]                    -> Mark
 
 %% 8.2.1 NAMES
 %%
-    [A-Za-z\$]
-    [A-Za-z0-9\$\']+        -> Name
+  [A-Za-z\$]
+  [A-Za-z0-9\$\']+          -> Name
+  'TRUE'                    -> Name     {reject}
+  'FALSE'                   -> Name     {reject}
+  'NULL'                    -> Name     {reject}
 
 %% 8.2.2 RESERVED WORDS
 %%
@@ -56,19 +88,36 @@ exports
   'COMPOOL'                 -> ReservedWord
   'CONDITION*'              -> ReservedWord
 
-
 %% 8.3.2 BIT LITERALS
 %%
-    [1-5]                   -> BeadSize
-    [A-V]                   -> Bead
+  [1-5]                     -> BeadSize
+  [A-V]                     -> Bead
+
+%% 8.4 COMMENTS
+%%
+  [\%] ~[\%]+ [\%]          -> LAYOUT
+  [\"] ~[\"]+ [\"]          -> LAYOUT
 
 %% 8.5 BLANKS
 %%
-    [\ \t\n\r]              -> LAYOUT
+  [\ \t\n\r]                -> LAYOUT
 
-%%  lexical restrictions
-%%    Id  -/- [A-Za-z0-9]
-%%    Int -/- [0-9]
+
+  lexical restrictions
+
+%% Name lexical restriction needed so 'ivar' is not split into 'iv' 'a' 'r'
+%% -/- to be read as "cannot be followed by"
+    Name -/- [A-Za-z0-9]
+%% TODO think about Icon lexical restriction
+%%  Icon -/- [0-9]
+%% Trying to stop IntegerItemDescription from interferring with StatusItemDescription
+
+    SignedTypeDesc   -/- [A-Za-z0-9]
+    UnsignedTypeDesc -/- [A-Za-z0-9]
+    BitTypeDesc      -/- [A-Za-z0-9]
+
+    PointerTypeDesc  -/- [A-Za-z0-9]
 
   context-free restrictions
-    LAYOUT? -/- [\ \t\n\r]
+
+    LAYOUT? -/- [\ \t\n\r\%\"]

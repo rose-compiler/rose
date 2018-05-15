@@ -744,13 +744,6 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgExpression* sg
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
-{
-  if(debuglevel > 0) debugPrint(sgn);
-  throw SPRAY::Exception("Address-Taken Analysis: lambda expression not supported.");
-  // TODO!
-}
-
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParameterList* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
@@ -990,6 +983,13 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
       throwExpression->accept(*this);
     }
   }
+}
+
+void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
+{
+  if(debuglevel > 0) debugPrint(sgn);
+  // lambda captures are handled in SgLambdaCapture, the lambda body
+  // is traversed and processed like any other function body.
 }
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaCapture* sgn)

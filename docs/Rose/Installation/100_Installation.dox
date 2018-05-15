@@ -37,6 +37,56 @@
  *  ROSE can be downloaded with standard Git commands. <em>Do not use Github's "Download ZIP" button since this strips necessary
  *  version information from the ZIP archive.</em>
  *
+ *  @section installation_rose_installer ROSE Binary Installer
+ *
+ *  Experimental binary ROSE Installers are available on our website: http://rosecompiler.org/releases/. Simply download and execute
+ *  the rose-installer script to get started. (Please report any issues to rose-public@nersc.gov.)
+ *
+ *  <table>
+ *    <tr>
+ *      <td><b>ROSE Version</b></td>
+ *      <td><b>Release Date</b></td>
+ *      <td><b>Notes</b></td>
+ *    </tr>
+ *
+ *    <tr>
+ *      <td><center><a href="http://rosecompiler.org/releases/rose-v0.9.9.171/rose-installer">0.9.9.171</a></center></td>
+ *      <td><center>2018-01-06</center></td>
+ *      <td>Built on Linux 2.6.32-696.el6.x86_64</td>
+ *    </tr>
+ *  </table>
+ *
+ *  Example:
+ *
+ *  @code
+   wget http://rosecompiler.org/releases/rose-v0.9.9.171/rose-installer
+   bash ./rose-installer -v --prefix=/tmp/rose-installation/
+
+   ls /tmp/rose-installation/
+   bin  include  lib  share
+
+   export LD_LIBRARY_PATH=/tmp/rose-installation/lib:${LD_LIBRARY_PATH}
+
+   /tmp/rose-installation/bin/identityTranslator --version
+   ROSE (version: 0.9.9.171)
+     --- using ROSE SCM version:
+         --- ID: 13d6f3d9cd593503a0d50bb8a393df4e146677db
+         --- Timestamp: 2018-01-06 01:28:48 UTC
+     --- using EDG C/C++ front-end version: edg-4.12
+     --- using OFP Fortran parser version: unknown (OFP is disabled)
+     --- using Boost version: 1.65.1 (/net/wci-cl1.llnl.gov/vol/home/reus1/ROSE-git-clones/ROSE-rzgenie-2018.01.08.23.15.27/BOOST-install/1.65.1)
+     --- using backend C compiler: gcc version: 4.8
+     --- using backend C compiler path (as specified at configure time): gcc
+     --- using backend C++ compiler: g++ version: 4.8
+     --- using backend C++ compiler path (as specified at configure time): g++
+     --- using original build tree path: /net/wci-cl1.llnl.gov/vol/home/reus1/ROSE-git-clones/ROSE-rzgenie-2018.01.08.23.15.27/ROSE/rose-build
+     --- using instalation path: /net/wci-cl1.llnl.gov/vol/home/reus1/ROSE-git-clones/ROSE-rzgenie-2018.01.08.23.15.27/ROSE-install
+     --- using GNU readline version: unknown (readline is disabled)
+     --- using libmagic version: unknown (libmagic is disabled)
+     --- using yaml-cpp version: unknown (yaml-cpp is disabled)
+     --- using lib-yices version: unknown (libyices is disabled)
+   @endcode
+ *
  *  @section installation_dev_repo Development Repository
  *
  *  @code

@@ -78,7 +78,7 @@ void Edge::addTypes(set<EdgeType> ets) {
 void Edge::removeType(EdgeType et) {
   set<EdgeType>::const_iterator iter =_types.find(et);
   if(iter!=_types.end()) {
-    _types.erase(iter);
+    _types.erase(*iter);
   }
 }
 
@@ -739,6 +739,10 @@ set<string> Flow::getAllAnnotations() {
 EdgeTypeSet Flow::iterator::getTypes() {
   EdgeTypeSet result = ((*this).SawyerCfg::EdgeIterator::operator->())->value().edgeTypes;
   return result;
+}
+
+void Flow::iterator::setTypes(EdgeTypeSet types) {
+  ((*this).SawyerCfg::EdgeIterator::operator->())->value().edgeTypes=types;
 }
 
 string Flow::iterator::getAnnotation() {
