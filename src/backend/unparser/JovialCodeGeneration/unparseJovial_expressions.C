@@ -85,9 +85,9 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
                      unparseUnaryOp(isSgUnaryOp(expr), info ); break;
                 case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
                 case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
-
-                case V_SgNullExpression:        { curprint ("null"); break; }
 #endif
+
+                case V_SgNullExpression:         break;
 
                 default:
                      cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;

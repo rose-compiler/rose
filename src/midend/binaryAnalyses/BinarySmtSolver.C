@@ -745,6 +745,9 @@ SmtSolver::selfTest() {
     exprs.push_back(makeSignedGt(a8, z8, NO_SOLVER, "signed greater than"));
     exprs.push_back(makeSignedGe(a8, z8, NO_SOLVER, "signed greather than or equal"));
 
+    //  Wider than 64 bits
+    exprs.push_back(makeEq(z256, a256, NO_SOLVER, "wide constant"));
+
     // Boolean operations
     exprs.push_back(makeEq(makeIte(makeZerop(a8), z8, b8), b8, NO_SOLVER, "if-then-else"));
     exprs.push_back(makeAnd(makeZerop(a8), makeZerop(c8), NO_SOLVER, "Boolean conjunction"));

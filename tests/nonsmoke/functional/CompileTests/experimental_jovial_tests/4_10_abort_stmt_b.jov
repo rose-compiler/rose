@@ -1,0 +1,6 @@
+START
+PROGRAM main ;	
+BEGIN
+ ABORT ;
+END
+TERM

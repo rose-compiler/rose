@@ -8,7 +8,8 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 bin_PROGRAMS = roseupcc
 roseupcc_SOURCES = upc_translation.C roseupcc.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDFLAGS = $(ROSE_RPATHS)
 
 EXTRA_DIST = README upc_translation.h include 
 

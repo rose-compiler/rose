@@ -18531,8 +18531,8 @@ SgTemplateArgument::get_scope () const
           case SgTemplateArgument::nontype_argument:
              {
             // Not clear if the scope should be defined here!
-               const SgExpression* expr = get_expression();
-               ROSE_ASSERT(expr != NULL);
+            // const SgExpression* expr = get_expression();
+               ROSE_ASSERT(get_expression() != NULL);
                scope = NULL;
                break;
              }
