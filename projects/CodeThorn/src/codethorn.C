@@ -1219,8 +1219,7 @@ int main( int argc, char * argv[] ) {
     timer.start();
 
     vector<string> argvList(argv,argv+argc);
-    if(args.getBool("omp-ast")) {
-      //TODO: new openmp-ast support not finished yet - using existing implementation
+    if(args.getBool("omp-ast")||args.getBool("data-race")) {
       cout<<"INFO: using OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
