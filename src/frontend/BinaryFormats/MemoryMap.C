@@ -734,6 +734,19 @@ MemoryMap::shrinkUnshare() {
     return success;
 }
 
+Combinatorics::Hasher&
+MemoryMap::hash(Combinatorics::Hasher &hasher) const {
+    uint8_t buffer[4096];                               // arbitrary size
+    rose_addr_t va = 0;
+    while (AddressInterval where = this->atOrAfter(va).limit(sizeof buffer).read(buffer)) {
+        hasher.append(buffer, where.size());
+        if (where.greatest() == hull().greatest())
+            break;                                      // prevent overflow in next statement
+        va = where.greatest() + 1;
+    }
+    return hasher;
+}
+
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {

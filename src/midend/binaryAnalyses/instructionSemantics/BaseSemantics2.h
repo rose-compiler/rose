@@ -157,18 +157,14 @@ namespace BinaryAnalysis {
  *  except the RISC-like operation for writing a value to memory needs to additionally print the address and value.
  *
  *  Since you're essentially creating a new domain derived from ROSE's concrete domain, you should create a namespace for your
- *  domain. Let's call it @c MyDomain.  Since the value type, memory state, register state, combined state are all the same,
- *  create typedefs within @c MyDomain that just alias the types in ROSE's concrete domain. Notice there's no alias for a
+ *  domain. Let's call it @c MySemantics.  Since the value type, memory state, register state, combined state are all the same,
+ *  create typedefs within @c MySemantics that just alias the types in ROSE's concrete domain. Notice there's no alias for a
  *  dispatcher; this is because dispatchers are domain-agnostic--any dispatcher will work with any semantic domain.
  *
  *  The only class you need to change is the RiscOperators class in ROSE's concrete domain. Therefore, within your namespace,
- *  define a new class named @c MyDomain::RiscOperators that inherits from ROSE's @ref ConcreteSemantics::RiscOperators, and
+ *  define a new class named @c MySemantics::RiscOperators that inherits from ROSE's @ref ConcreteSemantics::RiscOperators, and
  *  override the @c writeMemory method so it prints the address and value before delegating to the base class.  You'll also
- *  need to write the C++ constructors (since they're not inherited in C++). These C++ constructors should have "protected"
- *  visibility to prevent the user from accidentally instantiating one of these objects on the stack (because they're reference
- *  counted). Then also reimplement all the static factory methods from the base class, and all the virtual constructors (these
- *  are C++ virtual member functions that allocate a new instance of the class and return a shared pointer to it). @ref
- *  instruction_semantics_constructors has more details about this step.
+ *  need to define three classes of constructors detailed in @ref instruction_semantics_constructors.
  *
  *  Finally, your analysis can instantiate a semantics framework using the components from the new @c MySemantics. The code to
  *  do this looks almost identical to the example instantiation we already saw, except the word @c Symbolic would be changed to
@@ -179,25 +175,27 @@ namespace BinaryAnalysis {
  *  Here are some additional details to help you implement subclasses of reference-counted classes: You should implement three
  *  versions of each constructor: the real C++ constructor, the static allocating constructor, and the virtual constructor.
  *  Fortunately, the amount of extra code needed is not substantial since the virtual constructor can call the static
- *  allocating constructor, which can call the real constructor. The three versions in more detail are:
+ *  allocating constructor, which can call the real C++ constructor. You'll need to override each overload of the three
+ *  versions of constructors from the base class. The three versions in more detail are:
  *
  *  @li <i>Real Constructors</i>: These are the normal C++ constructors. They should have protected access and are used
- *  only by authors of subclasses.
+ *  only by authors of subclasses.  The other two versions of constructors described next are <em>constructors</em> in the
+ *  sense of object-oriented languages in general, although in the C++ world they're not called "constructors".
  *
- *  @li <i>Static Allocating Constructors</i>: These are class methods that allocate a specific kind of object on the heap and
- *  return a smart pointer to the object.  They are named "instance" to emphasize that they instantiate a new instance of a
- *  particular class and they return the pointer type that is specific to the class (i.e., not one of the BaseSemantics pointer
- *  types).  When an end user constructs a dispatcher, RISC operators, etc., they have particular classes in mind and use those
- *  classes' "instance" methods to create objects.  Static allocating constructors are seldom called by authors of subclasses;
- *  instead the author usually has an object whose provenance can be traced back to a user-created object (such as a
- *  prototypical object), and he invokes one of that object's virtual constructors.
+ *  @li <i>Static Allocating Constructors</i>: These are class methods (C++ static member functions) that allocate a specific
+ *  kind of object on the heap and return a smart pointer to the object.  They are named "instance" to emphasize that they
+ *  instantiate a new instance of a particular class and they return the pointer type that is specific to the class (i.e., not
+ *  one of the BaseSemantics pointer types).  When an end user constructs a dispatcher, RISC operators, etc., they have
+ *  particular classes in mind and use those classes' "instance" methods to create objects.  Static allocating constructors are
+ *  seldom called by authors of subclasses; instead the author usually has an object whose provenance can be traced back to a
+ *  user-created object (such as a prototypical object), and he invokes one of that object's virtual constructors.
  *
  *  @li <i>Virtual Constructors</i>: A virtual constructor creates a new object having the same run-time type as the object on
  *  which the method is invoked.  Virtual constructors are often named "create" with the virtual copy constructor named
- *  "clone", however the SValue class hierarchy follows a different naming scheme for historic reason--its virtual
+ *  "copy" or "clone", however the SValue class hierarchy follows a different naming scheme for historic reason--its virtual
  *  constructors end with an underscore.  Virtual constructors return pointer types that defined in BaseSemantics. Subclass
- *  authors usually use this kind of object creation because it frees them from having to know a specific type and allows
- *  their classes to be easily subclassed.
+ *  authors usually use this kind of constructor because it frees them from having to know a specific type and allows
+ *  their classes to be easily subclassed. Virtual constructors are implemented in C++ as virtual member functions.
  *
  *  When writing a subclass the author should implement the three versions for each constructor inherited from the super
  *  class. The author may also add any additional constructors that are deemed necessary, realizing that all subclasses of his

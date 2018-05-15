@@ -129,7 +129,7 @@ ROSE_DLL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const s
 /** Base class for self tests.
  *
  *  Each test has a name and a functor that takes no arguments. */
-class SelfTest: public Sawyer::SharedObject {
+class ROSE_DLL_API SelfTest: public Sawyer::SharedObject {
 public:
     typedef Sawyer::SharedPointer<SelfTest> Ptr;
 

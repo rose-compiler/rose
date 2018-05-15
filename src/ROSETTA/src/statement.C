@@ -1205,6 +1205,11 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ("bool", "marked_as_edg_normalization", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/10/2018): Add a data member to record when this is an implicit function. Implicit functions can have no explicit 
+  // parameters and yet have function arguments where they are called (default type is int for such parameters).
+     FunctionDeclaration.setDataPrototype ("bool", "is_implicit_function", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
