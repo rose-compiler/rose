@@ -19699,8 +19699,8 @@ SgTemplateArgument::get_mangled_name (void) const
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
             // DQ (7/4/2013): Added support for additional template argument type.
-               const SgExpression* expr = get_expression();
-               assert(expr != NULL);
+            // const SgExpression* expr = get_expression();
+               assert(get_expression() != NULL);
 #if 0
                printf ("WARNING: In SgTemplateArgument::get_mangled_name(): handling of mangled name for varadic template argument is incomplete! \n");
 #endif
@@ -19823,8 +19823,8 @@ SgTemplateArgument::get_scope () const
           case SgTemplateArgument::nontype_argument:
              {
             // Not clear if the scope should be defined here!
-               const SgExpression* expr = get_expression();
-               assert(expr != NULL);
+            // const SgExpression* expr = get_expression();
+               assert(get_expression() != NULL);
                scope = NULL;
                break;
              }
@@ -20136,8 +20136,8 @@ SgTemplateArgument::display( const std::string & label) const
 
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
-               const SgExpression* expr = get_expression();
-               assert(expr != NULL);
+            // const SgExpression* expr = get_expression();
+               assert(get_expression() != NULL);
 #if 1
                printf ("WARNING: In SgTemplateArgument::display(): handling of display for varadic template argument is incomplete! \n");
 #endif

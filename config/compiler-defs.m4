@@ -106,9 +106,10 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 elif test $XCODE_VERSION_MAJOR -eq 9; then
                     CXX_VERSION_MAJOR=3
                   # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
+                  # Rasmussen (04/04//2018): Added results for clang --version 9.0.1
                   # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
                     case "$XCODE_VERSION_MINOR" in
-                        0)
+                        0|1)
                             CXX_VERSION_MINOR=9
                             ;;
                         *)

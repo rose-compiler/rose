@@ -20,6 +20,7 @@ Label::Label() {
   }
 
 Label::Label(size_t labelId) {
+  ROSE_ASSERT(labelId!=NO_LABEL_ID);
   _labelId=labelId;
 }
 
@@ -72,9 +73,19 @@ size_t Label::getId() const {
   return _labelId;
 }
 
+std::string Label::toString() const {
+  if(_labelId==NO_LABEL_ID) {
+    return "NO_LABEL_ID";
+  } else {
+    stringstream ss;
+    ss<<_labelId;
+    return ss.str();
+  }
+}
+
 // friend function
 ostream& SPRAY::operator<<(ostream& os, const Label& label) {
-  os<<label._labelId;
+  os<<label.toString();
   return os;
 }
 
@@ -233,14 +244,19 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgGotoStatement:
-  case V_SgVariableDeclaration:
   case V_SgLabelStatement:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgSwitchStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
+    return 1;
+
+    // declarations
+  case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
+  case V_SgTypedefDeclaration:
     return 1;
 
     // represent all parallel omp constructs as nodes
@@ -324,6 +340,10 @@ void Labeler::createLabels(SgNode* root) {
     //   }
     if(isSgExprStatement(*i)||isSgReturnStmt(*i)/*||isSgVariableDeclaration(*i)*/)
       i.skipChildrenOnForward();
+    // MS 2018: skip templates (only label template instantiations)
+    if(isSgTemplateClassDeclaration(*i)||isSgTemplateClassDefinition(*i)) {
+      i.skipChildrenOnForward();
+    }
   }
   //std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
   //std::cout << "DEBUG: mappingLabelToLabelProperty:\n"<<this->toString()<<std::endl;
