@@ -15,6 +15,14 @@ Sawyer::Message::Facility Specialization::logger;
 ConstReporter::~ConstReporter() {
 }
 
+void Specialization::setMaxNumberOfExtractedUpdates(long maxNumber) {
+  _maxNumberOfExtractedUpdates=maxNumber;
+}
+
+long Specialization::getMaxNumberOfExtractedUpdates() {
+  return _maxNumberOfExtractedUpdates;
+}
+
 SpecializationConstReporter::SpecializationConstReporter(VariableIdMapping* variableIdMapping, VariableId var, int constInt) {
     _variableIdMapping=variableIdMapping;
     _variableId=var;
@@ -253,11 +261,12 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        }
      }
      if(succSet.size()>1) {
-       cerr<<estate->toString()<<endl;
-       cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
-       cerr<<"       @ node: "<<node->class_name()<<endl;
-       cerr<<"       source: "<<node->unparseToString()<<endl;
-       exit(1);
+       std::stringstream ss;
+       ss<<estate->toString()<<endl;
+       ss<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
+       ss<<"       @ node: "<<node->class_name()<<endl;
+       ss<<"       source: "<<node->unparseToString()<<endl;
+       throw CodeThorn::Exception(ss.str());
      } else {
         ROSE_ASSERT(succSet.size()==1);
        EStatePtrSet::iterator i=succSet.begin();
@@ -304,8 +313,9 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
 #endif
      SgExpression* p_expCopy2=isSgExpression(p_expCopy);
      if(!p_expCopy2) {
-       cerr<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
-       exit(1);
+       std::stringstream ss;
+       ss<<"Error: wrong node type in array update extraction. Expected SgExpression* but found "<<p_expCopy->class_name()<<endl;
+       cout<<ss.str();
     }
     numProcessedArrayUpdates++;
     if(numProcessedArrayUpdates%100==0) {

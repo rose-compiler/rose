@@ -616,7 +616,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-equivalence-checking check-data-races check-svcomp-witness
+CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-equivalence check-data-races check-svcomp-witness
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
 CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven-reset-analyzer
@@ -727,7 +727,7 @@ check-ltl-driven-reset-analyzer:
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
-check-equivalence-checking:
+check-equivalence:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================

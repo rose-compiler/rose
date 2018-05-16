@@ -400,6 +400,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("print-update-infos", po::value< bool >()->default_value(false)->implicit_value(true), "Print information about array updates on stdout.")
     ("rule-const-subst", po::value< bool >()->default_value(true)->implicit_value(true), "Use const-expr substitution rule.")
     ("rule-commutative-sort", po::value< bool >()->default_value(false)->implicit_value(true), "Apply rewrite rule for commutative sort of expression trees.")
+    ("max-extracted-updates",po::value< int >()->default_value(5000)->implicit_value(-1),"Set maximum number of extracted updates. This ends the analysis.")
     ("specialize-fun-name", po::value< string >(), "Function of name <arg> to be specialized.")
     ("specialize-fun-param", po::value< vector<int> >(), "Function parameter number to be specialized (starting at 0).")
     ("specialize-fun-const", po::value< vector<int> >(), "Constant <arg>, the param is to be specialized to.")
@@ -1186,6 +1187,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
+    // parse command line options for data race detection
     DataRaceDetection dataRaceDetection;
     dataRaceDetection.handleCommandLineOptions(*analyzer);
     dataRaceDetection.setVisualizeReadWriteAccesses(args.getBool("visualize-read-write-sets"));
@@ -1663,7 +1665,7 @@ int main( int argc, char * argv[] ) {
       assertionExtractor.computeLabelVectorOfEStates();
       assertionExtractor.annotateAst();
       AstAnnotator ara(analyzer->getLabeler());
-      ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
+      ara.annotateAstAttributesAsCommentsBeforeStatements  (sageProject,"ctgen-pre-condition");
       logger[TRACE] << "STATUS: Generated assertions."<<endl;
     }
 

@@ -274,6 +274,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     // all omp statements
   case V_SgOmpForStatement:
   case V_SgOmpParallelStatement:
+  case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
@@ -480,6 +481,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   }
     
     // all omp statements
+  case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
@@ -1016,6 +1018,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
     // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
+  case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	

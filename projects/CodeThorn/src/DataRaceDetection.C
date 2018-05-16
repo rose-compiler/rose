@@ -54,76 +54,91 @@ void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer) {
     options.printUpdateInfos=true;
   }
   options.useConstSubstitutionRule=args.getBool("rule-const-subst");
+  if(args.isDefined("max-extracted-updates")) {
+    options.maxNumberOfExtractedUpdates=args.getInt("max-extracted-updates");
+  }
 }
 
 void DataRaceDetection::setCsvFileName(string fileName) {
   options.dataRaceCsvFileName=fileName;
 }
 
+void DataRaceDetection::reportResult(int verifyUpdateSequenceRaceConditionsResult,
+                                     int verifyUpdateSequenceRaceConditionsParLoopNum,
+                                     int verifyUpdateSequenceRaceConditionsTotalLoopNum) {
+  stringstream text;
+  if(verifyUpdateSequenceRaceConditionsResult==-1) {
+    text<<"sequential";
+  } else if(verifyUpdateSequenceRaceConditionsResult==-2) {
+    // not supported yet
+    text<<"unknown";
+  } else if(verifyUpdateSequenceRaceConditionsResult==0) {
+    text<<"no";
+  } else {
+    text<<"yes";
+  }
+  text<<","<<verifyUpdateSequenceRaceConditionsResult;
+  text<<","<<verifyUpdateSequenceRaceConditionsParLoopNum;
+  text<<","<<verifyUpdateSequenceRaceConditionsTotalLoopNum;
+  text<<endl;
+  
+  if(options.dataRaceCsvFileName!="") {
+    CodeThorn::write_file(options.dataRaceCsvFileName,text.str());
+  } else {
+    // if no output file is provided print on std out
+    cout << "Data Race Detection: ";
+    cout << text.str();
+  }
+}
+
 bool DataRaceDetection::run(Analyzer& analyzer) {
   if(options.active) {
-    SAR_MODE sarMode=SAR_SSA;
-    Specialization speci;
-    ArrayUpdatesSequence arrayUpdates;
-    RewriteSystem rewriteSystem;   
-    int verifyUpdateSequenceRaceConditionsResult=-1;
-    int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
-    int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
+    try {
+      SAR_MODE sarMode=SAR_SSA;
+      Specialization speci;
+      ArrayUpdatesSequence arrayUpdates;
+      RewriteSystem rewriteSystem;   
+      int verifyUpdateSequenceRaceConditionsResult=-2;
+      int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
+      int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
+      
+      analyzer.setSkipSelectedFunctionCalls(true);
+      analyzer.setSkipArrayAccesses(true);
 
-    analyzer.setSkipSelectedFunctionCalls(true);
-    analyzer.setSkipArrayAccesses(true);
-
-    // perform data race detection
-    if (options.visualizeReadWriteSets) {
-      setVisualizeReadWriteAccesses(true);
+      // perform data race detection
+      if (options.visualizeReadWriteSets) {
+        setVisualizeReadWriteAccesses(true);
+      }
+      cout<<"STATUS: performing array analysis on STG."<<endl;
+      cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+      
+      speci.setMaxNumberOfExtractedUpdates(options.maxNumberOfExtractedUpdates);
+      speci.extractArrayUpdateOperations(&analyzer,
+                                         arrayUpdates,
+                                         rewriteSystem,
+                                         options.useConstSubstitutionRule
+                                         );
+      speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
+      
+      SgNode* root=analyzer.startFunRoot;
+      VariableId parallelIterationVar;
+      LoopInfoSet loopInfoSet=DataRaceDetection::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
+      cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
+      verifyUpdateSequenceRaceConditionsParLoopNum=DataRaceDetection::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
+      verifyUpdateSequenceRaceConditionsResult=checkDataRaces(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
+      if(options.printUpdateInfos) {
+        speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
+      }
+      speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
+      reportResult(verifyUpdateSequenceRaceConditionsResult,
+                   verifyUpdateSequenceRaceConditionsParLoopNum,
+                   verifyUpdateSequenceRaceConditionsTotalLoopNum);
+    } catch(const CodeThorn::Exception& e) {
+      logger[TRACE] << "CodeThorn::Exception raised & catched inside data race detection (generating 'unknown'): " << e.what() << endl;
+      reportResult(-2,0,0);
+      return 1;
     }
-    cout<<"STATUS: performing array analysis on STG."<<endl;
-    cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-    
-    speci.extractArrayUpdateOperations(&analyzer,
-                                       arrayUpdates,
-                                       rewriteSystem,
-                                       options.useConstSubstitutionRule
-                                       );
-    speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
-
-    SgNode* root=analyzer.startFunRoot;
-    VariableId parallelIterationVar;
-    LoopInfoSet loopInfoSet=DataRaceDetection::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-    cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
-    verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
-    verifyUpdateSequenceRaceConditionsParLoopNum=DataRaceDetection::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
-    verifyUpdateSequenceRaceConditionsResult=checkDataRaces(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
-    if(options.printUpdateInfos) {
-      speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
-    }
-    speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
-
-    stringstream text;
-    if(verifyUpdateSequenceRaceConditionsResult==-1) {
-      text<<"sequential";
-    } else 
-      // not supported yet
-      if(verifyUpdateSequenceRaceConditionsResult==-2) {
-      text<<"unknown";
-    } else if(verifyUpdateSequenceRaceConditionsResult==0) {
-      text<<"no";
-    } else {
-      text<<"yes";
-    }
-    text<<","<<verifyUpdateSequenceRaceConditionsResult;
-    text<<","<<verifyUpdateSequenceRaceConditionsParLoopNum;
-    text<<","<<verifyUpdateSequenceRaceConditionsTotalLoopNum;
-    text<<endl;
-    
-    if(options.dataRaceCsvFileName!="") {
-      CodeThorn::write_file(options.dataRaceCsvFileName,text.str());
-    } else {
-      // if no output file is proved print on std out
-      cout << "Data Race Detection: ";
-      cout << text.str();
-    }
-
     return true;
   } else {
     return false;
@@ -226,8 +241,8 @@ list<SgPragmaDeclaration*> DataRaceDetection::findPragmaDeclarations(SgNode* roo
 
 // returns the number of detected data races
 int DataRaceDetection::checkDataRaces(LoopInfoSet& loopInfoSet, 
-                                   ArrayUpdatesSequence& arrayUpdates, 
-                                   VariableIdMapping* variableIdMapping) {
+                                      ArrayUpdatesSequence& arrayUpdates, 
+                                      VariableIdMapping* variableIdMapping) {
   int errorCount=0;
   logger[TRACE]<<"checking race conditions."<<endl;
   logger[INFO]<<"number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
@@ -261,8 +276,8 @@ int DataRaceDetection::checkDataRaces(LoopInfoSet& loopInfoSet,
 }
 
 void DataRaceDetection::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, 
-                                                ArrayUpdatesSequence& arrayUpdates, 
-                                                VariableIdMapping* variableIdMapping) {
+                                                   ArrayUpdatesSequence& arrayUpdates, 
+                                                   VariableIdMapping* variableIdMapping) {
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
     if (li.isInAssociatedLoop(estate)) {
@@ -419,7 +434,7 @@ int DataRaceDetection::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToR
     }
   }
   // 3) optional: Generate a dot graph for visualizing reads and writes (including data races)
-  if (_visualizeReadWriteAccesses) {
+  if (getVisualizeReadWriteAccesses()) {
     string filename = "readWriteSetGraph.dot";
     Visualizer visualizer;
     string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
@@ -472,6 +487,10 @@ void DataRaceDetection::setCheckAllLoops(bool val) {
 }
 void DataRaceDetection::setCheckAllDataRaces(bool val) {
   _checkAllDataRaces=val;
+}
+
+bool DataRaceDetection::getVisualizeReadWriteAccesses() {
+  return _visualizeReadWriteAccesses;
 }
 
 void DataRaceDetection::setVisualizeReadWriteAccesses(bool val) {

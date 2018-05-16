@@ -945,7 +945,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       SingleEvalResultConstInt res;
       return listify(res);
     } else {
-      cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
+      //cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
     }
   } else {
