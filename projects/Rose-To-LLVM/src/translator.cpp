@@ -9,11 +9,17 @@ using namespace boost::program_options;
 
 #define PREFIX "rose2llvm:"
 
+extern int llc(vector<string> &, char *);
+
 /**
  * Main program for Rose to LLVM translator.
  */
 int main(int argc, char *argv[]) {
-    options_description desc("");
+    options_description desc(
+			     "OVERVIEW: Rose compiler\n\n"
+                             "USAGE: rose2llvm [options] input_file...\n\n"
+                             "OPTIONS"
+                            );
     desc.add_options()
         ("help","print this help message")
         (PREFIX "translate-external", "translate code from external files");
@@ -30,6 +36,11 @@ int main(int argc, char *argv[]) {
     if (vm.count("help")) {
         RoseToLLVM::addOptionsToDescription(desc);
         cout << desc << "\n";
+
+        std::vector<std::string> options;
+	options.push_back("-help-list");
+	llc(options, "");
+	
         return 1;
     }
 
