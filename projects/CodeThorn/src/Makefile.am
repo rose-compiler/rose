@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher varp1 varp3 astinfo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher varp1 typeforge astinfo cldemo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo cldemo
 
 CLEANFILES = 
 
@@ -183,6 +183,8 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   LoopInfo.h                       \
   LoopInfo.C                       \
+  Lowering.h                       \
+  Lowering.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   PhiAttribute.h \
@@ -267,9 +269,10 @@ codethorn_SOURCES = \
   VariableValueMonitor.C \
   Visualizer.C                     \
   Visualizer.h                     \
+  AstTermRepresentation.h \
+  AstTermRepresentation.C \
   codethorn.h \
   codethorn.C 
-
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
@@ -559,20 +562,29 @@ matcher_SOURCES = Timer.cpp matcher.C
 varp1_DEPENDENCIES=libspray.la
 varp1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varp1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-varp1_SOURCES = Timer.cpp varp1.C
+varp1_SOURCES = Timer.cpp varp1.C TFTransformation.C
 
-varp3_DEPENDENCIES=libspray.la
-varp3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-varp3__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-varp3_SOURCES = Timer.cpp varp3.C CommandLineOptions.C CastStats.C
+typeforge_DEPENDENCIES=libspray.la
+typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C
 
-check-varp3: varp3
+cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+cldemo_SOURCES = cldemo.C
+
+
+check-typeforge: typeforge
 	rm -f typegraph.dot
-	rm -f rose_casttest1.C
-	./varp3 -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
-	dot -Tpdf typegraph.dot -o type-graph.pdf
-	./varp3 --explicit $(srcdir)/tests/casttest1.C
-	g++ rose_casttest1.C
+	rm -f rose_casttest3.C
+#	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
+#	dot -Tpdf typegraph.dot -o type-graph.pdf
+#	./typeforge --explicit $(srcdir)/tests/casttest1.C
+	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
+	./typeforge --spec-file=$(srcdir)/tests/casttest3.tyf --trace $(srcdir)/tests/casttest3.C 
+	g++ -Wall rose_casttest3.C
+	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tyf --trace $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
 	rm -f a.out
 
 #MS: iterator_test not ingegrated yet
@@ -604,9 +616,11 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-equivalence-checking check-data-races check-svcomp-witness
+CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-equivalence check-data-races check-svcomp-witness
 
-CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
+#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
+CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven-reset-analyzer
+
 CHECK_WITH_SPOT=$(CHECK_DEFAULT) $(CHECK_WITH_SPOT_ONLY)
 
 if ROSE_WITH_SPOT
@@ -646,11 +660,16 @@ check-data-races:
 	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
-check-flow-insensitive:
+#check-flow-insensitive: check-analyterix check-const-analysis
+check-flow-insensitive: check-const-analysis
+
+check-analyterix:
 	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
 	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+
+check-const-analysis:
 	@echo ================================================================
 	@echo RUNNING CONST ANALYSIS CHECK
 	@echo ================================================================
@@ -658,18 +677,38 @@ check-flow-insensitive:
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
 
-check-ltl:
+
+
+#check-ltl: check-ltl-rers-different-versions check-ltl-rers-arithmetic check-ltl-rers-array check-ltl-rers-topify check-ltl-rers-timetout check-ltl-rers-loop-aware-sync check-ltl-cegpra
+check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-array check-ltl-rers-topify check-ltl-rers-timetout check-ltl-rers-loop-aware-sync check-ltl-cegpra
+
+check-ltl-start:
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	@rm -f *.consistent
+
+check-ltl-rers-different-versions:
 	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS Problem1 from 2012 in several versions and compare to previous results
+
+check-ltl-rers-arithmetic:
 	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
+
+check-ltl-rers-array:
 	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
+
+check-ltl-rers-topify:
 	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
-#	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+
+# SKIPPED
+check-ltl-rers-memory-bound:
+	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+
+check-ltl-rers-timetout:
 	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
+check-ltl-rers-loop-aware-sync:
 	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
+check-ltl-cegpra:
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
 
 check-arrays:
@@ -678,13 +717,17 @@ check-arrays:
 check-array-bounds: ./codethorn
 	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
 
+# seg-faults with --reset-analyzer=no. Works with --reset-analyzer=yes
 check-ltl-driven:
 	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=no
+
+check-ltl-driven-reset-analyzer:
+	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=yes
 
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
-check-equivalence-checking:
+check-equivalence:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================

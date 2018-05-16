@@ -86,7 +86,7 @@ PreventDiscontiguousBlocks::operator()(bool chain, const Args &args) {
 
 bool
 BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
-    if (chain && args.bblock->nInstructions() >= maxInsns_) {
+    if (chain && maxInsns_ > 0 && args.bblock->nInstructions() >= maxInsns_) {
         args.results.terminate = TERMINATE_NOW;
         if (mlog[DEBUG]) {
             mlog[DEBUG] <<"BasicBlockSizeLimiter triggered:\n";

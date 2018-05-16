@@ -307,7 +307,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
     ++i;
     SingleEvalResultConstInt singleResult2=*i;
     if((singleResult1.value().operatorEq(singleResult2.value())).isTrue()) {
-      cout<<"Info: evaluating condition of conditional operator gives two equal results"<<endl;
+      //cout<<"Info: evaluating condition of conditional operator gives two equal results"<<endl;
     }
   }
   if(condResultList.size()>1) {
@@ -945,7 +945,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       SingleEvalResultConstInt res;
       return listify(res);
     } else {
-      cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
+      //cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
     }
   } else {
@@ -1102,7 +1102,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
   return listify(res);
 }
 
-
 bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds
   int arraySize=_variableIdMapping->getNumberOfElements(arrayVarId);
@@ -1113,12 +1112,4 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
     return false; // fail
   }
   return true; // pass
-}
-
-// compute absolute variableId as encoded in the VariableIdMapping.
-// obsolete with new domain
-SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrValue) const {
-  VariableId arrayVarId2=abstrValue.getVariableId();
-  int index2=abstrValue.getIntValue();
-  return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
 }

@@ -22,7 +22,7 @@ void StringSet::Rehash() {
     base.resize(hash_size, NULL);
     ROSE2LLVM_ASSERT(base.size() == hash_size);
     for (int i = 0; i < element_pool.size(); i++) {
-        Element *ns = element_pool[i];
+        StringElement *ns = element_pool[i];
         int k = ns -> HashAddress() % hash_size;
         ns -> next = base[k];
         base[k] = ns;
@@ -31,18 +31,18 @@ void StringSet::Rehash() {
     return;
 }
 
-int StringSet::insert(const char *str) {
+int StringSet::insert(const char *str, int size) {
     unsigned hash_address = Hash(str);
     int k = hash_address % hash_size,
         len = strlen(str);
 
-    Element *element;
-    for (element = base[k]; element; element = (Element *) element -> next) {
+    StringElement *element;
+    for (element = base[k]; element; element = (StringElement *) element -> next) {
         if (len == element -> Length() && memcmp(element -> Name(), str, len * sizeof(char)) == 0)
             return element -> Index();
     }
 
-    element = new Element(str, element_pool.size(), hash_address);
+    element = new StringElement(str, size, element_pool.size(), hash_address);
     element_pool.push_back(element);
 
     element -> next = base[k];
@@ -66,7 +66,7 @@ int StringSet::getIndex(const char *str) {
     unsigned hash_address = Hash(str);
     int k = hash_address % hash_size,
         len = strlen(str);
-    for (Element *element = base[k]; element; element = (Element *) element -> next) {
+    for (StringElement *element = base[k]; element; element = (StringElement *) element -> next) {
         if (len == element -> Length() && memcmp(element -> Name(), str, len * sizeof(char)) == 0)
            return element -> Index();
     }

@@ -1,10 +1,12 @@
 #include "sage3basic.h"
 #include "SingleStatementToBlockNormalization.h"
+
 #include "Lowering.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "inliner.h"
 #include "CFAnalysis.h"
+#include <list>
 
 using namespace std;
 using namespace Rose;
@@ -15,6 +17,59 @@ namespace SPRAY {
   int32_t Lowering::labelNr=1;
   string Lowering::labelPrefix="__label";
 
+  void Lowering::normalizeAllVariableDeclarations(SgNode* root) {
+    RoseAst ast(root);
+    typedef std::list<std::pair<SgVariableDeclaration*,SgStatement*>> DeclAssignListType;
+    DeclAssignListType declAssignList;
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      SgNode* node=*i;
+      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+        if(SgStatement* newVarAssignment=buildNormalizedVariableDeclaration(varDecl)) {
+          declAssignList.push_back(std::make_pair(varDecl,newVarAssignment));
+        }
+        i.skipChildrenOnForward();
+      } else {
+        //cout<<"DEBUG: NOT a variable declaration: "<<node->class_name()<<endl;
+      }
+    }
+    for(auto declAssign : declAssignList) {
+      SageInterface::insertStatementAfter(declAssign.first, declAssign.second);
+    }
+  }
+
+  // Given 'Type x=init;' is transformed into 'Type x;' and returns 'x=init;'
+  // return nullptr if provided declaration is in global scope (cannot be normalized)
+  SgStatement* Lowering::buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl) {
+    ROSE_ASSERT(varDecl);
+    // check that variable is within a scope where it can be normalized
+    SgScopeStatement* scopeStatement=varDecl->get_scope();
+    ROSE_ASSERT(scopeStatement);
+    if(!isSgGlobal(scopeStatement)) {
+      //cout<<"DEBUG normalizing decl: "<<varDecl->unparseToString()<<endl;
+      SgExpression* declInitializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+      // if there is no initializer, the declaration remains unchanged
+      if(declInitializer) {
+        SgInitializedName* declInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+        // detach initializer from declaration such that is has no initializer
+        varDecl->reset_initializer(0); 
+        // build new variable
+        SgVarRefExp* declVarRefExp=SageBuilder::buildVarRefExp(declInitName,varDecl->get_declarationScope());
+        // build assignment with new variable and initializer from original declaration
+        SgAssignOp* varAssignOp=SageBuilder::buildAssignOp(declVarRefExp,declInitializer);
+        // build exprstatement from assignOp expression
+        SgStatement* varAssignStatement=SageBuilder::buildExprStatement(varAssignOp);
+        // insert new assignment statement after original variable declaration
+        return varAssignStatement;
+      }
+    }
+    return nullptr;
+  }
+
+  void Lowering::normalizeSingleStatementsToBlocks(SgNode* root) {
+    SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
+    singleStatementToBlockNormalizer.Normalize(root);
+  }
+
   void Lowering::setLabelPrefix(std::string prefix) {
     Lowering::labelPrefix=prefix;
   }
@@ -23,16 +78,40 @@ namespace SPRAY {
     return labelPrefix + StringUtility::numberToString(Lowering::labelNr++);
   }
 
-  void Lowering::lowerAst(SgNode* root) {
-    normalizeBlocks(root);
+  void Lowering::normalizeAst(SgNode* root) {
+    normalizeSingleStatementsToBlocks(root);
+
+    // TODO1: normalize AST such that all empty blocks contain a null
+    // statement this is only necessary to be able to eliminate
+    // begin/end labels of blocks and avoid true+false edges between
+    // the same nodes in the CFG generation
+
+    // TODO2: normalize AST such that every expression in a statement has as root a SgExpressionRoot node
+    // this allows to transform any expression without updating the corresponding child pointer in the enclosing statement
+    // normalizeExpressionRootNodes(root);
+  }
+
+  void Lowering::transformAst(SgNode* root) {
+    normalizeAst(root);
     convertAllForsToWhiles(root);
     changeBreakStatementsToGotos(root);
     createLoweringSequence(root);
     applyLoweringSequence();
     normalizeExpressions(root);
-    inlineFunctions(root);
+    if(getInliningOption()) {
+      inlineFunctions(root);
+    }
+    normalizeAllVariableDeclarations(root);
   }
 
+  void Lowering::setInliningOption(bool flag) {
+    _inliningOption=flag;
+  }
+
+  bool Lowering::getInliningOption() {
+    return _inliningOption;
+  }
+  
   void Lowering::createLoweringSequence(SgNode* node) {
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -49,11 +128,6 @@ namespace SPRAY {
       loweringOp->analyse();
       loweringOp->transform();
     }
-  }
-
-  void Lowering::normalizeBlocks(SgNode* root) {
-    SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
-    singleStatementToBlockNormalizer.Normalize(root);
   }
 
   void Lowering::convertAllForsToWhiles (SgNode* top) {
@@ -78,7 +152,7 @@ namespace SPRAY {
     tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
     tmpVarDeclaration->set_parent(scope);
     ROSE_ASSERT(tmpVarDeclaration!= 0);
-    cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
+    //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
     tmpVarNr++;
     transformationList.push_back(make_pair(stmt,expr));
   }
@@ -117,7 +191,7 @@ namespace SPRAY {
   
   void Lowering::normalizeExpressions(SgNode* node) {
     // TODO: if temporary variables are generated, the initialization-list
-    // must be put into a block, otherwise some generates gotos are
+    // must be put into a block, otherwise some generated gotos are
     // not legal (crossing initialization).
 
     // find all SgExprStatement, SgReturnStmt
@@ -125,14 +199,14 @@ namespace SPRAY {
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(SgExprStatement* exprStmt=isSgExprStatement(*i)) {
         if(!SgNodeHelper::isCond(exprStmt)) {
-          cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
+          //cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
           SgExpression* expr=exprStmt->get_expression();
           normalizeExpression(exprStmt,expr);
           i.skipChildrenOnForward();
         }
       }
       if(isSgReturnStmt(*i)) {
-        cout<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
+        //cout<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
         i.skipChildrenOnForward();
       }
     }
@@ -142,14 +216,26 @@ namespace SPRAY {
       SgVariableDeclaration* tmpVarDeclaration = 0;
       SgExpression* tmpVarReference = 0;
       SgScopeStatement* scope=stmt->get_scope();
-      tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
-      tmpVarDeclaration->set_parent(scope);
-      ROSE_ASSERT(tmpVarDeclaration!= 0);
-      SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
-      SageInterface::replaceExpression(expr, tmpVarReference);
-
-      cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
-      tmpVarNr++;
+#if 0
+      if(false || isSgFunctionCallExp(expr)) {
+        cout<<"normalization: function call in declaration: "<<expr->unparseToString()<<endl;
+        tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
+        tmpVarDeclaration->set_parent(scope);
+        ROSE_ASSERT(tmpVarDeclaration!= 0);
+        SgAssignOp* tmpVarAssignOp=SageBuilder::buildAssignOp(tmpVarReference,expr);
+        SgStatement* tmpVarAssignStatement=SageBuilder::buildExprStatement(tmpVarAssignOp);
+        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        SageInterface::insertStatementBefore(stmt, tmpVarAssignStatement);
+      } else {
+#endif
+        tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
+        tmpVarDeclaration->set_parent(scope);
+        ROSE_ASSERT(tmpVarDeclaration!= 0);
+        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        SageInterface::replaceExpression(expr, tmpVarReference);
+        //      }
+        //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
+        tmpVarNr++;
     }
   }
 
@@ -220,7 +306,7 @@ namespace SPRAY {
 
   void LoweringOp::analyse() {
   }
-  void WhileStmtLoweringOp::analyse() {
+  void WhileStmtLoweringOp::analyse() {  
   }
   WhileStmtLoweringOp::WhileStmtLoweringOp(SgWhileStmt* node) {
     this->node=node;

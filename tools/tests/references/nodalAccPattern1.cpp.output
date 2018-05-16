@@ -2,6 +2,6 @@ Found a nodal accumulation loop at line:17 1st acc. stmt at line:23
 Found a nodal accumulation loop at line:43 1st acc. stmt at line:49
 Not a nodal accumulation loop at line:70
 Not a nodal accumulation loop at line:91
-Not a nodal accumulation loop at line:111
+Found a nodal accumulation loop at line:111 1st acc. stmt at line:113
 Not a nodal accumulation loop at line:132
 Not a nodal accumulation loop at line:139

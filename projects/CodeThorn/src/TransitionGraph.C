@@ -314,19 +314,6 @@ string TransitionGraph::toString() const {
   * \author Markus Schordan
   * \date 2012.
  */
-set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) {
-  set<const EState*> estateSet;
-  for(TransitionGraph::iterator j=begin();j!=end();++j) {
-    if((*j)->source->label()==lab)
-      estateSet.insert((*j)->source);
-  }
-  return estateSet;
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {

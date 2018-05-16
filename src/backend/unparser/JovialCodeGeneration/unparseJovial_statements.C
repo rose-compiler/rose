@@ -78,6 +78,8 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
+          case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
+          case V_SgReturnStmt:                 unparseReturnStmt     (stmt, info);  break;
 
           case V_SgExprStatement:              unparseExprStmt(stmt, info);         break;
 
@@ -94,7 +96,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgDefaultOptionStmt:      unparseDefaultStmt    (stmt, info); break;
           case V_SgBreakStmt:              unparseBreakStmt      (stmt, info); break;
           case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
-          case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
@@ -192,6 +193,38 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (10/6/2008): This does not appear to be required (passes all tests).
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
 #endif
+   }
+
+void
+Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgStopOrPauseStatement* sp_stmt = isSgStopOrPauseStatement(stmt);
+     ROSE_ASSERT(sp_stmt != NULL);
+
+     SgStopOrPauseStatement::stop_or_pause_enum kind = sp_stmt->get_stop_or_pause();
+
+     if (kind == SgStopOrPauseStatement::e_stop)
+        {
+          curprint("STOP ");
+          unparseExpression(sp_stmt->get_code(), info);
+          curprint(";");
+          unp->cur.insert_newline(1);
+        }
+     else if (kind == SgStopOrPauseStatement::e_exit)
+        {
+          curprint("EXIT ;");
+          unp->cur.insert_newline(1);
+        }
+   }
+
+void
+Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+      SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
+      ROSE_ASSERT(return_stmt != NULL);
+
+      curprint("RETURN ;");
+      unp->cur.insert_newline(1);
    }
 
 void

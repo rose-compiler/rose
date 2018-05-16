@@ -10,7 +10,7 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
       node0->toStream(cout,vim);
     else
       cout<<" none.";
-    cout<<endl;
+    cout<<endl; // eol print attributes
   }
 }
 

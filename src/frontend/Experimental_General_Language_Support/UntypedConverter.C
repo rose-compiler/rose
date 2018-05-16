@@ -422,8 +422,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
 
    ROSE_ASSERT(ut_type->get_is_user_defined() == false);
 
-   SgExpression*   kindExpression = NULL;
-   SgExpression* lengthExpression = NULL;
+   SgExpression* kindExpression = NULL;
 
    if (ut_type->get_has_kind())
       {
@@ -431,15 +430,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
          SgUntypedExpression* ut_kind = ut_type->get_type_kind();
       // TODO - figure out how to handle operators (or anything with children)
          ROSE_ASSERT(isSgUntypedValueExpression(ut_kind) != NULL || isSgUntypedReferenceExpression(ut_kind) != NULL);
-         kindExpression = convertSgUntypedExpression(ut_kind, children);
-      }
-   if (ut_type->get_char_length_is_string())
-      {
-         SgExpressionPtrList children;
-         SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
-      // TODO - figure out how to handle operators (or anything with children)
-         ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
-         lengthExpression = convertSgUntypedExpression(ut_length, children);
+         kindExpression = convertSgUntypedExpression(ut_kind, children, scope);
       }
 
 // TODO - determine if SageBuilder can be used (or perhaps should be updated)
@@ -447,6 +438,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
       {
         case SgUntypedType::e_void:           sg_type = SageBuilder::buildVoidType();              break;
         case SgUntypedType::e_int:            sg_type = SgTypeInt::createType(0, kindExpression);  break;
+        case SgUntypedType::e_uint:           sg_type = SgTypeUnsignedInt::createType(kindExpression); break;
         case SgUntypedType::e_float:          sg_type = SgTypeFloat::createType(kindExpression);   break;
         case SgUntypedType::e_double:         sg_type = SageBuilder::buildDoubleType();            break;
 
@@ -454,19 +446,23 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
         case SgUntypedType::e_complex:        sg_type = SgTypeComplex::createType(SgTypeFloat::createType(kindExpression), kindExpression); break;
         case SgUntypedType::e_double_complex: sg_type = SgTypeComplex::createType(SgTypeDouble::createType());                              break;
 
+     // TODO - is incorrect (may be closer to a hexadecimal or Hollerith, but used in boolean expressions)
+        case SgUntypedType::e_bit:            sg_type = SgTypeBool::createType(kindExpression);    break;
         case SgUntypedType::e_bool:           sg_type = SgTypeBool::createType(kindExpression);    break;
 
-     // character and string types
-        case SgUntypedType::e_char:
+        case SgUntypedType::e_char:           sg_type = SgTypeChar::createType(kindExpression);    break;
+        case SgUntypedType::e_string:
            {
-              if (lengthExpression)
-                 {
-                    sg_type = SgTypeString::createType(lengthExpression, kindExpression);          break;
-                 }
-              else
-                 {
-                    sg_type = SgTypeChar::createType(kindExpression);                              break;
-                 }
+              SgExpressionPtrList children;
+              SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
+           // TODO - figure out how to handle operators (or anything with children)
+              ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
+
+              SgExpression* sg_length = convertSgUntypedExpression(ut_length, children, scope);
+              ROSE_ASSERT(sg_length != NULL);
+
+              sg_type = SageBuilder::buildStringType(sg_length);
+              break;
            }
 
         default:
@@ -480,10 +476,6 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
    if (kindExpression != NULL)
       {
          kindExpression->set_parent(sg_type);
-      }
-   if (lengthExpression != NULL)
-      {
-         lengthExpression->set_parent(sg_type);
       }
 
    ROSE_ASSERT(sg_type != NULL);
@@ -1235,6 +1227,113 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
    }
 
 SgStatement*
+UntypedConverter::convertSgUntypedExitStatement (SgUntypedExitStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      SgExpression* exitExpression = new SgNullExpression();
+      SageInterface::setSourcePosition(exitExpression);
+
+      SgStopOrPauseStatement* exitStatement = new SgStopOrPauseStatement(exitExpression);
+      exitStatement->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
+      setSourcePositionFrom(exitStatement, ut_stmt);
+
+      exitExpression->set_parent(exitStatement);
+      scope->append_statement(exitStatement);
+      convertLabel(ut_stmt, exitStatement);
+
+      return exitStatement;
+   }
+
+SgStatement*
+UntypedConverter::convertSgUntypedGotoStatement (SgUntypedGotoStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      return NULL;
+#ifdef GOTO_FIX
+
+      SgName targetLabel = ut_stmt->get_target_label();
+      //TODO - lookup symbol in table here
+      //      targetSymbol = (*i)->lookup_label_symbol(name);
+      targetSymbol = NULL;
+
+      if (targetSymbol == NULL)
+         {
+           targetSymbol = new SgLabelSymbol((SgLabelStatement*) NULL);
+           ROSE_ASSERT(targetSymbol != NULL);
+
+           SgStatement* labelStatement = SageBuilder::buildLabelStatement(targetLabel, NULL, scope);
+           SageInterface::setSourcePosition(labelStatement);
+           //           ROSE_ASSERT(isSgFunctionDefinition(*i) != NULL);
+           //          (*i)->insert_symbol(name,targetSymbol);
+          }
+
+      else { ROSE_ASSERT(targetSymbol != NULL)
+           }
+      //Stuff copied from Return statement
+      SgGotoStatement* goto_statement = SageBuilder::buildGotoStatement();
+      ROSE_ASSERT(goto_statement != NULL);
+
+      setSourcePositionFrom(goto_statement, ut_stmt);
+
+      scope->append_statement(goto_statement);
+      convertLabel(ut_stmt, goto_statement);
+
+      return goto_statement;
+
+
+      //TEMPORARY - stuff copied from fortran_support.C
+      //DELETE WHEN DONE LOOKING AT IT
+         SgName name = label->text;
+       // SgLabelSymbol* returnSymbol = (*i)->lookup_label_symbol(name);
+          returnSymbol = (*i)->lookup_label_symbol(name);
+
+       // printf ("In buildNumericLabelSymbol(): returnSymbol = %p \n",returnSymbol);
+          if (returnSymbol == NULL)
+             {
+            // The symbol was not found, create a symbol so that statements can reference
+            // it then we can fixup the statement in the symbol later (when we see it).
+               int label_value = atoi(label->text);
+            // printf ("Building a SgLabelSymbol for a numeric label that we have not see yet: label_value = %d = %s \n",label_value,label->text);
+
+               returnSymbol = new SgLabelSymbol((SgLabelStatement*) NULL);
+               ROSE_ASSERT(returnSymbol != NULL);
+               returnSymbol->set_fortran_statement(NULL);
+               returnSymbol->set_numeric_label_value(label_value);
+
+               SgStatement* label_statement = new SgNullStatement();
+            // printf ("Building SgNullStatement label_statement = %p \n",label_statement);
+
+               returnSymbol->set_fortran_statement(label_statement);
+
+            // DQ (1/20/2008): The parent of a statement can't be set to a SgSymbol, so make it point to the current scope for now!
+            // label_statement->set_parent(returnSymbol);
+               label_statement->set_parent(astScopeStack.front());
+               ROSE_ASSERT(label_statement->get_parent() != NULL);
+
+            // DQ (1/20/2008): If the label is not present, but is referenced then this has to be set.
+            // Note that test2007_175.f demonstrates that if the lable is not present
+            // then this label_statement fails because the source position is not set.
+               setSourcePosition(label_statement);
+
+               ROSE_ASSERT(isSgFunctionDefinition(*i) != NULL);
+            // Insert the symbol into the function definition's symbol table so it will be found next time.
+               (*i)->insert_symbol(name,returnSymbol);
+             }
+
+          ROSE_ASSERT(returnSymbol != NULL)
+#endif
+   }
+
+SgNullStatement*
+UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      SgNullStatement* nullStatement = new SgNullStatement();
+      setSourcePositionFrom(nullStatement, ut_stmt);
+
+      scope->append_statement(nullStatement);
+
+      return nullStatement;
+   }
+
+SgStatement*
 UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
    {
       switch (ut_stmt->get_statement_enum())
@@ -1250,15 +1349,18 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
        }
    }
 
-SgNullStatement*
-UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
+SgStatement*
+UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgScopeStatement* scope)
    {
-      SgNullStatement* nullStatement = new SgNullStatement();
-      setSourcePositionFrom(nullStatement, ut_stmt);
+      SgReturnStmt* return_stmt = SageBuilder::buildReturnStmt();
+      ROSE_ASSERT(return_stmt != NULL);
 
-      scope->append_statement(nullStatement);
+      setSourcePositionFrom(return_stmt, ut_stmt);
 
-      return nullStatement;
+      scope->append_statement(return_stmt);
+      convertLabel(ut_stmt, return_stmt);
+
+      return return_stmt;
    }
 
 
@@ -1327,6 +1429,16 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
             sg_expr = sg_operator;
 #if DEBUG_UNTYPED_CONVERTER
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
+#endif
+         }
+      else if ( isSgUntypedUnaryOperator(ut_expr) != NULL )
+         {
+            SgUntypedUnaryOperator* op = dynamic_cast<SgUntypedUnaryOperator*>(ut_expr);
+            ROSE_ASSERT(children.size() == 1);
+            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, children[0]);
+            sg_expr = sg_operator;
+#if DEBUG_UNTYPED_CONVERTER
+            printf ("  -  unary operator      ==>   %s\n", op->get_operator_name().c_str());
 #endif
          }
       else
@@ -1404,9 +1516,11 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 {
    SgValueExp* sg_expr = NULL;
 
+   // TODO - what about doubles, longs, Jovial fixed, ...
    switch(ut_expr->get_type()->get_type_enum_id())
        {
          case SgUntypedType::e_int:
+         case SgUntypedType::e_uint:
             {
                std::string constant_text = ut_expr->get_value_string();
 
@@ -1433,13 +1547,24 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
 
                sg_expr = new SgIntVal(atoi(ut_expr->get_value_string().c_str()), constant_text);
                setSourcePositionFrom(sg_expr, ut_expr);
-
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - value expression TYPE_INT \n");
-#endif
-
                break;
             }
+
+         case SgUntypedType::e_float:
+            {
+               std::string constant_text = ut_expr->get_value_string();
+
+            // preserve kind parameter if any
+               if (ut_expr->get_type()->get_has_kind())
+                  {
+                     cerr << "WARNING: UntypedConverter::convertSgUntypedValueExpression: kind value not handled \n";
+                  }
+
+               sg_expr = new SgFloatVal(atof(ut_expr->get_value_string().c_str()), constant_text);
+               setSourcePositionFrom(sg_expr, ut_expr);
+               break;
+            }
+
          default:
             {
                ROSE_ASSERT(0);  // NOT IMPLEMENTED
@@ -1563,8 +1688,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
          case General_Language_Translation::e_operator_and:
             {
 #if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_and
-:\n");
+               printf("  - e_operator_and:\n");
 #endif
                op = new SgAndOp(lhs, rhs, NULL);
                setSourcePositionIncluding(op, lhs, rhs);

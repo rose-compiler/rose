@@ -16,6 +16,7 @@
 
 #include <rosetollvm/RootAstAttribute.h>
 #include <rosetollvm/ManagerAstAttribute.h>
+#include <rosetollvm/SgCastAstAttribute.h>
 #include <rosetollvm/SgTypeAstAttribute.h>
 #include <rosetollvm/IntAstAttribute.h>
 #include <rosetollvm/StringAstAttribute.h>
@@ -38,14 +39,18 @@ class LLVMAstAttributes : public RootAstAttribute {
     StringSet string_table,
               used_function_table,
               defined_function_table;
-    std::vector<int> length;
-    int getLength(const char *);
+// TODO: Remove this !!!
+//    std::vector<int> length;
+//    int getLength(const char *);
     std::vector<SgNode *> global_declaration;
     bool needs_memcopy;
     std::vector<SgInitializedName *> remote_global_declarations;
 
     std::string intPointerTarget;
     SgType *pointerSizeIntegerType;
+    SgTypeInt *typeInt;
+    SgTypeVoid *typeVoid;
+    SgPointerType *voidStarType;
 
     Control &control;
     CodeEmitter codeOut;
@@ -59,11 +64,16 @@ class LLVMAstAttributes : public RootAstAttribute {
     std::map<llvm::MDNode *, int> mdIndices;
     std::map<std::string, int> functionPragmaMetadataIndices;
 
+    /**
+     * This map is used to map each label into a unique number.
+     */
+    std::map<std::string, int> label_map;
+
     bool isHex(char c) { return isdigit(c) || ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')); }
 
     void processClassDeclaration(SgClassType *);
     void prepFor2DigitHex(std::ostream &s) {
-      s << std::setfill('0') << std::setw(2) << std::hex;
+        s << std::setfill('0') << std::setw(2) << std::hex;
     }
 
 public:
@@ -78,6 +88,13 @@ public:
     {
         int byte_size = sizeof(void *);
 
+        typeInt = SgTypeInt::createType();
+        setLLVMTypeName(typeInt);
+    
+        typeVoid = SgTypeVoid::createType();
+        voidStarType = SgPointerType::createType(typeVoid);
+        setLLVMTypeName(voidStarType);
+    
         if (byte_size == sizeof(int)) {
             pointerSizeIntegerType = SgTypeInt::createType();
         }
@@ -152,7 +169,8 @@ public:
         TEMP_COERCE,
         TEMP_AGGREGATE,
         TEMP_POINTER_DIFFERENCE_ARITHMETIC_SHIFT_RIGHT,
-        TEMP_POINTER_DIFFERENCE_DIVISION 
+        TEMP_POINTER_DIFFERENCE_DIVISION,
+        TEMP_LABEL
     };
     long tmp_count,
          tmp_int_count;
@@ -160,13 +178,26 @@ public:
     const std::string getTemp(TEMP_KIND k);
     const std::string getFunctionTemp(std::string, std::string);
 
+    std::string findLabel(SgLabelStatement *);
+
     bool needsMemcopy() { return needs_memcopy; }
     void setNeedsMemcopy() { needs_memcopy = true; }
 
-    const std::string filter(const std::string);
+    class StringLiteral {
+    public:
+        std::string value;
+        int length;
+        int size;
+    };
+    
+    StringLiteral preprocessString(SgStringVal *, int);
 
-    const std::string filter(const std::string, int);
-
+    int insertString(SgStringVal *); 
+    
+    int insertString(SgStringVal *, int);
+    
+// TODO: Remove this !!!
+/*
     int insertString(std::string s) {
         return string_table.insert(filter(s).c_str());
     }
@@ -174,12 +205,16 @@ public:
     int insertString(std::string s, int size) {
         return string_table.insert(filter(s, size).c_str());
     }
-
+*/
+    
     int numStrings() { return string_table.size(); }
 
-    const char *getString(int i) { return string_table[i]; }
+    const char *getString(int i) { return string_table[i] -> Name(); }
 
-    int getStringLength(int i) {
+    int getStringLength(int i) { return string_table[i] -> Size(); }
+// TODO: Remove this !!!
+/*
+    {
         int start = length.size();
         if (length.size() < string_table.size()) {
             length.resize(string_table.size());
@@ -189,14 +224,15 @@ public:
 
         return length[i];
     }
+*/
 
     void insertFunction(std::string f) {
-        used_function_table.insert(f.c_str());
+        used_function_table.insert(f.c_str(), f.size());
     }
 
     int numFunctions() { return used_function_table.size(); }
 
-    const char* getFunction(int i) { return used_function_table[i]; }
+    const char* getFunction(int i) { return used_function_table[i] -> Name(); }
 
     void insertAdditionalFunction(SgFunctionDeclaration *function) {
         additionalFunctions.push_back(function);
@@ -222,7 +258,7 @@ public:
 
     SgNode *getGlobalDeclaration(int i) { return global_declaration[i]; }
 
-    void insertDefinedFunction(std::string f) { defined_function_table.insert(f.c_str()); }
+    void insertDefinedFunction(std::string f) { defined_function_table.insert(f.c_str(), f.size()); }
     bool isDefinedFunction(const char *fname) { return defined_function_table.contains(fname); }
 
     int numRemoteGlobalDeclarations() { return remote_global_declarations.size(); }
@@ -232,7 +268,9 @@ public:
     }
 
     static SgType *getSourceType(SgType *type) {
-        return type -> stripTypedefsAndModifiers();
+        type = type -> stripTypedefsAndModifiers();
+        SgTypeOfType *type_of_type = isSgTypeOfType(type);
+        return (type_of_type ? getSourceType(type_of_type -> get_base_type()) : type);
     }
 
     const std::string getFunctionName(SgFunctionSymbol *);
@@ -263,12 +301,26 @@ public:
         return pointerSizeIntegerType;
     }
 
+    SgType *getTypeInt() {
+        return typeInt;
+    }
+
+    SgType *getVoidStarType() {
+        return voidStarType;
+    }
+
     /**
      *
      */
     SgType *getExpressionType(SgExpression *expression) {
-        ROSE2LLVM_ASSERT(expression -> attributeExists(Control::LLVM_EXPRESSION_RESULT_TYPE));
-        return getSourceType(((SgTypeAstAttribute *) expression -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE)) -> getType());
+        SgTypeAstAttribute *attribute = (SgTypeAstAttribute *) expression -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+        if (! attribute) {
+            SgType *expression_type = getSourceType(expression -> get_type());
+            attribute = new SgTypeAstAttribute(expression_type);
+            control.SetAttribute(expression, Control::LLVM_EXPRESSION_RESULT_TYPE, attribute);
+            setLLVMTypeName(expression_type);
+        }
+        return attribute -> getType();
     }
 
     /**

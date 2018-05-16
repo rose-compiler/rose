@@ -6,13 +6,14 @@
  * Author   : Markus Schordan                                *
  *************************************************************/
 
+#include <limits>
 #include <set>
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
 
 #define NO_STATE -3
 #define NO_ESTATE -4
-#define NO_LABEL_ID -1
+#define NO_LABEL_ID std::numeric_limits<size_t>::max()
 
 namespace SPRAY {
 
@@ -39,7 +40,7 @@ class Label {
   // postfix inc operator
   Label operator++(int);
   size_t getId() const;
-
+  std::string toString() const;
   friend std::ostream& operator<<(std::ostream& os, const Label& label);
 
  protected:
@@ -134,7 +135,7 @@ typedef std::set<LabelSet> LabelSetSet;
 class Labeler {
  public:
   Labeler();
-  static Label NO_LABEL;
+  static Label NO_LABEL; // default initialized label (used to check for non-existing labels)
   Labeler(SgNode* start);
   static std::string labelToString(Label lab);
   int isLabelRelevantNode(SgNode* node);

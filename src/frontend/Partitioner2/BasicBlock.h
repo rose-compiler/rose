@@ -27,10 +27,18 @@ namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a sequence of distinct instructions with linear control flow from the first instruction to the last.  No
  *  edges are permitted to enter or leave the basic block except to the first instruction and from the last instruction,
- *  respectively.  The instructions of a basic block are not required to be contiguous or non-overlapping.
+ *  respectively.  The instructions of a basic block are not required to be contiguous or non-overlapping or at increasing
+ *  addresses.
+ *
+ *  In the absense of interrupt handling, the instructions of a basic block are executed entirely. In the absense of
+ *  multi-threading, no other instructions intervene.
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
- *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
+ *  threads.  The memory for these objects is shared and managed by a shared pointer implementation.
+ *
+ *  A basic block may belong to multiple functions.
+ *
+ *  See also, @ref SgAsmBlock which is how a basic block (and some other things) are represented in the AST. */
 class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */

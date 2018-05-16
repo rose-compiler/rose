@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_MemoryMap_H
 #define ROSE_BinaryAnalysis_MemoryMap_H
 
-#include "ByteOrder.h"
+#include <ByteOrder.h>
+#include <Combinatorics.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -62,7 +63,7 @@ T alignDown(T address, T alignment) {
  *
  * @code
  *  using namespace Sawyer::Container;
- * 
+ *
  *  // Create and initialize the overlay data
  *  myData_size = 8192;
  *  uint8_t *myData = new uint8_t[myDataSize];
@@ -166,7 +167,7 @@ public:
 
     // These bits are reserved for use in ROSE
     static const unsigned RESERVED_ACCESS_BITS = 0x0000ffff;
-    
+
 
 public:
     /** Exception for MemoryMap operations. */
@@ -249,7 +250,7 @@ public:
     Ptr shallowCopy() {
         return Ptr(new MemoryMap(*this));
     }
-    
+
     /** Property: byte order.
      *
      *  Every map has a default byte order property which can be used by functions that read and write multi-byte values when
@@ -381,7 +382,7 @@ public:
     size_t readQuick(void *buf, rose_addr_t startVa, size_t desired) const {
         return at(startVa).limit(desired).require(READABLE).read((uint8_t*)buf).size();
     }
-    
+
     /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p startVa in the memory map and
      *  continuing until one of the following conditions is met:
      *
@@ -397,6 +398,20 @@ public:
     std::string readString(rose_addr_t startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
                            unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0, char terminator='\0') const;
 
+    /** Read an unsigned value.
+     *
+     *  Reads an unsigned value from memory and converts it from the memory byte order to the host byte order.  If the entire
+     *  value is not mapped in memory then return nothing (not even any part of the multi-byte value that might have been
+     *  present. */
+    template<typename U>
+    Sawyer::Optional<U> readUnsigned(rose_addr_t startVa) const {
+        U val = 0;
+        if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
+            return Sawyer::Nothing();
+        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
+        return val;
+    }
+
     /** Read quickly into a vector. */
     SgUnsignedCharList readVector(rose_addr_t startVa, size_t desired, unsigned requiredPerms=READABLE) const;
 
@@ -404,7 +419,7 @@ public:
     size_t writeQuick(const void *buf, rose_addr_t startVa, size_t desired) {
         return at(startVa).limit(desired).require(WRITABLE).write((const uint8_t*)buf).size();
     }
-    
+
     /** Search for any byte.
      *
      *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
@@ -432,6 +447,22 @@ public:
     void dump(std::ostream&, std::string prefix="") const;
     void print(std::ostream &o, std::string prefix="") const { dump(o, prefix); }
     /** @} */
+
+    /** Compute a hash of the entire memory contents.
+     *
+     *  This hashes the memory contents. Segment information (names, addresses, permissions, etc) are not included in the hash;
+     *  only the bytes stored in the map.  The user should supply a hasher whose @c append method will be called to add memory
+     *  map contents to the hash.  For instance, here's one way to hash the contents of a file without having to read the
+     *  entire file into memory first:
+     *
+     * @code
+     *  MemoryMap::Ptr file = MemoryMap::instance();
+     *  file->insertFile("/name/of/the/file", 0);
+     *  HasherSha1 hasher;
+     *  file->hash(hasher);
+     *  std::cout <<"file SHA1 hash is " <<hash <<"\n";
+     * @endcode */
+    Combinatorics::Hasher& hash(Combinatorics::Hasher&) const;
 
     /** Title of a segment when printing the map. */
     static std::string segmentTitle(const Segment&);

@@ -1,6 +1,8 @@
 #ifndef NORMALIZATION_H
 #define NORMALIZATION_H
 
+// Author: Markus Schordan 2018.
+
 #include <list>
 #include <utility>
 
@@ -52,20 +54,33 @@ namespace SPRAY {
 
   class Lowering {
   public:
-    void lowerAst(SgNode* root);
+    // applies all available lowering operations
+    void transformAst(SgNode* root);
+    // calls ROSE SageInterface function for inlining
     size_t inlineFunctions(SgNode* root);
+    static void setLabelPrefix(std::string prefix);
+    static std::string newLabelName();
+    void normalizeExpressions(SgNode* node);
+    // enable/disable inling. By default off.
+    void setInliningOption(bool flag);
+    bool getInliningOption();
+    //void setKeepOmpForStmts(bool flag); TODO
+    //bool getKeepOmpForStmts(); TODO
+
     static SgLabelStatement* createLabel(SgStatement* target);
     static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
     static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
-    static void setLabelPrefix(std::string prefix);
-    static std::string newLabelName();
+
   private:
+    void normalizeAst(SgNode* root);
+    void normalizeSingleStatementsToBlocks(SgNode* node);
+    void normalizeAllVariableDeclarations(SgNode* node);
+    // transforms T x=InitExp into: T x; x=InitExp;
+    SgStatement* buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl);
     void createLoweringSequence(SgNode* root);
     void applyLoweringSequence();
-    void normalizeExpressions(SgNode* node);
     void normalizeExpression(SgExprStatement* stmt, SgExpression* node);
     void generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr);
-    void normalizeBlocks(SgNode* node);
     // Finds needle in haystack and returns true if found.  Needle is a single node (possibly an invalid pointer and will not be
     // dereferenced) and haystack is the root of an abstract syntax (sub)tree.
     static bool isAstContaining(SgNode *haystack, SgNode *needle);
@@ -85,6 +100,7 @@ namespace SPRAY {
     typedef std::list<std::pair<SgStatement*,SgExpression*> > TransformationList;
     TransformationList transformationList;
     std::list<LoweringOp*> loweringSequence;
+    bool _inliningOption=false;
   };
   
 } // end of namespace SPRAY
