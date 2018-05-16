@@ -8,21 +8,24 @@
 #include <vector>
 #include "rosetollvm/Control.h"
 
-class Element
+class StringElement
 {
 public:
-    Element *next;
+    StringElement *next;
 
     unsigned HashAddress() { return hash_address; }
 
     char *Name() { return name; }
 
-    int Length() { return length; }
+    int Length() { return length; } // The actual strlen of name 
+
+    int Size() { return size; }     // The length of name when encoded Hexadecimal characters (such as \0F) are counted as one character
 
     int Index() { return pool_index; }
 
-    Element(const char *name_, int pool_index_, unsigned hash_address_) :  pool_index(pool_index_),
-                                                                           hash_address(hash_address_)
+    StringElement(const char *name_, int size_, int pool_index_, unsigned hash_address_) : size(size_),
+                                                                                           pool_index(pool_index_),
+                                                                                           hash_address(hash_address_)
     {
         length = strlen(name_);
         name = new char[length + 1];
@@ -30,12 +33,13 @@ public:
         name[length] = '\0';
     }
 
-    ~Element() { delete [] name; }
+    ~StringElement() { delete [] name; }
 
 private:
 
     int  pool_index,
-         length;
+         length,
+         size;
     unsigned hash_address;
     char *name;
 };
@@ -88,7 +92,7 @@ class StringSet : public HashPrimes
         StringSet();
         ~StringSet();
 
-        int insert(const char *);
+        int insert(const char *, int size = 0);
  
         bool contains(const char *);
 
@@ -96,7 +100,7 @@ class StringSet : public HashPrimes
 
         int size() { return element_pool.size(); }
 
-        char *operator[](const int i) { return element_pool[i] -> Name(); }
+        StringElement *operator[](const int i) { return element_pool[i]; }
 
         void Push() { container_stack.push(element_pool.size()); }
 
@@ -110,10 +114,10 @@ class StringSet : public HashPrimes
            //
            for (int i = element_pool.size() - 1; i >= previous_size; i--)
            {
-               Element *element = element_pool[i];
+               StringElement *element = element_pool[i];
                int k = element -> HashAddress() % hash_size;
                ROSE2LLVM_ASSERT(base[k] == element);
-               base[k] = (Element *) element -> next;
+               base[k] = (StringElement *) element -> next;
                delete element;
            }
            //
@@ -136,8 +140,8 @@ class StringSet : public HashPrimes
 
     private:
 
-        std::vector<Element *> element_pool;
-        std::vector<Element *> base;
+        std::vector<StringElement *> element_pool;
+        std::vector<StringElement *> base;
         int hash_size;
 
         std::stack<int> container_stack;

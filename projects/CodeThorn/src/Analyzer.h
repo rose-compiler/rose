@@ -55,10 +55,10 @@ namespace CodeThorn {
 
   class SpotConnection;
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+  /*! 
+   * \author Markus Schordan
+   * \date 2012.
+   */
   class Analyzer {
     friend class Solver;
     friend class Solver5;
@@ -115,9 +115,6 @@ namespace CodeThorn {
     void setElementSize(VariableId variableId, SgType* elementType);
 
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-
-    PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
-    // to be replaced by above function
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
     // thread save; only prints if option status messages is enabled.
@@ -208,17 +205,9 @@ namespace CodeThorn {
     */
     void setCommandLineOptions(vector<string> clOptions);
 
-    ///////
-    // MJ: 08/24/2017: Currently not used
-    //! list of all asserts in a program
-    std::list<SgNode*> listOfAssertNodes(SgProject *root);
-    size_t memorySizeContentEStateWorkLists();
-    static std::string nodeToString(SgNode* node);
-    static string lineColSource(SgNode* node);
-    SgNode* getCond(SgNode* node);
-    set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
-    ///////
-
+    // TODO: move to flow analyzer (reports label,init,final sets)
+    static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
+    
     // public member variables
     SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;

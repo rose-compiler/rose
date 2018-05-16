@@ -289,6 +289,14 @@ Engine::partitionerSwitches() {
               .intrinsicValue(false, settings_.partitioner.discontiguousBlocks)
               .hidden(true));
 
+    sg.insert(Switch("max-bblock-size")
+              .argument("n", nonNegativeIntegerParser(settings_.partitioner.maxBasicBlockSize))
+              .doc("Limit the size of basic blocks to @v{n} instructions. If a basic block would contain more than @v{n} "
+                   "instructions then it is split into multiple basic blocks.  Limiting the block size is useful in order "
+                   "to prevent long analysis times for intra-basic block semantics, but reduces the amount of information "
+                   "available to some analyses. If @v{n} is zero then no limit is enforced.  The default is " +
+                   StringUtility::numberToString(settings_.partitioner.maxBasicBlockSize) + "."));
+
     sg.insert(Switch("find-function-padding")
               .intrinsicValue(true, settings_.partitioner.findingFunctionPadding)
               .doc("Cause each built-in and user-defined function padding analysis to run. The purpose of these "
@@ -1101,7 +1109,9 @@ Engine::createBarePartitioner() {
         p.basicBlockCallbacks().append(Modules::AddGhostSuccessors::instance());
     if (!settings_.partitioner.discontiguousBlocks)
         p.basicBlockCallbacks().append(Modules::PreventDiscontiguousBlocks::instance());
-
+    if (settings_.partitioner.maxBasicBlockSize > 0)
+        p.basicBlockCallbacks().append(Modules::BasicBlockSizeLimiter::instance(settings_.partitioner.maxBasicBlockSize));
+        
     // PEScrambler descrambler
     if (settings_.partitioner.peScramblerDispatcherVa) {
         ModulesPe::PeDescrambler::Ptr cb = ModulesPe::PeDescrambler::instance(settings_.partitioner.peScramblerDispatcherVa);

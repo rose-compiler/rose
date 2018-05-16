@@ -281,4 +281,9 @@ VariableId DFTransferFunctions::getResultVariableId() {
   return resultVariableId;
 }
 
+void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
+  // empty by default. Only transfer functions that reason on function
+  // calls need to override this function.
+}
+
 #endif

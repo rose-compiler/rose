@@ -1095,8 +1095,8 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 } else if (shouldInline(path, cfgCallEdge->target())) {
                     info <<"inlining function call paths at vertex " <<partitioner.vertexName(backVertex) <<"\n";
-                    P2::insertCalleePaths(paths, backVertex,
-                                          partitioner.cfg(), cfgBackVertex, calleeCfgAvoidVertices, cfgAvoidEdges);
+                    P2::inlineMultipleCallees(paths, backVertex, partitioner.cfg(), cfgBackVertex,
+                                              calleeCfgAvoidVertices, cfgAvoidEdges);
                 } else {
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 }
@@ -1536,6 +1536,7 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     searching <<"; took " <<searchTime <<" seconds\n";
 }
 
+#if 0 // [Robb Matzke 2018-04-10]
 /** Merge states for multi-path feasibility analysis. Given two paths, such as when control flow merges after an "if"
  * statement, compute a state that represents both paths.  The new state that's returned will consist largely of ite
  * expressions. */
@@ -1592,7 +1593,9 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
 
     return ops->currentState()->create(mergedReg, mergedMem);
 }
+#endif
 
+#if 0 // [Robb Matzke 2018-04-10]
 // Merge all the predecessor outgoing states to create a new incoming state for the specified vertex.
 static BaseSemantics::StatePtr
 mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::ControlFlowGraph::ConstVertexIterator vertex,
@@ -1613,6 +1616,7 @@ mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::Con
     ASSERT_not_null(state);
     return state;
 }
+#endif
 
 class ReverseMultiVisitDfsTraversal {
     struct Node {
@@ -1878,8 +1882,8 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
                 } else { // inline the function
                     ++nFuncsInlined;
                     std::vector<P2::ControlFlowGraph::ConstVertexIterator> insertedVertices;
-                    P2::insertCalleePaths(paths, work.vertex, partitioner.cfg(), cfgCallEdge,
-                                          calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
+                    P2::inlineOneCallee(paths, work.vertex, partitioner.cfg(), cfgCallEdge->target(),
+                                        calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
                     P2::eraseEdges(paths, P2::findCallReturnEdges(work.vertex));
                     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
                         ++nVertsProcessed;

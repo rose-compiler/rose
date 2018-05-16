@@ -86,6 +86,8 @@ BinaryLoader::lookup(SgAsmInterpretation *interp)
             throw Exception("interpretation has multiple loaders");
         retval = candidate;
     }
+    if (!retval)
+        throw Exception("no loader for interpretation");
     return retval;
 }
 
@@ -95,6 +97,7 @@ BinaryLoader::lookup(SgAsmGenericHeader *header)
 {
     initclass();
     for (size_t i=loaders.size(); i>0; --i) {
+        ASSERT_not_null(loaders[i-1]);
         if (loaders[i-1]->can_load(header))
             return loaders[i-1];
     }

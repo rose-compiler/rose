@@ -634,7 +634,27 @@ void Grammar::setUpBinaryInstructions() {
 #endif // SgAsmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
-    /** Base class for machine instructions. */
+    /** Base class for machine instructions.
+     *
+     *  @li Each instruction is represented by one or more instances of SgAsmInstruction.
+     *
+     *  @li An instruction obtained from a full AST will have a parent pointer. The instruction's first ancestor of type @ref
+     *  SgAsmBlock is the basic block in which the instruction appears, and its first ancestor of type @ref SgAsmFunction is
+     *  the function in which the instruction appears. There may be intervening AST nodes having other types.
+     *
+     *  @li An instruction obtained from a @ref Rose::BinaryAnalysis::Partitioner2::Partitioner "Partitioner" will not have a
+     *  parent pointer. You can find ownership information using the Partitioner API.
+     *
+     *  @li An instruction's bytes will always be contiguous in the virtual address space from which the instruction was
+     *  decoded, but might not be contiguous in the file (if any) where the instruction was stored. In fact, there's no
+     *  guarantee that the instruction even exists entirely within one file.
+     *
+     *  @li Two distinct instructions (with different encodings) can start at the same virtual address if the specimen is
+     *  self-modifying. Most ROSE analysis assumes that specimens are not self-modifying and uses the instruction's starting
+     *  virtual address to uniquely identify the instruction.
+     *
+     *  @li Two distinct instructions (with different encodings) can occupy overlapping bytes in the virtual address space, and
+     *  are guaranteed to have different starting addresses unless the specimen is self-modifying. */
     class SgAsmInstruction: public SgAsmStatement {
     public:
 #endif
@@ -3530,8 +3550,24 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     /** Instruction basic block.
      *
-     *  One entry point (first instruction) and one exit point (last instruction).  However, SgAsmBlock has also historically
-     *  been used for other things, such as collections of functions. */
+     *  A SgAsmBlock usually represents a sequence of instructions. It's also used for grouping other things such as
+     *  functions. A SgAsmBlock represents a basic block if and only if it has at least one descendant of type @ref
+     *  SgAsmInstruction and it has no descendants of type SgAsmBlock.
+     *
+     *  In the absence of interrupt handling, the instructions of a basic block are executed entirely.  In the absense of
+     *  multi-threading, no other instructions intervene.
+     *
+     *  The instructions of a basic block need not be contiguous in virtual memory. They also do not need to be at increasing
+     *  virtual addresses.
+     *
+     *  If the basic block has a parent pointer, then the closest @ref SgAsmFunction ancestor is the one to which this basic
+     *  block belongs. In the @ref Rose::BinaryAnalysis::Partitioner2::Partitioner "Partitioner" API, a basic block can be
+     *  owned by more than one function.
+     *
+     *  An AST may have multiple SgAsmBlock objects that represent the same basic block. This happens when a single block
+     *  belongs to more than one function.
+     *
+     *  See also, @ref Rose::BinaryAnalysis::Partitioner2::BasicBlock, which represents a basic block outside the AST. */
     class SgAsmBlock: public SgAsmStatement {
     public:
 #endif

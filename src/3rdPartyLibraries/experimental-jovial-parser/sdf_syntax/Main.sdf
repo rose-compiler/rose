@@ -22,7 +22,7 @@ sorts
 % 3.0    %  SubroutineDeclaration SubroutineDefinition
 
 % 4.0    %  Statement SimpleStatement NullStatement Label StatementName CompoundStatement
-            LabelList
+            LabeledSimpleStatement LabelList
 
 InterferenceControl
 TraceControl
@@ -67,7 +67,7 @@ AssignmentOperator
 DereferenceOperator
 BitOperator
 ArithmeticOperator
-Comment
+%%Comment %%Moved to JovialLex.sdf
 Literal
 Operator
 Symbol
@@ -219,7 +219,7 @@ CaseAlternative
 StatusFormula
 CharacterFormula
 BitFormula
-IntegerFormula
+IntegerFormula OptIntegerFormula
 CaseBody
 CaseSelectorFormula
 ElseClause
@@ -508,75 +508,75 @@ context-free syntax
 
 %% 1.4 IMPLEMENTATION PARAMETERS
 %%
-  'BITSINBYTE'               -> IntegerMachineParameter {cons("BitsInByte")}
-  'BITSINWORD'               -> IntegerMachineParameter {cons("BitsInWord")}
-  'LOCSINWORD'               -> IntegerMachineParameter {cons("LocsInWord")}
+  'BITSINBYTE'               -> IntegerMachineParameter {cons("BITSINBYTE")}
+  'BITSINWORD'               -> IntegerMachineParameter {cons("BITSINWORD")}
+  'LOCSINWORD'               -> IntegerMachineParameter {cons("LOCSINWORD")}
   'BYTEPOS' '('
     CompileTimeIntegerFormula
-            ')'              -> IntegerMachineParameter {cons("BitsInWord")}
-  'BYTESINWORD'              -> IntegerMachineParameter {cons("BytesInWord")}
-  'BITSINPOINTER'            -> IntegerMachineParameter {cons("BitsInPointer")}
-  'INTPRECISION'             -> IntegerMachineParameter {cons("IntPrecision")}
-  'FLOATPRECISION'           -> IntegerMachineParameter {cons("FloatPrecision")}
-  'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FixedPrecision")}
-  'FLOATRADIX'               -> IntegerMachineParameter {cons("FloatRadix")}
+            ')'              -> IntegerMachineParameter {cons("BYTEPOS")} %% cons used to be "BitsInWord"
+  'BYTESINWORD'              -> IntegerMachineParameter {cons("BYTESINWORD")}
+  'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
+  'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
+  'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
+  'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
+  'FLOATRADIX'               -> IntegerMachineParameter {cons("FLOATRADIX")}
   'IMPLFLOATPRECISION'
-    '(' Precision ')'        -> IntegerMachineParameter {cons("ImplFloatPrecision")}
-  'IMPLLFIXEDPRECISION'
+    '(' Precision ')'        -> IntegerMachineParameter {cons("IMPLFLOATPRECISION")}
+  'IMPLFIXEDPRECISION'
     '(' ScaleSpecifier ','
-     FractionSpecifier ')'   -> IntegerMachineParameter {cons("ImplFixedPrecision")}
+     FractionSpecifier ')'   -> IntegerMachineParameter {cons("IMPLFIXEDPRECISION")}
   'IMPLINTSIZE'
-    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("ImplIntSize")}
-  'MAXFLOATPRECISION'        -> IntegerMachineParameter {cons("MaxFloatPrecision")}
-  'MAXFIXEDPRECISION'        -> IntegerMachineParameter {cons("MaxFixedPrecision")}
-  'MAXINTSIZE'               -> IntegerMachineParameter {cons("MaxIntSize")}
-  'MAXBYTES'                 -> IntegerMachineParameter {cons("MaxBytes")}
-  'MAXBITS'                  -> IntegerMachineParameter {cons("MaxBits")}
+    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
+  'MAXFLOATPRECISION'        -> IntegerMachineParameter {cons("MAXFLOATPRECISION")}
+  'MAXFIXEDPRECISION'        -> IntegerMachineParameter {cons("MAXFIXEDPRECSION")}
+  'MAXINTSIZE'               -> IntegerMachineParameter {cons("MAXINTSIZE")}
+  'MAXBYTES'                 -> IntegerMachineParameter {cons("MAXBYTES")}
+  'MAXBITS'                  -> IntegerMachineParameter {cons("MAXBITS")}
   'MAXINT'
-    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("MaxInt")}
+    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("MAXINT")}
   'MININT'
-    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("MinInt")}
-  'MAXTABLESIZE'             -> IntegerMachineParameter {cons("MaxTableSize")}
-  'MAXSTOP'                  -> IntegerMachineParameter {cons("MaxStop")}
-  'MINSTOP'                  -> IntegerMachineParameter {cons("MinStop")}
-  'MAXSIGNDIGITS'            -> IntegerMachineParameter {cons("MaxSignDigits")}
+    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("MININT")}
+  'MAXTABLESIZE'             -> IntegerMachineParameter {cons("MAXTABLESIZE")}
+  'MAXSTOP'                  -> IntegerMachineParameter {cons("MAXSTOP")}
+  'MINSTOP'                  -> IntegerMachineParameter {cons("MINSTOP")}
+  'MAXSIGNDIGITS'            -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
   'MINSIZE'
     '('
         CompileTimeIntegerFormula
-    ')'                      -> IntegerMachineParameter {cons("MinSize")}
+    ')'                      -> IntegerMachineParameter {cons("MINSIZE")}
   'MINFRACTION'
     '('
         CompileTimeIntegerFormula
-    ')'                      -> IntegerMachineParameter {cons("MinFraction")}
+    ')'                      -> IntegerMachineParameter {cons("MINFRACTION")}
   'MINSCALE'
     '('
         CompileTimeIntegerFormula
-     ')'                     -> IntegerMachineParameter {cons("MinScale")}
+     ')'                     -> IntegerMachineParameter {cons("MINSCALE")}
   'MINRELPRECISION'
      '('
     CompileTimeIntegerFormula
-     ')'                     -> IntegerMachineParameter {cons("MinRelPrecision")}
+     ')'                     -> IntegerMachineParameter {cons("MINRELPRECISION")}
 
   'MAXFLOAT'
-     '(' Precision ')'       -> FloatingMachineParameter {cons("MaxFloat")}
+     '(' Precision ')'       -> FloatingMachineParameter {cons("MAXFLOAT")}
   'MINFLOAT'
-     '(' Precision ')'       -> FloatingMachineParameter {cons("MinFloat")}
+     '(' Precision ')'       -> FloatingMachineParameter {cons("MINFLOAT")}
   'FLOATRELPRECISION'
-     '(' Precision ')'       -> FloatingMachineParameter {cons("FloatRelPrecision")}
+     '(' Precision ')'       -> FloatingMachineParameter {cons("FLOATRELPRECISION")}
   'FLOATUNDERFLOW'
-     '(' Precision ')'       -> FloatingMachineParameter {cons("FloatUnderFlow")}
+     '(' Precision ')'       -> FloatingMachineParameter {cons("FLOATUNDERFLOW")}
 
   'MAXFIXED'
      '('
     ScaleSpecifier
     FractionSpecifier
-     ')'                     -> FixedMachineParameter    {cons("MaxFixed")}
+     ')'                     -> FixedMachineParameter    {cons("MAXFIXED")}
 
   'MINFIXED'
      '('
     ScaleSpecifier
     FractionSpecifier
-     ')'                     -> FixedMachineParameter    {cons("MinFixed")}
+     ')'                     -> FixedMachineParameter    {cons("MINFIXED")}
 
 
 %%%%%%%%%%
@@ -629,7 +629,7 @@ context-free syntax
   FixedTypeDescription        -> ItemTypeDescription
   BitTypeDescription          -> ItemTypeDescription
   CharacterTypeDescription    -> ItemTypeDescription
-  StatusTypeDescription       -> ItemTypeDescription
+  StatusTypeDescription       -> ItemTypeDescription     {prefer}
   PointerTypeDescription      -> ItemTypeDescription
 
   ItemTypeName                -> ItemTypeDescription     {cons("ItemTypeName")}  %% Fixes ambiguity with type names  
@@ -640,9 +640,13 @@ context-free syntax
   IntegerItemDescription      -> IntegerTypeDescription  {prefer}
   IntegerTypeName             -> IntegerTypeDescription
 
-  'S' OptRoundOrTruncate
+%%  'S'
+  SignedTypeDesc
+      OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescription")}
-  'U' OptRoundOrTruncate
+%%  'U'
+  UnsignedTypeDesc
+      OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescriptionU")}
 
   CompileTimeIntegerFormula   -> IntegerSize             {cons("ItemSize")}
@@ -659,12 +663,14 @@ context-free syntax
   FloatingItemDescription     -> FloatingTypeDescription {prefer}
   FloatingTypeName            -> FloatingTypeDescription
 
+%% 'F'
+
   'F' OptRoundOrTruncate
       Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
 
-  ',' 'R'                     -> RoundOrTruncate         {cons("RoundOrTruncateR")}
-  ',' 'T'                     -> RoundOrTruncate         {cons("RoundOrTruncateT")}
-  ',' 'Z'                     -> RoundOrTruncate         {cons("RoundOrTruncateZ")}
+  ',' 'R'                     -> RoundOrTruncate         {cons("R")}
+  ',' 'T'                     -> RoundOrTruncate         {cons("T")}
+  ',' 'Z'                     -> RoundOrTruncate         {cons("Z")}
 
   RoundOrTruncate             -> OptRoundOrTruncate
   % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
@@ -677,15 +683,15 @@ context-free syntax
 %% 2.1.1.3 FIXED TYPE DESCRIPTIONS
 %%
 
-  FixedItemDescription        -> FixedTypeDescription    {reject}  %% AMBIGUOUS
-  FixedTypeName               -> FixedTypeDescription    {reject}  %% AMBIGUOUS
+  FixedItemDescription        -> FixedTypeDescription    {prefer}
+  FixedTypeName               -> FixedTypeDescription
 
   'A' OptRoundOrTruncate
       ScaleSpecifier
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
   CompileTimeIntegerFormula   -> ScaleSpecifier
-  CompileTimeFixedFormula     -> FractionSpecifier
+  CompileTimeFixedFormula     -> FractionSpecifier       {cons("FractionSpecifier")}
 
   FractionSpecifier           -> OptFractionSpecifier
   % empty %                   -> OptFractionSpecifier    {cons("no-fraction-specifier")}
@@ -699,7 +705,9 @@ context-free syntax
   BitItemDescription          -> BitTypeDescription       {prefer}
   BitTypeName                 -> BitTypeDescription
 
-  'B' OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
+%%  'B'
+  BitTypeDesc
+      OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
 
   CompileTimeIntegerFormula   -> BitSize                  {cons("ItemSize")}
 
@@ -752,7 +760,7 @@ context-free syntax
 
   Name                       -> Status
   Letter                     -> Status
-  ReservedWord               -> Status
+  ReservedWord               -> Status  {prefer}       %%fixes ambiguity between Name and ReservedWord
 
   ItemTypeName               -> StatusTypeName
 
@@ -767,11 +775,13 @@ context-free syntax
   PointerItemDescription      -> PointerTypeDescription  {prefer}
   PointerTypeName             -> PointerTypeDescription
 
-  'P' OptTypeName             -> PointerItemDescription  {cons("PointerItemDescription")}
+%%  'P'
+  PointerTypeDesc
+      OptTypeName             -> PointerItemDescription  {cons("PointerItemDescription")}
 
   ItemTypeName                -> PointerTypeName         {cons("PointerTypeName")}
 
-  ItemTypeName                -> TypeName
+  ItemTypeName                -> TypeName  {prefer}      %%fixes ambiguity between ItemTypeName, TableTypeName, and BlockTypeName
   TableTypeName               -> TypeName
   BlockTypeName               -> TypeName
 
@@ -951,7 +961,7 @@ context-free syntax
   % empty %                       -> OptItemPreset           {cons("no-item-preset")}
 
   CompileTimeFormula              -> ItemPresetValue
-  LocFunction                     -> ItemPresetValue
+  LocFunction                     -> ItemPresetValue  {prefer}  %%fixes many different ambiguities with and within LocFunction in 2.1.1.7 Pointer Type tests
 
   ItemPresetValue                 -> OptItemPresetValue
   % empty %                       -> ItemPresetValue         {cons("no-item-preset-value")}
@@ -1042,7 +1052,7 @@ context-free syntax
 
 %% 2.3 STATEMENT NAME DECLARATIONS
 %%
-'LABEL' {StatementName ','}+ ':'  -> StatementNameDeclaration {cons("StatementNameDeclaration")}
+'LABEL' {StatementName ','}+ ';'  -> StatementNameDeclaration {cons("StatementNameDeclaration")}
 
 %% 2.4 DEFINE DECLARATIONS
 %%
@@ -1266,6 +1276,7 @@ context-free syntax
 %%%%%%%%%%
 
   LabelList SimpleStatement   -> Statement             {cons("SimpleStatement")}
+  LabeledSimpleStatement      -> Statement             {cons("SimpleStatement")}
   LabelList CompoundStatement -> Statement             {cons("CompoundStatement")}
 
   AssignmentStatement         -> SimpleStatement
@@ -1273,11 +1284,11 @@ context-free syntax
   IfStatement                 -> SimpleStatement
   CaseStatement               -> SimpleStatement
   ProcedureCallStatement      -> SimpleStatement       {reject} %%AMBIGUOUS with AssignmentStatement
-  ReturnStatement             -> SimpleStatement
-  GotoStatement               -> SimpleStatement
-  ExitStatement               -> SimpleStatement
-  StopStatement               -> SimpleStatement
-  AbortStatement              -> SimpleStatement
+  ReturnStatement             -> LabeledSimpleStatement
+  GotoStatement               -> LabeledSimpleStatement
+  ExitStatement               -> LabeledSimpleStatement
+  StopStatement               -> LabeledSimpleStatement
+  AbortStatement              -> LabeledSimpleStatement
   NullStatement               -> SimpleStatement
 
   ';'                         -> NullStatement         {cons("NullStatement")}
@@ -1286,11 +1297,16 @@ context-free syntax
     LabelList
   'END'                       -> NullStatement         {cons("NullBlockStatement")}
 
-  StatementName ':'           -> Label                 {cons("Label")}
+%% StatementName changed to Name when cons("Name") was added to StatementName
+%% Otherwise terms like Name(Label("label_string")) would appear.
+%%
+%% StatementName ':'          -> Label                 {cons("Label")}
+%%
+  Name ':'                    -> Label                 {cons("Label")}
 
   Label*                      -> LabelList             {cons("LabelList")}
 
-  Name                        -> StatementName         {cons("StatementName")}
+  Name                        -> StatementName         {cons("Name")}
 
   'BEGIN'
     Statement+
@@ -1305,7 +1321,7 @@ context-free syntax
 
   {Variable ','}+            -> VariableList           {cons("VariableList")}
 
-%% 4.2 LOOP STATEMEMTS
+%% 4.2 LOOP STATEMENTS
 %%
 
   LoopType ControlledStatement -> LoopStatement        {cons("LoopStatement")}
@@ -1357,7 +1373,7 @@ context-free syntax
   WhilePhrase                  -> OptWhilePhrase
   % empty %                    -> OptWhilePhrase       {cons("no-while-phrase")}
 
-%% 4.3 IF STATEMEMTS
+%% 4.3 IF STATEMENTS
 %%
 
   'IF' BooleanFormula ';'
@@ -1371,7 +1387,7 @@ context-free syntax
   ElseClause                 -> OptElseClause
   % empty %                  -> OptElseClause          {cons("no-else-clause")}
 
-%% 4.4 CASE STATEMEMTS
+%% 4.4 CASE STATEMENTS
 %%
 
   'CASE'
@@ -1408,7 +1424,7 @@ context-free syntax
   CompileTimeStatusFormula     -> CaseIndex            {cons("CaseIndex")}
   LowerBound ':' UpperBound    -> CaseIndex            {cons("CaseIndex")}
 
-%% 4.5 PROCEDURE CALL STATEMEMTS
+%% 4.5 PROCEDURE CALL STATEMENTS
 %%
 
   UserDefinedProcedureCall     -> ProcedureCallStatement   {cons("ProcedureCallStatement")}
@@ -1449,30 +1465,33 @@ context-free syntax
   Name                         -> ProcedureName
   Name                         -> FunctionName
 
-%% 4.6 RETURN STATEMEMTS
+%% 4.6 RETURN STATEMENTS
 %%
 
-  'RETURN' ';'               -> ReturnStatement        {cons("ReturnStatement")}
+  LabelList 'RETURN' ';'                  -> ReturnStatement        {cons("ReturnStatement")}
 
-%% 4.7 GOTO STATEMEMTS
+%% 4.7 GOTO STATEMENTS
 %%
 
-  'GOTO' StatementName       -> GotoStatement          {cons("GotoStatement")}
+  LabelList 'GOTO' StatementName ';'      -> GotoStatement          {cons("GotoStatement")}
 
-%% 4.8 Exit STATEMEMTS
+%% 4.8 EXIT STATEMENTS
 %%
 
-  'EXIT' ';'                 -> ExitStatement          {cons("ExitStatement")}
+  LabelList 'EXIT' ';'                    -> ExitStatement          {cons("ExitStatement")}
 
-%% 4.9 STOP STATEMEMTS
+%% 4.9 STOP STATEMENTS
 %%
 
-  'EXIT' IntegerFormula      -> StopStatement          {cons("StopStatement")}
+  LabelList 'STOP' OptIntegerFormula ';'  -> StopStatement          {cons("StopStatement")}
 
-%% 4.10 ABORT STATEMEMTS
+  IntegerFormula                          -> OptIntegerFormula
+  % empty %                               -> OptIntegerFormula      {cons("no-integer-formula")}
+
+%% 4.10 ABORT STATEMENTS
 %%
 
-  'ABORT' ';'                -> AbortStatement         {cons("AbortStatement")}
+  LabelList 'ABORT' ';'         -> AbortStatement         {cons("AbortStatement")}
 
 
 %%%%%%%%%%
@@ -1622,7 +1641,7 @@ context-free syntax
   LogicalOperand
     OptLogicalContinuation    -> BitFormula             {cons("BitFormula")}
 
-  'NOT' LogicalOperand        -> BitFormula             {cons("BitFormula")}
+  'NOT' LogicalOperand        -> BitFormula             {cons("BitFormulaNOT")}
 
   BitPrimary                  -> LogicalOperand
   RelationalExpression        -> LogicalOperand
@@ -1673,7 +1692,7 @@ context-free syntax
 
   FixedFormula
     RelationalOperator
-    FixedFormula              -> RelationalExpression   {cons("RelationalExpression")}
+    FixedFormula              -> RelationalExpression   {cons("RelationalExpression"), prefer}
 
   CharacterFormula
     RelationalOperator
@@ -2088,7 +2107,7 @@ context-free syntax
     Operator                 -> Symbol
     Literal                  -> Symbol
     StatusConstant           -> Symbol
-    Comment                  -> Symbol
+%%  Comment                  -> Symbol %% Moved to JovialLex.sdf
     DefineString             -> Symbol
     DefineCall               -> Symbol
     Letter                   -> Symbol
@@ -2164,8 +2183,8 @@ context-free syntax
   Icon                       -> Number
 
   RealLiteral                -> FloatingLiteral
-  Icon Exponent              -> RealLiteral           {cons("RealLiteral")}
-  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteral")}
+  Icon Exponent              -> RealLiteral           {cons("RealLiteralIE")}
+  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteralFF")}
 
   'E' OptSign Number         -> Exponent              {cons("Exponent")}
 
@@ -2183,9 +2202,9 @@ context-free syntax
 
 %% 8.3.2 BIT LITERALS
 %%
-  BeadSize 'B' "'" Bead+   -> BitLiteral              {cons("BitLiteral")}
+  BeadSize 'B' "'" Bead+ "'"  -> BitLiteral              {cons("BitLiteral")}
 
-  Digit                    -> Bead
+  Digit                       -> Bead
 
 %% 8.3.3 BOOLEAN LITERALS
 %%
@@ -2194,14 +2213,15 @@ context-free syntax
 
 %% 8.3.3 CHARACTER LITERALS
 %%
-  "'" Character+ "'"       -> CharacterLiteral        {cons("CharacterLiteral")}
+  CharString               -> CharacterLiteral        {cons("CharacterLiteral")}
 
 %% 8.3.4 POINTER LITERALS
 %%
   'NULL'                   -> PointerLiteral          {cons("Null")}
 
-  '"' Character* '"'       -> Comment                 {cons("Comment")}
-  '%' Character* '%'       -> Comment                 {cons("Comment")}
+%% Comment moved to JovialLex.sdf
+%%  '"' Character* '"'     -> Comment                 {cons("Comment")}
+%%  '%' Character* '%'     -> Comment                 {cons("Comment")}
 
 
 %%%%%%%%%%

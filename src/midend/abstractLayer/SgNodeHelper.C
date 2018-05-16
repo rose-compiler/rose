@@ -381,9 +381,10 @@ list<SgVarRefExp*> SgNodeHelper::listOfUsedVarsInFunctions(SgProject* project) {
   list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
   for(list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
     RoseAst ast(*i);
-    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      if(SgVarRefExp* varRefExp=isSgVarRefExp(*i))
+    for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
+      if(SgVarRefExp* varRefExp=isSgVarRefExp(*j)) {
         varRefExpList.push_back(varRefExp);
+      }
     }
   }
   return varRefExpList;
@@ -1112,6 +1113,43 @@ set<SgContinueStmt*> SgNodeHelper::loopRelevantContinueStmtNodes(SgNode* node) {
     ++i;
   }
   return continueNodes;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2018.
+ */
+set<SgCaseOptionStmt*> SgNodeHelper::switchRelevantCaseStmtNodes(SgNode* node) {
+  set<SgCaseOptionStmt*> caseNodes;
+  RoseAst ast(node);
+  RoseAst::iterator i=ast.begin();
+  while(i!=ast.end()) {
+    if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(*i))
+      caseNodes.insert(caseStmt);
+    // exclude nested switch stmts
+    if(isSgSwitchStatement(*i))
+      i.skipChildrenOnForward();
+    ++i;
+  }
+  return caseNodes;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2018.
+ */
+SgDefaultOptionStmt* SgNodeHelper::switchRelevantDefaultStmtNode(SgNode* node) {
+  RoseAst ast(node);
+  RoseAst::iterator i=ast.begin();
+  while(i!=ast.end()) {
+    if(SgDefaultOptionStmt* defStmt=isSgDefaultOptionStmt(*i))
+      return defStmt;
+    // exclude nested switch stmts
+    if(isSgSwitchStatement(*i))
+      i.skipChildrenOnForward();
+    ++i;
+  }
+  return 0; // nullptr
 }
 
 /*! 
