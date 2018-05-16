@@ -790,6 +790,8 @@ HEADER_UNTYPED_TYPE_START
                e_double_complex, //! double complex type as identified by parser.
                e_bool,           //! boolean type as identified by parser.
                e_char,           //! character type as identified by parser.
+            // Rasmussen (03/29/2018): Added e_string for Fortran and Jovial
+               e_string,         //! character string type as identified by parser.
             // Rasmussen (01/02/2018): Added e_bit, e_fixed, e_ptr, e_status for Jovial
                e_bit,            //! bit type as identified by parser.
                e_fixed,          //! fixed type as identified by parser.

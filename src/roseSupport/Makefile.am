@@ -21,6 +21,7 @@ rebuild-stringify:
 noinst_LTLIBRARIES = libroseSupport.la
 
 libroseSupport_la_SOURCES =			\
+	Combinatorics.C				\
 	CommandLine.C				\
 	Diagnostics.C				\
 	IncludeDirective.C			\
@@ -36,6 +37,7 @@ libroseSupport_la_SOURCES =			\
 	utility_functions.C
 
 pkginclude_HEADERS =				\
+	Combinatorics.h				\
 	CommandLine.h				\
 	Diagnostics.h				\
 	IncludeDirective.h			\
