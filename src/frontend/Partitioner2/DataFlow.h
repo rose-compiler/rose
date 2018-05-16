@@ -48,7 +48,7 @@ public:
 
     /** Construct a faked call vertex. The function may be null if indeterminate. */
     explicit DfCfgVertex(const Function::Ptr &function, const Function::Ptr &parentFunction, size_t inliningId)
-        : type_(FAKED_CALL), callee_(function), parentFunction_(function), inliningId_(inliningId) {}
+        : type_(FAKED_CALL), callee_(function), parentFunction_(parentFunction), inliningId_(inliningId) {}
 
     /** Construct a vertex of specified type that takes no auxiliary data. */
     explicit DfCfgVertex(Type type, const Function::Ptr &parentFunction, size_t inliningId)

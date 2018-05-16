@@ -26,6 +26,51 @@ using namespace SageInterface;
 // It will be used for diff-based correctness checking. So don't output varying debugging  info into this file.
 ofstream ofile; 
 
+// A helper function to match simple regular expression patterns
+// .  match a single character
+// *  match zero or more of the preceding element
+bool isMatch(string s, string p) {
+  /**
+   * f[i][j]: if s[0..i-1] matches p[0..j-1]
+
+   * if p[j - 1] != '*'
+   *      f[i][j] = f[i - 1][j - 1] && (s[i - 1] == p[j - 1] || p[i-1=='.'])
+   * if p[j - 1] == '*', denote p[j - 2] with x
+   *      f[i][j] is true iff any of the following is true
+   *      1) "x*" repeats 0 time and matches empty: = f[i][j - 2] // eliminate the last two chars of p [j-2]
+   *      2) "x*" repeats >= 1 times and matches "x*x": s[i - 1] == x && f[i - 1][j]  
+   * '.' matches any single character
+   */
+  int m = s.size(), n = p.size();
+
+  // (m+1) x (n+1) matrix 
+  vector < vector <bool> > f(m + 1, vector<bool>(n + 1, false));
+
+
+  f[0][0] = true; // bootstrap point: from true
+  // if p size is 0: no match is possible, set to false
+  for (int i = 1; i <= m; i++)
+    f[i][0] = false;
+  // p[0.., j - 3, j - 2, j - 1] matches empty iff p[j - 1] is '*' and p[0..j - 3] matches empty
+  for (int j = 1; j <= n; j++)
+    f[0][j] = j > 1 && '*' == p[j - 1] && f[0][j - 2];
+
+  // go through all i, j values , both start from 1
+  for (int i = 1; i <= m; i++)
+    for (int j = 1; j <= n; j++)
+    {
+      if (p[j - 1] != '*') // straightforward match
+        f[i][j] = f[i - 1][j - 1] && (s[i - 1] == p[j - 1] || '.' == p[j - 1]);
+      else
+        // p[0] cannot be '*' so no need to check "j > 1" here
+        f[i][j] = (f[i][j - 2] || ((s[i - 1] == p[j - 2] || '.' == p[j - 2]) && f[i - 1][j]));
+    }
+
+  return f[m][n];
+} // end isMatch
+
+
+
 namespace RAJA_Checker 
 {
   bool enable_debug = false;
@@ -251,7 +296,8 @@ namespace RAJA_Checker
         {
           string func_name = func_names[i];
           //  if (func_name == obtained_name) // the full qualified name is ::for_all < seq_exec ,  >, we only match the first portion for now
-          if (obtained_name.find (func_name,0) !=string::npos)
+          //if (obtained_name.find (func_name,0) !=string::npos)
+          if (isMatch(obtained_name, func_name)) 
           {
             retval = true; 
             break; 
@@ -687,15 +733,22 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefE
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var's type is not a pointer type, but " << lhs->get_type()->class_name() <<endl;
     return false;
   }
-  // lhs is a pointer to double  
-   if (! isSgTypeDouble( ptype->get_base_type()) )
+  // lhs is a pointer to double, float or integer 
+   SgType* bst = ptype->get_base_type();
+   if (! isSgTypeDouble( bst) && ! isSgTypeInt ( bst )  && ! isSgTypeFloat ( bst) )
    {
-    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double type, but " << ptype->get_base_type()->class_name()<<endl;
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double, int or float type, but " << ptype->get_base_type()->class_name()<<endl;
     return false;
    }
   
   // rhs is a loop index
+ 
+ // strip off one or more levels of index arrays
+  while (isSgPntrArrRefExp(rhs))
+    rhs = isSgPntrArrRefExp(rhs)->get_rhs_operand();
+
   SgVarRefExp* varRef = isSgVarRefExp(rhs) ;
+  
   if (varRef == NULL) 
   {
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t rhs of a[i] is not SgVarRefExp, but " << rhs->class_name() <<endl;
@@ -1147,11 +1200,11 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
     // skip const or typedef chain
     rhs_type =rhs_type->stripTypedefsAndModifiers();
 
-    // rhs is a double type
-    if (!isSgTypeDouble(rhs_type)) 
+    // rhs is a double, float or integer type, both integer and float arrays are allowed
+    if (!isSgTypeDouble(rhs_type) && !isSgTypeFloat(rhs_type) && !isSgTypeInt(rhs_type)) 
     {
       if (RAJA_Checker::enable_debug)
-        cout<<"\t\t not double type for rhs"<<endl;
+        cout<<"\t\t not double, float or integer type for rhs, but a type of "<< rhs_type->class_name() <<endl;
       return false;
     }
   }
@@ -1337,12 +1390,16 @@ bool RAJA_Checker::isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
   SgFunctionDeclaration* raja_func = NULL;
   SgExprStatement* call_stmt = NULL;
   vector<string> wrappers; 
-  wrappers.push_back("::for_all <");
+  wrappers.push_back("::for_all <.*");
+  // use regular expression to describe all patterns
+  wrappers.push_back("::for_all_.* <.*");
+/*
   wrappers.push_back("::for_all_zones <");
   wrappers.push_back("::for_all_region_zones <");
   wrappers.push_back("::for_all_zones_tiled <");
   wrappers.push_back("::for_all_mixed_slots <");
   wrappers.push_back("::for_all_mixed_zones <");
+*/
   if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func)  && 
       !isWrapperTemplateFunctionCallParameter (exp, wrappers,  call_stmt, raja_func))
   {

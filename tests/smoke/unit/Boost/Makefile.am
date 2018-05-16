@@ -39,6 +39,20 @@ testBoostRegex.passed: $(top_srcdir)/scripts/test_exit_status testBoostRegex
 		CMD=./testBoostRegex			\
 		$< $@
 
+###############################################################################################################################
+# Test that boost::thread works.
+###############################################################################################################################
+
+noinst_PROGRAMS += testBoostThreads
+testBoostThreads_SOURCES = testBoostThreads.C
+
+TEST_TARGETS += testBoostThreads.passed
+
+testBoostThreads.passed: $(top_srcdir)/scripts/test_exit_status testBoostThreads
+	@$(RTH_RUN)				\
+		TITLE="boost threads [$@]"	\
+		CMD=./testBoostThreads		\
+		$< $@
 
 ###############################################################################################################################
 # Boilerplate

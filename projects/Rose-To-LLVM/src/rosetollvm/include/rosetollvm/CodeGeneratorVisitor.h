@@ -63,6 +63,8 @@ protected:
     void genDivideBinaryOperation(SgBinaryOp *, std::string, std::string const &);
     void genDivideBinaryOperationAndAssign(SgBinaryOp *, std::string, std::string const &);
 
+    SgFunctionType *getFunctionType(SgType *);
+
     virtual bool preVisitEnter(SgNode *);
     virtual void preVisit(SgNode *);
     virtual void preVisitExit(SgNode *);

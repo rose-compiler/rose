@@ -12,6 +12,18 @@
 
 using namespace std;
 
+/**  generateLibraryIdentificationDataBase
+ *  
+ *  Attempts to match the functions in the database against an
+ *  existing binary function identification database with
+ *  the functions in the project.  Whether a match is found or not, a
+ *  message is simply printed to stdout.
+ *  Just calls libraryIdentificationDataBaseSupport internally
+ *
+ * @param[in] databaseName Filename of the database to create/access
+ * @param[in] project      Rose SgProject that has the functions to
+ * write or find
+ **/
 void
 LibraryIdentification::matchAgainstLibraryIdentificationDataBase( string databaseName, SgProject* project )
    {

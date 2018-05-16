@@ -1227,6 +1227,113 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
    }
 
 SgStatement*
+UntypedConverter::convertSgUntypedExitStatement (SgUntypedExitStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      SgExpression* exitExpression = new SgNullExpression();
+      SageInterface::setSourcePosition(exitExpression);
+
+      SgStopOrPauseStatement* exitStatement = new SgStopOrPauseStatement(exitExpression);
+      exitStatement->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
+      setSourcePositionFrom(exitStatement, ut_stmt);
+
+      exitExpression->set_parent(exitStatement);
+      scope->append_statement(exitStatement);
+      convertLabel(ut_stmt, exitStatement);
+
+      return exitStatement;
+   }
+
+SgStatement*
+UntypedConverter::convertSgUntypedGotoStatement (SgUntypedGotoStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      return NULL;
+#ifdef GOTO_FIX
+
+      SgName targetLabel = ut_stmt->get_target_label();
+      //TODO - lookup symbol in table here
+      //      targetSymbol = (*i)->lookup_label_symbol(name);
+      targetSymbol = NULL;
+
+      if (targetSymbol == NULL)
+         {
+           targetSymbol = new SgLabelSymbol((SgLabelStatement*) NULL);
+           ROSE_ASSERT(targetSymbol != NULL);
+
+           SgStatement* labelStatement = SageBuilder::buildLabelStatement(targetLabel, NULL, scope);
+           SageInterface::setSourcePosition(labelStatement);
+           //           ROSE_ASSERT(isSgFunctionDefinition(*i) != NULL);
+           //          (*i)->insert_symbol(name,targetSymbol);
+          }
+
+      else { ROSE_ASSERT(targetSymbol != NULL)
+           }
+      //Stuff copied from Return statement
+      SgGotoStatement* goto_statement = SageBuilder::buildGotoStatement();
+      ROSE_ASSERT(goto_statement != NULL);
+
+      setSourcePositionFrom(goto_statement, ut_stmt);
+
+      scope->append_statement(goto_statement);
+      convertLabel(ut_stmt, goto_statement);
+
+      return goto_statement;
+
+
+      //TEMPORARY - stuff copied from fortran_support.C
+      //DELETE WHEN DONE LOOKING AT IT
+         SgName name = label->text;
+       // SgLabelSymbol* returnSymbol = (*i)->lookup_label_symbol(name);
+          returnSymbol = (*i)->lookup_label_symbol(name);
+
+       // printf ("In buildNumericLabelSymbol(): returnSymbol = %p \n",returnSymbol);
+          if (returnSymbol == NULL)
+             {
+            // The symbol was not found, create a symbol so that statements can reference
+            // it then we can fixup the statement in the symbol later (when we see it).
+               int label_value = atoi(label->text);
+            // printf ("Building a SgLabelSymbol for a numeric label that we have not see yet: label_value = %d = %s \n",label_value,label->text);
+
+               returnSymbol = new SgLabelSymbol((SgLabelStatement*) NULL);
+               ROSE_ASSERT(returnSymbol != NULL);
+               returnSymbol->set_fortran_statement(NULL);
+               returnSymbol->set_numeric_label_value(label_value);
+
+               SgStatement* label_statement = new SgNullStatement();
+            // printf ("Building SgNullStatement label_statement = %p \n",label_statement);
+
+               returnSymbol->set_fortran_statement(label_statement);
+
+            // DQ (1/20/2008): The parent of a statement can't be set to a SgSymbol, so make it point to the current scope for now!
+            // label_statement->set_parent(returnSymbol);
+               label_statement->set_parent(astScopeStack.front());
+               ROSE_ASSERT(label_statement->get_parent() != NULL);
+
+            // DQ (1/20/2008): If the label is not present, but is referenced then this has to be set.
+            // Note that test2007_175.f demonstrates that if the lable is not present
+            // then this label_statement fails because the source position is not set.
+               setSourcePosition(label_statement);
+
+               ROSE_ASSERT(isSgFunctionDefinition(*i) != NULL);
+            // Insert the symbol into the function definition's symbol table so it will be found next time.
+               (*i)->insert_symbol(name,returnSymbol);
+             }
+
+          ROSE_ASSERT(returnSymbol != NULL)
+#endif
+   }
+
+SgNullStatement*
+UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      SgNullStatement* nullStatement = new SgNullStatement();
+      setSourcePositionFrom(nullStatement, ut_stmt);
+
+      scope->append_statement(nullStatement);
+
+      return nullStatement;
+   }
+
+SgStatement*
 UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
    {
       switch (ut_stmt->get_statement_enum())
@@ -1242,15 +1349,18 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
        }
    }
 
-SgNullStatement*
-UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
+SgStatement*
+UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgScopeStatement* scope)
    {
-      SgNullStatement* nullStatement = new SgNullStatement();
-      setSourcePositionFrom(nullStatement, ut_stmt);
+      SgReturnStmt* return_stmt = SageBuilder::buildReturnStmt();
+      ROSE_ASSERT(return_stmt != NULL);
 
-      scope->append_statement(nullStatement);
+      setSourcePositionFrom(return_stmt, ut_stmt);
 
-      return nullStatement;
+      scope->append_statement(return_stmt);
+      convertLabel(ut_stmt, return_stmt);
+
+      return return_stmt;
    }
 
 

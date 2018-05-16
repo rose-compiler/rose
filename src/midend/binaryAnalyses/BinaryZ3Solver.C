@@ -1022,6 +1022,13 @@ Z3Solver::parseEvidence() {
         }
     }
 
+    // If there are no assertions, then there is no evidence.
+    bool hasAssertions = false;
+    for (size_t i=0; i<z3Stack_.size() && !hasAssertions; ++i)
+        hasAssertions = !z3Stack_[i].empty();
+    if (!hasAssertions)
+        return;
+
     // Parse the evidence
     ASSERT_not_null(solver_);
     z3::model model = solver_->get_model();

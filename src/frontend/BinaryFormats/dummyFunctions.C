@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include <Combinatorics.h>
 
 using namespace Rose::BinaryAnalysis;
 
@@ -93,6 +94,7 @@ void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
 namespace Rose {
 namespace BinaryAnalysis {
 void MemoryMap::dump(FILE *f, const char *prefix) const {}
+Combinatorics::Hasher& MemoryMap::hash(Combinatorics::Hasher &x) const { return x; }
 } // namespace
 } // namespace
 

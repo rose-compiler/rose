@@ -28,6 +28,7 @@ pkginclude_HEADERS 	= \
 	include/rosetollvm/Option.h \
 	include/rosetollvm/Control.h \
 	include/rosetollvm/RoseToLLVM.hpp \
+	include/rosetollvm/SgCastAstAttribute.h \
 	include/rosetollvm/SgTypeAstAttribute.h \
 	include/rosetollvm/SizeOfAstAttribute.h \
 	include/rosetollvm/StringAstAttribute.h \
@@ -46,7 +47,8 @@ librosetollvm_la_SOURCES = \
 	LLVMAstAttributes.cpp \
 	Option.cpp \
 	Control.cpp \
-	StringSet.cpp
+	StringSet.cpp \
+	llc.cpp
 
 librosetollvm_la_CPPFLAGS	= \
 	-I$(srcdir)/include \

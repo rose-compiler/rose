@@ -196,6 +196,26 @@ test2018_71.C \
 test2018_72.C \
 test2018_73.C \
 test2018_74.C \
+test2018_75.C \
+test2018_76.C \
+test2018_77.C \
+test2018_78.C \
+test2018_79.C \
+test2018_80.C \
+test2018_81.C \
+test2018_82.C \
+test2018_83.C \
+test2018_84.C \
+test2018_85.C \
+test2018_86.C \
+test2018_88.C \
+test2018_89.C \
+test2018_90.C \
+test2018_91.C \
+test2018_92.C \
+test2018_93.C \
+test2018_95.C \
+test2018_96.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 test2016_40.C \
 last.C
