@@ -677,7 +677,9 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      printf ("In unparseFunctionParameterDeclaration(): TOP \n");
      printf ("   --- funcdecl_stmt                                 = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
      printf ("   --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
+     printf ("   --- initializedName                               = %p = %s \n",initializedName,initializedName->get_name().str());
      printf ("   --- initializedName->get_name()                   = %s \n",initializedName->get_name().str());
+     printf ("   --- initializedName->get_type()                   = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
 #endif
 
 #if 1
@@ -686,6 +688,11 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
   // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
      if (funcdecl_stmt->get_type_syntax_is_available() == true)
         {
+#if 0
+       // DQ (4/13/2018): Since the API permits the specification of the correct SgInitializedName we don't need this code
+       // which incedentally also set the type to be used incorectly (not matching the type syntax and initialized name 
+       // used in the original syntax of the function prototype).
+
        // Here we want to use the type syntax that originally appears with this function declaration in the original code.
           SgFunctionType* function_type = funcdecl_stmt->get_type_syntax();
           ROSE_ASSERT(function_type != NULL);
@@ -696,8 +703,18 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           SgFunctionParameterTypeList* type_argument_list = function_type->get_argument_list();
           ROSE_ASSERT(type_argument_list != NULL);
 
+       // DQ (4/13/2018): I think it is awkward that we need to introduce this test here (there might be a better API for this function).
        // find the associated index from the initializedName.
-          SgFunctionParameterList* name_argument_list = funcdecl_stmt->get_parameterList();
+       // SgFunctionParameterList* name_argument_list = funcdecl_stmt->get_parameterList();
+          SgFunctionParameterList* name_argument_list = NULL;
+          if (funcdecl_stmt->get_type_syntax_is_available() == true)
+             {
+               name_argument_list = funcdecl_stmt->get_parameterList_syntax();
+             }
+            else
+             {
+               name_argument_list = funcdecl_stmt->get_parameterList();
+             }
           ROSE_ASSERT(name_argument_list != NULL);
 
           SgInitializedNamePtrList & name_list = name_argument_list->get_args();
@@ -719,8 +736,10 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
        // SgTypePtrList & get_arguments()
           tmp_type = type_argument_list->get_arguments()[counter];
+#endif
+
 #if 0
-          printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+          printf ("Resetting tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
 #if 0
           printf ("In unparseFunctionParameterDeclaration(): (funcdecl_stmt->get_type_syntax_is_available() == true): exiting as a test! \n");
@@ -1053,7 +1072,15 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      bool outputFunctionParameters = true;
 #endif
 
-     SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
+     SgInitializedNamePtrList::iterator p        = funcdecl_stmt->get_args().begin();
+
+  // DQ (4/13/2018): I want to initialize this iterator, but it is not clea what to initialize it to...
+     SgInitializedNamePtrList::iterator p_syntax = funcdecl_stmt->get_args().begin();
+     if (funcdecl_stmt->get_type_syntax_is_available() == true)
+        {
+          p_syntax = funcdecl_stmt->get_parameterList_syntax()->get_args().begin();
+        }
+
      while ( p != funcdecl_stmt->get_args().end() )
         {
         // Liao 11/9/2010, 
@@ -1071,11 +1098,33 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
        // if (outputFunctionParameters == true)
           if ( (outputFunctionParameters == true) || (funcdecl_stmt->get_oldStyleDefinition() == true) )
              {
-               unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+#if 0
+               printf ("In unparseFunctionArgs(): Calling unparseFunctionParameterDeclaration() \n");
+#endif
+            // DQ (4/13/2018): If we have saved the original syntax then use it, else use the default (which is matching the defining function declaration).
+            // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+               if (funcdecl_stmt->get_type_syntax_is_available() == true)
+                  {
+                 // DQ (4/13/2018): One question would be are we using the correct name qualification for any type referenced.
+#if 0
+                    printf ("In unparseFunctionArgs(): Output the syntax for function parameters: (*p_syntax)->get_name() = %s \n",(*p_syntax)->get_name().str());
+#endif
+                    unparseFunctionParameterDeclaration (funcdecl_stmt,*p_syntax,false,info);
+                  }
+                 else
+                  {
+                    unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+                  }
              }
 
        // Move to the next argument
           p++;
+
+       // DQ (4/13/2018): Increment the type syntax iterator in unison.
+          if (funcdecl_stmt->get_type_syntax_is_available() == true)
+             {
+               p_syntax++;
+             }
 
        // Check if this is the last argument (output a "," separator if not)
           if (p != funcdecl_stmt->get_args().end())
@@ -10306,6 +10355,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
      printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
 #endif
 
+#error "DEAD CODE!"
+
   // Check to see if this is an object defined within a class
      ROSE_ASSERT (template_stmt->get_parent() != NULL);
      SgClassDefinition *cdefn = isSgClassDefinition(template_stmt->get_parent());
@@ -10317,6 +10368,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
              }
         }
 
+#error "DEAD CODE!"
+
   // Output access modifiers
      unp->u_sage->printSpecifier1(template_stmt, info);
 
@@ -10324,6 +10377,8 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
 
   // DQ (1/21/2004): Use the string class to simplify the previous version of the code
      string templateString = template_stmt->get_string().str();
+
+#error "DEAD CODE!"
 
   // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
      if (template_stmt->get_declarationModifier().isExport())
@@ -10649,11 +10704,23 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // Substitute " decltype" with " __decltype" to fix this.
        // templateString.subst(" decltype"," __decltype");
           string denormalizedTemplateString = replaceString (templateString," decltype"," __decltype");
+
+       // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
+       // Not clear if this is only a C++11 issue or a C++14 issue as well.
+       // denormalizedTemplateString = replaceString (denormalizedTemplateString," __ALIGNOF__"," __alignof__");
 #if 0
           printf ("denormalizedTemplateString = %s \n",denormalizedTemplateString.c_str());
 #endif
           templateString = denormalizedTemplateString;
         }
+
+  // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
+  // Not clear if this is only a C++11 issue or a C++14 issue as well.
+     string denormalizedAlignofTemplateString = replaceString (templateString," __ALIGNOF__"," __alignof__");
+#if 0
+     printf ("denormalizedAlignofTemplateString = %s \n",denormalizedAlignofTemplateString.c_str());
+#endif
+     templateString = denormalizedAlignofTemplateString;
 
   // DQ (9/6/2014): if this is only a partial string then ignore unparsing this function (until we are done with the implementation of the function header).
      if (string_represents_function_body == true)
