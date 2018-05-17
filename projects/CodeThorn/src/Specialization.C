@@ -319,7 +319,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
     }
     numProcessedArrayUpdates++;
     if(numProcessedArrayUpdates%100==0) {
-      cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
+      // OUTPUT of progress in transformation of updates
+      logger[TRACE]<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
     }
     rewriteSystem.getRewriteStatisticsPtr()->numArrayUpdates++;
     arrayUpdates[i]=EStateExprInfo(p_estate,p_exp,p_expCopy2);

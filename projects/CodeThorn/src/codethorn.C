@@ -1222,7 +1222,7 @@ int main( int argc, char * argv[] ) {
 
     vector<string> argvList(argv,argv+argc);
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
-      cout<<"INFO: using OpenMP AST."<<endl;
+      logger[TRACE]<<"INFO: using OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);

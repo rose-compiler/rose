@@ -5,11 +5,13 @@
 #include "Specialization.h"
 #include "EquivalenceChecking.h"
 #include "AstTerm.h"
+#include "OmpSupport.h"
 
 using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 using namespace Sawyer::Message;
+using namespace OmpSupport;
 
 Sawyer::Message::Facility DataRaceDetection::logger;
 
@@ -109,8 +111,8 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       if (options.visualizeReadWriteSets) {
         setVisualizeReadWriteAccesses(true);
       }
-      cout<<"STATUS: performing array analysis on STG."<<endl;
-      cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+      logger[TRACE]<<"STATUS: performing array analysis on STG."<<endl;
+      logger[TRACE]<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
       
       speci.setMaxNumberOfExtractedUpdates(options.maxNumberOfExtractedUpdates);
       speci.extractArrayUpdateOperations(&analyzer,
@@ -123,7 +125,7 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=DataRaceDetection::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-      cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      logger[TRACE]<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
       verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
       verifyUpdateSequenceRaceConditionsParLoopNum=DataRaceDetection::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       verifyUpdateSequenceRaceConditionsResult=checkDataRaces(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
@@ -219,7 +221,7 @@ LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapp
     }
     loopInfoSet.push_back(loopInfo);
   }
-  cout<<"INFO: found "<<DataRaceDetection::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
+  logger[TRACE]<<"INFO: found "<<DataRaceDetection::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
   return loopInfoSet;
 }
 
@@ -422,6 +424,11 @@ int DataRaceDetection::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToR
 	if(drdebug) logger[DEBUG]<<"arrayWset2:"<<arrayWset2.size()<<": "<<arrayElementAccessDataSetToString(arrayWset2,variableIdMapping)<<endl;
 	VariableIdSet wset2=indexToReadWriteDataMap[*tv2].writeVarIdSet;
 	VariableIdSet rset2=indexToReadWriteDataMap[*tv2].readVarIdSet;
+        SgVarRefExp* varRefExp=nullptr;
+        if(varRefExp) {
+          omp_construct_enum sharingProperty=OmpSupport::getDataSharingAttribute(varRefExp);
+          cout<<"Var: "<<varRefExp->unparseToString()<<" sharing property: "<<sharingProperty<<endl;
+        }
 	if (dataRaceExistsInvolving1And2(wset1, rset1, wset2, rset2, writeWriteRaces, readWriteRaces)
 	    || dataRaceExistsInvolving1And2(arrayWset1, arrayRset1, arrayWset2, arrayRset2, arrayWriteWriteRaces, arrayReadWriteRaces) ) {
 	  errorCount++;
