@@ -129,10 +129,15 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
       verifyUpdateSequenceRaceConditionsParLoopNum=DataRaceDetection::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       verifyUpdateSequenceRaceConditionsResult=checkDataRaces(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
+      // if no data race is found, but only an incomplete STG computed due to resource constraints, then report unknown (-2)
       if(options.printUpdateInfos) {
         speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
       }
-      speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
+
+      if(verifyUpdateSequenceRaceConditionsResult==false && analyzer.isIncompleteSTGReady()) {
+        logger[TRACE]<<"DEBUG: INCOMPLETE AST AND NO DATA RACE WAS FOUND => UNKNOWN"<<endl;
+        verifyUpdateSequenceRaceConditionsResult=-2;
+      }
       reportResult(verifyUpdateSequenceRaceConditionsResult,
                    verifyUpdateSequenceRaceConditionsParLoopNum,
                    verifyUpdateSequenceRaceConditionsTotalLoopNum);
