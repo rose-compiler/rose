@@ -256,10 +256,16 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        node=SgNodeHelper::getExprRootChild(node);
      if(SgExpression* exp=isSgExpression(node)) {
        // TODO: variable declaration with initialization
-       if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
-       // extract all assignments
-       //if(isSgAssignOp(exp)) {
-         stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+
+       if(dataRaceDetection) {
+         // extract all assignments
+         if(isSgAssignOp(exp)) {
+           stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+         }
+       } else {
+         if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
+           stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+         }
        }
      }
      if(succSet.size()>1) {
@@ -479,7 +485,11 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
     SgExpression* exp=(*i).second;
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-    ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+    if(dataRaceDetection) {
+      // no check, anything valid
+    } else {
+      ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+    }
     //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
     RoseAst rhsast(rhs);
     for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {

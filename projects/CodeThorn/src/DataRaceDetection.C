@@ -115,6 +115,7 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       logger[TRACE]<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
       
       speci.setMaxNumberOfExtractedUpdates(options.maxNumberOfExtractedUpdates);
+      speci.dataRaceDetection=true;
       speci.extractArrayUpdateOperations(&analyzer,
                                          arrayUpdates,
                                          rewriteSystem,
@@ -322,7 +323,7 @@ void DataRaceDetection::addAccessesFromExpressionToIndex(SgExpression* exp, Inde
                                                       VariableIdMapping* variableIdMapping) {  
   SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
   SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-  ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+  //ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp)); // only for equivalence checking valid
         
   //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
   // read-set

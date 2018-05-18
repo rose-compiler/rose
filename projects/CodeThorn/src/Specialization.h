@@ -112,6 +112,7 @@ class Specialization {
   void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem);
   void setMaxNumberOfExtractedUpdates(long);
   long getMaxNumberOfExtractedUpdates();
+  bool dataRaceDetection=false; // temporary flag
  private:
   static Sawyer::Message::Facility logger;
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
