@@ -177,7 +177,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
              AbstractValue varVal=(*i).value();
              if(varVal.isConstInt()) {
                int varIntValue=varVal.getIntValue();
-               //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
+               logger[TRACE]<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
                SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue),false);
                numConstExprElim++;
              }
@@ -221,7 +221,7 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
      // buildFloatType()
      // buildDoubleType()
      // SgIntVal* buildIntVal(int)
-     //cout<<"DEBUG: substituting: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
+     logger[TRACE]<<"replacing in AST: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
      SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
    return (int)substitutionList.size();
@@ -257,6 +257,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      if(SgExpression* exp=isSgExpression(node)) {
        // TODO: variable declaration with initialization
        if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
+       // extract all assignments
+       //if(isSgAssignOp(exp)) {
          stgArrayUpdateSequence.push_back(make_pair(estate,exp));
        }
      }

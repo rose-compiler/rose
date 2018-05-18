@@ -120,6 +120,7 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
                                          rewriteSystem,
                                          options.useConstSubstitutionRule
                                          );
+      // TODO: SUBST remove substitution if faster without
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       
       SgNode* root=analyzer.startFunRoot;
@@ -347,7 +348,7 @@ void DataRaceDetection::addAccessesFromExpressionToIndex(SgExpression* exp, Inde
     VariableId varId=variableIdMapping->variableId(var);
     indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
   } else {
-    cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+    cerr<<"Error: addAccessFromExpressoinToIndex: unknown LHS."<<endl;
     exit(1);
   }
 }
