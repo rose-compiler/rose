@@ -1234,8 +1234,8 @@ int main( int argc, char * argv[] ) {
     if(args.count("inline")) {
       Lowering lowering;
       size_t numInlined=lowering.inlineFunctions(sageProject);
-      //logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
-      cout<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
+      logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
+      //cout<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
     }
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);

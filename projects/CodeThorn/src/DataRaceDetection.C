@@ -318,6 +318,25 @@ IndexVector DataRaceDetection::extractIndexVector(LoopInfo& li, const PState* ps
   return index;
 }
 
+bool DataRaceDetection::isSharedArrayAccess(SgPntrArrRefExp* useRef) {
+  SgNode* lhsExp=SgNodeHelper::getLhs(useRef);
+  //cout<<"DEBUG: checking lhs: "<<lhsExp->unparseToString()<<endl;
+  if(SgVarRefExp* varRefExp=isSgVarRefExp(lhsExp)) {
+    return isSharedVariable(varRefExp);
+  }
+  return true;
+}
+
+bool DataRaceDetection::isSharedVariable(SgVarRefExp* varRefExp) {
+  if(varRefExp) {
+    omp_construct_enum sharingProperty=OmpSupport::getDataSharingAttribute(varRefExp);
+    bool isShared=(sharingProperty==OmpSupport::e_shared);
+    //cout<<"Var: "<<varRefExp->unparseToString()<<" shared: "<<isShared<<endl;
+    return isShared;
+  }
+  return true;
+}
+
 void DataRaceDetection::addAccessesFromExpressionToIndex(SgExpression* exp, IndexVector& index,
                                                       IndexToReadWriteDataMap& indexToReadWriteDataMap, 
                                                       VariableIdMapping* variableIdMapping) {  
@@ -330,24 +349,32 @@ void DataRaceDetection::addAccessesFromExpressionToIndex(SgExpression* exp, Inde
   RoseAst rhsast(rhs);
   for (RoseAst::iterator j=rhsast.begin(); j!=rhsast.end(); ++j) {
     if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+      if(isSharedArrayAccess(useRef)) {
+        ArrayElementAccessData access(useRef,variableIdMapping);
+        indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
+      }
       j.skipChildrenOnForward();
-      ArrayElementAccessData access(useRef,variableIdMapping);
-      indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
     } else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
       ROSE_ASSERT(useRef);
+      if(isSharedVariable(useRef)) {
+        VariableId varId=variableIdMapping->variableId(useRef);
+        indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
+      }
       j.skipChildrenOnForward();
-      VariableId varId=variableIdMapping->variableId(useRef);
-      indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
     } else {
       //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
     }
   }
   if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
-    ArrayElementAccessData access(arr,variableIdMapping);
-    indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
+    if(isSharedArrayAccess(arr)) {
+      ArrayElementAccessData access(arr,variableIdMapping);
+      indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
+    }
   } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
-    VariableId varId=variableIdMapping->variableId(var);
-    indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
+    if(isSharedVariable(var)) {
+      VariableId varId=variableIdMapping->variableId(var);
+      indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
+    }
   } else {
     cerr<<"Error: addAccessFromExpressoinToIndex: unknown LHS."<<endl;
     exit(1);
@@ -431,11 +458,6 @@ int DataRaceDetection::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToR
 	if(drdebug) logger[DEBUG]<<"arrayWset2:"<<arrayWset2.size()<<": "<<arrayElementAccessDataSetToString(arrayWset2,variableIdMapping)<<endl;
 	VariableIdSet wset2=indexToReadWriteDataMap[*tv2].writeVarIdSet;
 	VariableIdSet rset2=indexToReadWriteDataMap[*tv2].readVarIdSet;
-        SgVarRefExp* varRefExp=nullptr;
-        if(varRefExp) {
-          omp_construct_enum sharingProperty=OmpSupport::getDataSharingAttribute(varRefExp);
-          cout<<"Var: "<<varRefExp->unparseToString()<<" sharing property: "<<sharingProperty<<endl;
-        }
 	if (dataRaceExistsInvolving1And2(wset1, rset1, wset2, rset2, writeWriteRaces, readWriteRaces)
 	    || dataRaceExistsInvolving1And2(arrayWset1, arrayRset1, arrayWset2, arrayRset2, arrayWriteWriteRaces, arrayReadWriteRaces) ) {
 	  errorCount++;

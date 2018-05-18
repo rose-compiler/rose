@@ -304,6 +304,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      SgExpression* p_exp=stgArrayUpdateSequence[i].second;
      SgNode* p_expCopy;
      p_expCopy=SageInterface::copyExpression(p_exp);
+     // set parent pointer such that node appears as correct AST node to function OmpSuppprt::getSharingConstruct
+     p_expCopy->set_parent(p_exp->get_parent());
 #if 1
      // p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
      if(useConstExprSubstRule) {

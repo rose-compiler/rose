@@ -67,7 +67,9 @@ class DataRaceDetection {
   void reportResult(int verifyUpdateSequenceRaceConditionsResult,
                     int verifyUpdateSequenceRaceConditionsParLoopNum,
                     int verifyUpdateSequenceRaceConditionsTotalLoopNum);
-  
+  // predicates to filter variables from data race detection (only shared variables are relevant)
+  bool isSharedArrayAccess(SgPntrArrRefExp* useRef);
+  bool isSharedVariable(SgVarRefExp* varRef);
  private:
   static Sawyer::Message::Facility logger;
   // for data race check of all loops independent on whether they are marked as parallel loops
