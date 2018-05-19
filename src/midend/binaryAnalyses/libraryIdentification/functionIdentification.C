@@ -55,8 +55,11 @@ FunctionIdentification::FunctionIdentification(std::string dbName)
 void 
 FunctionIdentification::createTables()
 {
-    try { //TODO: row_number probably shouldn't be PRIMARY KEY.  
-    con.executenonquery("create table IF NOT EXISTS vectors(row_number INTEGER PRIMARY KEY, file TEXT, function_name TEXT,  begin INTEGER, end INTEGER, md5_sum TEXT)");
+    try { //Functions: identifying hash, name, link to the source library
+    con.executenonquery("create table IF NOT EXISTS functions(functionID TEXT PRIMARY KEY, function_name TEXT, libraryId TEXT)");
+    //libraries: id hash, name, version, ISA, and time as an int
+    //May also want calling convention and compile flags
+    con.executenonquery("create table IF NOT EXISTS libraries(libraryId TEXT PRIMARY KEY, library_name TEXT, library_version TEXT, architecture INT, time INT)");
   }
   catch(exception &ex) {
     cerr << "Exception Occurred: " << ex.what() << endl;

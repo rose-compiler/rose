@@ -1,7 +1,9 @@
 #ifndef LIBRARY_IDENTIFICATION_H
 #define LIBRARY_IDENTIFICATION_H
 
-#include "sqlite3x.h"
+#include "LibraryInfo.h"
+#include "FunctionInfo.h"
+#include "FunctionIdDatabaseInterface.h"
 
 /** LibraryIdentification.
  *
@@ -13,108 +15,24 @@ namespace LibraryIdentification
    {
 
 /** generate Library Identification Database
- *  This function takes a binary project and analyzes every function,
- *  in the library.  It does this by combining all the instructions in
- *  the function into a unique hash.
- *  The hash is then inserted into a new sqlite3 database.  If the project was
+ *  This function takes a binary project (presumeably a library) and
+ *  hashes every function, in it.  It then inserts the library and
+ *  functions into a new sqlite3 database.  If the project was
  *  built with debug information, we should have a database that can
- *  later identifiy functions in stripped libraries.
+ *  later identify functions in stripped libraries.
  *
- *  @param std::string databaseName The filename of the database to create
- *  @param SgProject* project       A Rose binary project
+ * @param[in] databaseName Filename of the database to create/access
+ * @param[in] libraryName  Library names cannot be discovered from all
+ *                         library types, so pass in name.
+ * @param[in] libraryVersion  Library version, same problem
+ * @param[in] project      Rose SgProject that has the functions to
+ * write or find
  **/     
-     void generateLibraryIdentificationDataBase    ( std::string databaseName, SgProject* project );
+       void generateLibraryIdentificationDataBase    ( const std::string& databaseName, 
+                                                       const std::string& libraryName, 
+                                                       const std::string& libraryVersion, 
+                                                       SgProject* project );
 
-/** match Library Identification Database
- *  This function takes a binary project and attempts to match the
- *  functions in it to functions that already exist in databaseName
- *  This only results in a message on stdout: found_match true/false
- *
- *  @param std::string databaseName The filename of the database to
- *  read from
- *  @param SgProject* project       A Rose binary project
- **/     
-     void matchAgainstLibraryIdentificationDataBase( std::string databaseName, SgProject* project );
-
-/**  libraryIdentificationDataBaseSupport
- *
- *  Code that actually loops through the project, and writes or reads
- *  to/from the database. Implementation of both
- *  generateLibraryIdentificationDataBase() and matchAgainstLibraryIdentificationDataBase()
- **/
-     void libraryIdentificationDataBaseSupport( std::string databaseName, SgProject* project, bool generate_database );
-
-
-/**  testForDuplicateEntries
- *  Debugging support
- **/
-     void testForDuplicateEntries( const std::vector<SgUnsignedCharList> & functionOpcodeList );
-
-     /**
-      * @class library_handle 
-      *
-      * A simple data holder for the data that's in the database on a
-      * given function.  Name of the database, name of the function,
-      * and its size.  
-      * TODO: Shouldn't think have the OpCodeString as well?
-      * (Counterpoint: that's the key we're using to look things up)
-      *  
-      **/
-     class library_handle
-        {
-          public:
-               std::string filename;
-               std::string function_name;
-               size_t begin;
-               size_t end;
-
-               library_handle() {}              
-        };
-
-     /**
-      * @class FunctionIdentification
-      *
-      * Database interface class for reading and writing
-      * function/library identification information from the database.
-      *  
-      **/
-     class FunctionIdentification
-     {
-       public:
-
-         /** @brief Constructor, creates or opens the database */
-         FunctionIdentification(std::string dbName);
-
-         /** @brief Make sure that all the tables are defined in the
-          * function identification database **/
-         void createTables();
-
-         // @brief Add an entry for a function to the database
-         void set_function_match( const library_handle & handle, const std::string s );
-         void set_function_match( const library_handle & handle, const SgUnsignedCharList & opcode_vector);
-         void set_function_match( const library_handle & handle, const unsigned char* str, size_t str_length );
-
-         /** @brief Lookup a function in the database.  True returned if found
-          * This can't be const (some sqlite problem).
-          **/
-         bool get_function_match(library_handle & handle, const std::string s ) const;
-         bool get_function_match(library_handle & handle, const SgUnsignedCharList & opcode_vector) const;
-         bool get_function_match(library_handle & handle, const unsigned char* str, size_t str_length );
-
-       private:
-         // @brief The name of the database
-         std::string database_name;
-
-         // @brief SQLite database handle
-         sqlite3x::sqlite3_connection con;
-     };
-
-  // Add an entry to store the pair <library_handle,string> in the database
-     void set_function_match( const library_handle & handle, const std::string & data );
-
-  // Return the library_handle matching string from the database. bool false
-  // is returned if no such match was found, true otherwise.
-     bool get_function_match( library_handle & handle, const std::string & data );
 
      /**
       * @class FlattenAST 
@@ -221,31 +139,7 @@ namespace LibraryIdentification
                FlattenAST_RangeListAttribute evaluateSynthesizedAttribute( SgNode* n, SynthesizedAttributesList childAttributes );
         };
 
-     /**
-      * generateOpCodeVector
-      *
-      * @brief Generates the OpCode vector rooted by root.  Internally
-      * calls the traversal defined by the FlattenAST class.
-      **/
-     SgUnsignedCharList generateOpCodeVector(SgAsmInterpretation* asmInterpretation, SgNode* root, size_t & startOffset, size_t & endOffset);
 
-     /**
-      * @brief Writes a function to the FLIRT database
-      **/
-     void write_database ( FunctionIdentification & ident, const std::string & fileName, const std::string & functionName, size_t startOffset, size_t endOffset, const SgUnsignedCharList & s );
-     /**
-      * @brief Looks for a function in the database.  Returns true and fills in the arguments if found.
-      **/
-     bool match_database ( const FunctionIdentification & ident, std::string & fileName, std::string & functionName, size_t & startOffset, size_t & endOffset, const SgUnsignedCharList & s );
-
-#if 0
-  //! Add an entry to store the pair <library_handle,string> in the database
-      void set_function_match( library_handle, std::string );
-
-  //! Return the library_handle matching string from the database. bool false
-  //! is returned if no such match was found, true otherwise.
-      bool get_function_match(library_handle&, std::string);
-#endif
 
    }
 #endif
