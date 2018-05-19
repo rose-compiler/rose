@@ -365,7 +365,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
     ("generate-assertions", po::value< bool >()->default_value(false)->implicit_value(true),"Generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("precision-exact-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Use precise constraint extraction.")
-    ("trace-file", po::value< string >(), "Generate STG computation trace and write to file <arg>.")
+    ("stg-trace-file", po::value< string >(), "Generate STG computation trace and write to file <arg>.")
     ("explicit-arrays", po::value< bool >()->default_value(true)->implicit_value(true),"Represent all arrays explicitly in every state.")
     ("z3", "RERS specific reachability analysis using z3.")	
     ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3.")
@@ -860,15 +860,14 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     args.setOption("with-ltl-counterexamples",true);
   }
 
-  if(args.count("trace-file")) {
-    analyzer->setStgTraceFileName(args["trace-file"].as<string>());
+  if(args.count("stg-trace-file")) {
+    analyzer->setStgTraceFileName(args["stg-trace-file"].as<string>());
   }
 
   if (args.isDefined("cl-options")) {
     string clOptions=args.getString("cl-options");
     vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
     analyzer->setCommandLineOptions(clOptionsVector);
-    // TODO set this result and create initial state
   }
 
   if(args.count("input-values")) {

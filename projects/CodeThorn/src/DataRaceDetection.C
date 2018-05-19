@@ -155,8 +155,14 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
 }
 
 bool DataRaceDetection::isOmpParallelFor(SgForStatement* node) {
-  if(SgOmpForStatement* ompForStmt=isSgOmpForStatement(node->get_parent())) {
-    return isSgOmpParallelStatement(ompForStmt->get_parent());
+  SgNode* parentNode1=node->get_parent();
+  ROSE_ASSERT(parentNode1);
+  if(isSgOmpSimdStatement(parentNode1)) {
+    return true;
+  } else if(SgOmpForStatement* ompForStmt=isSgOmpForStatement(parentNode1)) {
+    SgNode* parentNode2=ompForStmt->get_parent();
+    ROSE_ASSERT(parentNode2);
+    return isSgOmpParallelStatement(parentNode2);
   }
   return false;
 }

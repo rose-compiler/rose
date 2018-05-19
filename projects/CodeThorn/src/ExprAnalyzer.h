@@ -210,11 +210,11 @@ namespace CodeThorn {
     int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
     
   private:
-    VariableIdMapping* _variableIdMapping;
+    VariableIdMapping* _variableIdMapping=nullptr;
     
     // Options
-    bool _skipSelectedFunctionCalls;
-    bool _skipArrayAccesses;
+    bool _skipSelectedFunctionCalls=false;
+    bool _skipArrayAccesses=false;
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
   };
