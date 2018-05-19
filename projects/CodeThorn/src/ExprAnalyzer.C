@@ -11,13 +11,7 @@
 using namespace CodeThorn;
 using namespace SPRAY;
 
-ExprAnalyzer::ExprAnalyzer():
-  _variableIdMapping(0),
-  _skipSelectedFunctionCalls(false),
-  _skipArrayAccesses(false), 
-  _stdFunctionSemantics(true),
-  _svCompFunctionSemantics(false)
-{
+ExprAnalyzer::ExprAnalyzer() {
 }
 
 void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
