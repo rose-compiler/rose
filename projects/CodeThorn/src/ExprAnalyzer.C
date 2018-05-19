@@ -265,6 +265,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
   // EXPRESSION LEAF NODES
   // this test holds for all subclasses of SgValueExp
+
+  // special case sizeof operator (operates on types and types of expressions)
+  if(SgSizeOfOp* sizeOfOp=isSgSizeOfOp(node)) {
+    return evalSizeofOp(sizeOfOp,estate,useConstraints);
+  }
   if(SgValueExp* exp=isSgValueExp(node)) {
     ROSE_ASSERT(exp!=nullptr);
     return evalValueExp(exp,estate,useConstraints);
@@ -825,6 +830,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
   res.estate=estate;
   res.result=operandResult.result.operatorUnaryMinus();
   res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
+                                                              EState estate, bool useConstraints) {
+  AbstractValue sizeValue=AbstractValue(4); // TODO: compute size
+  SingleEvalResultConstInt res;
+  ConstraintSet constraintSet;
+  res.init(estate,constraintSet,sizeValue);
   return listify(res);
 }
 

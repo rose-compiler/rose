@@ -443,7 +443,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("status", po::value< bool >()->default_value(false)->implicit_value(true), "Show status messages.")
     ("reduce-cfg", po::value< bool >()->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", "Run internal consistency checks (without input program).")
-    ("cl-options",po::value< string >(),"Specify command line options for the analyzed program (as one quoted string).")
+    ("cl-args",po::value< string >(),"Specify command line options for the analyzed program (as one quoted string).")
     ("input-values",po::value< string >(),"Specify a set of input values. (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Represent input var values as constraints (otherwise as constants in PState).")
     ("input-sequence",po::value< string >(),"Specify a sequence of input values. (e.g. \"[1,2,3]\")")
@@ -864,8 +864,8 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     analyzer->setStgTraceFileName(args["stg-trace-file"].as<string>());
   }
 
-  if (args.isDefined("cl-options")) {
-    string clOptions=args.getString("cl-options");
+  if (args.isDefined("cl-args")) {
+    string clOptions=args.getString("cl-args");
     vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
     analyzer->setCommandLineOptions(clOptionsVector);
   }
