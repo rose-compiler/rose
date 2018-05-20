@@ -140,6 +140,10 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
         logger[TRACE]<<"DEBUG: INCOMPLETE AST AND NO DATA RACE WAS FOUND => UNKNOWN"<<endl;
         verifyUpdateSequenceRaceConditionsResult=-2;
       }
+      // cannot handle programs without parallel loop yet
+      if(verifyUpdateSequenceRaceConditionsParLoopNum==0) {
+        verifyUpdateSequenceRaceConditionsResult=-2;
+      }
       reportResult(verifyUpdateSequenceRaceConditionsResult,
                    verifyUpdateSequenceRaceConditionsParLoopNum,
                    verifyUpdateSequenceRaceConditionsTotalLoopNum);
@@ -299,6 +303,14 @@ void DataRaceDetection::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWrit
       const PState* pstate=estate->pstate();
       SgExpression* exp=(*i).second;
       IndexVector index = extractIndexVector(li, pstate);
+      // check index and report unknown if negative (TODO: recompute negative indices)
+      for (auto idx : index) {
+        if(idx<0) {
+          stringstream ss;
+          ss<<idx;
+          throw CodeThorn::Exception("Negative array index detected: "+ss.str());
+        }
+      }
       addAccessesFromExpressionToIndex(exp, index, indexToReadWriteDataMap, variableIdMapping);
     }
   } // array sequence iter
@@ -357,6 +369,9 @@ void DataRaceDetection::addAccessesFromExpressionToIndex(SgExpression* exp, Inde
     if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
       if(isSharedArrayAccess(useRef)) {
         ArrayElementAccessData access(useRef,variableIdMapping);
+        if(access.hasNegativeIndex()) {
+          throw CodeThorn::Exception("addAccessesFromExpressionToIndex: Negative array index detected.");
+        }
         indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
       }
       j.skipChildrenOnForward();
@@ -374,6 +389,9 @@ void DataRaceDetection::addAccessesFromExpressionToIndex(SgExpression* exp, Inde
   if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
     if(isSharedArrayAccess(arr)) {
       ArrayElementAccessData access(arr,variableIdMapping);
+      if(access.hasNegativeIndex()) {
+        throw CodeThorn::Exception("addAccessesFromExpressionToIndex: Negative array index detected.");
+      }
       indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
     }
   } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {

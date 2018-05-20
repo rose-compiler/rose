@@ -177,7 +177,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
              AbstractValue varVal=(*i).value();
              if(varVal.isConstInt()) {
                int varIntValue=varVal.getIntValue();
-               logger[TRACE]<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
+               //logger[TRACE]<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
                SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue),false);
                numConstExprElim++;
              }

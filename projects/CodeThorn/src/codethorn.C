@@ -460,6 +460,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rewrite","Rewrite AST applying all rewrite system rules.")
     ("run-rose-tests", "Run ROSE AST tests.")
     ("threads",po::value< int >(),"(experimental) Run analyzer in parallel using <arg> threads.")
+    ("unparse",po::value< bool >()->default_value(false)->implicit_value(true),"unpare code (only relevant for inlining, normalization, and lowering)")
     ("version,v", "Display the version of CodeThorn.")
     ;
 
@@ -1234,7 +1235,10 @@ int main( int argc, char * argv[] ) {
       Lowering lowering;
       size_t numInlined=lowering.inlineFunctions(sageProject);
       logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
-      //cout<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
+    }
+
+    if(args.getBool("unparse")) {
+      sageProject->unparse(0,0);
     }
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
