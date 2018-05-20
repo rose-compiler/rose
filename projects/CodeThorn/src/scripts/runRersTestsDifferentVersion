@@ -31,7 +31,7 @@ do
        echo "._________________________."
        echo "| start running Woodpecker|"
        echo "*~~~~~~~~~~~~~~~~~~~~~~~~~*"
-       eval ${BUILDDIR}/woodpecker --edg:no_warnings ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c --inline=yes --generate-transformed-code=yes ;
+       eval ${BUILDDIR}/woodpecker --edg:no_warnings ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c --inline-non-param-functions=yes --unparse=yes ;
        echo ".____________________________."
        echo "| finished running Woodpecker|"
        echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*"
@@ -40,7 +40,7 @@ do
        echo "._________________________."
        echo "| start running Woodpecker|"
        echo "*~~~~~~~~~~~~~~~~~~~~~~~~~*"
-       eval ${BUILDDIR}/woodpecker --edg:no_warnings ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c --eliminate-dead-code=yes --generate-transformed-code=yes ;
+       eval ${BUILDDIR}/woodpecker --edg:no_warnings ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c --eliminate-fi-dead-code=yes --unparse=yes ;
        echo ".____________________________."
        echo "| finished running Woodpecker|"
        echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*" 

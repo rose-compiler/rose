@@ -4,7 +4,7 @@ int y;
 int main() {
 
   int c[10];
-  #pragma omp for
+  #pragma omp parallel for
   for(int i=0;i<10;i++) {
     c[i]=0;
   }

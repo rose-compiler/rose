@@ -34,7 +34,7 @@ protected:
      * allowing visitation to resume starting with a post-visitation of P itself. 
      *
      * This feature is important because there appears to be cases in Sage III where the Rose compiler
-     * calculates the value of a constant expression at compile time, replaces the tree correspondingto the
+     * calculates the value of a constant expression at compile time, replaces the tree corresponding to the
      * constant expression by a Value node, but nonetheless, makes the original tree a subtree of the value
      * node in question. That subtree also gets traversed during a normal Pre/Post visit. Thus, to avoid
      * this problem, when we encounter a constant value (SgValueExp) during a visit, we instruct the visitor

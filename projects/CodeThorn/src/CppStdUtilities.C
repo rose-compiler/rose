@@ -41,14 +41,14 @@ namespace CppStdUtilities {
   }
 
   std::vector<std::string> splitByComma(const string& input) {
-    return mysplit(input,",");
+    return splitByRegex(input,",");
   }
 
   std::vector<std::string> splitBySpaces(const string& input) {
-    return mysplit(input,"\\s+");
+    return splitByRegex(input,"\\s+");
   }
 
-  std::vector<std::string> mysplit(const string& input, const string& regex) {
+  std::vector<std::string> splitByRegex(const string& input, const string& regex) {
     // passing -1 as the submatch index parameter performs splitting
     std::regex re(regex);
     std::sregex_token_iterator first{input.begin(), input.end(), re, -1},last;

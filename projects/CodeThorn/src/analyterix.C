@@ -91,7 +91,9 @@ bool option_optimize_icfg=false;
 bool option_csv_stable=false;
 bool option_no_topological_sort=false;
 bool option_annotate_source_code=false;
-
+bool option_ignore_unknown_functions=false;
+bool option_inlining=false;
+bool option_normalize=false;
 //boost::program_options::variables_map args;
 
 void writeFile(std::string filename, std::string data) {
@@ -304,9 +306,6 @@ string getScopeAsMangledStableString(SgLocatedNode* stmt) {
 }
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
-
-  //SPRAY::DFAnalysisBase::normalizeProgram(root);
-
   if(option_fi_constanalysis) {
     FIConstAnalysis fiConstAnalysis(variableIdMapping);
     fiConstAnalysis.runAnalysis(root);
@@ -488,6 +487,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
+    intervalAnalyzer->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
+
     intervalAnalyzer->setSolverTrace(option_trace);
     std::string funtofind=option_start_function;
     RoseAst completeast(root);
@@ -521,9 +522,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
             ROSE_ASSERT(correspondingNode);
             // Do not output scope statements ({ }, ...)
             if(!isSgScopeStatement(correspondingNode)) {
-              deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
-                              << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
-                              << endl;
+              int lineNr=correspondingNode->get_file_info()->get_line();
+              if(lineNr>0) {
+                deadCodeCsvFile << lineNr
+                                << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
+                                << endl;
+              }
             } else {
               //cout<<"DEBUG: EXCLUDING: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;
             }
@@ -796,7 +800,11 @@ int main(int argc, char* argv[]) {
       ("print-inter-flow", "prints inter-procedural information call/entry/exit/callreturn.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ("start-function",po::value< string >(), "set name of function where analysis is supposed to start (default is 'main').")
+      ("ignore-unknown-functions","ignore unknown functions (assume those functions are side effect free)")
       ("csv-stable", "only output csv data that is stable/portable across environments.")
+      ("normalize", "normalize program (transform into lower-level IR).")
+      ("inline", "inline functions (can increase precision of analysis).")
+      ("unparse", "generate source code from internal representation.")
       ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -886,6 +894,9 @@ int main(int argc, char* argv[]) {
     if (args.count("no-topological-sort")) {
       option_no_topological_sort=true;
     }
+    if (args.count("ignore-unknown-functions")) {
+      option_ignore_unknown_functions=true;
+    }
 
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
@@ -916,6 +927,16 @@ int main(int argc, char* argv[]) {
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
+  if(args.count("inline")) {
+    programAbstractionLayer->setInliningOption(true);
+  }
+  if(args.count("normalize")) {
+    programAbstractionLayer->setLoweringOption(true);
+  }
+  if(programAbstractionLayer->getInliningOption() && !programAbstractionLayer->getLoweringOption()) {
+    cerr<<"Error: inlining option requires normalization option to be provided as well."<<endl;
+    return 0;
+  }
   programAbstractionLayer->initialize(root);
   if (args.count("print-varid-mapping-array")) {
     programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
@@ -971,6 +992,11 @@ int main(int argc, char* argv[]) {
 
   if(option_annotate_source_code) {
     cout << "INFO: generating annotated source code."<<endl;
+    root->unparse(0,0);
+  }
+
+  if(args.count("unparse")) {
+    cout << "INFO: generating source code from internal representation."<<endl;
     root->unparse(0,0);
   }
 

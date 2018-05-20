@@ -52,6 +52,7 @@
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
+#include "Lowering.h"
 
 // test
 #include "SSAGenerator.h"
@@ -292,6 +293,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)).")
     ("solver",po::value< int >()->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ("relop-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for the expression analyzer .")
+    ("omp-ast", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
     ;
 
   passOnToRose.add_options()
@@ -357,6 +359,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
 
   experimentalOptions.add_options()
     ("normalize", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize AST before analysis .")
+    ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >()->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
@@ -397,6 +400,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("print-update-infos", po::value< bool >()->default_value(false)->implicit_value(true), "Print information about array updates on stdout.")
     ("rule-const-subst", po::value< bool >()->default_value(true)->implicit_value(true), "Use const-expr substitution rule.")
     ("rule-commutative-sort", po::value< bool >()->default_value(false)->implicit_value(true), "Apply rewrite rule for commutative sort of expression trees.")
+    ("max-extracted-updates",po::value< int >()->default_value(5000)->implicit_value(-1),"Set maximum number of extracted updates. This ends the analysis.")
     ("specialize-fun-name", po::value< string >(), "Function of name <arg> to be specialized.")
     ("specialize-fun-param", po::value< vector<int> >(), "Function parameter number to be specialized (starting at 0).")
     ("specialize-fun-const", po::value< vector<int> >(), "Constant <arg>, the param is to be specialized to.")
@@ -1183,6 +1187,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
+    // parse command line options for data race detection
     DataRaceDetection dataRaceDetection;
     dataRaceDetection.handleCommandLineOptions(*analyzer);
     dataRaceDetection.setVisualizeReadWriteAccesses(args.getBool("visualize-read-write-sets"));
@@ -1216,14 +1221,21 @@ int main( int argc, char * argv[] ) {
     timer.start();
 
     vector<string> argvList(argv,argv+argc);
-    if(args.getBool("data-race")) {
-      //TODO: new openmp-ast support not finished yet - using existing implementation
-      //argvList.push_back("-rose:OpenMP:ast_only");
+    if(args.getBool("omp-ast")||args.getBool("data-race")) {
+      cout<<"INFO: using OpenMP AST."<<endl;
+      argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
+
+    // perform inlining before variable ids are computed, because variables are duplicated by inlining.
+    if(args.count("inline")) {
+      Lowering lowering;
+      size_t numInlined=lowering.inlineFunctions(sageProject);
+      logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
+    }
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
 
@@ -1653,7 +1665,7 @@ int main( int argc, char * argv[] ) {
       assertionExtractor.computeLabelVectorOfEStates();
       assertionExtractor.annotateAst();
       AstAnnotator ara(analyzer->getLabeler());
-      ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
+      ara.annotateAstAttributesAsCommentsBeforeStatements  (sageProject,"ctgen-pre-condition");
       logger[TRACE] << "STATUS: Generated assertions."<<endl;
     }
 

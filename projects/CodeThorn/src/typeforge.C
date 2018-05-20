@@ -14,7 +14,8 @@
 #include "AstProcessing.h"
 #include "AstMatching.h"
 #include "Sawyer/Graph.h"
-#include "TypeTransformer.h"
+#include "TFTypeTransformer.h"
+#include "TFSpecFrontEnd.h"
 
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
@@ -30,6 +31,10 @@
 #include "CppStdUtilities.h"
 #include <utility>
 #include <functional>
+#include <regex>
+#include <algorithm>
+#include <list>
+#include "TFTransformation.h"
 
 using namespace std;
 
@@ -66,7 +71,8 @@ int main (int argc, char* argv[])
     ("stats", "print statistics on casts of built-in floating point types.")
     ("trace", "print cast operations as they are performed.")
     ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
-    ("command-file", po::value< string >()," name of file where each line specifies how to change a variable's type: type-name function-name var-name.")
+    ("spec-file", po::value< string >()," name of typeforge specification file.")
+    ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
     ("float-var", po::value< string >()," change type of var [arg] to float.")
     ("double-var", po::value< string >()," change type of var [arg] to double.")
     ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
@@ -83,7 +89,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.2.0"<<endl;
+    cout<<toolName<<" version 0.3.0"<<endl;
     return 0;
   }
 
@@ -100,11 +106,13 @@ int main (int argc, char* argv[])
   vector<string> argvList(argv, argv+argc);
   argvList.push_back("-rose:skipfinalCompileStep");
   SgProject* sageProject=frontend (argvList); 
-  TypeTransformer tt;
+  TFTypeTransformer tt;
 
   if(args.isUserProvided("explicit")) {
     tt.makeAllCastsExplicit(sageProject);
     cout<<"Converted all implicit casts to explicit casts."<<endl;
+    backend(sageProject);
+    return 0;
   }
 
   if(args.isUserProvided("stats")) {
@@ -135,58 +143,33 @@ int main (int argc, char* argv[])
     tt.setTraceFlag(true);
   }
 
-  if(args.isUserProvided("command-file")) {
-    string changeFileName=args.getString("command-file");
-    CppStdUtilities::DataFileVector lines;
-    bool fileOK=CppStdUtilities::readDataFile(changeFileName,lines);
-    if(fileOK) {
-      TypeTransformer::VarTypeVarNameTupleList list;
-      int lineNr=0;
-      for (auto line : lines) {
-        lineNr++;
-        std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
-        string functionName,varName,typeName;
-        if(splitLine.size()>=2) {
-          functionName=splitLine[0];
-          varName=splitLine[1];
-        } 
-        if(splitLine.size()==3) {
-          typeName=splitLine[2];
-        } else {
-          typeName="float";
-        }
-        if(splitLine.size()>3) {
-          cerr<<"Error: wrong input format in file "<<changeFileName<<". Wrong number of entries in line "<<lineNr<<"."<<endl;
-          return 1;
-        }
-        if(functionName.size()>=2&&functionName[0]=='/' && functionName[1]=='/') {
-          // line is commented out (skip)
-          cout<<"Skipping "<<functionName<<","<<varName<<","<<typeName<<endl;
-        } else {
-          RoseAst completeast(sageProject);
-          SgFunctionDefinition* funDef=completeast.findFunctionByName(functionName);
-          if(typeName=="float") {
-            tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varName);
-          } else if(typeName=="double") {
-            tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varName);
-          } else if(typeName=="long double") {
-            tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varName);
-          } else {
-            cerr<<"Error: unknown type "<<typeName<<" in file "<<changeFileName<<" in line "<<lineNr<<"."<<endl;
-          }
-        }
-      } 
-      tt.transformCommandLineFiles(sageProject,list);
-      backend(sageProject);
-      return 0;
-    } else {
-      cerr<<"Error: could not access file "<<changeFileName<<endl;
-      return 1;
+  if(args.isUserProvided("spec-file")) {
+    string commandFileName=args.getString("spec-file");
+    TFTransformation tfTransformation;
+    tfTransformation.trace=tt.getTraceFlag();
+    TFSpecFrontEnd typeforgeSpecFrontEnd;
+    bool error=typeforgeSpecFrontEnd.run(commandFileName,sageProject,tt,tfTransformation);
+    if(error) {
+      exit(1);
     }
+    auto list=typeforgeSpecFrontEnd.getTransformationList();
+    tt.transformCommandLineFiles(sageProject,list);
+    if(args.isUserProvided("csv-stats-file")) {
+      string csvFileName=args.getString("csv-stats-file");
+      tt.generateCsvTransformationStats(csvFileName,
+					typeforgeSpecFrontEnd.getNumTypeReplace(),
+					tt,
+					tfTransformation);
+    }
+    tt.printTransformationStats(typeforgeSpecFrontEnd.getNumTypeReplace(),
+				tt,
+				tfTransformation);
+    backend(sageProject);
+    return 0;
   }
 
   if(args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var")) {
-    TypeTransformer::VarTypeVarNameTupleList list;
+    TFTypeTransformer::VarTypeVarNameTupleList list;
     SgFunctionDefinition* funDef=nullptr;
     if(args.isUserProvided("float-var")) {
       string varNames=args.getString("float-var");
