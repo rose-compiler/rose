@@ -215,6 +215,17 @@ Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint("EXIT ;");
           unp->cur.insert_newline(1);
         }
+     else if (kind == SgStopOrPauseStatement::e_abort)
+        {
+          curprint("ABORT ;");
+          unp->cur.insert_newline(1);
+        }
+     else
+        {
+           cerr << "Unparse_Jovial::unparseStopOrPauseStmt: unknown statement enum "
+                <<  kind << endl;
+           ROSE_ASSERT(false);
+        }
    }
 
 void
