@@ -3488,9 +3488,12 @@ HEADER_USE_STATEMENT_END
 HEADER_STOP_OR_PAUSE_STATEMENT_START
      public:
        // Rasmussen (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
+       // Rasmussen (5/21/2018): Added e_abort for Jovial, perhaps should rethink naming
+       //                        of SgStopOrPauseStatement (or create new node?)
           enum stop_or_pause_enum
              {
                e_unknown,
+               e_abort,
                e_stop,
                e_error_stop,
                e_exit,

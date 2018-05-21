@@ -167,6 +167,12 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          pConverter->convertSgUntypedExpressionStatement(ut_stmt, children, currentScope);
          break;
       }
+    case V_SgUntypedAbortStatement:
+      {
+         SgUntypedAbortStatement* ut_stmt = dynamic_cast<SgUntypedAbortStatement*>(node);
+         pConverter->convertSgUntypedAbortStatement(ut_stmt, currentScope);
+         break;
+      }
     case V_SgUntypedExitStatement:
       {
          SgUntypedExitStatement* ut_stmt = dynamic_cast<SgUntypedExitStatement*>(node);
