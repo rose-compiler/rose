@@ -291,12 +291,20 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
             break;
         }
 
-        case x86_ret:
-        case x86_iret:
+        case x86_int:                                   // assumes interrupts return
         case x86_int1:
         case x86_int3:
         case x86_into:
+        case x86_syscall: {
+            retval.insert(get_address() + get_size());  // probable return point
+            *complete = false;
+            break;
+        }
+            
+        case x86_ret:
+        case x86_iret:
         case x86_rsm:
+        case x86_sysret:
         case x86_ud2:
         case x86_retf: {
             /* Unconditional branch to run-time specified address */
