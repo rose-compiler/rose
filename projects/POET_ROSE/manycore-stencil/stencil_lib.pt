@@ -33,13 +33,15 @@ include OptHighLevel.pi
 
 <xform gen_local_refs pars=(old_array, array, dim,body) >
   repl=NULL;
-  foreach_r (body : (cur=GLOBAL.STENCIL_REF#( (cur_array=old_array|array), CLEAR sub)): TRUE) {
+  foreach (body : (cur=GLOBAL.STENCIL_REF#( (cur_array=old_array|array), sub=_)): TRUE) {
       <* find each stencil array reference in the code, replace it with local array reference*>
      sub = convert_linearized_subscript(sub);
-     repl = (cur, CODE.manycore_stencil_local_arr#(cur_array,dim,sub)) :: repl;  
+     repl = (cur, CODE.manycore_stencil_local_arr#(cur_array,dim,sub))::repl; 
   }
-  if (repl != NULL)
+  if (repl != NULL) {
+      repl=ReverseList(repl);
       body=REPLACE(repl,body); <* perform the replacement transformation *>
+  }
   body
 </xform>
 
@@ -58,8 +60,10 @@ include OptHighLevel.pi
      <* current dimension information *>
      i = car(p);
      <*replace global loop with local loop *>
-     foreach n=Nest#((ctrl=Loop#(i,lo=_,hi=_,dist=_)|CODE.For#(VarDecl#(_,VarInit#(i,_)),_,_)),b1=_) \in body do 
-       body = REPLACE( n,CODE.LocalStencil#(StencilDim#(i,REBUILD(lo-dist),hi,dist,len), len-index-1,b1), body);
+     foreach n=Nest#((ctrl=Loop#(i,lo=_,hi=_,dist=_)|CODE.For#(TypeInfo#(_,i,lo=_)|Assign#(i,lo=_),Bop#("<",i,hi=_)|Bop#("!=",i,hi=_),incr=(Uop#("++",i)|VarRef#(i,"++")|Assign#(i,Bop#("+",i,dist=_))|FunctionCall#("++",i)))),b1=_) \in body do 
+       assert(lo : INT);
+       dist = lo;  lo=0;
+       body = REPLACE( n,CODE.LocalStencil#(StencilDim#(i,lo,hi,dist,len), len-index-1,b1), body);
        break; 
      enddo
      init = LocalIndexInit#(i,index)::init;
@@ -130,8 +134,9 @@ include OptHighLevel.pi
  arr_name=InnerName(GLOBAL.STENCIL_array);
  CODE.StencilDim#(i,_,_,_,_) = dim_spec;
 
- target = DELAY{CODE.manycore_stencil_remote_arr_access#(CODE.manycore_stencil_remote_arr#(arr_name,CLEAR old_loc), CLEAR sub) 
-                | (old_loc=""; GLOBAL.STENCIL_REF#(array, CLEAR sub))};
+ old_loc="";
+ target = DELAY{CODE.manycore_stencil_remote_arr_access#(CODE.manycore_stencil_remote_arr#(arr_name,old_loc=_), sub=_) 
+                | (GLOBAL.STENCIL_REF#(array, sub=_))};
  cp_res = NULL;
  foreach (ERASE(res) : (cur=target): TRUE) {
     sub = convert_linearized_subscript(sub);
@@ -191,23 +196,42 @@ include OptHighLevel.pi
   <* find the loop that traverses the current dimension and remove it from local*>
   res=st_local; 
   if (!Lookup(CODE.LocalStencil,st_local)) return res; 
-  foreach (ERASE(st_local) : (cur=CODE.LocalStencil#(d=_,_,CLEAR body)):FALSE) {
-    CODE.StencilDim#(i,lo,hi,dist,_) = d;
+  body=""; d="";
+  foreach (ERASE(st_local) : (cur=CODE.LocalStencil#(d=_,_,body_now=_)):FALSE) {
+    CODE.StencilDim#(i=_,lo=_,hi=_,dist=_,_) = d;
+    body=StmtBlock#body_now;
     if (i == cur_dim) { res = REPLACE(cur, body, res); break; }
   }
+  assert(body!="" && d !="");
 
    <* Translate st_local index variable to boundary value  *>
   assert(dist>0); body1 = body; nbody = NULL;
+  <<*assert(ivar!="");
   switch (loc) {
   case "left": 
-      for (v = 0; v < dist; v=v+1) 
-         nbody = REPLACE(i, LB#(dim_idx,REBUILD(lo+v)), body1)::nbody; 
+      for (v = 0; v < dist; v=v+1)  {
+        body1=body;
+        foreach ivar=i \in body do 
+            body1 = REPLACE(ivar, LB#(dim_idx,REBUILD(lo+v)), body1);
+        enddo
+        nbody = body1::nbody; 
+      }
   case "right": 
-      for (v = 1; v <= dist; v=v+1) 
-        nbody = REPLACE(i, manycore_stencil_size#(dim_idx,gen_local_loc(dim))-v, body1)::nbody;
+      for (v = 1; v <= dist; v=v+1)  {
+        body1=body;
+        foreach ivar=i \in body do 
+          body1=REPLACE(ivar, manycore_stencil_size#(dim_idx,gen_local_loc(dim))-v, body1);
+        enddo
+        nbody = body1::nbody; 
+      }
   case ("left" "right"):
-      for (v = 0; v < dist; v=v+1) 
-        nbody = REPLACE(i, Both#(dim_idx,REBUILD(lo+v)), body1)::nbody;
+      for (v = 0; v < dist; v=v+1)  {
+        body1=body;
+        foreach ivar=i \in body do 
+          body1 = REPLACE(ivar, Both#(dim_idx,REBUILD(lo+v)), body1);
+        enddo
+        nbody = body1::nbody; 
+      }
   }
   res = REPLACE(body,nbody,res);
   <* Replace st_local stencil array references with remote neighbor accesses*>
@@ -396,8 +420,10 @@ include OptHighLevel.pi
     local = StmtList#(local CODE.process_check_time);
     if (array_inner != array) {
        init2 = CODE.StmtList#(CODE.ManycoreArrayPtr#(old_array_inner,stencil_type)::CODE.ManycoreArrayPtr#(array_inner,stencil_type)::init2); 
-       (local,boundary) = REPLACE(array_inner, Name#("_" array_inner), (local,boundary));
-       (local,boundary) = REPLACE(old_array_inner, Name#("_" old_array_inner), (local,boundary));
+       local1=local; boundary1=boundary;
+       (local1,boundary1) = REPLACE(array_inner, Name#("_"^array_inner), (local1,boundary1));
+       (local1,boundary1) = REPLACE(old_array_inner, Name#("_"^old_array_inner), (local1,boundary1));
+       local=local1; boundary=boundary1;
     }
     finalize=StmtList#(CODE.copy_stencil_manycore#(old_array,CODE.stencil_copyback_stmt#(old_array,ivarinfo,datainfo),ivars,datainfo) CODE.copy_stencil_manycore#(array,CODE.stencil_copyback_stmt#(array,ivarinfo,datainfo),ivars,datainfo) CODE.postcopy_check_time CODE.free_resources);
     array_inner = Name#("_" array_inner);
@@ -420,7 +446,8 @@ include OptHighLevel.pi
      break;
   enddo
 
-  Append_Include(CODE.stencil_macro#(dim,ivars,ivarsmacro)); 
+  if (!Lookup(CODE.stencil_macro, TRACE_INCL))
+     Append_Include[trace=TRACE_INCL](CODE.stencil_macro#(dim,ivars,ivarsmacro)); 
   res = init1
       :: CODE.InitNumOfCores#(array,dimsizes,ivars)
       :: (if (add_timing) { CODE.TimingInit } else {""}) 

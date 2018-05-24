@@ -11,6 +11,7 @@ mptlpDriver_la_sources=\
 	$(mptlpDriverPath)/ParallelizeLoop.C \
 	$(mptlpDriverPath)/LoopTransformInterface.C \
 	$(mptlpDriverPath)/NormalizeCPP.C \
+	$(mptlpDriverPath)/ArrayInterface.C \
 	$(mptlpDriverPath)/AutoTuningInterface.C
 
 mptlpDriver_includeHeaders=\
@@ -21,6 +22,7 @@ mptlpDriver_includeHeaders=\
 	$(mptlpDriverPath)/LoopTransformInterface.h \
 	$(mptlpDriverPath)/FusionAnal.h \
 	$(mptlpDriverPath)/ParallelizeLoop.h \
+	$(mptlpDriverPath)/AutoTuningInterface.h \
 	$(mptlpDriverPath)/AutoTuningInterface.h
 
 mptlpDriver_extraDist=\

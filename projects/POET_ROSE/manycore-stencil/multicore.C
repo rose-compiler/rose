@@ -13,33 +13,11 @@ MulticoreArray<T>::algorithmicComputationOfSize( int dim, int p ) const
   // int remainder = (arraySize[dim] % coreArraySize[dim]);
      int size = (arraySize[dim] / coreArraySize[dim]) + (((arraySize[dim] % coreArraySize[dim]) != 0) ? 1 : 0);
 
-#if 0
-     printf ("In algorithmic distribution: p = %d arraySize[dim=%d] = %2d coreArraySize[dim=%d] = %2d \n",p,dim,arraySize[dim],dim,coreArraySize[dim]);
-     printf ("In algorithmic distribution: arraySize/numberOfCores = %2d arraySize MOD numberOfCores = %2d \n",(arraySize[dim]/coreArraySize[dim]),(arraySize[dim] % coreArraySize[dim]));
-#endif
-
-  // DQ (10/22/2011): I think we can assert this.
-     assert(p < coreArraySize[dim]);
-
      if (p >= (arraySize[dim] % coreArraySize[dim]))
         {
-#if 0
-          printf ("p=%2d: p >= arraySize MOD numberOfCores \n",p);
-#endif
           size -= ((arraySize[dim] % coreArraySize[dim]) != 0) ? 1 : 0;
         }
-       else
-        {
-#if 0
-          printf ("p=%2d: p < arraySize MOD numberOfCores \n",p);
-#endif
-        }
-#if 0
-     printf ("In algorithmic distribution (p=%2d): arraySize/numberOfCores = %2d arraySize MOD numberOfCores = %2d size = %d \n",p,(arraySize[dim]/coreArraySize[dim]),(arraySize[dim] % coreArraySize[dim]),size);
-#endif
 
-  // Alternative computation:
-  // int altSize = (p >= (arraySize[dim] % coreArraySize[dim]) ? (arraySize[dim] / coreArraySize[dim]) + 
      return size;
    }
 
@@ -72,7 +50,6 @@ MulticoreArray<T>::display( const std::string & label ) const
 
                for (int i = 0; i < arraySize[0]; i++)
                   {
-                 // printf ("%1.2e ",operator()(i));
                       printf ("%5.2f ",operator()(i,j,k));
                   }
                printf ("\n");
@@ -94,9 +71,6 @@ MulticoreArray<T>::initializeBoundary( const T & x )
      if (arraySize[2] > 2)
         {
        // This is is a 3D array.
-#if 0
-          printf ("==== 3D: Z axis size = %2d \n",arraySize[2]);
-#endif
           if (arraySize[1] > 2)
              {
                if (arraySize[0] > 2)
@@ -143,27 +117,10 @@ MulticoreArray<T>::initializeBoundary( const T & x )
                             }
                        }
                   }
-                 else
-                  {
-#if 0
-                    printf ("Axis X has no interior (there is no boundary). \n");
-#endif
-                 // assert(false);
-                  }
-             }
-            else
-             {
-#if 0
-               printf ("Axis Y has no interior (there is no boundary). \n");
-#endif
-            // assert(false);
              }
         }
        else
         {
-#if 0
-          printf ("Axis Z has no interior (this is a 1D or 2D array). \n");
-#endif
           if (arraySize[1] >= 2)
              {
                if (arraySize[0] >= 2)
@@ -190,19 +147,9 @@ MulticoreArray<T>::initializeBoundary( const T & x )
 #endif
                        }
                   }
-                 else
-                  {
-#if 0
-                    printf ("Axis X has no interior (there is no boundary). \n");
-#endif
-                 // assert(false);
-                  }
              }
             else
              {
-#if 0
-               printf ("Axis Y has no interior (this is a 1D array). \n");
-#endif
 #if (DEBUG_CHANGE_SIGN_OF_BOUNDARY == 0)
                (*this)(0,0,0)              = x;
                (*this)(arraySize[0]-1,0,0) = x;
@@ -227,23 +174,13 @@ MulticoreArray<T>::distanceBetweenMemoryAllocatedPerCore()
      size_t totalDistanceBetweenMemoryAllocatedPerCore = 0;
      for (int p = 0; p < numberOfCores; p++)
         {
-#if 0
-          printf("core specific data address = %p arraySize = %d p = %d padding = %d \n",arraySectionPointers[p],arraySize,p,padding);
-#endif
           if (p > 0)
              {
                size_t distance = abs((char*)(arraySectionPointers[p]) - (char*)(arraySectionPointers[p-1]));
-#if 0
-               printf("core specific data distance p(%2d,%2d) = %zu \n",p-1,p,distance);
-#endif
             // Need to make sure this does not overflow.
                totalDistanceBetweenMemoryAllocatedPerCore += distance;
              }
         }
-#if 0
-     printf("totalDistanceBetweenMemoryAllocatedPerCore = %zu \n",totalDistanceBetweenMemoryAllocatedPerCore);
-#endif
-
      return totalDistanceBetweenMemoryAllocatedPerCore;
    }
 
@@ -256,34 +193,16 @@ MulticoreArray<T>::verifyArraySize() const
 
      int accumulatedSize[3] = {0,0,0};
 
-#if 0
-     printf ("In verifyArraySize() \n");
-#endif
-
      for (int dim = 0; dim < 3; dim++)
         {
-#if 0
-          printf ("In verifyArraySize(): coreArraySize[dim=%2d] = %2d \n",dim,coreArraySize[dim]);
-#endif
           int indexInCoreArray[DIM] = { 0, 0, 0 };
-#if 0
-          printf ("In verifyArraySize() before loop along axis: indexInCoreArray[0] = %d indexInCoreArray[1] = %d indexInCoreArray[2] = %d \n",indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#endif
           for (int core = 0; core < coreArraySize[dim]; core++)
              {
             // int coreIndexInLinearArray = indexIntoCoreArray(dim,core);
                indexInCoreArray[dim] = core;
-#if 0
-               printf ("In verifyArraySize(): indexInCoreArray[0] = %d indexInCoreArray[1] = %d indexInCoreArray[2] = %d \n",indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#endif
                int coreIndexInLinearArray = coreArrayElement(indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
 
-            // int local_size = (useArraySectionRanges == true) ? arraySectionSizes[dim][core] : algorithmicComputationOfSize(dim,core);
-            // int local_size = (useArraySectionRanges == true) ? arraySectionSizes[dim][coreIndexInLinearArray] : algorithmicComputationOfSize(dim,core);
                int local_size = arraySectionSizes[dim][coreIndexInLinearArray];
-#if 0
-               printf ("In verifyArraySize(): core = %2d coreIndexInLinearArray = %2d local_size = %d \n",core,coreIndexInLinearArray,local_size);
-#endif
                accumulatedSize[dim] += local_size;
              }
              if(boundaryType == MulticoreArray<T>::attached)
@@ -499,24 +418,14 @@ MulticoreArray<T>::get_left_section_index( int dim, int p ) const
 
      do {
           tmp_p = (tmp_p > 0) ? tmp_p-1 : coreArraySize[dim] - 1;
-#if 0
-          printf ("In MulticoreArray<T>::get_left_section_index(): We should not mix linearized core indexes with the indexes into the multidimensional core array \n");
-#endif
        // Compute the adjacent processor in the muti-dimensional core array.
           indexSet[dim] = tmp_p;
           int computedLinearizedIndex = coreArrayElement(indexSet[0],indexSet[1],indexSet[2]);
 
        // partitionSize = (get_tableBasedDistribution() == true) ? get_arraySectionSizes(dim)[tmp_p] : algorithmicComputationOfSize(dim,tmp_p);
           partitionSize = (get_tableBasedDistribution() == true) ? get_arraySectionSizes(dim)[computedLinearizedIndex] : algorithmicComputationOfSize(dim,tmp_p);
-#if 0
-          printf ("In get_left_section_index(p=%d): tmp_p = %d partitionSize = %d computedLinearizedIndex = %d \n",p,tmp_p,partitionSize,computedLinearizedIndex);
-#endif
          }
      while (tmp_p != p && partitionSize == 0);
-
-#if 0
-     printf ("In get_left_section_index(dim=%d,p=%d): returning tmp_p = %d \n",dim,p,tmp_p);
-#endif
 
      return tmp_p;
    }
@@ -534,22 +443,12 @@ MulticoreArray<T>::get_right_section_index( int dim, int p ) const
 
      do {
           tmp_p = (tmp_p < coreArraySize[dim]-1) ? tmp_p+1 : 0;
-#if 0
-          printf ("In MulticoreArray<T>::get_right_section_index(): We should not mix linearized core indexes with the indexes into the multidimensional core array \n");
-#endif
           indexSet[dim] = tmp_p;
           int computedLinearizedIndex = coreArrayElement(indexSet[0],indexSet[1],indexSet[2]);
 
           partitionSize = (get_tableBasedDistribution() == true) ? get_arraySectionSizes(dim)[computedLinearizedIndex] : algorithmicComputationOfSize(dim,tmp_p);
-#if 0
-          printf ("In get_right_section_index(p=%d): tmp_p = %d partitionSize = %d computedLinearizedIndex = %d \n",p,tmp_p,partitionSize,computedLinearizedIndex);
-#endif
          }
      while (tmp_p != p && partitionSize == 0);
-
-#if 0
-     printf ("In get_right_section_index(dim=%d,p=%d): returning tmp_p = %d \n",dim,p,tmp_p);
-#endif
 
      return tmp_p;
    }
@@ -581,16 +480,7 @@ template <typename T>
 int
 MulticoreArray<T>::coreArrayElement(int p, int q, int r) const
    {
-#if 0
-      printf ("In MulticoreArray<T>::coreArrayElement(): p = %d q = %d r = %d coreArraySize[0] = %d coreArraySize[1] = %d coreArraySize[2] = %d numberOfCores = %d \n",p,q,r,coreArraySize[0],coreArraySize[1],coreArraySize[2],numberOfCores);
-#endif
-
      int core = (r*coreArraySize[1]*coreArraySize[0]) + (q*coreArraySize[0]) + p;
-
-#if 0
-     printf ("In coreArrayElement(p=%2d,q=%2d,r=%2d) = %2d \n",p,q,r,core);
-     printf ("coreArraySize[0] = %d coreArraySize[1] = %d coreArraySize[2] = %d \n",coreArraySize[0],coreArraySize[1],coreArraySize[2]);
-#endif
 
   // Assert this fact about when "core" maps to "zero".
   // assert(core == 0 && (p == 0 && q == 0 && r == 0));
@@ -607,10 +497,8 @@ MulticoreArray<T>::coreArrayElement(int p, int q, int r) const
   // This is not a strong assertion, but it avoids at least some strange errors.
      if (core > numberOfCores*numberOfCores)
         {
-       // printf ("core = %d numberOfCores = %d numberOfCores*numberOfCores = %d numberOfCores*numberOfCores*numberOfCores = %d \n",core,numberOfCores,numberOfCores*numberOfCores,numberOfCores*numberOfCores*numberOfCores);
           printf ("core = %d numberOfCores = %d numberOfCores*numberOfCores = %d \n",core,numberOfCores,numberOfCores*numberOfCores);
         }
-  // assert (core <= numberOfCores*numberOfCores*numberOfCores);
      assert (core <= numberOfCores*numberOfCores);
 
      return core;
@@ -644,8 +532,6 @@ MulticoreArray<T>::memorySectionSize(int p, int q, int r) const
           assert(false);
 #endif
 //          int indexOfCore = (dim == 0) ? p : ((dim == 1) ? q : r);
-       // size *= (useArraySectionRanges == true) ? arraySectionSizes[dim][core] + padding : algorithmicComputationOfSize(dim,p) + padding;
-       // size *= (useArraySectionRanges == true) ? arraySectionSizes[dim][core] + padding : algorithmicComputationOfSize(dim,indexOfCore) + padding;
           size *= arraySectionSizes[dim][core] + padding;
         }
 
@@ -783,22 +669,13 @@ MulticoreArray<T>::memorySectionSize(int core) const
   // This function computes the size (number of elements) in a memory segment given by the index of the 
   // core in the linearized array of cores.
 
-#if 0
-     printf ("In memorySectionSize(core=%2d): numberOfCores = %d \n",core,numberOfCores);
-#endif
-
      assert(core < numberOfCores);
 
      int size = 1;
      for (int dim = 0; dim < DIM; dim++)
         {
-//          int index = indexIntoCoreArray(dim,core);
-       // size *= (useArraySectionRanges == true) ? arraySectionSizes[dim][core] + padding : algorithmicComputationOfSize(dim,index) + padding;
           size *= arraySectionSizes[dim][core] + padding;
         }
-#if 0
-     printf ("In memorySectionSize(core=%2d) = %2d \n",core,size);
-#endif
 
      return size;
    }
@@ -812,57 +689,27 @@ MulticoreArray<T>::computeArraySectionDistribution()
   // This is the support for the table-based distribution of data across the many-core processor.
   // It is more flexible than the algorithmic-base distribution, but requires more storage.
 
-#if 0
-     printf ("In MulticoreArray<T>::computeArraySectionDistribution() useArraySectionRanges = %s \n",useArraySectionRanges ? "true" : "false");
-#endif
-
   // The algorithm based approach does not need or use this sort of support.
      if (useArraySectionRanges == true)
         {
-       // int indexInCoreArray[DIM] = { 0, 0, 0 };
-
           int accumulatedSize[DIM] = {0,0,0};
-#if 0
-          printf ("BEFORE loop over dimensions \n");
-#endif
        // Compute a default table based distribution (could be user specified in a number of ways).
           for (int dim = 0; dim < DIM; dim++)
              {
-#if 0
-               printf ("^^^^^^^^^ In computeArraySectionDistribution(): dim = %d \n",dim);
-#endif
-            // These are the remaining two dimensions that are not the same as "dim".
                const int indexOneAway = (dim+1) % 3;
                const int indexTwoAway = (dim+2) % 3;
-#if 0
-               printf ("indexOneAway = %d indexTwoAway = %d \n",indexOneAway,indexTwoAway);
-#endif
                size_t counter = 0;
 
                int indexInCoreArray[DIM] = { 0, 0, 0 };
-#if 0
-               printf ("BEFORE loop along axis: indexInCoreArray[0] = %d indexInCoreArray[1] = %d indexInCoreArray[2] = %d \n",indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#endif
             // This is a serial loop over the number of cores (filling in the table of array section distributions amongst cores).
             // Since the default table based distribution could use the algorithmic based distribution, we could simplify this code.
-            // for (int p = 0; p < numberOfCores; p++)
                for (int p = 0; p < coreArraySize[dim]; p++)
                   {
-#if 0
-                    printf ("In computeArraySectionDistribution(): p = %d \n",p);
-#endif
                     assert(arraySectionRanges[dim].size() > (size_t)p);
                     assert(arraySectionSizes[dim].size()  > (size_t)p);
 
                     indexInCoreArray[dim] = p;
-#if 0
-                    printf ("indexInCoreArray[0] = %d indexInCoreArray[1] = %d indexInCoreArray[2] = %d \n",indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#endif
                     int coreIndexInLinearArray = coreArrayElement(indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#if 0
-                    printf ("coreIndexInLinearArray = %d \n",coreIndexInLinearArray);
-#endif
-                 // arraySectionRanges[dim][p].first = counter;
                     arraySectionRanges[dim][coreIndexInLinearArray].first = counter;
 
                  // Use the same distribution, but with a table based approach.
@@ -871,36 +718,17 @@ MulticoreArray<T>::computeArraySectionDistribution()
                  // Truncate to the the arraySize[dim] if required...
                     counter = (tmpBound <= arraySize[dim]) ? tmpBound : arraySize[dim];
 
-                 // arraySectionRanges[dim][p].second = counter;
                     arraySectionRanges[dim][coreIndexInLinearArray].second = counter;
 
-                 // int localSize = (arraySectionRanges[dim][p].second - arraySectionRanges[dim][p].first);
                     int localSize = (arraySectionRanges[dim][coreIndexInLinearArray].second - arraySectionRanges[dim][coreIndexInLinearArray].first);
-#if 0
-                    printf ("In computeArraySectionDistribution(): arraySize[dim=%d] = %d localSize = %d \n",dim,arraySize[dim],localSize);
-#endif
-                 // arraySectionSizes[dim][p] = localSize;
                     arraySectionSizes[dim][coreIndexInLinearArray] = localSize;
                     if(boundaryType == MulticoreArray<T>::attached)
                       arraySectionSizes[dim][coreIndexInLinearArray] += 2 * haloSize[dim];
 
-                 // assert(arraySize[dim] == 0 || localSize != 0);
                     assert(arraySize[dim] == 0 || localSize != 0 || p > 0);
 
                     assert(localSize == 0 || arraySectionSizes[dim][coreIndexInLinearArray] != 0);
-#if 0
-                    printf ("Setting size on target core arraySectionSizes[dim=%d][coreIndexInLinearArray=%d] = %d \n",dim,coreIndexInLinearArray,arraySectionSizes[dim][coreIndexInLinearArray]);
-#endif
-                 // Now set all sizes for the cores in this axis of the coreArray to have value
-#if 0
-                    printf ("----- Set the other core entries in this row/column of the core array to have the same value. \n");
-#endif
                     int indexInCoreArrayOfOtherCores[DIM] = { indexInCoreArray[0], indexInCoreArray[1], indexInCoreArray[2] };
-#if 0
-                    printf ("coreArraySize[0] = %d coreArraySize[1] = %d coreArraySize[2] = %d \n",coreArraySize[0],coreArraySize[1],coreArraySize[2]);
-                    printf ("coreArraySize[indexOneAway=%d] = %d \n",indexOneAway,coreArraySize[indexOneAway]);
-                    printf ("coreArraySize[indexTwoAway=%d] = %d \n",indexTwoAway,coreArraySize[indexTwoAway]);
-#endif
                     assert(indexOneAway >= 0 && indexOneAway < 3);
                     assert(indexTwoAway >= 0 && indexTwoAway < 3);
 
@@ -915,9 +743,6 @@ MulticoreArray<T>::computeArraySectionDistribution()
                               indexInCoreArrayOfOtherCores[indexOneAway] = i;
 
                               int coreIndexInLinearArrayOfOtherCores = coreArrayElement(indexInCoreArrayOfOtherCores[0],indexInCoreArrayOfOtherCores[1],indexInCoreArrayOfOtherCores[2]);
-#if 0
-                              printf ("coreIndexInLinearArrayOfOtherCores = %d \n",coreIndexInLinearArrayOfOtherCores);
-#endif
                               arraySectionSizes[dim][coreIndexInLinearArrayOfOtherCores] = localSize;
                               if(boundaryType == MulticoreArray<T>::attached)
                                 arraySectionSizes[dim][coreIndexInLinearArrayOfOtherCores] += 2 * haloSize[dim];
@@ -925,36 +750,17 @@ MulticoreArray<T>::computeArraySectionDistribution()
                            // Also set the ranges on all of the other processors.
                               arraySectionRanges[dim][coreIndexInLinearArrayOfOtherCores].first  = arraySectionRanges[dim][coreIndexInLinearArray].first;
                               arraySectionRanges[dim][coreIndexInLinearArrayOfOtherCores].second = arraySectionRanges[dim][coreIndexInLinearArray].second;
-#if 0
-                              printf ("Setting size on other cores (i=%d,j=%d) arraySectionSizes[dim=%d][coreIndexInLinearArray=%d] = %d \n",i,j,dim,coreIndexInLinearArrayOfOtherCores,arraySectionSizes[dim][coreIndexInLinearArrayOfOtherCores]);
-#endif
                             }
                        }
 
-#if 0
-                 // printf ("In computeArraySectionDistribution(): arraySectionSizes[dim][p] = %zu \n",arraySectionSizes[dim][p]);
-                    printf ("In computeArraySectionDistribution(): arraySectionSizes[dim=%2d][coreIndexInLinearArray=%2d] = %zu \n",dim,coreIndexInLinearArray,arraySectionSizes[dim][coreIndexInLinearArray]);
-#endif
-#if 0
-                 // printf ("In computeArraySectionDistribution(): arraySize[dim=%d] = %d localSize = %2d arraySectionRanges[dim=%d][p=%2d].first = %3zu arraySectionRanges[dim=%d][p=%2d].second = %3zu \n",
-                 //      dim,arraySize[dim],localSize,dim,p,arraySectionRanges[dim][p].first,dim,p,arraySectionRanges[dim][p].second);
-                    printf ("In computeArraySectionDistribution(): arraySize[dim=%d] = %d localSize = %2d arraySectionRanges[dim=%d][coreIndexInLinearArray=%2d].first = %3zu arraySectionRanges[dim=%d][coreIndexInLinearArray=%2d].second = %3zu \n",
-                         dim,arraySize[dim],localSize,dim,coreIndexInLinearArray,arraySectionRanges[dim][coreIndexInLinearArray].first,dim,coreIndexInLinearArray,arraySectionRanges[dim][coreIndexInLinearArray].second);
-#endif
-                 // assert (arraySectionRanges[dim][p].second <= arraySize[dim]);
                     assert (arraySectionRanges[dim][coreIndexInLinearArray].second <= (size_t)arraySize[dim]);
                   }
 
-#if 1
             // ******************************************************************************************************
             // Verification code (make sure that each dimension stores the same size for each core in the same axis).
             // And also that the size for each memory segment for all cores along an axis of the coreArray adds up to 
             // the size of the array for that dimension (axis).
             // ******************************************************************************************************
-#if 0
-               printf ("In computeArraySectionDistribution(VERIFY): coreArraySize[dim=%2d] = %2d \n",dim,coreArraySize[dim]);
-               printf ("In computeArraySectionDistribution(VERIFY): arraySectionSizes[dim=%2d][0] = %2d \n",dim,arraySectionSizes[dim][0]);
-#endif
                for (int core = 0; core < coreArraySize[dim]; core++)
                   {
                  // This is calling the wrong function, indexIntoCoreArray() is designed to "take as input" the core 
@@ -962,12 +768,8 @@ MulticoreArray<T>::computeArraySectionDistribution()
                  // int coreIndexInLinearArray = indexIntoCoreArray(dim,core);
 
                     indexInCoreArray[dim] = core;
-#if 0
-                    printf ("indexInCoreArray[0] = %d indexInCoreArray[1] = %d indexInCoreArray[2] = %d \n",indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#endif
                     int coreIndexInLinearArray = coreArrayElement(indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
 
-                 // int local_size = (useArraySectionRanges == true) ? arraySectionSizes[dim][core] : algorithmicComputationOfSize(dim,core);
                     int local_size = (useArraySectionRanges == true) ? arraySectionSizes[dim][coreIndexInLinearArray] : algorithmicComputationOfSize(dim,core);
 
                     int indexInCoreArrayOfOtherCores[DIM] = { indexInCoreArray[0], indexInCoreArray[1], indexInCoreArray[2] };
@@ -992,9 +794,6 @@ MulticoreArray<T>::computeArraySectionDistribution()
                             }
                        }
 
-#if 0
-                    printf ("In computeArraySectionDistribution(VERIFY): core = %2d coreIndexInLinearArray = %2d local_size = %d \n",core,coreIndexInLinearArray,local_size);
-#endif
                     accumulatedSize[dim] += local_size;
                   }
                if(boundaryType == MulticoreArray<T>::attached)
@@ -1015,7 +814,6 @@ MulticoreArray<T>::computeArraySectionDistribution()
 
                  assert(accumulatedSize[dim] == arraySize[dim]);
                }
-#endif
 
             // We can have valid zero sizes parts of an array abstraction along any dimension where arraySectionSizes[dim][0] > 0.
                assert(arraySectionSizes[dim][0] > 0);
@@ -1236,9 +1034,6 @@ MulticoreArray<T>::allocateMemorySectionsPerCore()
               assert(coreArray[core]->haloRegionPointer[dim][1] != NULL);
             }
           }
-#if 0
-          printf("tableBasedDistribution = %s data size for arraySize[0] = %d core = %2d has size = %2d with padding = %d arraySectionPointers[%d] = %p \n",(useArraySectionRanges == true) ? "true" : "false",arraySize[0],core,size,padding,core,arraySectionPointers[core]);
-#endif
         }
 #endif
    }
@@ -1879,31 +1674,8 @@ MulticoreArray<T>::computeMemorySectionAndOffset(const int & i, const int & j, c
 
      if (get_tableBasedDistribution() == true)
         {
-       // Assume that ranges are ordered (so that we can find the range matching an index via a linear search).
-       // A better implementation could use a map of bases and bounds (with appropriate relational operators).
-#if 0
-          printf ("arraySectionRanges[0].size() = %zu \n",arraySectionRanges[0].size());
-          printf ("arraySectionRanges[1].size() = %zu \n",arraySectionRanges[1].size());
-          printf ("arraySectionRanges[2].size() = %zu \n",arraySectionRanges[2].size());
-#endif
-          assert(arraySectionRanges[0].size() > 0);
-          assert(arraySectionRanges[1].size() == arraySectionRanges[0].size());
-          assert(arraySectionRanges[2].size() == arraySectionRanges[0].size());
-
-          assert(coreArraySize[0] > 0);
-          assert(coreArraySize[1] > 0);
-          assert(coreArraySize[2] > 0);
-
-          assert(i < arraySize[0]);
-          assert(j < arraySize[1]);
-          assert(k < arraySize[2]);
-
-
           for (int dim = 0; dim < DIM; dim++)
              {
-#if 0
-               printf ("\n@@@@@ In computeMemorySectionAndOffset(): processing dimension = %d \n",dim);
-#endif
                int coreIndexInMultidimensionalCoreArray        = 0;
                int elementIndexInMultidimensionalMemorySegment = 0;
 
@@ -1914,97 +1686,30 @@ MulticoreArray<T>::computeMemorySectionAndOffset(const int & i, const int & j, c
             // int p = 0;
                do {
                     coreIndexInLinearArray = coreArrayElement(indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#if 0
-                    printf ("\n*** coreIndexInLinearArray = %d aCoreToFar = %d \n",coreIndexInLinearArray,aCoreToFar);
-#endif
-#if 0
-                    printf ("indexInCoreArray[dim=%d] = %d coreIndexInLinearArray = %d \n",dim,indexInCoreArray[dim],coreIndexInLinearArray);
-                    printf ("arraySectionRanges[dim=%d][coreIndexInLinearArray=%2d].second = %3zu arraySectionRanges[dim=%d][coreIndexInLinearArray=%2d].second = %3zu \n",
-                         dim,coreIndexInLinearArray,arraySectionRanges[dim][coreIndexInLinearArray].first,dim,coreIndexInLinearArray,arraySectionRanges[dim][coreIndexInLinearArray].second);
-#endif
-#if 0
-                    printf ("Assert: arraySectionRanges[dim][coreIndexInLinearArray].first (%d) <= indexInMulticoreArray[dim] (%d) \n",arraySectionRanges[dim][coreIndexInLinearArray].first,indexInMulticoreArray[dim]);
-#endif
-                 // I think we can assert this!
-                    assert(arraySectionRanges[dim][coreIndexInLinearArray].first <= (size_t)indexInMulticoreArray[dim]);
-#if 0
-                    printf ("Assert: indexInCoreArray[dim] < coreArraySize[dim] \n");
-#endif
-                    assert(indexInCoreArray[dim] < coreArraySize[dim]);
-#if 0
-                    printf ("indexInCoreArray[dim=%d] = %d \n",dim,indexInCoreArray[dim]);
-#endif
                     coreIndexInMultidimensionalCoreArray = indexInCoreArray[dim];
 
                     elementIndexInMultidimensionalMemorySegment = indexInMulticoreArray[dim] - arraySectionRanges[dim][coreIndexInLinearArray].first;
-#if 0
-                    printf ("In loop: coreIndexInMultidimensionalCoreArray = %d elementIndexInMultidimensionalMemorySegment = %d \n",coreIndexInMultidimensionalCoreArray,elementIndexInMultidimensionalMemorySegment);
-
-                    printf ("arraySectionRanges[dim=%d][core=%d].first  = %d \n",dim,coreIndexInLinearArray,arraySectionRanges[dim][coreIndexInLinearArray].first);
-                    printf ("arraySectionRanges[dim=%d][core=%d].second = %d \n",dim,coreIndexInLinearArray,arraySectionRanges[dim][coreIndexInLinearArray].second);
-#endif
                     indexInCoreArray[dim]++;
                     aCoreToFar = coreArrayElement(indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
                     assert(aCoreToFar >= 0);
-#if 0
-                    printf ("arraySectionRanges[dim=%d][aCoreToFar=%d].first  = %d \n",dim,aCoreToFar,(aCoreToFar < numberOfCores) ? arraySectionRanges[dim][aCoreToFar].first : -99);
-                    printf ("arraySectionRanges[dim=%d][aCoreToFar=%d].second = %d \n",dim,aCoreToFar,(aCoreToFar < numberOfCores) ? arraySectionRanges[dim][aCoreToFar].second : -99);
-
-                    printf ("aCoreToFar < numberOfCores                 = %s \n",(aCoreToFar < numberOfCores) ? "true" : "false");
-                    printf ("indexInCoreArray[dim] < coreArraySize[dim] = %s \n",(indexInCoreArray[dim] < coreArraySize[dim]) ? "true" : "false");
-#endif
-                    if (aCoreToFar < numberOfCores)
-                       {
-#if 0
-                         printf ("(arraySectionRanges[dim][aCoreToFar].first <= indexInMulticoreArray[dim]) = %s \n",(arraySectionRanges[dim][aCoreToFar].first <= indexInMulticoreArray[dim]) ? "true" : "false");
-#endif
-                       }
-                      else
-                       {
-                         assert((int)aCoreToFar >= (int)numberOfCores);
-#if 0
-                         printf ("aCoreToFar is out of bounds, can't evaluate (arraySectionRanges[dim][aCoreToFar].first <= indexInMulticoreArray[dim]) \n");
-#endif
-                       }
-#if 0
-                    printf ("*** At bottom or loop: aCoreToFar = %d indexInCoreArray[dim=%d] = %d numberOfCores = %d \n",aCoreToFar,dim,indexInCoreArray[dim],numberOfCores);
-#endif
                   }
                while ( (aCoreToFar < numberOfCores) && (indexInCoreArray[dim] < coreArraySize[dim]) && (arraySectionRanges[dim][aCoreToFar].first <= (size_t)indexInMulticoreArray[dim]) );
-#if 0
-               printf ("After loop: coreIndexInMultidimensionalCoreArray = %d elementIndexInMultidimensionalMemorySegment = %d \n",coreIndexInMultidimensionalCoreArray,elementIndexInMultidimensionalMemorySegment);
-#endif
             // Reset to the index before we went too far.
                indexInCoreArray[dim]          = coreIndexInMultidimensionalCoreArray;
                indexInMemorySectionArray[dim] = elementIndexInMultidimensionalMemorySegment;
              }
-#if 0
-          printf ("In computeMemorySectionAndOffset(): indexInCoreArray[0] = %d indexInCoreArray[1] = %d indexInCoreArray[2] = %d \n",indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#endif
        // Only here do we set the "core" and "element_index"
           core = coreArrayElement(indexInCoreArray[0],indexInCoreArray[1],indexInCoreArray[2]);
-#if 0
-          printf ("In computeMemorySectionAndOffset(): core = %d \n",core);
-#endif
           assert(core >= 0);
-#if 0
-          printf ("In computeMemorySectionAndOffset(): indexInMemorySectionArray[0] = %d indexInMemorySectionArray[1] = %d indexInMemorySectionArray[2] = %d \n",indexInMemorySectionArray[0],indexInMemorySectionArray[1],indexInMemorySectionArray[2]);
-#endif
 
        // Only here do we set the "element_index" in/out function parameter
           if(boundaryType == MulticoreArray<T>::attached)
             element_index = mappingFromMultidimentionalMemorySegmentArray(indexInMemorySectionArray[0]+haloSize[0],indexInMemorySectionArray[1]+haloSize[1],indexInMemorySectionArray[2]+haloSize[2],core);
           else
             element_index = mappingFromMultidimentionalMemorySegmentArray(indexInMemorySectionArray[0],indexInMemorySectionArray[1],indexInMemorySectionArray[2],core);
-#if 0
-          printf ("In computeMemorySectionAndOffset(): element_index = %d \n",element_index);
-#endif
         }
        else
         {
-#if 0
-          printf ("In computeMemorySectionAndOffset(): get_tableBasedDistribution() == false, we compute the offsets algorithmically. \n");
-#endif
         }
 
   // Modified this block to always be executed so that the code in it can be evaluated against the computation of
@@ -2338,9 +2043,6 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
      haloSize[2] = numberOfHalos_Z;
 
      boundaryType = haloDataType; 
-#if 0
-     printf ("In MulticoreArray<T> constructor arraySize = (%d,%d,%d) numberOfCores = %d useTableBasedDistribution = %s \n",arraySize[0],arraySize[1],arraySize[2],numberOfCores,useTableBasedDistribution ? "true" : "false");
-#endif
 
   // We want to assume at least a non-zero length array (for not at least while debugging).
      assert(arraySize_I > 0);
@@ -2357,15 +2059,20 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
 
      coreArray = new Core<T>*[numberOfCores];
      assert(coreArray != NULL);
-     for (int core = 0; core < numberOfCores; core++)
-        {
-          coreArray[core] = new Core<T>();
-        }
 
   // Storage for the range for each axis for each memory segment (associated with each core).
      arraySectionRanges[0] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
      arraySectionRanges[1] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
      arraySectionRanges[2] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
+
+     for (int core = 0; core < numberOfCores; core++)
+        {
+          coreArray[core] = new Core<T>();
+          arraySectionRanges[0][core].first = arraySectionRanges[0][core].second = 0;
+          arraySectionRanges[1][core].first = arraySectionRanges[1][core].second = 0;
+          arraySectionRanges[2][core].first = arraySectionRanges[2][core].second = 0;
+        }
+
 
      assert(arraySectionRanges[0].size() == (size_t)numberOfCores);
      assert(arraySectionRanges[1].size() == (size_t)numberOfCores);
@@ -2386,10 +2093,6 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
           arraySectionPointers[core] = NULL;
           assert(arraySectionPointers[core] == NULL);
         }
-
-#if 0
-     printf ("Calling computeArraySectionDistribution() \n");
-#endif
 
      assert(coreArraySize[0] > 0);
      assert(coreArraySize[1] > 0);
@@ -2505,9 +2208,6 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
      haloSize[1] = 0;
      haloSize[2] = 0;
      boundaryType = MulticoreArray<T>::remote ; 
-#if 0
-     printf ("In MulticoreArray<T> constructor arraySize = (%d,%d,%d) numberOfCores = %d useTableBasedDistribution = %s \n",arraySize[0],arraySize[1],arraySize[2],numberOfCores,useTableBasedDistribution ? "true" : "false");
-#endif
 
   // We want to assume at least a non-zero length array (for not at least while debugging).
      assert(arraySize_I > 0);
@@ -2522,17 +2222,22 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
      arraySectionPointers = new T*[numberOfCores];
      assert(arraySectionPointers != NULL);
 
+  // Storage for the range for each axis for each memory segment (associated with each core).
+     arraySectionRanges[0] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
+     arraySectionRanges[1] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
+     arraySectionRanges[2] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
+
      coreArray = new Core<T>*[numberOfCores];
      assert(coreArray != NULL);
      for (int core = 0; core < numberOfCores; core++)
         {
           coreArray[core] = new Core<T>();
+          arraySectionRanges[0][core].first = arraySectionRanges[0][core].second = 0;
+          arraySectionRanges[1][core].first = arraySectionRanges[1][core].second = 0;
+          arraySectionRanges[2][core].first = arraySectionRanges[2][core].second = 0;
         }
 
-  // Storage for the range for each axis for each memory segment (associated with each core).
-     arraySectionRanges[0] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
-     arraySectionRanges[1] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
-     arraySectionRanges[2] = std::vector<std::pair<size_t,size_t> >(numberOfCores);
+
 
      assert(arraySectionRanges[0].size() == (size_t)numberOfCores);
      assert(arraySectionRanges[1].size() == (size_t)numberOfCores);
@@ -2554,10 +2259,6 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
           assert(arraySectionPointers[core] == NULL);
         }
 
-#if 0
-     printf ("Calling computeArraySectionDistribution() \n");
-#endif
-
      assert(coreArraySize[0] > 0);
      assert(coreArraySize[1] > 0);
      assert(coreArraySize[2] > 0);
@@ -2565,16 +2266,8 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
   // This is a NOP in the case of an algorithm-based distribution.
      computeArraySectionDistribution();
 
-#if 0
-     printf ("Calling allocateMemorySectionsPerCore() \n");
-#endif
-
   // Allocate memory per core (uses libnuma if available).
      allocateMemorySectionsPerCore();
-
-#if 0
-     printf ("Calling verifyArraySize() \n");
-#endif
 
   // Error Checking: make sure we have only allocated an array of the correct size (tests logic).
      verifyArraySize();
@@ -2582,27 +2275,13 @@ MulticoreArray<T>::MulticoreArray(int arraySize_I, int arraySize_J, int arraySiz
   // More verification support.
      verifyMultidimensionalCoreArray();
 
-#if 0
-     printf ("Calling distanceBetweenMemoryAllocatedPerCore() \n");
-#endif
-
   // Debugging: check the distance (bytes) between memory segments allocated for each core.
      distanceBetweenMemoryAllocatedPerCore();
-
-#if 0
-     printf ("In MulticoreArray<T> constructor: data pointers allocated \n");
-#endif
 
   // Initialize the allocated memory.
      initializeDataPlusPadding();
 
      const int firstCoreIndex = 0;
-
-#if 0
-     printf ("In constructor: arraySectionSizes[0][firstCoreIndex=%d] = %d \n",firstCoreIndex,arraySectionSizes[0][firstCoreIndex]);
-     printf ("In constructor: arraySectionSizes[1][firstCoreIndex=%d] = %d \n",firstCoreIndex,arraySectionSizes[1][firstCoreIndex]);
-     printf ("In constructor: arraySectionSizes[2][firstCoreIndex=%d] = %d \n",firstCoreIndex,arraySectionSizes[2][firstCoreIndex]);
-#endif
 
   // There should be a valid size for an array (not a zero length array).
      assert(useTableBasedDistribution == false || arraySectionSizes[0][firstCoreIndex] > 0);
@@ -3242,7 +2921,7 @@ else if(boundaryType == MulticoreArray<T>::detached)
 }
 else
 {
-printf ("Error: haloExchange is not allowed in this mode \n");
+  printf ("Error: haloExchange is not allowed in this mode \n");
   
 }
 }

@@ -1,5 +1,5 @@
-edge definition:SgInitializedName:x:SgVariableDeclaration:int x = 2;  use:SgVarRefExp:x:SgExprStatement:x = x + 4;  
-edge definition:SgVarRefExp:x:SgExprStatement:x += 5; 
-edge definition:SgVarRefExp:x:SgExprStatement:x = x + 4;  use:SgVarRefExp:x:SgExprStatement:x += 5;  
-edge use:SgVarRefExp:x:SgExprStatement:x = x + 4; 
-edge use:SgVarRefExp:x:SgExprStatement:x += 5; 
+edge:definition:SgInitializedName:x:SgVariableDeclaration:int x = 2; ->use:SgVarRefExp:x:SgExprStatement:x = x + 4;  : 
+edge:definition:SgVarRefExp:x:SgExprStatement:x += 5; 
+edge:definition:SgVarRefExp:x:SgExprStatement:x = x + 4; ->use:SgVarRefExp:x:SgExprStatement:x += 5;  : 
+edge:use:SgVarRefExp:x:SgExprStatement:x = x + 4; 
+edge:use:SgVarRefExp:x:SgExprStatement:x += 5; 

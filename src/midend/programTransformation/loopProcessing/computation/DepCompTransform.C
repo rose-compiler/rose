@@ -11,8 +11,6 @@
 #include <GraphScope.h>
 #include <GraphIO.h>
 
-//#define DEBUG
-
 bool DebugRefFuse()
 {
   static int r = 0;
@@ -34,6 +32,14 @@ bool DebugCopySplit()
   static int r = 0;
   if (r == 0) {
      r = CmdOptions::GetInstance()->HasOption("-debugcopysplit")? 1 : -1; 
+  }
+  return r == 1;
+}
+bool DebugLoopDist()
+{
+  static int r = 0;
+  if (r == 0) {
+     r = CmdOptions::GetInstance()->HasOption("-debugloopdist")? 1 : -1; 
   }
   return r == 1;
 }
@@ -75,12 +81,12 @@ operator()( LoopTreeDepComp& tc, LoopTreeNode *l, LoopTreeNodeIterator stmts)
   LoopTreeNodeList stmts1, stmts2;
 
   LoopTreeDepCompSubtree loopComp( tc, l);
-#ifdef DEBUG
-std::cerr << "***************From sub tree *******\n";
+if (DebugLoopDist()) {
+std::cerr << "***************Loop Distribution: From sub tree *******\n";
 loopComp.DumpTree();
 loopComp.DumpDep();
 std::cerr << "***************end sub tree *******\n";
-#endif
+}
   DepLinkedNodes( loopComp, stmts, GraphAccess::EdgeIn, stmts1);
   DepLinkedNodes( loopComp, stmts, GraphAccess::EdgeOut, stmts2);
 
@@ -101,18 +107,21 @@ operator() ( LoopTreeDepComp &tc, LoopTreeNode *l)
   typedef PtrSetWrap<LoopTreeNode> LoopTreeNodeSet;
 
   LoopTreeDepCompSubtree loopComp( tc, l);
-#ifdef DEBUG
-std::cerr << "***************From sub tree *******\n";
+if (DebugLoopDist()) {
+std::cerr << "**Loop distribution based on SCC analysis From sub tree *******\n";
 loopComp.DumpTree();
 loopComp.DumpDep();
 std::cerr << "***************end sub tree *******\n";
-#endif
+std::cerr << "***************original dependence graph *******\n";
+tc.DumpDep();
+}
   Result result;
 
   LoopTreeDepGraph *depGraph = loopComp.GetDepGraph();
   GraphAccessWrapTemplate<void,void,LoopTreeDepGraph> access(depGraph);
   SCCGraphCreate sccGraph( &access );
   sccGraph.TopoSort();
+  //write_graph(sccGraph, std::cerr, std::string("scc dump"));
 
   for ( GroupGraphCreate::NodeIterator sccIter = sccGraph.GetNodeIterator();
        !sccIter.ReachEnd(); sccIter++) {
@@ -131,6 +140,12 @@ std::cerr << "***************end sub tree *******\n";
       } 
     }
   }
+if (DebugLoopDist()) {
+std::cerr << "**After loop distribution *******\n";
+loopComp.DumpTree();
+loopComp.DumpDep();
+std::cerr << "***************end sub tree *******\n";
+}
   return result;
 }
 
@@ -447,8 +462,7 @@ CollectCopyArray( DepCompCopyArrayCollect& collect,
     curunit.root = collect.ComputeCommonRoot(curunit.refs);
     EnforceCopyRoot(curunit,refDep,cuts);
 
-    if (cuts.size() > 0) {
-       assert(cuts.size() < refs.size());
+    if (cuts.size() > 0 && cuts.size() < refs.size()) {
        refs -= cuts;
        collect.AddCopyArray().refs = cuts;
     }

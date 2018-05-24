@@ -31,6 +31,7 @@ void ReadAnnotation::read()
 void ReadAnnotation:: read( istream & in)
 {
   while (in.good()) {
+    peek_ch(in);
     string buf = read_id(in);
     
     if (buf == "class") {
@@ -39,10 +40,13 @@ void ReadAnnotation:: read( istream & in)
     else if (buf == "operator") {
         opInfo.read(in);
     }
-    else if (!in.good())
+    else if (buf == "variable") {
+        varInfo.read(in);
+    }
+    else if (buf=="" || !in.good())
       break;
     else if (in.good()) {
-      ReadError m("non-recognizable annotation: " + buf);
+      ReadError m("non-recognizable annotation: \"" + buf + "\"");
       cerr << m.msg << endl;
       throw m;
     }

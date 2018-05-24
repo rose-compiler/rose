@@ -263,7 +263,7 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
          return GetClassDefinition(isSgNamedType(isSgTypedefType(classtype)->get_base_type()));
     }
     SgDeclarationStatement *decl = classtype->get_declaration();
-    if (decl->variantT() == V_SgClassDeclaration) 
+    if (decl->variantT() == V_SgClassDeclaration || V_SgTemplateClassDeclaration) 
         return GetClassDefn(isSgClassDeclaration(decl));
     else {
        cerr << "unexpected class declaration type: " << decl->sage_class_name() << endl;
@@ -827,10 +827,15 @@ std::string AstInterface::unparseToString( const AstNodePtr& n)
   return ::unparseToString(s);
 }
 
-std::string AstInterface::AstToString( const AstNodePtr& n)
+std::string AstInterface::AstToString( const AstNodePtr& n, bool withClassName)
 { 
   SgNode* s = (SgNode*)n.get_ptr();
-  return string(s->sage_class_name()) + ":" + ::unparseToString(s);
+  if (s == 0) return "";
+  std::string res;
+  if (withClassName)
+    res =  string(s->sage_class_name()) + ":";
+  res = res + ::unparseToString(s);
+  return res;
 }
 
 // Return "@line_number:column_number" for an AST node  
@@ -1665,6 +1670,15 @@ SgNode* SkipCasting(SgNode*  exp)
     return exp;
 }
 
+std::string AstInterface::GetScopeName( const AstNodePtr& _scope)
+{
+  SgNode* s = AstNodePtrImpl(_scope).get_ptr();
+  SgScopeStatement* scope = isSgScopeStatement(s);
+  assert(scope != 0); 
+  return StripGlobalQualifier(scope->get_qualified_name().str());
+}
+
+
 string AstInterface::GetVarName( const AstNodePtr& _exp)
 {
   AstNodePtrImpl exp(_exp);
@@ -1998,27 +2012,6 @@ IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstList* index)
   return false;
 }
 
-/*
-bool AstInterface::
-IsArrayType( const AstNodeType& s, AstNodeType* base)
-{
-  if (s->variantT() ==  V_SgArrayType) {
-      if (base != 0) {
-        SgType* n = s;
-        while (true) {
-          SgArrayType *arr = isSgArrayType(n);
-          if (arr == 0)
-            break;
-          n = arr->get_base_type();
-        }
-        *base = n;
-      }
-      return true;
-  }
-  return false;
-}
-*/
-
 bool AstInterface::
 IsBinaryOp( const AstNodePtr& _exp, OperatorEnum* opr,
             AstNodePtr* opd1, AstNodePtr* opd2)
@@ -2341,9 +2334,30 @@ AstInterface::IsPointerType(const AstNodeType& __type)
   return type.get_ptr()->variantT() == V_SgPointerType;
 }
 
+/*
+bool AstInterface::
+IsArrayType( const AstNodeType& s, AstNodeType* base)
+{
+  if (s->variantT() ==  V_SgArrayType) {
+      if (base != 0) {
+        SgType* n = s;
+        while (true) {
+          SgArrayType *arr = isSgArrayType(n);
+          if (arr == 0)
+            break;
+          n = arr->get_base_type();
+        }
+        *base = n;
+      }
+      return true;
+  }
+  return false;
+}
+*/
+
 bool
 AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,
-                          AstNodeType* __base_type)
+                          AstNodeType* __base_type, std::string* annotation)
 {
   AstNodeTypeImpl type(__type);
   SgArrayType* t = isSgArrayType(type.get_ptr());
@@ -2354,6 +2368,15 @@ AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,
     (*__base_type) = AstNodeTypeImpl(t->get_base_type());
   if (__dim)
     (*__dim) = t->get_rank();
+  if (annotation != 0) {
+    SgDeclarationStatement *d = t->getAssociatedDeclaration ();
+/*
+    if (p != NULL) {
+      *annotation = p->getString();
+std::cerr << "ANNOTATION:" << *annotation << "\n";
+    } 
+*/
+  }
   return true;
 }
 

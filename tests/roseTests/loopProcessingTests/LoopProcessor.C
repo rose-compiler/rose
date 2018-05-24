@@ -3,7 +3,9 @@
 #include <LoopTransformInterface.h>
 #include <AnnotCollect.h>
 #include <OperatorAnnotation.h>
+#include <ArrayAnnot.h>
 #include <AstInterface_ROSE.h>
+#include <ArrayInterface.h>
 #include <AutoTuningInterface.h>
 //do not include the following files from rose.h
 #define CFG_ROSE_H
@@ -58,13 +60,20 @@ main ( int argc,  char * argv[] )
   vector<string> argvList(argv, argv + argc);
   CmdOptions::GetInstance()->SetOptions(argvList);
 
-  OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
-  funcAnnot->register_annot();
-  LoopTransformInterface::set_sideEffectInfo(funcAnnot);
+  ArrayAnnotation* array_annot = ArrayAnnotation::get_inst();
+  array_annot->register_annot();
+
+  //OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
+  //funcAnnot->register_annot();
+  LoopTransformInterface::set_sideEffectInfo(array_annot);
+
+  ArrayInterface anal(*array_annot);
+  LoopTransformInterface::set_arrayInfo(&anal);
 
   ReadAnnotation::get_inst()->read();
   if (DebugAnnot()) {
-    funcAnnot->Dump();
+   // funcAnnot->Dump();
+    array_annot->Dump();
   }
 
   AssumeNoAlias aliasInfo;

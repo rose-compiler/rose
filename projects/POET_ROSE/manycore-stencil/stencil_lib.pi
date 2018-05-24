@@ -30,8 +30,10 @@ include Loops.incl
 </xform>
 
 <code stencil_macro  pars=(dim,ivars,ivars_macro)>
+
 #define local_index@dim@D(@ExpList#ivars@,@ExpList#ivars_macro@) @gen_linearized_ref(ivars,ivars_macro)@
 #define otherCore_index@dim@D(@ExpList#ivars@,@ExpList#ivars_macro@) @gen_linearized_ref(ivars,ivars_macro)@
+
 </code>
 
 <code manycore_stencil_local_arr pars=(arr_name, dim, sub) >
