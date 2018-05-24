@@ -21,7 +21,8 @@ class ArrayInterface
   void ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy);
 
   virtual bool IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t);
-  bool IsArray( CPPAstInterface& fa, const AstNodePtr& s) ;
+  virtual bool IsArray( CPPAstInterface& fa, const AstNodePtr& s) ;
+  virtual bool IsUniqueArray( AstInterface& fa, const AstNodePtr& array);
   virtual bool IsArrayAccess( AstInterface& fa,
                                  const AstNodePtr& s, AstNodePtr* array = 0,
                                  AstInterface::AstNodeList* index = 0) ;
@@ -30,6 +31,7 @@ class ArrayInterface
                                  int dim, int &lb, int &ub) ;
   virtual AstNodePtr CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
                                 const AstNodeList& index);
+  virtual SymbolicVal CreateArrayAccess(const SymbolicVal&, const SymbolicVal&);
   bool get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& d);
  public:
   ArrayInterface( ArrayAnnotation& a) : aliasCollect(&a) {}

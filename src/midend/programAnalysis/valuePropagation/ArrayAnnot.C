@@ -225,6 +225,7 @@ void ArrayAnnotation:: register_annot()
    ValueAnnotation::get_inst()->register_annot();
    ReadAnnotation* op = ReadAnnotation::get_inst();
    op->add_TypeCollection(&arrays);
+   op->add_TypeCollection(&unique_arrays);
    op->add_TypeCollection(&arrayopt);
    op->add_OperatorCollection(&arrayConstruct);
    op->add_OperatorCollection(&arrayModify);
@@ -248,10 +249,32 @@ known_array_type( CPPAstInterface& fa, const AstNodeType& type, ArrayDefineDescr
   return arrays.known_type( fa, type, r);
 }
 
+
+bool ArrayAnnotation :: 
+known_unique_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* d)
+{
+   std::string varname; 
+   AstNodePtr scope;
+   if (!fa.IsVarRef(array,0,&varname,&scope)) return false;
+   if (scope != AST_NULL)
+      varname = fa.GetScopeName(scope)+"::"+varname;
+   if (unique_arrays.known_type(varname, d)) {
+      return true;
+   }
+  return false;
+}
+
 bool ArrayAnnotation ::
 known_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* r)
 {
-  return arrays.known_type( fa, array, r);
+  if (arrays.known_type( fa, array, r)) {
+    if (DebugArrayAnnot()) 
+       std::cerr << "Recognized array: " << AstInterface::AstToString(array) << "\n";
+    return true;
+  }
+  if (DebugArrayAnnot()) 
+       std::cerr << "Not recognizing array: " << AstInterface::AstToString(array) << "\n";
+  return false;
 }
 
 bool ArrayAnnotation ::
@@ -474,8 +497,7 @@ allow_alias(AstInterface& fa, const AstNodePtr& fc,
 bool ArrayAnnotation ::
 get_modify(AstInterface& _fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect)
-{
-  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
+{ CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
    if ( is_access_array_elem(fa, fc) || is_access_array_length(fa, fc)) 
       return true;
    AstNodePtr array;

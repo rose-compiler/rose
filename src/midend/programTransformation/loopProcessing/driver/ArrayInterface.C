@@ -2,6 +2,7 @@
 #include <CPPAstInterface.h>
 
 extern bool DebugAliasAnal();
+extern bool DebugArrayAnnot();
 
 void ArrayInterface::
 initialize( AstInterface& fa, const AstNodePtr& h)
@@ -373,7 +374,7 @@ impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
   {
     ArrayDefineDescriptor desc1;
     if (!ArrayAnnotation::get_inst()->known_array( fa, array, &desc1))
-      assert(false);
+        return AST_NULL;
     elem = desc1.get_elem();
   }
   elem.replace_var("this", SymbolicAstWrap(array));
@@ -415,6 +416,19 @@ bool ArrayInterface ::
 IsArray( CPPAstInterface& fa, const AstNodePtr& s)
 { 
   if ( ArrayAnnotation::get_inst()->known_array( fa, s))
+     return true;
+  return false;
+}
+
+bool ArrayInterface::
+IsUniqueArray( AstInterface& _fa, const AstNodePtr& s)
+{
+  if (DebugArrayAnnot()) {
+     std::cerr << "checking unique array:" << AstInterface::AstToString(s) << "\n";
+   }
+  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
+
+  if ( ArrayAnnotation::get_inst()->known_unique_array( fa, s))
      return true;
   return false;
 }
@@ -471,6 +485,11 @@ GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
 
 typedef std::map<SgFunctionDefinition *, ArrayInterface *> ArrayInterfaceMapT;
 static ArrayInterfaceMapT instMap;
+
+SymbolicVal ArrayInterface::CreateArrayAccess(const SymbolicVal& v1, const SymbolicVal& v2)
+{
+  return new SymbolicFunction(AstInterface::OP_ARRAY_ACCESS, "ArrayAccess", v1, v2); 
+}
 
 ArrayInterface * ArrayInterface::
 get_inst( ArrayAnnotation& a, AstInterface& fa, SgFunctionDefinition* funcDef, const AstNodePtr& node)

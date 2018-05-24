@@ -176,6 +176,19 @@ class ArrayCollection
     { std::cerr << "arrays: \n"; BaseClass::Dump(); }
 };
 
+class UniqueArrayCollection 
+  : public TypeAnnotCollection< ArrayDefineDescriptor>,
+    public CPPTypeCollection< ArrayDefineDescriptor>
+{
+   typedef TypeAnnotCollection< ArrayDefineDescriptor > BaseClass;
+  virtual bool read_annot_name( const std::string& annotName) const 
+    { return annotName == "unique_array"; }
+ public:
+  UniqueArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
+  void Dump() const 
+    { std::cerr << "unique arrays: \n"; BaseClass::Dump(); }
+};
+
 class ArrayOptCollection : public TypeAnnotCollection< ArrayOptDescriptor>
 {
   typedef TypeAnnotCollection< ArrayOptDescriptor > BaseClass;
@@ -217,6 +230,7 @@ class ArrayAnnotation
 {
   //map <std::string, OperatorDeclaration> decl;
   ArrayCollection arrays;
+  UniqueArrayCollection unique_arrays;
   ArrayOptCollection arrayopt;
   ArrayModifyOpCollection arrayModify;
   ArrayConstructOpCollection arrayConstruct;
@@ -240,6 +254,7 @@ class ArrayAnnotation
   void Dump() const;
 
   bool known_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* d = 0);
+  bool known_unique_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* d = 0);
   bool known_array_type(CPPAstInterface& fa,  const AstNodeType& array, ArrayDefineDescriptor* d = 0);
   bool has_array_opt( CPPAstInterface& fa, const AstNodePtr array, ArrayOptDescriptor* d = 0);
 
