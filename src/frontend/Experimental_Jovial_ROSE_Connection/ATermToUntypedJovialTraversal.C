@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 0
+#define PRINT_ATERM_TRAVERSAL 1
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -1281,13 +1281,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_AbortStatement(ATerm term, SgUnty
          // MATCHED LabelList
       } else return ATfalse;
 
-      // TODO - construct untyped node for AbortStatement
-      // SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
-      // setSourcePosition(abort_stmt, term);
-      // TODO - add new node to stmt_list
-      // stmt_list->get_stmt_list().push_back(abort_stmt);
+      SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
+      setSourcePosition(abort_stmt, term);
 
-      return ATfalse;
+      stmt_list->get_stmt_list().push_back(abort_stmt);
+
    }
    else return ATfalse;
 
