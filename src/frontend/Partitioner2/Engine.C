@@ -2014,8 +2014,15 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
 void
 Engine::disassembleForRoseFrontend(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
-    ASSERT_not_null(interp->get_map());
     ASSERT_require(interp->get_global_block() == NULL);
+
+    if (interp->get_map() == NULL) {
+        mlog[WARN] <<"no virtual memory to disassemble for";
+        BOOST_FOREACH (SgAsmGenericFile *file, interp->get_files())
+            mlog[WARN] <<" \"" <<StringUtility::cEscape(file->get_name()) <<"\"";
+        mlog[WARN] <<"\n";
+        return;
+    }
 
     Engine engine;
     engine.memoryMap(interp->get_map()->shallowCopy()); // copied so we can make local changes
