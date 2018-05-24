@@ -39,8 +39,16 @@ class LoopTreeBuild : public ProcessAstTree
                      const AstNodePtr& body1, const AstNodePtr& body2,
                       AstInterface::TraversalVisitType t)
     { 
-        if (t == AstInterface::PreVisit) return ProcessStmt(fa, s); 
-         return true;
+       if (t == AstInterface::PreVisit) {
+            LoopTreeIfCond* result = lt->CreateIfCond(cond); 
+            result->Link(cur, LoopTreeNode::AsLastChild);
+            cur = result;
+       }
+       else {
+          if (cur != lt->GetTreeRoot())
+             cur = cur->Parent();
+       }
+       return ProcessAstTree::ProcessIf(fa, s, cond, body1, body2, t);
     }
 
   bool ProcessGoto( AstInterface &fa, const AstNodePtr& start, 

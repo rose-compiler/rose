@@ -104,7 +104,7 @@ public:
   ~AstInterface() {}
   AstInterfaceImpl* get_impl() { return impl; }
 
-  static std::string AstToString( const AstNodePtr& s);
+  static std::string AstToString( const AstNodePtr& s, bool unparseClassName=true);
   static std::string getAstLocation( const AstNodePtr& s);
   static std::string unparseToString( const AstNodePtr& s);
   AstNodePtr GetRoot() const;
@@ -166,7 +166,7 @@ public:
                          const AstNodePtr& ub, const AstNodePtr& step, 
                          const AstNodePtr& stmts, bool negativeStep);
 
-  bool IsIf( const AstNodePtr& s, AstNodePtr* cond = 0, 
+  static bool IsIf( const AstNodePtr& s, AstNodePtr* cond = 0, 
                        AstNodePtr* truebody = 0, AstNodePtr* falsebody = 0);
 
   ///  Creates if-else-statement, or if-statement (if \a __else_stmt is null).
@@ -236,6 +236,7 @@ public:
                     bool *isglobal = 0) ;
 
   static std::string GetVarName( const AstNodePtr& exp);
+  static std::string GetScopeName( const AstNodePtr& scope);
 
   bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
 
@@ -253,7 +254,7 @@ public:
 
   bool IsScalarType(const AstNodeType& t);
   bool IsPointerType(const AstNodeType& t);
-  static bool IsArrayType(const AstNodeType& t, int* dim = 0, AstNodeType* base = 0);
+  static bool IsArrayType(const AstNodeType& t, int* dim = 0, AstNodeType* base = 0, std::string* annotation=0);
 
   AstNodeType GetType(const std::string& name);
   bool IsCompatibleType( const AstNodeType& t1, const AstNodeType& t2);

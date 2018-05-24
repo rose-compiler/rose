@@ -187,6 +187,7 @@ class LoopTreeDepComp
   void Dump() const;
   void DumpTree() const;
   void DumpDep() const;
+  void OutputDep() const;
   void DumpNode( LoopTreeNode *s) const;
 };
 

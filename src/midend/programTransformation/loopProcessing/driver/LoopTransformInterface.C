@@ -29,6 +29,17 @@ extern bool LoopTransformation(const AstNodePtr& head, AstNodePtr& result);
 // Helper Functions //
 //////////////////////
 
+bool ArrayUseAccessFunction:: 
+IsUniqueArray( AstInterface& fa, const AstNodePtr& array)
+{
+  if (prev != 0 &&  prev->IsUniqueArray(fa, array))
+       return true;
+  AstNodeType t;
+  if (!fa.IsVarRef(array, &t)) assert(0);
+  
+  return false;
+}
+
 bool ArrayUseAccessFunction::
 IsArrayAccess( AstInterface& fa, const AstNodePtr& s, AstNodePtr* array, 
                                  AstInterface::AstNodeList* index) 
@@ -104,27 +115,33 @@ CreateArrayAccess( const SymbolicVal& arr, const SymbolicVal& index)
 AstNodePtr LoopTransformInterface::
 CreateArrayAccess( const AstNodePtr& arr, AstInterface::AstList& index) 
   { assert(fa != 0);
-    if (arrayInfo != 0){ return arrayInfo->CreateArrayAccess(*fa,arr,index); }
-    else {
-       AstNodePtr res = arr;
+    AstNodePtr res;
+    if (arrayInfo != 0){ 
+        res = arrayInfo->CreateArrayAccess(*fa,arr,index); }
+    if (res == AST_NULL) {
+       res = arr;
        for (AstNodeList::const_reverse_iterator p = index.rbegin(); 
             p != index.rend(); ++p) 
          { res = AstInterface::CreateArrayAccess(res, *p); }
-       return res;
     }
+    return res;
   }
 
 AstNodePtr ArrayUseAccessFunction::
 CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
                                 const AstNodeList& index)
 {
+  AstNodePtr r;
   if (prev != 0)
-     return prev->CreateArrayAccess(fa, arr, index);
-  AstNodeList nindex;
-  nindex.push_back(arr.get_ptr());
-  for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p) 
-     nindex.push_back(*p);
-  return fa.CreateFunctionCall(funcname,nindex.begin(), nindex.end()) ;
+     r =  prev->CreateArrayAccess(fa, arr, index);
+  if (r == AST_NULL) {
+    AstNodeList nindex;
+    nindex.push_back(arr.get_ptr());
+    for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p) 
+       nindex.push_back(*p);
+    r = fa.CreateFunctionCall(funcname,nindex.begin(), nindex.end()) ;
+  }
+  return r;
 }
 
 AstNodePtr LoopTransformInterface::
@@ -188,6 +205,7 @@ cmdline_configure(std::vector<std::string>& argv)
              name =  unknown[++index];
            else name = opt.substr(7);
            ArrayUseAccessFunction* r = new ArrayUseAccessFunction(name, arrayInfo, funcInfo);
+//std::cerr << "SETTING ARR FUNC\n";
            funcInfo = r;
            arrayInfo = r;
            if (tuning != 0) tuning->set_arrayInfo(*r);

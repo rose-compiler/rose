@@ -361,7 +361,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
        assert(false);
      }
   }
-  else if (fa.IsFunctionCall(exp, &s1, &l)) { 
+  else if (fa.IsFunctionCall(exp, &s1, &l) || fa.IsArrayAccess(exp, &s1, &l)) { 
      bool ismin = fa.IsMin(s1), ismax = fa.IsMax(s1);
      AstInterface::AstNodeList::const_iterator p = l.begin();
      if (ismin || ismax) {
@@ -374,7 +374,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
        }
        return v;
      }
-     if (fa.IsVarRef(exp, 0, &name)) {    
+     if (fa.IsVarRef(s1, 0, &name)) {    
         SymbolicFunction::Arguments args;
         for ( ; p != l.end(); ++p) { 
            SymbolicVal cur = GetSymbolicVal(fa, *p);
@@ -382,6 +382,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         }
         return new SymbolicFunction( AstInterface::OP_NONE, name, args);
      }
+     assert(0);
   } 
   return new SymbolicAstWrap(exp);
 }
