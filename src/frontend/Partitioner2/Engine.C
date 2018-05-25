@@ -19,6 +19,7 @@
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
+#include <Sawyer/FileSystem.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Stopwatch.h>
 
@@ -192,6 +193,42 @@ Engine::loaderSwitches() {
                    "@v{addr} is constant memory, then the \"jmp\" has a single constant successor; if @v{addr} is "
                    "non-constant but initialized, then the \"jmp\" will have a single constant successor and indeterminate "
                    "successors; otherwise it will have only indeterminate successors."));
+
+    sg.insert(Switch("link-objects")
+              .intrinsicValue(true, settings_.loader.linkObjectFiles)
+              .doc("Object files (\".o\" files) typically don't contain information about how the object is mapped into "
+                   "virtual memory, and thus machine instructions are not found. This switch causes the linker to be run "
+                   "on all the object files mentioned on the command line and, if successful, the output file is "
+                   "analyzed instead of the objects.  The linker command is specified with the @s{linker} switch. The "
+                   "@s{no-link-objects} switch disables linking object files. The default is to " +
+                   std::string(settings_.loader.linkObjectFiles ? "" : "not ") + "perform the link."));
+    sg.insert(Switch("no-link-objects")
+              .key("link-objects")
+              .intrinsicValue(false, settings_.loader.linkObjectFiles)
+              .hidden(true));
+
+    sg.insert(Switch("link-archives")
+              .intrinsicValue(true, settings_.loader.linkStaticArchives)
+              .doc("Library archives (\".a\" files) contain object files that typically don't contain information about "
+                   "how the object is mapped into virtual memory, and thus machine instructions are not found. This switch "
+                   "causes the linker to be run on all the library archives mentioned on the command line and, if successful, "
+                   "the output file is analyzed instead of the archives.  The linker command is specified with the @s{linker} "
+                   "switch. The @s{no-link-archives} switch disables linking archives. The default is to " +
+                   std::string(settings_.loader.linkStaticArchives ? "" : "not ") + "perform the link."));
+    sg.insert(Switch("no-link-archives")
+              .key("link-archives")
+              .intrinsicValue(false, settings_.loader.linkStaticArchives)
+              .hidden(true));
+
+    sg.insert(Switch("linker")
+              .argument("command", anyParser(settings_.loader.linker))
+              .doc("Shell command that runs the linker if object files and/or library archives are being linked.  The command "
+                   "should include two special variables: \"%o\" is replaced by the name of the output file, and \"%f\" is "
+                   "replaced by a space-separated list of input files (object files and/or library archives) in the same order "
+                   "that they were specified on the command-line.  Since the substituted files names are properly escaped using "
+                   "Bourne shell syntax, the \"%o\" and \"%f\" should not appear in quotes. If the linker fails, the object "
+                   "and archive files are processed without linking.  The default link command is \"" +
+                   StringUtility::cEscape(settings_.loader.linker) + "\"."));
 
     return sg;
 }
@@ -777,6 +814,28 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
             }
         }
 
+        // Try to link .o and .a files
+        Sawyer::FileSystem::TemporaryFile linkerOutput;
+        std::vector<std::string> filesToLink, nonLinkedFiles;
+        if (!settings_.loader.linker.empty()) {
+            BOOST_FOREACH (const std::string &file, frontendNames) {
+                if (settings_.loader.linkObjectFiles && ModulesElf::isObjectFile(file)) {
+                    filesToLink.push_back(file);
+                } else if (settings_.loader.linkStaticArchives && ModulesElf::isStaticArchive(file)) {
+                    filesToLink.push_back(file);
+                } else {
+                    nonLinkedFiles.push_back(file);
+                }
+            }
+            if (!filesToLink.empty()) {
+                linkerOutput.stream().close();      // will be written by linker command
+                if (ModulesElf::tryLink(settings_.loader.linker, linkerOutput.name().native(), filesToLink, mlog[WARN])) {
+                    frontendNames = nonLinkedFiles;
+                    frontendNames.push_back(linkerOutput.name().native());
+                }
+            }
+        }
+
         // Process through ROSE's frontend()
         if (!frontendNames.empty()) {
             std::vector<std::string> frontendArgs;
@@ -1111,7 +1170,7 @@ Engine::createBarePartitioner() {
         p.basicBlockCallbacks().append(Modules::PreventDiscontiguousBlocks::instance());
     if (settings_.partitioner.maxBasicBlockSize > 0)
         p.basicBlockCallbacks().append(Modules::BasicBlockSizeLimiter::instance(settings_.partitioner.maxBasicBlockSize));
-        
+
     // PEScrambler descrambler
     if (settings_.partitioner.peScramblerDispatcherVa) {
         ModulesPe::PeDescrambler::Ptr cb = ModulesPe::PeDescrambler::instance(settings_.partitioner.peScramblerDispatcherVa);
