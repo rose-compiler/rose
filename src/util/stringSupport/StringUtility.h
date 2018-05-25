@@ -42,6 +42,10 @@ ROSE_UTIL_API std::string htmlEscape(const std::string&);
  *  resulting string. */
 ROSE_UTIL_API std::string cEscape(const std::string&);
 
+/**  Escapes characters that are special to the Bourne shell.
+ *
+ *   Assumes that the context is outside of any quoting and possibly adds quotes. */
+ROSE_UTIL_API std::string bourneEscape(const std::string&);
 
 // [Robb Matzke 2016-05-06]: I am deprecating escapeNewLineCharaters because:
 //   1. Its name is spelled wrong: "Charater"
