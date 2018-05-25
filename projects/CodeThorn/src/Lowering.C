@@ -37,8 +37,7 @@ namespace SPRAY {
     }
   }
 
-  // Given 'Type x=init;' is transformed into 'Type x;' and returns 'x=init;'
-  // return nullptr if provided declaration is in global scope (cannot be normalized)
+
   SgStatement* Lowering::buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl) {
     ROSE_ASSERT(varDecl);
     // check that variable is within a scope where it can be normalized
@@ -159,7 +158,7 @@ namespace SPRAY {
 
   void Lowering::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
     if(isSgPntrArrRefExp(expr)) {
-        // TODO: evaluate index-expressions
+        // TODO: normalize index-expressions
     } else if(SgAssignOp* assignOp=isSgAssignOp(expr)) {
       //TODO: normalize subexpressions of LHS
       //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
@@ -169,8 +168,8 @@ namespace SPRAY {
       //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)));
     } else if(SgNodeHelper::isPrefixIncDecOp(expr)||SgNodeHelper::isPostfixIncDecOp(expr)) {
-      /* TODO: ++,-- operators may need to be moved in the generated assignment sequence
-         and replaced with +=/-=.
+      /* TODO: ++,-- prefix operators may need to be moved in the generated assignment sequence
+         and replaced with +=/-=. postfix may require additional temp var.
       */
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
     } else if(isSgBinaryOp(expr)) {
