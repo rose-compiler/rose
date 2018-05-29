@@ -60,6 +60,9 @@ namespace SPRAY {
     size_t inlineFunctions(SgNode* root);
     static void setLabelPrefix(std::string prefix);
     static std::string newLabelName();
+    /* normalize all Expressions in AST. The original variables remain
+     * in the program and are assign the last value of the sequence of
+     * operations of an expression. */
     void normalizeExpressions(SgNode* node);
     // enable/disable inling. By default off.
     void setInliningOption(bool flag);

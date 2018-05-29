@@ -1231,6 +1231,12 @@ int main( int argc, char * argv[] ) {
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
 
     // perform inlining before variable ids are computed, because variables are duplicated by inlining.
+    if(args.getBool("normalize")) {
+      Lowering lowering;
+      lowering.normalizeExpressions(sageProject);
+      logger[TRACE]<<"STATUS: normalized expressions"<<endl;
+    }
+    // perform inlining before variable ids are computed, because variables are duplicated by inlining.
     if(args.getBool("inline")) {
       Lowering lowering;
       size_t numInlined=lowering.inlineFunctions(sageProject);
@@ -1239,6 +1245,7 @@ int main( int argc, char * argv[] ) {
 
     if(args.getBool("unparse")) {
       sageProject->unparse(0,0);
+      exit(0);
     }
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);

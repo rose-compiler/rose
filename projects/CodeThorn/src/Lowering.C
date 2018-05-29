@@ -179,12 +179,22 @@ namespace SPRAY {
     } else if(isSgUnaryOp(expr)) {
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
       generateTmpVarAssignment(stmt,expr);
-    } else if(isSgFunctionCallExp(expr)) {
+    } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
       SgExpressionPtrList& expList=SgNodeHelper::getFunctionCallActualParameterList(expr);
       for(SgExpressionPtrList::iterator i=expList.begin();i!=expList.end();++i) {
         normalizeExpression(stmt,*i);
       }
-      generateTmpVarAssignment(stmt,expr);
+      // check if function has a return value
+      SgType* functionReturnType=funCallExp->get_type();
+      //cout<<"DEBUG: function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
+
+      // generate tmp var only if return value exists and it is used (i.e. there exists an expression as parent).
+      SgNode* parentNode=funCallExp->get_parent();
+      if(!isSgTypeVoid(functionReturnType)
+         &&  isSgExpression(parentNode)
+         && !isSgExpressionRoot(parentNode)) {
+        generateTmpVarAssignment(stmt,expr);
+      }
     }
   }
   
