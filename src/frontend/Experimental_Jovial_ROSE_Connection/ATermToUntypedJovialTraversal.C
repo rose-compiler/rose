@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 1
+#define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -142,8 +142,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
          assert(function_scope != NULL);
       } else return ATfalse;
 
-      std::cout << "MAIN_PROGRAM_MODULE:\n";
-
       std::string label = "";
 
       SgUntypedInitializedNameList* param_list = new SgUntypedInitializedNameList();
@@ -232,11 +230,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
          // MATCHED LabelList
       } else return ATfalse;
 
+#if 0
       std::cout << "PROGRAM BODY\n";
       std::cout << "  # decls = " << decl_list->get_decl_list().size() << "\n";
       std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
       std::cout << "  # funcs = " << func_list->get_func_list().size() << "\n";
       std::cout << "  #labels = " <<     labels.size() << "\n\n";
+#endif
 
    // TODO - need list for labels in untyped IR
       assert(labels.size() <= 1);

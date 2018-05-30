@@ -16,6 +16,8 @@
 #include "UntypedJovialTraversal.h"
 #include "UntypedJovialConverter.h"
 
+#define DEBUG_EXPERIMENTAL_JOVIAL 0
+
 int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
      int status;
@@ -30,22 +32,21 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
   // ------
      std::string commandString = stratego_bin_path + "/sglri";
 
+  // Add path to the parse table (located in the source tree)
+     std::string parse_table_path = "src/3rdPartyLibraries/experimental-jovial-parser/share/rose";
+     parse_table = findRoseSupportPathFromSource(parse_table_path, "share/rose") + "/Jovial.tbl";
+     commandString += " -p " + parse_table;
+
   // Filename is obtained from the source-file object
      std::string filenameWithPath = sg_source_file->getFileName();
      std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(filenameWithPath);
      commandString += " -i " + filenameWithPath;
-
-  // Add path to the parse table (located in the source tree)
-     std::string parse_table_path = "src/3rdPartyLibraries/experimental-jovial-parser/bin/Jovial.tbl";
-     parse_table = findRoseSupportPathFromSource(parse_table_path, "bin");
-     commandString += " -p " + parse_table;
 
   // Add source code location information to output
      commandString += " --preserve-locations";
 
   // Output the transformed aterm file
      commandString += " -o " + filenameWithoutPath + ".aterm";
-     std::cout << "PARSER command: " << commandString << "\n";
 
   // Make system call to run parser and output ATerm parse-tree file
      status = system(commandString.c_str());
@@ -63,7 +64,10 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
      std::string aterm_filename = filenameWithoutPath + ".aterm";
 
+#if DEBUG_EXPERIMENTAL_JOVIAL
+     std::cout << "PARSER command: " << commandString << "\n";
      std::cout << "OPENING ATerm parse-tree file " << aterm_filename << "\n";
+#endif
 
   // Read the ATerm file that was created by the parser
      FILE * file = fopen(aterm_filename.c_str(), "r");
@@ -76,7 +80,9 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      ATerm module_term = ATreadFromTextFile(file);
      fclose(file);
 
+#if DEBUG_EXPERIMENTAL_JOVIAL
      std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
+#endif
 
      ATermSupport::ATermToUntypedJovialTraversal* aterm_traversal = NULL;
 
@@ -88,7 +94,9 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
            return 1;
         }
 
+#if DEBUG_EXPERIMENTAL_JOVIAL
      std::cout << "\nSUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
+#endif
 
   // Rasmussen (11/9/17): Create a dot file.  This is temporary or should
   // at least be a rose option.
