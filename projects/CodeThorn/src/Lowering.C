@@ -167,11 +167,6 @@ namespace SPRAY {
       //TODO: normalize subexpressions of LHS
       //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)));
-    } else if(SgNodeHelper::isPrefixIncDecOp(expr)||SgNodeHelper::isPostfixIncDecOp(expr)) {
-      /* TODO: ++,-- prefix operators may need to be moved in the generated assignment sequence
-         and replaced with +=/-=. postfix may require additional temp var.
-      */
-      normalizeExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
     } else if(isSgBinaryOp(expr)) {
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)));
