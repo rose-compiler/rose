@@ -196,6 +196,12 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalMinusMinusOp(SgMinusMinusOp* node, 
+                                                    SingleEvalResultConstInt operandResult, 
+                                                    EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPlusPlusOp(SgPlusPlusOp* node, 
+                                                  SingleEvalResultConstInt operandResult, 
+                                                  EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                                            SingleEvalResultConstInt operandResult, 
                                                            EState estate, bool useConstraints);
