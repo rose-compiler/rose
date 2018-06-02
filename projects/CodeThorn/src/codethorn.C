@@ -269,7 +269,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("csv-spot-ltl", po::value< string >(), "Output SPOT's LTL verification results into a CSV file <arg>.")
     ("csv-stats-size-and-ltl",po::value< string >(),"Output statistics regarding the final model size and results for LTL properties into a CSV file <arg>.")
     ("check-ltl", po::value< string >(), "Take a text file of LTL I/O formulae <arg> and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
-    ("single-property", po::value< int >(), "Number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify an input property file).")
+    ("single-property", po::value< int >(), "Number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify a input property file).")
     ("counterexamples-with-output", po::value< bool >()->default_value(false)->implicit_value(true), "Reported counterexamples for LTL or reachability properties also include output values.")
     ("inf-paths-only", po::value< bool >()->default_value(false)->implicit_value(true), "Recursively prune the transition graph so that only infinite paths remain when checking LTL properties.")
     ("io-reduction", po::value< int >(), "(work in progress) Reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
@@ -371,6 +371,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3.")
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
+    ("check-null-pointer",po::value< bool >()->default_value(false)->implicit_value(false),"Perform null pointer analysis.");
     ;
 
   rersOptions.add_options()
@@ -1222,27 +1223,31 @@ int main( int argc, char * argv[] ) {
 
     vector<string> argvList(argv,argv+argc);
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
-      logger[TRACE]<<"INFO: using OpenMP AST."<<endl;
+      logger[TRACE]<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
+    logger[TRACE] << "Parsing and creating AST: finished."<<endl;
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
-    logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
-
-    // perform inlining before variable ids are computed, because variables are duplicated by inlining.
+    /* perform inlining before variable ids are computed, because
+       variables are duplicated by inlining. */
     Lowering lowering;
-    if(args.count("inline")) {
-      size_t numInlined=lowering.inlineFunctions(sageProject);
-      logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
-    }
-    if(args.count("normalize")) {
+    if(args.getBool("normalize")) {
       lowering.normalizeExpressions(sageProject);
-      logger[TRACE]<<"STATUS: normalized expressions."<<endl;
+      logger[TRACE]<<"STATUS: normalized expressions"<<endl;
+    }
+
+    /* perform inlining before variable ids are computed, because
+     * variables are duplicated by inlining. */
+    if(args.getBool("inline")) {
+      size_t numInlined=lowering.inlineFunctions(sageProject);
+      logger[TRACE]<<"inlined "<<numInlined<<" functions"<<endl;
     }
 
     if(args.getBool("unparse")) {
       sageProject->unparse(0,0);
+      exit(0);
     }
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);

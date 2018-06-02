@@ -37,8 +37,7 @@ namespace SPRAY {
     }
   }
 
-  // Given 'Type x=init;' is transformed into 'Type x;' and returns 'x=init;'
-  // return nullptr if provided declaration is in global scope (cannot be normalized)
+
   SgStatement* Lowering::buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl) {
     ROSE_ASSERT(varDecl);
     // check that variable is within a scope where it can be normalized
@@ -159,7 +158,7 @@ namespace SPRAY {
 
   void Lowering::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
     if(isSgPntrArrRefExp(expr)) {
-        // TODO: evaluate index-expressions
+        // TODO: normalize index-expressions
     } else if(SgAssignOp* assignOp=isSgAssignOp(expr)) {
       //TODO: normalize subexpressions of LHS
       //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
@@ -168,11 +167,6 @@ namespace SPRAY {
       //TODO: normalize subexpressions of LHS
       //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)));
-    } else if(SgNodeHelper::isPrefixIncDecOp(expr)||SgNodeHelper::isPostfixIncDecOp(expr)) {
-      /* TODO: ++,-- operators may need to be moved in the generated assignment sequence
-         and replaced with +=/-=.
-      */
-      normalizeExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
     } else if(isSgBinaryOp(expr)) {
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)));
@@ -180,12 +174,22 @@ namespace SPRAY {
     } else if(isSgUnaryOp(expr)) {
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
       generateTmpVarAssignment(stmt,expr);
-    } else if(isSgFunctionCallExp(expr)) {
+    } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
       SgExpressionPtrList& expList=SgNodeHelper::getFunctionCallActualParameterList(expr);
       for(SgExpressionPtrList::iterator i=expList.begin();i!=expList.end();++i) {
         normalizeExpression(stmt,*i);
       }
-      generateTmpVarAssignment(stmt,expr);
+      // check if function has a return value
+      SgType* functionReturnType=funCallExp->get_type();
+      //cout<<"DEBUG: function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
+
+      // generate tmp var only if return value exists and it is used (i.e. there exists an expression as parent).
+      SgNode* parentNode=funCallExp->get_parent();
+      if(!isSgTypeVoid(functionReturnType)
+         &&  isSgExpression(parentNode)
+         && !isSgExpressionRoot(parentNode)) {
+        generateTmpVarAssignment(stmt,expr);
+      }
     }
   }
 

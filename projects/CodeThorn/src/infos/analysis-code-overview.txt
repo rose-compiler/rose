@@ -68,3 +68,16 @@ FILES:
     * DFAnalysisBase::run(...)
   - projects/CodeThorn/src/Flow.{h|C}
     * Flow::getTopologicalSortedEdgeList (...)
+
+* Lowering/Normalization
+- convert break stmts to goto+label (covers: for,while,switch)
+- convert expressions to list of assignments for each subexpression
+TODO:
+- convert continue stmts to goto+label (for,while)
+- MODE: make normalization dependent on the existence of function calls and inc/dec operators.
+- alternative: convert for/while without lowering:
+  keeping all continue/breaks in while, for
+  while(C) {...} ==> t=C;while(t) { ... t=C; }
+  do { ... } while(C); ==> do { ... t=C; } while(t);
+  for(init,test,inc) { ... } ==> init;while(test) { ... inc;}
+
