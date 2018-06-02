@@ -1231,10 +1231,14 @@ int main( int argc, char * argv[] ) {
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
 
     // perform inlining before variable ids are computed, because variables are duplicated by inlining.
+    Lowering lowering;
     if(args.count("inline")) {
-      Lowering lowering;
       size_t numInlined=lowering.inlineFunctions(sageProject);
       logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
+    }
+    if(args.count("normalize")) {
+      lowering.normalizeExpressions(sageProject);
+      logger[TRACE]<<"STATUS: normalized expressions."<<endl;
     }
 
     if(args.getBool("unparse")) {

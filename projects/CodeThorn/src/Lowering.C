@@ -188,7 +188,16 @@ namespace SPRAY {
       generateTmpVarAssignment(stmt,expr);
     }
   }
-  
+
+  // temporary filter (also in TFTransformation)
+  bool isWithinBlockStmt(SgExpression* exp) {
+    SgNode* current=exp;
+    while(isSgExpression(current)||isSgExprStatement(current)) {
+      current=current->get_parent();
+    };
+    return isSgBasicBlock(current);
+  }
+
   void Lowering::normalizeExpressions(SgNode* node) {
     // TODO: if temporary variables are generated, the initialization-list
     // must be put into a block, otherwise some generated gotos are
@@ -201,7 +210,9 @@ namespace SPRAY {
         if(!SgNodeHelper::isCond(exprStmt)) {
           //cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
           SgExpression* expr=exprStmt->get_expression();
-          normalizeExpression(exprStmt,expr);
+          if(isWithinBlockStmt(expr)) {
+            normalizeExpression(exprStmt,expr);
+          }
           i.skipChildrenOnForward();
         }
       }
