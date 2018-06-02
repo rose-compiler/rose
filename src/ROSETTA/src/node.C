@@ -178,8 +178,10 @@ Grammar::setUpNodes ()
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
   // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+  // Rasmussen (5/28/2018): Added UntypedLabelStatement
      NEW_TERMINAL_MACRO (UntypedNullDeclaration,               "UntypedNullDeclaration",               "TEMP_UntypedNullDeclaration" );
      NEW_TERMINAL_MACRO (UntypedNullStatement,                 "UntypedNullStatement",                 "TEMP_UntypedNullStatement" );
+     NEW_TERMINAL_MACRO (UntypedLabelStatement,                "UntypedLabelStatement",                "TEMP_UntypedLabelStatement" );
      NEW_TERMINAL_MACRO (UntypedIfStatement,                   "UntypedIfStatement",                   "TEMP_UntypedIfStatement" );
      NEW_TERMINAL_MACRO (UntypedCaseStatement,                 "UntypedCaseStatement",                 "TEMP_UntypedCaseStatement" );
      NEW_TERMINAL_MACRO (UntypedLoopStatement,                 "UntypedLoopStatement",                 "TEMP_UntypedLoopStatement" );
@@ -261,14 +263,14 @@ Grammar::setUpNodes ()
      NEW_NONTERMINAL_MACRO (UntypedScope, UntypedFunctionScope | UntypedModuleScope | UntypedGlobalScope,
          "UntypedScope", "UntypedScopeTag", true);
 
-     NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement | 
-         UntypedFunctionCallStatement    | UntypedBlockStatement          | UntypedNamedStatement                | UntypedExpressionStatement |
-         UntypedOtherStatement           | UntypedScope                   | UntypedNullStatement                 | UntypedIfStatement | 
-         UntypedCaseStatement            | UntypedLoopStatement           | UntypedWhileStatement                | UntypedForStatement | 
-         UntypedExitStatement            | UntypedGotoStatement           | UntypedProcedureCallStatement        | 
-         UntypedReturnStatement          | UntypedExtendedReturnStatement | UntypedAcceptStatement               | UntypedEntryCallStatement |
+     NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement           |
+         UntypedFunctionCallStatement    | UntypedBlockStatement          | UntypedNamedStatement                | UntypedExpressionStatement           |
+         UntypedOtherStatement           | UntypedScope                   | UntypedNullStatement                 | UntypedIfStatement                   |
+         UntypedCaseStatement            | UntypedLabelStatement          | UntypedLoopStatement                 | UntypedWhileStatement                |
+         UntypedForStatement             | UntypedExitStatement           | UntypedGotoStatement                 | UntypedProcedureCallStatement        |
+         UntypedReturnStatement          | UntypedExtendedReturnStatement | UntypedAcceptStatement               | UntypedEntryCallStatement            |
          UntypedRequeueStatement         | UntypedDelayUntilStatement     | UntypedDelayRelativeStatement        | UntypedTerminateAlternativeStatement |
-         UntypedSelectiveAcceptStatement | UntypedTimedEntryCallStatement | UntypedConditionalEntryCallStatement | UntypedAsynchronousSelectStatement |
+         UntypedSelectiveAcceptStatement | UntypedTimedEntryCallStatement | UntypedConditionalEntryCallStatement | UntypedAsynchronousSelectStatement   |
          UntypedAbortStatement           | UntypedRaiseStatement          | UntypedCodeStatement,
          "UntypedStatement", "UntypedStatementTag", false);
 
@@ -759,6 +761,12 @@ Grammar::setUpNodes ()
 
      UntypedDeclarationStatement.setFunctionPrototype  ( "HEADER_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedImplicitDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (5/28/2018): Added UntypedLabelStatement
+     UntypedLabelStatement.setFunctionPrototype ( "HEADER_UNTYPED_LABEL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedLabelStatement.setDataPrototype     ( "SgUntypedStatement*", "statement", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
   // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
      UntypedNameListDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_NAMELIST_DECLARATION", "../Grammar/LocatedNode.code");
@@ -1409,8 +1417,10 @@ Grammar::setUpNodes ()
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
   // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+  // Rasmussen (5/28/2018): Added UntypedLabelStatement
      UntypedNullDeclaration.setFunctionSource               ( "SOURCE_UNTYPED_NULL_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedNullStatement.setFunctionSource                 ( "SOURCE_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedLabelStatement.setFunctionSource                ( "SOURCE_UNTYPED_LABEL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedIfStatement.setFunctionSource                   ( "SOURCE_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedCaseStatement.setFunctionSource                 ( "SOURCE_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedLoopStatement.setFunctionSource                 ( "SOURCE_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");

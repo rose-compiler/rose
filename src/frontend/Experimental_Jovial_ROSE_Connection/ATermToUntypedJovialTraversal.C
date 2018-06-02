@@ -235,7 +235,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
       std::cout << "  # decls = " << decl_list->get_decl_list().size() << "\n";
       std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
       std::cout << "  # funcs = " << func_list->get_func_list().size() << "\n";
-      std::cout << "  #labels = " <<     labels.size() << "\n\n";
+      std::cout << "  #labels = " << labels.size() << "\n\n";
 #endif
 
    // TODO - need list for labels in untyped IR
@@ -1140,27 +1140,28 @@ ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUnt
 
    ATerm t_labels;
    std::vector<std::string> labels;
+   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "ReturnStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-      std::string label("");
-      if (labels.size() == 1) {
-         label = labels[0];
-      }
-      else if (labels.size() > 1) {
-         cout << "ERROR: multiple labels unimplemented \n";
-         return ATfalse;
-      }
-
-      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label);
+      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement("");
       setSourcePosition(return_stmt, term);
 
-      stmt_list->get_stmt_list().push_back(return_stmt);
+      stmt = return_stmt;
+
+      for (int i = labels.size() - 1; i >= 0; i--) {
+         SgUntypedLabelStatement* label_stmt = new SgUntypedLabelStatement(labels[i], stmt);
+         setSourcePosition(label_stmt, term);
+         stmt->set_parent(label_stmt);
+         stmt = label_stmt;
+      }
    }
    else return ATfalse;
+
+   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
