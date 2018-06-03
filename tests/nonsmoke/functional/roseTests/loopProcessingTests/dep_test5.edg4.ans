@@ -1,0 +1,12 @@
+----------------------------------------------
+dependence graph: 
+From if (AstWrap(SgExprStatement:(this) -> bcVelocity[3] . y != 0xdeadbeef;)):
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:: ();CTRL_DEP;
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:: ();TYPE_NONE
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:: ();TYPE_NONE
+From SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:u[(this) -> bc3Nodes[in]] . y@25:19->u[(this) -> bc3Nodes[in]] . y@25:19: (<);OUTPUT_DEP;
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:u[(this) -> bc3Nodes[in]] . y@25:19->u[(this) -> bc3Nodes[in]] . y@25:19: (<);OUTPUT_DEP;
+To if (AstWrap(SgExprStatement:(this) -> bcVelocity[3] . y != 0xdeadbeef;)):: ();CTRL_DEP;
+To if (AstWrap(SgExprStatement:(this) -> bcVelocity[3] . y != 0xdeadbeef;)):: ();TYPE_NONE
+To if (AstWrap(SgExprStatement:(this) -> bcVelocity[3] . y != 0xdeadbeef;)):: ();TYPE_NONE
