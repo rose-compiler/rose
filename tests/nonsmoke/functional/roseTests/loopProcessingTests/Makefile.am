@@ -38,7 +38,7 @@ test1.passed: LoopProcessor.conf LoopProcessor mm.C mm.$(EDG).ans
 	@$(RTH_RUN) SWITCHES="-c -bk1 -fs0" INPUT=mm.C ANSWER=mm.$(EDG).ans $< $@
 
 TEST_NAMES += test2
-EXTRA_DIST += lufac.C lufac.edg3.ans lufac.edg4.ans funcs.annot
+EXTRA_DIST += lufac.C lufac.edg3.ans lufac.edg4.ans funcs.annot 
 test2.passed: LoopProcessor.conf LoopProcessor lufac.C lufac.$(EDG).ans funcs.annot
 	@$(RTH_RUN) SWITCHES="-c -bk1 -fs0 -annot $(srcdir)/funcs.annot" INPUT=lufac.C ANSWER=lufac.$(EDG).ans $< $@
 
@@ -98,6 +98,44 @@ TEST_NAMES += test13
 EXTRA_DIST += dgemvT.C dgemvT.edg3.ans dgemvT.edg4.ans
 test13.passed: LoopProcessor.conf LoopProcessor dgemvT.C dgemvT.$(EDG).ans
 	@$(RTH_RUN) SWITCHES="-c -fs01 -cp 0" INPUT=dgemvT.C ANSWER=dgemvT.$(EDG).ans $< $@
+
+EXTRA_DIST += LoopProcessor_deptest.conf dep_test1.c dep_test1.$(EDG).ans dep_test.annot
+TEST_NAMES += deptest1
+EXTRA_DIST += dep_test1.c dep_test1.edg4.ans 
+deptest1.passed: LoopProcessor_deptest.conf LoopProcessor dep_test1.c dep_test1.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-outputdep" INPUT=dep_test1.c ANSWER=dep_test1.$(EDG).ans $< $@
+
+
+EXTRA_DIST += dep_test2.C dep_test2.$(EDG).ans
+TEST_NAMES += deptest2
+EXTRA_DIST += dep_test2.C dep_test1.edg4.ans 
+deptest2.passed: LoopProcessor_deptest.conf LoopProcessor dep_test2.C dep_test2.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-outputdep" INPUT=dep_test2.C ANSWER=dep_test2.$(EDG).ans $< $@
+
+EXTRA_DIST += dep_test3.C dep_test3.$(EDG).ans
+TEST_NAMES += deptest3
+EXTRA_DIST += dep_test3.C dep_test1.edg4.ans 
+deptest3.passed: LoopProcessor_deptest.conf LoopProcessor dep_test3.C dep_test3.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-outputdep" INPUT=dep_test3.C ANSWER=dep_test3.$(EDG).ans $< $@
+
+EXTRA_DIST += dep_test4.C dep_test4.$(EDG).ans
+TEST_NAMES += deptest4
+EXTRA_DIST += dep_test4.C dep_test1.edg4.ans 
+deptest4.passed: LoopProcessor_deptest.conf LoopProcessor dep_test4.C dep_test4.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-outputdep" INPUT=dep_test4.C ANSWER=dep_test4.$(EDG).ans $< $@
+
+EXTRA_DIST += dep_test5.C dep_test5.$(EDG).ans
+TEST_NAMES += deptest5
+EXTRA_DIST += dep_test5.C dep_test1.edg4.ans 
+deptest5.passed: LoopProcessor_deptest.conf LoopProcessor dep_test5.C dep_test5.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-outputdep" INPUT=dep_test5.C ANSWER=dep_test5.$(EDG).ans $< $@
+
+EXTRA_DIST += dep_test6.C dep_test6.$(EDG).ans
+TEST_NAMES += deptest6
+EXTRA_DIST += dep_test6.C dep_test1.edg4.ans 
+deptest6.passed: LoopProcessor_deptest.conf LoopProcessor dep_test6.C dep_test6.$(EDG).ans
+	@$(RTH_RUN) SWITCHES="-outputdep -annot $(srcdir)/dep_test6.annot" INPUT=dep_test6.C ANSWER=dep_test6.$(EDG).ans $< $@
+
 
 ########################################################################################################################
 # Automake targets
