@@ -866,7 +866,7 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    setSourcePositionFrom(sg_decl, ut_decl);
 
    scope->append_statement(sg_decl);
-   convertLabel(ut_decl, sg_decl);
+   convertLabel(ut_decl, sg_decl, scope);
 
    return sg_decl;
 
@@ -972,7 +972,7 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    }
 
    scope->append_statement(sg_decl);
-   convertLabel(ut_decl, sg_decl);
+   convertLabel(ut_decl, sg_decl, scope);
 
    //        SgInitializedNamePtrList& varList = varDecl->get_variables ();
    //        SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
@@ -1072,7 +1072,7 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
 #endif
              }
              scope->append_statement(attr_spec_stmt);     
-             convertLabel(ut_decl, attr_spec_stmt);
+             convertLabel(ut_decl, attr_spec_stmt, scope);
 
              return attr_spec_stmt;
          }
@@ -1111,7 +1111,7 @@ UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatem
 
             scope->append_statement(expressionStatement);
 
-            convertLabel(ut_stmt, expressionStatement);
+            convertLabel(ut_stmt, expressionStatement, scope);
          }
 
       return expressionStatement;
@@ -1163,7 +1163,7 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
 
       scope->append_statement(sg_stmt);
 
-      convertLabel(ut_stmt, sg_stmt);
+      convertLabel(ut_stmt, sg_stmt, scope);
 
       return sg_stmt;
    }
@@ -1180,7 +1180,7 @@ UntypedConverter::convertSgUntypedAbortStatement (SgUntypedAbortStatement* ut_st
 
       abortExpression->set_parent(abortStatement);
       scope->append_statement(abortStatement);
-      convertLabel(ut_stmt, abortStatement);
+      convertLabel(ut_stmt, abortStatement, scope);
 
       return abortStatement;
    }
@@ -1197,7 +1197,7 @@ UntypedConverter::convertSgUntypedExitStatement (SgUntypedExitStatement* ut_stmt
 
       exitExpression->set_parent(exitStatement);
       scope->append_statement(exitStatement);
-      convertLabel(ut_stmt, exitStatement);
+      convertLabel(ut_stmt, exitStatement, scope);
 
       return exitStatement;
    }
@@ -1324,8 +1324,7 @@ UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt
       setSourcePositionFrom(nullStatement, ut_stmt);
 
       scope->append_statement(nullStatement);
-   // TODO
-   // convertLabel(ut_stmt, nullStatement);
+      convertLabel(ut_stmt, nullStatement, scope);
 
       return nullStatement;
    }

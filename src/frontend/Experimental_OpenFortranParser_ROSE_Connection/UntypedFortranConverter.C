@@ -13,7 +13,8 @@ using std::endl;
 bool
 UntypedFortranConverter::convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt, SgScopeStatement* label_scope)
 {
-   return convertLabel(ut_stmt, sg_stmt, SgLabelSymbol::e_unknown_label_type, label_scope);
+// Assume a start label type as the most common
+   return convertLabel(ut_stmt, sg_stmt, SgLabelSymbol::e_start_label_type, label_scope);
 }
 
 bool
