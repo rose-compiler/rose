@@ -1,4 +1,4 @@
-#1/bin/bash
+#!/bin/bash
 
 #$1: CodeThorn's src directory
 #$2: CodeThorn's build directory
