@@ -1223,25 +1223,26 @@ int main( int argc, char * argv[] ) {
 
     vector<string> argvList(argv,argv+argc);
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
-      logger[TRACE]<<"INFO: using OpenMP AST."<<endl;
+      logger[TRACE]<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
+    logger[TRACE] << "Parsing and creating AST: finished."<<endl;
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
-    logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
-
-    // perform inlining before variable ids are computed, because variables are duplicated by inlining.
+    /* perform inlining before variable ids are computed, because
+       variables are duplicated by inlining. */
+    Lowering lowering;
     if(args.getBool("normalize")) {
-      Lowering lowering;
       lowering.normalizeExpressions(sageProject);
       logger[TRACE]<<"STATUS: normalized expressions"<<endl;
     }
-    // perform inlining before variable ids are computed, because variables are duplicated by inlining.
+
+    /* perform inlining before variable ids are computed, because
+     * variables are duplicated by inlining. */
     if(args.getBool("inline")) {
-      Lowering lowering;
       size_t numInlined=lowering.inlineFunctions(sageProject);
-      logger[TRACE]<<"STATUS: inlined "<<numInlined<<" functions"<<endl;
+      logger[TRACE]<<"inlined "<<numInlined<<" functions"<<endl;
     }
 
     if(args.getBool("unparse")) {
