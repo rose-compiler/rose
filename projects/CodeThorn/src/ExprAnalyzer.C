@@ -896,10 +896,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPlusPlusOp(SgPlusPlusOp* node,
   res.estate=estate;
   if(SgNodeHelper::isPrefixIncDecOp(node)) {
     // preincrement ++E
-    throw CodeThorn::Exception("Error: PreIncrement operator inside expression:"+node->unparseToString());
+    throw CodeThorn::Exception("Error: PreIncrement operator inside expression:"+node->unparseToString()+". Normalization required.");
   } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
     // postincrement E++
-    throw CodeThorn::Exception("Error: PostIncrement operator inside expression."+node->unparseToString());
+    throw CodeThorn::Exception("Error: PostIncrement operator inside expression."+node->unparseToString()+". Normalization required.");
   } else {
     throw CodeThorn::Exception("Error: Unsupported increment operator mode."+node->unparseToString());
   }
@@ -919,19 +919,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* no
   res.estate=estate;
   if(SgNodeHelper::isPrefixIncDecOp(node)) {
     // preincrement --E
-    throw CodeThorn::Exception("Error: PreDecrement operator inside expression."+node->unparseToString());
+    throw CodeThorn::Exception("Error: PreDecrement operator inside expression. Normalization required."+node->unparseToString());
   } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
     // postincrement E--
-    throw CodeThorn::Exception("Error: PostDecrement operator inside expression."+node->unparseToString());
+    throw CodeThorn::Exception("Error: PostDecrement operator inside expression. Normalization required."+node->unparseToString());
   } else {
     throw CodeThorn::Exception("Error: Unsupported decrement operator mode."+node->unparseToString());
   }
-#if 0
-  AbstractValue derefOperandValue=operandResult.result;
-  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  res.exprConstraints=operandResult.exprConstraints;
-#endif
   return listify(res);
 }
 

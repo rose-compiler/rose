@@ -2023,14 +2023,15 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
 
-    AbstractValue varVal=newPState.readFromMemoryLocation(var);
+    AbstractValue oldVarVal=newPState.readFromMemoryLocation(var);
+    AbstractValue newVarVal;
     AbstractValue const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
     case V_SgPlusPlusOp:
-      varVal=varVal+const1; // overloaded binary + operator
+      newVarVal=oldVarVal+const1; // overloaded binary + operator
       break;
     case V_SgMinusMinusOp:
-      varVal=varVal-const1; // overloaded binary - operator
+      newVarVal=oldVarVal-const1; // overloaded binary - operator
       break;
     default:
       logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
@@ -2040,7 +2041,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
       exit(1);
     }
     //newPState[var]=varVal;
-    newPState.writeToMemoryLocation(var,varVal);
+    newPState.writeToMemoryLocation(var,newVarVal);
 
     if(!(*i).result.isTop())
       cset.removeAllConstraintsOfVar(var);
