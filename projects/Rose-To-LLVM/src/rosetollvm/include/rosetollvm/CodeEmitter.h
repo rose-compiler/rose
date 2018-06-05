@@ -48,6 +48,9 @@ public:
     CodeEmitter& operator<< (const signed char* s)                 { (*Cout) << s;   if (Cout == default_output) last_instruction_was_an_unconditional_branch = false; return *this; }
     CodeEmitter& operator<< (const unsigned char* s)               { (*Cout) << s;   if (Cout == default_output) last_instruction_was_an_unconditional_branch = false; return *this; }
 
+    void startOutputToBuffer(std::stringstream &);
+    void flushBuffer(std::stringstream &);
+
     void startOutputToBuffer();
     void flushTopBuffer();
     void endOutputToBuffer();
