@@ -8640,7 +8640,7 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
     scope = SageBuilder::topScopeStack();
  //  ROSE_ASSERT(scope != NULL); // We support bottom up building of label statements now
 
-   // should including current scope when searching for the function definition
+   // should include current scope when searching for the function definition
    // since users can only pass FunctionDefinition when the function body is not yet attached
   SgLabelStatement * labelstmt = new SgLabelStatement(name,stmt);
   ROSE_ASSERT(labelstmt);
