@@ -771,6 +771,7 @@ SgUntypedGotoStatement
 SgUntypedProcedureCallStatement
 SgUntypedReturnStatement
 SgUntypedExtendedReturnStatement
+SgUntypedStopStatement
 SgUntypedAcceptStatement
 SgUntypedEntryCallStatement
 SgUntypedRequeueStatement
