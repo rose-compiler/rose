@@ -111,6 +111,8 @@ install(
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/TestSemantics2.h
     instructionSemantics/TraceSemantics2.h
-    libraryIdentification/functionIdentification.h
+    libraryIdentification/FunctionIdDatabaseInterface.h  
+    libraryIdentification/FunctionInfo.h  
     libraryIdentification/libraryIdentification.h
+    libraryIdentification/LibraryInfo.h    
   DESTINATION include)
