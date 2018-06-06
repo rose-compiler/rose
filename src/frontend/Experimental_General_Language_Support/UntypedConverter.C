@@ -1143,11 +1143,6 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
              sg_stmt = stop_stmt;
              break;
           }
-        case SgToken::FORTRAN_RETURN:
-          {
-             sg_stmt = new SgReturnStmt(sg_expr);
-             break;
-          }
         default:
           {
              fprintf(stderr, "UntypedConverter::convertSgUntypedExpressionStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
@@ -1345,13 +1340,18 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
        }
    }
 
-SgStatement*
-UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgScopeStatement* scope)
+SgReturnStmt*
+UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
    {
       SgReturnStmt* return_stmt;
       bool hasLabel;
 
-      return_stmt = SageBuilder::buildReturnStmt();
+      ROSE_ASSERT(children.size() == 1);
+
+      SgExpression* sg_expr = isSgExpression(children[0]);
+      ROSE_ASSERT(sg_expr != NULL);
+
+      return_stmt = SageBuilder::buildReturnStmt(sg_expr);
       ROSE_ASSERT(return_stmt != NULL);
 
       setSourcePositionFrom(return_stmt, ut_stmt);
@@ -1363,6 +1363,30 @@ UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_
       }
 
       return return_stmt;
+   }
+
+SgStatement*
+UntypedConverter::convertSgUntypedStopStatement (SgUntypedStopStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+   {
+      SgStopOrPauseStatement* stop_stmt;
+
+      ROSE_ASSERT(children.size() == 1);
+
+      SgExpression* stop_expr = isSgExpression(children[0]);
+      ROSE_ASSERT(stop_expr != NULL);
+
+      stop_stmt = new SgStopOrPauseStatement(stop_expr);
+      stop_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_stop);
+
+      ROSE_ASSERT(stop_stmt != NULL);
+      setSourcePositionFrom(stop_stmt, ut_stmt);
+
+      stop_expr->set_parent(stop_stmt);
+      scope->append_statement(stop_stmt);
+
+      convertLabel(ut_stmt, stop_stmt);
+
+      return stop_stmt;
    }
 
 
@@ -1384,8 +1408,8 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr)
               }
            case V_SgUntypedNullExpression:
               {
-                 sg_expr = new SgNullExpression();
-                 setSourcePositionFrom(sg_expr, ut_expr);
+              // Ignore source position information for now, for some reason it is broken (perhaps filename)
+                 sg_expr = SageBuilder::buildNullExpression();
                  break;
               }
            case V_SgUntypedReferenceExpression:
