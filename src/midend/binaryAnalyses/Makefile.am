@@ -13,6 +13,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryAstHash.C						\
     BinaryBestMapAddress.C					\
     BinaryCallingConvention.C					\
+    BinaryCodeInserter.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDemangler.C						\
@@ -69,6 +70,7 @@ pkginclude_HEADERS =					\
     BinaryAstHash.h					\
     BinaryBestMapAddress.h				\
     BinaryCallingConvention.h				\
+    BinaryCodeInserter.h				\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDemangler.h					\
