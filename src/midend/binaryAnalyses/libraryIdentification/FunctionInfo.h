@@ -14,6 +14,10 @@
  **/
 namespace LibraryIdentification
 {
+    /** class FunctionInfo
+     *  Combines all the information to uniquely identify a single
+     *  function in one object.
+     **/
     class FunctionInfo
     {
     public:
