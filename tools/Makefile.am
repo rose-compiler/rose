@@ -50,7 +50,8 @@ Checker_Test_Files += \
    definedTwice.cpp \
    insideForLoop.cpp \
    integerPattern.cpp \
-   insideIfStmt.cpp
+   insideIfStmt.cpp \
+   nodalAccPattern5-multipleAssign.cpp
 endif
 endif
 endif
