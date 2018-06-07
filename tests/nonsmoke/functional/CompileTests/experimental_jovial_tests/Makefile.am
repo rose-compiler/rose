@@ -14,10 +14,13 @@ JOVIAL_TESTCODES = \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
  4_6_return_stmt.jov                    \
+ 4_7_goto_stmt_a.jov                    \
  4_8_exit_stmt.jov                      \
  4_9_stop_stmt_a.jov                    \
  4_9_stop_stmt_b.jov                    \
  4_9_stop_stmt_c.jov                    \
+ 4_10_abort_stmt_a.jov                  \
+ 4_10_abort_stmt_b.jov                  \
  5_1_1_integer-primary.jov
 
 JOVIAL_TESTCODES_WORKING_ON = \
@@ -40,8 +43,6 @@ JOVIAL_TESTCODES_WORKING_ON = \
  1_2_3_program-body_f.jov               \
  1_2_3_program-body_g.jov               \
  1_2_3_program-body_h.jov               \
- 4_10_abort_stmt_a.jov                  \
- 4_10_abort_stmt_b.jov                  \
  4_10_abort_stmt_c.jov                  \
  5_1_1_integer-factor.jov               \
  5_1_1_integer-formula.jov              \

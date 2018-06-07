@@ -301,6 +301,8 @@ RegisterStateX86::readRegisterXmm(RegisterDescriptor reg, RiscOperators *ops)
     ASSERT_require(reg.get_minor()<8);
     ASSERT_require(reg.get_offset()==0);
     ASSERT_require(reg.get_nbits()==128);
+    unsigned minr = reg.get_minor();
+    ASSERT_require(minr < 8);
     SValuePtr retval = xmm[reg.get_minor()];
     ASSERT_require(retval!=NULL && retval->get_width()==128);
     return retval;
