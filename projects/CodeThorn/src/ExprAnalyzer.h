@@ -196,10 +196,19 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalMinusMinusOp(SgMinusMinusOp* node, 
+                                                    SingleEvalResultConstInt operandResult, 
+                                                    EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPlusPlusOp(SgPlusPlusOp* node, 
+                                                  SingleEvalResultConstInt operandResult, 
+                                                  EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                                            SingleEvalResultConstInt operandResult, 
                                                            EState estate, bool useConstraints);
     
+    // special case of sizeof operator (operates on types and types of expressions)
+    list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node, 
+                                                EState estate, bool useConstraints);
     // use of Variable as rvalue (not as lvalue; lvalues are handled in the transfer function of assignments)
     list<SingleEvalResultConstInt> evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
@@ -210,11 +219,11 @@ namespace CodeThorn {
     int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
     
   private:
-    VariableIdMapping* _variableIdMapping;
+    VariableIdMapping* _variableIdMapping=nullptr;
     
     // Options
-    bool _skipSelectedFunctionCalls;
-    bool _skipArrayAccesses;
+    bool _skipSelectedFunctionCalls=false;
+    bool _skipArrayAccesses=false;
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
   };

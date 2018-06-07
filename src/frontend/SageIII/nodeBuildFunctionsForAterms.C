@@ -3455,14 +3455,27 @@ SgUntypedNullDeclaration* SgUntypedNullDeclaration::build_node_from_nonlist_chil
    }
 
 
-SgUntypedReturnStatement* SgUntypedReturnStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedReturnStatement* SgUntypedReturnStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* expression)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedReturnStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedReturnStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* expression): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedReturnStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedStopStatement* SgUntypedStopStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* expression)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedStopStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* expression): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedStopStatement* returnNode = NULL;
 
      return returnNode;
    }

@@ -934,8 +934,7 @@ int main(int argc, char* argv[]) {
     programAbstractionLayer->setLoweringOption(true);
   }
   if(programAbstractionLayer->getInliningOption() && !programAbstractionLayer->getLoweringOption()) {
-    cerr<<"Error: inlining option requires normalization option to be provided as well."<<endl;
-    return 0;
+    cerr<<"WARNING: inlining option selected without normalization option."<<endl;
   }
   programAbstractionLayer->initialize(root);
   if (args.count("print-varid-mapping-array")) {

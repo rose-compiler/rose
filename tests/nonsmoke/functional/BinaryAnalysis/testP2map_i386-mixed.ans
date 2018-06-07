@@ -278,5 +278,34 @@
 0x08048209: 00 00                   |..      |          add    byte ds:[eax], al
 0x0804820b: 00 04 00                |...     |          add    byte ds:[eax + eax], al
 0x0804820e: f1                      |.       |          int1   
-0x0804820e: Successor blocks: unknown
+0x0804820e: Successor blocks: 0x0804820f, unknown
+
+0x0804820f: Basic block reasons: 
+0x0804820f: ff 0e                   |..      |          dec    dword ds:[esi]
+0x08048211: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048213: 00 a0 80 04 08 00       |......  |          add    byte ds:[eax + 0x00080480], ah
+0x08048219: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804821b: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804821d: 00 02                   |..      |          add    byte ds:[edx], al
+0x0804821f: 00 15 00 00 00 a5       |......  |          add    byte ds:[0xa5000000], dl
+0x08048225: 80 04 08 00             |....    |          add    byte ds:[eax + ecx], 0x00
+0x08048229: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804822b: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804822d: 00 02                   |..      |          add    byte ds:[edx], al
+0x0804822f: 00 0e                   |..      |          add    byte ds:[esi], cl
+0x08048231: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048233: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048235: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048237: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048239: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804823b: 00 10                   |..      |          add    byte ds:[eax], dl
+0x0804823d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804823f: 00 1e                   |..      |          add    byte ds:[esi], bl
+0x08048241: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048243: 00 aa 90 04 08 00       |......  |          add    byte ds:[edx + 0x00080490], ch
+0x08048249: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804824b: 00 10                   |..      |          add    byte ds:[eax], dl
+0x0804824d: 00 f1                   |..      |          add    cl, dh
+0x0804824f: ff 2a                   |.*      |          farJmp dword ds:[edx]
+0x0804824f: Successor blocks: unknown
 

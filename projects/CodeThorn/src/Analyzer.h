@@ -217,6 +217,11 @@ namespace CodeThorn {
     std::map<std::string,VariableId> globalVarName2VarIdMapping;
     std::vector<bool> binaryBindingAssert;
 
+    // functions related to abstractions during the analysis
+    void eventGlobalTopifyTurnedOn();
+    bool isActiveGlobalTopify();
+    bool isIncompleteSTGReady();
+    bool isPrecise();
 
   protected:
     void printStatusMessage(string s, bool newLineFlag);
@@ -291,12 +296,6 @@ namespace CodeThorn {
     std::string labelNameOfAssertLabel(Label lab);
     bool isCppLabeledAssertLabel(Label lab);
     std::list<FailedAssertion> _firstAssertionOccurences;
-
-    // functions related to abstractions during the analysis
-    void eventGlobalTopifyTurnedOn();
-    bool isActiveGlobalTopify();
-    bool isIncompleteSTGReady();
-    bool isPrecise();
 
     // specific to the loop-aware exploration modes
     bool isLoopCondLabel(Label lab);

@@ -949,11 +949,17 @@ void Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
   size_t mainFunArgNr=0;
   for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
     VariableId varId=variableIdMapping.variableId(*i);
-    if(functionName=="main") {
+    if(functionName=="main" && initNamePtrList.size()==2) {
       //string varName=getVariableIdMapping()->variableName(varId)) {
       switch(mainFunArgNr) {
-      case 0: argcVarId=varId;break;
-      case 1: argvVarId=varId;break;
+      case 0:
+	argcVarId=varId;
+	logger[TRACE]<<"INIT CLARGS: found argc in main function."<<endl;
+	break;
+      case 1:
+	argvVarId=varId;
+	logger[TRACE]<<"INIT CLARGS: found argv in main function."<<endl;
+	break;
       default:
         throw CodeThorn::Exception("Error: main function has more than 2 parameters.");
       }
@@ -964,39 +970,52 @@ void Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
     //initialPState[varId]=AbstractValue(CodeThorn::Top());
     initialPState.writeTopToMemoryLocation(varId);
   }
-  if(_commandLineOptions.size()>0) {
-
-    // create command line option array argv and argc in initial pstate
-    int argc=0;
-    VariableId argvArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion("$argvmem",(int)_commandLineOptions.size());
-    AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
-    initialPState.writeToMemoryLocation(argvVarId,argvAddress);
-    for (auto argvElem:_commandLineOptions) {
-      cout<<"Initial state: "
-          <<variableIdMapping.variableName(argvVarId)<<"["<<argc+1<<"]: "
-          <<argvElem;
-      int regionSize=(int)string(argvElem).size();
-      cout<<" size: "<<regionSize<<endl;
-
-      stringstream memRegionName;
-      memRegionName<<"$argv"<<argc<<"mem";
-      VariableId argvElemArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion(memRegionName.str(),regionSize);
-      AbstractValue argvElemAddress=AbstractValue::createAddressOfArray(argvElemArrayMemoryId);
-      initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(argvVarId,argc),argvElemAddress);
-
-      // copy concrete command line argument strings char by char to State
-      for(int j=0;_commandLineOptions[argc][j]!=0;j++) {
-        cout<<"Copying: @argc="<<argc<<" char: "<<_commandLineOptions[argc][j]<<endl;
-        AbstractValue argvElemAddressWithIndexOffset;
-        AbstractValue AbstractIndex=AbstractValue(j);
-        argvElemAddressWithIndexOffset=argvElemAddress+AbstractIndex;
-        initialPState.writeToMemoryLocation(argvElemAddressWithIndexOffset,AbstractValue(_commandLineOptions[argc][j]));
+  // if function main exists and has 2 arguments then argcvarid and argvvarid have valid ids now.
+  // otherwise the command line options are ignored (because this is the correct behaviour)
+  if(argcVarId.isValid() && argvVarId.isValid()) {
+    if(_commandLineOptions.size()>0) {
+      // create command line option array argv and argc in initial pstate if argv and argc exist in the program
+      int argc=0;
+      VariableId argvArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion("$argvmem",(int)_commandLineOptions.size());
+      AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
+      initialPState.writeToMemoryLocation(argvVarId,argvAddress);
+      for (auto argvElem:_commandLineOptions) {
+	logger[TRACE]<<"INIT: Initial state: "
+		     <<variableIdMapping.variableName(argvVarId)<<"["<<argc+1<<"]: "
+		     <<argvElem<<endl;
+	int regionSize=(int)string(argvElem).size();
+	logger[TRACE]<<"argv["<<argc+1<<"] size: "<<regionSize<<endl;
+	
+	stringstream memRegionName;
+	memRegionName<<"$argv"<<argc<<"mem";
+	VariableId argvElemArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion(memRegionName.str(),regionSize);
+	AbstractValue argvElemAddress=AbstractValue::createAddressOfArray(argvElemArrayMemoryId);
+	initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(argvVarId,argc),argvElemAddress);
+	
+	// copy concrete command line argument strings char by char to State
+	for(int j=0;_commandLineOptions[argc][j]!=0;j++) {
+	  logger[TRACE]<<"INIT: Copying: @argc="<<argc<<" char: "<<_commandLineOptions[argc][j]<<endl;
+	  AbstractValue argvElemAddressWithIndexOffset;
+	  AbstractValue AbstractIndex=AbstractValue(j);
+	  argvElemAddressWithIndexOffset=argvElemAddress+AbstractIndex;
+	  initialPState.writeToMemoryLocation(argvElemAddressWithIndexOffset,AbstractValue(_commandLineOptions[argc][j]));
+	}
+	argc++;
       }
-      argc++;
+      // this also covers the case that no command line options were provided. In this case argc==0. argv is non initialized.
+      logger[TRACE]<<"INIT: Initial state argc:"<<argc<<endl;
+      AbstractValue abstractValueArgc(argc);
+      initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
+    } else {
+      // argc and argv present in program but no command line arguments provided
+      logger[TRACE]<<"INIT: no command line arguments provided. Initializing argc=0."<<endl;
+      AbstractValue abstractValueArgc(0);
+      initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
     }
-    cout<<"Initial state argc:"<<argc<<endl;
-    AbstractValue abstractValueArgc(argc);
-    initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
+  } else {
+    // argv and argc not present in program. argv and argc are not added to initialPState.
+    // in this case it is irrelevant whether command line arguments were provided (correct behaviour)
+    // nothing to do.
   }
 }
 
@@ -1058,7 +1077,7 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   initializeCommandLineArgumentsInState(initialPState);
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
-  logger[TRACE]<< "INIT: initial state(stored): "<<initialPStateStored->toString()<<endl;
+  logger[TRACE]<< "INIT: initial state(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
@@ -2004,14 +2023,15 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
 
-    AbstractValue varVal=newPState.readFromMemoryLocation(var);
+    AbstractValue oldVarVal=newPState.readFromMemoryLocation(var);
+    AbstractValue newVarVal;
     AbstractValue const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
     case V_SgPlusPlusOp:
-      varVal=varVal+const1; // overloaded binary + operator
+      newVarVal=oldVarVal+const1; // overloaded binary + operator
       break;
     case V_SgMinusMinusOp:
-      varVal=varVal-const1; // overloaded binary - operator
+      newVarVal=oldVarVal-const1; // overloaded binary - operator
       break;
     default:
       logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
@@ -2021,7 +2041,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
       exit(1);
     }
     //newPState[var]=varVal;
-    newPState.writeToMemoryLocation(var,varVal);
+    newPState.writeToMemoryLocation(var,newVarVal);
 
     if(!(*i).result.isTop())
       cset.removeAllConstraintsOfVar(var);

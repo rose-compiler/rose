@@ -18,6 +18,10 @@ parseCommandLine(int argc, char *argv[]) {
   SwitchGroup sg("SwitchesGroup1");
   sg.name("switchesgroup1"); // optional (see --help output)
   
+  sg.insert(Switch("help", 'h')
+            .doc("Show this documentation.")
+            .action(showHelpAndExit(0)));
+
   // boolean switches. Descriptions can be arbitrarily long.
   // These are just wrappers around sg.insert(Switch(....)).
   Rose::CommandLine::insertBooleanSwitch(sg, "bool1", opt1, "This optional bool switch 1 does something.");
@@ -29,9 +33,12 @@ parseCommandLine(int argc, char *argv[]) {
             .argument("argswitch1name", anyParser(argswitch1name))
             .doc("Causes @v{argswitch1name} to be the name used for analysis."));
 
+
   // parsing
   Parser parser = Rose::CommandLine::createEmptyParserStage(purpose, description);
-  parser.with(Rose::CommandLine::genericSwitches());  // optional: --help, etc.
+  //parser.with(Rose::CommandLine::genericSwitches());  // optional: --help, etc.
+  parser.version("Toolversion 0.0.1","Tool Releasedate");
+  parser.chapter(1,"ToolHelpPageChapterName");
   return parser.with(sg).parse(argc, argv).apply().unparsedArgs();
 }
 

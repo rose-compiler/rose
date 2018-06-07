@@ -1140,28 +1140,28 @@ ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUnt
 
    ATerm t_labels;
    std::vector<std::string> labels;
-   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "ReturnStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement("");
+      std::string label("");
+      if (labels.size() == 1) {
+         label = labels[0];
+      }
+      else if (labels.size() > 1) {
+         cout << "ERROR: multiple labels unimplemented \n";
+         return ATfalse;
+      }
+
+      SgUntypedNullExpression * return_code = UntypedBuilder::buildUntypedNullExpression();
+      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label, return_code);
       setSourcePosition(return_stmt, term);
 
-      stmt = return_stmt;
-
-      for (int i = labels.size() - 1; i >= 0; i--) {
-         SgUntypedLabelStatement* label_stmt = new SgUntypedLabelStatement(labels[i], stmt);
-         setSourcePosition(label_stmt, term);
-         stmt->set_parent(label_stmt);
-         stmt = label_stmt;
-      }
+      stmt_list->get_stmt_list().push_back(return_stmt);
    }
    else return ATfalse;
-
-   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1247,8 +1247,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntyp
 
       if (ATmatch(t_stop_code, "no-integer-formula()")) {
          // No StopCode
-         stop_code = new SgUntypedNullExpression();
-         setSourcePositionUnknown(stop_code);
+         stop_code = UntypedBuilder::buildUntypedNullExpression();
       }
       else if (traverse_IntegerFormula(t_stop_code, &stop_code)) {
          // MATCHED IntegerFormula

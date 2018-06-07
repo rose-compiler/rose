@@ -16,6 +16,7 @@ struct ArrayElementAccessData {
   std::string toStringNoSsaSubscript(SPRAY::VariableIdMapping* variableIdMapping) const;
   //! checks validity of data. The default value is not valid (does not correspond to any array) but can be used when creating STL containers.
   bool isValid() const;
+  bool hasNegativeIndex() const;
 };
 
 bool operator==(const ArrayElementAccessData& a,const ArrayElementAccessData& other);

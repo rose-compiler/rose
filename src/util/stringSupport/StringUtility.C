@@ -89,6 +89,33 @@ cEscape(const std::string &s) {
     return result;
 }
 
+std::string
+bourneEscape(const std::string &s) {
+    std::string result;
+    bool quoted = false;
+
+    BOOST_FOREACH (char ch, s) {
+        if (isalnum(ch) || strchr("_-+./", ch)) {
+            result += ch;
+
+        } else {
+            if (!quoted) {
+                result = "'" + result;
+                quoted = true;
+            }
+
+            if (ch == '\\' || ch == '\'') {
+                result += std::string("\\") + ch;
+            } else {
+                result += ch;
+            }
+        }
+    }
+    if (quoted)
+        result += "'";
+    return result;
+}
+
 // [Robb P Matzke 2016-06-15]: deprecated
 std::string
 escapeNewLineCharaters ( const std::string & X )
