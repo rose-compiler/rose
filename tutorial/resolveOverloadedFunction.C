@@ -49,10 +49,11 @@ int main( int argc, char * argv[] )
           ROSE_ASSERT(functionDeclaration != NULL);
           
        // Output mapping of function calls to function declarations
-          printf ("Location of function call #%d at line %d resolved by overloaded function declared at line %d \n",
-               functionCounter++,
-               isSgFunctionCallExp(*i)->get_file_info()->get_line(),
-               functionDeclaration->get_file_info()->get_line());
+          if(isSgFunctionCallExp(*i))
+            printf ("Location of function call #%d at line %d resolved by overloaded function declared at line %d \n",
+                 functionCounter++,
+                 isSgFunctionCallExp(*i)->get_file_info()->get_line(),
+                 functionDeclaration->get_file_info()->get_line());
         }
 
      return 0;
