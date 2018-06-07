@@ -251,6 +251,94 @@ isUnlinkedImport(const Partitioner &partitioner, const Function::Ptr &function) 
     return matcher.gotEntry() == 0 || matcher.gotEntry() == fallthrough;
 }
 
+bool
+isObjectFile(const boost::filesystem::path &fileName) {
+    if (!boost::filesystem::exists(fileName))
+        return false;                                   // file doesn't exist
+    MemoryMap::Ptr map = MemoryMap::instance();
+    if (0 == map->insertFile(fileName.native(), 0))
+        return false;                                   // file cannot be mmap'd
+
+    uint8_t magic[4];
+    if (map->at(0).limit(4).read(magic).size() != 4)
+        return false;                                   // file is too short
+    if (magic[0] != 0x7f || magic[1] != 'E' || magic[2] != 'L' || magic[3] != 'F')
+        return false;                                   // wrong magic number
+
+    uint8_t encoding = 0;
+    if (map->at(5).limit(1).read(&encoding).size() != 1)
+        return false;                                   // file is too short
+
+    uint8_t elfTypeBuf[2];
+    if (map->at(16).limit(2).read(elfTypeBuf).size() != 2)
+        return false;                                   // file is too short
+
+    unsigned elfType = 0;
+    switch (encoding) {
+        case 1: // little endian
+            elfType = ((unsigned)elfTypeBuf[1] << 8) | elfTypeBuf[0];
+            break;
+        case 2: // big endian
+            elfType = ((unsigned)elfTypeBuf[0] << 8) | elfTypeBuf[1];
+            break;
+        default:
+            return false;                               // invalid data encoding
+    }
+
+    return elfType == SgAsmElfFileHeader::ET_REL;
+}
+
+bool
+isStaticArchive(const boost::filesystem::path &fileName) {
+    if (!boost::filesystem::exists(fileName))
+        return false;                                   // file doesn't exist
+    MemoryMap::Ptr map = MemoryMap::instance();
+    if (0 == map->insertFile(fileName.native(), 0))
+        return false;                                   // file cannot be mmap'd
+    uint8_t magic[7];
+    if (map->at(0).limit(7).read(magic).size() != 7)
+        return false;                                   // short read
+    return memcmp(magic, "!<arch>", 7) == 0;
+}
+
+bool
+tryLink(const std::string &commandTemplate, std::string outputName, std::vector<std::string> inputNames,
+        Sawyer::Message::Stream &errors) {
+    if (commandTemplate.empty() || outputName.empty() || inputNames.empty())
+        return false;
+
+    outputName = StringUtility::bourneEscape(outputName);
+    BOOST_FOREACH (std::string &input, inputNames)
+        input = StringUtility::bourneEscape(input);
+    std::string allInputs = StringUtility::join(" ", inputNames);
+
+    std::string cmd;
+    bool escaped = false;
+    for (size_t i=0; i<commandTemplate.size(); ++i) {
+        if ('\\' == commandTemplate[i]) {
+            escaped = !escaped;
+            cmd += commandTemplate[i];
+        } else if (escaped) {
+            cmd += commandTemplate[i];
+        } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'o' == commandTemplate[i+1]) {
+            cmd += outputName;
+            ++i;                                        // skip the "o"
+        } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'f' == commandTemplate[i+1]) {
+            cmd += allInputs;
+            ++i;                                        // skip the "f"
+        } else {
+            cmd += commandTemplate[i];
+        }
+    }
+
+    if (system(cmd.c_str()) != 0) {
+        errors <<"shell command failed: " <<cmd <<"\n";
+        return false;
+    }
+
+    return true;
+}
+
 std::vector<Function::Ptr>
 findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
     std::vector<Function::Ptr> functions;
