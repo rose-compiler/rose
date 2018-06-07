@@ -177,7 +177,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
              AbstractValue varVal=(*i).value();
              if(varVal.isConstInt()) {
                int varIntValue=varVal.getIntValue();
-               //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
+               //logger[TRACE]<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
                SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue),false);
                numConstExprElim++;
              }
@@ -221,7 +221,7 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
      // buildFloatType()
      // buildDoubleType()
      // SgIntVal* buildIntVal(int)
-     //cout<<"DEBUG: substituting: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
+     logger[TRACE]<<"replacing in AST: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
      SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
    return (int)substitutionList.size();
@@ -256,8 +256,16 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        node=SgNodeHelper::getExprRootChild(node);
      if(SgExpression* exp=isSgExpression(node)) {
        // TODO: variable declaration with initialization
-       if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
-         stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+
+       if(dataRaceDetection) {
+         // extract all assignments
+         if(isSgAssignOp(exp)) {
+           stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+         }
+       } else {
+         if(SgNodeHelper::isArrayElementAssignment(exp)||SgNodeHelper::isFloatingPointAssignment(node)) {
+           stgArrayUpdateSequence.push_back(make_pair(estate,exp));
+         }
        }
      }
      if(succSet.size()>1) {
@@ -296,6 +304,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      SgExpression* p_exp=stgArrayUpdateSequence[i].second;
      SgNode* p_expCopy;
      p_expCopy=SageInterface::copyExpression(p_exp);
+     // set parent pointer such that node appears as correct AST node to function OmpSuppprt::getSharingConstruct
+     p_expCopy->set_parent(p_exp->get_parent());
 #if 1
      // p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
      if(useConstExprSubstRule) {
@@ -319,7 +329,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
     }
     numProcessedArrayUpdates++;
     if(numProcessedArrayUpdates%100==0) {
-      cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
+      // OUTPUT of progress in transformation of updates
+      logger[TRACE]<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
     }
     rewriteSystem.getRewriteStatisticsPtr()->numArrayUpdates++;
     arrayUpdates[i]=EStateExprInfo(p_estate,p_exp,p_expCopy2);
@@ -476,7 +487,11 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
     SgExpression* exp=(*i).second;
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-    ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+    if(dataRaceDetection) {
+      // no check, anything valid
+    } else {
+      ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+    }
     //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
     RoseAst rhsast(rhs);
     for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {

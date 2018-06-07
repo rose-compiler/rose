@@ -1,21 +1,13 @@
-int x;
-int y;
-
 int main() {
-  x=0;
-  y=0;
   int a[]={1,2,3};
-  int b[3]={4,5,6};
-  int c[5]={7,8,9};
-  int* p;
-  p=a;
-  x=a[0];
-  x=b[1];
-  x=x+c[2];
-  x=c[y];
-  if(c[y]) { y=y+1; }
-  x=x+1;
-  x=p[y];
-  if(p[y]) { y=y+1;}
+  int* p0;
+  int* p1;
+  p0=a;
+  p1=a+1;
+  *p0=10;
+  //p0=&a[0];
+  *p0=15;
+  //p1=&a[1];
+  *p1=20;
   return 0;
 }

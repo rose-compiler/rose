@@ -5,11 +5,13 @@
 #include "Specialization.h"
 #include "EquivalenceChecking.h"
 #include "AstTerm.h"
+#include "OmpSupport.h"
 
 using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 using namespace Sawyer::Message;
+using namespace OmpSupport;
 
 Sawyer::Message::Facility DataRaceDetection::logger;
 
@@ -109,28 +111,39 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       if (options.visualizeReadWriteSets) {
         setVisualizeReadWriteAccesses(true);
       }
-      cout<<"STATUS: performing array analysis on STG."<<endl;
-      cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+      logger[TRACE]<<"STATUS: performing array analysis on STG."<<endl;
+      logger[TRACE]<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
       
       speci.setMaxNumberOfExtractedUpdates(options.maxNumberOfExtractedUpdates);
+      speci.dataRaceDetection=true;
       speci.extractArrayUpdateOperations(&analyzer,
                                          arrayUpdates,
                                          rewriteSystem,
                                          options.useConstSubstitutionRule
                                          );
+      // TODO: SUBST remove substitution if faster without
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=DataRaceDetection::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-      cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      logger[TRACE]<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
       verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
       verifyUpdateSequenceRaceConditionsParLoopNum=DataRaceDetection::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       verifyUpdateSequenceRaceConditionsResult=checkDataRaces(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
+      // if no data race is found, but only an incomplete STG computed due to resource constraints, then report unknown (-2)
       if(options.printUpdateInfos) {
         speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
       }
-      speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
+
+      if(verifyUpdateSequenceRaceConditionsResult==false && analyzer.isIncompleteSTGReady()) {
+        logger[TRACE]<<"DEBUG: INCOMPLETE AST AND NO DATA RACE WAS FOUND => UNKNOWN"<<endl;
+        verifyUpdateSequenceRaceConditionsResult=-2;
+      }
+      // cannot handle programs without parallel loop yet
+      if(verifyUpdateSequenceRaceConditionsParLoopNum==0) {
+        verifyUpdateSequenceRaceConditionsResult=-2;
+      }
       reportResult(verifyUpdateSequenceRaceConditionsResult,
                    verifyUpdateSequenceRaceConditionsParLoopNum,
                    verifyUpdateSequenceRaceConditionsTotalLoopNum);
@@ -146,8 +159,14 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
 }
 
 bool DataRaceDetection::isOmpParallelFor(SgForStatement* node) {
-  if(SgOmpForStatement* ompForStmt=isSgOmpForStatement(node->get_parent())) {
-    return isSgOmpParallelStatement(ompForStmt->get_parent());
+  SgNode* parentNode1=node->get_parent();
+  ROSE_ASSERT(parentNode1);
+  if(isSgOmpSimdStatement(parentNode1)) {
+    return true;
+  } else if(SgOmpForStatement* ompForStmt=isSgOmpForStatement(parentNode1)) {
+    SgNode* parentNode2=ompForStmt->get_parent();
+    ROSE_ASSERT(parentNode2);
+    return isSgOmpParallelStatement(parentNode2);
   }
   return false;
 }
@@ -219,7 +238,7 @@ LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapp
     }
     loopInfoSet.push_back(loopInfo);
   }
-  cout<<"INFO: found "<<DataRaceDetection::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
+  logger[TRACE]<<"INFO: found "<<DataRaceDetection::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
   return loopInfoSet;
 }
 
@@ -284,6 +303,14 @@ void DataRaceDetection::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWrit
       const PState* pstate=estate->pstate();
       SgExpression* exp=(*i).second;
       IndexVector index = extractIndexVector(li, pstate);
+      // check index and report unknown if negative (TODO: recompute negative indices)
+      for (auto idx : index) {
+        if(idx<0) {
+          stringstream ss;
+          ss<<idx;
+          throw CodeThorn::Exception("Negative array index detected: "+ss.str());
+        }
+      }
       addAccessesFromExpressionToIndex(exp, index, indexToReadWriteDataMap, variableIdMapping);
     }
   } // array sequence iter
@@ -309,38 +336,71 @@ IndexVector DataRaceDetection::extractIndexVector(LoopInfo& li, const PState* ps
   return index;
 }
 
+bool DataRaceDetection::isSharedArrayAccess(SgPntrArrRefExp* useRef) {
+  SgNode* lhsExp=SgNodeHelper::getLhs(useRef);
+  //cout<<"DEBUG: checking lhs: "<<lhsExp->unparseToString()<<endl;
+  if(SgVarRefExp* varRefExp=isSgVarRefExp(lhsExp)) {
+    return isSharedVariable(varRefExp);
+  }
+  return true;
+}
+
+bool DataRaceDetection::isSharedVariable(SgVarRefExp* varRefExp) {
+  if(varRefExp) {
+    omp_construct_enum sharingProperty=OmpSupport::getDataSharingAttribute(varRefExp);
+    bool isShared=(sharingProperty==OmpSupport::e_shared);
+    //cout<<"Var: "<<varRefExp->unparseToString()<<" shared: "<<isShared<<endl;
+    return isShared;
+  }
+  return true;
+}
+
 void DataRaceDetection::addAccessesFromExpressionToIndex(SgExpression* exp, IndexVector& index,
                                                       IndexToReadWriteDataMap& indexToReadWriteDataMap, 
                                                       VariableIdMapping* variableIdMapping) {  
   SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
   SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-  ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+  //ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp)); // only for equivalence checking valid
         
   //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
   // read-set
   RoseAst rhsast(rhs);
   for (RoseAst::iterator j=rhsast.begin(); j!=rhsast.end(); ++j) {
     if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+      if(isSharedArrayAccess(useRef)) {
+        ArrayElementAccessData access(useRef,variableIdMapping);
+        if(access.hasNegativeIndex()) {
+          throw CodeThorn::Exception("addAccessesFromExpressionToIndex: Negative array index detected.");
+        }
+        indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
+      }
       j.skipChildrenOnForward();
-      ArrayElementAccessData access(useRef,variableIdMapping);
-      indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
     } else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
       ROSE_ASSERT(useRef);
+      if(isSharedVariable(useRef)) {
+        VariableId varId=variableIdMapping->variableId(useRef);
+        indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
+      }
       j.skipChildrenOnForward();
-      VariableId varId=variableIdMapping->variableId(useRef);
-      indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
     } else {
       //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
     }
   }
   if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
-    ArrayElementAccessData access(arr,variableIdMapping);
-    indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
+    if(isSharedArrayAccess(arr)) {
+      ArrayElementAccessData access(arr,variableIdMapping);
+      if(access.hasNegativeIndex()) {
+        throw CodeThorn::Exception("addAccessesFromExpressionToIndex: Negative array index detected.");
+      }
+      indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
+    }
   } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
-    VariableId varId=variableIdMapping->variableId(var);
-    indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
+    if(isSharedVariable(var)) {
+      VariableId varId=variableIdMapping->variableId(var);
+      indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
+    }
   } else {
-    cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+    cerr<<"Error: addAccessFromExpressoinToIndex: unknown LHS."<<endl;
     exit(1);
   }
 }

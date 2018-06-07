@@ -11,13 +11,7 @@
 using namespace CodeThorn;
 using namespace SPRAY;
 
-ExprAnalyzer::ExprAnalyzer():
-  _variableIdMapping(0),
-  _skipSelectedFunctionCalls(false),
-  _skipArrayAccesses(false), 
-  _stdFunctionSemantics(true),
-  _svCompFunctionSemantics(false)
-{
+ExprAnalyzer::ExprAnalyzer() {
 }
 
 void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
@@ -183,10 +177,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   res.estate=estate;
   res.result=AbstractValue(CodeThorn::Bot());
 
+#if 0
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "Error: incdec-op not supported in conditions."<<endl;
     exit(1);
   }
+#endif
+
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     return evalConditionalExpr(condExp,estate,useConstraints);
   }
@@ -251,12 +248,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitwiseComplementOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
-      case V_SgAddressOfOp: {
-        cerr << "Error: Operator addressOfOp not implemented for this domain."<<endl;
-        string exceptionInfo=string("Error: Operator addressOfOp not implemented for this domain.");
-        throw exceptionInfo; 
-        //CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp); // TODO
-      }
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPlusPlusOp,evalPlusPlusOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusMinusOp,evalMinusMinusOp);
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
         string exceptionInfo=string("Error: evaluateExpression::unknown unary operation @")+string(node->sage_class_name());
@@ -271,6 +265,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
   // EXPRESSION LEAF NODES
   // this test holds for all subclasses of SgValueExp
+
+  // special case sizeof operator (operates on types and types of expressions)
+  if(SgSizeOfOp* sizeOfOp=isSgSizeOfOp(node)) {
+    return evalSizeofOp(sizeOfOp,estate,useConstraints);
+  }
   if(SgValueExp* exp=isSgValueExp(node)) {
     ROSE_ASSERT(exp!=nullptr);
     return evalValueExp(exp,estate,useConstraints);
@@ -834,6 +833,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
+                                                              EState estate, bool useConstraints) {
+  AbstractValue sizeValue=AbstractValue(4); // TODO: compute size
+  SingleEvalResultConstInt res;
+  ConstraintSet constraintSet;
+  res.init(estate,constraintSet,sizeValue);
+  return listify(res);
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node, 
                                                         SingleEvalResultConstInt operandResult, 
                                                         EState estate, bool useConstraints) {
@@ -874,10 +882,50 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue addressOfOperandValue=operandResult.result;
-  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  //cout<<"DEBUG: addressOfOpValue: "<<addressOfOperandValue.toRhsString(_variableIdMapping);
   // AbstractValue of a VariableId is a pointer to this variable.
   res.result=AbstractValue(addressOfOperandValue.getVariableId());
   res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPlusPlusOp(SgPlusPlusOp* node, 
+                                                            SingleEvalResultConstInt operandResult, 
+                                                            EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  if(SgNodeHelper::isPrefixIncDecOp(node)) {
+    // preincrement ++E
+    throw CodeThorn::Exception("Error: PreIncrement operator inside expression:"+node->unparseToString()+". Normalization required.");
+  } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
+    // postincrement E++
+    throw CodeThorn::Exception("Error: PostIncrement operator inside expression."+node->unparseToString()+". Normalization required.");
+  } else {
+    throw CodeThorn::Exception("Error: Unsupported increment operator mode."+node->unparseToString());
+  }
+#if 0
+  AbstractValue derefOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
+  res.exprConstraints=operandResult.exprConstraints;
+#endif
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* node, 
+                                                              SingleEvalResultConstInt operandResult, 
+                                                              EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  if(SgNodeHelper::isPrefixIncDecOp(node)) {
+    // preincrement --E
+    throw CodeThorn::Exception("Error: PreDecrement operator inside expression. Normalization required."+node->unparseToString());
+  } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
+    // postincrement E--
+    throw CodeThorn::Exception("Error: PostDecrement operator inside expression. Normalization required."+node->unparseToString());
+  } else {
+    throw CodeThorn::Exception("Error: Unsupported decrement operator mode."+node->unparseToString());
+  }
   return listify(res);
 }
 

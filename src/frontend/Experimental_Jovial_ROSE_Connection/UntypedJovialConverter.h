@@ -15,9 +15,10 @@ class UntypedJovialConverter : public UntypedConverter
   {
     public:
 
-      virtual void convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
-                                SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type,
-                                SgScopeStatement* label_scope=NULL);
+      virtual bool convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt, SgScopeStatement* label_scope=NULL);
+
+      virtual bool convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
+                                SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope=NULL);
 
    // Declaration statements
    //

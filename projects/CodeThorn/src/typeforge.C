@@ -46,6 +46,7 @@ public:
 
 string toolName="typeforge";
 
+#define EXPLICIT_VAR_FORGE
 int main (int argc, char* argv[])
 {
   ROSE_INITIALIZE;
@@ -66,16 +67,18 @@ int main (int argc, char* argv[])
   desc.add_options()
     ("help,h", "produce this help message.")
     ("version,v", "display the version.")
-    ("annotate", "annotate implicit casts as comments.")
+    //("annotate", "annotate implicit casts as comments.")
     ("explicit", "make all imlicit casts explicit.")
     ("stats", "print statistics on casts of built-in floating point types.")
-    ("trace", "print cast operations as they are performed.")
-    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
+    ("trace", "print program transformation operations as they are performed.")
+    //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("spec-file", po::value< string >()," name of typeforge specification file.")
     ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
+#ifdef EXPLICIT_VAR_FORGE
     ("float-var", po::value< string >()," change type of var [arg] to float.")
     ("double-var", po::value< string >()," change type of var [arg] to double.")
     ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
+#endif
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -128,7 +131,8 @@ int main (int argc, char* argv[])
     backend(sageProject);
     return 0;
   }
-  
+
+#if 0  
   if(args.isUserProvided("dot-type-graph")) {
     string dotFileName="typegraph.dot";
     if(generateTypeGraph(sageProject,dotFileName)) {
@@ -138,6 +142,7 @@ int main (int argc, char* argv[])
     }
     return 0;
   }
+#endif
 
   if(args.isUserProvided("trace")) {
     tt.setTraceFlag(true);
@@ -168,6 +173,7 @@ int main (int argc, char* argv[])
     return 0;
   }
 
+#ifdef EXPLICIT_VAR_FORGE
   if(args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var")) {
     TFTypeTransformer::VarTypeVarNameTupleList list;
     SgFunctionDefinition* funDef=nullptr;
@@ -186,6 +192,6 @@ int main (int argc, char* argv[])
     tt.transformCommandLineFiles(sageProject,list);
     backend(sageProject);
   }
-  
+#endif  
   return 0;
 }
