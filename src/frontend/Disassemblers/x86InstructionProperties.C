@@ -121,6 +121,7 @@ bool x86InstructionIsControlTransfer(SgAsmX86Instruction* inst) {
     case x86_farjmp:
     case x86_hlt:
     case x86_jmp:
+    case x86_int:
     case x86_int1:
     case x86_int3:
     case x86_into:
@@ -148,6 +149,8 @@ bool x86InstructionIsControlTransfer(SgAsmX86Instruction* inst) {
     case x86_loopz:
     case x86_retf:
     case x86_rsm:
+    case x86_syscall:
+    case x86_sysret:
     case x86_ud2:
       return true;
     default: return false;
@@ -433,6 +436,10 @@ bool x86InstructionIsUnconditionalBranch(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_call:
     case x86_ret:
+    case x86_int:
+    case x86_int1:
+    case x86_int3:
+    case x86_into:
     case x86_iret:
     case x86_farcall:
     case x86_farjmp:
@@ -440,6 +447,8 @@ bool x86InstructionIsUnconditionalBranch(SgAsmX86Instruction* inst) {
     case x86_jmp:
     case x86_retf:
     case x86_rsm:
+    case x86_syscall:
+    case x86_sysret:
       return true;
     default: return false;
   }
