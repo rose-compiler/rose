@@ -56,9 +56,13 @@ protected:
     const Rose::BinaryAnalysis::Partitioner2::Partitioner &partitioner_;
     AddressInterval chunkAllocationRegion_;             // where chunks can be allocated
     size_t minChunkAllocationSize_;                     // size of each chunk in bytes (also the alignment)
+    size_t chunkAllocationAlignment_;                   // alignment for allocating large chunks
+    std::string chunkAllocationName_;                   // name to give new areas of the memory map
+    AddressIntervalSet allocatedChunks_;                // large allocated chunks that populate freeSpace_
     AddressIntervalSet freeSpace_;                      // parts of mapped memory serving as free space for allocations
     unsigned aggregationDirection_;                     // AggregationDirection bits
     NopPadding nopPadding_;                             // where to add no-op padding
+    
 
 public:
     /** Facility for emitting diagnostics. */
@@ -66,8 +70,9 @@ public:
 
 public:
     explicit CodeInserter(const Rose::BinaryAnalysis::Partitioner2::Partitioner &partitioner)
-        : partitioner_(partitioner), minChunkAllocationSize_(8192),
-          aggregationDirection_(AGGREGATE_PREDECESSORS | AGGREGATE_SUCCESSORS), nopPadding_(PAD_NOP_BACK) {
+        : partitioner_(partitioner), minChunkAllocationSize_(8192), chunkAllocationAlignment_(4096),
+          chunkAllocationName_("new code"), aggregationDirection_(AGGREGATE_PREDECESSORS | AGGREGATE_SUCCESSORS),
+          nopPadding_(PAD_NOP_BACK) {
         ASSERT_not_null(partitioner.memoryMap());
         if (!partitioner.memoryMap()->isEmpty() &&
             partitioner.memoryMap()->hull().greatest() < AddressInterval::whole().greatest()) {
@@ -94,6 +99,11 @@ public:
     void chunkAllocationRegion(const AddressInterval& i) { chunkAllocationRegion_ = i; }
     /** @} */
 
+    /** Returns the parts of the virtual address space that were allocated for new instructions. The returned value will
+     *  be a subset of the @ref chunkAllocationRegion. The return value indicates where large chunks of memory were allocated,
+     *  but not what bytes within that memory were actually used for new instructions. */
+    const AddressIntervalSet& allocatedChunks() const { return allocatedChunks_; }
+
     /** Property: Minimum size of allocated chunks.
      *
      *  When allocating space for replacement code, never allocate less than this many bytes at a time. Note that multiple
@@ -102,6 +112,20 @@ public:
      * @{ */
     size_t minChunkAllocationSize() const { return minChunkAllocationSize_; }
     void minChunkAllocationSize(size_t n) { minChunkAllocationSize_ = n; }
+    /** @} */
+
+    /** Property: Alignment for large allocated chunks.
+     *
+     * @{ */
+    size_t chunkAllocationAlignment() const { return chunkAllocationAlignment_; }
+    void chunkAllocationAlignment(size_t n);
+    /** @} */
+
+    /** Property: Name for newly allocated regions of memory.
+     *
+     * @{ */
+    const std::string& chunkAllocationName() const { return chunkAllocationName_; }
+    void chunkAllocationName(const std::string &s) { chunkAllocationName_ = s; }
     /** @} */
 
     /** Property: Whether additional instructions can be moved.

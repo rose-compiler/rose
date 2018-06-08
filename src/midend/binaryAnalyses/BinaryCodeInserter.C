@@ -22,6 +22,11 @@ CodeInserter::initDiagnostics() {
     }
 }
 
+void
+CodeInserter::chunkAllocationAlignment(size_t n) {
+    chunkAllocationAlignment_ = std::min((size_t)1, n);
+}
+
 bool
 CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, size_t nInsns,
                                 std::vector<uint8_t> replacement, const std::vector<Relocation> &relocations) {
@@ -182,19 +187,20 @@ CodeInserter::allocateMemory(size_t nBytes, rose_addr_t jmpTargetVa, Commit::Boo
     // If we didn't find enough free space in segments that are already mapped, then map big chunk and use the first part
     // of it to satisfy the request.
     static const size_t maxJmpEncodedSize = 16; // size of largest unconditional jump on any architecture
-    static const size_t chunkAlignment = minChunkAllocationSize_;
     //AddressInterval chunkArea = AddressInterval::hull(0x80000000, 0xbfffffff); // restrinctions on chunk locations
     size_t chunkSize = std::max(nBytes + maxJmpEncodedSize, minChunkAllocationSize_);
     rose_addr_t chunkVa = 0;
-    if (!partitioner_.memoryMap()->findFreeSpace(chunkSize, chunkAlignment, chunkAllocationRegion_).assignTo(chunkVa))
+    if (!partitioner_.memoryMap()->findFreeSpace(chunkSize, chunkAllocationAlignment_, chunkAllocationRegion_)
+        .assignTo(chunkVa))
         return AddressInterval();               // no virtual address space available
 
     // Create the chunk and map it
     AddressInterval chunkVas = AddressInterval::baseSize(chunkVa, chunkSize);
     partitioner_.memoryMap()->insert(chunkVas,
                                      MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(chunkSize),
-                                                        0, MemoryMap::READ_EXECUTE, "new code"));
+                                                        0, MemoryMap::READ_EXECUTE, chunkAllocationName_));
     freeSpace_ |= chunkVas;
+    allocatedChunks_ |= chunkVas;
 
     // Use the first part of the new chunk
     size_t totalBytes = nBytes + encodeJump(chunkVa + nBytes, jmpTargetVa).size();
