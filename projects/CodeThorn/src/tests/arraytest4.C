@@ -1,13 +1,16 @@
 int main() {
   int a[]={1,2,3};
   int* p0;
-  int* p1;
   p0=a;
-  p1=a+1;
-  *p0=10;
-  //p0=&a[0];
+  int x;
+  x=*p0;
+  p0=&a[1];
   *p0=15;
-  //p1=&a[1];
+  int* p1;
+  p1=&x;
   *p1=20;
+  int* p2;
+  p2=p1;
+  *p1=5000;
   return 0;
 }
