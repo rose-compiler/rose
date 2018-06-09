@@ -2,6 +2,8 @@
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <rose_getline.h>
+#include <Sawyer/FileSystem.h>
 #include <x86InstructionProperties.h>
 
 #include <boost/foreach.hpp>
@@ -303,7 +305,7 @@ isStaticArchive(const boost::filesystem::path &fileName) {
 
 bool
 tryLink(const std::string &commandTemplate, std::string outputName, std::vector<std::string> inputNames,
-        Sawyer::Message::Stream &errors) {
+        Sawyer::Message::Stream &errors, FixUndefinedSymbols::Boolean fixUndefinedSymbols) {
     if (commandTemplate.empty() || outputName.empty() || inputNames.empty())
         return false;
 
@@ -331,12 +333,62 @@ tryLink(const std::string &commandTemplate, std::string outputName, std::vector<
         }
     }
 
-    if (system(cmd.c_str()) != 0) {
-        errors <<"shell command failed: " <<cmd <<"\n";
-        return false;
-    }
+    struct Resources {
+        FILE *ldOutput;
+        char *line;
 
-    return true;
+        Resources()
+            : ldOutput(NULL), line(NULL) {}
+        ~Resources() {
+            if (ldOutput)
+                pclose(ldOutput);
+            if (line)
+                free(line);
+        }
+    } r;
+
+    // Run the linker the first time and parse the error messages looking for complaints of undefined symbols.
+    cmd += " 2>&1";
+    mlog[DEBUG] <<"running command: " <<cmd <<"\n";
+    r.ldOutput = popen(cmd.c_str(), "r");
+    if (!r.ldOutput)
+        return false;
+    std::set<std::string> undefinedSymbols;
+    boost::regex undefReferenceRe("undefined reference to `(.*)'");
+    size_t lineSize = 0;
+    while (rose_getline(&r.line, &lineSize, r.ldOutput) > 0) {
+        std::string line = r.line;
+        mlog[DEBUG] <<"command output: " <<line;
+        boost::smatch matched;
+        if (boost::regex_search(line, matched, undefReferenceRe))
+            undefinedSymbols.insert(matched.str(1));
+    }
+    int exitStatus = pclose(r.ldOutput);
+    r.ldOutput = NULL;
+    if (0 == exitStatus || undefinedSymbols.empty() || !fixUndefinedSymbols)
+        return 0 == exitStatus;
+
+    // Create a .c file that defines those symbols that the linker complained about
+    Sawyer::FileSystem::TemporaryFile cFile((boost::filesystem::temp_directory_path() /
+                                             boost::filesystem::unique_path()).string() + ".c");
+    mlog[DEBUG] <<"defining symbols in a C file\n";
+    BOOST_FOREACH (const std::string &symbol, undefinedSymbols) {
+        cFile.stream() <<"void " <<symbol <<"() {}\n";
+        mlog[DEBUG] <<"  void " <<symbol <<"() {}\n";
+    }
+    cFile.stream().close();
+
+    // Compile the .c file to get an object file
+    Sawyer::FileSystem::TemporaryFile oFile((boost::filesystem::temp_directory_path() /
+                                             boost::filesystem::unique_path()).string() + ".o");
+    cmd = "cc -o " + oFile.name().string() + " -c " + cFile.name().string();
+    mlog[DEBUG] <<"running command: " <<cmd <<"\n";
+    if (system(cmd.c_str()) != 0)
+        return false;
+
+    // Try the linking again, but with the object file as well
+    inputNames.insert(inputNames.begin(), oFile.name().string());
+    return tryLink(commandTemplate, outputName, inputNames, errors, FixUndefinedSymbols::NO);
 }
 
 std::vector<Function::Ptr>
