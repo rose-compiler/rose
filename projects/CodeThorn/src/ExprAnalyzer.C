@@ -929,6 +929,39 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* no
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
+  cout<<"DEBUG: evalLValueVarExp: "<<node->unparseToString()<<" EState label:"<<estate.label().toString()<<endl;
+  SingleEvalResultConstInt res;
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  const PState* pstate=estate.pstate();
+  VariableId varId=_variableIdMapping->variableId(node);
+  if(pstate->varExists(varId)) {
+    if(_variableIdMapping->hasArrayType(varId)) {
+      cout<<"DEBUG: lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
+      res.result=AbstractValue::createAddressOfArray(varId);
+    } else {
+      res.result=AbstractValue::createAddressOfVariable(varId);
+    }
+    return listify(res);
+  } else {
+    // special mode to represent information not stored in the state
+    // i) unmodified arrays: data can be stored outside the state
+    // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
+    if(_variableIdMapping->hasArrayType(varId) && args.getBool("explicit-arrays")==false) {
+      // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
+      //res.result=AbstractValue(varId.getIdCode());
+      cout<<"DEBUG: lvalue array address (non-existing in state)(?): "<<node->unparseToString()<<endl;
+      res.result=AbstractValue::createAddressOfArray(varId);
+      return listify(res);
+    } else {
+      res.result=CodeThorn::Top();
+      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      return listify(res);
+    }
+  }
+  // unreachable
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
   //cout<<"DEBUG: evalRValueVarExp: "<<node->unparseToString()<<endl;
   SingleEvalResultConstInt res;
