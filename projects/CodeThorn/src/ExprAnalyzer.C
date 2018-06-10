@@ -889,6 +889,37 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPreIncrementOp(SgPlusPlusOp* node, 
+								SingleEvalResultConstInt operandResult, 
+								EState estate, bool useConstraints) {
+#if 0
+  AbstractValue derefOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+#endif
+  throw CodeThorn::Exception("Error: pre-increment operator inside expression:"+node->unparseToString()+". Normalization required.");
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPostIncrementOp(SgPlusPlusOp* node, 
+								 SingleEvalResultConstInt operandResult, 
+								 EState estate, bool useConstraints) {
+  throw CodeThorn::Exception("Error: post-increment operator inside expression:"+node->unparseToString()+". Normalization required.");
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPreDecrementOp(SgMinusMinusOp* node, 
+								SingleEvalResultConstInt operandResult, 
+								EState estate, bool useConstraints) {
+  throw CodeThorn::Exception("Error: pre-decrement operator inside expression:"+node->unparseToString()+". Normalization required.");
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPostDecrementOp(SgMinusMinusOp* node, 
+								 SingleEvalResultConstInt operandResult, 
+								 EState estate, bool useConstraints) {
+  throw CodeThorn::Exception("Error: post-decrement operator inside expression:"+node->unparseToString()+". Normalization required.");
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPlusPlusOp(SgPlusPlusOp* node, 
                                                             SingleEvalResultConstInt operandResult, 
                                                             EState estate, bool useConstraints) {
@@ -896,20 +927,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPlusPlusOp(SgPlusPlusOp* node,
   res.estate=estate;
   if(SgNodeHelper::isPrefixIncDecOp(node)) {
     // preincrement ++E
-    throw CodeThorn::Exception("Error: PreIncrement operator inside expression:"+node->unparseToString()+". Normalization required.");
-  } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
+    return evalPreIncrementOp(node,operandResult,estate,useConstraints);
+   } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
     // postincrement E++
-    throw CodeThorn::Exception("Error: PostIncrement operator inside expression."+node->unparseToString()+". Normalization required.");
-  } else {
-    throw CodeThorn::Exception("Error: Unsupported increment operator mode."+node->unparseToString());
+    return evalPostIncrementOp(node,operandResult,estate,useConstraints);
   }
-#if 0
-  AbstractValue derefOperandValue=operandResult.result;
-  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  res.exprConstraints=operandResult.exprConstraints;
-#endif
-  return listify(res);
+  throw CodeThorn::Exception("Interal error: ExprAnalyzer::evalPlusPlusOp: "+node->unparseToString());
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* node, 
@@ -918,15 +941,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* no
   SingleEvalResultConstInt res;
   res.estate=estate;
   if(SgNodeHelper::isPrefixIncDecOp(node)) {
-    // preincrement --E
-    throw CodeThorn::Exception("Error: PreDecrement operator inside expression. Normalization required."+node->unparseToString());
+    // predecrement --E
+    return evalPreDecrementOp(node,operandResult,estate,useConstraints);
   } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
-    // postincrement E--
-    throw CodeThorn::Exception("Error: PostDecrement operator inside expression. Normalization required."+node->unparseToString());
-  } else {
-    throw CodeThorn::Exception("Error: Unsupported decrement operator mode."+node->unparseToString());
+    // postdecrement E--
+    return evalPostDecrementOp(node,operandResult,estate,useConstraints);
   }
-  return listify(res);
+  throw CodeThorn::Exception("Internal error: ExprAnalyzer::evalMinusMinusOp: "+node->unparseToString());
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {

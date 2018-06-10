@@ -196,9 +196,23 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPreIncrementOp(SgPlusPlusOp* node, 
+						      SingleEvalResultConstInt operandResult, 
+						      EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPostIncrementOp(SgPlusPlusOp* node, 
+						       SingleEvalResultConstInt operandResult, 
+						       EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPreDecrementOp(SgMinusMinusOp* node, 
+						      SingleEvalResultConstInt operandResult, 
+						      EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPostDecrementOp(SgMinusMinusOp* node, 
+						       SingleEvalResultConstInt operandResult, 
+						       EState estate, bool useConstraints);
+    // dispatch function
     list<SingleEvalResultConstInt> evalMinusMinusOp(SgMinusMinusOp* node, 
                                                     SingleEvalResultConstInt operandResult, 
                                                     EState estate, bool useConstraints);
+    // dispatch function
     list<SingleEvalResultConstInt> evalPlusPlusOp(SgPlusPlusOp* node, 
                                                   SingleEvalResultConstInt operandResult, 
                                                   EState estate, bool useConstraints);
