@@ -18,6 +18,7 @@ using namespace std;
 
 namespace CodeThorn {
 
+  class Analyzer;
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -58,7 +59,10 @@ namespace CodeThorn {
   class ExprAnalyzer {
   public:
     ExprAnalyzer();
+    void setAnalyzer(Analyzer* analyzer);
     //SingleEvalResult eval(SgNode* node,EState estate);
+    //! compute abstract lvalue
+    list<SingleEvalResultConstInt> evaluateLExpression(SgNode* node,EState estate, bool useConstraints);
     //! Evaluates an expression using AbstractValue and returns a list of all evaluation-results.
     //! There can be multiple results if one of the variables was bound to top as we generate
     //! two different states and corresponding constraints in this case, one representing the
@@ -80,7 +84,7 @@ namespace CodeThorn {
     
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
-    
+    AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
   public:
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
@@ -240,6 +244,7 @@ namespace CodeThorn {
     bool _skipArrayAccesses=false;
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
+    Analyzer* _analyzer;
   };
  
 } // end of namespace CodeThorn

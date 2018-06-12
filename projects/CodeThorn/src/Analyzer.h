@@ -223,6 +223,9 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
     bool isPrecise();
 
+    EState createEState(Label label, PState pstate, ConstraintSet cset);
+    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+
   protected:
     void printStatusMessage(string s, bool newLineFlag);
 
@@ -249,9 +252,6 @@ namespace CodeThorn {
     EStateSet::ProcessingResult process(EState& s);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
-    EState createEState(Label label, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
 
     void set_finished(std::vector<bool>& v, bool val);

@@ -7,11 +7,17 @@
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
+#include "Analyzer.h" // dependency on process-functions
 
 using namespace CodeThorn;
 using namespace SPRAY;
 
 ExprAnalyzer::ExprAnalyzer() {
+}
+
+void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
+  ROSE_ASSERT(analyzer);
+  _analyzer=analyzer;
 }
 
 void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
@@ -170,13 +176,28 @@ void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints
 
 #define CASE_EXPR_ANALYZER_EVAL_UNARY_OP(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),operandResult,estate,useConstraints));break
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resList;
+  AbstractValue result;
+  if(SgVarRefExp* varExp=isSgVarRefExp(node)) {
+    result=computeAbstractAddress(varExp);
+  } else {
+    cerr<<"Error: unsupported lvalue expression: "<<node->unparseToString()<<endl;
+    exit(1);
+  }
+  SingleEvalResultConstInt res;
+  ConstraintSet cset;
+  res.init(estate,cset,result);
+  resList.push_back(res);
+  return resList;
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, bool useConstraints) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=AbstractValue(CodeThorn::Bot());
-
 #if 0
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "Error: incdec-op not supported in conditions."<<endl;
@@ -235,22 +256,34 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   
   if(dynamic_cast<SgUnaryOp*>(node)) {
     SgNode* child=SgNodeHelper::getFirstChild(node);
-    list<SingleEvalResultConstInt> operandResultList=evaluateExpression(child,estate,useConstraints);
+    list<SingleEvalResultConstInt> operandResultList=evaluateLExpression(child,estate,useConstraints);
     //assert(operandResultList.size()==1);
     list<SingleEvalResultConstInt> resultList;
-    for(list<SingleEvalResultConstInt>::iterator oiter=operandResultList.begin();
-        oiter!=operandResultList.end();
-        ++oiter) {
-      SingleEvalResultConstInt operandResult=*oiter;
+    for(auto oiter:operandResultList) {
+      SingleEvalResultConstInt operandResult=oiter;
+      switch(node->variantT()) {
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPlusPlusOp,evalPlusPlusOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusMinusOp,evalMinusMinusOp);
+      default:
+        ; // nothing to do, fall through to next loop on unary ops
+      }
+    }
+    return resultList;
+  }
+
+  if(dynamic_cast<SgUnaryOp*>(node)) {
+    SgNode* child=SgNodeHelper::getFirstChild(node);
+    list<SingleEvalResultConstInt> operandResultList=evaluateExpression(child,estate,useConstraints);
+    list<SingleEvalResultConstInt> resultList;
+    for(auto oiter:operandResultList) {
+      SingleEvalResultConstInt operandResult=oiter;
       switch(node->variantT()) {
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgNotOp,evalNotOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgCastExp,evalCastOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitwiseComplementOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
-        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp);
-        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPlusPlusOp,evalPlusPlusOp);
-        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusMinusOp,evalMinusMinusOp);
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
         string exceptionInfo=string("Error: evaluateExpression::unknown unary operation @")+string(node->sage_class_name());
@@ -876,15 +909,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   return listify(res);
 }
 
+AbstractValue ExprAnalyzer::computeAbstractAddress(SgVarRefExp* varRefExp) {
+  VariableId varId=_variableIdMapping->variableId(varRefExp);
+  return AbstractValue(varId);
+}
+  
 list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node, 
                                                              SingleEvalResultConstInt operandResult, 
                                                              EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.estate=estate;
-  AbstractValue addressOfOperandValue=operandResult.result;
+  AbstractValue operand=operandResult.result;
   //cout<<"DEBUG: addressOfOpValue: "<<addressOfOperandValue.toRhsString(_variableIdMapping);
   // AbstractValue of a VariableId is a pointer to this variable.
-  res.result=AbstractValue(addressOfOperandValue.getVariableId());
+  res.result=AbstractValue(operand.getVariableId());
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
@@ -892,14 +930,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreIncrementOp(SgPlusPlusOp* node, 
 								SingleEvalResultConstInt operandResult, 
 								EState estate, bool useConstraints) {
-#if 0
   AbstractValue derefOperandValue=operandResult.result;
+  ROSE_ASSERT(derefOperandValue.isPtr());
+  SingleEvalResultConstInt res;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  res.exprConstraints=operandResult.exprConstraints;
+  AbstractValue oldValue=estate.pstate()->readFromMemoryLocation(derefOperandValue);
+  AbstractValue one=1;
+  AbstractValue newValue=oldValue+one;
+  PState newPState=*estate.pstate();
+  newPState.writeToMemoryLocation(derefOperandValue,newValue);
+  ConstraintSet cset; // use empty cset (in prep to remove it)
+  ROSE_ASSERT(_analyzer);
+  res.init(_analyzer->createEState(estate.label(),newPState,cset),cset,newValue);
   return listify(res);
-#endif
-  throw CodeThorn::Exception("Error: pre-increment operator inside expression:"+node->unparseToString()+". Normalization required.");
+  //throw CodeThorn::Exception("Error: pre-increment operator inside expression:"+node->unparseToString()+". Normalization required.");
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPostIncrementOp(SgPlusPlusOp* node, 

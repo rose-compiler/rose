@@ -157,7 +157,8 @@ Analyzer::Analyzer():
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
   resetInputSequenceIterator();
-}
+  exprAnalyzer.setAnalyzer(this);
+ }
 
 Analyzer::~Analyzer() {
 }
