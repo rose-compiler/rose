@@ -479,7 +479,7 @@ public:
             throw Exception("cannot read object because stream is in error state");
         if (objectType() != objectTypeId) {
             throw Exception("unexpected object type (expected " + boost::lexical_cast<std::string>(objectTypeId) +
-                            " but read " + boost::lexical_cast<std::string>(objectType()));
+                            " but read " + boost::lexical_cast<std::string>(objectType()) + ")");
         }
         objectType(ERROR); // in case of exception
         T object;

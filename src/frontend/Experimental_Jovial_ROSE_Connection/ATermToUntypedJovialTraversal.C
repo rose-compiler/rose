@@ -235,7 +235,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
       std::cout << "  # decls = " << decl_list->get_decl_list().size() << "\n";
       std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
       std::cout << "  # funcs = " << func_list->get_func_list().size() << "\n";
-      std::cout << "  #labels = " <<     labels.size() << "\n\n";
+      std::cout << "  #labels = " << labels.size() << "\n\n";
 #endif
 
    // TODO - need list for labels in untyped IR
@@ -1155,7 +1155,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUnt
          return ATfalse;
       }
 
-      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label);
+      SgUntypedNullExpression * return_code = UntypedBuilder::buildUntypedNullExpression();
+      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label, return_code);
       setSourcePosition(return_stmt, term);
 
       stmt_list->get_stmt_list().push_back(return_stmt);
@@ -1246,8 +1247,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntyp
 
       if (ATmatch(t_stop_code, "no-integer-formula()")) {
          // No StopCode
-         stop_code = new SgUntypedNullExpression();
-         setSourcePositionUnknown(stop_code);
+         stop_code = UntypedBuilder::buildUntypedNullExpression();
       }
       else if (traverse_IntegerFormula(t_stop_code, &stop_code)) {
          // MATCHED IntegerFormula

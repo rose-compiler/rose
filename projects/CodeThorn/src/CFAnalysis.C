@@ -272,8 +272,10 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
 
     // all omp statements
-  case V_SgOmpForStatement:
+  case V_SgOmpTargetStatement:
   case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -282,10 +284,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
@@ -471,8 +471,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
-  case V_SgOmpForStatement:
-  case V_SgOmpParallelStatement: {
+  case V_SgOmpTargetStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement: {
     // the final label is the final label of the child node's construct
     SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
     LabelSet finalLabelSet=finalLabels(nextNestedStmt);
@@ -489,10 +491,8 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
@@ -1004,7 +1004,9 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
 
     // parallel nested omp constructs
+  case V_SgOmpTargetStatement:
   case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
   case V_SgOmpForStatement: {
     SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
     // need to compute flow of next stmt because it is nested (and not at basic-block level)
@@ -1017,7 +1019,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet.insert(edge1);
     return edgeSet;
   }
-    // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
+    // these omp statements do not generate edges in addition to the ingoing and outgoing edge
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -1026,10 +1028,8 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:

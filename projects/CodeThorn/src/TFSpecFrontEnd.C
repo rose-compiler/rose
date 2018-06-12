@@ -67,7 +67,7 @@ SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefin
 }
 
 // experimental "parser" for building types from string
-SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
+SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
   SgType* newType=nullptr;
   std::regex e("[_A-Za-z]+|\\*|&|const");
   // default constructor = end-of-sequence
@@ -105,19 +105,20 @@ SgType* buildTypeFromStringSpec(string type,SgFunctionDefinition* funDef) {
       buildConstType=true;
     } else if(std::regex_match(typePart, std::regex("^[_A-Za-z]+$"))) {
       // found a type name
-      if(funDef) {
+      if(SgFunctionDefinition* funDef=isSgFunctionDefinition(providedScope)) {
         //cout<<"DEBUG: found type name:"<<typePart<<endl;
-        SgScopeStatement* scope=funDef->get_scope();
+        SgScopeStatement* funScope=funDef->get_scope();
         // check whether provided type name is a name of a user-defined type
         SgType* userDefinedType=findUserDefinedTypeByName(funDef,typePart);
         if(userDefinedType) {
           //cout<<"DEBUG: --> found user defined type :"<<typePart<<endl;
           newType=userDefinedType;
         } else {
-          newType=SageBuilder::buildOpaqueType(typePart, scope);
+          newType=SageBuilder::buildOpaqueType(typePart, funScope);
         }
       } else {
-        cout<<"WARNING: no function def for scope. not building new type:"<<typePart<<endl;
+        // use provided scope if no funDef is provided
+        newType=SageBuilder::buildOpaqueType(typePart, providedScope);
       }
     } else {
     parseerror:
@@ -231,9 +232,22 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionSpec<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
         if(onlyGlobalVars) {
           listOfGlobalVars=SgNodeHelper::listOfGlobalVars(root);
-          cout<<"Found "<<listOfGlobalVars.size() <<" global variables."<<endl;
-          cout<<"Error: option 'global' not supported yet."<<endl;
-          exit(1);
+          if(listOfGlobalVars.size()>0) {
+            cout<<"Found "<<listOfGlobalVars.size() <<" global variables."<<endl;
+            SgScopeStatement* globalScope=(*listOfGlobalVars.begin())->get_scope(); // obtain global scope from first var
+            SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,globalScope);
+            SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,globalScope);
+            for(auto varDecl : listOfGlobalVars) {
+              SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+              SgType* varInitNameType=varInitName->get_type();
+              if(varInitNameType==oldBuiltType) {
+                varInitName->set_type(newBuiltType);
+                numTypeReplace++;
+              }
+            }
+          }
+          //cout<<"Error: option 'global' not supported yet."<<endl;
+          //exit(1);
         } else {
           std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
           if(functionName=="*") {

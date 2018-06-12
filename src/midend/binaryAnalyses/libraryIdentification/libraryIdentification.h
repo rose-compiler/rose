@@ -14,6 +14,17 @@
 namespace LibraryIdentification
    {
 
+/** typedef libToFuncMap
+ *  This is used as the type to list which functions are found in
+ *  which libraries from matchLibraryIdentificationDataBase.
+ *  The map is: libraryname -> set<functions matched in that library>
+ *
+ *  Functions that are not found in any library, will be placed in the
+ *  "UNKNOWN" bin.
+ **/
+       typedef std::map<LibraryInfo, std::set<FunctionInfo> > LibToFuncsMap;
+       
+
 /** generate Library Identification Database
  *  This function takes a binary project (presumeably a library) and
  *  hashes every function, in it.  It then inserts the library and
@@ -27,119 +38,47 @@ namespace LibraryIdentification
  * @param[in] libraryVersion  Library version, same problem
  * @param[in] project      Rose SgProject that has the functions to
  * write or find
+ * @param[in] replace      If a function or library already exisits in
+ * the database, replace it?
  **/     
        void generateLibraryIdentificationDataBase    ( const std::string& databaseName, 
                                                        const std::string& libraryName, 
                                                        const std::string& libraryVersion, 
-                                                       SgProject* project );
+                                                       SgProject* project,
+                                                       bool replace = false);
 
 
-     /**
-      * @class FlattenAST 
-      *
-      * A simple traversal that builds up the opcode string for a
-      * function.  When constructed, a reference to an
-      * SgUnsignedCharList must be passed in to recieve the output
-      * data.  It is initialized when traverse is run. The node passed into
-      * traverse is presumeably an SgAsmFunction.
-      * This class is used by generateOpCodeVector to generate the
-      * opCodeVector. 
-      * NOTE: FlattenAST has been superceeded by FlattenAST_AndResetImmediateValues
-      *
-      * Use like this:
-      *  SgUnsignedCharList functionBytes;  //Recieves the output data
-      *  FlattenAST flatAST(functionBytes);
-      *  flatAST.traverse(node,preorder);
-      *  size_t startAddress = flatAST.startAddress;
-      *  size_t endAddress   = flatAST.endAddress;
-      *  
-      **/
-     class FlattenAST: public AstSimpleProcessing
-        {
-          public:
-            // @brief The reference used to the output data buffer,
-            // get the opcodes
-               SgUnsignedCharList & data;
 
-            // @brief start address of the function in the memorymap
-               size_t startAddress;
-            // @brief end address of the function in the memorymap
-               size_t endAddress;
+/** match functions in project to  Library Identification Database
+ *  This is a function to simplify matching functions in a binary
+ *  project to library functions in the database.  It will attempt to
+ *  match every function defined in the project to a library function.
+ *
+ *  It returns a LibToFuncsMap that contains every function defined in
+ *  the project in the following form: Library->set(Function).  
+ *  Functions that could not be matched in the database are found in
+ *  the "UNKNOWN" library.
+ *
+ * @param[in] databaseName Filename of the database to create/access
+ * @param[in] project      Rose SgProject that has the functions to
+ * write or find
+ * @return libToFuncsMap Libraries->set(Functions) unmatched
+ * functions under "UNKNOWN"
+ **/     
+       LibToFuncsMap matchLibraryIdentificationDataBase (const std::string& databaseName,
+                                                          SgProject* project);
 
-            // @brief Constructor just initializes output buffer  
-               FlattenAST(SgUnsignedCharList & s) : data(s),startAddress(0),endAddress(0) {}
-               
-            // @brief Generates the opcodes for each AsmInstruction.
-            // (Called by traverse) 
-               void visit(SgNode* n);
-        };
-
-     
-     /**
-      * @class FlattenAST_RangeListAttribute
-      *
-      * FlattenAST_RangeListAttribute is a synthesized attribute
-      * (bottom-up attribute) that gathers a list of intermediate bit
-      * ranges and passes it up the AST.
-      * This list is used to reset all the intermediate (constant)
-      * values to 0, so that any pointers are ignored when comparing
-      * functions.  
-      * The purpose is so that static linking, which changes where
-      * pointers jump to, does not change the signature of a library
-      * function. 
-      * A possible downside is that this will also reset integer
-      * constants, so functions containing Value+2 and Value+3 will be
-      * seen as the same function.
-      * This also currently only works for x86.
-      *
-      * NOTE: I don't know why we need a rangeList to reset
-      * intermediate values. -Jim
-      **/
-     class FlattenAST_RangeListAttribute
-        {
-          public:
-            // Save the list of ranges of where offsets are stored in each instruction's opcode (used to represent immediates).
-               std::vector<std::pair<unsigned char,unsigned char> > rangeList;
-        };
-
-     /**
-      * @class FlattenAST_AndResetImmediateValues
-      *
-      * FlattenAST_AndResetImmediateValues is a bottom-up traversal
-      * that generates a list of a list of the opcodes in a function.
-      * This is used to generate a signature of a function for FLIRT
-      * identification. 
-      * This is the same as FlattenAST, but also resets all the
-      * intermediate (constant) values to zero so that any pointers
-      * are ignored when making the signature.  
-      * This is so that static linking, which changes where pointers
-      * jump to, does not change the signature of a library function. 
-      * A possible downside is that this will also reset integer
-      * constants, so functions containing Value+2 and Value+3 will be
-      * seen as the same function.
-      * This also currently only works for x86.
-      *
-      * NOTE: I don't know why we need a rangeList to reset
-      * intermediate values. -Jim
-      * DQ (7/11/2009): We need to use a synthesized attribute to gather the list of bit ranges from any nested 
-      * SgAsmExpression IR nodes where the opcode stores values (offsets) used to store immediate values (coded 
-      * values in the instruction's op-codes.
-      **/
-     class FlattenAST_AndResetImmediateValues: public AstBottomUpProcessing<FlattenAST_RangeListAttribute>
-        {
-          public:
-            // Save flattended AST in reference initialized at construction.
-               SgUnsignedCharList & data;
-
-               size_t startAddress;
-               size_t endAddress;
-
-               FlattenAST_AndResetImmediateValues(SgUnsignedCharList & s) : data(s),startAddress(0),endAddress(0) {}
-
-               FlattenAST_RangeListAttribute evaluateSynthesizedAttribute( SgNode* n, SynthesizedAttributesList childAttributes );
-        };
-
-
+/** 
+ * Private helper function for adding idents to the libToFuncsMap.
+ * @param[inout] libToFuncsMap The map to insert to
+ * @param[in] libraryInfo      This libraryInfo to insert as key
+ * @param[in] functionInfo     The functionInfo to insert as value        
+ **/     
+       void insertFunctionToMap(LibToFuncsMap& libToFuncsMap, 
+                                const LibraryInfo& libraryInfo, 
+                                const FunctionInfo& functionInfo);
+       
+       
 
    }
 #endif

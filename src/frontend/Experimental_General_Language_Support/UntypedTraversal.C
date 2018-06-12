@@ -101,6 +101,12 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          pConverter->convertSgUntypedNameListDeclaration(ut_decl, currentScope);
          break;
       }
+    case V_SgUntypedLabelStatement:
+      {
+         SgUntypedLabelStatement* ut_decl = dynamic_cast<SgUntypedLabelStatement*>(node);
+         pConverter->convertSgUntypedLabelStatement_decl(ut_decl, currentScope);
+         break;
+      }
     case V_SgUntypedNullStatement:
       {
          SgUntypedNullStatement* ut_decl = dynamic_cast<SgUntypedNullStatement*>(node);
@@ -152,7 +158,12 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
           sg_expr = pConverter->convertSgUntypedExpression(ut_expr);
           break;
        }
-
+    case V_SgUntypedAbortStatement:
+      {
+         SgUntypedAbortStatement* ut_stmt = dynamic_cast<SgUntypedAbortStatement*>(node);
+         pConverter->convertSgUntypedAbortStatement(ut_stmt, currentScope);
+         break;
+      }
     case V_SgUntypedAssignmentStatement:
       {
          SgUntypedAssignmentStatement* ut_stmt = dynamic_cast<SgUntypedAssignmentStatement*>(node);
@@ -167,12 +178,6 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          pConverter->convertSgUntypedExpressionStatement(ut_stmt, children, currentScope);
          break;
       }
-    case V_SgUntypedAbortStatement:
-      {
-         SgUntypedAbortStatement* ut_stmt = dynamic_cast<SgUntypedAbortStatement*>(node);
-         pConverter->convertSgUntypedAbortStatement(ut_stmt, currentScope);
-         break;
-      }
     case V_SgUntypedExitStatement:
       {
          SgUntypedExitStatement* ut_stmt = dynamic_cast<SgUntypedExitStatement*>(node);
@@ -183,7 +188,6 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedGotoStatement* ut_stmt = dynamic_cast<SgUntypedGotoStatement*>(node);
          pConverter->convertSgUntypedGotoStatement(ut_stmt, currentScope);
-         cout << "Returning from GOTO conversion\n";
          break;
       }
     case V_SgUntypedOtherStatement:
@@ -195,7 +199,15 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
     case V_SgUntypedReturnStatement:
       {
          SgUntypedReturnStatement* ut_stmt = dynamic_cast<SgUntypedReturnStatement*>(node);
-         pConverter->convertSgUntypedReturnStatement(ut_stmt, currentScope);
+         SgExpressionPtrList children(childAttrs);
+         pConverter->convertSgUntypedReturnStatement(ut_stmt, children, currentScope);
+         break;
+      }
+    case V_SgUntypedStopStatement:
+      {
+         SgUntypedStopStatement* ut_stmt = dynamic_cast<SgUntypedStopStatement*>(node);
+         SgExpressionPtrList children(childAttrs);
+         pConverter->convertSgUntypedStopStatement(ut_stmt, children, currentScope);
          break;
       }
 

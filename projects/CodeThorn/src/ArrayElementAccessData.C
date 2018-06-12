@@ -81,19 +81,27 @@ bool operator!=(const ArrayElementAccessData& a, const ArrayElementAccessData& o
   return !(a==other);
 }
 bool operator<(const ArrayElementAccessData& a, const ArrayElementAccessData& other) {
-    if(a.varId!=other.varId)
-      return a.varId<other.varId;
-    if(a.subscripts.size()!=other.subscripts.size())
-      return a.subscripts.size()<other.subscripts.size();
-    vector<int>::const_iterator i=a.subscripts.begin();
-    vector<int>::const_iterator j=other.subscripts.begin();
-    while(i!=a.subscripts.end() && j!=other.subscripts.end()) {
-      if(*i!=*j) {
-        return *i<*j;
-      } else {
-        ++i;++j;
-      }
+  if(a.varId!=other.varId)
+    return a.varId<other.varId;
+  if(a.subscripts.size()!=other.subscripts.size())
+    return a.subscripts.size()<other.subscripts.size();
+  vector<int>::const_iterator i=a.subscripts.begin();
+  vector<int>::const_iterator j=other.subscripts.begin();
+  while(i!=a.subscripts.end() && j!=other.subscripts.end()) {
+    if(*i!=*j) {
+      return *i<*j;
+    } else {
+      ++i;++j;
     }
-    ROSE_ASSERT(i==a.subscripts.end() && j==other.subscripts.end());
-    return false; // both are equal
   }
+  ROSE_ASSERT(i==a.subscripts.end() && j==other.subscripts.end());
+  return false; // both are equal
+}
+
+bool ArrayElementAccessData::hasNegativeIndex() const {
+  for (auto index : subscripts ) {
+    if(index<0)
+      return true;
+  }
+  return false;
+}
