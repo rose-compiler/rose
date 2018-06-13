@@ -117,6 +117,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+        ASSERT_not_null(ops);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
         SValuePtr orig_esp = SValue::promote(ops->readRegister(dispatcher->REG_anySP));
