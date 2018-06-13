@@ -92,8 +92,10 @@ namespace CodeThorn {
     bool variable(SgNode* node,VariableId& varId);
     
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
-    
+    bool isLValueOp(SgNode* node);
   protected:
+    static void initDiagnostics();
+    static Sawyer::Message::Facility logger;
     AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
     
     //! This function turn a single result into a one-elment list with

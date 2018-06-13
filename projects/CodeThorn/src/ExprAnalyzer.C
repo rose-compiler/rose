@@ -12,7 +12,19 @@
 using namespace CodeThorn;
 using namespace SPRAY;
 
+Sawyer::Message::Facility ExprAnalyzer::logger;
+
 ExprAnalyzer::ExprAnalyzer() {
+  initDiagnostics();
+}
+
+void ExprAnalyzer::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::ExprAnalyzer", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
 }
 
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
@@ -183,6 +195,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
     result=computeAbstractAddress(varExp);
   } else {
     cerr<<"Error: unsupported lvalue expression: "<<node->unparseToString()<<endl;
+    cerr<<"     : "<<SgNodeHelper::sourceLineColumnToString(node)<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     exit(1);
   }
   SingleEvalResultConstInt res;
@@ -190,6 +203,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
   res.init(estate,cset,result);
   resList.push_back(res);
   return resList;
+}
+
+bool ExprAnalyzer::isLValueOp(SgNode* node) {
+  // assign operators not included yet
+  return isSgAddressOfOp(node)
+    || SgNodeHelper::isPrefixIncDecOp(node)
+    || SgNodeHelper::isPostfixIncDecOp(node)
+    ;
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, bool useConstraints) {
@@ -254,7 +275,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     return resultList;
   }
   
-  if(dynamic_cast<SgUnaryOp*>(node)) {
+  if(isLValueOp(node)) {
     SgNode* child=SgNodeHelper::getFirstChild(node);
     list<SingleEvalResultConstInt> operandResultList=evaluateLExpression(child,estate,useConstraints);
     //assert(operandResultList.size()==1);
@@ -262,6 +283,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     for(auto oiter:operandResultList) {
       SingleEvalResultConstInt operandResult=oiter;
       switch(node->variantT()) {
+        // covers same operators as isLValueOp
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPlusPlusOp,evalPlusPlusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusMinusOp,evalMinusMinusOp);
