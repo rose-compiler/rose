@@ -6,13 +6,14 @@
 
 class IntAstAttribute : public RootAstAttribute { 
 public: 
-    IntAstAttribute(int s) : value(s) {} 
+    IntAstAttribute(long long s) : value(s) {} 
 
-    int getValue() { return value; }
+    long long getValue() { return value; }
+    void resetValue(long long value_) { value = value_; }
 
 private:
 
-    int value;
+    long long value;
 };
 
 #endif
