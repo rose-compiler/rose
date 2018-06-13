@@ -202,12 +202,14 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change);
     list<SingleEvalResultConstInt> evalPreIncrementOp(SgPlusPlusOp* node, 
 						      SingleEvalResultConstInt operandResult, 
 						      EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalPostIncrementOp(SgPlusPlusOp* node, 
 						       SingleEvalResultConstInt operandResult, 
 						       EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change);
     list<SingleEvalResultConstInt> evalPreDecrementOp(SgMinusMinusOp* node, 
 						      SingleEvalResultConstInt operandResult, 
 						      EState estate, bool useConstraints);

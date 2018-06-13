@@ -949,41 +949,66 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   return listify(res);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalPreIncrementOp(SgPlusPlusOp* node, 
-								SingleEvalResultConstInt operandResult, 
-								EState estate, bool useConstraints) {
-  AbstractValue derefOperandValue=operandResult.result;
-  ROSE_ASSERT(derefOperandValue.isPtr());
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
   SingleEvalResultConstInt res;
-  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-  AbstractValue oldValue=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  AbstractValue one=1;
-  AbstractValue newValue=oldValue+one;
+  AbstractValue oldValue=estate.pstate()->readFromMemoryLocation(address);
+  AbstractValue newValue=oldValue+change;
   PState newPState=*estate.pstate();
-  newPState.writeToMemoryLocation(derefOperandValue,newValue);
+  newPState.writeToMemoryLocation(address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
   res.init(_analyzer->createEState(estate.label(),newPState,cset),cset,newValue);
   return listify(res);
-  //throw CodeThorn::Exception("Error: pre-increment operator inside expression:"+node->unparseToString()+". Normalization required.");
+  }
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change) {
+  // TODO change from precomp to postcomp
+  SingleEvalResultConstInt res;
+  AbstractValue oldValue=estate.pstate()->readFromMemoryLocation(address);
+  AbstractValue newValue=oldValue+change;
+  PState newPState=*estate.pstate();
+  newPState.writeToMemoryLocation(address,newValue);
+  ConstraintSet cset; // use empty cset (in prep to remove it)
+  ROSE_ASSERT(_analyzer);
+  res.init(_analyzer->createEState(estate.label(),newPState,cset),cset,oldValue);
+  return listify(res);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalPostIncrementOp(SgPlusPlusOp* node, 
-								 SingleEvalResultConstInt operandResult, 
-								 EState estate, bool useConstraints) {
-  throw CodeThorn::Exception("Error: post-increment operator inside expression:"+node->unparseToString()+". Normalization required.");
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPreIncrementOp(SgPlusPlusOp* node, 
+								SingleEvalResultConstInt operandResult, 
+								EState estate, bool useConstraints) {
+  AbstractValue address=operandResult.result;
+  ROSE_ASSERT(address.isPtr());
+  AbstractValue change=1;
+  return evalPreComputationOp(estate,address,change);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreDecrementOp(SgMinusMinusOp* node, 
 								SingleEvalResultConstInt operandResult, 
 								EState estate, bool useConstraints) {
-  throw CodeThorn::Exception("Error: pre-decrement operator inside expression:"+node->unparseToString()+". Normalization required.");
+  AbstractValue address=operandResult.result;
+  ROSE_ASSERT(address.isPtr());
+  AbstractValue change=-1;
+  return evalPreComputationOp(estate,address,change);
 }
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalPostIncrementOp(SgPlusPlusOp* node, 
+								 SingleEvalResultConstInt operandResult, 
+								 EState estate, bool useConstraints) {
+  AbstractValue address=operandResult.result;
+  ROSE_ASSERT(address.isPtr());
+  AbstractValue change=1;
+  return evalPostComputationOp(estate,address,change);
+}
+
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPostDecrementOp(SgMinusMinusOp* node, 
 								 SingleEvalResultConstInt operandResult, 
 								 EState estate, bool useConstraints) {
-  throw CodeThorn::Exception("Error: post-decrement operator inside expression:"+node->unparseToString()+". Normalization required.");
+  AbstractValue address=operandResult.result;
+  ROSE_ASSERT(address.isPtr());
+  AbstractValue change=-1;
+  return evalPostComputationOp(estate,address,change);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPlusPlusOp(SgPlusPlusOp* node, 
