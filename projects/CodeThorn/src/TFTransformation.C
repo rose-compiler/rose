@@ -269,7 +269,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
       if(varRefExpSymbol) {
         SgName varName=varRefExpSymbol->get_name();
         string varNameString=varName;
-        string instrumentationString="AD_INTERMEDIATE("+varNameString+",\""+varNameString+"\");";
+        string instrumentationString="AD_intermediate("+varNameString+",\""+varNameString+"\", FILE_INFO, FUNC_INFO);";
         // locate root node of statement
         SgNode* stmtSearch=assignOp;
         while(!isSgStatement(stmtSearch)) {
