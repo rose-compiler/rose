@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <Sawyer/IntervalSet.h>
 
 #if ROSE_MICROSOFT_OS
 // This is the boost solution for lack of support for stdint.h (e.g. types such as "uint64_t")
@@ -252,6 +253,19 @@ template<typename T> std::string unsignedToHex(T value) { return unsignedToHex2(
  *  represents at least @p nbits bits (four bits per hexadecimal digits). If @p nbits is zero then the function uses 32 bits
  *  for values that fit in 32 bits, otherwise 64 bits. */
 ROSE_UTIL_API std::string addrToString(uint64_t value, size_t nbits = 0);
+
+/** Convert an interval of virtual addresses to a string.
+ *
+ *  Converts an interval to a string by converting each address to a string, separating them with a comma, and enclosing the
+ *  whole string in square brackets. */
+ROSE_UTIL_API std::string addrToString(const Sawyer::Container::Interval<uint64_t> &interval, size_t nbits = 0);
+
+/** Convert an interval set of virtual addresses to a string.
+ *
+ *  Converts the interval-set to a string by converting each interval to a string, separating the intervals with commas, and
+ *  enclosing the whole string in curly braces. */
+ROSE_UTIL_API std::string addrToString(const Sawyer::Container::IntervalSet<Sawyer::Container::Interval<uint64_t> > &iset,
+                                       size_t nbits = 0);
 
 
 
