@@ -29,15 +29,41 @@ CodeInserter::chunkAllocationAlignment(size_t n) {
     chunkAllocationAlignment_ = std::min((size_t)1, n);
 }
 
+CodeInserter::InstructionInfoMap
+CodeInserter::computeInstructionInfoMap(const P2::BasicBlock::Ptr &bb, size_t startIdx, size_t nDeleted) {
+    ASSERT_not_null(bb);
+    ASSERT_require(startIdx < bb->nInstructions());
+    ASSERT_require(startIdx + nDeleted <= bb->nInstructions());
+    InstructionInfoMap retval;
+
+    // Instructions before the insertion point
+    for (size_t i = 0; i < startIdx; ++i) {
+        int relativeIndex = (int)i - (int)startIdx;
+        retval.insert(relativeIndex, InstructionInfo(bb->instructions()[i]));
+    }
+
+    // Instructions after the deletion (or insertion point)
+    for (size_t i = startIdx + nDeleted; i < bb->nInstructions(); ++i) {
+        int relativeIndex = (int)i - (int)(startIdx + nDeleted);
+        retval.insert(relativeIndex, InstructionInfo(bb->instructions()[i]));
+    }
+
+    return retval;
+}
+
 bool
 CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, size_t nInsns,
                                 std::vector<uint8_t> replacement, const std::vector<Relocation> &relocations) {
     ASSERT_not_null(bb);
     ASSERT_require(index + nInsns <= bb->nInstructions());
+
+    const size_t insertAt = index;
+    const size_t nDeletes = nInsns;
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // Where are the instructions located that are to be removed?  Be careful: the instructions of a basic block need not be in
     // address order, and need not be contiguous in memory.
+    InstructionInfoMap insnInfoMap = computeInstructionInfoMap(bb, insertAt, nDeletes);
     std::vector<SgAsmInstruction*> toReplace(bb->instructions().begin() + index, bb->instructions().begin() + index + nInsns);
     AddressIntervalSet toReplaceVas = instructionLocations(toReplace);
 
@@ -70,8 +96,8 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
 
             // Try to replace
             SAWYER_MESG(debug) <<"  trying replacement using overwrite and/or transfer methodologies...\n";
-            if (replaceByOverwrite(toReplaceVas, entryInterval, replacement, relocations, relocStart) ||
-                replaceByTransfer(toReplaceVas, entryInterval, toReplace, replacement, relocations, relocStart)) {
+            if (replaceByOverwrite(toReplaceVas, entryInterval, replacement, relocations, relocStart, insnInfoMap) ||
+                replaceByTransfer(toReplaceVas, entryInterval, toReplace, replacement, relocations, relocStart, insnInfoMap)) {
                 SAWYER_MESG(debug) <<"  replaceBlockInsns succeeded\n";
                 return true;
             }
@@ -79,21 +105,38 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
 
         if ((aggregationDirection_ & AGGREGATE_SUCCESSORS) != 0 && index + nInsns < bb->nInstructions()) {
             // Enlarge to-be-replaced by appending one of the block's instructions to the replacement
-            SgAsmInstruction *nextInsn = bb->instructions()[index + nInsns++];
+            size_t insnIdx = index + nInsns++;
+            int relIdx = (int)insnIdx - (int)(insertAt + nDeletes); // relative to one past last deleted instruction
+            SgAsmInstruction *nextInsn = bb->instructions()[insnIdx];
+
+            insnInfoMap[relIdx].newVaOffset = replacement.size();
+
             toReplace.push_back(nextInsn);
             toReplaceVas |= AddressInterval::baseSize(nextInsn->get_address(), nextInsn->get_size());
             std::vector<uint8_t> bytes = nextInsn->get_raw_bytes();
             replacement.insert(replacement.end(), bytes.begin(), bytes.end());
+
             SAWYER_MESG(debug) <<"  enlarged area by redirecting a successor:\n"
                                <<"    " <<unparseInstructionWithAddress(nextInsn) <<"\n";
+
         } else if ((aggregationDirection_ & AGGREGATE_PREDECESSORS) != 0 && index > 0) {
             // Enlarge to-be-replaced by prepending one of the block's instructions to the replacement
-            SgAsmInstruction *prevInsn = bb->instructions()[--index];
+            size_t insnIdx = --index;
+            int relIdx = (int)insnIdx - (int)insertAt;  // relative to insertion point
+            SgAsmInstruction *prevInsn = bb->instructions()[insnIdx];
+
+            BOOST_FOREACH (InstructionInfo &info, insnInfoMap.values()) {
+                if (info.newVaOffset)
+                    info.newVaOffset = info.newVaOffset.get() + prevInsn->get_size();
+            }
+            insnInfoMap[relIdx].newVaOffset = 0;
+
             toReplace.insert(toReplace.begin(), prevInsn);
             toReplaceVas |= AddressInterval::baseSize(prevInsn->get_address(), prevInsn->get_size());
             std::vector<uint8_t> bytes = prevInsn->get_raw_bytes();
             replacement.insert(replacement.begin(), bytes.begin(), bytes.end());
             relocStart += bytes.size();
+
             SAWYER_MESG(debug) <<"  enlarged area by redirecting a predecessor:\n"
                                <<"    " <<unparseInstructionWithAddress(prevInsn) <<"\n";
         } else {
@@ -131,8 +174,8 @@ CodeInserter::replaceInsns(const std::vector<SgAsmInstruction*> &toReplace, cons
 
     // Try to replace
     SAWYER_MESG(debug) <<"  trying to replace using overwrite and/or transfer methodologies...\n";
-    return (replaceByOverwrite(toReplaceVas, entryInterval, replacement, relocations, 0) ||
-            replaceByTransfer(toReplaceVas, entryInterval, toReplace, replacement, relocations, 0));
+    return (replaceByOverwrite(toReplaceVas, entryInterval, replacement, relocations, 0, InstructionInfoMap()) ||
+            replaceByTransfer(toReplaceVas, entryInterval, toReplace, replacement, relocations, 0, InstructionInfoMap()));
 }
 
 void
@@ -174,7 +217,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
 
 std::vector<uint8_t>
 CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement, const std::vector<Relocation> &relocations,
-                               size_t relocStart) {
+                               size_t relocStart, const InstructionInfoMap &insnInfoMap) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     if (debug) {
         debug <<"applying relocations at va " <<StringUtility::addrToString(va) <<"\n"
@@ -190,21 +233,13 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
         rose_addr_t value = 0;
         SAWYER_MESG(debug) <<"  at offset " <<(relocStart + reloc.offset) <<": ";
         switch (reloc.type) {
-            case RELOC_REL_LE32: {
-                SAWYER_MESG(debug) <<"rel_le32";
-                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
-                value = reloc.value - (va + relocStart + reloc.offset);
-                replacement[relocStart + reloc.offset + 0] = (value >>  0) & 0xff;
-                replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
-                replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
-                replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
-                break;
-            }
+            case RELOC_INDEX_ABS_LE32: {
+                // Virtual address of one of the input bytes.
+                SAWYER_MESG(debug) <<"index_abs_le32(" <<StringUtility::addrToString(reloc.value) <<")";
 
-            case RELOC_IDXABS_LE32: {
-                SAWYER_MESG(debug) <<"idxabs_le32";
-                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
                 value = va + reloc.value;
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
                 replacement[relocStart + reloc.offset + 0] = (value >>  0) & 0xff;
                 replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
                 replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
@@ -212,22 +247,93 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 break;
             }
 
-            case RELOC_IDXABSHI_LE32: {
-                SAWYER_MESG(debug) <<"idxabshi_le32";
-                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+            case RELOC_INDEX_ABS_LE32HI: {
+                // Virtual address of one of the input bytes (but only the high 32 bits)
+                SAWYER_MESG(debug) <<"index_abs_le32hi(" <<StringUtility::addrToString(reloc.value) <<")";
+
                 value = (va + reloc.value) >> 32;
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
                 replacement[relocStart + reloc.offset + 0] = (value >> 0) & 0xff;
                 replacement[relocStart + reloc.offset + 1] = (value >> 8) & 0xff;
                 replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
                 replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
                 break;
             }
+
+            case RELOC_INDEX_REL_LE32: {
+                // Offset from the input byte's virtual address to a specified virtual address, adjusted by adding the value
+                // originally stored in the input.
+                SAWYER_MESG(debug) <<"index_rel_le32(" <<StringUtility::addrToString(reloc.value);
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                rose_addr_t addend = replacement[relocStart + reloc.offset + 0];
+                addend |= replacement[relocStart + reloc.offset + 1] << 8;
+                addend |= replacement[relocStart + reloc.offset + 1] << 16;
+                addend |= replacement[relocStart + reloc.offset + 1] << 24;
+                addend = IntegerOps::signExtend2(addend, 32, 64);
+
+                SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
+
+                value = reloc.value - (va + relocStart + reloc.offset) + addend;
+
+                replacement[relocStart + reloc.offset + 0] = (value >>  0) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
+                break;
+            }
+
+            case RELOC_INSN_ABS_LE32: {
+                // Virtual address of some possibly moved instruction in the original basic block. The instruction is
+                // indicated by its index relative to the instructions that were removed by this insertion.
+                int relIdx = (int)reloc.value;
+                SAWYER_MESG(debug) <<"insn_abs_le32(" <<relIdx;
+                ASSERT_require(insnInfoMap.exists(relIdx));
+
+                const InstructionInfo &info = insnInfoMap[relIdx];
+                rose_addr_t value = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                replacement[relocStart + reloc.offset + 0] = (value >>  0) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
+                break;
+            }
+
+            case RELOC_INSN_REL_LE32: {
+                // Offset from the input byte's virtual address to the virtual address of some possibly moved instruction of
+                // the original basic block, adjusted by adding the value originally stored in the input. The instruction is
+                // indicated by its index relative to the instructions that were removed by this insertion.
+                int relIdx = (int)reloc.value;
+                SAWYER_MESG(debug) <<"insn_rel_le32(" <<relIdx;
+                ASSERT_require(insnInfoMap.exists(relIdx));
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                rose_addr_t addend = replacement[relocStart + reloc.offset + 0];
+                addend |= replacement[relocStart + reloc.offset + 1] << 8;
+                addend |= replacement[relocStart + reloc.offset + 1] << 16;
+                addend |= replacement[relocStart + reloc.offset + 1] << 24;
+                addend = IntegerOps::signExtend2(addend, 32, 64);
+                SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
+
+                const InstructionInfo &info = insnInfoMap[relIdx];
+                rose_addr_t targetVa = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
+                SAWYER_MESG(debug) <<" [target=" <<StringUtility::addrToString(targetVa) <<"]";
+                value = targetVa - (va + relocStart + reloc.offset) + addend;
+
+                replacement[relocStart + reloc.offset + 0] = (value >>  0) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
+                break;
+            }
         }
-        SAWYER_MESG(debug) <<"(" <<StringUtility::addrToString(reloc.value) <<")"
+        SAWYER_MESG(debug) 
                            << " = " <<StringUtility::addrToString(value)
                            <<" written to " <<StringUtility::addrToString(va)
-                           <<" + " <<relocStart <<" + " <<reloc.offset
-                           <<" = " <<StringUtility::addrToString(va + relocStart + reloc.offset) <<"\n";
+                           <<StringUtility::addrToString(va + relocStart + reloc.offset) <<"\n";
     }
 
     if (debug) {
@@ -302,7 +408,7 @@ CodeInserter::instructionLocations(const std::vector<SgAsmInstruction*> &insns) 
 bool
 CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const AddressInterval &entryInterval,
                                  const std::vector<uint8_t> &replacement, const std::vector<Relocation> &relocations,
-                                 size_t relocStart) {
+                                 size_t relocStart, const InstructionInfoMap &insnInfoMap) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     if (debug) {
         debug <<"replaceByOverwrite:\n";
@@ -328,7 +434,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
     AddressInterval replacementVas = AddressInterval::baseSize(replacementVa, replacement.size());
 
     // Write the replacement to memory
-    std::vector<uint8_t> patched = applyRelocations(replacementVa, replacement, relocations, relocStart);
+    std::vector<uint8_t> patched = applyRelocations(replacementVa, replacement, relocations, relocStart, insnInfoMap);
     if (partitioner_.memoryMap()->at(replacementVas).write(patched).size() != patched.size()) {
         SAWYER_MESG(debug) <<"  replaceByOverwrite failed: short write to memory map at "
                            <<StringUtility::addrToString(replacementVas) <<"\n";
@@ -344,7 +450,8 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
 bool
 CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const AddressInterval &entryInterval,
                                 const std::vector<SgAsmInstruction*> &toReplace, const std::vector<uint8_t> &replacement,
-                                const std::vector<Relocation> &relocations, size_t relocStart) {
+                                const std::vector<Relocation> &relocations, size_t relocStart,
+                                const InstructionInfoMap &insnInfoMap) {
     ASSERT_forbid(toReplace.empty());
     ASSERT_forbid(toReplaceVas.isEmpty());
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -371,11 +478,11 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: cannot allocate space in memory map\n";
         return false;                                   // failure to allocate memory
     }
-    SAWYER_MESG(debug) <<"  memory for movde instructions and returning branch is "
+    SAWYER_MESG(debug) <<"  memory for moved instructions and returning branch is "
                        <<StringUtility::addrToString(replacementVas) <<"\n";
 
     // Insert the replacement
-    std::vector<uint8_t> patched = applyRelocations(replacementVas.least(), replacement, relocations, relocStart);
+    std::vector<uint8_t> patched = applyRelocations(replacementVas.least(), replacement, relocations, relocStart, insnInfoMap);
     if (partitioner_.memoryMap()->at(replacementVas).write(patched).size() != patched.size()) {
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: short write to memory map at "
                            <<StringUtility::addrToString(replacementVas) <<"\n";

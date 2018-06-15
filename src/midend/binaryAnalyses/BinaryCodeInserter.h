@@ -2,6 +2,7 @@
 #define Rose_BinaryAnalysis__CodeInserter_H
 
 #include <Partitioner2/Partitioner.h>
+#include <Sawyer/Map.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -29,14 +30,64 @@ public:
         PAD_NOP_FRONT                                   /**< Add no-ops to the front of replacements. */
     };
 
-    /** Type of relocation to perform. */
+    /** Type of relocation to perform.
+     *
+     *  Each enum constant identifies a function whose description is given below. In those descriptions, the following
+     *  variables are used:
+     *
+     *  @li @p input is a vector of bytes that was specified by the user as the new code to be inserted.
+     *
+     *  @li @p reloc_value is the value data member of the relocation record. It has various interpretations depending on the
+     *      relocation function.
+     *
+     *  @li @ addend is the value currerntly stored at the destination bytes of the input interpretted as a signed value in the
+     *      byte order and width specified by the function name.
+     *
+     *  The last word of the function name specifies the format used to write the computed value back to the output:
+     *
+     *  @li @c LE32 writes the low-order 32 bits of the computed value as a 32-bit integer in little-endian order.
+     *
+     *  @li @c LE32HI writes the high-order 32 bits of the computed value as a 32-bit integer in little-endian order. */
     enum RelocType {
-        RELOC_REL_LE32,                                 /**< f(va) = va - reloc_site_va. */
-        RELOC_IDXABS_LE32,                              /**< f(index) = address_of(index). */
-        RELOC_IDXABSHI_LE32                             /**< f(index) = address_of(index) >> 32. */
+        RELOC_INDEX_ABS_LE32,                           /**< Interprets the @p reloc_value as an index of some byte in the
+                                                         *   @p input, and computes that byte's virtual address. */
+
+        RELOC_INDEX_ABS_LE32HI,                         /**< Interprets the @p reloc_value as an index of some byte in the @p
+                                                         *   input, and computes that byte's virtual address.*/
+
+        RELOC_INDEX_REL_LE32,                           /**< Interprets the @p reloc_value as an index of some byte in the @p
+                                                         *   input and computes the offset from the output virtual address to
+                                                         *   that input byte's virtual address, adjusted with the addend. */
+
+        RELOC_INSN_ABS_LE32,                            /**< Interprets the @p reloc_value as an instruction relative index for
+                                                         *   some instruction of the original basic block. Negative indexes are
+                                                         *   measured backward from the insertion point, and non-negative
+                                                         *   indexes are measured forward from one past the last deleted
+                                                         *   instruction (or insertion point if no deletions). This relocation
+                                                         *   function calculates the address of the specified instruction. This
+                                                         *   accounts for cases when the referenced instruction has been
+                                                         *   moved. */
+
+        RELOC_INSN_REL_LE32                             /**< Interprets the @p reloc_value as an instruction relative index for
+                                                         *   some instruction of the original basic block. Negative indexes are
+                                                         *   measured backward from the insertion point, and non-negative
+                                                         *   indexes are measured forward from one past the last deleted
+                                                         *   instruction (or insertion point if no deletions). This relocation
+                                                         *   function calculates the offset from the output virtual address to
+                                                         *   that instructions virtual address, adjusted with the addend. This
+                                                         *   accounts for cases when the referenced instruction has been
+                                                         *   moved. */
     };
 
-    /** Relocation record. */
+    /** Relocation record.
+     *
+     *  A relocation record describes how the new encoded instructions need to have their encodings adjusted when they're
+     *  placed at some specific memory address. This is necessary because the instructions are encoded by the user before an
+     *  address is chosen by the CodeInserter.
+     *
+     *  Each relocation entry applies to a specific index in the vector of bytes of the encoded instructions. This is called
+     *  the relocation @p offset.  The @p type of the relocation indicates which predefined function is used to calculate the
+     *  value that is to be written to that output offset, and @p value is an optional argument that gets passed to that function. */
     struct Relocation {
         size_t offset;                                  /**< Location of relocation in replacement code. */
         RelocType type;                                 /**< Relocation algorithm. */
@@ -52,6 +103,23 @@ public:
             : offset(offset), type(type), value(value) {}
     };
 
+    /** Information about an instruction within the basic block being modified. */
+    struct InstructionInfo {
+        rose_addr_t originalVa;                         /**< Original address of instruction. */
+        Sawyer::Optional<rose_addr_t> newVaOffset;      /**< Offset of instruction from front of encoded insn vector. */
+
+        explicit InstructionInfo(SgAsmInstruction *insn)
+            : originalVa(insn->get_address()) {}
+    };
+
+    /** Information about instructions within the basic block being modified.
+     *
+     *  The instructions are numbered relative to their position with the insertion point and deleted instructions. Negative
+     *  keys refer to instructions that appear before the insertion point, and non-negative keys refer to instructions starting
+     *  one past the last deleted instruction or, if no instructions are deleted, the instruction originally at the insertion
+     *  point. */
+    typedef Sawyer::Container::Map<int, InstructionInfo> InstructionInfoMap;
+    
 protected:
     const Rose::BinaryAnalysis::Partitioner2::Partitioner &partitioner_;
     AddressInterval chunkAllocationRegion_;             // where chunks can be allocated
@@ -233,7 +301,9 @@ public:
      *  instruction in @p toReplace. Likewise, control enters at the beginning of @p replacement and exits to the first address
      *  after the end of the @p replacement.
      *
-     *  If @p relocations are specified, then parts of the @p replacement are rewritten based on its final address.
+     *  If @p relocations are specified, then parts of the @p replacement are rewritten based on its final address. Relocation
+     *  records that refer to instructions rather than bytes are not permitted since this function doesn't have access to the
+     *  basic block in which the replacement is occuring.
      *
      *  Returns true if the replacement could be inserted, false otherwise. The only time this returns false is when the
      *  addresses of the original instructions starting with the first instruction do not occupy a contiguous region of memory
@@ -258,7 +328,8 @@ public:
      *  @p startVa. The @p relocStart is a byte offset for all the relocations; i.e., the actual offset in the @p replacement
      *  where the relocation is applied is the relocation's offset plus the @p relocStart value. */
     virtual std::vector<uint8_t> applyRelocations(rose_addr_t startVa, std::vector<uint8_t> replacement,
-                                                  const std::vector<Relocation> &relocations, size_t relocStart);
+                                                  const std::vector<Relocation> &relocations, size_t relocStart,
+                                                  const InstructionInfoMap &insnInfoMap);
 
     /** Allocate virtual memory in the partitioner memory map.
      *
@@ -293,7 +364,7 @@ public:
      *  instructions. */
     virtual bool replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const AddressInterval &entryInterval,
                                     const std::vector<uint8_t> &replacement, const std::vector<Relocation> &relocations,
-                                    size_t relocStart);
+                                    size_t relocStart, const InstructionInfoMap &insnInfoMap);
 
     /** Insert new code in allocated area.
      *
@@ -306,7 +377,16 @@ public:
      *  address after the end of the @p toReplaceVas. All other bytes of @p toReplaceVas are overwritten with no-ops. */
     virtual bool replaceByTransfer(const AddressIntervalSet &toReplaceVas, const AddressInterval &entryInterval,
                                    const std::vector<SgAsmInstruction*> &toReplace, const std::vector<uint8_t> &replacement,
-                                   const std::vector<Relocation> &relocations, size_t relocStart);
+                                   const std::vector<Relocation> &relocations, size_t relocStart,
+                                   const InstructionInfoMap &insnInfoMap);
+
+    /** Obtain info about instructions for the basic block being modified.
+     *
+     *  Given a basic block, an insertion point, and the number of instructions that will be deleted starting at that insertion
+     *  point, return information about the remaining instructions.  See documentation for @ref InstructionInfoMap for details
+     *  about how the instructions are indexed in this map. */
+    InstructionInfoMap computeInstructionInfoMap(const Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr&,
+                                                 size_t startIdx, size_t nDeleted);
 };
 
 } // namespace
