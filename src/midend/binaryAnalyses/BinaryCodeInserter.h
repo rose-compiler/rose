@@ -252,9 +252,13 @@ public:
      *  away require more bytes to encode than jumps to nearby targets. */
     virtual std::vector<uint8_t> encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa);
 
-    /** Apply relocations to create a new encoding. */
+    /** Apply relocations to create a new encoding.
+     *
+     *  The @p relocations are applied to the @p replacement bytes which are assumed to be mapped in virtual memory starting at
+     *  @p startVa. The @p relocStart is a byte offset for all the relocations; i.e., the actual offset in the @p replacement
+     *  where the relocation is applied is the relocation's offset plus the @p relocStart value. */
     virtual std::vector<uint8_t> applyRelocations(rose_addr_t startVa, std::vector<uint8_t> replacement,
-                                                  const std::vector<Relocation> &relocations);
+                                                  const std::vector<Relocation> &relocations, size_t relocStart);
 
     /** Allocate virtual memory in the partitioner memory map.
      *
@@ -288,7 +292,8 @@ public:
      *  necessary according to the @ref nopPadding property.  All other addresses in @p toReplaceVas are filled with no-op
      *  instructions. */
     virtual bool replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const AddressInterval &entryInterval,
-                                    const std::vector<uint8_t> &replacement, const std::vector<Relocation> &relocations);
+                                    const std::vector<uint8_t> &replacement, const std::vector<Relocation> &relocations,
+                                    size_t relocStart);
 
     /** Insert new code in allocated area.
      *
@@ -301,7 +306,7 @@ public:
      *  address after the end of the @p toReplaceVas. All other bytes of @p toReplaceVas are overwritten with no-ops. */
     virtual bool replaceByTransfer(const AddressIntervalSet &toReplaceVas, const AddressInterval &entryInterval,
                                    const std::vector<SgAsmInstruction*> &toReplace, const std::vector<uint8_t> &replacement,
-                                   const std::vector<Relocation> &relocations);
+                                   const std::vector<Relocation> &relocations, size_t relocStart);
 };
 
 } // namespace
