@@ -11,6 +11,7 @@
 
 using namespace CodeThorn;
 using namespace SPRAY;
+using namespace Sawyer::Message;
 
 Sawyer::Message::Facility ExprAnalyzer::logger;
 
@@ -192,7 +193,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
   list<SingleEvalResultConstInt> resList;
   AbstractValue result;
   if(SgVarRefExp* varExp=isSgVarRefExp(node)) {
+#if 0
     result=computeAbstractAddress(varExp);
+#else
+    return evalLValueVarRefExp(varExp,estate,useConstraints);
+#endif
   } else {
     cerr<<"Error: unsupported lvalue expression: "<<node->unparseToString()<<endl;
     cerr<<"     : "<<SgNodeHelper::sourceLineColumnToString(node)<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
@@ -331,7 +336,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   }
   switch(node->variantT()) {
   case V_SgVarRefExp:
-    return evalRValueVarExp(isSgVarRefExp(node),estate,useConstraints);
+    return evalRValueVarRefExp(isSgVarRefExp(node),estate,useConstraints);
   case V_SgFunctionCallExp: {
     //cout<<"DEBUG: SgFunctionCall detected in subexpression."<<endl;
     return evalFunctionCall(isSgFunctionCallExp(node),estate,useConstraints);
@@ -1041,15 +1046,101 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* no
   throw CodeThorn::Exception("Internal error: ExprAnalyzer::evalMinusMinusOp: "+node->unparseToString());
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
-  cout<<"DEBUG: evalLValueVarExp: "<<node->unparseToString()<<" EState label:"<<estate.label().toString()<<endl;
+list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, bool useConstraints) {
+  // for now we ignore array refs on lhs
+  // TODO: assignments in index computations of ignored array ref
+  // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
+  // since nothing can change (because of being ignored) state remains the same
+  PState oldPState=*estate.pstate();
+  ConstraintSet oldcset=*estate.constraints();
+  SingleEvalResultConstInt res;
+  res.init(estate,oldcset,AbstractValue(CodeThorn::Bot()));
+  if(getSkipArrayAccesses()) {
+    // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
+    res.result=CodeThorn::Top();
+    return listify(res);
+  } else {
+    SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
+    SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
+    if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
+      PState pstate2=oldPState;
+      VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
+      AbstractValue arrayPtrValue;
+      // two cases
+      if(_variableIdMapping->hasArrayType(arrayVarId)) {
+        // create array element 0 (in preparation to have index added, or, if not index is used, it is already the correct index (=0).
+        arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
+      } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
+        // in case it is a pointer retrieve pointer value
+        AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
+        if(pstate2.varExists(ptr)) {
+          //cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
+          arrayPtrValue=pstate2.readFromMemoryLocation(ptr);
+          //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+          // convert integer to VariableId
+          if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
+            logger[ERROR] <<"Error: unsupported feature:"<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
+            exit(1);
+          }
+          // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
+        } else {
+          logger[ERROR] <<"lhs array access: pointer variable does not exist in PState."<<endl;
+          exit(1);
+        }
+          } else {
+        logger[ERROR] <<"lhs array access: unkown type of array or pointer."<<endl;
+        exit(1);
+      }
+      AbstractValue arrayElementAddress;
+      //AbstractValue aValue=(*i).value();
+      list<SingleEvalResultConstInt> resIntermediate=evaluateExpression(indexExp,estate,useConstraints);
+      ROSE_ASSERT(resIntermediate.size()==1); // TODO: temporary restriction
+      AbstractValue indexValue=(*(resIntermediate.begin())).value();
+      AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
+      logger[TRACE]<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+      
+      // TODO: rewrite to use AbstractValue only
+      {
+        VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
+        int index2=arrayPtrPlusIndexValue.getIndexIntValue();
+        if(!checkArrayBounds(arrayVarId2,index2)) {
+          // TODO: add to analysis report (do not print)
+          cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(node)<<" : write access out of bounds."<<endl;
+        }
+      }
+
+      arrayElementAddress=arrayPtrPlusIndexValue;
+      //cout<<"DEBUG: arrayElementAddress: "<<arrayElementAddress.toString(_variableIdMapping)<<endl;
+      //logger[TRACE]<<"arrayElementVarId:"<<arrayElementAddress.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
+      ROSE_ASSERT(!arrayElementAddress.isBot());
+      // read value of variable var id (same as for VarRefExp - TODO: reuse)
+      // TODO: check whether arrayElementAddress (or array) is a constant array (arrayVarId)
+      if(!pstate2.varExists(arrayElementAddress)) {
+        // check that array is constant array (it is therefore ok that it is not in the state)
+        //logger[TRACE] <<"lhs array-access index does not exist in state (creating it as address now). Array element id:"<<arrayElementAddress.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
+      }
+      res.result=arrayElementAddress;
+      return listify(res);
+    } else {
+      logger[ERROR] <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
+      logger[ERROR] <<"expr: "<<node->unparseToString()<<endl;
+      logger[ERROR] <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
+      exit(1);
+    }
+  }
+  // unreachable
+  ROSE_ASSERT(false);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints) {
+  logger[TRACE]<<"DEBUG: evalLValueVarRefExp: "<<node->unparseToString()<<" EState label:"<<estate.label().toString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   if(pstate->varExists(varId)) {
     if(_variableIdMapping->hasArrayType(varId)) {
-      cout<<"DEBUG: lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
+      logger[TRACE]<<"DEBUG: lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
       res.result=AbstractValue::createAddressOfVariable(varId);
@@ -1062,7 +1153,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarExp(SgVarRefExp* node,
     if(_variableIdMapping->hasArrayType(varId) && args.getBool("explicit-arrays")==false) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
-      cout<<"DEBUG: lvalue array address (non-existing in state)(?): "<<node->unparseToString()<<endl;
+      logger[TRACE]<<"DEBUG: lvalue array address (non-existing in state)(?): "<<node->unparseToString()<<endl;
       res.result=AbstractValue::createAddressOfArray(varId);
       return listify(res);
     } else {
@@ -1074,8 +1165,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarExp(SgVarRefExp* node,
   // unreachable
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
-  //cout<<"DEBUG: evalRValueVarExp: "<<node->unparseToString()<<endl;
+list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints) {
+  //cout<<"DEBUG: evalRValueVarRefExp: "<<node->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();

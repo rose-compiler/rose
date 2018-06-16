@@ -231,8 +231,9 @@ namespace CodeThorn {
     // special case of sizeof operator (operates on types and types of expressions)
     list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node, 
                                                 EState estate, bool useConstraints);
-    list<SingleEvalResultConstInt> evalLValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
-    list<SingleEvalResultConstInt> evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
     
     list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints);

@@ -81,3 +81,10 @@ TODO:
   do { ... } while(C); ==> do { ... t=C; } while(t);
   for(init,test,inc) { ... } ==> init;while(test) { ... inc;}
 
+Domain:
+lval(*E)=rval(E)
+rval(*E)=deref(rval(E)
+rval(&E)=lval(E)
+lval(E1[E2])=lval(E1)+rval(E2)
+rval(E1[E2])=deref(lval(E1[E2]))
+lval(E1.F)=lval(E1)+offset(type(E1),id(F))

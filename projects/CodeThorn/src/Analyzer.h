@@ -148,8 +148,8 @@ namespace CodeThorn {
     std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
     void setSkipSelectedFunctionCalls(bool defer);
-    void setSkipArrayAccesses(bool skip) { exprAnalyzer.setSkipArrayAccesses(skip); }
-    bool getSkipArrayAccesses() { return exprAnalyzer.getSkipArrayAccesses(); }
+    void setSkipArrayAccesses(bool skip);
+    bool getSkipArrayAccesses();
 
     // specific to the loop-aware exploration modes
     int getIterations() { return _iterations; }

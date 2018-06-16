@@ -1466,6 +1466,14 @@ void Analyzer::setSkipSelectedFunctionCalls(bool defer) {
   exprAnalyzer.setSkipSelectedFunctionCalls(true);
 }
 
+void Analyzer::setSkipArrayAccesses(bool skip) {
+  exprAnalyzer.setSkipArrayAccesses(skip);
+}
+
+bool Analyzer::getSkipArrayAccesses() {
+  return exprAnalyzer.getSkipArrayAccesses();
+}
+
 void Analyzer::set_finished(std::vector<bool>& v, bool val) {
   ROSE_ASSERT(v.size()>0);
   for(vector<bool>::iterator i=v.begin();i!=v.end();++i) {
