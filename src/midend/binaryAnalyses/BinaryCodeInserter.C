@@ -197,6 +197,24 @@ CodeInserter::fillWithNops(const AddressIntervalSet &where) {
     }
 }
 
+void
+CodeInserter::fillWithRandom(const AddressIntervalSet &where) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    std::string isa = partitioner_.instructionProvider().disassembler()->name();
+    BOOST_FOREACH (const AddressInterval &interval, where.intervals()) {
+        SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with random data\n";
+        std::vector<uint8_t> data;
+        data.reserve(interval.size());
+        for (size_t i=0; i<interval.size(); ++i)
+            data.push_back(Sawyer::fastRandomIndex(256));
+        if (partitioner_.memoryMap()->at(interval.least()).write(data).size() != data.size()) {
+            mlog[ERROR] <<"short write of " <<interval.size() <<"-byte random sequence at "
+                        <<StringUtility::addrToString(interval) <<"\n";
+        }
+    }
+}
+
 std::vector<uint8_t>
 CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
     std::vector<uint8_t> retval;
@@ -428,8 +446,16 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
         return false;
     }
     rose_addr_t replacementVa = entryInterval.least();
-    if (replacement.size() < entryInterval.size() && PAD_NOP_FRONT == nopPadding_)
-        replacementVa += entryInterval.size() - replacement.size();
+    if (replacement.size() < entryInterval.size()) {
+        switch (nopPadding_) {
+            case PAD_NOP_FRONT:
+                replacementVa += entryInterval.size() - replacement.size();
+                break;
+            case PAD_NOP_BACK:
+            case PAD_RANDOM_BACK:
+                break;
+        }
+    }
     SAWYER_MESG(debug) <<"  trying to insert replacement at " <<StringUtility::addrToString(replacementVa) <<"\n";
     AddressInterval replacementVas = AddressInterval::baseSize(replacementVa, replacement.size());
 
@@ -441,8 +467,17 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
         return false;
     }
 
-    // Fill everything else with no-ops
-    fillWithNops(toReplaceVas - replacementVas);
+    // Fill everything else with no-ops, etc.
+    switch (nopPadding_) {
+        case PAD_NOP_FRONT:
+        case PAD_NOP_BACK:
+            fillWithNops(toReplaceVas - replacementVas);
+            break;
+        case PAD_RANDOM_BACK:
+            fillWithRandom(toReplaceVas - replacementVas);
+            break;
+    }
+    
     SAWYER_MESG(debug) <<"  replaceByOverwrite succeeded\n";
     return true;
 }

@@ -27,7 +27,8 @@ public:
     /** How to pad with no-ops. */
     enum NopPadding {
         PAD_NOP_BACK,                                   /**< Add no-ops to the end of replacements. */
-        PAD_NOP_FRONT                                   /**< Add no-ops to the front of replacements. */
+        PAD_NOP_FRONT,                                  /**< Add no-ops to the front of replacements. */
+        PAD_RANDOM_BACK                                 /**< Add random data to the end of replacements. */
     };
 
     /** Type of relocation to perform.
@@ -314,6 +315,9 @@ public:
 
     /** Fill the specified memory with no-op instructions. */
     virtual void fillWithNops(const AddressIntervalSet &where);
+
+    /** Fill the specified memory with random data. */
+    virtual void fillWithRandom(const AddressIntervalSet &where);
 
     /** Encode an unconditional branch.
      *
