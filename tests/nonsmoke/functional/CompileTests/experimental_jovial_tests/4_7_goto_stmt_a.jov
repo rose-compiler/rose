@@ -1,7 +1,7 @@
 START
 PROGRAM testgoto ;
 BEGIN
- GOTO label1 ;
+ labelxyz: GOTO label1 ;
  label1: RETURN ;
 END
 TERM

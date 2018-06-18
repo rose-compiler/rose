@@ -20,6 +20,18 @@ class PosInfo
         pEndCol    = endCol;
      }
 
+   PosInfo(SgLocatedNode* fromNode)
+     {
+        ROSE_ASSERT(fromNode != NULL);
+        ROSE_ASSERT(fromNode->get_startOfConstruct() != NULL);
+        ROSE_ASSERT(fromNode->get_endOfConstruct()   != NULL);
+
+        pStartLine = fromNode->get_startOfConstruct()->get_line();
+        pStartCol  = fromNode->get_startOfConstruct()->get_col();
+        pEndLine   = fromNode->get_endOfConstruct()->get_line();
+        pEndCol    = fromNode->get_endOfConstruct()->get_col();
+     }
+
    int  getStartLine()             { return pStartLine; }
    int  getStartCol()              { return pStartCol;  }
    int  getEndLine()               { return pEndLine;   }
@@ -67,6 +79,8 @@ class ATermToUntypedTraversal
    void setSourcePositionFromEndOnly   ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
 
    void setSourcePositionUnknown       ( SgLocatedNode* locatedNode);
+
+   SgUntypedStatement* convert_Labels (std::vector<std::string> & labels, std::vector<PosInfo> & locations, SgUntypedStatement* stmt);
 
 }; // class ATermToUntypedTraversal
 }  // namespace ATermSupport

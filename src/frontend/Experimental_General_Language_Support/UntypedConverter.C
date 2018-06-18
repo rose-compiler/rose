@@ -1166,16 +1166,25 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
 SgStatement*
 UntypedConverter::convertSgUntypedAbortStatement (SgUntypedAbortStatement* ut_stmt, SgScopeStatement* scope)
    {
+      bool hasLabel;
+
       SgExpression* abortExpression = new SgNullExpression();
+      ROSE_ASSERT(abortExpression != NULL);
+
       SageInterface::setSourcePosition(abortExpression);
 
       SgStopOrPauseStatement* abortStatement = new SgStopOrPauseStatement(abortExpression);
+      ROSE_ASSERT(abortStatement != NULL);
+
       abortStatement->set_stop_or_pause(SgStopOrPauseStatement::e_abort);
       setSourcePositionFrom(abortStatement, ut_stmt);
-
       abortExpression->set_parent(abortStatement);
-      scope->append_statement(abortStatement);
-      convertLabel(ut_stmt, abortStatement, scope);
+
+      hasLabel = convertLabel(ut_stmt, abortStatement, scope);
+      if (hasLabel == false) {
+      // There is no enclosing SgLabelStatement so this statement is added to the scope
+         scope->append_statement(abortStatement);
+      }
 
       return abortStatement;
    }
@@ -1183,16 +1192,26 @@ UntypedConverter::convertSgUntypedAbortStatement (SgUntypedAbortStatement* ut_st
 SgStatement*
 UntypedConverter::convertSgUntypedExitStatement (SgUntypedExitStatement* ut_stmt, SgScopeStatement* scope)
    {
+      bool hasLabel;
+
       SgExpression* exitExpression = new SgNullExpression();
+      ROSE_ASSERT(exitExpression != NULL);
+
       SageInterface::setSourcePosition(exitExpression);
 
       SgStopOrPauseStatement* exitStatement = new SgStopOrPauseStatement(exitExpression);
+      ROSE_ASSERT(exitStatement != NULL);
+
       exitStatement->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
       setSourcePositionFrom(exitStatement, ut_stmt);
 
       exitExpression->set_parent(exitStatement);
-      scope->append_statement(exitStatement);
-      convertLabel(ut_stmt, exitStatement, scope);
+
+      hasLabel = convertLabel(ut_stmt, exitStatement, scope);
+      if (hasLabel == false) {
+      // There is no enclosing SgLabelStatement so this statement is added to the scope
+         scope->append_statement(exitStatement);
+      }
 
       return exitStatement;
    }
@@ -1203,6 +1222,7 @@ UntypedConverter::convertSgUntypedGotoStatement (SgUntypedGotoStatement* ut_stmt
       SgLabelSymbol* target_symbol = NULL;
       SgLabelStatement* label_stmt = NULL;
       SgGotoStatement*   goto_stmt = NULL;
+      bool hasLabel;
 
       SgFunctionDefinition * label_scope = SageInterface::getEnclosingFunctionDefinition(scope, true);
       ROSE_ASSERT (label_scope);
@@ -1228,7 +1248,11 @@ UntypedConverter::convertSgUntypedGotoStatement (SgUntypedGotoStatement* ut_stmt
       goto_stmt = SageBuilder::buildGotoStatement(target_symbol);
       setSourcePositionFrom(goto_stmt, ut_stmt);
 
-      scope->append_statement(goto_stmt);
+      hasLabel = convertLabel(ut_stmt, goto_stmt, scope);
+      if (hasLabel == false) {
+      // There is no enclosing SgLabelStatement so this statement is added to the scope
+         scope->append_statement(goto_stmt);
+      }
 
       return goto_stmt;
    }
@@ -1300,14 +1324,13 @@ UntypedConverter::convertSgUntypedLabelStatement (SgUntypedLabelStatement* ut_st
 
       SgLabelStatement* label_stmt = SageBuilder::buildLabelStatement(label, sg_stmt);
       ROSE_ASSERT(label_stmt != NULL);
-
       setSourcePositionFrom(label_stmt, ut_stmt);
-      bool hasLabel = convertLabel(ut_stmt, label_stmt, scope);
 
-      if (hasLabel == false)
-         {
-            scope->append_statement(label_stmt);
-         }
+      bool hasLabel = convertLabel(ut_stmt, label_stmt, scope);
+      if (hasLabel == false) {
+      // There is no enclosing SgLabelStatement so this statement is added to the scope
+         scope->append_statement(label_stmt);
+      }
 
       return label_stmt;
    }
@@ -1315,7 +1338,7 @@ UntypedConverter::convertSgUntypedLabelStatement (SgUntypedLabelStatement* ut_st
 SgNullStatement*
 UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
    {
-      SgNullStatement* nullStatement = new SgNullStatement();
+      SgNullStatement* nullStatement = SageBuilder::buildNullStatement();
       setSourcePositionFrom(nullStatement, ut_stmt);
 
       scope->append_statement(nullStatement);
@@ -1368,6 +1391,7 @@ UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_
 SgStatement*
 UntypedConverter::convertSgUntypedStopStatement (SgUntypedStopStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
    {
+      bool hasLabel;
       SgStopOrPauseStatement* stop_stmt;
 
       ROSE_ASSERT(children.size() == 1);
@@ -1382,9 +1406,12 @@ UntypedConverter::convertSgUntypedStopStatement (SgUntypedStopStatement* ut_stmt
       setSourcePositionFrom(stop_stmt, ut_stmt);
 
       stop_expr->set_parent(stop_stmt);
-      scope->append_statement(stop_stmt);
 
-      convertLabel(ut_stmt, stop_stmt);
+      hasLabel = convertLabel(ut_stmt, stop_stmt, scope);
+      if (hasLabel == false) {
+      // There is no enclosing SgLabelStatement so this statement is added to the scope
+         scope->append_statement(stop_stmt);
+      }
 
       return stop_stmt;
    }
