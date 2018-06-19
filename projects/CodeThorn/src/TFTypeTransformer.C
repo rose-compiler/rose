@@ -83,7 +83,7 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
 int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType) {
   RoseAst ast(root);
   bool foundVar=0;
-  // need to process formal params explicitly because not found in traversal (?)
+  // need to process formal params explicitly because not found in traversal of functionDef (is traversed from function decl)
   if(SgFunctionDefinition* funDef=isSgFunctionDefinition(root)) {
     SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     for(auto varInitName : initNamePtrList) {

@@ -190,11 +190,16 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	} else {
 	  typeName="float";
 	}
-	SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
-	if(funDef==0) {
-	  cerr<<"Error: function "<<functionName<<" does not exist in file."<<endl;
-	  return true;
-	}
+        SgFunctionDefinition* funDef;
+        if(functionName=="$global") {
+          funDef=nullptr; // denote global scope
+        } else {
+          funDef=completeAst.findFunctionByName(functionName);
+          if(funDef==0) {
+            cerr<<"Error: function "<<functionName<<" does not exist in file."<<endl;
+            return true;
+          }
+        }
 	SgType* newType=buildTypeFromStringSpec(typeName,funDef);
 	if(newType==nullptr) {
 	  cerr<<"Error: unknown type "<<typeName<<" in command file "<<specFileName<<" in line "<<lineNr<<"."<<endl;
@@ -215,7 +220,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	string functionName;
         std::vector<std::string> functionConstructSpecList;
         std::vector<std::string> functionSpecSplit;
-        if(functionSpec=="global") {
+        if(functionSpec=="$global") {
           onlyGlobalVars=true;
         } else {
           functionSpecSplit=CppStdUtilities::splitByRegex(functionSpec,":");

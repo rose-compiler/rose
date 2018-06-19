@@ -581,9 +581,9 @@ check-typeforge: typeforge
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
 	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/casttest3.tyf --trace $(srcdir)/tests/casttest3.C 
+	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C 
 	g++ -Wall rose_casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tyf --trace $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
 	rm -f a.out
 
