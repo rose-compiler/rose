@@ -273,7 +273,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
 
         default:
           cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
-          throw CodeThorn::Exception("Error: evaluateExpression::unkown binary operation.");
+          throw CodeThorn::Exception("Error: evaluateExpression::unknown binary operation.");
         }
       }
     }
@@ -798,7 +798,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           exit(1);
         }
       } else {
-        cerr<<"Error: unkown type of array or pointer."<<endl;
+        cerr<<"Error: unknown type of array or pointer."<<endl;
         exit(1);
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
@@ -1088,7 +1088,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
           exit(1);
         }
           } else {
-        logger[ERROR] <<"lhs array access: unkown type of array or pointer."<<endl;
+        logger[ERROR] <<"lhs array access: unknown type of array or pointer."<<endl;
         exit(1);
       }
       AbstractValue arrayElementAddress;

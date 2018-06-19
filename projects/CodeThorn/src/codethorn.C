@@ -298,6 +298,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
 
   passOnToRose.add_options()
     (",I", po::value< vector<string> >(),"Include directories.")
+    (",D", po::value< vector<string> >(),"Define constants for preprocessor.")
     (",std", po::value< string >(),"Compilation standard.")
     ("edg:no_warnings", po::bool_switch(),"EDG frontend flag.")
     ;
@@ -562,14 +563,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
       logger[ERROR] << "Option \"-std\" requires an argument." << endl;
       ROSE_ASSERT(0);
     }
-#if 0
-    string iPrefix = "-I";
-    if(currentArg.substr(0, iPrefix.size()) == iPrefix && 
-       (currentArg.size()>iPrefix.size() && currentArg[2] != '/') ) {
-      logger[ERROR] << "Option \"-I\" should be followed by either a slash or a whitespace." << endl;
-      ROSE_ASSERT(0);
-    }
-#endif
   }
 
   // Remove all CodeThorn-specific elements of argv (do not confuse ROSE frontend)
@@ -587,8 +580,12 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
       continue;
     } else {
       string iPrefix = "-I/";
+      string dPrefix = "-D"; // special case, cannot contain separating space
       string stdPrefix = "-std=";
       if(currentArg.substr(0, iPrefix.size()) == iPrefix) {
+	continue;
+      }
+      if(currentArg.substr(0, dPrefix.size()) == dPrefix) {
 	continue;
       }
       if(currentArg.substr(0, stdPrefix.size()) == stdPrefix) {

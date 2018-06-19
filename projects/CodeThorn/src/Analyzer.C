@@ -2129,7 +2129,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
               exit(1);
             }
           } else {
-            logger[ERROR] <<"lhs array access: unkown type of array or pointer."<<endl;
+            logger[ERROR] <<"lhs array access: unknown type of array or pointer."<<endl;
             exit(1);
           }
           AbstractValue arrayElementId;
