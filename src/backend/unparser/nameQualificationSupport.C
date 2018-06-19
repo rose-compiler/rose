@@ -4028,9 +4028,12 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
        // DQ (6/9/2013): I have incremented this value to support mangled names in the protobuf-2.5.0 application.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
+       // [Robb Matzke 2018-06-19]: Incremented from 8000 to 9000 because <rose.h> has a name that's 8960 characters, namely "__gnu_cxx::new_allocator< _Rb_tree_node< map< ... >
+       //    ::value_type > > ::deallocate".
        // if (memberFunctionNameString.length() > 4000)
        // if (memberFunctionNameString.length() > 8000)
-          if (memberFunctionNameString.length() > 8000)
+       // if (memberFunctionNameString.length() > 8000)
+          if (memberFunctionNameString.length() > 9000)
              {
                printf ("Error: function names should not be this long... memberFunctionNameString.length() = %" PRIuPTR " \n",memberFunctionNameString.length());
 #if 1
