@@ -1975,7 +1975,6 @@ projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
-projects/StencilManyCore/Makefile
 projects/TileK/Makefile
 projects/TileK/doc/Makefile
 projects/TileK/doc/dlx.doxy

@@ -57,6 +57,17 @@ class CodeReplVisitor : public ReplInfoVisitor
  protected:
   CodeReplOperator& Repl;
   virtual void defaultVisit(POETCode* s) { std::cerr << "unhandled case:" << s->toString() << "\n"; assert(0); }
+  void visitOperator(POETOperator* op) {
+           assert(op->get_op()==TYPE_TOR);
+           op->get_arg(0)->visit(this); 
+           POETCode* r1 = res;
+           for (int i = 1; i < op->numOfArgs();++i) {
+              POETCode* r2 = op->get_arg(i); 
+              r2->visit(this); r2 = res;
+              r1 = POETProgram::make_typeTor(r1,r2);
+           }
+           res = r1; 
+    }
   virtual void visitNULL(POETNull* n) { res = n; }
   virtual void visitMap(POETMap* m) { res = m; }
   virtual void visitIconst(POETIconst* l) { res=Repl.apply(l); }
@@ -667,7 +678,7 @@ class CodeReplSingleOperator : public CodeReplOperator
   POETCode *from, *to;
   POETCode* apply(POETCode* f)
      { 
-       if (f==from) {
+       if (f==from || (f->get_enum() == SRC_UNKNOWN && POETAstInterface::MatchAstWithPattern(static_cast<POETCode_ext*>(f)->get_content(), from)!=0)) {
          if (debug_repl()) std::cerr << "replacing " << f->toString() << "\n with " << to->toString() << "\n";
          return to;
        } 

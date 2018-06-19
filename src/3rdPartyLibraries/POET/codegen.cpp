@@ -61,8 +61,7 @@ public:
         }
         else {
            POETCode* res = eval_AST(output);
-           if (res != output) apply(res);
-           else res->visit(this);
+           res->visit(this);
         }
         output = 0;
     }

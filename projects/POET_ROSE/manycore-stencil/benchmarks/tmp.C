@@ -43,7 +43,7 @@ high_level_relax ( MulticoreArray<int> & array, MulticoreArray<int> & old_array 
   // (use array class (e.g. A++) for this level).
 
   // Use pragma to trigger compiler transformations, such as: 
-#pragma stencil-manycore(int, old_array, array) D(i,0,arraySizeX,1) D(j,0,arraySizeY,1) S(k,0,arraySizeZ,1) 
+#pragma stencil _ data <i,j,k> array [arraySizeX*arraySizeY*arraySizeZ] <old_array,array>
 #pragma omp for
      for (int k = 1; k < arraySizeZ-1; k++)
         {
