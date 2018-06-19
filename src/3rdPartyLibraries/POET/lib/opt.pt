@@ -236,7 +236,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
   else template_par = template_arg=NULL;
   if (function_definition : CODE.InlineDecl#(tmp=_)) function_definition=tmp;
   FunctionDecl#(fname, CLEAR fpara, CLEAR ftype, CLEAR fbody) = function_definition;
-  foreach FunctionCall#(fname2=CODE.TypeName#(fname, CODE.TemplateInstantiation#(template_arg=_))|fname, callpara=_) \in input do
+  foreach FunctionCall#(fname2=CODE.TypeName#(fname=_, CODE.TemplateInstantiation#(template_arg=_))|fname=_, callpara=_) \in input do
         break;
   enddo
   if (fname : CODE.ScopedName#a) fname = car(cdr(a));
@@ -258,7 +258,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
          ret_orig = gen_return_var(""); ret_decl=DeclStmt#(TypeInfo#(t,ret_orig, v)); 
   }
 
-  if (template_arg != "") {
+  if (!(template_arg : ""|NULL)) {
       for ( (p1=template_par; p2=template_arg); p1 != NULL; (p1=cdr(p1);p2=cdr(p2))) {
          TemplateParameterDecl#(_,n1) = car p1;
          fbody = REPLACE(n1, car p2, fbody);
@@ -289,14 +289,15 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
      enddo
   }
 
-  if (fbody : CODE.StmtBlock)
+  res = fbody;
+  if (fbody : CODE.StmtBlock | CODE.Nest)
      res = eliminate_early_return[var=ret_orig](fbody[StmtBlock.stmts],ftype);
-  else if (fbody : ExpStmt#(e=_)) { res=e; }
-  else res = fbody;
+  if (res : CODE.ExpStmt#(e) && call_stmt =="" ) res = e;
   if (ret_decl != "") res = ret_decl :: res;
   <* there should be only one return now *>
-  foreach (COPY(res) : (cur=CODE.Return#(CLEAR exp)) : TRUE) {
-    if (ret_orig == "" || exp == ret_orig)
+  foreach (COPY(res) : (cur=CODE.FunctionCall|CODE.Return#(CLEAR exp)) : TRUE) {
+    if (cur : CODE.FunctionCall) {""}
+    else if (ret_orig == "" || exp == ret_orig)
        res=REPLACE(cur, "", res);
     else {
        res=REPLACE(cur, CODE.ExpStmt#(CODE.Assign#(ret_orig,exp)), res);
@@ -312,7 +313,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
   if (trace != "") {
     if (ret_orig == "") REPLACE(call_stmt, StmtBlock#res, trace);
-    else if (call_stmt : CODE.DeclStmt) {
+    else if (call_stmt : CODE.DeclStmt || (!(ret_orig : ID|CODE.Name))) {
       foreach TypeInfo#(t=_,v=_,init=CODE.VarInit) \in call_stmt do
         if (Lookup(input, init)) {
           (t,init2) = gen_default_init(t);

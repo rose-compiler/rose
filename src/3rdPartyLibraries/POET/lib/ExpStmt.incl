@@ -151,7 +151,7 @@ rebuild/Parse/Unparse functions for Expressions
 
 <code Bop pars=(op, opd1, opd2) rebuild=(XFORM.RebuildBop(op,opd1,opd2)) > 
 @
-if (op=="+" && opd2 : Uop#("-",_)) { op="-"; Uop#(_,opd2)=opd2; }
+if (op=="+" && opd2 : Uop#("-",_)) { op="-"; Uop#(_,opd2=_)=opd2; }
 p1=(opd1:INT|ID|(_)...)?100:0; 
 p2=(opd2:INT|ID|(_)...)?100:0;
 p=GLOBAL.EXP_PREC[op];
@@ -207,7 +207,7 @@ by applying $op$ to all elements in the list
     Routine implementations 
 *******************************************>
 
-<code Tuple pars=(elems : CODE.ExpList) > _(@elems@) </code>
+<code Tuple pars=(elems : CODE.ExpList) output=("("elems")")> _(@elems@) </code>
 
 <xform EvalCall pars=(op,opd)>
  len = LEN(opd);
@@ -230,8 +230,8 @@ else {
   switch (div) {
   case 1:  (exp,0) 
   case Bop#("*",d1,d2):
-      (q1,r1) = IntDiv(exp, d1);
-      (q2,r2) = IntDiv(q1, d2);
+      (q1=_,r1=_) = IntDiv(exp, d1);
+      (q2=_,r2=_) = IntDiv(q1, d2);
       (q2, Bop#("+", r1, RebuildBop("*",r2,d1)))
   case ID|CODE.Name|INT: 
      switch (exp) {
@@ -241,9 +241,9 @@ else {
            res2 = IntDiv(opd2, div);
            (res1[0] + res2[0], res1[1] + res2[1])
        case (Bop#("*", opd1, opd2) ):
-           (q1,r1) = IntDiv(opd1, div); 
+           (q1=_,r1=_) = IntDiv(opd1, div); 
            if (q1 != 0) return (q1*opd2,r1 * opd2);
-           (q2,r2) = IntDiv(opd2, div);
+           (q2=_,r2=_) = IntDiv(opd2, div);
            if (q2 != 0) { (opd1*q2, opd1*r2) }
            else  { (0, exp) }
        case div : (1,0)
@@ -466,7 +466,7 @@ default: Bop#(and,first,second)
     )
    : (   
       for ( (cur=lopd1; r = ""; found=0; nrhs = RebuildUminus rhs); cur;
-           (lopd2 : Bop#("+",(CLEAR ncur), (CLEAR nopd2)))? (cur=ncur;lopd2=nopd2):(cur=lopd2;lopd2="") ) {
+           (lopd2 : Bop#("+",ncur=_, nopd2=_))? (cur=ncur;lopd2=nopd2):(cur=lopd2;lopd2="") ) {
           if (cur == nrhs) found=1;
           else r= BuildList(cur,r);
       }
@@ -489,7 +489,7 @@ default: Bop#(and,first,second)
    case "+": { RebuildPlus(lhs,rhs) }
    case "-": { RebuildPlus(lhs,RebuildUminus rhs) }
    case "*":
-            ((lhs : INT) && (rhs : INT))? lhs * rhs 
+            ((lhs : INT) && (rhs : INT))? (lhs=>INT) * (rhs=>INT) 
           : (lhs == 0 || rhs == 0)? 0
           : (lhs==1)?  rhs 
           : (rhs==1)?  lhs
