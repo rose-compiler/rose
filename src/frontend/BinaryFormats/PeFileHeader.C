@@ -766,6 +766,7 @@ SgAsmPEFileHeader::reallocate()
         throw FormatError("unsupported PE word size");
     }
     r.oh = new unsigned char[oh_size];
+    memset(r.oh, 0, oh_size);
     if (4==get_word_size()) {
         encode((PE32OptHeader_disk*)r.oh);
     } else if (8==get_word_size()) {

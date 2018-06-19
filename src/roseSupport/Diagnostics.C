@@ -6,6 +6,7 @@
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "AsmUnparser.h"                                // Rose::BinaryAnalysis::AsmUnparser
 #include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
+#include "BinaryCodeInserter.h"                         // Rose::BinaryAnalysis::CodeInserter
 #include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
 #include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
@@ -111,6 +112,7 @@ void initialize() {
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
+        BinaryAnalysis::CodeInserter::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();

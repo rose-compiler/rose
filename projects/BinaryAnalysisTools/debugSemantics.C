@@ -303,8 +303,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
                   <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
                   <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  partitioner2     Rose::BinaryAnalysis::Partitioner2::Semantics::RegisterState\n"
-                  <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  x86              Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateX86\n";
+                  <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n";
         return BaseSemantics::RegisterStatePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
@@ -324,8 +323,6 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
         return P2::Semantics::RegisterState::instance(protoval, regdict);
     } else if (className == "symbolic") {
         return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-    } else if (className == "x86") {
-        return BaseSemantics::RegisterStateX86::instance(protoval, regdict);
     } else {
         throw std::runtime_error("unrecognized register state class name \"" + className + "\"; see --rstate=list\n");
     }
@@ -505,31 +502,7 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
     } else {
         // There are many more combinations where the operators class need not be the same as the value or state classes. We
         // test only some of the more common ones.
-        if (settings.opsClassName=="partial" && settings.valueClassName=="partial" &&
-            settings.rstateClassName=="x86" && settings.mstateClassName=="partial") {
-            TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          BaseSemantics::MemoryCellListPtr, BaseSemantics::StatePtr,
-                          PartialSymbolicSemantics::RiscOperatorsPtr> tester;
-            tester.test(ops);
-        } else if (settings.opsClassName=="partitioner2" && settings.valueClassName=="partitioner2" &&
-                   settings.rstateClassName=="x86" && settings.mstateClassName=="p2-list") {
-            TestSemantics<P2::Semantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          P2::Semantics::MemoryListStatePtr, P2::Semantics::StatePtr,
-                          P2::Semantics::RiscOperatorsPtr> tester;
-            tester.test(ops);
-        } else if (settings.opsClassName=="partitioner2" && settings.valueClassName=="partitioner2" &&
-                   settings.rstateClassName=="x86" && settings.mstateClassName=="p2-map") {
-            TestSemantics<P2::Semantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          P2::Semantics::MemoryMapStatePtr, P2::Semantics::StatePtr,
-                          P2::Semantics::RiscOperatorsPtr> tester;
-            tester.test(ops);
-        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
-                   settings.rstateClassName=="x86" && settings.mstateClassName=="symbolic-list") {
-            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
-                          SymbolicSemantics::RiscOperatorsPtr> tester;
-            tester.test(ops);
-        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
+        if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
                    settings.rstateClassName=="symbolic" && settings.mstateClassName=="symbolic-map") {
             TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                           SymbolicSemantics::MemoryMapStatePtr, BaseSemantics::StatePtr,

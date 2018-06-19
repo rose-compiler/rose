@@ -9,6 +9,9 @@ public:
 
     FunctionAstAttribute(SgFunctionDeclaration *function_declaration_, SgClassType *n = NULL) : DeclarationsAstAttribute(n),
                                                                                                 function_declaration(function_declaration_),
+/*
+    //                                                                                                ast_attributes(NULL),
+*/
                                                                                                 entry_label(".entry"),
                                                                                                 current_label(entry_label),
                                                                                                 return_label(".return")
@@ -63,10 +66,25 @@ public:
     void insertRemoteVariableDeclaration(SgInitializedName *decl) {
         remote_variable_declarations.push_back(decl);
     }
+/*
+    int numDimensionExpressions() { return dimensionExpressions.size(); }
+    SgExpression *getDimensionExpression(int i) { return dimensionExpressions[i]; }
+    void insertDimensionExpression(SgExpression *exp) {
+        dimensionExpressions.push_back(exp);
+    }
 
-private:
+    std::stringstream &getBuffer() { return buffer; }
+   
+    LLVMAstAttributes *getAstAttributes() { return ast_attributes; }
+    void setAstAttributes(LLVMAstAttributes *ast_attributes_) { ast_attributes = ast_attributes_; }
+*/
+
+ private:
 
     SgFunctionDeclaration *function_declaration;
+/*
+    //    LLVMAstAttributes *ast_attributes;
+*/
 
     /**
      * This is a map from each label l into the set of labels associated with basic blocks that can
@@ -81,6 +99,11 @@ private:
     std::vector<SgType *> coerce_types;
 
     std::vector<SgInitializedName *> remote_variable_declarations;
+/*    
+    //
+    //    std::vector<SgExpression *> dimensionExpressions;
+    //    std::stringstream buffer;
+*/
 };
 
 #endif

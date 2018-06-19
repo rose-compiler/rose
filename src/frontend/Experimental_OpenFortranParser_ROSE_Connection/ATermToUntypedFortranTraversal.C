@@ -1905,8 +1905,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptExpr( ATerm term, SgUntypedEx
 
    if (ATmatch(term, "no-expr()")) {
       // No Expression
-      *expr = new SgUntypedNullExpression();
-      setSourcePositionUnknown(*expr);
+      *expr = UntypedBuilder::buildUntypedNullExpression();
    }
    else if (traverse_Expression(term, expr)) {
       // MATCHED an Expression
@@ -2002,8 +2001,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_StopStmt(ATerm term, SgUntypedSt
    std::string eos;
    SgUntypedExpression* stop_code;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;
-
    if (ATmatch(term, "StopStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -2017,7 +2014,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_StopStmt(ATerm term, SgUntypedSt
    }
    else return ATfalse;
 
-   SgUntypedExpressionStatement* stop_stmt = new SgUntypedExpressionStatement(label, keyword, stop_code);
+   SgUntypedStopStatement* stop_stmt = new SgUntypedStopStatement(label, stop_code);
    setSourcePositionExcludingTerm(stop_stmt, term, term_eos);
 
    stmt_list->get_stmt_list().push_back(stop_stmt);
@@ -3886,8 +3883,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_ReturnStmt(ATerm term, SgUntyped
    std::string eos;
    SgUntypedExpression* expr;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_RETURN;
-
    if (ATmatch(term, "ReturnStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -3901,7 +3896,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ReturnStmt(ATerm term, SgUntyped
    }
    else return ATfalse;
 
-   SgUntypedExpressionStatement* return_stmt = new SgUntypedExpressionStatement(label, keyword, expr);
+   SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label, expr);
    setSourcePositionExcludingTerm(return_stmt, term, term_eos);
 
    stmt_list->get_stmt_list().push_back(return_stmt);

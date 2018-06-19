@@ -5,6 +5,8 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Modules.h>
 
+#include <boost/filesystem.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -45,6 +47,34 @@ bool isLinkedImport(const Partitioner&, const Function::Ptr&);
  *
  *  Returns true if the specified function is an import function but has not been linked in yet. */
 bool isUnlinkedImport(const Partitioner&, const Function::Ptr&);
+
+/** True if named file is an ELF object file.
+ *
+ *  Object files usually have names with a ".o" extension, although this function actually tries to open the file and parse
+ *  some ELF data structures to make that determination. */
+bool isObjectFile(const boost::filesystem::path&);
+
+/** True if named file is a static library archive.
+ *
+ *  Archives usually have names ending with a ".a" extension, although this function actually tries to open the file and parse
+ *  the header to make that determination. */
+bool isStaticArchive(const boost::filesystem::path&);
+
+/** Boolean flag for @ref tryLink. */
+namespace FixUndefinedSymbols {
+/** Boolean flag for @ref tryLink. */
+enum Boolean {
+    NO,                                                 /**< Do not try to fix undefined symbols. */
+    YES                                                 /**< Yes, try to fix undefined symbols. */
+};
+} // namespace
+
+/** Try to run a link command.
+ *
+ *  The substring "%o" is replaced by the quoted output name, and the substring "%f" is replaced by the space separated list of
+ *  quoted input names.  Bourne shell escape syntax is used. Returns true if the link command was successful, false otherwise. */
+bool tryLink(const std::string &command, std::string outputName, std::vector<std::string> inputNames,
+             Sawyer::Message::Stream &errors, FixUndefinedSymbols::Boolean fixUndefinedSymbols = FixUndefinedSymbols::YES);
 
 /** Matches an ELF PLT entry.  The address through which the PLT entry branches is remembered. This address is typically an
  *  RVA which is added to the initial base address. */

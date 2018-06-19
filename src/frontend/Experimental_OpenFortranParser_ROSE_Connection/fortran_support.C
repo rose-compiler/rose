@@ -70,16 +70,17 @@ experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file)
         }
 
   // Parse table location is now stored in the source tree
-     string parse_table_path;
+     string parse_table_path = "src/3rdPartyLibraries/experimental-fortran-parser/share/rose";
+     parse_table = findRoseSupportPathFromSource(parse_table_path, "share/rose");
+
      if (sg_source_file->get_experimental_cuda_fortran_frontend() == false)
         {
-           parse_table_path += "src/3rdPartyLibraries/experimental-fortran-parser/bin/Fortran.tbl";
+           parse_table += "/Fortran.tbl";
         }
      else
         {
-           parse_table_path += "src/3rdPartyLibraries/experimental-fortran-parser/bin/CUDA_Fortran.tbl";
+           parse_table += "/CUDA_Fortran.tbl";
         }
-     parse_table = findRoseSupportPathFromSource(parse_table_path, "bin");
      commandString += "-p " + parse_table + " ";
 
   // Rasmussen (11/14/2017): TODO: What about multiple files?

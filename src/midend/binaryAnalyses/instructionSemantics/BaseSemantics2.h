@@ -835,9 +835,8 @@ public:
      *
      *  Depending on the register state implementation, this could either store new, distinct undefined values in each
      *  register, or it could simply erase all information about stored values leaving the register state truly empty. For
-     *  instance, @ref RegisterStateX86, which stores register values using fixed length arrays assigns new undefined values to
-     *  each element of those arrays, whereas RegisterStateGeneric, which uses variable length arrays to store information
-     *  about a dynamically changing set of registers, clears its arrays to zero length.
+     *  instance RegisterStateGeneric, which uses variable length arrays to store information about a dynamically changing set
+     *  of registers, clears its arrays to zero length.
      *
      *  Register states can also be initialized by clearing them or by explicitly writing new values into each desired
      *  register (or both). See @ref RegisterStateGeneric::initialize_nonoverlapping for one way to initialize that register
@@ -911,129 +910,6 @@ public:
     /** @} */
 
 };
-
-/** Shared-ownership pointer to an x86 register state. See @ref heap_object_shared_ownership. */
-typedef boost::shared_ptr<class RegisterStateX86> RegisterStateX86Ptr;
-
-/** The set of all registers and their values for a 32-bit x86 architecture.
- *
- *  This register state is probably not too useful anymore; use RegisterStateGeneric instead.
- *
- *  The general purpose registers are stored as 32-bit values; subparts thereof will require calls to the RiscOperators
- *  extract() or concat() operators.  The status bits from the EFLAGS register are stored individually since that's how they're
- *  typically accessed; access to the FLAGS/EFLAGS register as a whole will require calls to the RISC operators. */
-class RegisterStateX86: public RegisterState {
-public:
-    static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
-    static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
-    static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
-    static const size_t n_st = 8;               /**< Number of ST registers (not counting _st_top pseudo register). */
-    static const size_t n_xmm = 8;              /**< Number f XMM registers. */
-
-    SValuePtr ip;                               /**< Instruction pointer. */
-    SValuePtr gpr[n_gprs];                      /**< General-purpose registers */
-    SValuePtr segreg[n_segregs];                /**< Segmentation registers. */
-    SValuePtr flag[n_flags];                    /**< Control/status flags (i.e., FLAG register). */
-    SValuePtr st[n_st];                         /**< Floating point circular stack. */
-    SValuePtr fpstatus;                         /**< Floating-point status word. */
-    SValuePtr xmm[n_xmm];                       /**< XMM registers. */
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Real constructors
-protected:
-    explicit RegisterStateX86(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : RegisterState(protoval, regdict) {
-        clear();
-    }
-
-    RegisterStateX86(const RegisterStateX86 &other): RegisterState(other) {
-        ip = other.ip->copy();
-        for (size_t i=0; i<n_gprs; ++i)
-            gpr[i] = other.gpr[i]->copy();
-        for (size_t i=0; i<n_segregs; ++i)
-            segreg[i] = other.segreg[i]->copy();
-        for (size_t i=0; i<n_flags; ++i)
-            flag[i] = other.flag[i]->copy();
-        for (size_t i=0; i<n_st; ++i)
-            st[i] = other.st[i]->copy();
-        fpstatus = other.fpstatus;
-        for (size_t i=0; i<n_xmm; ++i)
-            xmm[i] = other.xmm[i]->copy();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Static allocating constructors
-public:
-    /** Instantiate a new register state. The @p protoval argument must be a non-null pointer to a semantic value which will be
-     *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
-     *  of the same type for all parts of a semantic analysis: its state and operator classes. */
-    static RegisterStateX86Ptr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
-        return RegisterStateX86Ptr(new RegisterStateX86(protoval, regdict));
-    }
-
-    /** Instantiate a new copy of an existing register state. */
-    static RegisterStateX86Ptr instance(const RegisterStateX86Ptr &other) {
-        return RegisterStateX86Ptr(new RegisterStateX86(*other));
-    }
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual constructors
-public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const ROSE_OVERRIDE {
-        return instance(protoval, regdict);
-    }
-
-    virtual RegisterStatePtr clone() const ROSE_OVERRIDE {
-        return RegisterStatePtr(new RegisterStateX86(*this));
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Dynamic pointer casts
-public:
-    /** Run-time promotion of a base register state pointer to a RegisterStateX86 pointer. This is a checked conversion--it
-     *  will fail if @p from does not point to a RegisterStateX86 object. */
-    static RegisterStateX86Ptr promote(const RegisterStatePtr &from) {
-        RegisterStateX86Ptr retval = boost::dynamic_pointer_cast<RegisterStateX86>(from);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods we inherited
-public:
-    virtual void clear() ROSE_OVERRIDE;
-    virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
-    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods first declared at this level of the class hierarchy
-protected:
-    // helpers for readRegister()
-    virtual SValuePtr readRegisterGpr(RegisterDescriptor reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterFlag(RegisterDescriptor reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterSeg(RegisterDescriptor reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterIp(RegisterDescriptor reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterSt(RegisterDescriptor reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterXmm(RegisterDescriptor reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterFpStatus(RegisterDescriptor reg, RiscOperators *ops);
-
-    // helpers for writeRegister()
-    virtual void writeRegisterGpr(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterFlag(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterSeg(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterIp(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterSt(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterXmm(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterFpStatus(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
-
-    // Generate a name for initial values.
-    virtual std::string initialValueName(RegisterDescriptor) const;
-};
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
