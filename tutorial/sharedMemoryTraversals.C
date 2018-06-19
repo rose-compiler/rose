@@ -46,12 +46,14 @@ int main(int argc, char **argv) {
 
     std::cout << "shared-memory parallel execution of traversals" << std::endl;
     parallelTraversal.traverseInParallel(project, preorder);
+    return 0;
 }
 
 #else
 
 int main() {
     std::cout <<"parallel traversal is not supported in this configuration (user does not want ROSE to be thread-aware)\n";
+    return 0;
 }
 
 #endif

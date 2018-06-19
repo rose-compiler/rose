@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
 bin_SCRIPTS =
+pkgdata_DATA =
 MOSTLYCLEANFILES =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -38,10 +39,14 @@ else
 endif
 
 # Rasmussen (01/21/2018): Adding general support for experimental languages
+# Rasmussen (05/29/2018): Moved parse tables for installation in $(prefix)/share/rose
 if ROSE_BUILD_ATERM_SUPPORT
    libroseExperimentalGeneralLanguagelibraries = \
         frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
         frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/Fortran.tbl
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/CUDA_Fortran.tbl
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl
 else
    libroseExperimentalGeneralLanguagelibraries =
 endif
