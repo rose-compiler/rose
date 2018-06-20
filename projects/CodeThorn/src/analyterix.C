@@ -315,10 +315,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       cout<<"INFO: generating const CSV file "<<option_prefix+csvConstResultFileName<<endl;
       fiConstAnalysis.writeCvsConstResult(*variableIdMapping, option_prefix+csvConstResultFileName);
     }
-    cout << "INFO: annotating analysis results as comments."<<endl;
-    AstAnnotator ara(labeler);
-    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "const-analysis-inout");
-    ara.annotateAstAttributesAsCommentsAfterStatements(root, "const-analysis-inout");
+    if(option_annotate_source_code) {
+      cout << "INFO: annotating analysis results as comments."<<endl;
+      AstAnnotator ara(labeler);
+      ara.annotateAstAttributesAsCommentsBeforeStatements(root, "const-analysis-inout");
+      ara.annotateAstAttributesAsCommentsAfterStatements(root, "const-analysis-inout");
+    }
   }
 
   if(option_at_analysis) {
@@ -497,8 +499,10 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->determineExtremalLabels(startFunRoot,false);
     intervalAnalyzer->run();
 
-    AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
-    ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
+    if(option_annotate_source_code) {
+      AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
+      ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
+    }
 
     if(option_check_static_array_bounds) {
       checkStaticArrayBounds(root,intervalAnalyzer);
@@ -546,13 +550,15 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
     ara.annotateAstAttributesAsCommentsAfterStatements(root, "lv-analysis-out");
 #else
-    AnalysisAstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
-    ara.annotateAnalysisPrePostInfoAsComments(root,"lv-analysis",lvAnalysis);
+    if(option_annotate_source_code) {
+      AnalysisAstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
+      ara.annotateAnalysisPrePostInfoAsComments(root,"lv-analysis",lvAnalysis);
+    }
 #endif
 
     // schroder3 (2016-08-15): Generate csv-file that contains dead assignments/ initializations:
     if(csvDeadCodeDeadStoreFileName) {
-      std::string deadCodeCsvFileName = option_prefix+csvDeadCodeUnreachableFileName;
+      std::string deadCodeCsvFileName = option_prefix+csvDeadCodeDeadStoreFileName;
       DeadCodeAnalysis deadCodeAnalysis;
       deadCodeAnalysis.writeDeadAssignmentResultFile(lvAnalysis,deadCodeCsvFileName);
     }
@@ -590,8 +596,10 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
       ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
 #else
-      AnalysisAstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
-      ara.annotateAnalysisPrePostInfoAsComments(root,"rd-analysis",rdAnalysis);
+      if(option_annotate_source_code) {
+        AnalysisAstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
+        ara.annotateAnalysisPrePostInfoAsComments(root,"rd-analysis",rdAnalysis);
+      }
 #endif
 
 #if 0
@@ -898,11 +906,6 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
   runAnalyses(root, programAbstractionLayer->getLabeler(), programAbstractionLayer->getVariableIdMapping());
-
-  if(option_annotate_source_code) {
-    cout << "INFO: generating annotated source code."<<endl;
-    root->unparse(0,0);
-  }
 
   if(args.count("unparse")) {
     cout << "INFO: generating source code from internal representation."<<endl;

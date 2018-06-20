@@ -12,7 +12,7 @@ int g() {
 int main() {
   int x=1;
   x=x;
-  x=f(4)*g()+f(g());
+  x=f(4)*f(g());
   if(x!=10) {
     printf("%d",x);
   }

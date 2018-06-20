@@ -19,14 +19,14 @@ void f2()
 void g1() 
 {
     return;
-    printLine("Hello");
+    printf("Hello");
 }
 
 void g2() 
 {
     return;
     int x;
-    printLine("Hello");
+    printf("Hello");
 }
 
 void h(int x) 

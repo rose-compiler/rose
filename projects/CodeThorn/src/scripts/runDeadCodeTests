@@ -10,51 +10,27 @@ echo "------------------------------------------------"
 echo "running DEADCODE TESTS"
 echo "------------------------------------------------"
 
-# C++ tests
-#    for p in 1 2 3 4 5 6 7 8 9; do
+BENCH_PASS=0
+BENCH_FAIL=0
 
-for p in 1 2 3 4 5 6 7 9; do
+for benchmark in $TESTDIR/DC00*.C; do
     rm -f tmptest.csv
     rm -f tmptest_col1.csv
     rm -f test${p}_col1.csv
-    ./analyterix --csv-deadcode-unreachable=tmptest.csv ${OPTIONS} $TESTDIR/deadcode/test$p.C > /dev/null
-	echo -n "DEADCODE test${p}.C : "
-	#diff tmptest.csv $TESTDIR/deadcode/test$p.csv
-    cut -d, -f1 tmptest.csv | sort > tmptest_col1.csv
-    cut -d, -f1  $TESTDIR/deadcode/test$p.csv |sort > test${p}_col1.csv
-    diff tmptest_col1.csv test${p}_col1.csv
-	if [ ! $? -eq 0 ]
-	then
-	    echo "FAIL"
+    benchmarkname=$(basename $benchmark)
+    echo -n "Testing $benchmarkname : "
+    ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --unparse > /dev/null
+    #diff tmptest.csv $TESTDIR/$benchmarkname.csv
+    cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
+    cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv
+    diff $benchmarkname.line.csv ${benchmarkname}_ref.line.csv
+    if [ ! $? -eq 0 ]
+    then
+	echo "FAIL"
         exit 1
-	else
-	    echo "PASS"
-	fi
-	#echo "-------------------------------------------------"
+    else
+	echo "PASS"
+    fi
 done
-
-# C tests
-for p in 10; do
-	#./analyterix --csv-deadcode-unreachable=tmptest.csv $OPTIONS $TESTDIR/deadcode/test$p.c
-    ./analyterix --csv-deadcode-unreachable=tmptest.csv ${OPTIONS} $TESTDIR/deadcode/test$p.c > /dev/null
-	echo -n "DEADCODE test${p}.c : "
-    cut -d, -f1 tmptest.csv | sort > tmptest_col1.csv
-    cut -d, -f1  $TESTDIR/deadcode/test$p.csv |sort > test${p}_col1.csv
-    echo "SKIP"
-    #diff tmptest_col1.csv test${p}_col1.csv
-	#echo "-------------------------------------------------"
-done
-    
-# C tests
-for p in 11; do
-	./analyterix --csv-deadcode-unreachable=tmptest.csv --ignore-unknown-functions $OPTIONS $TESTDIR/deadcode/test$p.C > /dev/null
-    cut -d, -f1 tmptest.csv | sort > tmptest_col1.csv
-    # no result file test11.csv available yet
-    #cut -d, -f1  $TESTDIR/deadcode/test$p.csv |sort > test${p}_col1.csv
-    #diff tmptest_col1.csv test${p}_col1.csv
-	echo -n "DEADCODE test${p}.C : "
-    echo "SKIP"
-	#echo "-------------------------------------------------"
-done
-
-#    rm -f tmptest.csv
+exit
+rm -rf DC*.csv
