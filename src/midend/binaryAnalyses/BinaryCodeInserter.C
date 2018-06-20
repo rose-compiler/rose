@@ -265,6 +265,20 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 break;
             }
 
+            case RELOC_INDEX_ABS_BE32: {
+                // Virtual address of one of the input bytes.
+                SAWYER_MESG(debug) <<"index_abs_be32(" <<StringUtility::addrToString(reloc.value) <<")";
+
+                value = va + reloc.value;
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                replacement[relocStart + reloc.offset + 0] = (value >> 24) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >>  0) & 0xff;
+                break;
+            }
+
             case RELOC_INDEX_ABS_LE32HI: {
                 // Virtual address of one of the input bytes (but only the high 32 bits)
                 SAWYER_MESG(debug) <<"index_abs_le32hi(" <<StringUtility::addrToString(reloc.value) <<")";
@@ -279,7 +293,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 break;
             }
 
-            case RELOC_INDEX_REL_LE32: {
+            case RELOC_ADDR_REL_LE32: {
                 // Offset from the input byte's virtual address to a specified virtual address, adjusted by adding the value
                 // originally stored in the input.
                 SAWYER_MESG(debug) <<"index_rel_le32(" <<StringUtility::addrToString(reloc.value);
@@ -299,6 +313,29 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
                 replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
                 replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
+                break;
+            }
+
+            case RELOC_ADDR_REL_BE32: {
+                // Offset from the input byte's virtual address to a specified virtual address, adjusted by adding the value
+                // originally stored in the input.
+                SAWYER_MESG(debug) <<"index_rel_be32(" <<StringUtility::addrToString(reloc.value);
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                rose_addr_t addend = replacement[relocStart + reloc.offset + 0] << 24;
+                addend |= replacement[relocStart + reloc.offset + 1] << 16;
+                addend |= replacement[relocStart + reloc.offset + 1] <<  8;
+                addend |= replacement[relocStart + reloc.offset + 1] <<  0;
+                addend = IntegerOps::signExtend2(addend, 32, 64);
+
+                SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
+
+                value = reloc.value - (va + relocStart + reloc.offset) + addend;
+
+                replacement[relocStart + reloc.offset + 0] = (value >> 24) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >>  0) & 0xff;
                 break;
             }
 
@@ -345,6 +382,34 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
                 replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
                 replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
+                break;
+            }
+
+            case RELOC_INSN_REL_BE32: {
+                // Offset from the input byte's virtual address to the virtual address of some possibly moved instruction of
+                // the original basic block, adjusted by adding the value originally stored in the input. The instruction is
+                // indicated by its index relative to the instructions that were removed by this insertion.
+                int relIdx = (int)reloc.value;
+                SAWYER_MESG(debug) <<"insn_rel_be32(" <<relIdx;
+                ASSERT_require(insnInfoMap.exists(relIdx));
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                rose_addr_t addend = replacement[relocStart + reloc.offset + 0] << 24;
+                addend |= replacement[relocStart + reloc.offset + 1] << 16;
+                addend |= replacement[relocStart + reloc.offset + 1] << 8;
+                addend |= replacement[relocStart + reloc.offset + 1] << 0;
+                addend = IntegerOps::signExtend2(addend, 32, 64);
+                SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
+
+                const InstructionInfo &info = insnInfoMap[relIdx];
+                rose_addr_t targetVa = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
+                SAWYER_MESG(debug) <<" [target=" <<StringUtility::addrToString(targetVa) <<"]";
+                value = targetVa - (va + relocStart + reloc.offset) + addend;
+
+                replacement[relocStart + reloc.offset + 0] = (value >> 24) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >>  0) & 0xff;
                 break;
             }
         }

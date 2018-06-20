@@ -56,9 +56,16 @@ public:
         RELOC_INDEX_ABS_LE32HI,                         /**< Interprets the @p reloc_value as an index of some byte in the @p
                                                          *   input, and computes that byte's virtual address.*/
 
-        RELOC_INDEX_REL_LE32,                           /**< Interprets the @p reloc_value as an index of some byte in the @p
-                                                         *   input and computes the offset from the output virtual address to
-                                                         *   that input byte's virtual address, adjusted with the addend. */
+        RELOC_INDEX_ABS_BE32,                           /**< Interprets the @p reloc_value as an index of some byte in the
+                                                         *   @p input, and computes that byte's virtual address. */
+
+        RELOC_ADDR_REL_LE32,                            /**< Interprets the @p reloc_value as a virtual address and computes
+                                                         *   the offset from the output virtual address to that specified
+                                                         *   virtual address, adjusted with the addend. */
+
+        RELOC_ADDR_REL_BE32,                            /**< Interprets the @p reloc_value as a virtual address and computes
+                                                         *   the offset from the output virtual address to that specified
+                                                         *   virtual address, adjusted with the addend. */
 
         RELOC_INSN_ABS_LE32,                            /**< Interprets the @p reloc_value as an instruction relative index for
                                                          *   some instruction of the original basic block. Negative indexes are
@@ -69,7 +76,17 @@ public:
                                                          *   accounts for cases when the referenced instruction has been
                                                          *   moved. */
 
-        RELOC_INSN_REL_LE32                             /**< Interprets the @p reloc_value as an instruction relative index for
+        RELOC_INSN_REL_LE32,                            /**< Interprets the @p reloc_value as an instruction relative index for
+                                                         *   some instruction of the original basic block. Negative indexes are
+                                                         *   measured backward from the insertion point, and non-negative
+                                                         *   indexes are measured forward from one past the last deleted
+                                                         *   instruction (or insertion point if no deletions). This relocation
+                                                         *   function calculates the offset from the output virtual address to
+                                                         *   that instructions virtual address, adjusted with the addend. This
+                                                         *   accounts for cases when the referenced instruction has been
+                                                         *   moved. */
+
+        RELOC_INSN_REL_BE32                             /**< Interprets the @p reloc_value as an instruction relative index for
                                                          *   some instruction of the original basic block. Negative indexes are
                                                          *   measured backward from the insertion point, and non-negative
                                                          *   indexes are measured forward from one past the last deleted
