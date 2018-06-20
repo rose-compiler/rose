@@ -505,6 +505,8 @@ analyterix_SOURCES = \
   CommandLineOptions.h \
   CommandLineOptions.C \
   CodeThornException.h \
+  DeadCodeAnalysis.C \
+  DeadCodeAnalysis.h \
   DataDependenceVisualizer.C \
   DataDependenceVisualizer.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \

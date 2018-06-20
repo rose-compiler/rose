@@ -62,6 +62,7 @@
 
 #include "SprayException.h"
 #include "CodeThornException.h"
+#include "DeadCodeAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -502,41 +503,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     if(option_check_static_array_bounds) {
       checkStaticArrayBounds(root,intervalAnalyzer);
     }
-    // schroder3 (2016-08-08): Generate csv-file that contains unreachable statements:
+    // schroder3 (2016-08-08): Generate csv-file containing unreachable statements
     if(csvDeadCodeUnreachableFileName) {
-      // Generate file name and open file:
-      std::string deadCodeCsvFileName = option_prefix;
-      deadCodeCsvFileName += csvDeadCodeUnreachableFileName;
-      ofstream deadCodeCsvFile;
-      deadCodeCsvFile.open(deadCodeCsvFileName.c_str());
-      // Iteratate over all CFG nodes/ labels:
-      Flow* flow=intervalAnalyzer->getFlow();
-      for(Flow::const_node_iterator i = flow->nodes_begin(); i != flow->nodes_end(); ++i) {
-        const Label& label = *i;
-        // Do not output a function call twice (only the function call label and not the function call return label):
-        if(!intervalAnalyzer->getLabeler()->isFunctionCallReturnLabel(label)) {
-          /*const*/ IntervalPropertyState& intervalsLattice = *static_cast<IntervalPropertyState*>(intervalAnalyzer->getPreInfo(label.getId()));
-          if(intervalsLattice.isBot()) {
-            // Unreachable statement found:
-            const SgNode* correspondingNode = intervalAnalyzer->getLabeler()->getNode(label);
-            ROSE_ASSERT(correspondingNode);
-            // Do not output scope statements ({ }, ...)
-            if(!isSgScopeStatement(correspondingNode)) {
-              int lineNr=correspondingNode->get_file_info()->get_line();
-              if(lineNr>0) {
-                deadCodeCsvFile << lineNr
-                                << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
-                                << endl;
-              }
-            } else {
-              //cout<<"DEBUG: EXCLUDING: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;
-            }
-          }
-        } else {
-          //cout<<"DEBUG: FUNCTION CALLRETURN LABEL: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;
-        }
-      }
-      deadCodeCsvFile.close();
+      // Generate file name
+      std::string deadCodeCsvFileName = option_prefix+csvDeadCodeUnreachableFileName;
+      DeadCodeAnalysis deadCodeAnalysis;
+      deadCodeAnalysis.writeUnreachableCodeResultFile(intervalAnalyzer,deadCodeCsvFileName);
     }
     delete fipa;
   }
@@ -580,71 +552,9 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
     // schroder3 (2016-08-15): Generate csv-file that contains dead assignments/ initializations:
     if(csvDeadCodeDeadStoreFileName) {
-      // Generate file name and open file:
-      std::string deadCodeCsvFileName = option_prefix;
-      deadCodeCsvFileName += csvDeadCodeDeadStoreFileName;
-      ofstream deadCodeCsvFile;
-      deadCodeCsvFile.open(deadCodeCsvFileName.c_str());
-      if(option_trace) {
-        cout << "TRACE: checking for dead stores." << endl;
-      }
-      // Iteratate over all CFG nodes/ labels:
-      for(Flow::const_node_iterator labIter = lvAnalysis->getFlow()->nodes_begin(); labIter != lvAnalysis->getFlow()->nodes_end(); ++labIter) {
-        const Label& label = *labIter;
-        // Do not output a function call twice (only the function call return label and not the function call label):
-        if(!lvAnalysis->getLabeler()->isFunctionCallLabel(label)) {
-          /*const*/ SgNode* correspondingNode = lvAnalysis->getLabeler()->getNode(label);
-          ROSE_ASSERT(correspondingNode);
-          if(/*const*/ SgExprStatement* exprStmt = isSgExprStatement(correspondingNode)) {
-            correspondingNode = exprStmt->get_expression();
-          }
-          /*const*/ SgNode* association = 0;
-          // Check if the corresponding node is an assignment or an initialization:
-          if(isSgAssignOp(correspondingNode)) {
-            association = correspondingNode;
-          }
-          else if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(correspondingNode)) {
-            SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-            ROSE_ASSERT(initName);
-            // Check whether there is an initialization that can be eliminated (reference initialization can not be eliminated).
-            if(!SgNodeHelper::isReferenceType(initName->get_type()) && initName->get_initializer()) {
-              association = correspondingNode;
-            }
-          }
-
-          if(association) {
-            if(option_trace) {
-              cout << endl << "association: " << association->unparseToString() << endl;
-            }
-            VariableIdSet assignedVars = AnalysisAbstractionLayer::defVariables(association, *lvAnalysis->getVariableIdMapping(), fipa);
-            /*const*/ LVLattice& liveVarsLattice = *static_cast<LVLattice*>(lvAnalysis->getPreInfo(label.getId()));
-            if(option_trace) {
-              cout << "live: " << liveVarsLattice.toString(lvAnalysis->getVariableIdMapping()) << endl;
-              cout << "assigned: " << endl;
-            }
-            bool minOneIsLive = false;
-            for(VariableIdSet::const_iterator assignedVarIter = assignedVars.begin(); assignedVarIter != assignedVars.end(); ++assignedVarIter) {
-              if(option_trace) {
-                cout << (*assignedVarIter).toString(*lvAnalysis->getVariableIdMapping()) << endl;
-              }
-              if(liveVarsLattice.exists(*assignedVarIter)) {
-                minOneIsLive = true;
-                break;
-              }
-            }
-            if(!minOneIsLive) {
-              if(option_trace) {
-                cout << "association is dead." << endl;
-              }
-              // assignment to only dead variables found:
-              deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
-                              << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
-                              << endl;
-            }
-          }
-        }
-      }
-      deadCodeCsvFile.close();
+      std::string deadCodeCsvFileName = option_prefix+csvDeadCodeUnreachableFileName;
+      DeadCodeAnalysis deadCodeAnalysis;
+      deadCodeAnalysis.writeDeadAssignmentResultFile(lvAnalysis,deadCodeCsvFileName);
     }
     delete lvAnalysis;
   }

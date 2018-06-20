@@ -71,9 +71,9 @@ class DFAnalysisBase {
 
   // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
+  SPRAY::PointerAnalysisInterface* getPointerAnalysis();
   void setSkipSelectedFunctionCalls(bool defer);
  protected:
-  SPRAY::PointerAnalysisInterface* getPointerAnalysis();
 
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
