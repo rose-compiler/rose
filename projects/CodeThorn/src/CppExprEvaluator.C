@@ -257,7 +257,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
         IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
         Number plusOrMinusOne = (isSgMinusMinusOp(node) ? -1 : (isSgPlusPlusOp(node) ? 1 : (ROSE_ASSERT(false), 0)));
-        NumberIntervalLattice res=domain->arithAdd(evaluate(operand), plusOrMinusOne);
         if(variableIdMapping->hasReferenceType(varId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
@@ -268,21 +267,22 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         }
         else {
           if(SgNodeHelper::isPrefixIncDecOp(node)) {
-            ips->setVariable(varId,res);
+            NumberIntervalLattice oldValue=evaluate(operand);
+            NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);
+            ips->setVariable(varId,newValue);
+            return newValue;
           }
           if(SgNodeHelper::isPostfixIncDecOp(node)) {
-            if(isExprRootNode(node)) {
-              ips->setVariable(varId,res);
-            } else {
-              SgNode* exprRootNode=findExprRootNode(node);
-              cerr<<"Error: CppExprEvaluator: post-fix operator ++ not supported in sub-expressions yet: expression: "<<"\""<<(exprRootNode?exprRootNode->unparseToString():0)<<"\""<<endl;
-              exit(1);
-            }
+            NumberIntervalLattice oldValue=evaluate(operand);
+            NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);
+            ips->setVariable(varId,newValue);
+            return oldValue;
           }
         }
-        return res;
+        cerr<<"Error: CppExprEvaluator: ++/-- operation: unknown operand."<<endl;
+        exit(1);
       } else {
-        cerr<<"Error: CppExprEvaluator: ++/-- operation on lhs-expression not supported yet."<<endl;
+        cerr<<"Error: CppExprEvaluator: ++/-- operation: only variables are supported as operand."<<endl;
         exit(1);
       }
     }
