@@ -391,7 +391,7 @@ UntypedFortranConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDe
    SgImplicitStatement* implicitStatement = new SgImplicitStatement(isImplicitNone);
    setSourcePositionFrom(implicitStatement, ut_decl);
 
-   ROSE_ASSERT(scope->variantT() == V_SgBasicBlock);
+   ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
    scope->append_statement(implicitStatement);
 
    convertLabel(ut_decl, implicitStatement);
