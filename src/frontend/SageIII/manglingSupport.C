@@ -1218,9 +1218,27 @@ mangleExpression (const SgExpression* expr)
           mangled_name << fdecl->get_mangled_name().str();
           break;
         }
+        case V_SgTemplateFunctionRefExp: {
+          const SgTemplateFunctionRefExp* e = isSgTemplateFunctionRefExp (expr);
+          SgTemplateFunctionSymbol * fsym = e->get_symbol_i();
+          ROSE_ASSERT(fsym != NULL);
+          SgFunctionDeclaration * fdecl = fsym->get_declaration();
+          ROSE_ASSERT(fdecl != NULL);
+          mangled_name << fdecl->get_mangled_name().str();
+          break;
+        }
         case V_SgMemberFunctionRefExp: {
           const SgMemberFunctionRefExp* e = isSgMemberFunctionRefExp (expr);
           SgMemberFunctionSymbol * fsym = e->get_symbol_i();
+          ROSE_ASSERT(fsym != NULL);
+          SgMemberFunctionDeclaration * fdecl = fsym->get_declaration();
+          ROSE_ASSERT(fdecl != NULL);
+          mangled_name << fdecl->get_mangled_name().str();
+          break;
+        }
+        case V_SgTemplateMemberFunctionRefExp: {
+          const SgTemplateMemberFunctionRefExp* e = isSgTemplateMemberFunctionRefExp (expr);
+          SgTemplateMemberFunctionSymbol * fsym = e->get_symbol_i();
           ROSE_ASSERT(fsym != NULL);
           SgMemberFunctionDeclaration * fdecl = fsym->get_declaration();
           ROSE_ASSERT(fdecl != NULL);
