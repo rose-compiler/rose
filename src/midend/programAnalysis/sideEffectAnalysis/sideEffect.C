@@ -53,6 +53,9 @@ bool debugOut = false; // output information about traversal to stderr
 #define SIDEEFFECTTBL "sideEffect"
 #define CALLEDGETBL   "callEdge"
 
+using namespace boost;
+
+
 class simpleFuncRow : public dbRow
 {
   public:
@@ -565,7 +568,7 @@ bool createDatabaseTables(sqlite3_connection& con, bool drop) {
 
     // DatabaseGraph tables
     define_schema(con);
-  } catch( exception &ex ) {
+  } catch( std::exception &ex ) {
     cerr << "Exception Occured: " << ex.what() << endl;
     return false;
   }
@@ -2551,11 +2554,9 @@ SideEffect::createMultiGraph(CallGraph *callgraph, long projectId,
       typedef boost::graph_traits < CallMultiGraph >::edge_descriptor Edge;
       typedef std::pair<bool, Edge> dbgEdgeReturn; 
       multigraph->insertEdge( src, tar, edge );
-      typedef boost::property_map<CallMultiGraph, boost::vertex_index_t>::type
-        VertexIndexMap;
-      typedef boost::property_map<CallMultiGraph, boost::edge_index_t>::type
-        EdgeIndexMap;
-      EdgeIndexMap index_map = get(boost::edge_index, *multigraph);
+      typedef boost::property_map<CallMultiGraph, boost::vertex_index_t>::type VertexIndexMap;
+      typedef boost::property_map<CallMultiGraph, boost::edge_index_t>::type EdgeIndexMap;
+      boost::property_map<CallMultiGraph, boost::edge_index_t> index_map = boost::get(boost::edge_index, *multigraph);
 
     }
   }

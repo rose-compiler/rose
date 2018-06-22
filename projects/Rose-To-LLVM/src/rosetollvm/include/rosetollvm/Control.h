@@ -8,6 +8,8 @@
 #include <rosetollvm/Option.h>
 #include <rosetollvm/RootAstAttribute.h>
 #include <rosetollvm/ManagerAstAttribute.h>
+#include <rosetollvm/DimensionAstAttribute.h>
+#include <rosetollvm/ConstantValue.h>
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -27,6 +29,8 @@
 extern void __rose2llvm_fail (const char *__assertion, const char *__file, unsigned int __line);
 
 #define ROSE2LLVM_ASSERT(expr) ((expr) ? __ASSERT_VOID_CAST (0) : __rose2llvm_fail(__STRING(expr), __FILE__, __LINE__))
+
+class FunctionAstAttribute;
 
 class Control {
 public: 
@@ -69,7 +73,7 @@ public:
                       *LLVM_WHILE_LABELS,                    // WhileAstAttribute - used to associate labels with an SgWhileStatement
                       *LLVM_DO_LABELS,                       // DoAstAttribute - used to associate labels with a SgDoWhileStmt
                       *LLVM_FOR_LABELS,                      // ForAstAttribute - used to associate labels  with a SgForStatement
-      //                      *LLVM_LABEL, // UNUSED... Remove
+                      *LLVM_DIMENSIONS,                      // DimensionAstAttribute - used to associated non-constant expressions used as array dimensions with their declarations.
                       *LLVM_DEFAULT_VALUE,                   // StringAstAttribute - used to associate a default value to with an SgType 
                       *LLVM_EXPRESSION_RESULT_NAME,          // StringAstAttribute - used to associate the name of the final result of an expression evaluation with an SgExpression 
                       *LLVM_BUFFERED_OUTPUT,                 // ForAstAttribute - used to identify a SgExpression as the increment of a for loop and associate the loop labels with it.
@@ -94,11 +98,11 @@ public:
                       *LLVM_SWITCH_EXPRESSION,
                       *LLVM_CASE_INFO,
                       *LLVM_DEFAULT_LABEL,
-      //                      *LLVM_STRING_SIZE,
                       *LLVM_STRING_INDEX,
                       *LLVM_STRING_INITIALIZATION,
                       *LLVM_POINTER_TO_INT_CONVERSION,
                       *LLVM_ARRAY_TO_POINTER_CONVERSION,
+                      // Missing Case here that can be used.
                       *LLVM_INTEGRAL_PROMOTION,
                       *LLVM_INTEGRAL_DEMOTION,
                       *LLVM_NULL_VALUE,
@@ -119,7 +123,7 @@ public:
                       *LLVM_OP_AND_ASSIGN_FP_PROMOTION,
                       *LLVM_OP_AND_ASSIGN_FP_DEMOTION,
                       *LLVM_ARRAY_BIT_CAST,
-//                      *LLVM_ARGUMENT_INTEGRAL_DEMOTION,
+                      *LLVM_CONSTANT_VALUE,
                       *LLVM_FUNCTION_VISITED,
                       *LLVM_FUNCTION_NEEDS_REVISIT,
                       *LLVM_STRUCTURE_PADDING,
@@ -163,6 +167,15 @@ public:
     }
 
     /**
+     *
+     */
+    int numDimensionAttributes() { return dimensionAttributes.size(); }
+    DimensionAstAttribute *getDimensionAttribute(int i) { return dimensionAttributes[i]; }
+    void insertDimensionAttribute(DimensionAstAttribute *dimension_attribute) {
+        dimensionAttributes.push_back(dimension_attribute);
+    }
+
+    /**
      * Store \c n to be destroyed with \c this.
      */
     template <typename T>
@@ -172,7 +185,7 @@ public:
     static std::string FloatToString(float f);
     static std::string DoubleToString(double d);
     static std::string LongDoubleToString(long double x);
-    static std::string IntToString(long l);
+    static std::string IntToString(long long l);
     static bool isIntegerType(SgType *t);
     static bool isFloatingType(SgType *t);
     static bool isIntegerValue(SgValueExp *n);
@@ -182,13 +195,16 @@ public:
     static std::string floatingValue(SgValueExp *n, SgType *t);
     static std::string integerValueofAPFloat(llvm::APFloat &f);
     static std::string integerValue(SgValueExp *n, SgType *t);
-    static std::string primitiveCast(SgValueExp *node, SgType *type);
+    static std::string primitiveCast(SgValueExp *, SgType *type);
+    static std::string primitiveCast(ConstantValue &, SgType *type);
 
 private:
 
     Option &option;
     llvm::LLVMContext context;
     llvm::SMDiagnostic error;
+
+    std::vector<DimensionAstAttribute *> dimensionAttributes;
 
     std::vector<ManagerAstAttribute *> manager_attributes;
     std::vector<SgNode *> owned_nodes;

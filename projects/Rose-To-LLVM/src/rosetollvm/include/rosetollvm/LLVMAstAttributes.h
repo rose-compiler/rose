@@ -39,9 +39,6 @@ class LLVMAstAttributes : public RootAstAttribute {
     StringSet string_table,
               used_function_table,
               defined_function_table;
-// TODO: Remove this !!!
-//    std::vector<int> length;
-//    int getLength(const char *);
     std::vector<SgNode *> global_declaration;
     bool needs_memcopy;
     std::vector<SgInitializedName *> remote_global_declarations;
@@ -53,6 +50,8 @@ class LLVMAstAttributes : public RootAstAttribute {
     SgPointerType *voidStarType;
 
     Control &control;
+    Option &option;
+
     CodeEmitter codeOut;
     llvm::LLVMContext &context;
     llvm::Module *module;
@@ -69,7 +68,7 @@ class LLVMAstAttributes : public RootAstAttribute {
      */
     std::map<std::string, int> label_map;
 
-    bool isHex(char c) { return isdigit(c) || ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')); }
+    bool isHex(char c) { return isdigit(c) || ((c >= 'a' && c <= 'f') || (c >= 'a' && c <= 'f')); }
 
     void processClassDeclaration(SgClassType *);
     void prepFor2DigitHex(std::ostream &s) {
@@ -78,13 +77,14 @@ class LLVMAstAttributes : public RootAstAttribute {
 
 public:
 
-    LLVMAstAttributes(Option &option, Control &control_, std::string input_file) : codeOut(option, control, input_file),
-                                                                                   control(control_),
-                                                                                   needs_memcopy(false),
-                                                                                   tmp_count(0),
-                                                                                   tmp_int_count(0),
-                                                                                   context(control.getGlobalContext()),
-                                                                                   builder(context)
+    LLVMAstAttributes(Option &option_, Control &control_, std::string input_file) : codeOut(option_, control, input_file),
+                                                                                    option(option_),
+                                                                                    control(control_),
+                                                                                    needs_memcopy(false),
+                                                                                    tmp_count(0),
+                                                                                    tmp_int_count(0),
+                                                                                    context(control.getGlobalContext()),
+                                                                                    builder(context)
     {
         int byte_size = sizeof(void *);
 
@@ -226,37 +226,29 @@ public:
     }
 */
 
+    int numFunctions() { return used_function_table.size(); }
+    const char* getFunction(int i) { return used_function_table[i] -> Name(); }
     void insertFunction(std::string f) {
         used_function_table.insert(f.c_str(), f.size());
     }
 
-    int numFunctions() { return used_function_table.size(); }
-
-    const char* getFunction(int i) { return used_function_table[i] -> Name(); }
-
+    int numAdditionalFunctions() { return additionalFunctions.size(); }
+    SgFunctionDeclaration *getAdditionalFunction(int i) { return additionalFunctions[i]; }
     void insertAdditionalFunction(SgFunctionDeclaration *function) {
         additionalFunctions.push_back(function);
     }
 
-    int numAdditionalFunctions() { return additionalFunctions.size(); }
-
-    SgFunctionDeclaration *getAdditionalFunction(int i) { return additionalFunctions[i]; }
-
+    int numAdditionalFunctionAttributes() { return additionalFunctionAttributes.size(); }
+    FunctionAstAttribute *getAdditionalFunctionAttribute(int i) { return additionalFunctionAttributes[i]; }
     void insertAdditionalFunctionAttribute(FunctionAstAttribute *function) {
         additionalFunctionAttributes.push_back(function);
     }
 
-    int numAdditionalFunctionAttributes() { return additionalFunctionAttributes.size(); }
-
-    FunctionAstAttribute *getAdditionalFunctionAttribute(int i) { return additionalFunctionAttributes[i]; }
-
+    int numGlobalDeclarations() { return global_declaration.size(); }
+    SgNode *getGlobalDeclaration(int i) { return global_declaration[i]; }
     void insertGlobalDeclaration(SgNode *n) {
         global_declaration.push_back(n);
     }
-
-    int numGlobalDeclarations() { return global_declaration.size(); }
-
-    SgNode *getGlobalDeclaration(int i) { return global_declaration[i]; }
 
     void insertDefinedFunction(std::string f) { defined_function_table.insert(f.c_str(), f.size()); }
     bool isDefinedFunction(const char *fname) { return defined_function_table.contains(fname); }
@@ -322,6 +314,12 @@ public:
         }
         return attribute -> getType();
     }
+
+    bool isValignType(SgType *);
+    bool isUnsignedType(SgType *);
+    bool isFloatType(SgType *);
+    bool isIntegerType(SgType *);
+    bool isBooleanType(SgType *);
 
     /**
      * Compute the LLVM name of an integer with the given number of bytes.
