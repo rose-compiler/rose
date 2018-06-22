@@ -12,8 +12,10 @@ class DeadCodeAnalysis {
   void writeDeadAssignmentResultFile(SPRAY::LVAnalysis* lvAnalysis,
                                      std::string deadCodeCsvFileName);
   void setOptionTrace(bool flag);
+  void setOptionSourceCode(bool flag);
  private:
   bool option_trace;
+  bool optionSourceCode;
 };
 
 #endif

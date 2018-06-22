@@ -1027,6 +1027,10 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
 
+  Rose::global_options.set_frontend_notes(false);
+  Rose::global_options.set_frontend_warnings(false);
+  Rose::global_options.set_backend_warnings(false);
+
   signal(SIGSEGV, handler);   // install handler for backtrace
   CodeThorn::initDiagnostics();
 

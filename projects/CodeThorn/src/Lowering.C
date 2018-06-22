@@ -202,7 +202,17 @@ namespace SPRAY {
     return isSgBasicBlock(current);
   }
 
-  void Lowering::normalizeExpressions(SgNode* node) {
+  bool Lowering::hasFunctionCall(SgExpression* expr) {
+    RoseAst ast(expr);
+    for(auto node:ast) {
+      if(isSgFunctionCallExp(node)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void Lowering::normalizeExpressions(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
     // TODO: if temporary variables are generated, the initialization-list
     // must be put into a block, otherwise some generated gotos are
     // not legal (crossing initialization).
@@ -215,7 +225,13 @@ namespace SPRAY {
           //cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
           SgExpression* expr=exprStmt->get_expression();
           if(isWithinBlockStmt(expr)) {
-            normalizeExpression(exprStmt,expr);
+            if(onlyNormalizeFunctionCallExpressions) {
+              if(hasFunctionCall(expr)) {
+                normalizeExpression(exprStmt,expr);
+              }
+            } else {
+              normalizeExpression(exprStmt,expr);
+            }
           }
           i.skipChildrenOnForward();
         }

@@ -19,7 +19,7 @@ for benchmark in $TESTDIR/DC00*.C; do
     rm -f test${p}_col1.csv
     benchmarkname=$(basename $benchmark)
     echo -n "Testing $benchmarkname : "
-    ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --unparse > /dev/null
+    ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --normalizefcalls --ignore-unknown-functions > /dev/null
     #diff tmptest.csv $TESTDIR/$benchmarkname.csv
     cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
     cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv

@@ -11,6 +11,10 @@ void DeadCodeAnalysis::setOptionTrace(bool flag) {
   option_trace=flag;
 }
 
+void DeadCodeAnalysis::setOptionSourceCode(bool flag) {
+  optionSourceCode=flag;
+}
+
 void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* intervalAnalyzer,
                                                       string csvDeadCodeUnreachableFileName) {
   ofstream deadCodeCsvFile;
@@ -28,11 +32,18 @@ void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* i
         ROSE_ASSERT(correspondingNode);
         // Do not output scope statements ({ }, ...)
         if(!isSgScopeStatement(correspondingNode)) {
-          int lineNr=correspondingNode->get_file_info()->get_line();
+          Sg_File_Info* fileInfo=correspondingNode->get_file_info();
+          int lineNr=fileInfo->get_line();
+          int colNr=fileInfo->get_col();
+          string fileName=fileInfo->get_filenameString();
           if(lineNr>0) {
-            deadCodeCsvFile << lineNr
-                            << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
-                            << endl;
+            deadCodeCsvFile << lineNr;
+            deadCodeCsvFile <<","<< colNr;
+            if(optionSourceCode) {
+              deadCodeCsvFile <<","<< SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/");
+            }
+            deadCodeCsvFile << ","<<fileName;
+            deadCodeCsvFile << endl;
           }
         } else {
           //cout<<"DEBUG: EXCLUDING: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;

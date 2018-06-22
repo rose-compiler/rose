@@ -63,6 +63,7 @@
 #include "SprayException.h"
 #include "CodeThornException.h"
 #include "DeadCodeAnalysis.h"
+#include "Lowering.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -95,6 +96,7 @@ bool option_annotate_source_code=false;
 bool option_ignore_unknown_functions=false;
 bool option_inlining=false;
 bool option_normalize=false;
+bool option_show_source_code=false;
 //boost::program_options::variables_map args;
 
 void writeFile(std::string filename, std::string data) {
@@ -512,6 +514,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       // Generate file name
       std::string deadCodeCsvFileName = option_prefix+csvDeadCodeUnreachableFileName;
       DeadCodeAnalysis deadCodeAnalysis;
+      deadCodeAnalysis.setOptionSourceCode(option_show_source_code);
       deadCodeAnalysis.writeUnreachableCodeResultFile(intervalAnalyzer,deadCodeCsvFileName);
     }
     delete fipa;
@@ -710,6 +713,7 @@ int main(int argc, char* argv[]) {
       ("interval-analysis", "perform interval analysis.")
       ("csv-deadcode-unreachable", po::value< string >(), "perform interval analysis and generate csv-file [arg] with unreachable code.")
       ("csv-deadcode-deadstore", po::value< string >(), "perform liveness analysis and generate csv-file [arg] with stores to dead variables.")
+      ("show-source-code", "show source code in generated csv files.")
       ("trace", "show operations as performed by selected solver.")
       ("check-static-array-bounds", "check static array bounds (uses interval analysis).")
       ("print-varid-mapping", "prints variableIdMapping")
@@ -721,6 +725,7 @@ int main(int argc, char* argv[]) {
       ("ignore-unknown-functions","ignore unknown functions (assume those functions are side effect free)")
       ("csv-stable", "only output csv data that is stable/portable across environments.")
       ("normalize", "normalize program (transform into lower-level IR).")
+      ("normalizefcalls", "normalize only function calls.")
       ("inline", "inline functions (can increase precision of analysis).")
       ("unparse", "generate source code from internal representation.")
       ;
@@ -815,6 +820,9 @@ int main(int argc, char* argv[]) {
     if (args.count("ignore-unknown-functions")) {
       option_ignore_unknown_functions=true;
     }
+    if (args.count("show-source-code")) {
+      option_show_source_code=true;
+    }
 
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
@@ -842,6 +850,14 @@ int main(int argc, char* argv[]) {
    if(option_stats) {
       SPRAY::ProgramStatistics::printBasicCodeInfo(root);
     }
+
+  if(args.count("normalizefcalls")) {
+    Lowering lowering;
+    bool normalizeOnlyFunctionCalls=true;
+    lowering.normalizeExpressions(root,normalizeOnlyFunctionCalls);
+    lowering.normalizeAllVariableDeclarations(root);
+    cout<<"INFO: normalized function calls."<<endl;
+  }
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();

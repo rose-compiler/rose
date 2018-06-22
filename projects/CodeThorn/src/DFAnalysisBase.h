@@ -108,7 +108,7 @@ class DFAnalysisBase {
   SPRAY::PASolver1* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
-
+  
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
   SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;

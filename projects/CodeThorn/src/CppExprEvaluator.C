@@ -9,6 +9,7 @@
 #include "SgNodeHelper.h"
 #include "BoolLattice.h"
 #include <cmath>
+#include "AstTerm.h"
 
 using namespace std;
 
@@ -180,8 +181,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         }
         lhsResult = ips->getVariable(lhsVarId);
       } else {
-        //        if(_showWarnings)
-          //          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
+        if(_showWarnings)
+          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
         VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
         ips->topifyVariableSet(varIdSet);
       }
@@ -246,6 +247,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
     case V_SgAddressOfOp:
     case V_SgPointerDerefExp:
+      //cout<<"DEBUG: SgPointerDerefExp: "<<isSgLocatedNode(node)->unparseToString()<<endl;
       // discard result as pointer value intervals are not represented in this domain, but evaluate to ensure all side-effects are represented in the state
       evaluate(operand);
       return NumberIntervalLattice::top();
@@ -388,6 +390,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   }
   case V_SgFunctionCallExp: {
     {
+      //cerr<<"AST:"<<AstTerm::astTermWithNullValuesToString(node);
       string funName=SgNodeHelper::getFunctionName(node);
       if(funName=="__assert_fail") {
         return NumberIntervalLattice::bot();

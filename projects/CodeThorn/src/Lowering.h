@@ -63,7 +63,7 @@ namespace SPRAY {
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
-    void normalizeExpressions(SgNode* node);
+    void normalizeExpressions(SgNode* node, bool onlyNormalizeFunctionCallExpressions=false);
     // enable/disable inling. By default off.
     void setInliningOption(bool flag);
     bool getInliningOption();
@@ -73,13 +73,14 @@ namespace SPRAY {
     static SgLabelStatement* createLabel(SgStatement* target);
     static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
     static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
+    bool hasFunctionCall(SgExpression* expr);
+    // normalizes variable declarations T x=init to T x; x=init; 
+    void normalizeAllVariableDeclarations(SgNode* node);
 
   private:
     void normalizeAst(SgNode* root);
     // normalizes all single statements in if-statements to blocks (sage version)
     void normalizeSingleStatementsToBlocks(SgNode* node);
-    // normalizes variable declarations T x=init to T x; x=init; 
-    void normalizeAllVariableDeclarations(SgNode* node);
     /* Given 'Type x=init;' is transformed into 'Type x;' and returns 'x=init;'
        return nullptr if provided declaration is in global scope (cannot be normalized) */
     SgStatement* buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl);

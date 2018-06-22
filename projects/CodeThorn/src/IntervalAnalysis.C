@@ -40,7 +40,7 @@ void SPRAY::IntervalAnalysis::initializeTransferFunctions() {
   SPRAY::IntervalTransferFunctions* intervalTransferFunctions=dynamic_cast<SPRAY::IntervalTransferFunctions*>(_transferFunctions);
   ROSE_ASSERT(intervalTransferFunctions->getCppExprEvaluator()==0);
   SPRAY::CppExprEvaluator* cppExprEvaluator=new SPRAY::CppExprEvaluator(_numberIntervalLattice,getVariableIdMapping());
-  cppExprEvaluator->setShowWarnings(true);
+  cppExprEvaluator->setShowWarnings(false);
   cppExprEvaluator->setPointerAnalysis(getPointerAnalysis());
   cppExprEvaluator->setSoundness(false);
   intervalTransferFunctions->setCppExprEvaluator(cppExprEvaluator);
