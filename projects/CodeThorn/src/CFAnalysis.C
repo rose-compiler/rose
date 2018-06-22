@@ -935,6 +935,8 @@ Flow CFAnalysis::flow(SgNode* node) {
 
   switch (node->variantT()) {
   case V_SgFunctionDefinition: {
+    
+    //cout<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<<endl;
     SgBasicBlock* body=isSgFunctionDefinition(node)->get_body();
     Edge edge=Edge(labeler->functionEntryLabel(node),EDGE_FORWARD,initialLabel(body));
     edgeSet.insert(edge);
