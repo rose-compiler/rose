@@ -1502,6 +1502,9 @@ string SgNodeHelper::getFunctionName(SgNode* node) {
   if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
     // MS: conditional update of variable 'node' is intentional for following if
     node=funCall->getAssociatedFunctionDeclaration();
+    // in case of function pointers 0 is returned
+    if(node==0)
+      return "";
   }
   if(SgFunctionDeclaration* tmpfundecl=isSgFunctionDeclaration(node)) {
     fundecl=tmpfundecl;
