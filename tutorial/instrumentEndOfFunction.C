@@ -35,5 +35,6 @@ int main (int argc, char *argv[])
   AstTests::runAllTests(project); 
   // translation only
    project->unparse();
+  return 0; 
 }
 
