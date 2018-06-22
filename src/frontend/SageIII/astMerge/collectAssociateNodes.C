@@ -323,6 +323,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
        // DQ (9/6/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
           case V_SgTypeSigned128bitInteger:
+          case V_SgTypeUnsigned128bitInteger:
 
        // DQ (2/2/2011): Unclear if there is anything to do here for this type (any associated IR nodes would have been visited already).
           case V_SgTypeLabel:
@@ -2306,15 +2307,27 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
            }
 #endif
 
+           case V_SgTemplateParameter:
+             {
+               SgTemplateParameter * tpl_param = isSgTemplateParameter(node);
+               ROSE_ASSERT(tpl_param != NULL);
+               if (tpl_param->get_type() != NULL) {
+                 addAssociatedNodes(tpl_param->get_type(), nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+               if (tpl_param->get_defaultTypeParameter() != NULL) {
+                 addAssociatedNodes(tpl_param->get_defaultTypeParameter(), nodeList, markMemberNodesDefinedToBeDeleted);
+               }
+               break;
+             }
            case V_SgNonrealDecl:
              {
                SgNonrealDecl * nrdecl = isSgNonrealDecl(node);
                ROSE_ASSERT(nrdecl != NULL);
                nodeList.insert(nrdecl);
 
-               SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
-               if (nrscope != NULL)
-                 addAssociatedNodes(nrscope,nodeList,markMemberNodesDefinedToBeDeleted);
+//             SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
+//             if (nrscope != NULL)
+//               addAssociatedNodes(nrscope,nodeList,markMemberNodesDefinedToBeDeleted);
 
                SgNonrealType * nrtype = nrdecl->get_type();
                if (nrtype != NULL)
@@ -2325,8 +2338,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                  addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
                }
 
-               SgTemplateArgumentPtrList & part_spec_tpl_args = nrdecl->get_part_spec_tpl_args();
-               for (SgTemplateArgumentPtrList::iterator it = part_spec_tpl_args.begin(); it != part_spec_tpl_args.end(); it ++) {
+               SgTemplateParameterPtrList & tpl_params = nrdecl->get_tpl_params();
+               for (SgTemplateParameterPtrList::iterator it = tpl_params.begin(); it != tpl_params.end(); it ++) {
                  addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
                }
 
@@ -2344,9 +2357,6 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
              {
                SgNonrealSymbol * symbol = isSgNonrealSymbol(node);
                ROSE_ASSERT(symbol != NULL);
-               nodeList.insert(symbol);
-
-               addAssociatedNodes(symbol->get_declaration(),nodeList,markMemberNodesDefinedToBeDeleted);
 
                break;
              }

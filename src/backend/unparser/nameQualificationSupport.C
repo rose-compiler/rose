@@ -733,6 +733,9 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
        // DQ (2/12/2013): Added support for SgTemplateFunctionSymbol.
           case V_SgTemplateFunctionSymbol:
 
+       // TV (05/24/2018): Added support for SgTemplateTypedefSymbol
+          case V_SgTemplateTypedefSymbol:
+
        // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
           case V_SgFunctionSymbol:
           case V_SgMemberFunctionSymbol:
@@ -749,6 +752,7 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
           case V_SgEnumSymbol: 
           case V_SgNamespaceSymbol: // Note sure about this!!!
           case V_SgTemplateSymbol: // Note sure about this!!!
+          case V_SgNonrealSymbol: // Note sure about this!!!
           case V_SgTypedefSymbol:
              {
                typeElaborationRequired = false;
@@ -1058,7 +1062,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                    (templateDeclaration       != NULL) ? templateDeclaration->get_name()  : 
                    (enumDeclaration           != NULL) ? enumDeclaration->get_name()      : "unknown_name";
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In nameQualificationDepth(SgDeclarationStatement*,...): declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),name.str());
 #endif
 
@@ -1133,7 +1137,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
        // Note that there can be more than one symbol if the name is hidden in a base class scope (and thus there are SgAliasSymbols using the same name).
           ROSE_ASSERT(currentScope != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Initial lookup: name = %s currentScope = %p = %s \n",name.str(),currentScope,currentScope->class_name().c_str());
 #endif
 
@@ -1143,7 +1147,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
        // SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
           SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope,templateParameterList,templateArgumentList);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Initial lookup: symbol = %p = %s \n",symbol,(symbol != NULL) ? symbol->class_name().c_str() : "NULL");
 #endif
 
@@ -2290,6 +2294,15 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                          break;
                        }
+                    case V_SgNonrealDecl:
+                       {
+                      // TV (05/10/2018): TODO
+#if 1
+                         printf ("In NameQualificationTraversal::nameQualificationDepth(): Found a case of declaration == SgNonrealDecl => return 0\n");
+#endif
+                         return 0;
+                         break;
+                       }
 
                     default:
                        {
@@ -2307,7 +2320,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
              }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",
                declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
@@ -2315,7 +2328,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
        // Refactored this code to another member function so that it could also support evaluation of declarations found in types (more generally).
           evaluateTemplateInstantiationDeclaration(declaration,currentScope,positionStatement);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("DONE: Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",
                declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
@@ -3716,9 +3729,6 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        if (nrdecl->get_tpl_args().size() > 0) {
          evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, positionStatement);
        }
-       if (nrdecl->get_part_spec_tpl_args().size() > 0) {
-         evaluateNameQualificationForTemplateArgumentList(nrdecl->get_part_spec_tpl_args(), currentScope, positionStatement);
-       }
 #if 0
        ROSE_ASSERT(nrdecl->get_nonreal_decl_scope());
        SgNonrealDecl * parent_nrdecl = isSgNonrealDecl(nrdecl->get_nonreal_decl_scope()->get_parent());
@@ -4359,19 +4369,26 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgBaseClass* baseClass = *i;
                ROSE_ASSERT(baseClass != NULL);
 
-               SgClassDeclaration* classDeclaration = baseClass->get_base_class();
-               SgScopeStatement*   currentScope     = classDefinition->get_scope();
-               ROSE_ASSERT(currentScope != NULL);
+               if (isSgNonrealBaseClass(baseClass)) {
+                 // FIXME nothing to do?
+               } else if (isSgExpBaseClass(baseClass)) {
+                  ROSE_ASSERT(false); // TODO traverse the expression ???
+               } else {
+                 SgClassDeclaration * classDeclaration = baseClass->get_base_class();
+                 ROSE_ASSERT(classDeclaration != NULL);
+                 SgScopeStatement * currentScope = classDefinition->get_scope();
+                 ROSE_ASSERT(currentScope != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("Calling nameQualificationDepth() for base class classDeclaration name = %s \n",classDeclaration->get_name().str());
+                 printf ("Calling nameQualificationDepth() for base class name = %s \n",classDeclaration->get_name().str());
 #endif
-               int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDefinition);
+                 int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDefinition);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("amountOfNameQualificationRequired (base class) = %d \n",amountOfNameQualificationRequired);
+                 printf ("amountOfNameQualificationRequired (base class) = %d \n",amountOfNameQualificationRequired);
 #endif
-               setNameQualification(baseClass,classDeclaration,amountOfNameQualificationRequired);
+                 setNameQualification(baseClass,classDeclaration,amountOfNameQualificationRequired);
+               }
 
             // DQ (12/23/2015): Also need to add this to the aliasSymbolCausalNodeSet.
                SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(baseClass);
@@ -5620,7 +5637,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // This fix is similar to that for the case of non-member functions (yesterday, see Cxx11_tests/test2018_68.C). This fix is 
                  // relevant to Cxx11_tests/test2018_69.C.
                     int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,memberFunctionDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
 
@@ -5853,7 +5870,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // This point of calling this function is to just have the template arguments evaluated for name qualification (see Cxx11_tests/test2018_68.C).
                int amountOfNameQualificationRequired = nameQualificationDepth(templateInstantiationTypedefDeclaration,currentScope,templateInstantiationTypedefDeclaration);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("SgTemplateInstantiationTypedefDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -6949,19 +6966,24 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (currentStatement != NULL)
                        {
                          SgScopeStatement* currentScope = currentStatement->get_scope();
-                         ROSE_ASSERT(currentScope != NULL);
+                         if (currentScope != NULL) {
 
-                         int amountOfNameQualificationRequiredForType = nameQualificationDepth(associatedTypeDeclaration,currentScope,currentStatement);
+                           int amountOfNameQualificationRequiredForType = nameQualificationDepth(associatedTypeDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         printf ("SgExpression (name = %s) type: amountOfNameQualificationRequiredForType = %d \n",referenceToType->class_name().c_str(),amountOfNameQualificationRequiredForType);
+                           printf ("SgExpression (name = %s) type: amountOfNameQualificationRequiredForType = %d \n",referenceToType->class_name().c_str(),amountOfNameQualificationRequiredForType);
 #endif
-                         setNameQualification(referenceToType,associatedTypeDeclaration,amountOfNameQualificationRequiredForType);
+                           setNameQualification(referenceToType,associatedTypeDeclaration,amountOfNameQualificationRequiredForType);
 
 #if 0
-                         printf ("Calling traverseType on referenceToType = %p = %s \n",referenceToType,referenceToType->class_name().c_str());
+                           printf ("Calling traverseType on referenceToType = %p = %s \n",referenceToType,referenceToType->class_name().c_str());
 #endif
-                      // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
-                         traverseType(qualifiedType,referenceToType,currentScope,currentStatement);
+                        // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
+                           traverseType(qualifiedType,referenceToType,currentScope,currentStatement);
+                         } else {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                           printf ("WARNING: currentStatement->get_scope() == NULL for case of referenceToType = %p = %s \n",referenceToType,referenceToType->class_name().c_str());
+#endif
+                         }
                        }
                       else
                        {
@@ -9848,10 +9870,10 @@ NameQualificationTraversal::buildTemplateHeaderString ( SgTemplateParameterPtrLi
                case SgTemplateParameter::template_parameter:
                   {
                     ROSE_ASSERT(templateParameter->get_templateDeclaration() != NULL);
-                    SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(templateParameter->get_templateDeclaration());
-                    ROSE_ASSERT(templateDeclaration != NULL);
+                    SgNonrealDecl* nrdecl = isSgNonrealDecl(templateParameter->get_templateDeclaration());
+                    ROSE_ASSERT(nrdecl != NULL);
 
-                    SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+                    SgTemplateParameterPtrList & templateParameterList = nrdecl->get_tpl_params();
 
                     template_name += buildTemplateHeaderString(templateParameterList);
 

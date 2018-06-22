@@ -719,23 +719,18 @@ GetOperatorVariant(SgExpression* expr)
 #else
             // DQ (11/27/2012): Added more general support for templates to include new IR nodes.
                SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(mfunc);
-               if (mfunc_ref != NULL)
-                  {
-                    name = mfunc_ref->get_symbol()->get_name();
-                  }
-                 else
-                  {
-                    SgTemplateMemberFunctionRefExp* template_mfunc_ref = isSgTemplateMemberFunctionRefExp(mfunc);
-
-                 // DQ (9/28/2012): Added debug support.
-                    if (template_mfunc_ref == NULL)
-                       {
-                         printf ("ERROR: mfunc = %p = %s mfunc->get_startOfConstruct() = %p mfunc->get_operatorPosition() = %p \n",mfunc,mfunc->class_name().c_str(),mfunc->get_startOfConstruct(),mfunc->get_operatorPosition());
-                         mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
-                       }
-                    ROSE_ASSERT(template_mfunc_ref != NULL);
-                    name = template_mfunc_ref->get_symbol()->get_name();
-                  }
+               SgTemplateMemberFunctionRefExp* tplmfunc_ref = isSgTemplateMemberFunctionRefExp(mfunc);
+               SgNonrealRefExp * nrref = isSgNonrealRefExp(mfunc);
+               if (mfunc_ref != NULL) {
+                 name = mfunc_ref->get_symbol()->get_name();
+               } else if (tplmfunc_ref != NULL) {
+                 name = tplmfunc_ref->get_symbol()->get_name();
+               } else if (nrref != NULL) {
+                 name = nrref->get_symbol()->get_name();
+               } else {
+                 printf("ERROR: unexpected reference expression for a member-function: %p (%s)\n", mfunc, mfunc ? mfunc->class_name().c_str() : "");
+                 ROSE_ASSERT(false);
+               }
 #endif
                break;
              }
@@ -1520,18 +1515,23 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                            // testTranslator is run on test2015_35.C) then we require the "template<>" syntax.
                               SgTemplateInstantiationMemberFunctionDecl* nondefiningTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
                               ROSE_ASSERT(nondefiningTemplateInstantiationMemberFunctionDecl != NULL);
-                              SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
-                              ROSE_ASSERT(nondefiningTemplateClassInstatiationDefn != NULL);
-                              SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
-                              ROSE_ASSERT(templateClassInstantiation != NULL);
-                              bool isOutput = false;
 #if 0
-                              printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
-                              printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
+                              printf("  nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() = %p (%s)\n", nondefiningTemplateInstantiationMemberFunctionDecl->get_parent(), nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() ? nondefiningTemplateInstantiationMemberFunctionDecl->get_parent()->class_name().c_str() : "");
 #endif
-                           // isOutput = (templateClassInstantiation->get_file_info()->isCompilerGenerated() && templateClassInstantiation->get_file_info()->isOutputInCodeGeneration());
-                           // TV (3/14/18): This need to be true whether or not it is compiler generated (template<> not used when defining a member of a class specialization)
-                              isOutput = templateClassInstantiation->get_file_info()->isOutputInCodeGeneration();
+                              bool isOutput = false;
+
+                              SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
+                              if (nondefiningTemplateClassInstatiationDefn != NULL) {
+                                SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
+                                ROSE_ASSERT(templateClassInstantiation != NULL);
+#if 0
+                                printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
+                                printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
+#endif
+                             // isOutput = (templateClassInstantiation->get_file_info()->isCompilerGenerated() && templateClassInstantiation->get_file_info()->isOutputInCodeGeneration());
+                             // TV (3/14/18): This need to be true whether or not it is compiler generated (template<> not used when defining a member of a class specialization)
+                                isOutput = templateClassInstantiation->get_file_info()->isOutputInCodeGeneration();
+                              }
                               if (isOutput == true)
                                  {
 #if 0

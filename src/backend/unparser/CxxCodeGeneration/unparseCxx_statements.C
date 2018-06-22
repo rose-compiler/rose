@@ -1617,6 +1617,8 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // DQ 11/3/2014): Adding C++11 templated typedef declaration support.
           case V_SgTemplateTypedefDeclaration:          unparseTemplateTypedefDeclaration (stmt, info); break;
 
+          case V_SgNonrealDecl:                         unparseNonrealDecl(stmt,info); break;
+
           default:
              {
                printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
@@ -9800,6 +9802,14 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
 #endif
    }
 
+void
+Unparse_ExprStmt::unparseNonrealDecl(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgNonrealDecl * nrdecl = isSgNonrealDecl(stmt);
+     ROSE_ASSERT(nrdecl != NULL);
+
+     ROSE_ASSERT(false);
+   }
 
 void
 Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -10772,8 +10782,8 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
         {
           if (templateMemberFunctionDeclaration != NULL) {
-            SgClassDeclaration * assoc_class_decl = templateMemberFunctionDeclaration->get_associatedClassDeclaration();
-            SgTemplateClassDeclaration * assoc_tpl_class_decl = isSgTemplateClassDeclaration(assoc_class_decl);
+            SgDeclarationStatement * assoc_decl = templateMemberFunctionDeclaration->get_associatedClassDeclaration();
+            SgTemplateClassDeclaration * assoc_tpl_class_decl = isSgTemplateClassDeclaration(assoc_decl);
 
             SgNode * parent = templateMemberFunctionDeclaration->get_parent();
             SgTemplateClassDefinition * parent_is_tpl_class_defn = isSgTemplateClassDefinition(parent);

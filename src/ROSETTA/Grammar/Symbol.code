@@ -399,6 +399,14 @@ SgSymbol::get_mangled_name() const
                break;
              }
 
+          case V_SgNonrealSymbol:
+             {
+               const SgNonrealSymbol* symbol = isSgNonrealSymbol(symbolFromTable);
+               ROSE_ASSERT(symbol != NULL);
+               mangledName = symbol->get_name();
+               break;
+             }
+
 #if 1
        // DQ (2/28/2018): Added support for C++11 specific symbol.
           case V_SgTemplateTypedefSymbol:
