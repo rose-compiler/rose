@@ -273,14 +273,14 @@ ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionPa
 ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
 
 //! DQ (1/16/2009): Added to support member function in C++ (for new interface)
-ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier);
+ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 
 // DQ (3/20/2017): This function is not used (so let's see if we can remove it).
 //! DQ (12/2/2011): Added for symetry with other functios to generate SgFunctionType
 // ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterList* argList = NULL, SgClassDefinition *struct_name = NULL, unsigned int mfunc_specifier = 0);
 
 //! DQ (8/19/2012): Refactored some of the code supporting construction of the SgMemberFunctionType.
-ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier);
+ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 
 // PP (07/14/2016):
 //! Some support for building class template instantiation declarations.
@@ -474,7 +474,7 @@ ROSE_DLL_API SgTemplateType* buildTemplateType(SgName name="");
 ROSE_DLL_API SgTemplateParameter * buildTemplateParameter (SgTemplateParameter::template_parameter_enum parameterType, SgType*);
 
 //! Build a declaration of a non-real class or class-member representing template parameters and their members
-ROSE_DLL_API SgNonrealDecl * buildNonrealDecl(const SgName & name, SgDeclarationScope * scope);
+ROSE_DLL_API SgNonrealDecl * buildNonrealDecl(const SgName & name, SgDeclarationScope * scope, SgDeclarationScope * child_scope = NULL);
 
 //! Build a reference to the non-real declaration of a member of a non-real class
 ROSE_DLL_API SgNonrealRefExp * buildNonrealRefExp_nfi(SgNonrealSymbol * sym);

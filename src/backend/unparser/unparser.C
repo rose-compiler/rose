@@ -2111,28 +2111,22 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
        // printf ("In globalUnparseToString(): inheritedAttributeInfo.get_current_scope() == NULL astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 
        // DQ (6/2/2007): Find the nearest containing scope so that we can fill in the current_scope, so that the name qualification can work.
-#if 1
           SgStatement* stmt = TransformationSupport::getStatement(astNode);
-#else
-          SgStatement* stmt = NULL;
-       // DQ (6/27/2007): SgProject and SgFile are not contained in any statement
-          if (isSgProject(astNode) == NULL && isSgFile(astNode) == NULL)
-               stmt = TransformationSupport::getStatement(astNode);
-#endif
 
-          if (stmt != NULL)
-             {
-               SgScopeStatement* scope = stmt->get_scope();
-               ROSE_ASSERT(scope != NULL);
-               inheritedAttributeInfo.set_current_scope(scope);
-             }
-            else
-             {
-            // DQ (6/27/2007): If we unparse a type then we can't find the enclosing statement, so 
-            // assume it is SgGlobal. But how do we find a SgGlobal IR node to use?  So we have to 
-            // leave it NULL and hand this case downstream!
-               inheritedAttributeInfo.set_current_scope(NULL);
-             }
+       // DQ (6/27/2007): If we unparse a type then we can't find the enclosing statement, so 
+       // assume it is SgGlobal. But how do we find a SgGlobal IR node to use?  So we have to 
+       // leave it NULL and hand this case downstream!
+       // TV (05/24/2018): in the case of template arguments the statement's parent might not have been set (template argument are unparsed to qualify names for lookup when translating from EDG to SAGE)
+          SgScopeStatement* scope = isSgScopeStatement(stmt);
+          if (scope == NULL && stmt != NULL) {
+            scope = stmt->get_scope();
+          }
+#if 1
+          if (scope == NULL) {
+            printf("NOTE: in globalUnparseToString(): failed to find the nearest containing scope for %p (%s)\n", astNode, astNode ? astNode->class_name().c_str() : "");
+          }
+#endif
+          inheritedAttributeInfo.set_current_scope(scope);
 
           const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
           if (templateArgument != NULL)

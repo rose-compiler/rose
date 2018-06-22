@@ -3428,16 +3428,14 @@ SgClassType::get_name() const
        // DQ (12/4/2011): Handling support for SgClassDeclaration and SgTemplateClassDeclaration declarations.
        // return isSgClassDeclaration(get_declaration())->get_name();
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
-          if (classDeclaration != NULL)
-             {
-               return classDeclaration->get_name();
-             }
-            else
-             {
-               SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(declaration);
-               ROSE_ASSERT(templateClassDeclaration != NULL);
-               return templateClassDeclaration->get_name();
-             }
+          SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(declaration);
+          if (templateClassDeclaration != NULL) {
+            return templateClassDeclaration->get_name();
+          } else if (classDeclaration != NULL) {
+            return classDeclaration->get_name();
+          } else {
+            ROSE_ASSERT(false);
+          }
         }
        else
         {
@@ -3475,16 +3473,20 @@ SgClassType::get_mangled(void) const
                ROSE_ASSERT(class_decl->get_scope() != NULL);
 
             // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
-               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
-               if (template_class_decl != NULL)
+               const SgTemplateInstantiationDecl* template_class_inst = isSgTemplateInstantiationDecl(get_declaration());
+               const SgTemplateClassDeclaration* template_class_decl = isSgTemplateClassDeclaration(get_declaration());
+               if (template_class_inst != NULL)
                   {
-                    mangled_name = template_class_decl->get_mangled_name();
+                    mangled_name = template_class_inst->get_mangled_name();
 #if 0
                     printf ("In SgClassType::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
 #endif
+                  }
+                 else if (template_class_decl != NULL)
+                  {
+                    mangled_name = template_class_decl->get_mangled_name();
 #if 0
-                    printf ("Need to get the mangled names of the template arguments \n");
-                    ROSE_ASSERT(false);
+                    printf ("In SgClassType::get_mangled(): SgTemplateClassDeclaration mangled_name = %s \n",mangled_name.str());
 #endif
                   }
                  else
@@ -3550,7 +3552,9 @@ SgNonrealType::SgNonrealType ( const SgNonrealType & X )
 SgName
 SgNonrealType::get_mangled(void) const
    {
-     return get_name();
+     SgNonrealDecl * nrdecl = isSgNonrealDecl(get_declaration());
+     ROSE_ASSERT(nrdecl != NULL);
+     return nrdecl->get_mangled_name();
    }
 
 SgName
@@ -4731,6 +4735,10 @@ SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * type
      printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): arg_names = %s \n",arg_names.str());
 #endif
 
+#if 0
+     printf ("In SgFunctionType::get_mangled(SgType*,SgFunctionParameterTypeList*): ret_type = %p (%s) \n",ret_type, ret_type->class_name().c_str());
+#endif
+
   // process return type
      ROSE_ASSERT (ret_type != NULL);
      SgName ret_name = ret_type->get_mangled();
@@ -5173,7 +5181,7 @@ SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTy
   // Member-function specific information (class name, const/volatile qualifiers).
      SgName mangled_cls_tag;
 
-     ROSE_ASSERT(classType != NULL);
+  // ROSE_ASSERT(classType != NULL);
 
   // Compute class scope
   //! \todo Figure out why member function types are sometimes used

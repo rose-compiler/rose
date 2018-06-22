@@ -196,6 +196,10 @@ struct hash_nodeptr
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
+   ROSE_DLL_API SgFunctionSymbol *lookupTemplateFunctionSymbolInParentScopes (const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement *currentScope=NULL);
+   ROSE_DLL_API SgFunctionSymbol *lookupTemplateMemberFunctionSymbolInParentScopes (const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement *currentScope=NULL);
+
+
 // DQ (8/21/2013): Modified to make newest function parameters be default arguments.
 // DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
 // DQ (5/7/2011): Added support for SgClassSymbol (used in name qualification support).

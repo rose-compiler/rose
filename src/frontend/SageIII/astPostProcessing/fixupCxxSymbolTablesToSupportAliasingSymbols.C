@@ -222,6 +222,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                          case V_SgNamespaceSymbol:
                          case V_SgTemplateSymbol:
                          case V_SgLabelSymbol:
+                         case V_SgNonrealSymbol:
                          {
                            // Liao, 10/31/2012. 
                            // Using lookup_function_symbol () etc. is not good enough since it returns the first match only.
@@ -478,190 +479,6 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
      printf ("In FixupAstSymbolTablesToSupportAliasedSymbols::visit() (preorder AST traversal) node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
-#if 0
-  // DQ (7/23/2011): New support for linking namespaces sharing the same name (mangled name).
-  // std::map<SgName,std::vector<SgNamespaceDefinition*> > namespaceMap;
-     SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(node);
-     if (namespaceDefinition != NULL)
-        {
-       // DQ (7/23/2011): Assemble namespaces with the same name into vectors defined in the map 
-       // accessed using the name of the namespace as a key.
-
-#error "DEAD CODE"
-
-          SgName name = namespaceDefinition->get_namespaceDeclaration()->get_name();
-#if ALIAS_SYMBOL_DEBUGGING
-          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: namespace definition found for name = %s #symbols = %d \n",name.str(),namespaceDefinition->get_symbol_table()->size());
-#endif
-       // It is important to use mangled names to define unique names when namespaces are nested.
-          SgName mangledNamespaceName = namespaceDefinition->get_namespaceDeclaration()->get_mangled_name();
-#if ALIAS_SYMBOL_DEBUGGING
-          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
-#endif
-       // DQ (7/23/2011): Fixup the name we use as a key in the map to relect that some namespaces don't have a name.
-          if (name == "")
-             {
-            // Modify the mangled name to reflect the unnamed namespace...
-
-#if ALIAS_SYMBOL_DEBUGGING
-               printf ("Warning in FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Unnamed namespaces shuld be mangled to reflect the lack of a name \n");
-#endif
-               mangledNamespaceName += "_unnamed_namespace";
-             }
-
-#if ALIAS_SYMBOL_DEBUGGING
-          printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
-#endif
-#if ALIAS_SYMBOL_DEBUGGING
-          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: associated mangled name = %s namespaceMap size = %" PRIuPTR " \n",mangledNamespaceName.str(),namespaceMap.size());
-#endif
-          std::map<SgName,std::vector<SgNamespaceDefinitionStatement*> >::iterator i = namespaceMap.find(mangledNamespaceName);
-          if (i != namespaceMap.end())
-             {
-               std::vector<SgNamespaceDefinitionStatement*> & namespaceVector = i->second;
-#if ALIAS_SYMBOL_DEBUGGING
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (found an entry): Namespace vector size = %" PRIuPTR " \n",namespaceVector.size());
-#endif
-            // Testing each entry...
-               for (size_t j = 0; j < namespaceVector.size(); j++)
-                  {
-                    ROSE_ASSERT(namespaceVector[j] != NULL);
-                    SgName existingNamespaceName = namespaceVector[j]->get_namespaceDeclaration()->get_name();
-#if ALIAS_SYMBOL_DEBUGGING
-                    printf ("Existing namespace (SgNamespaceDefinitionStatement) %p = %s \n",namespaceVector[j],existingNamespaceName.str());
-#endif
-                    if (j > 0)
-                       {
-                         ROSE_ASSERT(namespaceVector[j]->get_previousNamespaceDefinition() != NULL);
-                       }
-
-                    if (namespaceVector.size() > 1 && j < namespaceVector.size() - 2)
-                       {
-                         ROSE_ASSERT(namespaceVector[j]->get_nextNamespaceDefinition() != NULL);
-                       }
-                  }
-
-#error "DEAD CODE"
-
-               size_t namespaceListSize = namespaceVector.size();
-               if (namespaceListSize > 0)
-                  {
-                    size_t lastNamespaceIndex = namespaceListSize - 1;
-
-                 // DQ (5/9/2013): Before setting these, I think they should be unset (to NULL values).
-                 // ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL);
-                 // ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == NULL);
-                 // ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL);
-                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() != NULL);
-
-                 // namespaceVector[lastNamespaceIndex]->set_nextNamespaceDefinition(namespaceDefinition);
-#if 1
-                    printf ("namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() = %p \n",namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition());
-#endif
-                    if (namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL)
-                       {
-                         namespaceVector[lastNamespaceIndex]->set_nextNamespaceDefinition(namespaceDefinition);
-                       }
-                      else
-                       {
-                      // DQ (5/9/2013): If this is already set then make sure it was set to the correct value.
-                         ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == namespaceDefinition);
-                       }
-
-#error "DEAD CODE"
-
-                 // DQ (5/9/2013): If this is already set then make sure it was set to the correct value.
-                 // namespaceDefinition->set_previousNamespaceDefinition(namespaceVector[lastNamespaceIndex]);
-                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() != NULL);
-                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == namespaceVector[lastNamespaceIndex]);
-
-                 // DQ (5/9/2013): I think I can assert this.
-                    ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_namespaceDeclaration()->get_name() == namespaceDefinition->get_namespaceDeclaration()->get_name());
-                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() != NULL);
-#if 1
-                    printf ("namespaceDefinition = %p namespaceDefinition->get_nextNamespaceDefinition() = %p \n",namespaceDefinition,namespaceDefinition->get_nextNamespaceDefinition());
-#endif
-                 // ROSE_ASSERT(namespaceDefinition->get_nextNamespaceDefinition()     == NULL);
-                 // ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == NULL);
-                  }
-
-            // Add the namespace matching a previous name to the list.
-               namespaceVector.push_back(namespaceDefinition);
-
-#error "DEAD CODE"
-
-            // Setup scopes as sources and distinations of alias symbols.
-               SgNamespaceDefinitionStatement* referencedScope = namespaceDefinition->get_previousNamespaceDefinition();
-               ROSE_ASSERT(referencedScope != NULL);
-               SgNamespaceDefinitionStatement* currentScope = namespaceDefinition;
-               ROSE_ASSERT(currentScope != NULL);
-
-#if ALIAS_SYMBOL_DEBUGGING
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: Suppress injection of symbols from one namespace to the other for each reintrant namespace \n");
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: referencedScope #symbols = %d currentScope #symbols = %d \n",referencedScope->get_symbol_table()->size(),currentScope->get_symbol_table()->size());
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: referencedScope = %p currentScope = %p \n",referencedScope,currentScope);
-#endif
-#if 1
-            // Generate the alias symbols from the referencedScope and inject into the currentScope.
-               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,SgAccessModifier::e_default);
-#endif
-             }
-            else
-             {
-#if ALIAS_SYMBOL_DEBUGGING
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (entry NOT found): Insert namespace %p for name = %s into the namespaceMap \n",namespaceDefinition,mangledNamespaceName.str());
-#endif
-               std::vector<SgNamespaceDefinitionStatement*> list(1);
-               ROSE_ASSERT(list.size() == 1);
-
-#error "DEAD CODE"
-
-               list[0] = namespaceDefinition;
-#if 0
-            // DQ (3/11/2012): New code, but maybe we should instead put the implicit "std" namespace into the global scope more directly.
-               if (mangledNamespaceName == "std" && false)
-                  {
-                 // This case has to be handled special since the implicit "std" namespace primary declaration was 
-                 // constructed but not added to the global scope.  But maybe it should be.
-                  }
-                 else
-                  {
-                 // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
-                 // (see tests/nonsmoke/functional/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
-                 // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
-                    namespaceDefinition->set_nextNamespaceDefinition(NULL);
-                    namespaceDefinition->set_previousNamespaceDefinition(NULL);
-
-                    ROSE_ASSERT(namespaceDefinition->get_nextNamespaceDefinition()     == NULL);
-                    ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == NULL);
-                  }
-#else
-            // DQ (7/24/2011): get_nextNamespaceDefinition() == NULL is false in the case of the AST copy tests 
-            // (see tests/nonsmoke/functional/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamespaceDefinition() 
-            // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
-               namespaceDefinition->set_nextNamespaceDefinition(NULL);
-               namespaceDefinition->set_previousNamespaceDefinition(NULL);
-
-               ROSE_ASSERT(namespaceDefinition->get_nextNamespaceDefinition()     == NULL);
-               ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() == NULL);
-#endif
-               namespaceMap.insert(std::pair<SgName,std::vector<SgNamespaceDefinitionStatement*> >(mangledNamespaceName,list));
-
-#error "DEAD CODE"
-
-#if ALIAS_SYMBOL_DEBUGGING
-               printf ("namespaceMap.size() = %" PRIuPTR " \n",namespaceMap.size());
-#endif
-             }
-        }
-
-#error "DEAD CODE"
-
-#else
-  // DQ (5/23/2013): Commented out since we now have a newer and better namespace support for symbol handling.
-  // printf ("NOTE:: COMMENTED OUT old support for namespace declarations in FixupAstSymbolTablesToSupportAliasedSymbols traversal \n");
-#endif
-
      SgUseStatement* useDeclaration = isSgUseStatement(node);
      if (useDeclaration != NULL)
         {
@@ -793,39 +610,31 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
             // DQ (6/22/2011): Define the access level for alias symbol's declarations to be included.
                SgAccessModifier::access_modifier_enum accessLevel = baseClass->get_baseClassModifier().get_accessModifier().get_modifier();
 
-               SgClassDeclaration* tmpClassDeclaration    = baseClass->get_base_class();
-               ROSE_ASSERT(tmpClassDeclaration != NULL);
-#if 0
-            // ROSE_ASSERT(tmpClassDeclaration->get_definingDeclaration() != NULL);
-               SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
-               ROSE_ASSERT(targetClassDeclaration != NULL);
-               SgScopeStatement*   referencedScope  = targetClassDeclaration->get_definition();
-            // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
-               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,accessLevel);
-#else
-            // DQ (2/25/2012) We only want to inject the symbol where we have identified the defining scope.
-               if (tmpClassDeclaration->get_definingDeclaration() != NULL)
-                  {
-                    SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
-                    ROSE_ASSERT(targetClassDeclaration != NULL);
-                    SgScopeStatement*   referencedScope  = targetClassDeclaration->get_definition();
-#if 0
-                    printf ("Calling injectSymbolsFromReferencedScopeIntoCurrentScope() for classDefinition = %p = %s baseClass = %p accessLevel = %d \n",
-                         node,node->class_name().c_str(),baseClass,accessLevel);
-#endif
-                 // DQ (7/12/2014): Use the SgBaseClass as the causal node that has triggered the insertion of the SgAliasSymbols.
-                 // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
-                    injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,baseClass,accessLevel);
-                  }
-                 else
-                  {
-                 // DQ (2/25/2012): Print a warning message when this happens (so far only test2012_08.C).
-                    if (SgProject::get_verbose() > 0)
-                       {
-                         mprintf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
-                       }
-                  }
-#endif
+               SgScopeStatement * referencedScope = NULL;
+               if (baseClass->variantT() == V_SgBaseClass) {
+                 SgClassDeclaration * tmpClassDeclaration = isSgClassDeclaration(baseClass->get_base_class());
+                 ROSE_ASSERT(tmpClassDeclaration != NULL);
+                 if (tmpClassDeclaration->get_definingDeclaration() != NULL) {
+                    SgClassDeclaration * targetDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
+                    ROSE_ASSERT(targetDeclaration != NULL);
+                    referencedScope  = targetDeclaration->get_definition();
+                 } else {
+                    if (SgProject::get_verbose() > 0) {
+                      mprintf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
+                    }
+                 }
+               } else if (baseClass->variantT() == V_SgNonrealBaseClass) {
+                 SgNonrealDecl * nrdecl = isSgNonrealBaseClass(baseClass)->get_base_class_nonreal();
+                 ROSE_ASSERT(nrdecl != NULL);
+
+                 referencedScope = isSgDeclarationScope(nrdecl->get_parent());
+               } else {
+                 ROSE_ASSERT(false);
+               }
+
+               if (referencedScope != NULL) {
+                 injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,baseClass,accessLevel);
+               }
              }
         }
 

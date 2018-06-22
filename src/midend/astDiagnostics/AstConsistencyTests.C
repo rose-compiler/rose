@@ -1277,6 +1277,13 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 #endif
+
+                    case V_SgNonrealRefExp:
+                       {
+                      // TV (05/10/2018): FIXME checks ???
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->class_name().c_str());
@@ -1781,26 +1788,44 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
 
   // printf ("astNode = %s \n",astNode->sage_class_name());
 
+     SgNode * parent = astNode->get_parent();
+#if 0
+     printf ("In TestAstTemplateProperties::visit():\n");
+     printf ("  --- astNode = %p (%s)\n", astNode, astNode ? astNode->class_name().c_str() : "");
+     printf ("  --- parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+#endif
+
      switch(astNode->variantT())
         {
           case V_SgTemplateInstantiationDecl:
              {
                SgTemplateInstantiationDecl* s = isSgTemplateInstantiationDecl(astNode);
-               ROSE_ASSERT (s->get_templateDeclaration() != NULL);
+               ROSE_ASSERT(s != NULL);
+#if 0
+               printf ("  --- name = %s\n", s->get_name().str());
+#endif
+
+               SgDeclarationStatement* templateDeclaration = s->get_templateDeclaration();
+               if (templateDeclaration->get_definingDeclaration()) {
+                 templateDeclaration = templateDeclaration->get_definingDeclaration();
+               }
+#if 0
+               printf ("  --- templateDeclaration = %p (%s)\n", templateDeclaration, templateDeclaration ? templateDeclaration->class_name().c_str() : "");
+#endif
 
             // DQ (8/12/2005): There are non-trivial cases where a template declaration can be compiler generated (e.g. when it is a nested class)
-               bool couldBeCompilerGenerated = MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(s->get_templateDeclaration());
+               bool couldBeCompilerGenerated = MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(templateDeclaration);
 
                if (couldBeCompilerGenerated == false)
                   {
                  // DQ (6/17/2005): Template declarations should not be marked as comiler generated 
                  // (only the instantiations are possibly marked as compiler generated).
-                    if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
+                    if (templateDeclaration->get_file_info()->isCompilerGenerated() == true)
                        {
                          printf ("Error: SgTemplateInstantiationDecl's original template declaration should not be compiler generated \n");
-                         s->get_templateDeclaration()->get_file_info()->display("debug");
+                         templateDeclaration->get_file_info()->display("debug");
                        }
-                    ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
+                    ROSE_ASSERT (templateDeclaration->get_file_info()->isCompilerGenerated() == false);
                   }
                break;
              }
@@ -4898,6 +4923,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgPragma:
                case V_SgBaseClass:
                case V_SgExpBaseClass:
+               case V_SgNonrealBaseClass:
                   {
                     SgNode* parent = support->get_parent();
                     if (parent == NULL)

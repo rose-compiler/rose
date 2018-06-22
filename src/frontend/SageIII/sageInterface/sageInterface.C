@@ -706,15 +706,17 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
 
      SgDeclarationStatement* parentDeclaration = NULL;
 
-     SgClassDefinition* classDefinition = memberFunctionInstantiation->get_class_scope();
-     ROSE_ASSERT(classDefinition != NULL);
+     SgScopeStatement* defn = memberFunctionInstantiation->get_class_scope();
+     ROSE_ASSERT(defn != NULL);
 
   // SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
      SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
      ROSE_ASSERT(templateDeclaration != NULL);
 
   // If it is a template instatiation, then we have to find the temple declaration (not the template instantiation declaration), else we want the class declaration.
-     SgTemplateInstantiationDefn* templateInstatiationClassDefinition = isSgTemplateInstantiationDefn(classDefinition);
+     SgClassDefinition* cdefn = isSgClassDefinition(defn);
+     SgDeclarationScope* nrscope = isSgDeclarationScope(defn);
+     SgTemplateInstantiationDefn* templateInstatiationClassDefinition = isSgTemplateInstantiationDefn(defn);
      if (templateInstatiationClassDefinition != NULL)
         {
        // This is the case of a template member function in a templated class (see test2005_172.C).
@@ -726,11 +728,20 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
           parentDeclaration = parentTemplateInstantiationDeclaration->get_templateDeclaration();
           ROSE_ASSERT(parentDeclaration != NULL);
         }
-       else
+       else if (cdefn != NULL)
         {
        // This is the case of a template member function in a class definition (see test2005_168.C).
-          parentDeclaration = classDefinition->get_declaration();
+          parentDeclaration = cdefn->get_declaration();
           ROSE_ASSERT(parentDeclaration != NULL);
+        }
+       else if (nrscope != NULL)
+        {
+          parentDeclaration = isSgDeclarationStatement(nrscope->get_parent());
+          ROSE_ASSERT(parentDeclaration != NULL);
+        }
+       else
+        {
+          ROSE_ASSERT(false);
         }
 
       return parentDeclaration;
@@ -5727,6 +5738,59 @@ SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, S
      return functionSymbol;
    }
 
+SgFunctionSymbol*
+SageInterface::lookupTemplateFunctionSymbolInParentScopes(const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement* currentScope )
+   {
+  // DQ (11/24/2007): This function can return NULL.  It returns NULL when the function symbol is not found.
+  // This can happen when a function is referenced before it it defined (no prototype mechanism in Fortran is required).
+
+  // enable default search from top of StackScope, Liao, 1/24/2008
+     SgFunctionSymbol* functionSymbol = NULL;
+     if (currentScope == NULL)
+          currentScope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(currentScope != NULL);
+
+     SgScopeStatement* tempScope = currentScope;
+     while ((functionSymbol == NULL) && (tempScope != NULL))
+        {
+          functionSymbol = tempScope->lookup_template_function_symbol(functionName, ftype, tplparams);
+#if 0
+          printf ("In lookupTemplateFunctionSymbolInParentScopes(): Searching scope = %p = %s functionName = %s functionSymbol = %p \n",tempScope,tempScope->class_name().c_str(),functionName.str(),functionSymbol);
+#endif
+          if (tempScope->get_parent()!=NULL) // avoid calling get_scope when parent is not set in middle of translation
+               tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
+            else
+               tempScope = NULL;
+        }
+     return functionSymbol;
+   }
+
+SgFunctionSymbol*
+SageInterface::lookupTemplateMemberFunctionSymbolInParentScopes(const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement* currentScope )
+   {
+  // DQ (11/24/2007): This function can return NULL.  It returns NULL when the function symbol is not found.
+  // This can happen when a function is referenced before it it defined (no prototype mechanism in Fortran is required).
+
+  // enable default search from top of StackScope, Liao, 1/24/2008
+     SgFunctionSymbol* functionSymbol = NULL;
+     if (currentScope == NULL)
+          currentScope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(currentScope != NULL);
+
+     SgScopeStatement* tempScope = currentScope;
+     while ((functionSymbol == NULL) && (tempScope != NULL))
+        {
+          functionSymbol = tempScope->lookup_template_member_function_symbol(functionName, ftype, tplparams);
+#if 0
+          printf ("In lookupTemplateMemberFunctionSymbolInParentScopes(): Searching scope = %p = %s functionName = %s functionSymbol = %p \n",tempScope,tempScope->class_name().c_str(),functionName.str(),functionSymbol);
+#endif
+          if (tempScope->get_parent()!=NULL) // avoid calling get_scope when parent is not set in middle of translation
+               tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
+            else
+               tempScope = NULL;
+        }
+     return functionSymbol;
+   }
 
 void
 SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
@@ -21449,22 +21513,41 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                  else
                   {
                  // DQ (12/15/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
-                    SgTemplateType* X_templateType = isSgTemplateType(X_element_type);
-                    SgTemplateType* Y_templateType = isSgTemplateType(Y_element_type);
+                    SgNonrealType* X_templateType = isSgNonrealType(X_element_type);
+                    SgNonrealType* Y_templateType = isSgNonrealType(Y_element_type);
 
                  // DQ (12/15/2015): We need to check that the array size is the same.
                     if (X_templateType != NULL && Y_templateType != NULL)
                        {
                          string X_name = X_templateType->get_name();
                          string Y_name = Y_templateType->get_name();
-                         int X_template_parameter_position = X_templateType->get_template_parameter_position();
-                         int Y_template_parameter_position = X_templateType->get_template_parameter_position();
 
-#if DEBUG_TYPE_EQUIVALENCE || 0
-                         printf ("In SageInterface::isEquivalentType(): case SgTemplateType: counter = %d X_name = %s Y_name = %s X_template_parameter_position = %d Y_template_parameter_position = %d \n",
-                              counter,X_name.c_str(),Y_name.c_str(),X_template_parameter_position,Y_template_parameter_position);
+                         SgNonrealDecl* X_templateDecl = isSgNonrealDecl(X_templateType->get_declaration());
+                         ROSE_ASSERT(X_templateDecl != NULL);
+                         SgNonrealDecl* Y_templateDecl = isSgNonrealDecl(Y_templateType->get_declaration());
+                         ROSE_ASSERT(Y_templateDecl != NULL);
+
+                         int X_template_parameter_position = X_templateDecl->get_template_parameter_position();
+                         int Y_template_parameter_position = Y_templateDecl->get_template_parameter_position();
+
+                         SgNode * X_parent = X_templateDecl->get_parent();
+                         SgNode * Y_parent = Y_templateDecl->get_parent();
+
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): case SgNonrealType:\n");
+                         printf ("  -- X_name = %s Y_name = %s\n", X_name.c_str(),Y_name.c_str());
+                         printf ("  -- X_template_parameter_position = %d Y_template_parameter_position = %d\n", X_template_parameter_position,Y_template_parameter_position);
+                         printf ("  -- X_parent = %p Y_parent = %p\n", X_parent,Y_parent);
+                         printf ("  -- X_templateDecl->get_mangled_name() = %s\n", X_templateDecl->get_mangled_name().str());
+                         printf ("  -- Y_templateDecl->get_mangled_name() = %s\n", Y_templateDecl->get_mangled_name().str());
 #endif
-                         bool value = ( (X_name == Y_name) && (X_template_parameter_position == Y_template_parameter_position));
+                         bool value = (X_parent == Y_parent);
+
+                         if (value && X_templateDecl->get_is_template_param() && Y_templateDecl->get_is_template_param()) {
+                           value = (X_template_parameter_position == Y_template_parameter_position);
+                         } else if (value && X_templateDecl->get_is_class_member() && Y_templateDecl->get_is_class_member()) {
+                           value = (X_name == Y_name);
+                         }
 
                          counter--;
 

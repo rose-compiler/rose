@@ -236,7 +236,19 @@ string get_type_name(SgType* t)
                          p++;
                          if (p != ftype->get_arguments().end()) { res = res + ","; }
                        }
-                       return res + ")";
+                       res = res + ")";
+
+                       if (ftype->isConstFunc()) {
+                         res = res + " const";
+                       }
+
+                       if (ftype->get_ref_qualifiers() == 1) {
+                         res = res + " &";
+                       } else if (ftype->get_ref_qualifiers() == 2) {
+                         res = res + " &&";
+                       }
+
+                       return res;
                   }
                   else {
                      return get_type_name(btype) + "(" +
@@ -433,6 +445,17 @@ string get_type_name(SgType* t)
 #endif
                   }
                res = res + ")";
+
+               if (mfunc_type->isConstFunc()) {
+                 res = res + " const";
+               }
+
+               if (mfunc_type->get_ref_qualifiers() == 1) {
+                 res = res + " &";
+               } else if (mfunc_type->get_ref_qualifiers() == 2) {
+                 res = res + " &&";
+               }
+
                return res;
              }
 
@@ -458,6 +481,13 @@ string get_type_name(SgType* t)
                SgTemplateType * tpl_type = isSgTemplateType(t);
                ROSE_ASSERT(tpl_type != NULL);
                return tpl_type->get_name();
+             }
+
+          case T_NONREAL:
+	     {
+               SgNonrealType * nrtype = isSgNonrealType(t);
+               ROSE_ASSERT(nrtype != NULL);
+               return nrtype->get_name();
              }
 
           default:
@@ -1514,6 +1544,12 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                  // curprint("\n/* In unparseMemberPointerType(): end of argument list */ \n";
 
                     unparseType(ftype->get_return_type(), info); // second part
+
+                     if (ftype->get_ref_qualifiers() == 1) {
+                       curprint(" &");
+                     } else if (ftype->get_ref_qualifiers() == 2) {
+                       curprint(" &&");
+                     }
 
                  // Liao, 2/27/2009, add "const" specifier to fix bug 327
                     if (ftype->isConstFunc())
@@ -3412,6 +3448,9 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
    {
+#if 0
+     printf ("In unparseMemberFunctionType(type = %p (%s))\n", type, type ? type->class_name().c_str() : "");
+#endif
      SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(type);
      ROSE_ASSERT(mfunc_type != NULL);
 
@@ -3494,6 +3533,16 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
                unparseType(mfunc_type->get_return_type(), info); // catch the 2nd part of the rtype
+
+               if (mfunc_type->isConstFunc()) {
+                 curprint (" const");
+               }
+
+               if (mfunc_type->get_ref_qualifiers() == 1) {
+                 curprint (" &");
+               } else if (mfunc_type->get_ref_qualifiers() == 2) {
+                 curprint (" &&");
+               }
              }
             else
              {
@@ -3507,6 +3556,7 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
 
                unparseType(mfunc_type, ninfo);
 
+               ninfo.unset_isTypeFirstPart();
                ninfo.set_isTypeSecondPart();
 #if 0
                printf ("In unparseMemberFunctionType(): ninfo.SkipClassDefinition() = %s \n",(ninfo.SkipClassDefinition() == true) ? "true" : "false");
@@ -3831,7 +3881,7 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
-  // Nothing to be done
+  // TODO Is it still used?
    }
 
 void
@@ -3850,21 +3900,15 @@ Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info)
      ROSE_ASSERT(parent != NULL);
      SgDeclarationScope * nrscope = isSgDeclarationScope(parent);
      if (nrscope == NULL) {
-       printf("Found a SgNonrealDecl (%p) whose parent is a %s (%p)\n", nrdecl, parent->class_name().c_str(), parent);
-       ROSE_ASSERT(false);
+       printf("WARNING: Found a SgNonrealDecl (%p) whose parent is a %s (%p)\n      (it should be the definition of a template function/class/...)\n", nrdecl, parent->class_name().c_str(), parent);
      }
 
-#if 0
-    printf("  nrscope = %p\n", nrscope);
-#endif
-
-     SgNode * parent_nrscope = nrscope->get_parent();
-//   ROSE_ASSERT(parent_nrscope != NULL); // Fails as unparseToString is called from the parser
-
-     SgNonrealDecl * nrparent_nrscope = isSgNonrealDecl(parent_nrscope);
+     SgNonrealDecl * nrparent_nrscope = NULL;
+     if (nrscope != NULL) {
+       nrparent_nrscope = isSgNonrealDecl(nrscope->get_parent());
+     }
 
      SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
-     SgTemplateArgumentPtrList & part_spec_tpl_args = nrdecl->get_part_spec_tpl_args();
 
   // TV (03/29/2018): either first part is requested, or neither if called from unparseToString.
      bool unparse_type = info.isTypeFirstPart() || ( !info.isTypeFirstPart() && !info.isTypeSecondPart() );
@@ -3876,26 +3920,21 @@ Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info)
        }
 
        // if template argument are provided then the "template" keyword has to be added
-       if (tpl_args.size() > 0 || part_spec_tpl_args.size() > 0) curprint("template ");
+       if (tpl_args.size() > 0) curprint("template ");
 
        // output the name of the non-real type
        curprint(nrtype->get_name());
 
        // unparse template argument list
        if (tpl_args.size() > 0) {
+#if 0
+         printf("  tpl_args.size() = %d\n", tpl_args.size());
+#endif
          SgUnparse_Info ninfo(info);
          ninfo.set_SkipClassDefinition();
          ninfo.set_SkipEnumDefinition();
          ninfo.set_SkipClassSpecifier();
          unp->u_exprStmt->unparseTemplateArgumentList(tpl_args, ninfo);
-       }
-       // unparse partial specialiation template arguments (FIXME do we need to keep both list or are they mutually exclusive?)
-       if (part_spec_tpl_args.size() > 0) {
-         SgUnparse_Info ninfo(info);
-         ninfo.set_SkipClassDefinition();
-         ninfo.set_SkipEnumDefinition();
-         ninfo.set_SkipClassSpecifier();
-         unp->u_exprStmt->unparseTemplateArgumentList(part_spec_tpl_args, ninfo);
        }
 
        curprint(" ");

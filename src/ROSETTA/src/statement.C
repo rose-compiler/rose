@@ -1291,7 +1291,7 @@ Grammar::setUpStatements ()
   // (see test2007_116.C). This pointer is only valid when the scope can not be set to the SgClassDefinition.
   // MemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
   //                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     MemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
+     MemberFunctionDeclaration.setDataPrototype ( "SgDeclarationStatement*", "associatedClassDeclaration", "= NULL",
                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      CtorInitializerList.setFunctionPrototype ( "HEADER_CTOR_INITIALIZER_LIST", "../Grammar/Statement.code" );
@@ -1997,13 +1997,6 @@ Grammar::setUpStatements ()
      TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if 0
-  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
-  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
-  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
-     TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 #else
 
 #error "DEAD CODE!"
@@ -2312,10 +2305,15 @@ Grammar::setUpStatements ()
 
      NonrealDecl.setDataPrototype ("SgTemplateArgumentPtrList", "tpl_args", "= SgTemplateArgumentPtrList()",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     NonrealDecl.setDataPrototype ("SgTemplateArgumentPtrList", "part_spec_tpl_args", "= SgTemplateArgumentPtrList()",
+     NonrealDecl.setDataPrototype ("SgTemplateParameterPtrList", "tpl_params", "= SgTemplateParameterPtrList()",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 //   NonrealDecl.setDataPrototype     ("SgTemplateParameter *","template_parameter","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+
+
+     NonrealDecl.setDataPrototype ("bool","is_class_member","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("bool","is_template_param","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("bool","is_template_template_param","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      EnumDeclaration.setFunctionPrototype ( "HEADER_ENUM_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      EnumDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
