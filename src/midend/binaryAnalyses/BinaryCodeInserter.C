@@ -56,6 +56,8 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
                                 std::vector<uint8_t> replacement, const std::vector<Relocation> &relocations) {
     ASSERT_not_null(bb);
     ASSERT_require(index + nInsns <= bb->nInstructions());
+    if (0 == nInsns && replacement.empty())
+        return true;
 
     const size_t insertAt = index;
     const size_t nDeletes = nInsns;
@@ -71,6 +73,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
         debug <<"replaceBlockInsns:\n";
         debug <<"  basic block with insertion point and deletions:\n";
         if (Unparser::Base::Ptr unparser = partitioner_.unparser()) {
+            unparser->settings().function.cg.showing = false;
             unparser->settings().insn.stackDelta.showing = false;
             for (size_t i=0; i<bb->nInstructions(); ++i) {
                 debug <<"    " <<(i==index ? "--> " : "    ") <<(i>=index && i<index+nInsns ? " X " : "   ");
@@ -185,14 +188,29 @@ CodeInserter::fillWithNops(const AddressIntervalSet &where) {
     std::string isa = partitioner_.instructionProvider().disassembler()->name();
     BOOST_FOREACH (const AddressInterval &interval, where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with no-op instructions\n";
+
+        // Create the vector containing the encoded instructions
+        std::vector<uint8_t> nops;
+        nops.reserve(interval.size());
         if ("i386" == isa || "amd64" == isa) {
-            std::vector<uint8_t> nops(interval.size(), 0x90);
-            if (partitioner_.memoryMap()->at(interval.least()).write(nops).size() != nops.size()) {
-                mlog[ERROR] <<"short write of " <<interval.size() <<"-byte NOP sequence at "
-                            <<StringUtility::addrToString(interval.least()) <<"\n";
-            }
+            nops.resize(interval.size(), 0x90);
+
+        } else if ("coldfire" == isa) {
+            // Although coldfire instructions are normally a multiple of 2 bytes, there is one exception: a bad instruction can
+            // be an odd number of bytes. Therefore we could be asked to fill an odd number of bytes with NOP instructions. If
+            // that happens, we fill even addresses with the first half of the NOP and odd addresses with the second half, this
+            // way preserving the usual m68k instruction alignment.
+            for (size_t i = 0; i < where.size(); ++i)
+                nops.push_back(i % 2 == 0 ? 0x4e : 0x71);
+
         } else {
             TODO("no-op insertion for " + isa + " is not implemented yet");
+        }
+
+        // Write the vector to memory
+        if (partitioner_.memoryMap()->at(interval.least()).write(nops).size() != nops.size()) {
+            mlog[ERROR] <<"short write of " <<interval.size() <<"-byte NOP sequence at "
+                        <<StringUtility::addrToString(interval.least()) <<"\n";
         }
     }
 }
@@ -227,6 +245,16 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
         retval.push_back((delta >>  8) & 0xff);
         retval.push_back((delta >> 16) & 0xff);
         retval.push_back((delta >> 24) & 0xff);
+
+    } else if ("coldfire" == isa) {
+        rose_addr_t delta = tgtVa - (srcVa + 2);
+        retval.push_back(0x60);                         // bra.l
+        retval.push_back(0xff);
+        retval.push_back((delta >> 24) & 0xff);
+        retval.push_back((delta >> 16) & 0xff);
+        retval.push_back((delta >>  8) & 0xff);
+        retval.push_back((delta >>  0) & 0xff);
+
     } else {
         TODO("jump encoding for " + isa + " is not implemented yet");
     }

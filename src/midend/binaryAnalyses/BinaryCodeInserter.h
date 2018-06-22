@@ -284,6 +284,7 @@ public:
     virtual bool replaceInsnsAtBack(const Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr &bb, size_t nInsns,
                                     const std::vector<uint8_t> &replacement,
                                     const std::vector<Relocation> &relocations = std::vector<Relocation>()) {
+        ASSERT_require(nInsns <= bb->nInstructions());
         return replaceBlockInsns(bb, bb->nInstructions()-nInsns, nInsns, replacement, relocations);
     }
 
