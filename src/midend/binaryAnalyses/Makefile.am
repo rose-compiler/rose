@@ -33,6 +33,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
     BinarySymbolicExprParser.C					\
+    BinarySystemCall.C						\
     BinaryTaintedFlow.C						\
     BinaryToSource.C						\
     BinaryYicesSolver.C						\
@@ -92,6 +93,7 @@ pkginclude_HEADERS =					\
     BinaryString.h					\
     BinarySymbolicExpr.h				\
     BinarySymbolicExprParser.h				\
+    BinarySystemCall.h					\
     BinaryTaintedFlow.h					\
     BinaryToSource.h					\
     BinaryYicesSolver.h					\
