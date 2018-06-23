@@ -10,6 +10,8 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+/** Disassembly and partitioning utility functions for ELF. */
 namespace ModulesElf {
 
 /** Reads ELF .eh_frames to find function entry addresses.

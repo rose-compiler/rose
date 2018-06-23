@@ -7,6 +7,8 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+/** Disassembly and partitioning utilities for PE files. */
 namespace ModulesPe {
 
 /** Convert function name to system representation.
