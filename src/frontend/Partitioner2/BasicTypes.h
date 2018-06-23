@@ -1,8 +1,10 @@
 #ifndef ROSE_Partitioner2_BasicTypes_H
 #define ROSE_Partitioner2_BasicTypes_H
 
+#include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <boost/serialization/version.hpp>
 #include <string>
 #include <vector>
 
@@ -106,7 +108,10 @@ private:
 
     template<class S>
     void serialize(S &s, unsigned version) {
-        s & allowEmptyGlobalBlock & allowFunctionWithNoBasicBlocks & allowEmptyBasicBlocks & copyAllInstructions;
+        s & BOOST_SERIALIZATION_NVP(allowEmptyGlobalBlock);
+        s & BOOST_SERIALIZATION_NVP(allowFunctionWithNoBasicBlocks);
+        s & BOOST_SERIALIZATION_NVP(allowEmptyBasicBlocks);
+        s & BOOST_SERIALIZATION_NVP(copyAllInstructions);
     }
 
 public:
@@ -211,8 +216,11 @@ private:
 
     template<class S>
     void serialize(S &s, unsigned version) {
-        s & deExecuteZerosThreshold & deExecuteZerosLeaveAtFront & deExecuteZerosLeaveAtBack;
-        s & memoryDataAdjustment & memoryIsExecutable;
+        s & BOOST_SERIALIZATION_NVP(deExecuteZerosThreshold);
+        s & BOOST_SERIALIZATION_NVP(deExecuteZerosLeaveAtFront);
+        s & BOOST_SERIALIZATION_NVP(deExecuteZerosLeaveAtBack);
+        s & BOOST_SERIALIZATION_NVP(memoryDataAdjustment);
+        s & BOOST_SERIALIZATION_NVP(memoryIsExecutable);
     }
 };
 
@@ -229,7 +237,7 @@ private:
 
     template<class S>
     void serialize(S &s, unsigned version) {
-        s & isaName;
+        s & BOOST_SERIALIZATION_NVP(isaName);
     }
 };
 
@@ -315,6 +323,8 @@ struct PartitionerSettings {
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
     bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
     bool namingStrings;                             /**< Give labels to constants that are string literal addresses. */
+    bool namingSyscalls;                            /**< Give names (comments) to system calls if possible. */
+    boost::filesystem::path syscallHeader;          /**< Name of header file containing system call numbers. */
     bool demangleNames;                             /**< Run all names through a demangling step. */
 
 private:
@@ -322,31 +332,44 @@ private:
 
     template<class S>
     void serialize(S &s, unsigned version) {
-        s & base;
-        s & startingVas;
-        s & followingGhostEdges;
-        s & discontiguousBlocks;
-        s & maxBasicBlockSize;
-        s & findingFunctionPadding;
-        s & findingDeadCode;
-        s & peScramblerDispatcherVa;
-        s & findingIntraFunctionCode;
-        s & findingIntraFunctionData;
-        s & findingInterFunctionCalls;
-        s & interruptVector;
-        s & doingPostAnalysis;
-        s & doingPostFunctionMayReturn;
-        s & doingPostFunctionStackDelta;
-        s & doingPostCallingConvention;
-        s & doingPostFunctionNoop;
-        s & functionReturnAnalysis;
-        s & findingDataFunctionPointers;
-        s & findingCodeFunctionPointers;
-        s & findingThunks;
-        s & splittingThunks;
-        s & semanticMemoryParadigm;
-        s & namingConstants;
-        s & namingStrings;
+        s & BOOST_SERIALIZATION_NVP(base);
+        s & BOOST_SERIALIZATION_NVP(startingVas);
+        s & BOOST_SERIALIZATION_NVP(followingGhostEdges);
+        s & BOOST_SERIALIZATION_NVP(discontiguousBlocks);
+        s & BOOST_SERIALIZATION_NVP(maxBasicBlockSize);
+        s & BOOST_SERIALIZATION_NVP(findingFunctionPadding);
+        s & BOOST_SERIALIZATION_NVP(findingDeadCode);
+        s & BOOST_SERIALIZATION_NVP(peScramblerDispatcherVa);
+        s & BOOST_SERIALIZATION_NVP(findingIntraFunctionCode);
+        s & BOOST_SERIALIZATION_NVP(findingIntraFunctionData);
+        s & BOOST_SERIALIZATION_NVP(findingInterFunctionCalls);
+        s & BOOST_SERIALIZATION_NVP(interruptVector);
+        s & BOOST_SERIALIZATION_NVP(doingPostAnalysis);
+        s & BOOST_SERIALIZATION_NVP(doingPostFunctionMayReturn);
+        s & BOOST_SERIALIZATION_NVP(doingPostFunctionStackDelta);
+        s & BOOST_SERIALIZATION_NVP(doingPostCallingConvention);
+        s & BOOST_SERIALIZATION_NVP(doingPostFunctionNoop);
+        s & BOOST_SERIALIZATION_NVP(functionReturnAnalysis);
+        s & BOOST_SERIALIZATION_NVP(findingDataFunctionPointers);
+        s & BOOST_SERIALIZATION_NVP(findingCodeFunctionPointers);
+        s & BOOST_SERIALIZATION_NVP(findingThunks);
+        s & BOOST_SERIALIZATION_NVP(splittingThunks);
+        s & BOOST_SERIALIZATION_NVP(semanticMemoryParadigm);
+        s & BOOST_SERIALIZATION_NVP(namingConstants);
+        s & BOOST_SERIALIZATION_NVP(namingStrings);
+        s & BOOST_SERIALIZATION_NVP(demangleNames);
+        if (version > 0) {
+            s & BOOST_SERIALIZATION_NVP(namingSyscalls);
+
+            // There is no support for boost::filesystem serialization due to arguments by the maintainers over who has
+            // responsibility, so we do it the hard way.
+            std::string temp;
+            if (S::is_saving::value)
+                temp = syscallHeader.string();
+            s & boost::serialization::make_nvp("syscallHeader", temp);
+            if (S::is_loading::value)
+                syscallHeader = temp;
+        }
     }
 
 public:
@@ -357,8 +380,10 @@ public:
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
           functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingCodeFunctionPointers(false),
           findingThunks(true), splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true),
-          namingStrings(true), demangleNames(true) {}
+          namingStrings(true), namingSyscalls(true), demangleNames(true) {}
 };
+
+// BOOST_CLASS_VERSION(PartitionerSettings, 1); -- see end of file (cannot be in a namespace)
 
 /** Settings for controling the engine behavior.
  *
@@ -376,8 +401,8 @@ private:
 
     template<class S>
     void serialize(S &s, unsigned version) {
-        s & configurationNames;
-        s & exitOnError;
+        s & BOOST_SERIALIZATION_NVP(configurationNames);
+        s & BOOST_SERIALIZATION_NVP(exitOnError);
     }
 };
 
@@ -393,5 +418,8 @@ typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 1);
 
 #endif

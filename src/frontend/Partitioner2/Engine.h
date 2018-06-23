@@ -1346,6 +1346,27 @@ public:
     virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
     /** @} */
 
+    /** Property: Give names to system calls.
+     *
+     *  If this property is set, then the partitioner makes a pass after the control flow graph is finalized and tries to give
+     *  names to system calls using the @ref Rose::BinaryAnalysis::SystemCall analysis.
+     *
+     * @{ */
+    bool namingSystemCalls() const /*final*/ { return settings_.partitioner.namingSyscalls; }
+    virtual void namingSystemCalls(bool b) { settings_.partitioner.namingSyscalls = b; }
+    /** @} */
+
+    /** Property: Header file in which system calls are defined.
+     *
+     *  If this property is not empty, then the specified Linux header file is parsed to obtain the mapping between system call
+     *  numbers and their names. Otherwise, any analysis that needs system call names obtains them by looking in predetermined
+     *  system header files.
+     *
+     * @{ */
+    const boost::filesystem::path& systemCallHeader() const /*final*/ { return settings_.partitioner.syscallHeader; }
+    virtual void systemCallHeader(const boost::filesystem::path &filename) { settings_.partitioner.syscallHeader = filename; }
+    /** @} */
+
     /** Property: Demangle names.
      *
      *  If this property is set, then names are passed through a demangle step, which generally converts them from a low-level

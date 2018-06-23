@@ -14,6 +14,7 @@
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/ModulesElf.h>
+#include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesX86.h>
@@ -482,6 +483,23 @@ Engine::partitionerSwitches() {
               .key("name-strings")
               .intrinsicValue(false, settings_.partitioner.namingStrings)
               .hidden(true));
+
+    sg.insert(Switch("name-syscalls")
+              .intrinsicValue(true, settings_.partitioner.namingSyscalls)
+              .doc("Scans all instructions and tries to give names to system calls.  The names are assigned as comments "
+                   "to the instruction that performs the system call. The system call names are parsed from the Linux header "
+                   "files on the system running the analysis (not necessarily where ROSE was compiled); this can be adjusted "
+                   "with the @s{syscall-header} switch.  The @s{no-name-syscalls} turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.namingSyscalls?"":"not ") + "do this step."));
+    sg.insert(Switch("no-name-syscalls")
+              .key("name-syscalls")
+              .intrinsicValue(false, settings_.partitioner.namingSyscalls)
+              .hidden(true));
+
+    sg.insert(Switch("syscall-header")
+              .argument("filename", anyParser(settings_.partitioner.syscallHeader))
+              .doc("Name of the header file from which to obtain the system call ID-name mapping. The default is to look "
+                   "in standard places such as /usr/include/asm/unistd_32.h."));
 
     sg.insert(Switch("post-analysis")
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
@@ -1225,6 +1243,7 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
+        p.basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(p, settings_.partitioner.syscallHeader));
         return p;
     }
 
@@ -1348,6 +1367,8 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         Modules::nameConstants(partitioner);
     if (settings_.partitioner.namingStrings)
         Modules::nameStrings(partitioner);
+    if (settings_.partitioner.namingSyscalls)
+        ModulesLinux::nameSystemCalls(partitioner, settings_.partitioner.syscallHeader);
     if (settings_.partitioner.demangleNames)
         Modules::demangleFunctionNames(partitioner);
 }

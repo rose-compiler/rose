@@ -27,6 +27,7 @@ libPartitioner_la_SOURCES =			\
 	MayReturnAnalysis.C			\
 	Modules.C				\
 	ModulesElf.C				\
+	ModulesLinux.C				\
 	ModulesM68k.C				\
 	ModulesPe.C				\
 	ModulesX86.C				\
