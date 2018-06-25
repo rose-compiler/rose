@@ -1594,38 +1594,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(declaration);
                          ROSE_ASSERT(templateDeclaration != NULL);
 
-#if 0
-                      // DQ (8/13/2013): This is older code that we should not have to support how.
+                         printf ("In NameQualificationTraversal::nameQualificationDepth(): case V_SgTemplateDeclaration: still emitted for template template parameter (seen in template template argument of `this`)\n");
+//                       ROSE_ASSERT(false);
 
-                         SgTemplateSymbol* templateSymbol = isSgTemplateSymbol(symbol);
-                         if (templateSymbol == NULL)
-                            {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
-#endif
-                              typeElaborationIsRequired = true;
-
-                           // DQ (8/13/2013): We want to use a SageInterface function that uses: lookup_template_class_symbol()
-                           // Reset the symbol to one that will match the declaration.
-                           // symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
-                              symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
-                           // ROSE_ASSERT(symbol != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              if (symbol != NULL)
-                                 {
-                                   printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-                                 }
-                                else
-                                 {
-                                // DQ (6/22/2011): This is demonstrated by test2004_48.C when using the Thrifty simulator.
-                                   printf ("Detected no template symbol in a parent scope (ignoring this case for now) \n");
-                                 }
-#endif
-                            }
-#else
-                         printf ("In NameQualificationTraversal::nameQualificationDepth(): case V_SgTemplateDeclaration: This case should not be seen in the newer EDG4x work \n");
-                         ROSE_ASSERT(false);
-#endif
+                         symbol = NULL;
 
                          break;
                        }
@@ -9201,18 +9173,17 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                SgTemplateArgumentPtrList::iterator i = templateArgumentList.begin();
                while (i != templateArgumentList.end())
                   {
-                    SgTemplateArgument* templateArgument = *i;
-                    ROSE_ASSERT(templateArgument != NULL);
+                    if ((*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) {
+                      if (i != templateArgumentList.begin())
+                             template_name += ",";
 
-                    string template_argument_name = globalUnparseToString(templateArgument,unparseInfoPointer);
+                      string template_argument_name = globalUnparseToString(*i,unparseInfoPointer);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("templateArgument = %p template_argument_name (globalUnparseToString()) = %s \n",templateArgument,template_argument_name.c_str());
+                      printf ("templateArgument = %p template_argument_name (globalUnparseToString()) = %s \n",*i,template_argument_name.c_str());
 #endif
-                    template_name += template_argument_name;
+                      template_name += template_argument_name;
+                    }
                     i++;
-
-                    if (i != templateArgumentList.end())
-                         template_name += ",";
                   }
 
                template_name += "> ";
