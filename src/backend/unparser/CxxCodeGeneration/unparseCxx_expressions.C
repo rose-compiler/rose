@@ -1613,7 +1613,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
                if (templateArgument->get_expression() != NULL)
                   {
-#if 1
+#if 0
                     printf ("In unparseTemplateArgument(): case SgTemplateArgument::nontype_argument: templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
 #endif
 #if OUTPUT_DEBUGGING_INFORMATION

@@ -8523,11 +8523,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                  // that were explicit in the source code.  Only meaningful for function 
                  // and member function template arguments.
                     bool templateArgumentWasExplicitlySpecified = (*i)->get_explicitlySpecified();
-                 // bool templateArgumentWasExplicitlySpecified = true;
-                 // if (templateArgumentWasExplicitlySpecified == true)
                     bool outputTemplateArgument = false;
-                    if ( (functionTemplateArguments == false) || 
-                         ( (functionTemplateArguments == true) && (templateArgumentWasExplicitlySpecified == true) ) )
+                    if ( ( (*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) &&
+                         ( (functionTemplateArguments == false) || 
+                         ( (functionTemplateArguments == true) && (templateArgumentWasExplicitlySpecified == true) ) ) )
                        {
                          outputTemplateArgument = true;
                        }

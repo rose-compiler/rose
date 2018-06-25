@@ -12653,7 +12653,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
         }
 
-#if 1
+#if 0
       printf ("In SageBuilder::buildClassDeclaration_nfi():\n");
       printf ("  -- nameWithoutTemplateArguments = %s\n", nameWithoutTemplateArguments.str());
       printf ("  -- nameWithTemplateArguments    = %s\n", nameWithTemplateArguments.str());
