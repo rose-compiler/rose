@@ -59,8 +59,19 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
     try {
         SystemCall::Declaration decl;
         if (analyzer_.analyze(args.partitioner, args.bblock, syscallInsn, args.partitioner.smtSolver()).assignTo(decl)) {
-            if (decl.name == "exit")
+            if (decl.name == "exit") {
+                // This system call doesn't return
                 args.bblock->successors(BasicBlock::Successors()); // defined, but empty
+            } else {
+                // This system call is like a function call in that it calls some undetermined location and then probably
+                // returns to the fall through address. Therefore, create two edges: one for the function call and the other
+                // for the call return.
+                args.bblock->successors(BasicBlock::Successors()); // remove existing successors
+                size_t wordsize = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
+                BaseSemantics::SValuePtr indeterminateVa = args.partitioner.newOperators()->undefined_(wordsize);
+                args.bblock->insertSuccessor(indeterminateVa, E_FUNCTION_CALL);
+                args.bblock->insertSuccessor(args.bblock->fallthroughVa(), wordsize, E_CALL_RETURN);
+            }
         }
     } catch (...) {
         // Not an error if we can't figure out the system call name.
