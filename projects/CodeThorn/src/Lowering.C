@@ -24,8 +24,11 @@ namespace SPRAY {
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgNode* node=*i;
       if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
-        if(SgStatement* newVarAssignment=buildNormalizedVariableDeclaration(varDecl)) {
-          declAssignList.push_back(std::make_pair(varDecl,newVarAssignment));
+        // do not transform assignments to static variables (must remain initializations because of different semantics)
+        if(!SageInterface::isStatic(varDecl)) {
+          if(SgStatement* newVarAssignment=buildNormalizedVariableDeclaration(varDecl)) {
+            declAssignList.push_back(std::make_pair(varDecl,newVarAssignment));
+          }
         }
         i.skipChildrenOnForward();
       } else {

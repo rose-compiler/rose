@@ -13,7 +13,7 @@ echo "------------------------------------------------"
 BENCH_PASS=0
 BENCH_FAIL=0
 
-for benchmark in $TESTDIR/DC00*.C; do
+for benchmark in $TESTDIR/DC00*.C $TESTDIR/DC010_*.C; do
     rm -f tmptest.csv
     rm -f tmptest_col1.csv
     rm -f test${p}_col1.csv

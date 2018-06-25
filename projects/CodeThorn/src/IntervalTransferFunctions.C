@@ -167,8 +167,15 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   ips.addVariable(varId);
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);
-  if(initExp) {
-    //NumberIntervalLattice res=_cppExprEvaluator->evaluate(initExp,ips);
+
+  // Static local variables in functions are always set to top irrespective of their initialization,
+  // since this would require a calling context abstraction which is not available yet.
+  // in all other cases the initializer is analyzed.
+  if(SageInterface::isStatic(declnode)) {
+    NumberIntervalLattice res; // 
+    res.setTop();
+    ips.setVariable(varId,res);
+  } else if(initExp) {
     NumberIntervalLattice res=evalExpression(lab,initExp,ips);
     ROSE_ASSERT(!res.isBot());
     ips.setVariable(varId,res);
