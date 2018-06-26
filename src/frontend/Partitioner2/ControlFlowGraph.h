@@ -178,11 +178,23 @@ private:
 #endif
 
 public:
+    /** Construct a new normal edge. */
     CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
+
+    /** Construct an edge with a specified type and confidence. */
     /*implicit*/ CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
+
+    /** Return edge type. */
     EdgeType type() const { return type_; }
+
+    /** Property: Confidence.
+     *
+     *  The confidence that this edge is correct.
+     *
+     * @{ */
     Confidence confidence() const { return confidence_; }
     void confidence(Confidence c) { confidence_ = c; }
+    /** @} */
 };
 
 /** Control flow graph. */
