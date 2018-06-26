@@ -86,7 +86,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     // Try to insert the replacement, enlarging the replacement set with subsequent then previous instructions.
     size_t relocStart = 0;
     while (true) {
@@ -235,6 +235,7 @@ CodeInserter::fillWithRandom(const AddressIntervalSet &where) {
 
 std::vector<uint8_t>
 CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
     std::vector<uint8_t> retval;
     std::string isa = partitioner_.instructionProvider().disassembler()->name();
     if ("i386" == isa || "amd64" == isa) {
@@ -258,6 +259,15 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
     } else {
         TODO("jump encoding for " + isa + " is not implemented yet");
     }
+
+    if (debug) {
+        debug <<"  jump from " <<StringUtility::addrToString(srcVa) <<" to " <<StringUtility::addrToString(tgtVa)
+              <<" is encoded as [";
+        BOOST_FOREACH (uint8_t byte, retval)
+            Diagnostics::mfprintf(debug)(" %02x", byte);
+        debug <<" ]\n";
+    }
+
     return retval;
 }
 
@@ -273,7 +283,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     BOOST_FOREACH (const Relocation &reloc, relocations) {
         ASSERT_require(reloc.offset < replacement.size());
         rose_addr_t value = 0;
@@ -441,7 +451,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 break;
             }
         }
-        SAWYER_MESG(debug) 
+        SAWYER_MESG(debug)
                            << " = " <<StringUtility::addrToString(value)
                            <<" written to " <<StringUtility::addrToString(va)
                            <<StringUtility::addrToString(va + relocStart + reloc.offset) <<"\n";
@@ -532,7 +542,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     // Figure out where the replacement should go
     if (replacement.size() > entryInterval.size()) {
         SAWYER_MESG(debug) <<"  replaceByOverwrite failed: replacement is larger than entryInterval\n";
@@ -570,7 +580,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
             fillWithRandom(toReplaceVas - replacementVas);
             break;
     }
-    
+
     SAWYER_MESG(debug) <<"  replaceByOverwrite succeeded\n";
     return true;
 }
@@ -597,7 +607,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     // Allocate memory for the replacement, plus enough to add a branch back to the first instruction after those being
     // replaced.
     rose_addr_t toReplaceFallThroughVa = toReplace.back()->get_address() + toReplace.back()->get_size();
@@ -616,7 +626,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
                            <<StringUtility::addrToString(replacementVas) <<"\n";
         return false;                               // write failed
     }
-    
+
     // Insert the jump back from the replacement
     rose_addr_t replacementFallThroughVa = replacementVas.least() + replacement.size();
     std::vector<uint8_t> jmpFrom = encodeJump(replacementFallThroughVa, toReplaceFallThroughVa);
@@ -625,7 +635,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
                            <<StringUtility::addrToString(replacementFallThroughVa) <<"\n";
         return false;                               // write failed
     }
-    
+
     // Insert the jump to the replacement code.  If we're nop-padding before the jump this becomes a bit complicated because
     // the size of the jump could change based on its address.  If that happens, give up.
     rose_addr_t jmpToSite = toReplace[0]->get_address();
@@ -651,11 +661,11 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
                            <<StringUtility::addrToString(jmpToVas) <<"\n";
         return false;                               // write failed
     }
-    
+
     // Nop-fill
     fillWithNops(toReplaceVas - jmpToVas);
     commitAllocation(replacementVas);
-    SAWYER_MESG(debug) <<"  replaceByTranser succeeded\n";
+    SAWYER_MESG(debug) <<"  replaceByTransfer succeeded\n";
     return true;
 }
 
