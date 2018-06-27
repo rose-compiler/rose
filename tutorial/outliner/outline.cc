@@ -156,4 +156,5 @@ main (int argc, char* argv[])
       ::mlog[INFO] << "outlining processed " << StringUtility::plural(count, "outline directives") <<"\n";
       return backend(proj);
   }
+  return 0;
 }

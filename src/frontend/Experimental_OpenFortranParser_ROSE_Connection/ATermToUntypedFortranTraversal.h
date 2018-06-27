@@ -132,6 +132,9 @@ ATbool traverse_OptExpr    ( ATerm term, SgUntypedExpression** expr );
 // R732
 ATbool traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list);
 
+// R851
+ATbool traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list);
+
 // R854
 ATbool traverse_ContinueStmt(ATerm term, SgUntypedStatementList* stmt_list);
 

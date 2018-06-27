@@ -165,6 +165,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
     BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
         // First, pack it as little-endian
         uint8_t packed[8];
+        memset(packed, 0, 8);
         for (size_t i=0; i<wordSize; ++i)
             packed[i] = (node.key() >> (8*i)) & 0xff;
 

@@ -10,6 +10,7 @@ class LLVMVisitor : public AstPrePostProcessing {
 public:
     LLVMVisitor(Option &option_, Control &control_) : option(option_),
                                                       control(control_),
+                                                      attributes(NULL),
                                                       visit_suspended_by_node(NULL)
     {}
 

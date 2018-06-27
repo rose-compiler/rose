@@ -29,11 +29,11 @@ protected:
 
     std::vector<SgSourceFile *> sourceFiles;
 
-    std::vector<SgExpression *> extraExpressions;
-
     bool isTrivialCast(SgType *type1, SgType *type2);
     
-    void processVariableDeclaration(SgInitializedName *);
+    void oldprocessVariableDeclaration(SgInitializedName *);
+    void preprocessVariableDeclaration(SgInitializedName *);
+    void postprocessVariableDeclaration(SgInitializedName *);
 
     /**
      * This stack keeps track of the current switch statement, if any, is being processed.
