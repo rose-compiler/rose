@@ -46,7 +46,11 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-      transferFunctionCall(lab, funCall, arguments, element);
+      if(isExternalFunctionCall(lab)) {
+        transferExternalFunctionCall(lab, funCall, arguments, element);
+      } else {
+        transferFunctionCall(lab, funCall, arguments, element);
+      }
       return;
     } else {
       cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<funCall->class_name()<<endl;
@@ -235,6 +239,9 @@ void DFTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
   // default identity function
 }
 
+void DFTransferFunctions::transferExternalFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
+  // default identity function
+}
 
 void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp*, SgFunctionCallExp* callExp, Lattice& element) {
   // default identity function
@@ -284,6 +291,10 @@ VariableId DFTransferFunctions::getResultVariableId() {
 void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
   // empty by default. Only transfer functions that reason on function
   // calls need to override this function.
+}
+
+bool DFTransferFunctions::isExternalFunctionCall(Label lab) {
+  return _programAbstractionLayer->getLabeler()->isExternalFunctionCallLabel(lab);
 }
 
 #endif

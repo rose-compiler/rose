@@ -739,7 +739,7 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::sourceLineColumnToString(getNode((*i).call))<<endl;
       }
 #else
-      Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);      
+      Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
       flow.insert(externalEdge);
 #endif
     } else {
