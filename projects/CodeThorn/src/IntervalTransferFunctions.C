@@ -56,8 +56,8 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
       num=evalExpression(lab, caseExpr, pstate);
     } else {
       // case NUM1 ... NUM2:
-      NumberIntervalLattice numStart=evalExpression(lab, caseExpr, pstate);;
-      NumberIntervalLattice numEnd=evalExpression(lab, caseExprOptionalRangeEnd, pstate);;
+      NumberIntervalLattice numStart=evalExpression(lab, caseExpr, pstate);
+      NumberIntervalLattice numEnd=evalExpression(lab, caseExprOptionalRangeEnd, pstate);
       num=NumberIntervalLattice::join(numStart,numEnd);
       //cout<<"DEBUG: range: "<<num.toString()<<endl;
     }
@@ -74,7 +74,12 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
       return;
     }
     if(varId.isValid()) {
+#if 1
       ips.setVariable(varId,num);
+#else
+      // join with any value that flows in [for testing only]
+      ips.setVariable(varId,NumberIntervalLattice::join(num,ips.getVariable(varId)));
+#endif
     }
   } else {
     cerr<<"Error: switch condition not a SgExprStmt. Unsupported program structure."<<endl;

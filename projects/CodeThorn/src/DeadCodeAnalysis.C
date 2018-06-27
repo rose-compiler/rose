@@ -3,6 +3,7 @@
 #include "DeadCodeAnalysis.h"
 #include "Flow.h"
 #include "Miscellaneous2.h"
+#include "CppStdUtilities.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -13,6 +14,10 @@ void DeadCodeAnalysis::setOptionTrace(bool flag) {
 
 void DeadCodeAnalysis::setOptionSourceCode(bool flag) {
   optionSourceCode=flag;
+}
+
+void DeadCodeAnalysis::setOptionSystemHeaders(bool flag) {
+  optionSystemHeaders=flag;
 }
 
 void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* intervalAnalyzer,
@@ -28,7 +33,7 @@ void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* i
       /*const*/ IntervalPropertyState& intervalsLattice = *static_cast<IntervalPropertyState*>(intervalAnalyzer->getPreInfo(label.getId()));
       if(intervalsLattice.isBot()) {
         // Unreachable statement found:
-        const SgNode* correspondingNode = intervalAnalyzer->getLabeler()->getNode(label);
+        SgNode* correspondingNode = intervalAnalyzer->getLabeler()->getNode(label);
         ROSE_ASSERT(correspondingNode);
         // Do not output scope statements ({ }, ...)
         if(!isSgScopeStatement(correspondingNode)) {
@@ -36,14 +41,24 @@ void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* i
           int lineNr=fileInfo->get_line();
           int colNr=fileInfo->get_col();
           string fileName=fileInfo->get_filenameString();
-          if(lineNr>0) {
-            deadCodeCsvFile << lineNr;
-            deadCodeCsvFile <<","<< colNr;
-            if(optionSourceCode) {
-              deadCodeCsvFile <<","<< SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/");
+          ROSE_ASSERT(isSgLocatedNode(correspondingNode));
+          bool generateOutput=(optionSystemHeaders? true: !SageInterface::insideSystemHeader(isSgLocatedNode(correspondingNode)));
+          string filename=string(fileInfo->get_filename());
+          for (auto headerFileName : excludedHeaders) {
+            if(CppStdUtilities::isPostfix(headerFileName,filename)) {
+              generateOutput=false;
             }
-            deadCodeCsvFile << ","<<fileName;
-            deadCodeCsvFile << endl;
+          }
+          if(generateOutput) {
+            if(lineNr>0) {
+              deadCodeCsvFile << lineNr;
+              deadCodeCsvFile <<","<< colNr;  
+              deadCodeCsvFile <<","<<fileName;
+              if(optionSourceCode) {
+                deadCodeCsvFile <<","<< SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/");
+              }
+              deadCodeCsvFile << endl;
+            }
           }
         } else {
           //cout<<"DEBUG: EXCLUDING: "<<label.getId()<<" : "<<intervalAnalyzer->getLabeler()->getNode(label)->unparseToString()<<endl;

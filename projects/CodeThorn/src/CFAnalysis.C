@@ -521,8 +521,30 @@ Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
   LabelSet finalSets1=finalLabels(s1);
   Label initLabel2=initialLabel(s2);
   for(LabelSet::iterator i=finalSets1.begin();i!=finalSets1.end();++i) {
+    // special case: case-blocks of switch: an edge never goes
+    // directly to a case, but instead to it's following statement (to
+    // model switch-case fallthrough). The edge to the case label is
+    // created by the CFG creation for switch. All other cases are
+    // handled uniformly.
+#if 1
+    SgNode* node=getNode(initLabel2);
+    if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
+      // adjust init label to stmt following the case label (the child of the SgCaseStmt node).
+      SgNode* body=caseStmt->get_body();
+      ROSE_ASSERT(body);
+      initLabel2=initialLabel(body);
+      cout<<"From: "<<node->unparseToString()<<endl;
+      cout<<"Adjusted case init label: "<<body->unparseToString()<<endl;
+    } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(node)) {
+      SgNode* body=caseStmt->get_body();
+      ROSE_ASSERT(body);
+      initLabel2=initialLabel(body);
+      cout<<"Adjusted default init label: "<<initLabel2.toString()<<endl;
+    }
+#endif
     Edge e(*i,initLabel2);
-    if(SgNodeHelper::isCond(labeler->getNode(*i))) { // special case (all TRUE edges are created explicitly)
+    // special case FALSE edges of conditions (all TRUE edges are created by the respective CFG construction)
+    if(SgNodeHelper::isCond(labeler->getNode(*i))) { 
       e.addType(EDGE_FALSE);
     }
     e.addType(EDGE_FORWARD);
