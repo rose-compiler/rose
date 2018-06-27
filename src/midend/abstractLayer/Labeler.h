@@ -73,6 +73,7 @@ class LabelProperty {
    std::string toString();
    SgNode* getNode();
    bool isFunctionCallLabel();
+   bool isExternalFunctionCallLabel();
    bool isFunctionCallReturnLabel();
    bool isFunctionEntryLabel();
    bool isFunctionExitLabel();
@@ -95,10 +96,10 @@ class LabelProperty {
    VariableId getIOVarId();
    int getIOConst();
 
+   bool makeFunctionCallExternal();
    void makeTerminationIrrelevant(bool t);
    bool isTerminationRelevant();
    bool isLTLRelevant();
-
  private:
    bool _isValid;
    SgNode* _node;
@@ -110,6 +111,7 @@ class LabelProperty {
    int _ioValue;
    bool _isTerminationRelevant;
    bool _isLTLRelevant;
+   bool _isExternalFunctionCall;
  };
 
 /*! 
@@ -170,6 +172,11 @@ class Labeler {
   bool isSwitchExprLabel(Label lab);
   bool isFirstLabelOfMultiLabeledNode(Label lab);
   bool isSecondLabelOfMultiLabeledNode(Label lab);
+
+  // by default false for all labels. This must be set by the CF analysis.
+  bool isExternalFunctionCallLabel(Label lab);
+  bool makeFunctionCallLabelExternal(Label lab);
+
   class iterator {
   public:
     iterator();
