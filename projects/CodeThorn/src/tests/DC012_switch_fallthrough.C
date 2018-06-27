@@ -20,7 +20,14 @@ int main() {
       y+=4; // dead
     }
   break;
+  case 11:
+    y+=8;
+    break;
  default:
-   y+=8;
+   y+=16;
+   break;
+  case 12:
+    y+=32;
   };
+  y+=64;
 }

@@ -195,6 +195,7 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
 void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
   int paramNr=0;
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
+  // TODO: handle external function call: do not add paramters and model pointer arguments
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
     VariableId paramId=getParameterVariableId(paramNr);
     ips.addVariable(paramId);
