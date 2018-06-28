@@ -19407,37 +19407,19 @@ SgTemplateArgument::get_mangled_name (void) const
 #endif
                SgName mangled_type = type->get_mangled();
 
-               SgNode* parent = this->get_parent();
-               ROSE_ASSERT(parent != NULL);
-
             // DQ (9/21/2012): We need to support defining a mangled name that uses the name of the declaration where the template 
             // argument is used.  E.g. In "template <class T> X<T> foo();", the return type "X<T>" shuld have a uniquely mangled 
             // name from that of a similar return type in any other function.  The template declaration support will define an
             // instantiation of "X<T>" which must be seperate from all other tempalte functions having a similar return type.
             // This is the say that te restrict sharing of "X<T>" by supporting a mangled name that forces each functions reference
             // to such a type to be different.
-               ROSE_ASSERT(this->get_parent() != NULL);
 
+               SgNode* parent = this->get_parent();
+               ROSE_ASSERT(parent != NULL);
 #if 0
                printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: this->get_parent() = %p = %s \n",this->get_parent(),this->get_parent()->class_name().c_str());
 #endif
-#if 0
-               SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(this->get_parent());
-               if (templateClassDeclaration != NULL)
-                  {
-                    SgTemplateParameterPtrList & templateParameters = templateClassDeclaration->get_templateParameters();
-                    for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++)
-                       {
-                         SgTemplateParameter::template_parameter_enum parameterType = (*i)->get_parameterType();
-                         printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: parameterType = %d \n",parameterType);
-                         if (parameterType == SgTemplateParameter::type_parameter)
-                            {
-                              printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: Found a SgTemplateParameter::type_parameter \n");
-                            }
-                       }
-                  }
-#endif
-               SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(this->get_parent());
+               SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(parent);
                if (templateClassInstantiationDeclaration != NULL)
                   {
                  // DQ (12/26/2012): I think that to generate a unique mangled name we need to alwasy reference the same declaration, so set this and enforce that it is a valid pointer.
