@@ -121,9 +121,9 @@ public:
     /** Map a file into an address space. */
     static AddressSegment fileInstance(const std::string &fileName, unsigned accessBits=Access::READABLE,
                                        const std::string &name="") {
-        boost::iostreams::mapped_file::mapmode mode = (accessBits & Access::WRITABLE)!=0 ?
-                                                      boost::iostreams::mapped_file::readwrite :
-                                                      boost::iostreams::mapped_file::readonly;
+        boost::iostreams::mapped_file::mapmode mode = (accessBits & Access::PRIVATE ? boost::iostreams::mapped_file::priv
+                                                       : (accessBits & Access::WRITABLE ? boost::iostreams::mapped_file::readwrite
+                                                          : boost::iostreams::mapped_file::readonly));
         return AddressSegment(MappedBuffer<A, T>::instance(fileName, mode), 0, accessBits, name);
     }
 
