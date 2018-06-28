@@ -16687,8 +16687,19 @@ SgTypedefDeclaration::get_mangled_name (void) const
           printf ("In SgTypedefDeclaration::get_mangled_name(): before calling get_base_type() \n");
 #endif
           SgType* baseType = get_base_type();
+
 #if 0
-          printf ("In SgTypedefDeclaration::get_mangled_name(): after calling get_base_type() \n");
+       // DQ (5/23/2018): Added assertion prior to the debug statement below.
+          ROSE_ASSERT(baseType != NULL);
+          printf ("In SgTypedefDeclaration::get_mangled_name(): after calling get_base_type(): baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+          if (get_file_info() != NULL)
+             {
+               printf ("   --- typedef source position: line = %d \n",get_file_info()->get_line());
+             }
+            else
+             {
+               printf ("   --- typedef source position: line = (unknown) \n");
+             }
 #endif
 
        // DQ (6/3/2006): I think this is a better implementation of name mangling for a typedef 

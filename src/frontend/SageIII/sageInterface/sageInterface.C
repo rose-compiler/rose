@@ -8542,6 +8542,30 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
          ;
    }
 
+#if 0
+// DQ (6/27/2018): This will be the template declaration test version of the template instantiation test function above.
+bool
+SageInterface::isTemplateDeclarationNode(SgNode* node) 
+   {
+  // DQ (7/19/2015): I think we want to focus exclusively on declarations.
+     if (isSgTemplateDefinition(node) != NULL)
+        {
+#if 0
+          printf ("Note: In SageInterface::isTemplateDeclarationNode(): skipping SgTemplateDefinition \n");
+#endif
+        }
+
+     return isSgTemplateInstantiationDecl(node)
+      // DQ (1/3/2016): Allow SgTemplateInstantiationDefn IR nodes.
+//       || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationFunctionDecl(node)
+         || isSgTemplateInstantiationMemberFunctionDecl(node)
+         || isSgTemplateInstantiationTypedefDeclaration(node)
+         || isSgTemplateInstantiationDirectiveStatement(node)
+         ;
+   }
+#endif
 
 void
 SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
