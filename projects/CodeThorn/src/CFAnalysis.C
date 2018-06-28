@@ -4,7 +4,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#define ALTERNATIVE_LOCAL_EDGE_HANDLING
+//#define ALTERNATIVE_LOCAL_EDGE_HANDLING
 
 #include "sage3basic.h"
 
@@ -729,6 +729,7 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         EdgeTypeSet tset=localEdgeIter.getTypes();
         tset.erase(EDGE_LOCAL);
         tset.insert(EDGE_EXTERNAL);
+        getLabeler()->setExternalFunctionCallLabel((*i).call);
         localEdgeIter.setTypes(tset);
 #endif
         //cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
@@ -740,6 +741,8 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
       }
 #else
       Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
+      // register in Labaler as external function call
+      getLabeler()->setExternalFunctionCallLabel((*i).call);
       flow.insert(externalEdge);
 #endif
     } else {

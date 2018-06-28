@@ -46,11 +46,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-      if(isExternalFunctionCall(lab)) {
-        transferExternalFunctionCall(lab, funCall, arguments, element);
-      } else {
-        transferFunctionCall(lab, funCall, arguments, element);
-      }
+      transferFunctionCall(lab, funCall, arguments, element);
       return;
     } else {
       cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<funCall->class_name()<<endl;

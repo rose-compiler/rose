@@ -196,11 +196,17 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
   int paramNr=0;
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   // TODO: handle external function call: do not add paramters and model pointer arguments
-  for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
-    VariableId paramId=getParameterVariableId(paramNr);
-    ips.addVariable(paramId);
-    ips.setVariable(paramId,evalExpression(lab,*i,ips));
-    paramNr++;
+  cout<<"DEBUG: label: "<<lab.toString()<<" is-external: "<<getLabeler()->isExternalFunctionCallLabel(lab)<<endl;
+  if(getLabeler()->isExternalFunctionCallLabel(lab)) {
+    cout<<"DEBUG: external function call detected: "<<callExp->unparseToString()<<endl;
+  } else {
+    cout<<"DEBUG: function call detected: "<<callExp->unparseToString()<<endl;
+    for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
+      VariableId paramId=getParameterVariableId(paramNr);
+      ips.addVariable(paramId);
+      ips.setVariable(paramId,evalExpression(lab,*i,ips));
+      paramNr++;
+    }
   }
 }
 /*! 
