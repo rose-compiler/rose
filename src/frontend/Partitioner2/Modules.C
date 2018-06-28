@@ -89,7 +89,7 @@ BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
     if (chain && maxInsns_ > 0 && args.bblock->nInstructions() >= maxInsns_) {
         args.results.terminate = TERMINATE_NOW;
         if (mlog[DEBUG]) {
-            mlog[DEBUG] <<"BasicBlockSizeLimiter triggered:\n";
+            mlog[DEBUG] <<"BasicBlockSizeLimiter triggered (max " <<StringUtility::plural(maxInsns_, "instructions") <<"):\n";
             BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
                 mlog[DEBUG] <<"        " <<unparseInstructionWithAddress(insn) <<"\n";
         }

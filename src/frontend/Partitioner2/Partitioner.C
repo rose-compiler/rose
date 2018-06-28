@@ -2390,7 +2390,7 @@ Partitioner::discoverCalledFunctions() const {
             BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
                 if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                     rose_addr_t entryVa = vertex.value().address();
-                    insertUnique(functions, Function::instance(entryVa), sortFunctionsByAddress);
+                    insertUnique(functions, Function::instance(entryVa, SgAsmFunction::FUNC_CALL_TARGET), sortFunctionsByAddress);
                     break;
                 }
             }

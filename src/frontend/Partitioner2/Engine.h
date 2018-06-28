@@ -702,7 +702,9 @@ public:
      *  that's already in the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
+     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
     virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
@@ -715,7 +717,9 @@ public:
      *  removed from the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found. */
+     *  function was found.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_INSN_RO_DATA reason. */
     virtual Function::Ptr makeNextCodeReferencedFunction(const Partitioner&);
 
     /** Make functions for function call edges.

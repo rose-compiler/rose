@@ -1196,7 +1196,7 @@ Engine::createBarePartitioner() {
         p.basicBlockCallbacks().append(cb);
         p.attachFunction(Function::instance(settings_.partitioner.peScramblerDispatcherVa,
                                             p.addressName(settings_.partitioner.peScramblerDispatcherVa),
-                                            SgAsmFunction::FUNC_USERDEF));
+                                            SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH));
     }
 
     return p;
@@ -1442,7 +1442,7 @@ Engine::makeConfiguredFunctions(Partitioner &partitioner, const Configuration &c
     BOOST_FOREACH (const FunctionConfig &fconfig, configuration.functionConfigsByAddress().values()) {
         rose_addr_t entryVa = 0;
         if (fconfig.address().assignTo(entryVa)) {
-            Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_USERDEF);
+            Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_CONFIGURED);
             function->comment(fconfig.comment());
             insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
         }
@@ -1571,7 +1571,7 @@ std::vector<Function::Ptr>
 Engine::makeUserFunctions(Partitioner &partitioner, const std::vector<rose_addr_t> &vas) {
     std::vector<Function::Ptr> retval;
     BOOST_FOREACH (rose_addr_t va, vas) {
-        Function::Ptr function = Function::instance(va, SgAsmFunction::FUNC_USERDEF);
+        Function::Ptr function = Function::instance(va, SgAsmFunction::FUNC_CMDLINE);
         insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
     }
     return retval;
@@ -1630,7 +1630,7 @@ Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(targetVa)
                    <<" found at read-only address " <<StringUtility::addrToString(readVa) <<"\n";
         readVa = incrementAddress(readVa, wordSize, maxaddr);
-        return Function::instance(targetVa, SgAsmFunction::FUNC_USERDEF);
+        return Function::instance(targetVa, SgAsmFunction::FUNC_SCAN_RO_DATA);
     }
     readVa = maxaddr;
     return Function::Ptr();
@@ -1654,7 +1654,7 @@ Engine::makeNextCodeReferencedFunction(const Partitioner &partitioner) {
         // All seems okay, so make a function there
         // FIXME[Robb P Matzke 2017-04-13]: USERDEF is not the best, most descriptive reason, but it's what we have for now
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(constant) <<"\n";
-        return Function::instance(constant, SgAsmFunction::FUNC_USERDEF);
+        return Function::instance(constant, SgAsmFunction::FUNC_INSN_RO_DATA);
     }
     return Function::Ptr();
 }

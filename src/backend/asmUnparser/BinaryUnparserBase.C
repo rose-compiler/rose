@@ -253,7 +253,7 @@ commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
     using namespace Rose::CommandLine;
-    
+
     SwitchGroup sg("Unparsing switches");
     sg.name("out");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
@@ -578,6 +578,34 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_LEFTOVERS,    "provisional");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_INTRABLOCK,   "possibly unreached (intra)");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_USERDEF,      "user defined");
+
+        if (flags & 0xff) {
+            switch (flags & 0xff) {
+                case SgAsmFunction::FUNC_INTERPADFUNC:
+                    strings.push_back("interpadfunc");
+                    break;
+                case SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH:
+                    strings.push_back("pescrambler dispatch");
+                    break;
+                case SgAsmFunction::FUNC_CONFIGURED:
+                    strings.push_back("configuration");
+                    break;
+                case SgAsmFunction::FUNC_CMDLINE:
+                    strings.push_back("command-line");
+                    break;
+                case SgAsmFunction::FUNC_SCAN_RO_DATA:
+                    strings.push_back("scanned read-only ptr");
+                    break;
+                case SgAsmFunction::FUNC_INSN_RO_DATA:
+                    strings.push_back("referenced read-only ptr");
+                    break;
+                default:
+                    strings.push_back("miscellaneous(" + StringUtility::numberToString(flags & 0xff) + ")");
+                    break;
+            }
+            flags &= ~0xff;
+        }
+
         if (flags != 0) {
             char buf[64];
             sprintf(buf, "0x%08x", flags);
