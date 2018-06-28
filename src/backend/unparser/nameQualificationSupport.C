@@ -6726,103 +6726,65 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
                if (explictlySpecifiedCurrentScope != NULL)
                   {
+                    currentStatement = explictlySpecifiedCurrentScope;
+
                     SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
                     ROSE_ASSERT(variableSymbol != NULL);
+
                     SgInitializedName* initializedName = variableSymbol->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
-                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-#if 1
-                    currentStatement = explictlySpecifiedCurrentScope;
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("In case SgVarRefExp: (currentStatement == NULL) Calling nameQualificationDepth() variableDeclaration = %p initializedName->get_parent() = %p = %s \n",
-                         variableDeclaration,initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
-#endif
-                 // ROSE_ASSERT(variableDeclaration != NULL);
-                    if (variableDeclaration == NULL)
-                       {
-                      // DQ (7/11/2014): Test code test2014_84.C demonstrates this problem.
-                         ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
 
-                         SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(initializedName->get_parent());
-
-
-                         SgTemplateClassDeclaration* templateClassDeclaration = NULL;
-
-                      // DQ (11/22/2016): Added debugging information to support test2013_63.C (using GNU g++ version 6.1, C++14 support).
-                         if (functionParameterList == NULL)
-                            {
-                              ROSE_ASSERT(initializedName->get_parent() != NULL);
-#if 0
-                              printf ("initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
-#endif
-                              SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(initializedName->get_parent());
-                              if (templateClassDefinition != NULL)
-                                 {
-#if 0
-                                   printf ("templateClassDefinition = %p name = %s \n",templateClassDefinition,templateClassDefinition->class_name().c_str());
-                                   templateClassDefinition->get_file_info()->display("functionParameterList == NULL: templateClassDefinition: debug");
-#endif
-                                // SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
-                                   templateClassDeclaration = templateClassDefinition->get_declaration();
-#if 0
-                                   printf ("templateClassDeclaration = %p name = %s \n",templateClassDeclaration,templateClassDeclaration->get_templateName().str());
-                                   templateClassDeclaration->get_file_info()->display("functionParameterList == NULL: templateClassDeclaration: debug");
-
-                                   printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
-                                   initializedName->get_file_info()->display("functionParameterList == NULL: initializedName: debug");
-#endif
-                                 }
-                            }
-
-                      // DQ (11/22/2016): In test2013_63.C the parent of the SgInitializedName is set to a SgTemplateClassDefinition.
-                      // ROSE_ASSERT(functionParameterList != NULL);
-
-                         int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
-
-                      // DQ (11/22/2016): Skip this case as part of testing.
-                      // setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
-                         if (functionParameterList != NULL)
-                            {
-                              setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
-                            }
-                           else
-                            {
-                           // DQ (11/22/2016): Added special handling for test2013_63.C (using GNU g++ version 6.1, C++14 support) as a test.
-                              if (templateClassDeclaration != NULL)
-                                 {
-                                   printf ("WARNING: name qualification special handling for initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
-                                   setNameQualification(varRefExp,templateClassDeclaration,amountOfNameQualificationRequired);
-                                 }
-                                else
-                                 {
-                                   printf ("ERROR: name qualification skipped for initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
-                                   ROSE_ASSERT(false);
-                                 }
-                            }
-                       }
-                      else
-                       {
-                         int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
-                         setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
-                       }
-#else
-                    ROSE_ASSERT(variableDeclaration != NULL);
-                    currentStatement = explictlySpecifiedCurrentScope;
+                    SgNode * parent = initializedName->get_parent();
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("In case SgVarRefExp: (currentStatement == NULL) Calling nameQualificationDepth() \n");
+                    printf ("In case SgVarRefExp: (currentStatement == NULL) Calling nameQualificationDepth() variableDeclaration = %p initializedName->get_parent() = %p = %s \n", variableDeclaration, parent, parent ? parent->class_name().c_str() : "");
 #endif
-                    int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
 
-                    setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(parent);
+                    SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
+                    SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
+                    SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
+
+                    if (variableDeclaration != NULL) {
+                      int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
+                      setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                    } else {
+                      int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
+                      if (functionParameterList != NULL) {
+                        setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+                      } else if (tpldef != NULL) {
+                        printf("WARNING: In NameQualificationTraversal::evaluateInheritedAttribute: Found SgInitializedName whose parent is a template class definition. It does not sound right!!!\n");
+
+                        ROSE_ASSERT(tpldef->get_parent() != NULL);
+                        SgDeclarationStatement * tpldecl = isSgDeclarationStatement(tpldef->get_parent());
+                        ROSE_ASSERT(tpldecl != NULL);
+                        ROSE_ASSERT(isSgTemplateClassDeclaration(tpldecl));
+                        setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
+                      } else if (tplParam != NULL) {
+#if 0
+                        printf("tplParam = %p (%s)\n", tplParam, tplParam ? tplParam->class_name().c_str() : "");
 #endif
+                        ROSE_ASSERT(tplParam->get_parent() != NULL);
+                        SgDeclarationStatement * tpldecl = isSgDeclarationStatement(tplParam->get_parent());
+                        ROSE_ASSERT(tpldecl != NULL);
+#if 0
+                        printf("tplParam = %p (%s)\n", tplParam, tplParam ? tplParam->class_name().c_str() : "");
+#endif
+                        ROSE_ASSERT(
+                            isSgTemplateFunctionDeclaration(tpldecl) ||
+                            isSgTemplateClassDeclaration(tpldecl) ||
+                            isSgTemplateTypedefDeclaration(tpldecl) ||
+                            isSgTemplateVariableDeclaration(tpldecl) ||
+                            isSgNonrealDecl(tpldecl)
+                        );
+                        setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
+                      } else {
+                        printf("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+                        ROSE_ASSERT(false);
+                      }
+                    }
                   }
              }
-
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
         }
 
   // DQ (6/9/2011): Added support for test2011_79.C (enum values can require name qualification).
