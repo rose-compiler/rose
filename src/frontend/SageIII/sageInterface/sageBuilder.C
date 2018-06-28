@@ -1532,9 +1532,11 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // DQ (7/18/2012): Added debugging code (should fail for test2011_75.C).
      SgVariableSymbol* variableSymbol = scope->lookup_variable_symbol(name);
   // ROSE_ASSERT(variableSymbol == NULL);
+
 #if 0
      printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol = %p \n",variableSymbol);
 #endif
+
   // If there was a previous use of the variable, then there will be an existing symbol with it's declaration pointing to the SgInitializedName object.
      SgVariableDeclaration * varDecl = NULL;
      if (variableSymbol == NULL)
@@ -1596,6 +1598,12 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
         {
        // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
        // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
+
+       // DQ (6/25/2018): I think this is incorrect for test2018_109.C.
+          SgScopeStatement* current_scope = topScopeStack();
+#if 0
+          printf ("  --- Setting parent using topScopeStack() = %p = %s = %s \n",current_scope,current_scope->class_name().c_str(),SageInterface::get_name(current_scope).c_str());
+#endif
           varDecl->set_parent(topScopeStack());
           ROSE_ASSERT(varDecl->get_parent() != NULL);
         }
@@ -1650,6 +1658,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // because we have added statements explicitly marked as transformations.
   // checkIsModifiedFlag(varDecl);
      unsetNodesMarkedAsModified(varDecl);
+
+  // DQ (6/25/2018): Added assertion.
+     ROSE_ASSERT(varDecl != NULL);
+
+#if 0
+     printf ("Leaving buildVariableDeclaration_nfi(): varDecl = %p varDecl->get_parent() = %p \n",varDecl,varDecl->get_parent());
+#endif
 
      return varDecl;
    }

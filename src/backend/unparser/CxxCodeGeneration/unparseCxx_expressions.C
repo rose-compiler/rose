@@ -6596,7 +6596,10 @@ bool uses_cxx11_initialization (SgNode* n)
 
              }
         }
+#endif
 
+#if 0
+     printf ("In uses_cxx11_initialization(): initializerChain.size() = %lu \n",initializerChain.size());
 #endif
 
      ROSE_ASSERT(initializerChain.size() <= 3);
@@ -6638,6 +6641,105 @@ bool uses_cxx11_initialization (SgNode* n)
 #if 0
                     printf ("No C++11 class specification required for this initializer chain \n");
 #endif
+                  }
+             }
+        }
+
+
+#if 0
+  // DQ (6/27/2018): Debugging test2018_113.C.
+     if (initializerChain.size() == 0)
+        {
+#if 0
+          printf ("Found C++11 specific initializer chain size 0: that requires use of class specifier \n");
+#endif
+       // This might be overly general.
+          returnValue = true;
+        }
+#endif
+
+  // DQ (6/27/2018): check if this is part of a template instantiation that would require the class name in the initializer to trigger the instantiation.
+     SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(n);
+     if (aggregateInitializer != NULL)
+        {
+          SgExprListExp* expListExp = isSgExprListExp(aggregateInitializer->get_parent());
+          if (expListExp != NULL)
+             {
+               SgFunctionCallExp* functionCall = isSgFunctionCallExp(expListExp->get_parent());
+
+               if (functionCall != NULL)
+                  {
+                    SgExpression* functionExpression = functionCall->get_function();
+#if 0
+                    printf ("functionExpression = %p = %s \n",functionExpression,functionExpression->class_name().c_str());
+#endif
+                    SgFunctionRefExp*       functionRefExp       = isSgFunctionRefExp(functionCall->get_function());
+                    SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionCall->get_function());
+
+                    SgArrowExp* arrowExpression = isSgArrowExp(functionExpression);
+                    SgDotExp*   dotExpression   = isSgDotExp(functionExpression);
+
+                    SgExpression* rhs = NULL;
+                    if (arrowExpression != NULL)
+                       {
+                         rhs = arrowExpression->get_rhs_operand();
+                       }
+                    if (dotExpression != NULL)
+                       {
+                         rhs = dotExpression->get_rhs_operand();
+                       }
+
+                    if (functionRefExp == NULL && memberFunctionRefExp == NULL)
+                       {
+                      // Get the pointer from the rhs.
+                         functionRefExp       = isSgFunctionRefExp(rhs);
+                         memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
+                       }
+
+                 // DQ (6/27/2018): This assertion fails for test2018_111.C.
+                 // ROSE_ASSERT(functionRefExp != NULL);
+
+                    SgFunctionDeclaration* functionDeclaration = NULL;
+                    if (functionRefExp != NULL)
+                       {
+                         SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+#if 0
+                         printf ("functionSymbol = %p = %s \n",functionSymbol,functionSymbol->class_name().c_str());
+#endif
+                      // SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+                         functionDeclaration = functionSymbol->get_declaration();
+                       }
+
+                    if (memberFunctionRefExp != NULL)
+                       {
+                         SgMemberFunctionSymbol* functionSymbol = memberFunctionRefExp->get_symbol();
+#if 0
+                         printf ("member functionSymbol = %p = %s \n",functionSymbol,functionSymbol->class_name().c_str());
+#endif
+                      // SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+                         functionDeclaration = functionSymbol->get_declaration();
+                       }
+
+                    if (functionDeclaration != NULL)
+                       {
+
+                         bool isTemplateInstantiation = SageInterface::isTemplateInstantiationNode(functionDeclaration);
+#if 0
+                         printf ("isTemplateInstantiation = %s \n",isTemplateInstantiation ? "true" : "false");
+#endif
+                         if (isTemplateInstantiation == true)
+                            {
+#if 0
+                              printf ("Found C++11 specific initializer function (%s) argument to template instantiation: that requires use of class specifier \n",functionDeclaration->class_name().c_str());
+#endif
+                           // This might be overly general.
+                              returnValue = true;
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
                   }
              }
         }
@@ -6816,6 +6918,35 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
+     SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
+
+  // DQ (6/27/2018): This is to output the class name for test2018_113.C.
+  // if (need_cxx11_class_specifier == true)
+  // if (list.size() == 0)
+  // Check if this is a part of the function argument list to a template (function or class), 
+  // since we need this to work independent of the list size (see test2018_116.C).
+
+
+  // if (need_cxx11_class_specifier == true && list.size() == 0 && need_explicit_braces == true)
+     if (need_cxx11_class_specifier == true && need_explicit_braces == true)
+        {
+       // Identified list size == 0
+
+          ROSE_ASSERT(aggr_init != NULL);
+          SgClassType* classType = isSgClassType(aggr_init->get_type());
+#if 0
+          printf ("classType = %p \n",classType);
+#endif
+          if (classType != NULL)
+             {
+#if 0
+               printf ("Output the class name classType = %p = %s \n",classType,classType->class_name().c_str());
+#endif
+               newinfo2.set_SkipClassSpecifier();
+               unp->u_type->outputType<SgAggregateInitializer>(aggr_init,classType,newinfo2);
+             }
+        }
+
   // if (aggr_init->get_need_explicit_braces())
      if (need_explicit_braces == true)
         {
@@ -6836,8 +6967,6 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      newinfo2.set_inAggregateInitializer();
 #endif
 
-     SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
-     size_t last_index = list.size() -1;
 
 #if 0
      SgExpressionPtrList::iterator p = list.begin();
@@ -6892,6 +7021,8 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      printf ("Looking for an array initializer: arrayType = %p \n",arrayType);
 #endif
 
+     size_t last_index = list.size() -1;
+
      for (size_t index = 0; index < list.size(); index++)
         {
 #if DEBUG_AGGREGATE_INITIALIZER || 0
@@ -6918,7 +7049,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
           printf ("In loop: depth = %d need_cxx11_class_specifier = %s \n",depth,need_cxx11_class_specifier ? "true" : "false");
 #endif
-          if (need_cxx11_class_specifier == true)
+       // DQ (6/27/2018): Make this more restrictive since need_cxx11_class_specifier is set more often to be true.
+       // if (need_cxx11_class_specifier == true)
+          if (need_cxx11_class_specifier == true && aggregateInitializer != NULL)
              {
                ROSE_ASSERT(aggregateInitializer != NULL);
 #if 0
@@ -6927,7 +7060,11 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
             // Might need to strip modifiers.
             // SgClassType* classType = isSgClassType(arrayType->get_base_type());
                SgClassType* classType = isSgClassType(aggregateInitializer->get_type());
-               ROSE_ASSERT(classType != NULL);
+
+            // DQ (6/27/2018): Make this more restrictive since need_cxx11_class_specifier is set more often to be true.
+            // ROSE_ASSERT(classType != NULL);
+               if (classType != NULL)
+                  {
 #if 0
                printf ("In unparseAggrInit(): need_cxx11_class_specifier == true: aggregateInitializer = %p \n",aggregateInitializer);
                printf ("In unparseAggrInit(): need_cxx11_class_specifier == true: classType            = %p \n",classType);
@@ -6940,6 +7077,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
                     unp->u_type->outputType<SgAggregateInitializer>(aggregateInitializer,classType,newinfo2);
                   }
+                  }
              }
 
 #if DEBUG_AGGREGATE_INITIALIZER
@@ -6951,7 +7089,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // If there was not an include then still unparse everything!
           unparseExpression(list[index], newinfo);
           if (index != last_index)
-               curprint ( ", ");
+               curprint (", ");
 
 #if 0
           printf ("Bottom of loop: depth = %d need_cxx11_class_specifier = %s \n",depth,need_cxx11_class_specifier ? "true" : "false");
@@ -6972,6 +7110,14 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving unparseAggrInit(): depth = %d \n",depth);
+#endif
+
+#if 0
+     if (need_cxx11_class_specifier == true)
+        {
+          printf ("Found case of need_cxx11_class_specifier == true \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      depth--;

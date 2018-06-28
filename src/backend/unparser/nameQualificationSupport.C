@@ -662,6 +662,14 @@ NameQualificationTraversal::nameQualificationDepthOfParent(SgDeclarationStatemen
      SgScopeStatement* parentScope = declaration->get_scope();
   // SgName parentName = associatedName(parentScope);
 
+  // DQ (6/24/2018): Added assertion.
+     ROSE_ASSERT(parentScope != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("***** Inside of NameQualificationTraversal::nameQualificationDepthOfParent() ***** \n");
+     printf ("   parentScope = %p = %s = %s \n",parentScope,parentScope->class_name().c_str(),SageInterface::get_name(parentScope).c_str());
+#endif
+
   // qualificationDepth = nameQualificationDepth(parentName,parentScope,positionStatement) + 1;
      SgGlobal* globalScope = isSgGlobal(parentScope);
      if (globalScope != NULL)
@@ -687,6 +695,7 @@ NameQualificationTraversal::nameQualificationDepthOfParent(SgDeclarationStatemen
                printf ("In NameQualificationTraversal::nameQualificationDepthOfParent(): calling nameQualificationDepth(): parentDeclaration = %p = %s = %s \n",
                     parentDeclaration,parentDeclaration->class_name().c_str(),SageInterface::get_name(parentDeclaration).c_str());
                printf ("   --- currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("   --- parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
                printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
             // qualificationDepth = nameQualificationDepth(parentDeclaration,parentScope,positionStatement);
@@ -694,7 +703,8 @@ NameQualificationTraversal::nameQualificationDepthOfParent(SgDeclarationStatemen
              }
         }
 
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+// #if 0
      printf ("Leaving nameQualificationDepthOfParent(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
 
@@ -2330,6 +2340,14 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
              {
                printf ("Exiting as a test: in nameQualificationDepth() \n");
                ROSE_ASSERT(false);
+             }
+#endif
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In NameQualificationTraversal::nameQualificationDepth(): symbol = %p \n",symbol);
+          if (symbol != NULL)
+             {
+               printf ("   --- symbol = %s \n",symbol->class_name().c_str());
              }
 #endif
 
@@ -5263,6 +5281,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                      // This point of calling this function is to just have the template arguments evaluated for name qualification (see Cxx11_tests/test2018_68.C).
                                         int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
 
+                                     // Add this to make sure that amountOfNameQualificationRequired is referenced to avoid a compiler warning.
+                                        ROSE_ASSERT(amountOfNameQualificationRequired >= 0);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                         printf ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
@@ -6622,9 +6643,20 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // DQ (12/23/2015): If there are multiple symbols with the same name then we require the name qualification.
                  // See test2015_140.C for an example.
                     SgName name = initializedName->get_name().str();
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("SgVarRefExp's SgDeclarationStatement: initializedName->get_name() = %s \n",name.str());
+#endif
+
                  // size_t numberOfAliasSymbols = currentScope->count_alias_symbol(name);
                     int numberOfAliasSymbols = currentScope->count_alias_symbol(name);
                  // if (numberOfAliasSymbols > 1)
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("SgVarRefExp's SgDeclarationStatement: numberOfAliasSymbols              = %d \n",numberOfAliasSymbols);
+                    printf ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+
                     if (numberOfAliasSymbols > 1 && amountOfNameQualificationRequired == 0)
                        {
                       // DQ (3/15/2017): Added support to use message streams.
@@ -6635,12 +6667,21 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // DQ (12/23/2015): Note that this is not a count of the SgVariableSymbol IR nodes.
                       // size_t numberOfSymbolsWithSameName = currentScope->count_symbol(name);
                          int numberOfSymbolsWithSameName = (int)currentScope->count_symbol(name);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("SgVarRefExp's SgDeclarationStatement: numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
+#endif
+
                       // if (numberOfSymbolsWithSameName > 1)
                       // if (numberOfSymbolsWithSameName > 1 && amountOfNameQualificationRequired == 0)
                          if ((numberOfSymbolsWithSameName - numberOfAliasSymbols) > 1 && amountOfNameQualificationRequired == 0)
                             {
                            // DQ (3/15/2017): Added support to use message streams.
                               mprintf ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
+#endif
                             }
                       // ROSE_ASSERT(numberOfSymbolsWithSameName < 2);
                       // if (numberOfSymbolsWithSameName >= 2 && amountOfNameQualificationRequired == 0)
@@ -6649,6 +6690,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                            // DQ (3/15/2017): Added support to use message streams.
                               mprintf ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
                               mprintf ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
+                              printf ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
                             }
                        // ROSE_ASSERT(numberOfSymbolsWithSameName < 2 || amountOfNameQualificationRequired > 0);
 

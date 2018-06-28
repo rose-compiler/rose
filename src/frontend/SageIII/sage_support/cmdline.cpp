@@ -8973,12 +8973,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        }
 #endif
                   }
-#endif                  
-                 // Liao 5/1/2015: support both single and multiple files like: identityTranslator main.c
-                 // introduce -c to compile this single file first.
-                 // the linking step will happen when handling SgProject
+#endif
+
+#if 1
+                 printf ("In SgFile::buildCompilerCommandLineOptions(): Adding \"-c\" to backedn command line! \n");
+#endif
+              // Liao 5/1/2015: support both single and multiple files like: identityTranslator main.c
+              // introduce -c to compile this single file first.
+              // the linking step will happen when handling SgProject
                  compilerNameString.push_back("-c");
-                 // compilation step of the two (compile+ link) steps
+              // compilation step of the two (compile + link) steps
                  std::string objectFileName = generateOutputFileName();
 
                  compilerNameString.push_back("-o");
