@@ -137,10 +137,23 @@ MemoryMap::segmentTitle(const Segment &segment) {
  ******************************************************************************************************************************/
 
 size_t
-MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, bool writable, std::string segmentName) {
+MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, InsertFileMapMode mode, std::string segmentName) {
     if (segmentName.empty())
         segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
-    Segment segment = Segment::fileInstance(fileName, READABLE | (writable?WRITABLE:0), segmentName);
+    unsigned accessBits = 0;
+    switch (mode) {
+        case MAP_PRIVATE:
+            accessBits = MemoryMap::READ_WRITE | MemoryMap::PRIVATE;
+            break;
+        case MAP_RDONLY:
+            accessBits = MemoryMap::READABLE;
+            break;
+        case MAP_READWRITE:
+            accessBits = MemoryMap::READ_WRITE;
+            break;
+    }
+
+    Segment segment = Segment::fileInstance(fileName, accessBits, segmentName);
     AddressInterval fileInterval = AddressInterval::baseSize(startVa, segment.buffer()->size());
     insert(fileInterval, segment);
     return fileInterval.size();

@@ -38,18 +38,17 @@ SgProject *RoseToLLVM::findEnclosingProject(SgNode *node) {
  */
 void RoseToLLVM::astVisit(SgProject *project) {
 
-    bool translateExternal
-        = project->attributeExists(kTranslateExternals);
+    bool translateExternal = project -> attributeExists(kTranslateExternals);
 
     /**
      * Visit Ast to add required code generation attributes.
      */
     CodeAttributesVisitor attribute_visitor(*options, *control);
     if (translateExternal) {
-      attribute_visitor.traverse(project);
+        attribute_visitor.traverse(project);
     }
     else {
-      attribute_visitor.traverseInputFiles(project);
+        attribute_visitor.traverseInputFiles(project);
     }
     attribute_visitor.processRemainingComponents();
 
@@ -57,12 +56,12 @@ void RoseToLLVM::astVisit(SgProject *project) {
      * Revisit Ast to generate code after attribute visit.
      */
     CodeGeneratorVisitor generator_visitor(*options, *control);
-    // generate code for function bodies
-    if (translateExternal) {
-      generator_visitor.traverse(project);
+    generator_visitor.processDimensionExpressions(); // generate code for dimension expressions
+    if (translateExternal) { // generate code for function bodies
+        generator_visitor.traverse(project);
     }
     else {
-      generator_visitor.traverseInputFiles(project);
+        generator_visitor.traverseInputFiles(project);
     }
     generator_visitor.processRemainingFunctions();
 }
@@ -82,7 +81,7 @@ llvm::Module *RoseToLLVM::translate(SgForStatement *for_stmt) {
 llvm::Module *RoseToLLVM::translate(SgFunctionDeclaration *function_decl, bool translate_whole_function) {
     options -> setQuery();
     if (translate_whole_function) {
-      options -> setTranslating();
+        options -> setTranslating();
     }
 
     ROSE2LLVM_ASSERT(function_decl);

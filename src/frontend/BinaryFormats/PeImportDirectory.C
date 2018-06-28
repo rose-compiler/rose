@@ -447,7 +447,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                 }
             }
             if (bufsz>=2) {
-                uint8_t *buf = new uint8_t[bufsz];
+                std::vector<uint8_t> buf(bufsz, 0);
                 unsigned hint = imports[idx]->get_hint();
                 std::string name = imports[idx]->get_name()->get_string();
                 if (0!=(hint & ~0xffff)) {
@@ -458,11 +458,11 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                     }
                 }
                 ByteOrder::host_to_le(hint, &hint); // nudge, nudge. Know what I mean?
-                memcpy(buf, &hint, 2);
-                memcpy(buf+2, name.c_str(), std::min(name.size()+1, bufsz-2));
+                memcpy(&buf[0], &hint, 2);
+                memcpy(&buf[2], name.c_str(), std::min(name.size()+1, bufsz-2));
                 if (bufsz>2)
                     buf[bufsz-1] = '\0';
-                hn_rva.get_section()->write(f, hn_rva.get_rel(), bufsz, buf);
+                hn_rva.get_section()->write(f, hn_rva.get_rel(), bufsz, &buf[0]);
                 if (0!=(hn_rva.get_rva() & by_ordinal_bit)) {
                     if (SgAsmPEImportSection::show_import_mesg()) {
                         mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
@@ -471,7 +471,6 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                                    <<" has by_ordinal bit set\n";
                     }
                 }
-                delete[] buf;
             }
             entry_word = hn_rva.get_rva() & ~by_ordinal_bit;
         }
@@ -564,12 +563,10 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
                        <<StringUtility::plural(p_dll_name_nalloc, "bytes") <<")"
                        <<" for DLL name (need " <<StringUtility::plural(p_dll_name->get_string().size()+1, "bytes") <<")\n";
         }
-    } else {
-        uint8_t *buf = new uint8_t[p_dll_name_nalloc];
-        memcpy(buf, p_dll_name->get_string().c_str(), p_dll_name->get_string().size());
-        memset(buf+p_dll_name->get_string().size(), 0, p_dll_name_nalloc - p_dll_name->get_string().size());
-        p_dll_name_rva.get_section()->write(f, p_dll_name_rva.get_rel(), p_dll_name_nalloc, buf);
-        delete[] buf;
+    } else if (p_dll_name_nalloc > 0) {
+        std::vector<uint8_t> buf(p_dll_name_nalloc, 0);
+        memcpy(&buf[0], p_dll_name->get_string().c_str(), p_dll_name->get_string().size());
+        p_dll_name_rva.get_section()->write(f, p_dll_name_rva.get_rel(), p_dll_name_nalloc, &buf[0]);
     }
 
     /* Import Lookup Table and Import Address Table (and indirectly, Hint/Name entries). According to the PE secification: "The

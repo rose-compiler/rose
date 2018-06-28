@@ -3,6 +3,7 @@ add_library(midend_binary OBJECT
   AbstractLocation.C
   BinaryBestMapAddress.C
   BinaryCallingConvention.C
+  BinaryCodeInserter.C
   BinaryControlFlow.C
   BinaryDataFlow.C
   BinaryDemangler.C
@@ -63,6 +64,7 @@ install(
     BinaryAnalysisUtils.h
     BinaryBestMapAddress.h
     BinaryCallingConvention.h
+    BinaryCodeInserter.h
     BinaryControlFlow.h
     BinaryDataFlow.h
     BinaryDemangler.h
@@ -111,6 +113,8 @@ install(
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/TestSemantics2.h
     instructionSemantics/TraceSemantics2.h
-    libraryIdentification/functionIdentification.h
+    libraryIdentification/FunctionIdDatabaseInterface.h  
+    libraryIdentification/FunctionInfo.h  
     libraryIdentification/libraryIdentification.h
+    libraryIdentification/LibraryInfo.h    
   DESTINATION include)
