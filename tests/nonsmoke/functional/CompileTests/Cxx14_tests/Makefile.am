@@ -159,6 +159,27 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 print_testcodes:
 	echo $(TESTCODES)
 
+######
+# Try to use RTH here
+
+TEST_TRANSLATOR = ../../testTranslator
+
+TEST_Sources = $(addsuffix .passed, $(TESTCODES_REQUIRED_TO_PASS))
+
+$(TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+if !ROSE_USE_INSURE
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) -rose:suppress_variable_declaration_normalization -rose:skipfinalCompileStep $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
+else
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+endif
+
 check-local:
 # DQ (2/19/2017): NEW VERSION OF LOGIC
 # DQ (2/18/2017): More specific logic required for portability.
@@ -177,7 +198,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 # Exclude these tests on GNU 4.9 and later compilers).
 if ROSE_USING_GCC_VERSION_LATER_5_1
 	@echo "ROSE_USING_GCC_VERSION_LATER_5_1 == true"
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 else # NOT ROSE_USING_GCC_VERSION_LATER_5_1
 	@echo "ROSE_USING_GCC_VERSION_LATER_5_1 == true (requires GNU 5.1 or later version of GNU compiler)"
 endif # ROSE_USING_GCC_VERSION_LATER_5_1
@@ -197,7 +218,7 @@ else # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 	@echo "USING_INTEL_COMPILER == true"
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 	@echo "USING_INTEL_COMPILER == false"
