@@ -1820,6 +1820,7 @@ struct IP_fp_mul: P {
         ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
         SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
         SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
+        ASSERT_not_null(dstType);
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
         SValuePtr a;
         if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {

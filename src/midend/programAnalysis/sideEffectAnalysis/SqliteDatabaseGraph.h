@@ -650,9 +650,9 @@ DBG_TEMPLATE_DEF void DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDOTFile(std::s
 
         dbgType *tG = dynamic_cast<dbgType *>( this );
         write_graphviz( fileout, *this, 
-                        make_vertex_attributes_writer(*tG),
-                        make_edge_attributes_writer(*tG),
-                        make_graph_attributes_writer(*tG) );
+                        boost::make_vertex_attributes_writer(*tG),
+                        boost::make_edge_attributes_writer(*tG),
+                        boost::make_graph_attributes_writer(*tG) );
         
         fileout.close();
 }
@@ -665,7 +665,7 @@ DBG_TEMPLATE_DEF void DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDOTFile(std::s
 DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchVertex(VertexType &node, dbgVertex &vdesc) const
 {
         typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
-        tie(vi,vend) = vertices( *this );
+        boost::tie(vi,vend) = vertices( *this );
         for(; vi!=vend; vi++) {
                 if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == node.get_id() ) {
                         vdesc = *vi;
@@ -683,7 +683,7 @@ DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchVertex(VertexTy
 DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchEdge(EdgeType &edge, dbgEdge &edesc) const
 {
         typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
-        tie(ei,eend) = edges( *this );
+        boost::tie(ei,eend) = edges( *this );
         // milki (06/23/2010) edge_iterators use preincrement
         for(; ei!=eend; ++ei) {
                 if( get( boost::edge_dbg_data,  *this , *ei).get_id() == edge.get_id() ) {
@@ -921,7 +921,7 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
     edge.load(r6);
                 bool parFound = false, succFound = false;
                 typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
-                tie(vi,vend) = vertices( *this );
+                boost::tie(vi,vend) = vertices( *this );
                 typename boost::graph_traits< dbgType >::vertex_descriptor par=*vi, succ=*vi;
 
                 for(; vi!=vend; vi++) {
@@ -994,7 +994,7 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDatabase( void 
 
         // save node IDs
         typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
-        tie(vi,vend) = vertices( *this );
+        boost::tie(vi,vend) = vertices( *this );
         for(; vi!=vend; vi++) {
                 cgNode node( gid, 
                                 get( boost::vertex_dbg_data, *this, *vi).get_id(), 
@@ -1011,7 +1011,7 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDatabase( void 
 
         // save edges
         typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
-        tie(ei,eend) = edges( *this );
+        boost::tie(ei,eend) = edges( *this );
         // milki (6/23/2010) edge_iterators use preincrement
         for(; ei!=eend; ++ei) {
     cgEdge edge(gid,

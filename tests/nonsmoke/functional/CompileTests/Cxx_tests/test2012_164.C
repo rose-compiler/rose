@@ -22,6 +22,7 @@ main()
       N::A x;
 
   // Note that struct B has a non-defining declaration as a struct in global scope (though it was never declared in global scope).
+  // N::B* y;
      N::B* y;
      N::A::B* y2;
 

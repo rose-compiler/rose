@@ -4028,9 +4028,12 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
        // DQ (6/9/2013): I have incremented this value to support mangled names in the protobuf-2.5.0 application.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
+       // [Robb Matzke 2018-06-19]: Incremented from 8000 to 9000 because <rose.h> has a name that's 8960 characters, namely "__gnu_cxx::new_allocator< _Rb_tree_node< map< ... >
+       //    ::value_type > > ::deallocate".
        // if (memberFunctionNameString.length() > 4000)
        // if (memberFunctionNameString.length() > 8000)
-          if (memberFunctionNameString.length() > 8000)
+       // if (memberFunctionNameString.length() > 8000)
+          if (memberFunctionNameString.length() > 9000)
              {
                printf ("Error: function names should not be this long... memberFunctionNameString.length() = %" PRIuPTR " \n",memberFunctionNameString.length());
 #if 1
@@ -7334,6 +7337,10 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
      SgBinaryOp* arrowExp = isSgArrowExp(varRefExp->get_parent());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgVarRefExp*) \n");
+#endif
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("dotExp = %p arrowExp = %p \n",dotExp,arrowExp);
 #endif
 
@@ -7506,6 +7513,10 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgFunctionRefExp*) \n");
+#endif
 
      string qualifier = setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -7690,6 +7701,10 @@ NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functio
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgMemberFunctionRefExp*) \n");
+#endif
+
      string qualifier = setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
      functionRefExp->set_global_qualification_required(outputGlobalQualification);
@@ -7745,6 +7760,10 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgConstructorInitializer*) \n");
+#endif
 
      string qualifier = setNameQualificationSupport(declaration->get_scope(), amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -7813,6 +7832,10 @@ NameQualificationTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDecla
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgEnumVal*) \n");
+#endif
+
      string qualifier = setNameQualificationSupport(enumDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
      enumVal->set_global_qualification_required(outputGlobalQualification);
@@ -7873,6 +7896,10 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgBaseClass*) \n");
+#endif
 
      string qualifier = setNameQualificationSupport(classDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -7943,6 +7970,10 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
      bool outputTypeEvaluation          = false;
 
   // printf ("\n************************************************ \n");
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgFunctionDeclaration*) \n");
+#endif
 
      string qualifier = setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -8121,6 +8152,10 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualificationReturnType(SgFunctionDeclaration*) \n");
+#endif
+
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -8176,6 +8211,10 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgUsingDeclarationStatement*,SgDeclarationStatement*) \n");
+#endif
 
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -8240,6 +8279,10 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgUsingDeclarationStatement*,SgInitializedName*) \n");
+#endif
+
      string qualifier = setNameQualificationSupport(associatedInitializedName->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
      usingDeclaration->set_global_qualification_required(outputGlobalQualification);
@@ -8277,6 +8320,10 @@ NameQualificationTraversal::setNameQualification ( SgUsingDirectiveStatement* us
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgUsingDirectiveStatement*) \n");
+#endif
 
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -8316,6 +8363,10 @@ NameQualificationTraversal::setNameQualification ( SgNamespaceAliasDeclarationSt
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgNamespaceAliasDeclarationStatement*) \n");
+#endif
 
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -8360,12 +8411,63 @@ NameQualificationTraversal::setNameQualification(SgInitializedName* initializedN
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgInitializedName*) \n");
+#endif
+
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgInitializedName*): qualifier = %s \n",qualifier.c_str());
+#endif
+
+#if 0
+     printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+     printf ("declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
+     printf ("declaration->get_definingDeclaration()         = %p \n",declaration->get_definingDeclaration());
+#endif
+
+  // unsigned int sourceSequenceForInitializedName = initializedName->get_file_info()->get_source_sequence_number();
+  // unsigned int sourceSequenceForTypeDeclaration = declaration->get_file_info()->get_source_sequence_number();
+
+  // DQ (5/15/2018): Test code test2018_65.C demonstrates that we need to suppress the
+  // name qualification of the type if the defining declaration has not been seen yet.
+     unsigned int sourceSequenceForInitializedName = 0;
+     unsigned int sourceSequenceForTypeDeclaration = 0;
+     SgDeclarationStatement* definingDeclaration = declaration->get_definingDeclaration();
+     if (definingDeclaration != NULL)
+        {
+       // If we have a defining declaration, then query the source sequence numbers.
+          ROSE_ASSERT(initializedName->get_file_info() != NULL);
+          ROSE_ASSERT(declaration->get_file_info() != NULL);
+          sourceSequenceForTypeDeclaration = definingDeclaration->get_file_info()->get_source_sequence_number();
+          sourceSequenceForInitializedName = initializedName->get_file_info()->get_source_sequence_number();
+        }
+
+#if 0
+     printf ("sourceSequenceForInitializedName = %u \n",sourceSequenceForInitializedName);
+     printf ("sourceSequenceForTypeDeclaration = %u \n",sourceSequenceForTypeDeclaration);
+#endif
+
+     bool outputNameQualification = sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;
+
+  // DQ (5/15/2018): If this is a SgTemplateInstantiationTypedefDeclaration then output the name qualification.
+     if (isSgTemplateInstantiationTypedefDeclaration(declaration) != NULL)
+        {
+          outputNameQualification = true;
+        }
+
+#if 0
+     printf ("In setNameQualification(SgInitializedName*): outputNameQualification = %s \n",outputNameQualification ? "true" : "false");
+#endif
+
+  // DQ (5/15/2018): Explicitly check for qualifier == "::" (see Cxxx11_tests/test2018_97.C).
   // DQ (8/4/2012): In rare cases we have to eliminate qualification only if it is going to be global qualification.
   // if (skipGlobalQualification == true && qualifier == "::")
-     if (skipGlobalQualification == true)
+  // if (skipGlobalQualification == true)
+  // if (skipGlobalQualification == true && qualifier == "::")
+     if (skipGlobalQualification == true && outputNameQualification == false)
         {
 // #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -8440,6 +8542,10 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualificationOnName(SgInitializedName*) \n");
+#endif
+
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -8449,7 +8555,7 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
         {
 // #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("In NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName): skipGlobalQualification has caused global qualification to be ignored \n");
+          printf ("In NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initializedName): skipGlobalQualification has caused global qualification to be ignored \n");
 #endif
           qualifier = "";
 
@@ -8472,9 +8578,9 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
      ROSE_ASSERT(outputTypeEvaluation == false);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("In NameQualificationTraversal::setNameQualification(): initializedName->get_name_qualification_length_for_type()     = %d \n",initializedName->get_name_qualification_length_for_type());
-     printf ("In NameQualificationTraversal::setNameQualification(): initializedName->get_type_elaboration_required_for_type()     = %s \n",initializedName->get_type_elaboration_required_for_type() ? "true" : "false");
-     printf ("In NameQualificationTraversal::setNameQualification(): initializedName->get_global_qualification_required_for_type() = %s \n",initializedName->get_global_qualification_required_for_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualificationOnName(): initializedName->get_name_qualification_length_for_type()     = %d \n",initializedName->get_name_qualification_length_for_type());
+     printf ("In NameQualificationTraversal::setNameQualificationOnName(): initializedName->get_type_elaboration_required_for_type()     = %s \n",initializedName->get_type_elaboration_required_for_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualificationOnName(): initializedName->get_global_qualification_required_for_type() = %s \n",initializedName->get_global_qualification_required_for_type() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(initializedName) == qualifiedNameMapForNames.end())
@@ -8523,6 +8629,10 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgVariableDeclaration*) \n");
+#endif
 
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
@@ -8584,6 +8694,10 @@ NameQualificationTraversal::setNameQualification(SgTypedefDeclaration* typedefDe
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgTypedefDeclaration*) \n");
+#endif
 
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
@@ -8660,6 +8774,10 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgTemplateArgument*) \n");
+#endif
 
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
@@ -8880,6 +8998,10 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
   // DQ (11/22/2016): Added assertion.
      ROSE_ASSERT(typeDeclaration != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgExpression*) \n");
+#endif
+
      string qualifier = setNameQualificationSupport(typeDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
      exp->set_global_qualification_required(outputGlobalQualification);
@@ -9014,6 +9136,10 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
      int  outputNameQualificationLength = 0;
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgClassDeclaration*) \n");
+#endif
 
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(classDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);

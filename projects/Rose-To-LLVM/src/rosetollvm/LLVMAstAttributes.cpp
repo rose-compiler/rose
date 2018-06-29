@@ -1,8 +1,11 @@
 #include <complex>
 #include <rosetollvm/LLVMAstAttributes.h>
+#include <rosetollvm/CodeAttributesVisitor.h>
+#include <rosetollvm/ConstantIntegerEvaluator.h>
 
 #include <llvm/ADT/ArrayRef.h>
 #include <llvm/BinaryFormat/Dwarf.h> // For LLVMDebugVersion
+#include <llvm/IR/Metadata.h>
 
 #ifdef HAVE_LOOPUNROLLER_BUNDLEATTRIBUTE_H
 #  include <loopunroller/bundleAttribute.h>
@@ -191,6 +194,49 @@ const string LLVMAstAttributes::getTemp(TEMP_KIND k) {
     }
     out << (k == TEMP_INT ? tmp_int_count++ : tmp_count++);
     return out.str();
+}
+
+
+/**
+ * Rose has a function type -> isUnsignedType() that is supposed to yield the same result
+ * as this function. However, it has a bug and does not include the type: unsigned long.
+ */
+bool LLVMAstAttributes::isUnsignedType(SgType *type) {
+    return type -> isUnsignedType() || isSgTypeUnsignedLong(type);
+}
+
+
+/**
+ * The type might be encapsulated in an SgModifierType.
+ */
+bool LLVMAstAttributes::isFloatType(SgType *type) {
+    return this -> getSourceType(type) -> isFloatType();
+}
+
+/**
+ * The type might be encapsulated in an SgModifierType.
+ */
+bool LLVMAstAttributes::isIntegerType(SgType *type) {
+    type = this -> getSourceType(type);
+    return (type -> isIntegerType() || isSgEnumType(type));
+}
+
+/**
+ * The type might be encapsulated in an SgModifierType.
+ */
+bool LLVMAstAttributes::isBooleanType(SgType *type) {
+    type = this -> getSourceType(type);
+    return isSgTypeBool(type);
+}
+
+
+
+/**
+ * Checks whether the type is a typedef whose name starts with "valign_"
+ */
+bool LLVMAstAttributes::isValignType(SgType *type) {
+    SgTypedefType * t = dynamic_cast<SgTypedefType *> (type);
+    return (t && (t -> get_name().getString().find("valign_") == 0));
 }
 
 
@@ -568,16 +614,26 @@ cout.flush();
             //
             //            SgUnsignedLongVal *specified_size = isSgUnsignedLongVal(array_type -> get_index());
             //            size_t array_size = (specified_size ? specified_size -> get_value() : 1); // compute number of elements in this array.
-            SgIntVal *specified_size = isSgIntVal(array_type -> get_index());
+            ConstantIntegerEvaluator evaluator(this);
+            ConstantValue x = evaluator.traverse(array_type -> get_index());
+            size_t array_size = (x.hasIntValue() ? (size_t) x.int_value : 0);
+
 // TODO: Remove this !!!
 /*
 cout
-  << "*** The type of this array dimension is "
+  << "*** The type of the dimension of array "
+  <<  array_type -> get_name().getString()
+  << " is "
   << (array_type -> get_index() ? array_type -> get_index() -> class_name() : " NULL???")
+  << "; its value is "
+  << array_size
   << endl;
 cout.flush();
 */
-            size_t array_size = (specified_size ? specified_size -> get_value() : 0); // compute number of elements in this array.
+            if (x.hasIntValue() && x.int_value > 0) {
+                control.SetAttribute(array_type -> get_index(), Control::LLVM_CONSTANT_VALUE, new IntAstAttribute(x.int_value));
+            }
+
             int element_size = ((IntAstAttribute *) element_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
             std::ostringstream out;
             out << "[" << array_size << " x " << element_type_name << "]";
@@ -603,14 +659,22 @@ cout.flush();
             SgFunctionType *n = isSgFunctionType(type);
 // TODO: Remove this !!!
 /*
+cout
+  << "*** Processing function type "
+  << n -> get_mangled().getString()
+  << endl;
+cout.flush();
 SgSymbol *symbol = n -> get_symbol_from_symbol_table();
 if (symbol) {
-  cout << "*** Processing symbol "
+  cout << "*** Processing function symbol "
        << symbol -> get_name().getString()
+       << " with declaratiom "
+       << (n -> getAssociatedDeclaration() ? n -> getAssociatedDeclaration() -> class_name() : "?")
        << endl;
 }
 else {
-  cout << "*** Did not find function symbol!"
+  cout << "*** Did not find function symbol but declaration is "
+       << (n -> getAssociatedDeclaration() ? n -> getAssociatedDeclaration() -> class_name() : "?")
        << endl;
 }
 cout.flush();
@@ -665,20 +729,28 @@ cout.flush();
              */
 // TODO: Remove this !!!
 /*
+SgSymbol *symbol = n -> get_symbol_from_symbol_table();
 if (n -> get_has_ellipses()) {    
-  cout << "*** This function has ellipsis"
+  cout << "*** The function "
+       << (symbol ? symbol -> get_name().getString() : "?")
+       << " has ellipsis"
        << endl;
 }
 else {
-  cout << "*** No ellipsis found"
+  cout << "*** No ellipsis found for "
+       << (symbol ? symbol -> get_name().getString() : "?")
        << endl;
 }
 if (n -> attributeExists(Control::LLVM_COMPILER_GENERATED)) { // this function was declared inside a block?
-  cout << "*** This function is compiler-generated"
+  cout << "*** Function "
+       << (symbol ? symbol -> get_name().getString() : "?")
+       << " is compiler-generated"
        << endl;
 }
-else {
-  cout << "*** No ellipsis found"
+else { // this function was declared inside a block?
+  cout << "*** Function "
+       << (symbol ? symbol -> get_name().getString() : "?")
+       << " is NOT compiler-generated"
        << endl;
 }
 cout.flush();
@@ -1144,6 +1216,7 @@ std::string LLVMAstAttributes::addDebugMetadata(SgNode const *node, FunctionAstA
             fun_name = fun_decl->get_name().getString();
         }
     }
+
     // A lot of the values in the following structure are dummy value. Lets hope
     // we get away with that. Fixing the FIXMEs would require having the current
     // function available.
