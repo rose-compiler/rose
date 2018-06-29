@@ -20,6 +20,10 @@ void DeadCodeAnalysis::setOptionSystemHeaders(bool flag) {
   optionSystemHeaders=flag;
 }
 
+void DeadCodeAnalysis::setOptionFilePath(bool flag) {
+  optionFilePath=flag;
+}
+
 void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* intervalAnalyzer,
                                                       string csvDeadCodeUnreachableFileName) {
   ofstream deadCodeCsvFile;
@@ -53,7 +57,13 @@ void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* i
             if(lineNr>0) {
               deadCodeCsvFile << lineNr;
               deadCodeCsvFile <<","<< colNr;  
-              deadCodeCsvFile <<","<<fileName;
+              if(optionFilePath) {
+                deadCodeCsvFile <<","<<fileName;
+              } else {
+                // determine base file name (without path) of given file name (with path)
+                std::string baseFileName = fileName.substr(fileName.find_last_of("/\\")+1);
+                deadCodeCsvFile <<","<<baseFileName;
+              }
               if(optionSourceCode) {
                 deadCodeCsvFile <<","<< SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/");
               }

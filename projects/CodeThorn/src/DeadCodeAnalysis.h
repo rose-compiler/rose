@@ -14,8 +14,7 @@ class DeadCodeAnalysis {
   void setOptionTrace(bool flag);
   void setOptionSourceCode(bool flag);
   void setOptionSystemHeaders(bool flag);
-  // checks whether fileId is one of the input files. Initiales data structures on first call to this function.
-  bool isInputFileId(int fileId);
+  void setOptionFilePath(bool flag);
  private:
   bool option_trace=false;
   // generates the source of the dead statement as last entry in the csv file
@@ -23,7 +22,8 @@ class DeadCodeAnalysis {
   // generates deadcode reports also for system headers. If false
   // system headers are excluded from the dead code report.
   bool optionSystemHeaders=false;
-  // exclude any dead code found in the following header files
+  // report the file's path in the deadcode report
+  bool optionFilePath=false;
   std::unordered_set<string> excludedHeaders={"bits/byteswap.h"};
 };
 

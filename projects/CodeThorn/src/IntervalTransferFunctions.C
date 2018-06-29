@@ -196,11 +196,15 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
   int paramNr=0;
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   // TODO: handle external function call: do not add paramters and model pointer arguments
-  cout<<"DEBUG: label: "<<lab.toString()<<" is-external: "<<getLabeler()->isExternalFunctionCallLabel(lab)<<endl;
+  //cout<<"DEBUG: label: "<<lab.toString()<<" is-external: "<<getLabeler()->isExternalFunctionCallLabel(lab)<<endl;
   if(getLabeler()->isExternalFunctionCallLabel(lab)) {
-    cout<<"DEBUG: external function call detected: "<<callExp->unparseToString()<<endl;
+    //cout<<"DEBUG: external function call detected: "<<callExp->unparseToString()<<endl;
+    // arguments must be processed for worst-case assumptions: any pointer/address passed can be used by external function to potentially modifiy reachable memory cells
+    // an external function my modify any address-taken variable in the program (including global variables)
+    SPRAY::PointerAnalysisInterface* pa=getPointerAnalysisInterface();
+    ips.topifyVariableSet(pa->getModByPointer());
   } else {
-    cout<<"DEBUG: function call detected: "<<callExp->unparseToString()<<endl;
+    //cout<<"DEBUG: function call detected: "<<callExp->unparseToString()<<endl;
     for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
       VariableId paramId=getParameterVariableId(paramNr);
       ips.addVariable(paramId);
@@ -219,7 +223,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
     cerr<<"Error: transferFunctionCallReturn: compound assignment of function call results not supported. Normalization required."<<endl;
     exit(1);
   }
-  // determine variable-id of dedivated variable for holding the return value
+  // determine variable-id of dedicated variable for holding the return value
   VariableId resVarId=getResultVariableId();
   if(lhsVar!=0) {
     //cout<<"DEBUG: updated var=f(...)."<<endl;

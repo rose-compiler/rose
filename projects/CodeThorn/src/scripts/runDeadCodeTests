@@ -13,7 +13,7 @@ echo "------------------------------------------------"
 BENCH_PASS=0
 BENCH_FAIL=0
 
-testNumbers=`echo {001..012}`
+testNumbers=`echo {001..013}`
 echo "Scheduled tests: $testNumbers"
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/DC${testNumber};
@@ -23,7 +23,7 @@ for testNumber in $testNumbers; do
         rm -f test${p}_col1.csv
         benchmarkname=$(basename $benchmark)
         echo -n "Testing $benchmarkname : "
-        ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --normalizefcalls --ignore-unknown-functions > /dev/null
+        ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --normalizefcalls --ignore-unknown-functions --report-only-file-name > /dev/null
         #diff tmptest.csv $TESTDIR/$benchmarkname.csv
         cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
         cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv
@@ -37,5 +37,4 @@ for testNumber in $testNumbers; do
         fi
     done
 done
-exit
 rm -rf DC*.csv
