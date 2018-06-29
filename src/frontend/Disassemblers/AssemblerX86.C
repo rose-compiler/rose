@@ -53,6 +53,7 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
         }
         case V_SgAsmFloatValueExpression: {
             SgAsmFloatValueExpression *ee = isSgAsmFloatValueExpression(e);
+            ASSERT_not_null(ee);
             fprintf(f, "FloatValue {value=%g", ee->get_nativeValue());
             printSgAsmExpression(f, e, prefix, V_SgAsmValueExpression);
             fprintf(f, "}");

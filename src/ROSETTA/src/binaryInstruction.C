@@ -12022,8 +12022,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -12032,45 +12030,312 @@ void Grammar::setUpBinaryInstructions() {
      *************************************************************************************************************************/
 
     NEW_TERMINAL_MACRO(AsmCoffSymbolTable, "AsmCoffSymbolTable", "AsmCoffSymbolTableTag");
-    AsmCoffSymbolTable.setFunctionPrototype("HEADER_PE_COFF_SYMBOL_TABLE", "../Grammar/BinaryInstruction.code");
-    AsmCoffSymbolTable.setDataPrototype("SgAsmGenericSection*", "strtab", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbolTable.setDataPrototype("SgAsmCoffSymbolList*", "symbols", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    AsmCoffSymbolTable.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCoffSymbolTable);
 
+#ifdef DOCUMENTATION
+    /** COFF symbol table.
+     *
+     *  This is a symbol table used by Microsoft PE format. */
+    class SgAsmCoffSymbolTable: public SgAsmGenericSection {
+    public:
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: String table.
+         *
+         *  Table that holds the strings for the symbol names.
+         *
+         * @{ */
+        SgAsmGenericSection* get_strtab() const;
+        void set_strtab(SgAsmGenericSection*);
+        /** @} */
+#else
+        AsmCoffSymbolTable.setDataPrototype("SgAsmGenericSection*", "strtab", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: List of symbols.
+         *
+         * @{ */
+        SgAsmCoffSymbolList* get_symbols() const;
+        void set_symbols(SgAsmCoffSymbolList*);
+        /** @} */
+#else
+        AsmCoffSymbolTable.setDataPrototype("SgAsmCoffSymbolList*", "symbols", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCoffSymbolTable);
+#if defined(SgAsmCoffSymbolTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_strtab);
+            s & BOOST_SERIALIZATION_NVP(p_symbols);
+        }
+#endif
+
+    public:
+        explicit SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr) {ctor();}
+        size_t get_nslots() const;
+        virtual SgAsmCoffSymbolTable *parse() $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
+    private:
+        void ctor();
+#endif // SgAsmCoffSymbolTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     NEW_TERMINAL_MACRO(AsmCoffSymbolList, "AsmCoffSymbolList", "AsmCoffSymbolListTag");
-    AsmCoffSymbolList.setDataPrototype("SgAsmCoffSymbolPtrList", "symbols", "",
-                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    AsmCoffSymbolList.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCoffSymbolList);
+
+#ifdef DOCUMENTATION
+    /** List of COFF symbols. */
+    class SgAsmCoffSymbolList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of symbol pointers.
+         *
+         * @{ */
+        const SgAsmCoffSymbolPtrList& get_symbols() const;
+        void set_symbols(const SgAsmCoffSymbolPtrList&);
+        /** @} */
+#else
+        AsmCoffSymbolList.setDataPrototype("SgAsmCoffSymbolPtrList", "symbols", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCoffSymbolList);
+#if defined(SgAsmCoffSymbolList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
 
 
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_symbols);
+        }
+#endif
+#endif // SgAsmCoffSymbolList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_TERMINAL_MACRO(AsmCoffSymbol, "AsmCoffSymbol", "AsmCoffSymbolTag");
-    AsmCoffSymbol.setFunctionPrototype("HEADER_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
+    AsmCoffSymbol.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCoffSymbol);
     AsmCoffSymbol.setFunctionSource("SOURCE_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
-    AsmCoffSymbol.setDataPrototype("std::string", "st_name", "= \"\"",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("rose_addr_t", "st_name_offset", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("int", "st_section_num", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("unsigned", "st_type", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("unsigned", "st_storage_class", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("unsigned", "st_num_aux_entries", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("SgUnsignedCharList", "aux_data", "",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#ifdef DOCUMENTATION
+    /** COFF symbol. */
+    class SgAsmCoffSymbol: public SgAsmGenericSymbol {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol name.
+         *
+         *  @{ */
+        const std::string& get_st_name() const;
+        void set_st_name(const std::string&)
+        /** @} */
+#else
+            AsmCoffSymbol.setDataPrototype("std::string", "st_name", "= \"\"",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol name offset.
+         *
+         * @{ */
+        rose_addr_t get_st_name_offset() const;
+        void set_st_name_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("rose_addr_t", "st_name_offset", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Section number.
+         *
+         * @{ */
+        int get_st_section_num() const;
+        void set_st_section_num(int);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("int", "st_section_num", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol type constant.
+         *
+         * @{ */
+        unsigned get_st_type() const;
+        void set_st_type(unsigned);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("unsigned", "st_type", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol storage class.
+         *
+         * @{ */
+        unsigned get_st_storage_class() const;
+        void set_st_storage_class(unsigned);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("unsigned", "st_storage_class", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of auxilliary entries.
+         *
+         * @{ */
+        unsigned get_st_num_aux_entries() const;
+        void set_st_num_aux_entries(unsigned);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("unsigned", "st_num_aux_entries", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Auxilliary data.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_aux_data() const;
+        void set_aux_data(const SgUnsignedCharList&);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("SgUnsignedCharList", "aux_data", "",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCoffSymbol);
+#if defined(SgAsmCoffSymbol_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSymbol);
+            s & BOOST_SERIALIZATION_NVP(p_st_name);
+            s & BOOST_SERIALIZATION_NVP(p_st_name_offset);
+            s & BOOST_SERIALIZATION_NVP(p_st_section_num);
+            s & BOOST_SERIALIZATION_NVP(p_st_type);
+            s & BOOST_SERIALIZATION_NVP(p_st_storage_class);
+            s & BOOST_SERIALIZATION_NVP(p_st_num_aux_entries);
+            s & BOOST_SERIALIZATION_NVP(p_aux_data);
+        }
+#endif
+        
+    public:
+
+        static const unsigned int COFFSymbol_disk_size = 18;
+
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        struct COFFSymbol_disk {
+            union {
+                char            st_name[8];
+                struct {
+                    uint32_t    st_zero;
+                    uint32_t    st_offset;
+                };
+            };
+            uint32_t            st_value;
+            int16_t             st_section_num;
+            uint16_t            st_type;
+            unsigned char       st_storage_class;
+            unsigned char       st_num_aux_entries;
+        }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
+        void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
+        virtual void dump(FILE *f, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+    
+    private:
+        void ctor(SgAsmPEFileHeader*, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
+#endif // SgAsmCoffSymbol_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_TERMINAL_MACRO(AsmCoffStrtab, "AsmCoffStrtab", "AsmCoffStrtabTag");
-    AsmCoffStrtab.setFunctionPrototype("HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
+    AsmCoffStrtab.setCppCondition("!defined(DOCUMENTATION)");
     AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
+    IS_SERIALIZABLE(AsmCoffStrtab);
 
+#ifdef DOCUMENTATION
+    /** COFF symbol string table. */
+    class SgAsmCoffStrtab: public SgAsmGenericStrtab {
+    public:
+#endif
 
+        DECLARE_OTHERS(AsmCoffStrtab);
+#if defined(SgAsmCoffStrtab_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
+        }
+#endif
+        
+    public:
+        explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section)
+            : SgAsmGenericStrtab(containing_section) {}
+        virtual ~SgAsmCoffStrtab();
+        virtual void unparse(std::ostream&) const;
+        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) $ROSE_OVERRIDE;
+        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) $ROSE_OVERRIDE;
+#endif // SgAsmCoffStrtab_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
     /*************************************************************************************************************************
      *                                         NE File Header
