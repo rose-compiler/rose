@@ -24,10 +24,10 @@ for testNumber in $testNumbers; do
         benchmarkname=$(basename $benchmark)
         echo -n "Testing $benchmarkname : "
         ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --normalizefcalls --ignore-unknown-functions --report-only-file-name > /dev/null
-        #diff tmptest.csv $TESTDIR/$benchmarkname.csv
-        cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
-        cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv
-        diff $benchmarkname.line.csv ${benchmarkname}_ref.line.csv
+        diff $benchmarkname.csv $TESTDIR/$benchmarkname.csv
+        #cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
+        #cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv
+        #diff $benchmarkname.line.csv ${benchmarkname}_ref.line.csv
         if [ ! $? -eq 0 ]
         then
 	    echo "FAIL"
