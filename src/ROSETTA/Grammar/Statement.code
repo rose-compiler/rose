@@ -8161,6 +8161,12 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
      printf ("In resetTemplateNamesInScope: traversing through parent scopes (scope = %p = %s) \n",scope,scope->class_name().c_str());
 #endif
 
+#if 0
+  // DQ (6/30/2018): Returning from top of function to test infinit loop over declarations in typedef base types.
+     printf ("In resetTemplateNamesInScope: Skipping body of function, return \n");
+     return;
+#endif
+
   // DQ (7/24/2017): Allow both SgGlobal and SgDeclarationScope to be stoping criteria for this iteration.
   // Unless this causes name collissions because we truncated the scope names.
   // while ( scope != NULL && isSgGlobal(scope) == NULL )
@@ -8310,7 +8316,8 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
      string returnName;
 
 #if 0
-     printf ("$$$$$$$$$$$$$$ In resetTemplateNameSupport(): this = %p = %s \n",this,this->class_name().c_str());
+  // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
+     printf ("$$$$$$$$$$$$$$ In resetTemplateNameSupport(): this = %p = %s name = %s \n",this,this->class_name().c_str(),name.str());
 #endif
 
 #if 0
@@ -8361,6 +8368,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
           nameResetFromMangledForm = true;
 
 #if 0
+       // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
           printf ("In resetTemplateNameSupport(): Calling resetTemplateNamesInScope(): parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
 #endif
 
@@ -8369,6 +8377,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
           resetTemplateNamesInScope(parentScope);
 
 #if 0
+       // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
           printf ("DONE: In resetTemplateNameSupport(): Calling resetTemplateNamesInScope(): parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
 #endif
 
@@ -8628,6 +8637,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                              while (true)
                                                 {
 #if 0
+                                               // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                   printf ("In while(true) loop over all modifiers: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
 #endif
                                                   if ( (modType = isSgModifierType(currentType)) )
@@ -8737,11 +8747,30 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                                        SgScopeStatement* typedefScope = typedefDeclaration->get_scope();
                                                        ROSE_ASSERT(typedefScope != NULL);
 #if 0
+                                                    // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                        printf ("In resetTemplateName: traversing through parent scopes to reset any instantiated template names: typedefScope = %p = %s \n",
                                                             typedefScope,typedefScope->class_name().c_str());
 #endif
-                                                       resetTemplateNamesInScope(typedefScope);
+
+                                                    // DQ (6/30/2018): Detect an break cycles in typedefs (debugging test2018_118.C).
+                                                    // resetTemplateNamesInScope(typedefScope);
+                                                       static std::set<SgScopeStatement*> scopeSet;
+                                                       if (scopeSet.find(typedefScope) == scopeSet.end())
+                                                          {
+                                                            scopeSet.insert(typedefScope);
+                                                            resetTemplateNamesInScope(typedefScope);
+                                                          }
+                                                         else
+                                                          {
 #if 0
+                                                         // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
+                                                            printf ("In resetTemplateName: scope was previously seen: typedefScope = %p = %s \n",typedefScope,typedefScope->class_name().c_str());
+#endif
+                                                         // Exit the while(true){} loop!
+                                                            break;
+                                                          }
+#if 0
+                                                    // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                     // DQ (10/24/2015): When we are in an infinite loop (current bug) we never get to this location in the code (I think). 
                                                        printf ("DONE: In resetTemplateName: traversing through parent scopes to reset any instantiated template names: typedefScope = %p = %s \n",
                                                             typedefScope,typedefScope->class_name().c_str());
@@ -8757,6 +8786,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
                                                   ROSE_ASSERT(currentType != NULL);
 #if 0
+                                               // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                   printf ("END OF WHILE LOOP: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
 #endif
                                                 }
@@ -8794,6 +8824,9 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                           // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                                              static int count = 0;
+
+                                          // DQ (6/30/2018): Debuging infinite loop in test2018_117.C.
+                                          // if (count++ % 1 == 0)
                                              if (count++ % 100 == 0)
                                                 {
                                                   printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a SgTemplateType ... (nothing done in this case) \n");
@@ -9133,6 +9166,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
         }
 
 #if 0
+  // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
      printf ("$$$$$$$$$$$$$$ Leaving SgDeclarationStatement::resetTemplateNameSupport(): name = %s \n",name.str());
 #endif
    }
@@ -14647,6 +14681,11 @@ SgTemplateInstantiationDecl::set_definition( SgClassDefinition* definition )
 void
 SgTemplateInstantiationDecl::resetTemplateName ()
    {
+#if 0
+  // DQ (6/30/2018): Adding debugging for infinite loop in test2018_117.C.
+     printf ("In SgTemplateInstantiationDecl::resetTemplateName(): calling resetTemplateNameSupport(): p_nameResetFromMangledForm = %s p_name = %s \n",p_nameResetFromMangledForm ? "true" : "false",p_name.str());
+#endif
+
   // local version of function to support generation of template names
      resetTemplateNameSupport (p_nameResetFromMangledForm,p_name);
    }
@@ -16636,6 +16675,9 @@ SgName
 SgTypedefDeclaration::get_mangled_name (void) const
    {
 #if 0
+     printf ("In SgTypedefDeclaration::get_mangled_name(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+#if 0
   // Ask for a mangled name from the base type
      SgType* baseType = get_base_type();
      SgName mangledName;
@@ -16733,14 +16775,48 @@ SgTypedefDeclaration::get_mangled_name (void) const
 #endif
                mangleQualifiersString = mangleQualifiers(scope);
 #if 0
-               printf ("DONE: In SgTypedefDeclaration::get_mangled_name(): scope = %p = %s (calling mangleQualifiers()) \n",scope,scope->class_name().c_str());
+               printf ("DONE: In SgTypedefDeclaration::get_mangled_name(): mangleQualifiersString = %s scope = %p = %s (calling mangleQualifiers()) \n",mangleQualifiersString.c_str(),scope,scope->class_name().c_str());
 #endif
              }
 
        // DQ (9/6/2016): We require a prefix to the name to avoid name collisions (see test2005_199.C and simplified test (but non-failing) in test2016_60.C).
        // mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
           SgName prefixed_name = "typedef_" + get_name();
-          mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseType->get_mangled();
+
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): prefixed_name = %s \n",prefixed_name.str());
+#endif
+
+       // DQ (6/30/2018): I think the call to the baseType->get_mangled() is the cause of the infinite loop in test2018_118.C.
+       // mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseType->get_mangled();
+       // SgName baseTypeMangleName = baseType->get_mangled();
+
+          static int base_type_counter = 0;
+          static std::set<SgType*> baseTypeSet;
+
+          SgName baseTypeMangleName;
+          if (baseTypeSet.find(baseType) == baseTypeSet.end())
+             {
+               baseTypeSet.insert(baseType);
+               baseTypeMangleName = baseType->get_mangled();
+             }
+            else
+             {
+            // Avoid infinite recursion in computation of mangled names.
+               baseTypeMangleName = "_previously_seen_baseType_" + Rose::StringUtility::numberToString(baseType);
+             }
+
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): calling baseType->get_mangled(): base_type_counter = %d baseType = %p = %s \n",base_type_counter++,baseType,baseType->class_name().c_str());
+#endif
+
+#if 0
+          printf ("DONE: In SgTypedefDeclaration::get_mangled_name(): calling baseType->get_mangled(): baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): baseTypeMangleName = %s \n",baseTypeMangleName.str());
+#endif
+          mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseTypeMangleName;
 
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";
@@ -16748,6 +16824,9 @@ SgTypedefDeclaration::get_mangled_name (void) const
           printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
           ROSE_ASSERT (mangledName.get_length() > 0);
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): calling SageInterface::addMangledNameToCache(): mangledName = %s \n",mangledName.str());
+#endif
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTypedefDeclaration*>(this),mangledName);

@@ -4005,6 +4005,16 @@ SgTypedefType::get_mangled (void) const
   // DQ (5/23/2018): Added debugging support for infinite loop bug.
      printf ("In SgTypedefType::get_mangled(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),decl->get_name().str());
 #endif
+#if 0
+     if (decl->get_file_info() != NULL)
+        {
+          printf ("   --- typedef source position: decl = %p line = %d \n",decl,decl->get_file_info()->get_line());
+        }
+       else
+        {
+          printf ("   --- typedef source position: line = (unknown) \n");
+        }
+#endif
 
      return decl->get_mangled_name();
    }
