@@ -3488,9 +3488,12 @@ HEADER_USE_STATEMENT_END
 HEADER_STOP_OR_PAUSE_STATEMENT_START
      public:
        // Rasmussen (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
+       // Rasmussen (5/21/2018): Added e_abort for Jovial, perhaps should rethink naming
+       //                        of SgStopOrPauseStatement (or create new node?)
           enum stop_or_pause_enum
              {
                e_unknown,
+               e_abort,
                e_stop,
                e_error_stop,
                e_exit,
@@ -8529,11 +8532,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                  // that were explicit in the source code.  Only meaningful for function 
                  // and member function template arguments.
                     bool templateArgumentWasExplicitlySpecified = (*i)->get_explicitlySpecified();
-                 // bool templateArgumentWasExplicitlySpecified = true;
-                 // if (templateArgumentWasExplicitlySpecified == true)
                     bool outputTemplateArgument = false;
-                    if ( (functionTemplateArguments == false) || 
-                         ( (functionTemplateArguments == true) && (templateArgumentWasExplicitlySpecified == true) ) )
+                    if ( ( (*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) &&
+                         ( (functionTemplateArguments == false) || 
+                         ( (functionTemplateArguments == true) && (templateArgumentWasExplicitlySpecified == true) ) ) )
                        {
                          outputTemplateArgument = true;
                        }

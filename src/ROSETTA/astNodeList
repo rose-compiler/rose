@@ -741,6 +741,7 @@ SgUntypedNullExpression
 SgUntypedExprListExpression
 SgUntypedFunctionCallOrArrayReferenceExpression
 SgUntypedStatement
+SgUntypedLabelStatement
 SgUntypedNamedStatement
 SgUntypedExpressionStatement
 SgUntypedAssignmentStatement
@@ -770,6 +771,7 @@ SgUntypedGotoStatement
 SgUntypedProcedureCallStatement
 SgUntypedReturnStatement
 SgUntypedExtendedReturnStatement
+SgUntypedStopStatement
 SgUntypedAcceptStatement
 SgUntypedEntryCallStatement
 SgUntypedRequeueStatement

@@ -307,6 +307,9 @@ namespace OmpSupport
       virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
           return CUSTOM_OWNERSHIP;
       }
+      // MS2018: added to fix warning
+      virtual std::string attribute_class_name() const;
+      virtual OmpAttributeList* copy();
   };                      
 
   //! One attribute object stores all information within an OpenMP pragma (directive and clauses)
