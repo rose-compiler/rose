@@ -31,6 +31,11 @@ namespace CppStdUtilities {
   // regular expression 'regex' (e.g. "a,b,c" is split into a vector
   // of 3 strings)
   std::vector<std::string> splitByRegex(const std::string& input, const std::string& regex);
+
+  // is true if string 'postfix' is a costfix of string 's'.
+  // e.g. "bba" is a postfix of "cccbba"
+  bool isPostfix(std::string const &postfix, std::string const &s);
+  
 }
 
 #endif

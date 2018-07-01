@@ -22,6 +22,7 @@ F90_TESTCODES = \
  R1120a.f90 \
  R404_a.f90 \
  R521.f90   \
+ R719a.f90  \
  R854.f90   \
  R856.f90   \
  contiguous_attr.f90 \

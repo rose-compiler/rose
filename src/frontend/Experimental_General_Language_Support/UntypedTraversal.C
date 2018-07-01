@@ -16,6 +16,10 @@ UntypedTraversal::UntypedTraversal(SgSourceFile* sourceFile, UntypedConverter* c
 InheritedAttribute
 UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute currentScope)
 {
+#if DEBUG_UNTYPED_TRAVERSAL > 0
+        cout << "Down traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
+#endif
+
    switch (node->variantT())
    {
      case V_SgUntypedFile:
@@ -101,6 +105,12 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          pConverter->convertSgUntypedNameListDeclaration(ut_decl, currentScope);
          break;
       }
+    case V_SgUntypedLabelStatement:
+      {
+         SgUntypedLabelStatement* ut_decl = dynamic_cast<SgUntypedLabelStatement*>(node);
+         pConverter->convertSgUntypedLabelStatement_decl(ut_decl, currentScope);
+         break;
+      }
     case V_SgUntypedNullStatement:
       {
          SgUntypedNullStatement* ut_decl = dynamic_cast<SgUntypedNullStatement*>(node);
@@ -109,7 +119,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
       }
     default:
       {
-#if DEBUG_UNTYPED_TRAVERSAL
+#if DEBUG_UNTYPED_TRAVERSAL > 1
         cout << "Down traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
 #endif
       }
@@ -125,6 +135,10 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
 // Synthesized attribute is an expression initialized to NULL for when an expression is a statement.
 // Statements are added to the scope and don't need to be returned as an attribute.
    SynthesizedAttribute sg_expr = NULL;   
+
+#if DEBUG_UNTYPED_TRAVERSAL > 0
+         cout << "Up   traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
+#endif
 
    switch (node->variantT())
    {
@@ -152,7 +166,12 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
           sg_expr = pConverter->convertSgUntypedExpression(ut_expr);
           break;
        }
-
+    case V_SgUntypedAbortStatement:
+      {
+         SgUntypedAbortStatement* ut_stmt = dynamic_cast<SgUntypedAbortStatement*>(node);
+         pConverter->convertSgUntypedAbortStatement(ut_stmt, currentScope);
+         break;
+      }
     case V_SgUntypedAssignmentStatement:
       {
          SgUntypedAssignmentStatement* ut_stmt = dynamic_cast<SgUntypedAssignmentStatement*>(node);
@@ -177,7 +196,6 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedGotoStatement* ut_stmt = dynamic_cast<SgUntypedGotoStatement*>(node);
          pConverter->convertSgUntypedGotoStatement(ut_stmt, currentScope);
-         cout << "Returning from GOTO conversion\n";
          break;
       }
     case V_SgUntypedOtherStatement:
@@ -189,13 +207,21 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
     case V_SgUntypedReturnStatement:
       {
          SgUntypedReturnStatement* ut_stmt = dynamic_cast<SgUntypedReturnStatement*>(node);
-         pConverter->convertSgUntypedReturnStatement(ut_stmt, currentScope);
+         SgExpressionPtrList children(childAttrs);
+         pConverter->convertSgUntypedReturnStatement(ut_stmt, children, currentScope);
+         break;
+      }
+    case V_SgUntypedStopStatement:
+      {
+         SgUntypedStopStatement* ut_stmt = dynamic_cast<SgUntypedStopStatement*>(node);
+         SgExpressionPtrList children(childAttrs);
+         pConverter->convertSgUntypedStopStatement(ut_stmt, children, currentScope);
          break;
       }
 
     default:
       {
-#if DEBUG_UNTYPED_TRAVERSAL
+#if DEBUG_UNTYPED_TRAVERSAL > 1
          cout << "Up   traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
 #endif
       }

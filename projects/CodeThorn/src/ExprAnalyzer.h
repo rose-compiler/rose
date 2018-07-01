@@ -18,6 +18,7 @@ using namespace std;
 
 namespace CodeThorn {
 
+  class Analyzer;
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -58,7 +59,10 @@ namespace CodeThorn {
   class ExprAnalyzer {
   public:
     ExprAnalyzer();
+    void setAnalyzer(Analyzer* analyzer);
     //SingleEvalResult eval(SgNode* node,EState estate);
+    //! compute abstract lvalue
+    list<SingleEvalResultConstInt> evaluateLExpression(SgNode* node,EState estate, bool useConstraints);
     //! Evaluates an expression using AbstractValue and returns a list of all evaluation-results.
     //! There can be multiple results if one of the variables was bound to top as we generate
     //! two different states and corresponding constraints in this case, one representing the
@@ -80,7 +84,7 @@ namespace CodeThorn {
     
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
-    
+    AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
   public:
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
@@ -88,8 +92,10 @@ namespace CodeThorn {
     bool variable(SgNode* node,VariableId& varId);
     
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
-    
+    bool isLValueOp(SgNode* node);
   protected:
+    static void initDiagnostics();
+    static Sawyer::Message::Facility logger;
     AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
     
     //! This function turn a single result into a one-elment list with
@@ -196,12 +202,38 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change);
+    list<SingleEvalResultConstInt> evalPreIncrementOp(SgPlusPlusOp* node, 
+						      SingleEvalResultConstInt operandResult, 
+						      EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPostIncrementOp(SgPlusPlusOp* node, 
+						       SingleEvalResultConstInt operandResult, 
+						       EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change);
+    list<SingleEvalResultConstInt> evalPreDecrementOp(SgMinusMinusOp* node, 
+						      SingleEvalResultConstInt operandResult, 
+						      EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalPostDecrementOp(SgMinusMinusOp* node, 
+						       SingleEvalResultConstInt operandResult, 
+						       EState estate, bool useConstraints);
+    // dispatch function
+    list<SingleEvalResultConstInt> evalMinusMinusOp(SgMinusMinusOp* node, 
+                                                    SingleEvalResultConstInt operandResult, 
+                                                    EState estate, bool useConstraints);
+    // dispatch function
+    list<SingleEvalResultConstInt> evalPlusPlusOp(SgPlusPlusOp* node, 
+                                                  SingleEvalResultConstInt operandResult, 
+                                                  EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                                            SingleEvalResultConstInt operandResult, 
                                                            EState estate, bool useConstraints);
     
-    // use of Variable as rvalue (not as lvalue; lvalues are handled in the transfer function of assignments)
-    list<SingleEvalResultConstInt> evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
+    // special case of sizeof operator (operates on types and types of expressions)
+    list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node, 
+                                                EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
     
     list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
@@ -210,13 +242,14 @@ namespace CodeThorn {
     int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
     
   private:
-    VariableIdMapping* _variableIdMapping;
+    VariableIdMapping* _variableIdMapping=nullptr;
     
     // Options
-    bool _skipSelectedFunctionCalls;
-    bool _skipArrayAccesses;
+    bool _skipSelectedFunctionCalls=false;
+    bool _skipArrayAccesses=false;
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
+    Analyzer* _analyzer;
   };
  
 } // end of namespace CodeThorn

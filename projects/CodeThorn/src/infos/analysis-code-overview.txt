@@ -1,0 +1,90 @@
+Model checker codethorn:
+
+Analyzer:
+transfer functions: transferXXX(Edge,EState) -> list<EState>
+transfer functions for function call/entry/exit/callreturn edges
+transfer functions for statements (return, function calls, etc.)
+transfer function for assignment(to be moved to ExprAnalyzer)
+
+ExprAnalyzer:
+* evalates an expression
+* produces as result list<SingleEvalResultConstInt>
+* evaluateExpression(AST,estate)
+  - helper functions:
+    + eval<OperatorName>(AST,SingleEvalResultConstInt^arity,EState)
+  - specialFunctions:
+    + evalRValueVarExp(VarRefExp,EState)
+    + evalValueExp(ValueExp,EState)
+    + malloc,free,memcpy  
+   
+Data flow analysis:
+
+DFAnalysisBase:
+- initialization (creatino of cfg, etc)
+- solver+support functions)
+- pre/post info compute functions
+- topological sort
+- forward/backward analysis
+
+DFTransferFunctions:
+similar to ExprAnalyzer interface
+in addition also handles switch statements
+in addition also uses a (very simple) pointer analysis (implicit in model checking domain)
+
+DFAnalyses inheriting from DFAnalysisBase:
+IntervalAnalysis
+ - uses IntervalTransferFunctions
+   + uses CppExprEvaluator (will become template)
+     : uses NumberIntervalLattice
+RDAnalysis
+ - uses RDTransferFunctions
+LVAnalysis
+ - uses LVTransferFunctinos
+ 
+FILES:
+* Address-Taken Analysis:
+  - projects/CodeThorn/src/addressTakenAnalysis.{h|C}
+  - projects/CodeThorn/src/analyterix.C (CSV output)
+
+* Interval Analysis:
+  - projects/CodeThorn/src/CppExprEvaluator.{h|C}
+    * SPRAY::CppExprEvaluator::evaluate(SgNode*)
+  - projects/CodeThorn/src/IntervalPropertyState.{h|C}
+  - projects/CodeThorn/src/IntervalTransferFunctions.{h|C}
+  - projects/CodeThorn/src/GenericIntervalLattice.h
+  - projects/CodeThorn/src/NumberIntervalLattice.{h|C}
+
+* Liveness Analysis
+  - projects/CodeThorn/src/AnalysisAbstractionLayer.{h|C}
+    * AnalysisAbstractionLayer::useVariables(...)
+    * AnalysisAbstractionLayer::defVariables(...)
+  - projects/CodeThorn/src/defUseQuery.{h|C}
+
+* Deadcode Analysis
+  - projects/CodeThorn/src/analyterix.C
+
+* Topological Sort
+  - projects/CodeThorn/src/DFAnalysisBase.{h|C}
+    * DFAnalysisBase::run(...)
+  - projects/CodeThorn/src/Flow.{h|C}
+    * Flow::getTopologicalSortedEdgeList (...)
+
+* Lowering/Normalization
+- convert break stmts to goto+label (covers: for,while,switch)
+- convert expressions to list of assignments for each subexpression
+TODO:
+- convert continue stmts to goto+label (for,while)
+- MODE: make normalization dependent on the existence of function calls and inc/dec operators.
+- alternative: convert for/while without lowering:
+  keeping all continue/breaks in while, for
+  while(C) {...} ==> t=C;while(t) { ... t=C; }
+  do { ... } while(C); ==> do { ... t=C; } while(t);
+  for(init,test,inc) { ... } ==> init;while(test) { ... inc;}
+
+Domain:
+lval(*E)=rval(E)
+rval(*E)=deref(rval(E)
+rval(&E)=lval(E)
+lval(E1[E2])=lval(E1)+rval(E2)
+rval(E1[E2])=deref(lval(E1[E2]))
+lval(E1.F)=lval(E1)+offset(type(E1),id(F))

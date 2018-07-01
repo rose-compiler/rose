@@ -20,8 +20,6 @@ using std::istream;
 using std::ostream;
 
 namespace CodeThorn {
-
-
   
   class AbstractValue;
 

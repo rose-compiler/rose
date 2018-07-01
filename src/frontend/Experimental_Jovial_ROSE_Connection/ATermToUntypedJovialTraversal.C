@@ -142,8 +142,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
          assert(function_scope != NULL);
       } else return ATfalse;
 
-      std::cout << "MAIN_PROGRAM_MODULE:\n";
-
       std::string label = "";
 
       SgUntypedInitializedNameList* param_list = new SgUntypedInitializedNameList();
@@ -196,6 +194,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
    ATerm t_stmt;
    ATerm t_decls, t_stmts, t_funcs, t_labels;
    std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
    std::string temp_label = "";
 
    SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
@@ -228,15 +227,17 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
          // MATCHED StatementList
       } else return ATfalse;
 
-      if (traverse_LabelList(t_labels, labels)) {
+      if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
+#if 0
       std::cout << "PROGRAM BODY\n";
       std::cout << "  # decls = " << decl_list->get_decl_list().size() << "\n";
       std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
       std::cout << "  # funcs = " << func_list->get_func_list().size() << "\n";
-      std::cout << "  #labels = " <<     labels.size() << "\n\n";
+      std::cout << "  #labels = " << labels.size() << "\n\n";
+#endif
 
    // TODO - need list for labels in untyped IR
       assert(labels.size() <= 1);
@@ -1003,9 +1004,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
 
    ATerm t_labels, t_stmt;
    std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
 
    if (ATmatch(term, "SimpleStatement(<term>,<term>)", &t_labels,&t_stmt)) {
-      if (traverse_LabelList(t_labels, labels)) {
+      if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
@@ -1064,7 +1066,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_NullStatement(ATerm term, SgUntyp
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> & labels)
+ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> & labels, std::vector<PosInfo> & locations)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LabelList: %s\n", ATwriteToString(term));
@@ -1080,6 +1082,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector
          tail = ATgetNext(tail);
          if (ATmatch(head, "Label(<str>)", &label)) {
             labels.push_back(label);
+            locations.push_back(getLocation(head));
          } else return ATfalse;
       }
    } else return ATfalse;
@@ -1140,27 +1143,23 @@ ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUnt
 
    ATerm t_labels;
    std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
+   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "ReturnStatement(<term>)", &t_labels)) {
-      if (traverse_LabelList(t_labels, labels)) {
+      if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-      std::string label("");
-      if (labels.size() == 1) {
-         label = labels[0];
-      }
-      else if (labels.size() > 1) {
-         cout << "ERROR: multiple labels unimplemented \n";
-         return ATfalse;
-      }
-
-      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label);
+      SgUntypedNullExpression * return_code = UntypedBuilder::buildUntypedNullExpression();
+      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement("", return_code);
       setSourcePosition(return_stmt, term);
 
-      stmt_list->get_stmt_list().push_back(return_stmt);
+      stmt = convert_Labels(labels, locations, return_stmt);
    }
    else return ATfalse;
+
+   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1176,10 +1175,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_GotoStatement(ATerm term, SgUntyp
 
    ATerm t_labels, t_name;
    std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
    std::string name;
+   SgUntypedStatement* stmt;
 
     if (ATmatch(term, "GotoStatement(<term>,<term>)", &t_labels, &t_name)) {
-       if (traverse_LabelList(t_labels, labels)) {
+       if (traverse_LabelList(t_labels, labels, locations)) {
           // MATCHED LabelList
        } else return ATfalse;
 
@@ -1190,10 +1191,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_GotoStatement(ATerm term, SgUntyp
       SgUntypedGotoStatement* goto_stmt = new SgUntypedGotoStatement("", name);
       setSourcePosition(goto_stmt, term);
 
-      stmt_list->get_stmt_list().push_back(goto_stmt);
+      stmt = convert_Labels(labels, locations, goto_stmt);
    }
-
    else return ATfalse;
+
+   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 
@@ -1210,18 +1212,22 @@ ATbool ATermToUntypedJovialTraversal::traverse_ExitStatement(ATerm term, SgUntyp
 
    ATerm t_labels;
    std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
+   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "ExitStatement(<term>)", &t_labels)) {
-      if (traverse_LabelList(t_labels, labels)) {
+      if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
       SgUntypedExitStatement* exit_stmt = new SgUntypedExitStatement("");
       setSourcePosition(exit_stmt, term);
 
-      stmt_list->get_stmt_list().push_back(exit_stmt);
+      stmt = convert_Labels(labels, locations, exit_stmt);
    }
    else return ATfalse;
+
+   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1237,29 +1243,31 @@ ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntyp
 
    ATerm t_labels, t_stop_code;
    std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
    SgUntypedExpression* stop_code = NULL;
+   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "StopStatement(<term>,<term>)", &t_labels, &t_stop_code)) {
-      if (traverse_LabelList(t_labels, labels)) {
+      if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
       if (ATmatch(t_stop_code, "no-integer-formula()")) {
          // No StopCode
-         stop_code = new SgUntypedNullExpression();
-         setSourcePositionUnknown(stop_code);
+         stop_code = UntypedBuilder::buildUntypedNullExpression();
       }
       else if (traverse_IntegerFormula(t_stop_code, &stop_code)) {
          // MATCHED IntegerFormula
       } else return ATfalse;
 
-      SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;
-      SgUntypedExpressionStatement* stop_stmt = new SgUntypedExpressionStatement("", keyword, stop_code);
+      SgUntypedStopStatement* stop_stmt = new SgUntypedStopStatement("", stop_code);
       setSourcePosition(stop_stmt, term);
 
-      stmt_list->get_stmt_list().push_back(stop_stmt);
+      stmt = convert_Labels(labels, locations, stop_stmt);
    }
    else return ATfalse;
+
+   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1275,21 +1283,22 @@ ATbool ATermToUntypedJovialTraversal::traverse_AbortStatement(ATerm term, SgUnty
 
    ATerm t_labels;
    std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
+   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
-      if (traverse_LabelList(t_labels, labels)) {
+      if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-      // TODO - construct untyped node for AbortStatement
-      // SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
-      // setSourcePosition(abort_stmt, term);
-      // TODO - add new node to stmt_list
-      // stmt_list->get_stmt_list().push_back(abort_stmt);
+      SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
+      setSourcePosition(abort_stmt, term);
 
-      return ATfalse;
+      stmt = convert_Labels(labels, locations, abort_stmt);
    }
    else return ATfalse;
+
+   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }

@@ -54,4 +54,13 @@ namespace CppStdUtilities {
     std::sregex_token_iterator first{input.begin(), input.end(), re, -1},last;
     return {first, last};
   }
+
+  bool isPostfix(std::string const &postfix, std::string const &s) {
+    if (s.length() >= postfix.length()) {
+      return (0 == s.compare (s.length() - postfix.length(), postfix.length(), postfix));
+    } else {
+      return false;
+    }
+  }
 }
+

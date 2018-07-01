@@ -71,9 +71,9 @@ class DFAnalysisBase {
 
   // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
+  SPRAY::PointerAnalysisInterface* getPointerAnalysis();
   void setSkipSelectedFunctionCalls(bool defer);
  protected:
-  SPRAY::PointerAnalysisInterface* getPointerAnalysis();
 
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
@@ -108,7 +108,7 @@ class DFAnalysisBase {
   SPRAY::PASolver1* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
-
+  
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
   SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;

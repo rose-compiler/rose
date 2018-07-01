@@ -148,8 +148,8 @@ namespace CodeThorn {
     std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
     void setSkipSelectedFunctionCalls(bool defer);
-    void setSkipArrayAccesses(bool skip) { exprAnalyzer.setSkipArrayAccesses(skip); }
-    bool getSkipArrayAccesses() { return exprAnalyzer.getSkipArrayAccesses(); }
+    void setSkipArrayAccesses(bool skip);
+    bool getSkipArrayAccesses();
 
     // specific to the loop-aware exploration modes
     int getIterations() { return _iterations; }
@@ -217,6 +217,14 @@ namespace CodeThorn {
     std::map<std::string,VariableId> globalVarName2VarIdMapping;
     std::vector<bool> binaryBindingAssert;
 
+    // functions related to abstractions during the analysis
+    void eventGlobalTopifyTurnedOn();
+    bool isActiveGlobalTopify();
+    bool isIncompleteSTGReady();
+    bool isPrecise();
+
+    EState createEState(Label label, PState pstate, ConstraintSet cset);
+    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
   protected:
     void printStatusMessage(string s, bool newLineFlag);
@@ -244,9 +252,6 @@ namespace CodeThorn {
     EStateSet::ProcessingResult process(EState& s);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
-    EState createEState(Label label, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
 
     void set_finished(std::vector<bool>& v, bool val);
@@ -291,12 +296,6 @@ namespace CodeThorn {
     std::string labelNameOfAssertLabel(Label lab);
     bool isCppLabeledAssertLabel(Label lab);
     std::list<FailedAssertion> _firstAssertionOccurences;
-
-    // functions related to abstractions during the analysis
-    void eventGlobalTopifyTurnedOn();
-    bool isActiveGlobalTopify();
-    bool isIncompleteSTGReady();
-    bool isPrecise();
 
     // specific to the loop-aware exploration modes
     bool isLoopCondLabel(Label lab);

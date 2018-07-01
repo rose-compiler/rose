@@ -16,6 +16,20 @@ CodeEmitter::CodeEmitter(Option &option_, Control &control, string input_file) :
 
 
 /**
+ * Start sending emitted code to the given buffer.
+ */
+void CodeEmitter::startOutputToBuffer(stringstream &buffer) {
+    Cout = &buffer;
+}
+
+/**
+ * Emit code from a given buffer.
+ */
+void CodeEmitter::flushBuffer(stringstream &buffer) {
+    (*default_output) << buffer.str();
+}
+
+/**
  * Allocate a new buffer and start sending emitted code to it.
  *
  */

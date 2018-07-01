@@ -1,0 +1,26 @@
+Adding logger to class A:
+class A {
+  ...
+  protected:
+    static void initDiagnostics();
+    static Sawyer::Message::Facility logger;
+  ...
+};
+
+---
+
+Sawyer::Message::Facility A::logger;
+
+void A::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
+
+---
+
+usage in methods of class A:
+logger[TRACE|DEBUG|...]<<...;

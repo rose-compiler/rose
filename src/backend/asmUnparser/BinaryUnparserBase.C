@@ -1360,6 +1360,15 @@ Base::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
         } else if (SgAsmFloatType *ft = isSgAsmFloatType(type)) {
             out <<"f" <<ft->get_nBits();
 
+        } else if (SgAsmVectorType *vt = isSgAsmVectorType(type)) {
+            out <<"vector(" <<vt->get_nElmts() <<" * ";
+            if (SgAsmType *subtype = vt->get_elmtType()) {
+                emitTypeName(out, subtype, state);
+            } else {
+                out <<"unknown";
+            }
+            out <<")";
+
         } else {
             ASSERT_not_implemented(type->toString());
         }

@@ -4,7 +4,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#define ALTERNATIVE_LOCAL_EDGE_HANDLING
+//#define ALTERNATIVE_LOCAL_EDGE_HANDLING
 
 #include "sage3basic.h"
 
@@ -272,8 +272,10 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
 
     // all omp statements
-  case V_SgOmpForStatement:
+  case V_SgOmpTargetStatement:
   case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -282,10 +284,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
@@ -471,8 +471,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
-  case V_SgOmpForStatement:
-  case V_SgOmpParallelStatement: {
+  case V_SgOmpTargetStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement: {
     // the final label is the final label of the child node's construct
     SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
     LabelSet finalLabelSet=finalLabels(nextNestedStmt);
@@ -489,10 +491,8 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
@@ -521,8 +521,27 @@ Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
   LabelSet finalSets1=finalLabels(s1);
   Label initLabel2=initialLabel(s2);
   for(LabelSet::iterator i=finalSets1.begin();i!=finalSets1.end();++i) {
+
+    // special case: case-blocks of switch: an edge between case-labels never goes
+    // directly from case to case, but instead to the other case's following statement (to
+    // model switch-case fallthrough). The edge directly to each case label is
+    // created by the CFG creation for the switch node.
+    SgNode* node=getNode(initLabel2);
+    if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
+      // adjust init label to stmt following the case label (the child of the SgCaseStmt node).
+      SgNode* body=caseStmt->get_body();
+      ROSE_ASSERT(body);
+      initLabel2=initialLabel(body);
+    } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(node)) {
+      SgNode* body=caseStmt->get_body();
+      ROSE_ASSERT(body);
+      initLabel2=initialLabel(body);
+    }
+
     Edge e(*i,initLabel2);
-    if(SgNodeHelper::isCond(labeler->getNode(*i))) { // special case (all TRUE edges are created explicitly)
+
+    // special case FALSE edges of conditions (all TRUE edges are created by the respective CFG construction)
+    if(SgNodeHelper::isCond(labeler->getNode(*i))) { 
       e.addType(EDGE_FALSE);
     }
     e.addType(EDGE_FORWARD);
@@ -710,6 +729,7 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         EdgeTypeSet tset=localEdgeIter.getTypes();
         tset.erase(EDGE_LOCAL);
         tset.insert(EDGE_EXTERNAL);
+        getLabeler()->setExternalFunctionCallLabel((*i).call);
         localEdgeIter.setTypes(tset);
 #endif
         //cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
@@ -720,7 +740,9 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::sourceLineColumnToString(getNode((*i).call))<<endl;
       }
 #else
-      Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);      
+      Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
+      // register in Labaler as external function call
+      getLabeler()->setExternalFunctionCallLabel((*i).call);
       flow.insert(externalEdge);
 #endif
     } else {
@@ -935,6 +957,8 @@ Flow CFAnalysis::flow(SgNode* node) {
 
   switch (node->variantT()) {
   case V_SgFunctionDefinition: {
+    
+    //cout<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<<endl;
     SgBasicBlock* body=isSgFunctionDefinition(node)->get_body();
     Edge edge=Edge(labeler->functionEntryLabel(node),EDGE_FORWARD,initialLabel(body));
     edgeSet.insert(edge);
@@ -1004,7 +1028,9 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
 
     // parallel nested omp constructs
+  case V_SgOmpTargetStatement:
   case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
   case V_SgOmpForStatement: {
     SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
     // need to compute flow of next stmt because it is nested (and not at basic-block level)
@@ -1017,7 +1043,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet.insert(edge1);
     return edgeSet;
   }
-    // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
+    // these omp statements do not generate edges in addition to the ingoing and outgoing edge
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -1026,10 +1052,8 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
