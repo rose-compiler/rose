@@ -1,24 +1,14 @@
 // This is reproducer ROSE-35
 
 namespace std{
-
   typedef __SIZE_TYPE__    size_t;
-
   typedef __PTRDIFF_TYPE__ ptrdiff_t;
 
- 
-
 template<typename _Unqualified>
-
     class __match_cv_qualifiers    {
-
     public:
-
       typedef  _Unqualified __type;
-
     };
-
- 
 
   template<typename _Tp>
     struct __make_unsigned    { };
@@ -43,7 +33,6 @@ template<typename _Unqualified>
     { typedef typename __make_unsigned_selector<_Tp>::__type type; };
 } // namespace std
 
- 
 
 namespace __gnu_cxx{
   template<typename _Tp>
@@ -61,7 +50,6 @@ namespace __gnu_cxx{
 
 } // namespace __gnu_cxx
 
- 
 
 namespace std{
   template<typename _Tp>
