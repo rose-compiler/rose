@@ -85,6 +85,12 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
     SgReferenceType* newReference = SageBuilder::buildReferenceType(base);
     return newReference;
   }
+  else if(SgModifierType* modType = isSgModifierType(root)){
+    //STRIPS modifers does not properly set.
+    SgType* base =  nathan_rebuildBaseType(modType->get_base_type(), newBaseType);
+    SgModifierType* newMod = SageBuilder::buildModifierType(base);
+    return newMod;
+  }
   else{
     return newBaseType;
   }
