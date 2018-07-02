@@ -47,6 +47,23 @@ void f5(A** a1, B** b, A** a2) {
   A z;
 };
 
+typedef double** MULTIPOINTER;
+typedef MULTIPOINTER ARRAYOFPOINTER[3][4][5];
+typedef ARRAYOFPOINTER*** POINTERTOP;
+typedef POINTERTOP TOPLEVEL[3][4][5];
+
+void f6(){
+  double     x;
+  double*    y;
+  double**   z;
+  double**** a;
+  double i[4];
+  double j[5][4];
+  double k[6][4][5];
+  double** (*p)[7][8];
+  TOPLEVEL b;
+}
+
 int main() {
   return 0;
 }

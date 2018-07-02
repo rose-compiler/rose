@@ -57,6 +57,30 @@ void TFTypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
   _castTransformer.transformCommandLineFiles(project);
 }
 
+SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
+  if(SgArrayType* arrayType = isSgArrayType(root)){
+    SgType* base = nathan_rebuildBaseType(arrayType->get_base_type(), newBaseType);
+    SgExpression* index = arrayType->get_index();
+    SgExprListExp* dim_info = arrayType->get_dim_info();
+    if(dim_info != nullptr){
+      return SageBuilder::buildArrayType(base, dim_info);
+    }
+    else if(index != nullptr){
+      return SageBuilder::buildArrayType(base, index);
+    }
+    else{
+      return SageBuilder::buildArrayType(base);
+    }
+  }
+  else if(SgPointerType* pointerType = isSgPointerType(root)){
+    SgType* base = nathan_rebuildBaseType(pointerType->get_base_type(), newBaseType);
+    SgPointerType* newPointer = SageBuilder::buildPointerType(base);
+    return newPointer;
+  }
+  else{
+   return newBaseType;
+  }
+}
 
 int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
                                                SgNode* root,
@@ -71,7 +95,9 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
         string funName;
         if(isSgFunctionDefinition(root)) 
           funName=SgNodeHelper::getFunctionName(root);
-        trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString()+".");
+        SgType* initType = varInitName->get_type();
+        newType = nathan_rebuildBaseType(initType, newType);
+        trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString()+"."+" From "+initType->unparseToString());
         varInitName->set_type(newType);
         foundVar++;
       }

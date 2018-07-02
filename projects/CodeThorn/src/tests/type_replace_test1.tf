@@ -19,3 +19,12 @@ replace_vartype;f0;b;float
 replace_vartype;f0;x;AD_real
 replace_vartype;f0;y;float&
 replace_vartype;f0;z;MyType**
+replace_vartype;f6;x;float
+replace_vartype;f6;y;float
+replace_vartype;f6;z;float
+replace_vartype;f6;i;float
+replace_vartype;f6;j;float
+replace_vartype;f6;k;float
+replace_vartype;f6;p;float
+replace_vartype;f6;a;float
+replace_vartype;f6;b;float
