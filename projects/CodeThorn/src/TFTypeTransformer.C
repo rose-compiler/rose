@@ -77,8 +77,16 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
     SgPointerType* newPointer = SageBuilder::buildPointerType(base);
     return newPointer;
   }
+  else if(SgTypedefType* defType = isSgTypedefType(root)){
+    return nathan_rebuildBaseType(defType->get_base_type(), newBaseType);
+  }
+  else if(SgReferenceType* refType = isSgReferenceType(root)){
+    SgType* base = nathan_rebuildBaseType(refType->get_base_type(), newBaseType);
+    SgReferenceType* newReference = SageBuilder::buildReferenceType(base);
+    return newReference;
+  }
   else{
-   return newBaseType;
+    return newBaseType;
   }
 }
 
