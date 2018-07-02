@@ -52,16 +52,19 @@ typedef MULTIPOINTER ARRAYOFPOINTER[3][4][5];
 typedef ARRAYOFPOINTER*** POINTERTOP;
 typedef POINTERTOP TOPLEVEL[3][4][5];
 
-void f6(){
-  double     x;
-  double*    y;
-  double**   z;
-  double**** a;
-  double i[4];
-  double j[5][4];
-  double k[6][4][5];
-  double** (*p)[7][8];
-  TOPLEVEL b;
+void f6(double& a){
+  double     b;
+  double*    c;
+  double**   d;
+  double**** e;
+  double f[4];
+  double g[5][4];
+  double h[6][4][5];
+  double** (*i)[7][8];
+  TOPLEVEL j;
+  const double k = 5;
+  double* restrict l;
+  volatile double m;
 }
 
 int main() {

@@ -88,7 +88,23 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
   else if(SgModifierType* modType = isSgModifierType(root)){
     //STRIPS modifers does not properly set.
     SgType* base =  nathan_rebuildBaseType(modType->get_base_type(), newBaseType);
-    SgModifierType* newMod = SageBuilder::buildModifierType(base);
+    SgTypeModifier modifier = modType->get_typeModifier();
+    SgModifierType* newMod;
+    if(modifier.isRestrict()){
+      newMod = SageBuilder::buildRestrictType(base);
+    }
+    else{
+      SgConstVolatileModifier cmod = modifier.get_constVolatileModifier();
+      if(cmod.isConst()){
+        newMod = SageBuilder::buildConstType(base);
+      }
+      else if(cmod.isVolatile()){
+        newMod = SageBuilder::buildVolatileType(base);
+      }
+      else{
+        newMod = SageBuilder::buildModifierType(base);
+      }
+    }
     return newMod;
   }
   else{
