@@ -359,7 +359,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   experimentalOptions.add_options()
-    ("normalize", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize AST before analysis .")
+    ("normalize", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
+    ("lowering", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >()->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
@@ -1235,8 +1236,14 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     Lowering lowering;
     if(args.getBool("normalize")) {
-      lowering.normalizeExpressions(sageProject);
-      logger[TRACE]<<"STATUS: normalized expressions"<<endl;
+      bool fcallsOnly=true;
+      lowering.normalizeExpressions(sageProject,fcallsOnly);
+      logger[TRACE]<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
+    }
+
+    if(args.getBool("lowering")) {
+      lowering.transformAst(sageProject);
+      logger[TRACE]<<"STATUS: lowered language constructs."<<endl;
     }
 
     /* perform inlining before variable ids are computed, because

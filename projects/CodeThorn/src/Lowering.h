@@ -1,5 +1,5 @@
-#ifndef NORMALIZATION_H
-#define NORMALIZATION_H
+#ifndef LOWERING_H
+#define LOWERING_H
 
 // Author: Markus Schordan 2018.
 
