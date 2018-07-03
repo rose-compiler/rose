@@ -1243,7 +1243,7 @@ int main( int argc, char * argv[] ) {
 
     if(args.getBool("lowering")) {
       lowering.transformAst(sageProject);
-      logger[TRACE]<<"STATUS: lowered language constructs."<<endl;
+      cout<<"STATUS: lowered language constructs."<<endl;
     }
 
     /* perform inlining before variable ids are computed, because
