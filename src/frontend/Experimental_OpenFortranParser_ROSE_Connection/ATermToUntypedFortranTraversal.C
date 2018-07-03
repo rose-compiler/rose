@@ -940,10 +940,19 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
 
    *var_expr = NULL;
    if (ATmatch(term, "IntVal(<str>)", &arg1)) {
-      // MATCHED IntVal
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
+   else if (ATmatch(term, "TRUE()")) {
+      value += "TRUE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+   else if (ATmatch(term, "FALSE()")) {
+      value += "FALSE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+
+// Handle literals with kind expressions
    else if (ATmatch(term, "IntVal(<str>,<term>)", &arg1,&t_kind)) {
       SgUntypedExpression* kind;
       if (traverse_Expression(t_kind, &kind)) {
@@ -951,6 +960,17 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
       } else return ATfalse;
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
+   // add type kind expression
+      type->set_has_kind(true);
+      type->set_type_kind(kind);
+   }
+   else if (ATmatch(term, "TRUE(<term>)", &t_kind)) {
+      SgUntypedExpression* kind;
+      if (traverse_Expression(t_kind, &kind)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      value += "TRUE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
    // add type kind expression
       type->set_has_kind(true);
       type->set_type_kind(kind);

@@ -219,9 +219,26 @@ test2018_96.C \
 test2018_97.C \
 test2018_98.C \
 test2018_99.C \
+test2018_105.C \
+test2018_107.C \
+test2018_108.C \
+test2018_109.C \
+test2018_110.C \
+test2018_111.C \
+test2018_112.C \
+test2018_113.C \
+test2018_114.C \
+test2018_115.C \
+test2018_116.C \
+test2018_117.C \
+test2018_118.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 test2016_40.C \
 last.C
+
+
+# DQ (7/1/2018): Failing test which can't find boost files explicitly referenced (likely this is not a portable test code).
+# test2018_100.C
 
 # DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
 FAILING_TEST = \
