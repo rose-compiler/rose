@@ -187,6 +187,8 @@ codethorn_SOURCES = \
   Lowering.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
+  NullPointerDereferenceLocations.h \
+  NullPointerDereferenceLocations.C \
   PhiAttribute.h \
   PhiAttribute.C \
   PhiStatement.h \

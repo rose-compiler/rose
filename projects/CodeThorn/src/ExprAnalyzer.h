@@ -9,10 +9,13 @@
 
 #include <limits.h>
 #include <string>
+#include <unordered_set>
+#include "Labeler.h"
 #include "EState.h"
 #include "VariableIdMapping.h"
 #include "AbstractValue.h"
 #include "AstTerm.h"
+#include "NullPointerDereferenceLocations.h"
 
 using namespace std;
 
@@ -85,6 +88,8 @@ namespace CodeThorn {
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
     AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
+    NullPointerDereferenceLocations getNullPointerDereferenceLocations();
+
   public:
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
@@ -240,10 +245,12 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
     int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
-    
+
+      
   private:
     VariableIdMapping* _variableIdMapping=nullptr;
-    
+    NullPointerDereferenceLocations _nullPointerDereferenceLocations;
+   
     // Options
     bool _skipSelectedFunctionCalls=false;
     bool _skipArrayAccesses=false;

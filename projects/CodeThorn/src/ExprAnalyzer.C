@@ -931,6 +931,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+#if 1
+  // null pointer check
+  if(derefOperandValue.isTop()) {
+    _nullPointerDereferenceLocations.potentialDereferenceLocations.insert(estate.label());
+  }
+  if(derefOperandValue.isConstInt()) {
+    int ptrIntVal=derefOperandValue.getIntValue();
+    if(ptrIntVal==0) {
+      _nullPointerDereferenceLocations.definitiveDereferenceLocations.insert(estate.label());
+    }
+  }
+#endif
   res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
@@ -1396,4 +1408,8 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
     return false; // fail
   }
   return true; // pass
+}
+
+NullPointerDereferenceLocations ExprAnalyzer::getNullPointerDereferenceLocations() {
+  return _nullPointerDereferenceLocations;
 }

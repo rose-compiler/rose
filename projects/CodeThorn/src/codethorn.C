@@ -372,7 +372,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3.")
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
-    ("check-null-pointer",po::value< bool >()->default_value(false)->implicit_value(false),"Perform null pointer analysis.");
+    ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].");
     ;
 
   rersOptions.add_options()
@@ -1483,6 +1483,13 @@ int main( int argc, char * argv[] ) {
 	ssaGen->generateSSAForm();
 
 	exit(0);
+    }
+
+    if(args.isDefined("null-pointer-analysis-file")) {
+      NullPointerDereferenceLocations nullPointerDereferenceLocations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
+      string fileName=args.getString("null-pointer-analysis-file");
+      cout<<"Writing null-pointer analysis results to file "<<fileName<<endl;
+      nullPointerDereferenceLocations.writeResultFile(fileName,analyzer->getLabeler());
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();

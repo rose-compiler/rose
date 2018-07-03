@@ -156,7 +156,8 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       //cout<<" [no definition found]"<<endl;
       // we were not able to find the funDef in the AST
       //cout << "STATUS: External function ";
-      if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
+      SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+      if(funDecl) {
         //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
         externalFunCalls++;
       } else {
