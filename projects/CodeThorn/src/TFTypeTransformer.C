@@ -132,7 +132,7 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
           funName=SgNodeHelper::getFunctionName(root);
         SgType* initType = varInitName->get_type();
         newType = nathan_rebuildBaseType(initType, newType);
-        trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString();
+        trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString());
         varInitName->set_type(newType);
         foundVar++;
       }

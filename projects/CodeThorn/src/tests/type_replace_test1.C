@@ -55,16 +55,14 @@ typedef POINTERTOP TOPLEVEL[3][4][5];
 void f6(double& a){
   double     b;
   double*    c;
-  double**   d;
-  double**** e;
-  double f[4];
-  double g[5][4];
-  double h[6][4][5];
-  double** (*i)[7][8];
-  TOPLEVEL j;
-  const double k = 5;
-  double* restrict l;
-  volatile double m;
+  double**** d;
+  double e[4];
+  double f[6][5][4];
+  double* (*g)[7][8];
+  TOPLEVEL h;
+  const double i = 5;
+  double* restrict j;
+  volatile double k;
 }
 
 int main() {
