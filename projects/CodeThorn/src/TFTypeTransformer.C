@@ -56,8 +56,9 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
 void TFTypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
   _castTransformer.transformCommandLineFiles(project);
 }
-
+//returns a new type with same structure as root but with newBaseType as a base
 SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
+  //handle array type
   if(SgArrayType* arrayType = isSgArrayType(root)){
     SgType* base = nathan_rebuildBaseType(arrayType->get_base_type(), newBaseType);
     SgExpression* index = arrayType->get_index();
@@ -72,21 +73,24 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
       return SageBuilder::buildArrayType(base);
     }
   }
+  //handle pointer type
   else if(SgPointerType* pointerType = isSgPointerType(root)){
     SgType* base = nathan_rebuildBaseType(pointerType->get_base_type(), newBaseType);
     SgPointerType* newPointer = SageBuilder::buildPointerType(base);
     return newPointer;
   }
+  //handle typedef, does not build new typedef. builds type around structure defined in typedef
   else if(SgTypedefType* defType = isSgTypedefType(root)){
     return nathan_rebuildBaseType(defType->get_base_type(), newBaseType);
   }
+  //handle reference type
   else if(SgReferenceType* refType = isSgReferenceType(root)){
     SgType* base = nathan_rebuildBaseType(refType->get_base_type(), newBaseType);
     SgReferenceType* newReference = SageBuilder::buildReferenceType(base);
     return newReference;
   }
+  //handle type modifiers(const, restrict, volatile)
   else if(SgModifierType* modType = isSgModifierType(root)){
-    //STRIPS modifers does not properly set.
     SgType* base =  nathan_rebuildBaseType(modType->get_base_type(), newBaseType);
     SgTypeModifier modifier = modType->get_typeModifier();
     SgModifierType* newMod;
@@ -107,6 +111,7 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
     }
     return newMod;
   }
+  //reached base so return new base instead
   else{
     return newBaseType;
   }
@@ -127,7 +132,7 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
           funName=SgNodeHelper::getFunctionName(root);
         SgType* initType = varInitName->get_type();
         newType = nathan_rebuildBaseType(initType, newType);
-        trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString()+"."+" From "+initType->unparseToString());
+        trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString();
         varInitName->set_type(newType);
         foundVar++;
       }
