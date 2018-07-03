@@ -10,12 +10,13 @@ using namespace std;
 // static member
 bool TFTypeTransformer::_traceFlag=false;
 
-void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames) {
+void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames, bool base, SgType* fromType) {
   vector<string> varNamesVector=CppStdUtilities::splitByComma(varNames);
   for (auto name:varNamesVector) {
-    TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name);
+    TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name,base,fromType);
     list.push_back(p);
   }
+  TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,"",base,fromType);
 }
 
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
@@ -30,13 +31,14 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
     SgType* newVarType=std::get<0>(typeNameTuple);
     SgFunctionDefinition* funDef=std::get<1>(typeNameTuple);
     string varName=std::get<2>(typeNameTuple);
+    bool base = std::get<3>(typeNameTuple);
     SgNode* root=nullptr;
     if(funDef)
       root=funDef;
     else
       root=project;
 
-    int numChanges=changeVariableType(root, varName, newVarType);
+    int numChanges=changeVariableType(root, varName, newVarType, base);
     if(numChanges==0) {
       cout<<"Warning: Did not find variable "<<varName;
       if(funDef) {
@@ -120,7 +122,8 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
 int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
                                                SgNode* root,
                                                string varNameToFind,
-                                               SgType* newType) {
+                                               SgType* newType,
+                                               bool base) {
   int foundVar=0;
   if(varInitName) {
     SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
@@ -130,8 +133,10 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
         string funName;
         if(isSgFunctionDefinition(root)) 
           funName=SgNodeHelper::getFunctionName(root);
-        SgType* initType = varInitName->get_type();
-        newType = nathan_rebuildBaseType(initType, newType);
+        if(base){
+          SgType* initType = varInitName->get_type();
+          newType = nathan_rebuildBaseType(initType, newType);
+        }
         trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString());
         varInitName->set_type(newType);
         foundVar++;
@@ -141,15 +146,44 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
   return foundVar;
 }
 
-int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType) {
+int nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base){
+  int foundVar = 0;
+  if(varInitName){
+    SgType* oldType = varInitName->get_type();
+    if(base){
+      oldType = oldType->findBaseType();
+    }
+    if(oldType == fromType){
+      if(base){
+        newType = nathan_rebuildBaseType(varInitName->get_type(),newType);
+      }
+      string funName;
+      if(isSgFunctionDefinition(root)) funName = SgNodeHelper::getFunctionName(root);
+      SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInitName);
+      string varName = SgNodeHelper::symbolToString(varSym);
+      TFTypeTransformer::trace("Found declaration of variable "+varName+((funName=="")? " in $global" : " in function "+funName)+". Changed type to "+newType->unparseToString());
+      varInitName->set_type(newType);
+      foundVar++;
+    }
+  }
+  return foundVar;
+}
+
+int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType, bool base, SgType* fromType) {
   RoseAst ast(root);
-  bool foundVar=0;
+  int foundVar=0;
   // need to process formal params explicitly because not found in traversal of functionDef (is traversed from function decl)
   if(SgFunctionDefinition* funDef=isSgFunctionDefinition(root)) {
     SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     for(auto varInitName : initNamePtrList) {
-      foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType);
+      if(fromType != nullptr && varNameToFind == "args"){
+        foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
+      }    
+      else if(varNameToFind != "" && fromType == nullptr){
+        foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+      }
     }
+    
   }
 
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -160,7 +194,12 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
     //   else if(SgInitializedName* varInitName0=isSgInitializedName(*i)) {
     //  varInitName=varInitName0;
     //}
-    foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType);
+    if(fromType != nullptr && (varNameToFind == "" || varNameToFind == "body")){
+      foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
+    }    
+    else if(varNameToFind != "" && fromType == nullptr){
+      foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+    }
   }
   return foundVar;
 }

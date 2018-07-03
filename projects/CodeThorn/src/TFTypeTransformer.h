@@ -7,12 +7,12 @@
 
 class TFTypeTransformer {
  public:
-  typedef std::tuple<SgType*,SgFunctionDefinition*,std::string> VarTypeVarNameTuple;
+  typedef std::tuple<SgType*,SgFunctionDefinition*,std::string,bool,SgType*> VarTypeVarNameTuple;
   typedef std::list<VarTypeVarNameTuple> VarTypeVarNameTupleList;
-  void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames);
+  void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base=false, SgType* fromType = nullptr);
   // searches for variable in the given subtree 'root'
-  int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type);
-  int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type);
+  int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type, bool base=false, SgType* fromType=nullptr);
+  int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type, bool base=false);
   void transformCommandLineFiles(SgProject* project);
   void transformCommandLineFiles(SgProject* project, VarTypeVarNameTupleList& list);
   void makeAllCastsExplicit(SgProject* root);
