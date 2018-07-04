@@ -1050,6 +1050,12 @@ void Grammar::setUpBinaryInstructions() {
          *  }
          * @endcode */
         virtual unsigned get_anyKind() const;
+
+        /** Converts the instruction to a string.
+         *
+         *  The return value is an address, colon, mnemonic, and arguments. Only one space is used between the parts. */
+        virtual std::string toString() const;
+
 #endif // SgAsmInstruction_OTHERS
 
 #ifdef DOCUMENTATION
@@ -3177,6 +3183,22 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
+        /** Property: Additional function existance reason comment.
+         *
+         *  This reason comment gets filled in automatically by certain function analyses. It's a free-form string that
+         *  contains additional information about why this function exists and is used in conjunction with the @ref get_reason
+         *  property.
+         *
+         * @{ */
+        const std::string& get_reasonComment() const;
+        void set_reasonComment(const std::string&);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("std::string", "reasonComment", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
         /** Property: Kind of function.
          *
          *  This enum constant describes the kind of function. See @ref SgAsmFunction::function_kind_enum for details.
@@ -3321,6 +3343,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
             s & BOOST_SERIALIZATION_NVP(p_name);
             s & BOOST_SERIALIZATION_NVP(p_reason);
+            s & BOOST_SERIALIZATION_NVP(p_reasonComment);
             s & BOOST_SERIALIZATION_NVP(p_function_kind);
             s & BOOST_SERIALIZATION_NVP(p_may_return);
             s & BOOST_SERIALIZATION_NVP(p_name_md5);

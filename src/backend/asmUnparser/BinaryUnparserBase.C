@@ -613,6 +613,8 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         }
         if (!strings.empty())
             out <<";;; reasons for function: " <<boost::join(strings, ", ") <<"\n";
+        if (!function->reasonComment().empty())
+            out <<";;; reason comment: " <<function->reasonComment() <<"\n";
     }
 }
 

@@ -456,7 +456,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
             for (size_t i=0; i<insns.size(); ++i) {
                 dispatcher->processInstruction(insns[i]);
                 if (debug)
-                    debug << "  state after " <<unparseInstructionWithAddress(insns[i]) <<"\n" <<*ops;
+                    debug << "  state after " <<insns[i]->toString() <<"\n" <<*ops;
             }
             SValuePtr ip = SValue::promote(ops->readRegister(dispatcher->REG_PC));
             if (ip->is_number()) {

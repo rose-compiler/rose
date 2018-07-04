@@ -33,6 +33,7 @@ MatchStandardPrologue::match(const Partitioner &partitioner, rose_addr_t anchor)
         return false;
 
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    function_->reasonComment("matched PUSH <bp>; MOV <bp>, <sp>");
     return true;
 }
 
@@ -51,6 +52,7 @@ MatchHotPatchPrologue::match(const Partitioner &partitioner, rose_addr_t anchor)
         return false;
 
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    function_->reasonComment("matched MOV <di>, <di>; PUSH <bp>; MOV <bp>, <sp>");
     return true;
 }
 
@@ -75,6 +77,7 @@ MatchAbbreviatedPrologue::match(const Partitioner &partitioner, rose_addr_t anch
 
     // Seems good!
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    function_->reasonComment("matched MOV <di>, <di>; PUSH <si>");
     return true;
 }
 
@@ -86,6 +89,7 @@ MatchEnterPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     if (!matchEnterAnyZero(partitioner, insn))
         return false;
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    function_->reasonComment("matched ENTER <x>, 0");
     return true;
 }
 
@@ -398,6 +402,7 @@ MatchRetPadPush::match(const Partitioner &partitioner, rose_addr_t anchor) {
 
     // Looks good
     function_ = Function::instance(pushVa, SgAsmFunction::FUNC_PATTERN);
+    function_->reasonComment("matched RET [x]; <padding>; PUSH <y>");
     return true;
 }
 
@@ -820,7 +825,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         using namespace StringUtility;
         mlog[DEBUG] <<"ModulesX86::SwitchSuccessors: found \"switch\" statement\n";
         mlog[DEBUG] <<"  basic block: " <<addrToString(args.bblock->address()) <<"\n";
-        mlog[DEBUG] <<"  instruction: " <<unparseInstructionWithAddress(args.bblock->instructions()[nInsns-1]) <<"\n";
+        mlog[DEBUG] <<"  instruction: " <<args.bblock->instructions()[nInsns-1]->toString() <<"\n";
         mlog[DEBUG] <<"  table va:    " <<addrToString(tableLimits.least()) <<"\n";
         mlog[DEBUG] <<"  table size:  " <<plural(tableEntries.size(), "entries")
                     <<", " <<plural(tableLimits.size(), "bytes") <<"\n";

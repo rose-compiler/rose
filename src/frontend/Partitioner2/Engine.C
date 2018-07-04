@@ -1296,6 +1296,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         Function::Ptr function = Function::instance(funcAst->get_entry_va(), funcAst->get_name());
         function->comment(funcAst->get_comment());
         function->reasons(funcAst->get_reason());
+        function->reasonComment(funcAst->get_reasonComment());
 
         BOOST_FOREACH (SgAsmBlock *blockAst, SageInterface::querySubTree<SgAsmBlock>(funcAst)) {
             if (blockAst->has_instructions())
@@ -1630,7 +1631,9 @@ Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(targetVa)
                    <<" found at read-only address " <<StringUtility::addrToString(readVa) <<"\n";
         readVa = incrementAddress(readVa, wordSize, maxaddr);
-        return Function::instance(targetVa, SgAsmFunction::FUNC_SCAN_RO_DATA);
+        Function::Ptr function = Function::instance(targetVa, SgAsmFunction::FUNC_SCAN_RO_DATA);
+        function->reasonComment("at ro-data address " + StringUtility::addrToString(readVa));
+        return function;
     }
     readVa = maxaddr;
     return Function::Ptr();
@@ -1642,19 +1645,26 @@ Engine::makeNextCodeReferencedFunction(const Partitioner &partitioner) {
     // function examines them, it moves them to an already-examined set.
     rose_addr_t constant = 0;
     while (codeFunctionPointers_ && codeFunctionPointers_->nextConstant(partitioner).assignTo(constant)) {
+        rose_addr_t srcVa = codeFunctionPointers_->inProgress();
+        SgAsmInstruction *srcInsn = partitioner.instructionProvider()[srcVa];
+        ASSERT_not_null(srcInsn);
 
-        SgAsmInstruction *insn = partitioner.discoverInstruction(constant);
-        if (!insn || insn->isUnknown())
+        SgAsmInstruction *targetInsn = partitioner.discoverInstruction(constant);
+        if (!targetInsn || targetInsn->isUnknown())
             continue;                                   // no instruction
 
-        AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
+        AddressInterval insnInterval = AddressInterval::baseSize(targetInsn->get_address(), targetInsn->get_size());
         if (!partitioner.instructionsOverlapping(insnInterval).empty())
             continue;                                   // would overlap with existing instruction
 
         // All seems okay, so make a function there
         // FIXME[Robb P Matzke 2017-04-13]: USERDEF is not the best, most descriptive reason, but it's what we have for now
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(constant) <<"\n";
-        return Function::instance(constant, SgAsmFunction::FUNC_INSN_RO_DATA);
+        Function::Ptr function = Function::instance(constant, SgAsmFunction::FUNC_INSN_RO_DATA);
+
+        
+        function->reasonComment("from " + srcInsn->toString() + ", ro-data address " + StringUtility::addrToString(constant));
+        return function;
     }
     return Function::Ptr();
 }
@@ -1818,6 +1828,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
                 std::vector<Function::Ptr> newFunctions;
                 BOOST_FOREACH (rose_addr_t functionVa, candidateFunctionVas) {
                     Function::Ptr newFunction = Function::instance(functionVa, SgAsmFunction::FUNC_CALL_INSN);
+                    newFunction->reasonComment("from " + bb->instructions().back()->toString());
                     newFunctions.push_back(partitioner.attachOrMergeFunction(newFunction));
                     SAWYER_MESG(debug) <<me <<"created " <<newFunction->printableName() <<" from " <<bb->printableName() <<"\n";
                 }

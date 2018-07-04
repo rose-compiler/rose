@@ -184,6 +184,9 @@ private:
 
         // Return the next available constant if any.
         Sawyer::Optional<rose_addr_t> nextConstant(const Partitioner &partitioner);
+
+        // Address of instruction being examined.
+        rose_addr_t inProgress() const { return inProgress_; }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

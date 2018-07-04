@@ -24,6 +24,7 @@ findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::
         void visit(SgNode *node) {
             if (SgAsmElfEHFrameEntryFD *fde = isSgAsmElfEHFrameEntryFD(node)) {
                 Function::Ptr function = Function::instance(fde->get_begin_rva().get_rva(), SgAsmFunction::FUNC_EH_FRAME);
+                function->reasonComment("from EhFrameEntry " + fde->get_begin_rva().to_string());
                 if (insertUnique(functions, function, sortFunctionsByAddress))
                     ++nInserted;
             }

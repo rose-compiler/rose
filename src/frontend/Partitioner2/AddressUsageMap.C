@@ -74,7 +74,7 @@ AddressUser::print(std::ostream &out) const {
             BOOST_FOREACH (const BasicBlock::Ptr &bb, bblocks_)
                 out <<"B-" <<StringUtility::addrToString(bb->address()) <<" ";
         }
-        out <<unparseInstructionWithAddress(insn_) <<"}";
+        out <<insn_->toString() <<"}";
     } else {
         ASSERT_require(odblock_.isValid());
         out <<"{D-" <<StringUtility::addrToString(odblock_.dataBlock()->address())

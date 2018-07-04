@@ -53,7 +53,7 @@ DataFlow::buildGraph(const std::vector<SgAsmInstruction*> &insns)
         }
 
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-            mlog[DEBUG] <<"  processing " <<unparseInstructionWithAddress(insn) <<"\n";
+            mlog[DEBUG] <<"  processing " <<insn->toString() <<"\n";
             dispatcher_->processInstruction(insn);
         }
 

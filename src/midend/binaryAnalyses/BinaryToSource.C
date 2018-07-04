@@ -136,7 +136,7 @@ BinaryToSource::emitInstruction(SgAsmInstruction *insn, std::ostream &out) {
     out <<"                /* "<<unparseInstruction(insn) <<" */\n";
     if (settings_.traceInsnExecution)
         out <<"                fputs("
-            <<"\"" <<StringUtility::cEscape(unparseInstructionWithAddress(insn)) <<"\\n\""
+            <<"\"" <<StringUtility::cEscape(insn->toString()) <<"\\n\""
             <<", stderr);\n";
 
     raisingOps_->reset();

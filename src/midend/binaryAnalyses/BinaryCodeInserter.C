@@ -120,7 +120,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             replacement.insert(replacement.end(), bytes.begin(), bytes.end());
 
             SAWYER_MESG(debug) <<"  enlarged area by redirecting a successor:\n"
-                               <<"    " <<unparseInstructionWithAddress(nextInsn) <<"\n";
+                               <<"    " <<nextInsn->toString() <<"\n";
 
         } else if ((aggregationDirection_ & AGGREGATE_PREDECESSORS) != 0 && index > 0) {
             // Enlarge to-be-replaced by prepending one of the block's instructions to the replacement
@@ -141,7 +141,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             relocStart += bytes.size();
 
             SAWYER_MESG(debug) <<"  enlarged area by redirecting a predecessor:\n"
-                               <<"    " <<unparseInstructionWithAddress(prevInsn) <<"\n";
+                               <<"    " <<prevInsn->toString() <<"\n";
         } else {
             break;
         }

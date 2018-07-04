@@ -96,7 +96,7 @@ Exception::print(std::ostream &o) const
 {
     o <<"Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
     if (insn)
-        o <<": " <<unparseInstructionWithAddress(insn);
+        o <<": " <<insn->toString();
     o <<"\n";
 }
 
@@ -224,7 +224,7 @@ State::print(std::ostream &stream, Formatter &fmt) const
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
-    SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<unparseInstructionWithAddress(insn) <<"\n";
+    SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<insn->toString() <<"\n";
     currentInsn_ = insn;
     ++nInsns_;
 };

@@ -340,7 +340,7 @@ public:
         if (mlog[DEBUG]) {
             SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
             mlog[DEBUG] <<"  +-------------------------------------------------\n"
-                        <<"  | " <<unparseInstructionWithAddress(insn) <<"\n"
+                        <<"  | " <<insn->toString() <<"\n"
                         <<"  +-------------------------------------------------\n"
                         <<"    state before instruction:\n"
                         <<(*currentState() + fmt);
@@ -1217,7 +1217,7 @@ FeasiblePath::VarDetail::toString() const {
         if (firstAccessIdx)
             ss <<" #" <<*firstAccessIdx;
         if (firstAccessInsn)
-            ss <<" " <<unparseInstructionWithAddress(firstAccessInsn);
+            ss <<" " <<firstAccessInsn->toString();
     }
     if (memAddress)
         ss <<" mem[" <<*memAddress <<"]";

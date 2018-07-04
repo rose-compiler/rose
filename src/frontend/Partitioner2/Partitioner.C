@@ -607,7 +607,7 @@ Partitioner::truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &pla
         throw BasicBlockError(bblock, basicBlockName(bblock) + " cannot be truncated at its initial instruction");
     if (!bblock->instructionExists(insn)) {
         throw BasicBlockError(bblock, basicBlockName(bblock) +
-                              " does not contain instruction \"" + unparseInstructionWithAddress(insn) + "\""
+                              " does not contain instruction \"" + insn->toString() + "\""
                               " for truncation");
     }
 
@@ -2390,7 +2390,9 @@ Partitioner::discoverCalledFunctions() const {
             BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
                 if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                     rose_addr_t entryVa = vertex.value().address();
-                    insertUnique(functions, Function::instance(entryVa, SgAsmFunction::FUNC_CALL_TARGET), sortFunctionsByAddress);
+                    Function::Ptr function = Function::instance(entryVa, SgAsmFunction::FUNC_CALL_TARGET);
+                    function->reasonComment("called along CFG edge " + edgeName(edge));
+                    insertUnique(functions, function, sortFunctionsByAddress);
                     break;
                 }
             }

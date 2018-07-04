@@ -53,6 +53,7 @@ private:
     std::string demangledName_;                         // optional demangled name
     std::string comment_;                               // optional multi-line, plain-text, commment
     unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
+    std::string reasonComment_;                         // additional commentary about reasons_
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
@@ -75,7 +76,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not stored
         s & BOOST_SERIALIZATION_NVP(entryVa_);
         s & BOOST_SERIALIZATION_NVP(name_);
@@ -89,6 +90,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(ccDefinition_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaAnalysis_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaOverride_);
+        if (version > 0)
+            s & BOOST_SERIALIZATION_NVP(reasonComment_);
     }
 #endif
     
@@ -115,11 +118,13 @@ public:
     }
     /** @} */
 
-    /** Return the entry address.  The entry address also serves as an identifier for the function since the CFG can only hold
-     *  one function per entry address.  Detached functions need not have unique entry addresses. */
+    /** Read-only property: Entry address.
+     *
+     *  The entry address also serves as an identifier for the function since the CFG can only hold one function per entry
+     *  address.  Detached functions need not have unique entry addresses. */
     rose_addr_t address() const { return entryVa_; }
 
-    /** Optional function name.
+    /** Property: Optional function name.
      *
      *  This is the official name. See also @ref demangledName, which can also return the value of this @ref name property.
      *
@@ -128,7 +133,7 @@ public:
     void name(const std::string &name) { name_ = name; }
     /** @} */
 
-    /** Optional demangled name.
+    /** Property: Optional demangled name.
      *
      *  This property holds the override string to use as the demangled name. If set to the empty string, then reading this
      *  property returns the true @ref name instead.
@@ -138,7 +143,7 @@ public:
     void demangledName(const std::string &name) { demangledName_ = name; }
     /** @} */
 
-    /** Optional function comment.
+    /** Property: Optional function comment.
      *
      *  Comments are multi-line, plain-text (not HTML), ASCII.
      *
@@ -147,13 +152,31 @@ public:
     void comment(const std::string &s) { comment_ = s; }
     /** @} */
 
-    /** Function reasons.  These are SgAsmFunction::FunctionReason bits.
+    /** Property: Bit vector of function reasons.  These are SgAsmFunction::FunctionReason bits.
      *
      *  @{ */
     unsigned reasons() const { return reasons_; }
     void reasons(unsigned reasons) { reasons_ = reasons; }
-    void insertReasons(unsigned reasons) { reasons_ |= reasons; }
-    void eraseReasons(unsigned reasons) { reasons_ &= ~reasons; }
+    /** @} */
+
+    /** Insert additional function reason bits.
+     *
+     *  The high-order bits 16 bits are OR'd into the @ref reasons property, while the low-order 16 bits given in the argument
+     *  replace the low-order 16 bits stored in the @ref reasons property. */
+    void insertReasons(unsigned reasons) { reasons_ = (reasons_ & 0xffff0000) | reasons; }
+
+    /** Remove function reason bits.
+     *
+     *  Removes the high-order 16 bits that appear in the argument from the @ref reasons property. The low-order 16 bits are
+     *  all cleared if any of the low-order 16 bits of the argument are set. */
+    void eraseReasons(unsigned reasons) { reasons_ &= ~((0xffff0000 & reasons) | ((reasons & 0xffff) != 0 ? 0xffff : 0x0)); }
+    /** @} */
+
+    /** Property: Additional comment for why function was detected.
+     *
+     * @{ */
+    const std::string& reasonComment() const { return reasonComment_; }
+    void reasonComment(const std::string &s) { reasonComment_ = s; }
     /** @} */
 
     /** Returns basic block addresses.  Because functions can exist in a detatched state, a function stores basic block
@@ -323,5 +346,8 @@ typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Function, 1);
 
 #endif

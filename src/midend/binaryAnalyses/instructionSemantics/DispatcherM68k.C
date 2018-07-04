@@ -1755,7 +1755,7 @@ struct IP_fp_move: P {
                 result = ops->fpToInteger(d->read(args[0], srcNBits), srcType, dflt);
             }
         } else {
-            ASSERT_require2(isSgAsmDirectRegisterExpression(args[1]), unparseInstructionWithAddress(insn));
+            ASSERT_require2(isSgAsmDirectRegisterExpression(args[1]), insn->toString());
             if (!dstType)
                 dstType = SageBuilderAsm::buildIeee754Binary64();
             if (srcType) {
