@@ -16,7 +16,6 @@ void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& 
     TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name,base,fromType);
     list.push_back(p);
   }
-  TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,"",base,fromType);
 }
 
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
@@ -32,14 +31,15 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
     SgFunctionDefinition* funDef=std::get<1>(typeNameTuple);
     string varName=std::get<2>(typeNameTuple);
     bool base = std::get<3>(typeNameTuple);
+    SgType* fromType = std::get<4>(typeNameTuple);
     SgNode* root=nullptr;
     if(funDef)
       root=funDef;
     else
       root=project;
 
-    int numChanges=changeVariableType(root, varName, newVarType, base);
-    if(numChanges==0) {
+    int numChanges=changeVariableType(root, varName, newVarType, base, fromType);
+    if(numChanges==0 && fromType == nullptr) {
       cout<<"Warning: Did not find variable "<<varName;
       if(funDef) {
         cout<<" in function "<<SgNodeHelper::getFunctionName(funDef)<<".";
@@ -47,10 +47,10 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
         cout<<" anywhere in file."<<endl;
       }
       cout<<endl;
-    } else if(numChanges>1) {
+    } else if(numChanges>1 && fromType == nullptr) {
       cout<<"Warning: Found more than one declaration of variable "<<varName<<endl;
     }
-    _totalNumChanges+=numChanges;
+    if(fromType == nullptr) _totalNumChanges+=numChanges;
     transformCommandLineFiles(project);
   }
 }
@@ -183,7 +183,25 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
       }
     }
-    
+    if(fromType != nullptr && varNameToFind == "ret"){
+      SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef);
+      SgType* funBaseType = funRetType;
+      if(base){
+        funBaseType = funRetType->findBaseType();
+      }
+      if(funBaseType == fromType){
+        SgFunctionDeclaration* funDecl = funDef->get_declaration();
+        SgFunctionType* funType = funDecl->get_type();
+        SgType* replaceType = newType;
+        if(base){
+          replaceType = nathan_rebuildBaseType(funRetType, newType);
+        }
+        string funName = SgNodeHelper::getFunctionName(root);
+        TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Changed type to "+replaceType->unparseToString());
+        funType->set_orig_return_type(replaceType);
+        foundVar++;
+      }
+    }
   }
 
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
