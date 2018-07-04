@@ -373,7 +373,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3.")
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
-    ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].");
+    ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
     ;
 
   rersOptions.add_options()
@@ -1260,8 +1260,12 @@ int main( int argc, char * argv[] ) {
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
 
+    if(args.getBool("print-varid-mapping")) {
+      analyzer->getVariableIdMapping()->toStream(cout);
+    }
+    
     if(args.count("run-rose-tests")) {
-      logger[TRACE] << "INIT: Running ROSE AST tests."<<endl;
+      cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
       AstTests::runAllTests(sageProject);
 
@@ -1279,6 +1283,7 @@ int main( int argc, char * argv[] ) {
         }
         delete evaluator;
       }
+      cout << "ROSE tests finished."<<endl;
       mfacilities.shutdown();
       return 0;
     }
@@ -1995,9 +2000,6 @@ int main( int argc, char * argv[] ) {
       sageProject->unparse(0,0);
     }
 
-    if(args.getBool("print-varid-mapping")) {
-      analyzer->getVariableIdMapping()->toStream(cout);
-    }
     // reset terminal
     cout<<color("normal")<<"done."<<endl;
 

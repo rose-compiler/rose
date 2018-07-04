@@ -909,20 +909,23 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
     return transferFunctionExit(edge,estate);
   } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
     return transferFunctionCallReturn(edge,estate);
-  } else if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)
-     ||edge.isType(EDGE_EXTERNAL)
-     ||edge.isType(EDGE_CALLRETURN)) {
+  } else if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
     // this is supposed to be dead code meanwhile
-    ROSE_ASSERT(false);
+    bool isCondition=SgNodeHelper::isCond(nextNodeToAnalyze1);
+    cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
+    //ROSE_ASSERT(false);
     // special case external call
-    //EState newEState=currentEState;
-    //newEState.setLabel(edge.target());
-    //return elistify(newEState);
+    //cout<<"DEBUG: edge: "<<edge.toString()<<endl;
+    EState newEState=currentEState;
+    newEState.setLabel(edge.target());
+    return elistify(newEState);
   } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
     return transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
     return transferExprStmt(nextNodeToAnalyze1, edge, estate);
   } else {
+      ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
+      ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
     // nothing to analyze, just create new estate (from same State) with target label of edge
     // can be same state if edge is a backedge to same cfg node
     EState newEState=currentEState;
