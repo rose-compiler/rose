@@ -5,6 +5,7 @@
 #include "BinaryNoOperation.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
+#include "AsmUnparser_compat.h"
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
@@ -186,4 +187,18 @@ SgAsmInstruction::isUnknown() const
 {
     abort(); // too bad ROSETTA doesn't allow virtual base classes
     return false;
+}
+
+std::string
+SgAsmInstruction::toString() const {
+    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
+    std::string retval = StringUtility::addrToString(get_address()) + ": " + unparseMnemonic(insn);
+    if (SgAsmOperandList *opList = insn->get_operandList()) {
+        const SgAsmExpressionPtrList &operands = opList->get_operands();
+        for (size_t i = 0; i < operands.size(); ++i) {
+            retval += i == 0 ? " " : ", ";
+            retval += StringUtility::trim(unparseExpression(operands[i], NULL, NULL));
+        }
+    }
+    return retval;
 }

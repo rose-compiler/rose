@@ -487,7 +487,7 @@ SageInterface::find ( SgNode* astNode, SgNode* target, EquivalenceTestFunctionTy
      printf ("flattenedTargetList.size() = %" PRIuPTR " \n",flattenedTargetList.size());
      SgAsmInstruction* instruction = isSgAsmInstruction(flattenedTargetList[0]);
      if (instruction != NULL)
-          printf ("   instruction = %s \n",unparseInstructionWithAddress(instruction).c_str());
+         printf ("   instruction = %s\n", instruction->toString().c_str());
      for (size_t i=0; i < flattenedTargetList.size(); i++)
         {
           ROSE_ASSERT(flattenedTargetList[i] != NULL);
@@ -502,7 +502,7 @@ SageInterface::find ( SgNode* astNode, SgNode* target, EquivalenceTestFunctionTy
           ROSE_ASSERT(matchList[i] != NULL);
           SgAsmInstruction* instruction = isSgAsmInstruction(matchList[i]);
           ROSE_ASSERT(instruction != NULL);
-          printf ("   instruction = %s \n",unparseInstructionWithAddress(instruction).c_str());
+          printf ("   instruction = %s\n", instruction->toString().c_str());
         }
 
      printf ("Leaving find() \n");
