@@ -792,7 +792,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         //cout<<"DEBUG: pointer-array access."<<endl;
         if(pstate->varExists(arrayVarId)) {
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
-          if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr())) {
+          if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             cout<<"Error: value not a pointer value: "<<arrayPtrValue.toString()<<endl;
             cout<<estate.toString(_variableIdMapping)<<endl;
             exit(1);
