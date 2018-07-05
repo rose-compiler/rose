@@ -9,7 +9,8 @@ class TFTypeTransformer {
  public:
   typedef std::tuple<SgType*,SgFunctionDefinition*,std::string,bool,SgType*> VarTypeVarNameTuple;
   typedef std::list<VarTypeVarNameTuple> VarTypeVarNameTupleList;
-  void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base=false, SgType* fromType = nullptr);
+  void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varnames);
+  void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, SgType* fromType);
   // searches for variable in the given subtree 'root'
   int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type, bool base=false, SgType* fromType=nullptr);
   int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type, bool base=false);
