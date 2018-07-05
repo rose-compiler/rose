@@ -49,6 +49,7 @@
 #include "AnalysisParameters.h"
 #include "SprayException.h"
 #include "CodeThornException.h"
+#include "ProgramInfo.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -374,6 +375,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
+    ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.");
     ;
 
   rersOptions.add_options()
@@ -1251,6 +1253,13 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("inline")) {
       size_t numInlined=lowering.inlineFunctions(sageProject);
       logger[TRACE]<<"inlined "<<numInlined<<" functions"<<endl;
+    }
+
+    if(args.getBool("program-stats")) {
+      ProgramInfo programInfo(sageProject);
+      programInfo.compute();
+      programInfo.printDetailed();
+      exit(0);
     }
 
     if(args.getBool("unparse")) {
