@@ -70,6 +70,7 @@ class AbstractValue {
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
   bool isPtr() const;
+  bool isNullPtr() const;
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
   AbstractValue operatorOr(AbstractValue other);

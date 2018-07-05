@@ -707,6 +707,20 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState,true);
 
+          if(res.size()!=1) {
+            if(res.size()>1) {
+              cerr<<"Error: multiple results in rhs evaluation."<<endl;
+            } else {
+              //cerr<<"INFO: no results in rhs evaluation."<<endl;
+              EState estate=currentEState;
+              PState newPState=*estate.pstate();
+              newPState.writeToMemoryLocation(lhsAbstractAddress,CodeThorn::Top());
+              ConstraintSet cset=*estate.constraints();
+              return createEState(targetLabel,newPState,cset);
+            }
+            cerr<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
+            exit(1);
+          }
           ROSE_ASSERT(res.size()==1);
           SingleEvalResultConstInt evalResult=*res.begin();
 
