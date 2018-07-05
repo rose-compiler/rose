@@ -212,7 +212,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
     //   else if(SgInitializedName* varInitName0=isSgInitializedName(*i)) {
     //  varInitName=varInitName0;
     //}
-    if(fromType != nullptr && (varNameToFind == "" || varNameToFind == "body")){
+    if(fromType != nullptr && !(varNameToFind == "args" || varNameToFind == "ret")){
       foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
     }    
     else if(varNameToFind != "" && fromType == nullptr){

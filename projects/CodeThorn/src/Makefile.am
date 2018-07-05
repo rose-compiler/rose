@@ -589,6 +589,7 @@ check-typeforge: typeforge
 	g++ -Wall rose_casttest3.C
 	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
+	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
 	rm -f a.out
 
 #MS: iterator_test not ingegrated yet

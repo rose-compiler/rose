@@ -351,15 +351,10 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
             SgScopeStatement* globalScope=(*listOfGlobalVars.begin())->get_scope(); // obtain global scope from first var
             SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,globalScope);
             SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,globalScope);
-            tt.addToTransformationList(_list,newBuiltType,nullptr,"",transformBase,oldBuiltType);
-            //for(auto varDecl : listOfGlobalVars) {
-            //  SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-            //  SgType* varInitNameType=varInitName->get_type();
-            //  if(varInitNameType==oldBuiltType) {
-            //    varInitName->set_type(newBuiltType);
-            //    numTypeReplace++;
-            //  }
-            //}
+            for (auto dec : listOfGlobalVars){
+              string initName = SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfInitializedName(SgNodeHelper::getInitializedNameOfVariableDeclaration(dec)));
+              tt.addToTransformationList(_list,newBuiltType,nullptr,initName,transformBase,oldBuiltType);
+            }
           }
           //cout<<"Error: option 'global' not supported yet."<<endl;
           //exit(1);
@@ -379,46 +374,14 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
           for (auto funDef : listOfFunctionDefinitions) {
             SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
             SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
-     
             //cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
-            
             for(auto functionConstructSpec : functionConstructSpecList) {
               tt.addToTransformationList(_list,newBuiltType,funDef,functionConstructSpec,transformBase,oldBuiltType);
-              //if(functionConstructSpec=="args") {
-              //  // change types of arguments
-              //  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-              //  for(auto varInitName : initNamePtrList) {
-              //    SgType* varInitNameType=varInitName->get_type();
-              //    if(varInitNameType==oldBuiltType) {
-              //      varInitName->set_type(newBuiltType);
-              //      numTypeReplace++;
-              //    }
-              //  }
-              //} else if(functionConstructSpec=="ret") {
-              //  // change type of return type if it matches provided type. If no type is provided always change.
-              //  SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef); // uses get_orig_return_type
-              //  SgFunctionDeclaration* funDecl=funDef->get_declaration();
-              //  if(funRetType==oldBuiltType||oldBuiltType==nullptr) {
-              //    SgFunctionType* funType=funDecl->get_type();
-              //    funType->set_orig_return_type(newBuiltType);
-              //    numTypeReplace++;
-              //  }
-              //} else if(functionConstructSpec=="body") {
-              //  // finds all variables in body of function and replaces type
-              //  std::list<SgInitializedName*> varInitList=findVariablesByType(funDef, oldBuiltType);
-              //  for (auto initName : varInitList) {
-              //   initName->set_type(newBuiltType);
-              //    numTypeReplace++;
-              //  }
-              //} else {
-              //  cerr<<"Error: line "<<lineNr<<": unknown function construct specifier "<<functionConstructSpec<<"."<<endl;
-              //  exit(1);
-              }
-              //tt.addToTransformationList(list,newType,funDef,varName);
-            } // end of loop on functionConstructSpecList
+            }
           }
-        } 
-       else if(commandName=="transform") {
+        }
+      } 
+      else if(commandName=="transform") {
         if(splitLine.size()!=4) {
           cerr<<"Error in line "<<lineNr<<": wrong number of arguments: "<<splitLine.size()<<" (should be 4)."<<endl;
         }
