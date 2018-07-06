@@ -195,21 +195,23 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
           transformBase = true;
         }
         SgFunctionDefinition* funDef;
+        SgType* newType;
         if(functionName=="$global") {
           funDef=nullptr; // denote global scope
+          newType = buildTypeFromStringSpec(typeName, (*SgNodeHelper::listOfGlobalVars(root).begin())->get_scope());
         } else {
           funDef=completeAst.findFunctionByName(functionName);
           if(funDef==0) {
             cerr<<"Error: function "<<functionName<<" does not exist in file."<<endl;
             return true;
           }
+	  newType=buildTypeFromStringSpec(typeName,funDef);
         }
-	SgType* newType=buildTypeFromStringSpec(typeName,funDef);
 	if(newType==nullptr) {
 	  cerr<<"Error: unknown type "<<typeName<<" in command file "<<specFileName<<" in line "<<lineNr<<"."<<endl;
 	  return true;
 	} else {
-	  tt.addToTransformationList(_list,newType,funDef,varName,transformBase);
+	  tt.addToTransformationList(_list,newType,funDef,varName,transformBase,nullptr);
 	}
       } else if(commandName=="replace_type") {
 	if(numEntries!=3) {

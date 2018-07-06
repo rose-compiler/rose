@@ -55,6 +55,7 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
       cout<<"Warning: Found more than one declaration of variable "<<varName<<endl;
     }
     if(fromType == nullptr) _totalNumChanges+=numChanges;
+    else _totalTypeNameChanges+=numChanges;
     transformCommandLineFiles(project);
   }
 }
@@ -121,6 +122,14 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
   else{
     return newBaseType;
   }
+}
+
+
+int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
+                                               SgNode* root,
+                                               string varNameToFind,
+                                               SgType* newType) {
+  return TFTypeTransformer::changeTypeIfInitNameMatches(varInitName, root, varNameToFind, newType, false);
 }
 
 int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
@@ -202,6 +211,11 @@ int nathan_changeTypeIfBothMatch(SgInitializedName* varInitName,SgNode* root,str
   }
   return foundVar;
 }
+
+int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType) {
+  return TFTypeTransformer::changeVariableType(root, varNameToFind, newType, false, nullptr);
+}
+
 int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType, bool base, SgType* fromType) {
   RoseAst ast(root);
   int foundVar=0;
@@ -330,6 +344,11 @@ int TFTypeTransformer::getTotalNumChanges() {
   return _totalNumChanges;
 }
 
+int TFTypeTransformer::getTotalTypeNameChanges(){
+  cout<<_totalTypeNameChanges<<"\n";
+  return (int) _totalTypeNameChanges;
+}
+
 void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
   ss<<numTypeReplace
@@ -344,7 +363,7 @@ void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int 
 
 void TFTypeTransformer::printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
-  int numTypeBasedReplacements=numTypeReplace;
+  int numTypeBasedReplacements=numTypeReplace+tt.getTotalTypeNameChanges();
   int numVarNameBasedReplacements=tt.getTotalNumChanges();
   int arrayReadAccesses=tfTransformation.readTransformations;
   int arrayWriteAccesses=tfTransformation.writeTransformations;

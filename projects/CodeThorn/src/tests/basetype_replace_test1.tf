@@ -22,5 +22,7 @@ replace_vartype;f0;j;AD_real
 replace_vartype;f0;k;AD_real
 replace_basetype;f1:args,body,ret;double=>float
 replace_basetype;$global;double=>float
+replace_varbasetype;$global;ga;double
+replace_varbasetype;$global;gb;double
 replace_varbasetype;$global;ga;AD_real
-replace_varbasetype;$global;gb;AD_real
+replace_vartype;$global;gb;AD_real
