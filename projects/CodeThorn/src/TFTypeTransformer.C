@@ -125,18 +125,11 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
 }
 
 
-int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
-                                               SgNode* root,
-                                               string varNameToFind,
-                                               SgType* newType) {
+int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType) {
   return TFTypeTransformer::changeTypeIfInitNameMatches(varInitName, root, varNameToFind, newType, false);
 }
 
-int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,
-                                               SgNode* root,
-                                               string varNameToFind,
-                                               SgType* newType,
-                                               bool base) {
+int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType,bool base) {
   int foundVar=0;
   if(varInitName) {
     SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
@@ -219,7 +212,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
 int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType, bool base, SgType* fromType) {
   RoseAst ast(root);
   int foundVar=0;
-  // need to process formal params explicitly because not found in traversal of functionDef (is traversed from function decl)
+  // need to process formal params and return explicitly because not found in traversal of functionDef (is traversed from function decl)
   if(SgFunctionDefinition* funDef=isSgFunctionDefinition(root)) {
     SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     for(auto varInitName : initNamePtrList) {
@@ -250,7 +243,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
       }
     }
   }
-
+  //Traversebody of function. Will be used for globals
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     SgInitializedName* varInitName=nullptr;
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
@@ -345,7 +338,6 @@ int TFTypeTransformer::getTotalNumChanges() {
 }
 
 int TFTypeTransformer::getTotalTypeNameChanges(){
-  cout<<_totalTypeNameChanges<<"\n";
   return (int) _totalTypeNameChanges;
 }
 

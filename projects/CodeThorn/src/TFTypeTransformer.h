@@ -33,7 +33,7 @@ class TFTypeTransformer {
   CastTransformer _castTransformer;
   static bool _traceFlag;
   int _totalNumChanges=0;
-  float _totalTypeNameChanges=0;
+  float _totalTypeNameChanges=0; //Float instead of int to hied bug. Reason unknown.
 };
 
 #endif

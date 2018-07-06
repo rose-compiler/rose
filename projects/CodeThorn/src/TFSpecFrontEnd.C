@@ -198,7 +198,8 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
         SgType* newType;
         if(functionName=="$global") {
           funDef=nullptr; // denote global scope
-          newType = buildTypeFromStringSpec(typeName, (*SgNodeHelper::listOfGlobalVars(root).begin())->get_scope());
+          SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
+          newType = buildTypeFromStringSpec(typeName,globalScope);
         } else {
           funDef=completeAst.findFunctionByName(functionName);
           if(funDef==0) {
@@ -378,7 +379,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
             SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
             //cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
             for(auto functionConstructSpec : functionConstructSpecList) {
-              tt.addToTransformationList(_list,newBuiltType,funDef,functionConstructSpec,transformBase,oldBuiltType);
+              tt.addToTransformationList(_list,newBuiltType,funDef,"TYPEFORGE"+functionConstructSpec,transformBase,oldBuiltType);
             }
           }
         }
