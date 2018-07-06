@@ -2,7 +2,7 @@
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
  * License  : see file LICENSE in the CodeThorn distribution *
- ****X*********************************************************/
+ *************************************************************/
 
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
@@ -823,7 +823,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       ROSE_ASSERT(arrayElementId.isValid());
 #endif
       if(pstate->varExists(arrayPtrValue)) {
-        cout<<"DEBUG: ARRAY PTR VALUE IN STATE (string not in state)."<<endl;
+        cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
       }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
         res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);

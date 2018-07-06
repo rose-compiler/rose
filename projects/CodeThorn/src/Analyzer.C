@@ -958,7 +958,18 @@ list<EState> Analyzer::transferIdentity(Edge edge, const EState* estate) {
 
 void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
   ROSE_ASSERT(getVariableIdMapping());
-  cout<<"DEBUG: TODO: initializeStringLiteralsInState"<<endl;
+  //cout<<"DEBUG: TODO: initializeStringLiteralsInState"<<endl;
+  std::map<SgStringVal*,VariableId>* map=getVariableIdMapping()->getStringLiteralsToVariableIdMapping();
+  for(auto iter=map->begin();iter!=map->end();++iter) {
+    auto dataPair=*iter;
+    SgStringVal* stringValNode=dataPair.first;
+    VariableId stringVarId=dataPair.second;
+    string theString=stringValNode->get_value();
+    for(int pos=0;pos<(int)theString.size();pos++) {
+      AbstractValue character(theString[pos]);
+      initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
+    }
+  }
 }
 
 void Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
