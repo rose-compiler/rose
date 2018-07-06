@@ -117,14 +117,26 @@ class VariableIdMapping {
      e.g. a[3] gets assigned 3 variable-ids (where the first one denotes a[0])
      this mode must be set before the mapping is computed with computeVariableSymbolMapping
   */
-  void setModeVariableIdForEachArrayElement(bool active) { ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active; }
-  bool getModeVariableIdForEachArrayElement() { return modeVariableIdForEachArrayElement; }
+  void setModeVariableIdForEachArrayElement(bool active);
+  bool getModeVariableIdForEachArrayElement();
   SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
   size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
   size_t getArrayElementCount(SgArrayType* t);
   size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
   VariableId idForArrayRef(SgPntrArrRefExp* ref);
+
+  
+  // memory locations of string literals
+  VariableId getStringLiteralVariableId(SgStringVal* sval);
+  void registerStringLiterals(SgNode* root);
+  int numberOfRegisteredStringLiterals();
+  bool isStringLiteralAddress(VariableId stringVarId);
+  std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
+
  private:
+  std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
+  std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
+
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   std::string generateDotSgSymbol(SgSymbol* sym);
   typedef std::pair<std::string,SgSymbol*> MapPair;

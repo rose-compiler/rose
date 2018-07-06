@@ -375,8 +375,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
-    ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.");
-    ;
+    ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
+    ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state")
+  ;
 
   rersOptions.add_options()
     ("csv-assert", po::value< string >(), "Output assert reachability results into a CSV file <arg>.")
@@ -1124,6 +1125,7 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
+    analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzerSetup(analyzer, logger);
 
     if(args.count("threads")) {
@@ -1268,7 +1270,9 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+    cout<<"STATUS: registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
+    
     if(args.getBool("print-varid-mapping")) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }

@@ -110,6 +110,7 @@ namespace CodeThorn {
     
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeStringLiteralsInState(PState& initialPState);
 
     // set the size of an element determined by this type
     void setElementSize(VariableId variableId, SgType* elementType);
@@ -225,7 +226,7 @@ namespace CodeThorn {
 
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
+    bool optionStringLiteralsInState=false;
   protected:
     void printStatusMessage(string s, bool newLineFlag);
 

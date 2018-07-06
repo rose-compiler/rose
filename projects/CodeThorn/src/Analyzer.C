@@ -956,6 +956,11 @@ list<EState> Analyzer::transferIdentity(Edge edge, const EState* estate) {
   return elistify(newEState);
 }
 
+void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
+  ROSE_ASSERT(getVariableIdMapping());
+  cout<<"DEBUG: TODO: initializeStringLiteralsInState"<<endl;
+}
+
 void Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
@@ -1093,6 +1098,9 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   // create empty state
   PState initialPState;
   initializeCommandLineArgumentsInState(initialPState);
+  if(optionStringLiteralsInState) {
+    initializeStringLiteralsInState(initialPState);
+  }
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
   logger[TRACE]<< "INIT: initial state(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;

@@ -107,10 +107,15 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
   if(isSgFloatVal(valueExp)
      ||isSgDoubleVal(valueExp)
      ||isSgLongDoubleVal(valueExp)
-     ||isSgComplexVal(valueExp)
-     ||isSgStringVal(valueExp)
-     ) {
+     ||isSgComplexVal(valueExp)) {
     return AbstractValue(CodeThorn::Top());
+  } else if(SgStringVal* stringVal=isSgStringVal(valueExp)) {
+    // handle string literals
+    std::string s=stringVal->get_value();
+    VariableId stringValVarId=_variableIdMapping->getStringLiteralVariableId(stringVal);
+    AbstractValue val=AbstractValue::createAddressOfVariable(stringValVarId);
+    cout<<"DEBUG: Found StringValue: "<<s<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
+    return val;
   } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
     // ROSE uses an integer for a bool
     int val=exp->get_value();
@@ -791,6 +796,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access."<<endl;
         if(pstate->varExists(arrayVarId)) {
+          cout<<"DEBUG: arrayPtrValue read from memory."<<endl;
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             cout<<"Error: value not a pointer value: "<<arrayPtrValue.toString()<<endl;
@@ -816,6 +822,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
       ROSE_ASSERT(arrayElementId.isValid());
 #endif
+      if(pstate->varExists(arrayPtrValue)) {
+        cout<<"DEBUG: ARRAY PTR VALUE IN STATE (string not in state)."<<endl;
+      }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
         res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
@@ -857,10 +866,15 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
             }
             elemIndex++;
           }
-          cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
+          cerr<<"Error: access to element of constant array (not in state). Not supported."<<endl;
           exit(1);
+        } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
+          cout<<"TODO: Found string literal address. Data not present in state yet. skipping for now, returning top"<<endl;
+          res.result=CodeThorn::Top();
+          return listify(res);
         } else {
-          cout<<"Error: potential out of bounds access 1 : ("<<arrayPtrValue.toString(_variableIdMapping)<<", "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<")"<<endl;
+          cout<<estate.toString(_variableIdMapping)<<endl;
+          cout<<"Error: potential out of bounds access 1 : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           cerr<<"array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           cerr<<"AST: "<<node->unparseToString()<<endl;
