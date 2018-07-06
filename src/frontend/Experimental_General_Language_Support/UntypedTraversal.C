@@ -16,6 +16,10 @@ UntypedTraversal::UntypedTraversal(SgSourceFile* sourceFile, UntypedConverter* c
 InheritedAttribute
 UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute currentScope)
 {
+#if DEBUG_UNTYPED_TRAVERSAL > 0
+        cout << "Down traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
+#endif
+
    switch (node->variantT())
    {
      case V_SgUntypedFile:
@@ -115,7 +119,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
       }
     default:
       {
-#if DEBUG_UNTYPED_TRAVERSAL
+#if DEBUG_UNTYPED_TRAVERSAL > 1
         cout << "Down traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
 #endif
       }
@@ -131,6 +135,10 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
 // Synthesized attribute is an expression initialized to NULL for when an expression is a statement.
 // Statements are added to the scope and don't need to be returned as an attribute.
    SynthesizedAttribute sg_expr = NULL;   
+
+#if DEBUG_UNTYPED_TRAVERSAL > 0
+         cout << "Up   traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
+#endif
 
    switch (node->variantT())
    {
@@ -213,7 +221,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
 
     default:
       {
-#if DEBUG_UNTYPED_TRAVERSAL
+#if DEBUG_UNTYPED_TRAVERSAL > 1
          cout << "Up   traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
 #endif
       }

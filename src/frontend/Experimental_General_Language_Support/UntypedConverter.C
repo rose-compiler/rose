@@ -1618,6 +1618,26 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
                break;
             }
 
+         case SgUntypedType::e_bool:
+            {
+               bool bool_val;
+               std::string constant_text = ut_expr->get_value_string();
+
+               if      (constant_text == "TRUE")  bool_val = 1;
+               else if (constant_text == "FALSE") bool_val = 0;
+               else    ROSE_ASSERT(0);
+
+            // preserve kind parameter if any
+               if (ut_expr->get_type()->get_has_kind())
+                  {
+                     cerr << "WARNING: UntypedConverter::convertSgUntypedValueExpression: kind value not handled \n";
+                  }
+
+               sg_expr = SageBuilder::buildBoolValExp(bool_val);
+               setSourcePositionFrom(sg_expr, ut_expr);
+               break;
+            }
+
          default:
             {
                ROSE_ASSERT(0);  // NOT IMPLEMENTED
