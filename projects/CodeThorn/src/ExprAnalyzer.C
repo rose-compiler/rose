@@ -853,17 +853,19 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
               }
             } else {
               cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              exit(1);
             }
             elemIndex++;
           }
           cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
           exit(1);
         } else {
-          cout<<"Error: potential out of bounds access (memory bound index: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<")"<<endl;
+          cout<<"Error: potential out of bounds access 1 : ("<<arrayPtrValue.toString(_variableIdMapping)<<", "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<")"<<endl;
           cerr<<"array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           cerr<<"AST: "<<node->unparseToString()<<endl;
-          
+          cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
+          _nullPointerDereferenceLocations.potentialDereferenceLocations.insert(estate.label());
         }
       }
     } else {
@@ -1226,6 +1228,21 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  for (auto arg : argsList) {
+    cout<<"DEBUG: functioncall argument: "<<arg->unparseToString()<<endl;
+    // Requirement: code is normalized, does not contain state modifying operations in function arguments
+    list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate,useConstraints);
+    cout<<"DEBUG: resList.size()"<<resList.size()<<endl;
+  }
+  SingleEvalResultConstInt res;
+  AbstractValue evalResultValue=CodeThorn::Top();
+  res.init(estate,*estate.constraints(),evalResultValue);
+ 
+  return listify(res);
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
@@ -1242,11 +1259,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallFree(funCall,estate,useConstraints);
     } else if(funName=="fflush") {
       // ignoring fflush
-      SingleEvalResultConstInt res;
+      // res initialized above
       return listify(res);
     } else {
       //cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
-      return listify(res);
+      return evalFunctionCallArguments(funCall,estate,useConstraints);
     }
   } else {
     string s=funCall->unparseToString();

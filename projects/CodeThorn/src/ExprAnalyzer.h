@@ -95,7 +95,7 @@ namespace CodeThorn {
     static bool variable(SgNode* node,VariableName& varName);
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
     bool variable(SgNode* node,VariableId& varId);
-    
+    list<SingleEvalResultConstInt> evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
     bool isLValueOp(SgNode* node);
   protected:
