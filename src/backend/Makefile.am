@@ -14,6 +14,7 @@ include $(srcdir)/unparser/Makefile_variables
 include $(srcdir)/unparser/CxxCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/formatSupport/Makefile_variables
 include $(srcdir)/unparser/FortranCodeGeneration/Makefile_variables
+include $(srcdir)/unparser/MatlabCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/languageIndependenceSupport/Makefile_variables
 include $(srcdir)/unparser/PHPCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/PythonCodeGeneration/Makefile_variables
