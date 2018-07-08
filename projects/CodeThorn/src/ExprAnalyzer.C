@@ -122,7 +122,7 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
     std::string s=stringVal->get_value();
     VariableId stringValVarId=_variableIdMapping->getStringLiteralVariableId(stringVal);
     AbstractValue val=AbstractValue::createAddressOfVariable(stringValVarId);
-    cout<<"DEBUG: Found StringValue: "<<s<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
+    //cout<<"DEBUG: Found StringValue: "<<s<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
     return val;
   } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
     // ROSE uses an integer for a bool
@@ -804,7 +804,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access."<<endl;
         if(pstate->varExists(arrayVarId)) {
-          cout<<"DEBUG: arrayPtrValue read from memory."<<endl;
+          //cout<<"DEBUG: arrayPtrValue read from memory."<<endl;
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             cout<<"Error: value not a pointer value: "<<arrayPtrValue.toString()<<endl;
@@ -831,7 +831,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       ROSE_ASSERT(arrayElementId.isValid());
 #endif
       if(pstate->varExists(arrayPtrValue)) {
-        cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
+        //cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
       }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
         res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
@@ -1253,10 +1253,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   for (auto arg : argsList) {
-    cout<<"DEBUG: functioncall argument: "<<arg->unparseToString()<<endl;
+    //cout<<"DEBUG: functioncall argument: "<<arg->unparseToString()<<endl;
     // Requirement: code is normalized, does not contain state modifying operations in function arguments
     list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate,useConstraints);
-    cout<<"DEBUG: resList.size()"<<resList.size()<<endl;
+    //cout<<"DEBUG: resList.size()"<<resList.size()<<endl;
   }
   SingleEvalResultConstInt res;
   AbstractValue evalResultValue=CodeThorn::Top();
