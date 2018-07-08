@@ -887,7 +887,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           cerr<<"AST: "<<node->unparseToString()<<endl;
           cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
-          _nullPointerDereferenceLocations.potentialDereferenceLocations.insert(estate.label());
+          _nullPointerDereferenceLocations.recordPotentialDereference(estate.label());
         }
       }
     } else {
@@ -962,12 +962,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
 #if 1
   // null pointer check
   if(derefOperandValue.isTop()) {
-    _nullPointerDereferenceLocations.potentialDereferenceLocations.insert(estate.label());
+    recordPotentialNullPointerDereferenceLocation(estate.label());
   }
   if(derefOperandValue.isConstInt()) {
     int ptrIntVal=derefOperandValue.getIntValue();
     if(ptrIntVal==0) {
-      _nullPointerDereferenceLocations.definitiveDereferenceLocations.insert(estate.label());
+      recordDefinitiveNullPointerDereferenceLocation(estate.label());
     }
   }
 #endif
@@ -1291,6 +1291,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  // create two cases: (i) allocation successful, (ii) allocation fails (null pointer is returned, and no memory is allocated).
   SingleEvalResultConstInt res;
   static int memorylocid=0; // to be integrated in VariableIdMapping
   memorylocid++;
@@ -1299,6 +1300,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
   ROSE_ASSERT(_variableIdMapping);
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   if(argsList.size()==1) {
+    // (i) create state for successful allocation of memory (do not reserve memory yet, only pointer is reserved and size of memory is recorded)
+    // memory is allocated when written to it. Otherwise it is assumed to be uninitialized
     SgExpression* arg1=*argsList.begin();
     list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate,useConstraints);
     if(resList.size()!=1) {
@@ -1321,7 +1324,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
     //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
     ROSE_ASSERT(allocatedMemoryPtr.isPtr());
     //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
-    return listify(res);
+    // (ii) add memory allocation case with null pointer.
+    SingleEvalResultConstInt resNullPtr;
+    AbstractValue nullPtr=AbstractValue::createNullPtr();
+    resNullPtr.init(estate,*estate.constraints(),nullPtr);
+    // create resList with two states now
+    list<SingleEvalResultConstInt> resList2;
+    resList2.push_back(res);
+    resList2.push_back(resNullPtr);
+    return resList2;
   } else {
     // this will become an error in future
     cerr<<"WARNING: unknown malloc function "<<funCall->unparseToString()<<endl;
@@ -1452,4 +1463,12 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
 
 NullPointerDereferenceLocations ExprAnalyzer::getNullPointerDereferenceLocations() {
   return _nullPointerDereferenceLocations;
+}
+
+void ExprAnalyzer::recordDefinitiveNullPointerDereferenceLocation(Label label) {
+  _nullPointerDereferenceLocations.recordDefinitiveDereference(label);
+}
+
+void ExprAnalyzer::recordPotentialNullPointerDereferenceLocation(Label label) {
+  _nullPointerDereferenceLocations.recordPotentialDereference(label);
 }

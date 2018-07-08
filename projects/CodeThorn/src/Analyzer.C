@@ -2221,6 +2221,11 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       }
       ROSE_ASSERT(resLhs.size()==1);
       AbstractValue lhsPointerValue=(*resLhs.begin()).result;
+      if(lhsPointerValue.isNullPtr()) {
+        getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estate->label());
+        // no state can follow, return estateList (may be empty)
+        return estateList;
+      }
       if(lhsPointerValue.isTop()) {
         // special case. Expr evaluates to top (should be dereferenced)
         PState pstate2=*(estate->pstate());

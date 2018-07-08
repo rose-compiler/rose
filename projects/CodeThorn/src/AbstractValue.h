@@ -99,6 +99,7 @@ class AbstractValue {
   static AbstractValue createAddressOfVariable(SPRAY::VariableId varId);
   static AbstractValue createAddressOfArray(SPRAY::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, AbstractValue Index);
+  static AbstractValue createNullPtr();
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;

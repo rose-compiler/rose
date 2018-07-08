@@ -91,7 +91,9 @@ namespace CodeThorn {
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
     AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
     NullPointerDereferenceLocations getNullPointerDereferenceLocations();
-
+    void recordDefinitiveNullPointerDereferenceLocation(Label lab);
+    void recordPotentialNullPointerDereferenceLocation(Label lab);
+    
   public:
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);

@@ -140,6 +140,12 @@ AbstractValue::AbstractValue(long double x) {
   initFloat(BITYPE_LONG_DOUBLE,x);
 }
 
+AbstractValue AbstractValue::createNullPtr() {
+  AbstractValue aval(0);
+  // create an integer 0, not marked as pointer value.
+  return aval;
+}
+
 AbstractValue 
 AbstractValue::createAddressOfVariable(SPRAY::VariableId varId) {
   return AbstractValue::createAddressOfArray(varId);

@@ -7,6 +7,8 @@ namespace CodeThorn {
     void writeResultFile(std::string fileName, SPRAY::Labeler* labeler);
     SPRAY::LabelSet definitiveDereferenceLocations;
     SPRAY::LabelSet potentialDereferenceLocations;
+    void recordDefinitiveDereference(SPRAY::Label lab);
+    void recordPotentialDereference(SPRAY::Label lab);
   private:
     std::string programLocation(SPRAY::Labeler* labeler, SPRAY::Label lab);
   };
