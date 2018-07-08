@@ -195,8 +195,9 @@ namespace CodeThorn {
     // enables external function semantics 
     void enableSVCompFunctionSemantics();
     void disableSVCompFunctionSemantics();
-    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
-    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
+    bool svCompFunctionSemantics();
+    bool getStdFunctionSemantics();
+    void setStdFunctionSemantics(bool flag);
 
     void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
     SgTypeSizeMapping* getTypeSizeMapping();

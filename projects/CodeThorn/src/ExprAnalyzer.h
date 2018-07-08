@@ -74,14 +74,16 @@ namespace CodeThorn {
     //! values of top-variables. 
     list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, bool useConstraints);
     void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
-    
     void setSkipSelectedFunctionCalls(bool skip);
     bool getSkipSelectedFunctionCalls();
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
     void setSVCompFunctionSemantics(bool flag);
     bool getSVCompFunctionSemantics();
+    // deprecated
     bool stdFunctionSemantics();
+    bool getStdFunctionSemantics();
+    void setStdFunctionSemantics(bool flag);
     
     bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
     

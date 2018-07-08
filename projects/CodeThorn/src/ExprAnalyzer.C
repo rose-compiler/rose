@@ -61,6 +61,14 @@ bool ExprAnalyzer::stdFunctionSemantics() {
   return _stdFunctionSemantics;
 }
 
+bool ExprAnalyzer::getStdFunctionSemantics() {
+  return _stdFunctionSemantics;
+}
+
+void ExprAnalyzer::setStdFunctionSemantics(bool flag) {
+  _stdFunctionSemantics=flag;
+}
+
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
@@ -1260,10 +1268,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctio
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
-  if(getSkipSelectedFunctionCalls()) {
-    // return default value
-    return listify(res);
-  } else if(stdFunctionSemantics()) {
+  if(getStdFunctionSemantics()) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
@@ -1274,11 +1279,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     } else if(funName=="fflush") {
       // ignoring fflush
       // res initialized above
-      return listify(res);
-    } else {
-      //cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return evalFunctionCallArguments(funCall,estate,useConstraints);
     }
+  }
+  if(getSkipSelectedFunctionCalls()) {
+    return evalFunctionCallArguments(funCall,estate,useConstraints);
   } else {
     string s=funCall->unparseToString();
     throw CodeThorn::Exception("Unknown semantics of function call inside expression: "+s);

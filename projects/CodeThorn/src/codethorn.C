@@ -376,8 +376,10 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
     ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
-    ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state")
-  ;
+    ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state.")
+    ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
+    ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.");
+    ;
 
   rersOptions.add_options()
     ("csv-assert", po::value< string >(), "Output assert reachability results into a CSV file <arg>.")
@@ -1126,6 +1128,8 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
+    analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
+    analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
     analyzerSetup(analyzer, logger);
 
     if(args.count("threads")) {

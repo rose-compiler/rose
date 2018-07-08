@@ -56,6 +56,31 @@ void Analyzer::initDiagnostics() {
   }
 }
 
+void Analyzer::enableSVCompFunctionSemantics() {
+  _svCompFunctionSemantics=true;
+  exprAnalyzer.setSVCompFunctionSemantics(true);
+  _externalErrorFunctionName="__VERIFIER_error";
+  _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
+  _externalNonDetLongFunctionName="__VERIFIER_nondet_long";
+  _externalExitFunctionName="exit";
+}
+
+void Analyzer::disableSVCompFunctionSemantics() {
+  _svCompFunctionSemantics=false;
+  exprAnalyzer.setSVCompFunctionSemantics(false);
+  _externalErrorFunctionName="";
+  _externalNonDetIntFunctionName="";
+  _externalNonDetLongFunctionName="";
+  _externalExitFunctionName="";
+  ROSE_ASSERT(getLabeler());
+  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+}
+
+bool Analyzer::svCompFunctionSemantics() { return _svCompFunctionSemantics; }
+bool Analyzer::getStdFunctionSemantics() { return exprAnalyzer.getStdFunctionSemantics(); }
+void Analyzer::setStdFunctionSemantics(bool flag) { exprAnalyzer.setStdFunctionSemantics(flag); }
+
 // TODO: move to flow analyzer (reports label,init,final sets)
 string Analyzer::astNodeInfoAttributeAndNodeToString(SgNode* node) {
   string textual;
@@ -77,27 +102,6 @@ bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
     }
   }
   return false;
-}
-
-void Analyzer::enableSVCompFunctionSemantics() {
-  _svCompFunctionSemantics=true;
-  exprAnalyzer.setSVCompFunctionSemantics(true);
-  _externalErrorFunctionName="__VERIFIER_error";
-  _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
-  _externalNonDetLongFunctionName="__VERIFIER_nondet_long";
-  _externalExitFunctionName="exit";
-}
-
-void Analyzer::disableSVCompFunctionSemantics() {
-  _svCompFunctionSemantics=false;
-  exprAnalyzer.setSVCompFunctionSemantics(false);
-  _externalErrorFunctionName="";
-  _externalNonDetIntFunctionName="";
-  _externalNonDetLongFunctionName="";
-  _externalExitFunctionName="";
-  ROSE_ASSERT(getLabeler());
-  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
-  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 }
 
 void Analyzer::writeWitnessToFile(string filename) {
@@ -1497,9 +1501,9 @@ int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
   return num;
 }
 
-void Analyzer::setSkipSelectedFunctionCalls(bool defer) {
-  _skipSelectedFunctionCalls=true; 
-  exprAnalyzer.setSkipSelectedFunctionCalls(true);
+void Analyzer::setSkipSelectedFunctionCalls(bool flag) {
+  _skipSelectedFunctionCalls=flag; 
+  exprAnalyzer.setSkipSelectedFunctionCalls(flag);
 }
 
 void Analyzer::setSkipArrayAccesses(bool skip) {
@@ -2336,4 +2340,5 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   }
   return estateSet;
 }
+
 #endif
