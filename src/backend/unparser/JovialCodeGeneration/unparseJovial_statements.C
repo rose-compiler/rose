@@ -80,6 +80,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
           case V_SgLabelStatement:             unparseLabelStmt      (stmt, info);  break;
           case V_SgGotoStatement:              unparseGotoStmt       (stmt, info);  break;
+          case V_SgIfStmt:                     unparseIfStmt         (stmt, info);  break;
 
           case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
           case V_SgReturnStmt:                 unparseReturnStmt     (stmt, info);  break;
@@ -91,7 +92,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgVariableDefinition:     unparseVarDefnStmt  (stmt, info); break;
 
        // executable statements, control flow
-          case V_SgIfStmt:                 unparseIfStmt         (stmt, info); break;
 
           case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
           case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
@@ -224,6 +224,35 @@ Unparse_Jovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
      unp->cur.insert_newline(1);
    }
 
+void
+Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgIfStmt* if_stmt = isSgIfStmt(stmt);
+     ROSE_ASSERT(if_stmt != NULL);
+     ROSE_ASSERT(if_stmt->get_conditional());
+
+  // condition
+     curprint("IF (");
+     info.set_inConditional();
+
+     SgExprStatement* expressionStatement = isSgExprStatement(if_stmt->get_conditional());
+     unparseExpression(expressionStatement->get_expression(), info);
+
+     info.unset_inConditional();
+     curprint(") ;");
+     unp->cur.insert_newline(1);
+
+  // true body
+     ROSE_ASSERT(if_stmt->get_true_body());
+     unparseStatement(if_stmt->get_true_body(), info);
+
+  // false body
+     if (if_stmt->get_false_body() != NULL) {
+        curprint("ELSE");
+        unp->cur.insert_newline(1);
+        unparseStatement(if_stmt->get_false_body(), info);
+     }
+   }
 
 void
 Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
