@@ -1,0 +1,11 @@
+START
+PROGRAM testif ;
+BEGIN
+  IF TRUE ;
+     RETURN ;
+  ELSE
+%    STOP 13 ; %
+%    ABORT   ; %
+     EXIT    ;
+END
+TERM

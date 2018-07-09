@@ -368,7 +368,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
 
    if (ut_type->get_has_kind())
       {
-         SgExpressionPtrList children;
+         SgNodePtrList children;
          SgUntypedExpression* ut_kind = ut_type->get_type_kind();
       // TODO - figure out how to handle operators (or anything with children)
          ROSE_ASSERT(isSgUntypedValueExpression(ut_kind) != NULL || isSgUntypedReferenceExpression(ut_kind) != NULL);
@@ -395,7 +395,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
         case SgUntypedType::e_char:           sg_type = SgTypeChar::createType(kindExpression);    break;
         case SgUntypedType::e_string:
            {
-              SgExpressionPtrList children;
+              SgNodePtrList children;
               SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
            // TODO - figure out how to handle operators (or anything with children)
               ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
@@ -1090,7 +1090,7 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
 //----------------------
 
 SgExprStatement*
-UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       SgExprStatement* expressionStatement = NULL;
 
@@ -1118,7 +1118,7 @@ UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatem
    }
 
 SgStatement*
-UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       SgStatement* sg_stmt = NULL;
 
@@ -1162,6 +1162,41 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
 
       return sg_stmt;
    }
+
+
+SgIfStmt*
+UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      ROSE_ASSERT(children.size() == 3);
+
+      SgExpression* conditional = isSgExpression(children[0]);
+      ROSE_ASSERT(conditional != NULL);
+
+      SgStatement* true_body = isSgStatement(children[1]);
+      ROSE_ASSERT(true_body != NULL);
+
+   // This needs to be removed because statements are appended to a scope
+   // True and false bodies will be replaced by the containing if statement
+      SageInterface::removeStatement(true_body, scope);
+
+   // The false body is allowed to be NULL
+      SgStatement* false_body = isSgStatement(children[2]);
+      if (false_body != NULL) {
+         SageInterface::removeStatement(false_body);
+      }
+
+      SgIfStmt* sg_stmt = SageBuilder::buildIfStmt(conditional, true_body, false_body);
+
+      ROSE_ASSERT(sg_stmt != NULL);
+      setSourcePositionFrom(sg_stmt, ut_stmt);
+
+      scope->append_statement(sg_stmt);
+
+      convertLabel(ut_stmt, sg_stmt, scope);
+
+      return sg_stmt;
+   }
+
 
 SgStatement*
 UntypedConverter::convertSgUntypedAbortStatement (SgUntypedAbortStatement* ut_stmt, SgScopeStatement* scope)
@@ -1364,7 +1399,7 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
    }
 
 SgReturnStmt*
-UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       SgReturnStmt* return_stmt;
       bool hasLabel;
@@ -1389,7 +1424,7 @@ UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_
    }
 
 SgStatement*
-UntypedConverter::convertSgUntypedStopStatement (SgUntypedStopStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedConverter::convertSgUntypedStopStatement (SgUntypedStopStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       bool hasLabel;
       SgStopOrPauseStatement* stop_stmt;
@@ -1470,7 +1505,7 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr)
 
 
 SgExpression*
-UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExpressionPtrList& children)
+UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgNodePtrList& children)
    {
       SgExpression* sg_expr = NULL;
 
@@ -1478,7 +1513,12 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
          {
             SgUntypedBinaryOperator* op = dynamic_cast<SgUntypedBinaryOperator*>(ut_expr);
             ROSE_ASSERT(children.size() == 2);
-            SgBinaryOp* sg_operator = convertSgUntypedBinaryOperator(op, children[0], children[1]);
+
+            SgExpression* expr1 = isSgExpression(children[0]);
+            SgExpression* expr2 = isSgExpression(children[1]);
+            ROSE_ASSERT(expr1 && expr2);
+
+            SgBinaryOp* sg_operator = convertSgUntypedBinaryOperator(op, expr1, expr2);
             sg_expr = sg_operator;
 #if DEBUG_UNTYPED_CONVERTER
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
@@ -1488,7 +1528,11 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
          {
             SgUntypedUnaryOperator* op = dynamic_cast<SgUntypedUnaryOperator*>(ut_expr);
             ROSE_ASSERT(children.size() == 1);
-            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, children[0]);
+
+            SgExpression* expr1 = isSgExpression(children[0]);
+            ROSE_ASSERT(expr1);
+
+            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, expr1);
             sg_expr = sg_operator;
 #if DEBUG_UNTYPED_CONVERTER
             printf ("  -  unary operator      ==>   %s\n", op->get_operator_name().c_str());
@@ -1505,7 +1549,7 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
 
 
 SgExpression*
-UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgNodePtrList& children, SgScopeStatement* scope)
    {
       SgExpression* sg_expr = NULL;
 
@@ -1513,7 +1557,12 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
          {
             SgUntypedBinaryOperator* op = dynamic_cast<SgUntypedBinaryOperator*>(ut_expr);
             ROSE_ASSERT(children.size() == 2);
-            SgBinaryOp* sg_operator = convertSgUntypedBinaryOperator(op, children[0], children[1]);
+
+            SgExpression* expr1 = isSgExpression(children[0]);
+            SgExpression* expr2 = isSgExpression(children[1]);
+            ROSE_ASSERT(expr1 && expr2);
+
+            SgBinaryOp* sg_operator = convertSgUntypedBinaryOperator(op, expr1, expr2);
             sg_expr = sg_operator;
 #if DEBUG_UNTYPED_CONVERTER
             printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
@@ -1523,7 +1572,11 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
          {
             SgUntypedUnaryOperator* op = dynamic_cast<SgUntypedUnaryOperator*>(ut_expr);
             ROSE_ASSERT(children.size() == 1);
-            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, children[0]);
+
+            SgExpression* expr1 = isSgExpression(children[0]);
+            ROSE_ASSERT(expr1);
+
+            SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, expr1);
             sg_expr = sg_operator;
 #if DEBUG_UNTYPED_CONVERTER
             printf ("  - unary operator       ==>   %s\n", op->get_operator_name().c_str());

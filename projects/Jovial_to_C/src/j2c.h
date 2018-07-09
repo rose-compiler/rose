@@ -19,6 +19,7 @@ namespace Jovial_to_C
 {
     void translateFileName(SgFile*);
     void translateProgramHeaderStatement(SgProgramHeaderStatement*);
+    void translateStopOrPauseStatement(SgStopOrPauseStatement*);
     //    void updateVariableDeclaration(SgVariableDeclaration*);
     //    void fixJovialSymbolTable(SgNode*, bool);
 
