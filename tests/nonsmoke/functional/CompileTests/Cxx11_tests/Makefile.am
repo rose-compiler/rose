@@ -232,6 +232,7 @@ test2018_115.C \
 test2018_116.C \
 test2018_117.C \
 test2018_118.C \
+ctor-list-init.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 test2016_40.C \
 last.C

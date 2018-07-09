@@ -37,6 +37,8 @@ add_library (unparser OBJECT
   FortranCodeGeneration/unparseFortran_modfile.C
   FortranCodeGeneration/unparseFortran_statements.C
   FortranCodeGeneration/unparseFortran_types.C
+  MatlabCodeGeneration/MatlabUnparserBottomUpTraversal.C
+  MatlabCodeGeneration/MatlabUnparser.C
   JavaCodeGeneration/unparseJava_expressions.C
   JavaCodeGeneration/unparseJava_statements.C
   JavaCodeGeneration/unparseJava_types.C
