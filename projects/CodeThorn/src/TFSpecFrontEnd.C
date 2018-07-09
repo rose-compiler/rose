@@ -354,13 +354,8 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
             SgScopeStatement* globalScope=(*listOfGlobalVars.begin())->get_scope(); // obtain global scope from first var
             SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,globalScope);
             SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,globalScope);
-            for (auto dec : listOfGlobalVars){
-              string initName = SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfInitializedName(SgNodeHelper::getInitializedNameOfVariableDeclaration(dec)));
-              tt.addToTransformationList(_list,newBuiltType,nullptr,initName,transformBase,oldBuiltType);
-            }
+            tt.addToTransformationList(_list,newBuiltType,nullptr,"",transformBase,oldBuiltType);
           }
-          //cout<<"Error: option 'global' not supported yet."<<endl;
-          //exit(1);
         } else {
           std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
           if(functionName=="*") {

@@ -152,15 +152,6 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
     if(varSym) {
       string varName=SgNodeHelper::symbolToString(varSym);
       if(varName==varNameToFind) {
-        //string funName;
-        //if(isSgFunctionDefinition(root)) 
-        //  funName=SgNodeHelper::getFunctionName(root);
-        //if(base){
-        //  SgType* initType = varInitName->get_type();
-        //  newType = nathan_rebuildBaseType(initType, newType);
-        //}
-        //trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString());
-        //varInitName->set_type(newType);
         nathan_changeType(varInitName, newType, nullptr, varName, base, isSgFunctionDefinition(root));
         foundVar++;
       }
@@ -177,15 +168,8 @@ int nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* r
       oldType = oldType->findBaseType();
     }
     if(oldType == fromType){
-      //if(base){
-      //  newType = nathan_rebuildBaseType(varInitName->get_type(),newType);
-      //}
-      //string funName;
-      //if(isSgFunctionDefinition(root)) funName = SgNodeHelper::getFunctionName(root);
       SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInitName);
       string varName = SgNodeHelper::symbolToString(varSym);
-      //TFTypeTransformer::trace("Found declaration of variable "+varName+((funName=="")? " in $global" : " in function "+funName)+". Changed type to "+newType->unparseToString());
-      //varInitName->set_type(newType);
       nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root));
       foundVar++;
     }
@@ -200,22 +184,12 @@ int nathan_changeTypeIfBothMatch(SgInitializedName* varInitName,SgNode* root,str
     if(varSym) {
       string varName=SgNodeHelper::symbolToString(varSym);
       if(varName==varNameToFind) {
-        string funName;
-        //if(isSgFunctionDefinition(root)) funName=SgNodeHelper::getFunctionName(root);
-        SgType* initType = varInitName->get_type();
-        bool typeMatch = true;
+        SgType* oldType = varInitName->get_type();
         if(base){
-          SgType* initBaseType = initType->findBaseType();
-          if(initBaseType != fromType){
-            typeMatch = false;
-          }else{
-           // newType = nathan_rebuildBaseType(initType, newType);
-          }
+          oldType = oldType->findBaseType();
         }
-        if(typeMatch){
+        if(oldType == fromType){
           nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root));
-          //TFTypeTransformer::trace("Found declaration of variable "+varNameToFind+((funName=="")? "" : " in function "+funName)+". Changed type to "+newType->unparseToString());
-          //varInitName->set_type(newType);
           foundVar++;
         }
       }
@@ -231,8 +205,9 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
 int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType, bool base, SgType* fromType) {
   RoseAst ast(root);
   int foundVar=0;
-  // need to process formal params and return explicitly because not found in traversal of functionDef (is traversed from function decl)
+  //process type changes inside of a function
   if(SgFunctionDefinition* funDef=isSgFunctionDefinition(root)) {
+    // need to process formal params and return explicitly because not found in traversal of functionDef (is traversed from function decl)
     SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     for(auto varInitName : initNamePtrList) {
       if(fromType != nullptr && varNameToFind == "TYPEFORGEargs"){
@@ -242,6 +217,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
       }
     }
+    //Change return type
     if(fromType != nullptr && varNameToFind == "TYPEFORGEret"){
       SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef);
       SgType* funBaseType = funRetType;
@@ -261,24 +237,44 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         foundVar++;
       }
     }
-  }
-  //Traversebody of function. Will be used for globals
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    SgInitializedName* varInitName=nullptr;
-    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-      varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+    //Change type in body of function
+    if(varNameToFind != "TYPEFORGEret" && varNameToFind != "TYPEFORGEargs"){
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+        SgInitializedName* varInitName=nullptr;
+        if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+          varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+        }
+        //   else if(SgInitializedName* varInitName0=isSgInitializedName(*i)) {
+        //  varInitName=varInitName0;
+        //}
+        if(fromType != nullptr && varNameToFind == "TYPEFORGEbody"){
+          foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
+        }     
+        else if(varNameToFind != "" && fromType == nullptr){
+          foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+        }
+      }
     }
-    //   else if(SgInitializedName* varInitName0=isSgInitializedName(*i)) {
-    //  varInitName=varInitName0;
-    //}
-    if(fromType != nullptr && (varNameToFind == "TYPEFORGEbody" || varNameToFind == "")){
-      foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
-    }
-    else if(fromType != nullptr && !(varNameToFind == "TYPEFORGEret" || varNameToFind == "TYPEFORGEargs")){
-      foundVar+=nathan_changeTypeIfBothMatch(varInitName,root,varNameToFind,newType,fromType,base); 
-    }    
-    else if(varNameToFind != "" && fromType == nullptr){
-      foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+  }else{
+    if(varNameToFind != "TYPEFORGEret" && varNameToFind != "TYPEFORGEargs"){
+      //Change type for globals
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+        //skip over function definitions
+        if(isSgFunctionDefinition(*i)){
+          i.skipChildrenOnForward();
+        }else{
+          SgInitializedName* varInitName=nullptr;
+          if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+            varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+          }
+          if(fromType != nullptr){
+            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
+          }   
+          else if(fromType == nullptr){
+            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+          }
+        }
+      }
     }
   }
   return foundVar;
