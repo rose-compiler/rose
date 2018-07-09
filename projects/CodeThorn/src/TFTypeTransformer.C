@@ -353,7 +353,7 @@ int TFTypeTransformer::getTotalNumChanges() {
 }
 
 int TFTypeTransformer::getTotalTypeNameChanges(){
-  return (int) _totalTypeNameChanges;
+  return _totalTypeNameChanges;
 }
 
 void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
