@@ -63,8 +63,9 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
 void TFTypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
   _castTransformer.transformCommandLineFiles(project);
 }
+
 //returns a new type with same structure as root but with newBaseType as a base
-SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
+SgType* TFTypeTransformer::nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
   //handle array type
   if(SgArrayType* arrayType = isSgArrayType(root)){
     SgType* base = nathan_rebuildBaseType(arrayType->get_base_type(), newBaseType);
@@ -124,7 +125,7 @@ SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType){
   }
 }
 
-int nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, string varName, bool base, SgFunctionDefinition* funDef){
+int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef){
   SgType* baseType;
   if(base){
     SgType* oldType = varInitName->get_type();
@@ -160,7 +161,7 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
   return foundVar;
 }
 
-int nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base){
+int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base){
   int foundVar = 0;
   if(varInitName){
     SgType* oldType = varInitName->get_type();
@@ -172,27 +173,6 @@ int nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* r
       string varName = SgNodeHelper::symbolToString(varSym);
       nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root));
       foundVar++;
-    }
-  }
-  return foundVar;
-}
-
-int nathan_changeTypeIfBothMatch(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType,SgType* fromType, bool base) {
-  int foundVar=0;
-  if(varInitName) {
-    SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
-    if(varSym) {
-      string varName=SgNodeHelper::symbolToString(varSym);
-      if(varName==varNameToFind) {
-        SgType* oldType = varInitName->get_type();
-        if(base){
-          oldType = oldType->findBaseType();
-        }
-        if(oldType == fromType){
-          nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root));
-          foundVar++;
-        }
-      }
     }
   }
   return foundVar;
@@ -256,17 +236,12 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
       }
     }
   }else{
+    //chnage type of globals
     if(varNameToFind != "TYPEFORGEret" && varNameToFind != "TYPEFORGEargs"){
-      //Change type for globals
-      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-        //skip over function definitions
-        if(isSgFunctionDefinition(*i)){
-          i.skipChildrenOnForward();
-        }else{
-          SgInitializedName* varInitName=nullptr;
-          if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-            varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-          }
+      std::list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(isSgProject(root));
+      if(listOfGlobalVars.size()>0){
+        for(auto varDecl: listOfGlobalVars){
+          SgInitializedName* varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
           if(fromType != nullptr){
             foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
           }   

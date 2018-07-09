@@ -27,3 +27,5 @@ replace_varbasetype;$global;ga;double
 replace_varbasetype;$global;gb;double
 replace_varbasetype;$global;ga;AD_real
 replace_vartype;$global;gb;AD_real
+replace_vartype;$global;gca;B
+replace_varbasetype;$global;gcb;A

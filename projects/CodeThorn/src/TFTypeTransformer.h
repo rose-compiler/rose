@@ -16,8 +16,11 @@ class TFTypeTransformer {
   int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type, bool base, SgType* fromType);
   int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type);
   int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type, bool base);
+  int nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base);
   void transformCommandLineFiles(SgProject* project);
   void transformCommandLineFiles(SgProject* project, VarTypeVarNameTupleList& list);
+  SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType);
+  int nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef);
   void makeAllCastsExplicit(SgProject* root);
   void annotateImplicitCastsAsComments(SgProject* root);
   void transformCastsInCommandLineFiles(SgProject* project);

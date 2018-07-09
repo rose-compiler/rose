@@ -6,6 +6,15 @@ typedef POINTERTOP TOPLEVEL[3][4][5];
 double  ga = 0.0;
 double* gb = &ga;
 
+class A{
+};
+
+class B{
+};
+
+A gca;
+B gcb;
+
 void f0(double& a){
   double     b;
   double*    c;
