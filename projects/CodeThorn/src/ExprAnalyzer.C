@@ -881,12 +881,12 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           res.result=CodeThorn::Top();
           return listify(res);
         } else {
-          cout<<estate.toString(_variableIdMapping)<<endl;
-          cout<<"Error: potential out of bounds access 1 : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-          cerr<<"array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-          cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
-          cerr<<"AST: "<<node->unparseToString()<<endl;
-          cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
+          //cout<<estate.toString(_variableIdMapping)<<endl;
+          //cout<<"DEBUG: Program error detected: potential out of bounds access 1 : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
+          //cerr<<"AST: "<<node->unparseToString()<<endl;
+          //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
           _nullPointerDereferenceLocations.recordPotentialDereference(estate.label());
         }
       }
@@ -934,11 +934,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
                                                         SingleEvalResultConstInt operandResult, 
                                                         EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.estate=estate;
   // TODO: model effect of cast when sub language is extended
   //SgCastExp* castExp=isSgCastExp(node);
-  res.result=operandResult.result;
-  res.exprConstraints=operandResult.exprConstraints;
+  //res.estate=estate;
+  //res.result=operandResult.result;
+  //res.exprConstraints=operandResult.exprConstraints;
+  res.init(estate,operandResult.exprConstraints,operandResult.result);
   return listify(res);
 }
 

@@ -78,6 +78,8 @@ class VariableIdMapping {
   bool hasReferenceType(VariableId varId);
   // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
   bool hasIntegerType(VariableId varId);
+  // returns true if this variable has type bool. This also include the C type _Bool.
+  bool hasBoolType(VariableId varId);
   // returns true if this variable has any floating-point type (float,double,longdouble)
   bool hasFloatingPointType(VariableId varId);
   bool hasPointerType(VariableId varId);

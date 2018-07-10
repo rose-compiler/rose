@@ -930,7 +930,7 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   } else if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
     // this is supposed to be dead code meanwhile
     bool isCondition=SgNodeHelper::isCond(nextNodeToAnalyze1);
-    cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
+    //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
     //ROSE_ASSERT(false);
     // special case external call
     //cout<<"DEBUG: edge: "<<edge.toString()<<endl;
@@ -2009,7 +2009,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       return transferAssignOp(assignOp,edge,estate);
     } else {
       // all other cases, evaluate function call as expression
-      cout<<"DEBUG: external function call: "<<funCall->unparseToString()<<"; evaluating as expression."<<endl;
+      //cout<<"DEBUG: external function call: "<<funCall->unparseToString()<<"; evaluating as expression."<<endl;
       list<SingleEvalResultConstInt> res2=exprAnalyzer.evaluateExpression(funCall,currentEState,false);
       ROSE_ASSERT(res2.size()==1);
       SingleEvalResultConstInt evalResult2=*res2.begin();
@@ -2120,10 +2120,15 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       // only update integer variables. Ensure values of floating-point variables are not computed
       if(variableIdMapping.hasIntegerType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
+      } else if(variableIdMapping.hasBoolType(lhsVar)) {
+        newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasPointerType(lhsVar)) {
         // we assume here that only arrays (pointers to arrays) are assigned
         //newPState[lhsVar]=(*i).result;
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
+      } else {
+        cerr<<"WARNING: Unknown type on LHS side of assignment: "<<nextNodeToAnalyze2->unparseToString()<<" TYPE: "<<variableIdMapping.getType(lhsVar)->unparseToString();
+        cerr<<" TYPE NODE: "<<variableIdMapping.getType(lhsVar)->class_name()<<endl;
       }
       if(!(*i).result.isTop()) {
         cset.removeAllConstraintsOfVar(lhsVar);

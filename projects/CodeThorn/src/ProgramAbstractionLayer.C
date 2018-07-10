@@ -31,7 +31,7 @@ void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
   lowering.setInliningOption(getInliningOption());
   if(getLoweringOption()) {
     cout<<"DEBUG: PAL: lowering"<<endl;
-    lowering.transformAst(root);
+    lowering.runLowering(root);
   }
   _variableIdMapping=new VariableIdMapping();
   getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());

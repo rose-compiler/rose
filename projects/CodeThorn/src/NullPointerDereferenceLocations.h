@@ -1,6 +1,9 @@
 #ifndef NULL_POINTER_DEREFERENCE_LOCATIONS_H
+#define NULL_POINTER_DEREFERENCE_LOCATIONS_H
+
 #include <string>
 #include "Labeler.h"
+
 namespace CodeThorn {
   class NullPointerDereferenceLocations {
   public:
@@ -11,6 +14,7 @@ namespace CodeThorn {
     void recordPotentialDereference(SPRAY::Label lab);
   private:
     std::string programLocation(SPRAY::Labeler* labeler, SPRAY::Label lab);
+    std::string sourceCodeAtProgramLocation(SPRAY::Labeler* labeler, SPRAY::Label lab);
   };
 }
 #endif
