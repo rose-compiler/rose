@@ -25,11 +25,41 @@
 #include <algorithm>
 #include <list>
 #include "TFTransformation.h"
-#include <json.hpp>
+#include <nlohmann/json.hpp>
+#include <JConfig.hpp>
+#include <JAction.hpp>
+
 using namespace std;
+using json = nlohmann::json;
 
 bool isComment(string s) {
   return s.size()>=2 && s[0]=='/' && s[1]=='/';
+}
+
+bool nathan_checkSuffix(string s, string suffix){
+  return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+string nathan_convertJSON(string fileName){
+  string tfString = "";
+  JConfig config(fileName);
+  vector<JAction>& actions = config.getActions();
+  for(auto act: actions){
+    string action = act.getActionType();
+    if(action == "replace_vartype" || action == "replace_varbasetype"){
+      tfString = tfString + action + ";" + act.getScope() + ";" + act.getVarName() + ";" + act.getToType() + "\n";
+    }
+    else if(action == "replace_type" || action == "replace_basetype"){
+      tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + "=>" + act.getToType() + "\n";
+    }
+    else if(action == "transform"){
+      tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + ";" + act.getVarName() + "\n";
+    }
+  }
+  ofstream out(fileName + ".tf");
+  out << tfString;
+  out.close();
+  return fileName + ".tf";
 }
 
 SgType* checkType(SgInitializedName* varInitName,string typeName) {
@@ -162,6 +192,11 @@ bool isConstReferenceType(string type) {
 
 bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   CppStdUtilities::DataFileVector lines;
+  string tempFileName = "";
+  if(nathan_checkSuffix(specFileName, ".json")){
+    tempFileName = nathan_convertJSON(specFileName);
+    specFileName = tempFileName;
+  }
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
   RoseAst completeAst(root);
   if(fileOK) {
@@ -416,6 +451,9 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
         cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
         return true;
       }
+    }
+    if(tempFileName != ""){
+      remove(tempFileName.c_str());
     }
     return false;
   } else {

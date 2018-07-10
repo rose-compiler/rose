@@ -1,0 +1,51 @@
+{
+  "version": "1",
+  "source_files": [
+    "jsonReplaceTest.C"
+  ],
+  "tool_id": "Master",
+  "actions": [
+    {
+      "action": "transform",
+      "scope": "*",
+      "from_type": "double",
+      "var_name": "ad_intermediate_instrumentation"
+    },
+    {
+      "action": "replace_vartype",
+      "scope": "f0",
+      "to_type": "float",
+      "var_name": "a"
+    },
+    {
+      "action": "replace_vartype",
+      "scope": "f0",
+      "to_type": "float",
+      "var_name": "b"
+    },
+    {
+      "action": "replace_varbasetype",
+      "scope": "f0",
+      "to_type": "float",
+      "var_name": "c"
+    },
+    {
+      "action": "replace_varbasetype",
+      "scope": "f0",
+      "to_type": "float",
+      "var_name": "d"
+    },
+    {
+      "action": "replace_basetype",
+      "scope": "f0:body",
+      "to_type": "double",
+      "from_type": "float"
+    },
+    {
+      "action": "replace_type",
+      "scope": "f0:body",
+      "to_type": "float",
+      "from_type": "double"
+    }
+  ]
+}
