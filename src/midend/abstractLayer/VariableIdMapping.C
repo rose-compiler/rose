@@ -78,6 +78,11 @@ bool VariableIdMapping::hasReferenceType(VariableId varId) {
   return isSgReferenceType(type);
 }
 
+bool VariableIdMapping::hasBoolType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgTypeBool(type);
+}
+
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::isStrictIntegerType(type);

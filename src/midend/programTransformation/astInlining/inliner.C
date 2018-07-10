@@ -413,8 +413,14 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgBasicBlock* funbody_copy = function_copy->get_body();
 
      renameLabels(funbody_copy, targetFunction);
-     ASSERT_require(funbody_raw->get_symbol_table()->size() == funbody_copy->get_symbol_table()->size());
 
+     // print more information in case the following assertion fails
+     if(funbody_raw->get_symbol_table()->size() != funbody_copy->get_symbol_table()->size()) {
+        cerr<<"funbody_raw symbol table size: "<<funbody_raw->get_symbol_table()->size()<<endl;
+        cerr<<"funbody_copy symbol table size: "<<funbody_copy->get_symbol_table()->size()<<endl;
+     }
+     ASSERT_require(funbody_raw->get_symbol_table()->size() == funbody_copy->get_symbol_table()->size());
+   
      // We don't need to keep the copied SgFunctionDefinition now that the labels in it have been moved to the target function
      // (having it in the memory pool confuses the AST tests), but we must not delete the formal argument list or the body
      // because we need them below.
