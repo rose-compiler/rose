@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <list>
 #include "TFTransformation.h"
-
+#include <json.hpp>
 using namespace std;
 
 bool isComment(string s) {
