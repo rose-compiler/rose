@@ -4,6 +4,7 @@
 #include <string>
 #include "CastTransformer.h"
 #include "TFTransformation.h"
+#include "JConfig.hpp"
 
 class TFTypeTransformer {
  public:
@@ -31,12 +32,15 @@ class TFTypeTransformer {
   int getTotalTypeNameChanges();
   void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
-
+  void nathan_addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode);
+  void nathan_setConfig(JConfig* oldConfig, std::string fileName); 
  private:
   CastTransformer _castTransformer;
   static bool _traceFlag;
   int _totalNumChanges=0;
   int _totalTypeNameChanges=0;
+  JConfig* _outConfig = nullptr;
+  string _writeConfig = "";
 };
 
 #endif

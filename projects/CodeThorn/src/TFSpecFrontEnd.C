@@ -40,7 +40,7 @@ bool nathan_checkSuffix(string s, string suffix){
   return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
-string nathan_convertJSON(string fileName){
+string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   string tfString = "";
   JConfig config(fileName);
   vector<JAction>& actions = config.getActions();
@@ -59,10 +59,11 @@ string nathan_convertJSON(string fileName){
   ofstream out(fileName + ".tf");
   out << tfString;
   out.close();
+  tt.nathan_setConfig(&config, fileName);
   return fileName + ".tf";
 }
 
-SgType* checkType(SgInitializedName* varInitName,string typeName) {
+SgType* checkType(SgInitializedName* varInitName, string typeName) {
   SgType* varInitType=varInitName->get_type();
   SgType* baseType=varInitType->findBaseType();
   if(baseType) {
@@ -194,7 +195,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
   CppStdUtilities::DataFileVector lines;
   string tempFileName = "";
   if(nathan_checkSuffix(specFileName, ".json")){
-    tempFileName = nathan_convertJSON(specFileName);
+    tempFileName = nathan_convertJSON(specFileName, tt);
     specFileName = tempFileName;
   }
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);

@@ -4,8 +4,13 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "CppStdUtilities.h"
+#include <JConfig.hpp>
+#include <JAction.hpp>
+#include "abstract_handle.h"
+#include "roseAdapter.h"
 
 using namespace std;
+using namespace AbstractHandle;
 
 // static member
 bool TFTypeTransformer::_traceFlag=false;
@@ -22,6 +27,28 @@ void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& 
   }
 }
 
+void TFTypeTransformer::nathan_setConfig(JConfig* oldConfig, string fileName){
+  _outConfig = new JConfig();
+  _outConfig->setExecutable(oldConfig->getExecutable());
+  //_outConfig->sourceFiles = {fileName};
+  _outConfig->setVersion(oldConfig->getVersion());
+  _outConfig->setToolID("TYPEFORGE");
+  _writeConfig = fileName + ".TF_OUT";
+}
+
+void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode){
+  if(!fromType || !toType || !handleNode) return;
+  if(!_outConfig) return;
+  abstract_node* anode = buildroseNode(handleNode);
+  abstract_handle* ahandle = new abstract_handle(anode);
+  JAction tempAction("replace_varbasetype");
+  tempAction.setVarName(varName);
+  tempAction.setHandle(ahandle->toString());
+  tempAction.setScope(scope);
+  tempAction.setFromType(fromType->unparseToString());
+  tempAction.setToType(toType->unparseToString());
+  _outConfig->addAction(tempAction); 
+}
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
   // make all floating point casts explicit
   makeAllCastsExplicit(project);
@@ -57,6 +84,9 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
     if(fromType == nullptr) _totalNumChanges+=numChanges;
     else _totalTypeNameChanges+=numChanges;
     transformCommandLineFiles(project);
+  }
+  if(_outConfig){
+    _outConfig->saveConfig(_writeConfig);
   }
 }
 
@@ -128,20 +158,22 @@ SgType* TFTypeTransformer::nathan_rebuildBaseType(SgType* root, SgType* newBaseT
 int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef){
   SgType* baseType;
   if(base){
-    SgType* oldType = varInitName->get_type();
-    baseType = nathan_rebuildBaseType(oldType, newType);
+    SgType* oldInitType = varInitName->get_type();
+    baseType = nathan_rebuildBaseType(oldInitType, newType);
   }else{
     baseType = newType;
   }
-  string scopeName = " in $global";
+  string scopeName = "$global";
   if(funDef){
-    scopeName = " in "+SgNodeHelper::getFunctionName(funDef);
+    scopeName = SgNodeHelper::getFunctionName(funDef);
   }
-  TFTypeTransformer::trace("Found declaration of variable "+varName+scopeName+". Changed type to "+baseType->unparseToString());
+  TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Changed type to "+baseType->unparseToString());
+  nathan_addToActionList(varName, scopeName, oldType, newType, varInitName);
   varInitName->set_type(baseType);
   return 1;
 }
 
+//void nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode){
 int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType) {
   return TFTypeTransformer::changeTypeIfInitNameMatches(varInitName, root, varNameToFind, newType, false);
 }
@@ -330,6 +362,7 @@ int TFTypeTransformer::getTotalNumChanges() {
 int TFTypeTransformer::getTotalTypeNameChanges(){
   return _totalTypeNameChanges;
 }
+
 
 void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;

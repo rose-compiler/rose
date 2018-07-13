@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "source_files": [
+    "jsonReplaceTest.C"
+  ],
+  "tool_id": "Master",
+  "actions": [
+    {
+      "action": "replace_basetype",
+      "scope": "*:body,args",
+      "to_type": "float",
+      "from_type": "double"
+    },
+    {
+      "action": "replace_basetype",
+      "scope": "$global",
+      "to_type": "float",
+      "from_type": "double"
+    }
+  ]
+}
