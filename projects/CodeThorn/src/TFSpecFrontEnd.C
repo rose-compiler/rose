@@ -25,9 +25,7 @@
 #include <algorithm>
 #include <list>
 #include "TFTransformation.h"
-#include <nlohmann/json.hpp>
-#include <JConfig.hpp>
-#include <JAction.hpp>
+#include <ToolConfig.hpp>
 
 using namespace std;
 using json = nlohmann::json;
@@ -42,8 +40,8 @@ bool nathan_checkSuffix(string s, string suffix){
 
 string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   string tfString = "";
-  JConfig config(fileName);
-  vector<JAction>& actions = config.getActions();
+  ToolConfig config(fileName);
+  vector<ToolAction>& actions = config.getActions();
   for(auto act: actions){
     string action = act.getActionType();
     if(action == "replace_vartype" || action == "replace_varbasetype"){
@@ -59,7 +57,7 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   ofstream out(fileName + ".tf");
   out << tfString;
   out.close();
-  tt.nathan_setConfig(&config, fileName);
+  tt.nathan_setConfig(config, fileName);
   return fileName + ".tf";
 }
 

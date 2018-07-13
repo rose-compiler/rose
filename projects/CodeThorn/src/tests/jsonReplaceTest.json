@@ -9,31 +9,31 @@
       "action": "transform",
       "scope": "*",
       "from_type": "double",
-      "var_name": "ad_intermediate_instrumentation"
+      "name": "ad_intermediate_instrumentation"
     },
     {
       "action": "replace_vartype",
       "scope": "f0",
       "to_type": "float",
-      "var_name": "a"
+      "name": "a"
     },
     {
       "action": "replace_vartype",
       "scope": "f0",
       "to_type": "float",
-      "var_name": "b"
+      "name": "b"
     },
     {
       "action": "replace_varbasetype",
       "scope": "f0",
       "to_type": "float",
-      "var_name": "c"
+      "name": "c"
     },
     {
       "action": "replace_varbasetype",
       "scope": "f0",
       "to_type": "float",
-      "var_name": "d"
+      "name": "d"
     },
     {
       "action": "replace_basetype",

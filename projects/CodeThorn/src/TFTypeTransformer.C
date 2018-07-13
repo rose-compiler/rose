@@ -4,8 +4,7 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "CppStdUtilities.h"
-#include <JConfig.hpp>
-#include <JAction.hpp>
+#include <ToolConfig.hpp>
 #include "abstract_handle.h"
 #include "roseAdapter.h"
 
@@ -27,27 +26,18 @@ void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& 
   }
 }
 
-void TFTypeTransformer::nathan_setConfig(JConfig* oldConfig, string fileName){
-  _outConfig = new JConfig();
-  _outConfig->setExecutable(oldConfig->getExecutable());
-  //_outConfig->sourceFiles = {fileName};
-  _outConfig->setVersion(oldConfig->getVersion());
-  _outConfig->setToolID("TYPEFORGE");
-  _writeConfig = fileName + ".TF_OUT";
+void TFTypeTransformer::nathan_setConfig(ToolConfig oldConfig, string fileName){
+  _outConfig = oldConfig;
+  _outConfig.getActions().clear();
+  _writeConfig = fileName;
 }
 
 void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode){
   if(!fromType || !toType || !handleNode) return;
-  if(!_outConfig) return;
+  if(_writeConfig == "") return;
   abstract_node* anode = buildroseNode(handleNode);
   abstract_handle* ahandle = new abstract_handle(anode);
-  JAction tempAction("replace_varbasetype");
-  tempAction.setVarName(varName);
-  tempAction.setHandle(ahandle->toString());
-  tempAction.setScope(scope);
-  tempAction.setFromType(fromType->unparseToString());
-  tempAction.setToType(toType->unparseToString());
-  _outConfig->addAction(tempAction); 
+  _outConfig.addReplaceVarType(ahandle->toString(), varName, scope, _writeConfig, fromType->unparseToString(), toType->unparseToString()); 
 }
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
   // make all floating point casts explicit
@@ -85,8 +75,8 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
     else _totalTypeNameChanges+=numChanges;
     transformCommandLineFiles(project);
   }
-  if(_outConfig){
-    _outConfig->saveConfig(_writeConfig);
+  if(_writeConfig != ""){
+    _outConfig.saveConfig(_writeConfig + ".TF_OUT");
   }
 }
 
