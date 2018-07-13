@@ -44,10 +44,10 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   vector<ToolAction>& actions = config.getActions();
   for(auto act: actions){
     string action = act.getActionType();
-    if(action == "replace_vartype" || action == "replace_varbasetype"){
+    if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
       tfString = tfString + action + ";" + act.getScope() + ";" + act.getVarName() + ";" + act.getToType() + "\n";
     }
-    else if(action == "replace_type" || action == "replace_basetype"){
+    else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
       tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + "=>" + act.getToType() + "\n";
     }
     else if(action == "transform"){
@@ -217,7 +217,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	cout<<"Skipping line "<<lineNr<<endl;
 	continue;
       }
-      if(commandName=="replace_vartype" || commandName=="replace_varbasetype") {
+      if(commandName=="change_vartype" || commandName=="change_varbasetype" || commandName=="replace_vartype" || commandName=="replace_varbasetype") {
 	varName=splitLine[2];
 	if(numEntries==4) {
 	  typeName=splitLine[3];
@@ -248,7 +248,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	} else {
 	  tt.addToTransformationList(_list,newType,funDef,varName,transformBase,nullptr);
 	}
-      } else if(commandName=="replace_type") {
+      } else if(commandName=="replace_type" || commandName=="change_type") {
 	if(numEntries!=3) {
 	  cerr<<"Error: wrong number of arguments in line "<<lineNr<<"."<<endl;
 	  return true;
@@ -347,13 +347,13 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
             } // end of loop on functionConstructSpecList
           }
         } 
-      } else if(commandName=="replace_basetype") {
+      } else if(commandName=="replace_basetype" || commandName=="change_basetype") {
 	if(numEntries!=3) {
 	  cerr<<"Error: wrong number of arguments in line "<<lineNr<<"."<<endl;
 	  return true;
 	}
         bool transformBase = false;
-        if(commandName == "replace_basetype"){
+        if(commandName == "replace_basetype" || commandName == "change_basetype"){
 	  if(tt.getTraceFlag()) cout<<"TRACE: replace_basetype mode: "<< "in line "<<lineNr<<"."<<endl;
           transformBase = true;
         }else{

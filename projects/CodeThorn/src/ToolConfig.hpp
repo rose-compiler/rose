@@ -68,8 +68,11 @@ public:
     ToolConfig(std::string fileName);
 
     void addAction(ToolAction action);
+
     void addReplaceVarType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType);
-    void addReplaceVarType(std::string handle, std::string var_name, double error, long assignments);
+    void addReplaceVarBaseType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType);
+ 
+   void addReplaceVarType(std::string handle, std::string var_name, double error, long assignments);
 
     std::vector<std::string>& getSourceFiles();
 

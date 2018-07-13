@@ -32,7 +32,7 @@ class TFTypeTransformer {
   int getTotalTypeNameChanges();
   void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
-  void nathan_addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode);
+  void nathan_addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base);
   void nathan_setConfig(ToolConfig oldConfig, std::string fileName); 
  private:
   CastTransformer _castTransformer;

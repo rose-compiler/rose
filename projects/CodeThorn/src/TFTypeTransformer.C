@@ -32,12 +32,13 @@ void TFTypeTransformer::nathan_setConfig(ToolConfig oldConfig, string fileName){
   _writeConfig = fileName;
 }
 
-void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode){
+void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
   if(!fromType || !toType || !handleNode) return;
   if(_writeConfig == "") return;
   abstract_node* anode = buildroseNode(handleNode);
   abstract_handle* ahandle = new abstract_handle(anode);
-  _outConfig.addReplaceVarType(ahandle->toString(), varName, scope, _writeConfig, fromType->unparseToString(), toType->unparseToString()); 
+  if(base) _outConfig.addReplaceVarBaseType(ahandle->toString(), varName, scope, _writeConfig, fromType->unparseToString(), toType->unparseToString()); 
+  else _outConfig.addReplaceVarType(ahandle->toString(), varName, scope, _writeConfig, fromType->unparseToString(), toType->unparseToString()); 
 }
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
   // make all floating point casts explicit
@@ -158,7 +159,7 @@ int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType*
     scopeName = SgNodeHelper::getFunctionName(funDef);
   }
   TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Changed type to "+baseType->unparseToString());
-  nathan_addToActionList(varName, scopeName, oldType, newType, varInitName);
+  nathan_addToActionList(varName, scopeName, oldType, newType, varInitName, base);
   varInitName->set_type(baseType);
   return 1;
 }
