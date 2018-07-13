@@ -902,6 +902,21 @@ std::list<EState> Analyzer::elistify(EState res) {
   return resList;
 }
 
+// wrapper function for reusing exprAnalyzer's function
+list<EState> Analyzer::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState currentEState, bool useConstraints) {
+  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalFunctionCallArguments(funCall, currentEState, useConstraints);
+  ROSE_ASSERT(evalResultList.size()>0);
+  list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+  SingleEvalResultConstInt evalResult=*resultListIter;
+  if(evalResultList.size()>1) {
+    logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
+    exit(1);
+  }
+  PState newPState=*evalResult.estate.pstate();
+  ConstraintSet cset=*evalResult.estate.constraints();
+  return elistify(createEState(edge.target(),newPState,cset));
+}
+
 list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   ROSE_ASSERT(edge.source()==estate->label());
   //cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
@@ -927,20 +942,16 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
     return transferFunctionExit(edge,estate);
   } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
     return transferFunctionCallReturn(edge,estate);
-  } else if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-    // this is supposed to be dead code meanwhile
-    bool isCondition=SgNodeHelper::isCond(nextNodeToAnalyze1);
-    //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
-    //ROSE_ASSERT(false);
-    // special case external call
-    //cout<<"DEBUG: edge: "<<edge.toString()<<endl;
-    EState newEState=currentEState;
-    newEState.setLabel(edge.target());
-    return elistify(newEState);
   } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
     return transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
     return transferExprStmt(nextNodeToAnalyze1, edge, estate);
+  } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+    // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
+    //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
+    // this case cannot happen for normalized code
+    bool useConstraints=false;
+    return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
   } else {
       ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
       ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));

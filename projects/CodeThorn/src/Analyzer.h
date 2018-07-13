@@ -263,6 +263,9 @@ namespace CodeThorn {
     // call of the form 'x=f(...)' and returns the varible-id of the
     // lhs, if a valid pointer is provided
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
+    // this function uses the respective function of ExprAnalyzer and
+    // extracts the result from the ExprAnalyzer data structure.
+    list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
