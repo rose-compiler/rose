@@ -6,7 +6,7 @@ namespace SPRAY {
     switch (sgType->variantT()) {
 
     case V_SgPointerType:
-    //case V_SgTypeNullPtr:
+      //case V_SgTypeNullPtr:
       return getTypeSize(BITYPE_POINTER);
 
     case V_SgTypeBool:
@@ -86,6 +86,5 @@ namespace SPRAY {
     SgType* typePointedTo=sgType->get_base_type();
     return determineTypeSize(typePointedTo);
   }
-
 
 } // end of namespace SPRAY

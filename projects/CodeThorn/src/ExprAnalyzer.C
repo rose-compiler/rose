@@ -923,10 +923,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
                                                               EState estate, bool useConstraints) {
-  AbstractValue sizeValue=AbstractValue(4); // TODO: compute size
+  
+  SPRAY::TypeSize typeSize=_sgTypeSizeMapping.determineTypeSize(node->get_operand_type());
+  AbstractValue sizeValue=AbstractValue(typeSize); 
   SingleEvalResultConstInt res;
-  ConstraintSet constraintSet;
-  res.init(estate,constraintSet,sizeValue);
+  res.init(estate,*estate.constraints(),sizeValue);
   return listify(res);
 }
 

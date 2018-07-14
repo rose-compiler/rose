@@ -16,6 +16,7 @@
 #include "AbstractValue.h"
 #include "AstTerm.h"
 #include "NullPointerDereferenceLocations.h"
+#include "SgTypeSizeMapping.h"
 
 using namespace std;
 
@@ -261,6 +262,7 @@ namespace CodeThorn {
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
     Analyzer* _analyzer;
+    SgTypeSizeMapping _sgTypeSizeMapping;
   };
  
 } // end of namespace CodeThorn
