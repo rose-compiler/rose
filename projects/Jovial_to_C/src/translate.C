@@ -85,11 +85,11 @@ void Jovial2cTraversal::visit(SgNode* n)
       }
     case V_SgProgramHeaderStatement:
       {
-         SgProgramHeaderStatement* ProgramHeaderStatement = isSgProgramHeaderStatement(n);
-         ROSE_ASSERT(ProgramHeaderStatement);
-         translateProgramHeaderStatement(ProgramHeaderStatement);
+         SgProgramHeaderStatement* programHeaderStatement = isSgProgramHeaderStatement(n);
+         ROSE_ASSERT(programHeaderStatement);
+         translateProgramHeaderStatement(programHeaderStatement);
       // Deep delete the original Jovial SgProgramHeaderStatement
-         removeList.push_back(ProgramHeaderStatement);
+         removeList.push_back(programHeaderStatement);
          break;
       }
     case V_SgExprStatement:
@@ -103,6 +103,13 @@ void Jovial2cTraversal::visit(SgNode* n)
            }
          break;
       }
+    case V_SgStopOrPauseStatement:
+      {
+         SgStopOrPauseStatement* stopOrPauseStmt = isSgStopOrPauseStatement(n);
+         ROSE_ASSERT(stopOrPauseStmt);
+         translateStopOrPauseStatement(stopOrPauseStmt);
+      }
+
     default:
        break;
   }

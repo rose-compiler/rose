@@ -2,6 +2,8 @@
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <rose_getline.h>
+#include <Sawyer/FileSystem.h>
 #include <x86InstructionProperties.h>
 
 #include <boost/foreach.hpp>
@@ -249,6 +251,144 @@ isUnlinkedImport(const Partitioner &partitioner, const Function::Ptr &function) 
     // Is function NOT linked?
     rose_addr_t fallthrough = insn->get_address() + insn->get_size();
     return matcher.gotEntry() == 0 || matcher.gotEntry() == fallthrough;
+}
+
+bool
+isObjectFile(const boost::filesystem::path &fileName) {
+    if (!boost::filesystem::exists(fileName))
+        return false;                                   // file doesn't exist
+    MemoryMap::Ptr map = MemoryMap::instance();
+    if (0 == map->insertFile(fileName.native(), 0))
+        return false;                                   // file cannot be mmap'd
+
+    uint8_t magic[4];
+    if (map->at(0).limit(4).read(magic).size() != 4)
+        return false;                                   // file is too short
+    if (magic[0] != 0x7f || magic[1] != 'E' || magic[2] != 'L' || magic[3] != 'F')
+        return false;                                   // wrong magic number
+
+    uint8_t encoding = 0;
+    if (map->at(5).limit(1).read(&encoding).size() != 1)
+        return false;                                   // file is too short
+
+    uint8_t elfTypeBuf[2];
+    if (map->at(16).limit(2).read(elfTypeBuf).size() != 2)
+        return false;                                   // file is too short
+
+    unsigned elfType = 0;
+    switch (encoding) {
+        case 1: // little endian
+            elfType = ((unsigned)elfTypeBuf[1] << 8) | elfTypeBuf[0];
+            break;
+        case 2: // big endian
+            elfType = ((unsigned)elfTypeBuf[0] << 8) | elfTypeBuf[1];
+            break;
+        default:
+            return false;                               // invalid data encoding
+    }
+
+    return elfType == SgAsmElfFileHeader::ET_REL;
+}
+
+bool
+isStaticArchive(const boost::filesystem::path &fileName) {
+    if (!boost::filesystem::exists(fileName))
+        return false;                                   // file doesn't exist
+    MemoryMap::Ptr map = MemoryMap::instance();
+    if (0 == map->insertFile(fileName.native(), 0))
+        return false;                                   // file cannot be mmap'd
+    uint8_t magic[7];
+    if (map->at(0).limit(7).read(magic).size() != 7)
+        return false;                                   // short read
+    return memcmp(magic, "!<arch>", 7) == 0;
+}
+
+bool
+tryLink(const std::string &commandTemplate, std::string outputName, std::vector<std::string> inputNames,
+        Sawyer::Message::Stream &errors, FixUndefinedSymbols::Boolean fixUndefinedSymbols) {
+    if (commandTemplate.empty() || outputName.empty() || inputNames.empty())
+        return false;
+
+    outputName = StringUtility::bourneEscape(outputName);
+    BOOST_FOREACH (std::string &input, inputNames)
+        input = StringUtility::bourneEscape(input);
+    std::string allInputs = StringUtility::join(" ", inputNames);
+
+    std::string cmd;
+    bool escaped = false;
+    for (size_t i=0; i<commandTemplate.size(); ++i) {
+        if ('\\' == commandTemplate[i]) {
+            escaped = !escaped;
+            cmd += commandTemplate[i];
+        } else if (escaped) {
+            cmd += commandTemplate[i];
+        } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'o' == commandTemplate[i+1]) {
+            cmd += outputName;
+            ++i;                                        // skip the "o"
+        } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'f' == commandTemplate[i+1]) {
+            cmd += allInputs;
+            ++i;                                        // skip the "f"
+        } else {
+            cmd += commandTemplate[i];
+        }
+    }
+
+    struct Resources {
+        FILE *ldOutput;
+        char *line;
+
+        Resources()
+            : ldOutput(NULL), line(NULL) {}
+        ~Resources() {
+            if (ldOutput)
+                pclose(ldOutput);
+            if (line)
+                free(line);
+        }
+    } r;
+
+    // Run the linker the first time and parse the error messages looking for complaints of undefined symbols.
+    cmd += " 2>&1";
+    mlog[DEBUG] <<"running command: " <<cmd <<"\n";
+    r.ldOutput = popen(cmd.c_str(), "r");
+    if (!r.ldOutput)
+        return false;
+    std::set<std::string> undefinedSymbols;
+    boost::regex undefReferenceRe("undefined reference to `(.*)'");
+    size_t lineSize = 0;
+    while (rose_getline(&r.line, &lineSize, r.ldOutput) > 0) {
+        std::string line = r.line;
+        mlog[DEBUG] <<"command output: " <<line;
+        boost::smatch matched;
+        if (boost::regex_search(line, matched, undefReferenceRe))
+            undefinedSymbols.insert(matched.str(1));
+    }
+    int exitStatus = pclose(r.ldOutput);
+    r.ldOutput = NULL;
+    if (0 == exitStatus || undefinedSymbols.empty() || !fixUndefinedSymbols)
+        return 0 == exitStatus;
+
+    // Create a .c file that defines those symbols that the linker complained about
+    Sawyer::FileSystem::TemporaryFile cFile((boost::filesystem::temp_directory_path() /
+                                             boost::filesystem::unique_path()).string() + ".c");
+    mlog[DEBUG] <<"defining symbols in a C file\n";
+    BOOST_FOREACH (const std::string &symbol, undefinedSymbols) {
+        cFile.stream() <<"void " <<symbol <<"() {}\n";
+        mlog[DEBUG] <<"  void " <<symbol <<"() {}\n";
+    }
+    cFile.stream().close();
+
+    // Compile the .c file to get an object file
+    Sawyer::FileSystem::TemporaryFile oFile((boost::filesystem::temp_directory_path() /
+                                             boost::filesystem::unique_path()).string() + ".o");
+    cmd = "cc -o " + oFile.name().string() + " -c " + cFile.name().string();
+    mlog[DEBUG] <<"running command: " <<cmd <<"\n";
+    if (system(cmd.c_str()) != 0)
+        return false;
+
+    // Try the linking again, but with the object file as well
+    inputNames.insert(inputNames.begin(), oFile.name().string());
+    return tryLink(commandTemplate, outputName, inputNames, errors, FixUndefinedSymbols::NO);
 }
 
 std::vector<Function::Ptr>

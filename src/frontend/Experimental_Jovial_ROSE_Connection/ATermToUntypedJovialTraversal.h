@@ -90,10 +90,13 @@ ATbool traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_StatementList(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_SimpleStatement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_NullStatement(ATerm term, SgUntypedStatementList* stmt_list);
-ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels);
+ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels, std::vector<PosInfo> & locations);
 
 // 4.1 ASSIGNMENT STATEMENTS
 ATbool traverse_AssignmentStatement(ATerm term, std::vector<std::string> & labels, SgUntypedStatementList* stmt_list);
+
+// 4.3 IF STATEMENTS
+ATbool traverse_IfStatement(ATerm term, SgUntypedStatementList* stmt_list);
 
 // 4.6 RETURN STATEMENTS
 ATbool traverse_ReturnStatement(ATerm term, SgUntypedStatementList* stmt_list);
@@ -114,7 +117,7 @@ ATbool traverse_AbortStatement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_Formula(ATerm term, SgUntypedExpression** expr);
 
 // 5.1 NUMERIC FORMULAS
-ATbool traverse_NumericFormula(ATerm term, SgUntypedExpression** expr);
+ATbool traverse_NumericFormula (ATerm term, SgUntypedExpression** expr);
 
 // 5.1.1 INTEGER FORMULAS
 ATbool traverse_IntegerFormula (ATerm term, SgUntypedExpression** expr);
@@ -132,6 +135,11 @@ ATbool traverse_FloatingLiteral (ATerm term, SgUntypedExpression** expr);
 
 // 5.1.3 FIXED FORMULAS
 ATbool traverse_FixedFormula (ATerm term, SgUntypedExpression** expr);
+
+// 5.2 BIT FORMULAS
+ATbool traverse_BitFormula     (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_LogicalOperand (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_BitPrimary     (ATerm term, SgUntypedExpression** expr);
 
 // 6.1 VARIABLE AND BLOCK REFERENCES
 ATbool traverse_Variable(ATerm term, SgUntypedExpression** var);

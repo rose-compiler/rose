@@ -506,11 +506,19 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptImplicitPart(ATerm term, SgUn
    printf("... traverse_OptImplicitPart: %s\n", ATwriteToString(term));
 #endif
 
+   ATerm t_stmt_list, t_implicit_stmt;
+
    if (ATmatch(term, "no-implicit-part()")) {
       // MATCHED no-implicit-part
    }
-   else if (traverse_ImplicitPartStmtList(term, decl_list)) {
-      // MATCHED ImplicitPartStmt list
+   else if (ATmatch(term, "ImplicitPart(<term>,<term>)", &t_stmt_list, &t_implicit_stmt)) {
+      // MATCHED ImplicitPart
+      if (traverse_ImplicitPartStmtList(t_stmt_list, decl_list)) {
+         // MATCHED ImplicitPartStmt list
+      } else return ATfalse;
+      if (traverse_ImplicitStmt(t_implicit_stmt, decl_list)) {
+         // MATCHED ImplicitStmt
+      } else return ATfalse;
    }
    else return ATfalse;
 
@@ -523,7 +531,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptImplicitPart(ATerm term, SgUn
 ATbool ATermToUntypedFortranTraversal::traverse_ImplicitPartStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_ImplicitPartStmtList: %s\n", ATwriteToString(term));
+   printf("... traverse_ImplicitPartStmtList: \n");
 #endif
 
 // NOTE: The statements in this list are formally supposed to end with an ImplicitStmt.
@@ -719,6 +727,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    }
    else if (traverse_ContinueStmt(term, stmt_list)) {
       // Matched ContinueStmt
+   }
+   else if (traverse_GotoStmt(term, stmt_list)) {
+      // Matched GotoStmt
    }
    else if (traverse_StopStmt(term, stmt_list)) {
       // Matched StopStmt
@@ -929,10 +940,19 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
 
    *var_expr = NULL;
    if (ATmatch(term, "IntVal(<str>)", &arg1)) {
-      // MATCHED IntVal
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
+   else if (ATmatch(term, "TRUE()")) {
+      value += "TRUE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+   else if (ATmatch(term, "FALSE()")) {
+      value += "FALSE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+
+// Handle literals with kind expressions
    else if (ATmatch(term, "IntVal(<str>,<term>)", &arg1,&t_kind)) {
       SgUntypedExpression* kind;
       if (traverse_Expression(t_kind, &kind)) {
@@ -940,6 +960,17 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
       } else return ATfalse;
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
+   // add type kind expression
+      type->set_has_kind(true);
+      type->set_type_kind(kind);
+   }
+   else if (ATmatch(term, "TRUE(<term>)", &t_kind)) {
+      SgUntypedExpression* kind;
+      if (traverse_Expression(t_kind, &kind)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      value += "TRUE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
    // add type kind expression
       type->set_has_kind(true);
       type->set_type_kind(kind);
@@ -1905,8 +1936,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptExpr( ATerm term, SgUntypedEx
 
    if (ATmatch(term, "no-expr()")) {
       // No Expression
-      *expr = new SgUntypedNullExpression();
-      setSourcePositionUnknown(*expr);
+      *expr = UntypedBuilder::buildUntypedNullExpression();
    }
    else if (traverse_Expression(term, expr)) {
       // MATCHED an Expression
@@ -1951,6 +1981,41 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssignmentStmt(ATerm term, SgUnt
    setSourcePosition(assign_stmt, term);
 
    stmt_list->get_stmt_list().push_back(assign_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R851 goto-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_GotoStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_target, t_eos;
+   char* char_target;
+   std::string label;
+   std::string eos;
+
+   if (ATmatch(term, "GotoStmt(<term>,<term>,<term>)", &t_label, &t_target, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (ATmatch(t_target, "<str>", &char_target)) {
+         // MATCHED target label string
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedGotoStatement* goto_stmt = new SgUntypedGotoStatement(label, char_target);
+   setSourcePosition(goto_stmt, term);
+
+   stmt_list->get_stmt_list().push_back(goto_stmt);
 
    return ATtrue;
 }
@@ -2002,8 +2067,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_StopStmt(ATerm term, SgUntypedSt
    std::string eos;
    SgUntypedExpression* stop_code;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;
-
    if (ATmatch(term, "StopStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -2017,7 +2080,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_StopStmt(ATerm term, SgUntypedSt
    }
    else return ATfalse;
 
-   SgUntypedExpressionStatement* stop_stmt = new SgUntypedExpressionStatement(label, keyword, stop_code);
+   SgUntypedStopStatement* stop_stmt = new SgUntypedStopStatement(label, stop_code);
    setSourcePositionExcludingTerm(stop_stmt, term, term_eos);
 
    stmt_list->get_stmt_list().push_back(stop_stmt);
@@ -3886,8 +3949,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_ReturnStmt(ATerm term, SgUntyped
    std::string eos;
    SgUntypedExpression* expr;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_RETURN;
-
    if (ATmatch(term, "ReturnStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -3901,7 +3962,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ReturnStmt(ATerm term, SgUntyped
    }
    else return ATfalse;
 
-   SgUntypedExpressionStatement* return_stmt = new SgUntypedExpressionStatement(label, keyword, expr);
+   SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label, expr);
    setSourcePositionExcludingTerm(return_stmt, term, term_eos);
 
    stmt_list->get_stmt_list().push_back(return_stmt);

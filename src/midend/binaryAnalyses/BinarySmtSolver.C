@@ -631,7 +631,9 @@ private:
                 size_t end = offset + 1;
                 while (EOF != (ch = input_.character(end)) && !isspace(ch) && !strchr("();", ch))
                     ++end;
-                return std::make_pair(std::string(input_.characters(offset), end - offset), end);
+                const char *lexemeChars = input_.characters(offset);
+                ASSERT_require(lexemeChars != NULL);
+                return std::make_pair(std::string(lexemeChars, end - offset), end);
             }
         }
     }

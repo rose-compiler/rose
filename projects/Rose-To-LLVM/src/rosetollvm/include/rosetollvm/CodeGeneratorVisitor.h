@@ -12,13 +12,8 @@ public:
                                                                current_function_decls(NULL)
     {}
 
+    void processDimensionExpressions();
     void processRemainingFunctions();
-
-    bool isValignType(SgType *);
-    bool isUnsignedType(SgType *);
-    bool isFloatType(SgType *);
-    bool isIntegerType(SgType *);
-    bool isBooleanType(SgType *);
 
 protected:
 
@@ -64,6 +59,7 @@ protected:
     void genDivideBinaryOperationAndAssign(SgBinaryOp *, std::string, std::string const &);
 
     SgFunctionType *getFunctionType(SgType *);
+    void generateArraySizeCode(const std::string &, SgType *, SgArrayType *);
 
     virtual bool preVisitEnter(SgNode *);
     virtual void preVisit(SgNode *);

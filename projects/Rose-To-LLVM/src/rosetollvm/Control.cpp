@@ -1,4 +1,5 @@
 #include "rosetollvm/Control.h"
+#include "rosetollvm/ConstantValue.h"
 #include "rosetollvm/LLVMAstAttributes.h"
 
 #include "llvm/ADT/APFloat.h"
@@ -34,7 +35,7 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_WHILE_LABELS = "m",
            *Control::LLVM_DO_LABELS = "n",
            *Control::LLVM_FOR_LABELS = "o",
-//           *Control::LLVM_LABEL = "p", // UNUSED, remove
+           *Control::LLVM_DIMENSIONS = "p",
            *Control::LLVM_DEFAULT_VALUE = "q",
            *Control::LLVM_EXPRESSION_RESULT_NAME = "r",
            *Control::LLVM_BUFFERED_OUTPUT = "s",
@@ -59,11 +60,11 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_SWITCH_EXPRESSION = "L",
            *Control::LLVM_CASE_INFO = "M",
            *Control::LLVM_DEFAULT_LABEL = "N",
-   //           *Control::LLVM_STRING_SIZE = "O",
            *Control::LLVM_STRING_INDEX = "O",
            *Control::LLVM_STRING_INITIALIZATION = "P",
            *Control::LLVM_POINTER_TO_INT_CONVERSION = "Q",
            *Control::LLVM_ARRAY_TO_POINTER_CONVERSION = "R",
+           // "S"
            *Control::LLVM_INTEGRAL_PROMOTION = "T",
            *Control::LLVM_INTEGRAL_DEMOTION = "U",
            *Control::LLVM_NULL_VALUE = "V", 
@@ -84,7 +85,7 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_OP_AND_ASSIGN_FP_PROMOTION = "LLVM_OP_AND_ASSIGN_FP_PROMOTION",
            *Control::LLVM_OP_AND_ASSIGN_FP_DEMOTION = "LLVM_OP_AND_ASSIGN_FP_DEMOTION",
            *Control::LLVM_ARRAY_BIT_CAST = "9",
-//           *Control::LLVM_ARGUMENT_INTEGRAL_DEMOTION = "~",
+           *Control::LLVM_CONSTANT_VALUE = "~",
            *Control::LLVM_FUNCTION_VISITED = "`",
            *Control::LLVM_FUNCTION_NEEDS_REVISIT = "!",
            *Control::LLVM_STRUCTURE_PADDING = "@",
@@ -306,7 +307,7 @@ cout.flush();
 /**
  * Convert a long to its string representation.
  */
-string Control::IntToString(long l) {
+string Control::IntToString(long long l) {
     stringstream out;
     out << l;
     return out.str();
@@ -742,5 +743,27 @@ cout.flush();
 }
         ROSE2LLVM_ASSERT(isIntegerValue(node) && isFloatingType(type));
         return floatingValue(node, type);
+    }
+}
+
+
+std::string Control::primitiveCast(ConstantValue &x, SgType *type) {
+    if (isSgPointerType(type) && x.hasIntValue() && x.int_value == 0) {
+        return "null";
+    }
+    else if (x.hasIntValue()) {
+        return IntToString(x.int_value);
+    }
+    else if (x.hasFloatValue()) {
+        return FloatToString(x.float_value);
+    }
+    else if (x.hasDoubleValue()) {
+        return DoubleToString(x.double_value);
+    }
+    else if (x.hasLongDoubleValue()) {
+        return LongDoubleToString(x.long_double_value);
+    }
+    else {
+        ROSE2LLVM_ASSERT(false);
     }
 }

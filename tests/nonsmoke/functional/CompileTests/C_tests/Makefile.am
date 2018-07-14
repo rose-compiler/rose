@@ -613,6 +613,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_44.c \
      test2018_62.c \
      test2018_63.c \
+     test2018_64.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 FAILING_2017_TESTS = \

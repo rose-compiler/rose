@@ -1,875 +1,76 @@
 #include <rosetollvm/CodeGeneratorVisitor.h>
+#include <rosetollvm/ConstantCodeEvaluator.h>
 #include <iostream>
 
 using namespace std;
 
-class constValue {
-    bool hasIntValue_;
-    bool hasDoubleValue_;
-    bool hasLongDoubleValue_;
-    string code;
-
-public:
-
-    constValue() {
-        setNoArithmeticValue();
-
-        code = "";
-
-        string_literal = NULL;
-        function_reference = NULL;
-        other_expression = NULL;
-    }
-
-    long long int_value;
-    double double_value;
-    long double long_double_value;
-    SgStringVal *string_literal;
-    SgFunctionRefExp *function_reference;
-    SgExpression *other_expression;
-
-    void setNoArithmeticValue() {
-        int_value = -1;
-        double_value = NAN;
-        hasIntValue_ = false;
-        hasDoubleValue_ = false;
-        hasLongDoubleValue_ = false;
-    }
-
-    bool hasArithmeticValue() {
-        return (hasIntValue_ || hasDoubleValue_ || hasLongDoubleValue_);
-    }
-
-    bool hasIntValue() {
-        return hasIntValue_;
-    }
-
-    bool hasDoubleValue() {
-        return hasDoubleValue_;
-    }
-
-    bool hasLongDoubleValue() {
-        return hasLongDoubleValue_;
-    }
-
-    void setIntValue(long long value_) {
-        int_value = value_;
-        hasIntValue_ = true;
-        hasDoubleValue_ = false;
-        double_value = NAN;
-        hasLongDoubleValue_ = false;
-        long_double_value = NAN;
-    }
-
-    void setDoubleValue(double value_) {
-        double_value = value_;
-        hasDoubleValue_ = true;
-        hasLongDoubleValue_ = false;
-        long_double_value = NAN;
-        hasIntValue_ = false;
-        int_value = -1;
-    }
-
-    void setLongDoubleValue(long double value_) {
-        long_double_value = value_;
-        hasLongDoubleValue_ = true;
-        hasDoubleValue_ = false;
-        double_value = NAN;
-        hasIntValue_ = false;
-        int_value = -1;
-    }
-
-    void setStringValue(SgStringVal *literal) {
-        setNoArithmeticValue();
-        string_literal = literal;
-    }
-
-  void setFunctionReference(SgFunctionRefExp *ref, string code_) {
-        setNoArithmeticValue();
-        this -> code = code_;
-        function_reference = ref;
-    }
-
-    void setOtherExpression(SgExpression *exp, string code_) {
-        setNoArithmeticValue();
-        this -> code = code_;
-        other_expression = exp;
-    }
-
-    string getCode() { return code; }
-};
-
-class ConstantExpressionEvaluator: public AstBottomUpProcessing <constValue> {
-    CodeGeneratorVisitor *generator;
-    LLVMAstAttributes *attributes;
-
-public:
-    ConstantExpressionEvaluator(CodeGeneratorVisitor *generator_, LLVMAstAttributes *attributes_) : generator(generator_),
-                                                                                                    attributes(attributes_)
-    {
-    }
-
-    /**
-     *
-     */
-    constValue getValueExpressionValue(SgValueExp *valExp) {
-        constValue subtreeVal;
-
-        if (isSgCharVal(valExp)) {
-            subtreeVal.setIntValue(isSgCharVal(valExp) -> get_value());
-        }
-        else if (isSgIntVal(valExp)) {
-            subtreeVal.setIntValue(isSgIntVal(valExp) -> get_value());
-        }
-        else if (isSgEnumVal(valExp)) {
-            subtreeVal.setIntValue(isSgEnumVal(valExp) -> get_value());
-        }
-        else if (isSgLongIntVal(valExp)) {
-            subtreeVal.setIntValue(isSgLongIntVal(valExp) -> get_value());
-        }
-        else if (isSgLongLongIntVal(valExp)) {
-            subtreeVal.setIntValue(isSgLongLongIntVal(valExp) -> get_value());
-        }
-        else if (isSgShortVal(valExp)) {
-           subtreeVal.setIntValue(isSgShortVal(valExp) -> get_value());
-        }
-        else if (isSgUnsignedIntVal(valExp)) {
-            subtreeVal.setIntValue(isSgUnsignedIntVal(valExp) -> get_value());
-        }
-        else if (isSgUnsignedLongVal(valExp)) {
-            subtreeVal.setIntValue(isSgUnsignedLongVal(valExp) -> get_value());
-        } 
-        else if (isSgUnsignedLongLongIntVal(valExp)) {
-            subtreeVal.setIntValue(isSgUnsignedLongLongIntVal(valExp) -> get_value());
-        } 
-        else if (isSgUnsignedShortVal(valExp)) {
-            subtreeVal.setIntValue(isSgUnsignedShortVal(valExp) -> get_value());
-        }
-        else if (isSgFloatVal(valExp)) {
-            subtreeVal.setDoubleValue(isSgFloatVal(valExp) -> get_value());
-        }
-        else if (isSgDoubleVal(valExp)) {
-            subtreeVal.setDoubleValue(isSgDoubleVal(valExp) -> get_value());
-        }
-        else if (isSgLongDoubleVal(valExp)) {
-            subtreeVal.setLongDoubleValue(isSgLongDoubleVal(valExp) -> get_value());
-        }
-        else if (isSgStringVal(valExp)) {
-            subtreeVal.setStringValue(isSgStringVal(valExp));
-        }
-        else if (isSgBoolValExp(valExp)) {
-// TODO: Remove this !!!
+/**
+ * A pointer type initialized with NULL (int value of 0) ?
+ */
+void CodeGeneratorVisitor::processDimensionExpressions() {
+     /**
+      *
+      */
+// TODO: Remove this !
+/*  
+if (control.numDimensionAttributes() > 0) {
+cout
+  << "*** Generating dimension Expressions code for "
+  << control.numDimensionAttributes()
+  << " dimension attributes"
+  << endl;
+cout.flush();
+}
+*/
+    for (int i = 0; i < control.numDimensionAttributes(); i++) {
+        DimensionAstAttribute *dimension_attribute = control.getDimensionAttribute(i);
+        current_function_decls = dimension_attribute -> getFunctionAttribute();
+        ROSE2LLVM_ASSERT(current_function_decls);
+//        ROSE2LLVM_ASSERT(current_function_decls -> getFunctionDeclaration());
+// TODO: Remove this !
 /*
-cout << "*** The value of this boolean is: "
-     << isSgBoolValExp(valExp) -> get_value()
+cout
+  << "***     Visiting function "
+  << current_function_decls -> getFunctionDeclaration() -> get_name().getString()
   << endl;
 cout.flush();
 */
-            subtreeVal.setIntValue(isSgBoolValExp(valExp) -> get_value() != 0 ? 1 : 0);
+
+// TODO: Remove this !
+/*
+cout
+  << "***     Processing "
+  << dimension_attribute -> numDimensionExpressions()
+  << " dimension expressions in declaration of "
+  << dimension_attribute -> getVariableDeclaration() -> get_name().getString()
+  << endl;
+cout.flush();
+*/
+        setAttributes(dimension_attribute -> getAstAttributes());
+        codeOut -> startOutputToBuffer(dimension_attribute -> getBuffer());
+        for (int k = 0; k < dimension_attribute -> numDimensionExpressions(); k++) {
+// TODO: Remove this !
+/*
+cout
+  << "    Generating dimension Expression code for a "
+  << dimension_attribute -> getDimensionExpression(k) -> class_name()
+  << endl;
+cout.flush();
+*/
+            this -> traverse(dimension_attribute -> getDimensionExpression(k));
         }
-        else {
-            cout << "*** Not yet able to process constant value of type " << valExp -> class_name() << endl;
-            cout.flush();
-            ROSE2LLVM_ASSERT(0);
-        }
-        return subtreeVal;
+        codeOut -> endOutputToBuffer();
     }
-
-    /**
-     *
-     */
-    constValue evaluateVariableReference(SgVarRefExp *ref) {
-        constValue val;
-
-        SgVariableSymbol *sym = ref -> get_symbol();
-        ROSE2LLVM_ASSERT(sym);
-        SgInitializedName *decl = sym -> get_declaration();
-        ROSE2LLVM_ASSERT(decl);
-
-        SgModifierType *ref_type = isSgModifierType(ref -> get_type());
-        if (ref_type && ref_type -> get_typeModifier().get_constVolatileModifier().isConst()) { // check if this variable was assigned to a constant.
-            // We know that the var value is const, so get the initialized name and evaluate it
-            SgInitializer *ini = decl -> get_initializer();
-                                                                                 
-            if (ini && isSgAssignInitializer(ini)) {
-                SgAssignInitializer *initializer = isSgAssignInitializer(ini);
-                SgExpression *rhs = initializer -> get_operand();
-                ConstantExpressionEvaluator variableEval(generator, attributes);
-                val = variableEval.traverse(rhs);
-            }
-        }
-        else {
-            ROSE2LLVM_ASSERT(decl -> getAttribute(Control::LLVM_NAME));
-            string var_name = ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_NAME)) -> getValue();
-            ROSE2LLVM_ASSERT(decl -> get_type());
-            SgType *var_type = decl -> get_type() -> stripTypedefsAndModifiers();
-            if (isSgAddressOfOp(ref -> get_parent())) { // are we going to take the address of this variable?
-                val.setOtherExpression(ref, var_name);
-            }
-            else if (isSgArrayType(var_type)) {
-                // If the declaration itself was tagged with a type (because of its initializer), use that type.
-                // Otherwise, use the the specified type.
-                string type_name = (decl -> attributeExists(Control::LLVM_TYPE) 
-                                          ? ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_TYPE)) -> getValue()
-                                          : ((StringAstAttribute *) var_type -> getAttribute(Control::LLVM_TYPE)) -> getValue());
-
-                // For an array, take the address of the array's first element.
-                val.setOtherExpression(ref, "getelementptr inbounds (" + type_name + "," + type_name + "* " + var_name + ", i32 0, i32 0)");
-            }
-            else if (isSgClassType(var_type)) {
-                // This case is necessary in case the address of a
-                // member of this struct or union is computed by
-                // ancestor nodes.
-                val.setOtherExpression(ref, var_name);
-            }
-            else {
-                // A variable of a primitive, enum, or pointer type
-                // cannot appear in a global initializer unless its
-                // address is being computed because loads are not
-                // allowed.
-                // ROSE2LLVM_ASSERT(! "yet know how to deal with this kind of variable");
-            }
-        }
-
-        return val;
-    }
-
-    /**
-     *
-     */
-    constValue evaluateSynthesizedAttribute(SgNode *some_node, SynthesizedAttributesList synList) {
-        SgExpression *node = isSgExpression(some_node);
-        ROSE2LLVM_ASSERT(node);
-
-        //
-        // The value that will be returned.
-        //
-        constValue value; // by default, a constValue has no value
-
-        if (isSgValueExp(node)) {
-            value = this -> getValueExpressionValue(isSgValueExp(node));
-        }
-        else if (isSgNullExpression(node)) {
-            value.setIntValue(0);
-        }
-        else if (isSgVarRefExp(node)) {
-            value = evaluateVariableReference(isSgVarRefExp(node));
-        }
-        else if (isSgSizeOfOp(node)) {
-            SgSizeOfOp *sizeof_exp = (SgSizeOfOp *) node;
-            IntAstAttribute *size_attribute = (IntAstAttribute *) sizeof_exp -> getAttribute(Control::LLVM_SIZE);
-            ROSE2LLVM_ASSERT(size_attribute);
-
-            value.setIntValue(size_attribute -> getValue());
-        }
-        else if (isSgUnaryOp(node)) {
-            assert(synList.size() == 1);
-
-            if (isSgCastExp(node)) {
-                SgCastExp *cast_expression = isSgCastExp(node);
-                // C99 explicitly states that "a cast does not yield an
-                // lvalue" and that "the operand of the unary & operator
-                // shall be either a function designator, the result of a []
-                // or unary * operator, or an lvalue that designates an
-                // object that is not a bit-field and is not declared with
-                // the register storage-class specifier".  Hopefully ROSE
-                // never inserts an implicit SgCastExp as the child of an
-                // SgAddressOfOp.
-                ROSE2LLVM_ASSERT(! isSgAddressOfOp(cast_expression -> get_parent()));
-                SgType *result_type =  attributes -> getSourceType(((SgTypeAstAttribute *) cast_expression -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE)) -> getType());
-                SgExpression *operand = cast_expression -> get_operand();
-                SgType *operand_type = attributes -> getSourceType(((SgTypeAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE)) -> getType());
-                if (isSgPointerType(result_type)) {
-                    // FIXME: So far, the only trees I've found where the
-                    // operand is not an SgAddressOfOp are corrupt trees
-                    // from ROSE.  For example,
-                    // https://mailman.nersc.gov/pipermail/rose-public/2010-December/000568.html.
-                    // Does this properly handle operands other than
-                    // SgAddressOfOp?
-
-                    //
-                    // TODO: remove the first case below that checks for LLVM_NULL_VALUE.
-                    //       This is now be calculated properly in this method. The assertion below
-                    //       in effect demonstrates that this code is unnecessary.
-                    //
-                    if (node -> attributeExists(Control::LLVM_NULL_VALUE)) {
-                        ROSE2LLVM_ASSERT(synList.at(0).hasIntValue() && synList.at(0).int_value == 0);
-                        value.setOtherExpression(node, "null");
-                    }
-                    else if (isSgPointerType(operand_type)) {
-                        string operand_llvm_type = ((StringAstAttribute *) operand_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                        string operand_name = synList.at(0).getCode();
-                        string result_llvm_type = ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                        value.setOtherExpression(node, "bitcast (" + operand_llvm_type + " " + operand_name + " to " + result_llvm_type + ")");
-                    }
-                    else if (isSgFunctionType(operand_type)) {
-                        string operand_llvm_type = ((StringAstAttribute *) operand_type -> getAttribute(Control::LLVM_TYPE)) -> getValue() + "*";
-                        string operand_name = synList.at(0).getCode(); // ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
-                        string result_llvm_type = ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-
-                        if (operand_llvm_type.compare(result_llvm_type) == 0) {
-                            value.setOtherExpression(node, operand_name);
-                        }
-                        else {
-                            value.setOtherExpression(node, "bitcast (" + operand_llvm_type + " " + operand_name + " to " + result_llvm_type + ")");
-                        }
-                    }
-                    else if (synList.at(0).hasIntValue()) {
-                        ROSE2LLVM_ASSERT(generator -> isIntegerType(operand_type));
-
-                        if (synList.at(0).int_value == 0) {
-                            value.setOtherExpression(node, "null");
-                        }
-                        else  {
-                            value.setOtherExpression(node, "inttoptr ("
-                                                         + ((StringAstAttribute *) operand_type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
-                                                         + " "
-                                                         + Control::IntToString(synList.at(0).int_value) // ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue()
-                                                         + " to "
-                                                         + ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
-                                                         + ")");
-                        }
-                    }
-                    else if (isSgTypeString(operand_type)) {
-                        // Keep the original Control::LLVM_EXPRESSION_RESULT_NAME.
-                        // TODO: Can this happen?  How do I set up the value for this?
-                        value.setOtherExpression(node, ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue());
-                    }
-                    else if (isSgArrayType(operand_type)) {
-                        value.setOtherExpression(node, "getelementptr inbounds (i8, i8* "
-                                                       + synList.at(0).getCode() // ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue()
-                                                       + ")");
-                    }
-                    else {
-                        ROSE2LLVM_ASSERT(! "This should not happen");
-                    }
-                }
-                else if (isSgPointerType(operand_type) && generator -> isIntegerType(result_type)) {
-                    // Even though C99 appears to say that, after folding, a
-                    // cast from pointer to integer is not allowed in a
-                    // global init, gcc and ROSE accept it, so handle it.
-                    string operand_llvm_type = ((StringAstAttribute *) operand_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    string operand_name = synList.at(0).getCode();
-                    string result_llvm_type = ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    value.setOtherExpression(node, "ptrtoint (" + operand_llvm_type + " " + operand_name + " to " + result_llvm_type + ")");
-                }
-                else if (isSgFunctionType(operand_type) && generator -> isIntegerType(result_type)) {
-                    // Even though C99 appears to say that, after folding, a
-                    // cast from pointer to integer is not allowed in a
-                    // global init, gcc and ROSE accept it, so handle it.
-                    string operand_llvm_type = ((StringAstAttribute *) operand_type -> getAttribute(Control::LLVM_TYPE)) -> getValue() + "*";
-                    string operand_name = synList.at(0).getCode(); // ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
-                    string result_llvm_type = ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    value.setOtherExpression(node, "ptrtoint (" + operand_llvm_type + " " + operand_name + " to " + result_llvm_type + ")");
-                }
-                else if (generator -> isFloatType(node -> get_type())) {
-                    if (synList.at(0).hasIntValue()) {
-                        value.setDoubleValue((double) synList.at(0).int_value);
-                    }
-                    else if (synList.at(0).hasDoubleValue()) {
-                        value = synList.at(0);
-                    }
-                }
-                else if (generator -> isIntegerType(node -> get_type())) { // isIntegerType includes isBooleanType.
-                    if (synList.at(0).hasDoubleValue()) {
-                        value.setIntValue(synList.at(0).double_value);
-                    }
-                    else if (synList.at(0).hasIntValue()) {
-                        value = synList.at(0);
-                    }
-                    else if (! synList.at(0).hasArithmeticValue()) {
-                        //
-                        // If this is a conversion to the Boolean type and the operand is not an arithmetic value...
-                        //
-                        if (generator -> isBooleanType(result_type)) {
-                            if (isSgPointerType(operand_type) || isSgTypeString(operand_type)) {
-                                value.setIntValue(1); // Except for the constant NULL, all pointer values are positive.
-                            }
-                            else {
-                                cout << ";*** Don't know yet how to cast node " << node -> class_name()
-                                     << " of type " << result_type -> class_name()
-                                     << endl;
-                                cout.flush();
-                                ROSE2LLVM_ASSERT(false);
-                            }
-                        }
-                    }
-                }
-                else {
-                    cerr << "Don't know how to process type "
-                         << node -> get_type() -> class_name()
-                         << endl;
-                    cerr.flush();
-                    ROSE2LLVM_ASSERT(false);
-                }
-            }
-            else if (isSgUnaryAddOp(node)) {
-                value = synList.at(0);
-            }
-            else if (isSgMinusOp(node)) {
-                if (synList.at(0).hasIntValue()) {
-                    value.setIntValue(- synList.at(0).int_value);
-                }
-                else if (synList.at(0).hasDoubleValue()) {
-                    value.setDoubleValue(- synList.at(0).double_value);
-                }
-            }
-            else if (isSgBitComplementOp(node)) {
-                if (synList.at(0).hasIntValue()) {
-                    value.setIntValue(~ synList.at(0).int_value);
-                }
-            }
-            else if (isSgNotOp(node)) {
-                if (synList.at(0).hasIntValue()) {
-                    value.setIntValue(! synList.at(0).int_value);
-                }
-            }
-            else if (isSgAddressOfOp(node)) {
-                //
-                // TODO: Generate address dereference code here!!!
-                //
-                SgExpression *operand = isSgAddressOfOp(node) -> get_operand();
-                // Every node type's handler is responsible for checking if
-                // its meaning is modified by a parent SgAddressOfOp, so we
-                // just copy that result here.  This approach seems to be
-                // encouraged by C99, which describes cases in which &
-                // operating on the result of a * or [] simply prevents part
-                // of the effect of the * or [].  However, C99 does not
-                // allow applying & to a & result, so assert that does not
-                // happen.
-                value.setOtherExpression(node, synList.at(0).getCode());
-            }
-            else if (isSgPointerDerefExp(node)) {
-                SgPointerDerefExp *n = isSgPointerDerefExp(node); 
-                SgExpression *operand = n -> get_operand();
-                string indexes_string = ", i32 0, i32 0";
-                while (isSgPointerDerefExp(operand)) {
-                    operand = isSgPointerDerefExp(operand) -> get_operand();
-                    indexes_string += ", i32 0, i32 0";
-                } 
-                SgVarRefExp *var_ref = isSgVarRefExp(operand);
-                ROSE2LLVM_ASSERT(var_ref);
-                ROSE2LLVM_ASSERT(var_ref -> get_symbol());
-                SgInitializedName *decl = var_ref -> get_symbol() -> get_declaration();
-                ROSE2LLVM_ASSERT(decl);
-                string name = ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_GLOBAL_CONSTANT_NAME)) -> getValue();
-                string type_name = ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_TYPE)) -> getValue(); 
-
-/**/                value.setOtherExpression(node, "getelementptr inbounds (" + type_name + ", " + type_name + "* " + name + indexes_string + ")");
-            }
-
-            else {
-                std::cerr << "We don't yet evaluate integer binary Expression " << node -> class_name() << std::endl;
-            }
-        }
-        else if (isSgBinaryOp(node)) {
-            assert(synList.size() == 2);
-
-            if (synList.at(0).hasArithmeticValue() && synList.at(1).hasArithmeticValue()) {
-                if (generator -> isFloatType(node -> get_type())) {
-                    double left = (synList.at(0).hasIntValue() ? (double) synList.at(0).int_value : synList.at(0).double_value),
-                           right = (synList.at(1).hasIntValue() ? (double) synList.at(1).int_value : synList.at(1).double_value);
-                    if (isSgAddOp(node)) {
-                        value.setDoubleValue(left + right);
-                    }
-                    else if (isSgSubtractOp(node)) {
-                        value.setDoubleValue(left - right);
-                    }
-                    else if (isSgMultiplyOp(node)) {
-                        value.setDoubleValue(left * right);
-                    }
-                    else if (isSgDivideOp(node)) {
-                        value.setDoubleValue(left / right);
-                    }
-                    else if (isSgEqualityOp(node)) {
-                        value.setIntValue(left == right);
-                    }
-                    else if (isSgNotEqualOp(node)) {
-                        value.setIntValue(left != right);
-                    }
-                    else if (isSgLessThanOp(node)) {
-                        value.setIntValue(left < right);
-                    }
-                    else if (isSgLessOrEqualOp(node)) {
-                        value.setIntValue(left <= right);
-                    }
-                    else if (isSgGreaterThanOp(node)) {
-                        value.setIntValue(left > right);
-                    }
-                    else if (isSgGreaterOrEqualOp(node)) {
-                        value.setIntValue(left >= right);
-                    }
-                    else {
-                        std::cerr << "We don't yet evaluate floating-point binary Expression " << node -> class_name() << std::endl;
-                    }
-                }
-                else {
-                    int left = (synList.at(0).hasIntValue() ? synList.at(0).int_value : (int) synList.at(0).double_value),
-                        right = (synList.at(1).hasIntValue() ? synList.at(1).int_value : (int) synList.at(1).double_value);
-                    if (isSgModOp(node)) {
-                        value.setIntValue(left % right);
-                    }
-                    else if (isSgAddOp(node)) {
-                        value.setIntValue(left + right);
-                    }
-                    else if (isSgSubtractOp(node)) {
-                        value.setIntValue(left - right);
-                    }
-                    else if (isSgMultiplyOp(node)) {
-                        value.setIntValue(left * right);
-                    }
-                    else if (isSgDivideOp(node)) {
-                        value.setIntValue(left / right);
-                    }
-                    else if (isSgEqualityOp(node)) {
-                        value.setIntValue(left == right);
-                    }
-                    else if (isSgNotEqualOp(node)) {
-                        value.setIntValue(left != right);
-                    }
-                    else if (isSgLessThanOp(node)) {
-                        value.setIntValue(left < right);
-                    }
-                    else if (isSgLessOrEqualOp(node)) {
-                        value.setIntValue(left <= right);
-                    }
-                    else if (isSgGreaterThanOp(node)) {
-                        value.setIntValue(left > right);
-                    }
-                    else if (isSgGreaterOrEqualOp(node)) {
-                        value.setIntValue(left >= right);
-                    }
-                    else if (isSgOrOp(node)) {
-                        value.setIntValue(left || right);
-                    }
-                    else if (isSgAndOp(node)) {
-                        value.setIntValue(left && right);
-                    }
-                    else if (isSgBitOrOp(node)) {
-                        value.setIntValue(left | right);
-                    }
-                    else if (isSgBitXorOp(node)) {
-                        value.setIntValue(left ^ right);
-                    }
-                    else if (isSgBitAndOp(node)) {
-                        value.setIntValue(left & right);
-                    }
-                    else if (isSgLshiftOp(node)) {
-                        value.setIntValue(left << right);
-                    }
-                    else if (isSgRshiftOp(node)) {
-                        value.setIntValue(left >> right);
-                    }
-                    else {
-                        std::cerr << "We don't yet evaluate integer binary Expression " << node -> class_name() << std::endl;
-                    }
-                }
-            }
-            else if (isSgPntrArrRefExp(node)) {
-                // In a folded constant expression, we assume the LHS of an
-                // SgPntrArrRefExp is always a reference to an array (or
-                // equivalent pointer), and we assume the RHS is always a
-                // constant integer.  FIXME: Does ROSE guarantee all that?
-                SgPntrArrRefExp *n = isSgPntrArrRefExp(node);
-                SgExpression *array_pointer,
-                             *array_index;
-                string array_name,
-                       index_name;
-                if (attributes -> getExpressionType(n -> get_rhs_operand()) -> isIntegerType()) {
-                    array_pointer = n -> get_lhs_operand();
-                    array_index = n -> get_rhs_operand();
-                    array_name = synList.at(0).getCode();
-                    ROSE2LLVM_ASSERT(synList.at(1).hasIntValue());
-                    index_name = Control::IntToString(synList.at(1).int_value);
-                }
-                else  {
-                    array_pointer = n -> get_rhs_operand();
-                    array_index = n -> get_lhs_operand();
-                    array_name = synList.at(1).getCode();
-                    ROSE2LLVM_ASSERT(synList.at(0).hasIntValue());
-                    index_name = Control::IntToString(synList.at(0).int_value);
-                }
-
-                ROSE2LLVM_ASSERT(isSgVarRefExp(array_pointer) || isSgPntrArrRefExp(array_pointer));
-                ROSE2LLVM_ASSERT(isSgValueExp(array_index));
-                SgType *array_type = attributes -> getExpressionType(array_pointer);
-                SgType *index_type = attributes -> getExpressionType(array_index);
-                string array_type_name;
-                if (isSgArrayType(array_type)) { // Most likely this will not occur as the CodeAttributeVisitor would have already transformed array types into pointer types.
-                    array_type_name = ((StringAstAttribute*) isSgArrayType(array_type) -> get_base_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue() + "*";
-                }
-                else {
-                    ROSE2LLVM_ASSERT(isSgPointerType(array_type));
-                    array_type_name = ((StringAstAttribute *) array_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                }
-                ROSE2LLVM_ASSERT(generator -> isIntegerType(index_type));
-                string index_type_name = ((StringAstAttribute*) index_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-
-                ROSE2LLVM_ASSERT(array_type_name.length() > 1 && array_type_name[array_type_name.length() - 1] == '*');
-// TODO: Remove this !!!
-/*
-cout << "; The array_type_name is: " << array_type_name.substr(0, array_type_name.length() - 1)
-     << "; the pointer is: " << array_type_name
-     << endl;
+// TODO: Remove this !
+/*   
+if (control.numDimensionAttributes() > 0) {
+cout
+  << "*** Done Generating dimension Expressions code"
+  << endl;
 cout.flush();
+}
 */
-                value.setOtherExpression(node, "getelementptr inbounds (" + array_type_name.substr(0, array_type_name.length() - 1) + "," + array_type_name + " " + array_name + ", " + index_type_name + " " + index_name + (! isSgAddressOfOp(n -> get_parent()) ? ", i32 0)" : ")"));
-
-            }
-            else if (isSgAddOp(node)) {
-                //
-                // 08/10/2016
-                // Make sure that we are only dealing with array dereferences here
-                //
-                if (isSgPointerType(attributes -> getSourceType(attributes -> getExpressionType(node)))) {
-                    // The only arithmetic that should appear in a folded global
-                    // initializer is on an address.  Rose always makes sure
-                    // that the pointer type is the left operand. It transforms
-                    // the original source if that was not the case.  Thus,
-                    // consider the following example:
-                    //
-                    //   int a[] = { 0, 1, 2, 3, 4};
-                    //   int *q;
-                    //
-                    //   q = &a[3];
-                    //   q = a + 3;
-                    //   q = 3 + a;
-                    //
-                    // In all 3 cases above, the AST node generated will
-                    // correspond to: q = a + 3.
-                    SgAddOp *n = isSgAddOp(node);
-                    // C99 does not permit taking the address of a temporary
-                    // arithmetic result.  Unfortunately, ROSE sometimes
-                    // generates such trees
-                    // (https://mailman.nersc.gov/pipermail/rose-public/2010-December/000568.html),
-                    // but we will wait for that to be fixed rather than
-                    // attempting to make sense of it.
-                    ROSE2LLVM_ASSERT(!isSgAddressOfOp(n->get_parent()));
-                    SgExpression *lhs_operand = n -> get_lhs_operand(),
-                                 *rhs_operand = n -> get_rhs_operand();
-                    string lhs_name = synList.at(0).getCode(); // ((StringAstAttribute *) lhs_operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
-                    ROSE2LLVM_ASSERT(synList.at(1).hasIntValue());
-                    string rhs_name = Control::IntToString(synList.at(1).int_value);
-                    SgType *lhs_type = attributes -> getExpressionType(lhs_operand),
-                           *rhs_type = attributes -> getExpressionType(rhs_operand);
-                    string lhs_type_name;
-                    if (isSgArrayType(lhs_type)) {
-                        lhs_type_name = ((StringAstAttribute*)isSgArrayType(lhs_type)->get_base_type()->getAttribute(Control::LLVM_TYPE))->getValue() + "*";
-                    }
-                    else {
-                        ROSE2LLVM_ASSERT(isSgPointerType(lhs_type));
-                        lhs_type_name = ((StringAstAttribute *) lhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    }
-                    ROSE2LLVM_ASSERT(generator -> isIntegerType(rhs_type));
-                    string rhs_type_name = ((StringAstAttribute *) rhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-
-                    ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
-// TODO: Remove this !!!
-/*
-cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
-     << "; the pointer is: " << lhs_type_name
-     << endl;
-cout.flush();
-*/
-                    value.setOtherExpression(node, "getelementptr inbounds (" + lhs_type_name.substr(0, lhs_type_name.length() - 1) + ", " + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " " + rhs_name + ")");
-                }
-            }
-            else if (isSgSubtractOp(node)) {
-                //
-                // 08/10/2016
-                // Make sure that we are only dealing with array dereferences here
-                //
-                if (isSgPointerType(attributes -> getSourceType(attributes -> getExpressionType(node)))) {
-                    // The only arithmetic that should appear in a folded global
-                    // initializer is on an address. For example:
-                    //
-                    //   int a[] = { 0, 1, 2, 3, 4};
-                    //   int *q;
-                    //   q = a - 3;
-                    //
-                    SgSubtractOp *n = isSgSubtractOp(node);
-                    // C99 does not permit taking the address of a temporary
-                    // arithmetic result.  Unfortunately, ROSE sometimes
-                    // generates such trees
-                    // (https://mailman.nersc.gov/pipermail/rose-public/2010-December/000568.html),
-                    // but we will wait for that to be fixed rather than
-                    // attempting to make sense of it.
-                    ROSE2LLVM_ASSERT(! isSgAddressOfOp(n -> get_parent()));
-                    SgExpression *lhs_operand = n -> get_lhs_operand(),
-                                 *rhs_operand = n -> get_rhs_operand();
-                    string lhs_name = synList.at(0).getCode(); // ((StringAstAttribute *) lhs_operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
-                    ROSE2LLVM_ASSERT(synList.at(1).hasIntValue());
-                    string rhs_name = Control::IntToString(synList.at(1).int_value);
-                    SgType *lhs_type = attributes -> getExpressionType(lhs_operand),
-                           *rhs_type = attributes -> getExpressionType(rhs_operand);
-                    string lhs_type_name;
-                    if (isSgArrayType(lhs_type)) {
-                        lhs_type_name = ((StringAstAttribute*)isSgArrayType(lhs_type) -> get_base_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue() + "*";
-                    }
-                    else {
-                        ROSE2LLVM_ASSERT(isSgPointerType(lhs_type));
-                        lhs_type_name = ((StringAstAttribute *) lhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    }
-                    ROSE2LLVM_ASSERT(generator -> isIntegerType(rhs_type));
-                    string rhs_type_name = ((StringAstAttribute *) rhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-
-                    ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
-// TODO: Remove this !!!
-/*
-cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
-     << "; the pointer is: " << lhs_type_name
-     << endl;
-cout.flush();
-*/
-                    value.setOtherExpression(node, "getelementptr inbounds (" + lhs_type_name.substr(0, lhs_type_name.length() - 1) + ", " + lhs_type_name + " " + lhs_name + ", " + rhs_type_name + " -" + rhs_name + ")");
-                }
-            }
-            else if (isSgArrowExp(node) || isSgDotExp(node)) {
-                // So far, the only way I've found to get ROSE to produce an
-                // SgArrowExp in a tree is when a load must be performed to
-                // obtain the pointer value.  Otherwise, it converts it to
-                // an SgDotExp.  For example, in "p->a", p's value must be
-                // loaded, so ROSE produces an SgArrowExp.  However, in
-                // "(&s)->a", only the address of s is needed, and ROSE
-                // converts this to "s.a".  Thus, because a constant
-                // expression can't load from memory, it appears there's no
-                // way for the SgArrowExp case below to be exercised.
-                // However, ROSE might evolve, so I include the SgArrowExp
-                // case anyway.
-                SgBinaryOp *n = isSgBinaryOp(node);
-                SgExpression *lhs_operand = n -> get_lhs_operand(),
-                             *rhs_operand = n -> get_rhs_operand();
-                string lhs_name = synList.at(0).getCode(); // ((StringAstAttribute *) lhs_operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
-                SgType *lhs_type = attributes -> getExpressionType(lhs_operand);
-                SgType *result_type = attributes -> getExpressionType(n);
-                string lhs_type_name = ((StringAstAttribute *) lhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                string result_type_name = ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                SgType *base_type = lhs_type;
-                if (isSgArrowExp(n)) {
-                    base_type = isSgPointerType(attributes -> getSourceType(lhs_type)) -> get_base_type();
-                }
-                SgClassType *class_type = isSgClassType(attributes -> getSourceType(base_type));
-                SgClassDeclaration *decl= isSgClassDeclaration(class_type -> get_declaration());
-                if (isSgDotExp(n)) {
-                    lhs_type_name += "*";
-                }
-
-                //
-                // This code is here for documentation and sanity check. See else segment below.
-                //
-                if (isSgAddressOfOp(n -> get_parent())) {
-                    // FIXME: I have so far found no test case for which the
-                    // field type (i.e., result_type) is an array and the
-                    // parent is an SgAddressOfOp.  Instead, ROSE transforms
-                    // the tree so it does not have the SgArrowExp or
-                    // SgDotExp, and sometimes it also corrupts the tree
-                    // (similar to
-                    // https://mailman.nersc.gov/pipermail/rose-public/2010-December/000568.html).
-                }
-                else if (isSgArrayType(result_type)) {
-                    // Take the address of the array's first element.
-                }
-                else if (isSgClassType(result_type)) {
-                    // This case is necessary in case the address of a
-                    // member of this struct or union is computed by
-                    // ancestor nodes.
-                }
-                else {
-                    // A variable of a primitive, enum, or pointer type
-                    // cannot appear in a global initializer unless its
-                    // address is being computed because loads are not
-                    // allowed.
-                    ROSE2LLVM_ASSERT(! "yet know how to deal with this kind of field in global initializer");
-                }
-
-                //
-                //
-                //
-                string out;
-                if (decl -> get_class_type() == SgClassDeclaration::e_union) {
-                    out = "bitcast (" + lhs_type_name + " " + lhs_name + " to " + result_type_name + "*)";
-                }
-                else if (isSgCastExp(n -> get_parent()) && isSgArrayType(result_type)) {
-                    int index = ((IntAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_CLASS_MEMBER)) -> getValue();
-                    SgType *cast_result_type =  ((SgTypeAstAttribute *) isSgCastExp(n -> get_parent()) -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE)) -> getType();
-                    string cast_result_type_name = ((StringAstAttribute *) cast_result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                    out = "bitcast (" + lhs_type_name + " " + lhs_name + " to " + cast_result_type_name + "), i64 " + Control::IntToString(index); // TODO: NEED the offset here and not the index !!!
-                }
-                else {
-                    int index = ((IntAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_CLASS_MEMBER)) -> getValue();
-
-                    ROSE2LLVM_ASSERT(lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*');
-// TODO: Remove this !!!
-/*
-cout << "; The lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
-     << "; the pointer is: " << lhs_type_name
-     << endl;
-cout.flush();
-*/
-                    out = "getelementptr inbounds (" + lhs_type_name.substr(0, lhs_type_name.length() - 1) + ", " + lhs_type_name + " " + lhs_name + ", i32 0, i32 " + Control::IntToString(index) + ")";
-                }
-
-                if ((! isSgAddressOfOp(n -> get_parent())) && (! isSgCastExp(n -> get_parent())) && isSgArrayType(result_type)) {
-                    out = "getelementptr inbounds (" + result_type_name + ", " + result_type_name + "* " + out + ", i32 0, i32 0)";
-                }
-
-                value.setOtherExpression(node, out);
-            }
-        }
-        else if (isSgConditionalExp(node)) {
-            assert(synList.size() == 3);
-            ROSE2LLVM_ASSERT(synList.at(0).hasIntValue());
-            value = (synList.at(0).int_value ? synList.at(1) : synList.at(2));
-        }
-        else if (isSgFunctionRefExp(node)) {
-            // Keep the original Control::LLVM_EXPRESSION_RESULT_NAME.
-            // C99 says that a function designator converts to a
-            // function pointer implicitly except in two cases:
-            // (1) when it appears as the operand of a sizeof, which is an
-            // error that should be caught by ROSE, and (2) when it appears
-            // as the operand of an &, which just performs the same
-            // conversion explicitly.  Thus, there's no case where we need a
-            // special handler for a parent SgAddressOfOp.
-
-            SgFunctionRefExp *function_reference = isSgFunctionRefExp(node);
-            string function_name = ((StringAstAttribute *) function_reference -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
-            value.setFunctionReference(function_reference, function_name);
-        }
-        else {
-            // TODO: Remove this !
-            cout << ";*** We don't yet evaluate Expression " << node -> class_name()
-                 << " of type " << node -> get_type() -> class_name()
-                 << endl;
-            cout.flush();
-
-            value.setOtherExpression(node, "");
-        } 
-
-        //
-        // Nodes with the LLVM_BOOLEAN_CAST attribute are nodes on which a boolean operation will be
-        // performed that had not been explicitly cast into a boolean value by Rose.
-        //
-        if (node -> attributeExists(Control::LLVM_BOOLEAN_CAST)) {
-            ROSE2LLVM_ASSERT(node -> attributeExists(Control::LLVM_EXPRESSION_RESULT_TYPE));
-            SgType *type = ((SgTypeAstAttribute *) node -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE)) -> getType();
-            if (isSgPointerType(type) || isSgTypeString(type)) { // a pointer address is always positive.
-                value.setIntValue(1);
-            }
-            else if (value.hasDoubleValue()) {
-                value.setIntValue(value.double_value);
-            }
-            else if (! value.hasIntValue()) {
-                cout << ";*** Don't know yet how to cast node " << node -> class_name()
-                     << " of type " << node -> get_type() -> class_name()
-                     << endl;
-                cout.flush();
-                ROSE2LLVM_ASSERT(false);
-            }
-        }
-
-        return value;
-    }
-};
+}
 
 /**
  * A pointer type initialized with NULL (int value of 0) ?
@@ -893,49 +94,6 @@ void CodeGeneratorVisitor::processRemainingFunctions() {
 }
 
 /**
- * Rose has a function type -> isUnsignedType() that is supposed to yield the same result
- * as this function. However, it has a bug and does not include the type: unsigned long.
- */
-bool CodeGeneratorVisitor::isUnsignedType(SgType *type) {
-    return type -> isUnsignedType() || isSgTypeUnsignedLong(type);
-}
-
-
-/**
- * The type might be encapsulated in an SgModifierType.
- */
-bool CodeGeneratorVisitor::isFloatType(SgType *type) {
-    return attributes -> getSourceType(type) -> isFloatType();
-}
-
-/**
- * The type might be encapsulated in an SgModifierType.
- */
-bool CodeGeneratorVisitor::isIntegerType(SgType *type) {
-    type = attributes -> getSourceType(type);
-    return (type -> isIntegerType() || isSgEnumType(type));
-}
-
-/**
- * The type might be encapsulated in an SgModifierType.
- */
-bool CodeGeneratorVisitor::isBooleanType(SgType *type) {
-    type = attributes -> getSourceType(type);
-    return isSgTypeBool(type);
-}
-
-
-
-/**
- * Checks whether the type is a typedef whose name starts with "valign_"
- */
-bool CodeGeneratorVisitor::isValignType(SgType *type) {
-  SgTypedefType * t = dynamic_cast<SgTypedefType *> (type);
-  return (t && (t->get_name().getString().find("valign_") == 0));
-}
-
-
-/**
  * Generate global declarations.
  */
 void CodeGeneratorVisitor::generateGlobals() {
@@ -953,7 +111,7 @@ void CodeGeneratorVisitor::generateGlobals() {
     for (int i = 0; i < attributes -> numStrings() ; i++) {
         const char *str = attributes -> getString(i);
         (*codeOut) << attributes -> getGlobalStringConstantName(i)
-                    << " = private unnamed_addr constant [" << attributes -> getStringLength(i) << " x i8] c\"" << str << "\"" << endl;
+                   << " = private unnamed_addr constant [" << attributes -> getStringLength(i) << " x i8] c\"" << str << "\"" << endl;
     }
 
     /**
@@ -991,10 +149,13 @@ void CodeGeneratorVisitor::generateGlobals() {
                     }
                 }
                 else {
-                    DeclarationsAstAttribute *attribute = (DeclarationsAstAttribute *) class_decl -> getAttribute(Control::LLVM_LOCAL_DECLARATIONS);
-                    for (int k = 0; k < attribute -> numSgInitializedNames(); k++) {
-                        SgInitializedName *field_decl = attribute -> getSgInitializedName(k);
-                        string field_type_name = ((StringAstAttribute *) field_decl -> get_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue();
+                    DeclarationsAstAttribute *class_attribute = (DeclarationsAstAttribute *) class_decl -> getAttribute(Control::LLVM_LOCAL_DECLARATIONS);
+                    for (int k = 0; k < class_attribute -> numSgInitializedNames(); k++) {
+                        SgInitializedName *field_decl = class_attribute -> getSgInitializedName(k);
+                        SgType *field_type = (field_decl -> attributeExists(Control::LLVM_DECLARATION_TYPE)
+                                                   ? ((SgTypeAstAttribute *) field_decl -> getAttribute(Control::LLVM_DECLARATION_TYPE)) -> getType()
+                                                   :  attributes -> getSourceType(field_decl -> get_type()));
+                        string field_type_name = ((StringAstAttribute *) field_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
                         if (field_decl -> attributeExists(Control::LLVM_STRUCTURE_PADDING)) {
                             int pad_size = ((IntAstAttribute *) field_decl -> getAttribute(Control::LLVM_STRUCTURE_PADDING)) -> getValue();
                             for (int j = 0; j < pad_size; j++) {
@@ -1002,15 +163,15 @@ void CodeGeneratorVisitor::generateGlobals() {
                             }
                         }
                         (*codeOut) << field_type_name;
-                        if (k + 1 < attribute -> numSgInitializedNames())
+                        if (k + 1 < class_attribute -> numSgInitializedNames())
                             (*codeOut) << ", ";
                     }
 
                     /**
                      *
                      */
-                    if (attribute -> getClassType() -> attributeExists(Control::LLVM_STRUCTURE_PADDING)) {
-                        int pad_size = ((IntAstAttribute *) attribute -> getClassType() -> getAttribute(Control::LLVM_STRUCTURE_PADDING)) -> getValue();
+                    if (class_attribute -> getClassType() -> attributeExists(Control::LLVM_STRUCTURE_PADDING)) {
+                        int pad_size = ((IntAstAttribute *) class_attribute -> getClassType() -> getAttribute(Control::LLVM_STRUCTURE_PADDING)) -> getValue();
 //                        if (pad_size < 3) {
                         for (int k = 0; k < pad_size; k++) {
                             (*codeOut) << ", i8";
@@ -1134,7 +295,7 @@ cout.flush();
                 (*codeOut) << ", section \"" << decl -> get_gnu_attribute_section_name() << "\"";
 
             SgArrayType *arr_type = dynamic_cast<SgArrayType *>(var_type);
-            if (isValignType(var_type) || (arr_type && isValignType(arr_type->get_base_type()))) {
+            if (attributes -> isValignType(var_type) || (arr_type && attributes -> isValignType(arr_type->get_base_type()))) {
                 (*codeOut) << attributes -> getVectorAlignmentStr();
             }
             else if (decl -> attributeExists(Control::LLVM_ALIGN_VAR)) {
@@ -1167,13 +328,13 @@ cout.flush();
 
 
 void CodeGeneratorVisitor::genGlobalExpressionInitialization(SgInitializedName *decl, string element_type_name, SgExpression *expression) {
-    ConstantExpressionEvaluator evaluator(this, attributes);
-    constValue x = evaluator.traverse(expression);
+    ConstantCodeEvaluator evaluator(attributes);
+    ConstantValue x = evaluator.traverse(expression);
 
     if (x.hasArithmeticValue()) {
         SgType *expression_type = attributes -> getSourceType(expression -> get_type());
         if (isSgTypeFloat(expression_type)) {
-            ROSE2LLVM_ASSERT(x.hasDoubleValue());
+            ROSE2LLVM_ASSERT(x.hasFloatValue());
             (*codeOut) << element_type_name << " " << Control::FloatToString((float) x.double_value);
         }
         else if (isSgTypeDouble(expression_type)) {
@@ -1184,7 +345,7 @@ void CodeGeneratorVisitor::genGlobalExpressionInitialization(SgInitializedName *
             ROSE2LLVM_ASSERT(x.hasLongDoubleValue());
             (*codeOut) << element_type_name << " " << Control::LongDoubleToString(x.long_double_value);
         }
-        else if (isIntegerType(expression_type)) {
+        else if (attributes -> isIntegerType(expression_type)) {
             ROSE2LLVM_ASSERT(x.hasIntValue());
             // string expr_name = ((StringAstAttribute *) expression -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
             (*codeOut) << element_type_name << " " << x.int_value;
@@ -1235,6 +396,11 @@ cout.flush();
         (*codeOut) << " " << element_type_name << " bitcast (" << function_type_name << "* " << function_name << " to " << element_type_name << ")";
     }
     else {
+// TODO: Remove this !!!
+/*
+cout << "*** (5.6) Dumping code: \"" << x.getCode() << "\"" << endl;
+cout.flush();
+*/
         (*codeOut) << element_type_name << " " << x.getCode();// << ((StringAstAttribute *) expression -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
     }
 }
@@ -1248,17 +414,20 @@ void CodeGeneratorVisitor::genGlobalAggregateInitialization(SgInitializedName *d
     (*codeOut) << (array_type ? " [" : " <{ ");
     vector<SgExpression *> exprs = aggregate -> get_initializers() -> get_expressions();
     DeclarationsAstAttribute *class_attribute = (class_type ? attributes -> class_map[class_type -> get_qualified_name().getString()] : NULL);
-    int type_limit = (array_type ? (array_type -> get_is_variable_length_array()
-                                                ? exprs.size()
-                                                : (isSgIntVal(array_type -> get_index())
-                                                        ? isSgIntVal(array_type -> get_index()) -> get_value()
-                                                        : 0))
+    int type_limit = (array_type ? (array_type -> get_index() -> attributeExists(Control::LLVM_CONSTANT_VALUE)
+                                                ? ((IntAstAttribute *) array_type -> get_index() -> getAttribute(Control::LLVM_CONSTANT_VALUE)) -> getValue()
+                                                : exprs.size())
                                  : class_attribute -> numSgInitializedNames());
-    if (class_type && isSgClassDeclaration(class_type->get_declaration())->get_class_type() == SgClassDeclaration::e_union) {
+    if (class_type && isSgClassDeclaration(class_type->get_declaration()) -> get_class_type() == SgClassDeclaration::e_union) {
         type_limit = 1;
     }
     for (int i = 0; i < type_limit; i++) {
-        SgType *element_type = attributes -> getSourceType(array_type ? array_type -> get_base_type() : class_attribute -> getSgInitializedName(i) -> get_type());
+        SgType *element_type = attributes -> getSourceType(array_type
+                                                                ? array_type -> get_base_type()
+                                                                : class_attribute -> getSgInitializedName(i) -> attributeExists(Control::LLVM_DECLARATION_TYPE)
+                                                                       ? ((SgTypeAstAttribute *) class_attribute -> getSgInitializedName(i) -> getAttribute(Control::LLVM_DECLARATION_TYPE)) -> getType()
+                                                                       :  class_attribute -> getSgInitializedName(i) -> get_type());
+        ROSE2LLVM_ASSERT((StringAstAttribute *) element_type -> attributeExists(Control::LLVM_TYPE));
         string element_type_name = ((StringAstAttribute *) element_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
 
         /**
@@ -1349,10 +518,10 @@ void CodeGeneratorVisitor::genBinaryCompareOperation(SgBinaryOp *node, string co
      SgType *lhs_type = attributes -> getSourceType(attributes -> getExpressionType(lhs_operand)),
             *rhs_type = attributes -> getSourceType(attributes -> getExpressionType(rhs_operand));
      string code;
-     if (isFloatType(lhs_type))
+     if (attributes -> isFloatType(lhs_type))
          code = "u"; // unordered
      else if (condition_code.compare("eq") != 0 && condition_code.compare("ne") != 0) { // integer? 
-         code = (isUnsignedType(lhs_type)  &&  isUnsignedType(rhs_type)
+         code = (attributes -> isUnsignedType(lhs_type)  &&  attributes -> isUnsignedType(rhs_type)
                        ? "u"   // unsigned
                        : "s"); // signed
      }
@@ -1375,14 +544,14 @@ cout << "The left operand type in the compare is: "
      << endl;
 cout.flush();
 */
-     (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(lhs_type) ? "f" : "i")
+     (*codeOut) << CodeEmitter::indent() << result_name << " = " << (attributes -> isFloatType(lhs_type) ? "f" : "i")
                 << "cmp " << code << " " << lhs_type_name << (isSgFunctionType(lhs_type) ? "* " : " ") << lhs_name << ", " << rhs_name << debug_md << endl;
 }
 
 
 void CodeGeneratorVisitor::genZeroCompareOperation(SgExpression *node, string const &debug_md) {
     SgType *lhs_type = attributes -> getSourceType(attributes -> getExpressionType(node));
-    bool is_float = isFloatType(lhs_type);
+    bool is_float = attributes -> isFloatType(lhs_type);
     string code = (is_float ? "u" /* unordered */ : "");
     code += "ne";
 
@@ -1402,6 +571,11 @@ void CodeGeneratorVisitor::genZeroCompareOperation(SgExpression *node, string co
                << "cmp " << code << " " << lhs_type_name << " " << lhs_name << ", " << rhs_name << debug_md << endl;
 
     result_attribute -> resetValue(result_name);
+
+    result_attribute = (StringAstAttribute *) node -> getAttribute(Control::LLVM_ARGUMENT_EXPRESSION_RESULT_NAME);
+    if (result_attribute) {
+        result_attribute -> resetValue(result_name);
+    }
 }
 
 
@@ -1491,8 +665,9 @@ cout
   << "; The "
   << (lhs_array_type ? "array " : "")
   << "lhs_type_name is: " << lhs_type_name.substr(0, lhs_type_name.length() - 1)
-     << "; the pointer is: " << lhs_type_name
-     << endl;
+  << "; the pointer is: " << lhs_type_name
+  << "; the rhs_name is: " << rhs_name
+  << endl;
 cout.flush();
 */
              ROSE2LLVM_ASSERT(lhs_array_type || (lhs_type_name.length() > 1 && lhs_type_name[lhs_type_name.length() - 1] == '*'));
@@ -1522,7 +697,7 @@ cout.flush();
      }
      else {
          string type_name = ((StringAstAttribute *) attributes -> getExpressionType(node) -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-         (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(node -> get_type()) ? "f" : "") << opcode
+         (*codeOut) << CodeEmitter::indent() << result_name << " = " << (attributes -> isFloatType(node -> get_type()) ? "f" : "") << opcode
                     << " " <<  type_name << " " << lhs_name << ", " << rhs_name << debug_md << endl;
      }
 }
@@ -1539,7 +714,7 @@ void CodeGeneratorVisitor::genBasicBinaryOperation(SgBinaryOp *node, string opco
             rhs_name = ((StringAstAttribute *) node -> get_rhs_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
      SgExpression *node_for_type = type_from_lhs ? node -> get_lhs_operand() : node;
      string type_name = ((StringAstAttribute *) attributes -> getExpressionType(node_for_type) -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-     (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(attributes -> getExpressionType(node)) ? "f" : "") << opcode
+     (*codeOut) << CodeEmitter::indent() << result_name << " = " << (attributes -> isFloatType(attributes -> getExpressionType(node)) ? "f" : "") << opcode
                 << " " <<  type_name << " " << lhs_name << ", " << rhs_name << debug_md << endl;
 }
 
@@ -1563,7 +738,7 @@ void CodeGeneratorVisitor::genBasicBinaryOperationAndAssign(SgBinaryOp *node, st
       */
      if (lhs_operand -> attributeExists(Control::LLVM_OP_AND_ASSIGN_INTEGRAL_PROMOTION)) {
          string promote_name = ((StringAstAttribute *) lhs_operand -> getAttribute(Control::LLVM_OP_AND_ASSIGN_INTEGRAL_PROMOTION)) -> getValue();
-         (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (isUnsignedType(lhs_type) ? "zext " : "sext ")
+         (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (attributes -> isUnsignedType(lhs_type) ? "zext " : "sext ")
                     << lhs_type_name << " " <<  lhs_name << " to " << rhs_type_name << debug_md << endl;
          lhs_name = promote_name;
          result_type_name = rhs_type_name;
@@ -1571,7 +746,7 @@ void CodeGeneratorVisitor::genBasicBinaryOperationAndAssign(SgBinaryOp *node, st
      }
      if (lhs_operand -> attributeExists(Control::LLVM_OP_AND_ASSIGN_INT_TO_FP_PROMOTION)) {
          string promote_name = ((StringAstAttribute *) lhs_operand -> getAttribute(Control::LLVM_OP_AND_ASSIGN_INT_TO_FP_PROMOTION)) -> getValue();
-         (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (isUnsignedType(lhs_type) ? "uitofp " : "sitofp ")
+         (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (attributes -> isUnsignedType(lhs_type) ? "uitofp " : "sitofp ")
                     << lhs_type_name << " " <<  lhs_name << " to " << rhs_type_name << debug_md << endl;
          lhs_name = promote_name;
          result_type_name = rhs_type_name;
@@ -1591,7 +766,7 @@ void CodeGeneratorVisitor::genBasicBinaryOperationAndAssign(SgBinaryOp *node, st
       */
      if (rhs_operand -> attributeExists(Control::LLVM_OP_AND_ASSIGN_INTEGRAL_PROMOTION)) {
          string promote_name = ((StringAstAttribute *) rhs_operand -> getAttribute(Control::LLVM_OP_AND_ASSIGN_INTEGRAL_PROMOTION)) -> getValue();
-         (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (isUnsignedType(rhs_type) ? "zext " : "sext ")
+         (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (attributes -> isUnsignedType(rhs_type) ? "zext " : "sext ")
                     << rhs_type_name << " " <<  rhs_name << " to " << lhs_type_name << debug_md << endl;
      }
 
@@ -1622,11 +797,11 @@ cout.flush();
      }
      else {
          string opcode_qualified = opcode;
-         if (isFloatType(attributes -> getExpressionType(node_for_result_type))) {
+         if (attributes -> isFloatType(attributes -> getExpressionType(node_for_result_type))) {
              opcode_qualified = "f" + opcode;
          }
          else if (op_signedness) {
-             opcode_qualified = (isUnsignedType(attributes -> getExpressionType(node_for_result_type)) ? "u" : "s") + opcode;
+             opcode_qualified = (attributes -> isUnsignedType(attributes -> getExpressionType(node_for_result_type)) ? "u" : "s") + opcode;
          }
          (*codeOut) << CodeEmitter::indent() << result_name << " = " << opcode_qualified
                     << " " <<  result_type_name << " " << lhs_name << ", " << rhs_name << debug_md << endl;
@@ -1647,7 +822,7 @@ cout.flush();
          string  demote_name = ((StringAstAttribute *) lhs_operand -> getAttribute(Control::LLVM_OP_AND_ASSIGN_INT_TO_FP_DEMOTION)) -> getValue();
          StringAstAttribute *result_attribute = (StringAstAttribute *) node -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME),
                             *result_type_attribute = (StringAstAttribute *) attributes -> getExpressionType(node) -> getAttribute(Control::LLVM_TYPE);
-         (*codeOut) << CodeEmitter::indent() << demote_name << " = " << (isUnsignedType(lhs_type) ? "fptoui " : "fptosi ") << result_type_name << " " <<  result_name << " to " << result_type_attribute -> getValue() << debug_md << endl;
+         (*codeOut) << CodeEmitter::indent() << demote_name << " = " << (attributes -> isUnsignedType(lhs_type) ? "fptoui " : "fptosi ") << result_type_name << " " <<  result_name << " to " << result_type_attribute -> getValue() << debug_md << endl;
          result_name = demote_name;
          result_type_name = result_type_attribute -> getValue();
      }
@@ -1667,8 +842,8 @@ cout.flush();
 
 
 void CodeGeneratorVisitor::genDivideBinaryOperation(SgBinaryOp *node, string opcode, string const &debug_md) {
-    if (!isFloatType(attributes -> getExpressionType(node))) {
-        opcode = (isUnsignedType(attributes -> getExpressionType(node)) ? "u" : "s") + opcode;
+    if (! attributes -> isFloatType(attributes -> getExpressionType(node))) {
+        opcode = (attributes -> isUnsignedType(attributes -> getExpressionType(node)) ? "u" : "s") + opcode;
     }
     genBasicBinaryOperation(node, opcode, debug_md, true);
 }
@@ -1700,6 +875,40 @@ SgFunctionType *CodeGeneratorVisitor::getFunctionType(SgType *type) {
     cout.flush();
     ROSE2LLVM_ASSERT(! "This should not happen");
     return NULL;
+}
+
+/**
+ *
+ */
+void CodeGeneratorVisitor::generateArraySizeCode(const std::string &result_name, SgType *result_type, SgArrayType *array_type) {
+    int alignment = ((IntAstAttribute *) result_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue();
+    string result_type_name = ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
+    SgType *base_type = array_type -> get_base_type();
+    int size = ((IntAstAttribute *) base_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
+    if (size > 0) {
+        ROSE2LLVM_ASSERT(! array_type -> get_index() -> attributeExists(Control::LLVM_CONSTANT_VALUE));
+        ROSE2LLVM_ASSERT(array_type -> get_index() -> attributeExists(Control::LLVM_EXPRESSION_RESULT_NAME));
+        string index_name = ((StringAstAttribute *) array_type -> get_index() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
+        (*codeOut) << CodeEmitter::indent() << result_name << " = mul " << result_type_name << " " << index_name << ", " << size
+                   << endl;
+    }
+    else {
+        string temp = attributes -> getTemp(LLVMAstAttributes::TEMP_GENERIC);
+        SgArrayType *subarray_type = isSgArrayType(base_type);
+        ROSE2LLVM_ASSERT(subarray_type);
+        generateArraySizeCode(temp, result_type, subarray_type);
+
+        IntAstAttribute *attribute =  (IntAstAttribute *) array_type -> get_index() -> getAttribute(Control::LLVM_CONSTANT_VALUE);
+        if (attribute) {
+            (*codeOut) << CodeEmitter::indent() << result_name << " = mul " << result_type_name << " " << attribute -> getValue() << ", " << temp
+                       << endl;
+        }
+        else {
+            string index_name = ((StringAstAttribute *) array_type -> get_index() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
+            (*codeOut) << CodeEmitter::indent() << result_name << " = mul " << result_type_name << " " << index_name  << ", " << temp
+                       << endl;
+        }
+    }
 }
 
 /**
@@ -1789,6 +998,21 @@ bool CodeGeneratorVisitor::preVisitEnter(SgNode *node) {
          else if (n -> attributeExists(Control::LLVM_LOGICAL_OR_RHS)) {
              LogicalAstAttribute *attribute = (LogicalAstAttribute *) n -> getAttribute(Control::LLVM_LOGICAL_OR_RHS);
              codeOut -> emitLabel(current_function_decls, attribute -> getRhsLabel());
+         }
+
+         /**
+          * Ignore constant expressions that have already been evaluated.
+          */
+         if (n -> attributeExists(Control::LLVM_CONSTANT_VALUE)) {
+// TODO: Remove this !!!
+/*
+cout
+  << "Suspending traversal of node "
+  << node -> class_name()
+  << endl;
+cout.flush(); 
+*/
+             visit_suspended_by_node = node;
          }
      }
 
@@ -2999,6 +2223,22 @@ cout.flush();
                  ROSE2LLVM_ASSERT(0);
              }
          }
+
+         /**
+          * If this declaration has non-constant dimension expressions, output the code emitted for them here.
+          */
+         DimensionAstAttribute *dimension_attribute = (DimensionAstAttribute *) n -> getAttribute(Control::LLVM_DIMENSIONS);
+         if (dimension_attribute) {
+// TODO: Remove this !!!
+/*
+cout
+  << "*** Flushing dimension Expressions buffer for variable "
+  << dimension_attribute -> getVariableDeclaration() -> get_name().getString()
+  << endl;
+cout.flush();
+*/
+             codeOut -> flushBuffer(dimension_attribute -> getBuffer());
+         }
      }
      //         SgAttribute:
      //             SgPragma
@@ -3564,7 +2804,7 @@ cout.flush();
                 type_name = ((StringAstAttribute *) type -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
                 operand_name = ((StringAstAttribute *) n -> get_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue(),
                 default_value = ((StringAstAttribute *) type -> getAttribute(Control::LLVM_DEFAULT_VALUE)) -> getValue();
-         (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(type) ? "f" : "") << "sub" << " "
+         (*codeOut) << CodeEmitter::indent() << result_name << " = " << (attributes -> isFloatType(type) ? "f" : "") << "sub" << " "
                     <<  type_name << " " << default_value << ", " << operand_name << attributes->addDebugMetadata(node, current_function_decls) << endl;
      }
      //                 SgUnaryAddOp
@@ -3635,11 +2875,11 @@ cout.flush();
              (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << type_name.substr(0, type_name.length() - 1) << ", " << type_name << " " <<  name << ", i32 -1" << debug_md << endl;
          }
          else {
-             (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(type) ? "fsub " : "sub ") << type_name << " " << name << ", "
+             (*codeOut) << CodeEmitter::indent() << result_name << " = " << (attributes -> isFloatType(type) ? "fsub " : "sub ") << type_name << " " << name << ", "
                         << (isSgTypeLongDouble(type) ? Control::LongDoubleToString(1.0)
                                                      : isSgTypeDouble(type) ? Control::DoubleToString(1.0)
                                                                             : isSgTypeFloat(type) ? Control::FloatToString(1.0) : "1")
-			<< debug_md << endl;
+                        << debug_md << endl;
          }
          (*codeOut) << CodeEmitter::indent() << "store " << type_name << " " << result_name << ", " << type_name << "* " << ref_name << debug_md << endl;
      }
@@ -3666,7 +2906,7 @@ cout.flush();
              (*codeOut) << CodeEmitter::indent() << result_name << " = getelementptr inbounds " << type_name.substr(0, type_name.length() - 1) << ", " << type_name << " " <<  name << ", i32 1" << debug_md << endl;
          }
          else {
-             (*codeOut) << CodeEmitter::indent() << result_name << " = " << (isFloatType(type) ? "fadd " : "add ") << type_name << " " << name << ", "
+             (*codeOut) << CodeEmitter::indent() << result_name << " = " << (attributes -> isFloatType(type) ? "fadd " : "add ") << type_name << " " << name << ", "
                         << (isSgTypeLongDouble(type) ? Control::LongDoubleToString(1.0)
                                                      : isSgTypeDouble(type) ? Control::DoubleToString(1.0)
                                                                             : isSgTypeFloat(type) ? Control::FloatToString(1.0) : "1")
@@ -3709,7 +2949,7 @@ cout.flush();
              if (! n -> get_operand() -> attributeExists(Control::LLVM_IS_BOOLEAN)) {
                  string name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue();
                  string operand_name = ((StringAstAttribute *) n -> get_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
-                 SgType *operand_type = attributes -> getSourceType(n -> get_operand() -> get_type());
+                 SgType *operand_type = attributes -> getExpressionType(n -> get_operand());
                  string operand_type_name = ((StringAstAttribute *) operand_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
                  string zero_value = (operand_type -> isFloatType()
                                              ? (isSgTypeFloat(operand_type)
@@ -3721,7 +2961,7 @@ cout.flush();
                                                    ? "null"
                                                    : "0");
                  (*codeOut) << CodeEmitter::indent() << name << " = "
-                            << (operand_type->isFloatType() ? "fcmp o" : "icmp ") << "ne "
+                            << (operand_type -> isFloatType() ? "fcmp o" : "icmp ") << "ne "
                             << operand_type_name << " " << operand_name << ", "
                             << zero_value
                             << attributes->addDebugMetadata(node, current_function_decls) << endl;
@@ -3732,7 +2972,7 @@ cout.flush();
           */
          else if (! n -> attributeExists(Control::LLVM_TRIVIAL_CAST)) { // process only non-trivial casts
              SgExpression *operand = n -> get_operand();
-             SgType *result_type = attributes -> getSourceType(n -> get_type());
+             SgType *result_type = attributes -> getExpressionType(n);
              ROSE2LLVM_ASSERT(result_type);
              if (isSgTypeVoid(result_type)) {
                  // TODO: Do nothing for now!!!
@@ -3761,7 +3001,7 @@ cout.flush();
                         operand_name = ((StringAstAttribute *) operand -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue(),
                         operand_type_name = ((StringAstAttribute *) operand_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
 
-                 if (isIntegerType(result_type)) {
+                 if (attributes -> isIntegerType(result_type)) {
                      string debug_md = attributes->addDebugMetadata(node, current_function_decls);
                      if (dynamic_cast<SgPointerType *> (operand_type)) {
                          (*codeOut) << CodeEmitter::indent() << result_name << " = ptrtoint " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
@@ -3769,8 +3009,8 @@ cout.flush();
                      else if (dynamic_cast<SgFunctionType *> (operand_type)) {
                          (*codeOut) << CodeEmitter::indent() << result_name << " = ptrtoint " << operand_type_name << "* " << operand_name << " to " << result_type_name << debug_md << endl;
                      }
-                     else if (isUnsignedType(result_type)) {
-                         if (isIntegerType(operand_type)) {
+                     else if (attributes -> isUnsignedType(result_type)) {
+                         if (attributes -> isIntegerType(operand_type)) {
                              if (((IntAstAttribute *) operand_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue() > 
                                  ((IntAstAttribute *) result_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue()) {
                                   (*codeOut) << CodeEmitter::indent() << result_name << " = trunc " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
@@ -3779,7 +3019,7 @@ cout.flush();
                                  (*codeOut) << CodeEmitter::indent() << result_name << " = zext " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                              }
                          }
-                         else if (isFloatType(operand_type)) {
+                         else if (attributes -> isFloatType(operand_type)) {
                              (*codeOut) << CodeEmitter::indent() << result_name << " = fptoui " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                          }
                          else {
@@ -3789,19 +3029,19 @@ cout.flush();
                          }
                      }
                      else {
-                         if (isIntegerType(operand_type)) {
+                         if (attributes -> isIntegerType(operand_type)) {
                              if (((IntAstAttribute *) operand_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue() > 
                                  ((IntAstAttribute *) result_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue()) {
                                   (*codeOut) << CodeEmitter::indent() << result_name << " = trunc " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                              }
-                             else if (isUnsignedType(operand_type)) {
+                             else if (attributes -> isUnsignedType(operand_type)) {
                                   (*codeOut) << CodeEmitter::indent() << result_name << " = zext " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                              }
                              else {
                                  (*codeOut) << CodeEmitter::indent() << result_name << " = sext " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                              }
                          }
-                         else if (isFloatType(operand_type)) {
+                         else if (attributes -> isFloatType(operand_type)) {
                              (*codeOut) << CodeEmitter::indent() << result_name << " = fptosi " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                          }
                          else {
@@ -3811,17 +3051,17 @@ cout.flush();
                          }
                      }
                  }
-                 else if (isFloatType(result_type)) {
+                 else if (attributes -> isFloatType(result_type)) {
                      string debug_md = attributes->addDebugMetadata(node, current_function_decls);
-                     if (isIntegerType(operand_type)) {
-                         if (isUnsignedType(operand_type)) {
+                     if (attributes -> isIntegerType(operand_type)) {
+                         if (attributes -> isUnsignedType(operand_type)) {
                              (*codeOut) << CodeEmitter::indent() << result_name << " = uitofp " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                          }
                          else {
                              (*codeOut) << CodeEmitter::indent() << result_name << " = sitofp " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
                          }
                      }
-                     else if (isFloatType(operand_type)) {
+                     else if (attributes -> isFloatType(operand_type)) {
                           if (((IntAstAttribute *) operand_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue() > 
                               ((IntAstAttribute *) result_type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue()) {
                                (*codeOut) << CodeEmitter::indent() << result_name << " = fptrunc " << operand_type_name << " " << operand_name << " to " << result_type_name << debug_md << endl;
@@ -3839,7 +3079,7 @@ cout.flush();
                  else if (dynamic_cast<SgPointerType *> (result_type)) {
                      if (dynamic_cast<SgTypeString *> (operand_type))
                           ;  // already taken care of
-                     else if (isIntegerType(operand_type)) {
+                     else if (attributes -> isIntegerType(operand_type)) {
                           (*codeOut) << CodeEmitter::indent() << result_name << " = inttoptr " << operand_type_name << " " << operand_name << " to " << result_type_name << attributes->addDebugMetadata(node, current_function_decls) << endl;
                      }
                      else if (dynamic_cast<SgPointerType *> (operand_type)) {
@@ -3893,7 +3133,7 @@ cout.flush();
          string reference_name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_REFERENCE_NAME)) -> getValue(),
                 lhs_name = ((StringAstAttribute *) n -> get_lhs_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue(),
                 lhs_type_name = ((StringAstAttribute *) lhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue(),
-                result_type_name = ((StringAstAttribute *) n -> get_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue();
+                result_type_name = ((StringAstAttribute *) attributes -> getExpressionType(n) -> getAttribute(Control::LLVM_TYPE)) -> getValue();
          if (isSgDotExp(n)) {
              lhs_type_name += "*";
          }
@@ -3970,7 +3210,7 @@ cout.flush();
      //                 SgSubtractOp
      else if (dynamic_cast<SgSubtractOp *>(node)) { // postVisit
          SgSubtractOp *n = isSgSubtractOp(node);
-         genAddOrSubtractOperation(n, "sub", attributes->addDebugMetadata(node, current_function_decls));
+         genAddOrSubtractOperation(n, "sub", attributes -> addDebugMetadata(node, current_function_decls));
      }
      //                 SgMultiplyOp
      else if (dynamic_cast<SgMultiplyOp *>(node)) { // postVisit
@@ -4038,7 +3278,7 @@ cout.flush();
      //                 SgRshiftOp
      else if (dynamic_cast<SgRshiftOp *>(node)) { // postVisit
          SgRshiftOp *n = isSgRshiftOp(node);
-         genBasicBinaryOperation(n, (isUnsignedType(attributes -> getExpressionType(n -> get_lhs_operand())) ? "lshr" : "ashr"), attributes->addDebugMetadata(node, current_function_decls));
+         genBasicBinaryOperation(n, (attributes -> isUnsignedType(attributes -> getExpressionType(n -> get_lhs_operand())) ? "lshr" : "ashr"), attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgPntrArrRefExp
      else if (dynamic_cast<SgPntrArrRefExp *>(node)) { // postVisit
@@ -4207,7 +3447,7 @@ cout.flush();
      //                 SgRshiftAssignOp
      else if (dynamic_cast<SgRshiftAssignOp *>(node)) { // postVisit
          SgRshiftAssignOp *n = isSgRshiftAssignOp(node);
-         genBasicBinaryOperationAndAssign(n, (isUnsignedType(attributes -> getExpressionType(n -> get_lhs_operand())) ? "lshr" : "ashr"), attributes->addDebugMetadata(node, current_function_decls));
+         genBasicBinaryOperationAndAssign(n, (attributes -> isUnsignedType(attributes -> getExpressionType(n -> get_lhs_operand())) ? "lshr" : "ashr"), attributes->addDebugMetadata(node, current_function_decls));
      }
      //                 SgExponentiationOp
      //                 SgConcatenationOp
@@ -4392,10 +3632,6 @@ cout.flush();
          else if (dynamic_cast<SgFunctionCallExp *>(n -> get_function())) {
              SgFunctionCallExp *function_call = isSgFunctionCallExp(n -> get_function());
              SgFunctionType *function_type = getFunctionType(attributes -> getExpressionType(function_call));
-//cout << "The type of the function call is "
-//     << function_type -> class_name()
-//  << endl;
-//cout.flush();
              ROSE2LLVM_ASSERT(function_type);
              ROSE2LLVM_ASSERT(function_call -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME));
              function_name = ((StringAstAttribute *) function_call -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
@@ -4520,7 +3756,7 @@ cout
 cout.flush();
 */
          for (int i = 0; i < args.size(); i++) {
-             SgType *type = (i < function_parm_types.size() && (! isSgTypeEllipse(function_parm_types[i]))
+             SgType *type = (i < function_parm_types.size() && (! isSgTypeEllipse(function_parm_types[i]) && (! args[i] -> attributeExists(Control::LLVM_ARRAY_BIT_CAST)))
                                                ? attributes -> getSourceType(function_parm_types[i])
                                                : attributes -> getExpressionType(args[i]));
              SgArrayType *array_type = isSgArrayType(type);
@@ -4580,6 +3816,23 @@ cout.flush();
      //                 SgSizeOfOp
      else if (dynamic_cast<SgSizeOfOp *>(node)) { // postVisit
          SgSizeOfOp *n = isSgSizeOfOp(node);
+         SgExpression *expr_operand = n -> get_operand_expr();
+         ROSE2LLVM_ASSERT(n -> get_operand_type() || expr_operand);
+         SgType *operand_type = attributes -> getSourceType(n -> get_operand_type() ? n -> get_operand_type() : expr_operand -> get_type());
+
+         stringstream out;
+         /**
+          * If the SgSizeOfOp expression is not a constant expression then it has not yet being computed and processed.
+          * We need to generate code for computing its size here.
+          */
+         if (! n -> attributeExists(Control::LLVM_SIZE)) {
+             SgArrayType *array_type = isSgArrayType(operand_type);
+             ROSE2LLVM_ASSERT(array_type);
+             StringAstAttribute *attribute = (StringAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME);
+             ROSE2LLVM_ASSERT(attribute);
+             ROSE2LLVM_ASSERT(array_type -> get_index());
+             generateArraySizeCode(attribute -> getValue(), attributes -> getSourceType(array_type -> get_index() -> get_type()), array_type);
+         }
      }
      //                 SgUpcLocalsizeof
      //                 SgUpcBlocksizeof
@@ -5031,12 +4284,18 @@ void CodeGeneratorVisitor::postVisitExit(SgNode *node) {
              string name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue();
              string type_name = ((StringAstAttribute *) type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
              string result_type_name = ((StringAstAttribute *) result_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-             (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (isUnsignedType(type) ? "zext " : "sext ")
+             (*codeOut) << CodeEmitter::indent() << promote_name << " = " << (attributes -> isUnsignedType(type) ? "zext " : "sext ")
                         << type_name << " " <<  name << " to " << result_type_name << attributes->addDebugMetadata(node, current_function_decls) << endl;
 
              StringAstAttribute *result_name_attribute = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME));
              ROSE2LLVM_ASSERT(result_name_attribute);
              result_name_attribute -> resetValue(promote_name);
+
+             result_name_attribute = (StringAstAttribute *) n -> getAttribute(Control::LLVM_ARGUMENT_EXPRESSION_RESULT_NAME);
+             if (result_name_attribute) {
+                 result_name_attribute -> resetValue(promote_name);
+             }
+
              SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
              ROSE2LLVM_ASSERT(result_type_attribute);
              result_type_attribute -> resetType(result_type);
@@ -5056,6 +4315,12 @@ void CodeGeneratorVisitor::postVisitExit(SgNode *node) {
              StringAstAttribute *result_name_attribute = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME));
              ROSE2LLVM_ASSERT(result_name_attribute);
              result_name_attribute -> resetValue(demote_name);
+
+             result_name_attribute = (StringAstAttribute *) n -> getAttribute(Control::LLVM_ARGUMENT_EXPRESSION_RESULT_NAME);
+             if (result_name_attribute) {
+                 result_name_attribute -> resetValue(demote_name);
+             }
+
              SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
              ROSE2LLVM_ASSERT(result_type_attribute);
              result_type_attribute -> resetType(result_type);
