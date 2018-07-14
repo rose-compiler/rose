@@ -322,8 +322,8 @@ public:
             return std::make_pair(Interval(), Interval());
         } else if (splitPoint < least()) {
             return std::make_pair(Interval(), *this);
-        } else if (splitPoint <= greatest()) {
-            return std::make_pair(Interval(least(), splitPoint), Interval(splitPoint+1, greatest()));
+        } else if (splitPoint < greatest()) {
+            return std::make_pair(Interval::hull(least(), splitPoint), Interval::hull(splitPoint+1, greatest()));
         } else {
             return std::make_pair(*this, Interval());
         }
