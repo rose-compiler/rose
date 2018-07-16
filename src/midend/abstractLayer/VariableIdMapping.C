@@ -805,7 +805,8 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
   string prefix="$string";
   int num=1;
   RoseAst ast(root);
-  for (auto node : ast) {
+  for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgNode* node=*i;
     if(SgStringVal* stringVal=isSgStringVal(node)) {
       //cout<<"registerStringLiterals:: found string literal"<<stringVal->unparseToString()<<endl;
       if(sgStringValueToVariableIdMapping.find(stringVal)==sgStringValueToVariableIdMapping.end()) {
