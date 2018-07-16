@@ -146,7 +146,7 @@ SgType* TFTypeTransformer::nathan_rebuildBaseType(SgType* root, SgType* newBaseT
   }
 }
 
-int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef){
+int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode){
   SgType* baseType;
   if(base){
     SgType* oldInitType = varInitName->get_type();
@@ -159,24 +159,24 @@ int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType*
     scopeName = SgNodeHelper::getFunctionName(funDef);
   }
   TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Changed type to "+baseType->unparseToString());
-  nathan_addToActionList(varName, scopeName, oldType, newType, varInitName, base);
+  nathan_addToActionList(varName, scopeName, oldType, newType, handleNode, base);
   varInitName->set_type(baseType);
   return 1;
 }
 
 //void nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode){
 int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType) {
-  return TFTypeTransformer::changeTypeIfInitNameMatches(varInitName, root, varNameToFind, newType, false);
+  return TFTypeTransformer::changeTypeIfInitNameMatches(varInitName, root, varNameToFind, newType, false, nullptr);
 }
 
-int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType,bool base) {
+int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType,bool base, SgNode* handleNode) {
   int foundVar=0;
   if(varInitName) {
     SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
     if(varSym) {
       string varName=SgNodeHelper::symbolToString(varSym);
       if(varName==varNameToFind) {
-        nathan_changeType(varInitName, newType, nullptr, varName, base, isSgFunctionDefinition(root));
+        nathan_changeType(varInitName, newType, nullptr, varName, base, isSgFunctionDefinition(root), handleNode);
         foundVar++;
       }
     }
@@ -184,7 +184,7 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
   return foundVar;
 }
 
-int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base){
+int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base, SgNode* handleNode){
   int foundVar = 0;
   if(varInitName){
     SgType* oldType = varInitName->get_type();
@@ -194,7 +194,7 @@ int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* var
     if(oldType == fromType){
       SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInitName);
       string varName = SgNodeHelper::symbolToString(varSym);
-      nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root));
+      nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root), handleNode);
       foundVar++;
     }
   }
@@ -214,10 +214,10 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
     SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     for(auto varInitName : initNamePtrList) {
       if(fromType != nullptr && varNameToFind == "TYPEFORGEargs"){
-        foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
+        foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base, varInitName);
       }    
       else if(varNameToFind != "" && fromType == nullptr){
-        foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+        foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base, varInitName);
       }
     }
     //Change return type
@@ -246,15 +246,12 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         SgInitializedName* varInitName=nullptr;
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
           varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-        }
-        //   else if(SgInitializedName* varInitName0=isSgInitializedName(*i)) {
-        //  varInitName=varInitName0;
-        //}
-        if(fromType != nullptr && varNameToFind == "TYPEFORGEbody"){
-          foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
-        }     
-        else if(varNameToFind != "" && fromType == nullptr){
-          foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+          if(fromType != nullptr && varNameToFind == "TYPEFORGEbody"){
+            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base,varDecl);
+          }      
+          else if(varNameToFind != "" && fromType == nullptr){
+            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base,varDecl);
+          }
         }
       }
     }
@@ -266,10 +263,10 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         for(auto varDecl: listOfGlobalVars){
           SgInitializedName* varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
           if(fromType != nullptr){
-            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base);
+            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base,varDecl);
           }   
           else if(fromType == nullptr){
-            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base);
+            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base,varDecl);
           }
         }
       }
