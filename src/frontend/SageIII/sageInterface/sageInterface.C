@@ -6044,6 +6044,38 @@ SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name, SgScope
 #endif
    }
 
+#define DEBUG_LOOKUP_TEMPLATE_VARIABLE 0
+
+SgTemplateVariableSymbol *
+SageInterface::lookupTemplateVariableSymbolInParentScopes (const SgName &  name, SgTemplateParameterPtrList * tplparams, SgTemplateArgumentPtrList* tplargs, SgScopeStatement *cscope)
+   {
+#if DEBUG_LOOKUP_TEMPLATE_VARIABLE
+     printf ("In SageInterface::lookupTemplateVariableSymbolInParentScopes():\n");
+     printf ("  -- name = %s\n", name.str());
+     printf ("  -- tplparams = %p [%zd]\n", tplparams, tplparams ? tplparams->size() : 0);
+     printf ("  -- tplargs   = %p [%zd]\n",   tplargs,   tplargs ?   tplargs->size() : 0);
+     printf ("  -- cscope    = %p (%s)\n",     cscope,    cscope ?    cscope->class_name().c_str() : "");
+#endif
+
+     SgTemplateVariableSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_template_variable_symbol(name, tplparams, tplargs);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 // SgClassSymbol* SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
 SgClassSymbol*
 SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateArgumentPtrList* templateArgumentList)
@@ -12752,46 +12784,8 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
 
   // printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
 
-#if 0
-     printf ("In SageInterface::fixVariableDeclaration(): varDecl = %p scope = %p = %s \n",varDecl,scope,scope->class_name().c_str());
-#endif
-
-#if 0
-  // DQ (11/19/2011): This is dangerous code since for C++ the declarations can have different scopes.
-  // But it is required to terminate some programs (now fixed by avoinding self reference, also put
-  // assertion into symbol table handling to detect such infinite loops.
-
-  // avoid duplicated work
-  // CH (2010/7/28): The following test may have a bug. Its scope may be not NULL but different from
-  // the scope passed in.
-  // if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
-  // if (namelist.size() > 0) if (namelist[0]->get_scope() == scope) return;
-
-     printf ("In SageInterface::fixVariableDeclaration(): This is dangerous code since for C++ the declarations can have different scopes \n");
-     if (namelist.size() > 0)
-        {
 #if 1
-       // DQ (11/19/2011): This at least makes this safer.
-          bool exitEarly = true;
-          SgInitializedNamePtrList::iterator j;
-          for (j = namelist.begin(); j != namelist.end(); j++)
-             {
-               exitEarly = exitEarly && ((*j)->get_scope() == scope);
-             }
-
-          if (exitEarly == true)
-             {
-               printf ("Exit early from SageInterface::fixVariableDeclaration() \n");
-               return;
-             }
-#else
-          if (namelist[0]->get_scope() == scope)
-             {
-               printf ("Premature return from SageInterface::fixVariableDeclaration() \n");
-               return;
-             }
-#endif
-        }
+     printf ("In SageInterface::fixVariableDeclaration(): varDecl = %p scope = %p = %s \n",varDecl,scope,scope->class_name().c_str());
 #endif
 
      ROSE_ASSERT(namelist.size() > 0);
@@ -12801,6 +12795,12 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
         {
           SgInitializedName *initName = *i;
           ROSE_ASSERT(initName != NULL);
+
+          SgName name = initName->get_name();
+#if 1
+          printf ("  -- initName = %p : %s\n", initName, name.str());
+          printf ("  -- initName->get_scope() = %p (%s)\n", initName->get_scope(), initName->get_scope() ? initName->get_scope()->class_name().c_str() : "");
+#endif
 
        // DQ (11/19/2011): When used with C++, the variable may already have an associated scope 
        // and be using name qualification, so might not be associated with the current scope.
@@ -12816,8 +12816,6 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
             // ROSE_ASSERT(preAssociatedScope == scope);
                requiredScope = preAssociatedScope;
              }
-
-          SgName name = initName->get_name();
 
        // DQ (11/19/2011): C++ can have a different scope than that of the current scope.
        // initName->set_scope(scope);
@@ -12840,6 +12838,9 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
        // SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
           ROSE_ASSERT(requiredScope != NULL);
           SgVariableSymbol* varSymbol = requiredScope->lookup_variable_symbol(name);
+#if 1
+          printf ("  -- varSymbol = %p (%s)\n", varSymbol, varSymbol ? varSymbol->class_name().c_str() : "");
+#endif
 
           if (varSymbol == NULL)
              {
@@ -12847,30 +12848,16 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
             // just insert the symbol into whatever scope structureally held the declaration (not good enough for C++).
                if (scope == initName->get_scope())
                   {
-                    varSymbol = new SgVariableSymbol(initName);
+                    if (isSgTemplateVariableDeclaration(varDecl)) {
+                      varSymbol = new SgTemplateVariableSymbol(initName);
+                    } else {
+                      varSymbol = new SgVariableSymbol(initName);
+                    }
                     ROSE_ASSERT(varSymbol);
-#if 1
+
                  // DQ (5/16/2013): We now want to use the SgScopeStatement::insert_symbol() functions since we put 
                  // the complexity of handling namespaces into the implementation of that function.
                     scope->insert_symbol(name, varSymbol);
-#else
-                 // DQ (5/9/2013): If this is a namespace scope then we need so handle that case there there can be many since it is reentrant.
-                    SgScopeStatement* associatedScope = NULL;
-                    SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
-                    if (namespaceDefinition != NULL)
-                       {
-                         associatedScope = namespaceDefinition->get_global_definition();
-#error "DEAD CODE!"
-                         printf ("WARNING: We should check the scope of the variable as well! initName->get_scope() = %p = %s associatedScope = %p \n",
-                              initName->get_scope(),initName->get_scope()->class_name().c_str(),associatedScope);
-                       }
-                      else
-                       {
-                         associatedScope = scope;
-                       }
-                    ROSE_ASSERT(associatedScope != NULL);
-                    associatedScope->insert_symbol(name, varSymbol);
-#endif
                   }
              }
             else
@@ -12886,30 +12873,6 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     initName->set_prev_decl_item(prev_decl);
 
                ROSE_ASSERT(initName->get_prev_decl_item() != initName);
-#if 0
-            // DQ (1/25/2014): We need to make sure that the variable is not initialzed twice.
-            // The selection of where to do the initialization is however important.
-            // ROSE_ASSERT(initName->get_prev_decl_item() != NULL);
-               if (initName->get_prev_decl_item() != NULL)
-                  {
-                 // Check if get_prev_decl_item() is marked extern, and if so don't let it be marked with an initializer.
-                 // We might also want to check is this is in a class, marked const, etc.
-                    if (initName->get_prev_decl_item()->get_initializer() != NULL && initName->get_initializer() != NULL)
-                       {
-#if 1
-                         printf ("In SageInterface::fixVariableDeclaration(): (initName->get_prev_decl_item()->get_init() != NULL): variable initialized twice! \n");
-#endif
-                         ROSE_ASSERT(initName->get_prev_decl_item()->get_initializer() != initName->get_initializer());
-
-                      // DQ (1/25/2014): If the first variable was initialized, then reset the second one to NULL.
-                         initName->set_initializer(NULL);
-#if 1
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-                  }
-#endif
                
              } //end if
         } //end for
@@ -21349,7 +21312,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 
 #define DEBUG_TYPE_EQUIVALENCE 0
 
-#if DEBUG_TYPE_EQUIVALENCE || 0
+#if DEBUG_TYPE_EQUIVALENCE
      printf ("In SageInterface::isEquivalentType(): evaluation of type equivalence for lhs and rhs: counter = %d \n",counter);
      printf ("   --- lhs = %s \n",lhs->unparseToString().c_str());
      printf ("   --- rhs = %s \n",rhs->unparseToString().c_str());
@@ -21364,7 +21327,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
         }
 #endif
 
-#if DEBUG_TYPE_EQUIVALENCE
+#if DEBUG_TYPE_EQUIVALENCE || 0
   // Debugging output.
      Rose_STL_Container<SgType*> X_typeChain = X.getInternalTypes();
      Rose_STL_Container<SgType*> Y_typeChain = Y.getInternalTypes();
@@ -21531,13 +21494,16 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          int Y_template_parameter_position = Y_templateDecl->get_template_parameter_position();
 
                          SgNode * X_parent = X_templateDecl->get_parent();
+                         SgNode * X_parent_parent = X_parent ? X_parent->get_parent() : NULL;
                          SgNode * Y_parent = Y_templateDecl->get_parent();
+                         SgNode * Y_parent_parent = Y_parent ? Y_parent->get_parent() : NULL;
 
 #if DEBUG_TYPE_EQUIVALENCE
                          printf ("In SageInterface::isEquivalentType(): case SgNonrealType:\n");
                          printf ("  -- X_name = %s Y_name = %s\n", X_name.c_str(),Y_name.c_str());
                          printf ("  -- X_template_parameter_position = %d Y_template_parameter_position = %d\n", X_template_parameter_position,Y_template_parameter_position);
-                         printf ("  -- X_parent = %p Y_parent = %p\n", X_parent,Y_parent);
+                         printf ("  -- X_parent = %p (%s) Y_parent = %p (%s)\n", X_parent, X_parent ? X_parent->class_name().c_str() : "", Y_parent, Y_parent ? Y_parent->class_name().c_str() : "");
+                         printf ("  -- X_parent_parent = %p (%s) Y_parent_parent = %p (%s)\n", X_parent_parent, X_parent_parent ? X_parent_parent->class_name().c_str() : "", Y_parent_parent, Y_parent_parent ? Y_parent_parent->class_name().c_str() : "");
                          printf ("  -- X_templateDecl->get_mangled_name() = %s\n", X_templateDecl->get_mangled_name().str());
                          printf ("  -- Y_templateDecl->get_mangled_name() = %s\n", Y_templateDecl->get_mangled_name().str());
 #endif

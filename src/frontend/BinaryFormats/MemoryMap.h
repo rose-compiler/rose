@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_MemoryMap_H
 #define ROSE_BinaryAnalysis_MemoryMap_H
 
-#include "ByteOrder.h"
+#include <ByteOrder.h>
+#include <Combinatorics.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -156,7 +157,7 @@ public:
     static const unsigned WRITABLE      = Sawyer::Access::WRITABLE;
     static const unsigned EXECUTABLE    = Sawyer::Access::EXECUTABLE;
     static const unsigned IMMUTABLE     = Sawyer::Access::IMMUTABLE;
-    static const unsigned PRIVATE       = 0x00000100;
+    static const unsigned PRIVATE       = Sawyer::Access::PRIVATE;
     static const unsigned INITIALIZED   = 0x00000200;   // Partitioner2: initialized memory even if writable
 
     // Aggregate accessibility flags
@@ -261,11 +262,26 @@ public:
     void byteOrder(ByteOrder::Endianness order) { endianness_ = order; }
      /** @} */
 
+    // Note that the order of the enum members is for backward compatibility with an older version of insertFile whose third
+    // argument was "bool writable = false" (MAP_RDONLY, but now intended to be MAP_PRIVATE) and when it was true was the same
+    // as MAP_READWRITE.
+    // 
+    /** Mapping mode for insertFile. */
+    enum InsertFileMapMode {
+        MAP_PRIVATE = 0,                                /**< File is mapped privately. Writing to the memory map is allowed,
+                                                         *   but the changes will not show up in the file. */
+        MAP_READWRITE = 1,                              /**< File is mapped with read and write permission. Changes to the
+                                                         *   memory map will also cause the file to change. */
+        MAP_RDONLY = 2                                  /**< File is mapped with read-only permission. Any attempt to modify
+                                                         *   the file will likely result in a segmentation fault. */
+    };
+    
     /** Insert file contents into memory map.
      *
      *  Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
      *  creates a new MappedBuffer and inserts it into the mapping. Returns the size of the file mapping. */
-    size_t insertFile(const std::string &fileName, rose_addr_t va, bool writable=false, std::string segmentName="");
+    size_t insertFile(const std::string &fileName, rose_addr_t va, InsertFileMapMode mode = MAP_PRIVATE,
+                      std::string segmentName = "");
 
     /** Insert file contents into memory map.
      *
@@ -446,6 +462,22 @@ public:
     void dump(std::ostream&, std::string prefix="") const;
     void print(std::ostream &o, std::string prefix="") const { dump(o, prefix); }
     /** @} */
+
+    /** Compute a hash of the entire memory contents.
+     *
+     *  This hashes the memory contents. Segment information (names, addresses, permissions, etc) are not included in the hash;
+     *  only the bytes stored in the map.  The user should supply a hasher whose @c append method will be called to add memory
+     *  map contents to the hash.  For instance, here's one way to hash the contents of a file without having to read the
+     *  entire file into memory first:
+     *
+     * @code
+     *  MemoryMap::Ptr file = MemoryMap::instance();
+     *  file->insertFile("/name/of/the/file", 0);
+     *  HasherSha1 hasher;
+     *  file->hash(hasher);
+     *  std::cout <<"file SHA1 hash is " <<hash <<"\n";
+     * @endcode */
+    Combinatorics::Hasher& hash(Combinatorics::Hasher&) const;
 
     /** Title of a segment when printing the map. */
     static std::string segmentTitle(const Segment&);

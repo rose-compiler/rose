@@ -55,10 +55,10 @@ namespace CodeThorn {
 
   class SpotConnection;
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+  /*! 
+   * \author Markus Schordan
+   * \date 2012.
+   */
   class Analyzer {
     friend class Solver;
     friend class Solver5;
@@ -115,9 +115,6 @@ namespace CodeThorn {
     void setElementSize(VariableId variableId, SgType* elementType);
 
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-
-    PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
-    // to be replaced by above function
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
     // thread save; only prints if option status messages is enabled.
@@ -151,8 +148,8 @@ namespace CodeThorn {
     std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
     void setSkipSelectedFunctionCalls(bool defer);
-    void setSkipArrayAccesses(bool skip) { exprAnalyzer.setSkipArrayAccesses(skip); }
-    bool getSkipArrayAccesses() { return exprAnalyzer.getSkipArrayAccesses(); }
+    void setSkipArrayAccesses(bool skip);
+    bool getSkipArrayAccesses();
 
     // specific to the loop-aware exploration modes
     int getIterations() { return _iterations; }
@@ -208,17 +205,9 @@ namespace CodeThorn {
     */
     void setCommandLineOptions(vector<string> clOptions);
 
-    ///////
-    // MJ: 08/24/2017: Currently not used
-    //! list of all asserts in a program
-    std::list<SgNode*> listOfAssertNodes(SgProject *root);
-    size_t memorySizeContentEStateWorkLists();
-    static std::string nodeToString(SgNode* node);
-    static string lineColSource(SgNode* node);
-    SgNode* getCond(SgNode* node);
-    set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
-    ///////
-
+    // TODO: move to flow analyzer (reports label,init,final sets)
+    static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
+    
     // public member variables
     SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;
@@ -228,6 +217,14 @@ namespace CodeThorn {
     std::map<std::string,VariableId> globalVarName2VarIdMapping;
     std::vector<bool> binaryBindingAssert;
 
+    // functions related to abstractions during the analysis
+    void eventGlobalTopifyTurnedOn();
+    bool isActiveGlobalTopify();
+    bool isIncompleteSTGReady();
+    bool isPrecise();
+
+    EState createEState(Label label, PState pstate, ConstraintSet cset);
+    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
   protected:
     void printStatusMessage(string s, bool newLineFlag);
@@ -255,9 +252,6 @@ namespace CodeThorn {
     EStateSet::ProcessingResult process(EState& s);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
-    EState createEState(Label label, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
 
     void set_finished(std::vector<bool>& v, bool val);
@@ -302,12 +296,6 @@ namespace CodeThorn {
     std::string labelNameOfAssertLabel(Label lab);
     bool isCppLabeledAssertLabel(Label lab);
     std::list<FailedAssertion> _firstAssertionOccurences;
-
-    // functions related to abstractions during the analysis
-    void eventGlobalTopifyTurnedOn();
-    bool isActiveGlobalTopify();
-    bool isIncompleteSTGReady();
-    bool isPrecise();
 
     // specific to the loop-aware exploration modes
     bool isLoopCondLabel(Label lab);

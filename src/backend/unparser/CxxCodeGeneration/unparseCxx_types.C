@@ -484,7 +484,7 @@ string get_type_name(SgType* t)
              }
 
           case T_NONREAL:
-	     {
+             {
                SgNonrealType * nrtype = isSgNonrealType(t);
                ROSE_ASSERT(nrtype != NULL);
                return nrtype->get_name();

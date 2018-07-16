@@ -30,18 +30,20 @@ public:
   virtual void transferSwitchCase(SPRAY::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);
   virtual void transferSwitchDefault(SPRAY::Label lab,SgStatement* condStmt, SgDefaultOptionStmt* defaultStmt,Lattice& pstate);
   virtual void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
+  virtual void transferExternalFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
   virtual void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
   virtual void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   virtual void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}
+  virtual void setSkipSelectedFunctionCalls(bool flag);
+  virtual void addParameterPassingVariables();
+  VariableId getParameterVariableId(int paramNr);
+  VariableId getResultVariableId();
+  bool isExternalFunctionCall(Label l);
   //protected:
  public:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 
- public:
-  virtual void addParameterPassingVariables();
-  VariableId getParameterVariableId(int paramNr);
-  VariableId getResultVariableId();
  private:
   SPRAY::ProgramAbstractionLayer* _programAbstractionLayer;
   VariableId parameter0VariableId;

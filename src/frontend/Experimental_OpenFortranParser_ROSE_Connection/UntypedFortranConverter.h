@@ -18,9 +18,15 @@ namespace Untyped {
          {
          }
 
-      virtual void
+      virtual bool
+      convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt, SgScopeStatement* label_scope = NULL);
+
+      virtual bool
       convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
-                   SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type, SgScopeStatement* label_scope=NULL);
+                   SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope=NULL);
+
+      void
+      setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope = NULL);
 
       virtual SgProcedureHeaderStatement* convertSgUntypedSubroutineDeclaration   (SgUntypedSubroutineDeclaration*   ut_decl, SgScopeStatement* scope);
       virtual SgProcedureHeaderStatement* convertSgUntypedBlockDataDeclaration    (SgUntypedBlockDataDeclaration*    ut_decl, SgScopeStatement* scope);

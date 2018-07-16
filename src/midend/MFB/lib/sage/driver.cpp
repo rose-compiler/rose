@@ -25,8 +25,11 @@ void Driver<Sage>::loadSymbols<SgDeclarationStatement>(size_t file_id, SgSourceF
   loadSymbols<SgNamespaceDeclarationStatement>(file_id, file);
   loadSymbols<SgFunctionDeclaration>(file_id, file);
   loadSymbols<SgClassDeclaration>(file_id, file);
+  loadSymbols<SgEnumDeclaration>(file_id, file);
   loadSymbols<SgVariableDeclaration>(file_id, file);
   loadSymbols<SgMemberFunctionDeclaration>(file_id, file);
+  loadSymbols<SgTypedefDeclaration>(file_id, file);
+  loadSymbols<SgNonrealDecl>(file_id, file);
 }
 
 size_t Driver<Sage>::getFileID(const boost::filesystem::path & path) const {
@@ -64,9 +67,11 @@ Driver<Sage>::Driver(SgProject * project_) :
   p_namespace_symbols(),
   p_function_symbols(),
   p_class_symbols(),
+  p_enum_symbols(),
   p_variable_symbols(),
   p_member_function_symbols(),
   p_typedef_symbols(),
+  p_nonreal_symbols(),
   p_type_scope_map()
 { 
   assert(project != NULL);
@@ -99,7 +104,7 @@ size_t Driver<Sage>::add(SgSourceFile * file) {
   file_to_id_map.insert(std::pair<SgSourceFile *, size_t>(file, id));
   file_id_to_accessible_file_id_map.insert(std::pair<size_t, std::set<size_t> >(id, std::set<size_t>())).first->second.insert(id);
 
-  /// \todo detect other accessible file (opt: add recursively)
+  /// \todo detect other accessible file (included) (opt: add recursively)
 
   loadSymbols<SgDeclarationStatement>(id, file);
 
@@ -318,6 +323,15 @@ api_t * Driver<Sage>::getAPI(size_t file_id) const {
       api->class_symbols.insert(*it_class_symbol);
   }
 
+  std::set<SgEnumSymbol *>::const_iterator it_enum_symbol;
+  for (it_enum_symbol = p_enum_symbols.begin(); it_enum_symbol != p_enum_symbols.end(); it_enum_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_enum_symbol);
+//  assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id != p_symbol_to_file_id_map.end() && it_sym_decl_file_id->second == file_id)
+      api->enum_symbols.insert(*it_enum_symbol);
+  }
+
   std::set<SgVariableSymbol *>::const_iterator it_variable_symbol;
   for (it_variable_symbol = p_variable_symbols.begin(); it_variable_symbol != p_variable_symbols.end(); it_variable_symbol++) {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_variable_symbol);
@@ -334,6 +348,24 @@ api_t * Driver<Sage>::getAPI(size_t file_id) const {
 
     if (it_sym_decl_file_id->second == file_id)
       api->member_function_symbols.insert(*it_member_function_symbol);
+  }
+
+  std::set<SgTypedefSymbol *>::const_iterator it_typedef_symbol;
+  for (it_typedef_symbol = p_typedef_symbols.begin(); it_typedef_symbol != p_typedef_symbols.end(); it_typedef_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_typedef_symbol);
+    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id->second == file_id)
+      api->typedef_symbols.insert(*it_typedef_symbol);
+  }
+
+  std::set<SgNonrealSymbol *>::const_iterator it_nonreal_symbol;
+  for (it_nonreal_symbol = p_nonreal_symbols.begin(); it_nonreal_symbol != p_nonreal_symbols.end(); it_nonreal_symbol++) {
+    it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_nonreal_symbol);
+    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+    if (it_sym_decl_file_id->second == file_id)
+      api->nonreal_symbols.insert(*it_nonreal_symbol);
   }
 
   return api;
@@ -375,6 +407,10 @@ api_t * Driver<Sage>::getAPI() const {
   for (it_class_symbol = p_class_symbols.begin(); it_class_symbol != p_class_symbols.end(); it_class_symbol++)
     api->class_symbols.insert(*it_class_symbol);
 
+  std::set<SgEnumSymbol *>::const_iterator it_enum_symbol;
+  for (it_enum_symbol = p_enum_symbols.begin(); it_enum_symbol != p_enum_symbols.end(); it_enum_symbol++)
+    api->enum_symbols.insert(*it_enum_symbol);
+
   std::set<SgVariableSymbol *>::const_iterator it_variable_symbol;
   for (it_variable_symbol = p_variable_symbols.begin(); it_variable_symbol != p_variable_symbols.end(); it_variable_symbol++)
     api->variable_symbols.insert(*it_variable_symbol);
@@ -382,6 +418,14 @@ api_t * Driver<Sage>::getAPI() const {
   std::set<SgMemberFunctionSymbol *>::const_iterator it_member_function_symbol;
   for (it_member_function_symbol = p_member_function_symbols.begin(); it_member_function_symbol != p_member_function_symbols.end(); it_member_function_symbol++)
     api->member_function_symbols.insert(*it_member_function_symbol);
+
+  std::set<SgTypedefSymbol *>::const_iterator it_typedef_symbol;
+  for (it_typedef_symbol = p_typedef_symbols.begin(); it_typedef_symbol != p_typedef_symbols.end(); it_typedef_symbol++)
+    api->typedef_symbols.insert(*it_typedef_symbol);
+
+  std::set<SgNonrealSymbol *>::const_iterator it_nonreal_symbol;
+  for (it_nonreal_symbol = p_nonreal_symbols.begin(); it_nonreal_symbol != p_nonreal_symbols.end(); it_nonreal_symbol++)
+    api->nonreal_symbols.insert(*it_nonreal_symbol);
 
   return api;
 }
@@ -488,6 +532,21 @@ void Driver<Sage>::useType(SgType * type, SgScopeStatement * scope) {
   else if (mod_type != NULL) useType(mod_type->get_base_type(), scope);
   else if (ptr_type != NULL) useType(ptr_type->get_base_type(), scope);
   else if (arr_type != NULL) useType(arr_type->get_base_type(), scope);
+}
+
+Driver<Sage> * SageDriver(bool skip_rose_builtin, bool edg_il_to_graphviz) {
+  SgProject * project = new SgProject();
+  project->get_fileList().clear();
+  {
+    Rose_STL_Container<std::string> arglist;
+    arglist.push_back("c++");
+    if (skip_rose_builtin)  arglist.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
+    if (edg_il_to_graphviz) arglist.push_back("-rose:edg_il_to_graphviz");
+    arglist.push_back("-c");
+    project->set_originalCommandLineArgumentList (arglist);
+  }
+
+  return new Driver<Sage>(project);
 }
 
 }

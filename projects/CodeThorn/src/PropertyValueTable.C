@@ -214,7 +214,7 @@ string PropertyValueTable::reachToString(PropertyValue num) {
   case PROPERTY_VALUE_YES: return "yes"; //,9";
   case PROPERTY_VALUE_NO: return "no"; //,9";
   default: {
-    cerr<<"Error: unkown reachability information.";
+    cerr<<"Error: unknown reachability information.";
     assert(0);
   }
   }
@@ -231,7 +231,7 @@ void PropertyValueTable::finishedReachability(bool isPrecise, bool isComplete) {
     return;
   }
   if(isPrecise&&!isComplete) {
-    // yes remains yes and unkown remains unknown (no cannot exist)
+    // yes remains yes and unknown remains unknown (no cannot exist)
     return;
   }
   if(!isPrecise&&isComplete) {

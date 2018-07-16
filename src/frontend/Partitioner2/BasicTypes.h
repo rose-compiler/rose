@@ -189,10 +189,22 @@ struct LoaderSettings {
                                                      *   engine will not modify executable bits in memory, but rather use
                                                      *   the bits already set in the memory map. This happens before the
                                                      *   @ref deExecuteZeros property is processed. */
+    bool linkObjectFiles;                           /**< Link object files before parsing. */
+    bool linkStaticArchives;                        /**< Link static libraries before parsing. */
+    std::string linker;                             /**< Command to run to link object and archives.  ELF object files
+                                                     *   typically don't contain information about how the object is mapped
+                                                     *   into memory. If this setting is a non-empty string then a shell
+                                                     *   command is constructed and run on all the supplied object and library
+                                                     *   files and the resulting file is used instead.  The string should
+                                                     *   contain two variables of the form "%o" and "%f" which are the single
+                                                     *   output file name and the space separated list of input names. The
+                                                     *   names are escaped when the command is generated and therefore the "%o"
+                                                     *   and "%f" should not be quoted. */
 
     LoaderSettings()
         : deExecuteZerosThreshold(0), deExecuteZerosLeaveAtFront(16), deExecuteZerosLeaveAtBack(1),
-          memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false) {}
+          memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false), linkObjectFiles(true),
+          linkStaticArchives(true), linker("ld -o %o --unresolved-symbols=ignore-all --whole-archive %f") {}
 
 private:
     friend class boost::serialization::access;
@@ -282,6 +294,7 @@ struct PartitionerSettings {
                                                      *   the instructions of a basic block do not need to follow one after
                                                      *   the other in memory--the block can have internal unconditional
                                                      *   branches. */
+    size_t maxBasicBlockSize;                       /**< Maximum basic block size. Number of instructions. 0 => no limit. */
     bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
     bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
     rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
@@ -313,6 +326,7 @@ private:
         s & startingVas;
         s & followingGhostEdges;
         s & discontiguousBlocks;
+        s & maxBasicBlockSize;
         s & findingFunctionPadding;
         s & findingDeadCode;
         s & peScramblerDispatcherVa;
@@ -337,7 +351,7 @@ private:
 
 public:
     PartitionerSettings()
-        : followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
+        : followingGhostEdges(false), discontiguousBlocks(true), maxBasicBlockSize(0), findingFunctionPadding(true),
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),

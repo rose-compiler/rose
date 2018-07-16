@@ -56,7 +56,6 @@ namespace CodeThorn {
     TransitionGraph();
     void setModeLTLDriven(bool mode) { _modeLTLDriven=mode; }
     bool getModeLTLDriven() { return _modeLTLDriven; }
-    EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
     EStatePtrSet estateSetOfLabel(Label lab);
     EStatePtrSet estateSet();
     long numberOfObservableStates(bool includeIn=true, bool includeOut=true, bool includeErr=true);

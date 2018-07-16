@@ -14,19 +14,10 @@
 using namespace SPRAY;
 using namespace std;
 
-DFAnalysisBase::DFAnalysisBase():
-  _programAbstractionLayer(0),
-  _cfanalyzer(0),
-  _numberOfLabels(0),
-  _preInfoIsValid(false),
-  _postInfoIsValid(false),
-  _transferFunctions(0),
-  _initialElementFactory(0),
-  _analysisType(DFAnalysisBase::FORWARD_ANALYSIS),
-  _no_topological_sort(false),
-  _pointerAnalysisInterface(0),
-  _pointerAnalysisEmptyImplementation(0)
-{}
+DFAnalysisBase::DFAnalysisBase()
+{
+  // all data member initializers are specified in class definition
+}
 
 DFAnalysisBase::~DFAnalysisBase() {
   if(_pointerAnalysisEmptyImplementation)
@@ -92,7 +83,7 @@ void DFAnalysisBase::setInitialElementFactory(PropertyStateFactory* pf) {
   _initialElementFactory=pf;
 }
 
-void DFAnalysisBase::setExtremalLabels(set<Label> extremalLabels) {
+void DFAnalysisBase::setExtremalLabels(LabelSet extremalLabels) {
   _extremalLabels=extremalLabels;
 }
 
@@ -152,14 +143,6 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   _globalVariablesState=elem;
   return elem;
 }
-
-void
-DFAnalysisBase::normalizeProgram(SgProject* root) {
-  cout<<"STATUS: Normalizing program."<<endl;
-  SPRAY::Lowering lowering;
-  lowering.lowerAst(root);
-}
-
 
 void
 DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/* = false*/) {
@@ -471,5 +454,17 @@ void DFAnalysisBase::attachInInfoToAst(string attributeName) {
 
 void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2018.
+ */
+
+void DFAnalysisBase::setSkipSelectedFunctionCalls(bool defer) {
+  _skipSelectedFunctionCalls=defer;
+  if(_transferFunctions) {
+    _transferFunctions->setSkipSelectedFunctionCalls(defer);
+  }
 }
 

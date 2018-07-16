@@ -139,100 +139,6 @@ static bool do_usedef = true;
 #error "invalid value for SEMANTIC_DOMAIN"
 #endif
 
-// Show the register state for BaseSemantics::RegisterStateGeneric in the same format as for RegisterStateX86. This is
-// for comparison of the two register states when verifying results.  It's also close to the format used by the old binary
-// semantics API.
-void
-show_state(const BaseSemantics::RiscOperatorsPtr &ops)
-{
-#if SEMANTIC_DOMAIN == MULTI_DOMAIN
-    std::cout <<*ops;
-    return;
-#endif
-
-    struct ShowReg {
-        BaseSemantics::RiscOperatorsPtr ops;
-        std::ostream &o;
-        std::string prefix;
-
-        ShowReg(const BaseSemantics::RiscOperatorsPtr &ops, std::ostream &o, const std::string &prefix)
-            : ops(ops), o(o), prefix(prefix) {}
-
-        void operator()(const char *name, const char *abbr=NULL) {
-            const RegisterDictionary *regdict = ops->currentState()->registerState()->get_register_dictionary();
-            const RegisterDescriptor *desc = regdict->lookup(name);
-            assert(desc);
-            (*this)(*desc, abbr?abbr:name);
-        }
-        void operator()(RegisterDescriptor desc, const char *abbr) {
-            BaseSemantics::RegisterStatePtr regstate = ops->currentState()->registerState();
-            FormatRestorer fmt(o);
-            o <<prefix <<std::setw(8) <<std::left <<abbr <<"= { ";
-            fmt.restore();
-            BaseSemantics::SValuePtr val = regstate->readRegister(desc, ops->undefined_(desc.get_nbits()), ops.get());
-            o <<*val <<" }\n";
-        }
-        void operator()(unsigned majr, unsigned minr, unsigned offset, unsigned nbits, const char *abbr) {
-            (*this)(RegisterDescriptor(majr, minr, offset, nbits), abbr);
-        }
-    } show(ops, std::cout, "    ");
-
-    std::cout <<"registers:\n";
-    show("eax",         "ax");
-    show("ecx",         "cx");
-    show("edx",         "dx");
-    show("ebx",         "bx");
-    show("esp",         "sp");
-    show("ebp",         "bp");
-    show("esi",         "si");
-    show("edi",         "di");
-    show("es");
-    show("cs");
-    show("ss");
-    show("ds");
-    show("fs");
-    show("gs");
-    show("cf");
-    show(x86_regclass_flags, 0, 1, 1, "?1");
-    show("pf");
-    show(x86_regclass_flags, 0, 3, 1, "?3");
-    show("af");
-    show(x86_regclass_flags, 0, 5, 1, "?5");
-    show("zf");
-    show("sf");
-    show("tf");
-    show("if");
-    show("df");
-    show("of");
-    show(x86_regclass_flags, 0, 12, 1, "iopl0");
-    show(x86_regclass_flags, 0, 13, 1, "iopl1");
-    show("nt");
-    show(x86_regclass_flags, 0, 15, 1, "?15");
-    show("rf");
-    show("vm");
-    show(x86_regclass_flags, 0, 18, 1, "ac");
-    show(x86_regclass_flags, 0, 19, 1, "vif");
-    show(x86_regclass_flags, 0, 20, 1, "vip");
-    show(x86_regclass_flags, 0, 21, 1, "id");
-    show(x86_regclass_flags, 0, 22, 1, "?22");
-    show(x86_regclass_flags, 0, 23, 1, "?23");
-    show(x86_regclass_flags, 0, 24, 1, "?24");
-    show(x86_regclass_flags, 0, 25, 1, "?25");
-    show(x86_regclass_flags, 0, 26, 1, "?26");
-    show(x86_regclass_flags, 0, 27, 1, "?27");
-    show(x86_regclass_flags, 0, 28, 1, "?28");
-    show(x86_regclass_flags, 0, 29, 1, "?29");
-    show(x86_regclass_flags, 0, 30, 1, "?30");
-    show(x86_regclass_flags, 0, 31, 1, "?31");
-    show("eip", "ip");
-
-    BaseSemantics::Formatter memfmt;
-    memfmt.set_line_prefix("    ");
-    std::cout <<"memory:\n";
-    ops->currentState()->printMemory(std::cout, memfmt);
-}
-
-
 /* Analyze a single interpretation a block at a time */
 static void
 analyze_interp(SgAsmInterpretation *interp)
@@ -307,11 +213,7 @@ analyze_interp(SgAsmInterpretation *interp)
             std::cout <<"\n" <<unparseInstructionWithAddress(insn) <<"\n";
             try {
                 dispatcher->processInstruction(insn);
-#   if 0 /*DEBUGGING [Robb P. Matzke 2013-05-01]*/
-                show_state(operators); // for comparing RegisterStateGeneric with the old RegisterStateX86 output
-#   else
                 std::cout <<(*operators + formatter);
-#   endif
             } catch (const BaseSemantics::Exception &e) {
                 std::cout <<e <<"\n";
             }

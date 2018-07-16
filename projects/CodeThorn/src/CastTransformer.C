@@ -3,7 +3,7 @@
 #include <iostream>
 #include "CastTransformer.h"
 #include "SgNodeHelper.h"
-#include "TypeTransformer.h" // only required for trace
+#include "TFTypeTransformer.h" // only required for trace
 
 using namespace std;
 
@@ -34,7 +34,7 @@ bool CastTransformer::castIsNecessary(SgType* source, SgType* target) {
 }
 
 void CastTransformer::eliminateCast(SgCastExp* castExp) {
-  TypeTransformer::trace("eliminating cast:"+SgNodeHelper::sourceLineColumnToString(castExp)+":"+castExp->unparseToString());
+  TFTypeTransformer::trace("eliminating cast:"+SgNodeHelper::sourceLineColumnToString(castExp)+":"+castExp->unparseToString());
   SgExpression* oldExp=castExp;
   SgExpression* newExp=castExp->get_operand();
   bool keepOldExp=true;
@@ -42,7 +42,7 @@ void CastTransformer::eliminateCast(SgCastExp* castExp) {
 }
 
 void CastTransformer::introduceCast(SgExpression* exp, SgType* type) {
-  TypeTransformer::trace("introducing cast @:"+SgNodeHelper::sourceLineColumnToString(exp)+":"+exp->unparseToString());
+  TFTypeTransformer::trace("introducing cast @:"+SgNodeHelper::sourceLineColumnToString(exp)+":"+exp->unparseToString());
   SgNode* parentOfExpBackup=exp->get_parent();
   SgCastExp* newCastExp=SageBuilder::buildCastExp(exp,type);
   // set parent back to original value, because buildCastExp modifies
@@ -58,7 +58,7 @@ void CastTransformer::introduceCast(SgExpression* exp, SgType* type) {
 }
 
 void CastTransformer::changeCast(SgCastExp* castExp, SgType* newType) {
-  TypeTransformer::trace("changing cast :"
+  TFTypeTransformer::trace("changing cast :"
         +SgNodeHelper::sourceLineColumnToString(castExp)
         +":"+castExp->unparseToString()+" TO "+newType->unparseToString());
 }

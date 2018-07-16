@@ -27,7 +27,7 @@ void Constraint::negate() {
   case NEQ_VAR_VAR: _op=EQ_VAR_VAR;break;
   case DEQ: break;
   default:
-    cerr<< "Error: unkown constraint operator."<<endl;
+    cerr<< "Error: unknown constraint operator."<<endl;
     exit(1);
   }
 }

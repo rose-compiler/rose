@@ -1572,6 +1572,17 @@ namespace OmpSupport
     return result;
   }
 
+  // MS2018: added to fix warning
+  std::string OmpAttributeList::attribute_class_name() const {
+    return "OmpAttributeList";
+  }
+  OmpAttributeList* OmpAttributeList::copy() {
+    OmpAttributeList* newCopy=new OmpAttributeList();
+    // TODO: implement deep copy
+    return newCopy;
+  }
+
+  
   std::string OmpAttributeList::toOpenMPString()
   {
     string result;

@@ -89,6 +89,33 @@ cEscape(const std::string &s) {
     return result;
 }
 
+std::string
+bourneEscape(const std::string &s) {
+    std::string result;
+    bool quoted = false;
+
+    BOOST_FOREACH (char ch, s) {
+        if (isalnum(ch) || strchr("_-+./", ch)) {
+            result += ch;
+
+        } else {
+            if (!quoted) {
+                result = "'" + result;
+                quoted = true;
+            }
+
+            if (ch == '\\' || ch == '\'') {
+                result += std::string("\\") + ch;
+            } else {
+                result += ch;
+            }
+        }
+    }
+    if (quoted)
+        result += "'";
+    return result;
+}
+
 // [Robb P Matzke 2016-06-15]: deprecated
 std::string
 escapeNewLineCharaters ( const std::string & X )
@@ -427,6 +454,31 @@ addrToString(uint64_t value, size_t nbits) {
     return toHex2(value, nbits, false, false);
 }
 
+std::string
+addrToString(const Sawyer::Container::Interval<uint64_t> &interval, size_t nbits) {
+    if (interval.isEmpty()) {
+        return "[empty]";
+    } else {
+        return "[" + addrToString(interval.least(), nbits) + ", " + addrToString(interval.greatest(), nbits) + "]";
+    }
+}
+
+std::string
+addrToString(const Sawyer::Container::IntervalSet<Sawyer::Container::Interval<uint64_t> > &iset, size_t nbits) {
+    if (iset.isEmpty()) {
+        return "{empty}";
+    } else {
+        std::string retval = "{";
+        size_t i = 0;
+        BOOST_FOREACH (const Sawyer::Container::Interval<uint64_t> &interval, iset.intervals()) {
+            if (++i > 1)
+                retval += ", ";
+            retval += addrToString(interval);
+        }
+        retval += "}";
+        return retval;
+    }
+}
 
 
 

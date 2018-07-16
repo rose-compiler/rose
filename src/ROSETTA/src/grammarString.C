@@ -277,8 +277,10 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
 
        // By "simple list" we mean NOT a pointer to a list (just a list, e.g. STL list)
           bool typeIsSimpleListOfPointers       = (typeIsPointerToListOfPointers == false) && typeName.find("PtrList") != string::npos;
-          bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers; 
+          bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
+#ifndef NDEBUG
           bool typeIsSgNode                     = typeName.find('*') != string::npos;
+#endif
 
 #if 0
           printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
@@ -455,7 +457,9 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
         }
 
    // The rule is that if it is not a char* or char** then if it ia a pointer type it is a pointer to a Sage IR node
+#ifndef NDEBUG
       bool typeIsSgNode = typeName.find('*') != string::npos;
+#endif
 
   // check if the member is accessed in tree traversal
      if ( toBeTraversed == DEF_TRAVERSAL || toBeCopied == CLONE_TREE)

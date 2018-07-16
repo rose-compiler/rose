@@ -381,9 +381,10 @@ list<SgVarRefExp*> SgNodeHelper::listOfUsedVarsInFunctions(SgProject* project) {
   list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
   for(list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
     RoseAst ast(*i);
-    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      if(SgVarRefExp* varRefExp=isSgVarRefExp(*i))
+    for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
+      if(SgVarRefExp* varRefExp=isSgVarRefExp(*j)) {
         varRefExpList.push_back(varRefExp);
+      }
     }
   }
   return varRefExpList;
@@ -1501,6 +1502,9 @@ string SgNodeHelper::getFunctionName(SgNode* node) {
   if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
     // MS: conditional update of variable 'node' is intentional for following if
     node=funCall->getAssociatedFunctionDeclaration();
+    // in case of function pointers 0 is returned
+    if(node==0)
+      return "";
   }
   if(SgFunctionDeclaration* tmpfundecl=isSgFunctionDeclaration(node)) {
     fundecl=tmpfundecl;

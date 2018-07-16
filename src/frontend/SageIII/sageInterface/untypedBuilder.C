@@ -282,4 +282,13 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
    return type;
 }
 
+
+SgUntypedNullExpression* buildUntypedNullExpression()
+{
+   SgUntypedNullExpression* expr = new SgUntypedNullExpression();
+   SageInterface::setOneSourcePositionForTransformation(expr);
+   return expr;
+}
+
+
 } // namespace UntypedBuilder

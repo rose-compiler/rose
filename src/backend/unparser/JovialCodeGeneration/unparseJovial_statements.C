@@ -74,13 +74,17 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
-          case V_SgVariableDeclaration:        unparseVarDeclStmt  (stmt, info);    break;
+          case V_SgVariableDeclaration:        unparseVarDeclStmt (stmt, info);     break;
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
-          case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
+          case V_SgLabelStatement:             unparseLabelStmt      (stmt, info);  break;
+          case V_SgGotoStatement:              unparseGotoStmt       (stmt, info);  break;
 
-          case V_SgExprStatement:              unparseExprStmt(stmt, info);         break;
+          case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
+          case V_SgReturnStmt:                 unparseReturnStmt     (stmt, info);  break;
+
+          case V_SgExprStatement:              unparseExprStmt       (stmt, info);  break;
 
 #if 0
        // declarations
@@ -94,8 +98,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgCaseOptionStmt:         unparseCaseStmt       (stmt, info); break;
           case V_SgDefaultOptionStmt:      unparseDefaultStmt    (stmt, info); break;
           case V_SgBreakStmt:              unparseBreakStmt      (stmt, info); break;
-          case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
-          case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
@@ -195,6 +197,34 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
    }
 
+void Unparse_Jovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
+     ROSE_ASSERT(label_stmt != NULL);
+
+     curprint (string(label_stmt->get_label().str()) + ":");
+     unp->cur.insert_newline(1);
+
+     if (label_stmt->get_statement() != NULL) {
+        SgStatement* sg_stmt = label_stmt->get_statement();
+        ROSE_ASSERT(sg_stmt);
+        UnparseLanguageIndependentConstructs::unparseStatement(sg_stmt, info);
+     }
+   }
+
+void
+Unparse_Jovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
+     ROSE_ASSERT(goto_stmt != NULL);
+     ROSE_ASSERT(goto_stmt->get_label() != NULL);
+
+     curprint (string("GOTO " ) + goto_stmt->get_label()->get_label().str());
+     curprint (string(" ;"));
+     unp->cur.insert_newline(1);
+   }
+
+
 void
 Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -210,6 +240,32 @@ Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint(";");
           unp->cur.insert_newline(1);
         }
+     else if (kind == SgStopOrPauseStatement::e_exit)
+        {
+          curprint("EXIT ;");
+          unp->cur.insert_newline(1);
+        }
+     else if (kind == SgStopOrPauseStatement::e_abort)
+        {
+          curprint("ABORT ;");
+          unp->cur.insert_newline(1);
+        }
+     else
+        {
+          cerr << "Unparse_Jovial::unparseStopOrPauseStmt: unknown statement enum "
+               <<  kind << endl;
+          ROSE_ASSERT(false);
+        }
+   }
+
+void
+Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+      SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
+      ROSE_ASSERT(return_stmt != NULL);
+
+      curprint("RETURN ;");
+      unp->cur.insert_newline(1);
    }
 
 void

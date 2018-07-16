@@ -1,38 +1,40 @@
 #!/bin/bash
 
+OPTIONS="--normalize"
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
 TESTDIR=$1
-    echo "------------------------------------------------"
-    echo "running DEADCODE TESTS"
-    echo "------------------------------------------------"
+echo "------------------------------------------------"
+echo "running DEADCODE TESTS"
+echo "------------------------------------------------"
 
-    # C++ tests
-    for p in 1 2 3 4 5 6 7 8 9; do
-	./analyterix --csv-deadcode-unreachable=tmptest.csv $TESTDIR/deadcode/test$p.C
-	echo -n "DEADCODE test${p}.C : "
-	diff tmptest.csv $TESTDIR/deadcode/test$p.csv
-	if [ ! $? -eq 0 ]
-	then
+BENCH_PASS=0
+BENCH_FAIL=0
+
+testNumbers=`echo {001..013}`
+echo "Scheduled tests: $testNumbers"
+for testNumber in $testNumbers; do
+    benchmarkprefix=$TESTDIR/DC${testNumber};
+    for benchmark in ${benchmarkprefix}_*.C; do
+        rm -f tmptest.csv
+        rm -f tmptest_col1.csv
+        rm -f test${p}_col1.csv
+        benchmarkname=$(basename $benchmark)
+        echo -n "Testing $benchmarkname : "
+        ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --normalizefcalls --ignore-unknown-functions --report-only-file-name > /dev/null
+        diff $benchmarkname.csv $TESTDIR/$benchmarkname.csv
+        #cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
+        #cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv
+        #diff $benchmarkname.line.csv ${benchmarkname}_ref.line.csv
+        if [ ! $? -eq 0 ]
+        then
 	    echo "FAIL"
             exit 1
-	else
+        else
 	    echo "PASS"
-	fi
-	echo "-------------------------------------------------"
+        fi
     done
-
-    # C tests
-    for p in 10; do
-	./analyterix --csv-deadcode-unreachable=tmptest.csv $TESTDIR/deadcode/test$p.c
-	echo -n "DEADCODE test${p}.c : "
-	diff tmptest.csv $TESTDIR/deadcode/test$p.csv
-	if [ ! $? -eq 0 ]
-	then
-	    echo "FAIL"
-            exit 1
-	else
-	    echo "PASS"
-	fi
-	echo "-------------------------------------------------"
-    done
-
-#    rm -f tmptest.csv
+done
+rm -rf DC*.csv
