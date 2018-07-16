@@ -43,15 +43,28 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   ToolConfig config(fileName);
   vector<ToolAction>& actions = config.getActions();
   for(auto act: actions){
+    string handle = act.getHandle();
     string action = act.getActionType();
-    if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
-      tfString = tfString + action + ";" + act.getScope() + ";" + act.getVarName() + ";" + act.getToType() + "\n";
+    if(handle == ""){
+      if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
+        tfString = tfString + action + ";" + act.getScope() + ";" + act.getVarName() + ";" + act.getToType() + "\n";
+      }
+      else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
+        tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + "=>" + act.getToType() + "\n";
+      }
+      else if(action == "transform"){
+        tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + ";" + act.getVarName() + "\n";
+      }
+      else if(action == "list_replacements"){
+        tfString = tfString + action + ";" + act.getVarName() + "\n";
+      }
     }
-    else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
-      tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + "=>" + act.getToType() + "\n";
-    }
-    else if(action == "transform"){
-      tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + ";" + act.getVarName() + "\n";
+    else{
+       tfString = tfString + "handle";
+       if(action == "replace_varbasetype" || action == "replace_basetype" || action == "change_basetype" || action == "change_varbasetype"){
+         tfString = tfString + "_base";
+       }
+       tfString = tfString + ";" + handle + "\n";
     }
   }
   ofstream out(fileName + ".tf");
@@ -206,7 +219,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
       //std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
       string commandName,functionName,varName,typeName;
       size_t numEntries=splitLine.size();
-      if(numEntries<=2 || numEntries>=5) {
+      if(numEntries<=1 || numEntries>=5) {
 	cerr<<"Error: wrong input format in file "<<specFileName<<". Wrong number of entries in line "<<lineNr<<"."<<endl;
 	return true;
       }
@@ -248,7 +261,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	} else {
 	  tt.addToTransformationList(_list,newType,funDef,varName,transformBase,nullptr);
 	}
-      } else if(commandName=="replace_type" || commandName=="change_type") {
+      } else if((commandName=="replace_type" || commandName=="change_type") && false) {
 	if(numEntries!=3) {
 	  cerr<<"Error: wrong number of arguments in line "<<lineNr<<"."<<endl;
 	  return true;
@@ -347,7 +360,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
             } // end of loop on functionConstructSpecList
           }
         } 
-      } else if(commandName=="replace_basetype" || commandName=="change_basetype") {
+      } else if(commandName == "replace_type" || commandName == "change_type" || commandName=="replace_basetype" || commandName=="change_basetype") {
 	if(numEntries!=3) {
 	  cerr<<"Error: wrong number of arguments in line "<<lineNr<<"."<<endl;
 	  return true;

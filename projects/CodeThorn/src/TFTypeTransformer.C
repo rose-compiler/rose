@@ -35,6 +35,7 @@ void TFTypeTransformer::nathan_setConfig(ToolConfig oldConfig, string fileName){
 void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
   if(!fromType || !toType || !handleNode) return;
   if(_writeConfig == "") return;
+  if(varName == "") return;
   abstract_node* anode = buildroseNode(handleNode);
   abstract_handle* ahandle = new abstract_handle(anode);
   if(base) _outConfig.addReplaceVarBaseType(ahandle->toString(), varName, scope, _writeConfig, fromType->unparseToString(), toType->unparseToString()); 
@@ -236,6 +237,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         }
         string funName = SgNodeHelper::getFunctionName(root);
         TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Changed type to "+replaceType->unparseToString());
+        nathan_addToActionList("", funName+":ret", fromType, newType, funDecl, base);
         funType->set_orig_return_type(replaceType);
         foundVar++;
       }
