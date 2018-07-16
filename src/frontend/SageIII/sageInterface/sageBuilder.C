@@ -1636,16 +1636,6 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT (scope != NULL);
      ROSE_ASSERT(type != NULL);
 
-  // At present we don't have a SgTemplateVariableDeclaration IR node, so use the base class SgTemplateDeclaration for now!
-  // printf ("ROSE maybe needs a SgTemplateVariableDeclaration IR node \n");
-
-  // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name, type, varInit);
-  // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name);
-
-  // DQ (12/21/2011): The new design for SgTemplateVariableDeclaration derives from the SgVariableDeclaration instead of SgTemplateDeclaration.
-  // SgTemplateDeclaration * varDecl = new SgTemplateVariableDeclaration(name);
-  // SgVariableDeclaration * varDecl = new SgTemplateVariableDeclaration();
-  // SgTemplateVariableDeclaration * varDecl = new SgTemplateVariableDeclaration();
      SgTemplateVariableDeclaration * varDecl = new SgTemplateVariableDeclaration(name, type, varInit);
      ROSE_ASSERT(varDecl);
 
@@ -1656,7 +1646,6 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT(variable != NULL);
      setSourcePosition(variable);
 
-#if 1
      if (name != "")
         {
        // Anonymous bit fields should not have symbols
@@ -1667,17 +1656,12 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT(initName);
      ROSE_ASSERT((initName->get_declptr())!=NULL);
 
-#if 1
   // bug 119, SgVariableDefintion's File_info is needed for deep copy to work
   // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
   // have to set SgVariableDefintion explicitly
      SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
      ROSE_ASSERT(variableDefinition_original != NULL);
      setOneSourcePositionNull(variableDefinition_original);
-#endif
-#else
-     printf ("In buildTemplateVariableDeclaration_nfi(): Support for template variable declarations is not yet implemented into AST. \n");
-#endif
 
      setOneSourcePositionNull(varDecl);
 
@@ -6674,47 +6658,62 @@ SgTemplateParameterVal* SageBuilder::buildTemplateParameterVal_nfi(int template_
   return templateParameterValue;
 }
 
+#define DEBUG_BUILD_NONREAL_DECL 1
+
 SgNonrealDecl * SageBuilder::buildNonrealDecl(const SgName & name, SgDeclarationScope * scope, SgDeclarationScope * child_scope) {
-#if 0
-  printf("In SageBuilder::buildNonrealDecl(name = %s):\n", name.str());
+  ROSE_ASSERT(scope != NULL);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("ENTER SageBuilder::buildNonrealDecl\n");
+  printf("  --- name = %s\n", name.str());
+  printf("  --- scope = %p (%s)\n", scope, scope->class_name().c_str());
 #endif
 
-  SgNonrealDecl * result = NULL;
+  SgNonrealDecl * nrdecl = NULL;
 
-  // check that `scope` is valid: parent is a template declaration (function, class, method) or non-real
-  ROSE_ASSERT(scope != NULL);
+  nrdecl = new SgNonrealDecl(name);
+  SageInterface::setSourcePosition(nrdecl);
+  nrdecl->set_firstNondefiningDeclaration(nrdecl);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- nrdecl = %p (%s)\n", nrdecl, nrdecl->class_name().c_str());
+#endif
 
-  result = new SgNonrealDecl(name);
-  SageInterface::setSourcePosition(result);
-  result->set_firstNondefiningDeclaration(result);
-
-  SgNonrealSymbol * symbol = new SgNonrealSymbol(result);
+  SgNonrealSymbol * symbol = new SgNonrealSymbol(nrdecl);
   scope->insert_symbol(name, symbol);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- symbol = %p (%s)\n", symbol, symbol->class_name().c_str());
+#endif
 
   SgNonrealType * type = new SgNonrealType();
-  type->set_declaration(result);
+  type->set_declaration(nrdecl);
+  type->set_parent(scope);
+  nrdecl->set_type(type);
   // FIXME (???) insert `type` in `scope`
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- type = %p (%s)\n", type, type->class_name().c_str());
+#endif
 
   if (child_scope == NULL) {
     child_scope = new SgDeclarationScope();
-#if 0
-  printf("In SageBuilder::buildNonrealDecl(name = %s): child_scope = %p (new)\n", name.str(), child_scope);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- child_scope = %p (new)\n", name.str(), child_scope);
 #endif
     SageInterface::setSourcePosition(child_scope);
     child_scope->get_startOfConstruct()->setCompilerGenerated();
     child_scope->get_endOfConstruct()->setCompilerGenerated();
   } else {
-#if 0
-  printf("In SageBuilder::buildNonrealDecl(name = %s): child_scope = %p (provided)\n", name.str(), child_scope);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- child_scope = %p (provided)\n", name.str(), child_scope);
 #endif
     
   }
+  child_scope->set_parent(nrdecl);
+  nrdecl->set_nonreal_decl_scope(child_scope);
+  
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("LEAVE SageBuilder::buildNonrealDecl\n");
+#endif
 
-  child_scope->set_parent(result);
-  result->set_nonreal_decl_scope(child_scope);
-  result->set_type(type);
-
-  return result;
+  return nrdecl;
 }
 
 //! Build UPC THREADS (integer expression)
@@ -9627,8 +9626,13 @@ SageBuilder::buildGotoStatement_nfi(SgExpression*  label_expression)
 SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */)
 {
   // Liao 2/6/2013. We no longer allow NULL express pointer. Use SgNullExpression instead.
+  // Rasmussen (4/27/18): The expression argument to the builder function is optional
+  // (NULL is allowed).  What is not allowed is constructing an SgReturnStmt with a NULL
+  // expression argument.
   if (expression == NULL)
-    expression = buildNullExpression();
+  {
+     expression = buildNullExpression();
+  }
   SgReturnStmt * result = new SgReturnStmt(expression);
   ROSE_ASSERT(result);
   if (expression != NULL) expression->set_parent(result);

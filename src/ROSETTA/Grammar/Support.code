@@ -4347,7 +4347,6 @@ HEADER_SYMBOL_TABLE_START
 
        // DQ (12/27/2011): Added support for template declarations in the AST.
        // SgTemplateVariableSymbol* find_template_variable(const SgName & name);
-          SgTemplateVariableSymbol* find_template_variable(const SgName & name, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateArgumentList);
           SgVariableSymbol*         find_nontemplate_variable(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
 #endif
           SgClassSymbol*     find_class(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
@@ -4424,6 +4423,8 @@ HEADER_SYMBOL_TABLE_START
       //! Complexity O(log n) for first match against name, then O(n)
        // SgTemplateFunctionSymbol* find_template_function(const SgName& name, const SgType* type, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateArgumentList);
           SgTemplateFunctionSymbol* find_template_function(const SgName& name, const SgType* type, SgTemplateParameterPtrList* templateList);
+
+          SgTemplateVariableSymbol* find_template_variable(const SgName& name, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateArgumentsList);
 
        // DQ (8/10/2013): Adding template parameter support for overloaded templates (note that the 
        // template arguments for specialization are not required since partial template function 
@@ -8518,6 +8519,21 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
+          case V_SgTemplateVariableSymbol:
+             {
+               SgTemplateVariableSymbol* vsym = isSgTemplateVariableSymbol(symbol);
+               ROSE_ASSERT(vsym != NULL);
+
+               SgInitializedName* iname = vsym->get_declaration();
+               ROSE_ASSERT(iname != NULL);
+
+               SgTemplateVariableDeclaration * tplvdecl = isSgTemplateVariableDeclaration(iname->get_parent());
+               ROSE_ASSERT(tplvdecl != NULL);
+
+               returnList = tplvdecl->get_templateSpecializationArguments();
+               break;
+             }
+
        // DQ (9/12/2016): Providing better implementation for template typedef symbol support.
        // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
           case V_SgTemplateTypedefSymbol:
@@ -8675,6 +8691,21 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
                     printf ("Error: Default reached in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
                     ROSE_ASSERT(false);
                   }
+               break;
+             }
+
+          case V_SgTemplateVariableSymbol:
+             {
+               SgTemplateVariableSymbol* vsym = isSgTemplateVariableSymbol(symbol);
+               ROSE_ASSERT(vsym != NULL);
+
+               SgInitializedName* iname = vsym->get_declaration();
+               ROSE_ASSERT(iname != NULL);
+
+               SgTemplateVariableDeclaration * tplvdecl = isSgTemplateVariableDeclaration(iname->get_parent());
+               ROSE_ASSERT(tplvdecl != NULL);
+
+               returnList = tplvdecl->get_templateParameters();
                break;
              }
 
@@ -9048,20 +9079,11 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 
                                    if (isTemplateType != test_isTemplateType)
                                       {
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                                         printf ("The two methods used to compute isTemplateType are different! \n");
                                         printf ("   --- isTemplateType      = %s \n",isTemplateType      ? "true" : "false");
                                         printf ("   --- test_isTemplateType = %s \n",test_isTemplateType ? "true" : "false");
 #endif
-                                     // ROSE_ASSERT(false);
-#if 0
-                                     // DQ (7/9/2016): Commenting this out allows test2016_51.C to pass, but causes test2016_57.C and test2016_58.C (from RoseExampleHeaders_10.C) to fail (and vis versa).
-                                        printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
-                                        printf ("In SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments(): Setting isTemplateType to value of test_isTemplateType = %s \n",test_isTemplateType ? "true" : "false");
-                                        printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
-#endif
-                                     // DQ (7/9/2016): Reset using the value computed from SageInterface::isEquivalentType().
-                                     // isTemplateType = test_isTemplateType;
 
                                         SgType* typeLocal_baseType      = templateParameterOrArgumentLocal->get_type()->stripType();
                                         SgType* typeFromSymbol_baseType = templateParameterOrArgumentFromSymbol->get_type()->stripType();
@@ -9101,7 +9123,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                  }
                                 else
                                  {
-#if 1
                                 // DQ (8/10/2013): Test for if the template parameter or arguments type matches (type, nontype, template_template).
                                 // DQ (6/17/2013): This newer code does a better job of resolving if template arguments are equivalent (more can be done still).
                                 // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::nontype_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::nontype_argument)
@@ -9175,13 +9196,8 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 
                                                     // DQ (12/8/2015): Using newly implemented function for type equivalence.
                                                     // DQ (12/8/2015): FIXME: This is not a good enough test, this can be improved.
-#if 0
-                                                    // DQ (12/15/2015): This is the original code, not good enough but working moderately well.
-                                                       if (templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type())
-#else
                                                     // DQ (12/15/2015): This causes a problem for SgTemplateType and SgMemberFunctionType and demonstrates the problem for debugging.
                                                        if (templateParameterOrArgumentLocal->get_initializedName()->get_type()->isEquivalentType(templateParameterOrArgumentFromSymbol->get_initializedName()->get_type()) == true)
-#endif
                                                           {
                                                             isTemplateType = true;
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
@@ -9210,7 +9226,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                           }
                                                          else
                                                           {
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                                                             printf ("-----    --- --- These are NOT the same initializedName pointers OR the same type! \n");
 #endif
                                                             isTemplateType = false;
@@ -9254,7 +9270,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                else
                                                 {
                                                // Different pointer values mean different expressions (I hope this is always true).
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                                                   printf ("-----    --- --- These are NOT the same template declaration values and should have resolved to be the same pointer value if there were the same template template declaration argument value \n");
 #endif
                                                 }
@@ -9293,7 +9309,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                 }
                                                else
                                                 {
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                                                   printf ("----- T::is_matching_kind() == false: \n");
 #endif
                                                 }
@@ -9317,26 +9333,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                              isTemplateType = false;
                                            }
                                       }
-#else
-                                // DQ (8/23/2012): This still might not be precise enough since but this is a test.
-                                // Note that both might for example be a value type, but we don't know that they are 
-                                // the same value (e.g. a boolean value used as a template argument could be true or false).
-#error "DEAD CODE!"
-                                   if (templateArgumentLocal->get_argumentType() == templateArgumentFromSymbol->get_argumentType())
-                                      {
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
-                                        printf ("----- SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): argumentTypes match: Depending on the type we may have to test that the internal expressions are the same templateArgumentLocal->get_argumentType() = %d \n",
-                                             templateArgumentLocal->get_argumentType());
-#endif
-                                        isTemplateType = true;
-                                      }
-                                     else
-                                      {
-#error "DEAD CODE!"
-                                     // These are not the same type: so return false.
-                                        isTemplateType = false;
-                                      }
-#endif
                                  }
                             }
 
@@ -9524,6 +9520,19 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTempl
      return s;
    }
 
+SgTemplateVariableSymbol*
+SgSymbolTable::find_template_variable(const SgName& nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList)
+   {
+#if 0
+     printf ("In SgSymbolTable::find_template_variable(): nm = %s templateParameterList = %p size = %zu \n",nm.str(),templateParameterList,templateParameterList->size());
+#endif
+
+     bool filterTemplateSymbols = false;
+     SgTemplateVariableSymbol *s = find_symbol_with_type_support<SgTemplateVariableSymbol>(nm,NULL,templateParameterList,templateArgumentsList,filterTemplateSymbols);
+
+     return s;
+   }
+
 
 // DQ (12/27/2011): Added more support for template declarations in the AST.
 // SgMemberFunctionSymbol* SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* t)
@@ -9586,7 +9595,7 @@ SgSymbolTable::find_nontemplate_class (const SgName & nm, SgTemplateArgumentPtrL
 SgTemplateClassSymbol*
 SgSymbolTable::find_template_class (const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
    {
-     ROSE_ASSERT(templateParameterList != NULL);
+//   ROSE_ASSERT(templateParameterList != NULL); // TV: when we are looking for the original declaration of a template from potential specialization (we only have the name)
 
      bool filterTemplateSymbols = false;
      SgTemplateClassSymbol *s = find_symbol_with_type_support<SgTemplateClassSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList,filterTemplateSymbols);
@@ -9698,7 +9707,7 @@ templateParameterAndArgumentErrorChecking(SgTemplateParameterPtrList* templatePa
 #endif
             // This is the only allowed case (since functions template can be partially specialized.
             // ROSE_ASSERT((VariantT)ReturnType::static_variant == V_SgTemplateClassDeclaration);
-               returnValue = (returnTypeVariant == V_SgTemplateClassSymbol);
+               returnValue = (returnTypeVariant == V_SgTemplateClassSymbol || returnTypeVariant == V_SgTemplateVariableSymbol);
 #if 0
                printf ("In templateParameterAndArgumentErrorChecking(): templateParameterList != NULL && templateArgumentList != NULL: returnValue = %s \n",returnValue ? "true" : "false");
 #endif
@@ -19558,6 +19567,9 @@ SgTemplateArgument::get_mangled_name (void) const
        // DQ (5/19/2014): Added support for varadic template argument.
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
+            // DQ (7/4/2013): Added support for additional template argument type.
+            // const SgExpression* expr = get_expression();
+               assert(get_expression() != NULL);
 #if 0
                printf ("WARNING: In SgTemplateArgument::get_mangled_name(): handling of mangled name for varadic template argument is incomplete! \n");
 #endif
@@ -19679,8 +19691,8 @@ SgTemplateArgument::get_scope () const
           case SgTemplateArgument::nontype_argument:
              {
             // Not clear if the scope should be defined here!
-               const SgExpression* expr = get_expression();
-               assert(expr != NULL);
+            // const SgExpression* expr = get_expression();
+               assert(get_expression() != NULL);
                scope = NULL;
                break;
              }
@@ -19992,8 +20004,8 @@ SgTemplateArgument::display( const std::string & label) const
 
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
-               const SgExpression* expr = get_expression();
-               assert(expr != NULL);
+            // const SgExpression* expr = get_expression();
+               assert(get_expression() != NULL);
 #if 1
                printf ("WARNING: In SgTemplateArgument::display(): handling of display for varadic template argument is incomplete! \n");
 #endif

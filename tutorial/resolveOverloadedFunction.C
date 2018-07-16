@@ -19,7 +19,11 @@ int main( int argc, char * argv[] )
      int functionCounter = 0;
      for (Rose_STL_Container<SgNode*>::iterator i = functionCallList.begin(); i != functionCallList.end(); i++)
         {
-          SgExpression* functionExpression = isSgFunctionCallExp(*i)->get_function();
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
+          ROSE_ASSERT(functionCallExp != NULL);
+ 
+
+          SgExpression* functionExpression = functionCallExp->get_function();
           ROSE_ASSERT(functionExpression != NULL);
 
           SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExpression);
@@ -49,10 +53,10 @@ int main( int argc, char * argv[] )
           ROSE_ASSERT(functionDeclaration != NULL);
           
        // Output mapping of function calls to function declarations
-          printf ("Location of function call #%d at line %d resolved by overloaded function declared at line %d \n",
-               functionCounter++,
-               isSgFunctionCallExp(*i)->get_file_info()->get_line(),
-               functionDeclaration->get_file_info()->get_line());
+            printf ("Location of function call #%d at line %d resolved by overloaded function declared at line %d \n",
+                 functionCounter++,
+                 functionCallExp->get_file_info()->get_line(),
+                 functionDeclaration->get_file_info()->get_line());
         }
 
      return 0;

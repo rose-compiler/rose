@@ -2157,7 +2157,8 @@ SgType::handledUsingLocalTable(SgType* t)
   // DQ (9/4/2012): I have made SgTemplateType be stored in the local type table.
   // DQ (9/3/2012): I think this should be modified to include SgTemplateType as well.
      SgTemplateType* templateType = isSgTemplateType(t);
-     if (templateType != NULL)
+     SgNonrealType* nonrealType = isSgNonrealType(t);
+     if (templateType != NULL || nonrealType != NULL)
         {
        // printf ("WARNING: In SgType::handledUsingLocalTable(): I think that SgTemplateType should be handled out of the local type table! templateType = %p = %s \n",templateType,templateType->get_name().str());
           returnValue = true;
@@ -8203,7 +8204,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
   // this by testing that at least one type modifier flag was set, not done yet.
      SgName name = result->get_mangled();
 
-#if 0
+#if 1
      printf ("insertModifierTypeIntoTypeTable(): result is modifier type to base_type = %p = %s name = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str(),name.str());
 #endif
 
@@ -8238,6 +8239,9 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
         }
        else
         {
+       // TV (07/13/2018): At the very least they should have the same stripped type... (it would happen if the base types have colliding mangled name)
+          ROSE_ASSERT(t->stripType() == result->stripType());
+
        // This should be only a pointer to a SgModifierType (e.g. a pointer to a const base_type) NOT TRUE.
        // ROSE_ASSERT(isSgModifierType(base_type) != NULL || isSgFunctionType(base_type) != NULL);
 
