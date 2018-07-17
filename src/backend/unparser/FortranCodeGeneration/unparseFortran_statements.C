@@ -2154,6 +2154,19 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
    }
 
 
+bool
+hasCStyleElseIfConstruction(SgIfStmt* parentIfStatement)
+   {
+  // Rasmussen(7/17/2018): Check for C style AST else-if construction.
+  // The C style else-if AST doesn't have an SgBasicBlock immediately
+  // preceding the SgIfStmt representing the else-if clause; the SgIfStmt
+  // itself is the false branch.
+     SgIfStmt* else_if_stmt = isSgIfStmt(parentIfStatement->get_false_body());
+
+     return (else_if_stmt != NULL);
+   }
+
+
 SgIfStmt*
 getElseIfStatement ( SgIfStmt* parentIfStatement )
    {
@@ -2162,7 +2175,8 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
      SgIfStmt* childIfStatement = NULL;
 
      bool ifStatementInFalseBody = false;
-     SgBasicBlock* falseBlock   = isSgBasicBlock(parentIfStatement->get_false_body());
+
+     SgBasicBlock* falseBlock = isSgBasicBlock(parentIfStatement->get_false_body());
   // printf ("falseBlock = %p \n",falseBlock);
      if (falseBlock != NULL)
         {
@@ -2187,6 +2201,16 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
 
   // printf ("(getElseIfStatement) ifStatementInFalseBody = %s childIfStatement = %p \n",ifStatementInFalseBody ? "true" : "false",childIfStatement);
 
+  // Rasmussen (7/16/2018): This branch added for the experimental Fortran parser where
+  // the AST was designed to follow C if statement.  For the new design there is no
+  // SgBasicBlock immediately preceding the SgIfStmt (the SgIfStmt is the false branch).
+     SgIfStmt* else_if_stmt = isSgIfStmt(parentIfStatement->get_false_body());
+     if (else_if_stmt != NULL)
+        {
+           else_if_stmt->set_is_else_if_statement(true);
+           childIfStatement = else_if_stmt;
+        }
+
      return childIfStatement;
    }
 
@@ -2198,8 +2222,6 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
   //
   // Assume: If nodes always have a true and false body which are
   // possibly empty basic block nodes.
-
-  // printf ("In FortranCodeGeneration_locatedNode::unparseIfStmt \n");
 
      SgIfStmt* if_stmt = isSgIfStmt(stmt);
      ROSE_ASSERT(if_stmt != NULL);
@@ -2215,7 +2237,7 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
      curprint("IF (");
      info.set_inConditional();
 
-  // DQ (8/15/2007): In C the condiion is a statment, and in Fortran the condition is an expression!
+  // DQ (8/15/2007): In C the condition is a statement, and in Fortran the condition is an expression!
   // We might want to fix this by having an IR node to represent the Fortran "if" statement.
   // unparseStatement(if_stmt->get_conditional(), info);
      SgExprStatement* expressionStatement = isSgExprStatement(if_stmt->get_conditional());
@@ -2333,7 +2355,9 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
   // printf ("Handling ELSE case for if_stmt = %p \n",if_stmt);
   // false body: unparse only if non-empty basic block
      SgBasicBlock* fbb = isSgBasicBlock(if_stmt->get_false_body());
-     if (fbb && fbb->get_statements().size() > 0)
+
+  // Rasmussen(7/17/2018): Added unparsing of C style else if AST construction
+     if ((fbb && fbb->get_statements().size() > 0) || hasCStyleElseIfConstruction(if_stmt))
         {
        // The else statement might just need its own numeric label
        // unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
