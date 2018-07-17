@@ -94,7 +94,7 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
       else _totalTypeNameChanges+=numChanges;
       transformCommandLineFiles(project);
     }else{
-
+      _totalHandleChanges+=nathan_changeHandleType(handleNode, newVarType, base, listing);
     }
   }
   if(_writeConfig != ""){
@@ -167,7 +167,28 @@ SgType* TFTypeTransformer::nathan_rebuildBaseType(SgType* root, SgType* newBaseT
   }
 }
 
-int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode){
+int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing){
+  SgInitializedName* initName = isSgInitializedName(handle);
+  if(SgVariableDeclaration* varDec = isSgVariableDeclaration(handle)){
+    initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
+  }
+  if(initName != nullptr){
+    SgType* changeType = newType;
+    if(base){
+      SgType* oldType = initName->get_type();
+      changeType = nathan_rebuildBaseType(oldType, newType);
+    }
+    if(!listing){
+      SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
+      string varName = SgNodeHelper::symbolToString(varSym);
+      TFTypeTransformer::trace("Found declaration of variable "+varName+". Changed type to "+changeType->unparseToString());
+      initName->set_type(changeType);
+      return 1;
+    }return 0;
+  }else return 0;
+}
+
+int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode,bool listing){
   SgType* baseType;
   if(base){
     SgType* oldInitType = varInitName->get_type();
@@ -179,33 +200,37 @@ int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType*
   if(funDef){
     scopeName = SgNodeHelper::getFunctionName(funDef);
   }
-  TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Changed type to "+baseType->unparseToString());
-  nathan_addToActionList(varName, scopeName, oldType, newType, handleNode, base);
-  varInitName->set_type(baseType);
-  return 1;
+  if(listing){
+    nathan_addToActionList(varName, scopeName, oldType, newType, handleNode, base);
+    return 0; 
+  } 
+  else{
+    TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Changed type to "+baseType->unparseToString());
+    varInitName->set_type(baseType);
+    return 1;
+  }
 }
 
 //void nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode){
 int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType) {
-  return TFTypeTransformer::changeTypeIfInitNameMatches(varInitName, root, varNameToFind, newType, false, nullptr);
+  return TFTypeTransformer::changeTypeIfInitNameMatches(varInitName, root, varNameToFind, newType, false, nullptr,false);
 }
 
-int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType,bool base, SgNode* handleNode) {
+int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitName,SgNode* root,string varNameToFind,SgType* newType,bool base, SgNode* handleNode,bool listing) {
   int foundVar=0;
   if(varInitName) {
     SgSymbol* varSym=SgNodeHelper::getSymbolOfInitializedName(varInitName);
     if(varSym) {
       string varName=SgNodeHelper::symbolToString(varSym);
       if(varName==varNameToFind) {
-        nathan_changeType(varInitName, newType, nullptr, varName, base, isSgFunctionDefinition(root), handleNode);
-        foundVar++;
+        foundVar += nathan_changeType(varInitName, newType, nullptr, varName, base, isSgFunctionDefinition(root), handleNode,listing);
       }
     }
   }
   return foundVar;
 }
 
-int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base, SgNode* handleNode){
+int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base, SgNode* handleNode, bool listing){
   int foundVar = 0;
   if(varInitName){
     SgType* oldType = varInitName->get_type();
@@ -215,8 +240,7 @@ int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* var
     if(oldType == fromType){
       SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInitName);
       string varName = SgNodeHelper::symbolToString(varSym);
-      nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root), handleNode);
-      foundVar++;
+      foundVar+=nathan_changeType(varInitName, newType, fromType, varName, base, isSgFunctionDefinition(root), handleNode,listing);
     }
   }
   return foundVar;
@@ -235,10 +259,10 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
     SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     for(auto varInitName : initNamePtrList) {
       if(fromType != nullptr && varNameToFind == "TYPEFORGEargs"){
-        foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base, varInitName);
+        foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base, varInitName,listing);
       }    
       else if(varNameToFind != "" && fromType == nullptr){
-        foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base, varInitName);
+        foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base, varInitName,listing);
       }
     }
     //Change return type
@@ -271,10 +295,10 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
           varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
           if(fromType != nullptr && varNameToFind == "TYPEFORGEbody"){
-            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base,varDecl);
+            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base,varDecl,listing);
           }      
           else if(varNameToFind != "" && fromType == nullptr){
-            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base,varDecl);
+            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base,varDecl,listing);
           }
         }
       }
@@ -287,10 +311,10 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         for(auto varDecl: listOfGlobalVars){
           SgInitializedName* varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
           if(fromType != nullptr){
-            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base,varDecl);
+            foundVar+=nathan_changeTypeIfFromTypeMatches(varInitName,root,newType,fromType,base,varDecl,listing);
           }   
           else if(fromType == nullptr){
-            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base,varDecl);
+            foundVar+=changeTypeIfInitNameMatches(varInitName,root,varNameToFind,newType,base,varDecl,listing);
           }
         }
       }
@@ -375,6 +399,10 @@ int TFTypeTransformer::getTotalTypeNameChanges(){
   return _totalTypeNameChanges;
 }
 
+int TFTypeTransformer::getTotalHandleChanges(){
+  return _totalHandleChanges;
+}
+
 
 void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
@@ -390,14 +418,16 @@ void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int 
 
 void TFTypeTransformer::printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
-  int numTypeBasedReplacements=numTypeReplace+tt.getTotalTypeNameChanges();
+  int numTypeBasedReplacements=tt.getTotalTypeNameChanges();
   int numVarNameBasedReplacements=tt.getTotalNumChanges();
+  int numHandleBasedReplacements=tt.getTotalHandleChanges();
   int arrayReadAccesses=tfTransformation.readTransformations;
   int arrayWriteAccesses=tfTransformation.writeTransformations;
   int arrayOfStructsAccesses=tfTransformation.arrayOfStructsTransformations;
   int adIntermediateTransformations=tfTransformation.adIntermediateTransformations;
   cout<<"STATS: number of variable types changed (based on type-name): "<<numTypeBasedReplacements<<endl;
   cout<<"STATS: number of variable types changed (based on var-name): "<<numVarNameBasedReplacements<<endl;
+  cout<<"STATS: number of variable types changed (based on handle): "<<numHandleBasedReplacements<<endl;
   cout<<"STATS: number of transformed array read accesses: "<<arrayReadAccesses<<endl;
   cout<<"STATS: number of transformed array write accesses: "<<arrayWriteAccesses<<endl;
   cout<<"STATS: number of transformed arrays of structs accesses: "<<arrayOfStructsAccesses<<endl;

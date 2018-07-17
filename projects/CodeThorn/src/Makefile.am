@@ -592,7 +592,8 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
 	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
-	rm -f a.out
+	./typeforge --spec-file=craft_initial.cfg.json --trace $(srcdir)/tests/jsonReplaceTest.C
+	rm -f a.out craft_initial.cfg.json
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
