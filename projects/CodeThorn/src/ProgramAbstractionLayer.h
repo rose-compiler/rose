@@ -14,6 +14,7 @@ namespace SPRAY {
     ProgramAbstractionLayer();
     virtual ~ProgramAbstractionLayer();
     virtual void initialize(SgProject* root);
+    SgProject* getRoot();
     Labeler* getLabeler();
     VariableIdMapping* getVariableIdMapping();
     FunctionIdMapping* getFunctionIdMapping();
@@ -24,12 +25,13 @@ namespace SPRAY {
     void setInliningOption(bool flag);
     bool getInliningOption();
   private:
-    bool _modeArrayElementVariableId;;
-    Labeler* _labeler;
-    VariableIdMapping* _variableIdMapping;
-    FunctionIdMapping* _functionIdMapping;
+    bool _modeArrayElementVariableId=false;
+    Labeler* _labeler=nullptr;
+    VariableIdMapping* _variableIdMapping=nullptr;
+    FunctionIdMapping* _functionIdMapping=nullptr;
     bool _loweringOption=false;
     bool _inliningOption=false;
+    SgProject* _root=nullptr;
   };
 
 } // end of namespace SPRAY

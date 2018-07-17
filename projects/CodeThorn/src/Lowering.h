@@ -1,5 +1,5 @@
-#ifndef NORMALIZATION_H
-#define NORMALIZATION_H
+#ifndef LOWERING_H
+#define LOWERING_H
 
 // Author: Markus Schordan 2018.
 
@@ -55,7 +55,7 @@ namespace SPRAY {
   class Lowering {
   public:
     // applies all available lowering operations
-    void transformAst(SgNode* root);
+    void runLowering(SgNode* root);
     // calls ROSE SageInterface function for inlining
     size_t inlineFunctions(SgNode* root);
     static void setLabelPrefix(std::string prefix);
@@ -76,7 +76,7 @@ namespace SPRAY {
     bool hasFunctionCall(SgExpression* expr);
     // normalizes variable declarations T x=init to T x; x=init; 
     void normalizeAllVariableDeclarations(SgNode* node);
-
+    int inlineDepth=10; // default value, can be overwritten
   private:
     void normalizeAst(SgNode* root);
     // normalizes all single statements in if-statements to blocks (sage version)

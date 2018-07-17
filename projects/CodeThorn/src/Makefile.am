@@ -187,6 +187,8 @@ codethorn_SOURCES = \
   Lowering.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
+  NullPointerDereferenceLocations.h \
+  NullPointerDereferenceLocations.C \
   PhiAttribute.h \
   PhiAttribute.C \
   PhiStatement.h \
@@ -195,6 +197,10 @@ codethorn_SOURCES = \
   PragmaHandler.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  ProgramInfo.h \
+  ProgramInfo.C \
+  ProgramAbstractionLayer.h \
+  ProgramAbstractionLayer.C \
   ReachabilityAnalysis.h ReachabilityAnalysis.C \
   ReachabilityAnalyzerZ3.h \
   ReachabilityAnalyzerZ3.C \
@@ -437,7 +443,6 @@ faketarget:
 	CPDomain.hpp
 	LTL.h
 	rtests/vector1/RevStack.h
-	ProgramAbstractionLayer.h
 	tests/lvtest4.C
 	tests/svcomp-test2.c
 #      end of fake target

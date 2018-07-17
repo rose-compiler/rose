@@ -21,12 +21,17 @@ bool SPRAY::ProgramAbstractionLayer::getModeArrayElementVariableId() {
   return _modeArrayElementVariableId;; 
 }
 
+SgProject* SPRAY::ProgramAbstractionLayer::getRoot() {
+  return _root;
+}
+
 void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
+  _root=root;
   Lowering lowering;
   lowering.setInliningOption(getInliningOption());
   if(getLoweringOption()) {
     cout<<"DEBUG: PAL: lowering"<<endl;
-    lowering.transformAst(root);
+    lowering.runLowering(root);
   }
   _variableIdMapping=new VariableIdMapping();
   getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());

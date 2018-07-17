@@ -110,6 +110,7 @@ namespace CodeThorn {
     
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeStringLiteralsInState(PState& initialPState);
 
     // set the size of an element determined by this type
     void setElementSize(VariableId variableId, SgType* elementType);
@@ -194,8 +195,9 @@ namespace CodeThorn {
     // enables external function semantics 
     void enableSVCompFunctionSemantics();
     void disableSVCompFunctionSemantics();
-    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
-    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
+    bool svCompFunctionSemantics();
+    bool getStdFunctionSemantics();
+    void setStdFunctionSemantics(bool flag);
 
     void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
     SgTypeSizeMapping* getTypeSizeMapping();
@@ -225,7 +227,7 @@ namespace CodeThorn {
 
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
+    bool optionStringLiteralsInState=false;
   protected:
     void printStatusMessage(string s, bool newLineFlag);
 
@@ -261,6 +263,9 @@ namespace CodeThorn {
     // call of the form 'x=f(...)' and returns the varible-id of the
     // lhs, if a valid pointer is provided
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
+    // this function uses the respective function of ExprAnalyzer and
+    // extracts the result from the ExprAnalyzer data structure.
+    list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
