@@ -19506,56 +19506,7 @@ SgTemplateArgument::get_mangled_name (void) const
             // mangled_name << mangleExpression (templateDeclaration);
 
             // Let the mangled name be the simple name of the template (at least for now).
-            // SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
-#if 0
-               SgName mangled_templateDeclaration = templateDeclaration->get_name();
-#else
-#if 1
-            // DQ (9/24/2012): This has to use the mangled name since the template arguments could contain templates that would have to be mangled as well (see test2012_221.C).
-            // SgName mangled_templateDeclaration = templateDeclaration->get_template_name();
                SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
-#else
-            // DQ (12/22/2011): This is an ugly aspect of supporting template declarations as derived from that which they are associated.
-            // (e.g. SgTemplateClassDeclaration derived from a SgClassDeclaration).
-               SgName mangled_templateDeclaration;
-               switch (templateDeclaration->variantT())
-                  {
-                    case V_SgTemplateClassDeclaration:
-                       {
-                         mangled_templateDeclaration = isSgTemplateClassDeclaration(templateDeclaration)->get_name();
-                         break;
-                       }
-
-                    case V_SgTemplateFunctionDeclaration:
-                       {
-                         mangled_templateDeclaration = isSgTemplateFunctionDeclaration(templateDeclaration)->get_name();
-                         break;
-                       }
-
-                    case V_SgTemplateMemberFunctionDeclaration:
-                       {
-                         mangled_templateDeclaration = isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_name();
-                         break;
-                       }
-
-                    case V_SgTemplateVariableDeclaration:
-                       {
-                      // mangled_templateDeclaration = isSgTemplateVariableDeclaration(templateDeclaration)->get_name();
-                         const SgTemplateVariableDeclaration* templateVariableDeclaration = isSgTemplateVariableDeclaration(templateDeclaration);
-                         ROSE_ASSERT(templateVariableDeclaration->get_variables().empty() == false);
-                         SgInitializedName* initializedName = templateVariableDeclaration->get_variables()[0];
-                         mangled_templateDeclaration = initializedName->get_name();
-                         break;
-                       }
-
-                    default:
-                       {
-                         printf ("Error: default reached templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
-                         ROSE_ASSERT(false);
-                       }
-                  }
-#endif
-#endif
 
 #if 0
                printf ("Mangling of template template argument to template type not well tested yet mangled name = %s \n",mangled_templateDeclaration.str());
@@ -19567,12 +19518,6 @@ SgTemplateArgument::get_mangled_name (void) const
        // DQ (5/19/2014): Added support for varadic template argument.
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
-            // DQ (7/4/2013): Added support for additional template argument type.
-            // const SgExpression* expr = get_expression();
-               assert(get_expression() != NULL);
-#if 0
-               printf ("WARNING: In SgTemplateArgument::get_mangled_name(): handling of mangled name for varadic template argument is incomplete! \n");
-#endif
                mangled_name << "start_of_pack_expansion_argument";
                break;
              }

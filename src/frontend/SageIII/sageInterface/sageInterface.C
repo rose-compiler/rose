@@ -12784,7 +12784,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
 
   // printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
 
-#if 1
+#if 0
      printf ("In SageInterface::fixVariableDeclaration(): varDecl = %p scope = %p = %s \n",varDecl,scope,scope->class_name().c_str());
 #endif
 
@@ -12797,7 +12797,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
           ROSE_ASSERT(initName != NULL);
 
           SgName name = initName->get_name();
-#if 1
+#if 0
           printf ("  -- initName = %p : %s\n", initName, name.str());
           printf ("  -- initName->get_scope() = %p (%s)\n", initName->get_scope(), initName->get_scope() ? initName->get_scope()->class_name().c_str() : "");
 #endif
@@ -12838,7 +12838,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
        // SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
           ROSE_ASSERT(requiredScope != NULL);
           SgVariableSymbol* varSymbol = requiredScope->lookup_variable_symbol(name);
-#if 1
+#if 0
           printf ("  -- varSymbol = %p (%s)\n", varSymbol, varSymbol ? varSymbol->class_name().c_str() : "");
 #endif
 

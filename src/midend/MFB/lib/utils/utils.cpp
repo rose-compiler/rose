@@ -166,22 +166,34 @@ void collect_symbol_template_info(SgSymbol * sym, SgSymbol * & tpl_sym, SgDeclar
     }
 
   } else if (isSgTemplateTypedefSymbol(sym)) {
-    ROSE_ASSERT(false); // FIXME These are not used!!!!
+    SgTemplateTypedefDeclaration * tpl_decl = isSgTemplateTypedefDeclaration(isSgTemplateTypedefSymbol(sym)->get_declaration());
+    SgTemplateInstantiationTypedefDeclaration * tpl_inst = isSgTemplateInstantiationTypedefDeclaration(isSgTemplateTypedefSymbol(sym)->get_declaration());
+    if (tpl_decl != NULL) {
+      nrscope = tpl_decl->get_nonreal_decl_scope();
+      tpl_params = &(tpl_decl->get_templateParameters());
+      tpl_args = &(tpl_decl->get_templateSpecializationArguments());
+      tpl_sym = tpl_decl->search_for_symbol_from_symbol_table();
+      ROSE_ASSERT(tpl_sym != NULL);
+    } else if (tpl_inst) {
+      tpl_args = &(tpl_inst->get_templateArguments());
 
-    SgTemplateTypedefDeclaration * decl = isSgTemplateTypedefDeclaration(isSgTemplateTypedefSymbol(sym)->get_declaration());
-    ROSE_ASSERT(decl != NULL);
+      SgTemplateTypedefDeclaration * tpl_decl = tpl_inst->get_templateDeclaration();
+      ROSE_ASSERT(tpl_decl != NULL);
 
-    nrscope = decl->get_nonreal_decl_scope();
-    tpl_params = &(decl->get_templateParameters());
-    tpl_args = &(decl->get_templateSpecializationArguments());
+      tpl_sym = tpl_decl->search_for_symbol_from_symbol_table();
+      ROSE_ASSERT(tpl_sym != NULL);
+    } else {
+      ROSE_ASSERT(false);
+    }
 
   } else if (isSgTypedefSymbol(sym)) {
     SgTypedefDeclaration * decl = isSgTypedefSymbol(sym)->get_declaration();
     ROSE_ASSERT(decl != NULL);
 #if 1
-    SgTemplateTypedefDeclaration * tdecl = isSgTemplateTypedefDeclaration(decl); // that should not happen as it should be a SgTemplateTypedefSymbol
-    if (tdecl != NULL) {
-      // TODO
+    SgTemplateTypedefDeclaration * tpl_decl = isSgTemplateTypedefDeclaration(decl); // that should not happen as it should be a SgTemplateTypedefSymbol
+    SgTemplateInstantiationTypedefDeclaration * tpl_inst = isSgTemplateInstantiationTypedefDeclaration(decl);
+    if (tpl_decl != NULL || tpl_inst != NULL) {
+      ROSE_ASSERT(false); // FIXME
     }
 #endif
     SgTemplateInstantiationTypedefDeclaration * idecl = isSgTemplateInstantiationTypedefDeclaration(decl);
@@ -218,7 +230,10 @@ void collect_symbol_template_info(SgSymbol * sym, SgSymbol * & tpl_sym, SgDeclar
     nrscope = decl->get_nonreal_decl_scope();
     tpl_params = &(decl->get_tpl_params());
     tpl_args = &(decl->get_tpl_args());
-    tpl_sym = decl->get_templateDeclaration() ? decl->get_templateDeclaration()->search_for_symbol_from_symbol_table() : NULL;
+    if (decl->get_templateDeclaration()) {
+      tpl_sym = decl->get_templateDeclaration()->search_for_symbol_from_symbol_table();
+      ROSE_ASSERT(tpl_sym != NULL);
+    }
   }
 }
 

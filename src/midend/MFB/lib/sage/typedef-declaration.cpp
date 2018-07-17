@@ -55,7 +55,7 @@ void  Driver<Sage>::loadSymbols<SgTypedefDeclaration>(size_t file_id, SgSourceFi
   std::vector<SgTypedefDeclaration *>::const_iterator it_typedef_decl;
   for (it_typedef_decl = typedef_decl.begin(); it_typedef_decl != typedef_decl.end(); it_typedef_decl++) {
     SgTypedefDeclaration * typedef_decl = *it_typedef_decl;
-#if VERBOSE || 1
+#if VERBOSE
     std::cout << "[Debug] (MFB::Driver<Sage>::loadSymbols<SgTypedefDeclaration>) typedef_decl = " << typedef_decl << " (" << typedef_decl->get_name().str() << ")" << std::endl;
 #endif
 
