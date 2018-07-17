@@ -38,13 +38,29 @@ void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& 
   }
 }
 
-void TFTypeTransformer::nathan_setConfig(ToolConfig config){
+void TFTypeTransformer::nathan_setConfig(ToolConfig* config){
   _outConfig = config;
-  _outConfig.getActions().clear();
+  _outConfig->getActions().clear();
+  _outConfig->setToolID("typeforge");
 }
 
 void TFTypeTransformer::nathan_setConfigFile(string fileName){
   _writeConfig = fileName;
+  if(_outConfig == nullptr){
+    _outConfig = new ToolConfig();
+    _outConfig->setToolID("typeforge");
+  }
+}
+
+std::string nathan_getNodeFileName(SgNode* node){
+  SgNode* currentNode = node;
+  SgSourceFile* file = nullptr;
+  while(file == nullptr && currentNode != nullptr){
+    file = isSgSourceFile(currentNode);
+    currentNode = currentNode->get_parent();
+  }
+  if(currentNode == nullptr) return "";
+  else return file->getFileName();
 }
 
 void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
@@ -53,8 +69,8 @@ void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgT
   if(varName == "") return;
   abstract_node* anode = buildroseNode(handleNode);
   abstract_handle* ahandle = new abstract_handle(anode);
-  if(base) _outConfig.addReplaceVarBaseType(ahandle->toString(), varName, scope, "", fromType->unparseToString(), toType->unparseToString()); 
-  else _outConfig.addReplaceVarType(ahandle->toString(), varName, scope, "", fromType->unparseToString(), toType->unparseToString()); 
+  if(base) _outConfig->addReplaceVarBaseType(ahandle->toString(), varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
+  else _outConfig->addReplaceVarType(ahandle->toString(), varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
 }
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
   // make all floating point casts explicit
@@ -98,7 +114,7 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
     }
   }
   if(_writeConfig != ""){
-    _outConfig.saveConfig(_writeConfig);
+    _outConfig->saveConfig(_writeConfig);
   }
 }
 

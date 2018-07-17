@@ -43,8 +43,8 @@ bool nathan_checkSuffix(string s, string suffix){
 
 string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   string tfString = "";
-  ToolConfig config(fileName);
-  vector<ToolAction>& actions = config.getActions();
+  ToolConfig* config = new ToolConfig(fileName);
+  vector<ToolAction>& actions = config->getActions();
   for(auto act: actions){
     string handle = act.getHandle();
     string action = act.getActionType();

@@ -37,7 +37,7 @@ class TFTypeTransformer {
   void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void nathan_addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base);
-  void nathan_setConfig(ToolConfig config);
+  void nathan_setConfig(ToolConfig* config);
   void nathan_setConfigFile(std::string fileName);
   int  nathan_changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing);
  private:
@@ -46,7 +46,7 @@ class TFTypeTransformer {
   int _totalNumChanges=0;
   int _totalTypeNameChanges=0;
   int _totalHandleChanges=0;
-  ToolConfig _outConfig;
+  ToolConfig* _outConfig;
   std::string _writeConfig = "";
 };
 

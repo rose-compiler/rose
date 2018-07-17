@@ -1,7 +1,7 @@
 {
   "version": "1",
   "source_files": [
-    "jsonReplaceTest.C"
+    "/export/tmp.pinnow2/rose/projects/CodeThorn/src/tests/jsonReplaceTest.C"
   ],
   "tool_id": "Master",
   "actions": [
