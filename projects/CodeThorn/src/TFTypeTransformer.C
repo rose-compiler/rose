@@ -212,9 +212,10 @@ int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType*
   }else{
     baseType = newType;
   }
-  string scopeName = "$global";
+  string scopeName = "global";
   if(funDef){
     scopeName = SgNodeHelper::getFunctionName(funDef);
+    scopeName = "function:<" + scopeName + ">";
   }
   if(listing){
     nathan_addToActionList(varName, scopeName, oldType, newType, handleNode, base);
@@ -297,7 +298,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         }
         string funName = SgNodeHelper::getFunctionName(root);
         TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Changed type to "+replaceType->unparseToString());
-        if(listing) nathan_addToActionList("RETURN TYPE", funName, fromType, newType, funDecl, base);
+        if(listing) nathan_addToActionList("$return", funName, fromType, newType, funDecl, base);
         else{
           funType->set_orig_return_type(replaceType);
           foundVar++;

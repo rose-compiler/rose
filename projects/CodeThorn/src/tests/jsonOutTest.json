@@ -7,7 +7,7 @@
   "actions": [
     {
       "action": "list_basereplacements",
-      "name": "craft_initial.cfg.json",
+      "name": "craft_initial.json",
       "to_type": "float",
       "from_type": "double"
     }
