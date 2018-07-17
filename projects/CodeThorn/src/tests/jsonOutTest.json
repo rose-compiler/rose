@@ -6,14 +6,8 @@
   "tool_id": "Master",
   "actions": [
     {
-      "action": "replace_basetype",
-      "scope": "*:body,args",
-      "to_type": "float",
-      "from_type": "double"
-    },
-    {
-      "action": "replace_basetype",
-      "scope": "$global",
+      "action": "list_basereplacements",
+      "name": "craft_initial.cfg.json",
       "to_type": "float",
       "from_type": "double"
     }

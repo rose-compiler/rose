@@ -15,20 +15,35 @@ using namespace AbstractHandle;
 bool TFTypeTransformer::_traceFlag=false;
 
 void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames){
-  TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,false,nullptr);
+  TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,false,nullptr,nullptr,false);
 }
 
-void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames, bool base, SgType* fromType) {
+void TFTypeTransformer::addHandleTransformationToList(std::list<VarTypeVarNameTuple>& list,SgType* type,bool base,SgNode* handleNode, bool listing){
+  TFTypeTransformer::addToTransformationList(list,type,nullptr,"",base,nullptr,handleNode,listing);
+} 
+
+void TFTypeTransformer::addTypeTransformationToList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, SgType* fromType, bool listing){
+  TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,base,fromType,nullptr,listing);
+}
+ 
+void TFTypeTransformer::addNameTransformationToList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, bool listing){
+  TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,base,nullptr,nullptr,listing);
+}
+
+void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames, bool base, SgType* fromType, SgNode* handleNode, bool listing) {
   vector<string> varNamesVector=CppStdUtilities::splitByComma(varNames);
   for (auto name:varNamesVector) {
-    TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name,base,fromType);
+    TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name,base,fromType,handleNode,listing);
     list.push_back(p);
   }
 }
 
-void TFTypeTransformer::nathan_setConfig(ToolConfig oldConfig, string fileName){
-  _outConfig = oldConfig;
+void TFTypeTransformer::nathan_setConfig(ToolConfig config){
+  _outConfig = config;
   _outConfig.getActions().clear();
+}
+
+void TFTypeTransformer::nathan_setConfigFile(string fileName){
   _writeConfig = fileName;
 }
 
@@ -38,8 +53,8 @@ void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgT
   if(varName == "") return;
   abstract_node* anode = buildroseNode(handleNode);
   abstract_handle* ahandle = new abstract_handle(anode);
-  if(base) _outConfig.addReplaceVarBaseType(ahandle->toString(), varName, scope, _writeConfig, fromType->unparseToString(), toType->unparseToString()); 
-  else _outConfig.addReplaceVarType(ahandle->toString(), varName, scope, _writeConfig, fromType->unparseToString(), toType->unparseToString()); 
+  if(base) _outConfig.addReplaceVarBaseType(ahandle->toString(), varName, scope, "", fromType->unparseToString(), toType->unparseToString()); 
+  else _outConfig.addReplaceVarType(ahandle->toString(), varName, scope, "", fromType->unparseToString(), toType->unparseToString()); 
 }
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
   // make all floating point casts explicit
@@ -55,30 +70,35 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
     string varName=std::get<2>(typeNameTuple);
     bool base = std::get<3>(typeNameTuple);
     SgType* fromType = std::get<4>(typeNameTuple);
+    SgNode* handleNode = std::get<5>(typeNameTuple);
+    bool listing = std::get<6>(typeNameTuple);
     SgNode* root=nullptr;
     if(funDef)
       root=funDef;
     else
       root=project;
-
-    int numChanges=changeVariableType(root, varName, newVarType, base, fromType);
-    if(numChanges==0 && fromType == nullptr) {
-      cout<<"Warning: Did not find variable "<<varName;
-      if(funDef) {
-        cout<<" in function "<<SgNodeHelper::getFunctionName(funDef)<<".";
-      } else {
-        cout<<" anywhere in file."<<endl;
+    if(!handleNode){
+      int numChanges=changeVariableType(root, varName, newVarType, base, fromType, listing);
+      if(numChanges==0 && fromType == nullptr) {
+        cout<<"Warning: Did not find variable "<<varName;
+        if(funDef) {
+          cout<<" in function "<<SgNodeHelper::getFunctionName(funDef)<<".";
+        } else {
+          cout<<" anywhere in file."<<endl;
+        }
+        cout<<endl;
+      } else if(numChanges>1 && fromType == nullptr) {
+        cout<<"Warning: Found more than one declaration of variable "<<varName<<endl;
       }
-      cout<<endl;
-    } else if(numChanges>1 && fromType == nullptr) {
-      cout<<"Warning: Found more than one declaration of variable "<<varName<<endl;
+      if(fromType == nullptr) _totalNumChanges+=numChanges;
+      else _totalTypeNameChanges+=numChanges;
+      transformCommandLineFiles(project);
+    }else{
+
     }
-    if(fromType == nullptr) _totalNumChanges+=numChanges;
-    else _totalTypeNameChanges+=numChanges;
-    transformCommandLineFiles(project);
   }
   if(_writeConfig != ""){
-    _outConfig.saveConfig(_writeConfig + ".TF_OUT");
+    _outConfig.saveConfig(_writeConfig);
   }
 }
 
@@ -203,10 +223,10 @@ int TFTypeTransformer::nathan_changeTypeIfFromTypeMatches(SgInitializedName* var
 }
 
 int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType) {
-  return TFTypeTransformer::changeVariableType(root, varNameToFind, newType, false, nullptr);
+  return TFTypeTransformer::changeVariableType(root, varNameToFind, newType, false, nullptr, false);
 }
 
-int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType, bool base, SgType* fromType) {
+int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType, bool base, SgType* fromType, bool listing) {
   RoseAst ast(root);
   int foundVar=0;
   //process type changes inside of a function
@@ -237,9 +257,11 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         }
         string funName = SgNodeHelper::getFunctionName(root);
         TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Changed type to "+replaceType->unparseToString());
-        nathan_addToActionList("", funName+":ret", fromType, newType, funDecl, base);
-        funType->set_orig_return_type(replaceType);
-        foundVar++;
+        if(listing) nathan_addToActionList("RETURN TYPE", funName, fromType, newType, funDecl, base);
+        else{
+          funType->set_orig_return_type(replaceType);
+          foundVar++;
+        }
       }
     }
     //Change type in body of function
