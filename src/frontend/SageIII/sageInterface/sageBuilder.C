@@ -3168,7 +3168,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         }
 #endif
 
-#if 1
+#if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): XXX_name = %s\n", XXX_name.str());
 #endif
 
@@ -3280,7 +3280,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         {
        // func_type = buildMemberFunctionType(return_type,paralist,NULL,0);
        // func_type = buildFunctionType(return_type,paralist);
-#if 1
+#if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s\n",scope,scope->class_name().c_str());
 #endif
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
@@ -6658,7 +6658,7 @@ SgTemplateParameterVal* SageBuilder::buildTemplateParameterVal_nfi(int template_
   return templateParameterValue;
 }
 
-#define DEBUG_BUILD_NONREAL_DECL 1
+#define DEBUG_BUILD_NONREAL_DECL 0
 
 SgNonrealDecl * SageBuilder::buildNonrealDecl(const SgName & name, SgDeclarationScope * scope, SgDeclarationScope * child_scope) {
   ROSE_ASSERT(scope != NULL);
@@ -14110,7 +14110,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
        ROSE_ASSERT(scope != NULL);
 
        SgClassSymbol* mysymbol = scope->lookup_template_class_symbol(nameWithTemplateSpecializationArguments,templateParameterList,templateSpecializationArgumentList);
-#if 1
+#if 0
        printf ("In buildTemplateClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -14138,7 +14138,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
 
          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
          nondefdecl->set_definingDeclaration(defdecl);
-#if 1
+#if 0
          printf("  nondefdecl = %p\n",nondefdecl);
 #endif
 #if 0

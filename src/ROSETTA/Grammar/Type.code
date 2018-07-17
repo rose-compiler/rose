@@ -8204,7 +8204,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
   // this by testing that at least one type modifier flag was set, not done yet.
      SgName name = result->get_mangled();
 
-#if 1
+#if 0
      printf ("insertModifierTypeIntoTypeTable(): result is modifier type to base_type = %p = %s name = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str(),name.str());
 #endif
 

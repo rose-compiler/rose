@@ -4889,7 +4889,7 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
              }
         }
 
-#if 1
+#if 0
      ROSE_ASSERT(s != NULL);
      SgNode* symbolBasis = s->get_symbol_basis();
   // printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s parent = %p = %s symbol = %p = %s s->get_symbol_basis() = %p = %s \n",
@@ -14370,19 +14370,20 @@ SgNonrealDecl::post_construction_initialization() {}
 
 SgName
 SgNonrealDecl::get_mangled_name (void) const {
-#if 1
+#if 0
   printf("In SgNonrealDecl::get_mangled_name():\n");
+  printf("  - this = %p\n", this);
 #endif
   ostringstream mangled_name;
 
-//if (get_is_class_member()) {
+  if (get_is_class_member()) {
     SgNode * type_parent = get_parent();
     ROSE_ASSERT(type_parent != NULL);
-#if 1
+#if 0
     printf("  - type_parent = %p (%s)\n", type_parent, type_parent ? type_parent->class_name().c_str() : "");
 #endif
     SgNode * decl_parent = type_parent->get_parent();
-#if 1
+#if 0
     printf("  - decl_parent = %p (%s)\n", decl_parent, decl_parent ? decl_parent->class_name().c_str() : "");
 #endif
     SgClassDeclaration * cdecl = isSgClassDeclaration(decl_parent);
@@ -14395,7 +14396,7 @@ SgNonrealDecl::get_mangled_name (void) const {
     } else if (nrdecl != NULL) {
        mangled_name << nrdecl->get_mangled_name().getString() << "___";
     }
-//}
+  }
 
   if (get_is_template_param()) {
     mangled_name << "__templ_param_" << p_template_parameter_depth << "_" << p_template_parameter_position + "__";
