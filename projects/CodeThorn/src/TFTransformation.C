@@ -257,41 +257,17 @@ bool isWithinBlockStmt(SgExpression* exp) {
 //Transformation ad_intermediate
 void TFTransformation::instrumentADIntermediate(SgNode* root) {
   RoseAst ast(root);
-  std::string matchexpression;
-  //matchexpression+="$ASSIGNOP=SgAssignOp($VAR=SgVarRefExp,_)";
-  //matchexpression+="$ASSIGNOP=SgAssignOp($VAR=SgVarRefExp,_)|$ASSIGNOP=SgPlusAssignOp($VAR=SgVarRefExp,..)";
-  //matchexpression+="|$ASSIGNOP=SgAssignOp($VAR=SgPntrArrRefExp,_)|$ASSIGNOP=SgPlusAssignOp($VAR=SgPntrArrRefExp,..)";
-  //matchexpression+="|$ASSIGNOP=SgAssignOp($VAR=SgPointerDerefExp,_)|$ASSIGNOP=SgPlusAssignOp($VAR=SgPointerDerefExp,..)";
-  //AstMatching m;
-  //MatchResult r=m.performMatching(matchexpression,root);
-  //for(MatchResult::iterator j=r.begin();j!=r.end();++j) {
-  //  SgExpression* assignOp=isSgExpression((*j)["$ASSIGNOP"]);
-  //  SgExpression* leftExp=isSgExpression((*j)["$VAR"]);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i){
-    SgExpression* assignOp = nullptr;
-    SgExpression* refExp = nullptr;
-    if(SgAssignOp* aop = isSgAssignOp(*i)){
-      assignOp = aop;
-      refExp = aop->get_lhs_operand();
-    }
-    else if(SgCompoundAssignOp* comOp = isSgCompoundAssignOp(*i)){
-      assignOp = comOp;
-      refExp = comOp->get_lhs_operand();  
-    }
-    else if(SgPlusPlusOp* ppOp = isSgPlusPlusOp(*i)){
-      assignOp = ppOp;
-      refExp = ppOp->get_operand();
-    }
-    else if(SgMinusMinusOp* mmOp = isSgMinusMinusOp(*i)){
-      assignOp = mmOp;
-      refExp = mmOp->get_operand();
-    }else continue;
+    SgBinaryOp* assignOp = nullptr;
+    if((assignOp = isSgAssignOp(*i)));
+    else if((assignOp = isSgCompoundAssignOp(*i)));
+    else continue;
+    SgExpression* refExp = assignOp->get_lhs_operand();  
     SgType* varType=refExp->get_type();
     SgVarRefExp* varRefExp = nullptr;
     while(!varRefExp){
       if((varRefExp = isSgVarRefExp(refExp)));
       else if(SgPntrArrRefExp* arrRef = isSgPntrArrRefExp(refExp)) refExp = arrRef->get_lhs_operand();
-      else if(SgPointerDerefExp* pntrRef = isSgPointerDerefExp(refExp)) refExp = pntrRef->get_operand();
       else continue;
     }
     if(SgNodeHelper::isFloatingPointType(varType)) {
