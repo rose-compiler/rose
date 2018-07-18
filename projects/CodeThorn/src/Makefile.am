@@ -246,6 +246,8 @@ codethorn_SOURCES = \
   SpotSuccIter.h \
   SSAGenerator.h \
   SSAGenerator.C \
+  StructureAccessLookup.h \
+  StructureAccessLookup.C \
   ParProSpotTgba.C \
   ParProSpotTgba.h \
   ParProSpotState.C \
