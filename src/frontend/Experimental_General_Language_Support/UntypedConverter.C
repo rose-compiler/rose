@@ -845,6 +845,21 @@ UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclar
       return blockDataDeclaration;
    }
 
+SgBasicBlock*
+UntypedConverter::convertSgUntypedBlockStatement (SgUntypedBlockStatement* ut_block_stmt, SgScopeStatement* scope)
+{
+   SgBasicBlock* sg_basic_block = SageBuilder::buildBasicBlock();
+
+#if 0
+   std::cout << "--- UntypedConverter:: SgBasicBlock: " << sg_basic_block << std::endl;
+   std::cout << "--- UntypedConverter:: current scope is : " << scope << std::endl;
+   std::cout << "--- UntypedConverter:: parent is : " << sg_basic_block->get_parent() << std::endl;
+   // I think this is the containing scope based on the parent.
+   //   std::cout << "--- UntypedConverter:: scope  is : " << sg_basic_block->get_scope() << std::endl;
+#endif
+
+   return sg_basic_block;
+}
 
 //TODO-WARNING: This needs help!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //
@@ -942,7 +957,7 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
          variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
          if (variableSymbol != NULL)
          {
-            std::cout << "--- but variable symbol is _NOT_ NULL for " << variableName << std::endl;
+            cout << "--- but variable symbol is _NOT_ NULL for " << variableName << endl;
 
          // This variable symbol has already been placed into the function definition's symbol table
          // Link the SgInitializedName in the variable declaration with its entry in the function parameter list.
@@ -1169,8 +1184,21 @@ UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, Sg
    {
       ROSE_ASSERT(children.size() == 3);
 
+#if 0
+      cout << "-x- convert if: conditional is " << ut_stmt->get_conditional() << " " << ut_stmt->get_conditional()->class_name() << endl;
+      cout << "-x- convert if:   true_body is " << ut_stmt->get_true_body() << " " << ut_stmt->get_true_body()->class_name() << endl;
+      cout << "-x- convert if:  false_body is " << ut_stmt->get_false_body() << " " << ut_stmt->get_false_body()->class_name() << endl;
+#endif
+
       SgExpression* conditional = isSgExpression(children[0]);
       ROSE_ASSERT(conditional != NULL);
+
+#if 0
+      cout << "--- convert if: conditional is " << conditional << " " << conditional->class_name() << endl;
+      cout << "-z- convert if: conditional is " << children[0] << " " << children[0]->class_name() << endl;
+      cout << "-z- convert if:   true_body is " << children[1] << " " << children[1]->class_name() << endl;
+      cout << "-z- convert if:  false_body is " << children[2] << " " << children[2]->class_name() << endl;
+#endif
 
       SgStatement* true_body = isSgStatement(children[1]);
       ROSE_ASSERT(true_body != NULL);
@@ -1179,10 +1207,19 @@ UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, Sg
    // True and false bodies will be replaced by the containing if statement
       SageInterface::removeStatement(true_body, scope);
 
-   // The false body is allowed to be NULL
+   // The false body has been appended to the scope at this point. Because it
+   // will be contained by the SgIfStmt it needs to be removed from the scope.
       SgStatement* false_body = isSgStatement(children[2]);
+   // The false body is allowed to be NULL
       if (false_body != NULL) {
          SageInterface::removeStatement(false_body);
+      }
+
+   // The false_body may be an SgIfStmt (representing else if ...),
+   // if so the unparser needs to know there is no END IF for the if statement.
+      SgIfStmt* else_if_stmt = isSgIfStmt(children[2]);
+      if (else_if_stmt != NULL) {
+         else_if_stmt->set_has_end_statement(false);
       }
 
       SgIfStmt* sg_stmt = SageBuilder::buildIfStmt(conditional, true_body, false_body);
@@ -2174,7 +2211,7 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
            SgUntypedInitializedName* ut_name = *it;
            SgName arg_name = ut_name->get_name();
 
-           std::cout << "In buildProcedureSupport(): building function parameter name " << arg_name << std::endl;
+           cout << "In buildProcedureSupport(): building function parameter name " << arg_name << endl;
 
         // The argument could be an alternate-return dummy argument
            SgInitializedName* initializedName = NULL;

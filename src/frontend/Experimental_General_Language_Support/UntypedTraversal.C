@@ -105,6 +105,27 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          pConverter->convertSgUntypedNameListDeclaration(ut_decl, currentScope);
          break;
       }
+    case V_SgUntypedBlockStatement:
+      {
+         SgUntypedBlockStatement* ut_block_stmt = dynamic_cast<SgUntypedBlockStatement*>(node);
+#if 0
+         std::cout << "-x- SgUntypedBlockStatement: " << ut_block_stmt << std::endl;
+         std::cout << "-x- scope is : " << ut_block_stmt->get_scope() << std::endl;
+#endif
+
+         SgBasicBlock* sg_basic_block = pConverter->convertSgUntypedBlockStatement(ut_block_stmt, currentScope);
+
+#if 0
+         std::cout << "---     top scope is : " << SageBuilder::topScopeStack() << " "
+                   << SageBuilder::topScopeStack()->class_name() << std::endl;
+         std::cout << "--- current scope is : " << currentScope << " " << currentScope->class_name() << std::endl;
+         std::cout << "---     new scope is : " << sg_basic_block << " " << sg_basic_block->class_name() << std::endl;
+#endif
+
+         SageBuilder::pushScopeStack(sg_basic_block);
+         currentScope = sg_basic_block;
+         break;
+      }
     case V_SgUntypedLabelStatement:
       {
          SgUntypedLabelStatement* ut_decl = dynamic_cast<SgUntypedLabelStatement*>(node);
@@ -179,6 +200,22 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          sg_node = pConverter->convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
          break;
       }
+    case V_SgUntypedBlockStatement:
+      {
+#if 0
+         SgNodePtrList children(childAttrs);
+         std::cout << "--- SgUntypedBlockStatement: # children is " << children.size() << std::endl;
+
+         std::cout << "---     top scope is : " << SageBuilder::topScopeStack() << " "
+                   << SageBuilder::topScopeStack()->class_name() << std::endl;
+         std::cout << "--- current scope is : " << currentScope << " " << currentScope->class_name() << std::endl;
+#endif
+
+         sg_node = SageBuilder::topScopeStack();
+                   SageBuilder::popScopeStack();
+
+         break;
+      }
     case V_SgUntypedExpressionStatement:
       {
          SgUntypedExpressionStatement* ut_stmt = dynamic_cast<SgUntypedExpressionStatement*>(node);
@@ -205,6 +242,15 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          sg_node = pConverter->convertSgUntypedIfStatement(ut_stmt, children, currentScope);
          break;
       }
+#if 0
+    case V_SgUntypedScope:
+      {
+         SgUntypedScope* ut_stmt = dynamic_cast<SgUntypedScope*>(node);
+         SgNodePtrList children(childAttrs);
+         std::cout << "--- SgUntypedScope: " << ut_stmt << " # children is " << children.size() << std::endl;
+         break;
+      }
+#endif
     case V_SgUntypedOtherStatement:
       {
          SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(node);
