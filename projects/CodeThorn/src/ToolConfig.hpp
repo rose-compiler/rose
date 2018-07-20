@@ -22,8 +22,8 @@ public:
     std::string getActionType();
     void setActionType(std::string type);
 
-    void setVarName(std::string name);
-    std::string getVarName();
+    void setName(std::string name);
+    std::string getName();
 
     void setHandle(std::string handle);
     std::string getHandle();
@@ -48,7 +48,7 @@ public:
 
 private:
     std::string action;
-    std::string varName;
+    std::string name;
     std::string handle;
     std::string scope;
     std::string sourceInfo;
@@ -71,8 +71,9 @@ public:
 
     void addReplaceVarType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType);
     void addReplaceVarBaseType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType);
- 
-   void addReplaceVarType(std::string handle, std::string var_name, double error, long assignments);
+
+    void addReplaceVarType(std::string handle, std::string var_name, double error, long assignments);
+    void addReplaceVarBaseType(std::string handle, std::string var_name, double error, long assignments);
 
     std::vector<std::string>& getSourceFiles();
 

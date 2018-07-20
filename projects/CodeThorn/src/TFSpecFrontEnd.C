@@ -45,13 +45,13 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   for(auto act: actions){
     string action = act.getActionType();
     if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
-      tfString = tfString + action + ";" + act.getScope() + ";" + act.getVarName() + ";" + act.getToType() + "\n";
+      tfString = tfString + action + ";" + act.getScope() + ";" + act.getName() + ";" + act.getToType() + "\n";
     }
     else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
       tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + "=>" + act.getToType() + "\n";
     }
     else if(action == "transform"){
-      tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + ";" + act.getVarName() + "\n";
+      tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + ";" + act.getName() + "\n";
     }
   }
   ofstream out(fileName + ".tf");

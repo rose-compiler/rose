@@ -5,7 +5,7 @@
 //////////////
 ToolAction::ToolAction(std::string actionType) {
     action = actionType;
-    varName = "";
+    name = "";
     handle = "";
     scope = "";
     sourceInfo = "";
@@ -17,7 +17,7 @@ ToolAction::ToolAction(std::string actionType) {
 
 ToolAction::ToolAction() {
     action = "None";
-    varName = "";
+    name = "";
     handle = "";
     scope = "";
     sourceInfo = "";
@@ -36,13 +36,13 @@ void ToolAction::setActionType(std::string type) {
     action = type;
 }
 
-//varName
-std::string ToolAction::getVarName() {
-    return varName;
+//name
+std::string ToolAction::getName() {
+    return name;
 }
 
-void ToolAction::setVarName(std::string name) {
-    varName = name;
+void ToolAction::setName(std::string name) {
+    this->name = name;
 }
 
 //handle
@@ -116,8 +116,8 @@ void to_json(json& j, const ToolAction& a) {
     }
     j["action"] = temp.getActionType();
 
-    if (temp.getVarName() != "") {
-        j["name"] = temp.getVarName();
+    if (temp.getName() != "") {
+        j["name"] = temp.getName();
     }
 
     if (temp.getHandle() != "") {
@@ -157,9 +157,9 @@ void from_json(const json& j, ToolAction& a) {
     }
 
     try {
-        a.setVarName(j.at("name"));
+        a.setName(j.at("name"));
     } catch(...) {
-        a.setVarName("");
+        a.setName("");
     }
 
     try {
@@ -265,7 +265,7 @@ void ToolConfig::addAction(ToolAction action) {
 void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType) {
     ToolAction action("replace_vartype");
     action.setHandle(handle);
-    action.setVarName(var_name);
+    action.setName(var_name);
     action.setScope(scope);
     action.setSourceInfo(source);
     action.setFromType(fromType);
@@ -276,7 +276,7 @@ void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, std
 void ToolConfig::addReplaceVarBaseType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType) {
     ToolAction action("replace_varbasetype");
     action.setHandle(handle);
-    action.setVarName(var_name);
+    action.setName(var_name);
     action.setScope(scope);
     action.setSourceInfo(source);
     action.setFromType(fromType);
@@ -290,7 +290,16 @@ void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, dou
     action.setError(error);
     action.setAssignments(assignments);
     action.setHandle(handle);
-    action.setVarName(var_name);
+    action.setName(var_name);
+    addAction(action);
+}
+
+void ToolConfig::addReplaceVarBaseType(std::string handle, std::string var_name, double error, long assignments) {
+    ToolAction action("replace_varbasetype");
+    action.setError(error);
+    action.setAssignments(assignments);
+    action.setHandle(handle);
+    action.setName(var_name);
     addAction(action);
 }
 
