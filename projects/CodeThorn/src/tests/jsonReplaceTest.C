@@ -8,8 +8,9 @@ void f0(){
   double e[10];
 }
 
-void f1(double a1){
+double f1(double a1){
  double b1;
+ return 0;
 }
 
 int main(){

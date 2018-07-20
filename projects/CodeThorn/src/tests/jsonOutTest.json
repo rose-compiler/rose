@@ -1,19 +1,13 @@
 {
   "version": "1",
   "source_files": [
-    "jsonReplaceTest.C"
+    "/export/tmp.pinnow2/rose/projects/CodeThorn/src/tests/jsonReplaceTest.C"
   ],
   "tool_id": "Master",
   "actions": [
     {
-      "action": "replace_basetype",
-      "scope": "*:body,args",
-      "to_type": "float",
-      "from_type": "double"
-    },
-    {
-      "action": "replace_basetype",
-      "scope": "$global",
+      "action": "list_basereplacements",
+      "name": "craft_initial.json",
       "to_type": "float",
       "from_type": "double"
     }

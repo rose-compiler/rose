@@ -257,14 +257,19 @@ bool isWithinBlockStmt(SgExpression* exp) {
 //Transformation ad_intermediate
 void TFTransformation::instrumentADIntermediate(SgNode* root) {
   RoseAst ast(root);
-  std::string matchexpression;
-  matchexpression+="$ASSIGNOP=SgAssignOp($VAR=SgVarRefExp,_)";
-  AstMatching m;
-  MatchResult r=m.performMatching(matchexpression,root);
-  for(MatchResult::iterator j=r.begin();j!=r.end();++j) {
-    SgExpression* assignOp=isSgExpression((*j)["$ASSIGNOP"]);
-    SgVarRefExp* varRefExp=isSgVarRefExp((*j)["$VAR"]);
-    SgType* varType=varRefExp->get_type();
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i){
+    SgBinaryOp* assignOp = nullptr;
+    if((assignOp = isSgAssignOp(*i)));
+    else if((assignOp = isSgCompoundAssignOp(*i)));
+    else continue;
+    SgExpression* refExp = assignOp->get_lhs_operand();  
+    SgType* varType=refExp->get_type();
+    SgVarRefExp* varRefExp = nullptr;
+    while(!varRefExp){
+      if((varRefExp = isSgVarRefExp(refExp)));
+      else if(SgPntrArrRefExp* arrRef = isSgPntrArrRefExp(refExp)) refExp = arrRef->get_lhs_operand();
+      else continue;
+    }
     if(SgNodeHelper::isFloatingPointType(varType)) {
       if(isWithinBlockStmt(assignOp)) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
