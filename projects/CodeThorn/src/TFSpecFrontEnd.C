@@ -28,6 +28,7 @@
 #include <ToolConfig.hpp>
 #include "abstract_handle.h"
 #include "roseAdapter.h"
+#include "TFCommandList.h"
 
 using namespace std;
 using namespace AbstractHandle;
@@ -77,134 +78,6 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
   return fileName + ".tf";
 }
 
-SgType* checkType(SgInitializedName* varInitName, string typeName) {
-  SgType* varInitType=varInitName->get_type();
-  SgType* baseType=varInitType->findBaseType();
-  if(baseType) {
-    if(SgNamedType* namedType=isSgNamedType(baseType)) {
-      string nameTypeString=namedType->get_name();
-      if(nameTypeString==typeName) {
-        //cout<<"DEBUG: Found user-defined type:"<<typeName<<endl;
-        return baseType;
-      }
-    }
-  }
-  return nullptr;
-}
-
-// search for user defined types in function parameters and variable declarations in provided function
-SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefinedTypeName) {
-  // (1) formal function parameters, (2) declared variables
-  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-  for(auto varInitName : initNamePtrList) {
-    if(SgType* type=checkType(varInitName,userDefinedTypeName))
-      return type;
-  }
-  RoseAst ast(funDef);
-  for (auto node : ast) {
-    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
-      SgInitializedName* varInitName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-      if(SgType* type=checkType(varInitName,userDefinedTypeName))
-        return type;
-    }
-  }
-  return nullptr;
-}
-
-// experimental "parser" for building types from string
-SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
-  SgType* newType=nullptr;
-  std::regex e("[_A-Za-z]+|\\*|&|const");
-  // default constructor = end-of-sequence
-  std::regex_token_iterator<std::string::iterator> rend;
-  std::regex_token_iterator<std::string::iterator> a ( type.begin(), type.end(), e );
-  bool buildConstType=false;
-  bool isLongType=false;
-  bool isShortType=false;
-  while (a!=rend) {
-    string typePart=*a++;
-    if(typePart=="float") {
-      if(isLongType||isShortType) {
-        cerr<<"Error: wrong type: float cannot be short or long."<<endl;
-        exit(1);
-      }
-      newType=SageBuilder::buildFloatType();
-    } else if(typePart=="double") {
-      if(!isLongType)
-        newType=SageBuilder::buildDoubleType();
-      else
-        newType=SageBuilder::buildLongDoubleType();
-    } else if(typePart=="short") {
-      isShortType=true;
-    } else if(typePart=="long") {
-      isLongType=true;
-    } else if(typePart==" ") {
-      continue;
-    } else if(typePart=="*") {
-      if(newType==nullptr) goto parseerror;
-      newType=SageBuilder::buildPointerType(newType);
-    } else if(typePart=="&") {
-      if(newType==nullptr) goto parseerror;
-      newType=SageBuilder::buildReferenceType(newType);
-    } else if(typePart=="const") {
-      buildConstType=true;
-    } else if(std::regex_match(typePart, std::regex("^[_A-Za-z]+$"))) {
-      // found a type name
-      if(SgFunctionDefinition* funDef=isSgFunctionDefinition(providedScope)) {
-        //cout<<"DEBUG: found type name:"<<typePart<<endl;
-        SgScopeStatement* funScope=funDef->get_scope();
-        // check whether provided type name is a name of a user-defined type
-        SgType* userDefinedType=findUserDefinedTypeByName(funDef,typePart);
-        if(userDefinedType) {
-          //cout<<"DEBUG: --> found user defined type :"<<typePart<<endl;
-          newType=userDefinedType;
-        } else {
-          newType=SageBuilder::buildOpaqueType(typePart, funScope);
-        }
-      } else {
-        // use provided scope if no funDef is provided
-        newType=SageBuilder::buildOpaqueType(typePart, providedScope);
-      }
-    } else {
-    parseerror:
-      cerr<<"Error: unsupported type: "<<type<<", unresolved:"<<typePart<<"."<<endl;
-      exit(1);
-    }
-    if(buildConstType && newType) {
-      newType=SageBuilder::buildConstType(newType);
-      buildConstType=false;
-    }
-  }
-  return newType;
-}
-
-list<SgInitializedName*> findVariablesByType(SgNode* root, SgType* type) {
-  list<SgInitializedName*> list;
-  RoseAst ast(root);
-  for (auto node : ast) {
-    if(SgInitializedName* initName=isSgInitializedName(node)) {
-      SgType* varInitNameType=initName->get_type();
-      if(varInitNameType==type) {
-        //cout<<"DEBUG: found variable by type! :"<<initName->unparseToString()<<endl;
-        list.push_back(initName);
-      }
-    }
-  }
-  return list;
-}
-
-// some simple string type tests (until parser is available)
-size_t pointerLevelOfType(string type) {
-  return std::count(type.begin(),type.end(),'*');
-}
-bool isReferenceType(string type) {
-  return 1==std::count(type.begin(),type.end(),'&');
-}
-bool isConstReferenceType(string type) {
-  size_t nPos = type.find("const", 0);
-  return nPos!=string::npos && isReferenceType(type);
-}
-
 bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   CppStdUtilities::DataFileVector lines;
   string tempFileName = "";
@@ -214,12 +87,17 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
   }
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
   RoseAst completeAst(root);
+  CommandList commandList(specFileName);
   if(fileOK) {
     int lineNr=0;
     for (auto line : lines) {
       lineNr++;
+      if(isComment(line)) {
+	// line is commented out (skip)
+	cout<<"Skipping line "<<lineNr<<endl;
+	continue;
+      }
       std::vector<std::string> splitLine=CppStdUtilities::splitByRegex(line,";");
-      //std::vector<std::string> splitLine=CppStdUtilities::splitByComma(line);
       string commandName,functionName,varName,typeName;
       size_t numEntries=splitLine.size();
       if(numEntries<=2 || numEntries>=5) {
@@ -228,11 +106,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
       }
       commandName=splitLine[0];
       functionName=splitLine[1];
-      if(isComment(commandName)) {
-	// line is commented out (skip)
-	cout<<"Skipping line "<<lineNr<<endl;
-	continue;
-      }
+      
       if(commandName=="change_vartype" || commandName=="change_varbasetype" || commandName=="replace_vartype" || commandName=="replace_varbasetype") {
 	varName=splitLine[2];
 	if(numEntries==4) {
@@ -244,26 +118,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
         if(commandName == "replace_varbasetype" || commandName == "change_varbasetype"){
           transformBase = true;
         }
-        SgFunctionDefinition* funDef;
-        SgType* newType;
-        if(functionName=="$global") {
-          funDef=nullptr; // denote global scope
-          SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
-          newType = buildTypeFromStringSpec(typeName,globalScope);
-        } else {
-          funDef=completeAst.findFunctionByName(functionName);
-          if(funDef==0) {
-            cerr<<"Error: function "<<functionName<<" does not exist in file."<<endl;
-            return true;
-          }
-	  newType=buildTypeFromStringSpec(typeName,funDef);
-        }
-	if(newType==nullptr) {
-	  cerr<<"Error: unknown type "<<typeName<<" in command file "<<specFileName<<" in line "<<lineNr<<"."<<endl;
-	  return true;
-	} else {
-	  tt.addNameTransformationToList(_list,newType,funDef,varName,transformBase,false);
-	}
+        commandList.addVarTypeCommand(varName, functionName, typeName, transformBase, false);
       } else if(commandName == "replace_type" || commandName == "change_type" || commandName=="replace_basetype" || commandName=="change_basetype") {
 	if(numEntries!=3) {
 	  cerr<<"Error: wrong number of arguments in line "<<lineNr<<"."<<endl;
@@ -271,21 +126,15 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	}
         bool transformBase = false;
         if(commandName == "replace_basetype" || commandName == "change_basetype"){
-	  if(tt.getTraceFlag()) cout<<"TRACE: replace_basetype mode: "<< "in line "<<lineNr<<"."<<endl;
           transformBase = true;
-        }else{
-          if(tt.getTraceFlag()) cout<<"TRACE: replace_type mode: "<< "in line "<<lineNr<<"."<<endl;
         }
-        bool onlyGlobalVars=false;
-        std::list<SgVariableDeclaration*> listOfGlobalVars;
+        
 	string functionSpec=splitLine[1];
 
 	string functionName;
-        std::vector<std::string> functionConstructSpecList;
+        std::vector<std::string> functionConstructSpecList = {""};
         std::vector<std::string> functionSpecSplit;
-        if(functionSpec=="$global") {
-          onlyGlobalVars=true;
-        } else {
+        if(functionSpec != "$global") {
           functionSpecSplit=CppStdUtilities::splitByRegex(functionSpec,":");
           if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier in line "<<lineNr<<":"<<functionSpec<<endl; exit(1);}
           functionName=functionSpecSplit[0];
@@ -297,37 +146,9 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	if(typeReplaceSpecSplit.size()!=2) { cerr<<"Error: wrong type replace specifier in line "<<lineNr<<":"<<typeReplaceSpec<<endl; exit(1);}
 	string oldTypeSpec=typeReplaceSpecSplit[0];
 	string newTypeSpec=typeReplaceSpecSplit[1];
-	if(tt.getTraceFlag()) cout<<"TRACE: line "<<lineNr<<":"<<functionSpec<<" "<<oldTypeSpec<<" "<<newTypeSpec<<" ptrlevel:"<<pointerLevelOfType(newTypeSpec)<<" ref:"<<isReferenceType(newTypeSpec)<<" constref:"<<isConstReferenceType(newTypeSpec)<<endl;
-        if(onlyGlobalVars) {
-          listOfGlobalVars=SgNodeHelper::listOfGlobalVars(root);
-          if(listOfGlobalVars.size()>0) {
-            cout<<"Found "<<listOfGlobalVars.size() <<" global variables."<<endl;
-            SgScopeStatement* globalScope=(*listOfGlobalVars.begin())->get_scope(); // obtain global scope from first var
-            SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,globalScope);
-            SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,globalScope);
-            tt.addTypeTransformationToList(_list,newBuiltType,nullptr,"",transformBase,oldBuiltType,false);
-          }
-        } else {
-          std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
-          if(functionName=="*") {
-            // transformation is specified to be applied to all functions, create list of all functions
-            listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
-          } else {
-            SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
-            if(funDef==nullptr) {
-              cout<<"WARNING: function "<<functionName<<" does not exist."<<endl;
-            } else {
-              listOfFunctionDefinitions.push_back(funDef);
-            }
-          }
-          for (auto funDef : listOfFunctionDefinitions) {
-            SgType* oldBuiltType=buildTypeFromStringSpec(oldTypeSpec,funDef);
-            SgType* newBuiltType=buildTypeFromStringSpec(newTypeSpec,funDef);
-            //cout<<"DEBUG: BUILT TYPES:"<<oldBuiltType->unparseToString()<<" => "<<newBuiltType->unparseToString()<<endl;
-            for(auto functionConstructSpec : functionConstructSpecList) {
-              tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGE"+functionConstructSpec,transformBase,oldBuiltType,false);
-            }
-          }
+
+        for(auto functionConstructSpec : functionConstructSpecList) {
+          commandList.addTypeCommand(functionConstructSpec, functionName, newTypeSpec, oldTypeSpec, transformBase, false);
         }
       } 
       else if(commandName=="transform") {
@@ -335,94 +156,33 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
           cerr<<"Error in line "<<lineNr<<": wrong number of arguments: "<<splitLine.size()<<" (should be 4)."<<endl;
         }
         if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
-        string functionName=splitLine[1];
-        string accessTypeName=splitLine[2];
-        string transformationName=splitLine[3];
-        std::list<SgFunctionDefinition*> listOfFunctionDefinitions;
-        if(functionName=="*") {
-          // transformation is specified to be applied to all functions, create list of all functions
-          listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
-        } else {
-          SgFunctionDefinition* funDef=completeAst.findFunctionByName(functionName);
-          if(funDef==nullptr) {
-            cerr<<"Error: line "<<lineNr<<": function "<<functionName<<" not found."<<endl;
-            return true;
-          } else {
-            listOfFunctionDefinitions.push_back(funDef);
-          }
-        }
-        for (auto funDef : listOfFunctionDefinitions) {
-          SgType* accessType=buildTypeFromStringSpec(accessTypeName,funDef);
-          if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
-          if(transformationName=="readwrite_access_transformation") {
-            tfTransformation.transformHancockAccess(accessType,funDef);
-          } else if(transformationName=="arrayofstructs_access_transformation") {
-	    //cout<<"ASTTERM:"<<AstTerm::astTermWithNullValuesToString(funDef);
-            tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
-          } else if(transformationName=="ad_intermediate_instrumentation") {
-            tfTransformation.instrumentADIntermediate(funDef);
-          }
-        }
-      }//Temporary should be improved
+        commandList.addTransformCommand(splitLine[1], splitLine[2], splitLine[3]);
+      }
       else if(commandName == "handle" || commandName == "handle_base"){
         bool base = false;
         if(commandName == "handle_base") base = true;
-        abstract_node* rootNode = buildroseNode(root);
-        abstract_handle* rootHandle = new abstract_handle(rootNode);
-        string handle = splitLine[1];
-        abstract_handle* ahandle = new abstract_handle(rootHandle,handle);
-        if(ahandle != nullptr){
-          if(abstract_node* anode = ahandle->getNode()){
-            SgNode* targetNode = (SgNode*) anode->getNode();
-            if(SgVariableDeclaration* varDec = isSgVariableDeclaration(targetNode)){
-              SgScopeStatement* scope = varDec->get_scope();
-              SgType* newBuiltType=buildTypeFromStringSpec(splitLine[2],scope);
-	      tt.addHandleTransformationToList(_list,newBuiltType,base,targetNode,false);
-            }
-            else if(SgInitializedName* initName = isSgInitializedName(targetNode)){
-              SgScopeStatement* scope = isSgDeclarationStatement(initName->get_parent())->get_scope();
-              SgType* newBuiltType=buildTypeFromStringSpec(splitLine[2],scope);
-	      tt.addHandleTransformationToList(_list,newBuiltType,base,targetNode,false);
-            }
-            else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(targetNode)){
-              SgFunctionDefinition* funDef = funDec->get_definition(); 
-              SgType* newBuiltType=buildTypeFromStringSpec(splitLine[2],funDef);
-              SgType* oldType = SgNodeHelper::getFunctionReturnType(funDef);
-              if(base) oldType = oldType->findBaseType();
-              tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGEret",base,oldType,false);
-            } 
-          }
-        }
+        commandList.addHandleCommand(splitLine[1], splitLine[2], base, false);
       }
       else if(commandName == "list_replacements" || commandName == "list_basereplacements"){
         bool base = false;
         if(commandName == "list_basereplacements") base = true;
         tt.nathan_setConfigFile(splitLine[3]);
-        std::list<SgVariableDeclaration*> listOfGlobalVars=SgNodeHelper::listOfGlobalVars(root);
-        if(listOfGlobalVars.size()>0) {
-          cout<<"Found "<<listOfGlobalVars.size() <<" global variables."<<endl; 
-          SgScopeStatement* globalScope=(*listOfGlobalVars.begin())->get_scope(); // obtain global scope from first var
-          SgType* oldBuiltType=buildTypeFromStringSpec(splitLine[1],globalScope);
-          SgType* newBuiltType=buildTypeFromStringSpec(splitLine[2],globalScope);
-          tt.addTypeTransformationToList(_list,newBuiltType,nullptr,"",base,oldBuiltType,true);
-        }
-        std::list<SgFunctionDefinition*> listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
-        for (auto funDef : listOfFunctionDefinitions) {
-          SgType* oldBuiltType=buildTypeFromStringSpec(splitLine[1],funDef);
-          SgType* newBuiltType=buildTypeFromStringSpec(splitLine[2],funDef);
-          tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGEbody",base,oldBuiltType,true);
-          tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGEargs",base,oldBuiltType,true);
-          tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGEret",base,oldBuiltType,true);
-        }
+        commandList.addTypeCommand("", "$global", splitLine[2], splitLine[1], base, true);
+        commandList.addTypeCommand("body", "*", splitLine[2], splitLine[1], base, true);
+        commandList.addTypeCommand("args", "*", splitLine[2], splitLine[1], base, true);
+        commandList.addTypeCommand("ret", "*", splitLine[2], splitLine[1], base, true);
       }
       else {
         cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
         return true;
       }
+      commandList.nextCommand();
     }
     if(tempFileName != ""){
       remove(tempFileName.c_str());
     }
+    commandList.runCommands(root, tt, tfTransformation);
+    _list = commandList.getTransformationList();
     return false;
   } else {
     cerr<<"Error: could not access file "<<specFileName<<endl;
