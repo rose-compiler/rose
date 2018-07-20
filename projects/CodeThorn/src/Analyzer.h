@@ -109,6 +109,7 @@ namespace CodeThorn {
     const EState* popWorkList();
     
     // initialize command line arguments provided by option "--cl-options" in PState
+    void initializeVariableIdMapping(SgProject*);
     void initializeCommandLineArgumentsInState(PState& initialPState);
     void initializeStringLiteralsInState(PState& initialPState);
 

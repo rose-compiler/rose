@@ -1275,7 +1275,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+    analyzer->initializeVariableIdMapping(sageProject);
     cout<<"STATUS: registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     

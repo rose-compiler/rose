@@ -987,6 +987,12 @@ void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
   }
 }
 
+void Analyzer::initializeVariableIdMapping(SgProject* project) {
+  variableIdMapping.computeVariableSymbolMapping(project);
+  exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
+  exprAnalyzer.initializeStructureAccessLookup(project);
+}
+
 void Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
@@ -1085,8 +1091,8 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
 
   logger[TRACE]<< "INIT: Creating Labeler."<<endl;
   Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
-  logger[TRACE]<< "INIT: Initializing VariableIdMapping."<<endl;
-  exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
+  //logger[TRACE]<< "INIT: Initializing VariableIdMapping."<<endl;
+  //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   logger[TRACE]<< "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);

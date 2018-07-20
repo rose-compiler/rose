@@ -17,6 +17,7 @@
 #include "AstTerm.h"
 #include "NullPointerDereferenceLocations.h"
 #include "SgTypeSizeMapping.h"
+#include "StructureAccessLookup.h"
 
 using namespace std;
 
@@ -74,7 +75,7 @@ namespace CodeThorn {
     //! When the option useConstraints is set to false constraints are not used when determining the
     //! values of top-variables. 
     list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, bool useConstraints);
-    void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
+    void setVariableIdMapping(VariableIdMapping* variableIdMapping);
     void setSkipSelectedFunctionCalls(bool skip);
     bool getSkipSelectedFunctionCalls();
     void setSkipArrayAccesses(bool skip);
@@ -94,8 +95,6 @@ namespace CodeThorn {
     NullPointerDereferenceLocations getNullPointerDereferenceLocations();
     void recordDefinitiveNullPointerDereferenceLocation(Label lab);
     void recordPotentialNullPointerDereferenceLocation(Label lab);
-    
-  public:
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
@@ -103,6 +102,8 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
     bool isLValueOp(SgNode* node);
+    void initializeStructureAccessLookup(SgProject* node);
+
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
@@ -251,7 +252,6 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
     int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
 
-      
   private:
     VariableIdMapping* _variableIdMapping=nullptr;
     NullPointerDereferenceLocations _nullPointerDereferenceLocations;
@@ -263,6 +263,7 @@ namespace CodeThorn {
     bool _svCompFunctionSemantics=false;
     Analyzer* _analyzer;
     SgTypeSizeMapping _sgTypeSizeMapping;
+    StructureAccessLookup structureAccessLookup;
   };
  
 } // end of namespace CodeThorn

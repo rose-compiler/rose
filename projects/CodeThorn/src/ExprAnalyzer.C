@@ -19,13 +19,24 @@ ExprAnalyzer::ExprAnalyzer() {
   initDiagnostics();
 }
 
+void ExprAnalyzer::setVariableIdMapping(VariableIdMapping* variableIdMapping) {
+  _variableIdMapping=variableIdMapping; 
+}
+
+
 void ExprAnalyzer::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
     initialized = true;
     logger = Sawyer::Message::Facility("CodeThorn::ExprAnalyzer", Rose::Diagnostics::destination);
     Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
-  }
+    }
+}
+
+void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
+  ROSE_ASSERT(node);
+  ROSE_ASSERT(_variableIdMapping);
+  structureAccessLookup.initialize(_variableIdMapping,node);
 }
 
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
@@ -100,7 +111,7 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   }
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
-    assert(_variableIdMapping);
+    ROSE_ASSERT(_variableIdMapping);
     varId=_variableIdMapping->variableId(varref);
     return true;
   } else {
