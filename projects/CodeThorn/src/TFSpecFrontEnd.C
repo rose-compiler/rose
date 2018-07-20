@@ -42,53 +42,67 @@ bool nathan_checkSuffix(string s, string suffix){
   return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
-string nathan_convertJSON(string fileName,TFTypeTransformer& tt){
-  string tfString = "";
+string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& commandList){
   ToolConfig* config = new ToolConfig(fileName);
   vector<ToolAction>& actions = config->getActions();
+  string outName = "";
   for(auto act: actions){
     string handle = act.getHandle();
     string action = act.getActionType();
+    bool base = false;
+    if(action == "replace_varbasetype" || action == "change_varbasetype" || action == "replace_basetype" || action == "change_basetype" || action == "list_basereplacements") base = true;
     if(handle == ""){
       if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
-        tfString = tfString + action + ";" + act.getScope() + ";" + act.getVarName() + ";" + act.getToType() + "\n";
+        commandList.addVarTypeCommand(act.getVarName(), act.getScope(), act.getToType(), base, false);
       }
       else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
-        tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + "=>" + act.getToType() + "\n";
+        string functionName = "$global";
+        std::vector<std::string> functionConstructSpecList = {""};
+        std::vector<std::string> functionSpecSplit;
+        if(act.getScope() != "$global") {
+          functionSpecSplit=CppStdUtilities::splitByRegex(act.getScope(),":");
+          if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier "<<act.getScope()<<endl; exit(1);}
+          functionName=functionSpecSplit[0];
+          functionConstructSpecList=CppStdUtilities::splitByRegex(functionSpecSplit[1],",");
+        } 
+        for(auto functionConstructSpec : functionConstructSpecList) {
+          commandList.addTypeCommand(functionConstructSpec, functionName, act.getToType(), act.getFromType(), base, false);
+        }
       }
       else if(action == "transform"){
-        tfString = tfString + action + ";" + act.getScope() + ";" + act.getFromType() + ";" + act.getVarName() + "\n";
+        commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getVarName());
       }
       else if(action == "list_basereplacements" || action == "list_replacements"){
-        tfString = tfString + action + ";" + act.getFromType() + ";" + act.getToType()  + ";" + act.getVarName() + "\n";
+        commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
+        commandList.addTypeCommand("body", "*", act.getToType(), act.getFromType(), base, true);
+        commandList.addTypeCommand("args", "*", act.getToType(), act.getFromType(), base, true);
+        commandList.addTypeCommand("ret", "*", act.getToType(), act.getFromType(), base, true);
+        outName = act.getVarName();
       }
     }
     else{
-       tfString = tfString + "handle";
-       if(action == "replace_varbasetype" || action == "replace_basetype" || action == "change_basetype" || action == "change_varbasetype"){
-         tfString = tfString + "_base";
-       }
-       tfString = tfString + ";" + handle + ";" + act.getToType() + "\n";
+      commandList.addHandleCommand(handle, act.getToType(), base, false);
     }
+    commandList.nextCommand();
   }
-  ofstream out(fileName + ".tf");
-  out << tfString;
-  out.close();
   tt.nathan_setConfig(config);
-  return fileName + ".tf";
+  if(outName != "") tt.nathan_setConfigFile(outName);
+  return outName;
 }
 
 bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation) {
-  CppStdUtilities::DataFileVector lines;
-  string tempFileName = "";
-  if(nathan_checkSuffix(specFileName, ".json")){
-    tempFileName = nathan_convertJSON(specFileName, tt);
-    specFileName = tempFileName;
-  }
-  bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
   RoseAst completeAst(root);
   CommandList commandList(specFileName);
-  if(fileOK) {
+  string tempFileName = "";
+  CppStdUtilities::DataFileVector lines;
+  bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
+  if(nathan_checkSuffix(specFileName, ".json")){
+    tempFileName = nathan_convertJSON(specFileName, tt, commandList);
+    commandList.runCommands(root, tt, tfTransformation);
+    _list = commandList.getTransformationList();
+    return false;
+  }
+  else if(fileOK) {
     int lineNr=0;
     for (auto line : lines) {
       lineNr++;
@@ -131,7 +145,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
         
 	string functionSpec=splitLine[1];
 
-	string functionName;
+	string functionName = "$global";
         std::vector<std::string> functionConstructSpecList = {""};
         std::vector<std::string> functionSpecSplit;
         if(functionSpec != "$global") {

@@ -42,6 +42,12 @@
       "from_type": "float"
     },
     {
+      "action": "replace_basetype",
+      "scope": "$global",
+      "to_type": "float",
+      "from_type": "double"
+    },
+    {
       "action": "replace_type",
       "scope": "f0:body",
       "to_type": "float",

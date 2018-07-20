@@ -43,7 +43,7 @@ void TFTypeTransformer::nathan_setConfig(ToolConfig* config){
   _outConfig->getActions().clear();
   _outConfig->setToolID("typeforge");
 }
-
+//TODO
 void TFTypeTransformer::nathan_setConfigFile(string fileName){
   _writeConfig = fileName;
   if(_outConfig == nullptr){
