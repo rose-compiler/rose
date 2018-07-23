@@ -1,36 +1,10 @@
 #ifndef TYPEFORGE_COMMAND_LIST_H
 #define TYPEFORGE_COMMAND_LIST_H
 
-#include "TFCommandList.h"
 #include "sage3basic.h"
-#include "TFSpecFrontEnd.h"
-#include "TFTransformation.h"
-#include "CppStdUtilities.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <list>
-#include <vector>
-#include <map>
 #include "AstTerm.h"
-#include "SgNodeHelper.h"
-#include "AstProcessing.h"
-#include "AstMatching.h"
-#include "TFTypeTransformer.h"
-#include "TFSpecFrontEnd.h"
-#include "CastStats.h"
-#include "CastTransformer.h"
-#include "CastGraphVis.h"
-#include "CppStdUtilities.h"
-#include <utility>
-#include <functional>
-#include <regex>
-#include <algorithm>
-#include <list>
 #include "TFTransformation.h"
-#include <ToolConfig.hpp>
-#include "abstract_handle.h"
-#include "roseAdapter.h"
+#include "TFTypeTransformer.h"
 
 class Command{
   protected:

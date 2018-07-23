@@ -26,13 +26,9 @@
 #include <list>
 #include "TFTransformation.h"
 #include <ToolConfig.hpp>
-#include "abstract_handle.h"
-#include "roseAdapter.h"
 #include "TFCommandList.h"
 
 using namespace std;
-using namespace AbstractHandle;
-using json = nlohmann::json;
 
 bool isComment(string s) {
   return s.size()>=2 && s[0]=='/' && s[1]=='/';

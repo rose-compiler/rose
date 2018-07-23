@@ -200,8 +200,22 @@ int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, 
       TFTypeTransformer::trace("Found declaration of variable "+varName+". Changed type to "+changeType->unparseToString());
       initName->set_type(changeType);
       return 1;
-    }return 0;
-  }else return 0;
+    }
+  }else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(handle)){
+      SgFunctionDefinition* funDef = funDec->get_definition(); 
+      SgType* funRetType=SgNodeHelper::getFunctionReturnType(funDef);
+      SgFunctionType* funType = funDec->get_type();
+      if(base){
+        newType = nathan_rebuildBaseType(funRetType, newType);
+      }
+      string funName = SgNodeHelper::getFunctionName(funDef);
+      TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Changed type to "+newType->unparseToString());
+      if(!listing){
+        funType->set_orig_return_type(newType);
+        return 1;
+      }
+  }
+  return 0;
 }
 
 int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode,bool listing){
@@ -449,7 +463,7 @@ void TFTypeTransformer::printTransformationStats(int numTypeReplace,TFTypeTransf
   cout<<"STATS: number of transformed array write accesses: "<<arrayWriteAccesses<<endl;
   cout<<"STATS: number of transformed arrays of structs accesses: "<<arrayOfStructsAccesses<<endl;
   cout<<"STATS: number of ad_intermediate transformations: "<<adIntermediateTransformations<<endl;
-  int totalTransformations=numTypeBasedReplacements+numVarNameBasedReplacements+arrayReadAccesses+arrayWriteAccesses+arrayOfStructsAccesses+adIntermediateTransformations;
+  int totalTransformations=numTypeBasedReplacements+numVarNameBasedReplacements+numHandleBasedReplacements+arrayReadAccesses+arrayWriteAccesses+arrayOfStructsAccesses+adIntermediateTransformations;
   cout<<"STATS: total number of transformations: "<<totalTransformations<<endl;
 }
 
