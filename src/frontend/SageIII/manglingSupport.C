@@ -887,7 +887,7 @@ mangleTemplateToString (const string& templ_name,
      string args_mangled;
      if (templ_args.empty() == true)
         {
-          args_mangled = "unknown_arg";
+          args_mangled = "no_templ_args";
         }
        else
         {
@@ -917,7 +917,7 @@ mangleTemplateToString (const string& templ_name,
           mangled_name = "unknown_template_name";
         }
 
-     mangled_name += "__tps__" + args_mangled + "__tpe__";
+     mangled_name += "__tas__" + args_mangled + "__tae__";
 
   // printf ("args_mangled = %s mangled_name = %s \n",args_mangled.c_str(),mangled_name.c_str());
 
@@ -1393,6 +1393,16 @@ mangleExpression (const SgExpression* expr)
         case V_SgNotEqualOp: {
           const SgNotEqualOp* e = isSgNotEqualOp (expr);
           mangled_name << "_bNotEqualOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eNotEqualOp_";
+          break;
+        }
+        case V_SgRshiftOp: {
+          const SgRshiftOp* e = isSgRshiftOp (expr);
+          mangled_name << "_bRshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eRshiftOp_";
+          break;
+        }
+        case V_SgLshiftOp: {
+          const SgLshiftOp* e = isSgLshiftOp (expr);
+          mangled_name << "_bLshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLshiftOp_";
           break;
         }
         case V_SgConditionalExp: {

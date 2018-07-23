@@ -210,6 +210,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                          case V_SgTemplateTypedefSymbol:
 
                          case V_SgEnumSymbol:
+                         case V_SgTemplateVariableSymbol:
                          case V_SgVariableSymbol:
                          case V_SgTemplateClassSymbol:
                          case V_SgClassSymbol:

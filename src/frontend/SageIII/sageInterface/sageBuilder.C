@@ -3333,6 +3333,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                nameWithTemplateArguments.str(),func_type,func_type->get_mangled().str(),
                templateParameterList != NULL ? templateParameterList->size() : 999,
                templateArgumentsList != NULL ? templateArgumentsList->size() : 999);
+          printf(" --- scope = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
 #endif
 #if 0
        // Debugging output.
@@ -3359,6 +3360,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",nameWithTemplateArguments.str(),func_symbol);
+          if (func_symbol != NULL) {
+            printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol->get_declaration() = %p \n", func_symbol->get_declaration());
+          }
 #endif
 #if 0
           if (nameWithoutTemplateArguments == "getline")
@@ -3532,43 +3536,17 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                   }
                  else
                   {
-#if 0
-                 // DQ (11/23/2011): This change allows this to compile for where SgTemplateFunctionDeclarations are used.
-                 // func_symbol = new SgFunctionSymbol(func);
-                    func_symbol = new SgFunctionSymbol(isSgFunctionDeclaration(func));
-                    ROSE_ASSERT(func_symbol->get_symbol_basis() != NULL);
-#else
                  // if (isSgFunctionDeclaration(func))
                     if (isSgTemplateFunctionDeclaration(func))
                        {
-#if 0
-                         printf ("THIS IS A TEMPLATE FUNCTION DECLARATION (MEMBER OR NON-MEMBER (build a SgTemplateFunctionSymbol) \n");
-#endif
                       // How should we handled template functions in the symbol table???
                       // DQ (11/24/2011): After some thought, I think that template declarations for function are more template declarations
-                      // than functions.  So all template function declarations will be handled as SgTemplateSymbols and not SgFunctionSymbols.
-#if 0
-                         SgTemplateDeclaration* templatedeclaration = isSgTemplateDeclaration(func);
-                         ROSE_ASSERT(templatedeclaration != NULL);
-                         SgTemplateSymbol* template_symbol = new SgTemplateSymbol(templatedeclaration);
-                         ROSE_ASSERT(template_symbol != NULL);
-                         ROSE_ASSERT(template_symbol->get_symbol_basis() != NULL);
-#else
-                      // DQ (12/27/2011): New design for symbols for template function declarations.
+                      // than functions.  So all template function declarations will be handled as SgTemplateSymbols and not SgFunctionSymbols.mplate function declarations.
                          SgTemplateFunctionDeclaration* templatedeclaration = isSgTemplateFunctionDeclaration(func);
                          ROSE_ASSERT(templatedeclaration != NULL);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                          SgTemplateFunctionSymbol* template_symbol = new SgTemplateFunctionSymbol(templatedeclaration);
-#else
-                         printf ("Error: This functionality is not yet been made backwardly compatable to EDG 3.3 template design \n");
-                         SgFunctionSymbol* template_symbol = new SgFunctionSymbol(NULL);
-#error "DEAD CODE!"
-                         printf ("Exiting to avoid further errors \n");
-                         ROSE_ASSERT(false);
-#endif
                          ROSE_ASSERT(template_symbol != NULL);
                          ROSE_ASSERT(template_symbol->get_symbol_basis() != NULL);
-#endif
                          func_symbol = template_symbol;
                        }
                       else
@@ -3576,7 +3554,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                          func_symbol = new SgFunctionSymbol(isSgFunctionDeclaration(func));
                          ROSE_ASSERT(func_symbol->get_symbol_basis() != NULL);
                        }
-#endif
                   }
 
                ROSE_ASSERT(func_symbol != NULL);
@@ -4583,6 +4560,11 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
 
   // set definingdecl for SgCtorInitializerList
      ROSE_ASSERT(result != NULL);
+
+#if 0
+     printf(" In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(...): result = %p (%s)\n", result, result->class_name().c_str());
+     printf(" In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(...): result->get_firstNondefiningDeclaration() = %p\n", result->get_firstNondefiningDeclaration());
+#endif
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
