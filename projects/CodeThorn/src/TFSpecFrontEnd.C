@@ -27,6 +27,7 @@
 #include "TFTransformation.h"
 #include <ToolConfig.hpp>
 #include "TFCommandList.h"
+#include <boost/filesystem.hpp>
 
 using namespace std;
 
@@ -34,8 +35,12 @@ bool isComment(string s) {
   return s.size()>=2 && s[0]=='/' && s[1]=='/';
 }
 
-bool nathan_checkSuffix(string s, string suffix){
-  return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+bool nathan_checkExtension(string filePath, string extension){
+  boost::filesystem::path pathObj(filePath);
+  if(pathObj.has_extension()){
+    if(pathObj.extension().string() == extension) return true;
+  }
+  return false;
 }
 
 string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& commandList){
@@ -92,7 +97,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
   string tempFileName = "";
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
-  if(nathan_checkSuffix(specFileName, ".json")){
+  if(nathan_checkExtension(specFileName, ".json")){
     tempFileName = nathan_convertJSON(specFileName, tt, commandList);
     commandList.runCommands(root, tt, tfTransformation);
     _list = commandList.getTransformationList();
