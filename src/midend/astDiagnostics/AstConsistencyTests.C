@@ -3560,7 +3560,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(typedefSymbol->get_declaration() != NULL);
                          break;
                        }
-
+                    case V_SgTemplateVariableSymbol:
                     case V_SgVariableSymbol:
                        {
                       // Note that the type returned by get_declaration is SgInitializedName and not any sort of SgDeclaration

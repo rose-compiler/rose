@@ -739,6 +739,7 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
        // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
           case V_SgFunctionSymbol:
           case V_SgMemberFunctionSymbol:
+          case V_SgTemplateVariableSymbol:
           case V_SgVariableSymbol:
              {
                typeElaborationRequired = true;
@@ -2618,6 +2619,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               break;
                             }
 
+                         case V_SgTemplateVariableSymbol:
                          case V_SgVariableSymbol:
                             {
                               SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
@@ -9278,13 +9280,16 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                   {
                     SgTemplateArgument* templateArgument = *i;
                     ROSE_ASSERT(templateArgument != NULL);
+                    i++;
+
+                    if (templateArgument->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+                      continue;
 
                     string template_argument_name = globalUnparseToString(templateArgument,unparseInfoPointer);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("templateArgument = %p template_argument_name (globalUnparseToString()) = %s \n",templateArgument,template_argument_name.c_str());
 #endif
                     template_name += template_argument_name;
-                    i++;
 
                     if (i != templateArgumentList.end())
                          template_name += ",";
