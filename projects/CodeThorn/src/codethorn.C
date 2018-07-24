@@ -853,7 +853,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     analyzer->setModeLTLDriven(true);
   }
 
-  if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+  if (args.isDefined("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
     analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
     args.setOption("no-input-input",true);
     args.setOption("with-ltl-counterexamples",true);
@@ -1058,7 +1058,7 @@ int main( int argc, char * argv[] ) {
 #ifndef HAVE_SPOT
     // display error message and exit in case SPOT is not avaiable, but related options are selected
     if (args.count("csv-stats-cegpra") ||
-	args.count("cegpra-ltl") ||
+	args.isDefined("cegpra-ltl") ||
 	args.getBool("cegpra-ltl-all") ||
 	args.count("cegpra-max-iterations") ||
 	args.count("viz-cegpra-detailed") ||
@@ -1665,7 +1665,7 @@ int main( int argc, char * argv[] ) {
       ltlResults = spotConnection.getLtlResults();
       logger[TRACE] << "LTL: results computed."<<endl;
 
-      if (args.getBool("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+      if (args.isDefined("cegpra-ltl") || (args.isDefined("cegpra-ltl-all")&&args.getBool("cegpra-ltl-all"))) {
         if (args.count("csv-stats-cegpra")) {
           statisticsCegpra << "init,";
           printStgSize(analyzer->getTransitionGraph(), "initial abstract model", &statisticsCegpra);
