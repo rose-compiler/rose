@@ -163,6 +163,7 @@ test2018_30.C \
 test2018_31.C \
 test2018_34.C \
 test2018_35.C \
+test2018_36.C \
 test2018_37.C \
 test2018_38.C \
 test2018_39.C \
@@ -214,6 +215,7 @@ test2018_90.C \
 test2018_91.C \
 test2018_92.C \
 test2018_93.C \
+test2018_94.C \
 test2018_95.C \
 test2018_96.C \
 test2018_97.C \
