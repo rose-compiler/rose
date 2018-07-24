@@ -100,8 +100,8 @@ void handler(int sig) {
   void *array[10];
   size_t size;
 
-  // get void*'s for all entries on the stack
-  size = backtrace(array, 10);
+  size = backtrace (array, 10);
+  printf ("Obtained %zd stack frames.\n", size);
 
   // print out all the frames to stderr
   fprintf(stderr, "Error: signal %d:\n", sig);
@@ -1665,7 +1665,7 @@ int main( int argc, char * argv[] ) {
       ltlResults = spotConnection.getLtlResults();
       logger[TRACE] << "LTL: results computed."<<endl;
 
-      if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+      if (args.getBool("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
         if (args.count("csv-stats-cegpra")) {
           statisticsCegpra << "init,";
           printStgSize(analyzer->getTransitionGraph(), "initial abstract model", &statisticsCegpra);

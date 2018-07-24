@@ -990,7 +990,10 @@ void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
 void Analyzer::initializeVariableIdMapping(SgProject* project) {
   variableIdMapping.computeVariableSymbolMapping(project);
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  exprAnalyzer.initializeStructureAccessLookup(project);
+  //logger[TRACE]<<"initializeStructureAccessLookup started."<<endl;
+  AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
+  //exprAnalyzer.initializeStructureAccessLookup(project);
+  //logger[TRACE]<<"initializeStructureAccessLookup finished."<<endl;
 }
 
 void Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {

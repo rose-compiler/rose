@@ -3,6 +3,8 @@
 
 namespace SPRAY {
   SPRAY::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
+    ROSE_ASSERT(_mapping.size()!=0);
+    ROSE_ASSERT(sgType);
     switch (sgType->variantT()) {
 
     case V_SgPointerType:
@@ -78,11 +80,13 @@ namespace SPRAY {
   }
 
   SPRAY::TypeSize SgTypeSizeMapping::determineElementTypeSize(SgArrayType* sgType) {
-    SgType* elementType=isSgArrayType(sgType)->get_base_type();
+    ROSE_ASSERT(_mapping.size()!=0);
+    SgType* elementType=sgType->get_base_type();
     return determineTypeSize(elementType);
   }
 
   SPRAY::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {
+    ROSE_ASSERT(_mapping.size()!=0);
     SgType* typePointedTo=sgType->get_base_type();
     return determineTypeSize(typePointedTo);
   }

@@ -1,11 +1,12 @@
 #include "sage3basic.h"
 #include "StructureAccessLookup.h"
 #include "RoseAst.h"
+#include "SgTypeSizeMapping.h"
+#include "AbstractValue.h"
 
 using namespace std;
 using namespace SPRAY;
-
-#include "SgTypeSizeMapping.h"
+using namespace CodeThorn;
 
 std::list<SgVariableDeclaration*> StructureAccessLookup::getDataMembers(SgClassDefinition* classDef) {
   std::list<SgVariableDeclaration*> varDeclList;
@@ -21,13 +22,20 @@ std::list<SgVariableDeclaration*> StructureAccessLookup::getDataMembers(SgClassD
   return varDeclList;
 }
 
-void StructureAccessLookup::initialize(VariableIdMapping* variableIdMapping, SgProject* root) {
+void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMapping, SgProject* root) {
   ROSE_ASSERT(variableIdMapping);
   ROSE_ASSERT(root);
   RoseAst ast(root);
-  for (auto node : ast) {
+  int numUnknownVarType=0;
+  int numNonValidVarId=0;
+  int numZeroTypeSize=0;
+#if 0
+  for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgNode* node=*i;
+    ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
       //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
+#if 0                
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
@@ -40,7 +48,13 @@ void StructureAccessLookup::initialize(VariableIdMapping* variableIdMapping, SgP
               // TODO: recursive for struct/class/union members
               //if(isStruct(type) ...) initialize(variableIdMapping, dataMember);
               
-              int typeSize=typeSizeMapping.determineTypeSize(varType);
+              SgTypeSizeMapping* typeSizeMapping=AbstractValue::getTypeSizeMapping();
+              ROSE_ASSERT(typeSizeMapping);
+              int typeSize=typeSizeMapping->determineTypeSize(varType);
+              if(typeSize==0) {
+                numZeroTypeSize++;
+                cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
+              }
               
               // different varids can be mapped to the same offset
               
@@ -48,20 +62,28 @@ void StructureAccessLookup::initialize(VariableIdMapping* variableIdMapping, SgP
               ROSE_ASSERT(varIdTypeSizeMap.find(varId)==varIdTypeSizeMap.end());
               //cout<<"Offset: "<<offset<<endl;
               
-              varIdTypeSizeMap[varId]=offset;
+              varIdTypeSizeMap.emplace(varId,offset);
               offset+=typeSize;
             } else {
               // could not determine var type
               // ...
+              numUnknownVarType++;
             }
           } else {
             // non valid var id
             // throw ...
+            numNonValidVarId++;
           }
         }
       }
+#endif
     }
   }
+#endif
+  cerr<<"DEBUG: Number of unknown var types: "<<numUnknownVarType<<endl;
+  cerr<<"DEBUG: Number of non-valid varids: "<<numNonValidVarId<<endl;
+  cerr<<"DEBUG: Number of types with 0 size: "<<numZeroTypeSize<<endl;
+  cerr<<"DEBUG: typesize map size: "<<varIdTypeSizeMap.size()<<endl;
 }
 
 int StructureAccessLookup::getOffset(SPRAY::VariableId varId) {

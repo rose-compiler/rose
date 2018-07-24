@@ -373,6 +373,7 @@ namespace CodeThorn {
     bool _timerRunning = false;
 
     std::vector<string> _commandLineOptions;
+    SgTypeSizeMapping _typeSizeMapping;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

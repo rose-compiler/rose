@@ -36,7 +36,7 @@ void ExprAnalyzer::initDiagnostics() {
 void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
   ROSE_ASSERT(node);
   ROSE_ASSERT(_variableIdMapping);
-  structureAccessLookup.initialize(_variableIdMapping,node);
+  structureAccessLookup.initializeOffsets(_variableIdMapping,node);
 }
 
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
@@ -935,8 +935,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
                                                               EState estate, bool useConstraints) {
   
-  SPRAY::TypeSize typeSize=_sgTypeSizeMapping.determineTypeSize(node->get_operand_type());
-  AbstractValue sizeValue=AbstractValue(typeSize); 
+  //SPRAY::TypeSize typeSize=_sgTypeSizeMapping.determineTypeSize(node->get_operand_type());
+  //AbstractValue sizeValue=AbstractValue(typeSize); 
+  AbstractValue sizeValue=AbstractValue(4); 
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),sizeValue);
   return listify(res);

@@ -21,7 +21,7 @@ using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
-SgTypeSizeMapping* AbstractValue::_typeSizeMapping=new SgTypeSizeMapping();
+SgTypeSizeMapping* AbstractValue::_typeSizeMapping=nullptr;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -198,7 +198,11 @@ long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
-    else if(isPtr()) return getVariableId().getIdCode()+getIntValue();
+  else if(isPtr()) {
+    VariableId varId=getVariableId();
+    ROSE_ASSERT(varId.isValid());
+    return varId.getIdCode()+getIntValue();
+  }
   else throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
 }
 

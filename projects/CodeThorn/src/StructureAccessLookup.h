@@ -12,11 +12,10 @@ class SgVariableDeclaration;
 
 class StructureAccessLookup {
  public:
-  void initialize(SPRAY::VariableIdMapping* variableIdMapping, SgProject* root);
+  void initializeOffsets(SPRAY::VariableIdMapping* variableIdMapping, SgProject* root);
   std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
   int getOffset(SPRAY::VariableId varId);
  private:
-  SPRAY::SgTypeSizeMapping typeSizeMapping;
   std::map<SPRAY::VariableId,int> varIdTypeSizeMap;
 };
 
