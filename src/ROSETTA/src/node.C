@@ -742,9 +742,12 @@ Grammar::setUpNodes ()
      UntypedNullDeclaration.setFunctionPrototype       ( "HEADER_UNTYPED_NULL_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedNullStatement.setFunctionPrototype         ( "HEADER_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
 
-  // Rasmussen (7/6/2018): Added conditional expression and changed true and false bodies to SgUntypedStatement (from
+  // Rasmussen (7/19/2018): Added statement_enum to specify the type if statement, i.e., Fortran if-stmt or if-construct
+  // Rasmussen (7/06/2018): Added conditional expression and changed true and false bodies to SgUntypedStatement (from
   // SgUntypedScope).  Also made all parameters CONSTRUCTOR_PARAMETER (always the case for untyped node constructors?)
      UntypedIfStatement.setFunctionPrototype           ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedIfStatement.setDataPrototype               ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedIfStatement.setDataPrototype               ( "SgUntypedExpression*",  "conditional", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedIfStatement.setDataPrototype               ( "SgUntypedStatement*", "true_body", "= NULL",
