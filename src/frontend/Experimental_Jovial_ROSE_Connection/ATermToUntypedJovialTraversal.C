@@ -1177,7 +1177,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IfStatement(ATerm term, SgUntyped
    }
    else return ATfalse;
 
-   SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement("", conditional, true_body, false_body);
+   SgUntypedIfStatement* if_stmt = SageBuilder::buildUntypedIfStatement("", conditional, true_body, false_body);
    setSourcePosition(if_stmt, term);
 
    stmt = convert_Labels(labels, locations, if_stmt);

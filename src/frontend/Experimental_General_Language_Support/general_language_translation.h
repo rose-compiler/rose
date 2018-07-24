@@ -7,7 +7,7 @@ namespace General_Language_Translation
   // Enum for different types of expressions.  These are used with the SgUntypedExpression IR nodes.
      enum ExpressionKind
         {
-          e_unknown,
+          e_unknown = 0,
 
        // Access modifiers
        // --------------
@@ -105,6 +105,7 @@ namespace General_Language_Translation
        // Fortran specific
           e_fortran_import_stmt,
 
+          e_fortran_if_stmt,
           e_fortran_if_then_stmt,
           e_fortran_else_if_stmt,
           e_fortran_else_stmt,

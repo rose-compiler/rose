@@ -151,6 +151,9 @@ ATbool traverse_ElseIfStmtBlock (ATerm term, SgUntypedIfStatement** if_stmt);
 ATbool traverse_ElseStmt(ATerm term, SgUntypedStatement** else_stmt);
 ATbool traverse_OptElseStmtAndBlock(ATerm term, SgUntypedStatement** else_stmt, SgUntypedBlockStatement** false_body);
 
+// R837
+ATbool traverse_IfStmt(ATerm term, SgUntypedStatementList* stmt_list);
+
 // R851
 ATbool traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list);
 

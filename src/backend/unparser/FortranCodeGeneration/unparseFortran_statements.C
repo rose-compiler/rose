@@ -2161,6 +2161,7 @@ hasCStyleElseIfConstruction(SgIfStmt* parentIfStatement)
   // The C style else-if AST doesn't have an SgBasicBlock immediately
   // preceding the SgIfStmt representing the else-if clause; the SgIfStmt
   // itself is the false branch.
+  //
      SgIfStmt* else_if_stmt = isSgIfStmt(parentIfStatement->get_false_body());
 
      return (else_if_stmt != NULL);
@@ -2174,40 +2175,34 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
 
      SgIfStmt* childIfStatement = NULL;
 
-     bool ifStatementInFalseBody = false;
-
      SgBasicBlock* falseBlock = isSgBasicBlock(parentIfStatement->get_false_body());
-  // printf ("falseBlock = %p \n",falseBlock);
+
+  // Rasmussen (7/23/2018): Simplification of logic allowed because usage of is_else_if_statement
+  // was fixed in frontend.  Previously is_else_if_statement was not used in the unparser and
+  // this confused users at NCAR when attempting transformations.
+  //
      if (falseBlock != NULL)
         {
-       // The last case of a chain of "if else if else if endif" has an empty false block!
           if (falseBlock->get_statements().empty() == false)
              {
                childIfStatement = isSgIfStmt(*(falseBlock->get_statements().begin()));
-            // printf ("Test first statement in false block is SgIfStmt: childIfStatement = %p \n",childIfStatement);
                if (childIfStatement != NULL)
                   {
-                 // A properly formed elseif has only a single statement in the false block AND was marked as NOT having an associated "END IF"
-                 // DXN (02/13/2011): and marked as using the THEN keyword
-                    ifStatementInFalseBody = (falseBlock->get_statements().size() == 1)
-                                && (childIfStatement->get_has_end_statement() == false)
-                                && childIfStatement->get_use_then_keyword();
-
-                    if (ifStatementInFalseBody == false)
-                         childIfStatement = NULL;
+                     if (childIfStatement->get_is_else_if_statement() == false)
+                        {
+                           childIfStatement = NULL;
+                        }
                   }
              }
         }
 
-  // printf ("(getElseIfStatement) ifStatementInFalseBody = %s childIfStatement = %p \n",ifStatementInFalseBody ? "true" : "false",childIfStatement);
-
-  // Rasmussen (7/16/2018): This branch added for the experimental Fortran parser where
-  // the AST was designed to follow C if statement.  For the new design there is no
+  // Rasmussen (7/23/2018): This branch added for the experimental Fortran parser where
+  // the AST was designed to follow the C if statement.  For the new design there is no
   // SgBasicBlock immediately preceding the SgIfStmt (the SgIfStmt is the false branch).
+  //
      SgIfStmt* else_if_stmt = isSgIfStmt(parentIfStatement->get_false_body());
      if (else_if_stmt != NULL)
         {
-           else_if_stmt->set_is_else_if_statement(true);
            childIfStatement = else_if_stmt;
         }
 
@@ -2218,28 +2213,34 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
 void 
 FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // Sage node corresponds to Fortran 'if'
+  // Sage node corresponding to Fortran 'if'
   //
-  // Assume: If nodes always have a true and false body which are
-  // possibly empty basic block nodes.
 
+  // Rasmussen(7/23/2018): Modified much of the unparsing of if statements and if
+  // constructs because:
+  //   1. The AST was modified to follow the C-style AST for the experimental branch.
+  //   2. Original Fortran frontend AST construction also moved towards C by using NULL for false body.
+  //   3. ELSE was not unparsed if the else-block was empty (no reason not to unparse it).
+  //   4. A bug was fixed in unparsing the if-construct label name (label_string).
+  //
      SgIfStmt* if_stmt = isSgIfStmt(stmt);
      ROSE_ASSERT(if_stmt != NULL);
      ROSE_ASSERT(if_stmt->get_conditional());
+     ROSE_ASSERT(if_stmt->get_true_body());
 
-     if (if_stmt->get_string_label().empty() == false)
+  // Output the if-construct-name string (if present) if this is an else-if branch
+     if (if_stmt->get_string_label().empty() == false && if_stmt->get_is_else_if_statement() == false)
         {
-       // Output the string label
           curprint(if_stmt->get_string_label() + ": ");
         }
 
-  // condition
+  // IF keyword and conditional
+  //
      curprint("IF (");
      info.set_inConditional();
 
   // DQ (8/15/2007): In C the condition is a statement, and in Fortran the condition is an expression!
   // We might want to fix this by having an IR node to represent the Fortran "if" statement.
-  // unparseStatement(if_stmt->get_conditional(), info);
      SgExprStatement* expressionStatement = isSgExprStatement(if_stmt->get_conditional());
      unparseExpression(expressionStatement->get_expression(), info);
 
@@ -2247,103 +2248,59 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
      curprint(") ");
 
   // DQ (12/26/2007): handling cases where endif is not in the source code and not required (stmt vs. construct)
+  // This is also (primarily) used to keep else-if-stmt from printing extra END IF.
      bool output_endif = if_stmt->get_has_end_statement();
-  // printf ("In unparseIfStmt(): output_endif = %s \n",output_endif ? "true" : "false");
-
-  // true body
-     ROSE_ASSERT(if_stmt->get_true_body());
 
      SgIfStmt* elseIfStatement = getElseIfStatement ( if_stmt );
 
 #if 0
-     printf ("\nIn unparseIfStmt(): line = %d \n",if_stmt->get_file_info()->get_line());
+     printf ("\nIn unparseIfStmt(): if_stmt = %p line = %d \n", if_stmt, if_stmt->get_file_info()->get_line());
      printf ("In unparseIfStmt(): if_stmt->get_use_then_keyword()     = %s \n",if_stmt->get_use_then_keyword() ? "true" : "false");
      printf ("In unparseIfStmt(): if_stmt->get_is_else_if_statement() = %s \n",if_stmt->get_is_else_if_statement() ? "true" : "false");
      printf ("In unparseIfStmt(): if_stmt->get_has_end_statement()    = %s \n",if_stmt->get_has_end_statement() ? "true" : "false");
-     printf ("In unparseIfStmt(): elseIfStatement = %p \n",elseIfStatement);
+     printf ("In unparseIfStmt(): if_stmt->get_string_label()         = %s \n",if_stmt->get_string_label().c_str());
+     printf ("In unparseIfStmt(): elseIfStatement                     = %p \n", elseIfStatement);
 #endif
 
-#if 0
-     bool ifStatementInFalseBody = false;
+// Rasmussen(7/23/2018): Removed several lines of dead code containing logic that
+// apparently conflicts with the Fortran standard.
 
-#if 1
-  // This code detects if this is an else-if statement.
-     SgBasicBlock* parentBlock   = isSgBasicBlock(if_stmt->get_parent());
-  // printf ("parentBlock = %p \n",parentBlock);
-     if (parentBlock != NULL)
-        {
-          SgIfStmt* parentIfStatement = isSgIfStmt(parentBlock->get_parent());
-       // printf ("parentIfStatement = %p \n",parentIfStatement);
-          if (parentIfStatement != NULL)
-             {
-               ROSE_ASSERT (isSgBasicBlock(parentIfStatement->get_false_body()));
-               SgStatementPtrList & statementList = isSgBasicBlock(parentIfStatement->get_false_body())->get_statements();
-
-            // Added code to make sure that the if is a part of an else and is the only statement inside the false block.
-            // if (statementList.size() > 1)
-                  {
-                    ifStatementInFalseBody = (find(statementList.begin(),statementList.end(),if_stmt) != statementList.end());
-                  }
-             }
-        }
-#endif
-
-     printf ("In unparseIfStmt(): ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
-
-#if 0
-     SgBasicBlock* trueBlock  = isSgBasicBlock(if_stmt->get_true_body());
-     SgBasicBlock* falseBlock = isSgBasicBlock(if_stmt->get_false_body());
-
-     int numberOfStatementsInIfStatementTrueBody  = (trueBlock  == NULL) ? 0 : trueBlock->get_statements().size();
-     int numberOfStatementsInIfStatementFalseBody = (falseBlock == NULL) ? 0 : falseBlock->get_statements().size();
-  // int numberOfStatementsInIfStatement          = numberOfStatementsInIfStatementTrueBody + numberOfStatementsInIfStatementFalseBody;
-
-     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementTrueBody  = %d \n",numberOfStatementsInIfStatementTrueBody);
-     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementFalseBody = %d \n",numberOfStatementsInIfStatementFalseBody);
-
-     bool tooManyStatementsForIfWithoutThen = (numberOfStatementsInIfStatementTrueBody > 1);
-#endif
-
-  // printf ("(if then case) ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
-  // bool output_as_elseif = ifStatementInFalseBody;
-  // bool output_as_elseif = ifStatementInFalseBody && !tooManyStatementsForIfWithoutThen;
-  // bool output_as_elseif = ifStatementInFalseBody && output_endif;
-  // bool output_as_elseif = ifStatementInFalseBody;
-#endif
-
-  // printf ("Handling THEN case for if_stmt = %p \n",if_stmt);
+  // THEN keyword
+  //
   // DQ (12/26/2007): If this is an elseif statement then output the "THEN" even though we will not output an "ENDIF"
-  // if (output_endif == true || output_as_elseif == true)
      if (output_endif == true)
         {
+       // IF THEN statement branch
+       //
           ROSE_ASSERT(if_stmt->get_use_then_keyword() == true);
-
+       // This branch taken for an if-then-stmt.
+       // Note that the string label if output before "IF", not after "THEN"
           curprint("THEN");
-       // curprint("THEN ! Output as endif");
-       // if (output_as_elseif == true) info.set_SkipFormatting();// curprint("\n      ");
           unparseStatement(if_stmt->get_true_body(), info);
-       // if (output_as_elseif == true) info.unset_SkipFormatting();// curprint("\n      ");
-       // if (output_as_elseif == true) curprint("      ");
         }
        else
         {
-       // curprint("!output on same line!");
-       // if (output_as_elseif == true)
           if (if_stmt->get_use_then_keyword() == true)
              {
+            // ELSE IF statement branch (uses if_stmt to unparse the "IF")
+            //
+            // This branch taken for an else-if-stmt.
+            // Note that the string label if output after "THEN"
                curprint("THEN");
-            // curprint("THEN ! Output as elseif");
+            // Output the if-construct-name string after THEN if needed
+               if (if_stmt->get_string_label().empty() == false) curprint(" " + if_stmt->get_string_label());
                unparseStatement(if_stmt->get_true_body(),info);
              }
             else
              {
+            // IF statement branch (not if-construct)
+            //
             // "THEN" is not output for the case of "IF (C) B = 0"
                ROSE_ASSERT (isSgBasicBlock(if_stmt->get_true_body()));
                SgStatementPtrList & statementList = isSgBasicBlock(if_stmt->get_true_body())->get_statements();
                ROSE_ASSERT(statementList.size() == 1);
                SgStatement* statement = *(statementList.begin());
                ROSE_ASSERT(statement != NULL);
-            // printf ("Output true statement = %p = %s \n",statement,statement->class_name().c_str());
 
             // Fixed format code includes a call to insert 6 spaces (or numeric label if available), we want to suppress this.
                SgUnparse_Info info_without_formating(info);
@@ -2352,68 +2309,48 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
              }
         }
 
-  // printf ("Handling ELSE case for if_stmt = %p \n",if_stmt);
-  // false body: unparse only if non-empty basic block
+  // ELSE and ELSE IF statements
+  //
+  // Rasmussen(7/23/2018): Added unparsing of C style else-if AST construction.  The C
+  // AST does not use an SgBasicBlock to precede an SgIfStmt representing the else-if-stmt.
+  // Also simplified the logic somewhat, now allowed because the false_body is NULL
+  // if no else-stmt (changed in the frontend to follow C AST).
+  //
      SgBasicBlock* fbb = isSgBasicBlock(if_stmt->get_false_body());
 
-  // Rasmussen(7/17/2018): Added unparsing of C style else if AST construction
-     if ((fbb && fbb->get_statements().size() > 0) || hasCStyleElseIfConstruction(if_stmt))
+     if (fbb || hasCStyleElseIfConstruction(if_stmt))
         {
-       // The else statement might just need its own numeric label
-       // unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
+       // The else statement might have its own numeric label
+          unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
+          curprint("ELSE");
 
-          if (output_endif == true && elseIfStatement == NULL)
+       // However, currently there is no information on else if-construct name in
+       // SgIfStmt so we won't try to unparse it.  NOTE, output could be different from input.
+
+          if (elseIfStatement != NULL)
              {
-            // The else statement might just need its own numeric label
-               unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
-               curprint("ELSE");
-               unparseStatement(if_stmt->get_false_body(), info);
+             // ELSE IF statement branch
+                ROSE_ASSERT(elseIfStatement->get_is_else_if_statement() == true);
+
+             // Call the associated unparse function directly to avoid formatting
+                curprint(" ");
+                unparseIfStmt(elseIfStatement, info);
              }
             else
              {
-               unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
-               curprint("ELSE ");
-
-            // if (output_as_elseif == true) curprint("      ");
-               if (elseIfStatement != NULL)
-                  {
-                 // Call the associated unparse function directly to avoid formatting
-                    unparseIfStmt(elseIfStatement, info);
-                  }
-                 else
-                  {
-#if 0
-                 // Output the statement on the same line as the "else" as in: "if (c) a = 0 else "
-                    SgStatementPtrList & statementList = if_stmt->get_false_body()->get_statements();
-                    if (statementList.size() != 1)
-                       {
-                         printf ("statementList.size() = %" PRIuPTR " \n",statementList.size());
-                         if_stmt->get_file_info()->display("statementList.size() != 1");
-                       }
-                    ROSE_ASSERT(statementList.size() == 1);
-                    SgStatement* statement = *(statementList.begin());
-                    ROSE_ASSERT(statement != NULL);
-                 // printf ("Output false statement = %p = %s \n",statement,statement->class_name().c_str());
-
-                    unparseLanguageSpecificStatement(statement, info);
-                 // if (output_as_elseif == true) curprint("      ");
-#else
-                    unparseStatement(if_stmt->get_false_body(), info);
-#endif
-                  }
+             // ELSE statement branch
+                unparseStatement(if_stmt->get_false_body(), info);
              }
         }
 
-  // printf ("Handling ENDIF case for if_stmt = %p \n",if_stmt);
+  // END IF statement
+  //
      if (output_endif == true)
         {
           unparseStatementNumbersSupport(if_stmt->get_end_numeric_label(),info);
           curprint("END IF");
-          if (if_stmt->get_string_label().empty() == false)
-             {
-            // Output the string label
-               curprint(" " + if_stmt->get_string_label());
-             }
+       // Output the if-construct-name string if present
+          if (if_stmt->get_string_label().empty() == false) curprint(" " + if_stmt->get_string_label());
         }
 
      ROSE_ASSERT(unp != NULL);

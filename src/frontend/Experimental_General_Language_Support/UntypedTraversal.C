@@ -239,6 +239,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedIfStatement* ut_stmt = dynamic_cast<SgUntypedIfStatement*>(node);
          SgNodePtrList children(childAttrs);
+
          sg_node = pConverter->convertSgUntypedIfStatement(ut_stmt, children, currentScope);
          break;
       }

@@ -10670,7 +10670,6 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param id Optional identifier used for the statement.
      */
-// void c_action_if_then_stmt(Token_t * label, Token_t * id)
     void c_action_if_then_stmt(Token_t *label, Token_t *id, Token_t *ifKeyword,
             Token_t *thenKeyword, Token_t *eos)
     {
@@ -10689,16 +10688,19 @@ void c_action_label(Token_t * lbl)
         SgExpression* conditionalExpression = getTopOfExpressionStack();
         astExpressionStack.pop_front();
 
-        SgExprStatement* conditionalStatement = new SgExprStatement(
-                conditionalExpression);
+        SgExprStatement* conditionalStatement = new SgExprStatement(conditionalExpression);
         SgBasicBlock* true_block = new SgBasicBlock();
-        SgBasicBlock* false_block = new SgBasicBlock();
-        SgIfStmt* ifStatement = new SgIfStmt(conditionalStatement, true_block,
-                false_block);
+
+     // Rasmussen(7/23/2018): Moved to C style AST construction (false block is NULL if present)
+     // This was done to allow analysis and transformations to work the same for C and Fortran.
+     // SgBasicBlock* false_block = new SgBasicBlock();
+        SgBasicBlock* false_block = NULL;
+
+        SgIfStmt* ifStatement = new SgIfStmt(conditionalStatement, true_block, false_block);
 
         // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
         true_block->setCaseInsensitive(true);
-        false_block->setCaseInsensitive(true);
+        if (false_block != NULL) false_block->setCaseInsensitive(true);
         ifStatement->setCaseInsensitive(true);
 
         // DQ (12/7/2010): Let the unparser know that this came from R803 sio that we know to output the "then" keyword.
@@ -10707,9 +10709,6 @@ void c_action_label(Token_t * lbl)
         // Save the if-stmt that might be the start the a chain of if-then-else-if-else-endif
         astIfStatementStack.push_front(ifStatement);
         // printf ("Pushed ifStatement = %p onto astIfStatementStack (size = %" PRIuPTR ") \n",ifStatement,astIfStatementStack.size());
-
-        // This is the version of the if-stmt which must have an associated endif, but only at the end of a chain of if then .. else .. else .. endif
-        // ifStatement->set_has_end_statement(true);
 
         // DQ (11/17/2007): Added support for numeric labels
         setStatementNumericLabel(ifStatement, label);
@@ -10722,7 +10721,7 @@ void c_action_label(Token_t * lbl)
         resetSourcePosition(conditionalStatement, conditionalExpression);
 
         setSourcePosition(true_block);
-        setSourcePosition(false_block);
+        if (false_block != NULL) setSourcePosition(false_block);
 
         // DQ (11/17/2007): Get the source position from the "if" keyword.
         // setSourcePosition(ifStatement);
@@ -10777,7 +10776,6 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param id Optional identifier used for the statement.
      */
-// void c_action_else_if_stmt(Token_t * label, Token_t * id)
     void c_action_else_if_stmt(Token_t *label, Token_t *elseKeyword,
             Token_t *ifKeyword, Token_t *thenKeyword, Token_t *id, Token_t *eos)
     {
@@ -10807,19 +10805,37 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(ifStatement != NULL);
 
         // DQ (12/6/2010): I think that this can be set explicitly.
-        // ifStatement->set_has_end_statement(true);
         ifStatement->set_use_then_keyword(true);
-        ifStatement->set_is_else_if_statement(true);
 
+        // Rasmussen(7/23/2018): Moved to C style AST construction (false block is NULL if present)
+        // This was done to allow analysis and transformations to work the same for C and Fortran.
+        //
         // Find the previously built false body in the SgIfStmt
-        SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
+        // SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
+        SgBasicBlock* false_body = new SgBasicBlock();
         ROSE_ASSERT(false_body != NULL);
+        false_body->setCaseInsensitive(true);
+        setSourcePosition(false_body);
+
+        ifStatement->set_false_body(false_body);
+        false_body->set_parent(ifStatement);
 
         // Push the false body onto the scope stack
         astScopeStack.push_front(false_body);
 
-        // Not call the R803 rule to build a SgIfStmt
+        // Now call the R803 rule to build a SgIfStmt
         c_action_if_then_stmt(label, id, ifKeyword, thenKeyword, eos);
+
+     // Rasmussen (7/22/2018): set is_else_if_statement correctly (now used by unparser)
+        if (false_body->get_statements().empty() == false)
+             {
+                ifStatement = isSgIfStmt(false_body->get_statements()[0]);
+                if (ifStatement != NULL)
+                   {
+                      ifStatement->set_is_else_if_statement(true);
+                      ifStatement->set_has_end_statement(false);
+                   }
+             }
 
         // After calling c_action_if_then_stmt() to reuse code there, pop the if-stmt that was saved,
         // since it is NOT the beginning of a chain of if-then-else-if-else-endif statements.
@@ -10848,9 +10864,7 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param id Optional identifier used for the statement.
      */
-// void c_action_else_stmt(Token_t * label, Token_t * id)
-    void c_action_else_stmt(Token_t *label, Token_t *elseKeyword, Token_t *id,
-            Token_t *eos)
+    void c_action_else_stmt(Token_t *label, Token_t *elseKeyword, Token_t *id, Token_t *eos)
     {
         // Support for else in SgIfStmt
 
@@ -10878,12 +10892,18 @@ void c_action_label(Token_t * lbl)
         SgIfStmt* ifStatement = isSgIfStmt(currentScope);
         ROSE_ASSERT(ifStatement != NULL);
 
-        // DQ (12/7/2010): Mark this explicitly as being associated with an else (might not be required).
-        // ifStatement->set_is_else_if_statement(true);
-
+        // Rasmussen(7/23/2018): Moved to C style AST construction (false block is NULL if present)
+        // This was done to allow analysis and transformations to work the same for C and Fortran.
+        //
         // Find the previously built false body in the SgIfStmt
-        SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
+        // SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
+        SgBasicBlock* false_body = new SgBasicBlock();
         ROSE_ASSERT(false_body != NULL);
+        false_body->setCaseInsensitive(true);
+        setSourcePosition(false_body);
+
+        ifStatement->set_false_body(false_body);
+        false_body->set_parent(ifStatement);
 
         // Push the false body onto the scope stack
         astScopeStack.push_front(false_body);
@@ -11019,19 +11039,20 @@ void c_action_label(Token_t * lbl)
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
         SgBasicBlock* true_block = new SgBasicBlock();
-        SgBasicBlock* false_block = new SgBasicBlock();
-        SgIfStmt* ifStatement = new SgIfStmt((SgStatement*) NULL, true_block,
-                false_block);
+
+     // Rasmussen (7/22/2018): Switched to using a NULL false_block to match C/C++
+     // SgBasicBlock* false_block = new SgBasicBlock();
+        SgBasicBlock* false_block = NULL;
+
+        SgIfStmt* ifStatement = new SgIfStmt((SgStatement*) NULL, true_block, false_block);
 
         // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
         true_block->setCaseInsensitive(true);
-        false_block->setCaseInsensitive(true);
+ //     false_block->setCaseInsensitive(true);
         ifStatement->setCaseInsensitive(true);
 
-        // astIfStatementStack.push_front(ifStatement);
-
         setSourcePosition(true_block);
-        setSourcePosition(false_block);
+//      setSourcePosition(false_block);
 
         SgScopeStatement* currentScope = getTopOfScopeStack();
         currentScope->append_statement(ifStatement);
@@ -11060,7 +11081,7 @@ void c_action_label(Token_t * lbl)
         printf("In R807 c_action_if_stmt() label = %p = %s \n", label,
                 label ? label->text : "NULL");
 
-        // This rule is for statements of the sort: "if (a) b = 0" withouth an associated endif statement.
+        // This rule is for statements of the sort: "if (a) b = 0" without an associated endif statement.
 
 #if 1
         // Output debugging information about saved state (stack) information.
@@ -13634,9 +13655,9 @@ void c_action_label(Token_t * lbl)
                 ROSE_ASSERT(expression->get_parent() != NULL);
             }
             // Process this second because the unit expression is deeper on the stack!
-            else if ((strncasecmp(name->text, "unit", 4) == 0) || (strncmp(
-                                    name->text, "defaultString", 13) == 0)
-                    && (readStatement->get_unit() == NULL))
+            else if ( ((strncasecmp(name->text, "unit", 4) == 0)
+                       || (strncmp(name->text, "defaultString", 13) == 0))
+                     && (readStatement->get_unit() == NULL) )
             {
                 // printf ("Processing token = %s as unit spec expression = %s \n",name->text,expression->class_name().c_str());
                 readStatement->set_unit(expression);
@@ -13812,9 +13833,9 @@ void c_action_label(Token_t * lbl)
             // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
             // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (writeStatement->get_format() == NULL) )
             // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (writeStatement->get_format() == NULL) && initalStackDepth >= 2)
-            if ((strncasecmp(name->text, "fmt", 3) == 0) || (strncmp(name->text,
-                                    "defaultString", 13) == 0) && (writeStatement->get_format()
-                            == NULL) && numberOfDefaultOptions == 2)
+            if ( ((strncasecmp(name->text, "fmt", 3) == 0) || (strncmp(name->text,"defaultString", 13) == 0))
+                && (writeStatement->get_format() == NULL)
+                && numberOfDefaultOptions == 2 )
             {
                 // printf ("Processing token = %s as format spec \n",name->text);
                 // writeStatement->set_format(expression);
@@ -13825,9 +13846,8 @@ void c_action_label(Token_t * lbl)
                 labelRefExp->set_parent(writeStatement);
             }
             // Process this second because the unit expression is deeper on the stack!
-            else if ((strncasecmp(name->text, "unit", 4) == 0) || (strncmp(
-                                    name->text, "defaultString", 13) == 0)
-                    && (writeStatement->get_unit() == NULL))
+            else if ( ((strncasecmp(name->text, "unit", 4) == 0) || (strncmp(name->text, "defaultString", 13) == 0))
+                     && (writeStatement->get_unit() == NULL))
             {
                 // printf ("Processing token = %s as unit spec \n",name->text);
                 writeStatement->set_unit(expression);

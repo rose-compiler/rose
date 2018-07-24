@@ -3364,11 +3364,11 @@ SgUntypedAcceptStatement* SgUntypedAcceptStatement::build_node_from_nonlist_chil
    }
 
 
-SgUntypedIfStatement* SgUntypedIfStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* conditional, SgUntypedStatement* true_body, SgUntypedStatement* false_body)
+SgUntypedIfStatement* SgUntypedIfStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* conditional, SgUntypedStatement* true_body, SgUntypedStatement* false_body)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedIfStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* conditional, SgUntypedStatement* true_body, SgUntypedStatement* false_body): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedIfStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* conditional, SgUntypedStatement* true_body, SgUntypedStatement* false_body): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedIfStatement* returnNode = NULL;

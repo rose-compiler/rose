@@ -1186,19 +1186,12 @@ UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, Sg
 
 #if 0
       cout << "-x- convert if: conditional is " << ut_stmt->get_conditional() << " " << ut_stmt->get_conditional()->class_name() << endl;
-      cout << "-x- convert if:   true_body is " << ut_stmt->get_true_body() << " " << ut_stmt->get_true_body()->class_name() << endl;
-      cout << "-x- convert if:  false_body is " << ut_stmt->get_false_body() << " " << ut_stmt->get_false_body()->class_name() << endl;
+      cout << "-x- convert if:   true_body is " << ut_stmt->get_true_body() << " "   << ut_stmt->get_true_body()->class_name()   << endl;
+      cout << "-x- convert if:  false_body is " << ut_stmt->get_false_body() << "\n";
 #endif
 
       SgExpression* conditional = isSgExpression(children[0]);
       ROSE_ASSERT(conditional != NULL);
-
-#if 0
-      cout << "--- convert if: conditional is " << conditional << " " << conditional->class_name() << endl;
-      cout << "-z- convert if: conditional is " << children[0] << " " << children[0]->class_name() << endl;
-      cout << "-z- convert if:   true_body is " << children[1] << " " << children[1]->class_name() << endl;
-      cout << "-z- convert if:  false_body is " << children[2] << " " << children[2]->class_name() << endl;
-#endif
 
       SgStatement* true_body = isSgStatement(children[1]);
       ROSE_ASSERT(true_body != NULL);
@@ -1219,6 +1212,7 @@ UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, Sg
    // if so the unparser needs to know there is no END IF for the if statement.
       SgIfStmt* else_if_stmt = isSgIfStmt(children[2]);
       if (else_if_stmt != NULL) {
+         else_if_stmt->set_is_else_if_statement(true);
          else_if_stmt->set_has_end_statement(false);
       }
 
@@ -1227,9 +1221,23 @@ UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, Sg
       ROSE_ASSERT(sg_stmt != NULL);
       setSourcePositionFrom(sg_stmt, ut_stmt);
 
+   // Determine if this is a simple if statement (no then or endif needed)
+      if (ut_stmt->get_statement_enum() == General_Language_Translation::e_fortran_if_stmt)
+         {
+            sg_stmt->set_use_then_keyword(false);
+            sg_stmt->set_has_end_statement(false);
+         }
+
+   // Determine if an if-construct-name is present
+      if (ut_stmt->get_label_string().empty() == false)
+         {
+            sg_stmt->set_string_label(ut_stmt->get_label_string());
+         }
+
       scope->append_statement(sg_stmt);
 
-      convertLabel(ut_stmt, sg_stmt, scope);
+// TEMPORARY (fix numeric labels especially here)
+//    convertLabel(ut_stmt, sg_stmt, scope);
 
       return sg_stmt;
    }
