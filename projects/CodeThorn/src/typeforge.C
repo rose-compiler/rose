@@ -67,12 +67,14 @@ int main (int argc, char* argv[])
   desc.add_options()
     ("help,h", "produce this help message.")
     ("version,v", "display the version.")
+    ("compile", "run backend compiler.")
     //("annotate", "annotate implicit casts as comments.")
     ("explicit", "make all imlicit casts explicit.")
     ("stats", "print statistics on casts of built-in floating point types.")
     ("trace", "print program transformation operations as they are performed.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("spec-file", po::value< string >()," name of typeforge specification file.")
+    ("source-file", po::value< string >()," name of source files.")
     ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
 #ifdef EXPLICIT_VAR_FORGE
     ("float-var", po::value< string >()," change type of var [arg] to float.")
@@ -80,9 +82,11 @@ int main (int argc, char* argv[])
     ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
 #endif
     ;
-
-  po::store(po::command_line_parser(argc, argv).
-            options(desc).allow_unregistered().run(), args);
+  po::positional_options_description pos;
+  pos.add("source-file", -1);
+  po::command_line_parser(argc,argv).options(desc).positional(pos).allow_unregistered();
+  po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).positional(pos).allow_unregistered().run();
+  po::store(parsed, args);
   po::notify(args);
 
   if (args.count("help")) {
@@ -106,8 +110,11 @@ int main (int argc, char* argv[])
       argv[i+1] = strdup("");
     }
   }
-  vector<string> argvList(argv, argv+argc);
-  argvList.push_back("-rose:skipfinalCompileStep");
+
+  
+  vector<string> argvList = po::collect_unrecognized(parsed.options, po::include_positional); 
+  argvList.insert(argvList.begin(), "rose");
+  if(!args.count("compile")) argvList.push_back("-rose:skipfinalCompileStep");
   SgProject* sageProject=frontend (argvList); 
   TFTypeTransformer tt;
 
