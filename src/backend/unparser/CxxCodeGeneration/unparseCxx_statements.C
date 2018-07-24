@@ -4709,6 +4709,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                     ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) != NULL);
                     ROSE_ASSERT(TransformationSupport::getSourceFile(firstNondefiningFunction) != NULL);
+#if 0
+                 // DQ (7/24/2018): This will be output spew from the Cxx_tests test_multiple_files rule (compiling two files with "void foo();" in each file.
+                 // I am guessing that if comes from the use of a common global scope across the two files.
                     if (TransformationSupport::getSourceFile(funcdecl_stmt) != TransformationSupport::getSourceFile(firstNondefiningFunction))
                        {
                          printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
@@ -4723,6 +4726,8 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
+#endif
+
                  // TV (07/01/2013) : prevent separated generation of decl and defn over an header file and a source file
                  // RPM (12/30/2013): Commented out because this fails for astSnippetTests which deep-copy a function
                  // declaration with definition and then call SageInterface::insertStatementBefore() to insert the copied
@@ -4731,6 +4736,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // commented out it at least works.
                     //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
 
+#if 0
+                 // DQ (7/24/2018): This will be output spew from the Cxx_tests test_multiple_files rule (compiling two files with "void foo();" in each file.
+                 // I am guessing that if comes from the use of a common global scope across the two files.
                  // DQ (2/26/2009): Commented out because moreTest3.cpp fails for outlining to a separate file.
                     if (TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) != TransformationSupport::getSourceFile(firstNondefiningFunction))
                        {
@@ -4744,6 +4752,8 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
                        }
+#endif
+
                  // TV (07/01/2013) : prevent separated generation of decl and defn over an header file and a source file
                  // RPM (12/10/2013): Commented out because this fails for astSnippetTests which deep-copy a function
                  // forward declaration and SageInterface::insertStatementBefore() the decl into a different file. The
