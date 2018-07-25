@@ -21,6 +21,7 @@ class TFTransformation {
   void transformArrayOfStructsAccesses(SgType* accessType,SgNode* root);
   //Transformation ad_intermediate
   void instrumentADIntermediate(SgNode* root);
+  void instrumentADIndependent(SgNode* root, SgFunctionDefinition* funDef);
 
 };
 

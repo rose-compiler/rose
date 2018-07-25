@@ -251,6 +251,10 @@ int TransformCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransforme
       tfTransformation.instrumentADIntermediate(funDef);
     }
   }
+  if(transformationName == "ad_intermediate_instrumentation"){
+    SgFunctionDefinition* funDef=completeAst.findFunctionByName("main");
+    tfTransformation.instrumentADIndependent(root, funDef);
+  }
   return false; 
 }
 

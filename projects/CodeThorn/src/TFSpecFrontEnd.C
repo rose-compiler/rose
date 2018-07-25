@@ -86,7 +86,14 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
     }
     commandList.nextCommand();
   }
-  tt.nathan_setConfig(config);
+  ToolConfig* newConfig = config;
+  try{
+    newConfig = new ToolConfig(outName);
+  }catch(...){
+    remove(outName.c_str());
+    newConfig->getActions().clear();
+  }
+  tt.nathan_setConfig(newConfig);
   if(outName != "") tt.nathan_setConfigFile(outName);
   return outName;
 }

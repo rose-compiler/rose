@@ -596,6 +596,7 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adCompoundTest.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adArrayTest.C 
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adGlobalTest.C 
 	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C 
 	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C 
 	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C --compile

@@ -40,7 +40,7 @@ void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& 
 
 void TFTypeTransformer::nathan_setConfig(ToolConfig* config){
   _outConfig = config;
-  _outConfig->getActions().clear();
+  //_outConfig->getActions().clear();
   _outConfig->setToolID("typeforge");
 }
 //TODO
