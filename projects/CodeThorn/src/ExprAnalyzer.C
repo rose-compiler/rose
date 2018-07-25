@@ -294,6 +294,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
           CASE_EXPR_ANALYZER_EVAL(SgPntrArrRefExp,evalArrayReferenceOp);
           CASE_EXPR_ANALYZER_EVAL(SgLshiftOp,evalBitwiseShiftLeftOp);
           CASE_EXPR_ANALYZER_EVAL(SgRshiftOp,evalBitwiseShiftRightOp);
+          CASE_EXPR_ANALYZER_EVAL(SgArrowExp,evalArrowOp);
+          CASE_EXPR_ANALYZER_EVAL(SgDotExp,evalDotOp);
 
         default:
           cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
@@ -968,35 +970,41 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseComplementOp(SgBitComple
   return listify(res);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp* node, 
-                                                              SingleEvalResultConstInt operandResult, 
-                                                              EState estate, bool useConstraints) {
-  SingleEvalResultConstInt res;
-  res.estate=estate;
-  AbstractValue derefOperandValue=operandResult.result;
-  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-#if 1
-  // null pointer check
-  if(derefOperandValue.isTop()) {
-    recordPotentialNullPointerDereferenceLocation(estate.label());
-  }
-  if(derefOperandValue.isConstInt()) {
-    int ptrIntVal=derefOperandValue.getIntValue();
-    if(ptrIntVal==0) {
-      recordDefinitiveNullPointerDereferenceLocation(estate.label());
-    }
-  }
-#endif
-  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  res.exprConstraints=operandResult.exprConstraints;
-  return listify(res);
-}
-
 AbstractValue ExprAnalyzer::computeAbstractAddress(SgVarRefExp* varRefExp) {
   VariableId varId=_variableIdMapping->variableId(varRefExp);
   return AbstractValue(varId);
 }
   
+list<SingleEvalResultConstInt> ExprAnalyzer::evalArrowOp(SgArrowExp* node,
+                                                         SingleEvalResultConstInt lhsResult, 
+                                                         SingleEvalResultConstInt rhsResult,
+                                                         EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  // L->R : L evaluates to pointer value (address), R evaluates to offset value (a struct member always evaluates to an offset)
+  AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
+  res.result=estate.pstate()->readFromMemoryLocation(address);
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
+                                                       SingleEvalResultConstInt lhsResult, 
+                                                       SingleEvalResultConstInt rhsResult,
+                                                       EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
+  AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
+  res.result=estate.pstate()->readFromMemoryLocation(address);
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node, 
                                                              SingleEvalResultConstInt operandResult, 
                                                              EState estate, bool useConstraints) {
@@ -1008,6 +1016,33 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   res.result=AbstractValue(operand.getVariableId());
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
+}
+
+
+list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEvalResultConstInt operandResult, 
+                                                                       EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  AbstractValue derefOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  // null pointer check
+  if(derefOperandValue.isTop()) {
+    recordPotentialNullPointerDereferenceLocation(estate.label());
+  } else if(derefOperandValue.isConstInt()) {
+    int ptrIntVal=derefOperandValue.getIntValue();
+    if(ptrIntVal==0) {
+      recordDefinitiveNullPointerDereferenceLocation(estate.label());
+    }
+  }
+  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp* node, 
+                                                              SingleEvalResultConstInt operandResult, 
+                                                              EState estate, bool useConstraints) {
+  return semanticEvalDereferenceOp(operandResult,estate,useConstraints);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
@@ -1227,6 +1262,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
+  // check if var is a struct member. if yes return struct-offset, otherwise continue.
+  if(_variableIdMapping->hasClassType(varId)) {
+    res.result=AbstractValue::createAddressOfVariable(varId);
+    return listify(res);
+  }
+#if 0
+  if(_variableIdMapping->isStructMemberVar(varId)) {
+    res.result=AbstractValue(StructureAccessLookup(varId));
+    return listify(res);
+  }
+#endif
   if(pstate->varExists(varId)) {
     if(_variableIdMapping->hasArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);

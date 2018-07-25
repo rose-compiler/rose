@@ -204,12 +204,22 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalUnaryMinusOp(SgMinusOp* node, 
                                                     SingleEvalResultConstInt operandResult, 
                                                     EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalArrowOp(SgArrowExp* node,
+                                               SingleEvalResultConstInt lhsResult, 
+                                               SingleEvalResultConstInt rhsResult,
+                                               EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> evalDotOp(SgDotExp* node,
+                                             SingleEvalResultConstInt lhsResult, 
+                                             SingleEvalResultConstInt rhsResult,
+                                             EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node, 
                                               SingleEvalResultConstInt operandResult, 
                                               EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalDereferenceOp(SgPointerDerefExp* node, 
                                                      SingleEvalResultConstInt operandResult, 
                                                      EState estate, bool useConstraints);
+    list<SingleEvalResultConstInt> semanticEvalDereferenceOp(SingleEvalResultConstInt operandResult, 
+                                                             EState estate, bool useConstraints);
     list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
@@ -262,7 +272,6 @@ namespace CodeThorn {
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
     Analyzer* _analyzer;
-    SgTypeSizeMapping _sgTypeSizeMapping;
     StructureAccessLookup structureAccessLookup;
   };
  
