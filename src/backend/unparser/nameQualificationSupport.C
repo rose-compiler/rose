@@ -1400,7 +1400,23 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
 #endif
+                           // DQ (7/25/2018): Type elaboration does not make since for functions.  This is a case where name qualification 
+                           // is required because the function is hidden by some non-function. The symbol was non-null and it was not a 
+                           // function.  Question: could it be a function that hides the function nane from another function (I think so).
+#if 0
+                              printf ("########### NOTE: NEED TO FORCE NAME QUALIFICATION SINCE TYPE ELABLORATION IS NOT A SOLUTION FOR declarations hiding a function \n");
+                              printf ("functionSymbol == NULL: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+#if 0
                               typeElaborationIsRequired = true;
+#else
+                           // I think we have to force an extra level of name qualification.
+                              forceMoreNameQualification = true;
+#endif
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("WARNING: Present implementation of symbol table will not find alias sysmbols of SgFunctionSymbol \n");
@@ -2380,9 +2396,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                        {
                          case V_SgFunctionDeclaration:
                             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Error: Skipping forced name qualification for SgFunctionDeclaration (sorry, not implemented) \n");
-#endif
+                           // DQ (7/25/2018): If in the original matching (for name collission) there was a match, then we need to force 
+                           // at least one more level of name qualification for functions since type elaboration can not be used to resolve 
+                           // an ambiguity on function (only makes sense for types).
+                              qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
                               break;
                             }
 
