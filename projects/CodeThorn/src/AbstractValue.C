@@ -49,9 +49,11 @@ AbstractValue::AbstractValue(bool val) {
 }
 
 void AbstractValue::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
+#if 0
   if(AbstractValue::_typeSizeMapping!=nullptr) {
     delete _typeSizeMapping;
   }
+#endif
   AbstractValue::_typeSizeMapping=typeSizeMapping;
 }
 

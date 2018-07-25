@@ -1703,9 +1703,12 @@ int main( int argc, char * argv[] ) {
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_NO);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
       }
-      delete ltlResults;
-      ltlResults = NULL;
-
+#if 0
+      if(ltlResults) {
+        delete ltlResults;
+        ltlResults = NULL;
+      }
+#endif
       //temporaryTotalRunTime = totalRunTime + infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
       //printAnalyzerStatistics(analyzer, temporaryTotalRunTime, "LTL check complete. Reduced transition system:");
     }
