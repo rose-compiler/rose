@@ -26,7 +26,7 @@ SgProject* MatlabParser::frontend(int argc, char* argv[])
 
   if (!matlabFile)
   {
-    std::cout << "File " << argv[1] << " cannot be opened." << std::endl;
+    std::cout << "File " << argv[argc-1] << " cannot be opened." << std::endl;
     ROSE_ASSERT(false);
     return NULL;
   }
