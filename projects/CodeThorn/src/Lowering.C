@@ -36,6 +36,7 @@ namespace SPRAY {
       }
     }
     for(auto declAssign : declAssignList) {
+      // insert new assignment statement after original variable declaration
       SageInterface::insertStatementAfter(declAssign.first, declAssign.second);
     }
   }
@@ -60,7 +61,6 @@ namespace SPRAY {
         SgAssignOp* varAssignOp=SageBuilder::buildAssignOp(declVarRefExp,declInitializer);
         // build exprstatement from assignOp expression
         SgStatement* varAssignStatement=SageBuilder::buildExprStatement(varAssignOp);
-        // insert new assignment statement after original variable declaration
         return varAssignStatement;
       }
     }
@@ -83,27 +83,24 @@ namespace SPRAY {
   void Lowering::normalizeAst(SgNode* root) {
     normalizeSingleStatementsToBlocks(root);
 
-    // TODO1: normalize AST such that all empty blocks contain a null
-    // statement this is only necessary to be able to eliminate
-    // begin/end labels of blocks and avoid true+false edges between
-    // the same nodes in the CFG generation
-
-    // TODO2: normalize AST such that every expression in a statement has as root a SgExpressionRoot node
+    // TODO: normalize AST such that every expression in a statement has as root a SgExpressionRoot node
     // this allows to transform any expression without updating the corresponding child pointer in the enclosing statement
     // normalizeExpressionRootNodes(root);
+
   }
 
-  void Lowering::transformAst(SgNode* root) {
-    normalizeAst(root);
+  void Lowering::runLowering(SgNode* root) {
+    normalizeSingleStatementsToBlocks(root);
     convertAllForsToWhiles(root);
     changeBreakStatementsToGotos(root);
     createLoweringSequence(root);
     applyLoweringSequence();
-    normalizeExpressions(root);
+    bool normalizeOnlyFunctionCalls=true;
+    normalizeExpressions(root,normalizeOnlyFunctionCalls);
+    normalizeAllVariableDeclarations(root);
     if(getInliningOption()) {
       inlineFunctions(root);
     }
-    normalizeAllVariableDeclarations(root);
   }
 
   void Lowering::setInliningOption(bool flag) {
@@ -295,7 +292,7 @@ namespace SPRAY {
     //SgProject* project=isSgProject(root);
     //ROSE_ASSERT(project);
     size_t nInlined = 0;
-    for (int count=0; count<10; ++count) {
+    for (int count=0; count<inlineDepth; ++count) {
       bool changed = false;
         BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(root)) {
           if (doInline(call)) {

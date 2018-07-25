@@ -42,7 +42,7 @@ namespace Untyped {
 
    // Executable statements
    //
-      virtual SgStatement* convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope);
+      virtual SgStatement* convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement* convertSgUntypedOtherStatement      (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope);
 
    // Expressions

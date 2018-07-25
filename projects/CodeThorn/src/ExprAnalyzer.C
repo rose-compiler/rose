@@ -2,7 +2,7 @@
  * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
  * License  : see file LICENSE in the CodeThorn distribution *
- ****X*********************************************************/
+ *************************************************************/
 
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
@@ -61,6 +61,14 @@ bool ExprAnalyzer::stdFunctionSemantics() {
   return _stdFunctionSemantics;
 }
 
+bool ExprAnalyzer::getStdFunctionSemantics() {
+  return _stdFunctionSemantics;
+}
+
+void ExprAnalyzer::setStdFunctionSemantics(bool flag) {
+  _stdFunctionSemantics=flag;
+}
+
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
@@ -107,10 +115,15 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
   if(isSgFloatVal(valueExp)
      ||isSgDoubleVal(valueExp)
      ||isSgLongDoubleVal(valueExp)
-     ||isSgComplexVal(valueExp)
-     ||isSgStringVal(valueExp)
-     ) {
+     ||isSgComplexVal(valueExp)) {
     return AbstractValue(CodeThorn::Top());
+  } else if(SgStringVal* stringVal=isSgStringVal(valueExp)) {
+    // handle string literals
+    std::string s=stringVal->get_value();
+    VariableId stringValVarId=_variableIdMapping->getStringLiteralVariableId(stringVal);
+    AbstractValue val=AbstractValue::createAddressOfVariable(stringValVarId);
+    //cout<<"DEBUG: Found StringValue: "<<s<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
+    return val;
   } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
     // ROSE uses an integer for a bool
     int val=exp->get_value();
@@ -791,8 +804,13 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access."<<endl;
         if(pstate->varExists(arrayVarId)) {
+          //cout<<"DEBUG: arrayPtrValue read from memory."<<endl;
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
-          ROSE_ASSERT(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr());
+          if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
+            cout<<"Error: value not a pointer value: "<<arrayPtrValue.toString()<<endl;
+            cout<<estate.toString(_variableIdMapping)<<endl;
+            exit(1);
+          }
         } else {
           cerr<<"Error: pointer variable does not exist in PState."<<endl;
           exit(1);
@@ -812,6 +830,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
       ROSE_ASSERT(arrayElementId.isValid());
 #endif
+      if(pstate->varExists(arrayPtrValue)) {
+        //cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
+      }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
         res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
@@ -849,17 +870,24 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
               }
             } else {
               cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              exit(1);
             }
             elemIndex++;
           }
-          cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
+          cerr<<"Error: access to element of constant array (not in state). Not supported."<<endl;
           exit(1);
+        } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
+          cout<<"TODO: Found string literal address. Data not present in state yet. skipping for now, returning top"<<endl;
+          res.result=CodeThorn::Top();
+          return listify(res);
         } else {
-          cout<<"Error: potential out of bounds access (memory bound index: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<")"<<endl;
-          cerr<<"array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-          cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
-          cerr<<"AST: "<<node->unparseToString()<<endl;
-          
+          //cout<<estate.toString(_variableIdMapping)<<endl;
+          //cout<<"DEBUG: Program error detected: potential out of bounds access 1 : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
+          //cerr<<"AST: "<<node->unparseToString()<<endl;
+          //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
+          _nullPointerDereferenceLocations.recordPotentialDereference(estate.label());
         }
       }
     } else {
@@ -895,10 +923,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
                                                               EState estate, bool useConstraints) {
-  AbstractValue sizeValue=AbstractValue(4); // TODO: compute size
+  
+  SPRAY::TypeSize typeSize=_sgTypeSizeMapping.determineTypeSize(node->get_operand_type());
+  AbstractValue sizeValue=AbstractValue(typeSize); 
   SingleEvalResultConstInt res;
-  ConstraintSet constraintSet;
-  res.init(estate,constraintSet,sizeValue);
+  res.init(estate,*estate.constraints(),sizeValue);
   return listify(res);
 }
 
@@ -906,11 +935,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
                                                         SingleEvalResultConstInt operandResult, 
                                                         EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.estate=estate;
   // TODO: model effect of cast when sub language is extended
   //SgCastExp* castExp=isSgCastExp(node);
-  res.result=operandResult.result;
-  res.exprConstraints=operandResult.exprConstraints;
+  //res.estate=estate;
+  //res.result=operandResult.result;
+  //res.exprConstraints=operandResult.exprConstraints;
+  res.init(estate,operandResult.exprConstraints,operandResult.result);
   return listify(res);
 }
 
@@ -931,6 +961,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+#if 1
+  // null pointer check
+  if(derefOperandValue.isTop()) {
+    recordPotentialNullPointerDereferenceLocation(estate.label());
+  }
+  if(derefOperandValue.isConstInt()) {
+    int ptrIntVal=derefOperandValue.getIntValue();
+    if(ptrIntVal==0) {
+      recordDefinitiveNullPointerDereferenceLocation(estate.label());
+    }
+  }
+#endif
   res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
@@ -1210,13 +1252,25 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  for (auto arg : argsList) {
+    //cout<<"DEBUG: functioncall argument: "<<arg->unparseToString()<<endl;
+    // Requirement: code is normalized, does not contain state modifying operations in function arguments
+    list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate,useConstraints);
+    //cout<<"DEBUG: resList.size()"<<resList.size()<<endl;
+  }
+  SingleEvalResultConstInt res;
+  AbstractValue evalResultValue=CodeThorn::Top();
+  res.init(estate,*estate.constraints(),evalResultValue);
+ 
+  return listify(res);
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
-  if(getSkipSelectedFunctionCalls()) {
-    // return default value
-    return listify(res);
-  } else if(stdFunctionSemantics()) {
+  if(getStdFunctionSemantics()) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
@@ -1226,12 +1280,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallFree(funCall,estate,useConstraints);
     } else if(funName=="fflush") {
       // ignoring fflush
-      SingleEvalResultConstInt res;
-      return listify(res);
-    } else {
-      //cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
-      return listify(res);
+      // res initialized above
+      return evalFunctionCallArguments(funCall,estate,useConstraints);
     }
+  }
+  if(getSkipSelectedFunctionCalls()) {
+    return evalFunctionCallArguments(funCall,estate,useConstraints);
   } else {
     string s=funCall->unparseToString();
     throw CodeThorn::Exception("Unknown semantics of function call inside expression: "+s);
@@ -1239,6 +1293,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  // create two cases: (i) allocation successful, (ii) allocation fails (null pointer is returned, and no memory is allocated).
   SingleEvalResultConstInt res;
   static int memorylocid=0; // to be integrated in VariableIdMapping
   memorylocid++;
@@ -1247,6 +1302,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
   ROSE_ASSERT(_variableIdMapping);
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   if(argsList.size()==1) {
+    // (i) create state for successful allocation of memory (do not reserve memory yet, only pointer is reserved and size of memory is recorded)
+    // memory is allocated when written to it. Otherwise it is assumed to be uninitialized
     SgExpression* arg1=*argsList.begin();
     list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate,useConstraints);
     if(resList.size()!=1) {
@@ -1269,7 +1326,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
     //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
     ROSE_ASSERT(allocatedMemoryPtr.isPtr());
     //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
-    return listify(res);
+    // (ii) add memory allocation case with null pointer.
+    SingleEvalResultConstInt resNullPtr;
+    AbstractValue nullPtr=AbstractValue::createNullPtr();
+    resNullPtr.init(estate,*estate.constraints(),nullPtr);
+    // create resList with two states now
+    list<SingleEvalResultConstInt> resList2;
+    resList2.push_back(res);
+    resList2.push_back(resNullPtr);
+    return resList2;
   } else {
     // this will become an error in future
     cerr<<"WARNING: unknown malloc function "<<funCall->unparseToString()<<endl;
@@ -1396,4 +1461,16 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
     return false; // fail
   }
   return true; // pass
+}
+
+NullPointerDereferenceLocations ExprAnalyzer::getNullPointerDereferenceLocations() {
+  return _nullPointerDereferenceLocations;
+}
+
+void ExprAnalyzer::recordDefinitiveNullPointerDereferenceLocation(Label label) {
+  _nullPointerDereferenceLocations.recordDefinitiveDereference(label);
+}
+
+void ExprAnalyzer::recordPotentialNullPointerDereferenceLocation(Label label) {
+  _nullPointerDereferenceLocations.recordPotentialDereference(label);
 }

@@ -470,6 +470,8 @@ namespace sg
     GEN_VISIT(SgUnaryOp)
     GEN_VISIT(SgBinaryOp)
     GEN_VISIT(SgValueExp)
+    GEN_VISIT(SgRangeExp)
+    GEN_VISIT(SgMatrixTransposeOp)
     GEN_VISIT(SgVariableSymbol)
     GEN_VISIT(SgFunctionTypeSymbol)
     GEN_VISIT(SgClassSymbol)

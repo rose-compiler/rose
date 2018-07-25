@@ -34,7 +34,8 @@ ATbool traverse_DeclarationConstruct     (ATerm term, SgUntypedDeclarationStatem
 ATbool traverse_DeclarationConstructList (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // R209
-ATbool traverse_ExecutionPartConstruct(ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_ExecutionPartConstruct      (ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_BlockExecutionPartConstruct (ATerm term, SgUntypedStatementList* stmt_list);
 
 ATbool traverse_OptInternalSubprogramPart (ATerm term, SgUntypedOtherStatement** contains_stmt,
                                                        SgUntypedScope* scope);
@@ -131,6 +132,24 @@ ATbool traverse_OptExpr    ( ATerm term, SgUntypedExpression** expr );
 
 // R732
 ATbool traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R801
+ATbool traverse_Block(ATerm term, SgUntypedBlockStatement** block_list);
+
+// R832
+ATbool traverse_IfConstruct(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R833
+ATbool traverse_IfThenStmt(ATerm term, SgUntypedExpressionStatement** if_then_stmt);
+
+// R834
+ATbool traverse_ElseIfStmt      (ATerm term, SgUntypedExpressionStatement** else_if_stmt);
+ATbool traverse_ElseIfStmtList  (ATerm term, SgUntypedIfStatement** if_stmt, SgUntypedIfStatement** last_if_stmt);
+ATbool traverse_ElseIfStmtBlock (ATerm term, SgUntypedIfStatement** if_stmt);
+
+// R835
+ATbool traverse_ElseStmt(ATerm term, SgUntypedStatement** else_stmt);
+ATbool traverse_OptElseStmtAndBlock(ATerm term, SgUntypedStatement** else_stmt, SgUntypedBlockStatement** false_body);
 
 // R851
 ATbool traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list);

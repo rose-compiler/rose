@@ -115,6 +115,7 @@ test2016_25.C \
 test2016_29.C \
 test2016_30.C \
 test2016_37.C \
+test2016_40.C \
 test2016_42.C \
 test2016_91.C \
 test2016_92.C \
@@ -243,8 +244,8 @@ test2018_130.C \
 test2018_131.C \
 test2018_132.C \
 test2018_133.C \
+ctor-list-init.C \
 $(PREVIOUSLY_FAILING_TESTS) \
-test2016_40.C \
 last.C
 
 

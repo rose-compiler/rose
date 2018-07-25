@@ -16,10 +16,23 @@
 
 using namespace SPRAY;
 using namespace std;
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility CFAnalysis::logger;
+void CFAnalysis::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::CFAnalysis", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
 
 CFAnalysis::CFAnalysis(Labeler* l):labeler(l),_createLocalEdge(false){
+  initDiagnostics();
 }
 CFAnalysis::CFAnalysis(Labeler* l, bool createLocalEdge):labeler(l),_createLocalEdge(createLocalEdge){
+  initDiagnostics();
 }
 void CFAnalysis::setCreateLocalEdge(bool createLocalEdge) {
   _createLocalEdge=createLocalEdge;
@@ -120,16 +133,19 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
-  //cout<<"STATUS: establishing inter-flow ..."<<endl;
+  cout<<"STATUS: establishing inter-flow ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
-  //int callLabsNum=callLabs.size();
-  //cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
+  int callLabsNum=callLabs.size();
+  cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
   int callLabNr=0;
+  int externalFunCalls=0;
+  int externalFunCallsWithoutDecl=0;
+  int functionsFound=0;
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
     SgNode* callNode=getNode(*i);
-    //cout<<"INFO: creating inter-flow for "<<callNode->unparseToString()<<endl;
+    //cout<<"INFO: Functioncall: creating inter-flow for "<<callNode->unparseToString()<<endl;
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
@@ -140,26 +156,36 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       //cout<<" [no definition found]"<<endl;
       // we were not able to find the funDef in the AST
       //cout << "STATUS: External function ";
-      //if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
-      //  cout << SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
-      //else
-      //  cout << "cannot be determined."<<endl;
+      SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+      if(funDecl) {
+        //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
+        externalFunCalls++;
+      } else {
+        //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
+        externalFunCallsWithoutDecl++;
+      }
       callLabel=*i;
       entryLabel=Labeler::NO_LABEL;
       exitLabel=Labeler::NO_LABEL;
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
       //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
     } else {
-      //cout<<" [definition found]"<<endl;
+      cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
       callLabel=*i;
       entryLabel=labeler->functionEntryLabel(funDef);
       exitLabel=labeler->functionExitLabel(funDef);
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
+      functionsFound++;
     }
     interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
     callLabNr++;
   }
-  //cout<<"STATUS: inter-flow established."<<endl;
+  cout<<"STATUS: inter-flow established."<<endl;
+  cout<<"INFO: Call labels: "<<callLabNr<<endl;
+  cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+  cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+  cout<<"INFO: functions found: "<<functionsFound<<endl;
+
   return interFlow;
 }
 
