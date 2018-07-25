@@ -59,9 +59,12 @@ typename _Alloc = std::allocator >
 
 class Class1;
 
-void func1() {
-  const std::vector<Class1*>::size_type local1 = 0;
-}
+void func1() 
+   {
+  // We are using the wrong class to support the name qualification.  This should be unparsed as: 
+  // const std::vector<Class1*>::size_type local1 = 0;
+     const std::vector<Class1*>::size_type local1 = 0;
+   }
 
  
 #if 0

@@ -234,6 +234,15 @@ test2018_115.C \
 test2018_116.C \
 test2018_117.C \
 test2018_118.C \
+test2018_119.C \
+test2018_120.C \
+test2018_121.C \
+test2018_124.C \
+test2018_127.C \
+test2018_130.C \
+test2018_131.C \
+test2018_132.C \
+test2018_133.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 test2016_40.C \
 last.C
