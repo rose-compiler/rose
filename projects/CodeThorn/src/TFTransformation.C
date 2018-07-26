@@ -317,6 +317,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
 }
 
 void TFTransformation::instrumentADIndependent(SgNode* root, SgFunctionDefinition* funDef){
+  if(!funDef) return;
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(isSgProject(root));
   if(listOfGlobalVars.size() > 0){
     string instString = "";

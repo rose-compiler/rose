@@ -186,9 +186,12 @@ HandleCommand::HandleCommand(std::string nodeHandle, std::string toType, bool ba
 }
 
 int HandleCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
-  abstract_node* rootNode = buildroseNode(root);
-  abstract_handle* rootHandle = new abstract_handle(rootNode);
-  abstract_handle* ahandle = new abstract_handle(rootHandle,handle);
+  abstract_handle* ahandle = nullptr;
+  try{
+    abstract_node* rootNode = buildroseNode(root);
+    abstract_handle* rootHandle = new abstract_handle(rootNode);
+    ahandle = new abstract_handle(rootHandle,handle);
+  }catch(...){}
   if(ahandle != nullptr){
     if(abstract_node* anode = ahandle->getNode()){
       SgNode* targetNode = (SgNode*) anode->getNode();
@@ -218,7 +221,7 @@ int HandleCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& 
   else{
     cerr<<"Error: Command "<<commandNumber<<": invalid handle "<<handle<<"."<<endl;
   }
-  return true;
+  return false;
 }
 
 TransformCommand::TransformCommand(std::string funName, std::string typeName, std::string transformName, int number) : Command(false, false, number){

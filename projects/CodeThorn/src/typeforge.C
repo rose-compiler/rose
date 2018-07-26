@@ -74,7 +74,7 @@ int main (int argc, char* argv[])
     ("trace", "print program transformation operations as they are performed.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("spec-file", po::value< string >()," name of typeforge specification file.")
-    ("source-file", po::value< string >()," name of source files.")
+    ("source-file", po::value<vector<string> >()," name of source files.")
     ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
 #ifdef EXPLICIT_VAR_FORGE
     ("float-var", po::value< string >()," change type of var [arg] to float.")
@@ -84,7 +84,6 @@ int main (int argc, char* argv[])
     ;
   po::positional_options_description pos;
   pos.add("source-file", -1);
-  po::command_line_parser(argc,argv).options(desc).positional(pos).allow_unregistered();
   po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).positional(pos).allow_unregistered().run();
   po::store(parsed, args);
   po::notify(args);
@@ -115,6 +114,7 @@ int main (int argc, char* argv[])
   vector<string> argvList = po::collect_unrecognized(parsed.options, po::include_positional); 
   argvList.insert(argvList.begin(), "rose");
   if(!args.count("compile")) argvList.push_back("-rose:skipfinalCompileStep");
+  //for(auto str : argvList) cout<<str<<"\n";
   SgProject* sageProject=frontend (argvList); 
   TFTypeTransformer tt;
 
