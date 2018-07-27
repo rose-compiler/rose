@@ -110,7 +110,16 @@ int main (int argc, char* argv[])
     }
   }
 
-  
+  bool objectFiles = false;
+  for(auto file : args["source-file"].as< vector<string> >()){
+    boost::filesystem::path pathObj(file);
+    if(pathObj.has_extension()){
+      if(pathObj.extension().string() == ".o"){
+        objectFiles = true;
+      }
+    }
+  }  
+ 
   vector<string> argvList = po::collect_unrecognized(parsed.options, po::include_positional); 
   argvList.insert(argvList.begin(), "rose");
   if(!args.count("compile")) argvList.push_back("-rose:skipfinalCompileStep");
@@ -155,7 +164,7 @@ int main (int argc, char* argv[])
     tt.setTraceFlag(true);
   }
 
-  if(args.isUserProvided("spec-file")) {
+  if(args.isUserProvided("spec-file") && !objectFiles) {
     string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
@@ -176,6 +185,10 @@ int main (int argc, char* argv[])
     tt.printTransformationStats(typeforgeSpecFrontEnd.getNumTypeReplace(),
 				tt,
 				tfTransformation);
+    backend(sageProject);
+    return 0;
+  }
+  else{
     backend(sageProject);
     return 0;
   }
