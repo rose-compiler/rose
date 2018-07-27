@@ -1890,6 +1890,8 @@ fi
 ROSE_SUPPORT_BINARY
 # ****************************************************
 
+ROSE_SUPPORT_PYTHON_API
+
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
 AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
 
