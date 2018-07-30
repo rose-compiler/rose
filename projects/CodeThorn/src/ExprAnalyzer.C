@@ -203,9 +203,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::listify(SingleEvalResultConstInt re
   return resList;
 }
 
-void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints, AbstractValue result) {
+void SingleEvalResultConstInt::init(EState estate, AbstractValue result) {
   this->estate=estate;
-  this->exprConstraints=exprConstraints;
   this->result=result;
 }
 
@@ -228,8 +227,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
     exit(1);
   }
   SingleEvalResultConstInt res;
-  ConstraintSet cset;
-  res.init(estate,cset,result);
+  res.init(estate,result);
   resList.push_back(res);
   return resList;
 }
@@ -816,7 +814,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
   AbstractValue sizeValue=AbstractValue(typeSize); 
   //AbstractValue sizeValue=AbstractValue(4); 
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),sizeValue);
+  res.init(estate,sizeValue);
   return listify(res);
 }
 
@@ -828,7 +826,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
   //SgCastExp* castExp=isSgCastExp(node);
   //res.estate=estate;
   //res.result=operandResult.result;
-  res.init(estate,operandResult.exprConstraints,operandResult.result);
+  res.init(estate,operandResult.result);
   return listify(res);
 }
 
@@ -922,7 +920,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate,
   newPState.writeToMemoryLocation(address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),newPState,cset),cset,newValue);
+  res.init(_analyzer->createEState(estate.label(),newPState,cset),newValue);
   return listify(res);
   }
 
@@ -935,7 +933,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate
   newPState.writeToMemoryLocation(address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),newPState,cset),cset,oldValue);
+  res.init(_analyzer->createEState(estate.label(),newPState,cset),oldValue);
   return listify(res);
 }
 
@@ -1012,9 +1010,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
   // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
   // since nothing can change (because of being ignored) state remains the same
   PState oldPState=*estate.pstate();
-  ConstraintSet oldcset=*estate.constraints();
   SingleEvalResultConstInt res;
-  res.init(estate,oldcset,AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   if(getSkipArrayAccesses()) {
     // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
     res.result=CodeThorn::Top();
@@ -1095,7 +1092,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
 list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* node, EState estate) {
   logger[TRACE]<<"DEBUG: evalLValueVarRefExp: "<<node->unparseToString()<<" EState label:"<<estate.label().toString()<<endl;
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   if(pstate->varExists(varId)) {
@@ -1128,7 +1125,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate) {
   //cout<<"DEBUG: evalRValueVarRefExp: "<<node->unparseToString()<<endl;
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   // check if var is a struct member. if yes return struct-offset, otherwise continue.
@@ -1170,7 +1167,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
 list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate) {
   ROSE_ASSERT(node);
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   res.result=constIntLatticeFromSgValueExp(node);
   return listify(res);
 }
@@ -1185,14 +1182,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctio
   }
   SingleEvalResultConstInt res;
   AbstractValue evalResultValue=CodeThorn::Top();
-  res.init(estate,*estate.constraints(),evalResultValue);
+  res.init(estate,evalResultValue);
  
   return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
+  res.init(estate,AbstractValue(CodeThorn::Top()));
   if(getStdFunctionSemantics()) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
@@ -1245,14 +1242,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
     }
     memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
     AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
-    res.init(estate,*estate.constraints(),allocatedMemoryPtr);
+    res.init(estate,allocatedMemoryPtr);
     //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
     ROSE_ASSERT(allocatedMemoryPtr.isPtr());
     //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
     // (ii) add memory allocation case with null pointer.
     SingleEvalResultConstInt resNullPtr;
     AbstractValue nullPtr=AbstractValue::createNullPtr();
-    resNullPtr.init(estate,*estate.constraints(),nullPtr);
+    resNullPtr.init(estate,nullPtr);
     // create resList with two states now
     list<SingleEvalResultConstInt> resList2;
     resList2.push_back(res);
@@ -1283,7 +1280,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCall
       //variableIdMapping->setSize(arg1Val.getVariableId(),-1);
       ROSE_ASSERT(memoryRegionSize>=0);
     }
-    res.init(estate,*estate.constraints(),AbstractValue(Top())); // void result (using top here)
+    res.init(estate,AbstractValue(Top())); // void result (using top here)
   } else {
     // this will become an error in future
     cerr<<"WARNING: unknown free function "<<funCall->unparseToString()<<endl;
@@ -1303,7 +1300,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
   //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   // memcpy is a void function, no return value
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top())); 
+  res.init(estate,AbstractValue(CodeThorn::Top())); 
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   if(argsList.size()==3) {
     AbstractValue memcpyArgs[3];

@@ -44,9 +44,8 @@ namespace CodeThorn {
    */
   class SingleEvalResultConstInt {
   public:
-    void init(EState estate, ConstraintSet exprConstraints, AbstractValue result);
+    void init(EState estate, AbstractValue result);
     EState estate;
-    ConstraintSet exprConstraints; // temporary during evaluation of expression
     AbstractValue result;
     AbstractValue value() {return result;}
     bool isConstInt() {return result.isConstInt();}
@@ -72,7 +71,6 @@ namespace CodeThorn {
     //! There can be multiple results if one of the variables was bound to top as we generate
     //! two different states and corresponding constraints in this case, one representing the
     //! true-case the other one representing the false-case.
-    //! When the option useConstraints is set to false constraints are not used when determining the
     //! values of top-variables. 
     list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate);
     void setVariableIdMapping(VariableIdMapping* variableIdMapping);
