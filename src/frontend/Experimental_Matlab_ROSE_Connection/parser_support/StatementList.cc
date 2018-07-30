@@ -4,7 +4,7 @@
 StatementList::StatementList() : SgScopeStatement()
     {
     }
-	
+
  StatementList::StatementList(SgStatement* statement)
     {
       appendStatement(statement);
@@ -25,13 +25,13 @@ SgBasicBlock* StatementList::getBasicBlock()
   }
 
 void StatementList::appendAll(SgScopeStatement *scope)
-  {		
+  {
     SageBuilder::pushScopeStack(scope);
     SageInterface::appendStatementList(statements);
     SageBuilder::popScopeStack();
   }
 
 void StatementList::appendAll()
-  {				
-    SageInterface::appendStatementList(statements);		
+  {
+    SageInterface::appendStatementList(statements);
   }

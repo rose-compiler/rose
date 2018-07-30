@@ -1,0 +1,14 @@
+unparseMatlabCodeGeneration_la_sources=\
+	$(MatlabCodeGenerationPath)/MatlabUnparserBottomUpTraversal.C \
+	$(MatlabCodeGenerationPath)/MatlabUnparser.C 
+
+unparseMatlabCodeGeneration_includeHeaders=\
+	$(MatlabCodeGenerationPath)/MatlabUnparserBottomUpTraversal.h \
+        $(MatlabCodeGenerationPath)/MatlabUnparser.h
+
+unparseMatlabCodeGeneration_extraDist=\
+	$(MatlabCodeGenerationPath)/CMakeLists.txt
+
+unparseMatlabCodeGeneration_cleanLocal=
+#	rm -rf $(MatlabCodeGenerationPath)/core
+

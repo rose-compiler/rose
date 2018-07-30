@@ -21,7 +21,7 @@ sorts
 
 % 3.0    %  SubroutineDeclaration SubroutineDefinition
 
-% 4.0    %  Statement SimpleStatement NullStatement Label StatementName CompoundStatement
+% 4.0    %  Statement SimpleStatement NullStatement Label StatementName LabeledCompoundStatement
             LabeledSimpleStatement LabelList
 
 InterferenceControl
@@ -133,18 +133,18 @@ TableConversion
 NamedTableConstant
 TableVariable
 PointerConversion
-PointerFunctionCall
-NamedPointerConstant
-PointerVariable
+%%PointerFunctionCall
+%%NamedPointerConstant
+%%PointerVariable
 PointerLiteral
 StatusConversion
-StatusFunctionCall
-NamedStatusConstant
-StatusVariable
+%%StatusFunctionCall
+%%NamedStatusConstant
+%%StatusVariable
 CharacterConversion
-CharacterFunctionCall
-NamedCharacterConstant
-CharacterVariable
+%%CharacterFunctionCall
+%%NamedCharacterConstant
+%%CharacterVariable
 CharacterLiteral
 EqualOrNotEqualOperator
 RelationalOperator
@@ -216,6 +216,7 @@ DefaultOption
 OptFALLTHRU
 CaseIndexGroup
 CaseAlternative
+GeneralFormula        %% added to simplify Character, Status, and Pointer Formula and avoid ambiguities
 StatusFormula
 CharacterFormula
 BitFormula
@@ -690,7 +691,7 @@ context-free syntax
       ScaleSpecifier
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
-  CompileTimeIntegerFormula   -> ScaleSpecifier
+  CompileTimeIntegerFormula   -> ScaleSpecifier          {cons("ScaleSpecifier")}
   CompileTimeFixedFormula     -> FractionSpecifier       {cons("FractionSpecifier")}
 
   FractionSpecifier           -> OptFractionSpecifier
@@ -785,7 +786,7 @@ context-free syntax
   TableTypeName               -> TypeName
   BlockTypeName               -> TypeName
 
-  TypeName                    -> OptTypeName
+  TypeName                    -> OptTypeName             {cons("TypeName")}
   % empty %                   -> OptTypeName             {cons("no-type-name")}
 
 %% 2.1.2 TABLE DECLARATIONS
@@ -1277,13 +1278,13 @@ context-free syntax
 
   LabelList SimpleStatement   -> Statement             {cons("SimpleStatement")}
   LabeledSimpleStatement      -> Statement             {cons("SimpleStatement")}
-  LabelList CompoundStatement -> Statement             {cons("CompoundStatement")}
+  LabeledCompoundStatement    -> Statement
 
   AssignmentStatement         -> SimpleStatement
   LoopStatement               -> SimpleStatement
-  IfStatement                 -> SimpleStatement
-  CaseStatement               -> SimpleStatement
-  ProcedureCallStatement      -> SimpleStatement       {reject} %%AMBIGUOUS with AssignmentStatement
+  IfStatement                 -> LabeledSimpleStatement
+  CaseStatement               -> LabeledSimpleStatement
+  ProcedureCallStatement      -> SimpleStatement       {reject} %%AMBIGUOUS with AssignmentStatement and other statements
   ReturnStatement             -> LabeledSimpleStatement
   GotoStatement               -> LabeledSimpleStatement
   ExitStatement               -> LabeledSimpleStatement
@@ -1308,10 +1309,11 @@ context-free syntax
 
   Name                        -> StatementName         {cons("Name")}
 
+  LabelList
   'BEGIN'
     Statement+
     LabelList
-  'END'                       -> CompoundStatement     {cons("CompoundStatement")}
+  'END'                       -> LabeledCompoundStatement {cons("CompoundStatement")}
   
 %% 4.1 ASSIGNMENT STATEMENTS
 %%
@@ -1333,7 +1335,7 @@ context-free syntax
 
   'WHILE' BooleanFormula ';'   -> WhileClause          {cons("WhileClause")}
 
-  'FOR' ControlItem   ';'
+  'FOR' ControlItem   ':'
         ControlClause ';'      -> ForClause            {cons("ForClause")}
 
   ControlVariable              -> ControlItem
@@ -1376,11 +1378,12 @@ context-free syntax
 %% 4.3 IF STATEMENTS
 %%
 
+  LabelList
   'IF' BooleanFormula ';'
     ConditionalStatement
     OptElseClause            -> IfStatement            {cons("IfStatement")}
 
-  Statement                  -> ConditionalStatement   {cons("ConditionalStatement")}
+  Statement                  -> ConditionalStatement
 
   'ELSE' Statement           -> ElseClause             {cons("ElseClause")}
 
@@ -1390,10 +1393,12 @@ context-free syntax
 %% 4.4 CASE STATEMENTS
 %%
 
+  LabelList
   'CASE'
     CaseSelectorFormula ';'
   'BEGIN'
     CaseBody
+    LabelList
   'END'                        -> CaseStatement        {cons("CaseStatement")}
 
   IntegerFormula               -> CaseSelectorFormula
@@ -1407,7 +1412,7 @@ context-free syntax
     Statement
     OptFALLTHRU                -> CaseAlternative      {cons("CaseAlternative")}
 
-  DefaultOption                -> CaseAlternative      {cons("CaseAlternative")}
+  DefaultOption                -> CaseAlternative      {prefer}
 
   '(' 'DEFAULT' ')' ':'
     Statement
@@ -1501,9 +1506,10 @@ context-free syntax
 %%UntypedNamedVariable        -> Formula               {cons("VariableFormula")}  %% BEWARE NON_STANDARD_TRIAL
   NumericFormula              -> Formula               {prefer}
   BitFormula                  -> Formula
-  CharacterFormula            -> Formula               {cons("CharacterFormula")}
-  StatusFormula               -> Formula               {cons("StatusFormula")}
-  PointerFormula              -> Formula               {cons("PointerFormula")}
+  GeneralFormula              -> Formula             %%{cons("GeneralFormula")}
+%%CharacterFormula            -> Formula               {cons("CharacterFormula")}
+%%StatusFormula               -> Formula               {cons("StatusFormula")}
+%%PointerFormula              -> Formula               {cons("PointerFormula")}
   TableFormula                -> Formula               {cons("TableFormula")}
 
 %% Additions to resolve ambiguities with variables (variables are mostly untyped)
@@ -1584,7 +1590,7 @@ context-free syntax
     IntegerPrimary            -> FloatingFactor         {cons("FloatingFactor")}
 
   FloatingLiteral             -> FloatingPrimary
-  FloatingMachineParameter    -> FloatingPrimary
+  FloatingMachineParameter    -> FloatingPrimary        {prefer} %% added to remove ambiguity with FloatingPrimary(FloatingConversion(FloatingTypeName))
   FloatingVariable            -> FloatingPrimary        {cons("FloatingVariable")}
   NamedFloatingConstant       -> FloatingPrimary        {cons("NamedFloatingConstant")}
   FloatingFunctionCall        -> FloatingPrimary
@@ -1645,6 +1651,7 @@ context-free syntax
 
   BitPrimary                  -> LogicalOperand
   RelationalExpression        -> LogicalOperand
+%%BitVariable                 -> LogicalOperand
 
   BitLiteral                  -> BitPrimary
   BooleanLiteral              -> BitPrimary
@@ -1672,7 +1679,7 @@ context-free syntax
   'XOR' LogicalOperand        -> XorContinuation        {cons("XorContinuation")}
   'EQV' LogicalOperand        -> EqvContinuation        {cons("EqvContinuation")}
 
-  Variable                    -> BitVariable
+  Variable                    -> BitVariable            {cons("BitVariable")}
 
   NamedConstant               -> NamedBitConstant
 
@@ -1686,6 +1693,10 @@ context-free syntax
     RelationalOperator
     IntegerFormula            -> RelationalExpression   {cons("RelationalExpression")}
 
+  GeneralFormula
+    RelationalOperator
+    GeneralFormula            -> RelationalExpression   {cons("RelationalExpression")}
+
   FloatingFormula
     RelationalOperator
     FloatingFormula           -> RelationalExpression   {cons("RelationalExpression")}
@@ -1694,81 +1705,102 @@ context-free syntax
     RelationalOperator
     FixedFormula              -> RelationalExpression   {cons("RelationalExpression"), prefer}
 
-  CharacterFormula
-    RelationalOperator
-    CharacterFormula          -> RelationalExpression   {cons("RelationalExpression")}
+%%CharacterFormula
+%%  RelationalOperator
+%%  CharacterFormula          -> RelationalExpression   {cons("RelationalExpression")}
 
-  StatusFormula
-    RelationalOperator
-    StatusFormula             -> RelationalExpression   {cons("RelationalExpression")}
+%%StatusFormula
+%%  RelationalOperator
+%%  StatusFormula             -> RelationalExpression   {cons("RelationalExpression")}
 
   BitPrimary
     EqualOrNotEqualOperator
     BitPrimary                -> RelationalExpression   {cons("RelationalExpression")}
 
-  PointerFormula
-    RelationalOperator
-    PointerFormula            -> RelationalExpression   {cons("RelationalExpression")}
+%%BitVariable
+%%  EqualOrNotEqualOperator
+%%  BitPrimary                -> RelationalExpression   {cons("RelationalExpression")}
+
+%%BitPrimary
+%%  EqualOrNotEqualOperator
+%%  BitVariable               -> RelationalExpression   {cons("RelationalExpression")}
+
+%%PointerFormula
+%%  RelationalOperator
+%%  PointerFormula            -> RelationalExpression   {cons("RelationalExpression")}
 
 %% 5.2.2 BOOLEAN FORMULAS
 %%
   BitFormula                  -> BooleanFormula
 
+%% 5.3.0 GENERAL FORMULAS
+%%
+%% Not in the original grammar
+%% Added to decrease chance for ambiguities
+
+  CharacterFormula            -> GeneralFormula
+  StatusFormula               -> GeneralFormula
+  PointerFormula              -> GeneralFormula
+
+  Variable                    -> GeneralFormula         {cons("GeneralFormula")}
+  NamedConstant               -> GeneralFormula         {cons("GeneralFormula")}
+  FunctionCall                -> GeneralFormula         {cons("GeneralFormula")}
+
 %% 5.3 CHARACTER FORMULAS
 %%
-  CharacterLiteral            -> CharacterFormula
-  CharacterVariable           -> CharacterFormula       {cons("CharacterVariable")}
-  NamedCharacterConstant      -> CharacterFormula       {cons("NamedCharacterConstant")}
-  CharacterFunctionCall       -> CharacterFormula
+  CharacterLiteral            -> CharacterFormula       {cons("CharacterFormula")}
+%%CharacterVariable           -> CharacterFormula       {cons("CharacterVariable")}
+%%NamedCharacterConstant      -> CharacterFormula       {cons("NamedCharacterConstant")}
+%%CharacterFunctionCall       -> CharacterFormula
   '(' CharacterFormula ')'    -> CharacterFormula       {cons("CharacterFormula")}
   CharacterConversion
     '(' Formula ')'           -> CharacterFormula       {cons("CharacterFormula")}
 
-  Variable                    -> CharacterVariable
+%%Variable                    -> CharacterVariable
 
-  NamedConstant               -> NamedCharacterConstant
+%%NamedConstant               -> NamedCharacterConstant
 
-  FunctionCall                -> CharacterFunctionCall
+%%FunctionCall                -> CharacterFunctionCall
 
   CharacterFormula            -> CompileTimeCharacterFormula
 
 %% 5.4 STATUS FORMULAS
 %%
-  StatusConstant              -> StatusFormula
-  StatusVariable              -> StatusFormula      {cons("StatusVariable")}
-  NamedStatusConstant         -> StatusFormula      {cons("NamedStatusConstant")}
-  StatusFunctionCall          -> StatusFormula
+  StatusConstant              -> StatusFormula      {cons("StatusFormula")}
+%%StatusVariable              -> StatusFormula      {cons("StatusVariable")}
+%%NamedStatusConstant         -> StatusFormula      {cons("NamedStatusConstant")}
+%%StatusFunctionCall          -> StatusFormula
   '(' StatusFormula ')'       -> StatusFormula      {cons("StatusFormula")}
   StatusConversion
     '(' Formula ')'           -> StatusFormula      {cons("StatusFormula")}
 
-  Variable                    -> StatusVariable
+%%Variable                    -> StatusVariable
 
-  NamedConstant               -> NamedStatusConstant
+%%NamedConstant               -> NamedStatusConstant
 
-  FunctionCall                -> StatusFunctionCall
+%%FunctionCall                -> StatusFunctionCall
 
   StatusFormula               -> CompileTimeStatusFormula
 
 %% 5.5 POINTER FORMULAS
 %%
-  PointerLiteral              -> PointerFormula
-  PointerVariable             -> PointerFormula     {cons("PointerVariable")}
-  NamedPointerConstant        -> PointerFormula     {cons("NamedPointerConstant")}
-  PointerFunctionCall         -> PointerFormula
+  PointerLiteral              -> PointerFormula     {cons("PointerFormula")}
+%%PointerVariable             -> PointerFormula     {cons("PointerVariable")}
+%%NamedPointerConstant        -> PointerFormula     {cons("NamedPointerConstant")}
+%%PointerFunctionCall         -> PointerFormula
   '(' PointerFormula ')'      -> PointerFormula     {cons("PointerFormula")}
   PointerConversion
     '(' Formula ')'           -> PointerFormula     {cons("PointerFormula")}
 
-  Variable                    -> PointerVariable
+%%Variable                    -> PointerVariable
 
-  NamedConstant               -> NamedPointerConstant
+%%NamedConstant               -> NamedPointerConstant
 
-  FunctionCall                -> PointerFunctionCall
+%%FunctionCall                -> PointerFunctionCall
 
   PointerFormula              -> CompileTimePointerFormula
 
-%% 5.5 TABLE FORMULAS
+%% 5.6 TABLE FORMULAS
 %%
   TableVariable               -> TableFormula       {cons("TableVariable")}
   NamedTableConstant          -> TableFormula       {cons("NamedTableConstant")}
@@ -1795,7 +1827,7 @@ context-free syntax
   
   Item                        -> NamedVariable
   Table                       -> NamedVariable
-  TableItem                   -> NamedVariable
+  TableItem                   -> NamedVariable      {prefer}
   TableEntry                  -> NamedVariable
   BlockItem                   -> NamedVariable      {reject} %% AMBIGUOUS with BlockTable
   BlockTable                  -> NamedVariable
@@ -1813,7 +1845,7 @@ context-free syntax
   TableItemName
        Subscript
 %%  OptSubscript                                                      %% Optional makes AMBIGUOUS with Name
-    OptTableDereference       -> TableItem             {cons("TableItem")}
+    OptTableDereference       -> TableItem             {cons("TableItem"), prefer}
 
   TableItemName
     OptSubscript
@@ -1827,7 +1859,7 @@ context-free syntax
   % empty %                   -> OptTableDereference   {cons("no-table-dereference")}
 
   TableName
-    Subscript                 -> TableEntry            {cons("TableEntry")}
+    Subscript                 -> TableEntry            {cons("TableEntry"), reject} %% Makes AMBIGUOUS with TableItem
 
   TableDereference
     Subscript                 -> TableEntry            {cons("TableEntry")}
@@ -1857,9 +1889,10 @@ context-free syntax
   Dereference                 -> TableDereference
 
   '@' PointerItemName         -> Dereference           {cons("Dereference")}
-  '@' '(' PointerFormula ')'  -> Dereference           {cons("Dereference")}
+  '@' '(' GeneralFormula ')'  -> Dereference           {cons("Dereference")}
+  '@' '(' PointerLiteral ')'  -> Dereference           {cons("Dereference"), reject}  %% This prevents NULL from being dereferenced
 
-  ItemName                    -> PointerItemName
+  ItemName                    -> PointerItemName       {prefer}
   TableItemName               -> PointerItemName
   ConstantItemName            -> PointerItemName
 
@@ -1871,8 +1904,11 @@ context-free syntax
   'BIT' '(' BitVariable ','
             Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
 
-  'BYTE'
-    '(' CharacterVariable ','
+%%'BYTE'
+%%  '(' CharacterVariable ','
+%%          Fbit ',' Nbit ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
+
+  'BYTE' '(' Variable ','
             Fbit ',' Nbit ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
 
   RepConversion
@@ -1951,8 +1987,8 @@ context-free syntax
   'BIT' '(' BitFormula ','
     Fbit ',' Nbit ')'         -> BitFunction          {cons("BitFunction")}
 
-  IntegerFormula              -> Fbit
-  IntegerFormula              -> Nbit
+  IntegerFormula              -> Fbit                 {cons("Fbit")}
+  IntegerFormula              -> Nbit                 {cons("Fbit")}
 
 %% 6.3.4 BYTE FUNCTION
 %%
@@ -2213,6 +2249,7 @@ context-free syntax
 
 %% 8.3.3 CHARACTER LITERALS
 %%
+%% CharString moved to JovialLex.sdf
   CharString               -> CharacterLiteral        {cons("CharacterLiteral")}
 
 %% 8.3.4 POINTER LITERALS
