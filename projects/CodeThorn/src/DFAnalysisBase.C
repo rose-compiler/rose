@@ -126,7 +126,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
   Lattice* elem=_initialElementFactory->create();
   initializeExtremalValue(elem);
-  cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
+  //cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
   list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
   for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
     if(usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()) {
@@ -137,9 +137,9 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
       cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
     }
   }
-  cout << "INIT: initial state: ";
-  elem->toStream(cout,getVariableIdMapping());
-  cout<<endl;
+  //cout << "INIT: initial state: ";
+  //elem->toStream(cout,getVariableIdMapping());
+  //cout<<endl;
   _globalVariablesState=elem;
   return elem;
 }
@@ -281,9 +281,9 @@ DFAnalysisBase::run() {
     initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
     // combine extremal value with global variables initialization state (computed by initializeGlobalVariables)
     _analyzerDataPreInfo[(*i).getId()]->combine(*_globalVariablesState);
-    cout<<"INFO: Initialized "<<*i<<" with ";
-    cout<<_analyzerDataPreInfo[(*i).getId()]->toString(getVariableIdMapping());
-    cout<<endl;
+    //cout<<"INFO: Initialized "<<*i<<" with ";
+    //cout<<_analyzerDataPreInfo[(*i).getId()]->toString(getVariableIdMapping());
+    //cout<<endl;
     // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
     //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
     if(_no_topological_sort || !isForwardAnalysis()) {

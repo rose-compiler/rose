@@ -1,1 +1,1 @@
-6,printf("I don't say anything here.");
+6,5,DC005_unreachable_external_function_call.C

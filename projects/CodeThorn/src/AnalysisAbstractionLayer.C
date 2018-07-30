@@ -47,10 +47,10 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
     VariableId id = variableIdMapping->variableId(*i);
     if(!id.isValid()) {
       ostringstream exceptionMsg;
-      exceptionMsg << "AnalysisAbstractionLayer::usedVariablesInsideFunctions: Invalid variable id for SgVarRefExp "
+      exceptionMsg << "Error: AnalysisAbstractionLayer::usedVariablesInsideFunctions: Invalid variable id for SgVarRefExp "
                    << (*i)->unparseToString() << ", Symbol: " << (*i)->get_symbol() << endl;
       cerr<<exceptionMsg.str();
-      exit(1);
+      //exit(1);
       //throw SPRAY::Exception(exceptionMsg.str());
     }
     setOfUsedVars.insert(id);

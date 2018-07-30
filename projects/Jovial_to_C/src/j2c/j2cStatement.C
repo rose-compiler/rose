@@ -9,12 +9,12 @@ using namespace Jovial_to_C;
 extern vector<SgStatement*> statementList;
 extern vector<SgNode*>      removeList;
 
-/******************************************************************************************************************************/
+/************************************************************************************************************************/
 /*
   Rename the output filename to .C file
   Replace the output file name to rose_j2c_*.C"
  */
-/******************************************************************************************************************************/
+/************************************************************************************************************************/
 void Jovial_to_C::translateFileName(SgFile* sourceFile)
 {
    string outputFilename = sourceFile->get_sourceFileNameWithoutPath();
@@ -43,12 +43,12 @@ void Jovial_to_C::translateFileName(SgFile* sourceFile)
 }
 
 
-/******************************************************************************************************************************/
+/************************************************************************************************************************/
 /* 
   Translate SgProgramHeaderStatement in Jovial into SgFunctionDeclaration in C.
   The main program in Jovial will become main function in C.
 */
-/******************************************************************************************************************************/
+/************************************************************************************************************************/
 void Jovial_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* programHeaderStatement)
 {
 // Get scopeStatement from SgProgramHeaderStatement
@@ -100,3 +100,44 @@ void Jovial_to_C::translateProgramHeaderStatement(SgProgramHeaderStatement* prog
   
    programHeaderStatement->set_parent(NULL);
 }  // End of Jovial_to_C::translateProgramHeaderStatement
+
+
+/***************************************************************************************************************
+  Translate SgStopOrPauseStatement in Jovial into exit function call (for now) in C.
+****************************************************************************************************************/
+void Jovial_to_C::translateStopOrPauseStatement(SgStopOrPauseStatement* stopOrPauseStmt)
+{
+   std::vector<SgExpression*> c_exit_args;
+
+   SgExpression* c_exit_expr = stopOrPauseStmt->get_code();
+   ROSE_ASSERT(c_exit_expr);
+
+   switch (stopOrPauseStmt->get_stop_or_pause())
+     {
+       case SgStopOrPauseStatement::e_abort:
+          c_exit_expr = buildIntVal(-2);
+          break;
+       case SgStopOrPauseStatement::e_exit:
+          c_exit_expr = buildIntVal(-1);
+          break;
+       case SgStopOrPauseStatement::e_stop:
+          break;
+       default:
+          std::cout << "Jovial_to_C::translateStopOrPauseStatement: enum = "
+                    << stopOrPauseStmt->get_stop_or_pause()
+                    << " not handled \n";
+          ROSE_ASSERT(false);
+     }
+
+   c_exit_args.push_back(c_exit_expr);
+
+// Replace the SgStopOrPauseStatement with call to exit
+   SgType* c_return_type = buildIntType();
+   SgExprListExp* c_arg_list = buildExprListExp(c_exit_args);
+   SgScopeStatement* scope = SageInterface::getEnclosingScope(stopOrPauseStmt);
+   SgExprStatement* c_exit_call_stmt = buildFunctionCallStmt("exit", c_return_type, c_arg_list, scope);
+   replaceStatement(stopOrPauseStmt, c_exit_call_stmt, true);
+
+   stopOrPauseStmt->set_parent(NULL);
+
+}  // End of Jovial_to_C::translateStopOrPauseStatement

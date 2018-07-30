@@ -187,6 +187,8 @@ codethorn_SOURCES = \
   Lowering.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
+  NullPointerDereferenceLocations.h \
+  NullPointerDereferenceLocations.C \
   PhiAttribute.h \
   PhiAttribute.C \
   PhiStatement.h \
@@ -195,6 +197,10 @@ codethorn_SOURCES = \
   PragmaHandler.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  ProgramInfo.h \
+  ProgramInfo.C \
+  ProgramAbstractionLayer.h \
+  ProgramAbstractionLayer.C \
   ReachabilityAnalysis.h ReachabilityAnalysis.C \
   ReachabilityAnalyzerZ3.h \
   ReachabilityAnalyzerZ3.C \
@@ -437,7 +443,6 @@ faketarget:
 	CPDomain.hpp
 	LTL.h
 	rtests/vector1/RevStack.h
-	ProgramAbstractionLayer.h
 	tests/lvtest4.C
 	tests/svcomp-test2.c
 #      end of fake target
@@ -505,6 +510,8 @@ analyterix_SOURCES = \
   CommandLineOptions.h \
   CommandLineOptions.C \
   CodeThornException.h \
+  CppStdUtilities.C \
+  CppStdUtilities.h \
   DeadCodeAnalysis.C \
   DeadCodeAnalysis.h \
   DataDependenceVisualizer.C \
@@ -569,7 +576,7 @@ varp1_SOURCES = Timer.cpp varp1.C TFTransformation.C
 typeforge_DEPENDENCIES=libspray.la
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C
+typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp
 
 cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
@@ -587,6 +594,9 @@ check-typeforge: typeforge
 	g++ -Wall rose_casttest3.C
 	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
+	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
+	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
 	rm -f a.out
 
 #MS: iterator_test not ingegrated yet

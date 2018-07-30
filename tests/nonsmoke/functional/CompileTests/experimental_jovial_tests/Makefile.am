@@ -13,6 +13,7 @@ JOVIAL_TESTCODES = \
  1_2_3_program-body_c.jov               \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
+ 4_3_if_else_stmt.jov                   \
  4_6_return_stmt.jov                    \
  4_7_goto_stmt_a.jov                    \
  4_8_exit_stmt.jov                      \

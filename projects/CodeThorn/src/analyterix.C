@@ -97,6 +97,7 @@ bool option_ignore_unknown_functions=false;
 bool option_inlining=false;
 bool option_normalize=false;
 bool option_show_source_code=false;
+bool option_show_path=true;
 //boost::program_options::variables_map args;
 
 void writeFile(std::string filename, std::string data) {
@@ -515,6 +516,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       std::string deadCodeCsvFileName = option_prefix+csvDeadCodeUnreachableFileName;
       DeadCodeAnalysis deadCodeAnalysis;
       deadCodeAnalysis.setOptionSourceCode(option_show_source_code);
+      deadCodeAnalysis.setOptionFilePath(option_show_path);
       deadCodeAnalysis.writeUnreachableCodeResultFile(intervalAnalyzer,deadCodeCsvFileName);
     }
     delete fipa;
@@ -713,7 +715,8 @@ int main(int argc, char* argv[]) {
       ("interval-analysis", "perform interval analysis.")
       ("csv-deadcode-unreachable", po::value< string >(), "perform interval analysis and generate csv-file [arg] with unreachable code.")
       ("csv-deadcode-deadstore", po::value< string >(), "perform liveness analysis and generate csv-file [arg] with stores to dead variables.")
-      ("show-source-code", "show source code in generated csv files.")
+      ("report-source-code", "report source code in generated csv files.")
+      ("report-only-file-name", "report only file name in generated csv files (default: full path).")
       ("trace", "show operations as performed by selected solver.")
       ("check-static-array-bounds", "check static array bounds (uses interval analysis).")
       ("print-varid-mapping", "prints variableIdMapping")
@@ -820,8 +823,11 @@ int main(int argc, char* argv[]) {
     if (args.count("ignore-unknown-functions")) {
       option_ignore_unknown_functions=true;
     }
-    if (args.count("show-source-code")) {
+    if (args.count("report-source-code")) {
       option_show_source_code=true;
+    }
+    if (args.count("report-only-file-name")) {
+      option_show_path=false;
     }
 
     // clean up string-options in argv

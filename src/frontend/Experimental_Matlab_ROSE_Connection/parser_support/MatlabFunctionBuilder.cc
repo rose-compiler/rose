@@ -12,7 +12,7 @@ MatlabFunctionBuilder::MatlabFunctionBuilder(SgFunctionParameterList* paramList,
   functionName(),
   returnList(NULL)
 {}
-		
+
 MatlabFunctionBuilder::MatlabFunctionBuilder(StatementList* stmtList, SgScopeStatement* sc)
 : parameterList(SageBuilder::buildFunctionParameterList()),
   statementList(stmtList),
@@ -56,7 +56,7 @@ SgFunctionDeclaration* MatlabFunctionBuilder::build_function()
 
    //Append all the accumulated statements into the currentScope
   statementList->appendAll();
-   
+
   if(returnList != NULL)
     {
       SageInterface::appendStatement(SageBuilder::buildReturnStmt(returnList), functionBody);
@@ -66,6 +66,6 @@ SgFunctionDeclaration* MatlabFunctionBuilder::build_function()
       returnAttribute->attachTo(declaration);
 */
     }
-  
+
   return declaration;
 }

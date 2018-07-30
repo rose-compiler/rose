@@ -70,6 +70,7 @@ class AbstractValue {
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
   bool isPtr() const;
+  bool isNullPtr() const;
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
   AbstractValue operatorOr(AbstractValue other);
@@ -98,6 +99,7 @@ class AbstractValue {
   static AbstractValue createAddressOfVariable(SPRAY::VariableId varId);
   static AbstractValue createAddressOfArray(SPRAY::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, AbstractValue Index);
+  static AbstractValue createNullPtr();
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;
