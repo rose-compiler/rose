@@ -2284,7 +2284,6 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
 
 list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
   EState currentEState=*estate;
-  EState currentEStateF=*estate;
   Label newLabel;
   PState newPState;
   ConstraintSet newCSet;
@@ -2320,11 +2319,12 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
     //}
 #endif
   list<EState> newEStateList;
-  for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
-      i!=evalResultList.end();
+  for(list<SingleEvalResultConstInt>::iterator i=evalResultListF.begin();
+      i!=evalResultListF.end();
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
     if(evalResult.isBot()) {
+      cout<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
       cout<<"Error: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
       exit(1);
     }
