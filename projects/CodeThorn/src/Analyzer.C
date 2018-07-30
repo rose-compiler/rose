@@ -709,7 +709,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           
           // build lhs-value dependent on type of declared variable
           AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState,true);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState,false);
 
           if(res.size()!=1) {
             if(res.size()>1) {
@@ -2086,7 +2086,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
   SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
   VariableId var;
   if(exprAnalyzer.variable(nextNodeToAnalyze3,var)) {
-    list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(nextNodeToAnalyze3,currentEState,true);
+    list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(nextNodeToAnalyze3,currentEState,false);
     ROSE_ASSERT(res.size()==1); // must hold for currently supported limited form of ++,--
     list<SingleEvalResultConstInt>::iterator i=res.begin();
     EState estate=(*i).estate;
@@ -2128,7 +2128,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
   EState currentEState=*estate;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
-  list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState,true);
+  list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState,false);
   list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
@@ -2200,7 +2200,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           }
           AbstractValue arrayElementId;
           //AbstractValue aValue=(*i).value();
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(indexExp,currentEState,true);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(indexExp,currentEState,false);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
           AbstractValue indexValue=(*(res.begin())).value();
           AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
@@ -2240,7 +2240,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       }
     } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
       SgExpression* lhsOperand=lhsDerefExp->get_operand();
-      list<SingleEvalResultConstInt> resLhs=exprAnalyzer.evaluateExpression(lhsOperand,currentEState,true);
+      list<SingleEvalResultConstInt> resLhs=exprAnalyzer.evaluateExpression(lhsOperand,currentEState,false);
       if(resLhs.size()>1) {
         throw CodeThorn::Exception("more than 1 execution path (probably due to abstraction) in operand's expression of pointer dereference operator on lhs of "+nextNodeToAnalyze2->unparseToString());
       }
@@ -2280,24 +2280,49 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
   return estateList;
 }
 
+//#define CONSTR_ELIM_DEBUG
+
 list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
   EState currentEState=*estate;
   Label newLabel;
   PState newPState;
   ConstraintSet newCSet;
+  // MS: the use of contraints is necessary here (for LTL verification). The evaluation of conditions is the only necessary case.
+#ifndef CONSTR_ELIM_DEBUG
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,true);
+#else
+  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,true);
+  list<SingleEvalResultConstInt> evalResultListF=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,false);
+  if(evalResultListF.size()!=evalResultList.size()) {
+    cout<<"DEBUG: different evalresultList sizes (false vs true):"<<evalResultListF.size()<<":"<<evalResultList.size()<<endl;
+    for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
+        i!=evalResultList.end();
+        ++i) {
+      SingleEvalResultConstInt evalResult=*i;
+      if(evalResult.isTop()) cout <<" top";
+      if(evalResult.isTrue()) cout <<" true";
+      if(evalResult.isFalse()) cout <<" false";
+    }
+    cout<<" @ "<<nextNodeToAnalyze2->unparseToString();
+    cout<<endl;
+  }
+#endif
   list<EState> newEStateList;
   for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
       i!=evalResultList.end();
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
+    if(evalResult.isBot()) {
+      cout<<"WARNING: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+    }
     if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
       // pass on EState
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
+#if 0
       // merge with collected constraints of expr (exprConstraints)
       if(edge.isType(EDGE_TRUE)) {
-          newCSet=*evalResult.estate.constraints()+evalResult.exprConstraints;
+        newCSet=*evalResult.estate.constraints()+evalResult.exprConstraints;
       } else if(edge.isType(EDGE_FALSE)) {
         ConstraintSet s1=*evalResult.estate.constraints();
         ConstraintSet s2=evalResult.exprConstraints;
@@ -2306,10 +2331,21 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
         logger[ERROR]<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
         exit(1);
       }
+#endif
+#if 0
+      // make check-ltl-rers-topify (topify => constraints are collected)
+      if(newCSet.size()>0) {
+        cout<<"DEBUG: cset: "<<newCSet.toString()<<endl;
+        cout<<"DEBUG: pstate: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
+      }
+#endif
+      // use new empty cset instead of computed cset
+      ROSE_ASSERT(newCSet.size()==0);
       EState estate=createEState(newLabel,newPState,newCSet);
       newEStateList.push_back(estate);
     } else {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
+      //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
     }
   }
   return newEStateList;
