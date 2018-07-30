@@ -118,6 +118,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	reduction2.c \
 	reduction.c \
 	reduction-classic.c \
+	reduction_min_max.c \
 	rice1.c \
 	section.c \
 	section1.c \
