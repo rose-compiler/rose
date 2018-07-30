@@ -508,7 +508,6 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
 
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId) {
   pstate.writeTopToMemoryLocation(varId);
-  //cset.removeAllConstraintsOfVar(varId);
 }
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
@@ -1284,8 +1283,10 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       // update of existing variable with new value
       //newPState[lhsVar]=rhsIntVal;
       newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
+#if 0
       if((!rhsIntVal.isTop() && !isRhsVar))
         cset.removeAllConstraintsOfVar(lhsVar);
+#endif
       return newPState;
     }
   } else {
@@ -1299,8 +1300,10 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     return newPState;
   }
   // make sure, we only create/propagate contraints if a non-const value is assigned or if a variable is on the rhs.
+#if 0
   if(!rhsIntVal.isTop() && !isRhsVar)
     cset.removeAllConstraintsOfVar(lhsVar);
+#endif
   return newPState;
 }
 
@@ -1624,10 +1627,12 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
     VariableId actualParameterVarId;
     ROSE_ASSERT(actualParameterExpr);
+#if 0
     if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
       // propagate constraint from actualParamterVarId to formalParameterVarId
       cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
     }
+#endif
     // general case: the actual argument is an arbitrary expression (including a single variable)
     // we use for the third parameter "false": do not use constraints when extracting values.
     // Consequently, formalparam=actualparam remains top, even if constraints are available, which
@@ -1709,7 +1714,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
           //_pstate[lhsVarId]=AbstractValue(rers_result);
           _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
           ConstraintSet _cset=*estate->constraints();
-          _cset.removeAllConstraintsOfVar(lhsVarId);
+          //_cset.removeAllConstraintsOfVar(lhsVarId);
           EState _eState=createEState(edge.target(),_pstate,_cset,newio);
           return elistify(_eState);
         } else {
@@ -1797,9 +1802,9 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
       //newPState[lhsVarId]=evalResult;
       newPState.writeToMemoryLocation(lhsVarId,evalResult);
 
-      cset.addAssignEqVarVar(lhsVarId,returnVarId);
+      //cset.addAssignEqVarVar(lhsVarId,returnVarId);
       newPState.deleteVar(returnVarId); // remove $return from state
-      cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
+      //cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
 
       return elistify(createEState(edge.target(),newPState,cset));
     } else {
@@ -1819,7 +1824,7 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
     }
     // no effect if $return does not exist
     newPState.deleteVar(returnVarId);
-    cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
+    //cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
     //ConstraintSet cset=*currentEState.constraints; ???
     return elistify(createEState(edge.target(),newPState,cset));
   } else {
@@ -1851,7 +1856,7 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
       VariableId varId=*i;
       newPState.deleteVar(varId);
-      cset.removeAllConstraintsOfVar(varId);
+      //cset.removeAllConstraintsOfVar(varId);
     }
     // ad 3)
     return elistify(createEState(edge.target(),newPState,cset));
@@ -1906,7 +1911,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
     if(_inputSequence.size()>0) {
       PState newPState=*currentEState.pstate();
       ConstraintSet newCSet=*currentEState.constraints();
-      newCSet.removeAllConstraintsOfVar(varId);
+      //newCSet.removeAllConstraintsOfVar(varId);
       list<EState> resList;
       int newValue;
       if(_inputSequenceIterator!=_inputSequence.end()) {
@@ -1917,13 +1922,15 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         return resList; // return no state (this ends the analysis)
       }
       if(args.getBool("input-values-as-constraints")) {
-        newCSet.removeAllConstraintsOfVar(varId);
+        cerr<<"Option input-values-as-constraints no longer supported."<<endl;
+        exit(1);
+        //newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=CodeThorn::Top();
-        newPState.writeTopToMemoryLocation(varId);
-        newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(newValue)));
-        ROSE_ASSERT(newCSet.size()>0);
+        //newPState.writeTopToMemoryLocation(varId);
+        //newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(newValue)));
+        //ROSE_ASSERT(newCSet.size()>0);
       } else {
-        newCSet.removeAllConstraintsOfVar(varId);
+        //newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=AbstractValue(newValue);
         newPState.writeToMemoryLocation(varId,AbstractValue(newValue));
       }
@@ -1937,18 +1944,20 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         // update state (remove all existing constraint on that variable and set it to top)
         PState newPState=*currentEState.pstate();
         ConstraintSet newCSet=*currentEState.constraints();
-        newCSet.removeAllConstraintsOfVar(varId);
+        //newCSet.removeAllConstraintsOfVar(varId);
         list<EState> resList;
         for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
           PState newPState=*currentEState.pstate();
           if(args.getBool("input-values-as-constraints")) {
-            newCSet.removeAllConstraintsOfVar(varId);
+            cerr<<"Option input-values-as-constraints no longer supported."<<endl;
+            exit(1);
+            //newCSet.removeAllConstraintsOfVar(varId);
             //newPState[varId]=CodeThorn::Top();
             newPState.writeTopToMemoryLocation(varId);
-            newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(*i)));
-            assert(newCSet.size()>0);
+            //newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(*i)));
+            //assert(newCSet.size()>0);
           } else {
-            newCSet.removeAllConstraintsOfVar(varId);
+            //newCSet.removeAllConstraintsOfVar(varId);
             // new input value must be const (otherwise constraints must be used)
             //newPState[varId]=AbstractValue(*i);
             newPState.writeToMemoryLocation(varId,AbstractValue(*i));
@@ -1965,7 +1974,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         PState newPState=*currentEState.pstate();
         ConstraintSet newCSet=*currentEState.constraints();
         // update input var
-        newCSet.removeAllConstraintsOfVar(varId);
+        //newCSet.removeAllConstraintsOfVar(varId);
         newPState.writeTopToMemoryLocation(varId);
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
         return elistify(createEState(edge.target(),newPState,newCSet,newio));
@@ -2113,8 +2122,10 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     //newPState[var]=varVal;
     newPState.writeToMemoryLocation(var,newVarVal);
 
+#if 0
     if(!(*i).result.isTop())
       cset.removeAllConstraintsOfVar(var);
+#endif
     list<EState> estateList;
     estateList.push_back(createEState(edge.target(),newPState,cset));
     return estateList;
@@ -2150,9 +2161,11 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         cerr<<"WARNING: Unknown type on LHS side of assignment: "<<nextNodeToAnalyze2->unparseToString()<<" TYPE: "<<variableIdMapping.getType(lhsVar)->unparseToString();
         cerr<<" TYPE NODE: "<<variableIdMapping.getType(lhsVar)->class_name()<<endl;
       }
+#if 0
       if(!(*i).result.isTop()) {
         cset.removeAllConstraintsOfVar(lhsVar);
       }
+#endif
       estateList.push_back(createEState(edge.target(),newPState,cset));
     } else if(isSgPntrArrRefExp(lhs)) {
       // for now we ignore array refs on lhs
