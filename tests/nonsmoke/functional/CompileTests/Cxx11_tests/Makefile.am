@@ -244,6 +244,7 @@ test2018_130.C \
 test2018_131.C \
 test2018_132.C \
 test2018_133.C \
+test2018_134.C \
 ctor-list-init.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 last.C
