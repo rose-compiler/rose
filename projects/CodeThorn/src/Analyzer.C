@@ -2139,7 +2139,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
   EState currentEState=*estate;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
-  list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState);
+  list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState, ExprAnalyzer::MODE_VALUE);
   list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
@@ -2168,8 +2168,17 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
 #endif
       estateList.push_back(createEState(edge.target(),newPState,cset));
     } else if(isSgDotExp(lhs)) {
-      cout<<"DEBUG: detected dot operator on lhs "<<lhs->unparseToString()<<" - not supported yet."<<endl;
-      exit(1);
+      cout<<"DEBUG: detected dot operator on lhs "<<lhs->unparseToString()<<"."<<endl;
+      list<SingleEvalResultConstInt> lhsRes=exprAnalyzer.evaluateExpression(lhs,currentEState, ExprAnalyzer::MODE_ADDRESS);
+      for (auto lhsAddressResult : lhsRes) {
+        EState estate=(*i).estate;
+        PState newPState=*estate.pstate();
+        ConstraintSet cset=*estate.constraints();
+        AbstractValue lhsAddress=lhsAddressResult.result;
+        cout<<"DEBUG: detected dot operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
+        newPState.writeToMemoryLocation(lhsAddress,(*i).result);
+        estateList.push_back(createEState(edge.target(),newPState,cset));
+      }
     } else if(isSgPntrArrRefExp(lhs)) {
       // for now we ignore array refs on lhs
       // TODO: assignments in index computations of ignored array ref

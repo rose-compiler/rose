@@ -62,17 +62,17 @@ namespace CodeThorn {
   //#define EXPR_VISITOR
   class ExprAnalyzer {
   public:
+    enum EvalMode { MODE_ADDRESS, MODE_VALUE };
     ExprAnalyzer();
     void setAnalyzer(Analyzer* analyzer);
     //SingleEvalResult eval(SgNode* node,EState estate);
     //! compute abstract lvalue
     list<SingleEvalResultConstInt> evaluateLExpression(SgNode* node,EState estate);
-    //! Evaluates an expression using AbstractValue and returns a list of all evaluation-results.
-    //! There can be multiple results if one of the variables was bound to top as we generate
-    //! two different states and corresponding constraints in this case, one representing the
-    //! true-case the other one representing the false-case.
-    //! values of top-variables. 
-    list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate);
+    //! Evaluates an expression using AbstractValue and returns a list
+    //! of all evaluation-results.  There can be multiple results if
+    //! one of the variables was bound to top and branching constructs
+    //! are inside the expression.
+    list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
     void setVariableIdMapping(VariableIdMapping* variableIdMapping);
     void setSkipSelectedFunctionCalls(bool skip);
     bool getSkipSelectedFunctionCalls();
@@ -117,143 +117,143 @@ namespace CodeThorn {
     SingleEvalResultConstInt res;
 #endif
     // evaluation functions
-    list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate);
+    list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
     
     list<SingleEvalResultConstInt> evalEqualOp(SgEqualityOp* node,
                                                SingleEvalResultConstInt lhsResult, 
                                                SingleEvalResultConstInt rhsResult,
-                                               EState estate);
+                                               EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalNotEqualOp(SgNotEqualOp* node,
                                                   SingleEvalResultConstInt lhsResult, 
                                                   SingleEvalResultConstInt rhsResult,
-                                                  EState estate);
+                                                  EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalAndOp(SgAndOp* node,
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalOrOp(SgOrOp* node,
                                             SingleEvalResultConstInt lhsResult, 
                                             SingleEvalResultConstInt rhsResult,
-                                            EState estate);
+                                            EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalAddOp(SgAddOp* node,
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalSubOp(SgSubtractOp* node,
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalMulOp(SgMultiplyOp* node,
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalDivOp(SgDivideOp* node,
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalModOp(SgModOp* node,
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalBitwiseAndOp(SgBitAndOp* node,
                                                     SingleEvalResultConstInt lhsResult, 
                                                     SingleEvalResultConstInt rhsResult,
-                                                    EState estate);
+                                                    EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalBitwiseOrOp(SgBitOrOp* node,
                                                    SingleEvalResultConstInt lhsResult, 
                                                    SingleEvalResultConstInt rhsResult,
-                                                   EState estate);
+                                                   EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalBitwiseXorOp(SgBitXorOp* node,
                                                     SingleEvalResultConstInt lhsResult, 
                                                     SingleEvalResultConstInt rhsResult,
-                                                    EState estate);
+                                                    EState estate, EvalMode mode=MODE_VALUE);
     
     list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
                                                         SingleEvalResultConstInt lhsResult, 
                                                         SingleEvalResultConstInt rhsResult,
-                                                        EState estate);
+                                                        EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalGreaterThanOp(SgGreaterThanOp* node,
                                                      SingleEvalResultConstInt lhsResult, 
                                                      SingleEvalResultConstInt rhsResult,
-                                                     EState estate);
+                                                     EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalLessOrEqualOp(SgLessOrEqualOp* node,
                                                      SingleEvalResultConstInt lhsResult, 
                                                      SingleEvalResultConstInt rhsResult,
-                                                     EState estate);
+                                                     EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalLessThanOp(SgLessThanOp* node,
                                                   SingleEvalResultConstInt lhsResult, 
                                                   SingleEvalResultConstInt rhsResult,
-                                                  EState estate);
+                                                  EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalBitwiseShiftLeftOp(SgLshiftOp* node,
                                                           SingleEvalResultConstInt lhsResult, 
                                                           SingleEvalResultConstInt rhsResult,
-                                                          EState estate);
+                                                          EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalBitwiseShiftRightOp(SgRshiftOp* node,
                                                            SingleEvalResultConstInt lhsResult, 
                                                            SingleEvalResultConstInt rhsResult,
-                                                           EState estate);
+                                                           EState estate, EvalMode mode=MODE_VALUE);
 
     list<SingleEvalResultConstInt> evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                         SingleEvalResultConstInt lhsResult, 
                                                         SingleEvalResultConstInt rhsResult,
-                                                        EState estate);
+                                                        EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalNotOp(SgNotOp* node, 
                                              SingleEvalResultConstInt operandResult, 
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalUnaryMinusOp(SgMinusOp* node, 
                                                     SingleEvalResultConstInt operandResult, 
-                                                    EState estate);
+                                                    EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalArrowOp(SgArrowExp* node,
                                                SingleEvalResultConstInt lhsResult, 
                                                SingleEvalResultConstInt rhsResult,
-                                               EState estate);
+                                               EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalDotOp(SgDotExp* node,
                                              SingleEvalResultConstInt lhsResult, 
                                              SingleEvalResultConstInt rhsResult,
-                                             EState estate);
+                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node, 
                                               SingleEvalResultConstInt operandResult, 
-                                              EState estate);
+                                              EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalDereferenceOp(SgPointerDerefExp* node, 
                                                      SingleEvalResultConstInt operandResult, 
-                                                     EState estate);
+                                                     EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> semanticEvalDereferenceOp(SingleEvalResultConstInt operandResult, 
-                                                             EState estate);
+                                                             EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
                                                    SingleEvalResultConstInt operandResult, 
-                                                   EState estate);
+                                                   EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change);
     list<SingleEvalResultConstInt> evalPreIncrementOp(SgPlusPlusOp* node, 
 						      SingleEvalResultConstInt operandResult, 
-						      EState estate);
+						      EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalPostIncrementOp(SgPlusPlusOp* node, 
 						       SingleEvalResultConstInt operandResult, 
-						       EState estate);
+						       EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change);
     list<SingleEvalResultConstInt> evalPreDecrementOp(SgMinusMinusOp* node, 
 						      SingleEvalResultConstInt operandResult, 
-						      EState estate);
+						      EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalPostDecrementOp(SgMinusMinusOp* node, 
 						       SingleEvalResultConstInt operandResult, 
-						       EState estate);
+						       EState estate, EvalMode mode=MODE_VALUE);
     // dispatch function
     list<SingleEvalResultConstInt> evalMinusMinusOp(SgMinusMinusOp* node, 
                                                     SingleEvalResultConstInt operandResult, 
-                                                    EState estate);
+                                                    EState estate, EvalMode mode=MODE_VALUE);
     // dispatch function
     list<SingleEvalResultConstInt> evalPlusPlusOp(SgPlusPlusOp* node, 
                                                   SingleEvalResultConstInt operandResult, 
-                                                  EState estate);
+                                                  EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                                            SingleEvalResultConstInt operandResult, 
-                                                           EState estate);
+                                                           EState estate, EvalMode mode=MODE_VALUE);
     
     // special case of sizeof operator (operates on types and types of expressions)
     list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node, 
-                                                EState estate);
-    list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate);
-    list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate);
-    list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate);
+                                                EState estate, EvalMode mode=MODE_VALUE);
+    list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate);
     
     list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate);
