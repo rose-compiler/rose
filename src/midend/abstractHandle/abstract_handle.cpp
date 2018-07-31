@@ -528,7 +528,7 @@ namespace AbstractHandle{
 
    // Initialize an empty handle from a handle string (including full parent handles)
    // set up parent pointer accordingly
-   void abstract_handle::fromString(abstract_handle* root_handle, const std::string& handle_str_full)
+   bool abstract_handle::fromString(abstract_handle* root_handle, const std::string& handle_str_full)
     {
       assert(root_handle!=NULL);
       assert(handle_str_full.size()>0);
@@ -553,7 +553,8 @@ namespace AbstractHandle{
       {
         //cout<<handle_str_vec[i]<<endl;
         abstract_node* node = root->findNode(handle_str_vec[i]);
-        assert (node != NULL);
+        if(node == NULL) return false;
+        //assert (node != NULL);
         if (handle_map[node]==NULL)
         { 
           abstract_handle* phandle = new abstract_handle();
@@ -576,6 +577,6 @@ namespace AbstractHandle{
         parent_handle=root_handle;
       // set up the handle for itself
       fromStringSelf(parent_handle,handle_str_vec.back());
-
+      return true;
     }
 }// end namespace
