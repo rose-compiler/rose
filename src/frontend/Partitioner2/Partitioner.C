@@ -2592,6 +2592,17 @@ Partitioner::rebuildVertexIndices() {
         insnUnparser_->settings() = Unparser::Settings::minimal();
 }
 
+#ifdef ROSE_ENABLE_PYTHON_API
+void
+Partitioner::pythonUnparse() const {
+    if (Unparser::Base::Ptr u = unparser()) {
+        u->unparse(std::cout, *this);
+    } else {
+        std::cout <<"no unparser for this architecture\n";
+    }
+}
+#endif
+
 } // namespace
 } // namespace
 } // namespace

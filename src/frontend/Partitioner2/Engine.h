@@ -11,6 +11,10 @@
 #include <Progress.h>
 #include <Sawyer/DistinctList.h>
 
+#ifdef ROSE_ENABLE_PYTHON_API
+#include <boost/python.hpp>
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -1430,6 +1434,17 @@ public:
     bool astCopyAllInstructions() const /*final*/ { return settings_.astConstruction.copyAllInstructions; }
     virtual void astCopyAllInstructions(bool b) { settings_.astConstruction.copyAllInstructions = b; }
     /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Python API support functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_PYTHON_API
+
+    // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
+    Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
+    Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
+        
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal stuff

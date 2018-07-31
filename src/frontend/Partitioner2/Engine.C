@@ -2575,6 +2575,35 @@ Engine::buildAst(const std::string &fileName) {
     return buildAst(std::vector<std::string>(1, fileName));
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Python API support
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_PYTHON_API
+
+template<class T>
+std::vector<T>
+pythonListToVector(boost::python::list &list) {
+    std::vector<T> retval;
+    for (int i = 0; i < len(list); ++i)
+        retval.push_back(boost::python::extract<T>(list[i]));
+    return retval;
+}
+
+Partitioner
+Engine::pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description) {
+    reset();
+    std::vector<std::string> args = pythonListToVector<std::string>(pyArgs);
+    std::vector<std::string> specimenNames = parseCommandLine(args, purpose, description).unreachedArgs();
+    return partition(specimenNames);
+}
+
+Partitioner
+Engine::pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description) {
+    return partition(std::vector<std::string>(1, specimen));
+}
+
+#endif
+
 } // namespace
 } // namespace
 } // namespace

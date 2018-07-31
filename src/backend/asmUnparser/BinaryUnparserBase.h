@@ -247,6 +247,34 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Python API wrappers and functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_PYTHON_API
+class PythonBase {
+    Base::Ptr base_;
+
+public:
+    PythonBase() {}
+
+    explicit PythonBase(const Base::Ptr &base)
+        : base_(base) {
+        ASSERT_not_null(base);
+    }
+    
+    std::string unparse(const Partitioner2::Partitioner &p) const {
+        return base_->unparse(p);
+    }
+
+    void print(const Partitioner2::Partitioner &p) const {
+        base_->unparse(std::cout, p);
+    }
+};
+#endif
+    
+
+
 } // namespace
 } // namespace
 } // namespace
