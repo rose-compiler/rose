@@ -142,7 +142,8 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	task_outlining.c \
 	task_untied.c \
 	task_untied2.c \
-	task_untied3.c
+	task_untied3.c \
+	omp_version.c
 
 # DQ (9/27/2009): Conditionally compile these files (fail in OSX due to lack of OSX
 # support for thread local storage). Liao knows more about the details of these tests.

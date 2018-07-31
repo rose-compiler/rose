@@ -18,6 +18,8 @@ What to put into this file:
 Specification 3.0 page 302
 D.1 Example of the omp.h Header File
  * */
+// This is not correct. omp.h is not required to trigger _OPENMP macro
+//#define _OPENMP 201511
 
 typedef void *omp_lock_t;  /* represented as a pointer */
 typedef void *omp_nest_lock_t; /* represented as a pointer */
