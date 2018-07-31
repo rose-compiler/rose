@@ -1643,7 +1643,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         string peak_band_measured_str = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak Global Memory Bandwidth measured cuda-stream"];
         hinfo->main_mem_bandwidth = atof (peak_band_str.c_str());
         hinfo->main_mem_bandwidth_measured = atof (peak_band_measured_str.c_str()); 
-        ROSE_ASSERT (hinfo->main_mem_bandwidth == 898.048);
+        ROSE_ASSERT (fabs(hinfo->main_mem_bandwidth -732.16)/732.16 <0.01) ;
 
         // TODO: add CPU hardware info. later
         //
