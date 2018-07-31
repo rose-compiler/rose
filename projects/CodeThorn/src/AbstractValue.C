@@ -548,7 +548,7 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
     return getFloatValueString();
   }
   case PTR: {
-    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
+    //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
         <<variableId.toString(vim)
@@ -556,9 +556,9 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
         <<getIntValue()
         <<")";
       return ss.str();
-    } else {
-      return variableId.toString(vim);
-    }
+      //    } else {
+      //      return variableId.toString(vim);
+      //    }
   }
   default:
     throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
