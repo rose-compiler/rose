@@ -29,6 +29,13 @@
 #include <vector>
 #include <string>
 #include <map>
+
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+
 namespace AutoParallelization
 {
   //Handle annotation, debugging flags, no longer used, replaced by using Sawyer command line processing
@@ -43,6 +50,7 @@ namespace AutoParallelization
   extern bool no_aliasing;  // assuming aliasing or not
   extern bool enable_patch; // an option to control the generation of patch files
   extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.
+  extern bool enable_modeling; // an experimental flag to turn on cost modeling being developed.
   extern bool b_unique_indirect_index; // assume all arrays used as indirect indices has unique elements(no overlapping)
   extern bool enable_distance; // print out absolute dependence distance for a dependence relation preventing from parallelization
   extern bool dump_annot_file; // print out annotation file's content
@@ -52,6 +60,73 @@ namespace AutoParallelization
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
   bool initialize_analysis(SgProject* project=NULL,bool debug=false);
 
+  //------------ this section supports modeling of loop execution cost
+  // software information for the loop
+  typedef struct loopInfo Loop_Info; 
+  typedef struct hardwareInfo Hardware_Info; 
+  struct loopInfo {
+    // arithmetic intensity: flops per byte
+    float arithmetic_intensity; 
+    // How many loop iterations estimated for this loop
+    int iteration_count; 
+    int flops_per_iteration; // floating point operations per iteration TODO double vs. single
+  };
+
+  // hardware info. generic for both CPUs and GPUs so far
+  struct hardwareInfo {
+    float main_mem_bandwidth; // theoretical peak bandwidth GBytes/second by default
+    float main_mem_bandwidth_measured; // measured peak bandwidth through some microbenchmarks
+    float peak_flops; // theoretical peak, GFlops/second by default
+    float peak_flops_measured; // GFlops/second by default, measured peak flops through some microbenchmarks
+  };
+
+  // A baseline roofline model
+  //! Using software and hardware information to estimate execution time in seconds 
+  double rooflineModeling(Loop_Info *l, Hardware_Info *h);
+
+  #if 0 // This is difficult to use: we have to differentiate types when storing them
+   // Lazy method: store values as strings. Interpret them during usage. 
+  //A hardware feature can be different types
+  union HValue {
+    int iv; 
+    float fv;
+    char* sv; 
+  };
+  #endif 
+
+
+  class CSVReader // Reading CSV file into vector of vectors
+  {
+    // public interface   
+    public:
+      // Parse the input file and store data internally.
+      CSVReader (std::string fname);
+
+      std::vector <std::vector <std::string> > getResult()
+      {return csv_table; }
+
+      void prettyPrintResult();
+      // Using hardware model number, store map of key-value pairs
+     // All types of values are stored as strings. Users have to interprete them to different types (int, string, float, etc.) based on meanings of keys.
+      static std::map < std::string,  std::map <std::string, std::string>  > hardwareDataBase; 
+
+    private:
+      std::string file_name;
+      std::vector <std::vector <std::string> > csv_table;
+      // Read and parse a line of a CSV stream
+      // Store cells into a vector of strings: 
+      //std::vector<std::string> readNextRow(std::istream istr)
+      std::istream& readNextRow(std::istream& istr, std::vector<std::string> & result);
+      // keep track of the cell number for each row.
+      static int cell_counter;
+      static void outputVectorElement(std::string s);
+      static void outputVector(std::vector <std::string> str_vec );
+
+      // read one entire CSV file, return vector of vectors of strings.
+      std::vector <std::vector <std::string> > readCSVFile (std::string filename);
+  };
+
+  //----------------------end of the cost modeling section ------------------------
   //Release the resources for analyses
   void release_analysis();
 
