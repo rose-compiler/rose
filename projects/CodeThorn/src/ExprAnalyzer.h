@@ -101,7 +101,8 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate);
     bool isLValueOp(SgNode* node);
     void initializeStructureAccessLookup(SgProject* node);
-
+    // requires StructureAccessLookup to be initialized.
+    bool isStructMember(SPRAY::VariableId varId);
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
@@ -270,6 +271,7 @@ namespace CodeThorn {
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
     Analyzer* _analyzer;
+  public:
     StructureAccessLookup structureAccessLookup;
   };
  

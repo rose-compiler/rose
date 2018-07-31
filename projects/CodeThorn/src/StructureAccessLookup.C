@@ -29,13 +29,13 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
   int numUnknownVarType=0;
   int numNonValidVarId=0;
   int numZeroTypeSize=0;
-#if 0
+#if 1
   for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     SgNode* node=*i;
     ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
       //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
-#if 0                
+#if 1                
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
@@ -94,4 +94,12 @@ int StructureAccessLookup::getOffset(SPRAY::VariableId varId) {
   } else {
     return 0;
   }
+}
+
+bool StructureAccessLookup::isStructMember(SPRAY::VariableId varId) {
+  return varIdTypeSizeMap.find(varId)!=varIdTypeSizeMap.end();
+}
+
+size_t StructureAccessLookup::numOfStoredMembers() {
+  return varIdTypeSizeMap.size();
 }

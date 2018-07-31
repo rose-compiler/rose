@@ -37,6 +37,7 @@ void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
   ROSE_ASSERT(node);
   ROSE_ASSERT(_variableIdMapping);
   structureAccessLookup.initializeOffsets(_variableIdMapping,node);
+  cout<<"INFO: Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
 }
 
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
@@ -863,12 +864,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
                                                        SingleEvalResultConstInt lhsResult, 
                                                        SingleEvalResultConstInt rhsResult,
                                                        EState estate) {
-  throw CodeThorn::Exception("Error: dot operator not supported yet: "+node->unparseToString());
+  //throw CodeThorn::Exception("Error: dot operator not supported yet: "+node->unparseToString());
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
   AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
+  cout<<"DEBUG: dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
   res.result=estate.pstate()->readFromMemoryLocation(address);
   resultList.push_back(res);
   return resultList;
@@ -1095,6 +1097,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
+  if(isStructMember(varId)) {
+    int offset=structureAccessLookup.getOffset(varId);
+    ROSE_ASSERT(_variableIdMapping);
+    cout<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    //res.result=AbstractValue(offset);
+    //return listify(res);
+  }
   if(pstate->varExists(varId)) {
     if(_variableIdMapping->hasArrayType(varId)) {
       logger[TRACE]<<"DEBUG: lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
@@ -1128,14 +1137,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
+  ROSE_ASSERT(varId.isValid());
   // check if var is a struct member. if yes return struct-offset, otherwise continue.
   if(_variableIdMapping->hasClassType(varId)) {
+    // TODO - not supported yet
+    cout<<"DEBUG: has Class type."<<endl;
     res.result=AbstractValue::createAddressOfVariable(varId);
     return listify(res);
   }
-#if 0
-  if(_variableIdMapping->isStructMemberVar(varId)) {
-    res.result=AbstractValue(StructureAccessLookup(varId));
+#if 1
+  if(isStructMember(varId)) {
+    int offset=structureAccessLookup.getOffset(varId);
+    ROSE_ASSERT(_variableIdMapping);
+    cout<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    res.result=AbstractValue(offset);
     return listify(res);
   }
 #endif
@@ -1393,4 +1408,8 @@ void ExprAnalyzer::recordDefinitiveNullPointerDereferenceLocation(Label label) {
 
 void ExprAnalyzer::recordPotentialNullPointerDereferenceLocation(Label label) {
   _nullPointerDereferenceLocations.recordPotentialDereference(label);
+}
+
+bool ExprAnalyzer::isStructMember(SPRAY::VariableId varId) {
+  return structureAccessLookup.isStructMember(varId);
 }

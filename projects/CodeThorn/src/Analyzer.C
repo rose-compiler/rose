@@ -989,10 +989,10 @@ void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
 void Analyzer::initializeVariableIdMapping(SgProject* project) {
   variableIdMapping.computeVariableSymbolMapping(project);
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  //logger[TRACE]<<"initializeStructureAccessLookup started."<<endl;
   AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
-  //exprAnalyzer.initializeStructureAccessLookup(project);
-  //logger[TRACE]<<"initializeStructureAccessLookup finished."<<endl;
+  logger[TRACE]<<"initializeStructureAccessLookup started."<<endl;
+  exprAnalyzer.initializeStructureAccessLookup(project);
+  logger[TRACE]<<"initializeStructureAccessLookup finished."<<endl;
 }
 
 void Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
@@ -2167,6 +2167,9 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       }
 #endif
       estateList.push_back(createEState(edge.target(),newPState,cset));
+    } else if(isSgDotExp(lhs)) {
+      cout<<"DEBUG: detected dot operator on lhs "<<lhs->unparseToString()<<" - not supported yet."<<endl;
+      exit(1);
     } else if(isSgPntrArrRefExp(lhs)) {
       // for now we ignore array refs on lhs
       // TODO: assignments in index computations of ignored array ref
