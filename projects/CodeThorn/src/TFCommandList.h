@@ -52,6 +52,22 @@ class TransformCommand : public Command{
     int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
 };
 
+class IncludeCommand : public Command{
+  std::string functionName;
+  std::string includeName;
+  public:
+    IncludeCommand(std::string funName, std::string inName, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
+class PragmaCommand : public Command{
+  std::string fromMatch;
+  std::string toReplace;
+  public:
+    PragmaCommand(std::string from, std::string to, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
 class CommandList{
   public:
     CommandList(std::string spec);

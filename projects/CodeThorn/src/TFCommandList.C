@@ -5,6 +5,7 @@
 #include "SgNodeHelper.h"
 #include <regex>
 #include "abstract_handle.h"
+#include "CppStdUtilities.h"
 
 using namespace std;
 using namespace AbstractHandle;
@@ -261,10 +262,59 @@ int TransformCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransforme
   return false; 
 }
 
+IncludeCommand::IncludeCommand(std::string funName, std::string inName, int number) : Command(false, false, number){
+  functionName = funName;
+  includeName = inName;
+}
+
+int IncludeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
+  SgFilePtrList listOfFiles;
+  if(functionName=="*") {
+    root->get_files();
+  } else {
+    SgNode* currentNode=completeAst.findFunctionByName(functionName);
+    while(currentNode != nullptr && !isSgFile(currentNode)){
+      currentNode = currentNode->get_parent();
+    }
+    if(currentNode==nullptr) {
+      cerr<<"Error: Command "<<commandNumber<<": function "<<functionName<<" not found."<<endl;
+      return true;
+    } else {
+      if(SgFile* file = isSgFile(currentNode)){
+        listOfFiles.push_back(file);
+      }
+    }
+  }
+  for (auto file : listOfFiles) {
+    if(SgSourceFile* source = isSgSourceFile(file)){
+      SageInterface::insertHeader(source,includeName,false,true);
+    }  
+  }
+  return false; 
+}
+
+PragmaCommand::PragmaCommand(std::string from, std::string to, int number) : Command(false, false, number){
+  fromMatch = from;
+  toReplace = to;
+}
+
+int PragmaCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
+  for(RoseAst::iterator i=completeAst.begin();i!=completeAst.end();++i){
+    if(SgPragma* pragmaNode = isSgPragma(*i)){
+      vector<string> splitFrom = CppStdUtilities::splitByRegex(fromMatch, " ");
+      vector<string> splitPragma = CppStdUtilities::splitByRegex(pragmaNode->get_pragma(), " ");
+     
+      cout<<pragmaNode->get_pragma();   
+ 
+      SgNodeHelper::replaceAstWithString(pragmaNode,"");
+    }
+  }
+  return false;
+}
+
 CommandList::CommandList(std::string spec){
   commandsList = {};
 }
-
 //Call the run command on all commands stored in the list.
 int CommandList::runCommands(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation){
   RoseAst completeAst(root);

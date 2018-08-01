@@ -1,4 +1,7 @@
 #include "ToolConfig.hpp"
+#include <unistd.h>
+
+#define MAXPATHLEN 255
 
 //////////////
 //ToolAction//
@@ -121,7 +124,8 @@ void to_json(json& j, const ToolAction& a) {
     }
 
     if (temp.getHandle() != "") {
-        std::string pwd = std::getenv("PWD");
+        char buff[MAXPATHLEN];
+        std::string pwd = getcwd(buff, MAXPATHLEN);
         std::string handle = temp.getHandle();
         size_t loc = handle.find(pwd);
         if (loc != std::string::npos) {
@@ -169,8 +173,9 @@ void from_json(const json& j, ToolAction& a) {
     }
 
     try {
+        char buff[MAXPATHLEN];
+        std::string pwd = getcwd(buff, MAXPATHLEN);
         std::string handle = j.at("handle");
-        std::string pwd = std::getenv("PWD");
         size_t loc = handle.find("${PWD}");
         if (loc != std::string::npos) {
             handle.replace(loc, 6, pwd);
