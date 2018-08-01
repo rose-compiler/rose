@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 0
+#define PRINT_ATERM_TRAVERSAL 1
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -46,6 +46,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_Module(ATerm term)
       } else return ATfalse;
 
    } else return ATfalse;
+
+   std::cout << "Super duper finished traversing." << endl;
 
    return ATtrue;
 }
@@ -168,6 +170,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
 
    } else return ATfalse;
 
+   std::cout << "Finished traversing" << endl;
+
    return ATtrue;
 }
 
@@ -194,7 +198,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
    ATerm t_stmt;
    ATerm t_decls, t_stmts, t_funcs, t_labels;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
    std::string temp_label = "";
 
    SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
@@ -227,7 +230,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
          // MATCHED StatementList
       } else return ATfalse;
 
-      if (traverse_LabelList(t_labels, labels, locations)) {
+      if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
@@ -373,10 +376,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    else if (traverse_BitItemDescription(term, type)) {
       // MATCHED BitItemDescription
    }
-   else if (traverse_CharacterItemDescription(term, type)) {
+   else if (traverse_CharacterItemDescription(term)) {
       // MATCHED CharacterItemDescription
    }
 #if 0
+   else if (traverse_CharacterItemDescription(term, type)) {
+      // MATCHED CharacterItemDescription
+   }
    else if (traverse_StatusItemDescription(term, type)) {
       // MATCHED StatusItemDescription
    }
@@ -542,7 +548,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, 
 #endif
 
    ATerm t_round_or_truncate, t_scale, t_fraction;
-   bool has_round_or_truncate, has_fraction_specifier;
+   bool has_round_or_truncate;  //, has_fraction_specifier;
    General_Language_Translation::ExpressionKind modifier_enum;
    SgUntypedExpression * scale, * fraction;
 
@@ -631,6 +637,26 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitItemDescription(ATerm term, Sg
 //========================================================================================
 // 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_CharacterLiteral(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CharacterLiteral: %s\n", ATwriteToString(term));
+#endif
+
+   char* name;
+   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+
+   if (ATmatch(term, "CharacterLiteral(<str>)", &name)) {
+      std::cout << "CharacterLiteral is " << name << endl;
+      *expr = new SgUntypedReferenceExpression(expr_enum, name);
+      setSourcePosition(*expr, term);
+
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+#if 0
 ATbool ATermToUntypedJovialTraversal::traverse_CharacterItemDescription(ATerm term, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -653,6 +679,214 @@ ATbool ATermToUntypedJovialTraversal::traverse_CharacterItemDescription(ATerm te
       else {
          *type = UntypedBuilder::buildType(SgUntypedType::e_char);
       }
+   } else return ATfalse;
+
+   return ATtrue;
+}
+#endif
+
+// Previous version of CharacterItemDescription is above
+// Current and temporary version of CharacterItemDescription is below
+
+ATbool ATermToUntypedJovialTraversal::traverse_CharacterItemDescription(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CharacterItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_size;
+   bool has_size;
+   SgUntypedExpression* size;
+
+   if (ATmatch(term, "CharacterItemDescription(<term>)", &t_size)) {
+      if (traverse_OptItemSize(t_size, &has_size, &size)) {
+         // In grammar (2.1.1.5), uses OptCharacterSize and CharacterSize but cons is ItemSize, so used that traversal
+         // MATCHED OptItemSize
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.1.1.6 STATUS TYPE DESCRIPTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_StatusConstant(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatusConstant: %s\n", ATwriteToString(term));
+#endif
+
+   // Dealt with this as other strings have been dealt with
+   // NOTE: Name -> StatusConstant , Letter -> StatusConstant, ReservedWord -> StatusConstant
+
+   char* name;
+   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+
+   if (ATmatch(term, "StatusConstant(<str>)", &name)) {
+      std::cout << "StatusConstant is " << name << endl;
+      *expr = new SgUntypedReferenceExpression(expr_enum, name);
+      setSourcePosition(*expr, term);
+
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_StatusItemDescription(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatusItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_size, t_sublist;
+   bool has_size;
+   SgUntypedExpression* size;
+
+   if (ATmatch(term, "StatusItemDescription(<term>,<term>)", &t_size, &t_sublist)) {
+      if (traverse_OptItemSize(t_size, &has_size, &size)) {
+         // In grammar (2.1.1.6), uses OptStatusSize and StatusSize but cons is ItemSize, so used that traversal
+         // MATCHED OptItemSize
+      } else return ATfalse;
+      if (traverse_DefaultSublist(t_sublist)) {
+         // MATCHED DefaultSublist
+      } else if (traverse_StatusList(t_sublist)) {
+         // MATCHED StatusList
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_DefaultSublist(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DefaultSublist: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_sublist;
+   SgUntypedExpression* expr;
+
+   if (ATmatch(term, "DefaultSublist(<term>)", &t_sublist)) {
+      ATermList tail = (ATermList) ATmake("<term>", t_sublist);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_StatusConstant(head, &expr)) {
+	   // MATCHED StatusConstant
+         } else return ATfalse;
+      }
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_OptDefaultSublist(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptDefaultSublist: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_sublist;
+
+   if (ATmatch(term, "OptDefaultSublist(<term>)", &t_sublist)) {
+      if (ATmatch(term, "no-default-sublist()")) {
+         std::cout << "Matched no-default-sublist" << endl;
+      } else if (traverse_DefaultSublist(t_sublist)) {
+         // MATCHED DefaultSublist
+      }
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_StatusList(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatusList: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_sublist, t_specified;
+
+   if (ATmatch(term, "StatusList(<term>,<term>)", &t_sublist, &t_specified)) {
+      if (traverse_OptDefaultSublist(t_sublist)) {
+         // MATCHED OptDefaultSublist
+      }
+      ATermList tail = (ATermList) ATmake("<term>", t_specified);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_SpecifiedSublist(head)) {
+	   // MATCHED SpecifiedSublist
+         } else return ATfalse;
+      }
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedSublist(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SpecifiedSublist: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_formula, t_constant;
+   SgUntypedExpression* expr;
+
+   if (ATmatch(term, "SpecifiedSublist(<term>,<term>)", &t_formula, &t_constant)) {
+     if (traverse_IntegerFormula(t_formula, &expr)) {
+         // MATCHED IntegerFormula
+      }
+      ATermList tail = (ATermList) ATmake("<term>", t_constant);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_StatusConstant(head, &expr)) {
+	   // MATCHED StatusConstant
+         } else return ATfalse;
+      }
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.1.1.7 POINTER TYPE DESCRIPTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_PointerItemDescription(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_PointerItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   char* pntr;
+   ATerm type_name;
+
+   if (ATmatch(term, "PointerItemDescription(<str>,<term>)", &pntr, &type_name)) {
+      std::cout << "PointerTypeDesc is " << pntr << endl;
+
+      if (traverse_OptTypeName(type_name)) {
+         // MATCHED OptTypeName
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptTypeName: %s\n", ATwriteToString(term));
+#endif
+
+   char* type_name;
+
+   if (ATmatch(term, "no-type-name()")) {
+      // MATCHED no-type-name
+      std::cout << "Matched no-type-name" << endl;
+   } else if (ATmatch(term, "TypeName(<str>)", &type_name)) {
+      std::cout << "TypeName is " << type_name << endl;
    } else return ATfalse;
 
    return ATtrue;
@@ -971,6 +1205,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_Statement(ATerm term, SgUntypedSt
 
    if (traverse_SimpleStatement(term, stmt_list)) {
       // MATCHED SimpleStatement
+   } else if (traverse_CompoundStatement(term, stmt_list)) {
+      // MATCHED CompoundStatement
    } else return ATfalse;
 
 // TODO CompoundStatement
@@ -1004,10 +1240,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
 
    ATerm t_labels, t_stmt;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
 
    if (ATmatch(term, "SimpleStatement(<term>,<term>)", &t_labels,&t_stmt)) {
-      if (traverse_LabelList(t_labels, labels, locations)) {
+      if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
@@ -1016,11 +1251,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       }
 
       //  LoopStatement               -> SimpleStatement
-
+      //  IfStatement                 -> SimpleStatement
       //  CaseStatement               -> SimpleStatement
       //%%ProcedureCallStatement      -> SimpleStatement  %%AMBIGUOUS with AssignmentStatement
 
       else if (traverse_NullStatement(t_stmt, stmt_list)) {
+         // MATCHED NullStatement
+      }
+      else if (traverse_NullBlockStatement(t_stmt, stmt_list)) {
          // MATCHED NullStatement
       }
       else return ATfalse;
@@ -1028,10 +1266,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
 
 // This subsumes the labels in statements, eventually all SimpleStatements will take this path
    else if (ATmatch(term, "SimpleStatement(<term>)", &t_stmt)) {
-      if (traverse_IfStatement(t_stmt, stmt_list)) {
-         // MATCHED IfStatement
-      }
-      else if (traverse_AbortStatement(t_stmt, stmt_list)) {
+      if (traverse_AbortStatement(t_stmt, stmt_list)) {
          // MATCHED AbortStatement
       }
       else if (traverse_StopStatement(t_stmt, stmt_list)) {
@@ -1046,7 +1281,43 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       else if (traverse_ReturnStatement(t_stmt, stmt_list)) {
          // MATCHED ReturnStatement
       }
+      else if (traverse_CaseStatement(t_stmt, stmt_list)) {
+         // MATCHED CaseStatement
+      }
+      else if (traverse_IfStatement(t_stmt, stmt_list)) {
+         // MATCHED IfStatement
+      }
       else return ATfalse;
+   }
+
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_CompoundStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CompoundStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels, t_stmt, t_labels2;
+   std::vector<std::string> labels;
+   SgUntypedStatementList* new_stmt_list = new SgUntypedStatementList();
+
+   if (ATmatch(term, "CompoundStatement(<term>,<term>,<term>)", &t_labels,&t_stmt,&t_labels2)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+      if (traverse_StatementList(t_stmt, new_stmt_list)) {
+         // MATCHED StatementList
+      } else return ATfalse;
+
+      if (traverse_LabelList(t_labels2, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
    }
 
    else return ATfalse;
@@ -1069,7 +1340,30 @@ ATbool ATermToUntypedJovialTraversal::traverse_NullStatement(ATerm term, SgUntyp
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> & labels, std::vector<PosInfo> & locations)
+ATbool ATermToUntypedJovialTraversal::traverse_NullBlockStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_NullBlockStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels;
+   std::vector<std::string> labels;
+
+   if (ATmatch(term, "NullBlockStatement(<term>)", &t_labels)) {
+      if (traverse_LabelList(t_labels, labels)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+
+      SgUntypedNullStatement* null_stmt = new SgUntypedNullStatement("");
+      setSourcePosition(null_stmt, term);
+      stmt_list->get_stmt_list().push_back(null_stmt);
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> & labels)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LabelList: %s\n", ATwriteToString(term));
@@ -1085,7 +1379,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector
          tail = ATgetNext(tail);
          if (ATmatch(head, "Label(<str>)", &label)) {
             labels.push_back(label);
-            locations.push_back(getLocation(head));
          } else return ATfalse;
       }
    } else return ATfalse;
@@ -1105,7 +1398,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
    ATerm t_vars, t_expr;
    std::string temp_label = "";
    std::vector<SgUntypedExpression*> vars;
-   SgUntypedExpression * expr = NULL;
+   SgUntypedExpression * expr; // = NULL;
 
    if (ATmatch(term, "AssignmentStatement(<term>,<term>)", &t_vars,&t_expr)) {
 
@@ -1119,8 +1412,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
 
       assert(labels.size() <= 1);
       assert(  vars.size() == 1);
-      assert(expr);
+      //      assert(expr);
 
+   // TODO - need list for labels in untyped IR
       if (labels.size() == 1) temp_label = labels[0];
 
       SgUntypedAssignmentStatement* assign_stmt = new SgUntypedAssignmentStatement(temp_label,vars[0],expr);
@@ -1135,7 +1429,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
 }
 
 //========================================================================================
-// 4.3 IF STATEMENTS
+// 4.2 IF STATEMENTS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_IfStatement(ATerm term, SgUntypedStatementList* stmt_list)
 {
@@ -1143,48 +1437,245 @@ ATbool ATermToUntypedJovialTraversal::traverse_IfStatement(ATerm term, SgUntyped
    printf("... traverse_IfStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_cond, t_else, t_true, t_false;
+   ATerm t_labels, t_formula, t_stmt, t_else;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
-   SgUntypedExpression* conditional;
-   SgUntypedStatement *stmt, *true_body, *false_body;
+   std::string name;
 
-   if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>)", &t_labels,&t_cond,&t_true,&t_else)) {
+   if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>)", &t_labels, &t_formula, &t_stmt, &t_else)) {
+       if (traverse_LabelList(t_labels, labels)) {
+          // MATCHED LabelList
+       } else return ATfalse;
 
-      if (traverse_LabelList(t_labels, labels, locations)) {
+       if (traverse_BitFormula(t_formula)) {
+          // MATCHED BitFormula
+       } else return ATfalse;
+
+       if (traverse_Statement(t_stmt, stmt_list)) {
+          // MATCHED Statement
+       } else return ATfalse;
+
+       if (traverse_OptElseClause(t_else, stmt_list)) {
+          // MATCHED OptElseClause
+       } else return ATfalse;
+
+       //      SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement("", true_body, false_body);
+       //      setSourcePosition(if_stmt, term);
+
+       //      stmt_list->get_stmt_list().push_back(if_stmt);
+   }
+
+   else return ATfalse;
+
+   std::cout << "Finished traversing IfStatement" << endl;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_OptElseClause(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptElseClause: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_stmt;
+   //   SgUntypedStatementList* stmt_list = new SgUntypedStatementList();
+
+   if (ATmatch(term, "no-else-clause()")) {
+      std::cout << "Matched no-else-clause" << endl;
+      // MATCHED no-else-clause
+
+   } else if (ATmatch(term, "ElseClause(<term>)", &t_stmt)) {
+      if (traverse_Statement(t_stmt, stmt_list)) {
+         // MATCHED Statement
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 4.4 CASE STATEMENTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_CaseStatement(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseStatement: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_labels, t_formula, t_case_body, t_labels2;
+   std::vector<std::string> labels, labels2;
+   SgUntypedStatement* stmt;
+   SgUntypedExpression* formula;
+
+   if (ATmatch(term, "CaseStatement(<term>,<term>,<term>,<term>)", &t_labels, &t_formula, &t_case_body, &t_labels2)) {
+      if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-      if (traverse_BitFormula(t_cond, &conditional)) {
-         // MATCHED BitFormula
+      if (traverse_Formula(t_formula, &formula)) {
+        // MATCHED Formula
+      }
+
+      if (traverse_CaseBody(t_case_body)) {
+        // MATCHED CaseBody
       } else return ATfalse;
 
-      if (traverse_Statement(t_true, stmt_list)) {
-         true_body = stmt_list->get_stmt_list().back();
-         stmt_list->get_stmt_list().pop_back();
+      if (traverse_LabelList(t_labels2, labels2)) {
+         // MATCHED LabelList
       } else return ATfalse;
 
-      if (ATmatch(t_else, "no-else-clause()")) {
-         false_body = NULL;
+      SgUntypedCaseStatement* case_stmt = new SgUntypedCaseStatement("");
+      setSourcePosition(case_stmt, term);
+
+      stmt = case_stmt;
+
+      for (int i = labels.size() - 1; i >= 0; i--) {
+         SgUntypedLabelStatement* label_stmt = new SgUntypedLabelStatement(labels[i], stmt);
+         setSourcePosition(label_stmt, term);
+         stmt->set_parent(label_stmt);
+         stmt = label_stmt;
       }
-      else if (ATmatch(t_else, "ElseClause(<term>)", &t_false)) {
-         if (traverse_Statement(t_false, stmt_list)) {
-            false_body = stmt_list->get_stmt_list().back();
-            stmt_list->get_stmt_list().pop_back();
-         } else return ATfalse;
-      }
-      else return ATfalse;
    }
    else return ATfalse;
 
-   SgUntypedIfStatement* if_stmt = SageBuilder::buildUntypedIfStatement("", conditional, true_body, false_body);
-   setSourcePosition(if_stmt, term);
-
-   stmt = convert_Labels(labels, locations, if_stmt);
-
-   stmt_list->get_stmt_list().push_back(stmt);
+   std::cout << "SgUntypedCaseStatement passed else return ATfalse" << endl;
+   //   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_CaseBody(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseBody: %s\n", ATwriteToString(term));
+#endif
+
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+      if (traverse_DefaultOption(head)) {
+         // MATCHED DefaultOption
+      } else if (traverse_CaseAlternative(head)) {
+         // MATCHED CaseAlternative
+      } else return ATfalse;
+   }
+
+   return ATtrue;
+
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_CaseAlternative(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseAlternative: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_case_index_group, t_stmt, t_fall_thru;
+   SgUntypedStatementList* stmt_list = new SgUntypedStatementList();
+
+   if (ATmatch(term, "CaseAlternative(<term>,<term>,<term>)", &t_case_index_group, &t_stmt, &t_fall_thru)) {
+      if (traverse_CaseIndexGroup(t_case_index_group)) {
+         // MATCHED CaseIndexGroup
+      } else return ATfalse;
+
+      if (traverse_Statement(t_stmt, stmt_list)) {
+        // MATCHED Statement
+      } else return ATfalse;
+
+      if (ATmatch(t_fall_thru, "no-fall-thru()")) {
+         // MATCHED no-fall-thru
+         std::cout << "Matched no-fall-thru" << endl;
+      } else if (ATmatch(t_fall_thru, "FALLTHRU()")) {
+         std::cout << "Matched FALLTHRU" << endl;
+         // MATCHED FALLTHRU
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   return ATtrue;
+
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_DefaultOption(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_DefaultOption: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_stmt, t_fall_thru;
+   SgUntypedStatementList* stmt_list = new SgUntypedStatementList();
+
+   if (ATmatch(term, "DefaultOption(<term>,<term>)", &t_stmt, &t_fall_thru)) {
+      if (traverse_Statement(t_stmt, stmt_list)) {
+         // MATCHED Statement
+      } else return ATfalse;
+
+      if (ATmatch(t_fall_thru, "no-fall-thru()")) {
+         std::cout << "Matched no-fall-thru" << endl;
+         // MATCHED no-fall-thru
+      } else if (ATmatch(t_fall_thru, "FALLTHRU()")) {
+         std::cout << "Matched FALLTHRU" << endl;
+         // MATCHED FALLTHRU
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   return ATtrue;
+
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_CaseIndexGroup(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseIndexGroup: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_case_index;
+
+   if (ATmatch(term, "CaseIndexGroup(<term>)", &t_case_index)) {
+      ATermList tail = (ATermList) ATmake("<term>", t_case_index);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_CaseIndex(head)) {
+	   // MATCHED CaseIndex
+         } else return ATfalse;
+      }
+   } else return ATfalse;
+
+   return ATtrue;
+
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_CaseIndex(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_CaseIndex: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_formula, t_formula2;
+   SgUntypedExpression * formula, * formula2;
+
+   if (ATmatch(term, "CaseIndex(<term>)", &t_formula)) {
+      if (traverse_Formula(t_formula, &formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+
+   } else if (ATmatch(term, "CaseIndex(<term>,<term>)", &t_formula, &t_formula2)) {
+     // This case needed to traverse LowerBound : UpperBound -> CaseIndex
+      if (traverse_Formula(t_formula, &formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula2, &formula2)) {
+         // MATCHED Formula
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   return ATtrue;
+
 }
 
 //========================================================================================
@@ -1198,23 +1689,28 @@ ATbool ATermToUntypedJovialTraversal::traverse_ReturnStatement(ATerm term, SgUnt
 
    ATerm t_labels;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
-   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "ReturnStatement(<term>)", &t_labels)) {
-      if (traverse_LabelList(t_labels, labels, locations)) {
+      if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
+      std::string label("");
+      if (labels.size() == 1) {
+         label = labels[0];
+      }
+      else if (labels.size() > 1) {
+         cout << "ERROR: multiple labels unimplemented \n";
+         return ATfalse;
+      }
+
       SgUntypedNullExpression * return_code = UntypedBuilder::buildUntypedNullExpression();
-      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement("", return_code);
+      SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label, return_code);
       setSourcePosition(return_stmt, term);
 
-      stmt = convert_Labels(labels, locations, return_stmt);
+      stmt_list->get_stmt_list().push_back(return_stmt);
    }
    else return ATfalse;
-
-   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1230,12 +1726,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_GotoStatement(ATerm term, SgUntyp
 
    ATerm t_labels, t_name;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
    std::string name;
-   SgUntypedStatement* stmt;
 
     if (ATmatch(term, "GotoStatement(<term>,<term>)", &t_labels, &t_name)) {
-       if (traverse_LabelList(t_labels, labels, locations)) {
+       if (traverse_LabelList(t_labels, labels)) {
           // MATCHED LabelList
        } else return ATfalse;
 
@@ -1246,11 +1740,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_GotoStatement(ATerm term, SgUntyp
       SgUntypedGotoStatement* goto_stmt = new SgUntypedGotoStatement("", name);
       setSourcePosition(goto_stmt, term);
 
-      stmt = convert_Labels(labels, locations, goto_stmt);
+      stmt_list->get_stmt_list().push_back(goto_stmt);
    }
-   else return ATfalse;
 
-   stmt_list->get_stmt_list().push_back(stmt);
+   else return ATfalse;
 
    return ATtrue;
 
@@ -1267,22 +1760,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_ExitStatement(ATerm term, SgUntyp
 
    ATerm t_labels;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
-   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "ExitStatement(<term>)", &t_labels)) {
-      if (traverse_LabelList(t_labels, labels, locations)) {
+      if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
       SgUntypedExitStatement* exit_stmt = new SgUntypedExitStatement("");
       setSourcePosition(exit_stmt, term);
 
-      stmt = convert_Labels(labels, locations, exit_stmt);
+      stmt_list->get_stmt_list().push_back(exit_stmt);
    }
    else return ATfalse;
-
-   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1298,12 +1787,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntyp
 
    ATerm t_labels, t_stop_code;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
    SgUntypedExpression* stop_code = NULL;
-   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "StopStatement(<term>,<term>)", &t_labels, &t_stop_code)) {
-      if (traverse_LabelList(t_labels, labels, locations)) {
+      if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
@@ -1315,14 +1802,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_StopStatement(ATerm term, SgUntyp
          // MATCHED IntegerFormula
       } else return ATfalse;
 
-      SgUntypedStopStatement* stop_stmt = new SgUntypedStopStatement("", stop_code);
+      SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;
+      SgUntypedExpressionStatement* stop_stmt = new SgUntypedExpressionStatement("", keyword, stop_code);
       setSourcePosition(stop_stmt, term);
 
-      stmt = convert_Labels(labels, locations, stop_stmt);
+      stmt_list->get_stmt_list().push_back(stop_stmt);
    }
    else return ATfalse;
-
-   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1338,22 +1824,19 @@ ATbool ATermToUntypedJovialTraversal::traverse_AbortStatement(ATerm term, SgUnty
 
    ATerm t_labels;
    std::vector<std::string> labels;
-   std::vector<PosInfo> locations;
-   SgUntypedStatement* stmt;
 
    if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
-      if (traverse_LabelList(t_labels, labels, locations)) {
+      if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
 
       SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
       setSourcePosition(abort_stmt, term);
 
-      stmt = convert_Labels(labels, locations, abort_stmt);
+      stmt_list->get_stmt_list().push_back(abort_stmt);
+
    }
    else return ATfalse;
-
-   stmt_list->get_stmt_list().push_back(stmt);
 
    return ATtrue;
 }
@@ -1363,15 +1846,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_AbortStatement(ATerm term, SgUnty
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_Formula(ATerm term, SgUntypedExpression** expr)
 {
+
    if (traverse_NumericFormula(term, expr)) {
       // MATCHED NumericFormula
-   }
-   else if (traverse_BitFormula(term, expr)) {
+   } else if (traverse_BitFormula(term)) {
       // MATCHED BitFormula
-   }
+   } else if (traverse_CharacterFormula(term)) {
+      // MATCHED CharacterFormula
+   } else if (traverse_StatusFormula(term)) {
+      // MATCHED StatusFormula
+   } else if (traverse_PointerFormula(term)) {
+      // MATCHED PointerFormula
+   } else return ATfalse;
 
-   else return ATfalse;
-
+   //  BitFormula                  -> Formula
    //  CharacterFormula            -> Formula
    //  StatusFormula               -> Formula
    //  PointerFormula              -> Formula
@@ -1385,6 +1873,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_Formula(ATerm term, SgUntypedExpr
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_NumericFormula(ATerm term, SgUntypedExpression** expr)
 {
+
    if (traverse_IntegerFormula(term, expr)) {
       // MATCHED IntegerFormula
    }
@@ -1476,7 +1965,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUnty
    printf("... traverse_IntegerPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   char *literal, *name;
+   char *literal, *name, *variable;
    SgUntypedType* type;
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
@@ -1484,10 +1973,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUnty
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
       expr_enum = Jovial_ROSE_Translation::e_literalExpression;
       *expr = new SgUntypedValueExpression(expr_enum,literal,type);
+      std::cout << "INTEGER LITERAL is " << literal << "\n";
       setSourcePosition(*expr, term);
    }
    //  IntegerMachineParameter     -> IntegerPrimary
    //  IntegerVariable             -> IntegerPrimary
+
+   // TEST: trying to match IntegerVariable
+   else if (ATmatch(term, "IntegerVariable(<str>)", &variable)) {
+      std::cout << "The variable is " << variable << "\n";
+      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+      *expr = new SgUntypedReferenceExpression(expr_enum, variable);
+      setSourcePosition(*expr, term);
+   }
+
    else if (ATmatch(term, "<str>" , &name)) {
       std::cout << "VARIABLE " << name << "\n";
       expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
@@ -1869,96 +2368,276 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedFormula(ATerm term, SgUntype
 //========================================================================================
 // 5.2 BIT FORMULAS
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_BitFormula(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_BitFormula(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_operand, t_continuation;
+   ATerm t_operand , t_continuation;
 
    if (ATmatch(term, "BitFormula(<term>,<term>)", &t_operand, &t_continuation)) {
-
-      if (traverse_LogicalOperand(t_operand, expr)) {
-         // MATCHED LogicalOperand
+      if (traverse_LogicalOperand(t_operand)) {
+         // MATCHED BooleanLiteral
       } else return ATfalse;
 
-      if (ATmatch(t_continuation, "no-logical-continuation()")) {
-      }
-      // TODO traverse_LogicalContinuation
-      else return ATfalse;
-   }
-
-   else if (ATmatch(term, "BitFormulaNOT(<term>)", &t_operand)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
-         // MATCHED LogicalOperand
+      if (traverse_OptLogicalContinuation(t_continuation)) {
+         // MATCHED OptLogicalContinuation
       } else return ATfalse;
-      // TODO
-      return ATfalse;
-   }
 
-   else return ATfalse;
+   } else if (ATmatch(term, "BitFormulaNOT(<term>)", &t_operand)) {
+      if (traverse_LogicalOperand(t_operand)) {
+         // MATCHED BooleanLiteral
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   std::cout << "Got through BitFormula" << endl;
 
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_LogicalOperand(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_OptLogicalContinuation(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptLogicalContinuation: %s\n", ATwriteToString(term));
+#endif
+
+   if (ATmatch(term, "no-logical-continuation")) {
+      std::cout << "Matched no-logical-continuation" << endl;
+   } else {
+      ATermList tail = (ATermList) ATmake("<term>", term);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_LogicalContinuation(head)) {
+	   // MATCHED LogicalContinuation
+         } else return ATfalse;
+      }
+   }
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_LogicalContinuation(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_operand;
+
+   if (ATmatch(term, "AndContinuation(<term>)", &t_operand)) {
+      std::cout << "Matched AndContinuation" << endl;
+      if (traverse_LogicalOperand(t_operand)) {
+      // MATCHED LogicalOperand
+      } else return ATfalse;
+   } else if (ATmatch(term, " OrContinuation(<term>)", &t_operand)) {
+      std::cout << "Matched OrContinuation" << endl;
+      if (traverse_LogicalOperand(t_operand)) {
+      // MATCHED LogicalOperand
+      } else return ATfalse;
+   } else if (ATmatch(term, "XorContinuation(<term>)", &t_operand)) {
+      std::cout << "Matched XorContinuation" << endl;
+      if (traverse_LogicalOperand(t_operand)) {
+      // MATCHED LogicalOperand
+      } else return ATfalse;
+   } else if (ATmatch(term, "EqvContinuation(<term>)", &t_operand)) {
+      std::cout << "Matched EqvContinuation" << endl;
+      if (traverse_LogicalOperand(t_operand)) {
+      // MATCHED LogicalOperand
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_LogicalOperand(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LogicalOperand: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_BitPrimary(term, expr)) {
+   if (traverse_BitPrimary(term)) {
       // MATCHED BitPrimary
-   }
-
-   //  RelationalExpression        -> LogicalOperand
-
-   else return ATfalse;
+   } else if (traverse_RelationalExpression(term)) {
+      // MATCHED RelationalExpression
+   } else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_BitPrimary(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_BitPrimary(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   SgUntypedType* type;
-   std::string literal_string;
-   Jovial_ROSE_Translation::ExpressionKind expr_enum;
-   bool is_boolean_literal = false;
+   ATerm t_bit;
 
-   //  BitLiteral                  -> BitPrimary
-   //  BooleanLiteral              -> BitPrimary
+   if (traverse_BooleanLiteral(term)) {
+      // MATCHED BooleanLiteral
+   } else if (ATmatch(term,"BitPrimary(<term>)", &t_bit)) {
+      if (traverse_BitFormula(t_bit)) {
+      // MATCHED '(' BitFormula ')'
+      } else return ATfalse;
+   } else return ATfalse;
+      // TODO: create else if for following
+      // BitLiteral                    -> BitPrimary (no cons)
+      // BitVariable                   -> BitPrimary {cons("BitVariable")} (not currently working in tests)
+      // NamedBitConstant              -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
+      // BitFunctionCall               -> BitPrimary (no cons)
+      // BitConversion '(' Formula ')' -> BitPrimary {cons("BitPrimary")}
 
-   // First check boolean literals
-   if (ATmatch(term, "True()")) {
-      is_boolean_literal = true;
-      literal_string = "TRUE";
-   }
-   else if (ATmatch(term, "False()")) {
-      is_boolean_literal = true;
-      literal_string = "FALSE";
-   }
-   else return ATfalse;
+   return ATtrue;
+}
 
-   if (is_boolean_literal) {
-      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
-      expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-      *expr = new SgUntypedValueExpression(expr_enum,literal_string,type);
-      setSourcePosition(*expr, term);
-   }
 
-   //  BitVariable                 -> BitPrimary             {cons("BitVariable")}
+//========================================================================================
+// 5.2.1 RELATIONAL EXPRESSIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_RelationalExpression(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_RelationalExpression: %s\n", ATwriteToString(term));
+#endif
 
-   //  NamedBitConstant            -> BitPrimary             {cons("NamedBitConstant"), reject}
+   ATerm t_formula, t_operator, t_formula2;
+   std::string op_name;
+   General_Language_Translation::ExpressionKind op_enum;
+   SgUntypedExpression * expr, * expr2;
 
-   //  BitFunctionCall             -> BitPrimary
-   //  '(' BitFormula  ')'         -> BitPrimary             {cons("BitPrimary")}
-   //  BitConversion
-   //  '('    Formula ')'          -> BitPrimary             {cons("BitPrimary")}
+   if (ATmatch(term, "RelationalExpression(<term>,<term>,<term>)", &t_formula, &t_operator, &t_formula2)) {
+      if (traverse_Formula(t_formula, &expr)) {
+         // MATCHED Formula
+      } else return ATfalse;
+
+      if (traverse_RelationalOperator(t_operator, op_enum, op_name)) {
+         // MATCHED RelationalOperator
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula2, &expr2)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+
+//========================================================================================
+// 5.3 CHARACTER FORMULAS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_CharacterFormula(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CharacterFormula: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next , t_formula;
+   SgUntypedExpression* expr;
+
+   if (ATmatch(term, "CharacterFormula(<term>)", &t_next)) {
+      if (traverse_CharacterLiteral(t_next, &expr)) {
+         // CharacterLiteral -> CharacterFormula
+         // MATCHED CharacterLiteral
+      }
+      else if (traverse_CharacterFormula(t_next)) {
+         // '(' CharacterFormula ')' -> CharacterFormula
+         // MATCHED CharacterFormula
+      } else return ATfalse;
+
+   } else if (ATmatch(term, "CharacterFormula(<term>,<term>)", &t_next, &t_formula)) {
+      if (traverse_CharacterConversion(t_next)) {
+         // CharacterConversion '(' Formula ')'  ->  CharacterFormula
+         // MATCHED CharacterConversion
+      } else if (traverse_CharacterConversionC(t_next)) {
+         // MATCHED CharacterConversionC
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula, &expr)) {
+         // MATCHED Formula
+      }
+   } else return ATfalse;
+
+   std::cout << "Got through CharacterFormula" << endl;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 5.4 STATUS FORMULAS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_StatusFormula(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatusFormula: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next , t_formula;
+   SgUntypedExpression* expr;
+
+   if (ATmatch(term, "StatusFormula(<term>)", &t_next)) {
+      if (traverse_StatusConstant(t_next, &expr)) {
+         // StatusConstant -> StatusFormula
+         // MATCHED StatusConstant
+      }
+      else if (traverse_StatusFormula(t_next)) {
+         // '(' StatusFormula ')' -> StatusFormula
+         // MATCHED StatusFormula
+      } else return ATfalse;
+
+   } else if (ATmatch(term, "StatusFormula(<term>,<term>)", &t_next, &t_formula)) {
+      if (traverse_StatusConversion(t_next)) {
+         // StatusConversion '(' Formula ')'  ->  StatusFormula
+         // MATCHED StatusConversion
+      }
+      if (traverse_Formula(t_formula, &expr)) {
+         // MATCHED Formula
+      }
+   } else return ATfalse;
+
+   std::cout << "Got through StatusFormula" << endl;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 5.5 POINTER FORMULAS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_PointerFormula(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_PointerFormula: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next , t_formula;
+   SgUntypedExpression* expr;
+
+   if (ATmatch(term, "PointerFormula(<term>)", &t_next)) {
+      if (traverse_PointerLiteral(t_next)) {
+         // PointerLiteral -> PointerFormula
+         // MATCHED PointerLiteral
+      }
+      else if (traverse_PointerFormula(t_next)) {
+         // '(' PointerFormula ')' -> PointerFormula
+         // MATCHED PointerFormula
+      } else return ATfalse;
+
+   } else if (ATmatch(term, "PointerFormula(<term>,<term>)", &t_next, &t_formula)) {
+      if (traverse_PointerConversion(t_next)) {
+         // PointerConversion '(' Formula ')'  -> PointerFormula
+         // MATCHED PointerConversion
+      } else if (traverse_PointerConversionP(t_next)) {
+         // MATCHED PointerConversionP
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula, &expr)) {
+         // MATCHED Formula
+      }
+   } else return ATfalse;
+
+   std::cout << "Got through PointerFormula" << endl;
 
    return ATtrue;
 }
@@ -2015,9 +2694,91 @@ ATbool ATermToUntypedJovialTraversal::traverse_VariableList(ATerm term, std::vec
 }
 
 //========================================================================================
+// 7.0 TYPE MATCHING AND TYPE CONVERSIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_CharacterConversion(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CharacterConversion: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next;
+
+   if (ATmatch(term, "CharacterConversion(<term>)", &t_next)) {
+     if (traverse_CharacterItemDescription(t_next)) {
+        // MATCHED CharacterItemDescription
+     } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_CharacterConversionC(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CharacterConversionC: %s\n", ATwriteToString(term));
+#endif
+
+   if (ATmatch(term, "CharacterConversionC()")) {
+     std::cout << "Matched CharacterConversionC" << endl;
+     // MATCHED CharacterConversionC
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_StatusConversion(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatusConversion: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next;
+
+   if (ATmatch(term, "StatusConversion(<term>)", &t_next)) {
+     if (traverse_StatusItemDescription(t_next)) {
+        // MATCHED StatusItemDescription
+     } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_PointerConversion(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_PointerConversion: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next;
+
+   if (ATmatch(term, "PointerConversion(<term>)", &t_next)) {
+     if (traverse_PointerItemDescription(t_next)) {
+        // MATCHED PointerItemDescription
+     } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_PointerConversionP(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_PointerConversionP: %s\n", ATwriteToString(term));
+#endif
+
+   if (ATmatch(term, "PointerConversionP()")) {
+     std::cout << "Matched PointerConversionP" << endl;
+     // MATCHED PointerConversionP
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+
+//========================================================================================
 // 8.2.3 OPERATORS
 //----------------------------------------------------------------------------------------
-
 ATbool
 ATermToUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name)
 {
@@ -2042,6 +2803,88 @@ ATermToUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, General_
       op_name = "Jovial_operator_unknown";
       return ATfalse;
    }
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_RelationalOperator(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_RelationalOperator: %s\n", ATwriteToString(term));
+#endif
+
+   if (ATmatch(term, "LT()")) {
+     std::cout << "Matched LT: < " << endl;
+      op_enum = General_Language_Translation::e_operator_less_than;
+      op_name = "<";
+   }
+   else if (ATmatch(term, "GT()")) {
+      std::cout << "Matched GT: > " << endl;
+      op_enum = General_Language_Translation::e_operator_greater_than;
+      op_name = ">";
+   }
+   else if (ATmatch(term, "LE()")) {
+      std::cout << "Matched LE: <= " << endl;
+      op_enum = General_Language_Translation::e_operator_less_than_or_equal;
+      op_name = "<=";
+   }
+   else if (ATmatch(term, "GE()")) {
+      std::cout << "Matched GE: >= " << endl;
+      op_enum = General_Language_Translation::e_operator_greater_than_or_equal;
+      op_name = ">=";
+   }
+   else if (ATmatch(term, "EqOp()")) {
+      std::cout << "Matched EqOp: = " << endl;
+      op_enum = General_Language_Translation::e_operator_equality;
+      op_name = "==";
+      // Should this be the character used in Jovial or in the general langauges?
+      //      op_name = "=";
+   }
+   else if (ATmatch(term, "NotEqOp()")) {
+      std::cout << "Matched NotEqOp: <> " << endl;
+      op_enum = General_Language_Translation::e_operator_not_equal;
+      // Should this be the character used in Jovial or in the general langauges?
+      op_name = "!=";
+      //      op_name = "<>";
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+
+//========================================================================================
+// 8.3.3 BOOLEAN LITERAL
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_BooleanLiteral(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BooleanLiteral: %s\n", ATwriteToString(term));
+#endif
+
+   if (ATmatch(term, "True()")) {
+      std::cout << "Matched TRUE" << endl;
+      // MATCHED TRUE
+   } else if (ATmatch(term, "False()")) {
+      std::cout << "Matched FALSE" << endl;
+      // MATCHED FALSE
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 8.3.4 POINTER LITERAL
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_PointerLiteral(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_PointerLiteral: %s\n", ATwriteToString(term));
+#endif
+
+   if (ATmatch(term, "Null()")) {
+     std::cout << "Matched Null()" << endl;
+     // MATCHED Null
+   } else return ATfalse;
 
    return ATtrue;
 }
