@@ -1,16 +1,17 @@
 #ifndef AI_MEASUREMENT_H
 #define AI_MEASUREMENT_H
 
+// Program analysis to estimate arithemetic intensity of one loop iteration
 #include <rose.h>
 #include <fstream>
 #include <iostream>
 
-namespace ArithemeticIntensityMeasurement
+namespace ArithmeticIntensityMeasurement
 {
   extern bool debug;
   extern bool e_inline; // enable inlining or not
   // the version of the counting algorithm: 
-  // value 1: flow-insensitive (default), treating all statements as straightline statements  
+  // value 1: flow-insensitive (default choice now), treating all statements as straightline statements  
   //       2: flow-sensitive (under development), considering if branches, loop iteration counts, etc. 
   extern int algorithm_version;
 
@@ -25,7 +26,7 @@ namespace ArithemeticIntensityMeasurement
     e_analysis_and_instrument,  // recognize special chiterations = .., do the counting based instrumentation
     e_static_counting // recognize #pragma aitool and do the counting, writing to a report file
   };
-
+  // Floating point operation types
   enum fp_operation_kind_enum {
     e_unknown = 0,
     e_total =1 ,
@@ -42,7 +43,7 @@ namespace ArithemeticIntensityMeasurement
   //! Estimate the byte size of types
   int getSizeOf(SgType* t);
 
-  //Data structure to store the information for an associated node, mostly a loop 
+  //Data structure to store the information for an associated node, mostly a loop.
   // The counters are for a single iteration, not considering iteration count.
   //Using AstAttribute to enable propagation
   class FPCounters: public AstAttribute
@@ -54,11 +55,11 @@ namespace ArithemeticIntensityMeasurement
       void  addCount(fp_operation_kind_enum c_type, int i =1);
 
       // Directly set counters. Use this carefully. Designed to support storing info. parsed from pragmas
-      void  setCount(fp_operation_kind_enum c_type, int i =1);
+      void setCount(fp_operation_kind_enum c_type, int i =1);
       void updateTotal() { // if (total_count == 0 ) 
-                          total_count = plus_count + minus_count + multiply_count + divide_count ; }
+        total_count = plus_count + minus_count + multiply_count + divide_count ; }
 
-      void  setErrorCode(int i) {error_code = i; };
+      void setErrorCode(int i) {error_code = i; };
 
       void printInfo(std::string comment="");
       // convert the counter information to a string
@@ -99,32 +100,32 @@ namespace ArithemeticIntensityMeasurement
       intensity = -1.0; 
     }
 
-    // copy constructor is required for synthesized attributes
-    FPCounters (const FPCounters &x)
-    {
-      node = x.node; 
-      plus_count = x.plus_count;
-      minus_count = x.minus_count;
-      multiply_count = x.multiply_count;
-      divide_count = x.divide_count;
-      total_count = x.total_count;
+      // copy constructor is required for synthesized attributes
+      FPCounters (const FPCounters &x)
+      {
+        node = x.node; 
+        plus_count = x.plus_count;
+        minus_count = x.minus_count;
+        multiply_count = x.multiply_count;
+        divide_count = x.divide_count;
+        total_count = x.total_count;
 
-      load_bytes = x.load_bytes;
-      store_bytes = x.store_bytes;
+        load_bytes = x.load_bytes;
+        store_bytes = x.store_bytes;
 
-      load_bytes_int = x.load_bytes_int;
-      store_bytes_int  = x.store_bytes_int;
+        load_bytes_int = x.load_bytes_int;
+        store_bytes_int  = x.store_bytes_int;
 
-      intensity = x.intensity; 
-    }
+        intensity = x.intensity; 
+      }
 
-    // used to synthesize counters from children nodes
-    FPCounters operator+( const FPCounters & right) const; 
+      // used to synthesize counters from children nodes
+      FPCounters operator+( const FPCounters & right) const; 
 
     private:
       SgLocatedNode* node ; //associated AST node
 
-       //0 means no error, 1 means side effect analysis failed, mostly due to function call
+      //0 means no error, 1 means side effect analysis failed, mostly due to unrecognized function calls
       int error_code;  // It is possible our analysis fails to estimate the numbers
 
       // Floating point operation counters
@@ -160,18 +161,18 @@ namespace ArithemeticIntensityMeasurement
       void addDivideCount(int i = 1)   {assert (i>=1); divide_count += i;}
   }; // end class FPCounters
 
- // Version 2 counting using a bottomup traversal and synthesized attributes
- /*
-  *
-    SgBasicBlock: sum of  count(stmt)
-    straight line expression statement, atomic case, scan expression for operations, store into attribute, count (exp)
-         function call expression: summarize the counter using some function annotation or lookup table!!
-        travese expression tree, recursively, accumulate the counter, where to store the results : attributes vs. lookup table (this is easier)
-    loops:  loop iteration * count[loop_body]
-    branches: using branch prediction ratios, if no available, pick the max or minimum branch, based on a flag. upper bound and lower bound FLOPS
-    really need constant folding or symbolic evaluation to simplify things here!!
-  *
-  */
+  // Version 2 counting using a bottomup traversal and synthesized attributes
+  /*
+   *
+SgBasicBlock: sum of  count(stmt)
+straight line expression statement, atomic case, scan expression for operations, store into attribute, count (exp)
+function call expression: summarize the counter using some function annotation or lookup table!!
+travese expression tree, recursively, accumulate the counter, where to store the results : attributes vs. lookup table (this is easier)
+loops:  loop iteration * count[loop_body]
+branches: using branch prediction ratios, if no available, pick the max or minimum branch, based on a flag. upper bound and lower bound FLOPS
+really need constant folding or symbolic evaluation to simplify things here!!
+   *
+   */
   //class OperationCountingTraversal: public AstBottomUpProcessing <FPCounters> 
   class OperationCountingTraversal: public SgBottomUpProcessing <FPCounters> 
   {
@@ -180,9 +181,9 @@ namespace ArithemeticIntensityMeasurement
   }; 
 
   // Top level interface: estimate AI for an input stmt (it could be a block of stmts)
- FPCounters* calculateArithmeticIntensity(SgLocatedNode* stmt, bool includeScalars = false, bool includeIntType = false); 
+  FPCounters* calculateArithmeticIntensity(SgLocatedNode* stmt, bool includeScalars = false, bool includeIntType = false); 
 
- // interface functions to manipulate FPCounters
+  // interface functions to manipulate FPCounters
   void CountFPOperations(SgLocatedNode* input);
   void printFPCount (SgLocatedNode* n);
 
@@ -199,7 +200,6 @@ namespace ArithemeticIntensityMeasurement
   // functions to handle pragmas
   bool parse_fp_counter_clause(fp_operation_kind_enum* fp_op_kind, int *op_count);
   FPCounters* parse_aitool_pragma (SgPragmaDeclaration* pragmaDecl);
-
 
   // Count the load and store bytes of the code rooted at input node. If fails , return false. 
   // Otherwise return true and the two expressions calculating save load/store bytes.
@@ -218,11 +218,11 @@ namespace ArithemeticIntensityMeasurement
   //If so, the loop will be instrumented and the tag statement will be returned.
   // This function supports both C/C++ for loops and Fortran Do loops
   SgStatement* instrumentLoopForCounting(SgStatement* loop);
-  
+
   //! Process a source file, add instrumentation to collect loop iteration counts, return the number of 
   int instrumentLoopIterationCount(SgSourceFile* sfile);
 
- //! Check If a statement is an assignment statement to a variable
+  //! Check If a statement is an assignment statement to a variable
   bool isAssignmentStmtOf (SgStatement* stmt, SgInitializedName* init_name);
 
   int get_int_value(SgValueExp * sg_value_exp);

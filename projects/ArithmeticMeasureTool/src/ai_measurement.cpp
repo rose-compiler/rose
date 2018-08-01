@@ -85,7 +85,7 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
     if (SgSizeOfOp * sop = isSgSizeOfOp(exp))
     {
        SgType* t = sop->get_operand_type();
-       returnAttribute.newValue = ArithemeticIntensityMeasurement::getSizeOf (t);
+       returnAttribute.newValue = ArithmeticIntensityMeasurement::getSizeOf (t);
     }
     else if (SgBinaryOp* bop = isSgBinaryOp(exp) )
     {
@@ -96,7 +96,7 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
     }
     else if (SgValueExp* vexp = isSgValueExp(exp))
     {
-      returnAttribute.newValue = ArithemeticIntensityMeasurement::get_int_value (vexp);
+      returnAttribute.newValue = ArithmeticIntensityMeasurement::get_int_value (vexp);
     }
     else // propagate the result for others
     {
@@ -114,7 +114,7 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
 }
 
 //----------------------------------------
-namespace ArithemeticIntensityMeasurement
+namespace ArithmeticIntensityMeasurement
 {
   running_mode_enum running_mode = e_analysis_and_instrument;
 
@@ -293,7 +293,7 @@ namespace ArithemeticIntensityMeasurement
         {
           //TODO : we should ignore some unrecognized op kind
           //Another case list to ignore them one by one
-          cerr<< ArithemeticIntensityMeasurement::toString(c_type) <<endl; 
+          cerr<< ArithmeticIntensityMeasurement::toString(c_type) <<endl; 
           assert (false);  
           break;
         }
