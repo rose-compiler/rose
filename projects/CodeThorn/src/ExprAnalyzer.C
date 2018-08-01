@@ -267,8 +267,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
   return resultList;
 }
 
-//#define NEW_SEMANTICS_MODELLING
-
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)
@@ -317,21 +315,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
           return resultList;
         }
         
-        // for all other binary operators (which are not pointer operators)
-        // prepare for binary non-pointer operators
-#ifdef NEW_SEMANTICS_MODELLING
-        // read if an address otherwise use as value
-        if(!lhsResult.result.isConstInt()&&!lhsResult.result.isTop()) {
-          cout<<"DEBUG: reading from "<<lhsResult.result.toString(_variableIdMapping)<<endl;
-          lhsResult.result=estate.pstate()->readFromMemoryLocation(lhsResult.result);
-          cout<<"DEBUG: read value: "<<lhsResult.result.toString(_variableIdMapping)<<endl;
-        }
-        if(!rhsResult.result.isConstInt()&&!rhsResult.result.isTop()) {
-          rhsResult.result=estate.pstate()->readFromMemoryLocation(rhsResult.result);
-        }
-#else
-        // nothing todo
-#endif
         switch(node->variantT()) {
           CASE_EXPR_ANALYZER_EVAL(SgEqualityOp,evalEqualOp);
           CASE_EXPR_ANALYZER_EVAL(SgNotEqualOp,evalNotEqualOp);
@@ -781,13 +764,8 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         //cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
       }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
-#ifdef NEW_SEMANTICS_MODELLING
-        //res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
-        res.result=arrayPtrPlusIndexValue;
-#else
         // return address of denoted memory location
         res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
-#endif
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
         return listify(res);
       } else {
@@ -836,11 +814,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           //cerr<<"AST: "<<node->unparseToString()<<endl;
           //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
-#ifdef NEW_SEMANTICS_MODELLING
-          // null pointer dereference is check in the read function
-#else
           _nullPointerDereferenceLocations.recordPotentialDereference(estate.label());
-#endif
         }
       }
     } else {
@@ -984,17 +958,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue operand=operandResult.result;
-#ifdef NEW_SEMANTICS_MODELLING
-  // all memory locations are modelled as addresses. Therefore the address operator is a no-op here.
-  res.result=AbstractValue(operand);
-#else
   logger[TRACE]<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
   if(operand.isTop()||operand.isBot()) {
     res.result=operand;
   } else {
     res.result=AbstractValue(operand.getVariableId());
   }
-#endif
   return listify(res);
 }
 
@@ -1276,11 +1245,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     if(_variableIdMapping->hasArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
-#ifdef NEW_SEMANTICS_MODELLING
-      res.result=AbstractValue::createAddressOfVariable(varId);
-#else
       res.result=const_cast<PState*>(pstate)->readFromMemoryLocation(varId);
-#endif
     }
     return listify(res);
   } else {
