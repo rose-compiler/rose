@@ -146,7 +146,7 @@ else
 endif
 
 pkginclude_HEADERS=\
-	$(mpArithmeticIntensity_includeHeaders) \
+	$(mpaArithmeticIntensity_includeHeaders) \
 	$(mpaCallGraphAnalysis_includeHeaders) \
 	$(mpaCFG_includeHeaders) \
 	$(mpaBitvectorDataflow_includeHeaders) \
