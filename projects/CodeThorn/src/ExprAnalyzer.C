@@ -887,15 +887,35 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalArrowOp(SgArrowExp* node,
                                                          SingleEvalResultConstInt lhsResult, 
                                                          SingleEvalResultConstInt rhsResult,
                                                          EState estate, EvalMode mode) {
-  throw CodeThorn::Exception("Error: arrow operator not supported yet: "+node->unparseToString());
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   // L->R : L evaluates to pointer value (address), R evaluates to offset value (a struct member always evaluates to an offset)
-  AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
-  res.result=estate.pstate()->readFromMemoryLocation(address);
-  resultList.push_back(res);
-  return resultList;
+  //AbstractValue address=lhsResult.result;
+  //cout<<"DEBUG: ArrowOp: address(lhs):"<<address.toString(_variableIdMapping)<<endl;
+  //AbstractValue referencedAddress=estate.pstate()->readFromMemoryLocation(address);
+  AbstractValue referencedAddress=lhsResult.result;
+  bool continueExec=checkAndRecordNullPointer(referencedAddress, estate.label());
+  if(continueExec) {
+    logger[TRACE]<<"ArrowOp: referencedAddress(lhs):"<<referencedAddress.toString(_variableIdMapping)<<endl;
+    AbstractValue offset=rhsResult.result;
+    AbstractValue denotedAddress=AbstractValue::operatorAdd(referencedAddress,offset);
+    logger[TRACE]<<"ArrowOp: denoted Address(lhs):"<<denotedAddress.toString(_variableIdMapping)<<endl;
+    switch(mode) {
+    case MODE_VALUE:
+    logger[TRACE]<<"Arrow op: reading value from arrowop-struct location."<<denotedAddress.toString(_variableIdMapping)<<endl;
+    res.result=estate.pstate()->readFromMemoryLocation(denotedAddress);
+    break;
+    case MODE_ADDRESS:
+      res.result=denotedAddress;
+      break;
+    } 
+    resultList.push_back(res);
+    return resultList;
+  } else {
+    list<SingleEvalResultConstInt> empty;
+    return empty;
+  }
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
@@ -907,6 +927,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
+  checkAndRecordNullPointer(lhsResult.result, estate.label());
   AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
   // only if rhs is *not* a dot-operator, needs the value be
   // read. Otherwise this is not the end of the access path and only the address is computed.
@@ -914,7 +935,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
     // reached end of dot sequence (a.b.<here>c)
     switch(mode) {
     case MODE_VALUE:
-      cout<<"DEBUG: dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
+      logger[TRACE]<<"Dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
       res.result=estate.pstate()->readFromMemoryLocation(address);
       break;
     case MODE_ADDRESS:
@@ -941,11 +962,28 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   // all memory locations are modelled as addresses. Therefore the address operator is a no-op here.
   res.result=AbstractValue(operand);
 #else
-  res.result=AbstractValue(operand.getVariableId());
+  if(operand.isTop()||operand.isBot()) {
+    res.result=operand;
+  } else {
+    res.result=AbstractValue(operand.getVariableId());
+  }
 #endif
   return listify(res);
 }
 
+bool ExprAnalyzer::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {
+  if(derefOperandValue.isTop()) {
+    recordPotentialNullPointerDereferenceLocation(label);
+    return true;
+  } else if(derefOperandValue.isConstInt()) {
+    int ptrIntVal=derefOperandValue.getIntValue();
+    if(ptrIntVal==0) {
+      recordDefinitiveNullPointerDereferenceLocation(label);
+      return false;
+    }
+  }
+  return true;
+}
 
 list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEvalResultConstInt operandResult, 
                                                                        EState estate, EvalMode mode) {
@@ -954,16 +992,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEva
   AbstractValue derefOperandValue=operandResult.result;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
   // null pointer check
-  if(derefOperandValue.isTop()) {
-    recordPotentialNullPointerDereferenceLocation(estate.label());
-  } else if(derefOperandValue.isConstInt()) {
-    int ptrIntVal=derefOperandValue.getIntValue();
-    if(ptrIntVal==0) {
-      recordDefinitiveNullPointerDereferenceLocation(estate.label());
-    }
+  bool continueExec=checkAndRecordNullPointer(derefOperandValue, estate.label());
+  if(continueExec) {
+    res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
+    return listify(res);
+  } else {
+    // TODO: build proper error state and check error state in solver.
+    list<SingleEvalResultConstInt> empty;
+    return empty;
   }
-  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp* node, 
@@ -1150,7 +1187,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
-  logger[TRACE]<<"DEBUG: evalLValueVarRefExp: "<<node->unparseToString()<<" EState label:"<<estate.label().toString()<<endl;
+  logger[TRACE]<<"DEBUG: evalLValueVarRefExp: "<<node->unparseToString()<<" label:"<<estate.label().toString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();

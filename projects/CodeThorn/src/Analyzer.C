@@ -2168,14 +2168,26 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
 #endif
       estateList.push_back(createEState(edge.target(),newPState,cset));
     } else if(isSgDotExp(lhs)) {
-      cout<<"DEBUG: detected dot operator on lhs "<<lhs->unparseToString()<<"."<<endl;
+      logger[TRACE]<<"detected dot operator on lhs "<<lhs->unparseToString()<<"."<<endl;
       list<SingleEvalResultConstInt> lhsRes=exprAnalyzer.evaluateExpression(lhs,currentEState, ExprAnalyzer::MODE_ADDRESS);
       for (auto lhsAddressResult : lhsRes) {
         EState estate=(*i).estate;
         PState newPState=*estate.pstate();
         ConstraintSet cset=*estate.constraints();
         AbstractValue lhsAddress=lhsAddressResult.result;
-        cout<<"DEBUG: detected dot operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
+        logger[TRACE]<<"detected dot operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
+        newPState.writeToMemoryLocation(lhsAddress,(*i).result);
+        estateList.push_back(createEState(edge.target(),newPState,cset));
+      }
+    } else if(isSgArrowExp(lhs)) {
+      logger[TRACE]<<"detected arrow operator on lhs "<<lhs->unparseToString()<<"."<<endl;
+      list<SingleEvalResultConstInt> lhsRes=exprAnalyzer.evaluateExpression(lhs,currentEState, ExprAnalyzer::MODE_ADDRESS);
+      for (auto lhsAddressResult : lhsRes) {
+        EState estate=(*i).estate;
+        PState newPState=*estate.pstate();
+        ConstraintSet cset=*estate.constraints();
+        AbstractValue lhsAddress=lhsAddressResult.result;
+        logger[TRACE]<<"detected arrow operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
         newPState.writeToMemoryLocation(lhsAddress,(*i).result);
         estateList.push_back(createEState(edge.target(),newPState,cset));
       }
@@ -2265,14 +2277,14 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       }
     } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
       SgExpression* lhsOperand=lhsDerefExp->get_operand();
-      cout<<"DEBUG: lhsOperand: "<<lhsOperand->unparseToString()<<endl;
+      logger[TRACE]<<"lhsOperand: "<<lhsOperand->unparseToString()<<endl;
       list<SingleEvalResultConstInt> resLhs=exprAnalyzer.evaluateExpression(lhsOperand,currentEState);
       if(resLhs.size()>1) {
         throw CodeThorn::Exception("more than 1 execution path (probably due to abstraction) in operand's expression of pointer dereference operator on lhs of "+nextNodeToAnalyze2->unparseToString());
       }
       ROSE_ASSERT(resLhs.size()==1);
       AbstractValue lhsPointerValue=(*resLhs.begin()).result;
-      cout<<"DEBUG: lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+      logger[TRACE]<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       if(lhsPointerValue.isNullPtr()) {
         getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estate->label());
         // no state can follow, return estateList (may be empty)

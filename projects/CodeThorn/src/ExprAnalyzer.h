@@ -103,6 +103,9 @@ namespace CodeThorn {
     void initializeStructureAccessLookup(SgProject* node);
     // requires StructureAccessLookup to be initialized.
     bool isStructMember(SPRAY::VariableId varId);
+    // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
+    // returns true if execution may continue, false if execution definitely does not continue.
+    bool checkAndRecordNullPointer(AbstractValue value, Label label);
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
