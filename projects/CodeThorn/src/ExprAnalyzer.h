@@ -121,7 +121,8 @@ namespace CodeThorn {
 #endif
     // evaluation functions
     list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    
+    list<SingleEvalResultConstInt> evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
+
     list<SingleEvalResultConstInt> evalEqualOp(SgEqualityOp* node,
                                                SingleEvalResultConstInt lhsResult, 
                                                SingleEvalResultConstInt rhsResult,

@@ -241,6 +241,32 @@ bool ExprAnalyzer::isLValueOp(SgNode* node) {
     ;
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode) {
+  SgNode* lhs=SgNodeHelper::getLhs(node);
+  list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(lhs,estate,mode);
+  SgNode* rhs=SgNodeHelper::getRhs(node);
+  list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,mode);
+  list<SingleEvalResultConstInt> resultList;
+  for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
+      liter!=lhsResultList.end();
+      ++liter) {
+    for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+        riter!=rhsResultList.end();
+        ++riter) {
+      SingleEvalResultConstInt lhsResult=*liter;
+      SingleEvalResultConstInt rhsResult=*riter;
+      switch(node->variantT()) {
+        CASE_EXPR_ANALYZER_EVAL(SgAndOp,evalAndOp);
+        CASE_EXPR_ANALYZER_EVAL(SgOrOp,evalOrOp);
+      default:
+        cerr << "Binary short circuit op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+        throw CodeThorn::Exception("Error: evaluateExpression::unknown binary short circuit operation.");
+      }
+    }
+  }
+  return resultList;
+}
+
 //#define NEW_SEMANTICS_MODELLING
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
@@ -261,6 +287,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   }
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
+    // special handling of short-circuit operators
+    if(isSgAndOp(node)||isSgOrOp(node)) {
+      return evaluateShortCircuitOperators(node,estate,mode);
+    }
     SgNode* lhs=SgNodeHelper::getLhs(node);
     list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(lhs,estate,mode);
     SgNode* rhs=SgNodeHelper::getRhs(node);
@@ -305,8 +335,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         switch(node->variantT()) {
           CASE_EXPR_ANALYZER_EVAL(SgEqualityOp,evalEqualOp);
           CASE_EXPR_ANALYZER_EVAL(SgNotEqualOp,evalNotEqualOp);
-          CASE_EXPR_ANALYZER_EVAL(SgAndOp,evalAndOp);
-          CASE_EXPR_ANALYZER_EVAL(SgOrOp,evalOrOp);
           CASE_EXPR_ANALYZER_EVAL(SgAddOp,evalAddOp);
           CASE_EXPR_ANALYZER_EVAL(SgSubtractOp,evalSubOp);
           CASE_EXPR_ANALYZER_EVAL(SgMultiplyOp,evalMulOp);
