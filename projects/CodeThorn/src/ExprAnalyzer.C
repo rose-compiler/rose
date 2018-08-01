@@ -256,8 +256,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
       SingleEvalResultConstInt lhsResult=*liter;
       SingleEvalResultConstInt rhsResult=*riter;
       switch(node->variantT()) {
-        CASE_EXPR_ANALYZER_EVAL(SgAndOp,evalAndOp);
-        CASE_EXPR_ANALYZER_EVAL(SgOrOp,evalOrOp);
+      case V_SgAndOp:
+        resultList.splice(resultList.end(),evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode));
+        break;
+      case V_SgOrOp:
+        resultList.splice(resultList.end(),evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,mode));
+        break;
       default:
         cerr << "Binary short circuit op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
         throw CodeThorn::Exception("Error: evaluateExpression::unknown binary short circuit operation.");
