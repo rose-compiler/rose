@@ -762,10 +762,16 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           }
 
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
-          // not supported yet. Declarations may exist in header files,
-          // therefore silently ignore it here, but if will cause an
-          // error later as read/write of class variables is not
-          // allowed yet in expressions.
+          // create only address start address of struct (on the
+          // stack) alternatively addresses for all member variables
+          // can be created; however, a member var can only be
+          // assigned by denoting an element relative to the start of
+          // the struct, similar only a pointer can be created. the
+          // value is actually uninitialized and therefore is
+          // implicitly bot.
+          AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
+          logger[TRACE]<<"declaration of struct: "<<variableIdMapping.getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
+          newPState.writeTopToMemoryLocation(pointerVal);
         } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);

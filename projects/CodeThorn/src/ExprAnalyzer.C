@@ -956,12 +956,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue operand=operandResult.result;
-  //cout<<"DEBUG: addressOfOpValue: "<<addressOfOperandValue.toRhsString(_variableIdMapping);
-  // AbstractValue of a VariableId is a pointer to this variable.
 #ifdef NEW_SEMANTICS_MODELLING
   // all memory locations are modelled as addresses. Therefore the address operator is a no-op here.
   res.result=AbstractValue(operand);
 #else
+  logger[TRACE]<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
   if(operand.isTop()||operand.isBot()) {
     res.result=operand;
   } else {
@@ -1219,7 +1218,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
       return listify(res);
     } else {
       res.result=CodeThorn::Top();
-      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
       return listify(res);
     }
   }
@@ -1233,22 +1232,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   ROSE_ASSERT(varId.isValid());
-  // check if var is a struct member. if yes return struct-offset, otherwise continue.
   if(_variableIdMapping->hasClassType(varId)) {
-    // TODO - not supported yet
-    cout<<"DEBUG: has Class type."<<endl;
     res.result=AbstractValue::createAddressOfVariable(varId);
     return listify(res);
   }
-#if 1
+  // check if var is a struct member. if yes return struct-offset.
   if(isStructMember(varId)) {
     int offset=structureAccessLookup.getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
-    cout<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    logger[TRACE]<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     res.result=AbstractValue(offset);
     return listify(res);
   }
-#endif
   if(pstate->varExists(varId)) {
     if(_variableIdMapping->hasArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);
