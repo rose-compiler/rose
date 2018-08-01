@@ -16,7 +16,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
 # ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
 # you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
-SUBDIRS = libltdl config src
+SUBDIRS = libltdl config src python
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests/smoke
 endif
@@ -101,6 +101,7 @@ install-compass: install-core
 install-rose-library: install-data-local
 	$(MAKE) -C $(top_builddir)/src install
 	cp rosePublicConfig.h $(pkgincludedir)
+	$(MAKE) -C $(top_builddir)/python install
 
 # Build a binary release of the ROSE library.  This assumes that you're running in the RMC-2 environment because it uses
 # some "make" variables that are initialized from shell exported variables. Other build environments will need other targets.
