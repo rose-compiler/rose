@@ -1,0 +1,8 @@
+START
+PROGRAM testif ;
+BEGIN
+  ITEM aBoolean B ;
+  IF TRUE ;
+    ;
+END
+TERM

@@ -1,0 +1,9 @@
+START
+PROGRAM testCompoundStatement ;
+BEGIN
+  BEGIN
+    ;
+    ;
+  END
+END
+TERM

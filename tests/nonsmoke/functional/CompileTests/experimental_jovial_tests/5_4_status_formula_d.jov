@@ -1,0 +1,7 @@
+START
+PROGRAM testStatusFormula ;
+BEGIN
+  ivar = (* STATUS (8 V(RED), V(GREEN), V(BLUE), 5 V(a), V(b), V(c)) *) (ibbr);
+  ivar = (* STATUS (V(MON), V(TUES), V(WED), 8 V(RED), V(GREEN), V(BLUE), 5 V(a), V(b), V(c)) *) (ibbr);
+END
+TERM

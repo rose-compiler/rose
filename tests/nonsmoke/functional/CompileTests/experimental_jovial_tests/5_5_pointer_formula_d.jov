@@ -1,0 +1,12 @@
+START
+PROGRAM testPointerFormula ;
+BEGIN
+  ivar = (* P pntr *) (3);
+  ivar = ((* P pntr *) (3));
+  ivar = (* P *) (ivar);
+  ivar = NULL;
+  ivar = (NULL);
+  ivar = P(3);
+  ivar = (P(3));
+END
+TERM

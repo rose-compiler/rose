@@ -1,0 +1,11 @@
+START
+PROGRAM testCharacterFormula ;
+BEGIN
+  ivar = 'ibbr';
+  ivar = ('ibbr');
+  ivar = C(ibbr);
+  ivar = (C(ibbr));
+  ivar = (* C 8 *) (ibbr);
+  ivar = (* C *) (ibbr);
+END
+TERM
