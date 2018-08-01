@@ -60,7 +60,9 @@ _mm_set_ps1
 _mm_set_sd
 _mm_set_ss
 _mm_setr_epi32
+
 _mm_shuffle_epi32
+
 _mm_shuffle_pd
 _mm_shuffle_ps
 _mm_store_pd
