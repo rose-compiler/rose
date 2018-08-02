@@ -664,10 +664,17 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       //SgName initDeclVarName=initDeclVar->get_name();
       //string initDeclVarNameString=initDeclVarName.getString();
       //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<endl;
-      //cout << "DECLARATION: var:"<<SgNodeHelper::nodeToString(decl)<<endl;
+      //cout << "DEBUG: DECLARATION: var:"<<SgNodeHelper::nodeToString(decl)<<endl;
       ConstraintSet cset=*currentEState.constraints();
       SgInitializer* initializer=initName->get_initializer();
       if(initializer) {
+        //cout<<"DEBUG: initialize with "<<initializer->unparseToString()<<endl;
+        //cout<<"DEBUG: lhs type: "<<getVariableIdMapping()->getType(initDeclVarId)->unparseToString()<<endl;
+        if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
+          // TODO: initialization of structs not supported yet
+          cerr<<"Error: initialization of structs not supported yet - "<<decl->unparseToString()<<endl;
+          exit(1);
+        }
         // has aggregate initializer
         if(isSgAggregateInitializer(initializer)) {
           // logger[DEBUG] <<"array-initializer found:"<<initializer->unparseToString()<<endl;
@@ -2155,8 +2162,12 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       EState estate=(*i).estate;
       PState newPState=*estate.pstate();
       ConstraintSet cset=*estate.constraints();
-      // only update integer variables. Ensure values of floating-point variables are not computed
-      if(variableIdMapping.hasIntegerType(lhsVar)) {
+      cout<<"DEBUG: LHS VAR found: "<<lhs->unparseToString()<<" hasClassType(): "<<variableIdMapping.hasClassType(lhsVar)<<endl;
+      if(variableIdMapping.hasClassType(lhsVar)) {
+        // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
+        cerr<<"Error: assignment of structs (copy constructor) is not supported yet."<<endl;
+        exit(1);
+      } else if(variableIdMapping.hasIntegerType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasBoolType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
@@ -2370,8 +2381,8 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
     if(evalResult.isBot()) {
-      cout<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
-      cout<<"Error: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      cerr<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
+      cerr<<"Error: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
       exit(1);
     }
     if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
