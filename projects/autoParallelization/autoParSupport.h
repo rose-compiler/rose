@@ -76,8 +76,10 @@ namespace AutoParallelization
   struct hardwareInfo {
     float main_mem_bandwidth; // theoretical peak bandwidth GBytes/second by default
     float main_mem_bandwidth_measured; // measured peak bandwidth through some microbenchmarks
-    float peak_flops; // theoretical peak, GFlops/second by default
-    float peak_flops_measured; // GFlops/second by default, measured peak flops through some microbenchmarks
+    float peak_flops_sp; // theoretical single precision peak, GFlops/second by default
+    float peak_flops_sp_measured; // GFlops/second by default, measured peak flops through some microbenchmarks
+    float peak_flops_dp; // theoretical double precision peak, GFlops/second by default
+    float peak_flops_dp_measured; // GFlops/second by default, measured peak flops through some microbenchmarks
   };
 
   // A baseline roofline model

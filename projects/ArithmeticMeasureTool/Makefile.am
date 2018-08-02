@@ -14,7 +14,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 Midend_Analysis_SOURCE_PATH=$(top_srcdir)/src/midend/programAnalysis/arithmeticIntensity
 
-AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src -I$(Midend_Analysis_SOURCE_PATH) #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
+AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src #-I$(Midend_Analysis_SOURCE_PATH) #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
 
 #SUBDIRS = src . 
 

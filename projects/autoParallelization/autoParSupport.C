@@ -7,11 +7,14 @@
 #include <iostream>
 #include <map>
 #include "RoseAst.h"
+#include "ai_measurement.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace Rose;
 using namespace OmpSupport;
 using namespace SageInterface;
+using namespace ArithmeticIntensityMeasurement;
 // Everything should go into the name space here!!
 namespace AutoParallelization
 {
@@ -1639,16 +1642,28 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         // Which GPU to target? we pick Pascal P100 as the default target GPU
         // TODO: enable users to pick a target GPU later
         Hardware_Info * hinfo = new Hardware_Info();
+        string peak_dp = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak FP64 (DP)"];
+        hinfo->peak_flops_dp = atof (peak_dp.c_str());
+
         string peak_band_str = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak Global Memory Bandwidth specified"];
         string peak_band_measured_str = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak Global Memory Bandwidth measured cuda-stream"];
         hinfo->main_mem_bandwidth = atof (peak_band_str.c_str());
         hinfo->main_mem_bandwidth_measured = atof (peak_band_measured_str.c_str()); 
-        ROSE_ASSERT (fabs(hinfo->main_mem_bandwidth -732.16)/732.16 <0.01) ;
+        //ROSE_ASSERT (fabs(hinfo->main_mem_bandwidth -732.16)/732.16 <0.01) ;
+        ROSE_ASSERT (hinfo->main_mem_bandwidth !=0.0 ) ;
+        ROSE_ASSERT (hinfo->peak_flops_dp!=0.0);
 
         // TODO: add CPU hardware info. later
         //
         // call loop analysis to extract loop information
-
+        SgStatement* lbody = isSgForStatement(loop)->get_loop_body();
+        FPCounters* fp_counters = calculateArithmeticIntensity(lbody);
+//        cout<< fp_counters->toString() <<endl;
+        Loop_Info * linfo = new Loop_Info();
+        linfo->arithmetic_intensity = fp_counters->getIntensity();
+        linfo->iteration_count = 200*200; // TODO: better way to obtain iteration count, through profiling??
+        linfo->flops_per_iteration =  fp_counters->getTotalCount(); 
+        cout<< "debug: estimated execution time in seconds:"<<rooflineModeling (linfo, hinfo)<<endl;
     }
 
 
@@ -1677,7 +1692,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     // dependencies associated with the autoscoped variabled can be
     // eliminated.
     //OmpSupport::OmpAttribute* omp_attribute = new OmpSupport::OmpAttribute();
-    OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(e_unknown, NULL, false);
+    OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(OmpSupport::e_unknown, NULL, false);
     ROSE_ASSERT(omp_attribute != NULL);
 
 #if 0
@@ -2197,9 +2212,12 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     ROSE_ASSERT (h!=NULL);
 
     // we use the theoretical peak for now. TODO: Measured peak is a better choice. 
-    float peak_loop_gflops = min (h->peak_flops, l->arithmetic_intensity * h->main_mem_bandwidth);
+    float peak_loop_gflops = min (h->peak_flops_dp, l->arithmetic_intensity * h->main_mem_bandwidth);
+    cout<<"\tdebug: peak_flops_dp:"<< h->peak_flops_dp<<endl;
+    cout<<"\tdebug: arithmetic intensity:"<< l->arithmetic_intensity<<endl;
+    cout<<"\tdebug: mem bandwidth:"<< h->main_mem_bandwidth<<endl;
 
-    ret = (l->iteration_count * l->flops_per_iteration)/peak_loop_gflops/1000000000;
+    ret = ((double)(l->iteration_count * l->flops_per_iteration))/ ((double) (peak_loop_gflops*1000000000));
     return ret; 
   }
 
@@ -2278,7 +2296,14 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         if (row.size()>=2)
         {
           //         cout<<"debug: store key:"<< row[0] << ": value: " << row[2+i] <<endl;
-          hardwareDataBase[model_name][row[0]]= row[2+i];
+          // Must trim leading and trailing spaces to avoid ambiguity
+          boost::trim(model_name);
+          string key= row[0]; 
+          boost::trim(key);
+          string value = row[2+i];
+          boost::trim(value);
+          //hardwareDataBase[model_name][row[0]]= row[2+i];
+          hardwareDataBase[model_name][key]= value;
         }
       }
     }
