@@ -244,28 +244,51 @@ bool ExprAnalyzer::isLValueOp(SgNode* node) {
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode) {
   SgNode* lhs=SgNodeHelper::getLhs(node);
   list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(lhs,estate,mode);
-  SgNode* rhs=SgNodeHelper::getRhs(node);
-  list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,mode);
   list<SingleEvalResultConstInt> resultList;
   for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
       liter!=lhsResultList.end();
       ++liter) {
-    for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
-        riter!=rhsResultList.end();
-        ++riter) {
+    switch(node->variantT()) {
+    case V_SgAndOp: {
       SingleEvalResultConstInt lhsResult=*liter;
-      SingleEvalResultConstInt rhsResult=*riter;
-      switch(node->variantT()) {
-      case V_SgAndOp:
-        resultList.splice(resultList.end(),evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode));
-        break;
-      case V_SgOrOp:
-        resultList.splice(resultList.end(),evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,mode));
-        break;
-      default:
-        cerr << "Binary short circuit op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
-        throw CodeThorn::Exception("Error: evaluateExpression::unknown binary short circuit operation.");
+      // short circuit semantics
+      if(lhsResult.isTrue()||lhsResult.isTop()||lhsResult.isBot()) {
+        SgNode* rhs=SgNodeHelper::getRhs(node);
+        list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,mode);
+        for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+            riter!=rhsResultList.end();
+            ++riter) {
+          SingleEvalResultConstInt rhsResult=*riter;
+          resultList.splice(resultList.end(),evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode));
+        }
+      } else {
+        // rhs not executed
+        ROSE_ASSERT(lhsResult.isFalse());
+        resultList.push_back(lhsResult);
       }
+      break;
+    }
+    case V_SgOrOp: {
+      SingleEvalResultConstInt lhsResult=*liter;
+      if(lhsResult.isFalse()||lhsResult.isTop()||lhsResult.isBot()) {
+        SgNode* rhs=SgNodeHelper::getRhs(node);
+        list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,mode);
+        for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+            riter!=rhsResultList.end();
+            ++riter) {
+          SingleEvalResultConstInt rhsResult=*riter;
+          resultList.splice(resultList.end(),evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,mode));
+        }
+      } else {
+        // rhs not executed
+        ROSE_ASSERT(lhsResult.isTrue());
+        resultList.push_back(lhsResult);
+      }
+      break;
+    }
+    default:
+      cerr << "Binary short circuit op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+      throw CodeThorn::Exception("Error: evaluateExpression::unknown binary short circuit operation.");
     }
   }
   return resultList;
@@ -928,12 +951,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
                                                        SingleEvalResultConstInt lhsResult, 
                                                        SingleEvalResultConstInt rhsResult,
                                                        EState estate, EvalMode mode) {
-  //throw CodeThorn::Exception("Error: dot operator not supported yet: "+node->unparseToString());
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
-  checkAndRecordNullPointer(lhsResult.result, estate.label());
+  logger[DEBUG]<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
+  checkAndRecordNullPointer(lhsResult.result, estate.label()); // source of dot-op cannot be null.
   AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
   // only if rhs is *not* a dot-operator, needs the value be
   // read. Otherwise this is not the end of the access path and only the address is computed.

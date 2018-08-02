@@ -780,6 +780,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           // set it to top (=any value possible (uninitialized)) for
           // all remaining cases. It will become an error-path once
           // all cases are addressed explicitly above.
+          logger[TRACE]<<"declaration of variable (other): "<<variableIdMapping.getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
           newPState.writeTopToMemoryLocation(initDeclVarId);
         }
         return createEState(targetLabel,newPState,cset);
