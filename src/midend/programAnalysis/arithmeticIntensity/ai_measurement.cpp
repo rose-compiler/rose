@@ -1,4 +1,5 @@
 #include "ai_measurement.h"
+#include "constantFolding.h"
 
 using namespace std;
 using namespace Rose;
@@ -22,6 +23,9 @@ class IntExpressionEvaluationTraversal: public SgBottomUpProcessing<IntExpressio
     IntExpressionEvaluationAttribute evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList);
 };
 
+#if 0
+// midend/programTransformation/constantFolding/constantFolding.C has a more complete calculate_t()
+// we move that one into constantFolding.h
 // For T type which is compatible for all binary operators we are interested in.
 template<typename T>
 T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
@@ -48,7 +52,6 @@ T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
   }// end switch
   return foldedValue; 
 } 
-
 // For T type which is compatible for all unary operators we are interested in.
 template<typename T>
 T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
@@ -73,6 +76,8 @@ T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
   return foldedValue;
 }
 
+#endif 
+
 // 7*sizeof(float) + 5 * sizeof(double)
 IntExpressionEvaluationAttribute
 IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynthesizedAttributes synthesizedAttributeList)
@@ -92,7 +97,7 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
       int lhsvalue, rhsvalue;
       lhsvalue =  synthesizedAttributeList[SgBinaryOp_lhs_operand_i].newValue;
       rhsvalue =  synthesizedAttributeList[SgBinaryOp_rhs_operand_i].newValue;
-      returnAttribute.newValue = calculate_t ( bop, lhsvalue, rhsvalue);
+      returnAttribute.newValue = ConstantFolding::calculate_t ( bop, lhsvalue, rhsvalue);
     }
     else if (SgValueExp* vexp = isSgValueExp(exp))
     {
