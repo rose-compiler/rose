@@ -2,6 +2,27 @@
 #ifndef __MFB_UTILS_HPP__
 #define __MFB_UTILS_HPP__
 
+
+
+class SgVariableSymbol;
+class SgType;
+class SgScopeStatement;
+class SgInitializer;
+class SgExpression;
+class SgFunctionSymbol;
+class SgSymbol;
+class SgDeclarationScope;
+class SgTemplateParameter;
+class SgTemplateArgument;
+
+#include <vector>
+
+typedef std::vector<SgTemplateParameter*> SgTemplateParameterPtrList;
+typedef std::vector<SgTemplateArgument*> SgTemplateArgumentPtrList;
+
+#include <string>
+#include <map>
+
 namespace MFB {
 
 namespace Utils {

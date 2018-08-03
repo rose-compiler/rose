@@ -54,6 +54,15 @@ size_t Driver<Sage>::getFileID(SgScopeStatement * scope) const {
   return getFileID(enclosing_source_file);
 }
 
+size_t Driver<Sage>::getFileID(SgSymbol * sym) const {
+  file_id_t file_id = 0;
+  std::map<SgSymbol *, file_id_t>::const_iterator it = p_symbol_to_file_id_map.find(sym);
+  if (it != p_symbol_to_file_id_map.end()) {
+    file_id = it->second;
+  }
+  return file_id;
+}
+
 Driver<Sage>::Driver(SgProject * project_) :
   project(project_),
   file_id_counter(1), // 0 is reserved
