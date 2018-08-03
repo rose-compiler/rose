@@ -19,6 +19,7 @@ class StructureAccessLookup {
   bool isStructMember(SPRAY::VariableId varId);
   size_t numOfStoredMembers();
  private:
+  bool isUnionDeclaration(SgNode* node);
   std::map<SPRAY::VariableId,int> varIdTypeSizeMap;
 };
 

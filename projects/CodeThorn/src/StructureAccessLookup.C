@@ -22,6 +22,16 @@ std::list<SgVariableDeclaration*> StructureAccessLookup::getDataMembers(SgClassD
   return varDeclList;
 }
 
+bool StructureAccessLookup::isUnionDeclaration(SgNode* node) {
+  if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
+    node=classDef->get_declaration();
+  }
+  if(SgClassDeclaration* classDecl=isSgClassDeclaration(node)) {
+    SgClassDeclaration::class_types classType=classDecl->get_class_type();
+    return classType==SgClassDeclaration::e_union;
+  }
+  return false;
+}
 void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMapping, SgProject* root) {
   ROSE_ASSERT(variableIdMapping);
   ROSE_ASSERT(root);
@@ -34,13 +44,13 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
     SgNode* node=*i;
     ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
-      //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
+      cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
 #if 1                
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
         if(isSgVariableDeclaration(dataMember)) {
-          //cout<<"DEBUG: varDecl: "<<varDecl->unparseToString()<<" : ";
+          cout<<"DEBUG: varDecl: "<<classDef->unparseToString()<<" : ";
           VariableId varId=variableIdMapping->variableId(dataMember);
           if(varId.isValid()) {
             SgType* varType=variableIdMapping->getType(varId);
@@ -60,10 +70,13 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               
               // every varid is inserted exactly once.
               ROSE_ASSERT(varIdTypeSizeMap.find(varId)==varIdTypeSizeMap.end());
-              //cout<<"Offset: "<<offset<<endl;
+              cout<<"Offset: "<<offset<<endl;
               
               varIdTypeSizeMap.emplace(varId,offset);
-              offset+=typeSize;
+              // for unions the offset is not increased (it is the same for all members)
+              if(!isUnionDeclaration(node)) {
+                offset+=typeSize;
+              }
             } else {
               // could not determine var type
               // ...

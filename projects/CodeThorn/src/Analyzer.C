@@ -2261,7 +2261,6 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       EState estate=(*i).estate;
       PState newPState=*estate.pstate();
       ConstraintSet cset=*estate.constraints();
-      cout<<"DEBUG: LHS VAR found: "<<lhs->unparseToString()<<" hasClassType(): "<<variableIdMapping.hasClassType(lhsVar)<<endl;
       if(variableIdMapping.hasClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
         cerr<<"Error: assignment of structs (copy constructor) is not supported yet."<<endl;
