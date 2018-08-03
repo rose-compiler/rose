@@ -957,6 +957,8 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
     return transferFunctionCallReturn(edge,estate);
   } else if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(nextNodeToAnalyze1)) {
     return transferCaseOptionStmt(caseStmt,edge,estate);
+  } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(nextNodeToAnalyze1)) {
+    return transferDefaultOptionStmt(caseStmt,edge,estate);
   } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
     return transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
@@ -2079,9 +2081,56 @@ AbstractValue Analyzer::singleValevaluateExpression(SgExpression* expr,EState cu
   return val;
 }
 
+std::list<EState> Analyzer::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
+  logger[TRACE]<<"DEBUG: DEFAULTSTMT: "<<defaultStmt->unparseToString()<<endl;
+
+  Label targetLabel=edge.target();
+  PState newPState=*estate->pstate();
+  ConstraintSet cset=*estate->constraints();
+  SgStatement* blockStmt=isSgBasicBlock(defaultStmt->get_parent());
+  ROSE_ASSERT(blockStmt);
+  SgSwitchStatement* switchStmt=isSgSwitchStatement(blockStmt->get_parent());
+  ROSE_ASSERT(switchStmt);
+  SgStatement* condStmt=isSgStatement(SgNodeHelper::getCond(switchStmt));
+  ROSE_ASSERT(condStmt);
+  SgExpression* condExpr=isSgExpression(SgNodeHelper::getExprStmtChild(condStmt));
+
+  EState currentEState=*estate;
+
+  // value of switch expression
+  AbstractValue switchCondVal=singleValevaluateExpression(condExpr,currentEState);
+
+  // create filter for all case labels (TODO: precompute this set)
+  set<SgCaseOptionStmt*> caseStmtSet=SgNodeHelper::switchRelevantCaseStmtNodes(switchStmt);
+  for(set<SgCaseOptionStmt*>::iterator i=caseStmtSet.begin();i!=caseStmtSet.end();++i) {
+    SgCaseOptionStmt* caseStmt=*i;
+    SgExpression* caseExpr=caseStmt->get_key();
+    SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
+    if(caseExprOptionalRangeEnd) {
+      cerr<<"Error: GNU extension range in case statement not supported."<<endl;
+      exit(1);
+    }
+    // value of constant case value
+    AbstractValue caseVal=singleValevaluateExpression(caseExpr,currentEState);
+    // compare case constant with switch expression value
+    logger[TRACE]<<"switch-default filter cmp: "<<switchCondVal.toString(getVariableIdMapping())<<"=?="<<caseVal.toString(getVariableIdMapping())<<endl;
+    // check that not any case label may be equal to the switch-expr value (exact for concrete values)
+    AbstractValue comparisonVal=caseVal.operatorEq(switchCondVal);
+    if(comparisonVal.isTop()||comparisonVal.isTrue()) {
+      // determined that at least one case may be reachable
+      logger[TRACE]<<"switch-default: continuing."<<endl;
+      return elistify(createEState(targetLabel,newPState,cset));
+    }
+  }
+  // detected infeasable path (default is not reachable)
+  logger[TRACE]<<"switch-default: infeasable path."<<endl;
+  list<EState> emptyList;
+  return emptyList;
+}
+
 std::list<EState> Analyzer::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, const EState* estate) {
   logger[TRACE]<<"DEBUG: CASESTMT: "<<caseStmt->unparseToString()<<endl;
-  Label targetLabel=estate->label();
+  Label targetLabel=edge.target();
   PState newPState=*estate->pstate();
   ConstraintSet cset=*estate->constraints();
   SgStatement* blockStmt=isSgBasicBlock(caseStmt->get_parent());
@@ -2114,12 +2163,8 @@ std::list<EState> Analyzer::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Ed
   } else {
     // detected infeasable path
     logger[TRACE]<<"switch-case: infeasable path."<<endl;
-#if 0
     list<EState> emptyList;
     return emptyList;
-#else
-    return elistify(createEState(targetLabel,newPState,cset));
-#endif
   }
 }
 
