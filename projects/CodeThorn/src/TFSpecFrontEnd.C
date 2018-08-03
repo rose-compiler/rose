@@ -74,11 +74,23 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
         commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
       }
       else if(action == "list_basereplacements" || action == "list_replacements"){
-        commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("body", "*", act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("args", "*", act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("ret", "*", act.getToType(), act.getFromType(), base, true);
+        string scope = act.getScope();
+        if(scope == "" || scope == "$global"){
+          if(scope == "") scope = "*";
+          commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
+        }
+        if(scope != "$global"){
+          commandList.addTypeCommand("body", scope, act.getToType(), act.getFromType(), base, true);
+          commandList.addTypeCommand("args", scope, act.getToType(), act.getFromType(), base, true);
+          commandList.addTypeCommand("ret", scope, act.getToType(), act.getFromType(), base, true);
+        }
         outName = act.getName();
+      }
+      else if(action == "introduce_include"){
+        commandList.addIncludeCommand(act.getScope(), act.getName());
+      }
+      else if(action == "replace_pragma"){
+        commandList.addPragmaCommand(act.getFromType(), act.getToType());
       }
     }
     else{

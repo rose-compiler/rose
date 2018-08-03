@@ -601,6 +601,8 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C 
 	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C --compile
 	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/jsonReplaceTest.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json --trace $(srcdir)/tests/includePragmaTest1.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json --trace $(srcdir)/tests/includePragmaTest2.C
 	rm -f a.out craft_initial.json
 
 #MS: iterator_test not ingegrated yet

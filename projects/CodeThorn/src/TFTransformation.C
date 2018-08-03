@@ -339,7 +339,7 @@ void TFTransformation::instrumentADIndependent(SgNode* root, SgFunctionDefinitio
     SgStatementPtrList statementList = funDef->get_body()->get_statements();
     SgStatement* firstStatement = statementList.front();
     string oldSource = firstStatement->unparseToString();
-    string newSource = instString+oldSource;
+    string newSource = oldSource+"\n"+instString;
     SgNodeHelper::replaceAstWithString(firstStatement,newSource);
   }
 }

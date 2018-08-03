@@ -78,6 +78,8 @@ class CommandList{
     void addTypeCommand(std::string location, std::string funName, std::string newType, std::string oldType, bool base, bool listing);
     void addHandleCommand(std::string handle, std::string newType, bool base, bool listing);
     void addTransformCommand(std::string funName, std::string typeName, std::string transformName);
+    void addIncludeCommand(std::string funName, std::string includeName);
+    void addPragmaCommand(std::string fromMatch, std::string toReplace);
     void nextCommand();
     TFTypeTransformer::VarTypeVarNameTupleList getTransformationList();
   private:

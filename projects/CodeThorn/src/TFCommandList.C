@@ -6,6 +6,7 @@
 #include <regex>
 #include "abstract_handle.h"
 #include "CppStdUtilities.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace AbstractHandle;
@@ -270,15 +271,14 @@ IncludeCommand::IncludeCommand(std::string funName, std::string inName, int numb
 int IncludeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
   SgFilePtrList listOfFiles;
   if(functionName=="*") {
-    root->get_files();
+    listOfFiles = root->get_files();
   } else {
     SgNode* currentNode=completeAst.findFunctionByName(functionName);
     while(currentNode != nullptr && !isSgFile(currentNode)){
       currentNode = currentNode->get_parent();
     }
     if(currentNode==nullptr) {
-      cerr<<"Error: Command "<<commandNumber<<": function "<<functionName<<" not found."<<endl;
-      return true;
+      return false;
     } else {
       if(SgFile* file = isSgFile(currentNode)){
         listOfFiles.push_back(file);
@@ -303,10 +303,27 @@ int PragmaCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& 
     if(SgPragma* pragmaNode = isSgPragma(*i)){
       vector<string> splitFrom = CppStdUtilities::splitByRegex(fromMatch, " ");
       vector<string> splitPragma = CppStdUtilities::splitByRegex(pragmaNode->get_pragma(), " ");
-     
-      cout<<pragmaNode->get_pragma();   
- 
-      SgNodeHelper::replaceAstWithString(pragmaNode,"");
+      bool match = true;
+      if(fromMatch != ""){
+        for(size_t i = 0; i < splitFrom.size(); i++){
+          if(i >= splitPragma.size()){
+            match = false;
+            break;
+          }
+          if(splitFrom[i] != splitPragma[i]){
+            match = false;
+            break;
+          }
+        }
+      }   
+      if(match){ 
+        long splitPragmaSize = (long) splitPragma.size();
+        for(int i = 0; i < splitPragmaSize; i++){
+          string findString = "$" + to_string(i);
+          boost::replace_all(toReplace, findString, splitPragma[i]);
+        }
+        SgNodeHelper::replaceAstWithString(pragmaNode->get_parent(),"\n"+toReplace);
+      }
     }
   }
   return false;
@@ -345,6 +362,15 @@ void CommandList::addTransformCommand(std::string funName, std::string typeName,
   commandsList.push_back(newCommand);
 }
 
+void CommandList::addIncludeCommand(std::string funName, std::string includeName){
+  IncludeCommand* newCommand = new IncludeCommand(funName, includeName, nextCommandNumber);
+  commandsList.push_back(newCommand);
+}
+
+void CommandList::addPragmaCommand(std::string fromMatch, std::string toReplace){
+  PragmaCommand* newCommand = new PragmaCommand(fromMatch, toReplace, nextCommandNumber);
+  commandsList.push_back(newCommand);
+}
 void CommandList::nextCommand(){
   nextCommandNumber++;
 }
