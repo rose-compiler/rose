@@ -113,7 +113,7 @@ void Solver5::run() {
 #if 1
                 fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&(_analyzer->variableIdMapping));
+                fout<<"PSTATE-IN :"<<currentEStatePtr->label().toString()<<":"<<currentEStatePtr->pstate()->toString(&(_analyzer->variableIdMapping));
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==40) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
