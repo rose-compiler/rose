@@ -832,7 +832,7 @@ Z3Solver::ctxShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa); // widen sa same as expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
@@ -848,13 +848,13 @@ Z3Solver::ctxShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
 Z3Solver::Z3ExprTypePair
 Z3Solver::ctxShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL0 || inode->getOperator() == SymbolicExpr::OP_SHL1);
+    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR0 || inode->getOperator() == SymbolicExpr::OP_SHR1);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa); // widen sa same as expr
-    bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
+    bool newBits = inode->getOperator() == SymbolicExpr::OP_SHR1;
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
     z3::expr e =
