@@ -49,6 +49,7 @@ bool SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>
 bool SgAsmInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 unsigned SgAsmInstruction::get_anyKind() const { return 0; }
+std::string SgAsmInstruction::toString() const { return ""; }
 
 std::set<rose_addr_t>
 SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
