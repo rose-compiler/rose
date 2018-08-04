@@ -12,6 +12,7 @@
 #include <Sawyer/DistinctList.h>
 
 #ifdef ROSE_ENABLE_PYTHON_API
+#undef slots                                            // stupid Qt pollution
 #include <boost/python.hpp>
 #endif
 
