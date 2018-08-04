@@ -4,6 +4,7 @@
 #include <BaseSemantics2.h>
 #include <BinarySmtSolver.h>
 #include <Partitioner2/CfgPath.h>
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <boost/filesystem/path.hpp>
 
@@ -229,6 +230,12 @@ public:
     Settings& settings() { return settings_; }
     void settings(const Settings &s) { settings_ = s; }
     /** @} */
+
+    /** Describe command-line switches.
+     *
+     *  The @p settings provide default values. A reference to @p settings is saved and when the command-line is parsed and
+     *  applied, the settings are adjusted. */
+    static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
