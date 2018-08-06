@@ -27,6 +27,8 @@ class Element {
   public:
     static std::map<SgNode *, Element *> all;
 
+    static Element * get(SgNode *);
+
   protected:
     Element();
 
@@ -39,7 +41,10 @@ class Element {
     virtual std::string getGraphVizLabel() const = 0;
     virtual std::string getGraphVizTag() const = 0;
     virtual std::string getGraphVizShape() const = 0;
+    virtual std::string getGraphVizStyle() const = 0;
     virtual std::string getGraphVizNodeColor() const = 0;
+    virtual size_t getGraphVizNodePenWidth() const = 0;
+    virtual std::string getGraphVizFillColor() const;
 
     void toGraphViz(std::ostream & out) const;
 
@@ -54,23 +59,25 @@ class Element {
   friend class SpecializationConstraints;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 
 };
 
-class TemplateParameterElement {
+class TemplateElement : public Element {
   protected:
     SgNode * node;
 
   protected:
-    static TemplateParameterElement * build(SgNode * node);
+    static TemplateElement * build(SgNode * node);
 
   protected:
-    TemplateParameterElement(SgNode * node__);
+    TemplateElement(SgNode * node__);
 
   public:
-    virtual ~TemplateParameterElement();
+    virtual ~TemplateElement();
 
   protected:
     void construct();
@@ -79,7 +86,9 @@ class TemplateParameterElement {
     virtual std::string getGraphVizLabel() const;
     virtual std::string getGraphVizTag() const;
     virtual std::string getGraphVizShape() const;
+    virtual std::string getGraphVizStyle() const;
     virtual std::string getGraphVizNodeColor() const;
+    virtual size_t getGraphVizNodePenWidth() const;
 
   friend class InstantiationFlow;
 
@@ -92,51 +101,12 @@ class TemplateParameterElement {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateArgumentElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
-};
-
-class TemplateArgumentElement {
-  protected:
-    SgNode * node;
-
-  protected:
-    static TemplateArgumentElement * build(SgNode * node);
-
-  protected:
-    TemplateArgumentElement(SgNode * node__);
-
-  public:
-    virtual ~TemplateArgumentElement();
-
-  protected:
-    void construct();
-    virtual void finalize();
-
-    virtual std::string getGraphVizLabel() const;
-    virtual std::string getGraphVizTag() const;
-    virtual std::string getGraphVizShape() const;
-    virtual std::string getGraphVizNodeColor() const;
-
-  friend class InstantiationFlow;
-
-  friend class Instantiation;
-  friend class TemplateInstantiation;
-  friend class NonrealInstantiation;
-
-  friend class Constraints;
-  friend class InstantiationConstraints;
-  friend class SpecializationConstraints;
-
-  friend class Element;
-  friend class TemplateParameterElement;
-
-  friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
 }

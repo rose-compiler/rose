@@ -15,7 +15,9 @@
 
 namespace ROSE { namespace Analysis { namespace Template {
 
-Constraints::Constraints() {}
+Constraints::Constraints() :
+  Relation()
+{}
 
 Constraints::~Constraints() {}
 
@@ -25,6 +27,10 @@ void Constraints::construct() {
 
 std::string Constraints::getGraphVizShape() const {
   return std::string("octagon");
+}
+
+std::string Constraints::getGraphVizStyle() const {
+  return std::string("solid");
 }
 
 InstantiationConstraints * InstantiationConstraints::build(TemplateInstantiation * from, NonrealInstantiation * to) {
@@ -64,7 +70,7 @@ void InstantiationConstraints::construct() {
   for (auto it = to->cannonical->nontype_parameters.begin(); it != to->cannonical->nontype_parameters.end(); it++) {
     size_t pos = it->second.first;
     SgType * t = it->second.second;
-    SgExpression * e = isSgExpression(to->arguments_map[pos]);
+    SgExpression * e = isSgExpression(to->arguments_map[pos]->node);
     assert(e != NULL);
 
     std::vector<SgNonrealRefExp *> nrrefs = SageInterface::querySubTree<SgNonrealRefExp>(e);
@@ -98,8 +104,8 @@ std::string InstantiationConstraints::getGraphVizTag() const {
 }
 
 void InstantiationConstraints::toGraphVizEdges(std::ostream & out) const {
-  out << from->getGraphVizTag() << " -> " << getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\"];" << std::endl;
-  out << getGraphVizTag() << " -> " << to->getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\"];" << std::endl;
+  out << from->getGraphVizTag() << " -> " << getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\", style=\"" << getGraphVizStyle() << "\", weight=1.0, penwidth=3];" << std::endl;
+  out << getGraphVizTag() << " -> " << to->getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\", style=\"" << getGraphVizStyle() << "\", weight=1.0, penwidth=3];" << std::endl;
 }
 
 std::string InstantiationConstraints::getGraphVizLabel() const {
@@ -172,28 +178,31 @@ void SpecializationConstraints::construct() {
     assert(from->arguments_map.size() == to->arguments_map.size());
 
     for (size_t i = 0; i < from->arguments_map.size(); i++) {
-//    std::cerr << " -- from.args[" << i << "] = " << std::hex << from->arguments_map[i] << " (" << from->arguments_map[i]->class_name() << ")" << std::endl;
-//    std::cerr << " --   to.args[" << i << "] = " << std::hex <<   to->arguments_map[i] << " (" <<   to->arguments_map[i]->class_name() << ")" << std::endl;
+//    std::cerr << " -- from.args[" << i << "] = " << std::hex << from->arguments_map[i]->node << " (" << from->arguments_map[i]->node->class_name() << ")" << std::endl;
+//    std::cerr << " --   to.args[" << i << "] = " << std::hex <<   to->arguments_map[i]->node << " (" <<   to->arguments_map[i]->node->class_name() << ")" << std::endl;
 
       assert(from->arguments_kind[i] == to->arguments_kind[i]);
       switch (from->arguments_kind[i]) {
-        case Instantiation::e_type_argument: {
-          SgType * type_from = isSgType(from->arguments_map[i]);
-          SgType * type_to   = isSgType(to->arguments_map[i]);
+        case TemplateRelation::e_type_argument: {
+          SgType * type_from = isSgType(from->arguments_map[i]->node);
+          SgType * type_to   = isSgType(to->arguments_map[i]->node);
           type_constraints.insert(std::pair<SgType *, SgType *>(type_from, type_to));
           break;
         }
-        case Instantiation::e_nontype_argument: {
-          SgExpression * expr_from = isSgExpression(from->arguments_map[i]);
-          SgExpression * expr_to   = isSgExpression(to->arguments_map[i]);
+        case TemplateRelation::e_nontype_argument: {
+          SgExpression * expr_from = isSgExpression(from->arguments_map[i]->node);
+          SgExpression * expr_to   = isSgExpression(to->arguments_map[i]->node);
           value_constraints.insert(std::pair<SgExpression *, SgExpression *>(expr_from, expr_to));
           break;
         }
-        case Instantiation::e_template_argument: {
+        case TemplateRelation::e_template_argument: {
           assert(false);
           break;
         }
-        case Instantiation::e_pack_expansion_argument: {
+        case TemplateRelation::e_pack_expansion_argument: {
+          assert(false);
+        }
+        default: {
           assert(false);
         }
       }
@@ -214,8 +223,8 @@ std::string SpecializationConstraints::getGraphVizTag() const {
 }
 
 void SpecializationConstraints::toGraphVizEdges(std::ostream & out) const {
-  out << from->getGraphVizTag() << " -> " << getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\"];" << std::endl;
-  out << getGraphVizTag() << " -> " << to->getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\"];" << std::endl;
+  out << from->getGraphVizTag() << " -> " << getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\", style=\"" << getGraphVizStyle() << "\", weight=1.0, penwidth=3];" << std::endl;
+  out << getGraphVizTag() << " -> " << to->getGraphVizTag() << " [color=\"" << getGraphVizColor() << "\", style=\"" << getGraphVizStyle() << "\", weight=1.0, penwidth=3];" << std::endl;
 }
 
 std::string SpecializationConstraints::getGraphVizLabel() const {

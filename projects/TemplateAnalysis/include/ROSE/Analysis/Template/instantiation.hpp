@@ -17,6 +17,7 @@
 
 #include "ROSE/Analysis/Template/instantiation-flow.hpp"
 #include "ROSE/Analysis/Template/element.hpp"
+#include "ROSE/Analysis/Template/relation.hpp"
 
 namespace ROSE {
 
@@ -36,19 +37,6 @@ class Instantiation : public Element {
     typedef std::pair< size_t, void * > type_arg_info_t;     // TODO
     typedef std::pair< size_t, void * > template_arg_info_t; // TODO
 
-    typedef enum {
-      e_nontype_parameter,
-      e_type_parameter,
-      e_template_parameter
-    } parameter_kind_e;
-
-    typedef enum {
-      e_nontype_argument,
-      e_type_argument,
-      e_template_argument,
-      e_pack_expansion_argument
-    } argument_kind_e;
-
   protected:
     SgSymbol * symbol;
     TemplateInstantiation * cannonical;
@@ -58,31 +46,30 @@ class Instantiation : public Element {
     std::map<SgSymbol *, nontype_param_info_t  > nontype_parameters;
     std::map<SgSymbol *, type_param_info_t     > type_parameters;
     std::map<SgSymbol *, template_param_info_t > template_parameters;
-    std::vector<SgNode *> parameters_map;
-    std::vector<parameter_kind_e> parameters_kind;
+    std::vector<TemplateElement *> parameters_map;
+    std::vector<TemplateRelation::kind_e> parameters_kind;
 
     std::map<SgExpression *, nontype_arg_info_t  > nontype_arguments;
     std::map<SgType *,       type_arg_info_t     > type_arguments;
     std::map<SgSymbol *,     template_arg_info_t > template_arguments;
-    std::vector<SgNode *> arguments_map;
-    std::vector<argument_kind_e> arguments_kind;
-
-    std::set<Instantiation *> sources;
+    std::vector<TemplateElement *> arguments_map;
+    std::vector<TemplateRelation::kind_e> arguments_kind;
 
   public:
     Instantiation(SgSymbol * sym);
     virtual ~Instantiation();
     
     void construct();
-    virtual void finalize() = 0;
+    virtual void finalize();
 
     virtual std::string getGraphVizLabel() const;
+    virtual std::string getGraphVizStyle() const;
     virtual std::string getGraphVizTag() const = 0;
     virtual std::string getGraphVizShape() const = 0;
-    virtual std::string getGraphVizLabelConstraints() const = 0;
+    virtual std::string getGraphVizLabelDetails() const = 0;
     virtual std::string getGraphVizNodeColor() const = 0;
-
-    void toGraphViz(std::ostream & out) const;
+    virtual std::string getGraphVizFillColor() const = 0;
+    virtual size_t getGraphVizNodePenWidth() const;
 
   friend class InstantiationFlow;
 
@@ -91,17 +78,18 @@ class Instantiation : public Element {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
 class NonrealInstantiation : public Instantiation {
   protected:
-    static NonrealInstantiation * build(SgSymbol * symbol, Instantiation * source = NULL);
+    static NonrealInstantiation * build(SgSymbol * symbol);
 
   protected:
     NonrealInstantiation(SgSymbol * symbol__);
@@ -111,8 +99,9 @@ class NonrealInstantiation : public Instantiation {
 
     virtual std::string getGraphVizTag() const;
     virtual std::string getGraphVizShape() const;
-    virtual std::string getGraphVizLabelConstraints() const;
+    virtual std::string getGraphVizLabelDetails() const;
     virtual std::string getGraphVizNodeColor() const;
+    virtual std::string getGraphVizFillColor() const;
 
   friend class InstantiationFlow;
 
@@ -124,12 +113,13 @@ class NonrealInstantiation : public Instantiation {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
 class TemplateInstantiation : public Instantiation {
@@ -142,7 +132,7 @@ class TemplateInstantiation : public Instantiation {
     bool is_defined;
 
   protected:
-    static TemplateInstantiation * build(SgSymbol * symbol, Instantiation * source = NULL);
+    static TemplateInstantiation * build(SgSymbol * symbol);
 
   protected:
     TemplateInstantiation(SgSymbol * symbol__);
@@ -152,8 +142,9 @@ class TemplateInstantiation : public Instantiation {
 
     virtual std::string getGraphVizTag() const;
     virtual std::string getGraphVizShape() const;
-    virtual std::string getGraphVizLabelConstraints() const;
+    virtual std::string getGraphVizLabelDetails() const;
     virtual std::string getGraphVizNodeColor() const;
+    virtual std::string getGraphVizFillColor() const;
 
   friend class InstantiationFlow;
 
@@ -165,12 +156,13 @@ class TemplateInstantiation : public Instantiation {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
 }

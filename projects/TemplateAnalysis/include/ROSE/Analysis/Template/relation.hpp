@@ -44,6 +44,7 @@ class Relation {
     virtual std::string getGraphVizLabel() const = 0;
     virtual std::string getGraphVizColor() const = 0;
     virtual std::string getGraphVizShape() const = 0;
+    virtual std::string getGraphVizStyle() const = 0;
 
   friend class InstantiationFlow;
 
@@ -56,23 +57,35 @@ class Relation {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 };
 
-class TemplateParameterRelation {
+class TemplateRelation : public Relation {
+  public:
+    typedef enum {
+      e_nontype_parameter,
+      e_type_parameter,
+      e_template_parameter,
+      e_nontype_argument,
+      e_type_argument,
+      e_template_argument,
+      e_pack_expansion_argument
+    } kind_e;
+
   protected:
     Instantiation * from;
-    TemplateParameterElement * to;
+    TemplateElement * to;
+    kind_e kind;
+    size_t position;
 
   protected:
-    static TemplateParameterRelation * build(Instantiation * from, TemplateParameterElement * to);
+    static TemplateRelation * build(Instantiation * from, TemplateElement * to, kind_e kind, size_t pos);
 
   protected:
-    TemplateParameterRelation(Instantiation * from_, TemplateParameterElement * to_);
+    TemplateRelation(Instantiation * from_, TemplateElement * to_, kind_e kind_, size_t pos_);
 
   public:
-    virtual ~TemplateParameterRelation();
+    virtual ~TemplateRelation();
 
   protected:
     void construct();
@@ -83,6 +96,7 @@ class TemplateParameterRelation {
     virtual std::string getGraphVizLabel() const;
     virtual std::string getGraphVizColor() const;
     virtual std::string getGraphVizShape() const;
+    virtual std::string getGraphVizStyle() const;
 
   friend class InstantiationFlow;
 
@@ -95,26 +109,27 @@ class TemplateParameterRelation {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateArgumentRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
-class TemplateArgumentRelation {
+class CannonicalRelation : public Relation {
   protected:
-    Instantiation * from;
-    TemplateArgumentElement * to;
+    TemplateInstantiation * from;
+    TemplateInstantiation * to;
 
   protected:
-    static TemplateArgumentRelation * build(Instantiation * from, TemplateArgumentElement * to);
+    static CannonicalRelation * build(TemplateInstantiation * from, TemplateInstantiation * to);
 
   protected:
-    TemplateArgumentRelation(Instantiation * from_, TemplateArgumentElement * to_);
+    CannonicalRelation(TemplateInstantiation * from_, TemplateInstantiation * to_);
 
   public:
-    virtual ~TemplateArgumentRelation();
+    virtual ~CannonicalRelation();
 
   protected:
     void construct();
@@ -125,6 +140,7 @@ class TemplateArgumentRelation {
     virtual std::string getGraphVizLabel() const;
     virtual std::string getGraphVizColor() const;
     virtual std::string getGraphVizShape() const;
+    virtual std::string getGraphVizStyle() const;
 
   friend class InstantiationFlow;
 
@@ -137,11 +153,99 @@ class TemplateArgumentRelation {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
+  friend class TemplateRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
+};
+
+class BaseTypeRelation : public Relation {
+  protected:
+    Element * from;
+    Element * to;
+
+  protected:
+    static BaseTypeRelation * build(Element * from, Element * to);
+
+  protected:
+    BaseTypeRelation(Element * from_, Element * to_);
+
+  public:
+    virtual ~BaseTypeRelation();
+
+  protected:
+    void construct();
+    virtual void finalize();
+
+    virtual std::string getGraphVizTag() const;
+    virtual void toGraphVizEdges(std::ostream & out) const;
+    virtual std::string getGraphVizLabel() const;
+    virtual std::string getGraphVizColor() const;
+    virtual std::string getGraphVizShape() const;
+    virtual std::string getGraphVizStyle() const;
+
+  friend class InstantiationFlow;
+
+  friend class Instantiation;
+  friend class TemplateInstantiation;
+  friend class NonrealInstantiation;
+
+  friend class Constraints;
+  friend class InstantiationConstraints;
+  friend class SpecializationConstraints;
+
+  friend class Element;
+  friend class TemplateElement;
+
+  friend class Relation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+};
+
+class TypeOfRelation : public Relation {
+  protected:
+    Element * from;
+    Element * to;
+
+  protected:
+    static TypeOfRelation * build(Element * from, Element * to);
+
+  protected:
+    TypeOfRelation(Element * from_, Element * to_);
+
+  public:
+    virtual ~TypeOfRelation();
+
+  protected:
+    void construct();
+    virtual void finalize();
+
+    virtual std::string getGraphVizTag() const;
+    virtual void toGraphVizEdges(std::ostream & out) const;
+    virtual std::string getGraphVizLabel() const;
+    virtual std::string getGraphVizColor() const;
+    virtual std::string getGraphVizShape() const;
+    virtual std::string getGraphVizStyle() const;
+
+  friend class InstantiationFlow;
+
+  friend class Instantiation;
+  friend class TemplateInstantiation;
+  friend class NonrealInstantiation;
+
+  friend class Constraints;
+  friend class InstantiationConstraints;
+  friend class SpecializationConstraints;
+
+  friend class Element;
+  friend class TemplateElement;
+
+  friend class Relation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class BaseTypeRelation;
 };
 
 }

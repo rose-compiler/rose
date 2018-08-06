@@ -38,15 +38,13 @@ class InstantiationFlow {
 };
 
 class Element;
-  class TemplateParameterElement;
-  class TemplateArgumentElement;
+  class TemplateElement;
   class Instantiation;
     class TemplateInstantiation;
     class NonrealInstantiation;
 
 class Relation;
-  class TemplateParameterRelation;
-  class TemplateArgumentRelation;
+  class TemplateRelation;
   class Constraints;
     class InstantiationConstraints;
     class SpecializationConstraints;

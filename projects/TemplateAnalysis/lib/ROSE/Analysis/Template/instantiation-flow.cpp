@@ -8,7 +8,10 @@
 namespace ROSE { namespace Analysis { namespace Template {
 
 void InstantiationFlow::finalize() {
-  for (auto it = Instantiation::all.begin(); it != Instantiation::all.end(); it++) {
+  for (auto it = Element::all.begin(); it != Element::all.end(); it++) {
+    it->second->finalize();
+  }
+  for (auto it = Relation::all.begin(); it != Relation::all.end(); it++) {
     it->second->finalize();
   }
 }

@@ -39,6 +39,7 @@ class Constraints : public Relation {
     virtual std::string getGraphVizLabel() const = 0;
     virtual std::string getGraphVizColor() const = 0;
     virtual std::string getGraphVizShape() const;
+    virtual std::string getGraphVizStyle() const;
 
   friend class InstantiationFlow;
 
@@ -47,12 +48,13 @@ class Constraints : public Relation {
   friend class NonrealInstantiation;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
 class InstantiationConstraints : public Constraints {
@@ -90,12 +92,13 @@ class InstantiationConstraints : public Constraints {
   friend class SpecializationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
 class SpecializationConstraints : public Constraints {
@@ -137,12 +140,13 @@ class SpecializationConstraints : public Constraints {
   friend class InstantiationConstraints;
 
   friend class Element;
-  friend class TemplateParameterElement;
-  friend class TemplateArgumentElement;
+  friend class TemplateElement;
 
   friend class Relation;
-  friend class TemplateParameterRelation;
-  friend class TemplateArgumentRelation;
+  friend class TemplateRelation;
+  friend class CannonicalRelation;
+  friend class TypeOfRelation;
+  friend class BaseTypeRelation;
 };
 
 }

@@ -1251,6 +1251,7 @@ mangleExpression (const SgExpression* expr)
           ROSE_ASSERT(nrsym != NULL);
           SgNonrealDecl * nrdecl = nrsym->get_declaration();
           ROSE_ASSERT(nrdecl != NULL);
+          nrdecl->get_is_nonreal_template(); // FIXME TMP Reference to get as it is not visible in the lib!!!
           mangled_name << nrdecl->get_mangled_name().str();
           break;
         }

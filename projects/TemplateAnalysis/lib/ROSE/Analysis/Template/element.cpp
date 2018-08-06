@@ -11,92 +11,163 @@ namespace ROSE { namespace Analysis { namespace Template {
 
 std::map<SgNode *, Element *> Element::all;
 
+Element * Element::get(SgNode * n) {
+  auto it = all.find(n);
+  if (it != all.end())
+    return it->second;
+  return NULL;
+}
+
 Element::Element() {}
 
 Element::~Element() {}
 
 void Element::toGraphViz(std::ostream & out) const {
-  out << getGraphVizTag() << "[label=\"" << getGraphVizLabel() << "\", shape=\"" << getGraphVizShape() << "\", color=\"" << getGraphVizNodeColor() << "\"];" << std::endl;
+  out << getGraphVizTag() << "[label=\"" << getGraphVizLabel() << "\", shape=\"" << getGraphVizShape() << "\", color=\"" << getGraphVizNodeColor() << "\", penwidth=" << getGraphVizNodePenWidth() << ", style=\"" << getGraphVizStyle() << "\", fillcolor=\"" << getGraphVizFillColor() << "\"];" << std::endl;
+}
+
+std::string Element::getGraphVizFillColor() const {
+  return std::string("white");
 }
 
 //
 
-TemplateParameterElement * TemplateParameterElement::build(SgNode * node) {
-  assert(false);
+TemplateElement * TemplateElement::build(SgNode * node) {
+  TemplateElement * result = NULL;
+
+  if (all.find(node) == all.end()) {
+    result = new TemplateElement(node);
+    all.insert(std::pair<SgNode *, Element *>(node, result));
+    result->construct();
+  } else {
+    result = dynamic_cast<TemplateElement *>(all[node]);
+    if (result == NULL) {
+      std::cerr << "FATAL: TemplateElement::build(...) with node = " << std::hex << node << " (" << node->class_name() << "): Another kind of element already exists for this symbol!" << std::endl;
+    }
+    assert(result != NULL);
+  }
+
+  return result;
 }
 
-TemplateParameterElement::TemplateParameterElement(SgNode * node__) :
+TemplateElement::TemplateElement(SgNode * node__) :
   node(node__)
-{
-  assert(false);
+{}
+
+TemplateElement::~TemplateElement() {}
+
+void TemplateElement::construct() {
+  if (isSgType(node)) {
+    SgNamedType *     ntype = isSgNamedType(node);
+    SgPointerType *   ptype = isSgPointerType(node);
+    SgReferenceType * rtype = isSgReferenceType(node);
+    SgModifierType *  mtype = isSgModifierType(node);
+    SgFunctionType *  ftype = isSgFunctionType(node);
+
+    if (ntype) {
+      SgDeclarationStatement * declstmt = ntype->get_declaration();
+      assert(declstmt != NULL);
+
+      SgSymbol * sym = declstmt->search_for_symbol_from_symbol_table();
+      assert(sym != NULL);
+
+      SgClassSymbol *   csym  = isSgClassSymbol(sym);
+      SgNonrealSymbol * nrsym = isSgNonrealSymbol(sym);
+
+      Element * e = NULL;
+      if (csym != NULL) {
+        e = TemplateInstantiation::build(csym);
+      } else if (nrsym != NULL) {
+        SgNonrealDecl * nrdecl = nrsym->get_declaration();
+        assert(nrdecl != NULL);
+
+        if (nrdecl->get_is_template_param() || nrdecl->get_is_class_member()) {
+          e = TemplateElement::build(nrsym);
+        } else {
+          e = NonrealInstantiation::build(nrsym);
+        }
+      } else {
+        e = TemplateElement::build(sym);
+      }
+      assert(e != NULL);
+
+      TypeOfRelation::build(this, e);
+
+    } else if (ptype) {
+      SgType * btype = ptype->get_base_type();
+      assert(btype != NULL);
+
+      TemplateElement * te = TemplateElement::build(btype);
+      assert(te != NULL);
+
+      BaseTypeRelation::build(this, te);
+
+    } else if (rtype) {
+      SgType * btype = rtype->get_base_type();
+      assert(btype != NULL);
+
+      TemplateElement * te = TemplateElement::build(btype);
+      assert(te != NULL);
+
+      BaseTypeRelation::build(this, te);
+
+    } else if (mtype) {
+      SgType * btype = mtype->get_base_type();
+      assert(btype != NULL);
+
+      TemplateElement * te = TemplateElement::build(btype);
+      assert(te != NULL);
+
+      BaseTypeRelation::build(this, te);
+
+    } else if (ftype) {
+      // TODO
+      //   SgType * 	get_return_type ()
+      //   SgFunctionParameterTypeList * 	get_argument_list ()
+    }
+  }
 }
 
-TemplateParameterElement::~TemplateParameterElement() {
-  assert(false);
+void TemplateElement::finalize() {
+  // TODO
 }
 
-void construct() {
-  assert(false);
+std::string TemplateElement::getGraphVizTag() const {
+  std::ostringstream oss;
+  oss << "te_" << std::hex << node;
+  return oss.str();
 }
 
-void TemplateParameterElement::finalize() {
-  assert(false);
+std::string TemplateElement::getGraphVizLabel() const {
+  std::ostringstream oss;
+  oss << node->class_name();
+  oss << "\\n";
+
+  SgSymbol * sym = isSgSymbol(node);
+  if (sym != NULL) {
+    oss << sym->get_name().getString();
+  } else {
+    oss << node->unparseToString();
+  }
+
+  oss << "\\n\\n";
+  return oss.str();
 }
 
-std::string TemplateParameterElement::getGraphVizTag() const {
-  assert(false);
+std::string TemplateElement::getGraphVizShape() const {
+  return std::string("ellipse");
 }
 
-std::string TemplateParameterElement::getGraphVizLabel() const {
-  assert(false);
+std::string TemplateElement::getGraphVizNodeColor() const {
+  return std::string("purple");
 }
 
-std::string TemplateParameterElement::getGraphVizShape() const {
-  assert(false);
+std::string TemplateElement::getGraphVizStyle() const {
+  return std::string("dashed");
 }
 
-std::string TemplateParameterElement::getGraphVizNodeColor() const {
-  assert(false);
-}
-
-//
-
-TemplateArgumentElement * TemplateArgumentElement::build(SgNode * node) {
-  assert(false);
-}
-
-TemplateArgumentElement::TemplateArgumentElement(SgNode * node__) :
-  node(node__)
-{
-  assert(false);
-}
-
-TemplateArgumentElement::~TemplateArgumentElement() {
-  assert(false);
-}
-
-void TemplateArgumentElement::construct() {
-  assert(false);
-}
-
-void TemplateArgumentElement::finalize() {
-  assert(false);
-}
-
-std::string TemplateArgumentElement::getGraphVizTag() const {
-  assert(false);
-}
-
-std::string TemplateArgumentElement::getGraphVizLabel() const {
-  assert(false);
-}
-
-std::string TemplateArgumentElement::getGraphVizShape() const {
-  assert(false);
-}
-
-std::string TemplateArgumentElement::getGraphVizNodeColor() const {
-  assert(false);
+size_t TemplateElement::getGraphVizNodePenWidth() const {
+  return 1;
 }
 
 } } }
