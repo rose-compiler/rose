@@ -867,7 +867,12 @@ SymbolicExprParser::docString() const {
 SymbolicExpr::Ptr
 SymbolicExprParser::parse(const std::string &input, const std::string &inputName) {
     std::istringstream stream(input);
-    return parse(stream, inputName);
+    TokenStream tokens(stream, inputName);
+    SymbolicExpr::Ptr expr = parse(tokens);
+    if (tokens[0].type() != Token::NONE)
+        throw SyntaxError("additional text after end of expression",
+                          tokens.name(), tokens[0].lineNumber(), tokens[0].columnNumber());
+    return expr;
 }
 
 SymbolicExpr::Ptr
@@ -966,6 +971,50 @@ void
 SymbolicExprParser::appendOperatorExpansion(const OperatorExpansion::Ptr &functor) {
     ASSERT_not_null(functor);
     operatorTable_.push_back(functor);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Command-line parsing
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// class method
+std::string
+SymbolicExprParser::SymbolicExprCmdlineParser::docString() {
+    return SymbolicExprParser().docString();
+}
+
+Sawyer::CommandLine::ParsedValue
+SymbolicExprParser::SymbolicExprCmdlineParser::operator()(const char *input, const char **rest,
+                                                          const Sawyer::CommandLine::Location &loc) {
+    SymbolicExpr::Ptr expr;
+    try {
+        expr = SymbolicExprParser().parse(input, "command-line");
+    } catch (const SyntaxError &e) {
+        *rest = input && *input ? input+1 : input;
+        std::ostringstream ss;
+        e.print(ss);
+        ss <<"\n  input: " <<input
+           <<"\n  here---" <<std::string(e.columnNumber, '-') <<"^";
+        throw std::runtime_error(ss.str());
+    }
+    
+    *rest = input + strlen(input);
+    return Sawyer::CommandLine::ParsedValue(expr, loc, input, valueSaver());
+}
+
+SymbolicExprParser::SymbolicExprCmdlineParser::Ptr
+SymbolicExprParser::symbolicExprParser(SymbolicExpr::Ptr &storage) {
+    return SymbolicExprCmdlineParser::instance(Sawyer::CommandLine::TypedSaver<SymbolicExpr::Ptr>::instance(storage));
+}
+
+SymbolicExprParser::SymbolicExprCmdlineParser::Ptr
+SymbolicExprParser::symbolicExprParser(std::vector<SymbolicExpr::Ptr> &storage) {
+    return SymbolicExprCmdlineParser::instance(Sawyer::CommandLine::TypedSaver<std::vector<SymbolicExpr::Ptr> >::instance(storage));
+}
+
+SymbolicExprParser::SymbolicExprCmdlineParser::Ptr
+SymbolicExprParser::symbolicExprParser() {
+    return SymbolicExprCmdlineParser::instance();
 }
 
 } // namespace

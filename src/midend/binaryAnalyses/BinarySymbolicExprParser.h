@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_SymbolicExprParser_H
 
 #include <BinarySymbolicExpr.h>
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/SharedPointer.h>
 
 namespace Rose {
@@ -253,6 +254,39 @@ public:
     /** Ordered operator table. */
     typedef std::vector<OperatorExpansion::Ptr> OperatorTable;
 
+    /** Parse a symbolic expression from the command-line.
+     *
+     *  This class implements a functor for parsing a symbolic expression from a command-line switch argument using the parser
+     *  from @ref Sawyer::CommandLine. */
+    class SymbolicExprCmdlineParser: public Sawyer::CommandLine::ValueParser {
+    protected:
+        SymbolicExprCmdlineParser() {}
+        SymbolicExprCmdlineParser(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver)
+            : Sawyer::CommandLine::ValueParser(valueSaver) {}
+
+    public:
+        /** Shared-ownership pointer. See @ref heap_object_shared_ownership. */
+        typedef Sawyer::SharedPointer<SymbolicExprCmdlineParser> Ptr;
+
+        static Ptr instance() {
+            return Ptr(new SymbolicExprCmdlineParser);
+        }
+
+        static Ptr instance(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver) {
+            return Ptr(new SymbolicExprCmdlineParser(valueSaver));
+        }
+
+        static std::string docString();
+
+    private:
+        virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
+                                                            const Sawyer::CommandLine::Location &loc) ROSE_OVERRIDE;
+    };
+
+    static SymbolicExprCmdlineParser::Ptr symbolicExprParser(SymbolicExpr::Ptr &storage);
+    static SymbolicExprCmdlineParser::Ptr symbolicExprParser(std::vector<SymbolicExpr::Ptr> &storage);
+    static SymbolicExprCmdlineParser::Ptr symbolicExprParser();
+
 private:
     AtomTable atomTable_;
     OperatorTable operatorTable_;
@@ -271,8 +305,8 @@ public:
     
     /** Create a symbolic expression by parsing a string.
      *
-     *  Parses the string and returns the first expression in the string. Throws a @ref SyntaxError if problems are
-     *  encountered. */
+     *  Parses an expression from a string. Throws a @ref SyntaxError if problems are encountered, including when the string
+     *  contains additional non-white-space following the expression. */
     SymbolicExpr::Ptr parse(const std::string&, const std::string &inputName="string");
 
     /** Create a symbolic expression by parsing a file.
