@@ -614,6 +614,7 @@ Sawyer::CommandLine::SwitchGroup
 Engine::engineSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg = Rose::CommandLine::genericSwitches();
+    sg.name("global");
 
     sg.insert(Switch("config")
               .argument("names", listParser(anyParser(settings_.engine.configurationNames), ":"))
