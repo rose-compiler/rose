@@ -2,6 +2,7 @@
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
+#include <BinarySymbolicExprParser.h>
 #include <BinaryYicesSolver.h>
 #include <CommandLine.h>
 #include <Partitioner2/GraphViz.h>
@@ -489,7 +490,7 @@ Sawyer::CommandLine::SwitchGroup
 FeasiblePath::commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg;
+    SwitchGroup sg("Feasible path analysis switches");
 
     sg.insert(Switch("search")
               .argument("mode", enumParser(settings.searchMode)
@@ -544,10 +545,10 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    StringUtility::plural(settings.maxRecursionDepth, "calls") + "."));
 
     sg.insert(Switch("post-condition")
-              .argument("sexpr", anyParser())
+              .argument("sexpr", SymbolicExprParser::symbolicExprParser(settings.postConditions))
               .doc("Additional constraint to be satisfied at the ending vertex. This switch may appear more than once "
-                   "in order to specify multiple conditions that must all be satisfied. "
-                   "@b{Not implemented yet.}"));
+                   "in order to specify multiple conditions that must all be satisfied. " +
+                   SymbolicExprParser::SymbolicExprCmdlineParser::docString()));
 
     sg.insert(Switch("summarize-function")
               .argument("addr_or_name", anyParser())
