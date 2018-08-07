@@ -9,7 +9,7 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 using namespace SPRAY;
 using namespace std;

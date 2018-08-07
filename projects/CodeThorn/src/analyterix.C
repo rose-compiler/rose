@@ -63,7 +63,7 @@
 #include "SprayException.h"
 #include "CodeThornException.h"
 #include "DeadCodeAnalysis.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -858,7 +858,7 @@ int main(int argc, char* argv[]) {
     }
 
   if(args.count("normalizefcalls")) {
-    Lowering lowering;
+    Normalization lowering;
     bool normalizeOnlyFunctionCalls=true;
     lowering.normalizeExpressions(root,normalizeOnlyFunctionCalls);
     lowering.normalizeAllVariableDeclarations(root);

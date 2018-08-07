@@ -18,7 +18,7 @@
 #include "TrivialInlining.h"
 #include "Threadification.h"
 #include "RewriteSystem.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 #include <vector>
 #include <set>
@@ -183,10 +183,10 @@ int main(int argc, char* argv[]) {
   logger[TRACE] << "INIT: Parsing and creating AST finished."<<endl;
 
   if(args.getBool("lowering")) {
-    logger[TRACE] <<"STATUS: Lowering started."<<endl;
-    SPRAY::Lowering lowering;
+    logger[TRACE] <<"STATUS: Normalization started."<<endl;
+    SPRAY::Normalization lowering;
     lowering.runLowering(root);
-    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
+    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
   }
 
   VariableIdMapping variableIdMapping;

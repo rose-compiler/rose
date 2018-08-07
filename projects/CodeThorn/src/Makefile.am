@@ -55,7 +55,7 @@ libspray_la_SOURCES=\
  LVTransferFunctions.h \
  LanguageRestrictor.h \
  Miscellaneous2.h \
- Lowering.h \
+ Normalization.h \
  NumberIntervalLattice.h \
  ParallelAutomataGenerator.h \
  PASolver1.h \
@@ -93,7 +93,7 @@ libspray_la_SOURCES=\
  LVLattice.C \
  LVTransferFunctions.C \
  Miscellaneous2.C \
- Lowering.C \
+ Normalization.C \
  NumberIntervalLattice.C \
  ParallelAutomataGenerator.C \
  PASolver1.C \
@@ -183,8 +183,8 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   LoopInfo.h                       \
   LoopInfo.C                       \
-  Lowering.h                       \
-  Lowering.C                       \
+  Normalization.h                       \
+  Normalization.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   NullPointerDereferenceLocations.h \

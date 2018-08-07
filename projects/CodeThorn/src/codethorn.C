@@ -53,7 +53,7 @@
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 // test
 #include "SSAGenerator.h"
@@ -1243,7 +1243,7 @@ int main( int argc, char * argv[] ) {
 
     /* perform inlining before variable ids are computed, because
        variables are duplicated by inlining. */
-    Lowering lowering;
+    Normalization lowering;
     if(args.getBool("normalize")) {
       bool fcallsOnly=true;
       lowering.normalizeExpressions(sageProject,fcallsOnly);

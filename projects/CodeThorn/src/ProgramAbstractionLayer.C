@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "ProgramAbstractionLayer.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 #include <iostream>
 
@@ -27,7 +27,7 @@ SgProject* SPRAY::ProgramAbstractionLayer::getRoot() {
 
 void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
-  Lowering lowering;
+  Normalization lowering;
   lowering.setInliningOption(getInliningOption());
   if(getLoweringOption()) {
     cout<<"DEBUG: PAL: lowering"<<endl;

@@ -52,7 +52,7 @@ namespace SPRAY {
     SgSwitchStatement* node;
   };
 
-  class Lowering {
+  class Normalization {
   public:
     // applies all available lowering operations
     void runLowering(SgNode* root);

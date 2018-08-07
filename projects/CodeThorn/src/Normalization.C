@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "SingleStatementToBlockNormalization.h"
 
-#include "Lowering.h"
+#include "Normalization.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "inliner.h"
@@ -13,11 +13,11 @@ using namespace Rose;
 
 namespace SPRAY {
 
-  int32_t Lowering::tmpVarNr=1;
-  int32_t Lowering::labelNr=1;
-  string Lowering::labelPrefix="__label";
+  int32_t Normalization::tmpVarNr=1;
+  int32_t Normalization::labelNr=1;
+  string Normalization::labelPrefix="__label";
 
-  void Lowering::normalizeAllVariableDeclarations(SgNode* root) {
+  void Normalization::normalizeAllVariableDeclarations(SgNode* root) {
     RoseAst ast(root);
     typedef std::list<std::pair<SgVariableDeclaration*,SgStatement*>> DeclAssignListType;
     DeclAssignListType declAssignList;
@@ -42,7 +42,7 @@ namespace SPRAY {
   }
 
 
-  SgStatement* Lowering::buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl) {
+  SgStatement* Normalization::buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl) {
     ROSE_ASSERT(varDecl);
     // check that variable is within a scope where it can be normalized
     SgScopeStatement* scopeStatement=varDecl->get_scope();
@@ -67,20 +67,20 @@ namespace SPRAY {
     return nullptr;
   }
 
-  void Lowering::normalizeSingleStatementsToBlocks(SgNode* root) {
+  void Normalization::normalizeSingleStatementsToBlocks(SgNode* root) {
     SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
     singleStatementToBlockNormalizer.Normalize(root);
   }
 
-  void Lowering::setLabelPrefix(std::string prefix) {
-    Lowering::labelPrefix=prefix;
+  void Normalization::setLabelPrefix(std::string prefix) {
+    Normalization::labelPrefix=prefix;
   }
 
-  string Lowering::newLabelName() {
-    return labelPrefix + StringUtility::numberToString(Lowering::labelNr++);
+  string Normalization::newLabelName() {
+    return labelPrefix + StringUtility::numberToString(Normalization::labelNr++);
   }
 
-  void Lowering::normalizeAst(SgNode* root) {
+  void Normalization::normalizeAst(SgNode* root) {
     normalizeSingleStatementsToBlocks(root);
 
     // TODO: normalize AST such that every expression in a statement has as root a SgExpressionRoot node
@@ -89,7 +89,7 @@ namespace SPRAY {
 
   }
 
-  void Lowering::runLowering(SgNode* root) {
+  void Normalization::runLowering(SgNode* root) {
     normalizeSingleStatementsToBlocks(root);
     convertAllForsToWhiles(root);
     changeBreakStatementsToGotos(root);
@@ -103,15 +103,15 @@ namespace SPRAY {
     }
   }
 
-  void Lowering::setInliningOption(bool flag) {
+  void Normalization::setInliningOption(bool flag) {
     _inliningOption=flag;
   }
 
-  bool Lowering::getInliningOption() {
+  bool Normalization::getInliningOption() {
     return _inliningOption;
   }
   
-  void Lowering::createLoweringSequence(SgNode* node) {
+  void Normalization::createLoweringSequence(SgNode* node) {
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(SgWhileStmt* stmt=isSgWhileStmt(*i)) {
@@ -122,18 +122,18 @@ namespace SPRAY {
     }
   }
 
-  void Lowering::applyLoweringSequence() {
+  void Normalization::applyLoweringSequence() {
     BOOST_FOREACH(LoweringOp* loweringOp,loweringSequence) {
       loweringOp->analyse();
       loweringOp->transform();
     }
   }
 
-  void Lowering::convertAllForsToWhiles (SgNode* top) {
+  void Normalization::convertAllForsToWhiles (SgNode* top) {
     SageInterface::convertAllForsToWhiles (top);
   }
  
-  void Lowering::changeBreakStatementsToGotos (SgNode* root) {
+  void Normalization::changeBreakStatementsToGotos (SgNode* root) {
     RoseAst ast(root);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(isSgSwitchStatement(*i)||CFAnalysis::isLoopConstructRootNode(*i)) {
@@ -142,7 +142,7 @@ namespace SPRAY {
     }
   }
 
-  void Lowering::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr) {
+  void Normalization::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr) {
     // 1) generate tmp-var assignment node with expr as lhs
     // 2) replace use of expr with tmp-var
     SgVariableDeclaration* tmpVarDeclaration = 0;
@@ -156,7 +156,7 @@ namespace SPRAY {
     transformationList.push_back(make_pair(stmt,expr));
   }
 
-  void Lowering::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
+  void Normalization::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
     if(isSgPntrArrRefExp(expr)) {
         // TODO: normalize index-expressions
     } else if(SgAssignOp* assignOp=isSgAssignOp(expr)) {
@@ -202,7 +202,7 @@ namespace SPRAY {
     return isSgBasicBlock(current);
   }
 
-  bool Lowering::hasFunctionCall(SgExpression* expr) {
+  bool Normalization::hasFunctionCall(SgExpression* expr) {
     RoseAst ast(expr);
     for(auto node:ast) {
       if(isSgFunctionCallExp(node)) {
@@ -212,7 +212,7 @@ namespace SPRAY {
     return false;
   }
 
-  void Lowering::normalizeExpressions(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
+  void Normalization::normalizeExpressions(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
     // TODO: if temporary variables are generated, the initialization-list
     // must be put into a block, otherwise some generated gotos are
     // not legal (crossing initialization).
@@ -270,7 +270,7 @@ namespace SPRAY {
     }
   }
 
-  bool Lowering::isAstContaining(SgNode *haystack, SgNode *needle) {
+  bool Normalization::isAstContaining(SgNode *haystack, SgNode *needle) {
     struct T1: AstSimpleProcessing {
       SgNode *needle;
       T1(SgNode *needle): needle(needle) {}
@@ -287,7 +287,7 @@ namespace SPRAY {
     }
   }
   
-  size_t Lowering::inlineFunctions(SgNode* root) {
+  size_t Normalization::inlineFunctions(SgNode* root) {
     // Inline one call at a time until all have been inlined.  Loops on recursive code.
     //SgProject* project=isSgProject(root);
     //ROSE_ASSERT(project);
@@ -310,9 +310,9 @@ namespace SPRAY {
   }
 
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
-  SgLabelStatement* Lowering::createLabel(SgStatement* target) {
+  SgLabelStatement* Normalization::createLabel(SgStatement* target) {
     SgLabelStatement* newLabel =
-      SageBuilder::buildLabelStatement(Lowering::newLabelName(),
+      SageBuilder::buildLabelStatement(Normalization::newLabelName(),
                                        SageBuilder::buildBasicBlock(),
                                        // MS: scope should be function scope?
                                        isSgScopeStatement(target->get_parent()));
@@ -320,14 +320,14 @@ namespace SPRAY {
   }
 
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
-  SgGotoStatement* Lowering::createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target) {
+  SgGotoStatement* Normalization::createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target) {
     SageInterface::insertStatement(target, newLabel, true);
     SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabel);
     return newGoto;
   }
 
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
-  void Lowering::createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target) {
+  void Normalization::createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target) {
     SgGotoStatement* newGoto=createGotoStmtAndInsertLabel(newLabel, target);
     block->append_statement(newGoto);
   }
@@ -347,8 +347,8 @@ namespace SPRAY {
     SgBasicBlock* block=isSgBasicBlock(SgNodeHelper::getLoopBody(node));
     ROSE_ASSERT(block); // must hold because all branches are normalized to be blocks
     
-    SgLabelStatement* newLabel=Lowering::createLabel(node);
-    Lowering::createGotoStmtAtEndOfBlock(newLabel,block,node);
+    SgLabelStatement* newLabel=Normalization::createLabel(node);
+    Normalization::createGotoStmtAtEndOfBlock(newLabel,block,node);
 
     // build IfStmt
     SgIfStmt* newIfStmt=SageBuilder::buildIfStmt(isSgExprStatement(SgNodeHelper::getCond(node)),
@@ -391,7 +391,7 @@ namespace SPRAY {
 
     // build label
     SgLabelStatement* newLabel =
-      SageBuilder::buildLabelStatement(Lowering::newLabelName(),
+      SageBuilder::buildLabelStatement(Normalization::newLabelName(),
                                        SageBuilder::buildBasicBlock(),
                                        // MS: scope should be function scope?
                                       scopeContainingDoWhileStmt);
@@ -416,7 +416,7 @@ namespace SPRAY {
     if(continueStmts.size()>0) {
       // create label for gotos replacing continues
       SgLabelStatement* newLabelForContinue =
-        SageBuilder::buildLabelStatement(Lowering::newLabelName(),
+        SageBuilder::buildLabelStatement(Normalization::newLabelName(),
                                          SageBuilder::buildBasicBlock(),
                                          // MS: scope should be function scope?
                                          scopeContainingDoWhileStmt);
