@@ -78,7 +78,7 @@ TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 TEST_TRANSLATOR = ../../testTranslator
 
 $(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
-	$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -105,4 +105,7 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC]
 	rm -rf QMTest
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 

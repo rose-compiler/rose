@@ -490,8 +490,9 @@ rajaTest:../../testTranslator
 TEST_TRANSLATOR = ../../testTranslator
 
 TEST_Sources = $(addsuffix .passed, $(TESTCODES_REQUIRED_TO_PASS))
+ALL_TEST_Sources = $(addsuffix .passed, $(ALL_TESTCODES))
 
-$(TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+$(ALL_TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
@@ -591,3 +592,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+
+status:
+	@$(MAKE) $(ALL_TEST_Sources)
+
