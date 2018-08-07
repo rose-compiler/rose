@@ -498,10 +498,6 @@ if !ROSE_USE_INSURE
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
 		TITLE="testTranslator $(notdir $<) [$@]" \
 		$(top_srcdir)/scripts/test_exit_status $@
-	@$(RTH_RUN) \
-		CMD="$(TEST_TRANSLATOR) -rose:suppress_variable_declaration_normalization -rose:skipfinalCompileStep $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
-		TITLE="testTranslator $(notdir $<) [$@]" \
-		$(top_srcdir)/scripts/test_exit_status $@
 else
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
 endif
