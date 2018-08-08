@@ -328,3 +328,7 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC]
 	rm -rf QMTest
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
+

@@ -2595,6 +2595,7 @@ tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/Makefile
+tests/nonsmoke/functional/roseTests/varDeclNorm/Makefile
 tests/nonsmoke/functional/testSupport/Makefile
 tests/nonsmoke/functional/testSupport/gtest/Makefile
 tests/nonsmoke/functional/translatorTests/Makefile

@@ -109,15 +109,7 @@ endif
 $(TEST_Objects): ../../testTranslator
 if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else
-#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
-#	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	echo "Removing the just built copy of lt-testTranslator to save space..."
-#	rm -f testTranslator_$(@:.o=)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 endif
 
@@ -165,15 +157,12 @@ print_testcodes:
 TEST_TRANSLATOR = ../../testTranslator
 
 TEST_Sources = $(addsuffix .passed, $(TESTCODES_REQUIRED_TO_PASS))
+ALL_TEST_Sources = $(addsuffix .passed, $(ALL_TESTCODES))
 
-$(TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+$(ALL_TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
-		TITLE="testTranslator $(notdir $<) [$@]" \
-		$(top_srcdir)/scripts/test_exit_status $@
-	@$(RTH_RUN) \
-		CMD="$(TEST_TRANSLATOR) -rose:suppress_variable_declaration_normalization -rose:skipfinalCompileStep $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
 		TITLE="testTranslator $(notdir $<) [$@]" \
 		$(top_srcdir)/scripts/test_exit_status $@
 else
@@ -212,7 +201,7 @@ if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
 # DQ (2/28/2017): Skip these tests until we can return to this problem later.
-#	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(TEST_Sources)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
@@ -230,32 +219,13 @@ endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx14_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"
 
-
-old_rule:
-if !ROSE_USE_EDG_VERSION_4_9
-if ROSE_USING_GCC_VERSION_LATER_5_2
-	@echo "C++14 tests using GNU version 5.2 backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
-else
-if USING_INTEL_COMPILER
-	@echo "C++14 tests using Intel backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
-else
-if USING_CLANG_COMPILER
-	@echo "C++14 tests using Clang backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
-endif
-endif
-else
-	@echo "C++14 tests require configuration with EDG version 4.12 and GNU version 5.2 or later backend compilers (compiler too old)."
-endif
-else
-	@echo "C++14 tests require configuration with EDG version 4.12 and GNU version 5.2 or later backend compilers (EDG version too old)."
-endif
-
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
 	rm -f *.foldedConstants-o
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+
+status:
+	@$(MAKE) $(ALL_TEST_Sources)
+

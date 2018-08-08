@@ -91,15 +91,7 @@ VALGRIND =
 $(TEST_Objects): ../../testTranslator
 if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.c)
-#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else
-#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
-#	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	echo "Removing the just built copy of lt-testTranslator to save space..."
-#	rm -f testTranslator_$(@:.o=)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.c)
 endif
 
@@ -137,6 +129,24 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 print_testcodes:
 	echo $(TESTCODES)
 
+######
+# Try to use RTH here
+
+TEST_TRANSLATOR = ../../testTranslator
+
+TEST_Sources = $(addsuffix .passed, $(TESTCODES_REQUIRED_TO_PASS))
+ALL_TEST_Sources = $(addsuffix .passed, $(ALL_TESTCODES))
+
+$(ALL_TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+if !ROSE_USE_INSURE
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
+else
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+endif
+
 check-local:
 # DQ (2/19/2017): NEW VERSION OF LOGIC
 # DQ (2/18/2017): More specific logic required for portability.
@@ -150,7 +160,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
 	@echo "C11 tests using GNU version 4.8 backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
@@ -178,7 +188,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
 	@echo "C11 tests using GNU version 4.8 backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
@@ -187,13 +197,13 @@ if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
 # DQ (2/28/2017): Skip these tests until we can return to this problem later.
-#	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(TEST_Sources)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 	@echo "USING_INTEL_COMPILER == true"
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 	@echo "USING_INTEL_COMPILER == false"
@@ -205,11 +215,11 @@ endif # ROSE_USE_EDG_VERSION_4_9
 # # if ROSE_USE_EDG_VERSION_4_9
 # if ROSE_USING_GCC_VERSION_LATER_4_8
 #	@echo "C11 tests using GNU version 4.8 backend compiler."
-#	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(TEST_Sources)
 # else
 # if ROSE_USING_GCC_VERSION_LATER_4_9
 # 	@echo "C11 tests using GNU version 4.9 backend compiler."
-#	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(TEST_Sources)
 # endif
 # endif
 # else
@@ -225,3 +235,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+
+status:
+	@$(MAKE) $(ALL_TEST_Sources)
+
