@@ -545,7 +545,7 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    StringUtility::plural(settings.maxRecursionDepth, "calls") + "."));
 
     sg.insert(Switch("post-condition")
-              .argument("sexpr", SymbolicExprParser::symbolicExprParser(settings.postConditions))
+              .argument("sexpr", anyParser(settings.postConditionStrings))
               .doc("Additional constraint to be satisfied at the ending vertex. This switch may appear more than once "
                    "in order to specify multiple conditions that must all be satisfied. " +
                    SymbolicExprParser::SymbolicExprCmdlineParser::docString()));
@@ -830,7 +830,9 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 
 boost::logic::tribool
 FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver,
-                             const std::vector<SymbolicExpr::Ptr> &endConstraints, PathProcessor *pathProcessor,
+                             std::vector<SymbolicExpr::Ptr> endConstraints,
+                             const SymbolicExprParser::RegisterSubstituter::Ptr &subber,
+                             PathProcessor *pathProcessor,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
                              BaseSemantics::DispatcherPtr &cpu /*out*/) {
     static const char *prefix = "      ";
@@ -840,6 +842,12 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
 
+    // Replace placeholders in the endConstraints with current values of registers.
+    if (subber) {
+        for (size_t i=0; i<endConstraints.size(); ++i)
+            endConstraints[i] = subber->substitute(endConstraints[i], ops);
+    }
+    
     size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
         processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
@@ -1122,6 +1130,17 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
 
+    // Gather all post conditions. When parsing post condition strings to create symbolic expressions, replace register names
+    // with new placeholder variables that will be expanded to register values at the time the expression is used as a post
+    // condition.
+    std::vector<SymbolicExpr::Ptr> postConditionsIn; // expressions with placholders
+    postConditionsIn = settings_.postConditions;
+    SymbolicExprParser exprParser;
+    SymbolicExprParser::RegisterSubstituter::Ptr subber =
+        exprParser.defineRegisters(partitioner().instructionProvider().registerDictionary());
+    BOOST_FOREACH (const std::string &s, settings_.postConditionStrings)
+        postConditionsIn.push_back(exprParser.parse(s));
+
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
         P2::CfgPath path(pathsBeginVertex);
@@ -1146,9 +1165,9 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             SAWYER_MESG(debug) <<"    checking feasibility";
             std::vector<SymbolicExpr::Ptr> postConditions, pathConditions;
             if (atEndOfPath)
-                postConditions = settings_.postConditions;
+                postConditions = postConditionsIn;
             BaseSemantics::DispatcherPtr cpu;
-            boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions, &pathProcessor,
+            boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions, subber, &pathProcessor,
                                                               pathConditions /*in,out*/, cpu /*out*/);
             if (debug) {
                 if (isFeasible) {
