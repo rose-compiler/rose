@@ -1,5 +1,9 @@
 #include "sage3basic.h"
 #include "TFCommandList.h"
+#include "TFSpecFrontEnd.h"
+#include "TFTransformation.h"
+#include "CppStdUtilities.h"
+
 #include <iostream>
 #include <vector>
 #include "SgNodeHelper.h"
