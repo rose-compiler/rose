@@ -1430,16 +1430,22 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                ROSE_ASSERT(decl != NULL);
 
                SgTemplateDeclaration * tpl_decl = isSgTemplateDeclaration(decl);
+               ROSE_ASSERT(tpl_decl == NULL);
+
                SgTemplateClassDeclaration * tpl_cdel = isSgTemplateClassDeclaration(decl);
                SgTemplateTypedefDeclaration * tpl_typedef = isSgTemplateTypedefDeclaration(decl);
+               SgNonrealDecl * nrdecl = isSgNonrealDecl(decl);
 
                SgType * assoc_type = NULL;
                if (tpl_cdel != NULL) {
-                 assoc_type = ((SgClassDeclaration *)decl)->get_type();
+                 assoc_type = tpl_cdel->get_type();
                } else if (tpl_typedef != NULL) {
-                 assoc_type = ((SgTypedefDeclaration *)decl)->get_type();
-               } else if (tpl_decl == NULL) {
-                 assoc_type = decl->get_type();
+                 assoc_type = tpl_typedef->get_type();
+               } else if (nrdecl != NULL) {
+                 assoc_type = nrdecl->get_type();
+               } else {
+                 printf("Error: Unexpected declaration %p (%s) for template template argument %p\n", decl, decl->class_name().c_str(), templateArgument);
+                 ROSE_ASSERT(false);
                }
                
 #if 0
@@ -1453,19 +1459,13 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                printf ("  -- templateArgument->get_name_qualification_length() = %d\n", templateArgument->get_name_qualification_length());
 #endif
 
-               if (assoc_type != NULL) {
-                  newInfo.set_SkipClassDefinition();
-                  newInfo.set_SkipClassSpecifier();
-                  newInfo.set_SkipEnumDefinition();
-                  unp->u_type->outputType<SgTemplateArgument>(templateArgument,assoc_type,newInfo);
-               } else {
-#if 0
-                 printf("WARNING: found template template argument represented by a SgTemplateDeclaration (meaning a reference to a template template parameter). That is not correct and will be fixed by proper handling of non-real declarations.\n");
-#endif
-                 std::ostringstream outstr;
-                 outstr << decl->get_template_name().str();
-                 unp->u_exprStmt->curprint ( outstr.str());
-               }
+               ROSE_ASSERT(assoc_type != NULL);
+
+               newInfo.set_SkipClassDefinition();
+               newInfo.set_SkipClassSpecifier();
+               newInfo.set_SkipEnumDefinition();
+               unp->u_type->outputType<SgTemplateArgument>(templateArgument,assoc_type,newInfo);
+
                break;
              }
 
