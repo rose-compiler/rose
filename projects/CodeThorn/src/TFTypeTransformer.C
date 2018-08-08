@@ -38,6 +38,32 @@ void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& 
   }
 }
 
+int TypeTransformer::transform(){
+  for(auto i = transformations.begin(); i != transformations.end(); i++){
+    SgNode* node     = i->first;
+    string  location = get<0>(i->second);
+    SgType* type     = get<1>(i->second);
+    if(SgInitializedName* initName = isSgInitializedName(node)){
+      initName->set_type(type);
+    }
+    else if(SgFunctionType* funType = isSgFunctionType(node)){
+      funType->set_orig_return_type(type);
+    }
+  }
+  return transformationsCount;
+}
+
+int TypeTransformer::addTransformation(string key, SgType* newType, SgNode* node){
+  if(transformations.count(node) != 0){
+    return 0;
+  }else{
+    ReplacementTuple newTuple = std::make_tuple(key, newType);
+    transformations[node] = newTuple;
+    transformationsCount++;
+    return 1;
+  }
+}
+
 void TFTypeTransformer::nathan_setConfig(ToolConfig* config){
   _outConfig = config;
   //_outConfig->getActions().clear();
@@ -197,7 +223,7 @@ int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, 
     if(!listing){
       SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
       string varName = SgNodeHelper::symbolToString(varSym);
-      TFTypeTransformer::trace("Found declaration of variable "+varName+". Changed type to "+changeType->unparseToString());
+      TFTypeTransformer::trace("Found declaration of variable "+varName+". Change type to "+changeType->unparseToString());
       initName->set_type(changeType);
       return 1;
     }
@@ -209,8 +235,8 @@ int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, 
         newType = nathan_rebuildBaseType(funRetType, newType);
       }
       string funName = SgNodeHelper::getFunctionName(funDef);
-      TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Changed type to "+newType->unparseToString());
       if(!listing){
+        TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Change type to "+newType->unparseToString());
         funType->set_orig_return_type(newType);
         return 1;
       }
@@ -236,7 +262,7 @@ int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType*
     return 0; 
   } 
   else{
-    TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Changed type to "+baseType->unparseToString());
+    TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Change type to "+baseType->unparseToString());
     varInitName->set_type(baseType);
     return 1;
   }

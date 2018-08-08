@@ -126,6 +126,8 @@ int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt
     SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
     SgType* oldBuiltType=buildTypeFromStringSpec(oldType,globalScope);
     SgType* newBuiltType=buildTypeFromStringSpec(newType,globalScope);
+//cout<<newBuiltType->unparseToString()<<"\n";
+//cout<<newType<<"\n";
     tt.addTypeTransformationToList(_list,newBuiltType,nullptr,"",base,oldBuiltType,listing);
     return false;
   } else {
@@ -144,6 +146,8 @@ int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt
     for (auto funDef : listOfFunctionDefinitions) {
       SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
       SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+//cout<<newType<<"\n";    
+//cout<<newBuiltType->unparseToString()<<"\n";
       tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGE"+location,base,oldBuiltType,listing);
     }
     return false;

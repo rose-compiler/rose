@@ -163,7 +163,6 @@ int main (int argc, char* argv[])
   if(args.isUserProvided("trace")) {
     tt.setTraceFlag(true);
   }
-
   if(args.isUserProvided("spec-file") && !objectFiles) {
     string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;

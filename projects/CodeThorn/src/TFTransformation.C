@@ -286,8 +286,9 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
     while(!varRefExp){
       if((varRefExp = isSgVarRefExp(refExp)));
       else if(SgPntrArrRefExp* arrRef = isSgPntrArrRefExp(refExp)) refExp = arrRef->get_lhs_operand();
-      else continue;
+      else break;
     }
+    if(!varRefExp) continue;
     if(SgNodeHelper::isFloatingPointType(varType)) {
       if(isWithinBlockStmt(assignOp)) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
@@ -295,7 +296,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
         if(varRefExpSymbol) {
           SgName varName=varRefExpSymbol->get_name();
           string varNameString=varName;
-          string instrumentationString="AD_intermediate("+varNameString+",\""+varHandle+"\", SOURCE_INFO);";
+          string instrumentationString="AD_intermediate("+assignOp->get_lhs_operand()->unparseToString()+",\""+varHandle+"\", SOURCE_INFO);";
           // locate root node of statement
           SgNode* stmtSearch=assignOp;
           while(!isSgStatement(stmtSearch)) {

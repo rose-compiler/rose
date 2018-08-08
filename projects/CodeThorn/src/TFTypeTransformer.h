@@ -6,10 +6,21 @@
 #include "TFTransformation.h"
 #include "ToolConfig.hpp"
 
+class TypeTransformer{
+  private:
+    typedef std::tuple<std::string,SgType*> ReplacementTuple;
+    std::map<SgNode*, ReplacementTuple> transformations;
+    int transformationsCount = 0;
+  public:
+    int transform();
+    int addTransformation(std::string key, SgType* newType, SgNode* node);
+};
+
 class TFTypeTransformer {
  public:
   typedef std::tuple<SgType*,SgFunctionDefinition*,std::string,bool,SgType*,SgNode*,bool> VarTypeVarNameTuple;
   typedef std::list<VarTypeVarNameTuple> VarTypeVarNameTupleList;
+  //Methods to add transformation directives
   void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varnames);
   void addToTransformationList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varnames, bool base, SgType* fromType, SgNode* handleNode, bool listing);
   void addHandleTransformationToList(VarTypeVarNameTupleList& list,SgType* type,bool base,SgNode* handleNode, bool listing);
@@ -42,6 +53,7 @@ class TFTypeTransformer {
   int  nathan_changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing);
  private:
   CastTransformer _castTransformer;
+  TypeTransformer _typeTransformer;
   static bool _traceFlag;
   int _totalNumChanges=0;
   int _totalTypeNameChanges=0;
