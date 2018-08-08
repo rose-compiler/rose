@@ -1362,6 +1362,44 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
 }
 /** @} */
 
+/** On-the-fly substitutions.
+ *
+ *  This function uses a user-defined substitutor to generate values that are substituted into the specified expression. This
+ *  operates by performing a depth-first search of the specified expression and calling the @p subber at each node. The @p
+ *  subber is invoked with two arguments: an expression to be replaced, and an optional SMT solver for simplifications. It
+ *  should return either the expression unmodified, or a new expression.  The return value of the @c substitute function as a
+ *  whole is either the original expression (if no substitutions were performed) or a new expression. */
+template<class Substitution>
+Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver = SmtSolverPtr()) {
+    if (!src)
+        return Ptr();                                   // no input implies no output
+
+    // Try substituting the whole expression, returning the result.
+    Ptr dst = subber(src, solver);
+    ASSERT_not_null(dst);
+    if (dst != src)
+        return dst;
+
+    // Try substituting all the subexpressions.
+    InteriorPtr inode = src->isInteriorNode();
+    if (!inode)
+        return src;
+    bool anyChildChanged = false;
+    Nodes newChildren;
+    newChildren.reserve(inode->nChildren());
+    BOOST_FOREACH (const Ptr &child, inode->children()) {
+        Ptr newChild = subber(child, solver);
+        if (newChild != child)
+            anyChildChanged = true;
+        newChildren.push_back(newChild);
+    }
+    if (!anyChildChanged)
+        return src;
+
+    // Some subexpression changed, so build a new expression
+    return Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+}
+
 } // namespace
 } // namespace
 } // namespace
