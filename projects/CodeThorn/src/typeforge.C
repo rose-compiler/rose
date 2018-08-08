@@ -67,12 +67,14 @@ int main (int argc, char* argv[])
   desc.add_options()
     ("help,h", "produce this help message.")
     ("version,v", "display the version.")
+    ("compile", "run backend compiler.")
     //("annotate", "annotate implicit casts as comments.")
     ("explicit", "make all imlicit casts explicit.")
     ("stats", "print statistics on casts of built-in floating point types.")
     ("trace", "print program transformation operations as they are performed.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("spec-file", po::value< string >()," name of typeforge specification file.")
+    ("source-file", po::value<vector<string> >()," name of source files.")
     ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
 #ifdef EXPLICIT_VAR_FORGE
     ("float-var", po::value< string >()," change type of var [arg] to float.")
@@ -80,9 +82,10 @@ int main (int argc, char* argv[])
     ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
 #endif
     ;
-
-  po::store(po::command_line_parser(argc, argv).
-            options(desc).allow_unregistered().run(), args);
+  po::positional_options_description pos;
+  pos.add("source-file", -1);
+  po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).positional(pos).allow_unregistered().run();
+  po::store(parsed, args);
   po::notify(args);
 
   if (args.count("help")) {
@@ -106,8 +109,21 @@ int main (int argc, char* argv[])
       argv[i+1] = strdup("");
     }
   }
-  vector<string> argvList(argv, argv+argc);
-  argvList.push_back("-rose:skipfinalCompileStep");
+
+  bool objectFiles = false;
+  for(auto file : args["source-file"].as< vector<string> >()){
+    boost::filesystem::path pathObj(file);
+    if(pathObj.has_extension()){
+      if(pathObj.extension().string() == ".o"){
+        objectFiles = true;
+      }
+    }
+  }  
+ 
+  vector<string> argvList = po::collect_unrecognized(parsed.options, po::include_positional); 
+  argvList.insert(argvList.begin(), "rose");
+  if(!args.count("compile")) argvList.push_back("-rose:skipfinalCompileStep");
+  //for(auto str : argvList) cout<<str<<"\n";
   SgProject* sageProject=frontend (argvList); 
   TFTypeTransformer tt;
 
@@ -147,8 +163,7 @@ int main (int argc, char* argv[])
   if(args.isUserProvided("trace")) {
     tt.setTraceFlag(true);
   }
-
-  if(args.isUserProvided("spec-file")) {
+  if(args.isUserProvided("spec-file") && !objectFiles) {
     string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
@@ -158,7 +173,8 @@ int main (int argc, char* argv[])
       exit(1);
     }
     auto list=typeforgeSpecFrontEnd.getTransformationList();
-    tt.transformCommandLineFiles(sageProject,list);
+    tt.analyzeTransformations(sageProject,list);
+    tt.executeTransformations(sageProject);
     if(args.isUserProvided("csv-stats-file")) {
       string csvFileName=args.getString("csv-stats-file");
       tt.generateCsvTransformationStats(csvFileName,
@@ -172,6 +188,10 @@ int main (int argc, char* argv[])
     backend(sageProject);
     return 0;
   }
+  else{
+    backend(sageProject);
+    return 0;
+  }
 
 #ifdef EXPLICIT_VAR_FORGE
   if(args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var")) {
@@ -179,15 +199,15 @@ int main (int argc, char* argv[])
     SgFunctionDefinition* funDef=nullptr;
     if(args.isUserProvided("float-var")) {
       string varNames=args.getString("float-var");
-      tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildFloatType(),funDef,varNames);
     }
     if(args.isUserProvided("double-var")) {
       string varNames=args.getString("double-var");
-      tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildDoubleType(),funDef,varNames);
     } 
     if(args.isUserProvided("long-double-var")) {
       string varNames=args.getString("long-double-var");
-      tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildLongDoubleType(),funDef,varNames);
     }
     tt.transformCommandLineFiles(sageProject,list);
     backend(sageProject);

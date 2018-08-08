@@ -26,20 +26,21 @@
 #include <list>
 #include "TFTransformation.h"
 #include <ToolConfig.hpp>
-#include "abstract_handle.h"
-#include "roseAdapter.h"
 #include "TFCommandList.h"
+#include <boost/filesystem.hpp>
 
 using namespace std;
-using namespace AbstractHandle;
-using json = nlohmann::json;
 
 bool isComment(string s) {
   return s.size()>=2 && s[0]=='/' && s[1]=='/';
 }
 
-bool nathan_checkSuffix(string s, string suffix){
-  return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+bool nathan_checkExtension(string filePath, string extension){
+  boost::filesystem::path pathObj(filePath);
+  if(pathObj.has_extension()){
+    if(pathObj.extension().string() == extension) return true;
+  }
+  return false;
 }
 
 string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& commandList){
@@ -73,11 +74,23 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
         commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
       }
       else if(action == "list_basereplacements" || action == "list_replacements"){
-        commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("body", "*", act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("args", "*", act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("ret", "*", act.getToType(), act.getFromType(), base, true);
+        string scope = act.getScope();
+        if(scope == "" || scope == "$global"){
+          if(scope == "") scope = "*";
+          commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
+        }
+        if(scope != "$global"){
+          commandList.addTypeCommand("body", scope, act.getToType(), act.getFromType(), base, true);
+          commandList.addTypeCommand("args", scope, act.getToType(), act.getFromType(), base, true);
+          commandList.addTypeCommand("ret", scope, act.getToType(), act.getFromType(), base, true);
+        }
         outName = act.getName();
+      }
+      else if(action == "introduce_include"){
+        commandList.addIncludeCommand(act.getScope(), act.getName());
+      }
+      else if(action == "replace_pragma"){
+        commandList.addPragmaCommand(act.getFromType(), act.getToType());
       }
     }
     else{
@@ -85,7 +98,14 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
     }
     commandList.nextCommand();
   }
-  tt.nathan_setConfig(config);
+  ToolConfig* newConfig = config;
+  try{
+    newConfig = new ToolConfig(outName);
+  }catch(...){
+    remove(outName.c_str());
+    newConfig->getActions().clear();
+  }
+  tt.nathan_setConfig(newConfig);
   if(outName != "") tt.nathan_setConfigFile(outName);
   return outName;
 }
@@ -96,7 +116,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
   string tempFileName = "";
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
-  if(nathan_checkSuffix(specFileName, ".json")){
+  if(nathan_checkExtension(specFileName, ".json")){
     tempFileName = nathan_convertJSON(specFileName, tt, commandList);
     commandList.runCommands(root, tt, tfTransformation);
     _list = commandList.getTransformationList();

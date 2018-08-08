@@ -589,17 +589,20 @@ check-typeforge: typeforge
 #	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
-	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C 
+	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C --compile
 	g++ -Wall rose_casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C 
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adCompoundTest.C
-	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adArrayTest.C
-	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
-	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
-	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/jsonReplaceTest.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adArrayTest.C 
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adGlobalTest.C 
+	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C 
+	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C 
+	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C --compile
+	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/jsonReplaceTest.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json --trace $(srcdir)/tests/includePragmaTest1.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json --trace $(srcdir)/tests/includePragmaTest2.C
 	rm -f a.out craft_initial.json
 
 #MS: iterator_test not ingegrated yet

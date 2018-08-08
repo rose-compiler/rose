@@ -3,6 +3,7 @@
 #include "SgNodeHelper.h"
 #include "TFTransformation.h"
 #include "AstTerm.h"
+#include "abstract_handle.h"
 
 using namespace std;
 
@@ -254,6 +255,23 @@ bool isWithinBlockStmt(SgExpression* exp) {
   return isSgBasicBlock(current);
 }
 
+string getHandle(SgNode* node){
+ AbstractHandle::abstract_node* anode = AbstractHandle::buildroseNode(node);
+ AbstractHandle::abstract_handle* ahandle = new  AbstractHandle::abstract_handle(anode);
+ return ahandle->toString(); 
+}
+
+string getVarRefHandle(SgVarRefExp* varRef){
+  SgVariableSymbol* varSym = varRef->get_symbol();
+  SgInitializedName* varInit = varSym->get_declaration();
+  SgDeclarationStatement* varDec = varInit->get_declaration();
+  if(isSgVariableDeclaration(varDec)){
+    return getHandle(varDec);
+  }else{
+    return getHandle(varInit);
+  }
+}
+
 //Transformation ad_intermediate
 void TFTransformation::instrumentADIntermediate(SgNode* root) {
   RoseAst ast(root);
@@ -268,15 +286,17 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
     while(!varRefExp){
       if((varRefExp = isSgVarRefExp(refExp)));
       else if(SgPntrArrRefExp* arrRef = isSgPntrArrRefExp(refExp)) refExp = arrRef->get_lhs_operand();
-      else continue;
+      else break;
     }
+    if(!varRefExp) continue;
     if(SgNodeHelper::isFloatingPointType(varType)) {
       if(isWithinBlockStmt(assignOp)) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
+        string varHandle = getVarRefHandle(varRefExp);
         if(varRefExpSymbol) {
           SgName varName=varRefExpSymbol->get_name();
           string varNameString=varName;
-          string instrumentationString="AD_intermediate("+varNameString+",\""+varNameString+"\", FILE_INFO, FUNC_INFO);";
+          string instrumentationString="AD_intermediate("+assignOp->get_lhs_operand()->unparseToString()+",\""+varHandle+"\", SOURCE_INFO);";
           // locate root node of statement
           SgNode* stmtSearch=assignOp;
           while(!isSgStatement(stmtSearch)) {
@@ -294,5 +314,33 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
         }
       }
     }
+  }
+}
+
+void TFTransformation::instrumentADIndependent(SgNode* root, SgFunctionDefinition* funDef){
+  if(!funDef) return;
+  list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(isSgProject(root));
+  if(listOfGlobalVars.size() > 0){
+    string instString = "";
+    for(auto varDecl: listOfGlobalVars){
+      SgInitializedName* varInit = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+      if(varInit){
+        SgType* varType = varInit->get_type()->findBaseType();
+        if(SgNodeHelper::isFloatingPointType(varType)){
+          SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInit);
+          if(varSym){
+            string varName = SgNodeHelper::symbolToString(varSym);
+            string handle = getHandle(varDecl);
+            instString += "AD_independent("+varName+",\""+handle+"\", SOURCE_INFO);\n";
+            adIntermediateTransformations++;
+          }
+        }
+      }
+    }
+    SgStatementPtrList statementList = funDef->get_body()->get_statements();
+    SgStatement* firstStatement = statementList.front();
+    string oldSource = firstStatement->unparseToString();
+    string newSource = oldSource+"\n"+instString;
+    SgNodeHelper::replaceAstWithString(firstStatement,newSource);
   }
 }
