@@ -1,7 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_SymbolicExprParser_H
 #define ROSE_BinaryAnalysis_SymbolicExprParser_H
 
+#include <BaseSemantics2.h>
 #include <BinarySymbolicExpr.h>
+#include <Sawyer/BiMap.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/SharedPointer.h>
 
@@ -231,6 +233,10 @@ public:
 
     /** Virtual base class for expanding operators. */
     class OperatorExpansion: public Expansion {
+    public:
+        /** Shared-ownership pointer. See @ref heap_object_shared_ownership. */
+        typedef Sawyer::SharedPointer<OperatorExpansion> Ptr;
+
     protected:
         SmtSolverPtr solver;                            // may be null
 
@@ -239,13 +245,104 @@ public:
     public:
         virtual ~OperatorExpansion();
 
-        /** Shared-ownership pointer to an @ref OperatorExpansion. See @ref heap_object_shared_ownership. */
-        typedef Sawyer::SharedPointer<OperatorExpansion> Ptr;
-
         /** Operator to expand a list into an expression tree. The width in bits is either the width specified in
          *  square brackets for the function symbol, or zero.  Functors are all called for each symbol, and the first one to
          *  return non-null is the one that's used to generate the symbolic expression. */
         virtual SymbolicExpr::Ptr operator()(const Token &name, const SymbolicExpr::Nodes &operands) = 0;
+    };
+
+    /** Expand register names to register values.
+     *
+     *  This expansion uses a @ref BaseSemantics::RiscOperators "RiscOperators" object to convert register names in the parse
+     *  string into register values. The values are substituted at the time the string is parsed. At this time (2018-08) only
+     *  the symbolic semantic domain is supported since this is the one usually used with SMT solvers. */
+    class RegisterToValue: public AtomExpansion {
+    public:
+        /** Shared-ownership pointer. See @ref heap_object_shared_ownership. */
+        typedef Sawyer::SharedPointer<RegisterToValue> Ptr;
+
+    private:
+        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
+
+    protected:
+        RegisterToValue(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+            : ops_(ops) {}
+
+    public:
+        /** Allocating constructor. */
+        static Ptr instance(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+
+        // internal
+        SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token&) ROSE_OVERRIDE;
+    };
+
+    /** Expand register name to placeholder variables.
+     *
+     *  The problem with @ref RegisterToValue is that the expansion from register name to register value occurs at parsing
+     *  time, and parsing is a relatively slow operation.  Therefore, this class takes a slightly different approach: at
+     *  parsing time, register names are replaced by symbolic variables (placeholders), and information is returned about how
+     *  these placeholders map to register names. Then, at a later time, a substition can be run to replace the placeholders
+     *  with the register values. */
+    class RegisterSubstituter: public AtomExpansion {
+    public:
+        /** Shared-ownership pointer. See @ref heap_object_shared_ownership. */
+        typedef Sawyer::SharedPointer<RegisterSubstituter> Ptr;
+
+        // internal
+        typedef Sawyer::Container::BiMap<RegisterDescriptor, SymbolicExpr::Ptr> RegToVarMap;
+
+    private:
+        const RegisterDictionary *regdict_;
+        RegToVarMap reg2var_;
+
+    protected:
+        RegisterSubstituter(const RegisterDictionary *regdict)
+            : regdict_(regdict) {}
+
+    public:
+        /** Allocating constructor. */
+        static Ptr instance(const RegisterDictionary*);
+
+        /** Substitute register values for placeholders.
+         *
+         *  Uses the information that was saved during parsing in order to find the placeholders in the specified symbolic
+         *  expression and replace them with the register values read from the semantic state. If substitutions were made, then
+         *  a new symbolic expression is returned, otherwise the argument is returned unmodified. */
+        SymbolicExpr::Ptr substitute(const SymbolicExpr::Ptr&,
+                                     const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) const;
+
+        // internal
+        SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token&) ROSE_OVERRIDE;
+    };
+
+    /** Expand unrecognized terms to placholder variables.
+     *
+     *  When parsing a symbolic expression, any unrecognized variable names such as "foo" will be replaced with a new
+     *  symbolic variable such as "v48722" and a record of the substitution is saved in this object. The same name is always
+     *  substituted with the same placeholder. */
+    class TermPlaceholders: public AtomExpansion {
+    public:
+        /** Shared-ownership pointer. See @ref heap_object_shared_ownership. */
+        typedef Sawyer::SharedPointer<TermPlaceholders> Ptr;
+
+        /** Mapping between term names and placeholder variables. */
+        typedef Sawyer::Container::BiMap<std::string, SymbolicExpr::Ptr> NameToVarMap;
+
+    private:
+        NameToVarMap name2var_;
+
+    protected:
+        TermPlaceholders() {}
+
+    public:
+        /** Allocating constructor. */
+        static Ptr instance();
+
+        /** Mapping between terms and variables. */
+        const NameToVarMap& map() const { return name2var_; }
+
+        // internal
+        SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token&) ROSE_OVERRIDE;
     };
 
     /** Ordered atom table. */
@@ -302,7 +399,7 @@ public:
     explicit SymbolicExprParser(const SmtSolverPtr &solver);
 
     ~SymbolicExprParser();
-    
+
     /** Create a symbolic expression by parsing a string.
      *
      *  Parses an expression from a string. Throws a @ref SyntaxError if problems are encountered, including when the string
@@ -346,10 +443,24 @@ public:
      *  used by command-line parsers. */
     std::string docString() const;
 
+    /** Add definitions for registers.
+     *
+     *  If register definitions are specified, then whenever a register name appears as a token during parsing, it will be
+     *  immediately replaced with the value of the register queried from the specified operator state.  If a @ref
+     *  Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators "RiscOperators" object is specified, then the
+     *  replacement is the register's current value; if a register dictionary is specified, then the replacement is a new
+     *  symbolic variable and an internal table is updated to associate the variable with a register name so that the register
+     *  value can be substituted later.
+     *
+     * @{ */
+    void defineRegisters(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    RegisterSubstituter::Ptr defineRegisters(const RegisterDictionary*);
+    /** @} */
+
 private:
     void init();
 };
-    
+
 std::ostream& operator<<(std::ostream&, const SymbolicExprParser::SyntaxError&);
 
 } // namespace
