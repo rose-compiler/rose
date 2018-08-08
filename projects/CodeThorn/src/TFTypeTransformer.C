@@ -14,6 +14,24 @@ using namespace AbstractHandle;
 // static member
 bool TFTypeTransformer::_traceFlag=false;
 
+//Constructors for directive list 
+TransformDirective::TransformDirective(bool transformBase, bool onlyList, SgType* to_type){
+  base = transformBase; listing = onlyList; toType = to_type;
+}
+
+NameTransformDirective::NameTransformDirective(string varName, SgFunctionDefinition* functionDefinition, bool base, bool listing, SgType* toType) : TransformDirective(base, listing, toType){
+  name = varName; funDef = functionDefinition;
+}
+
+TypeTransformDirective::TypeTransformDirective(string functionLocation, SgFunctionDefinition* functionDefinition, SgType* from_type, bool base, bool listing, SgType* toType) : TransformDirective(base, listing, toType){
+  location = functionLocation; funDef = functionDefinition; fromType = from_type;
+}
+
+HandleTransformDirective::HandleTransformDirective(SgNode* handleNode, bool base, bool listing, SgType* toType) : TransformDirective(base, listing, toType){
+  node = handleNode;
+}
+
+//Methods for adding to directive list
 void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames){
   TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,false,nullptr,nullptr,false);
 }
@@ -38,11 +56,26 @@ void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& 
   }
 }
 
+//Methods to run directive list
+int NameTransformDirective::run(SgProject* project){
+  return 0;
+}
+
+int TypeTransformDirective::run(SgProject* project){
+  return 0;
+}
+
+int HandleTransformDirective::run(SgProject* project){
+  return 0;
+}
+
+//TypeTransformer stores changes during analysis phase then performs the changes when done.
 int TypeTransformer::transform(){
   for(auto i = transformations.begin(); i != transformations.end(); i++){
     SgNode* node     = i->first;
     string  location = get<0>(i->second);
     SgType* type     = get<1>(i->second);
+    TFTypeTransformer::trace("Changing "+location+" type to "+type->unparseToString());
     if(SgInitializedName* initName = isSgInitializedName(node)){
       initName->set_type(type);
     }
@@ -64,6 +97,7 @@ int TypeTransformer::addTransformation(string key, SgType* newType, SgNode* node
   }
 }
 
+//Mangae config file if user specifies
 void TFTypeTransformer::nathan_setConfig(ToolConfig* config){
   _outConfig = config;
   //_outConfig->getActions().clear();
@@ -78,6 +112,7 @@ void TFTypeTransformer::nathan_setConfigFile(string fileName){
   }
 }
 
+//Returns the name of the file the specified node is part of
 std::string nathan_getNodeFileName(SgNode* node){
   SgNode* currentNode = node;
   SgSourceFile* file = nullptr;
@@ -89,6 +124,7 @@ std::string nathan_getNodeFileName(SgNode* node){
   else return file->getFileName();
 }
 
+//Adds an entry in the config file
 void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
   if(!fromType || !toType || !handleNode) return;
   if(_writeConfig == "") return;
@@ -98,12 +134,14 @@ void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgT
   if(base) _outConfig->addReplaceVarBaseType(ahandle->toString(), varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
   else _outConfig->addReplaceVarType(ahandle->toString(), varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
 }
+
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
   // make all floating point casts explicit
   makeAllCastsExplicit(project);
   // transform casts in AST
   transformCastsInCommandLineFiles(project);
 }
+
 
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNameTupleList& list) {
   for (auto typeNameTuple:list) {
@@ -139,6 +177,7 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
       _totalHandleChanges+=nathan_changeHandleType(handleNode, newVarType, base, listing);
     }
   }
+  _typeTransformer.transform();
   if(_writeConfig != ""){
     _outConfig->saveConfig(_writeConfig);
   }
@@ -223,8 +262,9 @@ int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, 
     if(!listing){
       SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
       string varName = SgNodeHelper::symbolToString(varSym);
-      TFTypeTransformer::trace("Found declaration of variable "+varName+". Change type to "+changeType->unparseToString());
-      initName->set_type(changeType);
+      TFTypeTransformer::trace("Found declaration of variable "+varName+".");// Change type to "+changeType->unparseToString());
+      _typeTransformer.addTransformation(varName, changeType, initName);
+      //initName->set_type(changeType);
       return 1;
     }
   }else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(handle)){
@@ -236,8 +276,9 @@ int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, 
       }
       string funName = SgNodeHelper::getFunctionName(funDef);
       if(!listing){
-        TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Change type to "+newType->unparseToString());
-        funType->set_orig_return_type(newType);
+        TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+".");// Change type to "+newType->unparseToString());
+        _typeTransformer.addTransformation(funName+":$return", newType, funType);
+        //funType->set_orig_return_type(newType);
         return 1;
       }
   }
@@ -262,8 +303,9 @@ int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType*
     return 0; 
   } 
   else{
-    TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+". Change type to "+baseType->unparseToString());
-    varInitName->set_type(baseType);
+    TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+".");// Change type to "+baseType->unparseToString());
+    _typeTransformer.addTransformation(scopeName+":"+varName,baseType,varInitName);
+    //varInitName->set_type(baseType);
     return 1;
   }
 }
@@ -337,10 +379,11 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
           replaceType = nathan_rebuildBaseType(funRetType, newType);
         }
         string funName = SgNodeHelper::getFunctionName(root);
-        TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+". Changed type to "+replaceType->unparseToString());
+        TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+".");// Changed type to "+replaceType->unparseToString());
         if(listing) nathan_addToActionList("$return", funName, fromType, newType, funDecl, base);
         else{
-          funType->set_orig_return_type(replaceType);
+          _typeTransformer.addTransformation(funName+":$return", funType, replaceType);
+          //funType->set_orig_return_type(replaceType);
           foundVar++;
         }
       }

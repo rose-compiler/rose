@@ -16,6 +16,44 @@ class TypeTransformer{
     int addTransformation(std::string key, SgType* newType, SgNode* node);
 };
 
+class TransformDirective{
+  protected:
+    bool base;
+    bool listing;
+    SgType* toType;
+    TransformDirective(bool transformBase, bool onlyList, SgType* to_type);
+  public:
+    virtual int run(SgProject* project) = 0;
+};
+
+class NameTransformDirective : public TransformDirective{
+  private:
+    SgFunctionDefinition* funDef;
+    std::string name;
+  public:
+    NameTransformDirective(std::string varName, SgFunctionDefinition* functionDefinition, bool base, bool listing, SgType* toType);
+    int run(SgProject* project);
+};
+
+class TypeTransformDirective : public TransformDirective{
+  private:
+    SgFunctionDefinition* funDef;
+    SgType* fromType;
+    std::string location;
+  public:
+    TypeTransformDirective(std::string functionLocation, SgFunctionDefinition* functionDefinition, SgType* from_type, bool base, bool listing, SgType* toType);
+    int run(SgProject* project);
+};
+
+class HandleTransformDirective : public TransformDirective{
+  private:
+    SgNode* node;
+  public:
+    HandleTransformDirective(SgNode* handleNode, bool base, bool listing, SgType* toType);
+    int run(SgProject* project);
+};
+
+
 class TFTypeTransformer {
  public:
   typedef std::tuple<SgType*,SgFunctionDefinition*,std::string,bool,SgType*,SgNode*,bool> VarTypeVarNameTuple;
