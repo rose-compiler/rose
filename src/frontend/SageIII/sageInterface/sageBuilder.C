@@ -551,6 +551,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      ROSE_ASSERT(info != NULL);
 
      info->set_language(SgFile::e_Cxx_language);
+     info->set_requiresGlobalNameQualification();
 
   // DQ (4/28/2017): For template arguments we never want to output the definitions of classes, and enums.
      info->set_SkipClassDefinition();
@@ -566,20 +567,26 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
           returnName += " < ";
 
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
+     bool need_separator = false;
      while (i != templateArgumentsList.end())
         {
+          if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+             {
+               i++;
+               continue; 
+             }
+
+          if (need_separator)
+             {
+               returnName += " , ";
+             }
+
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %p = %s returnName = %s \n",*i,(*i)->class_name().c_str(),returnName.str());
 #endif
-          if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
-            {
-              i++;
-              continue; 
-            }
 #if 0
           string s = string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */";
 #endif
-
 
        // DQ (9/15/2012): We need to communicate that the language so that SgBoolVal will not be unparsed to "1" instead of "true" (see test2012_215.C).
        // Calling the unparseToString (SgUnparse_Info *info) function instead of the version not taking an argument.
@@ -588,17 +595,8 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) *i = %p returnName = %s \n",*i,returnName.str());
 #endif
+          need_separator = true;
           i++;
-
-       // If there are more arguments then we need a "," to seperate them.
-          if (i != templateArgumentsList.end())
-             {
-            // Since we have a few places were these names are generated the code is sensative to names being
-            // generated exactly the same.  So the space on both sides of the "," is critical. This will be fixed
-            // and all locations where this is done are marked with "CRITICAL FUNCTION TO BE REFACTORED".
-            // returnName += ",";
-               returnName += " , ";
-             }
 
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (bottom of loop) returnName = %s \n",returnName.str());
@@ -760,6 +758,12 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                templateArgumentsList = &(isSgTemplateInstantiationTypedefDeclaration(decl)->get_templateArguments());
                break;
              }
+
+          case V_SgTemplateDeclaration:
+             {
+               templateArgumentsList = NULL;
+               break;
+             }
 #if 0
      // DQ (12/14/2016): Added new case
         case V_SgFunctionDeclaration:
@@ -783,7 +787,7 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
 
           default:
              {
-               printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
+               printf ("getTemplateArgumentList(): Default reached in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -888,9 +892,15 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
                break;
              }
 
+          case V_SgTemplateDeclaration:
+             {
+               templateParameterList = &(isSgTemplateDeclaration(decl)->get_templateParameters());
+               break;
+             }
+
           default:
              {
-               printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
+               printf ("getTemplateParameterList(): Default reached in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -1455,9 +1465,11 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // DQ (7/18/2012): Added debugging code (should fail for test2011_75.C).
      SgVariableSymbol* variableSymbol = scope->lookup_variable_symbol(name);
   // ROSE_ASSERT(variableSymbol == NULL);
+
 #if 0
      printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol = %p \n",variableSymbol);
 #endif
+
   // If there was a previous use of the variable, then there will be an existing symbol with it's declaration pointing to the SgInitializedName object.
      SgVariableDeclaration * varDecl = NULL;
      if (variableSymbol == NULL)
@@ -1519,7 +1531,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
         {
        // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
        // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
-          varDecl->set_parent(topScopeStack());
+
+       // DQ (6/25/2018): I think this is incorrect for test2018_109.C.
+          SgScopeStatement* current_scope = topScopeStack();
+#if 0
+          printf ("  --- Setting parent using topScopeStack() = %p = %s = %s \n",current_scope,current_scope->class_name().c_str(),SageInterface::get_name(current_scope).c_str());
+#endif
+          varDecl->set_parent(current_scope);
           ROSE_ASSERT(varDecl->get_parent() != NULL);
         }
 
@@ -1573,6 +1591,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // because we have added statements explicitly marked as transformations.
   // checkIsModifiedFlag(varDecl);
      unsetNodesMarkedAsModified(varDecl);
+
+  // DQ (6/25/2018): Added assertion.
+     ROSE_ASSERT(varDecl != NULL);
+
+#if 0
+     printf ("Leaving buildVariableDeclaration_nfi(): varDecl = %p varDecl->get_parent() = %p \n",varDecl,varDecl->get_parent());
+#endif
 
      return varDecl;
    }
@@ -12574,6 +12599,11 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
         }
+#if 0
+      printf ("In SageBuilder::buildClassDeclaration_nfi():\n");
+      printf ("  -- nameWithoutTemplateArguments = %s\n", nameWithoutTemplateArguments.str());
+      printf ("  -- nameWithTemplateArguments    = %s\n", nameWithTemplateArguments.str());
+#endif
 
   // DQ (7/27/2012): Note that the input name should not have template argument syntax.
   // I think this could still fail for a function with a name such as "X<Y>"  strange converstion operators.

@@ -1771,6 +1771,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
   // SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
      SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
      ROSE_ASSERT(decl != NULL);
+     SgTemplateClassDeclaration *tpldecl = isSgTemplateClassDeclaration(decl);
 
   // DQ (7/28/2013): Added assertion.
      ROSE_ASSERT(decl == decl->get_firstNondefiningDeclaration());
@@ -1856,35 +1857,40 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                   {
                     unp->u_exprStmt->unparseAttachedPreprocessingInfo(cDefiningDecl, info, PreprocessingInfo::before);
                   }
-            // DQ (6/6/2007): Type elaboration goes here.
-               bool useElaboratedType = generateElaboratedType(decl,info);
-               if (useElaboratedType == true)
-                  {
-                    switch (decl->get_class_type())
-                       {
-                         case SgClassDeclaration::e_class :
-                            {
-                              curprint ( "class ");
-                              break;
-                            }
-                         case SgClassDeclaration::e_struct :
-                            {
-                              curprint ( "struct ");
-                              break;
-                            }
-                         case SgClassDeclaration::e_union :
-                            {
-                              curprint ( "union ");
-                              break;
-                            }
-                         default:
-                            {
-                              printf ("Error: default reached in selection of elaborated type \n");
-                              ROSE_ASSERT(false);
-                              break;
-                            }
-                       }
-                  }
+
+               if (tpldecl != NULL) {
+                 curprint ( "template ");
+               } else {
+              // DQ (6/6/2007): Type elaboration goes here.
+                 bool useElaboratedType = generateElaboratedType(decl,info);
+                 if (useElaboratedType == true)
+                    {
+                      switch (decl->get_class_type())
+                         {
+                           case SgClassDeclaration::e_class :
+                              {
+                                curprint ( "class ");
+                                break;
+                              }
+                           case SgClassDeclaration::e_struct :
+                              {
+                                curprint ( "struct ");
+                                break;
+                              }
+                           case SgClassDeclaration::e_union :
+                              {
+                                curprint ( "union ");
+                                break;
+                              }
+                           default:
+                              {
+                                printf ("Error: default reached in selection of elaborated type \n");
+                                ROSE_ASSERT(false);
+                                break;
+                              }
+                         }
+                    }
+                }
              }
         }
 
@@ -1903,7 +1909,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
        // DQ (7/28/2012): Added support for un-named types in typedefs.
        // SgName nm = decl->get_name();
           SgName nm;
-#if 1
+
           if (decl->get_isUnNamed() == false || info.PrintName() == true)
              {
                nm = decl->get_name();
@@ -1918,26 +1924,6 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(false);
 #endif
              }
-#else
-          if (decl->get_isUnNamed() == false)
-             {
-               nm = decl->get_name();
-             }
-            else
-
-#error "DEAD CODE!"
-
-             {
-            // Else if this is a declaration in a variable declaration, then we do want to output a generated name.
-            // We could also mark the declaration for the cases where this is required. See test2012_141.C for this case.
-               ROSE_ASSERT(decl->get_parent() != NULL);
-               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl->get_parent());
-               if (variableDeclaration != NULL)
-                  {
-                    nm = decl->get_name();
-                  }
-             }
-#endif
 #if 0
           printf ("In unparseClassType: nm = %s \n",nm.str());
 #endif
@@ -1963,46 +1949,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #endif
 
                  // info.display("In unparseClassType: The C++ support is more complex and can require qualified names");
-#if 0
-                 // The C++ support is more complex and can require qualified names!
-                 // DQ (5/29/2011): Newest support for name qualification...
-                    SgName nameQualifier;
 
-                 // DQ (6/22/2011): I don't think we can assert this for anything than internal testing.  The unparseToString tests will fail with this assertion in place.
-                 // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
-                    if (info.get_reference_node_for_qualification() != NULL)
-                       {
-                      // printf ("In unparseClassType: info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-
-#error "DEAD CODE!"
-                      // DQ (6/2/2011): Newest support for name qualification...
-                         nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-                       }
-                      else
-                       {
-                      // printf ("In unparseClassType: info.get_reference_node_for_qualification() == NULL \n");
-                       }
-
-                 // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
-#if 0
-                    printf ("In unparseClassType: nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
-                 // curprint ( string("\n/* In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = ") + nameQualifier + " */ \n ");
-#endif
-                    curprint ( nameQualifier.str());
-
-                    SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(decl);
-                    if (isSgTemplateInstantiationDecl(decl) != NULL)
-                       {
-                      // Handle case of class template instantiation (code located in unparse_stmt.C)
-                         unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
-                       }
-#error "DEAD CODE!"
-                      else
-                       {
-                         curprint ( string(nm.str()) + " ");
-                      // printf ("class type name: nm = %s \n",nm.str());
-                       }
-#else
                  // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
                  // have an associated node to reference as a way to lookup the strored name qualification.  In this 
                  // case we return a fully qualified name.
@@ -2024,19 +1971,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #if 0
                          printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
 #endif
-#if 0
-                      // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
-                      // curprint ("\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
-                         curprint (nameQualifier.str());
-                         SgName nm = class_type->get_name();
 
-#error "DEAD CODE!"
-                         if (nm.getString() != "")
-                            {
-                           // printf ("Output qualifier of current types to the name = %s \n",nm.str());
-                              curprint ( nm.getString() + " ");
-                            }
-#endif
                       // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
 #if 0
                          printf ("In unparseClassType: nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
@@ -2091,7 +2026,6 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #endif
                             }
                        }
-#endif
 
                   }
              }
@@ -2131,7 +2065,6 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #endif
 
                  // DQ (12/3/2017): This is a problem for Cxx11_tests/test2017_31.C (but with it uncommented, C_tests/test2015_67.c does pass).
-#if 1
                  // DQ (4/4/2015): Comment out this to support test2015_67.c.
                  // info.unset_SkipClassDefinition();
                  // DQ (1/9/2014): Mark Enum and Class declaration handling consistantly (enforced within the unparser now).
@@ -2151,13 +2084,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          info.unset_SkipClassDefinition();
                          info.unset_SkipEnumDefinition();
                        }
-#else
-// #error "DEAD CODE!"
-                 // DQ (4/4/2015): This addresses the handling of test2015_67.c.
-#if 0
-                    printf ("In unparseClassType(): Skipping reset of info.unset_SkipClassDefinition() and info.unset_SkipEnumDefinition() \n");
-#endif
-#endif
+
 #if 0
                     printf ("In unparseClassType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
                     printf ("In unparseClassType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
