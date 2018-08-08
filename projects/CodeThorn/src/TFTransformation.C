@@ -272,6 +272,32 @@ string getVarRefHandle(SgVarRefExp* varRef){
   }
 }
 
+int instrumentADDecleration(SgInitializer* init){
+  if(SgInitializedName* initName = isSgInitializedName(init->get_parent())){
+    SgType* type = initName->get_type();
+    if(SgNodeHelper::isFloatingPointType(type)){
+      if(SgVariableDeclaration* varDec = isSgVariableDeclaration(initName->get_parent())){
+        SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
+        string varName   = SgNodeHelper::symbolToString(varSym); 
+        string handle    = getHandle(varDec);
+        string instrumentationString="AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);";
+        SgNode* stmtSearch=varDec;
+        while(!isSgStatement(stmtSearch)) {
+          stmtSearch=stmtSearch->get_parent();
+          if(!isSgStatement(stmtSearch)&&!isSgExpression(stmtSearch)) {
+            cerr<<"Error: Unsupported expression structure at "<<SgNodeHelper::sourceLineColumnToString(varDec)<<endl;
+            exit(1);
+          }
+        }
+        string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
+        SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
 //Transformation ad_intermediate
 void TFTransformation::instrumentADIntermediate(SgNode* root) {
   RoseAst ast(root);
@@ -279,6 +305,10 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
     SgBinaryOp* assignOp = nullptr;
     if((assignOp = isSgAssignOp(*i)));
     else if((assignOp = isSgCompoundAssignOp(*i)));
+    else if(SgInitializer* init = isSgInitializer(*i)){
+      adIntermediateTransformations += instrumentADDecleration(init);
+      continue;
+    }
     else continue;
     SgExpression* refExp = assignOp->get_lhs_operand();  
     SgType* varType=refExp->get_type();
