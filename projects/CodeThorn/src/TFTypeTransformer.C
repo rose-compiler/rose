@@ -32,41 +32,44 @@ HandleTransformDirective::HandleTransformDirective(SgNode* handleNode, bool base
 }
 
 //Methods for adding to directive list
-void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames){
-  TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,false,nullptr,nullptr,false);
-}
-
 void TFTypeTransformer::addHandleTransformationToList(std::list<VarTypeVarNameTuple>& list,SgType* type,bool base,SgNode* handleNode, bool listing){
-  TFTypeTransformer::addToTransformationList(list,type,nullptr,"",base,nullptr,handleNode,listing);
+  list.insert(list.begin(),new HandleTransformDirective(handleNode, base, listing, type));
 } 
 
 void TFTypeTransformer::addTypeTransformationToList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, SgType* fromType, bool listing){
-  TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,base,fromType,nullptr,listing);
+  list.push_back(new TypeTransformDirective(varNames, funDef, fromType, base, listing, type));  
 }
  
 void TFTypeTransformer::addNameTransformationToList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, bool listing){
-  TFTypeTransformer::addToTransformationList(list,type,funDef,varNames,base,nullptr,nullptr,listing);
-}
-
-void TFTypeTransformer::addToTransformationList(std::list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef,string varNames, bool base, SgType* fromType, SgNode* handleNode, bool listing) {
   vector<string> varNamesVector=CppStdUtilities::splitByComma(varNames);
   for (auto name:varNamesVector) {
-    TFTypeTransformer::VarTypeVarNameTuple p=std::make_tuple(type,funDef,name,base,fromType,handleNode,listing);
-    list.push_back(p);
+    list.push_back(new NameTransformDirective(name, funDef, base, listing, type));
   }
 }
 
 //Methods to run directive list
-int NameTransformDirective::run(SgProject* project){
-  return 0;
+int NameTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
+  SgNode* root = nullptr;
+  if(funDef) root = funDef;
+  else root = project;
+  int changes = tt->changeVariableType(root, name, toType, base, nullptr, listing);
+  if(changes == 0){
+    cout<<"Warning: Did not find variable "<<name;
+    if(funDef) cout<<" in function "<<SgNodeHelper::getFunctionName(funDef)<<"."<<endl;
+    else cout<<" in globals."<<endl;
+  }else if(changes > 1) cout<<"Warning: Found more than one declaration of variable "<<name<<"."<<endl;
+  return changes;
 }
 
-int TypeTransformDirective::run(SgProject* project){
-  return 0;
+int TypeTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
+  SgNode* root = nullptr;
+  if(funDef) root = funDef;
+  else root = project;
+  return tt->changeVariableType(root, location, toType, base, fromType, listing);
 }
 
-int HandleTransformDirective::run(SgProject* project){
-  return 0;
+int HandleTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
+  return tt->nathan_changeHandleType(node, toType, base, listing);
 }
 
 //TypeTransformer stores changes during analysis phase then performs the changes when done.
@@ -144,43 +147,22 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
 
 
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarNameTupleList& list) {
-  for (auto typeNameTuple:list) {
-    SgType* newVarType=std::get<0>(typeNameTuple);
-    SgFunctionDefinition* funDef=std::get<1>(typeNameTuple);
-    string varName=std::get<2>(typeNameTuple);
-    bool base = std::get<3>(typeNameTuple);
-    SgType* fromType = std::get<4>(typeNameTuple);
-    SgNode* handleNode = std::get<5>(typeNameTuple);
-    bool listing = std::get<6>(typeNameTuple);
-    SgNode* root=nullptr;
-    if(funDef)
-      root=funDef;
-    else
-      root=project;
-    if(!handleNode){
-      int numChanges=changeVariableType(root, varName, newVarType, base, fromType, listing);
-      if(numChanges==0 && fromType == nullptr) {
-        cout<<"Warning: Did not find variable "<<varName;
-        if(funDef) {
-          cout<<" in function "<<SgNodeHelper::getFunctionName(funDef)<<".";
-        } else {
-          cout<<" anywhere in file."<<endl;
-        }
-        cout<<endl;
-      } else if(numChanges>1 && fromType == nullptr) {
-        cout<<"Warning: Found more than one declaration of variable "<<varName<<endl;
-      }
-      if(fromType == nullptr) _totalNumChanges+=numChanges;
-      else _totalTypeNameChanges+=numChanges;
-      transformCommandLineFiles(project);
-    }else{
-      _totalHandleChanges+=nathan_changeHandleType(handleNode, newVarType, base, listing);
-    }
+  analyzeTransformations(project, list);
+  executeTransformations(project);
+}
+
+void TFTypeTransformer::analyzeTransformations(SgProject* project, VarTypeVarNameTupleList& list){
+  for (auto directive:list) {
+    _totalNumChanges += directive->run(project, this);
   }
-  _typeTransformer.transform();
   if(_writeConfig != ""){
     _outConfig->saveConfig(_writeConfig);
   }
+}
+
+void TFTypeTransformer::executeTransformations(SgProject* project){
+  _typeTransformer.transform();
+  transformCommandLineFiles(project);
 }
 
 void TFTypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
@@ -495,15 +477,6 @@ int TFTypeTransformer::getTotalNumChanges() {
   return _totalNumChanges;
 }
 
-int TFTypeTransformer::getTotalTypeNameChanges(){
-  return _totalTypeNameChanges;
-}
-
-int TFTypeTransformer::getTotalHandleChanges(){
-  return _totalHandleChanges;
-}
-
-
 void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
   ss<<numTypeReplace
@@ -518,21 +491,17 @@ void TFTypeTransformer::generateCsvTransformationStats(std::string fileName,int 
 
 void TFTypeTransformer::printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   stringstream ss;
-  int numTypeBasedReplacements=tt.getTotalTypeNameChanges();
-  int numVarNameBasedReplacements=tt.getTotalNumChanges();
-  int numHandleBasedReplacements=tt.getTotalHandleChanges();
+  int numReplacementsFound=tt.getTotalNumChanges();
   int arrayReadAccesses=tfTransformation.readTransformations;
   int arrayWriteAccesses=tfTransformation.writeTransformations;
   int arrayOfStructsAccesses=tfTransformation.arrayOfStructsTransformations;
   int adIntermediateTransformations=tfTransformation.adIntermediateTransformations;
-  cout<<"STATS: number of variable types changed (based on type-name): "<<numTypeBasedReplacements<<endl;
-  cout<<"STATS: number of variable types changed (based on var-name): "<<numVarNameBasedReplacements<<endl;
-  cout<<"STATS: number of variable types changed (based on handle): "<<numHandleBasedReplacements<<endl;
+  cout<<"STATS: number of variable type replacements found: "<<numReplacementsFound<<endl;
   cout<<"STATS: number of transformed array read accesses: "<<arrayReadAccesses<<endl;
   cout<<"STATS: number of transformed array write accesses: "<<arrayWriteAccesses<<endl;
   cout<<"STATS: number of transformed arrays of structs accesses: "<<arrayOfStructsAccesses<<endl;
   cout<<"STATS: number of ad_intermediate transformations: "<<adIntermediateTransformations<<endl;
-  int totalTransformations=numTypeBasedReplacements+numVarNameBasedReplacements+numHandleBasedReplacements+arrayReadAccesses+arrayWriteAccesses+arrayOfStructsAccesses+adIntermediateTransformations;
+  int totalTransformations=numReplacementsFound+arrayReadAccesses+arrayWriteAccesses+arrayOfStructsAccesses+adIntermediateTransformations;
   cout<<"STATS: total number of transformations: "<<totalTransformations<<endl;
 }
 

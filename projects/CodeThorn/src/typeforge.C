@@ -173,7 +173,8 @@ int main (int argc, char* argv[])
       exit(1);
     }
     auto list=typeforgeSpecFrontEnd.getTransformationList();
-    tt.transformCommandLineFiles(sageProject,list);
+    tt.analyzeTransformations(sageProject,list);
+    tt.executeTransformations(sageProject);
     if(args.isUserProvided("csv-stats-file")) {
       string csvFileName=args.getString("csv-stats-file");
       tt.generateCsvTransformationStats(csvFileName,
@@ -198,15 +199,15 @@ int main (int argc, char* argv[])
     SgFunctionDefinition* funDef=nullptr;
     if(args.isUserProvided("float-var")) {
       string varNames=args.getString("float-var");
-      tt.addToTransformationList(list,SageBuilder::buildFloatType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildFloatType(),funDef,varNames);
     }
     if(args.isUserProvided("double-var")) {
       string varNames=args.getString("double-var");
-      tt.addToTransformationList(list,SageBuilder::buildDoubleType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildDoubleType(),funDef,varNames);
     } 
     if(args.isUserProvided("long-double-var")) {
       string varNames=args.getString("long-double-var");
-      tt.addToTransformationList(list,SageBuilder::buildLongDoubleType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildLongDoubleType(),funDef,varNames);
     }
     tt.transformCommandLineFiles(sageProject,list);
     backend(sageProject);
