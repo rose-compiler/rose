@@ -11,7 +11,7 @@
 namespace Untyped {
 
 typedef SgScopeStatement*  InheritedAttribute;
-typedef SgExpression*      SynthesizedAttribute;
+typedef SgLocatedNode*     SynthesizedAttribute;
 
 class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>
   {

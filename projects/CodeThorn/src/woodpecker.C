@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
   if(args.getBool("lowering")) {
     logger[TRACE] <<"STATUS: Lowering started."<<endl;
     SPRAY::Lowering lowering;
-    lowering.transformAst(root);
+    lowering.runLowering(root);
     logger[TRACE] <<"STATUS: Lowering finished."<<endl;
   }
 

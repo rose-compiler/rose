@@ -91,8 +91,25 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
             // have been visited from somewhere else then the typedefDeclaration).
                nodeList.insert(typedefDeclaration);
 
+
             // Can this cause recursion?
-               addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+            // addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+
+            // DQ (6/30/2018): Detect a break cycles in typedefs (debugging test2018_118.C).
+               static std::set<SgTypedefDeclaration*> typedefDeclarationSet;
+               if (typedefDeclarationSet.find(typedefDeclaration) == typedefDeclarationSet.end())
+                  {
+                    typedefDeclarationSet.insert(typedefDeclaration);
+
+                 // Can this cause recursion?
+                    addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In addAssociatedNodes: typedefDeclaration was previously seen: typedefDeclaration = %p = %s \n",typedefDeclaration,typedefDeclaration->class_name().c_str());
+#endif
+                  }
 
             // DQ (6/23/2010): We need to include the type defined by the typedef as well.
             // addAssociatedNodes(typedefDeclaration->get_type(),nodeList,markMemberNodesDefinedToBeDeleted);

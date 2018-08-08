@@ -8646,6 +8646,30 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
          ;
    }
 
+#if 0
+// DQ (6/27/2018): This will be the template declaration test version of the template instantiation test function above.
+bool
+SageInterface::isTemplateDeclarationNode(SgNode* node) 
+   {
+  // DQ (7/19/2015): I think we want to focus exclusively on declarations.
+     if (isSgTemplateDefinition(node) != NULL)
+        {
+#if 0
+          printf ("Note: In SageInterface::isTemplateDeclarationNode(): skipping SgTemplateDefinition \n");
+#endif
+        }
+
+     return isSgTemplateInstantiationDecl(node)
+      // DQ (1/3/2016): Allow SgTemplateInstantiationDefn IR nodes.
+//       || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationFunctionDecl(node)
+         || isSgTemplateInstantiationMemberFunctionDecl(node)
+         || isSgTemplateInstantiationTypedefDeclaration(node)
+         || isSgTemplateInstantiationDirectiveStatement(node)
+         ;
+   }
+#endif
 
 void
 SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
@@ -15209,7 +15233,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                       new_statement->set_parent(doWhileStatement->get_parent());
                       myStatementInsert(doWhileStatement, new_statement, false);
                       SageInterface::myRemoveStatement(doWhileStatement);
-                      SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
+                      SgName varname = "rose__temp1"; // Does not need to be unique, but must not be used in user code anywhere
                       SgAssignInitializer* assignInitializer = buildAssignInitializer(
                           buildBoolValExp(true));
                       //SageInterface::getBoolType(doWhileStatement));
@@ -15222,9 +15246,15 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
          // DQ (12/14/2006): set the parent of the SgAssignInitializer to the variable (SgInitializedName).
             assignInitializer->set_parent(initname);
 
+#if 1
+                      // MS 7/3/2018: bugfix: above buildVariableDeclaration already creates var symbol
+                      SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);
+#else
                       SgVariableSymbol* varsym = new SgVariableSymbol(initname);
                       new_statement->insert_symbol(varname, varsym);
                       varsym->set_parent(new_statement->get_symbol_table());
+#endif
+                      
                       SageInterface::appendStatement(new_decl, new_statement);
                       SageInterface::appendStatement(doWhileStatement, new_statement);
                       assert (varsym);
@@ -15251,7 +15281,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                       new_statement->set_parent(ifStatement->get_parent());
                       myStatementInsert(ifStatement, new_statement, false);
                       SageInterface::myRemoveStatement(ifStatement);
-                      SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
+                      SgName varname = "rose__temp2"; // Does not need to be unique, but must not be used in user code anywhere
                       SgBoolValExp* trueVal = buildBoolValExp(true);
 
                       SgAssignInitializer* ai = buildAssignInitializer(trueVal);
@@ -15261,14 +15291,19 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                       SgInitializedName* initname = new_decl->get_variables().back();
                       ai->set_parent(initname);
                       initname->set_scope(new_statement);
+#if 1
+                      // MS 7/3/2018: bugfix: above buildVariableDeclaration already creates var symbol
+                      SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);
+#else
                       SgVariableSymbol* varsym = new SgVariableSymbol(initname);
                       new_statement->insert_symbol(varname, varsym);
                       varsym->set_parent(new_statement->get_symbol_table());
+#endif
                       SageInterface::appendStatement(new_decl, new_statement);
                       ifStatement->set_parent(new_statement);
                       assert (varsym);
 
-                                        SgCastExp* castExp2 = SageBuilder::buildCastExp(root, SageInterface::getBoolType(ifStatement));
+                      SgCastExp* castExp2 = SageBuilder::buildCastExp(root, SageInterface::getBoolType(ifStatement));
                       SgVarRefExp* vr = buildVarRefExp(varsym);
                       vr->set_lvalue(true);
                       SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp2 );
@@ -15290,7 +15325,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                       new_statement->set_parent(switchStatement->get_parent());
                       myStatementInsert(switchStatement, new_statement, false);
                       SageInterface::myRemoveStatement(switchStatement);
-                      SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
+                      SgName varname = "rose__temp3"; // Does not need to be unique, but must not be used in user code anywhere
                       switchCond->set_parent(NULL);
                       SgVariableDeclaration* new_decl = SageBuilder::buildVariableDeclaration(varname, switchCond->get_type(), SageBuilder::buildAssignInitializer(switchCond), new_statement);
                       SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);

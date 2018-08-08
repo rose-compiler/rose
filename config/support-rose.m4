@@ -602,6 +602,14 @@ ROSE_SUPPORT_SANITIZER
 
 # *****************************************************************
 
+
+# ********************************************************************************
+#    Option support for the Linux Coverage Test tools.
+# ********************************************************************************
+
+ROSE_SUPPORT_LCOV
+
+# *****************************************************************
 # ROSE_HOME should be relative to top_srcdir or top_builddir.
 ROSE_HOME=.
 # ROSE_HOME=`pwd`/$top_srcdir
