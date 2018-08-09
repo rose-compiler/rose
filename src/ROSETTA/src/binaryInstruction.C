@@ -2761,6 +2761,19 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Returns the width of the expression in bits according to its data type. The "type" property must be non-null. */
         size_t get_nBits() const;
+
+        /** Return a constant if possible.
+         *
+         *  If this expression is an integer expression with a constant that fits in a 64-bit unsigned type, then return it,
+         *  otherwise return nothing. */
+        Sawyer::Optional<uint64_t> asUnsigned() const;
+
+        /** Return a signed constant if possible.
+         *
+         *  If this expression is an integer expression with a constant that fits in a 64-bit signed type, then return it,
+         *  otherwise return nothing. */
+        Sawyer::Optional<int64_t> asSigned() const;
+
 #endif // SgAsmExpression_OTHERS
 
 #ifdef DOCUMENTATION
