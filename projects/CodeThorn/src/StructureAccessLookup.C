@@ -44,13 +44,13 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
     SgNode* node=*i;
     ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
-      cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
+      //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
 #if 1                
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
         if(isSgVariableDeclaration(dataMember)) {
-          cout<<"DEBUG: varDecl: "<<classDef->unparseToString()<<" : ";
+          //cout<<"DEBUG: varDecl: "<<classDef->unparseToString()<<" : ";
           VariableId varId=variableIdMapping->variableId(dataMember);
           if(varId.isValid()) {
             SgType* varType=variableIdMapping->getType(varId);
@@ -70,7 +70,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               
               // every varid is inserted exactly once.
               ROSE_ASSERT(varIdTypeSizeMap.find(varId)==varIdTypeSizeMap.end());
-              cout<<"Offset: "<<offset<<endl;
+              //cout<<"Offset: "<<offset<<endl;
               
               varIdTypeSizeMap.emplace(varId,offset);
               // for unions the offset is not increased (it is the same for all members)
