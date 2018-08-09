@@ -767,6 +767,14 @@ void Grammar::setUpBinaryInstructions() {
         // FIXME[Robb P Matzke 2017-02-13]: unused?
         void appendSources( SgAsmInstruction* instruction );
 
+        /** Number of operands. */
+        size_t nOperands() const;
+
+        /** Nth operand.
+         *
+         *  If the operand index is out of range, then null is returned. */
+        SgAsmExpression* operand(size_t) const;
+
         /** Determines if this instruction normally terminates a basic block.
          *
          *  The analysis only looks at the individual instruction and therefore is not very sophisticated.  For instance, a

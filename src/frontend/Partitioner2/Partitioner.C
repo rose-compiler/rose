@@ -1070,9 +1070,9 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
         BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
         if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(lastInsn)) {
             if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
-                x86insn->get_operandList()->get_operands().size() == 1 &&
-                isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])) {
-                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])
+                x86insn->nOperands() == 1 &&
+                isSgAsmIntegerValueExpression(x86insn->operand(0))) {
+                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
                                   ->get_absoluteValue();
                 nbytes += REG_IP.get_nbits() / 8;       // size of return address
                 stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), nbytes));

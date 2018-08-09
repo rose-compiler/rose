@@ -66,8 +66,8 @@ SystemCall::isSystemCall(SgAsmInstruction *insn_) const {
     if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_)) {
         if (insn->get_kind() == x86_syscall) {
             return true;
-        } else if (insn->get_kind() == x86_int && insn->get_operandList() && insn->get_operandList()->get_operands().size() == 1) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0]))
+        } else if (insn->get_kind() == x86_int && insn->nOperands() == 1) {
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(0)))
                 return ival->get_absoluteValue() == 0x80;
         }
     }

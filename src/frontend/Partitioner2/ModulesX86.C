@@ -479,9 +479,9 @@ matchJmpConst(const Partitioner &partitioner, SgAsmX86Instruction *jmp) {
 
 bool
 matchJmpMem(const Partitioner &partitioner, SgAsmX86Instruction *jmp) {
-    if (!jmp || jmp->get_kind()!=x86_jmp || jmp->get_operandList()->get_operands().size()!=1)
+    if (!jmp || jmp->get_kind()!=x86_jmp || jmp->nOperands() != 1)
         return false;                                   // not a JMP instruction
-    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(jmp->get_operandList()->get_operands()[0]);
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(jmp->operand(0));
     if (!mre)
         return false;                                   // JMP is not through memory
     ASSERT_not_null2(mre->get_type(), "all binary expressions have a type");
