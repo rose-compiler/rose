@@ -14,6 +14,18 @@ using namespace Rose::BinaryAnalysis;
 /** Indicates concrete stack delta is not known or not calculated. */
 const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero
 
+size_t
+SgAsmInstruction::nOperands() const {
+    if (!get_operandList())
+        return 0;
+    return get_operandList()->get_operands().size();
+}
+
+SgAsmExpression*
+SgAsmInstruction::operand(size_t i) const {
+    return i < nOperands() ? get_operandList()->get_operands()[i] : NULL;
+}
+
 void
 SgAsmInstruction::appendSources(SgAsmInstruction *inst) {
     p_sources.push_back(inst);
