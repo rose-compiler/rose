@@ -1246,12 +1246,12 @@ int main( int argc, char * argv[] ) {
     Normalization lowering;
     if(args.getBool("normalize")) {
       bool fcallsOnly=true;
-      lowering.normalizeExpressions(sageProject,fcallsOnly);
+      lowering.normalizeExpressionsInAst(sageProject,fcallsOnly);
       logger[TRACE]<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
     if(args.getBool("lowering")) {
-      lowering.runLowering(sageProject);
+      lowering.normalizeAst(sageProject);
       cout<<"STATUS: lowered language constructs."<<endl;
     }
 

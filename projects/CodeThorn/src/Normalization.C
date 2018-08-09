@@ -82,48 +82,73 @@ namespace SPRAY {
 
   void Normalization::normalizeAst(SgNode* root) {
     normalizeSingleStatementsToBlocks(root);
-
-    // TODO: normalize AST such that every expression in a statement has as root a SgExpressionRoot node
-    // this allows to transform any expression without updating the corresponding child pointer in the enclosing statement
-    // normalizeExpressionRootNodes(root);
-
-  }
-
-  void Normalization::runLowering(SgNode* root) {
-    normalizeSingleStatementsToBlocks(root);
     convertAllForsToWhiles(root);
     changeBreakStatementsToGotos(root);
     createLoweringSequence(root);
+    // currently only transforms while and do-while loops
     applyLoweringSequence();
     bool normalizeOnlyFunctionCalls=true;
-    normalizeExpressions(root,normalizeOnlyFunctionCalls);
+    hoistConditionsInAst(root,normalizeOnlyFunctionCalls);
+    normalizeExpressionsInAst(root,normalizeOnlyFunctionCalls);
     normalizeAllVariableDeclarations(root);
     if(getInliningOption()) {
       inlineFunctions(root);
     }
   }
 
+  // transformation: if(C) ... => T t=C; if(t) ...
+  // transformation: switch(C) ... => T t=C; switch(t) ...
+  // while/do-while/for: not applicable. Transform those before cond-hoisting.
+  void Normalization::hoistCondition(SgStatement* stmt) {
+    ROSE_ASSERT(isSgIfStmt(stmt)||isSgSwitchStatement(stmt));
+    SgExpression* cond=isSgExpression(SgNodeHelper::getCond(stmt));
+    ROSE_ASSERT(cond);
+    // TODO: 
+    // (i) build tmp var with cond as initializer and insert before stmt
+    // (ii) replace cond with new tmp-varref
+  }
+
+  void Normalization::hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
+    RoseAst ast(node);
+    for (auto node : ast) {
+      if(SgNodeHelper::isCond(node)) {
+        SgStatement* stmt=isSgStatement(node->get_parent());
+        if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
+          if(onlyNormalizeFunctionCallExpressions) {
+            if(hasFunctionCall(isSgExpression(SgNodeHelper::getCond(stmt)))) {
+              hoistCondition(stmt);
+            } else {
+              // do not hoist
+            }
+          } else {
+            hoistCondition(stmt);
+          }
+        }
+      }
+    }
+  }
+
   void Normalization::setInliningOption(bool flag) {
-    _inliningOption=flag;
+    options.inlining=flag;
   }
 
   bool Normalization::getInliningOption() {
-    return _inliningOption;
+    return options.inlining;
   }
   
   void Normalization::createLoweringSequence(SgNode* node) {
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(SgWhileStmt* stmt=isSgWhileStmt(*i)) {
-        loweringSequence.push_back(new WhileStmtLoweringOp(stmt));
+        loweringSequence.push_back(new NormalizationOpWhileStmt(stmt));
       } else if(SgDoWhileStmt* stmt=isSgDoWhileStmt(*i)) {
-        loweringSequence.push_back(new DoWhileStmtLoweringOp(stmt));
+        loweringSequence.push_back(new NormalizationOpDoWhileStmt(stmt));
       }
     }
   }
 
   void Normalization::applyLoweringSequence() {
-    BOOST_FOREACH(LoweringOp* loweringOp,loweringSequence) {
+    BOOST_FOREACH(NormalizationOp* loweringOp,loweringSequence) {
       loweringOp->analyse();
       loweringOp->transform();
     }
@@ -212,7 +237,7 @@ namespace SPRAY {
     return false;
   }
 
-  void Normalization::normalizeExpressions(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
+  void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
     // TODO: if temporary variables are generated, the initialization-list
     // must be put into a block, otherwise some generated gotos are
     // not legal (crossing initialization).
@@ -330,116 +355,6 @@ namespace SPRAY {
   void Normalization::createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target) {
     SgGotoStatement* newGoto=createGotoStmtAndInsertLabel(newLabel, target);
     block->append_statement(newGoto);
-  }
-
-  LoweringOp::LoweringOp() {}
-  LoweringOp::~LoweringOp() {}
-
-  void LoweringOp::analyse() {
-  }
-  void WhileStmtLoweringOp::analyse() {  
-  }
-  WhileStmtLoweringOp::WhileStmtLoweringOp(SgWhileStmt* node) {
-    this->node=node;
-  }
-  void WhileStmtLoweringOp::transform() {
-    //cout<<"DEBUG: transforming WhileStmt."<<endl;
-    SgBasicBlock* block=isSgBasicBlock(SgNodeHelper::getLoopBody(node));
-    ROSE_ASSERT(block); // must hold because all branches are normalized to be blocks
-    
-    SgLabelStatement* newLabel=Normalization::createLabel(node);
-    Normalization::createGotoStmtAtEndOfBlock(newLabel,block,node);
-
-    // build IfStmt
-    SgIfStmt* newIfStmt=SageBuilder::buildIfStmt(isSgExprStatement(SgNodeHelper::getCond(node)),
-                                                 block,
-                                                 0);
-    // replace while-stmt with if-stmt
-    isSgStatement(node->get_parent())->replace_statement(node,newIfStmt);
-    newIfStmt->set_parent(node->get_parent());
-
-    // handle continue statements
-    std::set<SgContinueStmt*> continueStmts=SgNodeHelper::loopRelevantContinueStmtNodes(node);
-
-    if(continueStmts.size()>0) {
-      // reuse same label (compact code) for gotos replacing continues
-      SgLabelStatement* labelForContinue = newLabel; 
-      BOOST_FOREACH(SgContinueStmt* continueStmt,continueStmts) {
-        SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(labelForContinue);
-        // replace continue with newGoto
-        isSgStatement(continueStmt->get_parent())->replace_statement(continueStmt,newGoto);
-        newGoto->set_parent(continueStmt->get_parent());
-      }
-    }
-  }
-
-  WhileStmtLoweringOp::~WhileStmtLoweringOp() {
-  }
-
-  DoWhileStmtLoweringOp::DoWhileStmtLoweringOp(SgDoWhileStmt* node) {
-    this->node=node;
-  }
-  void DoWhileStmtLoweringOp::transform() {
-    //cout<<"DEBUG: transforming DoWhileStmt."<<endl;
-    SgScopeStatement* scopeContainingDoWhileStmt=node->get_scope();
-    SgExprStatement* conditionOfDoWhileStmt=isSgExprStatement(SgNodeHelper::getCond(node));
-    ROSE_ASSERT(conditionOfDoWhileStmt);
-    SgBasicBlock* blockOfDoWhileStmt=isSgBasicBlock(SgNodeHelper::getLoopBody(node));
-    ROSE_ASSERT(blockOfDoWhileStmt);
-    SgStatement* parentOfDoWhileStmt=isSgStatement(node->get_parent());
-    ROSE_ASSERT(parentOfDoWhileStmt);
-
-    // build label
-    SgLabelStatement* newLabel =
-      SageBuilder::buildLabelStatement(Normalization::newLabelName(),
-                                       SageBuilder::buildBasicBlock(),
-                                       // MS: scope should be function scope?
-                                      scopeContainingDoWhileStmt);
-    SageInterface::prependStatement(newLabel, blockOfDoWhileStmt);
-
-    // build goto-stmt
-    SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabel);
-
-    // build if-stmt with condition of do-while-stmt and new goto
-    SgIfStmt* newIfStmt=SageBuilder::buildIfStmt(conditionOfDoWhileStmt,
-                                                 newGoto, // TODO: should be its own block?
-                                                 0);
-    newIfStmt->set_parent(blockOfDoWhileStmt);
-
-    // replace do-while with new block (of do-while) and insert if-stmt with conditional goto.
-    parentOfDoWhileStmt->replace_statement(node,blockOfDoWhileStmt);
-    SageInterface::appendStatement(newIfStmt,blockOfDoWhileStmt);
-
-    // handle continue statements
-    std::set<SgContinueStmt*> continueStmts=SgNodeHelper::loopRelevantContinueStmtNodes(node);
-    
-    if(continueStmts.size()>0) {
-      // create label for gotos replacing continues
-      SgLabelStatement* newLabelForContinue =
-        SageBuilder::buildLabelStatement(Normalization::newLabelName(),
-                                         SageBuilder::buildBasicBlock(),
-                                         // MS: scope should be function scope?
-                                         scopeContainingDoWhileStmt);
-      SageInterface::insertStatementBefore(newIfStmt, newLabelForContinue);
-      BOOST_FOREACH(SgContinueStmt* continueStmt,continueStmts) {
-        SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabelForContinue);
-        // replace continue with newGoto
-        isSgStatement(continueStmt->get_parent())->replace_statement(continueStmt,newGoto);
-        newGoto->set_parent(continueStmt->get_parent());
-      }
-    }
-  }
-
-  ForStmtLoweringOp::ForStmtLoweringOp(SgForStatement* node) {
-    this->node=node;
-  }
-  void ForStmtLoweringOp::transform() {
-  }
-
-  SwitchStmtLoweringOp::SwitchStmtLoweringOp(SgSwitchStatement* node) {
-    this->node=node;
-  }
-  void SwitchStmtLoweringOp::transform() {
   }
 
 } // end of namespace SPRAY

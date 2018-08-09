@@ -68,6 +68,7 @@ libspray_la_SOURCES=\
  WorkListSeq.h \
  TypeSizeMapping.h \
  SgTypeSizeMapping.h \
+ NormalizationOp.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AbstractValue.C \
@@ -111,6 +112,7 @@ libspray_la_SOURCES=\
  defUseQuery.C \
  TypeSizeMapping.C \
  SgTypeSizeMapping.C \
+ NormalizationOp.C \
  Timer.h \
  Timer.cpp
 

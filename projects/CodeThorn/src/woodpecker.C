@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
   if(args.getBool("lowering")) {
     logger[TRACE] <<"STATUS: Normalization started."<<endl;
     SPRAY::Normalization lowering;
-    lowering.runLowering(root);
+    lowering.normalizeAst(root);
     logger[TRACE] <<"STATUS: Normalization finished."<<endl;
   }
 

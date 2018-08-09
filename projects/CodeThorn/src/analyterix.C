@@ -860,7 +860,7 @@ int main(int argc, char* argv[]) {
   if(args.count("normalizefcalls")) {
     Normalization lowering;
     bool normalizeOnlyFunctionCalls=true;
-    lowering.normalizeExpressions(root,normalizeOnlyFunctionCalls);
+    lowering.normalizeExpressionsInAst(root,normalizeOnlyFunctionCalls);
     lowering.normalizeAllVariableDeclarations(root);
     cout<<"INFO: normalized function calls."<<endl;
   }
