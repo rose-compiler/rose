@@ -38,6 +38,7 @@
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
 #include <DispatcherM68k.h>
+#include <DispatcherPowerpc.h>
 #include <DispatcherX86.h>
 
 namespace Rose {
@@ -359,6 +360,7 @@ private:
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
         s.template register_type<InstructionSemantics2::DispatcherX86>();
         s.template register_type<InstructionSemantics2::DispatcherM68k>();
+        s.template register_type<InstructionSemantics2::DispatcherPowerpc>();
         s.template register_type<SymbolicExpr::Interior>();
         s.template register_type<SymbolicExpr::Leaf>();
         s.template register_type<YicesSolver>();

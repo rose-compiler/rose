@@ -1942,7 +1942,7 @@ Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
         if (startVa == *unmappedVa) {
             BOOST_FOREACH (const FunctionPrologueMatcher::Ptr &matcher, functionPrologueMatchers_) {
                 if (matcher->match(*this, startVa)) {
-                        std::vector<Function::Ptr> newFunctions = matcher->functions();
+                    std::vector<Function::Ptr> newFunctions = matcher->functions();
                     ASSERT_forbid(newFunctions.empty());
                     return newFunctions;
                 }

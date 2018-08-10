@@ -1133,3 +1133,7 @@ DispatcherPowerpc::record(const BaseSemantics::SValuePtr &result)
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherPowerpc);
+#endif
