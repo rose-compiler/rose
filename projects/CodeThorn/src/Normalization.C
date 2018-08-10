@@ -93,8 +93,12 @@ namespace SPRAY {
       createLoweringSequence(root);
       applyLoweringSequence();
     }
-    hoistConditionsInAst(root,options.restrictToFunCallExpressions);
-    normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
+    if(options.hoistConditionExpressions) {
+      hoistConditionsInAst(root,options.restrictToFunCallExpressions);
+    }
+    if(options.normalizeExpressions) {
+      normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
+    }
     if(options.normalizeVariableDeclarations) {
       normalizeAllVariableDeclarations(root);
     }

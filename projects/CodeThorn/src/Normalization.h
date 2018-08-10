@@ -19,14 +19,20 @@ namespace SPRAY {
   class Normalization {
   public:
     struct Options {
+      // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
+      // turns single statements into blocks with one statement
       bool normalizeSingleStatements=true;
-      bool eliminateForStatements=true; // replaced by while
-      bool eliminateWhileStatements=true; // replace by if/goto
-      // eliminate operators '||', '&&'
-      bool eliminateShortCircuitOperators=false;
-      // eliminate operator '?'
-      bool eliminateConditionalExpressionOp=false;
+      // replace for with while
+      bool eliminateForStatements=true;
+      // replace while with if/goto
+      bool eliminateWhileStatements=true; 
+      // eliminate operators '||', '&&' (not supported yet)
+      const bool eliminateShortCircuitOperators=false;
+      // eliminate operator '?' (not supported yet)
+      const bool eliminateConditionalExpressionOp=false;
+      bool hoistConditionExpressions=true;
+      bool normalizeExpressions=true;
       bool normalizeVariableDeclarations=false;
       bool inlining=false;
     } options;

@@ -859,9 +859,12 @@ int main(int argc, char* argv[]) {
 
   if(args.count("normalizefcalls")) {
     Normalization lowering;
-    bool normalizeOnlyFunctionCalls=true;
-    lowering.normalizeExpressionsInAst(root,normalizeOnlyFunctionCalls);
-    lowering.normalizeAllVariableDeclarations(root);
+    lowering.options.normalizeVariableDeclarations=true;
+    lowering.options.eliminateForStatements=false;
+    lowering.options.eliminateForStatements=false;
+    lowering.options.eliminateWhileStatements=false;
+    lowering.options.hoistConditionExpressions=false;
+    lowering.normalizeAst(root);
     cout<<"INFO: normalized function calls."<<endl;
   }
 
