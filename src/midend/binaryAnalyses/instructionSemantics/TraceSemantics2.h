@@ -91,26 +91,31 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public BaseSemantics::RiscOperators {
     BaseSemantics::RiscOperatorsPtr subdomain_;         // Domain to which all our RISC operators chain
     Sawyer::Message::Stream stream_;                    // stream to which output is emitted
-    
+    std::string indentation_;                           // string to print at start of each line
+    bool showingSubdomain_;                             // show subdomain name and address on each line of output?
+    bool showingInstructionVa_;                         // show instruction VA on each line of output?
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors.
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
+        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]), showingSubdomain_(true),
+          showingInstructionVa_(true) {
         name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
     explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
+        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]), showingSubdomain_(true),
+          showingInstructionVa_(true) {
         name("Trace");
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
         : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
-          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]) {
+          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), showingSubdomain_(true),
+          showingInstructionVa_(true) {
         name("Trace");
     }
 
@@ -216,6 +221,33 @@ public:
      * @{ */
     Sawyer::Message::Stream& stream() { return stream_; }
     void stream(Sawyer::Message::Stream &s) { stream_ = s; }
+    /** @} */
+
+    /** Property: Line prefix string.
+     *
+     *  This string will be printed at the start of each line of output. It's usually used for indentation.
+     *
+     * @{ */
+    const std::string& indentation() const { return indentation_; }
+    void indentation(const std::string &s) { indentation_ = s; }
+    /** @} */
+
+    /** Property: Show subdomain name in output.
+     *
+     *  If true, then the subdomain name and object address is printed for each line of output.
+     *
+     * @{ */
+    bool showingSubdomain() const { return showingSubdomain_; }
+    void showingSubdomain(bool b) { showingSubdomain_ = b; }
+    /** @} */
+
+    /** Property: Show instruction in output.
+     *
+     *  If true, then each line of output will contain the instruction virtual address.
+     *
+     * @{ */
+    bool showingInstructionVa() const { return showingInstructionVa_; }
+    void showingInstructionVa(bool b) { showingInstructionVa_ = b; }
     /** @} */
 
 protected:

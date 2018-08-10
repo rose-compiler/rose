@@ -11,13 +11,17 @@ void
 RiscOperators::linePrefix() {
     if (stream_) {
         const char *sep = "";
-        if (subdomain_) {
+        stream_ <<indentation_;
+
+        if (showingSubdomain_ && subdomain_) {
             stream_ <<subdomain_->name() <<"@" <<subdomain_.get();
             sep = " ";
         }
-        if (SgAsmInstruction *insn = currentInstruction()) {
-            stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(nInsns()-1) <<"]";
-            sep = " ";
+        if (showingInstructionVa_) {
+            if (SgAsmInstruction *insn = currentInstruction()) {
+                stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(nInsns()-1) <<"]";
+                sep = " ";
+            }
         }
         if (*sep)
             stream_ <<": ";
