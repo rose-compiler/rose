@@ -222,6 +222,8 @@ public:
     virtual void emitInstructionOperands(std::ostream&, SgAsmInstruction*, State&) const;
     virtual void emitInstructionComment(std::ostream&, SgAsmInstruction*, State&) const;
 
+    virtual void emitInstructionSemantics(std::ostream&, SgAsmInstruction*, State&) const;
+
     virtual void emitOperand(std::ostream&, SgAsmExpression*, State&) const;
     virtual void emitOperandPrologue(std::ostream&, SgAsmExpression*, State&) const;
     virtual void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const;

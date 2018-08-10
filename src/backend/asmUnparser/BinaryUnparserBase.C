@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+#include <BaseSemantics2.h>
 #include <BinaryUnparserBase.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
@@ -212,6 +213,9 @@ Settings::Settings() {
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
     insn.comment.fieldWidth = 1;
+    insn.semantics.showing = false;                     // not usually desired, and somewhat slow
+    insn.semantics.formatter.set_show_latest_writers(false);
+    insn.semantics.formatter.set_line_prefix("        ;; state: ");
 }
 
 // class method
@@ -244,6 +248,7 @@ Settings::minimal() {
     s.insn.operands.fieldWidth = 40;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
+    s.insn.semantics.showing = false;
 
     return s;
 }
@@ -370,6 +375,10 @@ commandLineSwitches(Settings &settings) {
                         "If comments are being shown and an instruction has an empty comment, then use the instruction "
                         "description instead.  This is especially useful for users that aren't familiar with the "
                         "instruction mnemonics for this architecture.");
+
+    insertBooleanSwitch(sg, "insn-semantics", settings.insn.semantics.showing,
+                        "Run each instruction on a clean semantic state and show the results. This is useful if you want "
+                        "to see the effect of each instruction.");
 
     return sg;
 }
@@ -1114,6 +1123,7 @@ Base::emitInstructionEpilogue(std::ostream &out, SgAsmInstruction *insn, State &
     if (nextUnparser()) {
         nextUnparser()->emitInstructionEpilogue(out, insn, state);
     } else {
+        state.frontUnparser().emitInstructionSemantics(out, insn, state);
     }
 }
 
@@ -1214,6 +1224,24 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
             comment = insn->description();
         if (!comment.empty())
             out <<"; " <<StringUtility::cEscape(comment);
+    }
+}
+
+void
+Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+    ASSERT_not_null(insn);
+    if (settings().insn.semantics.showing) {
+        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        if (InstructionSemantics2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+            try {
+                cpu->processInstruction(insn);
+                InstructionSemantics2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
+                std::ostringstream ss;
+                ss <<"\n" <<(*cpu->currentState()->registerState() + fmt) <<(*cpu->currentState()->memoryState() + fmt);
+                out <<StringUtility::trim(ss.str(), "\n", false, true);
+            } catch (...) {
+            }
+        }
     }
 }
 
