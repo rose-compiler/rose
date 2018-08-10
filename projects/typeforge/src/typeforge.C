@@ -9,7 +9,6 @@
 #include "rose.h"
 #include "AstTerm.h"
 #include "SgNodeHelper.h"
-#include "Timer.h"
 #include "CommandLineOptions.h"
 #include "AstProcessing.h"
 #include "AstMatching.h"
