@@ -81,17 +81,24 @@ namespace SPRAY {
   }
 
   void Normalization::normalizeAst(SgNode* root) {
-    normalizeSingleStatementsToBlocks(root);
-    convertAllForsToWhiles(root);
-    changeBreakStatementsToGotos(root);
-    createLoweringSequence(root);
-    // currently only transforms while and do-while loops
-    applyLoweringSequence();
-    bool normalizeOnlyFunctionCalls=true;
-    hoistConditionsInAst(root,normalizeOnlyFunctionCalls);
-    normalizeExpressionsInAst(root,normalizeOnlyFunctionCalls);
-    normalizeAllVariableDeclarations(root);
-    if(getInliningOption()) {
+    if(options.normalizeSingleStatements) {
+      normalizeSingleStatementsToBlocks(root);
+    }
+    if(options.eliminateForStatements) {
+      convertAllForsToWhiles(root);
+    }
+    if(options.eliminateWhileStatements) {
+      changeBreakStatementsToGotos(root);
+      // currently only transforms while and do-while loops
+      createLoweringSequence(root);
+      applyLoweringSequence();
+    }
+    hoistConditionsInAst(root,options.restrictToFunCallExpressions);
+    normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
+    if(options.normalizeVariableDeclarations) {
+      normalizeAllVariableDeclarations(root);
+    }
+    if(options.inlining) {
       inlineFunctions(root);
     }
   }
@@ -104,27 +111,50 @@ namespace SPRAY {
     SgExpression* cond=isSgExpression(SgNodeHelper::getCond(stmt));
     ROSE_ASSERT(cond);
     // TODO: 
-    // (i) build tmp var with cond as initializer and insert before stmt
+
+    // (i) build tmp var with cond as initializer
+    SgVariableDeclaration* tmpVarDeclaration = 0;
+    SgExpression* tmpVarReference = 0;
+    SgScopeStatement* scope=stmt->get_scope();
+    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(cond, scope);
+    tmpVarDeclaration->set_parent(scope);
+    ROSE_ASSERT(tmpVarDeclaration!= 0);
+
     // (ii) replace cond with new tmp-varref
+    bool deleteReplacedExpression=false;
+    SgNodeHelper::replaceExpression(cond,tmpVarReference,deleteReplacedExpression);
+
+    // (iii) set cond as initializer in new variable declaration
+    //TODO turn condition into initializer
+    //tmpVarDeclaration->reset_initializer(cond);
+
+    // (iv) insert declaration with initializer before stmt
+    SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
   }
 
   void Normalization::hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
+    list<SgStatement*> transformationList;
     RoseAst ast(node);
+    // build list of stmts to transform
     for (auto node : ast) {
       if(SgNodeHelper::isCond(node)) {
         SgStatement* stmt=isSgStatement(node->get_parent());
         if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
           if(onlyNormalizeFunctionCallExpressions) {
             if(hasFunctionCall(isSgExpression(SgNodeHelper::getCond(stmt)))) {
-              hoistCondition(stmt);
+              transformationList.push_back(stmt);
             } else {
               // do not hoist
             }
           } else {
-            hoistCondition(stmt);
+            transformationList.push_back(stmt);
           }
         }
       }
+    }
+    // transform stmts
+    for (auto stmt: transformationList) {
+      hoistCondition(stmt);
     }
   }
 
@@ -166,6 +196,7 @@ namespace SPRAY {
       }
     }
   }
+
 
   void Normalization::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr) {
     // 1) generate tmp-var assignment node with expr as lhs
