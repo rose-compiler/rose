@@ -112,21 +112,24 @@ namespace SPRAY {
   // while/do-while/for: not applicable. Transform those before cond-hoisting.
   void Normalization::hoistCondition(SgStatement* stmt) {
     ROSE_ASSERT(isSgIfStmt(stmt)||isSgSwitchStatement(stmt));
-    SgExpression* cond=isSgExpression(SgNodeHelper::getCond(stmt));
-    ROSE_ASSERT(cond);
-    // TODO: 
-
+    SgNode* condNode=SgNodeHelper::getCond(stmt);
+    ROSE_ASSERT(condNode);
+    if(isSgExprStatement(condNode)) {
+      condNode=SgNodeHelper::getExprStmtChild(condNode);
+    }
+    SgExpression* condExpr=isSgExpression(condNode);
+    ROSE_ASSERT(condExpr);
     // (i) build tmp var with cond as initializer
     SgVariableDeclaration* tmpVarDeclaration = 0;
     SgExpression* tmpVarReference = 0;
     SgScopeStatement* scope=stmt->get_scope();
-    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(cond, scope);
+    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(condExpr, scope);
     tmpVarDeclaration->set_parent(scope);
     ROSE_ASSERT(tmpVarDeclaration!= 0);
 
     // (ii) replace cond with new tmp-varref
     bool deleteReplacedExpression=false;
-    SgNodeHelper::replaceExpression(cond,tmpVarReference,deleteReplacedExpression);
+    SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
 
     // (iii) set cond as initializer in new variable declaration
     //TODO turn condition into initializer

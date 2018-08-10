@@ -360,8 +360,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   experimentalOptions.add_options()
-    ("normalize", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
-    ("lowering", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
+    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
+    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
@@ -1244,13 +1244,14 @@ int main( int argc, char * argv[] ) {
     /* perform inlining before variable ids are computed, because
        variables are duplicated by inlining. */
     Normalization lowering;
-    if(args.getBool("normalize")) {
-      bool fcallsOnly=true;
-      lowering.normalizeExpressionsInAst(sageProject,fcallsOnly);
+    if(args.getBool("normalize-fcalls")) {
+      lowering.options.restrictToFunCallExpressions=true;
+      lowering.normalizeAst(sageProject);
       logger[TRACE]<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("lowering")) {
+    if(args.getBool("normalize-all")) {
+      lowering.options.restrictToFunCallExpressions=false;
       lowering.normalizeAst(sageProject);
       cout<<"STATUS: lowered language constructs."<<endl;
     }

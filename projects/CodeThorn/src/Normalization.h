@@ -42,6 +42,20 @@ namespace SPRAY {
 
     static void setLabelPrefix(std::string prefix);
     static std::string newLabelName();
+    bool hasFunctionCall(SgExpression* expr);
+    static SgLabelStatement* createLabel(SgStatement* target);
+    static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
+    static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
+
+    // enable/disable inling. By default off.
+    void setInliningOption(bool flag);
+    bool getInliningOption();
+    // calls ROSE SageInterface function for inlining
+    size_t inlineFunctions(SgNode* root);
+    // default value, can be overwritten
+    int inlineDepth=10; 
+
+  private:
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
@@ -56,20 +70,6 @@ namespace SPRAY {
     // converts for-stmts to while-stmts (uses SageInterface function)
     void convertAllForsToWhiles (SgNode* top);
 
-    static SgLabelStatement* createLabel(SgStatement* target);
-    static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
-    static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
-    bool hasFunctionCall(SgExpression* expr);
-
-    // enable/disable inling. By default off.
-    void setInliningOption(bool flag);
-    bool getInliningOption();
-    // calls ROSE SageInterface function for inlining
-    size_t inlineFunctions(SgNode* root);
-    // default value, can be overwritten
-    int inlineDepth=10; 
-
-  private:
     // normalizes all single statements in if-statements to blocks (sage version)
     void normalizeSingleStatementsToBlocks(SgNode* node);
 

@@ -635,7 +635,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-equivalence check-data-races check-svcomp-witness
+CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-normalization check-equivalence check-data-races check-svcomp-witness
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
 CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven-reset-analyzer
@@ -774,17 +774,11 @@ check-commandline-options: ./codethorn
 	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
-check-lowering:
-	@echo ================================================================
-	@echo RUNNING LOWERING TESTS
-	@echo ================================================================
-	$(srcdir)/scripts/runLoweringTests $(srcdir)/tests
-
 check-deadcode:
-	@echo ================================================================
-	@echo RUNNING DEADCODE TESTS
-	@echo ================================================================
 	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
+
+check-normalization:
+	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
