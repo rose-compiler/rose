@@ -92,7 +92,7 @@ class TFTransformation {
     void appendNode(SgNode* node, std::string newCode);
     void transformationExecution();
   private:
-    std::list<TransformationSpec> _transformationList;
+    std::list<TransformationSpec*> _transformationList;
     std::list<std::tuple<std::string,bool>> _newHeaders;
     std::map<SgNode*, ReplacementString*> _transformations;
     

@@ -53,7 +53,7 @@ int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation*
 }
 
 int IncludeTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
-
+  return 0;
 }
 
 ReplacementString::ReplacementString(string before, string overwrite, string after){

@@ -15,7 +15,7 @@ AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/typeforge/src -g -rdynamic
 
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-typeforge_DEPENDENCIES=libspray.la
+typeforge_DEPENDENCIES=
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C
