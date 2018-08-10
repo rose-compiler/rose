@@ -8,7 +8,7 @@
 
 class TFTypeTransformer;
 
-class TypeTransformer{
+class Transformer{
   private:
     typedef std::tuple<std::string,SgType*> ReplacementTuple;
     std::map<SgNode*, ReplacementTuple> transformations;
@@ -91,7 +91,7 @@ class TFTypeTransformer {
   int  nathan_changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing);
  private:
   CastTransformer _castTransformer;
-  TypeTransformer _typeTransformer;
+  Transformer _transformer;
   static bool _traceFlag;
   int _totalNumChanges=0;
   ToolConfig* _outConfig;

@@ -73,7 +73,7 @@ int HandleTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
 }
 
 //TypeTransformer stores changes during analysis phase then performs the changes when done.
-int TypeTransformer::transform(){
+int Transformer::transform(){
   for(auto i = transformations.begin(); i != transformations.end(); i++){
     SgNode* node     = i->first;
     string  location = get<0>(i->second);
@@ -89,7 +89,7 @@ int TypeTransformer::transform(){
   return transformationsCount;
 }
 
-int TypeTransformer::addTransformation(string key, SgType* newType, SgNode* node){
+int Transformer::addTransformation(string key, SgType* newType, SgNode* node){
   if(transformations.count(node) != 0){
     return 0;
   }else{
@@ -161,7 +161,7 @@ void TFTypeTransformer::analyzeTransformations(SgProject* project, VarTypeVarNam
 }
 
 void TFTypeTransformer::executeTransformations(SgProject* project){
-  _typeTransformer.transform();
+  _transformer.transform();
   transformCommandLineFiles(project);
 }
 
@@ -245,7 +245,7 @@ int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, 
       SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
       string varName = SgNodeHelper::symbolToString(varSym);
       TFTypeTransformer::trace("Found declaration of variable "+varName+".");// Change type to "+changeType->unparseToString());
-      _typeTransformer.addTransformation(varName, changeType, initName);
+      _transformer.addTransformation(varName, changeType, initName);
       //initName->set_type(changeType);
       return 1;
     }
@@ -259,7 +259,7 @@ int TFTypeTransformer::nathan_changeHandleType(SgNode* handle, SgType* newType, 
       string funName = SgNodeHelper::getFunctionName(funDef);
       if(!listing){
         TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+".");// Change type to "+newType->unparseToString());
-        _typeTransformer.addTransformation(funName+":$return", newType, funType);
+        _transformer.addTransformation(funName+":$return", newType, funType);
         //funType->set_orig_return_type(newType);
         return 1;
       }
@@ -286,7 +286,7 @@ int TFTypeTransformer::nathan_changeType(SgInitializedName* varInitName, SgType*
   } 
   else{
     TFTypeTransformer::trace("Found declaration of variable "+varName+" in "+scopeName+".");// Change type to "+baseType->unparseToString());
-    _typeTransformer.addTransformation(scopeName+":"+varName,baseType,varInitName);
+    _transformer.addTransformation(scopeName+":"+varName,baseType,varInitName);
     //varInitName->set_type(baseType);
     return 1;
   }
@@ -364,7 +364,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
         TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+".");// Changed type to "+replaceType->unparseToString());
         if(listing) nathan_addToActionList("$return", funName, fromType, newType, funDecl, base);
         else{
-          _typeTransformer.addTransformation(funName+":$return", funType, replaceType);
+          _transformer.addTransformation(funName+":$return", funType, replaceType);
           //funType->set_orig_return_type(replaceType);
           foundVar++;
         }

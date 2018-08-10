@@ -7,6 +7,79 @@
 
 using namespace std;
 
+//Methods for building transform list
+TransformationSpec::TransformationSpec(SgFunctionDefinition* def){funDef = def;}
+ADTransformation::ADTransformation(SgFunctionDefinition* def) : TransformationSpec(def){}
+ArrayStructTransformation::ArrayStructTransformation(SgFunctionDefinition* def, SgType* accessType) : TransformationSpec(def){type = accessType;}
+ReadWriteTransformation::ReadWriteTransformation(SgFunctionDefinition* def, SgType* accessType) : TransformationSpec(def){type = accessType;}
+PragmaTransformation::PragmaTransformation(string from, string to) : TransformationSpec(nullptr){fromString = from; toString = to;}
+IncludeTransformation::IncludeTransformation(string include, bool system) : TransformationSpec(nullptr){includeFile = include; systemHeader = system;}
+
+void TFTransformation::addADTransformation(SgFunctionDefinition* funDef){
+
+}
+
+void TFTransformation::addArrayStructTransformation(SgFunctionDefinition* funDef, SgType* accessType){
+
+}
+
+void TFTransformation::addReadWriteTransformation(SgFunctionDefinition* funDef, SgType* accessType){
+
+}
+
+void TFTransformation::addPragmaTransformation(string from, string to){
+
+}
+
+void TFTransformation::addIncludeTransformation(string includeFile, bool systemHeader){
+
+}
+
+//Methods to analyze and execute
+int ADTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int ArrayStructTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int ReadWriteTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int IncludeTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+
+}
+
+ReplacementString::ReplacementString(string before, string overwrite, string after){
+  prepend = before; replace = overwrite; append = after;
+}
+
+void TFTransformation::prependNode(SgNode* node, string newCode){
+
+}
+
+void TFTransformation::replaceNode(SgNode* node, string newCode){
+
+}
+
+void TFTransformation::appendNode(SgNode* node, string newCode){
+
+}
+
+void TFTransformation::transformationAnalyze(SgProject* project){
+
+}
+
+void TFTransformation::transformationExecution(){
+
+}
+
 SgType* getElementType(SgType* type) {
   if(SgPointerType* ptrType=isSgPointerType(type)) {
     return getElementType(ptrType->get_base_type());
@@ -290,7 +363,7 @@ int instrumentADDecleration(SgInitializer* init){
           }
         }
         string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
-        SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+        //SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
         return 1;
       }
     }
@@ -347,7 +420,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
   }
 }
 
-void TFTransformation::instrumentADIndependent(SgNode* root, SgFunctionDefinition* funDef){
+void TFTransformation::instrumentADGlobals(SgNode* root, SgFunctionDefinition* funDef){
   if(!funDef) return;
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(isSgProject(root));
   if(listOfGlobalVars.size() > 0){
@@ -358,11 +431,13 @@ void TFTransformation::instrumentADIndependent(SgNode* root, SgFunctionDefinitio
         SgType* varType = varInit->get_type()->findBaseType();
         if(SgNodeHelper::isFloatingPointType(varType)){
           SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInit);
-          if(varSym){
-            string varName = SgNodeHelper::symbolToString(varSym);
-            string handle = getHandle(varDecl);
-            instString += "AD_independent("+varName+",\""+handle+"\", SOURCE_INFO);\n";
-            adIntermediateTransformations++;
+          if(varInit->get_initializer() != nullptr){
+            if(varSym){
+              string varName = SgNodeHelper::symbolToString(varSym);
+              string handle = getHandle(varDecl);
+              instString += "AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);\n";
+              adIntermediateTransformations++;
+            }
           }
         }
       }
