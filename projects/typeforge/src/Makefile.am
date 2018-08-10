@@ -1,0 +1,57 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+EXTRA_DIST = 
+
+bin_PROGRAMS = typeforge
+noinst_PROGRAMS = 
+
+CLEANFILES = 
+
+typeforge_YFLAGS = -p ltl_ # yacc flags for specification parser (not used yet)
+typeforge_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+typeforge_DEPENDENCIES=libspray.la
+
+typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+typeforge_DEPENDENCIES=libspray.la
+typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C
+
+CHECK_DEFAULT=check-typeforge
+
+check-local: $(CHECK_DEFAULT)
+
+check-typeforge: typeforge
+	@echo ================================================================
+	@echo RUNNING TYPEFORGE TESTS
+	@echo ================================================================
+	rm -f typegraph.dot
+	rm -f rose_casttest3.C
+#	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
+#	dot -Tpdf typegraph.dot -o type-graph.pdf
+#	./typeforge --explicit $(srcdir)/tests/casttest1.C
+	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
+	./typeforge --spec-file=$(srcdir)/tests/casttest3.tyf --trace $(srcdir)/tests/casttest3.C 
+	g++ -Wall rose_casttest3.C
+	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tyf --trace $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
+	rm -f a.out
+
+check-typeforge:
+	@echo ================================================================
+	@echo RUNNING DEADCODE TESTS
+	@echo ================================================================
+	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
+
+docs:
+	cd "$(srcdir)" && doxygen
+
+clean-local:
+	rm -f *.dot
+	rm -f *.ps
+	rm -f *.jpg
+
+distclean-local: clean
+	rm -f *.tgz
+	rm -f *~
+	rm -rf ../docs/doxygen
