@@ -484,6 +484,12 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
 #endif // SgAsmPowerpcInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
