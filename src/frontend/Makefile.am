@@ -88,6 +88,7 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/ModulesLinux.h		\
 	Partitioner2/ModulesM68k.h		\
 	Partitioner2/ModulesPe.h		\
+	Partitioner2/ModulesPowerpc.h		\
 	Partitioner2/ModulesX86.h		\
 	Partitioner2/OwnedDataBlock.h		\
 	Partitioner2/Partitioner.h		\

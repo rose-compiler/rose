@@ -103,6 +103,60 @@ SgAsmPowerpcInstruction::terminatesBasicBlock() {
     }
 }
 
+bool
+SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns,
+                                            rose_addr_t *target, rose_addr_t *return_va) {
+    if (insns.empty())
+        return false;
+    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insns.back());
+    if (!insn)
+        return false;
+
+    // Quick method based only on the kind of instruction
+    rose_addr_t tgt;
+    if (insn->get_kind() == powerpc_bl && insn->nOperands() == 1 && insn->operand(0)->asUnsigned().assignTo(tgt)) {
+        if (target)
+            *target = tgt;
+        if (return_va)
+            *return_va = insn->get_address() + insn->get_size();
+        return true;
+    }
+    
+    return false;
+}
+
+bool
+SgAsmPowerpcInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns,
+                                            rose_addr_t *target, rose_addr_t *return_va) {
+    return isFunctionCallFast(insns, target, return_va);
+}
+
+bool
+SgAsmPowerpcInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>& insns) {
+    if (insns.empty())
+        return false;
+    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insns.back());
+    if (!insn)
+        return false;
+
+    // Quick method based only on the kind of instruction.  Returns are normally coded as
+    //    BCLR BO, BI, BH
+    // where the BO field is the 5-bit constant 0b1x1xx where the x means 0 or 1
+    // where the BI field is anything (usually zero)
+    // where the BH field is zero
+    if (insn->get_kind() == powerpc_bclr && insn->nOperands() == 3 &&
+        (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
+        insn->operand(2)->asUnsigned().orElse(1) == 0)
+        return true;
+
+    return false;
+}
+
+bool
+SgAsmPowerpcInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
+    return isFunctionReturnFast(insns);
+}
+
 // Determines whether this is the special PowerPC "unknown" instruction.
 bool
 SgAsmPowerpcInstruction::isUnknown() const

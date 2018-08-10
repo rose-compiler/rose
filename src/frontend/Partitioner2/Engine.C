@@ -7,6 +7,7 @@
 #include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DisassemblerM68k.h"
+#include "DisassemblerPowerpc.h"
 #include "DisassemblerX86.h"
 #include "SRecord.h"
 #include <boost/algorithm/string/classification.hpp>
@@ -17,6 +18,7 @@
 #include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
+#include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
@@ -1211,6 +1213,7 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
+    p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
     if (settings_.partitioner.findingThunks)
         p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
@@ -1248,6 +1251,13 @@ Engine::createTunedPartitioner() {
         return p;
     }
 
+    if (dynamic_cast<DisassemblerPowerpc*>(disassembler_)) {
+        checkCreatePartitionerPrerequisites();
+        Partitioner p = createBarePartitioner();
+        p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
+        return p;
+    }
+    
     return createGenericPartitioner();
 }
 
