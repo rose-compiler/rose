@@ -71,10 +71,8 @@ SgAsmElfFileHeader::machine_to_isa(unsigned machine) const
       case 5:        return ISA_M88K_Family;
       case 7:        return ISA_I860_Family;
       case 8:        return ISA_MIPS_Family;
-      case 20:
-        // Note that PowerPC has: p_e_machine = 20 = 0x14, using both gcc on BGL and xlc on BGL.
-        // However, these don't seem like correct values for PowerPC.
-        return ISA_PowerPC;
+      case 20:       return ISA_PowerPC;
+      case 21:       return ISA_PowerPC_64bit;
       case 40:       return ISA_ARM_Family;
       case 62:       return ISA_X8664_Family;
       default:
