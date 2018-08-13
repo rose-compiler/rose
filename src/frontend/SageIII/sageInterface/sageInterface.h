@@ -2640,7 +2640,7 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
      return retval;
    }
 
-
+void detectCycleInType(SgType * type, char * from = NULL);
 
 }// end of namespace
 

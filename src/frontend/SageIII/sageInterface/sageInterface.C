@@ -22166,3 +22166,49 @@ SageInterface::isNormalizedTemplateInstantiation (SgFunctionDeclaration* functio
      return retval;
    }
 #endif
+
+void SageInterface::detectCycleInType(SgType * type, char * from) {
+#if 0
+  printf("In detectCycleInType():\n");
+  if (from != NULL) printf(" -- from = %s\n", from);
+  printf(" -- type = %p (%s)\n", type, type->class_name().c_str());
+#endif
+  std::vector<SgType *> seen_types;
+
+  while (type != NULL) {
+    std::vector<SgType *>::const_iterator it = std::find(seen_types.begin(), seen_types.end(), type);
+    if (it != seen_types.end()) {
+      printf("ERROR: Cycle found in type = %p (%s):\n", type, type->class_name().c_str());
+      size_t i = 0;
+      for (; it != seen_types.end(); it++) {
+        printf("  [%zd] %p (%s)\n", i, *it, (*it)->class_name().c_str());
+        i++;
+      }
+      if (from != NULL) printf("-> detectCycleInType() was called from: %s\n", from);
+      ROSE_ASSERT(false);
+    }
+    seen_types.push_back(type);
+
+    SgModifierType *  modType     = isSgModifierType(type);
+    SgPointerType *   pointType   = isSgPointerType(type);
+    SgReferenceType * refType     = isSgReferenceType(type);
+    SgArrayType *     arrayType   = isSgArrayType(type);
+    SgTypedefType *   typedefType = isSgTypedefType(type);
+
+    if ( modType ) {
+      type = modType->get_base_type();
+    } else if ( refType ) {
+      type = refType->get_base_type();
+    } else if ( pointType ) {
+      type = pointType->get_base_type();
+    } else if ( arrayType ) {
+      type = arrayType->get_base_type();
+    } else if ( typedefType ) {
+      type = typedefType->get_base_type();
+    } else {
+      break;
+    }
+    ROSE_ASSERT(type != NULL);
+  }
+}
+

@@ -3703,7 +3703,12 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
         {
           skipThisType = true;
         }
- 
+
+#if 0
+     printf("In NameQualificationTraversal::traverseType:\n");
+     printf(" -- type = %p (%s) : %s\n", type, type->class_name().c_str(), type->unparseToString().c_str());
+#endif
+
   // TV (04/03/2018): Traverse type structure associated with non-real "stuff" (template parameters and their members)
      SgType * btype = type->stripType();
      SgNonrealType * nrtype = isSgNonrealType(btype);

@@ -1882,6 +1882,9 @@ SgType::findBaseType() const
 #endif
    }
 
+#define DEBUG_SGTYPE_STRIPTYPE 0
+#define DEBUG_SGTYPE_STRIPTYPE_MORE 0
+
 SgType*
 SgType::stripType(unsigned char bit_array) const
    {
@@ -1893,7 +1896,9 @@ SgType::stripType(unsigned char bit_array) const
   // Cast away const of "this" pointer
      SgType* currentType = (SgType*) this;
 
-#if 0
+     SageInterface::detectCycleInType(currentType, "SgType::stripType");
+
+#if DEBUG_SGTYPE_STRIPTYPE
      printf ("Inside of SgType::stripType(bit_array = %u): this = %p = %s \n",bit_array,currentType,currentType->class_name().c_str());
 #endif
 
@@ -1906,12 +1911,12 @@ SgType::stripType(unsigned char bit_array) const
      size_t counter = 0;
      while (true)
         {
-#if 0
-          printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+#if DEBUG_SGTYPE_STRIPTYPE
+          printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " this = %p = %s = %s \n",bit_array,counter,currentType,currentType->class_name().c_str(),currentType->unparseToString().c_str());
 #endif
           if ( (bit_array & STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
-#if 0
+#if DEBUG_SGTYPE_STRIPTYPE_MORE
                printf ("In loop of SgType::stripType(): found SgModifierType \n");
 #endif
                currentType = modType->get_base_type();
@@ -1920,7 +1925,7 @@ SgType::stripType(unsigned char bit_array) const
              {
                if ( (bit_array & STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
                   {
-#if 0
+#if DEBUG_SGTYPE_STRIPTYPE_MORE
                     printf ("In loop of SgType::stripType(): found SgReferenceType \n");
 #endif
                     currentType = refType->get_base_type();
@@ -1929,7 +1934,7 @@ SgType::stripType(unsigned char bit_array) const
                   {
                     if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
                        {
-#if 0
+#if DEBUG_SGTYPE_STRIPTYPE_MORE
                          printf ("In loop of SgType::stripType(): found SgPointerType \n");
 #endif
                          currentType = pointType->get_base_type();
@@ -1938,7 +1943,7 @@ SgType::stripType(unsigned char bit_array) const
                        {
                          if ( (bit_array & STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
                             {
-#if 0
+#if DEBUG_SGTYPE_STRIPTYPE_MORE
                               printf ("In loop of SgType::stripType(): found SgArrayType \n");
 #endif
                               currentType = arrayType->get_base_type();
@@ -1947,7 +1952,7 @@ SgType::stripType(unsigned char bit_array) const
                             {
                               if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
                                  {
-#if 0
+#if DEBUG_SGTYPE_STRIPTYPE_MORE
                                    printf ("In loop of SgType::stripType(): found SgTypedefType: currentType = %p = %s typedefType->get_base_type() = %p = %s \n",
                                         currentType,currentType->class_name().c_str(),typedefType->get_base_type(),typedefType->get_base_type()->class_name().c_str());
 #endif
@@ -1958,7 +1963,7 @@ SgType::stripType(unsigned char bit_array) const
                                  {
                                 // Exit the while(true){} loop!
                                    ROSE_ASSERT(currentType != NULL);
-#if 0
+#if DEBUG_SGTYPE_STRIPTYPE
                                    printf ("In loop of SgType::stripType(): exiting loop: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
 #endif
                                    break;
@@ -1971,12 +1976,12 @@ SgType::stripType(unsigned char bit_array) const
        // DQ (7/4/2013): This should be a reasonable limit.
           if (counter >= 80)
              {
-               printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+               printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " currentType = %p = %s = %s\n",bit_array,counter,currentType,currentType->class_name().c_str(),currentType->unparseToString().c_str());
              }
           if (counter >= 100)
              {
             // Exit loop and return the currentType... 
-               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %" PRIuPTR ") this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %" PRIuPTR ") currentType = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
 #if 0
                break;
 #endif
