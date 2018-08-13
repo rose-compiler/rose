@@ -1122,13 +1122,16 @@ Unparse_ExprStmt::isAnonymousClass(SgType* templateArgumentType)
      return returnValue;
    }
 
+#define DEBUG_UNPARSE_TEMPLATE_ARGUMENT 0
+
 void
 Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
    {
      ROSE_ASSERT(templateArgument != NULL);
 
-#if 0
-     printf ("In unparseTemplateArgument() = %p (explicitlySpecified = %s) \n",templateArgument,(templateArgument->get_explicitlySpecified() == true) ? "true" : "false");
+#if DEBUG_UNPARSE_TEMPLATE_ARGUMENT
+     printf ("In unparseTemplateArgument():\n");
+     printf (" -- templateArgument = %p (explicitlySpecified = %s) \n",templateArgument,(templateArgument->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
@@ -1179,10 +1182,15 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // (documented in the Unparse_ExprStmt::generateNameQualifier() member function.
   // newInfo.set_forceQualifiedNames();
 
-#if 0
-     printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length()     = %d \n",templateArgument->get_name_qualification_length());
-     printf ("In unparseTemplateArgument(): templateArgument->get_global_qualification_required() = %s \n",(templateArgument->get_global_qualification_required() == true) ? "true" : "false");
-     printf ("In unparseTemplateArgument(): templateArgument->get_type_elaboration_required()     = %s \n",(templateArgument->get_type_elaboration_required() == true) ? "true" : "false");
+#if DEBUG_UNPARSE_TEMPLATE_ARGUMENT
+     printf (" -- newInfo.forceQualifiedNames()                 = %s \n", newInfo.forceQualifiedNames() ? "true" : "false");
+     printf (" -- newInfo.requiresGlobalNameQualification()     = %s \n", newInfo.requiresGlobalNameQualification() ? "true" : "false");
+     printf (" -- newInfo.get_name_qualification_length()       = %d \n", newInfo.get_name_qualification_length());
+     printf (" -- newInfo.get_global_qualification_required()   = %s \n", newInfo.get_global_qualification_required() ? "true" : "false");
+     printf (" -- newInfo.get_type_elaboration_required()       = %s \n", newInfo.get_type_elaboration_required() ? "true" : "false");
+     printf (" -- templateArgument->get_name_qualification_length()     = %d \n", templateArgument->get_name_qualification_length());
+     printf (" -- templateArgument->get_global_qualification_required() = %s \n", templateArgument->get_global_qualification_required() ? "true" : "false");
+     printf (" -- templateArgument->get_type_elaboration_required()     = %s \n", templateArgument->get_type_elaboration_required() ? "true" : "false");
 #endif
 
   // DQ (5/14/2011): Added support for newer name qualification implementation.
@@ -1194,6 +1202,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // DQ (5/30/2011): Added support for name qualification.
      newInfo.set_reference_node_for_qualification(templateArgument);
      ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
+
+     if (newInfo.requiresGlobalNameQualification()) {
+       newInfo.set_global_qualification_required(true);
+       newInfo.set_reference_node_for_qualification(NULL);
+     }
+
 
 #if 0
      printf ("Exiting in unparseTemplateArgument() to see where this is called \n");
