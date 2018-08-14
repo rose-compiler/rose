@@ -33,18 +33,28 @@ check-typeforge: typeforge
 #	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
-	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/casttest3.tyf --trace $(srcdir)/tests/casttest3.C 
+	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C --compile
 	g++ -Wall rose_casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tyf --trace $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/json_replace_test.json --trace $(srcdir)/tests/json_replace_test.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json --trace $(srcdir)/tests/json_out_test.C --compile
+	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/json_out_test.C --compile
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_compound_test.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_array_test.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_global_test.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
 	rm -f a.out
 
-check-typeforge:
-	@echo ================================================================
-	@echo RUNNING DEADCODE TESTS
-	@echo ================================================================
-	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
+#check-typeforge:
+#	@echo ================================================================
+#	@echo RUNNING DEADCODE TESTS
+#	@echo ================================================================
+#	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
 
 docs:
 	cd "$(srcdir)" && doxygen
