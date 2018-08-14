@@ -4,7 +4,8 @@
 #include "TFTransformation.h"
 #include "AstTerm.h"
 #include "abstract_handle.h"
-
+#include "CppStdUtilities.h"
+#include <boost/algorithm/string.hpp>
 using namespace std;
 
 //Methods for building transform list
@@ -13,46 +14,78 @@ ADTransformation::ADTransformation(SgFunctionDefinition* def) : TransformationSp
 ArrayStructTransformation::ArrayStructTransformation(SgFunctionDefinition* def, SgType* accessType) : TransformationSpec(def){type = accessType;}
 ReadWriteTransformation::ReadWriteTransformation(SgFunctionDefinition* def, SgType* accessType) : TransformationSpec(def){type = accessType;}
 PragmaTransformation::PragmaTransformation(string from, string to) : TransformationSpec(nullptr){fromString = from; toString = to;}
-IncludeTransformation::IncludeTransformation(string include, bool system) : TransformationSpec(nullptr){includeFile = include; systemHeader = system;}
+IncludeTransformation::IncludeTransformation(string include, bool system, SgSourceFile* sourceFile) : TransformationSpec(nullptr){includeFile = include; systemHeader = system; source = sourceFile;}
 
 void TFTransformation::addADTransformation(SgFunctionDefinition* funDef){
-
+  _transformationList.push_back(new ADTransformation(funDef));
 }
 
 void TFTransformation::addArrayStructTransformation(SgFunctionDefinition* funDef, SgType* accessType){
-
+  _transformationList.push_back(new ArrayStructTransformation(funDef, accessType));
 }
 
 void TFTransformation::addReadWriteTransformation(SgFunctionDefinition* funDef, SgType* accessType){
-
+  _transformationList.push_back(new ReadWriteTransformation(funDef, accessType));
 }
 
 void TFTransformation::addPragmaTransformation(string from, string to){
-
+  _transformationList.push_back(new PragmaTransformation(from, to));
 }
 
-void TFTransformation::addIncludeTransformation(string includeFile, bool systemHeader){
-
+void TFTransformation::addIncludeTransformation(string includeFile, bool systemHeader, SgSourceFile* source){
+  _transformationList.push_back(new IncludeTransformation(includeFile, systemHeader, source));
 }
 
 //Methods to analyze and execute
 int ADTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  tf->instrumentADIntermediate(funDef);
+  tf->instrumentADGlobals(project, ast);
   return 0;
 }
 
 int ArrayStructTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  tf->transformArrayOfStructsAccesses(type, funDef);
   return 0;
 }
 
 int ReadWriteTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  tf->transformHancockAccess(type, funDef);
   return 0;
 }
 
 int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  vector<string> splitFrom = CppStdUtilities::splitByRegex(fromString, " ");
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i){
+    if(SgPragma* pragmaNode = isSgPragma(*i)){
+      vector<string> splitPragma = CppStdUtilities::splitByRegex(pragmaNode->get_pragma(), " ");
+      bool match = true;
+      if(fromString != ""){
+        for(size_t i = 0; i < splitFrom.size(); i++){
+          if(i >= splitPragma.size()){
+            match = false;
+            break;
+          }
+          if(splitFrom[i] != splitPragma[i]){
+            match = false;
+            break;
+          }
+        }
+      }
+      if(match){
+        long splitPragmaSize = (long) splitPragma.size();
+        for(int i = 0; i < splitPragmaSize; i++){
+          string findString = "$" + to_string(i);
+          boost::replace_all(toString, findString, splitPragma[i]);
+        }
+        tf->replaceNode(pragmaNode->get_parent(),toString);
+      }
+    }
+  }
   return 0;
 }
 
 int IncludeTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  tf->insertInclude(includeFile, systemHeader, source);  
   return 0;
 }
 
@@ -60,24 +93,63 @@ ReplacementString::ReplacementString(string before, string overwrite, string aft
   prepend = before; replace = overwrite; append = after;
 }
 
-void TFTransformation::prependNode(SgNode* node, string newCode){
+string ReplacementString::generate(SgNode* node){
+  string composition = "\n";
+  if(prepend != "") composition += prepend;
+  if(replace != "") composition += replace;
+  else composition += node->unparseToString();
+  if(append  != "") composition += "\n" + append;
+  return composition;
+}
 
+void TFTransformation::insertInclude(string includeFile, bool systemHeader, SgSourceFile* source){
+  _newHeaders.push_back(std::make_tuple(includeFile, systemHeader, source));
+}
+
+void TFTransformation::prependNode(SgNode* node, string newCode){
+  if(_transformations.count(node) == 0){
+    ReplacementString* newReplace = new ReplacementString(newCode + "\n", "", "");
+    _transformations[node] = newReplace;
+  }else{
+    _transformations[node]->prepend += newCode + "\n";
+  }
 }
 
 void TFTransformation::replaceNode(SgNode* node, string newCode){
-
+  if(_transformations.count(node) == 0){
+    ReplacementString* newReplace = new ReplacementString("", newCode, "");
+    _transformations[node] = newReplace;
+  }else{
+    //Possible error
+    _transformations[node]->replace = newCode;
+  }
 }
 
 void TFTransformation::appendNode(SgNode* node, string newCode){
-
+  if(_transformations.count(node) == 0){
+    ReplacementString* newReplace = new ReplacementString("", "", "\n" + newCode);
+    _transformations[node] = newReplace;
+  }else{
+    _transformations[node]->append += "\n" + newCode;
+  }
 }
 
 void TFTransformation::transformationAnalyze(SgProject* project){
-
+  RoseAst ast(project);
+  for(auto spec : _transformationList){
+    spec->run(project, ast, this);
+  }
 }
 
 void TFTransformation::transformationExecution(){
-
+  for(auto newInclude : _newHeaders){
+    SageInterface::insertHeader(std::get<2>(newInclude), std::get<0>(newInclude), false);
+  }
+  for(auto i = _transformations.begin(); i != _transformations.end(); i++){
+    SgNode* node = i->first;
+    ReplacementString* rep = i->second;
+    SgNodeHelper::replaceAstWithString(node,rep->generate(node));
+  }
 }
 
 SgType* getElementType(SgType* type) {
@@ -151,7 +223,8 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
       string oldCode0=(*j)["$ArrayAccessPattern"]->unparseToString();
       string newCode0=ds+".get("+e1+","+e2+")";
       string newCode=newCode0; // ';' is unparsed as part of the statement that contains the assignop
-      SgNodeHelper::replaceAstWithString((*j)["$ArrayAccessPattern"], newCode);
+      //SgNodeHelper::replaceAstWithString((*j)["$ArrayAccessPattern"], newCode);
+      replaceNode((*j)["$ArrayAccessPattern"], newCode);
       std::cout << std::endl;
       std::string lineCol=SgNodeHelper::sourceLineColumnToString((*j)["$ArrayAccessPattern"]);
       if(trace) {
@@ -243,8 +316,8 @@ void TFTransformation::transformArrayAssignments(SgType* accessType,SgNode* root
       } else {
         //oldCode2="/* OLD: "+oldCode0+"*/;\n"; TODO: must strip preceding comment generated by previous transformation
       }
-      SgNodeHelper::replaceAstWithString((*i)["$Root"], oldCode2+newCode);
-
+      //SgNodeHelper::replaceAstWithString((*i)["$Root"], oldCode2+newCode);
+      replaceNode((*i)["$Root"],oldCode2+newCode);
       std::string lineCol=SgNodeHelper::sourceLineColumnToString((*i)["$Root"]);
       if(trace) {
         cout <<"TRANSFORMATION: "<<lineCol<<" OLD:"<<oldCode0<<endl;
@@ -309,7 +382,8 @@ void TFTransformation::transformArrayOfStructsAccesses(SgType* accessType,SgNode
       }
       arrayOfStructsTransformations++;
       string newCode=newCode0; // ';' is unparsed as part of the statement that contains the assignop
-      SgNodeHelper::replaceAstWithString(matchedPattern, newCode);
+      //SgNodeHelper::replaceAstWithString(matchedPattern, newCode);
+      replaceNode(matchedPattern, newCode);
       std::string lineCol=SgNodeHelper::sourceLineColumnToString(matchedPattern);
       //mRHS.printMarkedLocations();
       //mRHS.printMatchOperationsSequence();
@@ -345,7 +419,7 @@ string getVarRefHandle(SgVarRefExp* varRef){
   }
 }
 
-int instrumentADDecleration(SgInitializer* init){
+int TFTransformation::instrumentADDecleration(SgInitializer* init){
   if(SgInitializedName* initName = isSgInitializedName(init->get_parent())){
     SgType* type = initName->get_type();
     if(SgNodeHelper::isFloatingPointType(type)){
@@ -364,6 +438,7 @@ int instrumentADDecleration(SgInitializer* init){
         }
         string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
         //SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+        appendNode(stmtSearch, instrumentationString);
         return 1;
       }
     }
@@ -381,8 +456,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
     else if(SgInitializer* init = isSgInitializer(*i)){
       adIntermediateTransformations += instrumentADDecleration(init);
       continue;
-    }
-    else continue;
+    }else continue;
     SgExpression* refExp = assignOp->get_lhs_operand();  
     SgType* varType=refExp->get_type();
     SgVarRefExp* varRefExp = nullptr;
@@ -412,7 +486,8 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
           // instrument now: insert empty statement and replace it with macro call
           //cout<<"TRANSFORMATION: insert after "<< SgNodeHelper::sourceLineColumnToString(stmtSearch) <<" : "<<instrumentationString<<endl;
           string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
-          SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+          //SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+          appendNode(stmtSearch, instrumentationString);
           adIntermediateTransformations++;
         }
       }
@@ -420,32 +495,33 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
   }
 }
 
-void TFTransformation::instrumentADGlobals(SgNode* root, SgFunctionDefinition* funDef){
-  if(!funDef) return;
-  list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(isSgProject(root));
+void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
+  list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
   if(listOfGlobalVars.size() > 0){
     string instString = "";
-    for(auto varDecl: listOfGlobalVars){
-      SgInitializedName* varInit = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-      if(varInit){
-        SgType* varType = varInit->get_type()->findBaseType();
-        if(SgNodeHelper::isFloatingPointType(varType)){
-          SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInit);
-          if(varInit->get_initializer() != nullptr){
-            if(varSym){
-              string varName = SgNodeHelper::symbolToString(varSym);
-              string handle = getHandle(varDecl);
-              instString += "AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);\n";
-              adIntermediateTransformations++;
+    for(RoseAst::iterator i = ast.begin(); i != ast.end();i++){
+      SgPragma* pragma = isSgPragma(*i);
+      if(!pragma) continue;
+      if(pragma->get_pragma() != "adapt begin") continue;
+      for(auto varDecl: listOfGlobalVars){
+        SgInitializedName* varInit = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+        if(varInit){
+          SgType* varType = varInit->get_type()->findBaseType();
+          if(SgNodeHelper::isFloatingPointType(varType)){
+            SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInit);
+            if(varInit->get_initializer() != nullptr){
+              if(varSym){
+                string varName = SgNodeHelper::symbolToString(varSym);
+                string handle = getHandle(varDecl);
+                instString += "AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);\n";
+                adIntermediateTransformations++;
+              }
             }
           }
         }
       }
+      appendNode(pragma->get_parent(), instString);
+      return;
     }
-    SgStatementPtrList statementList = funDef->get_body()->get_statements();
-    SgStatement* firstStatement = statementList.front();
-    string oldSource = firstStatement->unparseToString();
-    string newSource = oldSource+"\n"+instString;
-    SgNodeHelper::replaceAstWithString(firstStatement,newSource);
   }
 }

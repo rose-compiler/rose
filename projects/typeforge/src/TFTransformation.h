@@ -50,8 +50,9 @@ class IncludeTransformation : public TransformationSpec{
   private:
     std::string includeFile;
     bool systemHeader;
+    SgSourceFile* source;
   public:
-    IncludeTransformation(std::string include, bool system);
+    IncludeTransformation(std::string include, bool system, SgSourceFile* sourceFile);
     int run(SgProject* project, RoseAst ast, TFTransformation* tf);
 };
 
@@ -80,20 +81,22 @@ class TFTransformation {
     void transformArrayOfStructsAccesses(SgType* accessType,SgNode* root);
     //Transformation ad_intermediate
     void instrumentADIntermediate(SgNode* root);
-    void instrumentADGlobals(SgNode* root, SgFunctionDefinition* funDef);
+    int instrumentADDecleration(SgInitializer* init);
+    void instrumentADGlobals(SgProject* project, RoseAst ast);
     void addADTransformation(SgFunctionDefinition* funDef);
     void addArrayStructTransformation(SgFunctionDefinition* funDef, SgType* accessType);
     void addReadWriteTransformation(SgFunctionDefinition* funDef, SgType* accessType);
     void addPragmaTransformation(std::string from, std::string to);
-    void addIncludeTransformation(std::string includeFile, bool systemHeader);
+    void addIncludeTransformation(std::string includeFile, bool systemHeader, SgSourceFile* source);
     void transformationAnalyze(SgProject* project);
+    void insertInclude(std::string includeFile, bool systemHeader, SgSourceFile* source);
     void prependNode(SgNode* node, std::string newCode);
     void replaceNode(SgNode* node, std::string newCode);
     void appendNode(SgNode* node, std::string newCode);
     void transformationExecution();
   private:
     std::list<TransformationSpec*> _transformationList;
-    std::list<std::tuple<std::string,bool>> _newHeaders;
+    std::list<std::tuple<std::string,bool,SgSourceFile*>> _newHeaders;
     std::map<SgNode*, ReplacementString*> _transformations;
     
 };

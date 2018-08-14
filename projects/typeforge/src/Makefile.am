@@ -38,7 +38,7 @@ check-typeforge: typeforge
 	g++ -Wall rose_casttest3.C
 	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/json_replace_test.json --trace $(srcdir)/tests/json_replace_test.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/json_replace_test.json --trace $(srcdir)/tests/json_replace_test.C 
 	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json --trace $(srcdir)/tests/json_out_test.C --compile
 	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/json_out_test.C --compile
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
@@ -48,7 +48,7 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
-	rm -f a.out
+	rm -f a.out craft_initial.json
 
 #check-typeforge:
 #	@echo ================================================================

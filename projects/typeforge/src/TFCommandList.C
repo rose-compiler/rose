@@ -257,16 +257,15 @@ int TransformCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransforme
     SgType* accessType=buildTypeFromStringSpec(accessTypeName,funDef);
     if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
     if(transformationName=="readwrite_access_transformation") {
-      tfTransformation.transformHancockAccess(accessType,funDef);
+      tfTransformation.addReadWriteTransformation(funDef, accessType);
+      //tfTransformation.transformHancockAccess(accessType,funDef);
     } else if(transformationName=="arrayofstructs_access_transformation") {
-      tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
+      tfTransformation.addArrayStructTransformation(funDef, accessType);
+      //tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
     } else if(transformationName=="ad_intermediate_instrumentation") {
-      tfTransformation.instrumentADIntermediate(funDef);
+      tfTransformation.addADTransformation(funDef);
+      //tfTransformation.instrumentADIntermediate(funDef);
     }
-  }
-  if(transformationName == "ad_intermediate_instrumentation"){
-    SgFunctionDefinition* funDef=completeAst.findFunctionByName("main");
-    tfTransformation.instrumentADGlobals(root, funDef);
   }
   return false; 
 }
@@ -295,7 +294,8 @@ int IncludeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer&
   }
   for (auto file : listOfFiles) {
     if(SgSourceFile* source = isSgSourceFile(file)){
-      SageInterface::insertHeader(source,includeName,false,true);
+      tfTransformation.addIncludeTransformation(includeName, false, source);
+      //SageInterface::insertHeader(source,includeName,false,true);
     }  
   }
   return false; 
@@ -307,7 +307,8 @@ PragmaCommand::PragmaCommand(std::string from, std::string to, int number) : Com
 }
 
 int PragmaCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
-  for(RoseAst::iterator i=completeAst.begin();i!=completeAst.end();++i){
+  tfTransformation.addPragmaTransformation(fromMatch, toReplace);
+  /*for(RoseAst::iterator i=completeAst.begin();i!=completeAst.end();++i){
     if(SgPragma* pragmaNode = isSgPragma(*i)){
       vector<string> splitFrom = CppStdUtilities::splitByRegex(fromMatch, " ");
       vector<string> splitPragma = CppStdUtilities::splitByRegex(pragmaNode->get_pragma(), " ");
@@ -333,7 +334,7 @@ int PragmaCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& 
         SgNodeHelper::replaceAstWithString(pragmaNode->get_parent(),"\n"+toReplace);
       }
     }
-  }
+  }*/
   return false;
 }
 

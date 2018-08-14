@@ -163,6 +163,7 @@ int main (int argc, char* argv[])
     tt.setTraceFlag(true);
   }
   if(args.isUserProvided("spec-file") && !objectFiles) {
+    //Setup phase
     string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
@@ -172,8 +173,13 @@ int main (int argc, char* argv[])
       exit(1);
     }
     auto list=typeforgeSpecFrontEnd.getTransformationList();
+    //Analysis Phase
     tt.analyzeTransformations(sageProject,list);
+    tfTransformation.transformationAnalyze(sageProject);
+    //Execution Phase
     tt.executeTransformations(sageProject);
+    tfTransformation.transformationExecution();
+    //Output Phase
     if(args.isUserProvided("csv-stats-file")) {
       string csvFileName=args.getString("csv-stats-file");
       tt.generateCsvTransformationStats(csvFileName,
