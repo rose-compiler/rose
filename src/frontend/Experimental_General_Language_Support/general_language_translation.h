@@ -103,6 +103,7 @@ namespace General_Language_Translation
        // ----------
 
        // Fortran specific
+          e_fortran_dimension_stmt,
           e_fortran_import_stmt,
 
           e_fortran_if_stmt,

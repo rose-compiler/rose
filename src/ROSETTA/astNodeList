@@ -753,6 +753,7 @@ SgUntypedDeclarationStatement
 SgUntypedInitializedName
 SgUntypedName
 SgUntypedNameListDeclaration
+SgUntypedInitializedNameListDeclaration
 SgUntypedImplicitDeclaration
 SgUntypedVariableDeclaration
 SgUntypedProgramHeaderDeclaration
