@@ -106,6 +106,10 @@ ATbool traverse_AssumedSize    (ATerm term, SgUntypedType* declared_type, SgUnty
 // R522
 ATbool traverse_AssumedOrImpliedSpec(ATerm term, SgUntypedExpression** lower_bound);
 
+// R545
+ATbool traverse_DimensionStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_ArrayNameSpec(ATerm term, SgUntypedType* base_type, SgUntypedInitializedNameList* name_list);
+
 // R560
 ATbool traverse_ImplicitStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_ImplicitSpecList(ATerm term, std::vector<FAST::ImplicitSpec> & ref_ImplicitSpecList);

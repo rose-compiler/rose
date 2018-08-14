@@ -272,39 +272,36 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    SgUntypedInitializedNamePtrList::const_iterator it;
 
 #if 0
-   std::cerr << "convertSgUntypedVariableDeclaration: # vars is " << ut_vars.size() << endl;
-   std::cerr << "convertSgUntypedVariableDeclaration: b_type is " << sg_base_type->class_name() << endl;
-   std::cerr << "convertSgUntypedVariableDeclaration:   name is " << ut_vars[0]->get_name() << endl;
-   ROSE_ASSERT(ut_vars[0]->get_type() != NULL);
-   std::cerr << "convertSgUntypedVariableDeclaration:   type is " << ut_vars[0]->get_type()->class_name() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: ut_decl: " << ut_decl << endl;
+   cout << "--- convertSgUntypedVariableDeclaration:       # vars is " << ut_vars.size() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: ut_base_type is " << ut_base_type->class_name()
+                                                                << " " << ut_base_type << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: sg_base_type is " << sg_base_type->class_name() << endl;
 #endif
 
    SgInitializedNamePtrList sg_name_list;
-// TODO: convertSgUntypedInitializedNameList(ut_decl->get_variables(), sg_base_type);
 
 // Declare the first variable
 #if 0
 //TODO - not sure this is correct and is ackward anyway as it would be nice to create a variable declaration
 // without any variables and then add them all later.
-   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration((*i)->get_name(), sg_type, /*sg_init*/NULL, scope);
-#endif
-
-#if 1
+   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration(name, sg_type, /*sg_init*/NULL, scope);
+#else
    SgVariableDeclaration* sg_decl = new SgVariableDeclaration();
    setSourcePositionFrom(sg_decl, ut_decl);
+
+#if 0
+   cout << "--- convertSgUntypedVariableDeclaration: sg_decl: " << sg_decl << endl;
+   cout << "                                                  " << sg_decl->get_firstNondefiningDeclaration() << endl;
+#endif
 
    sg_decl->set_parent(scope);
    sg_decl->set_definingDeclaration(sg_decl);
    setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
-
-#if 0
-   std::cerr << "convertSgUntypedVariableDeclaration:    var is " << sg_decl << endl;
-   std::cerr << "                                               " << sg_decl->get_firstNondefiningDeclaration() << endl;
-#endif
 #endif
 
 // add variables
-   for (it = ut_vars.begin(); it != ut_vars.end(); it++)
+   BOOST_FOREACH(SgUntypedInitializedName* ut_init_name, ut_vars)
    {
          // TODO
          //   1. initializer
@@ -313,51 +310,60 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
          //   4. CoarraySpec: buildArrayType with coarray attribute
          //   5. Pointers: new SgPointerType(sg_type)
          //   7. Dan warned me about sharing types but it looks like the base type is shared in inames
-      SgInitializedName* initializedName = convertSgUntypedInitializedName((*it), sg_base_type);
-      SgName variableName = initializedName->get_name();
+      SgInitializedName* sg_init_name = convertSgUntypedInitializedName(ut_init_name, sg_base_type);
+      SgName var_name = sg_init_name->get_name();
 
 #if 0
-      std::cerr << "convertSgUntypedVariableDeclaration:   name is " << (*it)->get_type()->class_name()   << endl;
+      cout << "--- convertSgUntypedVariableDeclaration: var name is " << ut_init_name->get_name() << endl;
+      cout << "--- convertSgUntypedVariableDeclaration:  ut_type is " << ut_init_name->get_type()->class_name()
+                                                               << " " << ut_init_name->get_type() << endl;
+      cout << "--- convertSgUntypedVariableDeclaration:  sg_type is " << sg_init_name->get_type()->class_name() << endl;
 #endif
 
-      initializedName->set_declptr(sg_decl);
-      sg_decl->append_variable(initializedName, initializedName->get_initializer());
+   // Finished with the untyped initialized name and associated types.  Don't delete untyped
+   // initialized names now as they will be deleted after the traversal but delete types now.
+      if (ut_init_name->get_type() != ut_base_type) delete ut_init_name->get_type();
+      ut_init_name->set_type(NULL);
+      delete ut_base_type;
+
+      sg_init_name->set_declptr(sg_decl);
+      sg_decl->append_variable(sg_init_name, sg_init_name->get_initializer());
 
       SgVariableSymbol* variableSymbol = NULL;
       SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(scope);
       if (functionDefinition != NULL)
       {
       // Check in the function definition for an existing symbol
-         variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
+         variableSymbol = functionDefinition->lookup_variable_symbol(var_name);
          if (variableSymbol != NULL)
          {
-            std::cout << "--- but variable symbol is _NOT_ NULL for " << variableName << std::endl;
+            std::cout << "--- but variable symbol is _NOT_ NULL for " << var_name << std::endl;
 
          // This variable symbol has already been placed into the function definition's symbol table
          // Link the SgInitializedName in the variable declaration with its entry in the function parameter list.
-            initializedName->set_prev_decl_item(variableSymbol->get_declaration());
+            sg_init_name->set_prev_decl_item(variableSymbol->get_declaration());
          // Set the referenced type in the function parameter to be the same as that in the declaration being processed.
-            variableSymbol->get_declaration()->set_type(initializedName->get_type());
+            variableSymbol->get_declaration()->set_type(sg_init_name->get_type());
          // Function parameters are in the scope of the function definition (same for C/C++)
-            initializedName->set_scope(functionDefinition);
+            sg_init_name->set_scope(functionDefinition);
          }
       }
 
       if (variableSymbol == NULL)
       {
       // Check the current scope
-         variableSymbol = scope->lookup_variable_symbol(variableName);
+         variableSymbol = scope->lookup_variable_symbol(var_name);
 
-         initializedName->set_scope(scope);
+         sg_init_name->set_scope(scope);
          if (variableSymbol == NULL)
          {
-            variableSymbol = new SgVariableSymbol(initializedName);
-            scope->insert_symbol(variableName,variableSymbol);
-            ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
+            variableSymbol = new SgVariableSymbol(sg_init_name);
+            scope->insert_symbol(var_name,variableSymbol);
+            ROSE_ASSERT (sg_init_name->get_symbol_from_symbol_table () != NULL);
          }
       }
       ROSE_ASSERT(variableSymbol != NULL);
-      ROSE_ASSERT(initializedName->get_scope() != NULL);
+      ROSE_ASSERT(sg_init_name->get_scope() != NULL);
    }
 
    scope->append_statement(sg_decl);
@@ -374,7 +380,7 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    //        DeclAttributes.reset();
 
 #if DEBUG_UNTYPED_CONVERTER
-   printf("--- finished converting type-declaration-stmt %s\n", sg_decl->class_name().c_str());
+   cout << "--- finished converting type-declaration-stmt " << sg_decl->class_name() << endl;
 #endif
 
    return sg_decl;
@@ -397,7 +403,7 @@ UntypedFortranConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDe
    convertLabel(ut_decl, implicitStatement);
 
 #if DEBUG_UNTYPED_CONVERTER
-   printf("--- finished converting implicit-stmt %s\n", implicitStatement->class_name().c_str());
+   cout << "--- finished converting implicit-stmt " << implicitStatement->class_name() << endl;
 #endif
 
    return implicitStatement;

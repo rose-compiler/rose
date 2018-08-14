@@ -3139,6 +3139,19 @@ SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonl
    }
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedInitializedNameListDeclaration* SgUntypedInitializedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedInitializedNameListDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedInitializedNameListDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedImplicitDeclaration* SgUntypedImplicitDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0

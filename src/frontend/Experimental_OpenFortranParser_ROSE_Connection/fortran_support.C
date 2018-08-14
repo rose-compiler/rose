@@ -21,6 +21,12 @@ using std::cout;
 using std::endl;
 
 #define DEBUG_EXPERIMENTAL_FORTRAN 0
+#define DOT_FILE_GENERATION 0
+
+#if DOT_FILE_GENERATION
+#   include "wholeAST_API.h"
+#endif
+
 
 int
 experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file)
@@ -153,8 +159,10 @@ experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file)
 
   // Rasmussen (01/22/18): Create a dot file.  This is temporary or should
   // at least be a rose option.
+#if DOT_FILE_GENERATION
      SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
      generateDOT(global_scope, filenameWithoutPath + ".ut");
+#endif
 
   // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
   // ------
@@ -169,7 +177,10 @@ experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file)
      sg_traversal.traverse(aterm_traversal->get_file(), scope);
 
   // Generate dot file for Sage nodes.
+#if DOT_FILE_GENERATION
      generateDOT(SageBuilder::getGlobalScopeFromScopeStack(), filenameWithoutPath);
+  // generateWholeGraphOfAST(filenameWithoutPath+"_WholeAST");
+#endif
 
      if (aterm_traversal)  delete aterm_traversal;
 

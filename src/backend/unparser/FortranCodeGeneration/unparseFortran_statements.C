@@ -802,8 +802,8 @@ bool
 unparseDimensionStatement(SgStatement* stmt)
    {
   // DQ (12/9/2007): If the dimension statement is what declares a variable (array) then we need it,
-  // else it is redendant (and an error) when used with the dementioning specification in the variable 
-  // declaration (which will be built from the type inforamtion in the variable declaration.
+  // else it is redundant (and an error) when used with the dimensioning specification in the variable
+  // declaration (which will be built from the type information in the variable declaration.
 
      SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(stmt);
 
@@ -874,12 +874,11 @@ unparseDimensionStatement(SgStatement* stmt)
      SgExpressionPtrList::iterator i = parameterList.begin();
 
   // Loop over the array variables and see if there is an explicit declaration for it.
-  // If so then the demention information will be output in the associated SgVariableDeclaration.
+  // If so then the dimension information will be output in the associated SgVariableDeclaration.
      while (i != parameterList.end())
         {
           SgPntrArrRefExp* arrayReference = isSgPntrArrRefExp(*i);
           ROSE_ASSERT(arrayReference != NULL);
-
           bool unparseForArrayVariable = unparseDimensionStatementForArrayVariable(arrayReference);
        // printf ("unparseForArrayVariable = %s \n",unparseForArrayVariable ? "true" : "false");
 
@@ -903,20 +902,20 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
 
      if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_dimensionStatement)
         {
-       // The dimention statement will have changed the type and the original declaration will have been 
+       // The dimension statement will have changed the type and the original declaration will have been
        // output with the dimension computed as part of the type. The only exception is that there may 
-       // have been no explicit declaration (only an implicit declaration from teh dimension statement).
+       // have been no explicit declaration (only an implicit declaration from the dimension statement).
 
        // DQ (12/9/2007):
-       // This test checks if we will need a dimension statement, we stil might not want all entries in 
+       // This test checks if we will need a dimension statement, we still might not want all entries in
        // the dimension statement to be unparsed (because some, but not all, might have appeared in an 
-       // exlicit declaration previously. I hate this part of Fortran!
+       // explicit declaration previously. I hate this part of Fortran!
 
        // printf ("This is a dimension statement \n");
           if (unparseDimensionStatement(stmt) == false)
              {
-            // Output the new line so that we leave a hole where the dimension statement was and done 
-            // screwup the formatting of the lables (in columns 1-6)
+            // Output the new line so that we leave a hole where the dimension statement was and don't
+            // screwup the formatting of the labels (in columns 1-6)
             // curprint("! Skipping output of dimension statement (handled in declaration)");
                unp->cur.insert_newline(1);
                return;

@@ -218,6 +218,11 @@ ROSE_DLL_API SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 ROSE_DLL_API SgTypeUnsignedShort*    buildUnsignedShortType();
 ROSE_DLL_API SgTypeUnknown * buildUnknownType();
 
+//! Build a type based on Fortran's implicit typing rules.
+//! Currently this interface does not take into account possible implicit
+//! statements that change the rules.
+ROSE_DLL_API SgType* buildFortranImplicitType(SgName name);
+
 //! Build a pointer type
 ROSE_DLL_API SgPointerType* buildPointerType(SgType *base_type = NULL);
 

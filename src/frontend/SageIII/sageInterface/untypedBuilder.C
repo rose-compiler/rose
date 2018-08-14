@@ -39,6 +39,12 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
                  break;
                }
+             case SgUntypedType::e_implicit:
+               {
+                 type = new SgUntypedType("IMPLICIT",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                 break;
+               }
              case SgUntypedType::e_void:
                {
                  type = new SgUntypedType("void",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
@@ -195,6 +201,13 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
              case SgUntypedType::e_unknown:
                {
                  type = new SgUntypedArrayType("UNKNOWN",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          shape, rank);
+                 break;
+               }
+             case SgUntypedType::e_implicit:
+               {
+                 type = new SgUntypedArrayType("IMPLICIT",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
                                           shape, rank);
                  break;

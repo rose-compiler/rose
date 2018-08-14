@@ -711,6 +711,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_SpecStmt(ATerm term, SgUntypedDe
    else if (traverse_ImplicitStmt(term, decl_list)) {
       // Matched ImplicitStmt
    }
+   else if (traverse_DimensionStmt(term, decl_list)) {
+      // Matched ExternalStmt
+   }
    else if (traverse_ExternalStmt(term, decl_list)) {
       // Matched ExternalStmt
    }
@@ -1185,6 +1188,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
 
       if (traverse_DeclarationTypeSpec(term2, &declared_type)) {
          // MATCHED DeclarationTypeSpec
+         ROSE_ASSERT(declared_type);
       } else return ATfalse;
 
       attr_list = new SgUntypedExprListExpression();
@@ -1208,7 +1212,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
 //   1. AttrSpecList, this can be a list of enums as the array specification can be placed in SgUntypedArrayType
 //   ! NO NO NO -> BIND(C,expression)
 
-   std::cerr << "...TODO... fully implement AttrSpecList in TypeDeclarationStmt" << std::endl;
+   std::cerr << "...TODO... fully implement AttrSpecList in TypeDeclarationStmt: list is " << attr_list << std::endl;
 
    variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
    setSourcePositionExcludingTerm(variable_decl, term, term_eos);
@@ -1390,7 +1394,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_EntityDecl(ATerm term, SgUntyped
 
    if (ATmatch(term, "EntityDecl(<term>,<term>,<term>,<term>,<term>)",&t_name,&t_array_spec,&t_coarray_spec,&t_char_length,&eos_term)) {
       if (traverse_Name(t_name, name)) {
-         // MATCHED ObjectName                                                                                      
+         // MATCHED ObjectName
       } else return ATfalse;
 
       if (traverse_OptArraySpec(t_array_spec, type, &array_type)) {
@@ -1511,6 +1515,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedT
    General_Language_Translation::ExpressionKind expr_enum = General_Language_Translation::e_unknown;
    int rank = 0;
 
+   ROSE_ASSERT(base_type != NULL);
    *array_type = NULL;
 
    if (ATmatch(term, "ArraySpec(<term>)", &t_array_spec_arg)) {
@@ -1725,11 +1730,12 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedSize(ATerm term, SgUntype
    int rank;
    ATerm t_explicit_shape_list, t_lower_bound;
    SgUntypedExpression *lower_bound, *upper_bound, *stride;
-
-   SgUntypedExprListExpression* dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
-   setSourcePosition(dim_info, term);
+   SgUntypedExprListExpression* dim_info = NULL;
 
    if (ATmatch(term, "AssumedSize(<term>,<term>)", &t_explicit_shape_list, &t_lower_bound)) {
+
+      dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+      setSourcePosition(dim_info, term);
 
    // traverse the list of explicit shape dimension before the final '*'
       if (traverse_ExplicitShapeList(t_explicit_shape_list, dim_info)) {
@@ -1759,6 +1765,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedSize(ATerm term, SgUntype
 
    } else return ATfalse;
 
+   ROSE_ASSERT(dim_info != NULL);
    rank = dim_info->get_expressions().size();
 
 // TODO: The array-type builder should probably be based on the declared type
@@ -1789,6 +1796,93 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedOrImpliedSpec(ATerm term,
       } else return ATfalse;
       
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R545 dimension-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_DimensionStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DimensionStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_spec_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedInitializedNameList* var_name_list = NULL;
+
+   SgUntypedInitializedNameListDeclaration* dimension_decl = NULL;
+
+   if (ATmatch(term, "DimensionStmt(<term>,<term>,<term>)", &t_label,&t_spec_list,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      SgUntypedType* base_type = UntypedBuilder::buildType(SgUntypedType::e_implicit);
+      ROSE_ASSERT(base_type != NULL);
+
+      var_name_list = new SgUntypedInitializedNameList();
+      setSourcePosition(var_name_list, t_spec_list);
+
+      ATermList tail = (ATermList) ATmake("<term>", t_spec_list);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+
+         if (traverse_ArrayNameSpec(head, base_type, var_name_list)) {
+            // MATCHED ArrayNameSpec
+         } else return ATfalse;
+      }
+
+   // The base type will have been replaced by an array type.
+      delete base_type;
+
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+
+      int stmt_enum = General_Language_Translation::e_fortran_dimension_stmt;
+      dimension_decl = new SgUntypedInitializedNameListDeclaration(label, stmt_enum, var_name_list);
+      setSourcePosition(dimension_decl, term);
+   }
+   else return ATfalse;
+
+   decl_list->get_decl_list().push_back(dimension_decl);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_ArrayNameSpec(ATerm term, SgUntypedType* base_type, SgUntypedInitializedNameList* name_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ArrayNameSpec: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_name, t_array_spec;
+   std::string name;
+
+   SgUntypedArrayType* array_type = NULL;
+   SgUntypedInitializedName* initialized_name = NULL;
+
+   if (ATmatch(term, "ArrayNameSpec(<term>,<term>)",&t_name,&t_array_spec)) {
+      if (traverse_Name(t_name, name)) {
+         // MATCHED ObjectName                                                                                      
+      } else return ATfalse;
+
+      if (traverse_ArraySpec(t_array_spec, base_type, &array_type)) {
+         // MATCHED ArraySpec
+         ROSE_ASSERT(array_type != NULL);
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   initialized_name = new SgUntypedInitializedName(array_type, name);
+   setSourcePosition(initialized_name, term);
+
+   name_list->get_name_list().push_back(initialized_name);
 
    return ATtrue;
 }

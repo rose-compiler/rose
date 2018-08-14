@@ -175,6 +175,10 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedInterfaceDeclaration,     "UntypedInterfaceDeclaration",     "TEMP_UntypedInterfaceDeclaration" );
      NEW_TERMINAL_MACRO (UntypedUseStatement,             "UntypedUseStatement",             "TEMP_UntypedUseStatement" );
 
+  // Rasmussen (8/06/2018): Added SgUntypedInitializedNameListDeclaration
+     NEW_TERMINAL_MACRO (UntypedInitializedNameListDeclaration, "UntypedInitializedNameListDeclaration",
+                                                                "TEMP_UntypedInitializedNameListDeclaration");
+
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
   // Rasmussen (1/16/2018): Added UntypedNullDeclaration
@@ -238,13 +242,14 @@ Grammar::setUpNodes ()
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration, UntypedBlockDataDeclaration
   // Rasmussen (1/16/2018): Added UntypedNullDeclaration
+  // Rasmussen (8/06/2018): Added SgUntypedInitializedNameListDeclaration
      NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement,
          UntypedNullDeclaration      | UntypedNameListDeclaration  | UntypedUseStatement                |
          UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration         |
          UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration        |
          UntypedPackageDeclaration   | UntypedStructureDeclaration | UntypedExceptionHandlerDeclaration |
-         UntypedExceptionDeclaration | UntypedTaskDeclaration      | UntypedUnitDeclaration,
-         "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
+         UntypedExceptionDeclaration | UntypedTaskDeclaration      | UntypedUnitDeclaration             |
+         UntypedInitializedNameListDeclaration, "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
      NEW_TERMINAL_MACRO (UntypedFunctionCallStatement, "UntypedFunctionCallStatement", "TEMP_UntypedFunctionCallStatement" );
@@ -790,6 +795,14 @@ Grammar::setUpNodes ()
      UntypedNameListDeclaration.setDataPrototype       ( "int", "statement_enum", "= 0",
                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedNameListDeclaration.setDataPrototype       ( "SgUntypedNameList*", "names", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (8/06/2018): Added SgUntypedInitializedNameListDeclaration
+     UntypedInitializedNameListDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_INITIALIZED_NAMELIST_DECLARATION",
+                                                                    "../Grammar/LocatedNode.code" );
+     UntypedInitializedNameListDeclaration.setDataPrototype       ( "int", "statement_enum", "= 0",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedInitializedNameListDeclaration.setDataPrototype       ( "SgUntypedInitializedNameList*", "variables", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedVariableDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
@@ -1472,6 +1485,10 @@ Grammar::setUpNodes ()
      UntypedSubroutineDeclaration.setFunctionSource    ( "SOURCE_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedInterfaceDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_INTERFACE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedModuleDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_MODULE_DECLARATION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (8/06/2018): Added SgUntypedInitializedNameListDeclaration
+     UntypedInitializedNameListDeclaration.setFunctionSource ( "SOURCE_UNTYPED_INITIALIZED_NAMELIST_DECLARATION",
+                                                               "../Grammar/LocatedNode.code" );
 
      UntypedPackageDeclaration.setFunctionSource          ( "SOURCE_UNTYPED_PACKAGE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedStructureDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_STRUCTURE_DECLARATION", "../Grammar/LocatedNode.code");
