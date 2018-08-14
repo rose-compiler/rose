@@ -185,8 +185,6 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   LoopInfo.h                       \
   LoopInfo.C                       \
-  Normalization.h                       \
-  Normalization.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   NullPointerDereferenceLocations.h \

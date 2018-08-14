@@ -1253,7 +1253,7 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("normalize-all")) {
       lowering.options.restrictToFunCallExpressions=false;
       lowering.normalizeAst(sageProject);
-      cout<<"STATUS: lowered language constructs."<<endl;
+      logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
     }
 
     /* perform inlining before variable ids are computed, because

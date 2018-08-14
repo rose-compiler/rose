@@ -17,6 +17,10 @@ class SgSwitchStatement;
 namespace SPRAY {
 
   class Normalization {
+    // Not supported yet: 
+    // 1. condition hoisting in do-while (into the block, not before the loop)
+    // 2. transformation of continue in while, do-while
+
   public:
     struct Options {
       // only normalize expressions with function calls
@@ -34,6 +38,24 @@ namespace SPRAY {
       bool hoistConditionExpressions=true;
       bool normalizeExpressions=true;
       bool normalizeVariableDeclarations=false;
+
+      // transforms break in switch to gotos. This can cause unparsed
+      // code to not compile because of special C++ rules of
+      // by-passing initializaitons with gotos. It is not a problem
+      // for the analysis, but for unparsing. Therefore this is off by
+      // default.
+      bool transformBreakToGotoInSwitchStmt=false;
+
+      // This is not necessary for normalization. Only interesting for
+      // lowering. Applies to {for, do, do-while}
+      bool transformBreakToGotoInLoopStmts=false;
+
+      // not supported yet - required for normalization of while when
+      // condition is hoisted). This transformation is applied to
+      // while and do-while, not to for-loops.
+      bool transformContinueToGotoInWhileStmts=false;
+
+      // using SgInterface inlining (to be replaced)
       bool inlining=false;
     } options;
 
@@ -68,7 +90,7 @@ namespace SPRAY {
     void hoistCondition(SgStatement* node);
 
     // converts for-stmts to while-stmts (uses SageInterface function)
-    void convertAllForsToWhiles (SgNode* top);
+    void convertAllForStmtsToWhileStmts(SgNode* top);
 
     // normalizes all single statements in if-statements to blocks (sage version)
     void normalizeSingleStatementsToBlocks(SgNode* node);
@@ -94,8 +116,11 @@ namespace SPRAY {
     /* If the given statement contains any break statements in its body,
        add a new label below the statement and change the breaks into
        gotos to that new label. Addresses for,while,switch stmts.
+       Transforms continue to gotos in while-loops (not for-loops).
     */
-    void changeBreakStatementsToGotos (SgNode *ast);
+    void normalizeBreakAndContinueStmts(SgNode *ast);
+    void transformContinueToGotoStmts(SgWhileStmt* whileStmt);
+    void transformContinueToGotoStmts(SgDoWhileStmt* whileStmt);
 
     // counter for generating new variable names (currently not used)
     static int32_t tmpVarNr;

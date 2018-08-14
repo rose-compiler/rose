@@ -85,11 +85,14 @@ namespace SPRAY {
       normalizeSingleStatementsToBlocks(root);
     }
     if(options.eliminateForStatements) {
-      convertAllForsToWhiles(root);
+      convertAllForStmtsToWhileStmts(root);
     }
+
+    // uses options to select which breaks are transformed (can be none)
+    normalizeBreakAndContinueStmts(root);
+
     if(options.eliminateWhileStatements) {
-      changeBreakStatementsToGotos(root);
-      // currently only transforms while and do-while loops
+      // transforms while and do-while loops
       createLoweringSequence(root);
       applyLoweringSequence();
     }
@@ -191,19 +194,45 @@ namespace SPRAY {
     }
   }
 
-  void Normalization::convertAllForsToWhiles (SgNode* top) {
+  void Normalization::convertAllForStmtsToWhileStmts(SgNode* top) {
     SageInterface::convertAllForsToWhiles (top);
   }
  
-  void Normalization::changeBreakStatementsToGotos (SgNode* root) {
+  void Normalization::transformContinueToGotoStmts(SgWhileStmt* whileStmt) {
+    cerr<<"Error: transforming continue to goto stmt in while loop not supported yet."<<endl;
+    exit(1);
+  }
+
+  void Normalization::transformContinueToGotoStmts(SgDoWhileStmt* whileStmt) {
+    cerr<<"Error: transforming continue to goto stmt in do-while loop not supported yet."<<endl;
+    exit(1);
+  }
+
+  void Normalization::normalizeBreakAndContinueStmts(SgNode* root) {
     RoseAst ast(root);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      if(isSgSwitchStatement(*i)||CFAnalysis::isLoopConstructRootNode(*i)) {
-         SageInterface::changeBreakStatementsToGotos(isSgStatement(*i));
+      SgStatement* stmt=isSgStatement(*i);
+      if(stmt) {
+        if(isSgSwitchStatement(stmt)) {
+          // only change break statements in switch stmt if explicitly requested
+          if(options.transformBreakToGotoInSwitchStmt) {
+            SageInterface::changeBreakStatementsToGotos(stmt);
+          } 
+        } else {
+          if(options.transformBreakToGotoInLoopStmts && CFAnalysis::isLoopConstructRootNode(stmt)) {
+            SageInterface::changeBreakStatementsToGotos(stmt);
+          }
+          if(options.transformContinueToGotoInWhileStmts) {
+            if(SgWhileStmt* whileStmt=isSgWhileStmt(stmt)) {
+              transformContinueToGotoStmts(whileStmt);
+            } else if(SgDoWhileStmt* doWhileStmt=isSgDoWhileStmt(stmt)) {
+              transformContinueToGotoStmts(doWhileStmt);
+            }
+          }
+        }
       }
     }
   }
-
 
   void Normalization::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr) {
     // 1) generate tmp-var assignment node with expr as lhs
