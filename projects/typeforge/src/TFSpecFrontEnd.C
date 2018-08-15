@@ -112,7 +112,6 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
 
 bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation) {
   RoseAst completeAst(root);
-  CommandList commandList(specFileName);
   string tempFileName = "";
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);

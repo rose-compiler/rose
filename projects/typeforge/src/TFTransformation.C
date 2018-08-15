@@ -53,6 +53,47 @@ int ReadWriteTransformation::run(SgProject* project, RoseAst ast, TFTransformati
   return 0;
 }
 
+string getHandle(SgNode* node){
+ AbstractHandle::abstract_node* anode = AbstractHandle::buildroseNode(node);
+ AbstractHandle::abstract_handle* ahandle = new  AbstractHandle::abstract_handle(anode);
+ return ahandle->toString(); 
+}
+
+SgScopeStatement* getNextScope(SgNode* node){
+  node = node->get_parent();
+  while(node){
+    if(SgScopeStatement* scope = isSgScopeStatement(node)){
+      return scope;
+    }else{
+      node = node->get_parent();
+    }
+  }
+  return nullptr;
+}
+
+string getHandleFromName(SgNode* node, string name){
+  SgScopeStatement* scope = getNextScope(node);
+  while(scope){
+    RoseAst ast(scope);
+    for(RoseAst::iterator i = ast.begin(); i != ast.end(); i++){
+      if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*i)){
+        SgInitializedName* varInit = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
+        if(varInit){
+          SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInit);
+          if(varSym){
+            string varName = SgNodeHelper::symbolToString(varSym);
+            if(varName == name){
+              return getHandle(varDec);
+            }
+          }
+        }
+      }
+    }
+    scope = getNextScope(scope);
+  }  
+  return "";
+}
+
 int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
   vector<string> splitFrom = CppStdUtilities::splitByRegex(fromString, " ");
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i){
@@ -71,7 +112,13 @@ int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation*
           }
         }
       }
-      if(match){
+      if(splitPragma.size() >= 4 && splitFrom.size() >= 2 &&splitFrom[0] == "adapt" && splitFrom[1] == "output"){
+        string handle = getHandleFromName(pragmaNode, splitPragma[2]);
+        if(handle == "") handle = splitPragma[2];
+        cout<<"Handle " + handle + "\n";
+        string replacement = "\nAD_dependent(" + splitPragma[2] + ", \"" + handle + "\", " + splitPragma[3] + ");";
+        tf->replaceNode(pragmaNode->get_parent(),replacement);
+      }else if(match){
         long splitPragmaSize = (long) splitPragma.size();
         for(int i = 0; i < splitPragmaSize; i++){
           string findString = "$" + to_string(i);
@@ -400,12 +447,6 @@ bool isWithinBlockStmt(SgExpression* exp) {
     current=current->get_parent();
   };
   return isSgBasicBlock(current);
-}
-
-string getHandle(SgNode* node){
- AbstractHandle::abstract_node* anode = AbstractHandle::buildroseNode(node);
- AbstractHandle::abstract_handle* ahandle = new  AbstractHandle::abstract_handle(anode);
- return ahandle->toString(); 
 }
 
 string getVarRefHandle(SgVarRefExp* varRef){

@@ -2,6 +2,7 @@
 #define TYPEFORGE_SPEC_FRONTEND_H
 
 #include "TFTypeTransformer.h"
+#include "TFCommandList.h"
 
 class TFSpecFrontEnd {
  public:
@@ -14,6 +15,7 @@ class TFSpecFrontEnd {
  private:
   int numTypeReplace=0;
   TFTypeTransformer::VarTypeVarNameTupleList _list;
+  CommandList commandList;
 };
 
 #endif

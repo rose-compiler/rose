@@ -70,7 +70,7 @@ class PragmaCommand : public Command{
 
 class CommandList{
   public:
-    CommandList(std::string spec);
+    CommandList();
   
     int runCommands(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation);
   

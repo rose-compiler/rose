@@ -338,7 +338,7 @@ int PragmaCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& 
   return false;
 }
 
-CommandList::CommandList(std::string spec){
+CommandList::CommandList(){
   commandsList = {};
 }
 //Call the run command on all commands stored in the list.
