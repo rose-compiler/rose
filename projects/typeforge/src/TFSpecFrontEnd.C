@@ -133,7 +133,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
       std::vector<std::string> splitLine=CppStdUtilities::splitByRegex(line,";");
       string commandName,functionName,varName,typeName;
       size_t numEntries=splitLine.size();
-      if(numEntries<=2 || numEntries>=5) {
+      if(numEntries<=2) {
 	cerr<<"Error: wrong input format in file "<<specFileName<<". Wrong number of entries in line "<<lineNr<<"."<<endl;
 	return true;
       }
@@ -191,7 +191,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
         if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
         commandList.addTransformCommand(splitLine[1], splitLine[2], splitLine[3]);
       }
-      else if(commandName == "handle" || commandName == "handle_base"){
+      else if(commandName == "change_handletype" || commandName == "change_handlebasetype"){
         bool base = false;
         if(commandName == "handle_base") base = true;
         commandList.addHandleCommand(splitLine[1], splitLine[2], base, false);
@@ -199,11 +199,23 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
       else if(commandName == "list_replacements" || commandName == "list_basereplacements"){
         bool base = false;
         if(commandName == "list_basereplacements") base = true;
-        tt.nathan_setConfigFile(splitLine[3]);
-        commandList.addTypeCommand("", "$global", splitLine[2], splitLine[1], base, true);
-        commandList.addTypeCommand("body", "*", splitLine[2], splitLine[1], base, true);
-        commandList.addTypeCommand("args", "*", splitLine[2], splitLine[1], base, true);
-        commandList.addTypeCommand("ret", "*", splitLine[2], splitLine[1], base, true);
+        tt.nathan_setConfigFile(splitLine[4]);
+        if(splitLine[1] == "" || splitLine[1] == "$global"){
+          if(splitLine[1] == "") splitLine[1] = "*";
+          commandList.addTypeCommand("", "$global", splitLine[3], splitLine[2], base, true);
+        }
+        if(splitLine[1] != "$global"){
+          commandList.addTypeCommand("body", splitLine[1], splitLine[3], splitLine[2], base, true);
+          commandList.addTypeCommand("args", splitLine[1], splitLine[3], splitLine[2], base, true);
+          commandList.addTypeCommand("ret", splitLine[1], splitLine[3], splitLine[2], base, true);
+        }
+      }
+      else if(commandName == "introduce_include"){
+        commandList.addIncludeCommand(splitLine[1], splitLine[2]);
+      }
+      else if(commandName == "replace_pragma"){
+        for(unsigned int i = 3; i < splitLine.size(); i++) splitLine[2] = splitLine[2] + ";" + splitLine[i];
+        commandList.addPragmaCommand(splitLine[1], splitLine[2]);
       }
       else {
         cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;

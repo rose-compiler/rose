@@ -129,7 +129,7 @@ std::string nathan_getNodeFileName(SgNode* node){
 
 //Adds an entry in the config file
 void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
-  if(!fromType || !toType || !handleNode) return;
+  if(!fromType || !toType || !handleNode || !_outConfig) return;
   if(_writeConfig == "") return;
   if(varName == "") return;
   abstract_node* anode = buildroseNode(handleNode);

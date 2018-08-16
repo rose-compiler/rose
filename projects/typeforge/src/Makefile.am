@@ -48,7 +48,8 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
-	rm -f a.out craft_initial.json
+	./typeforge --spec-file=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C
+	rm -f a.out craft_initial.json tftest.json
 
 #check-typeforge:
 #	@echo ================================================================

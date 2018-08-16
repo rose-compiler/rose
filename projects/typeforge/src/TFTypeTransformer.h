@@ -94,7 +94,7 @@ class TFTypeTransformer {
   Transformer _transformer;
   static bool _traceFlag;
   int _totalNumChanges=0;
-  ToolConfig* _outConfig;
+  ToolConfig* _outConfig = nullptr;
   std::string _writeConfig = "";
 };
 
