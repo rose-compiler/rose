@@ -97,6 +97,8 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
        // DQ (7/12/2013): Added support to type trait builtin functions 
           case V_SgTypeTraitBuiltinOperator:
 
+          case V_SgAssignInitializer:
+
        // DQ (8/19/2013): Added support for constructor initializers that might have an associated 
        // qualified name string associated with the templated class or instantiated template class.
           case V_SgConstructorInitializer:

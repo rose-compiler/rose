@@ -1593,10 +1593,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                        {
                          SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(declaration);
                          ROSE_ASSERT(templateDeclaration != NULL);
-
+#if 0
                          printf ("In NameQualificationTraversal::nameQualificationDepth(): case V_SgTemplateDeclaration: still emitted for template template parameter (seen in template template argument of `this`)\n");
-//                       ROSE_ASSERT(false);
-
+#endif
                          symbol = NULL;
 
                          break;
