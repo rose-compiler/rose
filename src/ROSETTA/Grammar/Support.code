@@ -19503,7 +19503,7 @@ SgTemplateArgument::SgTemplateArgument ( bool explicitlySpecified )
   // argument->set_parent(this);
    }
 
-
+#define DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME 0
 
 // RV (2/2/2006): Added mangling of template arguments.
 SgName
@@ -19511,10 +19511,10 @@ SgTemplateArgument::get_mangled_name (void) const
    {
      ROSE_ASSERT(this != NULL);
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
   // printf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
      printf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d \n",this,get_argumentType());
-     printf ("In SgTemplateArgument::get_mangled_name(): unparseToString() = %s \n",unparseToString().c_str());
+  // printf ("In SgTemplateArgument::get_mangled_name(): unparseToString() = %s \n",unparseToString().c_str());
 #endif
 
      ostringstream mangled_name;
@@ -19524,7 +19524,7 @@ SgTemplateArgument::get_mangled_name (void) const
              {
                const SgType* type = get_type();
                assert (type != NULL);
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                printf ("In SgTemplateArgument::get_mangled_name(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
 #endif
                SgName mangled_type = type->get_mangled();
@@ -19540,7 +19540,7 @@ SgTemplateArgument::get_mangled_name (void) const
             // to such a type to be different.
                ROSE_ASSERT(this->get_parent() != NULL);
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: this->get_parent() = %p = %s \n",this->get_parent(),this->get_parent()->class_name().c_str());
 #endif
 #if 0
@@ -19565,7 +19565,7 @@ SgTemplateArgument::get_mangled_name (void) const
                  // DQ (12/26/2012): I think that to generate a unique mangled name we need to alwasy reference the same declaration, so set this and enforce that it is a valid pointer.
                     templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(templateClassInstantiationDeclaration->get_firstNondefiningDeclaration());
                     ROSE_ASSERT(templateClassInstantiationDeclaration != NULL);
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                     printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: templateClassInstantiationDeclaration = %p name = %s \n",templateClassInstantiationDeclaration,templateClassInstantiationDeclaration->get_name().str());
 #endif
                     mangled_type += Rose::StringUtility::numberToString(templateClassInstantiationDeclaration);
@@ -19582,13 +19582,13 @@ SgTemplateArgument::get_mangled_name (void) const
                   {
                  // DQ (8/19/2014): I am not clear how important it is to warn about this issue.
 // #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                     printf ("WARNING: In SgTemplateArgument::get_mangled_name(): parent declaration is not handled: this->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
 #endif
                   }
 
                mangled_name << mangled_type.str();
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: mangled_type = %s \n",mangled_type.str());
 #endif
                break;
@@ -19611,7 +19611,7 @@ SgTemplateArgument::get_mangled_name (void) const
                  // mangled_name << mangleExpression(expr);
                  // mangled_name << get_initializedName()->get_mangled_name();
                     mangled_name << get_initializedName()->get_name().str();
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                     printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::nontype_argument: get_initializedName()->get_name() = %s \n",get_initializedName()->get_name().str());
 #endif
 #if 0
@@ -19630,65 +19630,13 @@ SgTemplateArgument::get_mangled_name (void) const
             // const SgTemplateDeclaration* templateDeclaration = get_templateDeclaration();
                const SgDeclarationStatement* templateDeclaration = get_templateDeclaration();
                ROSE_ASSERT(templateDeclaration != NULL);
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::template_template_argument: = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
 #endif
-            // DQ (8/24/2006): This is not yet implemented, we can't handle this as a expression!
-            // mangled_name << mangleExpression (templateDeclaration);
 
-            // Let the mangled name be the simple name of the template (at least for now).
-            // SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
-#if 0
-               SgName mangled_templateDeclaration = templateDeclaration->get_name();
-#else
-#if 1
-            // DQ (9/24/2012): This has to use the mangled name since the template arguments could contain templates that would have to be mangled as well (see test2012_221.C).
-            // SgName mangled_templateDeclaration = templateDeclaration->get_template_name();
                SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
-#else
-            // DQ (12/22/2011): This is an ugly aspect of supporting template declarations as derived from that which they are associated.
-            // (e.g. SgTemplateClassDeclaration derived from a SgClassDeclaration).
-               SgName mangled_templateDeclaration;
-               switch (templateDeclaration->variantT())
-                  {
-                    case V_SgTemplateClassDeclaration:
-                       {
-                         mangled_templateDeclaration = isSgTemplateClassDeclaration(templateDeclaration)->get_name();
-                         break;
-                       }
 
-                    case V_SgTemplateFunctionDeclaration:
-                       {
-                         mangled_templateDeclaration = isSgTemplateFunctionDeclaration(templateDeclaration)->get_name();
-                         break;
-                       }
-
-                    case V_SgTemplateMemberFunctionDeclaration:
-                       {
-                         mangled_templateDeclaration = isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_name();
-                         break;
-                       }
-
-                    case V_SgTemplateVariableDeclaration:
-                       {
-                      // mangled_templateDeclaration = isSgTemplateVariableDeclaration(templateDeclaration)->get_name();
-                         const SgTemplateVariableDeclaration* templateVariableDeclaration = isSgTemplateVariableDeclaration(templateDeclaration);
-                         ROSE_ASSERT(templateVariableDeclaration->get_variables().empty() == false);
-                         SgInitializedName* initializedName = templateVariableDeclaration->get_variables()[0];
-                         mangled_templateDeclaration = initializedName->get_name();
-                         break;
-                       }
-
-                    default:
-                       {
-                         printf ("Error: default reached templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
-                         ROSE_ASSERT(false);
-                       }
-                  }
-#endif
-#endif
-
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                printf ("Mangling of template template argument to template type not well tested yet mangled name = %s \n",mangled_templateDeclaration.str());
 #endif
                mangled_name << mangled_templateDeclaration.str();
@@ -19701,7 +19649,7 @@ SgTemplateArgument::get_mangled_name (void) const
             // DQ (7/4/2013): Added support for additional template argument type.
             // const SgExpression* expr = get_expression();
                assert(get_expression() != NULL);
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                printf ("WARNING: In SgTemplateArgument::get_mangled_name(): handling of mangled name for varadic template argument is incomplete! \n");
 #endif
             // mangled_name << mangleExpression(expr);
@@ -19718,8 +19666,8 @@ SgTemplateArgument::get_mangled_name (void) const
              }
         }
 
-#if 0
-     printf ("In SgTemplateArgument::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
+#if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
+     printf ("In SgTemplateArgument::get_mangled_name(): mangled_name = %s \n",mangled_name.str().c_str());
 #endif
 
      string str_mangled_name (mangled_name.str());
