@@ -115,7 +115,6 @@ int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation*
       if(splitPragma.size() >= 4 && splitFrom.size() >= 2 &&splitFrom[0] == "adapt" && splitFrom[1] == "output"){
         string handle = getHandleFromName(pragmaNode, splitPragma[2]);
         if(handle == "") handle = splitPragma[2];
-        cout<<"Handle " + handle + "\n";
         string replacement = "\nAD_dependent(" + splitPragma[2] + ", \"" + handle + "\", " + splitPragma[3] + ");";
         tf->replaceNode(pragmaNode->get_parent(),replacement);
       }else if(match){

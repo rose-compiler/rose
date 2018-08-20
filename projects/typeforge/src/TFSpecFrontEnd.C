@@ -52,49 +52,48 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
     string action = act.getActionType();
     bool base = false;
     if(action == "replace_varbasetype" || action == "change_varbasetype" || action == "replace_basetype" || action == "change_basetype" || action == "list_basereplacements") base = true;
-    if(handle == ""){
-      if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
+    if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
+      if(handle != ""){
+        commandList.addHandleCommand(handle, act.getToType(), base, false);
+      }else{
         commandList.addVarTypeCommand(act.getName(), act.getScope(), act.getToType(), base, false);
       }
-      else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
-        string functionName = "$global";
-        std::vector<std::string> functionConstructSpecList = {""};
-        std::vector<std::string> functionSpecSplit;
-        if(act.getScope() != "$global") {
-          functionSpecSplit=CppStdUtilities::splitByRegex(act.getScope(),":");
-          if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier "<<act.getScope()<<endl; exit(1);}
-          functionName=functionSpecSplit[0];
-          functionConstructSpecList=CppStdUtilities::splitByRegex(functionSpecSplit[1],",");
-        } 
-        for(auto functionConstructSpec : functionConstructSpecList) {
-          commandList.addTypeCommand(functionConstructSpec, functionName, act.getToType(), act.getFromType(), base, false);
-        }
-      }
-      else if(action == "transform"){
-        commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
-      }
-      else if(action == "list_basereplacements" || action == "list_replacements"){
-        string scope = act.getScope();
-        if(scope == "" || scope == "$global"){
-          if(scope == "") scope = "*";
-          commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
-        }
-        if(scope != "$global"){
-          commandList.addTypeCommand("body", scope, act.getToType(), act.getFromType(), base, true);
-          commandList.addTypeCommand("args", scope, act.getToType(), act.getFromType(), base, true);
-          commandList.addTypeCommand("ret", scope, act.getToType(), act.getFromType(), base, true);
-        }
-        outName = act.getName();
-      }
-      else if(action == "introduce_include"){
-        commandList.addIncludeCommand(act.getScope(), act.getName());
-      }
-      else if(action == "replace_pragma"){
-        commandList.addPragmaCommand(act.getFromType(), act.getToType());
+    }
+    else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
+      string functionName = "$global";
+      std::vector<std::string> functionConstructSpecList = {""};
+      std::vector<std::string> functionSpecSplit;
+      if(act.getScope() != "$global") {
+        functionSpecSplit=CppStdUtilities::splitByRegex(act.getScope(),":");
+        if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier "<<act.getScope()<<endl; exit(1);}
+        functionName=functionSpecSplit[0];
+        functionConstructSpecList=CppStdUtilities::splitByRegex(functionSpecSplit[1],",");
+      } 
+      for(auto functionConstructSpec : functionConstructSpecList) {
+        commandList.addTypeCommand(functionConstructSpec, functionName, act.getToType(), act.getFromType(), base, false);
       }
     }
-    else{
-      commandList.addHandleCommand(handle, act.getToType(), base, false);
+    else if(action == "transform"){
+      commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
+    }
+    else if(action == "list_basereplacements" || action == "list_replacements"){
+      string scope = act.getScope();
+      if(scope == "" || scope == "$global"){
+        if(scope == "") scope = "*";
+        commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
+      }
+      if(scope != "$global"){
+        commandList.addTypeCommand("body", scope, act.getToType(), act.getFromType(), base, true);
+        commandList.addTypeCommand("args", scope, act.getToType(), act.getFromType(), base, true);
+        commandList.addTypeCommand("ret", scope, act.getToType(), act.getFromType(), base, true);
+      }
+      outName = act.getName();
+    }
+    else if(action == "introduce_include"){
+      commandList.addIncludeCommand(act.getScope(), act.getName());
+    }
+    else if(action == "replace_pragma"){
+      commandList.addPragmaCommand(act.getFromType(), act.getToType());
     }
     commandList.nextCommand();
   }

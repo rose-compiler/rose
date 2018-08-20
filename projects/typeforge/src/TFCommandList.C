@@ -258,13 +258,10 @@ int TransformCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransforme
     if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
     if(transformationName=="readwrite_access_transformation") {
       tfTransformation.addReadWriteTransformation(funDef, accessType);
-      //tfTransformation.transformHancockAccess(accessType,funDef);
     } else if(transformationName=="arrayofstructs_access_transformation") {
       tfTransformation.addArrayStructTransformation(funDef, accessType);
-      //tfTransformation.transformArrayOfStructsAccesses(accessType,funDef);
     } else if(transformationName=="ad_intermediate_instrumentation") {
       tfTransformation.addADTransformation(funDef);
-      //tfTransformation.instrumentADIntermediate(funDef);
     }
   }
   return false; 
@@ -295,7 +292,6 @@ int IncludeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer&
   for (auto file : listOfFiles) {
     if(SgSourceFile* source = isSgSourceFile(file)){
       tfTransformation.addIncludeTransformation(includeName, false, source);
-      //SageInterface::insertHeader(source,includeName,false,true);
     }  
   }
   return false; 
@@ -308,33 +304,6 @@ PragmaCommand::PragmaCommand(std::string from, std::string to, int number) : Com
 
 int PragmaCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
   tfTransformation.addPragmaTransformation(fromMatch, toReplace);
-  /*for(RoseAst::iterator i=completeAst.begin();i!=completeAst.end();++i){
-    if(SgPragma* pragmaNode = isSgPragma(*i)){
-      vector<string> splitFrom = CppStdUtilities::splitByRegex(fromMatch, " ");
-      vector<string> splitPragma = CppStdUtilities::splitByRegex(pragmaNode->get_pragma(), " ");
-      bool match = true;
-      if(fromMatch != ""){
-        for(size_t i = 0; i < splitFrom.size(); i++){
-          if(i >= splitPragma.size()){
-            match = false;
-            break;
-          }
-          if(splitFrom[i] != splitPragma[i]){
-            match = false;
-            break;
-          }
-        }
-      }   
-      if(match){ 
-        long splitPragmaSize = (long) splitPragma.size();
-        for(int i = 0; i < splitPragmaSize; i++){
-          string findString = "$" + to_string(i);
-          boost::replace_all(toReplace, findString, splitPragma[i]);
-        }
-        SgNodeHelper::replaceAstWithString(pragmaNode->get_parent(),"\n"+toReplace);
-      }
-    }
-  }*/
   return false;
 }
 
