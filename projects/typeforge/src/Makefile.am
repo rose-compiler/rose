@@ -18,7 +18,7 @@ typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge_DEPENDENCIES=
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C
+typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C TFAnalysis.C
 
 CHECK_DEFAULT=check-typeforge
 
@@ -48,8 +48,9 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
-	./typeforge --spec-file=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C
-	rm -f a.out craft_initial.json tftest.json
+	./typeforge --spec-file=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C 
+	./typeforge --spec-file=$(srcdir)/tests/h_test.tf $(srcdir)/tests/h_test_not_main.C $(srcdir)/tests/h_test_main.C 
+	rm -f a.out *.json
 
 #check-typeforge:
 #	@echo ================================================================
