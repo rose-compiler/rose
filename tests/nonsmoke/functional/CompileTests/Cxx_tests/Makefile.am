@@ -1858,6 +1858,10 @@ test_MPI_LAM:
 test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
 	../../testTranslator -rose:verbose 1 -c $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C 
 
+# DQ (7/24/2018): Test for output spew from multiple files on the same command line.
+test_multiple_files_2: $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C 
+
 # DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 
