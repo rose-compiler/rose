@@ -503,6 +503,94 @@ struct IP_cntlzw: P {
     }
 };
 
+// Condition register AND
+struct IP_crand: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->and_(ba, bb);
+        d->write(args[0], result);
+    }
+};
+
+// Condition register AND with complement
+struct IP_crandc: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->and_(ba, ops->invert(bb));
+        d->write(args[0], result);
+    }
+};
+
+// Condition register equivalent
+struct IP_creqv: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->invert(ops->xor_(ba, bb));
+        d->write(args[0], result);
+    }
+};
+
+// Condition register NAND
+struct IP_crnand: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->invert(ops->and_(ba, bb));
+        d->write(args[0], result);
+    }
+};
+
+// Condition register NOR
+struct IP_crnor: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->invert(ops->or_(ba, bb));
+        d->write(args[0], result);
+    }
+};
+
+// Condition register OR
+struct IP_cror: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->or_(ba, bb);
+        d->write(args[0], result);
+    }
+};
+
+// Condition register OR with complement
+struct IP_crorc: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->or_(ba, ops->invert(bb));
+        d->write(args[0], result);
+    }
+};
+
+// Condition register XOR
+struct IP_crxor: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr ba = d->read(args[1], 1);
+        BaseSemantics::SValuePtr bb = d->read(args[2], 1);
+        BaseSemantics::SValuePtr result = ops->xor_(ba, bb);
+        d->write(args[0], result);
+    }
+};
+
 // Fixed-point divide word
 struct IP_divw: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -518,6 +606,27 @@ struct IP_divwu: P {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
         d->write(args[0], ops->unsignedDivide(d->read(args[1], 32), arg2));
+    }
+};
+
+// Enforce in-order execution of I/O
+struct IP_eieio: P {
+    void p(D d, Ops ops, I insn, A args) {
+        // no semantics necessary
+    }
+};
+
+// Extend sign halfword
+struct IP_extsh: P {
+    bool record;
+    IP_extsh(bool record): record(record) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr halfword = ops->extract(d->read(args[1], 32), 0, 16);
+        BaseSemantics::SValuePtr word = ops->signExtend(halfword, 32);
+        d->write(args[0], word);
+        if (record)
+            d->record(word);
     }
 };
 
@@ -637,6 +746,41 @@ struct IP_mullw: P {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
         d->write(args[0], ops->extract(ops->signedMultiply(d->read(args[1], 32), arg2), 0, 32));
+    }
+};
+
+// Move to condition register fields
+struct IP_mtcrf: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr mask = d->read(args[0], 8);
+        BaseSemantics::SValuePtr newFields = d->read(args[1], 32);
+        BaseSemantics::SValuePtr oldFields = ops->readRegister(d->REG_CR);
+        BaseSemantics::SValuePtr result;
+        for (size_t i = 0; i < 8; ++i) {
+            BaseSemantics::SValuePtr newField = ops->extract(newFields, i*4, i*4+4);
+            BaseSemantics::SValuePtr oldField = ops->extract(oldFields, i*4, i*4+4);
+            BaseSemantics::SValuePtr selected = ops->extract(mask, i, i+1);
+            BaseSemantics::SValuePtr field = ops->ite(selected, newField, oldField);
+            result = result ? ops->concat(result, field) : field;
+        }
+        ASSERT_not_null(result);
+        ASSERT_require(result->get_width() == 32);
+        ops->writeRegister(d->REG_CR, result);
+    }
+};
+
+// Fixed-point logical NAND
+struct IP_nand: P {
+    bool record;
+    IP_nand(bool record): record(record) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr arg2 = d->read(args[2], 32);
+        BaseSemantics::SValuePtr result = ops->invert(ops->and_(d->read(args[1], 32), arg2));
+        d->write(args[0], result);
+        if (record)
+            d->record(result);
     }
 };
 
@@ -793,6 +937,18 @@ struct IP_stb: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[1], ops->extract(d->read(args[0], 32), 0, 8));
+    }
+};
+
+// Store byte with update
+struct IP_stbu: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[1]);
+        ASSERT_not_null(mre);
+        BaseSemantics::SValuePtr ea = d->read(mre->get_address(), 32);
+        d->write(args[1], ops->extract(d->read(args[0], 32), 0, 8));
+        d->write(args[0], ea);
     }
 };
 
@@ -978,41 +1134,52 @@ struct IP_xoris: P {
 void
 DispatcherPowerpc::iproc_init()
 {
-    iproc_set(powerpc_add,              new Powerpc::IP_add);
     iproc_set(powerpc_addc,             new Powerpc::IP_addc);
     iproc_set(powerpc_adde,             new Powerpc::IP_adde);
-    iproc_set(powerpc_addi,             new Powerpc::IP_addi);
     iproc_set(powerpc_addic,            new Powerpc::IP_addic(false));
     iproc_set(powerpc_addic_record,     new Powerpc::IP_addic(true));
+    iproc_set(powerpc_addi,             new Powerpc::IP_addi);
     iproc_set(powerpc_addis,            new Powerpc::IP_addis);
     iproc_set(powerpc_addme,            new Powerpc::IP_addme);
+    iproc_set(powerpc_add,              new Powerpc::IP_add);
     iproc_set(powerpc_addze,            new Powerpc::IP_addze);
-    iproc_set(powerpc_and,              new Powerpc::IP_and(false));
-    iproc_set(powerpc_and_record,       new Powerpc::IP_and(true));
     iproc_set(powerpc_andc,             new Powerpc::IP_andc(false));
     iproc_set(powerpc_andc_record,      new Powerpc::IP_andc(true));
     iproc_set(powerpc_andi_record,      new Powerpc::IP_and(true));
     iproc_set(powerpc_andis_record,     new Powerpc::IP_andis(true));
-    iproc_set(powerpc_b,                new Powerpc::IP_b(false));
+    iproc_set(powerpc_and,              new Powerpc::IP_and(false));
+    iproc_set(powerpc_and_record,       new Powerpc::IP_and(true));
     iproc_set(powerpc_ba,               new Powerpc::IP_ba(false));
-    iproc_set(powerpc_bc,               new Powerpc::IP_bc(false));
     iproc_set(powerpc_bca,              new Powerpc::IP_bca(false));
-    iproc_set(powerpc_bcctr,            new Powerpc::IP_bcctr(false));
     iproc_set(powerpc_bcctrl,           new Powerpc::IP_bcctr(true));
-    iproc_set(powerpc_bcl,              new Powerpc::IP_bc(true));
+    iproc_set(powerpc_bcctr,            new Powerpc::IP_bcctr(false));
     iproc_set(powerpc_bcla,             new Powerpc::IP_bca(true));
-    iproc_set(powerpc_bclr,             new Powerpc::IP_bclr(false));
+    iproc_set(powerpc_bcl,              new Powerpc::IP_bc(true));
     iproc_set(powerpc_bclrl,            new Powerpc::IP_bclr(true));
-    iproc_set(powerpc_bl,               new Powerpc::IP_b(true));
+    iproc_set(powerpc_bclr,             new Powerpc::IP_bclr(false));
+    iproc_set(powerpc_bc,               new Powerpc::IP_bc(false));
     iproc_set(powerpc_bla,              new Powerpc::IP_ba(true));
-    iproc_set(powerpc_cmp,              new Powerpc::IP_cmp);
+    iproc_set(powerpc_bl,               new Powerpc::IP_b(true));
+    iproc_set(powerpc_b,                new Powerpc::IP_b(false));
     iproc_set(powerpc_cmpi,             new Powerpc::IP_cmpi);
-    iproc_set(powerpc_cmpl,             new Powerpc::IP_cmpl);
     iproc_set(powerpc_cmpli,            new Powerpc::IP_cmpl);
+    iproc_set(powerpc_cmpl,             new Powerpc::IP_cmpl);
+    iproc_set(powerpc_cmp,              new Powerpc::IP_cmp);
     iproc_set(powerpc_cntlzw,           new Powerpc::IP_cntlzw);
-    iproc_set(powerpc_fmr,              new Powerpc::IP_move);
+    iproc_set(powerpc_crandc,           new Powerpc::IP_crandc);
+    iproc_set(powerpc_crand,            new Powerpc::IP_crand);
+    iproc_set(powerpc_creqv,            new Powerpc::IP_creqv);
+    iproc_set(powerpc_crnand,           new Powerpc::IP_crnand);
+    iproc_set(powerpc_crnor,            new Powerpc::IP_crnor);
+    iproc_set(powerpc_crorc,            new Powerpc::IP_crorc);
+    iproc_set(powerpc_cror,             new Powerpc::IP_cror);
+    iproc_set(powerpc_crxor,            new Powerpc::IP_crxor);
     iproc_set(powerpc_divw,             new Powerpc::IP_divw);
     iproc_set(powerpc_divwu,            new Powerpc::IP_divwu);
+    iproc_set(powerpc_eieio,            new Powerpc::IP_eieio);
+    iproc_set(powerpc_extsh,            new Powerpc::IP_extsh(false));
+    iproc_set(powerpc_extsh_record,     new Powerpc::IP_extsh(true));
+    iproc_set(powerpc_fmr,              new Powerpc::IP_move);
     iproc_set(powerpc_lbz,              new Powerpc::IP_lbz);
     iproc_set(powerpc_lbzu,             new Powerpc::IP_lbzu);
     iproc_set(powerpc_lbzux,            new Powerpc::IP_lbzu);
@@ -1028,18 +1195,21 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_lwzx,             new Powerpc::IP_move);
     iproc_set(powerpc_mfcr,             new Powerpc::IP_mfcr);
     iproc_set(powerpc_mfspr,            new Powerpc::IP_move);
+    iproc_set(powerpc_mtcrf,            new Powerpc::IP_mtcrf);
     iproc_set(powerpc_mtspr,            new Powerpc::IP_move);
     iproc_set(powerpc_mulhw,            new Powerpc::IP_mulhw);
     iproc_set(powerpc_mulhwu,           new Powerpc::IP_mulhwu);
-    iproc_set(powerpc_mullw,            new Powerpc::IP_mullw);
     iproc_set(powerpc_mulli,            new Powerpc::IP_mullw);
+    iproc_set(powerpc_mullw,            new Powerpc::IP_mullw);
+    iproc_set(powerpc_nand,             new Powerpc::IP_nand(false));
+    iproc_set(powerpc_nand_record,      new Powerpc::IP_nand(true));
     iproc_set(powerpc_neg,              new Powerpc::IP_neg);
     iproc_set(powerpc_nor,              new Powerpc::IP_nor);
-    iproc_set(powerpc_or,               new Powerpc::IP_or(false));
-    iproc_set(powerpc_or_record,        new Powerpc::IP_or(true));
     iproc_set(powerpc_orc,              new Powerpc::IP_orc);
     iproc_set(powerpc_ori,              new Powerpc::IP_or(false));
     iproc_set(powerpc_oris,             new Powerpc::IP_oris);
+    iproc_set(powerpc_or,               new Powerpc::IP_or(false));
+    iproc_set(powerpc_or_record,        new Powerpc::IP_or(true));
     iproc_set(powerpc_rlwimi,           new Powerpc::IP_rlwimi);
     iproc_set(powerpc_rlwinm,           new Powerpc::IP_rlwinm(false));
     iproc_set(powerpc_rlwinm_record,    new Powerpc::IP_rlwinm(true));
@@ -1048,24 +1218,25 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_srawi,            new Powerpc::IP_srawi);
     iproc_set(powerpc_srw,              new Powerpc::IP_srw);
     iproc_set(powerpc_stb,              new Powerpc::IP_stb);
+    iproc_set(powerpc_stbu,             new Powerpc::IP_stbu);
     iproc_set(powerpc_stbx,             new Powerpc::IP_stb);
     iproc_set(powerpc_sth,              new Powerpc::IP_sth);
     iproc_set(powerpc_stmw,             new Powerpc::IP_stmw);
-    iproc_set(powerpc_stw,              new Powerpc::IP_stw);
     iproc_set(powerpc_stwcx_record,     new Powerpc::IP_stw);
+    iproc_set(powerpc_stw,              new Powerpc::IP_stw);
     iproc_set(powerpc_stwu,             new Powerpc::IP_stwu);
     iproc_set(powerpc_stwux,            new Powerpc::IP_stwu);
     iproc_set(powerpc_stwx,             new Powerpc::IP_stw);
-    iproc_set(powerpc_subf,             new Powerpc::IP_subf(false));
-    iproc_set(powerpc_subf_record,      new Powerpc::IP_subf(true));
     iproc_set(powerpc_subfc,            new Powerpc::IP_subfc);
     iproc_set(powerpc_subfe,            new Powerpc::IP_subfe);
     iproc_set(powerpc_subfic,           new Powerpc::IP_subfic);
+    iproc_set(powerpc_subf,             new Powerpc::IP_subf(false));
+    iproc_set(powerpc_subf_record,      new Powerpc::IP_subf(true));
     iproc_set(powerpc_subfze,           new Powerpc::IP_subfze);
-    iproc_set(powerpc_xor,              new Powerpc::IP_xor(false));
-    iproc_set(powerpc_xor_record,       new Powerpc::IP_xor(true));
     iproc_set(powerpc_xori,             new Powerpc::IP_xor(false));
     iproc_set(powerpc_xoris,            new Powerpc::IP_xoris);
+    iproc_set(powerpc_xor,              new Powerpc::IP_xor(false));
+    iproc_set(powerpc_xor_record,       new Powerpc::IP_xor(true));
 
 }
 
