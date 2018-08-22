@@ -5,6 +5,7 @@
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
 #include <stringify.h>
+#include <TraceSemantics2.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -214,6 +215,7 @@ Settings::Settings() {
     insn.comment.pre = "; ";
     insn.comment.fieldWidth = 1;
     insn.semantics.showing = false;                     // not usually desired, and somewhat slow
+    insn.semantics.tracing = false;                     // not usually desired even for full output
     insn.semantics.formatter.set_show_latest_writers(false);
     insn.semantics.formatter.set_line_prefix("        ;; state: ");
 }
@@ -249,6 +251,7 @@ Settings::minimal() {
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
     s.insn.semantics.showing = false;
+    s.insn.semantics.tracing = false;
 
     return s;
 }
@@ -379,6 +382,10 @@ commandLineSwitches(Settings &settings) {
     insertBooleanSwitch(sg, "insn-semantics", settings.insn.semantics.showing,
                         "Run each instruction on a clean semantic state and show the results. This is useful if you want "
                         "to see the effect of each instruction.");
+
+    insertBooleanSwitch(sg, "insn-semantics-trace", settings.insn.semantics.tracing,
+                        "Show a trace of the individual semantic operations when showing semantics rather than just showing the "
+                        "net effect.");
 
     return sg;
 }
@@ -1231,11 +1238,14 @@ void
 Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     ASSERT_not_null(insn);
     if (settings().insn.semantics.showing) {
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
-        if (InstructionSemantics2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+        S2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        if (settings().insn.semantics.tracing)
+            ops = S2::TraceSemantics::RiscOperators::instance(ops);
+
+        if (S2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
             try {
                 cpu->processInstruction(insn);
-                InstructionSemantics2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
+                S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
                 std::ostringstream ss;
                 ss <<"\n" <<(*cpu->currentState()->registerState() + fmt) <<(*cpu->currentState()->memoryState() + fmt);
                 out <<StringUtility::trim(ss.str(), "\n", false, true);

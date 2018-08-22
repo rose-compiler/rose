@@ -83,6 +83,7 @@ struct Settings {
         struct {
             bool showing;                               /**< Show instruction semantics? */
             InstructionSemantics2::BaseSemantics::Formatter formatter; /**< How to format the semantic state output. */
+            bool tracing;                               /**< Show instruction semantics traces when showing semantics. */
         } semantics;
     } insn;                                             /**< Settings for instructions. */
 
