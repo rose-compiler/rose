@@ -30,7 +30,11 @@ SgAsmPowerpcInstruction::getSuccessors(bool *complete) {
             assert(ve!=NULL);
             rose_addr_t target = SageInterface::getAsmConstant(ve);
             retval.insert(target);
-            retval.insert(get_address()+get_size());
+
+            // Fall-through address only happens for conditional branches. If the BO field of a B-form conditional branch is
+            // equal to 1x1xx (where x is 0 or 1) then the branch is unconditional.
+            if (nOperands() < 1 || (operand(0)->asUnsigned().orElse(0) & 0x14) != 0x14)
+                retval.insert(get_address()+get_size());
             break;
         }
 
@@ -40,7 +44,11 @@ SgAsmPowerpcInstruction::getSuccessors(bool *complete) {
         case powerpc_bclrl:
             /* Conditional branches to count register; target is unknown */
             *complete = false;
-            retval.insert(get_address()+get_size());
+
+            // Fall-through address only happens for conditional branches. If the BO field of a XL-form conditional branch is
+            // equal to 1x1xx (where x is 0 or 1) then the branch is unconditional.
+            if (nOperands() < 1 || (operand(0)->asUnsigned().orElse(0) & 0x14) != 0x14)
+                retval.insert(get_address()+get_size());
             break;
 
         case powerpc_b:
