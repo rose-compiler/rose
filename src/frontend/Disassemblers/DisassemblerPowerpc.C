@@ -25,7 +25,19 @@ namespace BinaryAnalysis {
 #define DEBUG_BRANCH_LOGIC 0
 
 // These are macros to make them look like constants while they are really
-// function calls
+// function calls.
+//
+// WARNING: THESE TYPE NAMES ARE DIFFERENT THAN NORMAL PowerPC TYPE NAMES!!! That's why
+// ROSE usually uses size-based names. The translation between PowerPC names and the macros
+// chosen for this disassembler is:
+//
+//     PowerPC Name | Macro  | Size
+//     -------------+--------+-------
+//     byte         | BYTET  | 8
+//     halfword     | WORDT  | 16
+//     word         | DWORDT | 32
+//     double word  | QWORDT | 64
+//     -------------+--------+-------
 #define BYTET (SageBuilderAsm::buildTypeU8())
 #define WORDT (SageBuilderAsm::buildTypeU16())
 #define DWORDT (SageBuilderAsm::buildTypeU32())
@@ -177,20 +189,23 @@ DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std:
  * related registers (e.g., "spr8" and "lr") map to overlapping areas of the descriptor address space. */
 SgAsmRegisterReferenceExpression*
 DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number,
-                                  PowerpcConditionRegisterAccessGranularity cr_granularity) const
+                                  PowerpcConditionRegisterAccessGranularity cr_granularity,
+                                  SgAsmType *registerType /*=NULL*/) const
 {
-    /* Obtain a register name */
+    /* Obtain a register name and override the registerType for certain registers */
     std::string name;
     switch (reg_class) {
         case powerpc_regclass_gpr:
             if (reg_number<0 || reg_number>=1024)
                 throw ExceptionPowerpc("invalid gpr register number", this);
             name = "r" + StringUtility::numberToString(reg_number);
+            registerType = SageBuilderAsm::buildTypeU32();
             break;
         case powerpc_regclass_fpr:
             if (reg_number<0 || reg_number>=1024)
                 throw ExceptionPowerpc("invalid fpr register number", this);
             name = "f" + StringUtility::numberToString(reg_number);
+            registerType = SageBuilderAsm::buildIeee754Binary64();
             break;
         case powerpc_regclass_cr:
             name = "cr";
@@ -204,6 +219,7 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
                     if (reg_number<0 || reg_number>=8)
                         throw ExceptionPowerpc("invalid condition register granularity field", this);
                     name += StringUtility::numberToString(reg_number);
+                    registerType = SageBuilderAsm::buildTypeU4();
                     break;
                 case powerpc_condreggranularity_bit: {
                     /* each field has four bits with names. The full name of each bit is "crF*4+B" where "F" is the field
@@ -212,6 +228,7 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
                         throw ExceptionPowerpc("invalid condition register granularity bit", this);
                     static const char *bitname[] = {"lt", "gt", "eq", "so"};
                     name += StringUtility::numberToString(reg_number/4) + "*4+" + bitname[reg_number%4];
+                    registerType = SageBuilderAsm::buildTypeU1();
                     break;
                 }
             }
@@ -220,23 +237,27 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             if (0!=reg_number)
                 throw ExceptionPowerpc("invalid register number for fpscr", this);
             name = "fpscr";
+            registerType = SageBuilderAsm::buildTypeU32();
             break;
         case powerpc_regclass_spr:
             /* Some special purpose registers have special names, but the dictionary has the generic name as well. */
             if (reg_number<0 || reg_number>=1024)
                 throw ExceptionPowerpc("invalid spr register number", this);
             name = "spr" + StringUtility::numberToString(reg_number);
+            registerType = SageBuilderAsm::buildTypeU32();
             break;
         case powerpc_regclass_tbr:
             /* Some time base registers have special names, but the dictionary has the generic name as well. */
             if (reg_number<0 || reg_number>=1024)
                 throw ExceptionPowerpc("invalid tbr register number", this);
             name = "tbr" + StringUtility::numberToString(reg_number);
+            registerType = SageBuilderAsm::buildTypeU32();
             break;
         case powerpc_regclass_msr:
             if (0!=reg_number)
                 throw ExceptionPowerpc("invalid msr register number", this);
             name = "msr";
+            registerType = SageBuilderAsm::buildTypeU32();
             break;
         case powerpc_regclass_sr:
             /* FIXME: not implemented yet [RPM 2010-10-09] */
@@ -249,6 +270,7 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             if (0!=reg_number)
                 throw ExceptionPowerpc("invalid pvr register number", this);
             name = "pvr";
+            registerType = SageBuilderAsm::buildTypeU32();
             break;
         case powerpc_regclass_unknown:
         case powerpc_last_register_class:
@@ -266,6 +288,7 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
     /* Construct the return value */
     SgAsmRegisterReferenceExpression *rre = new SgAsmDirectRegisterExpression(*rdesc);
     ASSERT_not_null(rre);
+    rre->set_type(registerType);
     return rre;
 }
 
