@@ -55,24 +55,19 @@ ATbool traverse_FractionSpecifier(ATerm term, SgUntypedExpression** fraction);
 ATbool traverse_BitItemDescription(ATerm term, SgUntypedType** type);
 
 // 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
+ATbool traverse_CharacterItemDescription  (ATerm term, SgUntypedType** type);
 ATbool traverse_CharacterLiteral          (ATerm term, SgUntypedExpression** expr);
-//ATbool traverse_CharacterItemDescription(ATerm term, SgUntypedType** type);
-ATbool traverse_CharacterItemDescription  (ATerm term);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
-//ATbool traverse_StatusItemDescription(ATerm term, SgUntypedType** type);
-// Original traversal for StatusItemDescription is above, the temporary traversal is below
+ATbool traverse_StatusItemDescription (ATerm term, SgUntypedType** type);
 ATbool traverse_StatusConstant        (ATerm term, SgUntypedExpression** expr);
-ATbool traverse_StatusItemDescription (ATerm term);
 ATbool traverse_DefaultSublist        (ATerm term);
 ATbool traverse_OptDefaultSublist     (ATerm term);
 ATbool traverse_StatusList            (ATerm term);
 ATbool traverse_SpecifiedSublist      (ATerm term);
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
-//ATbool traverse_PointerItemDescription(ATerm term, SgUntypedType** type);
-// Original traversal for PointerItemDescription is above, the temporary traversal is below
-ATbool traverse_PointerItemDescription (ATerm term);
+ATbool traverse_PointerItemDescription (ATerm term, SgUntypedType** type);
 ATbool traverse_OptTypeName            (ATerm term);
 
 // 2.1.2 TABLE DECLARATION
@@ -104,22 +99,21 @@ ATbool traverse_SimpleStatement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_CompoundStatement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_NullStatement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_NullBlockStatement(ATerm term, SgUntypedStatementList* stmt_list);
-ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels);
+ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels, std::vector<PosInfo> & locations);
 
 // 4.1 ASSIGNMENT STATEMENTS
 ATbool traverse_AssignmentStatement(ATerm term, std::vector<std::string> & labels, SgUntypedStatementList* stmt_list);
 
 // 4.3 IF STATEMENTS
 ATbool traverse_IfStatement   (ATerm term, SgUntypedStatementList* stmt_list);
-ATbool traverse_OptElseClause (ATerm term, SgUntypedStatementList* stmt_list);
 
 // 4.4 CASE STATEMENTS
 ATbool traverse_CaseStatement   (ATerm term, SgUntypedStatementList* stmt_list);
-ATbool traverse_CaseBody        (ATerm term);
-ATbool traverse_CaseAlternative (ATerm term);
-ATbool traverse_DefaultOption   (ATerm term);
-ATbool traverse_CaseIndexGroup  (ATerm term);
-ATbool traverse_CaseIndex       (ATerm term);
+ATbool traverse_CaseBody        (ATerm term, SgUntypedStatement**    case_body);
+ATbool traverse_CaseAlternative (ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_DefaultOption   (ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_CaseIndexGroup  (ATerm term, SgUntypedExprListExpression** case_index_group);
+ATbool traverse_CaseIndex       (ATerm term, SgUntypedExpression** case_index);
 
 // 4.6 RETURN STATEMENTS
 ATbool traverse_ReturnStatement (ATerm term, SgUntypedStatementList* stmt_list);
@@ -160,44 +154,44 @@ ATbool traverse_FloatingLiteral (ATerm term, SgUntypedExpression** expr);
 ATbool traverse_FixedFormula (ATerm term, SgUntypedExpression** expr);
 
 // 5.2 BIT FORMULAS
-ATbool traverse_BitFormula             (ATerm term);
-ATbool traverse_OptLogicalContinuation (ATerm term);
-ATbool traverse_LogicalContinuation    (ATerm term);
-ATbool traverse_LogicalOperand         (ATerm term);
-ATbool traverse_BitPrimary             (ATerm term);
+ATbool traverse_BitFormula             (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_OptLogicalContinuation (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_LogicalContinuation    (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_LogicalOperand         (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_BitPrimary             (ATerm term, SgUntypedExpression** expr);
 
 // 5.2.1 RELATIONAL EXPRESSIONS
-ATbool traverse_RelationalExpression   (ATerm term);
+ATbool traverse_RelationalExpression   (ATerm term, SgUntypedExpression** expr);
 
 // 5.3 CHARACTER FORMULAS
-ATbool traverse_CharacterFormula (ATerm term);
+ATbool traverse_CharacterFormula (ATerm term, SgUntypedExpression** expr);
 
 // 5.4 STATUS FORMULAS
-ATbool traverse_StatusFormula    (ATerm term);
+ATbool traverse_StatusFormula    (ATerm term, SgUntypedExpression** expr);
 
 // 5.5 POINTER FORMULAS
-ATbool traverse_PointerFormula   (ATerm term);
+ATbool traverse_PointerFormula   (ATerm term, SgUntypedExpression** expr);
 
 // 6.1 VARIABLE AND BLOCK REFERENCES
 ATbool traverse_Variable(ATerm term, SgUntypedExpression** var);
 ATbool traverse_VariableList(ATerm term, std::vector<SgUntypedExpression*> & vars);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
-ATbool traverse_CharacterConversion  (ATerm term);
-ATbool traverse_CharacterConversionC (ATerm term);
-ATbool traverse_StatusConversion     (ATerm term);
-ATbool traverse_PointerConversion    (ATerm term);
-ATbool traverse_PointerConversionP   (ATerm term);
+ATbool traverse_CharacterConversion  (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_CharacterConversionC (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_StatusConversion     (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_PointerConversion    (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_PointerConversionP   (ATerm term, SgUntypedExpression** expr);
 
 // 8.2.3 OPERATORS
 ATbool traverse_MultiplyDivideOrMod(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name);
 ATbool traverse_RelationalOperator (ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name);
 
 // 8.3.3 BOOLEAN LITERAL
-ATbool traverse_BooleanLiteral (ATerm term);
+ATbool traverse_BooleanLiteral (ATerm term, SgUntypedExpression** expr);
 
 // 8.3.4 POINTER LITERAL
-ATbool traverse_PointerLiteral (ATerm term);
+ATbool traverse_PointerLiteral (ATerm term, SgUntypedExpression** expr);
 
 }; // class ATermToUntypedJovialTraversal
 }  // namespace Jovial

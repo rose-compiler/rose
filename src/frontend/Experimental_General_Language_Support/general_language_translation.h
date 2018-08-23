@@ -88,6 +88,9 @@ namespace General_Language_Translation
           e_literalExpression,
           e_referenceExpression,
 
+          e_case_range,
+          e_case_selector,
+
        // Special expressions denoting array declaration type
           e_array_shape,
           e_explicit_shape,
@@ -101,6 +104,12 @@ namespace General_Language_Translation
 
        // Statements
        // ----------
+
+       // General
+          e_switch_stmt,
+          e_end_switch_stmt,
+          e_case_option_stmt,
+          e_case_default_option_stmt,
 
        // Fortran specific
           e_fortran_dimension_stmt,

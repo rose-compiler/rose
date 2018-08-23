@@ -1356,7 +1356,7 @@ UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, Sg
             sg_stmt->set_string_label(ut_stmt->get_label_string());
          }
 
-      scope->append_statement(sg_stmt);
+      SageInterface::appendStatement(sg_stmt, scope);
 
 // TEMPORARY (fix numeric labels especially here)
 //    convertLabel(ut_stmt, sg_stmt, scope);
@@ -1364,6 +1364,68 @@ UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, Sg
       return sg_stmt;
    }
 
+SgStatement*
+UntypedConverter::convertSgUntypedCaseStatement (SgUntypedCaseStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+  {
+      ROSE_ASSERT(children.size() == 2);
+
+      SgStatement* sg_stmt = NULL;
+
+      if (ut_stmt->get_statement_enum() == General_Language_Translation::e_switch_stmt)
+        {
+           SgExpression* selector = isSgExpression(children[0]);
+           SgStatement* body = isSgStatement(children[1]);
+
+           ROSE_ASSERT(selector);
+           ROSE_ASSERT(body);
+
+           SgSwitchStatement* switch_stmt = SageBuilder::buildSwitchStatement(selector, body);
+           ROSE_ASSERT(switch_stmt);
+
+           switch_stmt->set_string_label(ut_stmt->get_case_construct_name());
+
+           sg_stmt = switch_stmt;
+        }
+      else if (ut_stmt->get_statement_enum() == General_Language_Translation::e_case_option_stmt)
+        {
+           SgExpression* key = isSgExpression(children[0]);
+           SgStatement* body = isSgStatement(children[1]);
+
+           ROSE_ASSERT(key);
+           ROSE_ASSERT(body);
+
+           SgCaseOptionStmt* case_option_stmt = SageBuilder::buildCaseOptionStmt(key, body);
+           ROSE_ASSERT(case_option_stmt);
+
+           case_option_stmt->set_case_construct_name (ut_stmt->get_case_construct_name());
+           case_option_stmt->set_has_fall_through    (ut_stmt->get_has_fall_through());
+
+           sg_stmt = case_option_stmt;
+        }
+      else if (ut_stmt->get_statement_enum() == General_Language_Translation::e_case_default_option_stmt)
+        {
+           SgStatement* body = isSgStatement(children[1]);
+           ROSE_ASSERT(body);
+
+           SgDefaultOptionStmt* default_option_stmt = SageBuilder::buildDefaultOptionStmt(body);
+           ROSE_ASSERT(default_option_stmt);
+
+           default_option_stmt->set_default_construct_name (ut_stmt->get_case_construct_name());
+           default_option_stmt->set_has_fall_through       (ut_stmt->get_has_fall_through());
+
+           sg_stmt = default_option_stmt;
+        }
+      else
+        {
+           cerr << "ERROR: unknown statement_enum for convertSgUntypedCaseStatement \n";
+           ROSE_ASSERT(0);
+        }
+
+      ROSE_ASSERT(sg_stmt);
+      SageInterface::appendStatement(sg_stmt, scope);
+
+      return sg_stmt;
+  }
 
 SgStatement*
 UntypedConverter::convertSgUntypedAbortStatement (SgUntypedAbortStatement* ut_stmt, SgScopeStatement* scope)
@@ -2115,6 +2177,30 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 }
 
 
+SgExprListExp*
+UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression* ut_expr_list, SgNodePtrList& children)
+{
+   SgExprListExp* sg_expr_list = NULL;
+
+   // try doing this for specific nodes only, perhaps it will work for all of the expression lists
+   if (ut_expr_list->get_expression_enum() == General_Language_Translation::e_case_selector)
+     {
+        sg_expr_list = new SgExprListExp();
+        ROSE_ASSERT(sg_expr_list);
+
+        setSourcePositionFrom(sg_expr_list, ut_expr_list);
+
+        BOOST_FOREACH(SgLocatedNode* sg_node, children)
+          {
+             SgExpression* sg_expr = dynamic_cast<SgExpression*>(sg_node);
+             ROSE_ASSERT(sg_expr);
+             sg_expr_list->append_expression(sg_expr);
+          }
+     }
+
+   return sg_expr_list;
+}
+
 SgExpression*
 UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpression* ut_expr, bool delete_ut_expr)
 {
@@ -2193,6 +2279,35 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
 }
 
 
+SgExpression*
+UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpression* ut_expr, SgNodePtrList& children)
+{
+   ROSE_ASSERT(children.size() == 3);
+
+   SgExpression* sg_expr = NULL;
+
+   // try doing this for specific nodes only, perhaps it will work for all of the subscript expressions
+   if (ut_expr->get_expression_enum() == General_Language_Translation::e_case_range)
+     {
+        SgExpression* lower_bound = isSgExpression(children[0]);
+        SgExpression* upper_bound = isSgExpression(children[1]);
+        SgExpression* stride      = isSgExpression(children[2]);
+        ROSE_ASSERT(lower_bound && upper_bound && stride);
+
+     // stride has to be converted to the integer 1
+        delete stride;
+        stride = new SgIntVal(1,"1");
+        SageInterface::setSourcePosition(stride);
+
+        sg_expr = new SgSubscriptExpression(lower_bound, upper_bound, stride);
+        ROSE_ASSERT(sg_expr != NULL);
+        setSourcePositionFrom(sg_expr, ut_expr);
+     }
+
+   return sg_expr;
+}
+
+
 SgScopeStatement*
 UntypedConverter::initialize_global_scope(SgSourceFile* file)
 {
@@ -2252,7 +2367,7 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
      SgScopeStatement* currentScopeOfFunctionDeclaration = scope;
      ROSE_ASSERT(currentScopeOfFunctionDeclaration != NULL);
 
-     printf("------------------buildProcedureSupport: need to finish %p %p %p\n", scope, ut_function, procedureDeclaration);
+     printf("...TODO... buildProcedureSupport: need to finish %p %p %p\n", scope, ut_function, procedureDeclaration);
 
 #if 0
      if (astInterfaceStack.empty() == false)

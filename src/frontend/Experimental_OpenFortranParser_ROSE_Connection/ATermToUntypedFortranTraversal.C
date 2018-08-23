@@ -755,6 +755,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    else if (traverse_IfStmt(term, stmt_list)) {
       // Matched IfStmt
    }
+   else if (traverse_CaseConstruct(term, stmt_list)) {
+      // Matched ContinueStmt
+   }
    else if (traverse_ContinueStmt(term, stmt_list)) {
       // Matched ContinueStmt
    }
@@ -1045,6 +1048,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedEx
       op_enum = General_Language_Translation::e_operator_unary_plus;
       op_name = "+";
       is_unary_op = true;
+   }
+   else if (ATmatch(term, "Parens(<term>)", &term1)) {
+      // TODO - test this, it seems to work OK
+      cerr << "...WARNING...: throwing away Parens Operator in traverse_Operator (test expressions)\n";
+      return traverse_Expression(term1, var_expr);
    }
 
    if (is_unary_op) {
@@ -1526,10 +1534,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedT
    // check for non-list array-spec term first, e.g., dimension A(*)
    // 
       if (traverse_AssumedOrImpliedSpec(t_array_spec_arg, &lower_bound)) {
-         upper_bound = new SgUntypedNullExpression();
+         upper_bound = UntypedBuilder::buildUntypedNullExpression();
          setSourcePositionUnknown(upper_bound);
 
-         stride = new SgUntypedNullExpression();
+         stride = UntypedBuilder::buildUntypedNullExpression();
          setSourcePositionUnknown(stride);
 
          expr_enum = General_Language_Translation::e_assumed_or_implied_shape;
@@ -1563,7 +1571,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedT
 
             rank += 1;
 
-            stride = new SgUntypedNullExpression();
+            stride = UntypedBuilder::buildUntypedNullExpression();
             setSourcePositionUnknown(stride);
 
             range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
@@ -1579,10 +1587,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedT
 
             rank += 1;
 
-            upper_bound = new SgUntypedNullExpression();
+            upper_bound = UntypedBuilder::buildUntypedNullExpression();
             setSourcePositionUnknown(upper_bound);
 
-            stride = new SgUntypedNullExpression();
+            stride = UntypedBuilder::buildUntypedNullExpression();
             setSourcePositionUnknown(stride);
 
             range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
@@ -1636,7 +1644,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShape(ATerm term, SgUnty
 
    if (ATmatch(term, "ExplicitShape(<term>,<term>)", &t_lower_bound, &t_upper_bound)) {
       if (ATmatch(t_lower_bound, "no-lower-bound()")) {
-         *lower_bound = new SgUntypedNullExpression();
+         *lower_bound = UntypedBuilder::buildUntypedNullExpression();
          setSourcePositionUnknown(*lower_bound);
       }
       else if (traverse_Expression(t_lower_bound, lower_bound)) {
@@ -1707,7 +1715,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedShape(ATerm term, SgUntyp
 
    if (ATmatch(term, "AssumedShape(<term>)", &t_lower_bound)) {
       if (ATmatch(t_lower_bound, "no-lower-bound()")) {
-         *lower_bound = new SgUntypedNullExpression();
+         *lower_bound = UntypedBuilder::buildUntypedNullExpression();
          setSourcePositionUnknown(*lower_bound);
       }
       else if (traverse_Expression(t_lower_bound, lower_bound)) {
@@ -1744,16 +1752,16 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedSize(ATerm term, SgUntype
 
    // match the final dimension which makes it assumed-size, i.e., '*'
       if (ATmatch(t_lower_bound, "no-lower-bound()")) {
-         lower_bound = new SgUntypedNullExpression();
+         lower_bound = UntypedBuilder::buildUntypedNullExpression();
          setSourcePositionUnknown(lower_bound);
       }
       else if (traverse_Expression(t_lower_bound, &lower_bound)) {
       } else return ATfalse;
 
-      upper_bound = new SgUntypedNullExpression();
+      upper_bound = UntypedBuilder::buildUntypedNullExpression();
       setSourcePositionUnknown(upper_bound);
 
-      stride = new SgUntypedNullExpression();
+      stride = UntypedBuilder::buildUntypedNullExpression();
       setSourcePositionUnknown(stride);
 
       int expr_enum = General_Language_Translation::e_assumed_size;
@@ -1789,7 +1797,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedOrImpliedSpec(ATerm term,
 
    if (ATmatch(term, "AssumedOrImpliedSpec(<term>)", &t_lower_bound)) {
       if (ATmatch(t_lower_bound, "no-lower-bound()")) {
-         *lower_bound = new SgUntypedNullExpression();
+         *lower_bound = UntypedBuilder::buildUntypedNullExpression();
          setSourcePositionUnknown(*lower_bound);
       }
       else if (traverse_Expression(t_lower_bound, lower_bound)) {
@@ -1869,7 +1877,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArrayNameSpec(ATerm term, SgUnty
 
    if (ATmatch(term, "ArrayNameSpec(<term>,<term>)",&t_name,&t_array_spec)) {
       if (traverse_Name(t_name, name)) {
-         // MATCHED ObjectName                                                                                      
+         // MATCHED ObjectName
       } else return ATfalse;
 
       if (traverse_ArraySpec(t_array_spec, base_type, &array_type)) {
@@ -2086,6 +2094,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptExpr( ATerm term, SgUntypedEx
    if (ATmatch(term, "no-expr()")) {
       // No Expression
       *expr = UntypedBuilder::buildUntypedNullExpression();
+      setSourcePositionUnknown(*expr);
    }
    else if (traverse_Expression(term, expr)) {
       // MATCHED an Expression
@@ -2553,6 +2562,316 @@ ATbool ATermToUntypedFortranTraversal::traverse_IfStmt(ATerm term, SgUntypedStat
 }
 
 //========================================================================================
+// R838 case-construct
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_CaseConstruct(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseConstruct: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_case_stmt, t_case_list, t_end_case_stmt;
+   SgUntypedCaseStatement* select_case_stmt;
+   SgUntypedBlockStatement* case_body;
+   SgUntypedNamedStatement* end_select_stmt;
+
+   if (ATmatch(term, "CaseConstruct(<term>,<term>,<term>)", &t_case_stmt,&t_case_list,&t_end_case_stmt)) {
+      if (traverse_SelectCaseStmt(t_case_stmt, &select_case_stmt)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      ROSE_ASSERT(select_case_stmt != NULL);
+
+      case_body = SageBuilder::buildUntypedBlockStatement("");
+      ROSE_ASSERT(case_body != NULL);
+
+      select_case_stmt->set_body(case_body);
+
+      SgUntypedStatementList* my_stmt_list = case_body->get_scope()->get_statement_list();
+
+      ATermList tail = (ATermList) ATmake("<term>", t_case_list);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+
+         if (traverse_CaseStmtAndBlock(head, my_stmt_list)) {
+            // MATCHED CaseStmtAndBlock
+         } else return ATfalse;
+      }
+
+      if (traverse_EndSelectStmt(t_end_case_stmt, &end_select_stmt)) {
+         // MATCHED EndSelectStmt
+      } else return ATfalse;
+
+      my_stmt_list->get_stmt_list().push_back(end_select_stmt);
+   }
+   else return ATfalse;
+
+   stmt_list->get_stmt_list().push_back(select_case_stmt);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_CaseStmtAndBlock(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseStmtAndBlock: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_case_stmt, t_block;
+   SgUntypedCaseStatement* case_stmt;
+   SgUntypedBlockStatement* block;
+
+   // NOTE constructor name doesn't match the function name (cons name could be changed but not necessary).
+   if (ATmatch(term, "CaseStmtBlock(<term>,<term>)", &t_case_stmt,&t_block)) {
+      if (traverse_CaseStmt(t_case_stmt, &case_stmt)) {
+         // MATCHED CaseStmt
+      } else return ATfalse;
+      if (traverse_Block(t_block, &block)) {
+         // MATCHED Block
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(case_stmt);
+   ROSE_ASSERT(block);
+
+   case_stmt->set_body(block);
+   stmt_list->get_stmt_list().push_back(case_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R839 select-case-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SelectCaseStmt(ATerm term, SgUntypedCaseStatement** case_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SelectCaseStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_name, t_expr, t_eos;
+   std::string label, case_name, eos;
+   SgUntypedExpression* case_expr;
+   SgUntypedCaseStatement* select_case_stmt;
+
+   int stmt_enum = General_Language_Translation::e_switch_stmt;
+
+   if (ATmatch(term, "SelectCaseStmt(<term>,<term>,<term>,<term>)", &t_label,&t_name,&t_expr,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(t_name, case_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_Expression(t_expr, &case_expr)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedBlockStatement* body = NULL;
+
+   select_case_stmt = new SgUntypedCaseStatement(label, stmt_enum, case_expr, body, case_name, false);
+   ROSE_ASSERT(select_case_stmt);
+   setSourcePosition(select_case_stmt, term);
+
+   *case_stmt = select_case_stmt;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R840 case-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_CaseStmt(ATerm term, SgUntypedCaseStatement** case_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_selector, t_name, t_eos;
+   std::string label, case_name, eos;
+   int stmt_enum;
+   SgUntypedExprListExpression* selector = NULL;
+
+   if (ATmatch(term, "CaseStmt(<term>,<term>,<term>,<term>)", &t_label,&t_selector,&t_name,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_CaseSelector(t_selector, &selector)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_OptName(t_name, case_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedBlockStatement* body = NULL;
+
+   if (selector) stmt_enum = General_Language_Translation::e_case_option_stmt;
+   else          stmt_enum = General_Language_Translation::e_case_default_option_stmt;
+
+   *case_stmt = new SgUntypedCaseStatement(label, stmt_enum, selector, body, case_name, false);
+   ROSE_ASSERT(*case_stmt);
+   setSourcePosition(*case_stmt, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R841 end-select-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_EndSelectStmt(ATerm term, SgUntypedNamedStatement** end_select_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_EndSelectStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_name, t_eos;
+   std::string label, construct_name, eos;
+
+   int stmt_enum = General_Language_Translation::e_end_switch_stmt;
+
+   if (ATmatch(term, "EndSelectStmt(<term>,<term>,<term>)", &t_label,&t_name,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(t_name, construct_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   *end_select_stmt = new SgUntypedNamedStatement(label,stmt_enum,construct_name);
+
+   ROSE_ASSERT(*end_select_stmt);
+   setSourcePosition(*end_select_stmt, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R843 case-selector
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_CaseSelector(ATerm term, SgUntypedExprListExpression** selector)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CaseSelector: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_selector_list;
+   SgUntypedExpression* case_value_range;
+   SgUntypedExprListExpression* case_selector;
+
+   *selector = NULL;
+
+   if (ATmatch(term, "paren-list(<term>)", &t_selector_list)) {
+      case_selector = new SgUntypedExprListExpression(General_Language_Translation::e_case_selector);
+      ROSE_ASSERT(case_selector);
+      setSourcePosition(case_selector, term);
+
+      ATermList tail = (ATermList) ATmake("<term>", t_selector_list);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+
+         if (traverse_CaseValueRange(head, &case_value_range)) {
+            // MATCHED CaseStmtAndBlock
+         } else return ATfalse;
+         case_selector->get_expressions().push_back(case_value_range);
+      }
+   }
+   else if (ATmatch(term, "DEFAULT()")) {
+      // MATCHED DEFAULT case-selector
+      case_selector = NULL;
+   }
+   else return ATfalse;
+
+   // Ok to be NULL if DEFAULT selector
+   *selector = case_selector;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R844 case-value-range
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_CaseValueRange(ATerm term, SgUntypedExpression** case_value_range)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_CaseValueRange: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_expr1, t_expr2;
+
+   SgUntypedSubscriptExpression* range = NULL;
+   SgUntypedExpression* lower_bound = NULL;
+   SgUntypedExpression* upper_bound = NULL;
+   SgUntypedExpression* stride = NULL;
+   SgUntypedExpression* value = NULL;
+
+   *case_value_range = NULL;
+
+   if (ATmatch(term, "CaseValue(<term>)", &t_expr1)) {
+      if (traverse_Expression(t_expr1, &value)) {
+         // MATCHED Expression
+      } else return ATfalse;
+
+   } else if (ATmatch(term, "CaseValueRange(<term>,no-high())", &t_expr1)) {
+      if (traverse_Expression(t_expr1, &lower_bound)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      upper_bound = UntypedBuilder::buildUntypedNullExpression();
+      setSourcePositionUnknown(upper_bound);
+
+   } else if (ATmatch(term, "CaseValueRange(no-low(),<term>)", &t_expr2)) {
+      if (traverse_Expression(t_expr2, &upper_bound)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      lower_bound = UntypedBuilder::buildUntypedNullExpression();
+      setSourcePositionUnknown(lower_bound);
+
+   } else if (ATmatch(term, "CaseValueRange(<term>,<term>)", &t_expr1,&t_expr2)) {
+      if (traverse_Expression(t_expr1, &lower_bound)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_Expression(t_expr2, &upper_bound)) {
+         // MATCHED Expression
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   if (value) {
+      *case_value_range = value;
+   }
+   else if (lower_bound && upper_bound) {
+      int expr_enum = General_Language_Translation::e_case_range;
+      stride = UntypedBuilder::buildUntypedNullExpression();
+      setSourcePositionUnknown(stride);
+      range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
+      setSourcePosition(range, term);
+      *case_value_range = range;
+   }
+   else {
+      ROSE_ASSERT(0);
+   }
+   ROSE_ASSERT(*case_value_range);
+
+   return ATtrue;
+}
+
+//========================================================================================
 // R851 goto-stmt
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedFortranTraversal::traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list)
@@ -2700,7 +3019,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptStopCode(ATerm term, SgUntype
 
    if (ATmatch(term, "no-stop-code()")) {
       // No StopCode
-      *stop_code = new SgUntypedNullExpression();
+      *stop_code = UntypedBuilder::buildUntypedNullExpression();
       setSourcePositionUnknown(*stop_code);
    }
    else if (traverse_Expression(term, stop_code)) {

@@ -2522,6 +2522,10 @@ Grammar::setUpStatements ()
      CaseOptionStmt.setDataPrototype ( "std::string", "case_construct_name", " = \"\"",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (8/21/2018): Added support for Jovial FALLTHRU option.
+     CaseOptionStmt.setDataPrototype ( "bool", "has_fall_through", " = false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      TryStmt.setFunctionPrototype ( "HEADER_TRY_STATEMENT", "../Grammar/Statement.code" );
      TryStmt.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      TryStmt.editSubstitute       ( "LIST_DATA_TYPE", "SgStatementPtrList" );
@@ -2574,6 +2578,10 @@ Grammar::setUpStatements ()
 
   // DQ (1/31/2009): Added support for named default case construct.
      DefaultOptionStmt.setDataPrototype ( "std::string", "default_construct_name", " = \"\"",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (8/21/2018): Added support for Jovial FALLTHRU option.
+     DefaultOptionStmt.setDataPrototype ( "bool", "has_fall_through", " = false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      BreakStmt.setFunctionPrototype ( "HEADER_BREAK_STATEMENT", "../Grammar/Statement.code" );

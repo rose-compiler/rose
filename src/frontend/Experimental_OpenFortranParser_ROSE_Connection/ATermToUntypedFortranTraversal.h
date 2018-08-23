@@ -158,6 +158,25 @@ ATbool traverse_OptElseStmtAndBlock(ATerm term, SgUntypedStatement** else_stmt, 
 // R837
 ATbool traverse_IfStmt(ATerm term, SgUntypedStatementList* stmt_list);
 
+// R838
+ATbool traverse_CaseConstruct    (ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_CaseStmtAndBlock (ATerm term, SgUntypedStatementList* stmt_list);
+
+// R839
+ATbool traverse_SelectCaseStmt(ATerm term, SgUntypedCaseStatement** case_stmt);
+
+// R840
+ATbool traverse_CaseStmt(ATerm term, SgUntypedCaseStatement** case_stmt);
+
+// R841
+ATbool traverse_EndSelectStmt(ATerm term, SgUntypedNamedStatement** end_select_stmt);
+
+// R843
+ATbool traverse_CaseSelector(ATerm term, SgUntypedExprListExpression** selector);
+
+// R844
+ATbool traverse_CaseValueRange(ATerm term, SgUntypedExpression** case_range);
+
 // R851
 ATbool traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list);
 

@@ -192,6 +192,20 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
           sg_node = pConverter->convertSgUntypedExpression(ut_expr);
           break;
        }
+    case V_SgUntypedExprListExpression:
+       {
+          SgUntypedExprListExpression* ut_expr = isSgUntypedExprListExpression(node);
+          SgNodePtrList children(childAttrs);
+          sg_node = pConverter->convertSgUntypedExprListExpression(ut_expr, children);
+          break;
+       }
+    case V_SgUntypedSubscriptExpression:
+       {
+          SgUntypedSubscriptExpression* ut_expr = isSgUntypedSubscriptExpression(node);
+          SgNodePtrList children(childAttrs);
+          sg_node = pConverter->convertSgUntypedSubscriptExpression(ut_expr, children);
+          break;
+       }
     case V_SgUntypedAbortStatement:
       {
          SgUntypedAbortStatement* ut_stmt = dynamic_cast<SgUntypedAbortStatement*>(node);
@@ -210,7 +224,6 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
 #if 0
          SgNodePtrList children(childAttrs);
          cout << "--- SgUntypedBlockStatement: # children is " << children.size() << endl;
-
          cout << "---     top scope is : " << SageBuilder::topScopeStack() << " "
               << SageBuilder::topScopeStack()->class_name() << endl;
          cout << "--- current scope is : " << currentScope << " " << currentScope->class_name() << endl;
@@ -246,6 +259,13 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          SgNodePtrList children(childAttrs);
 
          sg_node = pConverter->convertSgUntypedIfStatement(ut_stmt, children, currentScope);
+         break;
+      }
+    case V_SgUntypedCaseStatement:
+      {
+         SgUntypedCaseStatement* ut_stmt = dynamic_cast<SgUntypedCaseStatement*>(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertSgUntypedCaseStatement(ut_stmt, children, currentScope);
          break;
       }
 #if 0
@@ -296,5 +316,16 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          delete node;
       }
    
+#if 0
+   SgBasicBlock* block = isSgBasicBlock(sg_node);
+   if (block)
+      {
+         cout << "-x- isSgBasicBlock " << block << endl;
+         cout << "-x-         parent " << block->get_parent();
+         if (block->get_parent()) cout << " " << block->get_parent()->class_name();
+         cout << endl;
+      }
+#endif
+
    return sg_node;
 }

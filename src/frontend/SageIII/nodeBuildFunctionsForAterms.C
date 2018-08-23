@@ -3416,11 +3416,11 @@ SgUntypedRequeueStatement* SgUntypedRequeueStatement::build_node_from_nonlist_ch
    }
 
 
-SgUntypedCaseStatement* SgUntypedCaseStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedCaseStatement* SgUntypedCaseStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* expression, SgUntypedStatement* body, std::string case_name)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedCaseStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedCaseStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* expression, SgUntypedStatement* body, std::string case_name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedCaseStatement* returnNode = NULL;
