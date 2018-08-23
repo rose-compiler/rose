@@ -933,15 +933,15 @@ namespace ArithmeticIntensityMeasurement
         case V_SgSubtractOp:
         case V_SgMinusAssignOp:  
           op_kind = e_minus;
-          break;	
+          break;        
         case V_SgMultiplyOp:
         case V_SgMultAssignOp:  
           op_kind = e_multiply;
-          break;	
+          break;        
         case V_SgDivideOp:
         case V_SgDivAssignOp:  
           op_kind = e_divide;
-          break;	
+          break;        
         default:
           break;  
       } //end switch
@@ -967,7 +967,7 @@ namespace ArithmeticIntensityMeasurement
           addFPCount (input, op_kind);
           FPVisitMAP[bop] = true;
         }
-      }	
+      } 
     }  // end for
 
     //Must update the total counter here
@@ -1016,7 +1016,7 @@ namespace ArithmeticIntensityMeasurement
     else
     {
       return false;
-    }	
+    }   
 
     // Now there is no turning point. Must succeed or assert failure. 
     //parse operation count value
