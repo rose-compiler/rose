@@ -2,7 +2,7 @@
 #define AI_MEASUREMENT_H
 
 // Program analysis to estimate arithemetic intensity of one loop iteration
-#include <sage3basic.h>
+#include <rosePublicConfig.h>
 #include <fstream>
 #include <iostream>
 
