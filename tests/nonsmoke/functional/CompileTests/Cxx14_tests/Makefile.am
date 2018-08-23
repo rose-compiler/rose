@@ -17,6 +17,7 @@ test2016_15.C \
 test2016_19.C \
 test2016_24.C \
 test2016_26.C \
+test2018_01.C \
 last.C
 
 # DQ (2/21/2017): Some compilers are not handling the C++14 support (Intel v15 and earlier).
