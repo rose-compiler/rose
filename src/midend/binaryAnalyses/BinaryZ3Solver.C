@@ -205,6 +205,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_ITE:
                 retval = outputIte(inode);
                 break;
+            case SymbolicExpr::OP_LET:
+                throw Exception("OP_LET not implemented");
             case SymbolicExpr::OP_LSSB:
                 throw Exception("OP_LSSB not implemented");
             case SymbolicExpr::OP_MSSB:
@@ -494,6 +496,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                                  alternatives[1].first);
                 return Z3ExprTypePair(z3expr, type);
             }
+            case SymbolicExpr::OP_LET:
+                throw Exception("OP_LET not implemented");
             case SymbolicExpr::OP_LSSB:
                 throw Exception("OP_LSSB not implemented");
             case SymbolicExpr::OP_MSSB:

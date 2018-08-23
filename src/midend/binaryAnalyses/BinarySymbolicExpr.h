@@ -62,6 +62,7 @@ enum Operator {
     OP_EXTRACT,             /**< Extract subsequence of bits. Extract bits [A..B) of C. 0 <= A < B <= width(C). */
     OP_INVERT,              /**< Bitwise inversion. One operand. */
     OP_ITE,                 /**< If-then-else. A must be one bit. Returns B if A is set, C otherwise. */
+    OP_LET,                 /**< Let expression. Deferred substitution. Substitutes A for B in C. */
     OP_LSSB,                /**< Least significant set bit or zero. One operand. */
     OP_MSSB,                /**< Most significant set bit or zero. One operand. */
     OP_NE,                  /**< Inequality. Two operands, both the same width. */
@@ -1167,6 +1168,8 @@ Ptr makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a,
 Ptr makeInvert(const Ptr &a,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeIte(const Ptr &cond, const Ptr &a, const Ptr &b,
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeLet(const Ptr &a, const Ptr &b, const Ptr &c,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeLssb(const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);

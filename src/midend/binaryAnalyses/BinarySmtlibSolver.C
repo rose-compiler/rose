@@ -507,6 +507,8 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_ITE:
                 retval = outputIte(inode);
                 break;
+            case SymbolicExpr::OP_LET:
+                throw Exception("OP_LET not implemented");
             case SymbolicExpr::OP_LSSB:
                 throw Exception("OP_LSSB not implemented");
             case SymbolicExpr::OP_MSSB:

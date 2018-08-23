@@ -616,6 +616,13 @@ Interior::adjustWidth() {
             domainWidth_ = child(1)->domainWidth();
             break;
         }
+        case OP_LET: {
+            if (nChildren() != 3)
+                throw Exception(toStr(op_) + " operator expects three arguments");
+            nBits_ = child(2)->nBits();
+            domainWidth_ = child(2)->domainWidth();
+            break;
+        }
         case OP_LSSB:
         case OP_MSSB:
         case OP_NEGATE: {
@@ -811,6 +818,7 @@ Interior::print(std::ostream &o, Formatter &fmt) {
                 case OP_ULT:
                 case OP_UMOD:
                 case OP_UMUL:
+                case OP_LET:
                     if (child_leaf) {
                         child_leaf->printAsUnsigned(o, fmt);
                         printed = true;
@@ -2463,6 +2471,9 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
             case OP_ITE:
                 newnode = inode->rewrite(IteSimplifier(), solver);
                 break;
+            case OP_LET:
+                // No simplifications
+                break;
             case OP_LSSB:
                 newnode = inode->rewrite(LssbSimplifier(), solver);
                 break;
@@ -3060,6 +3071,12 @@ Ptr
 makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment,
         unsigned flags) {
     return Interior::create(0, OP_ITE, cond, a, b, solver, comment, flags);
+}
+
+Ptr
+makeLet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment,
+        unsigned flags) {
+    return Interior::create(0, OP_LET, a, b, c, solver, comment, flags);
 }
 
 Ptr
