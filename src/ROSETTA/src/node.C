@@ -760,7 +760,19 @@ Grammar::setUpNodes ()
      UntypedIfStatement.setDataPrototype               ( "SgUntypedStatement*", "false_body", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     UntypedCaseStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
+  // Rasmussen (8/14/2018): Added statement_enum, expression, body, ..., to allow connection to Sage nodes.
+     UntypedCaseStatement.setFunctionPrototype         ( "HEADER_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCaseStatement.setDataPrototype             ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedCaseStatement.setDataPrototype             ( "SgUntypedExpression*",  "expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedCaseStatement.setDataPrototype             ( "SgUntypedStatement*", "body", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedCaseStatement.setDataPrototype             ( "std::string", "case_construct_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedCaseStatement.setDataPrototype             ( "bool", "has_fall_through", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+
      UntypedLoopStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedWhileStatement.setFunctionPrototype                ( "HEADER_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedForStatement.setFunctionPrototype                  ( "HEADER_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
