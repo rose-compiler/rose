@@ -609,6 +609,8 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, PathProcessor 
             REG_RETURN_ = *r;
         } else if ((r = registers_->lookup("d0"))) {
             REG_RETURN_ = *r;                           // m68k also typically has other return registers
+        } else if ((r = registers_->lookup("r3"))) {
+            REG_RETURN_ = *r;                           // PowerPC also returns via r4
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
