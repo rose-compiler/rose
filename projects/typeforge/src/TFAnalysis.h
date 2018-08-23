@@ -12,6 +12,7 @@ class TFAnalysis{
   private:
     void linkVariables(SgInitializedName* initName, SgType* type, SgExpression* exp);
     void addToMap(SgNode* originNode, SgNode* targetNode);
+    std::list<std::set<SgNode*>*> listSets;
     std::map<SgNode*,std::set<SgNode*>*> setMap;
 };
 

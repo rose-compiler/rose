@@ -15,6 +15,7 @@
 #include "Sawyer/Graph.h"
 #include "TFTypeTransformer.h"
 #include "TFSpecFrontEnd.h"
+#include "TFAnalysis.h"
 
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
@@ -71,6 +72,7 @@ int main (int argc, char* argv[])
     ("explicit", "make all imlicit casts explicit.")
     ("stats", "print statistics on casts of built-in floating point types.")
     ("trace", "print program transformation operations as they are performed.")
+    ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("spec-file", po::value< string >()," name of typeforge specification file.")
     ("source-file", po::value<vector<string> >()," name of source files.")
@@ -125,6 +127,12 @@ int main (int argc, char* argv[])
   //for(auto str : argvList) cout<<str<<"\n";
   SgProject* sageProject=frontend (argvList); 
   TFTypeTransformer tt;
+
+  if(args.isUserProvided("set-analysis")){
+    TFAnalysis analysis;
+    analysis.variableSetAnalysis(sageProject);
+    analysis.writeAnalysis("");    
+  }
 
   if(args.isUserProvided("explicit")) {
     tt.makeAllCastsExplicit(sageProject);
