@@ -767,7 +767,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_DefaultSublist(ATerm term)
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_StatusConstant(head, &expr)) {
-	   // MATCHED StatusConstant
+            // MATCHED StatusConstant
          } else return ATfalse;
       }
    } else return ATfalse;
@@ -811,7 +811,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusList(ATerm term)
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_SpecifiedSublist(head)) {
-	   // MATCHED SpecifiedSublist
+           // MATCHED SpecifiedSublist
          } else return ATfalse;
       }
    } else return ATfalse;
@@ -837,7 +837,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedSublist(ATerm term)
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_StatusConstant(head, &expr)) {
-	   // MATCHED StatusConstant
+           // MATCHED StatusConstant
          } else return ATfalse;
       }
    } else return ATfalse;
@@ -2483,7 +2483,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptLogicalContinuation(ATerm term
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_LogicalContinuation(head, expr)) {
-	   // MATCHED LogicalContinuation
+            // MATCHED LogicalContinuation
          } else return ATfalse;
       }
    }
