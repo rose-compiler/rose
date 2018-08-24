@@ -4172,7 +4172,7 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
 #if 0
                     printf ("In isDotExprWithAnonymousUnion(): (hidden in SgBinaryOp): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
 #endif
-                    returnValue = isAnonymousName;
+                   returnValue = isAnonymousName;
                   }
              }
             else
@@ -4199,10 +4199,12 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
    {
      bool suppressOutputOfImplicitArrowExp = false;
 
-#if 0
+#define DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA 0
+
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
      printf ("&&&&&&&&&&&&& In isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s info.supressImplicitThisOperator = %s \n",expr,expr->class_name().c_str(),info.supressImplicitThisOperator() ? "true" : "false");
 #endif
-#if 0
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
      curprint (" /* &&&&&&&&&&&&& In isImplicitArrowExpWithinLambdaFunction() */ ");
 #endif
 
@@ -4219,18 +4221,40 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
                   {
                     if (thisExp->get_file_info()->isCompilerGenerated() == true)
                        {
-#if 0
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
                          printf ("In isImplicitArrowExpWithinLambdaFunction(): found compiler generated this expression: thisExp = %p = %s \n",thisExp,thisExp->class_name().c_str());
 #endif
                          suppressOutputOfImplicitArrowExp = true;
                        }
                   }
 
+#if 0
+            // DQ (7/23/2018): Need to support cases where the rhs is a valid operand (see test2018_85.C).
+            // But we still want test2018_120.C to work properly.
+               SgExpression* rhs = arrowExp->get_rhs_operand();
+               if (rhs != NULL)
+                  {
+                 // suppressOutputOfImplicitArrowExp = false;
+                    if (rhs->get_file_info()->isCompilerGenerated() == false)
+                       {
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                         printf ("In isImplicitArrowExpWithinLambdaFunction(): found NON-compiler generated this expression: rhs = %p = %s \n",rhs,rhs->class_name().c_str());
+#endif
+                      // suppressOutputOfImplicitArrowExp = false;
+                         suppressOutputOfImplicitArrowExp = false;
+#if 0
+                         printf ("found NON-compiler generated this expression: exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+#endif
+
             // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
                SgArrowExp* nested_arrowExp = isSgArrowExp(lhs);
                if (nested_arrowExp != NULL)
                   {
-#if 0
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
                     printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
 #endif
                     suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
@@ -4239,19 +4263,21 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
                     SgExpression* nested_operator_rhs = nested_arrowExp->get_rhs_operand();
                     if (nested_operator_rhs->get_file_info()->isCompilerGenerated() == false)
                        {
-#if 0
+// #if DEBUG_ARROW_OPERATOR_CHAIN
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
                          printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: found NON compiler generated expression: nested_operator_rhs = %p = %s \n",
                               nested_operator_rhs,nested_operator_rhs->class_name().c_str());
 #endif
                          suppressOutputOfImplicitArrowExp = false;
                        }
                   }
-
+#if 0
+            // DQ (7/24/2018): I now think this is a mistake to make this a recursive function.
             // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
                SgCastExp* nested_cast = isSgCastExp(lhs);
                if (nested_cast != NULL)
                   {
-#if 0
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
                     printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested cast expression: nested_cast = %p = %s \n",nested_cast,nested_cast->class_name().c_str());
 #endif
                     if (nested_cast->get_file_info()->isCompilerGenerated() == true)
@@ -4260,20 +4286,25 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
                          SgArrowExp* nested_arrowExp = isSgArrowExp(nested_cast->get_operand());
                          if (nested_arrowExp != NULL)
                             {
-#if 0
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
                               printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression behind cast: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
 #endif
                               suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                              printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression behind cast: nested_arrowExp = %p = %s suppressOutputOfImplicitArrowExp = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
                             }
                        }
                   }
+#endif
              }
         }
 
-#if 0
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
      printf ("&&&&&&&&&&&&& Leaving isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",expr,expr->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
 #endif
-#if 0
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
      curprint (" /* &&&&&&&&&&&&& Leaving isImplicitArrowExpWithinLambdaFunction() */ ");
 #endif
 
@@ -4409,10 +4440,23 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           if (memberFunctionRefExp != NULL)
              {
             // If this is a member function, then we will need to include that reference to the calling class through the arrow operator.
+
+            // DQ (7/5/2018): If we are going to force the output of the "->" operator, then we have to force the output of the lhs 
+            // expression (see test2018_120.C) or the lhs of the lhs, ... unclear how to handle this more complex case.  Unless we 
+            // explicitly search the lhs expression for the "this" operand so that we can unparse it when there is not a variable
+            // reference expression as in test2018_85.C.  I would rather output the "this->" part of the unparsed expression than
+            // skip it, however, the case in test2018_120.C has a compiler generated "this" and so it might be better to use this
+            // as a test for if we should make this a special case and unparse the "->" operator.  This would be inconsistant with
+            // the original code, but then the EDG AST does marks even the "this" expression as comnpiler generated and that is 
+            // equivalent semantics, so that might be the best solution.  EDG just normalizes the code with respect to the source 
+            // position information in this case.
+
 #if 0
                printf ("In unparseBinaryExpr(): Set suppressOutputOfImplicitArrowExp = false: as special case of a member function reference: memberFunctionRefExp = %p = %s \n",memberFunctionRefExp,memberFunctionRefExp->class_name().c_str());
+               curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " : suppressOutputOfImplicitArrowExp set to false */ \n");
 #endif
-               suppressOutputOfImplicitArrowExp = false;
+            // DQ (7/24/2018): Instead of making this an exception, we should try to handle this case better in test2018_85.C and test2018_130.C.
+            // suppressOutputOfImplicitArrowExp = false;
              }
             else
              {
@@ -4687,7 +4731,26 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
        // unparseExpression(binary_op->get_lhs_operand(), info);
           if (suppressOutputOfImplicitArrowExp == false)
              {
+            // DQ (7/12/2018): Check if this is a member function and if it is from a compiler generated variable and then if "this" should be output.
+#if 0
+               printf ("NOTE: suppressOutputOfImplicitArrowExp == false: unparse the binary_op->get_lhs_operand() = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
+#endif
+#if 0
+           // Test for if this should be output by calling: 
+               bool inner_suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(binary_op->get_lhs_operand(),info);
+#if 1
+               printf ("################# inner_suppressOutputOfImplicitArrowExp = %s \n",inner_suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
+#endif
                unparseExpression(binary_op->get_lhs_operand(), info);
+
+#if 0
+               printf ("DONE: NOTE: suppressOutputOfImplicitArrowExp == false: unparse the binary_op->get_lhs_operand() = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
+#endif
+#if 0
+               printf ("NOTE: suppressOutputOfImplicitArrowExp == false: exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
 
 #if DEBUG_BINARY_OPERATORS

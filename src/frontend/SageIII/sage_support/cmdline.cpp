@@ -8975,8 +8975,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                   }
 #endif
 
-#if 1
-                 printf ("In SgFile::buildCompilerCommandLineOptions(): Adding \"-c\" to backedn command line! \n");
+#if 0
+                 printf ("In SgFile::buildCompilerCommandLineOptions(): Adding \"-c\" to backend command line! \n");
 #endif
               // Liao 5/1/2015: support both single and multiple files like: identityTranslator main.c
               // introduce -c to compile this single file first.

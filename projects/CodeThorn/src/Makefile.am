@@ -576,7 +576,7 @@ varp1_SOURCES = Timer.cpp varp1.C TFTransformation.C
 typeforge_DEPENDENCIES=libspray.la
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp
+typeforge_SOURCES = Timer.cpp typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C
 
 cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
@@ -589,15 +589,22 @@ check-typeforge: typeforge
 #	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
-	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C 
+	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C --compile
 	g++ -Wall rose_casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C 
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
-	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
-	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C
-	rm -f a.out
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adCompoundTest.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adArrayTest.C 
+	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/adGlobalTest.C 
+	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C 
+	./typeforge --spec-file=$(srcdir)/tests/jsonReplaceTest.json --trace $(srcdir)/tests/jsonReplaceTest.C 
+	./typeforge --spec-file=$(srcdir)/tests/jsonOutTest.json --trace $(srcdir)/tests/jsonReplaceTest.C --compile
+	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/jsonReplaceTest.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json --trace $(srcdir)/tests/includePragmaTest1.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json --trace $(srcdir)/tests/includePragmaTest2.C
+	./typeforge --spec-file=$(srcdir)/tests/ad_all.json --trace $(srcdir)/tests/ad_all.C
+	rm -f a.out craft_initial.json
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h

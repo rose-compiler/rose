@@ -115,6 +115,7 @@ test2016_25.C \
 test2016_29.C \
 test2016_30.C \
 test2016_37.C \
+test2016_40.C \
 test2016_42.C \
 test2016_91.C \
 test2016_92.C \
@@ -163,6 +164,7 @@ test2018_30.C \
 test2018_31.C \
 test2018_34.C \
 test2018_35.C \
+test2018_36.C \
 test2018_37.C \
 test2018_38.C \
 test2018_39.C \
@@ -214,6 +216,7 @@ test2018_90.C \
 test2018_91.C \
 test2018_92.C \
 test2018_93.C \
+test2018_94.C \
 test2018_95.C \
 test2018_96.C \
 test2018_97.C \
@@ -232,9 +235,21 @@ test2018_115.C \
 test2018_116.C \
 test2018_117.C \
 test2018_118.C \
+test2018_119.C \
+test2018_120.C \
+test2018_121.C \
+test2018_124.C \
+test2018_127.C \
+test2018_130.C \
+test2018_131.C \
+test2018_132.C \
+test2018_133.C \
+test2018_134.C \
+test2018_135.C \
+test2018_136.C \
+test2018_137.C \
 ctor-list-init.C \
 $(PREVIOUSLY_FAILING_TESTS) \
-test2016_40.C \
 last.C
 
 

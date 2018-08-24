@@ -16,6 +16,50 @@ TEST_Objects = ${C_TEST_Objects} ${F90_TEST_Objects}
 
 TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROSE_FLAGS)
 
+CXX_FILE_DIR = $(srcdir)/../../CompileTests/Cxx_tests
+
+# DQ (7/24/2018): Test for output spew from multiple files on the same command line (different files having the same function prototype).
+test_multiple_files_1: $(CXX_FILE_DIR)/test2012_246a.C $(CXX_FILE_DIR)/test2012_246b.C
+	@rm -f outputFile; \
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(CXX_FILE_DIR)/test2012_246a.C $(CXX_FILE_DIR)/test2012_246b.C >& outputFile; \
+	outputLines=`wc -l < outputFile`; \
+	echo "Spurious lines of output = $$outputLines"; \
+	if test $$outputLines -eq 0; then \
+           echo "#############################################################################"; \
+           echo "PASSED: Output from C++ translation is quiet (no output detected from translator): test_multiple_files_1"; \
+           echo "#############################################################################"; \
+        else \
+           echo "####################################################################################################"; \
+           echo "FAILED: Output from C++ compilation detected (clean up translator to eliminate output when verbose == 0): test_multiple_files_1"; \
+           echo "####################################################################################################"; \
+           echo "*** Output detected ***"; \
+           cat outputFile; \
+           echo "####################################################################################################"; \
+           exit 1; \
+        fi;
+
+# DQ (7/24/2018): Test for output spew from multiple files on the same command line.
+test_multiple_files_2: $(CXX_FILE_DIR)/test2018_01.C $(CXX_FILE_DIR)/test2018_02.C
+	@rm -f outputFile; \
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(CXX_FILE_DIR)/test2018_01.C $(CXX_FILE_DIR)/test2018_02.C >& outputFile; \
+	outputLines=`wc -l < outputFile`; \
+	echo "Spurious lines of output = $$outputLines"; \
+	if test $$outputLines -eq 0; then \
+           echo "#############################################################################"; \
+           echo "PASSED: Output from C++ translation is quiet (no output detected from translator): test_multiple_files_2"; \
+           echo "#############################################################################"; \
+        else \
+           echo "####################################################################################################"; \
+           echo "FAILED: Output from C++ compilation detected (clean up translator to eliminate output when verbose == 0): test_multiple_files_2"; \
+           echo "####################################################################################################"; \
+           echo "*** Output detected ***"; \
+           cat outputFile; \
+           echo "####################################################################################################"; \
+           exit 1; \
+        fi;
+
+
+
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
 	@echo "#################################################"
@@ -24,6 +68,8 @@ check-local:
 if !OS_MACOSX 	# Liao 2/9/2011. There are warnings for Mac OS X right now
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	@$(MAKE) $(CXX_TEST_Objects)
+	@$(MAKE) test_multiple_files_1
+	@$(MAKE) test_multiple_files_2
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	@$(MAKE) $(F90_TEST_Objects)

@@ -1400,7 +1400,23 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
 #endif
+                           // DQ (7/25/2018): Type elaboration does not make since for functions.  This is a case where name qualification 
+                           // is required because the function is hidden by some non-function. The symbol was non-null and it was not a 
+                           // function.  Question: could it be a function that hides the function nane from another function (I think so).
+#if 0
+                              printf ("########### NOTE: NEED TO FORCE NAME QUALIFICATION SINCE TYPE ELABLORATION IS NOT A SOLUTION FOR declarations hiding a function \n");
+                              printf ("functionSymbol == NULL: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+#if 0
                               typeElaborationIsRequired = true;
+#else
+                           // I think we have to force an extra level of name qualification.
+                              forceMoreNameQualification = true;
+#endif
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("WARNING: Present implementation of symbol table will not find alias sysmbols of SgFunctionSymbol \n");
@@ -1604,8 +1620,18 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(declaration);
                          ROSE_ASSERT(templateDeclaration != NULL);
 
+                      // DQ (7/24/2018): This is output spew for Cxx11_tests/test2016_90.C and Cxx_tests/test2013_63.C (and others).
+                      // It is not new, but it is also not clear that it is too much of an issue that we have some used of SgTemplateDeclaration
+                      // in place since within templates we can at times not have enough information to build anything more specific.
+                      // All of these issues appear to be related to input codes using boost: e.g. boost/graph/topological_sort.hpp.
+#if 0
                          printf ("In NameQualificationTraversal::nameQualificationDepth(): case V_SgTemplateDeclaration: still emitted for template template parameter (seen in template template argument of `this`)\n");
 //                       ROSE_ASSERT(false);
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
 
                          symbol = NULL;
 
@@ -2370,9 +2396,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                        {
                          case V_SgFunctionDeclaration:
                             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Error: Skipping forced name qualification for SgFunctionDeclaration (sorry, not implemented) \n");
-#endif
+                           // DQ (7/25/2018): If in the original matching (for name collission) there was a match, then we need to force 
+                           // at least one more level of name qualification for functions since type elaboration can not be used to resolve 
+                           // an ambiguity on function (only makes sense for types).
+                              qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
                               break;
                             }
 
