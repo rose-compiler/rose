@@ -1028,7 +1028,7 @@ endif
 
 # DQ (9/23/2013): Added better control to run tests more cleanly (command-line and any output put into *.passed file, or generates similar *.failed file is testing is unsuccessful).
 $(TEST_Source_passed): %.passed: ../../testTranslator $(top_srcdir)/scripts/test_exit_status
-	$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 # This is a redundant test with it also being in the list TESTCODES_REQUIRED_TO_PASS (above).
 # test2005_168.o: $(srcdir)/test2005_168.c
@@ -1272,6 +1272,9 @@ clean-local:
 	rm -f token_trailing_*.c token_leading_*.c
 	rm -f test2014_83 test2014_93
 	rm -f test2015_162 test2015_86
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 
 ################################################################################
 #

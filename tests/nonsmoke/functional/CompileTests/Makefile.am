@@ -214,3 +214,17 @@ test_new_languages:
 	cd experimental_jovial_tests; $(MAKE) test
 	cd experimental_cobol_tests;  $(MAKE) test
 
+# TV (08/07/2018): Added `status` target which generate `status.csv`
+status:
+	cd C_tests;                    $(MAKE) --keep-going status || true
+	cd C89_std_c89_tests;          $(MAKE) --keep-going status || true
+	cd C99_tests;                  $(MAKE) --keep-going status || true
+	cd C11_tests;                  $(MAKE) --keep-going status || true
+	cd Cxx_tests;                  $(MAKE) --keep-going status || true
+	cd Cxx11_tests;                $(MAKE) --keep-going status || true
+	cd Cxx14_tests;                $(MAKE) --keep-going status || true
+	cd C_subset_of_Cxx_tests;      $(MAKE) --keep-going status || true
+	cd MicrosoftWindows_C_tests;   $(MAKE) --keep-going status || true
+	cd MicrosoftWindows_Cxx_tests; $(MAKE) --keep-going status || true
+	$(srcdir)/status.sh C_tests C89_std_c89_tests C99_tests C11_tests Cxx_tests Cxx11_tests Cxx14_tests C_subset_of_Cxx_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
+
