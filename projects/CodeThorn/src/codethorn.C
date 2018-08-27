@@ -1259,8 +1259,12 @@ int main( int argc, char * argv[] ) {
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
     if(args.getBool("inline")) {
-      lowering.inlineDepth=args.getInt("inlinedepth");
-      size_t numInlined=lowering.inlineFunctions(sageProject);
+      InlinerBase* inliner=lowering.getInliner();
+      if(RoseInliner* roseInliner=dynamic_cast<SPRAY::RoseInliner*>(inliner)) {
+        roseInliner->inlineDepth=args.getInt("inlinedepth");
+      }
+      inliner->inlineFunctions(sageProject);
+      size_t numInlined=inliner->getNumInlinedFunctions();
       logger[TRACE]<<"inlined "<<numInlined<<" functions"<<endl;
     }
 

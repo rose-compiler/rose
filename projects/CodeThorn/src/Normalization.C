@@ -4,7 +4,6 @@
 #include "Normalization.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
-#include "inliner.h"
 #include "CFAnalysis.h"
 #include <list>
 
@@ -16,6 +15,29 @@ namespace SPRAY {
   int32_t Normalization::tmpVarNr=1;
   int32_t Normalization::labelNr=1;
   string Normalization::labelPrefix="__label";
+
+  Normalization::Normalization() {
+    _inliner=new RoseInliner();
+  }
+  Normalization::~Normalization() {
+    if(_defaultInliner) {
+      delete _inliner;
+    }
+  }
+
+  void Normalization::removeDefaultInliner() {
+    if(_defaultInliner) {
+      delete _inliner;
+      _defaultInliner=false;
+    }
+  }
+  InlinerBase* Normalization::getInliner() {
+    return _inliner;
+  }
+  void Normalization::setInliner(SPRAY::InlinerBase* userDefInliner) {
+    removeDefaultInliner();
+    _inliner=userDefInliner;
+  }
 
   void Normalization::normalizeAllVariableDeclarations(SgNode* root) {
     RoseAst ast(root);
@@ -106,7 +128,9 @@ namespace SPRAY {
       normalizeAllVariableDeclarations(root);
     }
     if(options.inlining) {
-      inlineFunctions(root);
+      InlinerBase* inliner=getInliner();
+      ROSE_ASSERT(inliner);
+      inliner->inlineFunctions(root);
     }
   }
 
@@ -210,26 +234,36 @@ namespace SPRAY {
 
   void Normalization::normalizeBreakAndContinueStmts(SgNode* root) {
     RoseAst ast(root);
+    list<SgStatement*> breakTransformationList;
+    list<SgStatement*> continueTransformationList;
+    // analysis phase
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgStatement* stmt=isSgStatement(*i);
       if(stmt) {
         if(isSgSwitchStatement(stmt)) {
           // only change break statements in switch stmt if explicitly requested
           if(options.transformBreakToGotoInSwitchStmt) {
-            SageInterface::changeBreakStatementsToGotos(stmt);
+            breakTransformationList.push_back(stmt);
           } 
         } else {
           if(options.transformBreakToGotoInLoopStmts && CFAnalysis::isLoopConstructRootNode(stmt)) {
-            SageInterface::changeBreakStatementsToGotos(stmt);
+            breakTransformationList.push_back(stmt);
           }
           if(options.transformContinueToGotoInWhileStmts) {
-            if(SgWhileStmt* whileStmt=isSgWhileStmt(stmt)) {
-              transformContinueToGotoStmts(whileStmt);
-            } else if(SgDoWhileStmt* doWhileStmt=isSgDoWhileStmt(stmt)) {
-              transformContinueToGotoStmts(doWhileStmt);
-            }
+            continueTransformationList.push_back(stmt);
           }
         }
+      }
+    }
+    // transformation phase (must be separate from analysis, since transformations happen ahead of the iterator)
+    for( auto stmt : breakTransformationList) {
+      SageInterface::changeBreakStatementsToGotos(stmt);
+    }
+    for( auto stmt : continueTransformationList) {
+      if(SgWhileStmt* whileStmt=isSgWhileStmt(stmt)) {
+        transformContinueToGotoStmts(whileStmt);
+      } else if(SgDoWhileStmt* doWhileStmt=isSgDoWhileStmt(stmt)) {
+        transformContinueToGotoStmts(doWhileStmt);
       }
     }
   }
@@ -361,46 +395,7 @@ namespace SPRAY {
         tmpVarNr++;
     }
   }
-
-  bool Normalization::isAstContaining(SgNode *haystack, SgNode *needle) {
-    struct T1: AstSimpleProcessing {
-      SgNode *needle;
-      T1(SgNode *needle): needle(needle) {}
-      void visit(SgNode *node) {
-        if (node == needle)
-          throw this;
-      }
-    } t1(needle);
-    try {
-      t1.traverse(haystack, preorder);
-      return false;
-    } catch (const T1*) {
-      return true;
-    }
-  }
   
-  size_t Normalization::inlineFunctions(SgNode* root) {
-    // Inline one call at a time until all have been inlined.  Loops on recursive code.
-    //SgProject* project=isSgProject(root);
-    //ROSE_ASSERT(project);
-    size_t nInlined = 0;
-    for (int count=0; count<inlineDepth; ++count) {
-      bool changed = false;
-        BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(root)) {
-          if (doInline(call)) {
-            ASSERT_always_forbid2(isAstContaining(root, call),
-                                  "Inliner says it inlined, but the call expression is still present in the AST.");
-            ++nInlined;
-            changed = true;
-            break;
-          }
-        }
-        if (!changed)
-          break;
-    }
-    return nInlined;
-  }
-
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
   SgLabelStatement* Normalization::createLabel(SgStatement* target) {
     SgLabelStatement* newLabel =

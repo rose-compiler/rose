@@ -56,6 +56,8 @@ libspray_la_SOURCES=\
  LanguageRestrictor.h \
  Miscellaneous2.h \
  Normalization.h \
+ NormalizationOp.h \
+ NormalizationInliner.h \
  NumberIntervalLattice.h \
  ParallelAutomataGenerator.h \
  PASolver1.h \
@@ -68,7 +70,6 @@ libspray_la_SOURCES=\
  WorkListSeq.h \
  TypeSizeMapping.h \
  SgTypeSizeMapping.h \
- NormalizationOp.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AbstractValue.C \
@@ -95,6 +96,8 @@ libspray_la_SOURCES=\
  LVTransferFunctions.C \
  Miscellaneous2.C \
  Normalization.C \
+ NormalizationOp.C \
+ NormalizationInliner.C \
  NumberIntervalLattice.C \
  ParallelAutomataGenerator.C \
  PASolver1.C \
@@ -112,7 +115,6 @@ libspray_la_SOURCES=\
  defUseQuery.C \
  TypeSizeMapping.C \
  SgTypeSizeMapping.C \
- NormalizationOp.C \
  Timer.h \
  Timer.cpp
 

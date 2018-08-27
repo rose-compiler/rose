@@ -1,5 +1,5 @@
-#ifndef LOWERING_H
-#define LOWERING_H
+#ifndef NORMALIZATION_H
+#define NORMALIZATION_H
 
 // Author: Markus Schordan 2018.
 
@@ -13,6 +13,7 @@ class SgForStatement;
 class SgSwitchStatement;
 
 #include "NormalizationOp.h"
+#include "NormalizationInliner.h"
 
 namespace SPRAY {
 
@@ -22,6 +23,8 @@ namespace SPRAY {
     // 2. transformation of continue in while, do-while
 
   public:
+    Normalization();
+    ~Normalization();
     struct Options {
       // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
@@ -46,14 +49,12 @@ namespace SPRAY {
       // default.
       bool transformBreakToGotoInSwitchStmt=false;
 
-      // This is not necessary for normalization. Only interesting for
       // lowering. Applies to {for, do, do-while}
-      bool transformBreakToGotoInLoopStmts=false;
+      bool transformBreakToGotoInLoopStmts=true;
 
-      // not supported yet - required for normalization of while when
-      // condition is hoisted). This transformation is applied to
+      // This transformation is applied to
       // while and do-while, not to for-loops.
-      bool transformContinueToGotoInWhileStmts=false;
+      bool transformContinueToGotoInWhileStmts=false; // not supported yet
 
       // using SgInterface inlining (to be replaced)
       bool inlining=false;
@@ -73,9 +74,8 @@ namespace SPRAY {
     void setInliningOption(bool flag);
     bool getInliningOption();
     // calls ROSE SageInterface function for inlining
-    size_t inlineFunctions(SgNode* root);
-    // default value, can be overwritten
-    int inlineDepth=10; 
+    SPRAY::InlinerBase* getInliner();
+    void setInliner(SPRAY::InlinerBase*);
 
   private:
     /* normalize all Expressions in AST. The original variables remain
@@ -110,9 +110,6 @@ namespace SPRAY {
     void normalizeExpression(SgExprStatement* stmt, SgExpression* node);
 
     void generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr);
-    // Finds needle in haystack and returns true if found.  Needle is a single node (possibly an invalid pointer and will not be
-    // dereferenced) and haystack is the root of an abstract syntax (sub)tree.
-    static bool isAstContaining(SgNode *haystack, SgNode *needle);
     /* If the given statement contains any break statements in its body,
        add a new label below the statement and change the breaks into
        gotos to that new label. Addresses for,while,switch stmts.
@@ -131,6 +128,11 @@ namespace SPRAY {
     typedef std::list<std::pair<SgStatement*,SgExpression*> > TransformationList;
     TransformationList transformationList;
     std::list<NormalizationOp*> loweringSequence;
+
+    void removeDefaultInliner();
+    SPRAY::InlinerBase* _inliner=0;
+    bool _defaultInliner=true;
+
   };
   
 } // end of namespace SPRAY
