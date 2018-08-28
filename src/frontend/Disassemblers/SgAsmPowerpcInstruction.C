@@ -112,8 +112,8 @@ SgAsmPowerpcInstruction::terminatesBasicBlock() {
 }
 
 bool
-SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns,
-                                            rose_addr_t *target, rose_addr_t *return_va) {
+SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
+                                            rose_addr_t *return_va) {
     if (insns.empty())
         return false;
     SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insns.back());
@@ -134,13 +134,13 @@ SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>
 }
 
 bool
-SgAsmPowerpcInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns,
-                                            rose_addr_t *target, rose_addr_t *return_va) {
+SgAsmPowerpcInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
+                                            rose_addr_t *return_va) {
     return isFunctionCallFast(insns, target, return_va);
 }
 
 bool
-SgAsmPowerpcInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>& insns) {
+SgAsmPowerpcInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
         return false;
     SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insns.back());
