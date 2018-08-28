@@ -60,32 +60,39 @@ int main (int argc, char* argv[])
 #else
     namespace po = boost::program_options;
 #endif
+  po::options_description all_desc("Supported Options");
 
-  po::options_description desc
-    ("Supported options");
+  po::options_description desc("Supported Options");
+  
+  po::options_description hidden_desc("Hidden Options");
 
   desc.add_options()
-    ("help,h", "produce this help message.")
-    ("version,v", "display the version.")
-    ("compile", "run backend compiler.")
+    ("help,h", "Produce this help message.")
+    ("version,v", "Display the version of Typeforge.")
+    ("compile", "Run back end compiler.")
     //("annotate", "annotate implicit casts as comments.")
-    ("explicit", "make all imlicit casts explicit.")
-    ("stats", "print statistics on casts of built-in floating point types.")
-    ("trace", "print program transformation operations as they are performed.")
+    ("explicit", "Make all implicit casts explicit.")
+    ("stats", "Print statistics on casts of built-in floating point types.")
+    ("trace", "Print program transformation operations as they are performed.")
     ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
-    ("spec-file", po::value< string >()," name of typeforge specification file.")
-    ("source-file", po::value<vector<string> >()," name of source files.")
-    ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
+    ("spec-file", po::value< string >(),"Name of Typeforge specification file.")
+    ("csv-stats-file", po::value< string >(),"Generate file [args] with transformation statistics.")
 #ifdef EXPLICIT_VAR_FORGE
-    ("float-var", po::value< string >()," change type of var [arg] to float.")
-    ("double-var", po::value< string >()," change type of var [arg] to double.")
-    ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
+    ("float-var", po::value< string >(),"Change type of var [arg] to float.")
+    ("double-var", po::value< string >(),"Change type of var [arg] to double.")
+    ("long-double-var", po::value< string >(),"Change type of var [arg] to long double.")
 #endif
     ;
+
+  hidden_desc.add_options()
+    ("source-file", po::value<vector<string> >(),"Name of source files.");
+
+  all_desc.add(desc).add(hidden_desc);
+
   po::positional_options_description pos;
   pos.add("source-file", -1);
-  po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).positional(pos).allow_unregistered().run();
+  po::parsed_options parsed = po::command_line_parser(argc, argv).options(all_desc).positional(pos).allow_unregistered().run();
   po::store(parsed, args);
   po::notify(args);
 

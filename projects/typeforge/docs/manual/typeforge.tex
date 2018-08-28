@@ -1,0 +1,375 @@
+\documentclass[natbib]{article}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{calc}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{amsmath,amssymb}
+\usepackage{rotating}
+\usepackage{colortbl}
+\usepackage{pifont}
+\usepackage{tikz}
+%\usetikzlibrary{shapes,shadows,arrows,calc,positioning,fit,matrix,mindmap,trees}
+%\usepackage{pgfplots}
+%\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{colortbl}
+\usepackage{algorithm2e}
+% pantone colors
+
+% More sensible defaults akin to \sloppy
+% \tolerance 1414
+% \hbadness 1414
+% \emergencystretch 1.5em
+% \hfuzz 0.3pt
+% \widowpenalty=10000
+% \clubpenalty=10000
+% \vfuzz
+% \hfuzz
+% \raggedbottom
+
+\newcommand{\ignore}[1]{}
+\newcommand{\st}{\textit{s.\,t.}\xspace}
+\newcommand{\eg}{\textit{e.\,g.}\xspace}
+\newcommand{\ie}{\textit{i.\,e.}\xspace}
+\newcommand{\cf}{\textit{cf.}\xspace}
+
+\newcommand{\blackarrow}{{\color{black} \Pisymbol{pzd}{217}}}
+\newcommand{\redarrow}{{\color{DarkRed} \Pisymbol{pzd}{217}}}
+\newcommand{\minibox}[2]{\begin{minipage}{#1}\raggedright #2\end{minipage}}
+
+\newcommand{\enquote}[1]{``#1''}
+
+%\newcommand{\fixme}[1]{\begin{tikzpicture}
+%\node[bottom color=red!80!white, top color=red!70!black, rounded corners,
+%      font=\bf\color{white}\footnotesize] {
+%  \begin{minipage}{.75\columnwidth}
+%    FIXME\\
+%    #1
+%  \end{minipage}
+%};
+%\end{tikzpicture}
+%}
+
+\lstset{
+  language=C,
+  basicstyle=\small,%\scriptsize, %\footnotesize\ttfamily,
+  keywordstyle={\bf},
+  keywordstyle={[2]\it},%\color{Blue!40!black}},
+  breaklines=true,
+  identifierstyle=,
+  stringstyle=\bf,
+  commentstyle=\it\color{black!80},
+  captionpos=b,
+  numbers=left,
+  stepnumber=3,
+  columns=fullflexible
+}
+
+\begin{document}
+\title{Typeforge}
+
+\author{\small Markus Schordan, Nathan Pinnow}
+%\end{tabular}
+%\date{September 20, 2018}
+
+\maketitle
+
+\begin{abstract}
+\noindent Typeforge is a tool for analysis and transformation of variable types in 
+C/C++ programs. The main focus of development was to aid the development of 
+mixed-precision programs through modification and searching of the AST. 
+Typeforge does this through changing type information and inserting program 
+instrumentation then outputting modified source code for the user or other tools to use.
+
+\end{abstract}
+
+\tableofcontents
+
+%-------------------------------------------------------------------------
+
+\section{Introduction}
+\label{sec:intro}
+
+Typeforge is based on the ROSE compiler infrastructure\footnote{\url{http://www.rosecompiler.org/}} 
+and uses the ROSE abstract syntax tree as basis for its transformations. 
+A main focus of Typeforge development was as part of a tool pipeline designed for 
+the automatic generation of mixed-precision programs. For use in the pipeline 
+Typeforge works with ADAPT~\cite{adapt} to insert the needed instrumentation to 
+perform automatic differentiation for the purpose of finding variables error threshold.
+Typeforge was also designed to work with CRAFT~\cite{CRAFT2013PARCO,CRAFT2013ICS,CRAFT2016} 
+for the purpose of searching mixed-precision configurations built by Typeforge 
+for the best performance.
+
+\subsection{Handles}
+Typeforge is capable of emitting string based handles for the purpose of variable identification. 
+These handles are guaranteed to uniquely identify a variable in the program and can be used to 
+specify a variable to Typeforge. The content of these handles is not guaranteed and is 
+subject to change.
+
+\section{Installation}
+
+No additional configuration is required because Typeforge is configured as part of ROSE. 
+% Is spot required for typeforge?
+In order to use Typeforge however, the SPOT LTL model checking library version 
+1.2.6\footnote{This version of SPOT can be downloaded here: 
+\url{https://www.lrde.epita.fr/dload/spot/spot-1.2.6.tar.gz}} is required. Please provide the option
+\verb+--with-spot=<spot-install-dir>+ to ROSE's configure command.
+% End spot
+Run 'make', 'make install', and optionally 'make check' in the
+\verb+projects/+ \verb+typeforge+ directory to install Typeforge. Typeforge is
+installed as 'typeforge' (at the same location as other ROSE tools, in
+the 'bin' directory of the ROSE installation).
+
+\section{Command Line Options}
+The command line options of Typeforge are parsed by Boost's program options 
+library\footnote{\url{http://www.boost.org/doc/libs/1_63_0/doc/html/program_options.html}}.
+The following command line options are listed when running \verb+typeforge --help+.
+These main options below comprise general parameters such as spec file and explicit command line 
+transformation. All filenames and unrecognized options will be passed directly to the ROSE compiler 
+as command line options.
+
+\begin{verbatim}
+typeforge <filename> [OPTIONS]
+Supported Options:
+  -h [ --help ]                   Produce this help message.
+  
+  -v [ --version ]                Display the version of Typeforge.
+  
+  --compile                       Run backend compiler.
+  
+  --explicit                      Make all implicit casts explicit.
+  
+  --stats                         Print statistics on casts of built-in 
+                                  floating point types.
+                                  
+  --trace                         Print program transformation operations 
+                                  as they are performed.
+\end{verbatim}
+%set analysis may become hidden option
+\begin{verbatim}
+  --set-analysis                  Perform set analysis to determine which 
+                                  variables must be changed together.
+                                  
+  --spec-file arg                 Name of Typeforge specification file.
+  
+  --csv-stats-file arg            Generate file [args] with transformation statistics.
+  
+  --float-var arg                 Change type of var [arg] to float.
+  
+  --double-var arg                Change type of var [arg] to double.
+  
+  --long-double-var arg           Change type of var [arg] to long double.
+\end{verbatim}
+\section{Specification File}
+Typeforge uses a specification file for the user to specify what changes should be 
+made to the source code. There are two formats supported for these files. a .json 
+file and .tf file. The .json file is generated using ToolConfig and is intended 
+for other programs to create specifications for Typeforge and the .tf file is a 
+simplified version for developers to write manually. The .json format has a list 
+of ToolActions stored in the actions field while the .tf file has one specification 
+per line. Inside of ToolActions all fields are strings that describe the specification 
+with the .tf file being the same fields without labels in a semi-colon separated list. 
+The order in which specifications are written is not considered, if multiple 
+specifications contradict the behavior is undefined. 
+
+\begin{enumerate}
+\item{} Var Type Change -- This specification is for changing the type or base type 
+of a specified variable. See section \ref{change} for more information on type changing.
+
+\begin{verbatim}
+JSON Format:
+action   = ["change_vartype" | "change_varbasetype"]
+scope    = Name of function where the variable to be changed is 
+           declared or "$global" for scope.
+name     = Name of the variable to be changed.
+to_type  = New type or new base type of the variable.
+
+TF Format:
+action;scope;name;to_type
+\end{verbatim}
+
+\item{} Handle Change -- This specification is to change a variables type based upon 
+a compiler generated handle. For JSON providing a handle will override normal behavior 
+and for .tf files a special command needs to be specifies.
+
+\begin{verbatim}
+JSON Format:
+action   = ["change_vartype" | "change_varbasetype"]
+handle   = Compiler generated handle of the variable to be changed.
+to_type  = New type or new base type of the variable.
+
+TF Format:
+["change_handletype" | "change_handlebasetype"];handle;to_type
+\end{verbatim}
+
+\item{} Change Type -- This specification is to replace all variables of a type with a new type.
+
+\begin{verbatim}
+JSON Format:
+action    = ["change_type" | "change_basetype"]
+scope     = Location where variables should be replaced. Use "$global" 
+            to specify replacing globals, otherwise use function name 
+            followed by colon then parts of the function to change in 
+            a comma seperated list. Use args to change arguments, body 
+            to change the body of the function, and ret to change the 
+            return type. The function name can be replaced with * to 
+            change all functions. For example to change everything in 
+            main use "main:args,ret,body".
+from_type = Type to be changed from.
+to_type   = Type to change to.
+
+TF Format:
+action;scope;from_type;to_type
+\end{verbatim}
+
+\item{} Listing Replacements -- Will output a list of possible replacements without 
+changing the type. Will output a JSON file with the actions set so when input as a 
+spec file will result in the changes being made.
+
+\begin{verbatim}
+action    = ["list_replacements" | "list_basereplacements"]
+scope     = Locations to list possible replacements. Can be name of function, 
+            "$global" for globals, * for all functions, or left blank for 
+            everything.
+from_type = Type to match for replacements.
+to_type   = Type to change to. Change will not be made, this is for 
+            construction of output.
+name      = Name of the file to write output.
+
+TF Format:
+action;scope;from_type;to_type;name
+\end{verbatim}
+
+\item{} Transformation -- Looks for patterns in the AST and will transform or insert 
+code based upon the type of transformation. See section \ref{transform} for more information.
+
+\begin{verbatim}
+JSON Format:
+action    = ["transform"]
+scope     = Name of function to perform transformation in or * for all functions. 
+from_type = The variable type for transformations to be performed on.
+name      = Name of transformation to be performed.
+
+TF Format:
+action;scope;from_type;name
+\end{verbatim}
+
+\item{} Add Include -- Will add include to files in the AST.
+
+\begin{verbatim}
+JSON Format:
+action = ["introduce_include"]
+scope  = Specifies name of function that needs to be in file before adding 
+         include or * for all files.
+name   = File to be included
+
+TF Format:
+action;scope;name
+\end{verbatim}
+
+\item{} Pragma Replacement -- Will perform simple pragma replacement inside the AST.
+
+\begin{verbatim}
+JSON Format:
+action    = ["replace_pragma"]
+from_type = What will need to be matched for replacement to occur.
+to_type   = What the pragma will be replaced with. Can specify arguments 
+            by writing $N where N is the argument number with 0 being the 
+            first token after the pragma in the source file.
+
+TF Format:
+action;scope;name
+\end{verbatim}
+\end{enumerate}
+
+\section{Transformation} \label{transform}
+\subsection{Array of Structure Access}
+Can be done by specifying \verb+"name = arrayofstructs_access_transformation"+ to the transform 
+specification.
+\subsection{Hancock Access}
+Can be done by specifying \verb+"name = readwrite_access_transformation"+ to the transform 
+specification.
+\subsection{ADAPT Instrumentation}
+Can be done by specifying \verb+"name = ad_intermediate_instrumentation"+ to the transform 
+specification. Will look for any location in the AST where a floating point type is assigned 
+to then insert the correct AD\_intermidiate function call after the assignment with the name 
+passed to ADAPT being set to the variables handle. If "\#pragma adapt begin" is included in 
+the body will insert instrumentation for initialized globals immediately after the pragma. 
+Will not do type replacement for AD\_real, including of ADAPT headers, or adapt pragma replacement.
+
+\section{Type Change} \label{change}
+All forms of changing a variables type will change the original declaration inside the AST 
+as well as supporting base changing. If base is not specified the from type will be matched 
+exactly regardless of pointers, arrays etc. If base is specified Typeforge will match based 
+on types after stripping pointers, arrays, modifiers, reference, and typedefs. The type will 
+be changed to a rebuilt type with the to type as the new base. For typedefs Typeforge will 
+not create a new typedef, it will change the type to what the typedef represents with a 
+new base type.
+
+\section{Analysis} \label{analysis}
+\subsection{Variable Sets}
+When changing the type of a variable it is possible that changing types will result in a 
+compilation error due to interdependent variables. This happens when variables are connected, 
+such as through assignment, and the types cannot simply be cast to be the same as with pointers 
+or arrays. This results in every variable being part of a dependence set where all the variables 
+in a given set must be changed together or the program will fail to compile. Given how these 
+dependence sets are defined all variables will be part of a class and the classes will not intersect.
+
+\begin{gather} 
+V = \text{Set of all variables, function parameters, and function return.}\\
+M = \text{Set of variable sets. Each Variable Links to a single set.}\\
+S = \text{Final set of interdependent sets}\\
+\forall i \in V(\exists! j \in S(i \in j))\\
+\forall x \in M(\exists! y \in S(x \cap y) \wedge \exists! z \in S(x \subseteq z))
+\end{gather}
+
+\begin{algorithm}[H]
+\label{variableSetAlgo}
+\SetAlgoLined
+\KwResult{Dependence\_Sets}
+Map$\langle$Node,Set$\langle$Node$\rangle\rangle$ Dependence\_Map;\\
+List$\langle$Set$\langle$Node$\rangle\rangle$ Dependence\_Sets;\\
+\For{All Variables}{
+  Dependence\_Map.Add(Variable, Variable);
+}
+ \For{All AST Nodes}{
+   \If{Node == Expression and Node.type == [Pointer or Array]}{
+     \If{Node == Assignment}{
+       Destination = Left  Hand Side;\\
+       Origin       = Right Hand Side;\\
+       \For{All Variable References in Origin}{
+       Dependence\_Map.Add(VarRef, Destination);\\
+       Dependence\_Map.Add(Destination, VarRef);
+       }
+     }
+   }
+ }
+ \For{All Variable\_Set in Dependence\_Map}{
+   Matched = Null;\\
+   \For{All Set in Dependence\_Sets}{
+     \If{Variable\_Set Intersects Set}{
+       \eIf{Matched}{
+         Matched.add(Set);\\
+         Dependence\_Set.Remove(Set)
+       }{
+         Set.add(Variable\_Set);\\
+         Matched = Set;
+       }
+     }
+   }
+   \If{Not Matched}{
+     Dependence\_Sets.Add(Variable\_Set)
+   }
+ }
+ \caption{Algorithm for building variable sets}
+\end{algorithm}
+
+\bibliographystyle{plain}
+\bibliography{typeforge}
+
+\end{document}
+
