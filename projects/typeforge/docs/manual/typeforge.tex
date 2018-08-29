@@ -112,17 +112,11 @@ subject to change.
 
 \section{Installation}
 
-No additional configuration is required because Typeforge is configured as part of ROSE. 
-% Is spot required for typeforge?
-In order to use Typeforge however, the SPOT LTL model checking library version 
-1.2.6\footnote{This version of SPOT can be downloaded here: 
-\url{https://www.lrde.epita.fr/dload/spot/spot-1.2.6.tar.gz}} is required. Please provide the option
-\verb+--with-spot=<spot-install-dir>+ to ROSE's configure command.
-% End spot
-Run 'make', 'make install', and optionally 'make check' in the
-\verb+projects/+ \verb+typeforge+ directory to install Typeforge. Typeforge is
-installed as 'typeforge' (at the same location as other ROSE tools, in
-the 'bin' directory of the ROSE installation).
+No additional configuration is required because Typeforge is configured as part of ROSE. Typeforge 
+is not installed by default as part of ROSE, to install Typeforge after installing ROSE run 'make',
+'make install', and optionally 'make check' in the \verb+projects/+ \verb+typeforge+ directory to 
+install Typeforge. Typeforge is installed as 'typeforge' (at the same location as other ROSE tools, 
+in the 'bin' directory of the ROSE installation).
 
 \section{Command Line Options}
 The command line options of Typeforge are parsed by Boost's program options 
@@ -176,17 +170,20 @@ with the .tf file being the same fields without labels in a semi-colon separated
 The order in which specifications are written is not considered, if multiple 
 specifications contradict the behavior is undefined. 
 
+\subsection{Specifications}
+
 \begin{enumerate}
 \item{} Var Type Change -- This specification is for changing the type or base type 
-of a specified variable. See section \ref{change} for more information on type changing.
-
+of a specified variable. See section \ref{change} for more information on type changing. 
+FunctionName can be either the name of the function where the variable is located or "\$global" 
+for a global variable. VariableName can be the name of a single variable or a comma separated 
+list of variables to change.
 \begin{verbatim}
 JSON Format:
 action   = ["change_vartype" | "change_varbasetype"]
-scope    = Name of function where the variable to be changed is 
-           declared or "$global" for scope.
-name     = Name of the variable to be changed.
-to_type  = New type or new base type of the variable.
+scope    = FunctionName
+name     = VariableName
+to_type  = NewType
 
 TF Format:
 action;scope;name;to_type
@@ -194,112 +191,184 @@ action;scope;name;to_type
 
 \item{} Handle Change -- This specification is to change a variables type based upon 
 a compiler generated handle. For JSON providing a handle will override normal behavior 
-and for .tf files a special command needs to be specifies.
+and for .tf files a special command needs to be specified.
 
 \begin{verbatim}
 JSON Format:
 action   = ["change_vartype" | "change_varbasetype"]
-handle   = Compiler generated handle of the variable to be changed.
-to_type  = New type or new base type of the variable.
+handle   = CompilerHandle
+to_type  = NewType
 
 TF Format:
 ["change_handletype" | "change_handlebasetype"];handle;to_type
 \end{verbatim}
 
-\item{} Change Type -- This specification is to replace all variables of a type with a new type.
+\item{} Change Type -- This specification is to replace all variables of a type with a new type. 
+VariableLocations is the locations where variables should be changed and has several forms. 
+Use "\$global" to specify replacing globals, otherwise use function name followed by colon 
+then parts of the function to change in a comma seperated list. Use args to change arguments, 
+body to change the body of the function, and ret to change the return type. The function name 
+can be replaced with * to change all functions. For example to change everything in main use 
+"main:args,ret,body".
 
 \begin{verbatim}
 JSON Format:
 action    = ["change_type" | "change_basetype"]
-scope     = Location where variables should be replaced. Use "$global" 
-            to specify replacing globals, otherwise use function name 
-            followed by colon then parts of the function to change in 
-            a comma seperated list. Use args to change arguments, body 
-            to change the body of the function, and ret to change the 
-            return type. The function name can be replaced with * to 
-            change all functions. For example to change everything in 
-            main use "main:args,ret,body".
-from_type = Type to be changed from.
-to_type   = Type to change to.
+scope     = VariableLocations
+from_type = OldType
+to_type   = NewType
 
 TF Format:
-action;scope;from_type;to_type
+action;scope;from_type=>to_type
 \end{verbatim}
 
 \item{} Listing Replacements -- Will output a list of possible replacements without 
 changing the type. Will output a JSON file with the actions set so when input as a 
-spec file will result in the changes being made.
+spec file will result in the changes being made. FileName is the file where the list will be 
+written to, if it already exists the list will be appended to. SearchLocations can be the name 
+of a function, "*" for all functions, "\$global" for just globals, or empty string for all. 
+NewType is only used for writing a valid specification file to output.
 
 \begin{verbatim}
 action    = ["list_replacements" | "list_basereplacements"]
-scope     = Locations to list possible replacements. Can be name of function, 
-            "$global" for globals, * for all functions, or left blank for 
-            everything.
-from_type = Type to match for replacements.
-to_type   = Type to change to. Change will not be made, this is for 
-            construction of output.
-name      = Name of the file to write output.
+scope     = SearchLocations
+from_type = MatchType
+to_type   = NewType
+name      = FileName
 
 TF Format:
 action;scope;from_type;to_type;name
 \end{verbatim}
 
 \item{} Transformation -- Looks for patterns in the AST and will transform or insert 
-code based upon the type of transformation. See section \ref{transform} for more information.
+code based upon the type of transformation. See section \ref{transform} for more 
+information on transformations and transformation names. FunctionName can be and 
+individual function name or "*" for all functions. MatchType semantics depends on 
+the transformation.
 
 \begin{verbatim}
 JSON Format:
 action    = ["transform"]
-scope     = Name of function to perform transformation in or * for all functions. 
-from_type = The variable type for transformations to be performed on.
-name      = Name of transformation to be performed.
+scope     = FunctionName 
+from_type = MatchType
+name      = TransformationName
 
 TF Format:
 action;scope;from_type;name
 \end{verbatim}
 
-\item{} Add Include -- Will add include to files in the AST.
+\item{} Add Include -- Will add include to files in the AST. MatchFunction is used to specify 
+only insert the include in files that define a specific function or use "*" for all files. 
+IncludeFile is the name of the file to be included.
 
 \begin{verbatim}
 JSON Format:
 action = ["introduce_include"]
-scope  = Specifies name of function that needs to be in file before adding 
-         include or * for all files.
-name   = File to be included
+scope  = MatchFunction
+name   = IncludeFile
 
 TF Format:
 action;scope;name
 \end{verbatim}
 
-\item{} Pragma Replacement -- Will perform simple pragma replacement inside the AST.
+\item{} Pragma Replacement -- Will perform simple pragma replacement inside the AST. Will only 
+replace pragmas that begin with MatchString excluding the \#pragma. Replace string is what the 
+pragma will be replaced with. Can specify arguments by writing \$N where N is the argument 
+number with 0 being the first token after the pragma in the source file including the matched string.
+If using a .tf spec file the MatchString may not include semicolons but ReplaceString may 
+use semicolons.
 
 \begin{verbatim}
 JSON Format:
 action    = ["replace_pragma"]
-from_type = What will need to be matched for replacement to occur.
-to_type   = What the pragma will be replaced with. Can specify arguments 
-            by writing $N where N is the argument number with 0 being the 
-            first token after the pragma in the source file.
+from_type = MatchString
+to_type   = ReplaceString
 
 TF Format:
-action;scope;name
+action;from_type;to_type
 \end{verbatim}
 \end{enumerate}
 
-\section{Transformation} \label{transform}
-\subsection{Array of Structure Access}
-Can be done by specifying \verb+"name = arrayofstructs_access_transformation"+ to the transform 
-specification.
-\subsection{Hancock Access}
-Can be done by specifying \verb+"name = readwrite_access_transformation"+ to the transform 
-specification.
-\subsection{ADAPT Instrumentation}
-Can be done by specifying \verb+"name = ad_intermediate_instrumentation"+ to the transform 
-specification. Will look for any location in the AST where a floating point type is assigned 
-to then insert the correct AD\_intermidiate function call after the assignment with the name 
-passed to ADAPT being set to the variables handle. If "\#pragma adapt begin" is included in 
-the body will insert instrumentation for initialized globals immediately after the pragma. 
-Will not do type replacement for AD\_real, including of ADAPT headers, or adapt pragma replacement.
+\subsection{Example Spec Files} \label{sec:expampleSpec}
+This specification file is used as setup for the pipeline in section \ref{sec:pipeline}. 
+Note there is a specification to change all doubles to AD\_real and a specification to 
+list replacements for doubles. These can both work as they are performed on the original tree.
+\begin{verbatim}
+JSON Format:
+{
+  "version": "1",
+  "tool_id": "Master",
+  "actions": [
+    {
+      "action": "replace_pragma",
+      "from_type": "adapt begin",
+      "to_type": "AD_begin();"
+    },
+    {
+      "action": "introduce_include",
+      "name": "adapt-impl.cpp",
+      "scope": "main"
+    },
+    {
+      "action": "transform",
+      "scope": "*",
+      "from_type": "float",
+      "name": "ad_intermediate_instrumentation"
+    },
+    {
+      "action": "change_basetype",
+      "scope": "*:args,ret,body",
+      "from_type": "double",
+      "to_type": "AD_real"
+    },
+    {
+      "action": "list_basereplacements",
+      "scope": "",
+      "from_type": "double",
+      "to_type": "float",
+      "name": "outputFile.json"
+    }
+  ]
+}
+
+TF Format:
+replace_pragma;adapt begin;AD_begin();
+introduce_include;main;adapt-impl.cpp
+transform;*;float;ad_intermediate_instrumentation
+change_basetype;*:args,ret,body;double=>AD_real
+list_basereplacements;;double;float;outputFile.json
+\end{verbatim}
+\vspace{5mm}
+The next specification file is to change the type of two specific variables to float types.
+One change is based upon the handle while the other is based upon specifying function 
+name and variable name.
+
+\begin{verbatim}
+JSON Format:
+{
+  "version": "1",
+  "tool_id": "CRAFT",
+  "actions": [
+  	{
+  	  "action": "change_varbasetype",
+  	  "handle": "Project<numbering,1>::FileList<numbering,1>::SourceFile
+                  <name,/home/src/test.C>::VariableDeclaration<position,1.1-1.15>",
+      "to_type": "float"
+    }
+    {
+  	  "action": "change_varbasetype",
+      "scope": "main",
+      "to_type": "float",
+      "name": "x"
+    }
+  ]
+}
+
+TF Format:
+change_handlebasetype;Project<numbering,1>::FileList<numbering,1>::SourceFile
+    <name,/home/src/test.C>::VariableDeclaration<position,1.1-1.15>;float
+change_varbasetype;main;x;float
+\end{verbatim}
 
 \section{Type Change} \label{change}
 All forms of changing a variables type will change the original declaration inside the AST 
@@ -310,6 +379,22 @@ be changed to a rebuilt type with the to type as the new base. For typedefs Type
 not create a new typedef, it will change the type to what the typedef represents with a 
 new base type.
 
+\section{Transformation} \label{transform}
+\subsection{Array of Structure Access}
+Can be done by specifying \verb+"name = arrayofstructs_access_transformation"+ to the transform 
+specification.
+\subsection{Hancock Access}
+Can be done by specifying \verb+"name = readwrite_access_transformation"+ to the transform 
+specification.
+\subsection{ADAPT Instrumentation}
+Can be done by specifying \verb+"name = ad_intermediate_instrumentation"+ to the transform 
+specification, MatchType is not used. Will look for any location in the AST where a floating 
+point type is assigned to or initialized then insert the correct AD\_intermidiate function 
+call after the assignment with the name passed to ADAPT being set to the variables handle. 
+If "\#pragma adapt begin" is included in the body will insert instrumentation for initialized 
+globals immediately after the pragma. Will not do type replacement for AD\_real, including 
+of ADAPT headers, or adapt pragma replacement.
+
 \section{Analysis} \label{analysis}
 \subsection{Variable Sets}
 When changing the type of a variable it is possible that changing types will result in a 
@@ -317,16 +402,11 @@ compilation error due to interdependent variables. This happens when variables a
 such as through assignment, and the types cannot simply be cast to be the same as with pointers 
 or arrays. This results in every variable being part of a dependence set where all the variables 
 in a given set must be changed together or the program will fail to compile. Given how these 
-dependence sets are defined all variables will be part of a class and the classes will not intersect.
+dependence sets are defined all variables will be part of a class and the classes will not intersect. 
+Section \ref{sec:setAlg} shows the algorithm for set generation for just variables and 
+section \ref{sec:setDef} shows a definition for the sets.
 
-\begin{gather} 
-V = \text{Set of all variables, function parameters, and function return.}\\
-M = \text{Set of variable sets. Each Variable Links to a single set.}\\
-S = \text{Final set of interdependent sets}\\
-\forall i \in V(\exists! j \in S(i \in j))\\
-\forall x \in M(\exists! y \in S(x \cap y) \wedge \exists! z \in S(x \subseteq z))
-\end{gather}
-
+\subsubsection{Sets Algorithm} \label{sec:setAlg}
 \begin{algorithm}[H]
 \label{variableSetAlgo}
 \SetAlgoLined
@@ -367,9 +447,36 @@ List$\langle$Set$\langle$Node$\rangle\rangle$ Dependence\_Sets;\\
  }
  \caption{Algorithm for building variable sets}
 \end{algorithm}
-
+\subsubsection{Sets Definition} \label{sec:setDef}
+\begin{gather} 
+V = \text{Set of all variables, function parameters, and function return.}\\
+M = \text{Set of variable sets. Each Variable Links to a single set.}\\
+S = \text{Final set of interdependent sets}\\
+\forall i \in V(\exists! j \in S(i \in j))\\
+\forall x \in M(\exists! y \in S(x \cap y \neq \emptyset) \wedge 
+\exists! z \in S(x \subseteq z))
+\end{gather}
+\section{Use Cases}
+\subsection{CRAFT-ADAPT Pipeline}\label{sec:pipeline}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{pipeline.png}
+    \caption{\textsf{Diagram of pipeline structure}}
+    \label{fig:pipeline}
+\end{figure}
+\noindent
+Typeforge has several uses in the pipeline for automatic generation of mixed precision programs as 
+seen in figure \ref{fig:pipeline}. In order for craft to conduct a proper search it needs to define 
+a search space which can be done by Typeforge by looking for all declarations in the AST. This 
+list can be refined by looking at sets to avoid searching configurations that will not compile. 
+When CRAFT tests a configuration it passes the appropriate specification file to Typeforge so 
+that it can generate new source code and compile the configuration. This lets CRAFT gain 
+performance metrics on a configuration instead of estimations. To refine the search space ADAPT 
+feeds precision information to CRAFT but for ADAPT to run modifications need to be made to the 
+source code. These modifications are pragma replacement, adding includes, replacing floating point 
+types with AD\_real, and adding ADAPT function calls. All of the ADAPT modifications and Variable 
+listing can be done with Typeforge with a single specification shown in section \ref{sec:expampleSpec}.
 \bibliographystyle{plain}
 \bibliography{typeforge}
 
 \end{document}
-
