@@ -1062,6 +1062,7 @@ SgAliasSymbol::get_declaration() const
              }
 
           case V_SgFunctionSymbol:
+          case V_SgMemberFunctionSymbol:
              {
                SgFunctionSymbol* symbol = isSgFunctionSymbol(get_alias());
                ROSE_ASSERT(symbol != NULL);
@@ -1070,6 +1071,7 @@ SgAliasSymbol::get_declaration() const
                break;
              }
 
+           case V_SgTemplateClassSymbol:
            case V_SgClassSymbol:
              {
                SgClassSymbol* symbol = isSgClassSymbol(get_alias());
