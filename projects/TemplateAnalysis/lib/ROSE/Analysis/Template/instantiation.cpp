@@ -59,9 +59,14 @@ void Instantiation::construct() {
   
    if (template_symbol != NULL && template_symbol != symbol) {
     SgTemplateClassSymbol * tpl_sym_ = isSgTemplateClassSymbol(template_symbol);
-    ROSE_ASSERT(tpl_sym_ != NULL);
+    SgNonrealSymbol * nr_sym_ = isSgNonrealSymbol(template_symbol);
+    ROSE_ASSERT(tpl_sym_ != NULL || nr_sym_ != NULL);
 
-    cannonical = TemplateInstantiation::build(tpl_sym_);
+    if (tpl_sym_ != NULL) {
+      cannonical = TemplateInstantiation::build(tpl_sym_);
+//  } else {
+//    cannonical = TemplateInstantiation::build(nr_sym_);
+    }
   } else if (template_symbol == symbol) {
     cannonical = dynamic_cast<TemplateInstantiation *>(this);
     assert(cannonical != NULL);
@@ -134,7 +139,7 @@ void Instantiation::construct() {
 
         SgNonrealDecl * nrdecl = nrpsym->get_declaration();
         assert(nrdecl != NULL);
-        assert(nrdecl->get_is_template_param());
+        //assert(nrdecl->get_is_template_param());
         assert(nrdecl->get_is_template_template_param());
 
         TemplateElement * te = TemplateElement::build(nrpsym);
@@ -184,19 +189,23 @@ void Instantiation::construct() {
       case SgTemplateArgument::template_template_argument: {
         SgDeclarationStatement * tdecl = arg->get_templateDeclaration();
         assert(tdecl != NULL);
-        SgNonrealDecl * nrtdecl = isSgNonrealDecl(tdecl);
-        assert(nrtdecl != NULL);
 
-        SgSymbol * tsym = nrtdecl->search_for_symbol_from_symbol_table();
+        SgSymbol * tsym = tdecl->search_for_symbol_from_symbol_table();
         assert(tsym != NULL);
-        SgNonrealSymbol * nrpsym = isSgNonrealSymbol(tsym);
-        assert(nrpsym != NULL); // FIXME I think that should fail
+        std::cerr << tsym->class_name() << std::endl;
+        SgNonrealSymbol * nrsym = isSgNonrealSymbol(tsym);
+        SgTemplateClassSymbol * tcsym = isSgTemplateClassSymbol(tsym);
+        assert(tcsym != NULL || nrsym != NULL);
 
-        TemplateElement * te = TemplateElement::build(nrpsym);
+        Element * e = NULL;
+        if (nrsym != NULL)
+          e = TemplateElement::build(nrsym);
+        else
+          e = TemplateInstantiation::build(tcsym);
 
-        template_arguments.insert(std::pair<SgSymbol *, template_arg_info_t>(nrpsym, template_arg_info_t(i, NULL)));
+        template_arguments.insert(std::pair<SgSymbol *, template_arg_info_t>(tsym, template_arg_info_t(i, NULL)));
 
-        arguments_map.push_back(te);
+        arguments_map.push_back(e);
         arguments_kind.push_back(TemplateRelation::e_template_argument);
 
         break;
@@ -259,6 +268,7 @@ void TemplateInstantiation::construct() {
 ////
 
 Instantiation::Instantiation(SgSymbol * sym) :
+  Element(sym),
   symbol(sym),
   cannonical(NULL),
   nonreal_scope(NULL),

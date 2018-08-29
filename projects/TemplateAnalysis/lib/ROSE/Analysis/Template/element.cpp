@@ -18,7 +18,9 @@ Element * Element::get(SgNode * n) {
   return NULL;
 }
 
-Element::Element() {}
+Element::Element(SgNode * node__) :
+  node(node__)
+{}
 
 Element::~Element() {}
 
@@ -51,7 +53,7 @@ TemplateElement * TemplateElement::build(SgNode * node) {
 }
 
 TemplateElement::TemplateElement(SgNode * node__) :
-  node(node__)
+  Element(node__)
 {}
 
 TemplateElement::~TemplateElement() {}

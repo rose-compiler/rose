@@ -24,7 +24,7 @@ void Relation::toGraphViz(std::ostream & out) const {
 
 //
 
-TemplateRelation * TemplateRelation::build(Instantiation * from, TemplateElement * to, kind_e kind, size_t pos) {
+TemplateRelation * TemplateRelation::build(Instantiation * from, Element * to, kind_e kind, size_t pos) {
   std::pair<Element *, Element *> coord(from,to);
 
   TemplateRelation * result = NULL;
@@ -44,7 +44,7 @@ TemplateRelation * TemplateRelation::build(Instantiation * from, TemplateElement
   return result;
 }
 
-TemplateRelation::TemplateRelation(Instantiation * from_, TemplateElement * to_, kind_e kind_, size_t pos_) :
+TemplateRelation::TemplateRelation(Instantiation * from_, Element * to_, kind_e kind_, size_t pos_) :
   Relation(),
   from(from_),
   to(to_),

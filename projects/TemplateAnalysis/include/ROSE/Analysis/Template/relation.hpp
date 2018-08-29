@@ -74,15 +74,15 @@ class TemplateRelation : public Relation {
 
   protected:
     Instantiation * from;
-    TemplateElement * to;
+    Element * to;
     kind_e kind;
     size_t position;
 
   protected:
-    static TemplateRelation * build(Instantiation * from, TemplateElement * to, kind_e kind, size_t pos);
+    static TemplateRelation * build(Instantiation * from, Element * to, kind_e kind, size_t pos);
 
   protected:
-    TemplateRelation(Instantiation * from_, TemplateElement * to_, kind_e kind_, size_t pos_);
+    TemplateRelation(Instantiation * from_, Element * to_, kind_e kind_, size_t pos_);
 
   public:
     virtual ~TemplateRelation();

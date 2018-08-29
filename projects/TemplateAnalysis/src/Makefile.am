@@ -18,9 +18,13 @@ PROP_INC_PATHS=-I$(top_srcdir)/$(PROP_REL_PATH)/include
 PROP_LIB_PATH=-L$(top_builddir)/$(PROP_REL_PATH)/lib/$(PROP_ORG_PATH)
 PROP_LIBS=-lROSE-Proposed
 
-bin_PROGRAMS=mfbEnv
+bin_PROGRAMS=mfbEnv sage2json
 
 mfbEnv_SOURCES=mfb-environment.cpp
 mfbEnv_CXXFLAGS=-g $(MFB_INC_PATHS) $(RAT_INC_PATHS) $(PROP_INC_PATHS) $(ROSE_INCLUDES)
 mfbEnv_LDADD=$(LIBS_WITH_RPATH) $(ROSE_LIBS) $(PROP_LIB_PATH) $(PROP_LIBS) $(MFB_LIB_PATHS) $(MFB_LIBS) $(RAT_LIB_PATH) $(RAT_LIBS)
+
+sage2json_SOURCES=sage-to-json.cpp
+sage2json_CXXFLAGS=-g $(RAT_INC_PATHS) $(ROSE_INCLUDES)
+sage2json_LDADD=$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

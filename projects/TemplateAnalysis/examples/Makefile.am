@@ -5,7 +5,7 @@ RAT_REL_PATH=projects/TemplateAnalysis
 RAT_ORG_PATH=ROSE/Analysis/Template
 RAT_PATH=$(top_builddir)/$(RAT_REL_PATH)/src
 
-check-local: if_and_branches/templinstflow.dot count_pointers/templinstflow.dot meta_objects/templinstflow.dot
+check-local: if_and_branches/templinstflow.dot count_pointers/templinstflow.dot meta_objects/templinstflow.dot high_order_metafunctions/templinstflow.dot
 
 $(RAT_PATH)/mfbEnv:
 	make -C $(RAT_PATH) mfbEnv
@@ -22,6 +22,10 @@ meta_objects/templinstflow.dot: $(srcdir)/codes/meta_objects.cxx $(srcdir)/queri
 	mkdir -p $(abs_builddir)/meta_objects
 	$(RAT_PATH)/mfbEnv --cfgfile=$(abs_srcdir)/queries/meta_objects.json --basedir=$(abs_srcdir)/codes --resdir=$(abs_builddir)/meta_objects
 
+high_order_metafunctions/templinstflow.dot: $(srcdir)/codes/high_order_metafunctions.cxx $(srcdir)/queries/high_order_metafunctions.json $(RAT_PATH)/mfbEnv
+	mkdir -p $(abs_builddir)/high_order_metafunctions
+	$(RAT_PATH)/mfbEnv --cfgfile=$(abs_srcdir)/queries/high_order_metafunctions.json --basedir=$(abs_srcdir)/codes --resdir=$(abs_builddir)/high_order_metafunctions
+
 clean-local:
-	rm -rf $(abs_builddir)/if_and_branches $(abs_builddir)/count_pointers $(abs_builddir)/meta_objects
+	rm -rf $(abs_builddir)/if_and_branches $(abs_builddir)/count_pointers $(abs_builddir)/meta_objects $(abs_builddir)/high_order_metafunctions
 

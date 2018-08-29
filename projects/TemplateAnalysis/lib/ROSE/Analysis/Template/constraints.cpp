@@ -64,32 +64,42 @@ void InstantiationConstraints::construct() {
   std::cerr << "   -- arguments_map.size()  = " << to->arguments_map.size()  << std::endl;
   std::cerr << "   -- parameters_map.size() = " << to->parameters_map.size() << std::endl;
 
-  assert(to->cannonical != NULL);
+  if (to->cannonical != NULL) {
+    std::cerr << " -> Non-type parameters:" << std::endl;
+    assert(to->arguments_map.size() == to->cannonical->parameters_map.size());
+    for (auto it = to->cannonical->nontype_parameters.begin(); it != to->cannonical->nontype_parameters.end(); it++) {
+      size_t pos = it->second.first;
+      std::cerr << "   -- pos = " << pos << std::endl;
+      SgType * t = it->second.second;
+      SgExpression * e = isSgExpression(to->arguments_map[pos]->node);
+      assert(e != NULL);
 
-  assert(to->arguments_map.size() == to->cannonical->parameters_map.size());
-  for (auto it = to->cannonical->nontype_parameters.begin(); it != to->cannonical->nontype_parameters.end(); it++) {
-    size_t pos = it->second.first;
-    SgType * t = it->second.second;
-    SgExpression * e = isSgExpression(to->arguments_map[pos]->node);
-    assert(e != NULL);
+      std::vector<SgNonrealRefExp *> nrrefs = SageInterface::querySubTree<SgNonrealRefExp>(e);
+      for (auto it = nrrefs.begin(); it != nrrefs.end(); it++) {
+        SgNonrealSymbol * nrsym = (*it)->get_symbol();
+        assert(nrsym != NULL);
+        std::cerr << "     -- nrsym = " << std::hex << nrsym << " : " << nrsym->get_name() << std::endl;
 
-    std::vector<SgNonrealRefExp *> nrrefs = SageInterface::querySubTree<SgNonrealRefExp>(e);
-    for (auto it = nrrefs.begin(); it != nrrefs.end(); it++) {
-      SgNonrealSymbol * nrsym = (*it)->get_symbol();
-      assert(nrsym != NULL);
-      SgCastExp * cexp = isSgCastExp((*it)->get_parent());
-      assert(cexp != NULL);
-      SgType * req_type = cexp->get_type();
-      assert(req_type != NULL);
+        SgNode * parent = (*it)->get_parent();
+        std::cerr << "       -- parent = " << std::hex << parent << " (" << parent->class_name() << ")" << std::endl;
 
-      nontype_constraints.insert(std::pair<SgNonrealSymbol *, SgType *>(nrsym, req_type));
+//      SgCastExp * cexp = isSgCastExp((*it)->get_parent());
+//      assert(cexp != NULL);
+
+        SgExpression * exp = isSgExpression(parent);
+        ROSE_ASSERT(exp != NULL);
+        SgType * req_type = exp->get_type();
+        assert(req_type != NULL);
+
+        nontype_constraints.insert(std::pair<SgNonrealSymbol *, SgType *>(nrsym, req_type));
+      }
     }
-  }
-  for (auto it = to->cannonical->type_parameters.begin(); it != to->cannonical->type_parameters.end(); it++) {
-    // TODO I feel like that is the "default" (if neither "nontype" nor "template" then it is "type") also the only constraint I can think of is for the difference (if any) between 'class' and 'typename'
-  }
-  for (auto it = to->cannonical->template_parameters.begin(); it != to->cannonical->template_parameters.end(); it++) {
-    // TODO template constraint include the template header
+    for (auto it = to->cannonical->type_parameters.begin(); it != to->cannonical->type_parameters.end(); it++) {
+      // TODO I feel like that is the "default" (if neither "nontype" nor "template" then it is "type") also the only constraint I can think of is for the difference (if any) between 'class' and 'typename'
+    }
+    for (auto it = to->cannonical->template_parameters.begin(); it != to->cannonical->template_parameters.end(); it++) {
+      // TODO template constraint include the template header
+    }
   }
 }
 
@@ -196,7 +206,7 @@ void SpecializationConstraints::construct() {
           break;
         }
         case TemplateRelation::e_template_argument: {
-          assert(false);
+//        assert(false); // TODO
           break;
         }
         case TemplateRelation::e_pack_expansion_argument: {

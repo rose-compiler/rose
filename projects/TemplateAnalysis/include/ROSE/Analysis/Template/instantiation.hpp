@@ -52,7 +52,7 @@ class Instantiation : public Element {
     std::map<SgExpression *, nontype_arg_info_t  > nontype_arguments;
     std::map<SgType *,       type_arg_info_t     > type_arguments;
     std::map<SgSymbol *,     template_arg_info_t > template_arguments;
-    std::vector<TemplateElement *> arguments_map;
+    std::vector<Element *> arguments_map;
     std::vector<TemplateRelation::kind_e> arguments_kind;
 
   public:

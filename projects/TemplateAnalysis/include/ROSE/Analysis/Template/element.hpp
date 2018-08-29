@@ -24,13 +24,16 @@ namespace Analysis {
 namespace Template {
 
 class Element {
+  protected:
+    SgNode * node;
+
   public:
     static std::map<SgNode *, Element *> all;
 
     static Element * get(SgNode *);
 
   protected:
-    Element();
+    Element(SgNode * node__);
 
   public:
     virtual ~Element();
@@ -67,9 +70,6 @@ class Element {
 };
 
 class TemplateElement : public Element {
-  protected:
-    SgNode * node;
-
   protected:
     static TemplateElement * build(SgNode * node);
 
