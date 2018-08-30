@@ -380,6 +380,8 @@ HEADER_SCOPE_STATEMENT_START
        // SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t) const;
           SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const;
 
+          SgTemplateVariableSymbol*       lookup_template_variable_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList) const;
+
        // DQ (8/10/2013): If there are template arguments then they are used to disambiguate template instantiations that might match existing non-template instantiations (normal functions).
        // SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const;
           SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
@@ -1733,7 +1735,7 @@ HEADER_LIST_DECLARATIONS
           A NULL pointer indicates that the class definition does not exist (was not defined in the current 
           translation unit), this can happen for pointers to member functions only.
         */
-          SgClassDefinition* get_class_scope(void) const;
+          SgScopeStatement* get_class_scope(void) const;
 
        /* \brief This returns the associated class (even if the class definition is unavailable).
 
@@ -1743,10 +1745,10 @@ HEADER_LIST_DECLARATIONS
 
           \implementation This is much more than a simple access function for the p_associatedClassDeclaration data member.
         */
-          SgClassDeclaration* get_associatedClassDeclaration () const;
+          SgDeclarationStatement* get_associatedClassDeclaration () const;
 
       //! This is an access function for the p_associatedClassDeclaration data member.
-          void set_associatedClassDeclaration ( SgClassDeclaration* associatedClassDeclaration );
+          void set_associatedClassDeclaration ( SgDeclarationStatement* associatedClassDeclaration );
 
           virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
@@ -2785,7 +2787,13 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
 
 HEADER_TYPEDEF_DECLARATION_STATEMENT_END
 
+HEADER_NONREAL_DECL_START
 
+          SgName get_mangled_name (void) const;
+
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
+
+HEADER_NONREAL_DECL_END
 
 HEADER_TEMPLATE_DECLARATION_STATEMENT_START
        // void post_construction_initialization();
@@ -4203,53 +4211,18 @@ SgStatement::get_scope(void) const
                ROSE_ASSERT (returnScope != NULL);
                break;
              }
-#if 0
-       // DQ (2/19/2006): If commented out test2004_78.C fails, if left in place then test2004_71.C fails.
-       // I have concluded from this that the SgNamespaceDeclarationStatement should have an explicitly 
-       // stored scope.
-       // DQ (2/10/2006): Added case that is a current problem in test2005_08.C
-       // There can be many instances of a single name space but get_scope()
-       // should return the scope of the first instance of each namespace.
-          case V_SgNamespaceDeclarationStatement:
+
+       // TV (05/28/2018): It can happen for SgDeclarationScope created to hold non-real declarations to be missing their parent...
+          case V_SgDeclarationScope:
              {
-            // Handle case of SgNamespaceDeclarationStatement
-               ROSE_ASSERT (stmt != NULL);
-               SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(stmt);
-               ROSE_ASSERT (namespaceDeclaration != NULL);
-            // printf ("namespaceDeclaration->get_firstNondefiningDeclaration() = %p namespaceDeclaration->get_definingDeclaration() = %p \n",
-            //      namespaceDeclaration->get_firstNondefiningDeclaration(),namespaceDeclaration->get_definingDeclaration());
-            // SgDeclarationStatement* firstDeclaration = namespaceDeclaration->get_definingDeclaration();
-               SgDeclarationStatement* firstDeclaration = namespaceDeclaration->get_firstNondefiningDeclaration();
-               ROSE_ASSERT(firstDeclaration != NULL);
-               SgNamespaceDeclarationStatement* firstNamespaceDeclaration = isSgNamespaceDeclarationStatement(firstDeclaration);
-               ROSE_ASSERT(firstNamespaceDeclaration != NULL);
-               ROSE_ASSERT(firstNamespaceDeclaration->get_parent() != NULL);
-               SgStatement* parentStatement = isSgStatement(firstNamespaceDeclaration->get_parent());
-               ROSE_ASSERT(parentStatement != NULL);
-
-               returnScope = parentStatement->get_scope();
-
-               ROSE_ASSERT (returnScope != NULL);
+               SgStatement * pstmt = isSgStatement(get_parent());
+               returnScope = isSgScopeStatement(pstmt);
+               if (returnScope == NULL && pstmt != NULL) {
+                 returnScope = pstmt->get_scope();
+               }
+               return returnScope; // Skipping assert at the end
                break;
              }
-#endif
-#if 0
-       // DQ (2/9/2006): Added case that is a current problem in test2004_02.C
-       // This is not needed now that we have set the parent directly (hope that works!)
-          case V_SgBasicBlock:
-             {
-            // Handle case of SgBasicBlock
-               ROSE_ASSERT (stmt != NULL);
-               SgBasicBlock* block = isSgBasicBlock(stmt);
-
-            // This fails
-               printf ("SgBasicBlock = %p \n",stmt);
-               ROSE_ASSERT (stmt->get_parent() != NULL);
-
-               ROSE_ASSERT (returnScope != NULL);
-               break;
-             }
-#endif
        // DQ (11/7/03): If we are a ScopeStatment then reset the starting point for the search
        //               for the scopeStatement to the parent of the current node.
           default:
@@ -4261,20 +4234,6 @@ SgStatement::get_scope(void) const
                printf ("In SgScopeStatement::get_scope() default case: stmt->get_parent() = %s \n",stmt->get_parent()->sage_class_name());
 #endif
 
-#if 0
-            // DQ (11/3/2007): Put old code back in as part of debugging case of calling get_scope from a SgClassDefinition.
-            // However this code does not appear to be relevant.  We just need an additional detail to the code below!
-               if (isSgScopeStatement(stmt) != NULL)
-                  {
-                    if (stmt->get_parent() == NULL)
-                       {
-                         printf ("Error: SgStatement has NULL parent at node = %p = %s \n",stmt,stmt->class_name().c_str());
-                         stmt->get_file_info()->display("Error: SgStatement has NULL parent");
-                       }
-                    ROSE_ASSERT(stmt->get_parent() != NULL);
-                    stmt = isSgStatement(stmt->get_parent());
-                  }
-#else
             // DQ (11/3/2007): Added comment to existing code. If the input node is a scope then move up one using 
             // the parent (since scopes are not explicitly stored in SgScopeStatement objects).
                if (isSgScopeStatement(stmt) != NULL)
@@ -4346,7 +4305,6 @@ SgStatement::get_scope(void) const
                          return NULL;
                        }
                   }
-#endif
                ROSE_ASSERT(stmt != NULL);
 
                int counter = 0;
@@ -5692,6 +5650,39 @@ SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType
 
      return p_symbol_table->find_template_function(n,t,templateParameterList);
    }
+   
+SgTemplateVariableSymbol*
+SgScopeStatement::lookup_template_variable_symbol(const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+
+          SgTemplateVariableSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_template_variable(n, templateParameterList, templateArgumentsList);
+
+          return symbol;
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateVariableSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_variable(n, templateParameterList, templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_template_variable(n, templateParameterList, templateArgumentsList);
+   }
 
 // DQ (8/10/2013): Modified version of function to support template arguments (where used).
 // SgFunctionSymbol* SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const
@@ -6176,6 +6167,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgNamespaceDefinitionStatement:
           case V_SgGlobal:
           case V_SgModuleStatement:
+          case V_SgDeclarationScope:
                returnValue = true;
                break;
 
@@ -7044,6 +7036,7 @@ SgScopeStatement::generateStatementList() const
      printf ("In $CLASSNAME::generateStatementList() containsOnlyDeclarations() = %s \n",
           containsOnlyDeclarations() ? "true" : "false");
 #endif
+
 
      SgStatementPtrList returnList;
      if (containsOnlyDeclarations() == true)
@@ -8528,6 +8521,11 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                     printf ("templateArgList element *i = %p = %s \n",*i,(*i)->sage_class_name());
 #endif
 
+                    if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) {
+                      i++;
+                      continue;
+                    }
+
                  // DQ (2/27/2005): Added support for output of only template arguments 
                  // that were explicit in the source code.  Only meaningful for function 
                  // and member function template arguments.
@@ -9812,6 +9810,11 @@ SgDeclarationStatement::get_template_name() const
   // switch (templateDeclaration->variantT())
      switch (this->variantT())
         {
+          case V_SgNonrealDecl:
+             {
+               templateDeclarationName = isSgNonrealDecl(this)->get_name();
+               break;
+             }
           case V_SgTemplateClassDeclaration:
              {
                templateDeclarationName = isSgTemplateClassDeclaration(this)->get_name();
@@ -12781,13 +12784,13 @@ SgMemberFunctionDeclaration::replace_child(SgStatement *target,SgStatement *news
 
 // DQ (10/12/2007): This is no longer a ROSETTA generated function, so that we can hide the get_associatedClassDeclaration 
 // member, making it private to only support the SgMemberFunctionDeclaration::get_class_scope() member function.
-SgClassDeclaration* 
+SgDeclarationStatement*
 SgMemberFunctionDeclaration::get_associatedClassDeclaration () const
    {
      assert (this != NULL);
   // return p_associatedClassDeclaration;
 
-     SgClassDeclaration* returnValue = NULL;
+     SgDeclarationStatement* returnValue = NULL;
 
   // The p_associatedClassDeclaration is only set when the class definition is unavailable (not defined in the current 
   // translation unit) and yet there is a class declared for there to be a member function declared.  This is always 
@@ -12804,19 +12807,32 @@ SgMemberFunctionDeclaration::get_associatedClassDeclaration () const
        // When p_associatedClassDeclaration == NULL, it is because the class definition exists (and the backup mechanism 
        // of relating the member function to the class declaration was not required) and so the class declaration can be 
        // obtained directly from the class definition.
-          SgClassDefinition* scope = get_class_scope();
+          SgScopeStatement* scope = get_class_scope();
+          SgClassDefinition * cdefn = isSgClassDefinition(scope);
+          SgDeclarationScope * nrscope = isSgDeclarationScope(scope);
 
-       // Testing ...
-       // ROSE_ASSERT(scope != NULL);
-          if (scope == NULL)
-             {
-               printf ("ERROR: retuning NULL from SgMemberFunctionDeclaration::get_associatedClassDeclaration \n");
-               return NULL;
-             }
-            else
-             {
-               returnValue = scope->get_declaration();
-             }
+          if (cdefn != NULL) {
+            returnValue = cdefn->get_declaration();
+          } else if (nrscope != NULL) {
+            SgNode * nrscope_parent = nrscope->get_parent();
+            ROSE_ASSERT(nrscope_parent != NULL);
+#if 0
+            printf("nrscope_parent = %p (%s)\n", nrscope_parent, nrscope_parent ? nrscope_parent->class_name().c_str() : "");
+#endif
+            SgTemplateClassDeclaration * tpldecl = isSgTemplateClassDeclaration(nrscope_parent);
+            SgNonrealDecl * nrdecl = isSgNonrealDecl(nrscope_parent);
+            if (tpldecl != NULL) {
+              returnValue = tpldecl;
+            } else if (nrdecl != NULL) {
+              printf ("WARNING: retuning a non-real declaration from SgMemberFunctionDeclaration::get_associatedClassDeclaration \n");
+              returnValue = nrdecl;
+            } else {
+              ROSE_ASSERT(false);
+            }
+          } else {
+            printf ("ERROR: retuning NULL from SgMemberFunctionDeclaration::get_associatedClassDeclaration \n");
+            returnValue = NULL;
+          }
         }
 
      return returnValue;
@@ -12827,7 +12843,7 @@ SgMemberFunctionDeclaration::get_associatedClassDeclaration () const
 // This SgMemberFunctionDeclaration::set_associatedClassDeclaration() member function is public so that it can be set in 
 // construction of the AST.
 void
-SgMemberFunctionDeclaration::set_associatedClassDeclaration ( SgClassDeclaration* associatedClassDeclaration )
+SgMemberFunctionDeclaration::set_associatedClassDeclaration ( SgDeclarationStatement* associatedClassDeclaration )
    {
      assert (this != NULL);
      set_isModified(true);
@@ -12845,7 +12861,7 @@ SgMemberFunctionDeclaration::set_associatedClassDeclaration ( SgClassDeclaration
      p_associatedClassDeclaration = associatedClassDeclaration;
    }
 
-SgClassDefinition* 
+SgScopeStatement*
 SgMemberFunctionDeclaration::get_class_scope(void) const
    {
   // DQ (10/12/2007): It is OK for this to be NULL! If it is NULL, then the get_associatedClassDeclaration() has the class declaration!
@@ -12858,45 +12874,41 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
   // get_scope() function which was only defined on the SgMemberFunctionDeclaration but is now defined on 
   // many different IR nodes (as a result of a major bug fix specific to scopes vs. parents handling).
   // SgClassDefinition *parentScope = isSgClassDefinition(get_scope());
-     SgClassDefinition* parentScope = NULL;
+     SgScopeStatement* parentScope = NULL;
 
   // DQ (10/12/2007): Modified to access the p_associatedClassDeclaration data member directly because
   // the get_associatedClassDeclaration() member function is more than an access function (no longer built be ROSETTA).
   // DQ (7/26/2007): Member function pointers don't require a SgClassDefinition so we have no scope 
   // for such cases, to make up for this, we explicitly store the class declaration.
   // SgClassDeclaration* classDeclaration = this->get_associatedClassDeclaration();
-     SgClassDeclaration* classDeclaration = this->p_associatedClassDeclaration;
-     if (classDeclaration != NULL)
-        {
-          parentScope = NULL;
-          SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-          if (definingClassDeclaration != NULL)
-               parentScope = definingClassDeclaration->get_definition();
-#if 0
-       // DQ (5/20/2014): This results in an untolerable amount of output spew from Boost test codes.
-          if (parentScope != NULL)
-             {
-               printf ("SgMemberFunctionDeclaration::get_class_scope(): memberFunction = %p = %s = %s classDeclaration = %p = %s = %s \n",
-                    this,this->class_name().c_str(),SageInterface::get_name(this).c_str(),
-                    classDeclaration,classDeclaration->class_name().c_str(),SageInterface::get_name(classDeclaration).c_str());
-             }
-#endif
-       // ROSE_ASSERT(parentScope != NULL);
-        }
-       else
-        {
+     SgDeclarationStatement* decl = this->p_associatedClassDeclaration;
+     if (decl != NULL) {
+       decl = decl->get_definingDeclaration();
+       ROSE_ASSERT(decl != NULL);
+
+       SgClassDeclaration* cdecl = isSgClassDeclaration(decl);
+       SgNonrealDecl* nrdecl = isSgNonrealDecl(decl);
+       if (cdecl != NULL) {
+         parentScope = cdecl->get_definition();
+       } else if (nrdecl != NULL) {
+         parentScope = nrdecl->get_nonreal_decl_scope();
+       } else {
+         ROSE_ASSERT(false);
+       }
+     } else {
        // DQ (7/26/2007): Moved from top of function
           ROSE_ASSERT(p_scope != NULL);
 
        // DQ (10/15/2007): Added assertion.
           ROSE_ASSERT(this->get_parent() != NULL);
 
-       // SgClassDefinition *parentScope = isSgClassDefinition(get_scope());
-          parentScope = isSgClassDefinition(get_scope());
+          parentScope = get_scope();
+          SgClassDefinition * cdefn = isSgClassDefinition(parentScope);
+          SgDeclarationScope * nrscope = isSgDeclarationScope(parentScope);
 
        // The scope associated with a member function had better be a SgClassDefinition!
        // if (this->get_associatedClassDeclaration() != NULL || parentScope == NULL)
-          if (parentScope == NULL)
+          if (cdefn == NULL && nrscope == NULL)
              {
             // DQ (12/5/2004): Note that new member function declarations added from the rewrite system 
             // allow there scope to be derived from the parent node.  This results in incorrect information 
@@ -14383,6 +14395,110 @@ SgClassDeclaration::set_global_qualification_required ( bool global_qualificatio
    }
 
 SOURCE_CLASS_DECLARATION_STATEMENT_END
+
+SOURCE_NONREAL_DECL_START
+
+void
+SgNonrealDecl::post_construction_initialization() {}
+
+SgName
+SgNonrealDecl::get_mangled_name (void) const {
+#if 0
+  printf("In SgNonrealDecl::get_mangled_name():\n");
+  printf("  - this = %p\n", this);
+#endif
+  ostringstream mangled_name;
+
+  if (get_is_class_member()) {
+    SgNode * type_parent = get_parent();
+    ROSE_ASSERT(type_parent != NULL);
+#if 0
+    printf("  - type_parent = %p (%s)\n", type_parent, type_parent ? type_parent->class_name().c_str() : "");
+#endif
+    SgNode * decl_parent = type_parent->get_parent();
+#if 0
+    printf("  - decl_parent = %p (%s)\n", decl_parent, decl_parent ? decl_parent->class_name().c_str() : "");
+#endif
+    SgClassDeclaration * cdecl = isSgClassDeclaration(decl_parent);
+    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(decl_parent);
+    SgNonrealDecl * nrdecl = isSgNonrealDecl(decl_parent);
+    if (cdecl != NULL) {
+       mangled_name << cdecl->get_mangled_name().getString() << "___";
+    } else if (tplcdecl != NULL) {
+       mangled_name << tplcdecl->get_mangled_name().getString() << "___";
+    } else if (nrdecl != NULL) {
+       mangled_name << nrdecl->get_mangled_name().getString() << "___";
+    }
+  }
+
+  if (get_is_template_param()) {
+    mangled_name << "__templ_param_" << p_template_parameter_depth << "_" << p_template_parameter_position + "__";
+  } else {
+    mangled_name << get_name().getString();
+  }
+
+  SgName mangled(mangled_name.str());
+
+  if (get_tpl_params().size() > 0)
+    mangled = mangleTemplate(mangled,get_tpl_params(),get_scope());
+
+  if (get_tpl_args().size() > 0)
+    mangled = mangleTemplate(mangled,get_tpl_args(),get_scope());
+
+  return mangled;
+}
+
+SgSymbol* SgNonrealDecl::get_symbol_from_symbol_table() const {
+#if 0
+  printf("In SgNonrealDecl::get_symbol_from_symbol_table():\n");
+#endif
+#if 0
+  printf("  this   = %p (%s) = %s\n", this, this ? this->class_name().c_str() : "", this ? this->get_name().str() : "");
+#endif
+  SgNode * parent = get_parent();
+  ROSE_ASSERT(parent != NULL);
+#if 0
+  printf("  parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+#endif
+  SgScopeStatement * scope = get_scope();
+  ROSE_ASSERT(scope != NULL);
+
+#if 0
+    printf("  scope  = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
+#endif
+
+  SgSymbol * res = scope->find_symbol_from_declaration(this);
+
+  if (res == NULL) {
+
+    SgGlobal * gscope = isSgGlobal(scope);
+    if (gscope != NULL) {
+      ROSE_ASSERT(false);
+    } else {
+      SgDeclarationStatement * parent = isSgDeclarationStatement(scope->get_parent());
+      ROSE_ASSERT(parent != NULL);
+#if 0
+      printf("  parent  = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+#endif
+      SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(parent);
+      if (tplcdecl != NULL) {
+        scope = tplcdecl->get_nonreal_decl_scope();
+        ROSE_ASSERT(scope != NULL);
+      } else {
+        ROSE_ASSERT(false);
+      }
+    }
+#if 0
+    printf("  scope  = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
+#endif
+    res = scope->find_symbol_from_declaration(this);
+    ROSE_ASSERT(res != NULL);
+  }
+
+  return res;
+}
+
+SOURCE_NONREAL_DECL_END
 
 SOURCE_STMT_DECLARATION_STATEMENT_START
 
@@ -17153,33 +17269,6 @@ SgTemplateClassDeclaration::post_construction_initialization()
 SgName
 SgTemplateClassDeclaration::get_mangled_name(void) const
    {
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-  #error "ROSE_USE_NEW_EDG_INTERFACE is required!"
-#endif
-
-
-#if 0
-  // DQ (2/13/2015): This is the older version of the code that was a problem for test2015_09.C.
-  // SgName mangled_name = SgClassDeclaration::get_mangled_name() + "__num_template_parameters_" + Rose::StringUtility::numberToString(get_templateParameters().size());
-     SgName mangled_name = this->get_templateName() + "__num_template_parameters_" + Rose::StringUtility::numberToString(get_templateParameters().size());
-
-  // DQ (9/12/2012): Added support for partial specialization.
-     if (this->get_templateSpecializationArguments().empty() == false)
-        {
-       // Add template specialization arguments to the mangled name.
-          mangled_name += "__template_partial_specialization";
-
-          SgTemplateArgumentPtrList::const_iterator i = this->get_templateSpecializationArguments().begin();
-          while (i != this->get_templateSpecializationArguments().end())
-             {
-               SgName suffix = (*i)->get_mangled_name();
-               mangled_name += "__" + suffix;
-               i++;
-             }
-
-          mangled_name += "__";
-        }
-#else
      string mangled_name;
 
   // DQ (2/13/2015): Fixing bug specific to adding mangle name of the scope of the template class to avoid collisions with other types 
@@ -17225,6 +17314,9 @@ SgTemplateClassDeclaration::get_mangled_name(void) const
              }
           ROSE_ASSERT(mangledName.is_null() == false);
 
+          // TODO add mangled template specialization arguments
+          mangledName = mangleTemplate(mangledName,get_templateSpecializationArguments(),get_scope());
+
        // p_globalMangledNameMap[classDeclaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateClassDeclaration*>(this),mangledName);
 #if 0
@@ -17240,8 +17332,6 @@ SgTemplateClassDeclaration::get_mangled_name(void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
         }
-#endif
-
 #if 0
   // DQ (7/24/2012): Output the mangled name being generated for debugging.
      printf (">>>>>>>>>> SgTemplateClassDeclaration::get_mangled_name(): returning mangled_name = %s \n",mangled_name.c_str());

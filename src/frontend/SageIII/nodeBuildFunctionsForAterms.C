@@ -1945,7 +1945,7 @@ SgFunctionType* SgFunctionType::build_node_from_nonlist_children ( SgType* retur
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgMemberFunctionType* SgMemberFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier )
+SgMemberFunctionType* SgMemberFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier, unsigned int ref_qualifier )
    {
 #if 0
   // debugging information!
@@ -1963,7 +1963,7 @@ SgMemberFunctionType* SgMemberFunctionType::build_node_from_nonlist_children ( S
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgPartialFunctionType* SgPartialFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier )
+SgPartialFunctionType* SgPartialFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier, unsigned int ref_qualifier )
    {
 #if 0
   // debugging information!
@@ -1981,7 +1981,7 @@ SgPartialFunctionType* SgPartialFunctionType::build_node_from_nonlist_children (
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgPartialFunctionModifierType* SgPartialFunctionModifierType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier )
+SgPartialFunctionModifierType* SgPartialFunctionModifierType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier, unsigned int ref_qualifier )
    {
 #if 0
   // debugging information!
@@ -2035,7 +2035,7 @@ SgTypeEllipse* SgTypeEllipse::build_node_from_nonlist_children (  )
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgTemplateType* SgTemplateType::build_node_from_nonlist_children ( SgName name, int template_parameter_position )
+SgTemplateType* SgTemplateType::build_node_from_nonlist_children ( SgName name )
    {
 #if 0
   // debugging information!
@@ -9362,7 +9362,7 @@ SgDeleteExp* SgDeleteExp::build_node_from_nonlist_children ( Sg_File_Info* start
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgThisExp* SgThisExp::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgClassSymbol* class_symbol, int pobj_this )
+SgThisExp* SgThisExp::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgClassSymbol* class_symbol, SgNonrealSymbol* nonreal_symbol, int pobj_this )
    {
 #if 0
   // debugging information!

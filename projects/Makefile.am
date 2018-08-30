@@ -65,6 +65,7 @@ SUBDIRS = \
 	RoseBlockLevelTracing \
 	LineDeleter \
 	xgenTranslator \
+        TemplateAnalysis \
 	$(OPTIONAL_PROJECTS)
 
 # DQ (4/20/2016): Clang has a problem within compiling POET, which is used in the StencilManyCore project.

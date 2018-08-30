@@ -1,0 +1,13 @@
+{
+  "rosecfg" : {
+    "compiler" : "c++",
+    "options" : [
+      "-DSKIP_ROSE_BUILTIN_DECLARATIONS"
+    ]
+  },
+  "sources" : [
+    {
+      "path" : "count_pointers.cxx"
+    }
+  ]
+}
