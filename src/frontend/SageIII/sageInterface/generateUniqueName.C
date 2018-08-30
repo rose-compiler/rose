@@ -1009,6 +1009,12 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+               case V_SgNonrealDecl:
+                  {
+                    const SgNonrealDecl * nrdecl = isSgNonrealDecl(statement);
+                    key = nrdecl->get_mangled_name();
+                    break;
+                  }
 
             // DQ (5/6/2007): Added more cases
                case V_SgDefaultOptionStmt:

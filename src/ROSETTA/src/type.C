@@ -99,6 +99,10 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TemplateType        , "TemplateType",         "T_TEMPLATE" );
      NEW_TERMINAL_MACRO ( EnumType            , "EnumType",             "T_ENUM" );
      NEW_TERMINAL_MACRO ( TypedefType         , "TypedefType",          "T_TYPEDEF" );
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     NEW_TERMINAL_MACRO ( NonrealType, "NonrealType", "T_NONREAL");
+
      NEW_TERMINAL_MACRO ( ModifierType        , "ModifierType",         "T_MODIFIER" );
 
   // DQ (4/14/2004): Support for new function modifiers (wrapper class design
@@ -159,7 +163,8 @@ Grammar::setUpTypes ()
                             JavaParameterType,
                             "ClassType","T_CLASS", true);
      NEW_NONTERMINAL_MACRO (NamedType,
-                            ClassType | JavaParameterizedType | JavaQualifiedType | EnumType | TypedefType | JavaWildcardType,
+                            ClassType | EnumType | TypedefType | NonrealType |
+                            JavaParameterizedType | JavaQualifiedType | JavaWildcardType,
                             "NamedType","T_NAME", false);
 #endif
  
@@ -581,6 +586,8 @@ Grammar::setUpTypes ()
   // CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateInstantiationDecl* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateDeclaration* decl = NULL");
 
+     CUSTOM_CREATE_TYPE_MACRO(NonrealType,"SOURCE_CREATE_TYPE_FOR_NONREAL_TYPE","SgNonrealDecl* decl = NULL");
+
      CUSTOM_CREATE_TYPE_MACRO(JavaWildcardType,
             "SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE",
             "SgClassDeclaration *decl = NULL");
@@ -718,6 +725,8 @@ Grammar::setUpTypes ()
   // This is required only for the RoseExample tests using Boost 1.56 (no where else that I know of so far).
      ClassType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     NonrealType.setFunctionPrototype ("HEADER_NONREAL_TYPE", "../Grammar/Type.code" );
+     NonrealType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -770,7 +779,14 @@ Grammar::setUpTypes ()
   // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of 
   // template parameters and the template declaration (OR just the template paramters only; I have not decided).
      TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_depth","= -1",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TemplateType.setDataPrototype     ("SgType *","class_type","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgType *","parent_class_type","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateParameter *","template_parameter","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateArgumentPtrList", "tpl_args", "= SgTemplateArgumentPtrList()", NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateArgumentPtrList", "part_spec_tpl_args", "= SgTemplateArgumentPtrList()", NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/18/2017): We need to support a flag to indicate packing in template parameters.
      TemplateType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -903,6 +919,8 @@ Grammar::setUpTypes ()
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionType.setDataPrototype     ("unsigned int", "mfunc_specifier","= 0",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     MemberFunctionType.setDataPrototype     ("unsigned int", "ref_qualifiers","= 0",
+                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
@@ -1032,6 +1050,8 @@ Grammar::setUpTypes ()
 
      ClassType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+     NonrealType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
      JavaParameterizedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
      JavaQualifiedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -1130,6 +1150,7 @@ Grammar::setUpTypes ()
      FunctionType.setFunctionSource        ( "SOURCE_FUNCTION_TYPE", "../Grammar/Type.code");
 
      ClassType.setFunctionSource             ( "SOURCE_CLASS_TYPE", "../Grammar/Type.code");
+     NonrealType.setFunctionSource           ( "SOURCE_NONREAL_TYPE", "../Grammar/Type.code");
      JavaParameterizedType.setFunctionSource ( "SOURCE_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code");
      JavaQualifiedType.setFunctionSource     ( "SOURCE_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code");
      JavaWildcardType.setFunctionSource      ( "SOURCE_JAVA_WILDCARD_TYPE", "../Grammar/Type.code");
