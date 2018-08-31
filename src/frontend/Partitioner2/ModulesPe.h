@@ -3,6 +3,7 @@
 
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Modules.h>
+#include <Sawyer/Map.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

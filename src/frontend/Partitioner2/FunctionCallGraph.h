@@ -3,6 +3,7 @@
 
 #include <Partitioner2/BasicTypes.h>
 #include <Sawyer/Graph.h>
+#include <Sawyer/Map.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
