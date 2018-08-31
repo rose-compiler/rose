@@ -1333,56 +1333,102 @@ Engine::createPartitioner() {
 
 void
 Engine::runPartitionerInit(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
+
+    SAWYER_MESG(where) <<"labeling addresses\n";
     labelAddresses(partitioner);
+
+    SAWYER_MESG(where) <<"marking configured basic blocks\n";
     makeConfiguredDataBlocks(partitioner, partitioner.configuration());
+
+    SAWYER_MESG(where) <<"marking configured functions\n";
     makeConfiguredFunctions(partitioner, partitioner.configuration());
+
+    SAWYER_MESG(where) <<"marking ELF/PE container functions\n";
     makeContainerFunctions(partitioner, interp_);
+
+    SAWYER_MESG(where) <<"marking interrupt functions\n";
     makeInterruptVectorFunctions(partitioner, settings_.partitioner.interruptVector);
+
+    SAWYER_MESG(where) <<"marking user-defined functions\n";
     makeUserFunctions(partitioner, settings_.partitioner.startingVas);
 }
 
 void
 Engine::runPartitionerRecursive(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
+
     // Start discovering instructions and forming them into basic blocks and functions
+    SAWYER_MESG(where) <<"discovering and populating functions\n";
     discoverFunctions(partitioner);
 
+    // Try to attach basic blocks to functions
+    SAWYER_MESG(where) <<"marking function call targets\n";
+    makeCalledFunctions(partitioner);
+
+    SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
+    attachBlocksToFunctions(partitioner);
+
     // Additional work
-    if (settings_.partitioner.findingDeadCode)
+    if (settings_.partitioner.findingDeadCode) {
+        SAWYER_MESG(where) <<"attaching dead code to functions\n";
         attachDeadCodeToFunctions(partitioner);
-    if (settings_.partitioner.findingFunctionPadding)
+    }
+    if (settings_.partitioner.findingFunctionPadding) {
+        SAWYER_MESG(where) <<"attaching function padding\n";
         attachPaddingToFunctions(partitioner);
-    if (settings_.partitioner.findingIntraFunctionCode)
+    }
+    if (settings_.partitioner.findingIntraFunctionCode) {
+        SAWYER_MESG(where) <<"searching for intra-function code\n";
         attachAllSurroundedCodeToFunctions(partitioner);
-    if (settings_.partitioner.findingIntraFunctionData)
+    }
+    if (settings_.partitioner.findingIntraFunctionData) {
+        SAWYER_MESG(where) <<"searching for inter-function code\n";
         attachSurroundedDataToFunctions(partitioner);
+    }
 
     // Another pass to attach blocks to functions
+    SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
 }
 
 void
 Engine::runPartitionerFinal(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
+
     if (settings_.partitioner.splittingThunks) {
         // Splitting thunks off the front of a basic block causes the rest of the basic block to be discarded and then
         // rediscovered. This might also create additional blocks due to the fact that opaque predicate analysis runs only on
         // single blocks at a time -- splitting the block may have broken the opaque predicate.
+        SAWYER_MESG(where) <<"splitting thunks from functions\n";
         ModulesX86::splitThunkFunctions(partitioner);
         discoverBasicBlocks(partitioner);
     }
 
     // Perform a final pass over all functions.
+    SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
 
-    if (interp_)
+    if (interp_) {
+        SAWYER_MESG(where) <<"naming imports\n";
         ModulesPe::nameImportThunks(partitioner, interp_);
-    if (settings_.partitioner.namingConstants)
+    }
+    if (settings_.partitioner.namingConstants) {
+        SAWYER_MESG(where) <<"naming constants\n";
         Modules::nameConstants(partitioner);
-    if (settings_.partitioner.namingStrings)
+    }
+    if (settings_.partitioner.namingStrings) {
+        SAWYER_MESG(where) <<"naming strings\n";
         Modules::nameStrings(partitioner);
-    if (settings_.partitioner.namingSyscalls)
+    }
+    if (settings_.partitioner.namingSyscalls) {
+        SAWYER_MESG(where) <<"naming system calls\n";
         ModulesLinux::nameSystemCalls(partitioner, settings_.partitioner.syscallHeader);
-    if (settings_.partitioner.demangleNames)
+    }
+    if (settings_.partitioner.demangleNames) {
+        SAWYER_MESG(where) <<"demangling names\n";
         Modules::demangleFunctionNames(partitioner);
+    }
 }
 
 void
@@ -1901,10 +1947,6 @@ Engine::discoverFunctions(Partitioner &partitioner) {
         // Nothing more to do
         break;
     }
-
-    // Try to attach basic blocks to functions
-    makeCalledFunctions(partitioner);
-    attachBlocksToFunctions(partitioner);
 }
 
 std::set<rose_addr_t>
