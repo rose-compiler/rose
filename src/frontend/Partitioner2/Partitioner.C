@@ -109,6 +109,9 @@ Partitioner::~Partitioner() {}
 
 void
 Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
+    // Start with a large hash table to reduce early rehashing. There's a high chance that we'll need this much.
+    vertexIndex_.rehash(100000);
+
     if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->unparser()->copy();
@@ -2590,6 +2593,16 @@ Partitioner::rebuildVertexIndices() {
     }
     if (insnUnparser_)
         insnUnparser_->settings() = Unparser::Settings::minimal();
+}
+
+void
+Partitioner::showStatistics() const {
+    std::cout <<"Rose::BinaryAnalysis::Partitioner2::Parttioner statistics:\n";
+    std::cout <<"  address to CFG vertex mapping:\n";
+    std::cout <<"    size = " <<vertexIndex_.size() <<"\n";
+    std::cout <<"    number of hash buckets =  " <<vertexIndex_.nBuckets() <<"\n";
+    std::cout <<"    load factor = " <<vertexIndex_.loadFactor() <<"\n";
+    instructionProvider().showStatistics();
 }
 
 #ifdef ROSE_ENABLE_PYTHON_API

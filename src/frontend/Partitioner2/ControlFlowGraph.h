@@ -7,6 +7,7 @@
 
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Graph.h>
+#include <Sawyer/HashMap.h>
 #include <Sawyer/Map.h>
 
 #include <boost/serialization/access.hpp>
@@ -201,7 +202,7 @@ public:
 typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
 /** Mapping from basic block starting address to CFG vertex. */
-typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
+typedef Sawyer::Container::HashMap<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
 
 /** List of CFG vertex pointers.
  *

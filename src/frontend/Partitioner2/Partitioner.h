@@ -2223,17 +2223,6 @@ public:
      *  Thread safety: Not thread safe. */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
-    /** Partitioner settings.
-     *
-     *  These are settings that are typically controlled from the command-line.
-     *
-     *  Thread safety: Not thread safe.
-     *
-     * @{ */
-    const BasePartitionerSettings& settings() const /*final*/ { return settings_; }
-    void settings(const BasePartitionerSettings &s) /*final*/ { settings_ = s; }
-    /** @} */
-
     /** Property: How to report progress.
      *
      *  Partitioning progress is reported in two ways:
@@ -2260,6 +2249,25 @@ public:
      *  This method is const because it doesn't change the partitioner, it only forwards the phase and completion to whatever
      *  @ref Progress object is associated with the partition, if any. */
     void updateProgress(const std::string &phase, double completion) const;
+
+    /** Print some partitioner performance statistics. */
+    void showStatistics() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Settings
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+
+    /** Partitioner settings.
+     *
+     *  These are settings that are typically controlled from the command-line.
+     *
+     *  Thread safety: Not thread safe.
+     *
+     * @{ */
+    const BasePartitionerSettings& settings() const /*final*/ { return settings_; }
+    void settings(const BasePartitionerSettings &s) /*final*/ { settings_ = s; }
+    /** @} */
 
     /** Use or not use symbolic semantics.
      *
