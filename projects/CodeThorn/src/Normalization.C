@@ -7,6 +7,8 @@
 #include "CFAnalysis.h"
 #include <list>
 
+// Author: Markus Schordan, 2018
+
 using namespace std;
 using namespace Rose;
 
@@ -167,7 +169,7 @@ namespace SPRAY {
   }
 
   void Normalization::hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
-    list<SgStatement*> transformationList;
+    list<SgStatement*> hoistingTransformationList;
     RoseAst ast(node);
     // build list of stmts to transform
     for (auto node : ast) {
@@ -176,18 +178,18 @@ namespace SPRAY {
         if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
           if(onlyNormalizeFunctionCallExpressions) {
             if(hasFunctionCall(isSgExpression(SgNodeHelper::getCond(stmt)))) {
-              transformationList.push_back(stmt);
+              hoistingTransformationList.push_back(stmt);
             } else {
               // do not hoist
             }
           } else {
-            transformationList.push_back(stmt);
+            hoistingTransformationList.push_back(stmt);
           }
         }
       }
     }
     // transform stmts
-    for (auto stmt: transformationList) {
+    for (auto stmt: hoistingTransformationList) {
       hoistCondition(stmt);
     }
   }
@@ -268,76 +270,6 @@ namespace SPRAY {
     }
   }
 
-  void Normalization::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr) {
-    // 1) generate tmp-var assignment node with expr as lhs
-    // 2) replace use of expr with tmp-var
-    SgVariableDeclaration* tmpVarDeclaration = 0;
-    SgExpression* tmpVarReference = 0;
-    SgScopeStatement* scope=stmt->get_scope();
-    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
-    tmpVarDeclaration->set_parent(scope);
-    ROSE_ASSERT(tmpVarDeclaration!= 0);
-    //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
-    tmpVarNr++;
-    transformationList.push_back(make_pair(stmt,expr));
-  }
-
-  void Normalization::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
-    if(isSgPntrArrRefExp(expr)) {
-        // TODO: normalize index-expressions
-    } else if(SgAssignOp* assignOp=isSgAssignOp(expr)) {
-      //TODO: normalize subexpressions of LHS
-      //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
-      normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(assignOp)));
-    } else if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(expr)) {
-      //TODO: normalize subexpressions of LHS
-      //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
-      normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)));
-    } else if(isSgBinaryOp(expr)) {
-      normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
-      normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)));
-      generateTmpVarAssignment(stmt,expr);
-    } else if(isSgUnaryOp(expr)) {
-      normalizeExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
-      generateTmpVarAssignment(stmt,expr);
-    } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
-      SgExpressionPtrList& expList=SgNodeHelper::getFunctionCallActualParameterList(expr);
-      for(SgExpressionPtrList::iterator i=expList.begin();i!=expList.end();++i) {
-        normalizeExpression(stmt,*i);
-      }
-      // check if function has a return value
-      SgType* functionReturnType=funCallExp->get_type();
-      //cout<<"DEBUG: function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
-
-      // generate tmp var only if return value exists and it is used (i.e. there exists an expression as parent).
-      SgNode* parentNode=funCallExp->get_parent();
-      if(!isSgTypeVoid(functionReturnType)
-         &&  isSgExpression(parentNode)
-         && !isSgExpressionRoot(parentNode)) {
-        generateTmpVarAssignment(stmt,expr);
-      }
-    }
-  }
-
-  // temporary filter (also in TFTransformation)
-  bool isWithinBlockStmt(SgExpression* exp) {
-    SgNode* current=exp;
-    while(isSgExpression(current)||isSgExprStatement(current)) {
-      current=current->get_parent();
-    };
-    return isSgBasicBlock(current);
-  }
-
-  bool Normalization::hasFunctionCall(SgExpression* expr) {
-    RoseAst ast(expr);
-    for(auto node:ast) {
-      if(isSgFunctionCallExp(node)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
     // TODO: if temporary variables are generated, the initialization-list
     // must be put into a block, otherwise some generated gotos are
@@ -367,52 +299,134 @@ namespace SPRAY {
         i.skipChildrenOnForward();
       }
     }
-    for(TransformationList::iterator i=transformationList.begin();i!=transformationList.end();++i) {
-      SgStatement* stmt=(*i).first;
-      SgExpression* expr=(*i).second;
-      SgVariableDeclaration* tmpVarDeclaration = 0;
-      SgExpression* tmpVarReference = 0;
-      SgScopeStatement* scope=stmt->get_scope();
-#if 0
-      if(false || isSgFunctionCallExp(expr)) {
-        cout<<"normalization: function call in declaration: "<<expr->unparseToString()<<endl;
+    for(ExprTransformationList::iterator i=exprTransformationList.begin();i!=exprTransformationList.end();++i) {
+      SubExprTransformationList subExprTransformationList=*i;
+      for(SubExprTransformationList::iterator j=subExprTransformationList.begin();j!=subExprTransformationList.end();++j) {
+        SgStatement* stmt=(*j).first;
+        SgExpression* expr=(*j).second;
+        SgVariableDeclaration* tmpVarDeclaration = 0;
+        SgExpression* tmpVarReference = 0;
+        SgScopeStatement* scope=stmt->get_scope();
         tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
         tmpVarDeclaration->set_parent(scope);
         ROSE_ASSERT(tmpVarDeclaration!= 0);
-        SgAssignOp* tmpVarAssignOp=SageBuilder::buildAssignOp(tmpVarReference,expr);
-        SgStatement* tmpVarAssignStatement=SageBuilder::buildExprStatement(tmpVarAssignOp);
-        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
-        SageInterface::insertStatementBefore(stmt, tmpVarAssignStatement);
-      } else {
-#endif
-        tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
-        tmpVarDeclaration->set_parent(scope);
-        ROSE_ASSERT(tmpVarDeclaration!= 0);
-        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        if(SgBasicBlock* block=isSgBasicBlock(stmt)) {
+          block->append_statement(tmpVarDeclaration);
+        } else {
+          SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        }
         SageInterface::replaceExpression(expr, tmpVarReference);
         //      }
         //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
         tmpVarNr++;
+      }
     }
   }
   
+  void Normalization::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
+    SubExprTransformationList subExprTransformationList;
+#if 0
+    SgBasicBlock* block=SageBuilder::buildBasicBlock();
+    block->set_parent(stmt->get_parent());
+    // move the ExprStatement into the new block
+    bool deleteReplacedExpression=false;
+    SgStatement* oldStmt=stmt;
+    SgStatement* newStmt=block;
+    SageInterface::replaceStatement(oldStmt,newStmt, bool movePreprocessinInfo=false);
+    block->append_statement(newStmt);
+    normalizeExpression(newStmt,expr,subExprTransformationList);
+#else
+    normalizeSubExpression(stmt,expr,subExprTransformationList);
+#endif
+    exprTransformationList.push_back(subExprTransformationList);
+  }
+
+  void Normalization::normalizeSubExpression(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
+    if(isSgPntrArrRefExp(expr)) {
+        // TODO: normalize index-expressions
+    } else if(SgAssignOp* assignOp=isSgAssignOp(expr)) {
+      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(assignOp)),subExprTransformationList);
+      //TODO: normalize subexpressions of LHS
+      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
+    } else if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(expr)) {
+      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)),subExprTransformationList);
+      //TODO: normalize subexpressions of LHS
+      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
+    } else if(isSgBinaryOp(expr)) {
+      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
+      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
+      generateTmpVarAssignment(stmt,expr,subExprTransformationList);
+    } else if(isSgUnaryOp(expr)) {
+      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList);
+      generateTmpVarAssignment(stmt,expr,subExprTransformationList);
+    } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
+      SgExpressionPtrList& expList=SgNodeHelper::getFunctionCallActualParameterList(expr);
+      for(SgExpressionPtrList::iterator i=expList.begin();i!=expList.end();++i) {
+        normalizeSubExpression(stmt,*i,subExprTransformationList);
+      }
+      // check if function has a return value
+      SgType* functionReturnType=funCallExp->get_type();
+      //cout<<"DEBUG: function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
+
+      // generate tmp var only if return value exists and it is used (i.e. there exists an expression as parent).
+      SgNode* parentNode=funCallExp->get_parent();
+      if(!isSgTypeVoid(functionReturnType)
+         &&  isSgExpression(parentNode)
+         && !isSgExpressionRoot(parentNode)) {
+        generateTmpVarAssignment(stmt,expr,subExprTransformationList);
+      }
+    }
+  }
+
+  void Normalization::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
+    // 1) generate tmp-var assignment node with expr as lhs
+    // 2) replace use of expr with tmp-var
+    SgVariableDeclaration* tmpVarDeclaration = 0;
+    SgExpression* tmpVarReference = 0;
+    SgScopeStatement* scope=stmt->get_scope();
+    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
+    tmpVarDeclaration->set_parent(scope);
+    ROSE_ASSERT(tmpVarDeclaration!= 0);
+    //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
+    tmpVarNr++;
+    subExprTransformationList.push_back(make_pair(stmt,expr));
+  }
+
+  bool Normalization::isWithinBlockStmt(SgExpression* exp) {
+    SgNode* current=exp;
+    while(isSgExpression(current)||isSgExprStatement(current)) {
+      current=current->get_parent();
+    };
+    return isSgBasicBlock(current);
+  }
+
+  bool Normalization::hasFunctionCall(SgExpression* expr) {
+    RoseAst ast(expr);
+    for(auto node:ast) {
+      if(isSgFunctionCallExp(node)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
   SgLabelStatement* Normalization::createLabel(SgStatement* target) {
     SgLabelStatement* newLabel =
       SageBuilder::buildLabelStatement(Normalization::newLabelName(),
                                        SageBuilder::buildBasicBlock(),
-                                       // MS: scope should be function scope?
+                                         // MS: scope should be function scope?
                                        isSgScopeStatement(target->get_parent()));
     return newLabel;
   }
-
-  // creates a goto at end of 'block', and inserts a label before statement 'target'.
+  
+    // creates a goto at end of 'block', and inserts a label before statement 'target'.
   SgGotoStatement* Normalization::createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target) {
     SageInterface::insertStatement(target, newLabel, true);
     SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabel);
     return newGoto;
   }
-
+  
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
   void Normalization::createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target) {
     SgGotoStatement* newGoto=createGotoStmtAndInsertLabel(newLabel, target);
