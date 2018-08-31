@@ -36,7 +36,7 @@ for f in															\
     Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached		\
     Callbacks CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup	\
     DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList	\
-    Interval IntervalMap IntervalSet IntervalSetMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional		\
+    Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional	\
     PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch	\
     Synchronization ThreadWorkers Trace Type WarningsOff WarningsRestore
 do
@@ -66,6 +66,7 @@ for f in					\
     Container/indexedGraphDemo.C		\
     Container/intervalSetMapUnitTests.C		\
     Container/intervalUnitTests.C		\
+    Container/hashMapUnitTests.C                \
     Container/lineVectorUnitTests.C		\
     Container/listUnitTests.C			\
     Container/mapUnitTests.C			\

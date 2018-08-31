@@ -9,7 +9,7 @@ install(FILES
     DefaultAllocator.h DenseIntegerSet.h DistinctList.h DocumentBaseMarkup.h DocumentMarkup.h
     DocumentPodMarkup.h DocumentTextMarkup.h Exception.h FileSystem.h Graph.h GraphAlgorithm.h
     GraphBoost.h GraphTraversal.h IndexedList.h Interval.h IntervalMap.h IntervalSet.h
-    IntervalSetMap.h Lexer.h LineVector.h Map.h MappedBuffer.h Message.h NullBuffer.h
+    IntervalSetMap.h HashMap.h Lexer.h LineVector.h Map.h MappedBuffer.h Message.h NullBuffer.h
     Optional.h PoolAllocator.h ProgressBar.h Sawyer.h Set.h SharedObject.h SharedPointer.h
     SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h
     Trace.h Type.h WarningsOff.h WarningsRestore.h
