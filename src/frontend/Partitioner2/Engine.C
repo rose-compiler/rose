@@ -1798,7 +1798,8 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
                 SAWYER_MESG(debug) <<me <<"candidate basic block overlaps with another; skipping\n";
                 continue;
             }
-            if (!partitioner.basicBlockIsFunctionCall(bb)) {
+
+            if (!partitioner.basicBlockIsFunctionCall(bb, Precision::LOW)) {
                 SAWYER_MESG(debug) <<me <<"candidate basic block is not a function call; skipping\n";
                 continue;
             }
@@ -1806,7 +1807,8 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
             // Look at the basic block successors to find those which appear to be function calls. Note that the edge types are
             // probably all E_NORMAL at this point rather than E_FUNCTION_CALL, and the call-return edges are not yet present.
             std::set<rose_addr_t> candidateFunctionVas; // entry addresses for potential new functions
-            BOOST_FOREACH (const BasicBlock::Successor &succ, partitioner.basicBlockSuccessors(bb)) {
+            BasicBlock::Successors successors = partitioner.basicBlockSuccessors(bb, Precision::LOW);
+            BOOST_FOREACH (const BasicBlock::Successor &succ, successors) {
                 if (succ.expr()->is_number() && succ.expr()->get_width() <= 64) {
                     rose_addr_t targetVa = succ.expr()->get_number();
                     if (targetVa == bb->fallthroughVa()) {

@@ -781,7 +781,7 @@ Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
 }
 
 BasicBlock::Successors
-Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
     BasicBlock::Successors successors;
 
@@ -791,7 +791,8 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
     SgAsmInstruction *lastInsn = bb->instructions().back();
     RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
-    if (BaseSemantics::StatePtr state = bb->finalState()) {
+    BaseSemantics::StatePtr state;
+    if (precision > Precision::LOW && (state = bb->finalState())) {
         // Use our own semantics if we have them.
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
@@ -847,7 +848,11 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
             ++i;
         }
     }
-    bb->successors() = successors;
+
+    // Cache the result, but not for low-precision results since that would mean a later call for high-precision results would
+    // only return low-precision results.
+    if (precision > Precision::LOW)
+        bb->successors() = successors;
     return successors;
 }
 
@@ -906,7 +911,7 @@ Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb, bool *isCom
 }
 
 bool
-Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
     bool retval = false;
 
@@ -922,105 +927,108 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
     // Use our own semantics if we have them.
-    if (BaseSemantics::StatePtr state = bb->finalState()) {
-        // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
-        // Is the block fall-through address equal to the value on the top of the stack?
-        ASSERT_not_null(bb->dispatcher());
-        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
-        const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
-        const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-        const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-        rose_addr_t returnVa = bb->fallthroughVa();
-        BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
-        BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
-        BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
-        topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
-        BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
-        bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
-        if (!isRetAddrOnTopOfStack) {
-            bb->isFunctionCall() = false;
-            return false;
-        }
-
-        // If the only successor is also the fall-through address then this isn't a function call.  This case handles code that
-        // obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and B are
-        // consecutive instruction addresses.
-        BasicBlock::Successors successors = basicBlockSuccessors(bb);
-        if (1==successors.size() && successors[0].expr()->is_number() && successors[0].expr()->get_number()==returnVa) {
-            bb->isFunctionCall() = false;
-            return false;
-        }
-
-        // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after all.
-        if (checkingCallBranch()) {
-            bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
-            BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
-                // Find callee basic block
-                if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-                rose_addr_t calleeVa = successor.expr()->get_number();
-                BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
-                if (!calleeBb)
-                    calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
-                if (!calleeBb) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // If the called block is also a function return (i.e., we're calling a function which is only one block long),
-                // then of course the block will pop the return address even though it's a legitimate function.
-                if (basicBlockIsFunctionReturn(calleeBb)) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Get callee block's initial and final states
-                BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
-                BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
-                if (!calleeState0 || !calleeStateN) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
-                // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll
-                // substitute a concrete value for the stack pointer.
-                BaseSemantics::SValuePtr sp0 =
-                    calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-                BaseSemantics::SValuePtr spN =
-                    calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-
-                SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-                SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
-                SymbolicExpr::Ptr spNExpr =
-                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
-                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
-
-                // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Did the callee return to somewhere other than caller's return address?
-                BaseSemantics::SValuePtr ipN =
-                    calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
-                if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-            }
-            if (allCalleesPopWithoutReturning) {
+    if (precision > Precision::LOW) {
+        if (BaseSemantics::StatePtr state = bb->finalState()) {
+            // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
+            // Is the block fall-through address equal to the value on the top of the stack?
+            ASSERT_not_null(bb->dispatcher());
+            BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+            const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
+            const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
+            const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
+            rose_addr_t returnVa = bb->fallthroughVa();
+            BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
+            BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
+            BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
+            topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
+            BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
+            bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
+            if (!isRetAddrOnTopOfStack) {
                 bb->isFunctionCall() = false;
                 return false;
             }
-        }
 
-        // This appears to be a function call
-        bb->isFunctionCall() = true;
-        return true;
+            // If the only successor is also the fall-through address then this isn't a function call.  This case handles code
+            // that obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and
+            // B are consecutive instruction addresses.
+            BasicBlock::Successors successors = basicBlockSuccessors(bb);
+            if (1==successors.size() && successors[0].expr()->is_number() && successors[0].expr()->get_number()==returnVa) {
+                bb->isFunctionCall() = false;
+                return false;
+            }
+
+            // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after
+            // all.
+            if (checkingCallBranch()) {
+                bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
+                BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
+                    // Find callee basic block
+                    if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+                    rose_addr_t calleeVa = successor.expr()->get_number();
+                    BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
+                    if (!calleeBb)
+                        calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
+                    if (!calleeBb) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // If the called block is also a function return (i.e., we're calling a function which is only one block
+                    // long), then of course the block will pop the return address even though it's a legitimate function.
+                    if (basicBlockIsFunctionReturn(calleeBb)) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Get callee block's initial and final states
+                    BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
+                    BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
+                    if (!calleeState0 || !calleeStateN) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
+                    // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore,
+                    // we'll substitute a concrete value for the stack pointer.
+                    BaseSemantics::SValuePtr sp0 =
+                        calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+                    BaseSemantics::SValuePtr spN =
+                        calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+
+                    SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
+                    SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+                    SymbolicExpr::Ptr spNExpr =
+                        Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+                    SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
+
+                    // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
+                    if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Did the callee return to somewhere other than caller's return address?
+                    BaseSemantics::SValuePtr ipN =
+                        calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
+                    if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+                }
+                if (allCalleesPopWithoutReturning) {
+                    bb->isFunctionCall() = false;
+                    return false;
+                }
+            }
+
+            // This appears to be a function call
+            bb->isFunctionCall() = true;
+            return true;
+        }
     }
 
     // An x86 idiom is two consecutive instructions "call next: pop ebx" where "next" is the address of the POP instruction
