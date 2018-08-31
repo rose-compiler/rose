@@ -171,7 +171,10 @@ The order in which specifications are written is not considered, if multiple
 specifications contradict the behavior is undefined. 
 
 \subsection{Specifications}
-
+For all specifications both specification file formats are shown. When double quotes 
+are used it is to indicate that it is the literal string to use. For the JSON format 
+all fields are in double quotes as they are input as a string type but the double quotes 
+should not be used in the TF format.
 \begin{enumerate}
 \item{} Var Type Change -- This specification is for changing the type or base type 
 of a specified variable. See section \ref{change} for more information on type changing. 
@@ -180,7 +183,7 @@ for a global variable. VariableName can be the name of a single variable or a co
 list of variables to change.
 \begin{verbatim}
 JSON Format:
-action   = ["change_vartype" | "change_varbasetype"]
+action   = ("change_var_type" | "change_var_basetype")
 scope    = FunctionName
 name     = VariableName
 to_type  = NewType
@@ -195,12 +198,12 @@ and for .tf files a special command needs to be specified.
 
 \begin{verbatim}
 JSON Format:
-action   = ["change_vartype" | "change_varbasetype"]
+action   = ("change_var_type" | "change_var_basetype")
 handle   = CompilerHandle
 to_type  = NewType
 
 TF Format:
-["change_handletype" | "change_handlebasetype"];handle;to_type
+(change_handle_type | change_handle_basetype);handle;to_type
 \end{verbatim}
 
 \item{} Change Type -- This specification is to replace all variables of a type with a new type. 
@@ -213,7 +216,7 @@ can be replaced with * to change all functions. For example to change everything
 
 \begin{verbatim}
 JSON Format:
-action    = ["change_type" | "change_basetype"]
+action    = ("change_every_type" | "change_every_basetype")
 scope     = VariableLocations
 from_type = OldType
 to_type   = NewType
@@ -230,7 +233,7 @@ of a function, "*" for all functions, "\$global" for just globals, or empty stri
 NewType is only used for writing a valid specification file to output.
 
 \begin{verbatim}
-action    = ["list_replacements" | "list_basereplacements"]
+action    = ("list_changes_type" | "list_changes_basetype")
 scope     = SearchLocations
 from_type = MatchType
 to_type   = NewType
@@ -248,7 +251,7 @@ the transformation.
 
 \begin{verbatim}
 JSON Format:
-action    = ["transform"]
+action    = "transform"
 scope     = FunctionName 
 from_type = MatchType
 name      = TransformationName
@@ -263,7 +266,7 @@ IncludeFile is the name of the file to be included.
 
 \begin{verbatim}
 JSON Format:
-action = ["introduce_include"]
+action = "add_include"
 scope  = MatchFunction
 name   = IncludeFile
 
@@ -280,7 +283,7 @@ use semicolons.
 
 \begin{verbatim}
 JSON Format:
-action    = ["replace_pragma"]
+action    = "replace_pragma"
 from_type = MatchString
 to_type   = ReplaceString
 
@@ -305,7 +308,7 @@ JSON Format:
       "to_type": "AD_begin();"
     },
     {
-      "action": "introduce_include",
+      "action": "add_include",
       "name": "adapt-impl.cpp",
       "scope": "main"
     },
@@ -316,13 +319,13 @@ JSON Format:
       "name": "ad_intermediate_instrumentation"
     },
     {
-      "action": "change_basetype",
+      "action": "change_every_basetype",
       "scope": "*:args,ret,body",
       "from_type": "double",
       "to_type": "AD_real"
     },
     {
-      "action": "list_basereplacements",
+      "action": "list_changes_basetype",
       "scope": "",
       "from_type": "double",
       "to_type": "float",
@@ -333,10 +336,10 @@ JSON Format:
 
 TF Format:
 replace_pragma;adapt begin;AD_begin();
-introduce_include;main;adapt-impl.cpp
+add_include;main;adapt-impl.cpp
 transform;*;float;ad_intermediate_instrumentation
-change_basetype;*:args,ret,body;double=>AD_real
-list_basereplacements;;double;float;outputFile.json
+change_every_basetype;*:args,ret,body;double=>AD_real
+list_changes_basetype;;double;float;outputFile.json
 \end{verbatim}
 \vspace{5mm}
 The next specification file is to change the type of two specific variables to float types.
@@ -350,13 +353,13 @@ JSON Format:
   "tool_id": "CRAFT",
   "actions": [
   	{
-  	  "action": "change_varbasetype",
+  	  "action": "change_var_basetype",
   	  "handle": "Project<numbering,1>::FileList<numbering,1>::SourceFile
                   <name,/home/src/test.C>::VariableDeclaration<position,1.1-1.15>",
       "to_type": "float"
     }
     {
-  	  "action": "change_varbasetype",
+  	  "action": "change_var_basetype",
       "scope": "main",
       "to_type": "float",
       "name": "x"
@@ -365,9 +368,9 @@ JSON Format:
 }
 
 TF Format:
-change_handlebasetype;Project<numbering,1>::FileList<numbering,1>::SourceFile
+change_handle_basetype;Project<numbering,1>::FileList<numbering,1>::SourceFile
     <name,/home/src/test.C>::VariableDeclaration<position,1.1-1.15>;float
-change_varbasetype;main;x;float
+change_var_basetype;main;x;float
 \end{verbatim}
 
 \section{Type Change} \label{change}
@@ -458,15 +461,16 @@ S = \text{Final set of interdependent sets}\\
 \end{gather}
 \section{Use Cases}
 \subsection{CRAFT-ADAPT Pipeline}\label{sec:pipeline}
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{pipeline.png}
-    \caption{\textsf{Diagram of pipeline structure}}
-    \label{fig:pipeline}
-\end{figure}
+%\begin{figure}[h]
+%    \centering
+%    \includegraphics[width=\textwidth]{pipeline.png}
+%    \caption{\textsf{Diagram of pipeline structure}}
+%    \label{fig:pipeline}
+%\end{figure}
 \noindent
-Typeforge has several uses in the pipeline for automatic generation of mixed precision programs as 
-seen in figure \ref{fig:pipeline}. In order for craft to conduct a proper search it needs to define 
+Typeforge has several uses in the pipeline for automatic generation of mixed precision programs.
+%as seen in figure \ref{fig:pipeline}. 
+In order for craft to conduct a proper search it needs to define 
 a search space which can be done by Typeforge by looking for all declarations in the AST. This 
 list can be refined by looking at sets to avoid searching configurations that will not compile. 
 When CRAFT tests a configuration it passes the appropriate specification file to Typeforge so 
@@ -480,3 +484,4 @@ listing can be done with Typeforge with a single specification shown in section 
 \bibliography{typeforge}
 
 \end{document}
+
