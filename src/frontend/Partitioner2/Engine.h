@@ -828,10 +828,11 @@ public:
      *
      *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
      *  unused interval, if the interval is immediately surrounded by a single function then a basic block placeholder is
-     *  created at the beginning of the interval and added to the function.
+     *  created at the beginning of the interval and added to the function.  Analyzes only addresses at least as large as @p
+     *  start, and updates @p start to the next address to be analyzed.
      *
      *  Returns the number of new placeholders created. */
-    virtual size_t attachSurroundedCodeToFunctions(Partitioner&);
+    virtual size_t attachSurroundedCodeToFunctions(Partitioner&, rose_addr_t &start);
 
     /** Attach basic blocks to functions.
      *

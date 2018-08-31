@@ -1257,7 +1257,7 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
         return p;
     }
-    
+
     return createGenericPartitioner();
 }
 
@@ -1719,7 +1719,6 @@ Engine::makeNextCodeReferencedFunction(const Partitioner &partitioner) {
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(constant) <<"\n";
         Function::Ptr function = Function::instance(constant, SgAsmFunction::FUNC_INSN_RO_DATA);
 
-        
         function->reasonComment("from " + srcInsn->toString() + ", ro-data address " + StringUtility::addrToString(constant));
         return function;
     }
@@ -2006,12 +2005,18 @@ Engine::attachPaddingToFunctions(Partitioner &partitioner) {
 size_t
 Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
     size_t retval = 0;
-    while (size_t n = attachSurroundedCodeToFunctions(partitioner)) {
-        retval += n;
-        discoverBasicBlocks(partitioner);
-        makeCalledFunctions(partitioner);
-        attachBlocksToFunctions(partitioner);
-    }
+    size_t nAddedThisPass = 0;
+    do {
+        nAddedThisPass = 0;
+        rose_addr_t va = 0;
+        while (size_t n = attachSurroundedCodeToFunctions(partitioner, va /*in,out*/)) {
+            retval += n;
+            nAddedThisPass += n;
+            discoverBasicBlocks(partitioner);
+            makeCalledFunctions(partitioner);
+            attachBlocksToFunctions(partitioner);
+        }
+    } while (nAddedThisPass > 0);
     return retval;
 }
 
@@ -2019,11 +2024,11 @@ Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
 // as yet undiscovered basic block and adds a basic block placeholder to the surrounding function.  This could be further
 // improved by testing to see if the candidate address looks like a valid basic block.
 size_t
-Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner) {
+Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner, rose_addr_t &va) {
     size_t nNewBlocks = 0;
     if (partitioner.aum().isEmpty())
         return 0;
-    rose_addr_t va = partitioner.aum().hull().least() + 1;
+    va = std::max(va, partitioner.aum().hull().least() + 1);
     while (va < partitioner.aum().hull().greatest()) {
         // Find an address interval that's unused and also executable.
         AddressInterval unusedAum = partitioner.aum().nextUnused(va);
