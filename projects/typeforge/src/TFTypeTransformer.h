@@ -55,6 +55,13 @@ class HandleTransformDirective : public TransformDirective{
     int run(SgProject* project, TFTypeTransformer* tt);
 };
 
+class FileTransformDirective : public TransformDirective{
+  private:
+    std::string fileName;
+  public:
+    FileTransformDirective(std::string file);
+    int run(SgProject* project, TFTypeTransformer* tt);
+};
 
 class TFTypeTransformer {
  public:
@@ -64,6 +71,7 @@ class TFTypeTransformer {
   void addHandleTransformationToList(VarTypeVarNameTupleList& list,SgType* type,bool base,SgNode* handleNode, bool listing);
   void addTypeTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, SgType* fromType, bool listing);
   void addNameTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base=false, bool listing=false);
+  void addFileChangeToList(VarTypeVarNameTupleList& list, std::string file);
   // searches for variable in the given subtree 'root'
   int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type);
   int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type, bool base, SgType* fromType, bool listing);
@@ -86,8 +94,8 @@ class TFTypeTransformer {
   void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void nathan_addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base);
-  void nathan_setConfig(ToolConfig* config);
-  void nathan_setConfigFile(std::string fileName);
+  void setConfigFile(std::string fileName);
+  void writeConfig();
   int  nathan_changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing);
  private:
   CastTransformer _castTransformer;

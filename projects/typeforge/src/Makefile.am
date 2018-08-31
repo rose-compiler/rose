@@ -49,7 +49,6 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
 	./typeforge --spec-file=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C 
-	./typeforge --spec-file=$(srcdir)/tests/h_test.tf $(srcdir)/tests/h_test_not_main.C $(srcdir)/tests/h_test_main.C 
 	./typeforge --set-analysis $(srcdir)/tests/setTest.C 
 	./typeforge --set-analysis $(srcdir)/tests/fft.cpp
 	./typeforge --set-analysis $(srcdir)/tests/sum2pi_x.c

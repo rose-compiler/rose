@@ -68,6 +68,13 @@ class PragmaCommand : public Command{
     int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
 };
 
+class FileCommand : public Command{
+  std::string fileName;
+  public:
+    FileCommand(std::string file, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
 class CommandList{
   public:
     CommandList();
@@ -80,6 +87,7 @@ class CommandList{
     void addTransformCommand(std::string funName, std::string typeName, std::string transformName);
     void addIncludeCommand(std::string funName, std::string includeName);
     void addPragmaCommand(std::string fromMatch, std::string toReplace);
+    void addFileCommand(std::string fileName);
     void nextCommand();
     TFTypeTransformer::VarTypeVarNameTupleList getTransformationList();
   private:

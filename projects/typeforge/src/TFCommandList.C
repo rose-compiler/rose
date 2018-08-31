@@ -307,6 +307,15 @@ int PragmaCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& 
   return false;
 }
 
+FileCommand::FileCommand(std::string file, int number) : Command(false, false, number){
+  fileName = file;
+}
+
+int FileCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
+  tt.addFileChangeToList(_list, fileName);
+  return false;
+}
+
 CommandList::CommandList(){
   commandsList = {};
 }
@@ -349,6 +358,12 @@ void CommandList::addPragmaCommand(std::string fromMatch, std::string toReplace)
   PragmaCommand* newCommand = new PragmaCommand(fromMatch, toReplace, nextCommandNumber);
   commandsList.push_back(newCommand);
 }
+
+void CommandList::addFileCommand(std::string fileName){
+  FileCommand* newCommand = new FileCommand(fileName, nextCommandNumber);
+  commandsList.push_back(newCommand);
+}
+
 void CommandList::nextCommand(){
   nextCommandNumber++;
 }

@@ -76,7 +76,7 @@ int main (int argc, char* argv[])
     ("trace", "Print program transformation operations as they are performed.")
     ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
-    ("spec-file", po::value< string >(),"Name of Typeforge specification file.")
+    ("spec-file", po::value<vector<string> >(),"Name of Typeforge specification file.")
     ("csv-stats-file", po::value< string >(),"Generate file [args] with transformation statistics.")
 #ifdef EXPLICIT_VAR_FORGE
     ("float-var", po::value< string >(),"Change type of var [arg] to float.")
@@ -179,14 +179,17 @@ int main (int argc, char* argv[])
   }
   if(args.isUserProvided("spec-file") && !objectFiles) {
     //Setup phase
-    string commandFileName=args.getString("spec-file");
+    //string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
     TFSpecFrontEnd typeforgeSpecFrontEnd;
-    bool error=typeforgeSpecFrontEnd.run(commandFileName,sageProject,tt,tfTransformation);
-    if(error) {
-      exit(1);
+    for(auto commandFileName : args["spec-file"].as<vector<string>>()){
+      bool error=typeforgeSpecFrontEnd.parse(commandFileName);
+      if(error) {
+        exit(1);
+      }
     }
+    typeforgeSpecFrontEnd.run(sageProject, tt, tfTransformation);
     auto list=typeforgeSpecFrontEnd.getTransformationList();
     //Analysis Phase
     tt.analyzeTransformations(sageProject,list);

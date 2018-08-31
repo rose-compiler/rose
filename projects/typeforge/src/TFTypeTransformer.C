@@ -31,6 +31,10 @@ HandleTransformDirective::HandleTransformDirective(SgNode* handleNode, bool base
   node = handleNode;
 }
 
+FileTransformDirective::FileTransformDirective(string file) : TransformDirective(false, false, nullptr){
+  fileName = file;
+}
+
 //Methods for adding to directive list
 void TFTypeTransformer::addHandleTransformationToList(std::list<VarTypeVarNameTuple>& list,SgType* type,bool base,SgNode* handleNode, bool listing){
   list.insert(list.begin(),new HandleTransformDirective(handleNode, base, listing, type));
@@ -45,6 +49,10 @@ void TFTypeTransformer::addNameTransformationToList(std::list<VarTypeVarNameTupl
   for (auto name:varNamesVector) {
     list.push_back(new NameTransformDirective(name, funDef, base, listing, type));
   }
+}
+
+void TFTypeTransformer::addFileChangeToList(std::list<VarTypeVarNameTuple>& list, string file){
+  list.push_back(new FileTransformDirective(file));
 }
 
 //Methods to run directive list
@@ -70,6 +78,12 @@ int TypeTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
 
 int HandleTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
   return tt->nathan_changeHandleType(node, toType, base, listing);
+}
+
+int FileTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
+  if(fileName == "") tt->writeConfig();
+  else tt->setConfigFile(fileName);
+  return 0;  
 }
 
 //TypeTransformer stores changes during analysis phase then performs the changes when done.
@@ -101,18 +115,25 @@ int Transformer::addTransformation(string key, SgType* newType, SgNode* node){
 }
 
 //Mangae config file if user specifies
-void TFTypeTransformer::nathan_setConfig(ToolConfig* config){
-  _outConfig = config;
-  //_outConfig->getActions().clear();
-  _outConfig->setToolID("typeforge");
-}
-//TODO
-void TFTypeTransformer::nathan_setConfigFile(string fileName){
+void TFTypeTransformer::setConfigFile(string fileName){
   _writeConfig = fileName;
   if(_outConfig == nullptr){
-    _outConfig = new ToolConfig();
+    try{
+      _outConfig = new ToolConfig(fileName);
+    }catch(...){
+      _outConfig = new ToolConfig();
+    }
     _outConfig->setToolID("typeforge");
   }
+}
+
+void TFTypeTransformer::writeConfig(){
+  if(_writeConfig != ""){
+    _outConfig->saveConfig(_writeConfig);
+  }
+  _writeConfig = "";
+  delete _outConfig;
+  _outConfig = nullptr;
 }
 
 //Returns the name of the file the specified node is part of
@@ -154,9 +175,6 @@ void TFTypeTransformer::transformCommandLineFiles(SgProject* project,VarTypeVarN
 void TFTypeTransformer::analyzeTransformations(SgProject* project, VarTypeVarNameTupleList& list){
   for (auto directive:list) {
     _totalNumChanges += directive->run(project, this);
-  }
-  if(_writeConfig != ""){
-    _outConfig->saveConfig(_writeConfig);
   }
 }
 

@@ -1,3 +1,3 @@
-list_basereplacements;;double;float;h_test.json
-change_basetype;*:args,body,ret;double=>float
-change_basetype;$global;double=>float
+list_changes_basetype;;double;float;h_test.json
+change_every_basetype;*:args,body,ret;double=>float
+change_every_basetype;$global;double=>float

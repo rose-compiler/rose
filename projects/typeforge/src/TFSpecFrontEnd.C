@@ -29,6 +29,20 @@
 #include "TFCommandList.h"
 #include <boost/filesystem.hpp>
 
+#define CHANGE_EVERY_TYPE  "change_every_type"
+#define CHANGE_EVERY_BASE  "change_every_basetype"
+#define CHANGE_VAR_TYPE    "change_var_type"
+#define CHANGE_VAR_BASE    "change_var_basetype"
+#define CHANGE_HANDLE_TYPE "change_handle_type"
+#define CHANGE_HANDLE_BASE "change_handle_basetype"
+#define LIST_CHANGES_TYPE  "list_changes_type"
+#define LIST_CHANGES_BASE  "list_changes_basetype"
+#define TRANSFORM          "transform"
+#define ADD_INCLUDE        "add_include"
+#define REPLACE_PRAGMA     "replace_pragma"
+#define FIND_SETS          "find_sets"
+#define ADD_SPEC           "add_spec"
+
 using namespace std;
 
 bool isComment(string s) {
@@ -43,23 +57,22 @@ bool nathan_checkExtension(string filePath, string extension){
   return false;
 }
 
-string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& commandList){
+int TFSpecFrontEnd::convertJSON(string fileName){
   ToolConfig* config = new ToolConfig(fileName);
   vector<ToolAction>& actions = config->getActions();
-  string outName = "";
   for(auto act: actions){
     string handle = act.getHandle();
     string action = act.getActionType();
     bool base = false;
-    if(action == "replace_varbasetype" || action == "change_varbasetype" || action == "replace_basetype" || action == "change_basetype" || action == "list_basereplacements") base = true;
-    if(action == "replace_vartype" || action == "replace_varbasetype" || action == "change_vartype" || action == "change_varbasetype"){
+    if(action == CHANGE_VAR_BASE || action == CHANGE_EVERY_BASE || action == LIST_CHANGES_BASE) base = true;
+    if(action == CHANGE_VAR_TYPE || action == CHANGE_VAR_BASE){
       if(handle != ""){
         commandList.addHandleCommand(handle, act.getToType(), base, false);
       }else{
         commandList.addVarTypeCommand(act.getName(), act.getScope(), act.getToType(), base, false);
       }
     }
-    else if(action == "replace_type" || action == "replace_basetype" || action == "change_type" || action == "change_basetype"){
+    else if(action == CHANGE_EVERY_TYPE || action == CHANGE_EVERY_BASE){
       string functionName = "$global";
       std::vector<std::string> functionConstructSpecList = {""};
       std::vector<std::string> functionSpecSplit;
@@ -73,11 +86,12 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
         commandList.addTypeCommand(functionConstructSpec, functionName, act.getToType(), act.getFromType(), base, false);
       }
     }
-    else if(action == "transform"){
+    else if(action == TRANSFORM){
       commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
     }
-    else if(action == "list_basereplacements" || action == "list_replacements"){
+    else if(action == LIST_CHANGES_TYPE || action == LIST_CHANGES_BASE){
       string scope = act.getScope();
+      commandList.addFileCommand(act.getName());
       if(scope == "" || scope == "$global"){
         if(scope == "") scope = "*";
         commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
@@ -87,37 +101,27 @@ string nathan_convertJSON(string fileName,TFTypeTransformer& tt, CommandList& co
         commandList.addTypeCommand("args", scope, act.getToType(), act.getFromType(), base, true);
         commandList.addTypeCommand("ret", scope, act.getToType(), act.getFromType(), base, true);
       }
-      outName = act.getName();
+      commandList.addFileCommand("");
     }
-    else if(action == "introduce_include"){
+    else if(action == ADD_INCLUDE){
       commandList.addIncludeCommand(act.getScope(), act.getName());
     }
-    else if(action == "replace_pragma"){
+    else if(action == REPLACE_PRAGMA){
       commandList.addPragmaCommand(act.getFromType(), act.getToType());
+    }
+    else if(action == ADD_SPEC){
+      parse(act.getName());
     }
     commandList.nextCommand();
   }
-  ToolConfig* newConfig = config;
-  try{
-    newConfig = new ToolConfig(outName);
-  }catch(...){
-    remove(outName.c_str());
-    newConfig->getActions().clear();
-  }
-  tt.nathan_setConfig(newConfig);
-  if(outName != "") tt.nathan_setConfigFile(outName);
-  return outName;
+  return 0;
 }
 
-bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation) {
-  RoseAst completeAst(root);
-  string tempFileName = "";
+bool TFSpecFrontEnd::parse(std::string specFileName) {  
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
   if(nathan_checkExtension(specFileName, ".json")){
-    tempFileName = nathan_convertJSON(specFileName, tt, commandList);
-    commandList.runCommands(root, tt, tfTransformation);
-    _list = commandList.getTransformationList();
+    convertJSON(specFileName);
     return false;
   }
   else if(fileOK) {
@@ -139,7 +143,7 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
       commandName=splitLine[0];
       functionName=splitLine[1];
       
-      if(commandName=="change_vartype" || commandName=="change_varbasetype" || commandName=="replace_vartype" || commandName=="replace_varbasetype") {
+      if(commandName== CHANGE_VAR_TYPE || commandName== CHANGE_VAR_BASE) {
 	varName=splitLine[2];
 	if(numEntries==4) {
 	  typeName=splitLine[3];
@@ -147,17 +151,17 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
 	  typeName="float";
 	}
         bool transformBase = false;
-        if(commandName == "replace_varbasetype" || commandName == "change_varbasetype"){
+        if(commandName == CHANGE_VAR_BASE){
           transformBase = true;
         }
         commandList.addVarTypeCommand(varName, functionName, typeName, transformBase, false);
-      } else if(commandName == "replace_type" || commandName == "change_type" || commandName=="replace_basetype" || commandName=="change_basetype") {
+      } else if(commandName == CHANGE_EVERY_TYPE || commandName== CHANGE_EVERY_BASE) {
 	if(numEntries!=3) {
 	  cerr<<"Error: wrong number of arguments in line "<<lineNr<<"."<<endl;
 	  return true;
 	}
         bool transformBase = false;
-        if(commandName == "replace_basetype" || commandName == "change_basetype"){
+        if(commandName == CHANGE_EVERY_BASE){
           transformBase = true;
         }
         
@@ -183,22 +187,21 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
           commandList.addTypeCommand(functionConstructSpec, functionName, newTypeSpec, oldTypeSpec, transformBase, false);
         }
       } 
-      else if(commandName=="transform") {
+      else if(commandName== TRANSFORM) {
         if(splitLine.size()!=4) {
           cerr<<"Error in line "<<lineNr<<": wrong number of arguments: "<<splitLine.size()<<" (should be 4)."<<endl;
         }
-        if(tt.getTraceFlag()) cout<<"TRACE: transform mode: "<< "in line "<<lineNr<<"."<<endl;
         commandList.addTransformCommand(splitLine[1], splitLine[2], splitLine[3]);
       }
-      else if(commandName == "change_handletype" || commandName == "change_handlebasetype"){
+      else if(commandName == CHANGE_HANDLE_TYPE || commandName == CHANGE_HANDLE_BASE){
         bool base = false;
-        if(commandName == "handle_base") base = true;
+        if(commandName == CHANGE_HANDLE_BASE) base = true;
         commandList.addHandleCommand(splitLine[1], splitLine[2], base, false);
       }
-      else if(commandName == "list_replacements" || commandName == "list_basereplacements"){
+      else if(commandName == LIST_CHANGES_TYPE || commandName == LIST_CHANGES_BASE){
         bool base = false;
-        if(commandName == "list_basereplacements") base = true;
-        tt.nathan_setConfigFile(splitLine[4]);
+        if(commandName == LIST_CHANGES_BASE) base = true;
+        commandList.addFileCommand(splitLine[4]);
         if(splitLine[1] == "" || splitLine[1] == "$global"){
           if(splitLine[1] == "") splitLine[1] = "*";
           commandList.addTypeCommand("", "$global", splitLine[3], splitLine[2], base, true);
@@ -208,13 +211,17 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
           commandList.addTypeCommand("args", splitLine[1], splitLine[3], splitLine[2], base, true);
           commandList.addTypeCommand("ret", splitLine[1], splitLine[3], splitLine[2], base, true);
         }
+        commandList.addFileCommand("");
       }
-      else if(commandName == "introduce_include"){
+      else if(commandName == ADD_INCLUDE){
         commandList.addIncludeCommand(splitLine[1], splitLine[2]);
       }
-      else if(commandName == "replace_pragma"){
+      else if(commandName == REPLACE_PRAGMA){
         for(unsigned int i = 3; i < splitLine.size(); i++) splitLine[2] = splitLine[2] + ";" + splitLine[i];
         commandList.addPragmaCommand(splitLine[1], splitLine[2]);
+      }
+      else if(commandName == ADD_SPEC){
+        parse(splitLine[1]);
       }
       else {
         cerr<<"Error: unknown command "<<commandName<<" in line "<<lineNr<<"."<<endl;
@@ -222,17 +229,18 @@ bool TFSpecFrontEnd::run(std::string specFileName, SgProject* root, TFTypeTransf
       }
       commandList.nextCommand();
     }
-    if(tempFileName != ""){
-      remove(tempFileName.c_str());
-    }
-    commandList.runCommands(root, tt, tfTransformation);
-    _list = commandList.getTransformationList();
     return false;
   } else {
     cerr<<"Error: could not access file "<<specFileName<<endl;
     return true;
   }
   return true;
+}
+
+int TFSpecFrontEnd::run(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation){
+  int temp = commandList.runCommands(root, tt, tfTransformation);
+  _list = commandList.getTransformationList();
+  return temp;
 }
 
 int TFSpecFrontEnd::getNumTypeReplace() {

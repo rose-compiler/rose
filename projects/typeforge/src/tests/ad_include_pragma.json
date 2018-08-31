@@ -27,12 +27,12 @@
       "name": "ad_intermediate_instrumentation"
     },
     {
-      "action": "introduce_include",
+      "action": "add_include",
       "name": "adapt.h",
       "scope": "*"
     },
     {
-      "action": "introduce_include",
+      "action": "add_include",
       "name": "adapt-impl.cpp",
       "scope": "main"
     }

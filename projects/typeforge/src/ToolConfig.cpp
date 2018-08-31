@@ -280,7 +280,7 @@ void ToolConfig::addAction(ToolAction action) {
 
 //TF
 void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType) {
-    ToolAction action("replace_vartype");
+    ToolAction action("change_var_type");
     action.setHandle(handle);
     action.setName(var_name);
     action.setScope(scope);
@@ -291,7 +291,7 @@ void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, std
 }
 
 void ToolConfig::addReplaceVarBaseType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType) {
-    ToolAction action("replace_varbasetype");
+    ToolAction action("change_var_basetype");
     action.setHandle(handle);
     action.setName(var_name);
     action.setScope(scope);
@@ -303,7 +303,7 @@ void ToolConfig::addReplaceVarBaseType(std::string handle, std::string var_name,
 
 //AdaPT
 void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, double error, long assignments) {
-    ToolAction action("replace_vartype");
+    ToolAction action("change_var_type");
     action.setError(error);
     action.setAssignments(assignments);
     action.setHandle(handle);
@@ -312,7 +312,7 @@ void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, dou
 }
 
 void ToolConfig::addReplaceVarBaseType(std::string handle, std::string var_name, double error, long assignments) {
-    ToolAction action("replace_varbasetype");
+    ToolAction action("change_var_basetype");
     action.setError(error);
     action.setAssignments(assignments);
     action.setHandle(handle);
