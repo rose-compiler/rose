@@ -60,7 +60,9 @@ main(int argc, char *argv[])
 
         //! [results]
         for (size_t i=0; i<idoms.size(); ++i) {
-            std::cout <<"  dominator of " <<P2::Partitioner::vertexName(*cfg.findVertex(i)) <<" is ";
+            std::cout <<"  function " <<Rose::StringUtility::addrToString(function->address())
+                      <<" dominator of " <<P2::Partitioner::vertexName(*cfg.findVertex(i))
+                      <<" is ";
             if (cfg.isValidVertex(idoms[i])) {
                 std::cout <<P2::Partitioner::vertexName(*idoms[i]) <<"\n";
             } else {
