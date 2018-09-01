@@ -325,17 +325,21 @@ namespace SPRAY {
   
   void Normalization::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
     SubExprTransformationList subExprTransformationList;
-#if 0
-    SgBasicBlock* block=SageBuilder::buildBasicBlock();
-    block->set_parent(stmt->get_parent());
+#if 1
+    // normalized subexpressions (and declared variables) are generated inside an additional block
     // move the ExprStatement into the new block
-    bool deleteReplacedExpression=false;
-    SgStatement* oldStmt=stmt;
-    SgStatement* newStmt=block;
-    SageInterface::replaceStatement(oldStmt,newStmt, bool movePreprocessinInfo=false);
-    block->append_statement(newStmt);
-    normalizeExpression(newStmt,expr,subExprTransformationList);
+    SgNode* stmtParent=stmt->get_parent();
+    SgBasicBlock* block=SageBuilder::buildBasicBlock();
+    ROSE_ASSERT(block->get_parent()==0);
+    SgStatement* stmtParent2=isSgStatement(stmtParent);
+    ROSE_ASSERT(stmtParent2);
+    stmtParent2->replace_statement(stmt,block);
+    stmt->set_parent(0);
+    block->append_statement(stmt);
+    ROSE_ASSERT(stmt->get_parent()==block);
+    normalizeSubExpression(stmt,expr,subExprTransformationList);
 #else
+    // normalized subexpressions (and declared variables) are replacing the current expression
     normalizeSubExpression(stmt,expr,subExprTransformationList);
 #endif
     exprTransformationList.push_back(subExprTransformationList);
