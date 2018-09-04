@@ -1126,6 +1126,10 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 
 ROSE_DLL_API SgIfStmt* buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
+// Rasmussen (9/3/2018)
+//! Build a Fortran do construct
+ROSE_DLL_API SgFortranDo * buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body);
+
 //! Build a for init statement
 ROSE_DLL_API SgForInitStatement* buildForInitStatement();
 ROSE_DLL_API SgForInitStatement* buildForInitStatement(const SgStatementPtrList & statements);

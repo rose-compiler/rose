@@ -2406,7 +2406,7 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
    {
   // Sage node corresponds to Fortran 'do'
 
-  // This is a Fortran specific IR node and it stores it' condition and increment differently 
+  // This is a Fortran specific IR node and it stores its condition and increment differently 
   // (since Fortran uses only values to represent the bound and the stride instead of 
   // expressions that include the index variable).
 
