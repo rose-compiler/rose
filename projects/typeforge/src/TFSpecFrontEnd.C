@@ -41,7 +41,7 @@
 #define ADD_INCLUDE        "add_include"
 #define REPLACE_PRAGMA     "replace_pragma"
 #define FIND_SETS          "find_sets"
-#define ADD_SPEC           "add_spec"
+#define ADD_SPEC           "import"
 
 using namespace std;
 
@@ -64,15 +64,20 @@ int TFSpecFrontEnd::convertJSON(string fileName){
     string handle = act.getHandle();
     string action = act.getActionType();
     bool base = false;
-    if(action == CHANGE_VAR_BASE || action == CHANGE_EVERY_BASE || action == LIST_CHANGES_BASE) base = true;
-    if(action == CHANGE_VAR_TYPE || action == CHANGE_VAR_BASE){
+    bool deprecatedBase    = ((action == "replace_varbasetype") || (action == "change_varbasetype") || (action == "replace_basetype") || (action == "change_basetype") || (action == "list_basereplacements"));
+    bool deprecatedVar     = ((action == "replace_vartype") || (action == "replace_varbasetype") || (action == "change_vartype") || (action == "change_varbasetype"));
+    bool deprecatedEvery   = ((action == "replace_type") || (action == "replace_basetype") || (action == "change_type") || (action == "change_basetype"));
+    bool deprecatedList    = ((action == "list_replacements") || (action == "list_basereplacements"));
+    bool deprecatedInclude = ((action == "introduce_include"));
+    if(action == CHANGE_VAR_BASE || action == CHANGE_EVERY_BASE || action == LIST_CHANGES_BASE || deprecatedBase) base = true;
+    if(action == CHANGE_VAR_TYPE || action == CHANGE_VAR_BASE || deprecatedVar){
       if(handle != ""){
         commandList.addHandleCommand(handle, act.getToType(), base, false);
       }else{
         commandList.addVarTypeCommand(act.getName(), act.getScope(), act.getToType(), base, false);
       }
     }
-    else if(action == CHANGE_EVERY_TYPE || action == CHANGE_EVERY_BASE){
+    else if(action == CHANGE_EVERY_TYPE || action == CHANGE_EVERY_BASE || deprecatedEvery){
       string functionName = "$global";
       std::vector<std::string> functionConstructSpecList = {""};
       std::vector<std::string> functionSpecSplit;
@@ -89,7 +94,7 @@ int TFSpecFrontEnd::convertJSON(string fileName){
     else if(action == TRANSFORM){
       commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
     }
-    else if(action == LIST_CHANGES_TYPE || action == LIST_CHANGES_BASE){
+    else if(action == LIST_CHANGES_TYPE || action == LIST_CHANGES_BASE || deprecatedList){
       string scope = act.getScope();
       commandList.addFileCommand(act.getName());
       if(scope == "" || scope == "$global"){
@@ -103,7 +108,7 @@ int TFSpecFrontEnd::convertJSON(string fileName){
       }
       commandList.addFileCommand("");
     }
-    else if(action == ADD_INCLUDE){
+    else if(action == ADD_INCLUDE || deprecatedInclude){
       commandList.addIncludeCommand(act.getScope(), act.getName());
     }
     else if(action == REPLACE_PRAGMA){
@@ -112,8 +117,12 @@ int TFSpecFrontEnd::convertJSON(string fileName){
     else if(action == ADD_SPEC){
       parse(act.getName());
     }
+    else{
+      cout<<"Unrecognized Action "<<action<<endl;
+    }
     commandList.nextCommand();
   }
+cout<<"parsed\n";
   return 0;
 }
 

@@ -74,19 +74,19 @@ int main (int argc, char* argv[])
     ("explicit", "Make all implicit casts explicit.")
     ("stats", "Print statistics on casts of built-in floating point types.")
     ("trace", "Print program transformation operations as they are performed.")
-    ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
+    ("plugin", po::value<vector<string> >(),"Name of Typeforge plugin files.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
-    ("spec-file", po::value<vector<string> >(),"Name of Typeforge specification file.")
     ("csv-stats-file", po::value< string >(),"Generate file [args] with transformation statistics.")
-#ifdef EXPLICIT_VAR_FORGE
-    ("float-var", po::value< string >(),"Change type of var [arg] to float.")
-    ("double-var", po::value< string >(),"Change type of var [arg] to double.")
-    ("long-double-var", po::value< string >(),"Change type of var [arg] to long double.")
-#endif
     ;
 
   hidden_desc.add_options()
-    ("source-file", po::value<vector<string> >(),"Name of source files.");
+    ("source-file", po::value<vector<string> >(),"Name of source files.")
+    ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
+    ("float-var", po::value< string >(),"Change type of var [arg] to float.")
+    ("double-var", po::value< string >(),"Change type of var [arg] to double.")
+    ("long-double-var", po::value< string >(),"Change type of var [arg] to long double.")
+    ("spec-file", po::value<vector<string> >(),"Name of Typeforge specification file.")
+    ;
 
   all_desc.add(desc).add(hidden_desc);
 
@@ -177,13 +177,24 @@ int main (int argc, char* argv[])
   if(args.isUserProvided("trace")) {
     tt.setTraceFlag(true);
   }
-  if(args.isUserProvided("spec-file") && !objectFiles) {
+  
+  vector<string> plugins;
+  if(args.isUserProvided("plugin")){
+    vector<string> plugin = args["plugin"].as<vector<string>>();
+    plugins.insert(plugins.end(), plugin.begin(), plugin.end());
+  }
+
+  if(args.isUserProvided("spec-file")){
+    vector<string> spec = args["spec-file"].as<vector<string>>();
+    plugins.insert(plugins.end(), spec.begin(), spec.end());
+  }
+
+  if(plugins.size() > 0 && !objectFiles) {
     //Setup phase
-    //string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
     TFSpecFrontEnd typeforgeSpecFrontEnd;
-    for(auto commandFileName : args["spec-file"].as<vector<string>>()){
+    for(auto commandFileName : plugins){
       bool error=typeforgeSpecFrontEnd.parse(commandFileName);
       if(error) {
         exit(1);
