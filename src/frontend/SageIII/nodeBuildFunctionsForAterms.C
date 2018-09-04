@@ -3324,11 +3324,11 @@ SgUntypedDelayRelativeStatement* SgUntypedDelayRelativeStatement::build_node_fro
    }
 
 
-SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedForStatement* returnNode = NULL;

@@ -755,6 +755,17 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    else if (traverse_IfStmt(term, stmt_list)) {
       // Matched IfStmt
    }
+   else if (traverse_NonlabelDoStmt(term, stmt_list)) {
+      // Matched NonlabelDoStmt
+   }
+   else if (traverse_EndDoStmt(term, stmt_list)) {
+      // Matched EndDoStmt
+   }
+#if 0
+   else if (traverse_LabelDoStmt(term, stmt_list)) {
+      // Matched LabelDoStmt
+   }
+#endif
    else if (traverse_CaseConstruct(term, stmt_list)) {
       // Matched ContinueStmt
    }
@@ -1949,6 +1960,38 @@ ATbool ATermToUntypedFortranTraversal::traverse_ImplicitStmt(ATerm term, SgUntyp
 }
 
 //========================================================================================
+// R603 variable-name ("VarRef")
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_VarRef(ATerm term, SgUntypedExpression** var_expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_VarRef: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_var;
+   char* char_name;
+   std::string name;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_UNKNOWN;
+
+   *var_expr = NULL;
+   if (ATmatch(term, "VarRef(<term>)", &t_var)) {
+      // MATCHED VarRef
+
+      if (ATmatch(t_var, "<str>", &char_name)) {
+         // MATCHED string
+         name += char_name;
+      } else return ATfalse;
+
+      *var_expr = new SgUntypedReferenceExpression(keyword, name);
+      setSourcePosition(*var_expr, term);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
 // R611 data-ref
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedFortranTraversal::traverse_DataRef(ATerm term, SgUntypedExpression** var_expr)
@@ -2077,6 +2120,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_Expression(ATerm term, SgUntyped
   else if (traverse_DataRef(term, var_expr)) {
     // MATCHED DataRef
   }
+  else if (traverse_VarRef(term, var_expr)) {
+    // MATCHED VarRef
+  }
   else return ATfalse;
 
   return ATtrue;
@@ -2171,6 +2217,142 @@ ATbool ATermToUntypedFortranTraversal::traverse_Block(ATerm term, SgUntypedBlock
       }
    }
    else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R817 nonlabel-do-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_NonlabelDoStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_NonlabelDoStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_name, t_loop_ctrl, t_eos;
+   std::string label;
+   std::string do_construct_name;
+   std::string eos;
+   SgUntypedExpression* initialization = NULL;
+   SgUntypedExpression* upper_bound = NULL;
+   SgUntypedExpression* increment = NULL;
+
+   if (ATmatch(term, "NonlabelDoStmt(<term>,<term>,<term>,<term>)", &t_label,&t_name,&t_loop_ctrl,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(t_name, do_construct_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_OptLoopControl(t_loop_ctrl, &initialization, &upper_bound, &increment)) {
+         // MATCHED OptLoopControl
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+// The do body is not used currently in the grammar, it must be found during conversion to Sage nodes.
+   SgUntypedStatement * body = NULL;
+
+   SgUntypedForStatement* for_stmt = new SgUntypedForStatement("", initialization, upper_bound, increment, body, do_construct_name);
+   setSourcePosition(for_stmt, term);
+
+   stmt_list->get_stmt_list().push_back(for_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R818 loop-control
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_OptLoopControl(ATerm term, SgUntypedExpression** initialization,
+                                                                           SgUntypedExpression** upper_bound, SgUntypedExpression** incr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptLoopControl: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_init_var, t_lbound, t_ubound, t_incr;
+
+   SgUntypedExpression* init_var = NULL;
+   SgUntypedExpression* lower_bound = NULL;
+
+   *initialization = NULL;
+   *upper_bound = NULL;
+   *incr = NULL;
+
+   if (ATmatch(term, "no-loop-control()")) {
+      // MATCHED no-loop-control
+      return ATtrue;
+   }
+
+// At this point there shall be a loop-control
+   if (ATmatch(term, "LoopControl(<term>,<term>,<term>,<term>)", &t_init_var, &t_lbound, &t_ubound, &t_incr)) {
+
+      if (traverse_Expression(t_init_var, &init_var)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_Expression(t_lbound, &lower_bound)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_OptExpr(t_ubound, upper_bound)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_OptExpr(t_incr, incr)) {
+         // MATCHED OptExpr
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(init_var);
+   ROSE_ASSERT(lower_bound);
+   ROSE_ASSERT(*upper_bound);
+   ROSE_ASSERT(*incr);
+
+   General_Language_Translation::ExpressionKind op_enum = General_Language_Translation::e_operator_assign;
+   *initialization = new SgUntypedBinaryOperator(op_enum, "=", init_var, lower_bound);
+   ROSE_ASSERT(*initialization);
+   setSourcePositionIncludingTerm(*initialization, t_init_var, t_lbound);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R822 end-do-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_EndDoStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_EndDoStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_name, t_eos;
+   std::string label;
+   std::string do_construct_name;
+   std::string eos;
+
+   int stmt_enum = General_Language_Translation::e_fortran_end_do_stmt;
+
+   if (ATmatch(term, "EndDoStmt(<term>,<term>,<term>)", &t_label,&t_name,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(t_name, do_construct_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedNamedStatement* end_do_stmt = new SgUntypedNamedStatement(label, stmt_enum, do_construct_name);
+   setSourcePosition(end_do_stmt, term);
+
+   stmt_list->get_stmt_list().push_back(end_do_stmt);
 
    return ATtrue;
 }

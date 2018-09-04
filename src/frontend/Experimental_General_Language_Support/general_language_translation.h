@@ -51,6 +51,9 @@ namespace General_Language_Translation
        // Operators
        // ---------
 
+       // Assignment operator
+          e_operator_assign,
+
        // Arithmetic operators
           e_operator_exponentiate,
           e_operator_concatenate,
@@ -119,6 +122,7 @@ namespace General_Language_Translation
           e_fortran_if_then_stmt,
           e_fortran_else_if_stmt,
           e_fortran_else_stmt,
+          e_fortran_end_do_stmt,
 
        // CUDA Attributes
        // ---------------

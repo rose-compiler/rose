@@ -114,6 +114,9 @@ ATbool traverse_ArrayNameSpec(ATerm term, SgUntypedType* base_type, SgUntypedIni
 ATbool traverse_ImplicitStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_ImplicitSpecList(ATerm term, std::vector<FAST::ImplicitSpec> & ref_ImplicitSpecList);
 
+// R603
+ATbool traverse_VarRef(ATerm term, SgUntypedExpression** var_expr);
+
 // R611
 ATbool traverse_DataRef(ATerm term, SgUntypedExpression** var_expr);
 // R612
@@ -139,6 +142,15 @@ ATbool traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list);
 
 // R801
 ATbool traverse_Block(ATerm term, SgUntypedBlockStatement** block_list);
+
+// R817
+ATbool traverse_NonlabelDoStmt(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R818
+ATbool traverse_OptLoopControl(ATerm term, SgUntypedExpression** initialization,
+                                           SgUntypedExpression** upper_bound, SgUntypedExpression** increment);
+// R822
+ATbool traverse_EndDoStmt     (ATerm term, SgUntypedStatementList* stmt_list);
 
 // R832
 ATbool traverse_IfConstruct(ATerm term, SgUntypedStatementList* stmt_list);

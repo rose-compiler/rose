@@ -1131,7 +1131,7 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
                 attr_spec_stmt->get_parameter_list()->prepend_expression(parameterExpression);
 #endif
              }
-             scope->append_statement(attr_spec_stmt);     
+             scope->append_statement(attr_spec_stmt);
              convertLabel(ut_decl, attr_spec_stmt, scope);
 
              return attr_spec_stmt;
@@ -1300,6 +1300,21 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
       return sg_stmt;
    }
 
+SgStatement*
+UntypedConverter::convertSgUntypedForStatement (SgUntypedForStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      ROSE_ASSERT(children.size() == 3);
+
+#if 0
+      cout << "-x- convert do: initialization is " << ut_stmt->get_initialization() << " " << ut_stmt->get_initialization()->class_name() << endl;
+      cout << "-x- convert do: bound is " << ut_stmt->get_bound() << " " << ut_stmt->get_bound()->class_name() << endl;
+      cout << "-x- convert do: increment is " << ut_stmt->get_increment() << " " << ut_stmt->get_increment()->class_name() << endl;
+#endif
+
+      SgStatement* sg_stmt = NULL;
+
+      return sg_stmt;
+   }
 
 SgIfStmt*
 UntypedConverter::convertSgUntypedIfStatement (SgUntypedIfStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
@@ -1675,7 +1690,7 @@ UntypedConverter::convertSgUntypedStopStatement (SgUntypedStopStatement* ut_stmt
       hasLabel = convertLabel(ut_stmt, stop_stmt, scope);
       if (hasLabel == false) {
       // There is no enclosing SgLabelStatement so this statement is added to the scope
-         scope->append_statement(stop_stmt);
+         SageInterface::appendStatement(stop_stmt, scope);
       }
 
       return stop_stmt;
@@ -1803,9 +1818,6 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgNod
 
             SgBinaryOp* sg_operator = convertSgUntypedBinaryOperator(op, expr1, expr2);
             sg_expr = sg_operator;
-#if DEBUG_UNTYPED_CONVERTER
-            printf ("  - binary operator      ==>   %s\n", op->get_operator_name().c_str());
-#endif
          }
       if ( isSgUntypedUnaryOperator(ut_expr) != NULL )
          {
@@ -1817,17 +1829,11 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgNod
 
             SgUnaryOp* sg_operator = convertSgUntypedUnaryOperator(op, expr1);
             sg_expr = sg_operator;
-#if DEBUG_UNTYPED_CONVERTER
-            printf ("  - unary operator       ==>   %s\n", op->get_operator_name().c_str());
-#endif
          }
       else if ( isSgUntypedValueExpression(ut_expr) != NULL )
          {
             SgUntypedValueExpression* expr = dynamic_cast<SgUntypedValueExpression*>(ut_expr);
             sg_expr = convertSgUntypedValueExpression(expr);
-#if DEBUG_UNTYPED_CONVERTER
-            printf ("  - value expression     ==>   %s\n", expr->get_value_string().c_str());
-#endif
          }
       else if ( isSgUntypedReferenceExpression(ut_expr) != NULL )
          {
@@ -1837,10 +1843,6 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgNod
 
             sg_expr = varRef;
             setSourcePositionFrom(sg_expr, ut_expr);
-
-#if DEBUG_UNTYPED_CONVERTER
-            printf ("  - reference expression ==>   %s\n", expr->get_name().c_str());
-#endif
          }
       else if ( isSgUntypedOtherExpression(ut_expr) != NULL )
          {
@@ -1994,154 +1996,98 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
  {
     SgBinaryOp* op = NULL;
 
+    ROSE_ASSERT(lhs);
+    ROSE_ASSERT(rhs);
+
     switch(untyped_operator->get_expression_enum())
        {
+         case General_Language_Translation::e_operator_assign:
+            {
+               op = new SgAssignOp(lhs, rhs, NULL);
+               break;
+            }
          case General_Language_Translation::e_operator_add:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_add: lhs=%p rhs=%p \n", lhs, rhs);
-#endif
                op = new SgAddOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_subtract:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_subtract: lhs=%p rhs=%p\n", lhs, rhs);
-#endif
                op = new SgSubtractOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_exponentiate:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_exponentiate:\n");
-#endif
                op = new SgExponentiationOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_concatenate:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_concatenate:\n");
-#endif
                op = new SgConcatenationOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_multiply:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_multiply: lhs=%p rhs=%p\n", lhs, rhs);
-#endif
                op = new SgMultiplyOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_divide:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_divide: lhs=%p rhs=%p\n", lhs, rhs);
-#endif
                op = new SgDivideOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_and:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_and:\n");
-#endif
                op = new SgAndOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_or:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_or:\n");
-#endif
                op = new SgOrOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
 #if 0
          case General_Language_Translation::e_operator_equiv:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_equiv:\n");
-#endif
                op = new SgEqualityOp(lhs, rhs, NULL);
                ROSE_ASSERT(0);  // check on logical operands
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_not_equiv:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_not_equiv:\n");
-#endif
                op = new SgNotEqualOp(lhs, rhs, NULL);
                ROSE_ASSERT(0);  // check on logical operands
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
 #endif
          case General_Language_Translation::e_operator_equality:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_equality:\n");
-#endif
                op = new SgEqualityOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_not_equal:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_not_equal:\n");
-#endif
                op = new SgNotEqualOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_greater_than_or_equal:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_greater_than_or_equal:\n");
-#endif
                op = new SgGreaterOrEqualOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_less_than_or_equal:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_less_than_or_equal:\n");
-#endif
                op = new SgLessOrEqualOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_less_than:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  -  e_operator_less_than:\n");
-#endif
                op = new SgLessThanOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          case General_Language_Translation::e_operator_greater_than:
             {
-#if DEBUG_UNTYPED_CONVERTER
-               printf("  - e_operator_greater_than:\n");
-#endif
                op = new SgGreaterThanOp(lhs, rhs, NULL);
-               setSourcePositionIncluding(op, lhs, rhs);
                break;
             }
          default:
@@ -2149,6 +2095,13 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                ROSE_ASSERT(0);  // NOT IMPLEMENTED
             }
        }
+
+    ROSE_ASSERT(op);
+    setSourcePositionIncluding(op, lhs, rhs);
+
+    lhs->set_parent(op);
+    rhs->set_parent(op);
+
     return op;
  }
 

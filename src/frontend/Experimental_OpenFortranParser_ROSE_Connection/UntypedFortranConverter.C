@@ -571,6 +571,52 @@ UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressio
    }
 
 SgStatement*
+UntypedFortranConverter::convertSgUntypedForStatement (SgUntypedForStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      ROSE_ASSERT(children.size() == 4);
+
+#if 0
+      cout << "-x- convert do: initialization is " << ut_stmt->get_initialization() << " " << ut_stmt->get_initialization()->class_name() << endl;
+      cout << "-x- convert do:          bound is " << ut_stmt->get_bound() << " " << ut_stmt->get_bound()->class_name() << endl;
+      cout << "-x- convert do:      increment is " << ut_stmt->get_increment() << " " << ut_stmt->get_increment()->class_name() << endl;
+      cout << "-x- convert do:           body is " << ut_stmt->get_body() << " " << endl;
+      cout << "-x- convert do: construct name is " << ut_stmt->get_do_construct_name() << endl;
+#endif
+
+      SgAssignOp* initialization = isSgAssignOp(children[0]);
+      ROSE_ASSERT(initialization != NULL);
+
+      SgExpression* upper_bound = isSgExpression(children[1]);
+      ROSE_ASSERT(upper_bound != NULL);
+
+      SgExpression* increment = isSgExpression(children[2]);
+      ROSE_ASSERT(increment != NULL);
+
+   // Allowed to be NULL in SageBuilder
+      SgBasicBlock* loop_body = isSgBasicBlock(children[3]);
+
+      SgFortranDo* sg_stmt = SageBuilder::buildFortranDo(initialization, upper_bound, increment, loop_body);
+      ROSE_ASSERT(sg_stmt != NULL);
+      setSourcePositionFrom(sg_stmt, ut_stmt);
+
+  // For now assume this is a do-construct
+     sg_stmt->set_has_end_statement(true);
+
+   // Determine if do-construct-name is present
+      if (ut_stmt->get_do_construct_name().empty() == false)
+         {
+            sg_stmt->set_string_label(ut_stmt->get_do_construct_name());
+         }
+
+      SageInterface::appendStatement(sg_stmt, scope);
+
+// TEMPORARY (fix numeric labels especially here)
+//    convertLabel(ut_stmt, sg_stmt, scope);
+
+      return sg_stmt;
+   }
+
+SgStatement*
 UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
    {
       switch (ut_stmt->get_statement_enum())
