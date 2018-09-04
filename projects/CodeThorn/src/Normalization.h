@@ -26,6 +26,15 @@ namespace SPRAY {
     Normalization();
     ~Normalization();
     struct Options {
+      // level=0: no normalization
+      // level=1: only normalize expressions containing a function call
+      // level=2: normalize all expressions
+      // (level=3: normalize all expressions and lower loops
+      //          (normalized programs has only if-goto constructs as control
+      //          statements) - not fully supported yet)
+      void setLevel(unsigned int level);
+      // allows to turn off all normalizations (at once)
+      bool normalization=true;
       // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
       // turns single statements into blocks with one statement
@@ -40,7 +49,14 @@ namespace SPRAY {
       const bool eliminateConditionalExpressionOp=false;
       bool hoistConditionExpressions=true;
       bool normalizeExpressions=true;
-      bool normalizeVariableDeclarations=false;
+      bool normalizeVariableDeclarations=true;
+
+      // puts the sequence of normalized expressions in a block. This
+      // way the scrope of temporary variables ends right after the
+      // last initialization (or assignment) of the normalized
+      // expression.
+      // requires: normalizeVariableDeclarations==true
+      bool encapsulateNormalizedExpressionsInBlocks=true;
 
       // transforms break in switch to gotos. This can cause unparsed
       // code to not compile because of special C++ rules of
@@ -54,7 +70,7 @@ namespace SPRAY {
 
       // This transformation is applied to
       // while and do-while, not to for-loops.
-      bool transformContinueToGotoInWhileStmts=false; // not supported yet
+      const bool transformContinueToGotoInWhileStmts=false; // not supported yet
 
       // using SgInterface inlining (to be replaced)
       bool inlining=false;

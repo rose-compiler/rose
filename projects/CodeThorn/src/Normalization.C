@@ -27,6 +27,29 @@ namespace SPRAY {
     }
   }
 
+  void Normalization::Options::setLevel(unsigned int level) {
+    if(level==0) {
+      normalization=false;
+      return;
+    }
+    restrictToFunCallExpressions=(level==1);
+    if(level==1||level==2) {
+      normalization=true;
+      normalizeSingleStatements=true;
+      eliminateForStatements=true;
+      eliminateWhileStatements=false;
+      normalizeVariableDeclarations=true;
+      hoistConditionExpressions=true;
+      normalizeExpressions=true;
+      encapsulateNormalizedExpressionsInBlocks=false;
+      transformBreakToGotoInSwitchStmt=false;
+      transformBreakToGotoInLoopStmts=false;
+      return;
+    }
+    cerr<<"Error: unsupported normalization level "<<level<<endl;
+    exit(1);
+  }
+
   void Normalization::removeDefaultInliner() {
     if(_defaultInliner) {
       delete _inliner;
@@ -137,7 +160,7 @@ namespace SPRAY {
   }
 
   // transformation: if(C) ... => T t=C; if(t) ...
-  // transformation: switch(C) ... => T t=C; switch(t) ...
+   // transformation: switch(C) ... => T t=C; switch(t) ...
   // while/do-while/for: not applicable. Transform those before cond-hoisting.
   void Normalization::hoistCondition(SgStatement* stmt) {
     ROSE_ASSERT(isSgIfStmt(stmt)||isSgSwitchStatement(stmt));
@@ -325,23 +348,24 @@ namespace SPRAY {
   
   void Normalization::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
     SubExprTransformationList subExprTransformationList;
-#if 1
-    // normalized subexpressions (and declared variables) are generated inside an additional block
-    // move the ExprStatement into the new block
-    SgNode* stmtParent=stmt->get_parent();
-    SgBasicBlock* block=SageBuilder::buildBasicBlock();
-    ROSE_ASSERT(block->get_parent()==0);
-    SgStatement* stmtParent2=isSgStatement(stmtParent);
-    ROSE_ASSERT(stmtParent2);
-    stmtParent2->replace_statement(stmt,block);
-    stmt->set_parent(0);
-    block->append_statement(stmt);
-    ROSE_ASSERT(stmt->get_parent()==block);
-    normalizeSubExpression(stmt,expr,subExprTransformationList);
-#else
-    // normalized subexpressions (and declared variables) are replacing the current expression
-    normalizeSubExpression(stmt,expr,subExprTransformationList);
-#endif
+    if(options.encapsulateNormalizedExpressionsInBlocks) {
+      ROSE_ASSERT(options.normalizeVariableDeclarations==true);
+      // normalized subexpressions (and declared variables) are generated inside an additional block
+      // move the ExprStatement into the new block
+      SgNode* stmtParent=stmt->get_parent();
+      SgBasicBlock* block=SageBuilder::buildBasicBlock();
+      ROSE_ASSERT(block->get_parent()==0);
+      SgStatement* stmtParent2=isSgStatement(stmtParent);
+      ROSE_ASSERT(stmtParent2);
+      stmtParent2->replace_statement(stmt,block);
+      stmt->set_parent(0);
+      block->append_statement(stmt);
+      ROSE_ASSERT(stmt->get_parent()==block);
+      normalizeSubExpression(stmt,expr,subExprTransformationList);
+    } else {
+      // normalized subexpressions (and declared variables) are replacing the current expression
+      normalizeSubExpression(stmt,expr,subExprTransformationList);
+    }
     exprTransformationList.push_back(subExprTransformationList);
   }
 
