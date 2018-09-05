@@ -32,7 +32,7 @@ namespace SPRAY {
       // (level=3: normalize all expressions and lower loops
       //          (normalized programs has only if-goto constructs as control
       //          statements) - not fully supported yet)
-      void setLevel(unsigned int level);
+      void configureLevel(unsigned int level);
       // allows to turn off all normalizations (at once)
       bool normalization=true;
       // only normalize expressions with function calls
@@ -76,23 +76,34 @@ namespace SPRAY {
       bool inlining=false;
     } options;
 
-    // applies all available lowering operations
-    void normalizeAst(SgNode* root);
+    // applies normalization on entire AST with normalization level 0-3.
+    // level 0: no normalization
+    // level 1: all expressions with a function call (and all implied normalizations)
+    // level 2: all expressions (and all implied normalizations)
+    // level 3: all expresisons and lowering of all control constructs (only if+gotos remain)
+    void normalizeAst(SgNode* root, unsigned int normalizationLevel);
 
     static void setLabelPrefix(std::string prefix);
+    static SgLabelStatement* createLabel(SgStatement* target);
     static std::string newLabelName();
+
     static bool hasFunctionCall(SgExpression* expr);
     static bool isWithinBlockStmt(SgExpression* exp);
-    static SgLabelStatement* createLabel(SgStatement* target);
-    static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
-    static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
 
     // enable/disable inling. By default off.
     void setInliningOption(bool flag);
     bool getInliningOption();
     // calls ROSE SageInterface function for inlining
     SPRAY::InlinerBase* getInliner();
+    // allows to use custom inliner. Default is the inliner from the SageInterface.
     void setInliner(SPRAY::InlinerBase*);
+
+    static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
+    static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
+
+  protected:
+    // assumes correctly configured options (invoked by normalizeAst(root,level))
+    void normalizeAst(SgNode* root);
 
   private:
     /* normalize all Expressions in AST. The original variables remain

@@ -27,7 +27,7 @@ namespace SPRAY {
     }
   }
 
-  void Normalization::Options::setLevel(unsigned int level) {
+  void Normalization::Options::configureLevel(unsigned int level) {
     if(level==0) {
       normalization=false;
       return;
@@ -38,12 +38,31 @@ namespace SPRAY {
       normalizeSingleStatements=true;
       eliminateForStatements=true;
       eliminateWhileStatements=false;
-      normalizeVariableDeclarations=true;
       hoistConditionExpressions=true;
-      normalizeExpressions=true;
+      normalizeVariableDeclarations=true;
+      //eliminateShortCircuitOperators=true; // not iomplemented yet
+      //eliminateConditionalExpressionOp=ture; // not iomplemented yet
       encapsulateNormalizedExpressionsInBlocks=false;
+      normalizeExpressions=true;
       transformBreakToGotoInSwitchStmt=false;
       transformBreakToGotoInLoopStmts=false;
+      //transformContinueToGotoInWhileStmts=false; // not iomplemented yet
+      return;
+    }
+    if(level==3) {
+      normalization=true;
+      normalizeSingleStatements=true;
+      eliminateForStatements=true;
+      eliminateWhileStatements=true;  // different to level 1,2
+      hoistConditionExpressions=true;
+      normalizeVariableDeclarations=true;
+      //eliminateShortCircuitOperators=true; // not iomplemented yet
+      //eliminateConditionalExpressionOp=ture; // not iomplemented yet
+      encapsulateNormalizedExpressionsInBlocks=true; // different to level 1,2
+      normalizeExpressions=true;
+      transformBreakToGotoInSwitchStmt=true;  // different to level 1,2
+      transformBreakToGotoInLoopStmts=true;  // different to level 1,2
+      //transformContinueToGotoInWhileStmts=false; // not iomplemented yet  // different to level 1,2
       return;
     }
     cerr<<"Error: unsupported normalization level "<<level<<endl;
@@ -125,6 +144,11 @@ namespace SPRAY {
 
   string Normalization::newLabelName() {
     return labelPrefix + StringUtility::numberToString(Normalization::labelNr++);
+  }
+
+  void Normalization::normalizeAst(SgNode* root, unsigned int level) {
+    options.configureLevel(level);
+    normalizeAst(root);
   }
 
   void Normalization::normalizeAst(SgNode* root) {

@@ -1245,14 +1245,12 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     Normalization lowering;
     if(args.getBool("normalize-fcalls")) {
-      lowering.options.restrictToFunCallExpressions=true;
-      lowering.normalizeAst(sageProject);
+      lowering.normalizeAst(sageProject,1);
       logger[TRACE]<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
     if(args.getBool("normalize-all")) {
-      lowering.options.restrictToFunCallExpressions=false;
-      lowering.normalizeAst(sageProject);
+      lowering.normalizeAst(sageProject,2);
       logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
     }
 

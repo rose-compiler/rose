@@ -29,10 +29,7 @@ void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
   Normalization lowering;
   lowering.setInliningOption(getInliningOption());
-  if(getLoweringOption()) {
-    cout<<"DEBUG: PAL: lowering"<<endl;
-    lowering.normalizeAst(root);
-  }
+  lowering.normalizeAst(root,getNormalizationLevel());
   _variableIdMapping=new VariableIdMapping();
   getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
@@ -56,12 +53,12 @@ SPRAY::FunctionIdMapping* SPRAY::ProgramAbstractionLayer::getFunctionIdMapping()
   return _functionIdMapping;
 }
 
-void SPRAY::ProgramAbstractionLayer::setLoweringOption(bool flag) {
-  _loweringOption=flag;
+void SPRAY::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {
+  _normalizationLevel=level;
 }
 
-bool SPRAY::ProgramAbstractionLayer::getLoweringOption() {
-  return _loweringOption;
+bool SPRAY::ProgramAbstractionLayer::getNormalizationLevel() {
+  return _normalizationLevel;
 }
 
 void SPRAY::ProgramAbstractionLayer::setInliningOption(bool flag) {

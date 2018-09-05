@@ -113,6 +113,8 @@ int main(int argc, char* argv[]) {
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
     ("normalize-compound-stmts", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (eliminate compound assignment operators).")
+    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true), "apply normalization to all expressions.")
+    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true), "apply normalization to all expressions.")
     ("lowering", po::value< bool >()->default_value(false)->implicit_value(true), "apply lowering to code (eliminates for,while,do-while,continue,break; inlines functions).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(true), "inlines functions.")
     ("inline-non-param-functions", po::value< bool >()->default_value(false)->implicit_value(true), "inlines only functions that have no return value and no parameters.")
@@ -182,11 +184,25 @@ int main(int argc, char* argv[]) {
   // inline all functions
   logger[TRACE] << "INIT: Parsing and creating AST finished."<<endl;
 
-  if(args.getBool("lowering")) {
-    logger[TRACE] <<"STATUS: Normalization started."<<endl;
+  if(args.getBool("normalize-fcalls")) {
+    logger[TRACE] <<"STATUS: Normalization level 1 started."<<endl;
     SPRAY::Normalization lowering;
-    lowering.normalizeAst(root);
-    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
+    lowering.normalizeAst(root,1);
+    logger[TRACE] <<"STATUS: Normalization level 1 finished."<<endl;
+  }
+
+  if(args.getBool("normalize-all")) {
+    logger[TRACE] <<"STATUS: Normalization level 2 started."<<endl;
+    SPRAY::Normalization lowering;
+    lowering.normalizeAst(root,2);
+    logger[TRACE] <<"STATUS: Normalization level 2 finished."<<endl;
+  } 
+
+  if(args.getBool("lowering")) {
+    logger[TRACE] <<"STATUS: Lowering started."<<endl;
+    SPRAY::Normalization lowering;
+    lowering.normalizeAst(root,3);
+    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
   }
 
   VariableIdMapping variableIdMapping;
