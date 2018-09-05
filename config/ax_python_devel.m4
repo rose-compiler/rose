@@ -294,6 +294,14 @@ EOD`
         AC_LANG_POP([C])
         AC_MSG_RESULT([$PYTHON_DEV_EXISTS])
 
+
+        if test "$OS_vendor" = "apple"; then
+            if echo "$PYTHON_EXTRA_LIBS" |grep CoreFoundation >/dev/null; then
+                AC_MSG_NOTICE([python API is not supported on macOS (CoreFoundation problems)])
+                PYTHON_DEV_EXISTS=no
+            fi
+        fi      
+                
         # If the python development environment exists and seems to work, then keep the
         # compiler flags we detected above, otherwise discard them.
         if test "$PYTHON_DEV_EXISTS" = no; then
