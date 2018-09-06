@@ -379,9 +379,9 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
           replaceType = nathan_rebuildBaseType(funRetType, newType);
         }
         string funName = SgNodeHelper::getFunctionName(root);
-        TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+".");// Changed type to "+replaceType->unparseToString());
         if(listing) nathan_addToActionList("$return", funName, fromType, newType, funDecl, base);
         else{
+          TFTypeTransformer::trace("Found return "+((funName=="")? "" : "in "+funName)+".");
           _transformer.addTransformation(funName+":$return", funType, replaceType);
           //funType->set_orig_return_type(replaceType);
           foundVar++;

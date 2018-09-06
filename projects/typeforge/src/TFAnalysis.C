@@ -8,12 +8,12 @@
 using namespace std;
 using namespace AbstractHandle;
 
-SgType* stripType(SgType* type){
+SgType* getBaseType(SgType* type){
   if(SgArrayType* arrayType = isSgArrayType(type)) return arrayType->get_base_type();
   if(SgPointerType* ptrType = isSgPointerType(type)) return ptrType->get_base_type();
-  if(SgTypedefType* typeDef = isSgTypedefType(type)) return stripType(typeDef->get_base_type());
+  if(SgTypedefType* typeDef = isSgTypedefType(type)) return typeDef->get_base_type();
   if(SgReferenceType* refType = isSgReferenceType(type)) return refType->get_base_type();
-  if(SgModifierType* modType = isSgModifierType(type)) return stripType(modType->get_base_type());
+  if(SgModifierType* modType = isSgModifierType(type)) return modType->get_base_type();
   return nullptr;
 }
 
@@ -21,7 +21,11 @@ bool isArrayPointerType(SgType* type){
   if(type == nullptr) return false;
   if(isSgArrayType(type)) return true;
   if(isSgPointerType(type)) return true;
-  return isArrayPointerType(stripType(type));
+  return isArrayPointerType(getBaseType(type));
+}
+
+bool checkMatch(bool base, SgType* typeOne, SgType* typeTwo){
+  return typeOne == nullptr || typeTwo == nullptr || typeOne == typeTwo || (base && typeOne->findBaseType() == typeTwo->findBaseType());
 }
 
 bool sameType(SgType* typeOne, SgType* typeTwo){
@@ -45,45 +49,54 @@ bool sameType(SgType* typeOne, SgType* typeTwo){
 
 TFAnalysis::TFAnalysis(){}
 
-int TFAnalysis::variableSetAnalysis(SgProject* project){
+int TFAnalysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool base){
+  RoseAst wholeAST(project);
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
   if(listOfGlobalVars.size() > 0){
     for(auto varDec : listOfGlobalVars){
-      SgInitializedName* lhsInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
-      if(!lhsInitName) continue;
-      SgInitializer* init = lhsInitName->get_initializer();
+      SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
+      if(!initName) continue;
+      SgInitializer* init = initName->get_initializer();
       if(!init) continue;
-      SgType* lhsType = lhsInitName->get_type();
-      if(!isArrayPointerType(lhsType)) continue;
-      SgExpression* rhsExp = init;
-      linkVariables(lhsInitName, lhsType, rhsExp);
+      SgType* keyType = initName->get_type();
+      if(!checkMatch(base, keyType, matchType)) continue;
+      addToMap(varDec, varDec);  
+      if(!isArrayPointerType(keyType)) continue;
+      SgExpression* exp = init;
+      linkVariables(varDec, keyType, exp);
     }
   }
   list<SgFunctionDefinition*> listOfFunctionDefinitions = SgNodeHelper::listOfFunctionDefinitions(project);
   for(auto funDef : listOfFunctionDefinitions){  
+    SgInitializedNamePtrList& initNameList = SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+    SgFunctionDeclaration* funDec = funDef->get_declaration();
+    if(checkMatch(base, funDec->get_type()->get_return_type(), matchType)) addToMap(funDec, funDec);
+    for(auto init : initNameList) if(checkMatch(base, init->get_type(), matchType)) addToMap(init, init);
     RoseAst ast(funDef);
     for(RoseAst::iterator i = ast.begin(); i!=ast.end(); i++){
-      SgInitializedName* lhsInitName = nullptr;
-      SgType* lhsType = nullptr;
-      SgExpression* rhsExp = nullptr;
+      SgNode* key = nullptr;
+      SgType* keyType = nullptr;
+      SgExpression* exp = nullptr;
       if(SgAssignOp* assignOp = isSgAssignOp(*i)){
         SgExpression* lhs = assignOp->get_lhs_operand();
         if(SgVarRefExp* varRef = isSgVarRefExp(lhs)){
-          lhsType = varRef->get_type();
-          if(!isArrayPointerType(lhsType)) continue;
+          keyType = varRef->get_type();
+          if(!isArrayPointerType(keyType)) continue;    
           SgVariableSymbol* varSym = varRef->get_symbol();
-          lhsInitName = varSym->get_declaration();
+	  key = varSym->get_declaration()->get_declaration();
         }
-        rhsExp = assignOp->get_rhs_operand();
+        exp = assignOp->get_rhs_operand();
       }
       else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*i)){
-        lhsInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
-        if(!lhsInitName) continue;
-        SgInitializer* init = lhsInitName->get_initializer();
+        SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
+        if(!initName) continue;
+        if(checkMatch(base, matchType, initName->get_type())) addToMap(varDec, varDec);
+        SgInitializer* init = initName->get_initializer();
         if(!init) continue;
-        lhsType = lhsInitName->get_type();
-        if(!isArrayPointerType(lhsType)) continue;
-        rhsExp = init;
+        keyType = initName->get_type();
+        if(!isArrayPointerType(keyType)) continue;
+        key = initName->get_declaration();
+        exp = init;
       }
       else if(SgFunctionCallExp* callExp = isSgFunctionCallExp(*i)){
         SgFunctionDefinition* funDef = SgNodeHelper::determineFunctionDefinition(callExp);
@@ -93,12 +106,22 @@ int TFAnalysis::variableSetAnalysis(SgProject* project){
         auto initIter = initNameList.begin();
         auto expIter  = expList.begin(); 
         while(initIter != initNameList.end()){
-          if(isArrayPointerType((*initIter)->get_type())) linkVariables((*initIter), (*initIter)->get_type(), (*expIter));
+          if(isArrayPointerType((*initIter)->get_type())){
+            if(checkMatch(base, matchType, (*initIter)->get_type())) linkVariables((*initIter), (*initIter)->get_type(), (*expIter));
+          }
           ++initIter;
           ++expIter;
         }
       }
-      if(lhsInitName && lhsType && rhsExp) linkVariables(lhsInitName, lhsType, rhsExp);
+      else if(SgReturnStmt* ret = isSgReturnStmt(*i)){
+        exp = ret->get_expression();
+        keyType = exp->get_type();
+        if(!isArrayPointerType(keyType)) continue;
+        key = funDec;
+         
+      }
+      if(!checkMatch(base, keyType, matchType)) continue;
+      if(key && keyType && exp) linkVariables(key, keyType, exp);
     }
   }
   return 0;
@@ -145,19 +168,12 @@ string makeSetString(set<SgNode*>* variableSet){
   for(auto j = variableSet->begin(); j != variableSet->end(); ++j){
     string name = "";
     string funName = getFunctionNameOfNode(*j) + ":"; 
-    if(SgInitializedName* rightInit = isSgInitializedName(*j)){
-      SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(rightInit);
-      if(varSym){
-        name = SgNodeHelper::symbolToString(varSym);
-      }
-    }
-    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(*j)){
-      funName = "";
-      SgSymbol* funSym = funDec->get_symbol_from_symbol_table();
-      if(funSym){
-        name = SgNodeHelper::symbolToString(funSym) + " Return";
-      }
-    }
+    SgSymbol* varSym = nullptr;
+    if(SgInitializedName* leftInit = isSgInitializedName(*j)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
+    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(*j)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
+    else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*j)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
+    if(varSym) name = SgNodeHelper::symbolToString(varSym);
+    
     if(setString != "") setString = setString + " & ";
     setString = setString + funName + name; 
   }
@@ -168,13 +184,15 @@ void TFAnalysis::writeAnalysis(string fileName){
   for(auto i = setMap.begin(); i != setMap.end(); ++i){
     string leftName = "";
     string rightFunName = getFunctionNameOfNode(i->first);
-    if(SgInitializedName* leftInit = isSgInitializedName(i->first)){
-      SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
-      if(varSym){
-        leftName = SgNodeHelper::symbolToString(varSym);
-      }
-    }
-    cout<<rightFunName<<":"<<leftName<<" => "<<makeSetString(i->second)<<endl;
+    SgSymbol* varSym = nullptr;
+    if(SgInitializedName* leftInit = isSgInitializedName(i->first)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
+    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
+    else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
+    else cout<<"FAIL WRONG NODE\n";
+    if(varSym){
+      leftName = SgNodeHelper::symbolToString(varSym);
+      cout<<rightFunName<<":"<<leftName<<" => "<<makeSetString(i->second)<<endl;
+    }else cout<<"FAIL NO SYMBOL\n";
   }
   cout<<"\n\n";
   for(auto i = setMap.begin(); i != setMap.end(); ++i){
@@ -207,28 +225,34 @@ void TFAnalysis::writeAnalysis(string fileName){
   }
 }
 
-void TFAnalysis::linkVariables(SgInitializedName* initName, SgType* type, SgExpression* expression){
+void TFAnalysis::linkVariables(SgNode* key, SgType* type, SgExpression* expression){
   RoseAst ast(expression);
   for(RoseAst::iterator i = ast.begin(); i!=ast.end(); i++){
     if(SgExpression* exp = isSgExpression(*i)){
       if(sameType(exp->get_type(), type)){
         if(SgFunctionCallExp* funCall = isSgFunctionCallExp(exp)){
           SgFunctionDeclaration* funDec = funCall->getAssociatedFunctionDeclaration();
-          addToMap(initName, funDec);
+          addToMap(key, funDec);
           i.skipChildrenOnForward();
         }
         else if(SgPntrArrRefExp* refExp = isSgPntrArrRefExp(exp)){
-          linkVariables(initName, refExp->get_lhs_operand()->get_type(), refExp->get_lhs_operand());
+          linkVariables(key, refExp->get_lhs_operand()->get_type(), refExp->get_lhs_operand());
           i.skipChildrenOnForward();
         }
         else if(SgPointerDerefExp* refExp = isSgPointerDerefExp(exp)){
-          linkVariables(initName, refExp->get_operand()->get_type(), refExp->get_operand());
+          linkVariables(key, refExp->get_operand()->get_type(), refExp->get_operand());
           i.skipChildrenOnForward();
         }
         else if(SgVarRefExp* varRef = isSgVarRefExp(exp)){
           SgVariableSymbol* varSym = varRef->get_symbol();
-          SgInitializedName* refInitName = varSym->get_declaration();
-          addToMap(initName, refInitName);
+          if(varSym){  
+            SgInitializedName* refInitName = varSym->get_declaration();
+            SgNode* target = refInitName;
+            if(!SgNodeHelper::isFunctionParameterVariableSymbol(varSym)) target = refInitName->get_declaration();
+            if(target){
+              addToMap(key, target);
+            }
+          }
         }
       }
     }
@@ -238,6 +262,12 @@ void TFAnalysis::linkVariables(SgInitializedName* initName, SgType* type, SgExpr
 void TFAnalysis::addToMap(SgNode* originNode, SgNode* targetNode){
   if(!setMap.count(originNode)){
     setMap[originNode] = new set<SgNode*>;
+    setMap[originNode]->insert(originNode);
+  }
+  if(!setMap.count(targetNode)){
+    setMap[targetNode] = new set<SgNode*>;
+    setMap[targetNode]->insert(targetNode);
   }
   setMap[originNode]->insert(targetNode);
+  setMap[targetNode]->insert(originNode);
 }

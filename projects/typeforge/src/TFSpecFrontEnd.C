@@ -49,7 +49,7 @@ bool isComment(string s) {
   return s.size()>=2 && s[0]=='/' && s[1]=='/';
 }
 
-bool nathan_checkExtension(string filePath, string extension){
+bool checkTypeforgeExtension(string filePath, string extension){
   boost::filesystem::path pathObj(filePath);
   if(pathObj.has_extension()){
     if(pathObj.extension().string() == extension) return true;
@@ -122,14 +122,13 @@ int TFSpecFrontEnd::convertJSON(string fileName){
     }
     commandList.nextCommand();
   }
-cout<<"parsed\n";
   return 0;
 }
 
 bool TFSpecFrontEnd::parse(std::string specFileName) {  
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
-  if(nathan_checkExtension(specFileName, ".json")){
+  if(!checkTypeforgeExtension(specFileName, ".tf")){
     convertJSON(specFileName);
     return false;
   }

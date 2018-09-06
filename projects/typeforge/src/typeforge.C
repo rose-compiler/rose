@@ -137,7 +137,7 @@ int main (int argc, char* argv[])
 
   if(args.isUserProvided("set-analysis")){
     TFAnalysis analysis;
-    analysis.variableSetAnalysis(sageProject);
+    analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
     analysis.writeAnalysis("");    
   }
 
