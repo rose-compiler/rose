@@ -394,19 +394,18 @@ Engine::partitionerSwitches() {
                    "address to zero disables this module (which is the default)."));
 
     sg.insert(Switch("intra-function-code")
-              .intrinsicValue(true, settings_.partitioner.findingIntraFunctionCode)
-              .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                   "followed by the same single function then a basic block is create at the beginning of that region and "
-                   "added as a member of the surrounding function.  A function block discover phase follows in order to "
-                   "find the instructions for the new basic blocks and to follow their control flow to add additional "
-                   "blocks to the functions.  These two steps are repeated until no new code can be created.  This step "
-                   "occurs before the @s{intra-function-data} step if both are enabled.  The @s{no-intra-function-code} "
-                   "switch turns this off. The default is to " +
-                   std::string(settings_.partitioner.findingIntraFunctionCode?"":"not ") +
-                   "perform this analysis."));
+              .argument("npasses", nonNegativeIntegerParser(settings_.partitioner.findingIntraFunctionCode), "10")
+              .doc("Near the end of processing, a pass is made over the entire address space to find executable memory "
+                   "that doesn't yet belong to any known function but is surrounded by a single function. A basic block "
+                   "is created for each such region after which a recursive basic block discover phase ensues in order "
+                   "find additional blocks reachable by the control flow. This process is repeated up to @v{npasses} "
+                   "times, or until no new addresses are found. For backward compatibility, this switch also acts as "
+                   "a boolean: @s{intra-function-code} and @s{no-intra-function-code} are equivalent to setting the "
+                   "number of passes to ten and zero, respectively. The default is " +
+                   StringUtility::plural(settings_.partitioner.findingIntraFunctionCode, "passes") + "."));
     sg.insert(Switch("no-intra-function-code")
               .key("intra-function-code")
-              .intrinsicValue(false, settings_.partitioner.findingIntraFunctionCode)
+              .intrinsicValue((size_t)0, settings_.partitioner.findingIntraFunctionCode)
               .hidden(true));
 
     sg.insert(Switch("intra-function-data")
@@ -1378,8 +1377,8 @@ Engine::runPartitionerRecursive(Partitioner &partitioner) {
         SAWYER_MESG(where) <<"attaching function padding\n";
         attachPaddingToFunctions(partitioner);
     }
-    if (settings_.partitioner.findingIntraFunctionCode) {
-        SAWYER_MESG(where) <<"searching for intra-function code\n";
+    if (settings_.partitioner.findingIntraFunctionCode > 0) {
+        // WHERE message is emitted in the call
         attachAllSurroundedCodeToFunctions(partitioner);
     }
     if (settings_.partitioner.findingIntraFunctionData) {
@@ -2004,19 +2003,18 @@ Engine::attachPaddingToFunctions(Partitioner &partitioner) {
 
 size_t
 Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
     size_t retval = 0;
-    size_t nAddedThisPass = 0;
-    do {
-        nAddedThisPass = 0;
-        rose_addr_t va = 0;
-        while (size_t n = attachSurroundedCodeToFunctions(partitioner, va /*in,out*/)) {
-            retval += n;
-            nAddedThisPass += n;
-            discoverBasicBlocks(partitioner);
-            makeCalledFunctions(partitioner);
-            attachBlocksToFunctions(partitioner);
-        }
-    } while (nAddedThisPass > 0);
+    for (size_t i = 0; i < settings_.partitioner.findingIntraFunctionCode; ++i) {
+        SAWYER_MESG(where) <<"searching for intra-function code (pass " <<(i+1) <<")\n";
+        size_t n = attachSurroundedCodeToFunctions(partitioner);
+        if (0 == n)
+            break;
+        retval += n;
+        discoverBasicBlocks(partitioner);
+        makeCalledFunctions(partitioner);
+        attachBlocksToFunctions(partitioner);
+    }
     return retval;
 }
 
@@ -2024,11 +2022,11 @@ Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
 // as yet undiscovered basic block and adds a basic block placeholder to the surrounding function.  This could be further
 // improved by testing to see if the candidate address looks like a valid basic block.
 size_t
-Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner, rose_addr_t &va) {
+Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner) {
     size_t nNewBlocks = 0;
     if (partitioner.aum().isEmpty())
         return 0;
-    va = std::max(va, partitioner.aum().hull().least() + 1);
+    rose_addr_t va = partitioner.aum().hull().least() + 1;
     while (va < partitioner.aum().hull().greatest()) {
         // Find an address interval that's unused and also executable.
         AddressInterval unusedAum = partitioner.aum().nextUnused(va);

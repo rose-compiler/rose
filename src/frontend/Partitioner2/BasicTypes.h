@@ -316,7 +316,7 @@ struct PartitionerSettings {
     bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
     bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
     rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
-    bool findingIntraFunctionCode;                  /**< Suck up unused addresses as intra-function code. */
+    size_t findingIntraFunctionCode;                /**< Suck up unused addresses as intra-function code (number of passes).. */
     bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
     bool findingInterFunctionCalls;                 /**< Look for function calls between functions. */
     AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
@@ -350,7 +350,16 @@ private:
         s & BOOST_SERIALIZATION_NVP(findingFunctionPadding);
         s & BOOST_SERIALIZATION_NVP(findingDeadCode);
         s & BOOST_SERIALIZATION_NVP(peScramblerDispatcherVa);
-        s & BOOST_SERIALIZATION_NVP(findingIntraFunctionCode);
+        if (version >= 2) {
+            s & BOOST_SERIALIZATION_NVP(findingIntraFunctionCode);
+        } else {
+            bool temp = false;
+            if (S::is_saving::value)
+                temp = findingIntraFunctionCode > 0;
+            s & boost::serialization::make_nvp("findingIntraFunctionCode", temp);
+            if (S::is_loading::value)
+                findingIntraFunctionCode = temp ? 10 : 0; // arbitrary number of passes
+        }
         s & BOOST_SERIALIZATION_NVP(findingIntraFunctionData);
         s & BOOST_SERIALIZATION_NVP(findingInterFunctionCalls);
         s & BOOST_SERIALIZATION_NVP(interruptVector);
@@ -368,7 +377,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(namingConstants);
         s & BOOST_SERIALIZATION_NVP(namingStrings);
         s & BOOST_SERIALIZATION_NVP(demangleNames);
-        if (version > 0) {
+        if (version >= 1) {
             s & BOOST_SERIALIZATION_NVP(namingSyscalls);
 
             // There is no support for boost::filesystem serialization due to arguments by the maintainers over who has
@@ -385,7 +394,7 @@ private:
 public:
     PartitionerSettings()
         : followingGhostEdges(false), discontiguousBlocks(true), maxBasicBlockSize(0), findingFunctionPadding(true),
-          findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
+          findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(10), findingIntraFunctionData(true),
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
           functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingCodeFunctionPointers(false),
@@ -430,6 +439,6 @@ typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 2);
 
 #endif

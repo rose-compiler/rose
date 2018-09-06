@@ -828,11 +828,10 @@ public:
      *
      *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
      *  unused interval, if the interval is immediately surrounded by a single function then a basic block placeholder is
-     *  created at the beginning of the interval and added to the function.  Analyzes only addresses at least as large as @p
-     *  start, and updates @p start to the next address to be analyzed.
+     *  created at the beginning of the interval and added to the function.
      *
      *  Returns the number of new placeholders created. */
-    virtual size_t attachSurroundedCodeToFunctions(Partitioner&, rose_addr_t &start);
+    virtual size_t attachSurroundedCodeToFunctions(Partitioner&);
 
     /** Attach basic blocks to functions.
      *
@@ -1193,12 +1192,13 @@ public:
 
     /** Property: Whether to find intra-function code.
      *
-     *  If set, the partitioner will look for parts of memory that were not disassembled and occur between other parts of the
-     *  same function, and will attempt to disassemble that missing part and link it into the surrounding function.
+     *  If positive, the partitioner will look for parts of memory that were not disassembled and occur between other parts of
+     *  the same function, and will attempt to disassemble that missing part and link it into the surrounding function. It will
+     *  perform up to @p n passes across the entire address space.
      *
      * @{ */
-    bool findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
-    virtual void findingIntraFunctionCode(bool b) { settings_.partitioner.findingIntraFunctionCode = b; }
+    size_t findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
+    virtual void findingIntraFunctionCode(size_t n) { settings_.partitioner.findingIntraFunctionCode = n; }
     /** @} */
 
     /** Property: Whether to find intra-function data.
