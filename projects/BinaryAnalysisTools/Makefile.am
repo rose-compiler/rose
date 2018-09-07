@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
+bin_SCRIPTS =
 pkginclude_HEADERS =
 EXTRA_DIST =
 MOSTLYCLEANFILES =
@@ -314,6 +315,10 @@ xml2json_CPPFLAGS = $(ROSE_INCLUDES)
 xml2json_LDFLAGS = $(ROSE_RPATHS)
 xml2json_LDADD = $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------
+# Script to print historgram of instructions with missing semantics
+
+bin_SCRIPTS += missing-semantics
 
 ########################################################################################################################
 ########################################################################################################################
