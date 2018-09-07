@@ -49,9 +49,10 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
 	./typeforge --plugin=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
 	./typeforge --plugin=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C 
-	./typeforge --set-analysis $(srcdir)/tests/setTest.C 
 	./typeforge --set-analysis $(srcdir)/tests/fft.cpp
 	./typeforge --set-analysis $(srcdir)/tests/sum2pi_x.c
+	./typeforge --set-analysis $(srcdir)/tests/setTest.C 
+	omps -x dotGraph.gv | dot | gvpack -array3 | neato -Tpng -n2 -o dotGraph.png
 	rm -f a.out *.json
 
 #check-typeforge:

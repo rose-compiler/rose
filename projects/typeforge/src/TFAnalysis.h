@@ -1,4 +1,4 @@
-#ifndef TYPEFORGE_ANALYSIS_LIST_H
+#ifndef TYPEFORGE_ANALYSIS_H
 #define TYPEFORGE_ANALYSIS_H
 
 #include "sage3basic.h"
@@ -9,6 +9,7 @@ class TFAnalysis{
     TFAnalysis();
     int variableSetAnalysis(SgProject* project, SgType* matchType, bool base);
     void writeAnalysis(std::string fileName);
+    void writeGraph(std::string fileName);
   private:
     void linkVariables(SgNode* key, SgType* type, SgExpression* exp);
     void addToMap(SgNode* originNode, SgNode* targetNode);

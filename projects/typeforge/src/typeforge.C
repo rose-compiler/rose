@@ -139,6 +139,7 @@ int main (int argc, char* argv[])
     TFAnalysis analysis;
     analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
     analysis.writeAnalysis("");    
+    analysis.writeGraph("dotGraph.gv");    
   }
 
   if(args.isUserProvided("explicit")) {

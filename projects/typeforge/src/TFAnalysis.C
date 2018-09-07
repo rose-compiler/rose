@@ -4,6 +4,7 @@
 #include <vector>
 #include "SgNodeHelper.h"
 #include "abstract_handle.h"
+#include <boost/graph/graphviz.hpp>
 
 using namespace std;
 using namespace AbstractHandle;
@@ -225,6 +226,35 @@ void TFAnalysis::writeAnalysis(string fileName){
   }
 }
 
+void TFAnalysis::writeGraph(string fileName){
+  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> SetGraph;
+  SetGraph graph(0);
+  map<SgNode*, SetGraph::vertex_descriptor> desMap;
+  vector<string> names;
+  for(auto i = setMap.begin(); i != setMap.end(); ++i){
+    string name = "";
+    string funName = getFunctionNameOfNode(i->first);
+    SgSymbol* varSym = nullptr;
+    if(SgInitializedName* leftInit = isSgInitializedName(i->first)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
+    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
+    else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
+    if(varSym) name = SgNodeHelper::symbolToString(varSym);
+    name = funName + "::" +name;
+    SetGraph::vertex_descriptor vDes = boost::add_vertex(graph);
+    desMap[i->first] = vDes;
+    names.push_back(name);
+  } 
+  for(auto i = setMap.begin(); i != setMap.end(); ++i){
+    for(auto j = i->second->begin(); j != i->second->end(); ++j){
+      if(desMap[i->first] < desMap[*j]) boost::add_edge(desMap[i->first], desMap[*j], graph);
+    }
+  }
+  fstream fileStream;
+  fileStream.open(fileName, ios::out | ios::trunc);
+  boost::write_graphviz(fileStream, graph, boost::make_label_writer((&names[0])));
+  fileStream.close();
+}
+
 void TFAnalysis::linkVariables(SgNode* key, SgType* type, SgExpression* expression){
   RoseAst ast(expression);
   for(RoseAst::iterator i = ast.begin(); i!=ast.end(); i++){
@@ -232,6 +262,9 @@ void TFAnalysis::linkVariables(SgNode* key, SgType* type, SgExpression* expressi
       if(sameType(exp->get_type(), type)){
         if(SgFunctionCallExp* funCall = isSgFunctionCallExp(exp)){
           SgFunctionDeclaration* funDec = funCall->getAssociatedFunctionDeclaration();
+          SgFunctionDefinition* funDef = SgNodeHelper::determineFunctionDefinition(funCall);
+          if(!funDef) continue;
+          funDec = funDef->get_declaration();
           addToMap(key, funDec);
           i.skipChildrenOnForward();
         }
