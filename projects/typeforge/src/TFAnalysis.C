@@ -1,13 +1,12 @@
 #include "sage3basic.h"
 #include "TFAnalysis.h"
+#include "TFHandles.h"
 #include <iostream>
 #include <vector>
 #include "SgNodeHelper.h"
-#include "abstract_handle.h"
 #include <boost/graph/graphviz.hpp>
 
 using namespace std;
-using namespace AbstractHandle;
 
 SgType* getBaseType(SgType* type){
   if(SgArrayType* arrayType = isSgArrayType(type)) return arrayType->get_base_type();

@@ -3,17 +3,15 @@
 #include "TFSpecFrontEnd.h"
 #include "TFTransformation.h"
 #include "CppStdUtilities.h"
-
+#include "TFHandles.h"
 #include <iostream>
 #include <vector>
 #include "SgNodeHelper.h"
 #include <regex>
-#include "abstract_handle.h"
 #include "CppStdUtilities.h"
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
-using namespace AbstractHandle;
 
 //Returns base type of varInitName if the name ofthe base type matches typename. Else returns nullptr.
 SgType* checkType(SgInitializedName* varInitName, string typeName) {
@@ -196,40 +194,23 @@ HandleCommand::HandleCommand(std::string nodeHandle, std::string toType, bool ba
 }
 
 int HandleCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
-  abstract_handle* ahandle = nullptr;
-  try{
-    abstract_node* rootNode = buildroseNode(root);
-    abstract_handle* rootHandle = new abstract_handle(rootNode);
-    ahandle = new abstract_handle(rootHandle,handle);
-  }catch(...){}
-  if(ahandle != nullptr){
-    if(abstract_node* anode = ahandle->getNode()){
-      SgNode* targetNode = (SgNode*) anode->getNode();
-      if(SgVariableDeclaration* varDec = isSgVariableDeclaration(targetNode)){
-        SgScopeStatement* scope = varDec->get_scope();
-        SgType* newBuiltType=buildTypeFromStringSpec(newType,scope);
-        tt.addHandleTransformationToList(_list,newBuiltType,base,targetNode,listing);
-        return false;
-      }
-      else if(SgInitializedName* initName = isSgInitializedName(targetNode)){
-        SgScopeStatement* scope = isSgDeclarationStatement(initName->get_parent())->get_scope();
-        SgType* newBuiltType=buildTypeFromStringSpec(newType,scope);
-        tt.addHandleTransformationToList(_list,newBuiltType,base,targetNode,listing);
-        return false;
-      }
-      else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(targetNode)){
-        SgFunctionDefinition* funDef = funDec->get_definition();
-        SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
-        tt.addHandleTransformationToList(_list,newBuiltType,base,targetNode,listing);
-        return false;
-      }
+  vector<SgNode*> nodeVector = TFHandles::getNodeVectorFromString(root, handle);
+  for(auto i = nodeVector.begin(); i != nodeVector.end(); ++i){
+    if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*i)){
+      SgScopeStatement* scope = varDec->get_scope();
+      SgType* newBuiltType=buildTypeFromStringSpec(newType,scope);
+      tt.addHandleTransformationToList(_list,newBuiltType,base,varDec,listing);
     }
-    else{
-      cerr<<"Error: Command "<<commandNumber<<": invalid node specified by handle "<<handle<<"."<<endl;
+    else if(SgInitializedName* initName = isSgInitializedName(*i)){
+      SgScopeStatement* scope = isSgDeclarationStatement(initName->get_parent())->get_scope();
+      SgType* newBuiltType=buildTypeFromStringSpec(newType,scope);
+      tt.addHandleTransformationToList(_list,newBuiltType,base,initName,listing);
     }
-  }
-  else{
-    cerr<<"Error: Command "<<commandNumber<<": invalid handle "<<handle<<"."<<endl;
+    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(*i)){
+      SgFunctionDefinition* funDef = funDec->get_definition();
+      SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+      tt.addHandleTransformationToList(_list,newBuiltType,base,funDec,listing);
+    }
   }
   return false;
 }

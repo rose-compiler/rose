@@ -3,9 +3,10 @@
 #include "SgNodeHelper.h"
 #include "TFTransformation.h"
 #include "AstTerm.h"
-#include "abstract_handle.h"
 #include "CppStdUtilities.h"
 #include <boost/algorithm/string.hpp>
+#include "TFHandles.h"
+
 using namespace std;
 
 //Methods for building transform list
@@ -54,9 +55,7 @@ int ReadWriteTransformation::run(SgProject* project, RoseAst ast, TFTransformati
 }
 
 string getHandle(SgNode* node){
- AbstractHandle::abstract_node* anode = AbstractHandle::buildroseNode(node);
- AbstractHandle::abstract_handle* ahandle = new  AbstractHandle::abstract_handle(anode);
- return ahandle->toString(); 
+ return TFHandles::getAbstractHandle(node); 
 }
 
 SgScopeStatement* getNextScope(SgNode* node){

@@ -42,7 +42,7 @@
 #define REPLACE_PRAGMA     "replace_pragma"
 #define FIND_SETS          "find_sets"
 #define ADD_SPEC           "import"
-
+#define AD_INST            "ad_intermediate_instrumentation"
 using namespace std;
 
 bool isComment(string s) {
@@ -94,6 +94,9 @@ int TFSpecFrontEnd::convertJSON(string fileName){
     else if(action == TRANSFORM){
       commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
     }
+    else if(action == AD_INST){
+      commandList.addTransformCommand(act.getScope(), act.getFromType(), action);
+    } 
     else if(action == LIST_CHANGES_TYPE || action == LIST_CHANGES_BASE || deprecatedList){
       string scope = act.getScope();
       commandList.addFileCommand(act.getName());

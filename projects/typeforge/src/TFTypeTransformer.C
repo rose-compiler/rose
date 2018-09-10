@@ -5,11 +5,8 @@
 #include "AstMatching.h"
 #include "CppStdUtilities.h"
 #include <ToolConfig.hpp>
-#include "abstract_handle.h"
-#include "roseAdapter.h"
-
+#include "TFHandles.h"
 using namespace std;
-using namespace AbstractHandle;
 
 // static member
 bool TFTypeTransformer::_traceFlag=false;
@@ -153,10 +150,9 @@ void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgT
   if(!fromType || !toType || !handleNode || !_outConfig) return;
   if(_writeConfig == "") return;
   if(varName == "") return;
-  abstract_node* anode = buildroseNode(handleNode);
-  abstract_handle* ahandle = new abstract_handle(anode);
-  if(base) _outConfig->addReplaceVarBaseType(ahandle->toString(), varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
-  else _outConfig->addReplaceVarType(ahandle->toString(), varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
+  string handle = TFHandles::getAbstractHandle(handleNode);
+  if(base) _outConfig->addReplaceVarBaseType(handle, varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
+  else _outConfig->addReplaceVarType(handle, varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
 }
 
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
