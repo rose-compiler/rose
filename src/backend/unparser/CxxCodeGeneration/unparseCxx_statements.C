@@ -6754,6 +6754,12 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                tmp_type = decl_item->get_type();
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
 
+            // TV (09/06/2018): if auto keyword is used then we unparse the associated declared type (before `auto` is resolved)
+               if (decl_item->get_using_auto_keyword() == true && decl_item->get_auto_decltype() != NULL)
+                  {
+                    tmp_type = decl_item->get_auto_decltype();
+                  }
+
             // DQ (11/28/2004): Added to support new design
                tmp_init = decl_item->get_initializer();
 #if 0
@@ -6773,12 +6779,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
 #endif
-
-            // DQ (8/2/2014): Added support for "auto" keyword (used in C++11).
-               if (decl_item->get_using_auto_keyword() == true)
-                  {
-                    curprint("auto ");
-                  }
                
                if (namedType != NULL)
                   {

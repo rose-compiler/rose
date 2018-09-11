@@ -1304,6 +1304,8 @@ Grammar::setUpNodes ()
   // DQ (8/2/2014): Using C++11 auto keyword.
      InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype("SgType *","auto_decltype","= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
      InitializedName.setDataPrototype("bool","using_device_keyword","= false",

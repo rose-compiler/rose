@@ -808,6 +808,13 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     break;
                   }
 
+            // TV (09/06/2018): Adding support for auto typed variable declaration.
+               case T_AUTO:
+                  {
+                    unparseAutoType(type, info);
+                    break;
+                  }
+
              // DQ (3/10/2014): Added so that we could get past this call in the dot file generator (fix later).
              // SgJavaWildcardType
                case T_JAVA_WILD:
@@ -3799,16 +3806,21 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
    {
-  // TV (05/01/2018): Continue to use SgTemplateType to handle the case of the auto-keyword in:
-  //                         "auto x = foo<int>();"
-  //                  where the return type of `foo` depends on the template argument:
-  //                         "template <class T> T foo();"
-  //                  In this case, the type is represented by a template-param which is unnamed without a parent scope.
-
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
-  // TODO Is it still used?
+     ROSE_ASSERT(false);
+   }
+
+void
+Unparse_Type::unparseAutoType(SgType* type, SgUnparse_Info& info)
+   {
+     SgAutoType* auto_type = isSgAutoType(type);
+     ROSE_ASSERT(auto_type != NULL);
+     bool unparse_type = info.isTypeFirstPart() || ( !info.isTypeFirstPart() && !info.isTypeSecondPart() );
+     if (unparse_type) {
+       curprint("auto ");
+     }
    }
 
 void

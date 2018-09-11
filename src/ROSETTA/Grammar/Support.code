@@ -11832,6 +11832,7 @@ SgInitializedName::post_construction_initialization()
 
   // DQ (8/2/2014): Adding support for C++11 auto keyword.
      p_using_auto_keyword = false;
+     p_auto_decltype = NULL;
 
   // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
      p_using_device_keyword = false;
@@ -11874,7 +11875,8 @@ SgInitializedName::SgInitializedName
   // DQ (8/9/2006): Added support for asm declarations on variables (using strings)
      p_register_name_string(""),
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
-     p_requiresGlobalNameQualificationOnType(false)
+     p_requiresGlobalNameQualificationOnType(false),
+     p_auto_decltype(NULL)
    {
      post_construction_initialization();
    }
@@ -11899,7 +11901,8 @@ SgInitializedName::SgInitializedName
      p_register_name_code(SgInitializedName::e_invalid_register),
      p_register_name_string(""),
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
-     p_requiresGlobalNameQualificationOnType(false)
+     p_requiresGlobalNameQualificationOnType(false),
+     p_auto_decltype(NULL)
    {
      p_startOfConstruct = fileInfo; 
      post_construction_initialization();
@@ -11993,6 +11996,7 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
 
   // DQ (8/2/2014): Adding support for C++11 auto keyword.
      p_using_auto_keyword                     = ptr.p_using_auto_keyword;
+     p_auto_decltype                          = ptr.p_auto_decltype;
 
   // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
      p_using_device_keyword                   = ptr.p_using_device_keyword;

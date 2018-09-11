@@ -400,6 +400,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 #endif
        // TV (04/16/2018): Ignore non-real type for now
           case V_SgNonrealType:
+          case V_SgAutoType:
              {
             // Ignore these cases (they contain no base types)...
                nodeList.insert(type);

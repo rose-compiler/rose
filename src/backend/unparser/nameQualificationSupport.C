@@ -480,6 +480,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeLongDouble:
           case V_SgTypeBool:
           case V_SgTypeWchar:
+
+       // TV (09/06/2018): Type of an unresolved auto keyword
+          case V_SgAutoType:
              {
                return_declaration = NULL;
                break;
@@ -2306,7 +2309,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                     case V_SgNonrealDecl:
                        {
                       // TV (05/10/2018): TODO
-#if 1
+#if 0
                          printf ("In NameQualificationTraversal::nameQualificationDepth(): Found a case of declaration == SgNonrealDecl => return 0\n");
 #endif
                          return 0;

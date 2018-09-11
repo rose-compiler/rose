@@ -103,6 +103,9 @@ Grammar::setUpTypes ()
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      NEW_TERMINAL_MACRO ( NonrealType, "NonrealType", "T_NONREAL");
 
+  // TV (04/11/2018): Type for declaration of auto typed variables
+     NEW_TERMINAL_MACRO ( AutoType        , "AutoType",         "T_AUTO" );
+
      NEW_TERMINAL_MACRO ( ModifierType        , "ModifierType",         "T_MODIFIER" );
 
   // DQ (4/14/2004): Support for new function modifiers (wrapper class design
@@ -198,7 +201,8 @@ Grammar::setUpTypes ()
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
-          TypeTuple            | TypeChar16              | TypeChar32, "Type","TypeTag", false);
+          TypeTuple            | TypeChar16              | TypeChar32                | AutoType,
+        "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
 
@@ -587,6 +591,7 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateDeclaration* decl = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(NonrealType,"SOURCE_CREATE_TYPE_FOR_NONREAL_TYPE","SgNonrealDecl* decl = NULL");
+     CUSTOM_CREATE_TYPE_MACRO(AutoType,"SOURCE_CREATE_TYPE_FOR_AUTO_TYPE","SgNode* node = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(JavaWildcardType,
             "SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE",
@@ -727,6 +732,9 @@ Grammar::setUpTypes ()
 
      NonrealType.setFunctionPrototype ("HEADER_NONREAL_TYPE", "../Grammar/Type.code" );
      NonrealType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+     AutoType.setFunctionPrototype ("HEADER_AUTO_TYPE", "../Grammar/Type.code" );
+     AutoType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -1052,6 +1060,8 @@ Grammar::setUpTypes ()
 
      NonrealType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+     AutoType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
      JavaParameterizedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
      JavaQualifiedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -1151,6 +1161,7 @@ Grammar::setUpTypes ()
 
      ClassType.setFunctionSource             ( "SOURCE_CLASS_TYPE", "../Grammar/Type.code");
      NonrealType.setFunctionSource           ( "SOURCE_NONREAL_TYPE", "../Grammar/Type.code");
+     AutoType.setFunctionSource           ( "SOURCE_AUTO_TYPE", "../Grammar/Type.code");
      JavaParameterizedType.setFunctionSource ( "SOURCE_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code");
      JavaQualifiedType.setFunctionSource     ( "SOURCE_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code");
      JavaWildcardType.setFunctionSource      ( "SOURCE_JAVA_WILDCARD_TYPE", "../Grammar/Type.code");
