@@ -7072,7 +7072,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
        // DQ (6/1/2011): It can't be this simple since con_init->get_declaration() can be NULL where in a struct there is no constructor defined.
 #if 0
-          printf ("con_init->get_declaration() = %p \n",con_init->get_declaration());
+          printf ("con_init->get_declaration() = %p (%s) \n",con_init->get_declaration(),con_init->get_declaration()?con_init->get_declaration()->class_name().c_str():"");
        // curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
 #endif
           if (con_init->get_declaration() != NULL)

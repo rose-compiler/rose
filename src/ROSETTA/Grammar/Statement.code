@@ -4143,9 +4143,10 @@ SgStatement::get_scope(void) const
      ROSE_ASSERT (stmt != NULL);
 
   // Make sure that parents have been set already (assume this means that all parents have been set)
+#define WARN_NULL_PARENT_IN_GET_SCOPE 0
+#if WARN_NULL_PARENT_IN_GET_SCOPE
      if (get_parent() == NULL)
         {
-       // printf ("Error: found IR node where parent was not set = %p = %s \n",this,sage_class_name());
           printf ("Note: found IR node where parent was not set = %p = %s (may not be required) \n",this,class_name().c_str());
        // ROSE_ASSERT(get_file_info() != NULL);
           if (get_file_info() != NULL)
@@ -4153,6 +4154,8 @@ SgStatement::get_scope(void) const
                get_file_info()->display("Location of problematic IR node");
              }
         }
+#endif
+
   // ROSE_ASSERT (get_parent() != NULL);
 
 #if 0

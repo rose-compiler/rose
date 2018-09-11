@@ -384,6 +384,10 @@ HEADER_NONREAL_TYPE_START
           SgNonrealType ( const SgNonrealType & X );
 HEADER_NONREAL_TYPE_END
 
+HEADER_AUTO_TYPE_START
+          SgAutoType ( const SgAutoType & X );
+HEADER_AUTO_TYPE_END
+
 
 HEADER_JAVA_PARAMETERIZED_TYPE_START
           SgJavaParameterizedType ( const SgJavaParameterizedType & X );
@@ -3573,6 +3577,28 @@ SgNonrealType::get_name() const {
 }
 
 SOURCE_NONREAL_TYPE_END
+
+SOURCE_AUTO_TYPE_START
+
+SgAutoType::SgAutoType ( const SgAutoType & X )
+   : SgType(X)
+   {
+   }
+
+SgName
+SgAutoType::get_mangled(void) const
+   {
+     std::ostringstream oss;
+     oss << "auto_" << std::hex << this;
+     return SgName(oss.str());
+   }
+
+SgName
+SgAutoType::get_name() const {
+  return SgName("auto");
+}
+
+SOURCE_AUTO_TYPE_END
 
 SOURCE_JAVA_PARAMETERIZED_TYPE_START
 SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType & X )
@@ -7327,6 +7353,19 @@ SgNonrealType::createType(SgNonrealDecl* decl, SgExpression* optional_fortran_ty
    }
 
 SOURCE_CREATE_TYPE_FOR_NONREAL_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_AUTO_TYPE_START
+
+SgAutoType*
+SgAutoType::createType(SgNode* n, SgExpression* optional_fortran_type_kind)
+   {
+     printf ("SgAutoType::createType(SgNode*,SgExpression*) implemented to return NULL \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+
+SOURCE_CREATE_TYPE_FOR_AUTO_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_START
 // SgPointerType* SgPointerType::createType(SgType* base_type)
