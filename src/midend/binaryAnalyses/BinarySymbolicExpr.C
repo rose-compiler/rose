@@ -1403,13 +1403,38 @@ OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
 
 Ptr
 OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
-    // Result has all bits set if any argument has all bits set
+    // Result has all bits set if any argument has all bits set.
+    // Zeros have no effect on the result
+    std::vector<bool> removed(inode->nChildren(), false);
+    bool modified = false;
     for (size_t i=0; i<inode->nChildren(); ++i) {
         LeafPtr child = inode->child(i)->isLeafNode();
-        if (child && child->isNumber() && child->bits().isAllSet())
-            return makeConstant(child->bits(), inode->comment(), child->flags());
+        if (child && child->isNumber()) {
+            if (child->bits().isEqualToZero()) {
+                removed[i] = modified = true;
+            } else if (child->bits().isAllSet()) {
+                return makeConstant(child->bits(), inode->comment(), child->flags());
+            }
+        }
     }
-    return Ptr();
+    Nodes newargs;
+    for (size_t i=0; i<inode->nChildren(); ++i) {
+        if (!removed[i])
+            newargs.push_back(inode->child(i));
+    }
+
+    // If we removed all the arguments, return 0. I.e., (or 0) => (or) => 0
+    if (newargs.empty())
+        return makeInteger(inode->nBits(), 0, inode->comment());
+
+    // If there's only one argument left, return it. I.e., (or 0 x 0) => (or x) => x
+    if (newargs.size() == 1)
+        return newargs[0];
+
+    // Return original or modified expression
+    if (!modified)
+        return Ptr();
+    return Interior::create(0, inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
