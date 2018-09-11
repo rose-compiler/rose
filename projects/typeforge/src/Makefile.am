@@ -49,20 +49,9 @@ check-typeforge: typeforge
 	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
 	./typeforge --plugin=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
 	./typeforge --plugin=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C 
-	./typeforge --set-analysis $(srcdir)/tests/fft.cpp
-	./typeforge --set-analysis $(srcdir)/tests/sum2pi_x.c
-	./typeforge --set-analysis $(srcdir)/tests/setTest.C 
-	omps -x dotGraph.gv | dot | gvpack -array3 | neato -Tpng -n2 -o dotGraph.png
-	rm *.json
-	./typeforge --spec-file=$(srcdir)/tests/output_test.json --typeforge-out=command_out.json $(srcdir)/tests/fft.cpp
-	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json $(srcdir)/tests/fft.cpp
-	./typeforge --set-analysis --typeforge-out=set.json $(srcdir)/tests/fft.cpp
-	./typeforge --plugin=command_out.json $(srcdir)/tests/fft.cpp --compile
-	mv rose_fft.cpp fft.cpp
-	./typeforge --plugin=set.json $(srcdir)/tests/fft.cpp --compile
-	diff craft_initial.json command_out.json
-	diff rose_fft.cpp fft.cpp
-	rm rose_* fft.cpp
+	./typeforge --plugin=$(srcdir)/tests/set_out_test.json --typeforge-out=set.json $(srcdir)/tests/setTest.C
+	./typeforge --plugin=set.json --trace $(srcdir)/tests/setTest.C
+	./typeforge --plugin=$(srcdir)/tests/var_set_change.json --trace $(srcdir)/tests/setTest.C
 	rm -f a.out *.json
 
 #check-typeforge:

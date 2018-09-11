@@ -35,8 +35,12 @@
 #define CHANGE_VAR_BASE    "change_var_basetype"
 #define CHANGE_HANDLE_TYPE "change_handle_type"
 #define CHANGE_HANDLE_BASE "change_handle_basetype"
+#define CHANGE_SET_TYPE    "change_set_type"
+#define CHANGE_SET_BASE    "change_set_basetype"
 #define LIST_CHANGES_TYPE  "list_changes_type"
 #define LIST_CHANGES_BASE  "list_changes_basetype"
+#define SET_CHANGES_TYPE   "set_changes_type"
+#define SET_CHANGES_BASE   "set_changes_basetype"
 #define TRANSFORM          "transform"
 #define ADD_INCLUDE        "add_include"
 #define REPLACE_PRAGMA     "replace_pragma"
@@ -69,7 +73,7 @@ int TFSpecFrontEnd::convertJSON(string fileName){
     bool deprecatedEvery   = ((action == "replace_type") || (action == "replace_basetype") || (action == "change_type") || (action == "change_basetype"));
     bool deprecatedList    = ((action == "list_replacements") || (action == "list_basereplacements"));
     bool deprecatedInclude = ((action == "introduce_include"));
-    if(action == CHANGE_VAR_BASE || action == CHANGE_EVERY_BASE || action == LIST_CHANGES_BASE || deprecatedBase) base = true;
+    if(action == CHANGE_VAR_BASE || action == CHANGE_EVERY_BASE || action == LIST_CHANGES_BASE || action == SET_CHANGES_BASE || action == CHANGE_SET_BASE || deprecatedBase) base = true;
     if(action == CHANGE_VAR_TYPE || action == CHANGE_VAR_BASE || deprecatedVar){
       if(handle != ""){
         commandList.addHandleCommand(handle, act.getToType(), base, false);
@@ -91,6 +95,9 @@ int TFSpecFrontEnd::convertJSON(string fileName){
         commandList.addTypeCommand(functionConstructSpec, functionName, act.getToType(), act.getFromType(), base, false);
       }
     }
+    else if(action == CHANGE_SET_TYPE || action == CHANGE_SET_BASE){
+      commandList.addSetTypeCommand(act.getName(), act.getScope(), act.getToType(), act.getHandle(), base);
+    }
     else if(action == TRANSFORM){
       commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
     }
@@ -110,6 +117,9 @@ int TFSpecFrontEnd::convertJSON(string fileName){
         commandList.addTypeCommand("ret", scope, act.getToType(), act.getFromType(), base, true);
       }
       commandList.addFileCommand("");
+    }
+    else if(action == SET_CHANGES_TYPE || action == SET_CHANGES_BASE){
+      commandList.addListSetsCommand(act.getFromType(), act.getToType(), base);
     }
     else if(action == ADD_INCLUDE || deprecatedInclude){
       commandList.addIncludeCommand(act.getScope(), act.getName());

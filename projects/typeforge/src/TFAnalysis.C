@@ -48,6 +48,42 @@ bool sameType(SgType* typeOne, SgType* typeTwo){
   return false;  
 }
 
+string getFunctionNameOfNode(SgNode* node){
+  SgFunctionDefinition* funDef = SgNodeHelper::getClosestParentFunctionDefinitionOfLocatedNode(isSgLocatedNode(node));
+  if(!funDef){
+    SgNode* parent = node;
+    while(parent != nullptr){
+      parent = parent->get_parent();
+      if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(parent)){
+        return SgNodeHelper::getFunctionName(funDec);
+      }
+    }
+    return "$global";
+  }
+  else return SgNodeHelper::getFunctionName(funDef);
+}
+
+bool setIntersect(set<SgNode*>* set1, set<SgNode*>* set2){
+  for(auto i = set2->begin(); i != set2->end(); ++i){
+    if(set1->count(*i)) return true;
+  }
+  return false;
+}
+
+void inPlaceUnion(set<SgNode*>* set1, set<SgNode*>* set2){
+  for(auto i = set2->begin(); i != set2->end(); ++i){
+    set1->insert(*i);
+  }
+}
+
+set<SgNode*>* copySet(set<SgNode*>* oldSet){
+  set<SgNode*>* newSet = new set<SgNode*>;
+  for(auto i = oldSet->begin(); i != oldSet->end(); ++i){
+    newSet->insert(*i);
+  }
+  return newSet;
+}
+
 TFAnalysis::TFAnalysis(){}
 
 int TFAnalysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool base){
@@ -125,75 +161,6 @@ int TFAnalysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool 
       if(key && keyType && exp) linkVariables(key, keyType, exp);
     }
   }
-  return 0;
-}
-
-string getFunctionNameOfNode(SgNode* node){
-  SgFunctionDefinition* funDef = SgNodeHelper::getClosestParentFunctionDefinitionOfLocatedNode(isSgLocatedNode(node));
-  if(!funDef){
-    SgNode* parent = node;
-    while(parent != nullptr){
-      parent = parent->get_parent();
-      if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(parent)){
-        return SgNodeHelper::getFunctionName(funDec);
-      }
-    }
-    return "$global";
-  }
-  else return SgNodeHelper::getFunctionName(funDef);
-}
-
-bool setIntersect(set<SgNode*>* set1, set<SgNode*>* set2){
-  for(auto i = set2->begin(); i != set2->end(); ++i){
-    if(set1->count(*i)) return true;
-  }
-  return false;
-}
-
-void inPlaceUnion(set<SgNode*>* set1, set<SgNode*>* set2){
-  for(auto i = set2->begin(); i != set2->end(); ++i){
-    set1->insert(*i);
-  }
-}
-
-set<SgNode*>* copySet(set<SgNode*>* oldSet){
-  set<SgNode*>* newSet = new set<SgNode*>;
-  for(auto i = oldSet->begin(); i != oldSet->end(); ++i){
-    newSet->insert(*i);
-  }
-  return newSet;
-}
-
-string makeSetString(set<SgNode*>* variableSet){
-  string setString = "";
-  for(auto j = variableSet->begin(); j != variableSet->end(); ++j){
-    string name = "";
-    string funName = getFunctionNameOfNode(*j) + ":"; 
-    SgSymbol* varSym = nullptr;
-    if(SgInitializedName* leftInit = isSgInitializedName(*j)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
-    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(*j)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
-    else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*j)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
-    if(varSym) name = SgNodeHelper::symbolToString(varSym);
-    
-    if(setString != "") setString = setString + " & ";
-    setString = setString + funName + name; 
-  }
-  return setString;
-}
-
-void TFAnalysis::writeAnalysis(string fileName){
-  for(auto i = setMap.begin(); i != setMap.end(); ++i){
-    string leftName = "";
-    string rightFunName = getFunctionNameOfNode(i->first);
-    SgSymbol* varSym = nullptr;
-    if(SgInitializedName* leftInit = isSgInitializedName(i->first)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
-    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
-    else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
-    if(varSym){
-      leftName = SgNodeHelper::symbolToString(varSym);
-//      cout<<rightFunName<<":"<<leftName<<" => "<<makeSetString(i->second)<<endl;
-    }
-  }
   for(auto i = setMap.begin(); i != setMap.end(); ++i){
     bool intersect = false;
     set<SgNode*>* found = nullptr;
@@ -219,10 +186,50 @@ void TFAnalysis::writeAnalysis(string fileName){
       listSets.push_back(copy);
     }
   }
+  return 0;
+}
+
+set<SgNode*>* TFAnalysis::getSet(SgNode* node){
+  for(auto i = listSets.begin(); i != listSets.end(); ++i){
+    if((*i)->count(node)) return *i;
+  }
+  return nullptr;
+}
+
+string makeSetString(set<SgNode*>* variableSet){
+  string setString = "";
+  for(auto j = variableSet->begin(); j != variableSet->end(); ++j){
+    string name = "";
+    string funName = getFunctionNameOfNode(*j) + ":"; 
+    SgSymbol* varSym = nullptr;
+    if(SgInitializedName* leftInit = isSgInitializedName(*j)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
+    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(*j)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
+    else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*j)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
+    if(varSym) name = SgNodeHelper::symbolToString(varSym);
+    
+    if(setString != "") setString = setString + "==";
+    setString = setString + funName + name; 
+  }
+  return setString;
+}
+
+void TFAnalysis::writeAnalysis(SgType* type, string toTypeString){
+  for(auto i = setMap.begin(); i != setMap.end(); ++i){
+    string leftName = "";
+    string rightFunName = getFunctionNameOfNode(i->first);
+    SgSymbol* varSym = nullptr;
+    if(SgInitializedName* leftInit = isSgInitializedName(i->first)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
+    else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
+    else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
+    if(varSym){
+      leftName = SgNodeHelper::symbolToString(varSym);
+//      cout<<rightFunName<<":"<<leftName<<" => "<<makeSetString(i->second)<<endl;
+    }
+  }
   for(auto i = listSets.begin(); i != listSets.end(); ++i){
     string nameString = makeSetString(*i);
     string handle = TFHandles::getHandleVectorString(*(*i));
-    TFToolConfig::addChangeVarBaseType(handle, nameString, "*", "", "double", "float");
+    TFToolConfig::addChangeVarBaseType(handle, nameString, "*", "", type->unparseToString(), toTypeString);
   }
 }
 

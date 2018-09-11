@@ -144,7 +144,7 @@ int main (int argc, char* argv[])
   if(args.isUserProvided("set-analysis")){
     TFAnalysis analysis;
     analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
-    analysis.writeAnalysis("");    
+    analysis.writeAnalysis(SageBuilder::buildDoubleType(), "float");    
     analysis.writeGraph("dotGraph.gv");
     TFToolConfig::write();    
   }
