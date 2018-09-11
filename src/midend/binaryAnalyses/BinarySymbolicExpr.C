@@ -1426,27 +1426,41 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 Ptr
 XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
+    // If any argument is zero, then it doesn't contribute to the final answer.
     std::vector<bool> removed(inode->nChildren(), false);
     bool modified = false;
     for (size_t i=0; i<inode->nChildren(); ++i) {
         if (removed[i])
             continue;
-        for (size_t j=i+1; j<inode->nChildren(); ++j) {
-            if (!removed[j] && inode->child(i)->mustEqual(inode->child(j), solver)) {
-                removed[i] = removed[j] = modified = true;
-                break;
+        LeafPtr leaf = inode->child(i)->isLeafNode();
+        if (leaf && leaf->isNumber() && leaf->bits().isEqualToZero()) {
+            removed[i] = modified = true;
+        } else {
+            for (size_t j=i+1; j<inode->nChildren(); ++j) {
+                if (!removed[j] && inode->child(i)->mustEqual(inode->child(j), solver)) {
+                    removed[i] = removed[j] = modified = true;
+                    break;
+                }
             }
         }
     }
-    if (!modified)
-        return Ptr();
     Nodes newargs;
     for (size_t i=0; i<inode->nChildren(); ++i) {
         if (!removed[i])
             newargs.push_back(inode->child(i));
     }
+
+    // If we removed all the arguments, return 0. I.e., (xor X X) = (xor) = 0
     if (newargs.empty())
         return makeInteger(inode->nBits(), 0, inode->comment());
+
+    // If there's only one argument left, return it. I.e., (xor X) == (xor X Y Y) == (xor X 0) == X
+    if (newargs.size() == 1)
+        return newargs[0];
+
+    // Return original or modified expression
+    if (!modified)
+        return Ptr();
     return Interior::create(0, inode->getOperator(), newargs, solver, inode->comment());
 }
 
