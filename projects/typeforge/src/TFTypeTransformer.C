@@ -4,7 +4,7 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "CppStdUtilities.h"
-#include <ToolConfig.hpp>
+#include "TFToolConfig.h"
 #include "TFHandles.h"
 using namespace std;
 
@@ -78,7 +78,7 @@ int HandleTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
 }
 
 int FileTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
-  if(fileName == "") tt->writeConfig();
+  if(fileName == "") return 0;//tt->writeConfig();
   else tt->setConfigFile(fileName);
   return 0;  
 }
@@ -113,24 +113,11 @@ int Transformer::addTransformation(string key, SgType* newType, SgNode* node){
 
 //Mangae config file if user specifies
 void TFTypeTransformer::setConfigFile(string fileName){
-  _writeConfig = fileName;
-  if(_outConfig == nullptr){
-    try{
-      _outConfig = new ToolConfig(fileName);
-    }catch(...){
-      _outConfig = new ToolConfig();
-    }
-    _outConfig->setToolID("typeforge");
-  }
+  TFToolConfig::open(fileName);
 }
 
 void TFTypeTransformer::writeConfig(){
-  if(_writeConfig != ""){
-    _outConfig->saveConfig(_writeConfig);
-  }
-  _writeConfig = "";
-  delete _outConfig;
-  _outConfig = nullptr;
+  TFToolConfig::write();
 }
 
 //Returns the name of the file the specified node is part of
@@ -147,12 +134,11 @@ std::string nathan_getNodeFileName(SgNode* node){
 
 //Adds an entry in the config file
 void TFTypeTransformer::nathan_addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
-  if(!fromType || !toType || !handleNode || !_outConfig) return;
-  if(_writeConfig == "") return;
+  if(!fromType || !toType || !handleNode) return;
   if(varName == "") return;
   string handle = TFHandles::getAbstractHandle(handleNode);
-  if(base) _outConfig->addReplaceVarBaseType(handle, varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
-  else _outConfig->addReplaceVarType(handle, varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
+  if(base) TFToolConfig::addChangeVarBaseType(handle, varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
+  else TFToolConfig::addChangeVarType(handle, varName, scope, nathan_getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
 }
 
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {

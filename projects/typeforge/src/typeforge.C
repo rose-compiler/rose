@@ -16,6 +16,7 @@
 #include "TFTypeTransformer.h"
 #include "TFSpecFrontEnd.h"
 #include "TFAnalysis.h"
+#include "TFToolConfig.h"
 
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
@@ -77,6 +78,7 @@ int main (int argc, char* argv[])
     ("plugin", po::value<vector<string> >(),"Name of Typeforge plugin files.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("csv-stats-file", po::value< string >(),"Generate file [args] with transformation statistics.")
+    ("typeforge-out", po::value< string >(),"File to store output inside of JSON.")
     ;
 
   hidden_desc.add_options()
@@ -135,11 +137,16 @@ int main (int argc, char* argv[])
   SgProject* sageProject=frontend (argvList); 
   TFTypeTransformer tt;
 
+  if(args.isUserProvided("typeforge-out")){
+    TFToolConfig::open(args["typeforge-out"].as<string>());
+  }
+
   if(args.isUserProvided("set-analysis")){
     TFAnalysis analysis;
     analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
     analysis.writeAnalysis("");    
-    analysis.writeGraph("dotGraph.gv");    
+    analysis.writeGraph("dotGraph.gv");
+    TFToolConfig::write();    
   }
 
   if(args.isUserProvided("explicit")) {
@@ -220,6 +227,8 @@ int main (int argc, char* argv[])
     tt.printTransformationStats(typeforgeSpecFrontEnd.getNumTypeReplace(),
 				tt,
 				tfTransformation);
+  
+    TFToolConfig::write();    
     backend(sageProject);
     return 0;
   }

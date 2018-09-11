@@ -18,7 +18,7 @@ typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge_DEPENDENCIES=
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C TFAnalysis.C TFHandles.C
+typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C TFAnalysis.C TFHandles.C TFToolConfig.C
 
 CHECK_DEFAULT=check-typeforge
 
@@ -53,6 +53,10 @@ check-typeforge: typeforge
 	./typeforge --set-analysis $(srcdir)/tests/sum2pi_x.c
 	./typeforge --set-analysis $(srcdir)/tests/setTest.C 
 	omps -x dotGraph.gv | dot | gvpack -array3 | neato -Tpng -n2 -o dotGraph.png
+	rm *.json
+	./typeforge --spec-file=$(srcdir)/tests/output_test.json --typeforge-out=command_out.json $(srcdir)/tests/fft.cpp
+	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json $(srcdir)/tests/fft.cpp
+	diff craft_initial.json command_out.json
 	rm -f a.out *.json
 
 #check-typeforge:

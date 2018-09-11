@@ -5,6 +5,7 @@
 #include <vector>
 #include "SgNodeHelper.h"
 #include <boost/graph/graphviz.hpp>
+#include "TFToolConfig.h"
 
 using namespace std;
 
