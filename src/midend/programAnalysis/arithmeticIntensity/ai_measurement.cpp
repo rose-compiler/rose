@@ -1,3 +1,5 @@
+#include "sage3basic.h"
+#include "inliner.h"
 #include "ai_measurement.h"
 #include "constantFolding.h"
 
