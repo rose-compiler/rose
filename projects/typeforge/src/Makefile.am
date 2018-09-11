@@ -56,7 +56,13 @@ check-typeforge: typeforge
 	rm *.json
 	./typeforge --spec-file=$(srcdir)/tests/output_test.json --typeforge-out=command_out.json $(srcdir)/tests/fft.cpp
 	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json $(srcdir)/tests/fft.cpp
+	./typeforge --set-analysis --typeforge-out=set.json $(srcdir)/tests/fft.cpp
+	./typeforge --plugin=command_out.json $(srcdir)/tests/fft.cpp --compile
+	mv rose_fft.cpp fft.cpp
+	./typeforge --plugin=set.json $(srcdir)/tests/fft.cpp --compile
 	diff craft_initial.json command_out.json
+	diff rose_fft.cpp fft.cpp
+	rm rose_* fft.cpp
 	rm -f a.out *.json
 
 #check-typeforge:

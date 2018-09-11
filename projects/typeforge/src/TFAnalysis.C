@@ -189,13 +189,11 @@ void TFAnalysis::writeAnalysis(string fileName){
     if(SgInitializedName* leftInit = isSgInitializedName(i->first)) varSym = SgNodeHelper::getSymbolOfInitializedName(leftInit);
     else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfFunctionDeclaration(funDec);
     else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
-    else cout<<"FAIL WRONG NODE\n";
     if(varSym){
       leftName = SgNodeHelper::symbolToString(varSym);
-      cout<<rightFunName<<":"<<leftName<<" => "<<makeSetString(i->second)<<endl;
-    }else cout<<"FAIL NO SYMBOL\n";
+//      cout<<rightFunName<<":"<<leftName<<" => "<<makeSetString(i->second)<<endl;
+    }
   }
-  cout<<"\n\n";
   for(auto i = setMap.begin(); i != setMap.end(); ++i){
     bool intersect = false;
     set<SgNode*>* found = nullptr;
@@ -222,7 +220,9 @@ void TFAnalysis::writeAnalysis(string fileName){
     }
   }
   for(auto i = listSets.begin(); i != listSets.end(); ++i){
-    cout<<makeSetString(*i)<<"\n";
+    string nameString = makeSetString(*i);
+    string handle = TFHandles::getHandleVectorString(*(*i));
+    TFToolConfig::addChangeVarBaseType(handle, nameString, "*", "", "double", "float");
   }
 }
 
