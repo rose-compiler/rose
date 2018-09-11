@@ -1,8 +1,8 @@
 #ifndef AI_MEASUREMENT_H
 #define AI_MEASUREMENT_H
-
+// Other .C files must include  "sage3basic.h" before including this file!!
 // Program analysis to estimate arithemetic intensity of one loop iteration
-#include <rosePublicConfig.h>
+//#include <rosePublicConfig.h>
 #include <fstream>
 #include <iostream>
 
