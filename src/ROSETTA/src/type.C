@@ -334,6 +334,8 @@ Grammar::setUpTypes ()
      PartialFunctionType.excludeFunctionPrototype   ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
      NamedType.excludeFunctionPrototype             ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
   // NamedType.setAutomaticGenerationOfCopyFunction(false);
+     NonrealType.excludeFunctionPrototype             ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
+     AutoType.excludeFunctionPrototype             ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
 
   // TypeUnknown.setFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
   // TypeUnknown.setFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
