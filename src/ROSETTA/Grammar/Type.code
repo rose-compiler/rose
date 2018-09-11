@@ -382,10 +382,14 @@ HEADER_CLASS_TYPE_END
 
 HEADER_NONREAL_TYPE_START
           SgNonrealType ( const SgNonrealType & X );
+          SgName get_mangled(void) const;
+          SgName get_name() const;
 HEADER_NONREAL_TYPE_END
 
 HEADER_AUTO_TYPE_START
           SgAutoType ( const SgAutoType & X );
+          SgName get_mangled(void) const;
+          SgName get_name() const;
 HEADER_AUTO_TYPE_END
 
 
