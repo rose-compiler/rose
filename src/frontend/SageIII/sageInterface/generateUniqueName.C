@@ -1704,6 +1704,16 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+            // TV (09/12/2018)
+               case V_SgNonrealBaseClass:
+                  {
+                    const SgNonrealBaseClass* baseClass = isSgNonrealBaseClass(node);
+                    key = "__nonreal_base_class_";
+                    ROSE_ASSERT(baseClass->get_base_class_nonreal() != NULL);
+                    key = key + generateUniqueName(baseClass->get_base_class_nonreal(),false);
+                    break;
+                  }
+
                case V_SgPragma:
                   {
                     const SgPragma* pragma = isSgPragma(node);
