@@ -4983,7 +4983,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library
   // to be linked in. (Not implemented yet).
      set_openmp(false);
-     string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); 
+     //string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); // Mac OS complains this function does not exist!
+     string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION); 
      ROSE_ASSERT (get_openmp() == false);
      // We parse OpenMP and then stop now since Building OpenMP AST nodes is a work in progress.
      // so the default behavior is to turn on them all
