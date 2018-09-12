@@ -1314,6 +1314,14 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+               case V_SgNonrealSymbol:
+                  {
+                    const SgNonrealSymbol* nrSymbol = isSgNonrealSymbol(symbol);
+                    key = nrSymbol->get_name();
+                    additionalSuffix = "__nonreal_symbol";
+                    break;
+                  }
+
             // All other SgSymbols
                default:
                   {
