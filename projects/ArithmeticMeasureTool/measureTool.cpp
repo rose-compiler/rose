@@ -1,4 +1,5 @@
 // Liao, 12/8/2014
+#include "rose.h"
 #include "ai_measurement.h"
 
 //Array Annotation headers
