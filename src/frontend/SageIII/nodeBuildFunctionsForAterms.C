@@ -15231,3 +15231,41 @@ SgWhenStmt* SgWhenStmt::build_node_from_nonlist_children(Sg_File_Info*, SgExpres
      SgWhenStmt* returnNode = NULL;
      return returnNode;
    }
+
+SgNonrealRefExp* SgNonrealRefExp::build_node_from_nonlist_children(Sg_File_Info*, SgNonrealSymbol*)
+   {
+     SgNonrealRefExp* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealBaseClass* SgNonrealBaseClass::build_node_from_nonlist_children(SgClassDeclaration*, bool, SgNonrealDecl*)
+   {
+     SgNonrealBaseClass* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealType* SgNonrealType::build_node_from_nonlist_children(SgDeclarationStatement*)
+   {
+     SgNonrealType* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealSymbol* SgNonrealSymbol::build_node_from_nonlist_children(SgNonrealDecl*)
+   {
+     SgNonrealSymbol* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealDecl* SgNonrealDecl::build_node_from_nonlist_children(Sg_File_Info*, SgName)
+   {
+     SgNonrealDecl* returnNode = NULL;
+     return returnNode;
+   }
+
+SgAutoType* SgAutoType::build_node_from_nonlist_children()
+   {
+     SgAutoType* returnNode = NULL;
+     return returnNode;
+   }
+
+
