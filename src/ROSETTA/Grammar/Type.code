@@ -382,14 +382,14 @@ HEADER_CLASS_TYPE_END
 
 HEADER_NONREAL_TYPE_START
           SgNonrealType ( const SgNonrealType & X );
-          SgName get_mangled(void) const;
-          SgName get_name() const;
+          virtual SgName get_mangled(void) const;
+          virtual SgName get_name() const;
 HEADER_NONREAL_TYPE_END
 
 HEADER_AUTO_TYPE_START
           SgAutoType ( const SgAutoType & X );
-          SgName get_mangled(void) const;
-          SgName get_name() const;
+          virtual SgName get_mangled(void) const;
+          virtual SgName get_name() const;
 HEADER_AUTO_TYPE_END
 
 
@@ -3571,8 +3571,7 @@ SgNonrealType::get_mangled(void) const
      return nrdecl->get_mangled_name();
    }
 
-SgName
-SgNonrealType::get_name() const {
+SgName SgNonrealType::get_name() const {
   SgDeclarationStatement * decl_stmt = get_declaration();
   ROSE_ASSERT(decl_stmt != NULL);
   SgNonrealDecl * nonreal_decl = isSgNonrealDecl(decl_stmt);

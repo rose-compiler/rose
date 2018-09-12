@@ -1060,9 +1060,13 @@ Grammar::setUpTypes ()
 
      ClassType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+     NonrealType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
      NonrealType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     NonrealType.setFunctionSource        ( "SOURCE_NONREAL_TYPE", "../Grammar/Type.code");
 
+     AutoType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
      AutoType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AutoType.setFunctionSource        ( "SOURCE_AUTO_TYPE", "../Grammar/Type.code");
 
      JavaParameterizedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -1162,8 +1166,6 @@ Grammar::setUpTypes ()
      FunctionType.setFunctionSource        ( "SOURCE_FUNCTION_TYPE", "../Grammar/Type.code");
 
      ClassType.setFunctionSource             ( "SOURCE_CLASS_TYPE", "../Grammar/Type.code");
-     NonrealType.setFunctionSource           ( "SOURCE_NONREAL_TYPE", "../Grammar/Type.code");
-     AutoType.setFunctionSource              ( "SOURCE_AUTO_TYPE", "../Grammar/Type.code");
      JavaParameterizedType.setFunctionSource ( "SOURCE_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code");
      JavaQualifiedType.setFunctionSource     ( "SOURCE_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code");
      JavaWildcardType.setFunctionSource      ( "SOURCE_JAVA_WILDCARD_TYPE", "../Grammar/Type.code");
