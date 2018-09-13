@@ -2789,6 +2789,12 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_END
 
 HEADER_NONREAL_DECL_START
 
+          SgName get_name (void) const;
+          void set_name (SgName name);
+
+          SgNonrealType* get_type (void) const;
+          void set_type (SgNonrealType* t);
+
           SgName get_mangled_name (void) const;
 
           virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
@@ -14403,6 +14409,22 @@ SOURCE_NONREAL_DECL_START
 
 void
 SgNonrealDecl::post_construction_initialization() {}
+
+SgName SgNonrealDecl::get_name (void) const {
+  return p_name;
+}
+
+void SgNonrealDecl::set_name (SgName name) {
+  p_name = name;
+}
+
+SgNonrealType* SgNonrealDecl::get_type (void) const {
+  return p_type;
+}
+
+void SgNonrealDecl::set_type (SgNonrealType* t) {
+  p_type = t;
+}
 
 SgName
 SgNonrealDecl::get_mangled_name (void) const {
