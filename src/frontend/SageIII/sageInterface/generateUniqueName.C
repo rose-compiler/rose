@@ -1172,6 +1172,16 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+               case V_SgTemplateVariableSymbol:
+                  {
+                    const SgTemplateVariableSymbol* valiableSymbol = isSgTemplateVariableSymbol(symbol);
+                    SgInitializedName* initializedName = valiableSymbol->get_declaration();
+                 // key = initializedName->get_mangled_name();
+                    key = generateUniqueName(initializedName,false);
+                    additionalSuffix = "__template_variable_symbol";
+                    break;
+                  }
+
                case V_SgClassSymbol:
                   {
                     const SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
