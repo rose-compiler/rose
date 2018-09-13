@@ -675,7 +675,7 @@ namespace ArithmeticIntensityMeasurement
     {
       SgType* t = (*citer).first;
       // at this point, we should not have array types any more
-      ROSE_ASSERT (isSgArrayType (t) == false); 
+      ROSE_ASSERT (isSgArrayType (t) == NULL); 
       int count = (*citer).second; 
       assert (t != NULL);
       assert (count>0);
