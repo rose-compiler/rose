@@ -166,3 +166,6 @@ clean-local:
 	rm -rf test2013_76_unparse_headers conftest_configure_test else_case_disambiguation_test.c
 	rm -f *.err *.passed *.failed
 
+status:
+	@$(MAKE) $(TEST_Source_passed)
+

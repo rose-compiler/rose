@@ -271,41 +271,10 @@ VALGRIND =
 
 TEST_TRANSLATOR = ../../testTranslator
 
-# A number of tests require the path to the A++ include directory 
-# and a number of other tests require a path to the source directory.
-# Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
-# $(TEST_Objects):
-# $(TEST_Objects): %.o: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
-# if !ROSE_USE_INSURE
-# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
-# #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-# #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-# else
-# #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-# #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
-# #	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-# #	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-# #	echo "Removing the just built copy of lt-testTranslator to save space..."
-# #	rm -f testTranslator_$(@:.o=)
-# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
-# endif
-
-# $(TEST_Sources_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
-# $(TEST_Sources): %.passed: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
 $(TEST_Sources): %.passed: $(TEST_TRANSLATOR)
 if !ROSE_USE_INSURE
-#	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
-#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else
-#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
-#	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	echo "Removing the just built copy of lt-testTranslator to save space..."
-#	rm -f testTranslator_$(@:.o=)
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
 endif
 
@@ -422,6 +391,9 @@ clean-local:
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
+
+status:
+	@$(MAKE) $(TEST_Sources)
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
