@@ -382,14 +382,14 @@ HEADER_CLASS_TYPE_END
 
 HEADER_NONREAL_TYPE_START
           SgNonrealType ( const SgNonrealType & X );
-          virtual SgName get_mangled(void) const;
-          virtual SgName get_name() const;
+//        virtual SgName get_mangled(void) const;
+//        virtual SgName get_name() const;
 HEADER_NONREAL_TYPE_END
 
 HEADER_AUTO_TYPE_START
           SgAutoType ( const SgAutoType & X );
-          virtual SgName get_mangled(void) const;
-          virtual SgName get_name() const;
+//        virtual SgName get_mangled(void) const;
+//        virtual SgName get_name() const;
 HEADER_AUTO_TYPE_END
 
 
@@ -3596,10 +3596,10 @@ SgAutoType::get_mangled(void) const
      return SgName(oss.str());
    }
 
-SgName
+/*SgName
 SgAutoType::get_name() const {
   return SgName("auto");
-}
+}*/
 
 SOURCE_AUTO_TYPE_END
 
