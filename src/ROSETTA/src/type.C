@@ -730,13 +730,14 @@ Grammar::setUpTypes ()
   // This is required only for the RoseExample tests using Boost 1.56 (no where else that I know of so far).
      ClassType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     NonrealType.setFunctionPrototype     ( "HEADER_NONREAL_TYPE", "../Grammar/Type.code" );
-     NonrealType.excludeFunctionPrototype ( "HEADER_GET_NAME",     "../Grammar/Type.code" );
-     NonrealType.excludeFunctionPrototype ( "HEADER_GET_MANGLED",  "../Grammar/Type.code" );
+     NonrealType.setFunctionPrototype ( "HEADER_NONREAL_TYPE", "../Grammar/Type.code" );
+     NonrealType.setFunctionPrototype ( "HEADER_GET_NAME",     "../Grammar/Type.code" );
+//   NonrealType.excludeFunctionPrototype ( "HEADER_GET_NAME",     "../Grammar/Type.code" );
+//   NonrealType.excludeFunctionPrototype ( "HEADER_GET_MANGLED",  "../Grammar/Type.code" );
 
      AutoType.setFunctionPrototype        ( "HEADER_AUTO_TYPE",   "../Grammar/Type.code" );
-     AutoType.excludeFunctionPrototype    ( "HEADER_GET_NAME",    "../Grammar/Type.code" );
-     AutoType.excludeFunctionPrototype    ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
+//   AutoType.excludeFunctionPrototype    ( "HEADER_GET_NAME",    "../Grammar/Type.code" );
+//   AutoType.excludeFunctionPrototype    ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -1060,11 +1061,11 @@ Grammar::setUpTypes ()
 
      ClassType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
-     NonrealType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
+//   NonrealType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
      NonrealType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      NonrealType.setFunctionSource        ( "SOURCE_NONREAL_TYPE", "../Grammar/Type.code");
 
-     AutoType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
+//   AutoType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
      AutoType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AutoType.setFunctionSource        ( "SOURCE_AUTO_TYPE", "../Grammar/Type.code");
 
