@@ -2296,11 +2296,11 @@ Grammar::setUpStatements ()
      NonrealDecl.setFunctionPrototype ( "HEADER_NONREAL_DECL", "../Grammar/Statement.code");
 
      NonrealDecl.setDataPrototype ( "SgName", "name", "= \"\"",
-                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NonrealDecl.setDataPrototype ( "SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      NonrealDecl.setDataPrototype ( "SgNonrealType*", "type", "= NULL",
-                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TV (04/16/2018):
      NonrealDecl.setDataPrototype ("int","template_parameter_position","= -1",
