@@ -8359,7 +8359,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
           if (get_openmp_lowering()||get_openmp())  
           {
-            string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION);
+            string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION);
             compilerNameString.push_back(ompmacro);
           }
         }
