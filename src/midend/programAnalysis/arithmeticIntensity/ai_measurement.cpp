@@ -1,4 +1,7 @@
+#include "sage3basic.h"
+#include "inliner.h"
 #include "ai_measurement.h"
+#include "constantFolding.h"
 
 using namespace std;
 using namespace Rose;
@@ -22,6 +25,9 @@ class IntExpressionEvaluationTraversal: public SgBottomUpProcessing<IntExpressio
     IntExpressionEvaluationAttribute evaluateSynthesizedAttribute (SgNode* n, SubTreeSynthesizedAttributes synthesizedAttributeList);
 };
 
+#if 0
+// midend/programTransformation/constantFolding/constantFolding.C has a more complete calculate_t()
+// we move that one into constantFolding.h
 // For T type which is compatible for all binary operators we are interested in.
 template<typename T>
 T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
@@ -48,7 +54,6 @@ T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
   }// end switch
   return foldedValue; 
 } 
-
 // For T type which is compatible for all unary operators we are interested in.
 template<typename T>
 T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
@@ -73,6 +78,8 @@ T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
   return foldedValue;
 }
 
+#endif 
+
 // 7*sizeof(float) + 5 * sizeof(double)
 IntExpressionEvaluationAttribute
 IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynthesizedAttributes synthesizedAttributeList)
@@ -85,18 +92,18 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
     if (SgSizeOfOp * sop = isSgSizeOfOp(exp))
     {
        SgType* t = sop->get_operand_type();
-       returnAttribute.newValue = ArithemeticIntensityMeasurement::getSizeOf (t);
+       returnAttribute.newValue = ArithmeticIntensityMeasurement::getSizeOf (t);
     }
     else if (SgBinaryOp* bop = isSgBinaryOp(exp) )
     {
       int lhsvalue, rhsvalue;
       lhsvalue =  synthesizedAttributeList[SgBinaryOp_lhs_operand_i].newValue;
       rhsvalue =  synthesizedAttributeList[SgBinaryOp_rhs_operand_i].newValue;
-      returnAttribute.newValue = calculate_t ( bop, lhsvalue, rhsvalue);
+      returnAttribute.newValue = ConstantFolding::calculate_t ( bop, lhsvalue, rhsvalue);
     }
     else if (SgValueExp* vexp = isSgValueExp(exp))
     {
-      returnAttribute.newValue = ArithemeticIntensityMeasurement::get_int_value (vexp);
+      returnAttribute.newValue = ArithmeticIntensityMeasurement::get_int_value (vexp);
     }
     else // propagate the result for others
     {
@@ -114,7 +121,7 @@ IntExpressionEvaluationTraversal::evaluateSynthesizedAttribute ( SgNode* astNode
 }
 
 //----------------------------------------
-namespace ArithemeticIntensityMeasurement
+namespace ArithmeticIntensityMeasurement
 {
   running_mode_enum running_mode = e_analysis_and_instrument;
 
@@ -293,7 +300,7 @@ namespace ArithemeticIntensityMeasurement
         {
           //TODO : we should ignore some unrecognized op kind
           //Another case list to ignore them one by one
-          cerr<< ArithemeticIntensityMeasurement::toString(c_type) <<endl; 
+          cerr<< ArithmeticIntensityMeasurement::toString(c_type) <<endl; 
           assert (false);  
           break;
         }
@@ -668,7 +675,7 @@ namespace ArithemeticIntensityMeasurement
     {
       SgType* t = (*citer).first;
       // at this point, we should not have array types any more
-      ROSE_ASSERT (isSgArrayType (t) == false); 
+      ROSE_ASSERT (isSgArrayType (t) == NULL); 
       int count = (*citer).second; 
       assert (t != NULL);
       assert (count>0);
@@ -928,15 +935,15 @@ namespace ArithemeticIntensityMeasurement
         case V_SgSubtractOp:
         case V_SgMinusAssignOp:  
           op_kind = e_minus;
-          break;	
+          break;        
         case V_SgMultiplyOp:
         case V_SgMultAssignOp:  
           op_kind = e_multiply;
-          break;	
+          break;        
         case V_SgDivideOp:
         case V_SgDivAssignOp:  
           op_kind = e_divide;
-          break;	
+          break;        
         default:
           break;  
       } //end switch
@@ -962,7 +969,7 @@ namespace ArithemeticIntensityMeasurement
           addFPCount (input, op_kind);
           FPVisitMAP[bop] = true;
         }
-      }	
+      } 
     }  // end for
 
     //Must update the total counter here
@@ -1011,7 +1018,7 @@ namespace ArithemeticIntensityMeasurement
     else
     {
       return false;
-    }	
+    }   
 
     // Now there is no turning point. Must succeed or assert failure. 
     //parse operation count value

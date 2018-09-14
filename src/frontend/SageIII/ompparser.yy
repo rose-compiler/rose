@@ -122,7 +122,7 @@ corresponding C type is union name defaults to YYSTYPE.
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2 DEPEND IN OUT INOUT MERGEABLE
-        LEXICALERROR IDENTIFIER 
+        LEXICALERROR IDENTIFIER MIN MAX
         READ WRITE CAPTURE SIMDLEN FINAL PRIORITY
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
@@ -662,6 +662,14 @@ reduction_operator : '+' {
                    | '-' {
                        ompattribute->setReductionOperator(e_reduction_minus); 
                        omptype = e_reduction_minus;
+                      }
+                   | MIN {
+                       ompattribute->setReductionOperator(e_reduction_min); 
+                       omptype = e_reduction_min;
+                      }
+                   | MAX {
+                       ompattribute->setReductionOperator(e_reduction_max); 
+                       omptype = e_reduction_max;
                       }
                    | '&' {
                        ompattribute->setReductionOperator(e_reduction_bitand);  
