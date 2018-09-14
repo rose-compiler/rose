@@ -6689,7 +6689,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
   // TV (08/17/2018): sourceFile is NULL when called from unparseToString
   //                  FIXME will it be needed with C++ 14 and 17 ???
-     if ( (sourceFile != NULL) && ( sourceFile->get_Cxx11_only() || sourceFile->get_Cxx14_only() ) )
+     if ( !( (sourceFile != NULL) && ( sourceFile->get_Cxx11_only() || sourceFile->get_Cxx14_only() ) ) )
         {
           need_cxx11_class_specifier = false;
         }
