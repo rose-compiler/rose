@@ -1839,6 +1839,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name), base_type, NULL, base_decl, parent_scope);
      ROSE_ASSERT(type_decl != NULL);
 
+  // TV (08/17/2018): moved it before building type as SgTypedefType::createType uses SgTemplateTypedefDeclaration::get_mangled_name which requires the scope to be set (else name of the associated type might not be unique)
+     type_decl->set_scope(scope);
+     type_decl->set_parent(scope);
+
 #if 0
      printf ("In buildTypedefDeclaration_nfi(): calling SgTypedefType::createType() using this = %p = %s \n",type_decl,type_decl->class_name().c_str());
 #endif
@@ -1890,45 +1894,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
              }
         }
 
-  // Symbol and SgTypedefType should be associated with the first nondefining declaration
-  // Create SgTypedefType
-  // This is already included in the constructor
-  // SgTypedefType::createType (type_decl);
-     if (scope != NULL)
-        {
-          SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
-          ROSE_ASSERT(typedef_symbol);
+     SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
+     ROSE_ASSERT(typedef_symbol);
 
-#if 1
-       // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
-          scope->insert_symbol(SgName(name),typedef_symbol);
-          type_decl->set_scope(scope);
-#else
-       // DQ (5/9/2013): If this is a namespace scope then we need so handle that case there there can be many since it is reentrant.
-          SgScopeStatement* associatedScope = NULL;
-          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
-          if (namespaceDefinition != NULL)
-             {
-               associatedScope = namespaceDefinition->get_global_definition();
-               if (namespaceDefinition->get_global_definition() == NULL)
-                  {
-                    printf ("ERROR: namespaceDefinition->get_global_definition() == NULL: namespaceDefinition = %p \n",namespaceDefinition);
-                  }
-               ROSE_ASSERT(associatedScope != NULL);
-             }
-            else
-             {
-               associatedScope = scope;
-             }
-          ROSE_ASSERT(associatedScope != NULL);
-
-          associatedScope->insert_symbol(SgName(name),typedef_symbol);
-          type_decl->set_scope(associatedScope);
-#endif
-
-       // DQ (3/20/2012): Commented added only: The parent is always the scope in this case, I think.
-          type_decl->set_parent(scope);
-        }
+     scope->insert_symbol(SgName(name),typedef_symbol);
 
 #if 0
   // DQ (3/20/2012): This is always false...since base_decl is never reset from NULL (above).
@@ -2074,6 +2043,10 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
      SgTemplateTypedefDeclaration* type_decl = new SgTemplateTypedefDeclaration(name, base_type, NULL, base_decl, parent_scope);
      ROSE_ASSERT(type_decl != NULL);
 
+  // TV (08/17/2018): moved it before building type as SgTypedefType::createType uses SgTemplateTypedefDeclaration::get_mangled_name which requires the scope to be set (else name of the associated type might not be unique)
+     type_decl->set_scope(scope);
+     type_decl->set_parent(scope);
+
   // DQ (2/27/2018): We now have to set the type explicitly.
      ROSE_ASSERT(type_decl->get_type() == NULL);
 
@@ -2096,12 +2069,6 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
   // DQ (2/27/2018): This should be non-null, since we just built the new type.
      ROSE_ASSERT(type_decl->get_type() != NULL);
 
-     ROSE_ASSERT(type_decl->get_scope() == NULL);
-
-     type_decl->set_scope(scope);
-
-     ROSE_ASSERT(type_decl->get_scope() != NULL);
-
 #if 0
      printf ("In buildTemplateTypedefDeclaration_nfi(): After SgTemplateTypedefDeclaration constructor: type_decl->get_scope() = %p \n",type_decl->get_scope());
 #endif
@@ -2113,8 +2080,8 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
   // Set the source code position information.
      setOneSourcePositionNull(type_decl);
 
-     if (scope != NULL)
-        {
+//     if (scope != NULL)
+//        {
 #if 0
           printf ("Test 2: Check on the symbol associatd with the declaration associated with the base type \n");
 #endif
@@ -2163,13 +2130,10 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
        // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
        // scope->insert_symbol(SgName(name),typedef_symbol);
           scope->insert_symbol(name, typedef_symbol);
-          type_decl->set_scope(scope);
 
-       // DQ (3/20/2012): Comment added only: The parent is always the scope in this case, I think.
-          type_decl->set_parent(scope);
 
           ROSE_ASSERT(scope->lookup_template_typedef_symbol(name) != NULL);
-        }
+//        }
 
 #if 0
   // We have to setup the template arguments (need specialization and partial specialization support).
@@ -13049,14 +13013,19 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
              {
                printf ("ERROR: nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
                printf ("ERROR: nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
-               printf ("ERROR: nondefdecl = %p = %s nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
+               printf ("ERROR: nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
 
                SgClassDeclaration* classDeclarationFromType = isSgClassDeclaration(nondefdecl->get_type()->get_declaration());
                ROSE_ASSERT(classDeclarationFromType != NULL);
 
-               printf ("classDeclarationFromType->get_name() = %s \n",classDeclarationFromType->get_name().str());
                printf ("nondefdecl->get_name() = %s \n",nondefdecl->get_name().str());
+               printf ("nondefdecl->get_type()->get_name() = %s \n",nondefdecl->get_type()->get_name().str());
+               printf ("nondefdecl->get_type()->get_declaration()->get_name() = %s \n",classDeclarationFromType->get_name().str());
 
+               printf ("nondefdecl->get_mangled_name() = %s \n",nondefdecl->get_mangled_name().getString().c_str());
+               printf ("nondefdecl->get_type()->get_mangled() = %s \n",nondefdecl->get_type()->get_mangled().getString().c_str());
+               printf ("nondefdecl->get_type()->get_declaration()->get_mangled_name() = %s \n",classDeclarationFromType->get_mangled_name().getString().c_str());
+#if 0
                nondefdecl->get_type()->get_declaration()->get_file_info()->display("nondefdecl->get_type()->get_declaration()");
 
             // DQ (7/24/2017): Added more debug information to support debugging test2014_187.C.
@@ -13079,6 +13048,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                     ROSE_ASSERT(nondefdecl->get_file_info() != NULL);
                     nondefdecl->get_file_info()->display("nondefdecl");
                   }
+#endif
              }
           ROSE_ASSERT(nondefdecl->get_type()->get_declaration() == nondefdecl);
 
