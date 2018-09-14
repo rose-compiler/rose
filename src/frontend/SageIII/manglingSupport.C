@@ -366,6 +366,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+               case V_SgRangeBasedForStatement:
                case V_SgCatchOptionStmt:
                case V_SgDoWhileStmt:
                case V_SgForStatement:

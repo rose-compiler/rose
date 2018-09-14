@@ -139,6 +139,7 @@ namespace OmpSupport
     e_reduction_plus, //+
     e_reduction_mul,  //* 
     e_reduction_minus, // -
+
       // C/C++ only
     e_reduction_bitand, // &  
     e_reduction_bitor,  // | 
@@ -151,9 +152,12 @@ namespace OmpSupport
     e_reduction_or, // .or.
     e_reduction_eqv,   // fortran .eqv. 
     e_reduction_neqv,   // fortran .neqv.
+
     // reduction intrinsic procedure name for Fortran  
+    // min, max also for C
     e_reduction_max,
     e_reduction_min, 
+
     e_reduction_iand,
     e_reduction_ior,
     e_reduction_ieor,

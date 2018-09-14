@@ -3464,12 +3464,13 @@ SgClassType::get_name() const
  *    typedef struct { int a; char b; } tag_t;
  *  then this routine returns an empty name.
  */
+#define DEBUG_CLASS_TYPE_GET_MANGLED 0
 SgName
 SgClassType::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
 
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
      printf ("In SgClassType::get_mangled(): get_name() = %s \n",get_name().str());
 #endif
 
@@ -3478,7 +3479,7 @@ SgClassType::get_mangled(void) const
      if (get_name().is_null() == false) // not anonymous
         {
           const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
           printf ("In SgClassType::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
 #endif
           if (class_decl != NULL)
@@ -3492,7 +3493,7 @@ SgClassType::get_mangled(void) const
                if (template_class_inst != NULL)
                   {
                     mangled_name = template_class_inst->get_mangled_name();
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
                     printf ("In SgClassType::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
 #endif
                   }
@@ -3510,14 +3511,14 @@ SgClassType::get_mangled(void) const
 
                  // This is for just a simple SgClassDeclaration.
                     mangled_name = class_decl->get_mangled_name();
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
                     printf ("In SgClassType::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
 #endif
                   }
              }
         }
 
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
      printf ("Leaving SgClassType::get_mangled(): mangled_name = %s \n",mangled_name.str());
 #endif
 
