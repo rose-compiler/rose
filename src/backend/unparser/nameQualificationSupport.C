@@ -1638,20 +1638,17 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                        {
                          SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(declaration);
                          ROSE_ASSERT(templateDeclaration != NULL);
-
                       // DQ (7/24/2018): This is output spew for Cxx11_tests/test2016_90.C and Cxx_tests/test2013_63.C (and others).
                       // It is not new, but it is also not clear that it is too much of an issue that we have some used of SgTemplateDeclaration
                       // in place since within templates we can at times not have enough information to build anything more specific.
                       // All of these issues appear to be related to input codes using boost: e.g. boost/graph/topological_sort.hpp.
 #if 0
                          printf ("In NameQualificationTraversal::nameQualificationDepth(): case V_SgTemplateDeclaration: still emitted for template template parameter (seen in template template argument of `this`)\n");
-//                       ROSE_ASSERT(false);
 #endif
 #if 0
                          printf ("Exiting as a test! \n");
                          ROSE_ASSERT(false);
 #endif
-
                          symbol = NULL;
 
                          break;

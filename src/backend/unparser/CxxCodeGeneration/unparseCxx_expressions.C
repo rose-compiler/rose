@@ -6455,10 +6455,11 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (4/12/2018): Check if this is a C++11 file (just to make sure), see C_tests/test2018_35.c).
      SgSourceFile* sourceFile = info.get_current_source_file();
-     ROSE_ASSERT(sourceFile != NULL);
+  // ROSE_ASSERT(sourceFile != NULL);
 
-     bool isCxx11 = sourceFile->get_Cxx11_only();
-     if (isCxx11 == false)
+  // TV (08/17/2018): sourceFile is NULL when called from unparseToString
+  //                  FIXME will it be needed with C++ 14 and 17 ???
+     if ( (sourceFile != NULL) && ( sourceFile->get_Cxx11_only() || sourceFile->get_Cxx14_only() ) )
         {
           need_cxx11_class_specifier = false;
         }
@@ -6920,13 +6921,14 @@ isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, Sg
 #if 0
                     printf ("Found special type used in C++ to indicate special syntax for C++11 initiazation list support \n");
 #endif
+#if 0
+                 // TV (07/18/18): happens in C++ 14 . With Kripke, EDG auto-detect C++14 (forcing C++11 causes C++14 related errors)
                  // Check if this is a C++11 file (just to make sure).
                     SgSourceFile* sourceFile = info.get_current_source_file();
                     ROSE_ASSERT(sourceFile != NULL);
-
                     bool isCxx11 = sourceFile->get_Cxx11_only();
                     ROSE_ASSERT(isCxx11 == true);
-
+#endif
                     is_cxx11_initialization_list = true;
 #if 0
                     printf ("Exiting as a test! \n");

@@ -5174,10 +5174,12 @@ SageInterface::getMangledNameFromCache( SgNode* astNode )
      return mangledName;
    }
 
+#define DEBUG_SAGE_INTERFACE_ADD_MANGLED_TO_CACHE 0
+
 std::string
 SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMangledName)
    {
-#if 0
+#if DEBUG_SAGE_INTERFACE_ADD_MANGLED_TO_CACHE
      printf ("In SageInterface::addMangledNameToCache(): TOP: astNode = %p = %s oldMangledName = %s \n",astNode,astNode->class_name().c_str(),oldMangledName.c_str());
 #endif
 
@@ -5276,7 +5278,9 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
 
      mangledNameCache.insert(pair<SgNode*,string>(astNode,mangledName));
 
-  // printf ("In SageInterface::addMangledNameToCache(): returning mangledName = %s \n",mangledName.c_str());
+#if DEBUG_SAGE_INTERFACE_ADD_MANGLED_TO_CACHE
+     printf ("In SageInterface::addMangledNameToCache(): returning mangledName = %s \n",mangledName.c_str());
+#endif
 
      return mangledName;
    }

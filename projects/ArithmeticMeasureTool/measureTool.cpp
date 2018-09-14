@@ -1,4 +1,5 @@
 // Liao, 12/8/2014
+#include "rose.h"
 #include "ai_measurement.h"
 
 //Array Annotation headers
@@ -9,7 +10,7 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-using namespace ArithemeticIntensityMeasurement; 
+using namespace ArithmeticIntensityMeasurement; 
 
 int local_loop_id=0; // unique loop id, at least for the context of each function
 bool considerLambda = false; // if lambda function bodies should be included for estimation. 
@@ -98,7 +99,6 @@ bool processStatements(SgNode* n)
   if (insideSystemHeader(isSgLocatedNode(n)) ||insideRAJAHeader(isSgLocatedNode(n)) )
     return false;
 
-
   // consider RAJA::forall loops, lambda functions only, estimate arithmetic intensity
   if (considerLambda)
   {
@@ -127,9 +127,9 @@ bool processStatements(SgNode* n)
       else if (running_mode == e_static_counting)
       {  
         SgStatement* lbody = loop->get_loop_body();
-//        CountFPOperations (lbody);
-//        CountMemOperations (lbody , false, true); // bool includeScalars /*= true*/, bool includeIntType /*= true*/
-//        FPCounters* fp_counters = getFPCounters (lbody);
+        //        CountFPOperations (lbody);
+        //        CountMemOperations (lbody , false, true); // bool includeScalars /*= true*/, bool includeIntType /*= true*/
+        //        FPCounters* fp_counters = getFPCounters (lbody);
         FPCounters* fp_counters = calculateArithmeticIntensity(lbody);
 
         ofstream reportFile(report_filename.c_str(), ios::app);
@@ -184,7 +184,6 @@ bool processStatements(SgNode* n)
     {
       instrumentLoopForCounting (doloop);
     }
-
   }
   return true;
 }

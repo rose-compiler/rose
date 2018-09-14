@@ -8,6 +8,6 @@
  *
  *   The execution of the code will write counters into a file like: 0 /path/to/firstloop:line:col 123 
  *   the 0th loop at location /path/to/firstloop:line:col, it has 123 iterations during the execution. 
- * /
+ */
 
 void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int* loop_iter_counters, int loop_count);

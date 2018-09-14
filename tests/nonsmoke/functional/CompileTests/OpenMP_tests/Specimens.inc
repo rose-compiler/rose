@@ -112,6 +112,7 @@ nonsmoke_specimens_openmp_c = \
     reduction2.c \
     reduction.c \
     reduction-classic.c \
+    reduction_min_max.c \
     rice1.c \
     section1.c \
     section.c \
@@ -255,6 +256,7 @@ nonsmoke_getDataSharingAttribute_c = \
     reduction2.c \
     reduction.c \
     reduction-classic.c \
+    reduction_min_max.c \
     rice1.c \
     section1.c \
     section.c \
@@ -315,5 +317,6 @@ nonsmoke_getDataSharingAttribute_c_verify = \
     empty.c \
     endif2.c \
     endif3.c \
-    endif.c
- 
+    endif.c \
+    reduction_min_max.c
+

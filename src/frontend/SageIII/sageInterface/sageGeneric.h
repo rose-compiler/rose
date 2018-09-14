@@ -934,7 +934,7 @@ namespace sg
 
     while (res.second != NULL)
     {
-      res = sg::dispatch(AncestorFinder(), res.second);
+      res = (typename AncestorFinder::Pair) sg::dispatch(AncestorFinder(), res.second);
     }
 
     return res.first;
