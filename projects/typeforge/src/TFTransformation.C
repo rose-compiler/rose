@@ -268,8 +268,11 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
       string oldCode0=(*j)["$ArrayAccessPattern"]->unparseToString();
       string newCode0=ds+".get("+e1+","+e2+")";
       string newCode=newCode0; // ';' is unparsed as part of the statement that contains the assignop
-      //SgNodeHelper::replaceAstWithString((*j)["$ArrayAccessPattern"], newCode);
+#if 1
+      SgNodeHelper::replaceAstWithString((*j)["$ArrayAccessPattern"], newCode);
+#else
       replaceNode((*j)["$ArrayAccessPattern"], newCode);
+#endif
       std::cout << std::endl;
       std::string lineCol=SgNodeHelper::sourceLineColumnToString((*j)["$ArrayAccessPattern"]);
       if(trace) {
