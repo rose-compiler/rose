@@ -68,6 +68,31 @@ class PragmaCommand : public Command{
     int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
 };
 
+class FileCommand : public Command{
+  std::string fileName;
+  public:
+    FileCommand(std::string file, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
+class SetTypeCommand : public Command{
+  std::string varName;
+  std::string funName;
+  std::string newType;
+  std::string handle;
+  public:
+    SetTypeCommand(std::string name, std::string fun, std::string toType, std::string varHandle, bool base, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
+class ListSetsCommand : public Command{
+  std::string fromType;
+  std::string toType;
+  public:
+    ListSetsCommand(std::string from, std::string to, bool base, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
 class CommandList{
   public:
     CommandList();
@@ -75,11 +100,14 @@ class CommandList{
     int runCommands(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation);
   
     void addVarTypeCommand(std::string varName, std::string funName, std::string newType, bool base, bool listing);
+    void addSetTypeCommand(std::string varName, std::string funName, std::string newType, std::string handle, bool base);
     void addTypeCommand(std::string location, std::string funName, std::string newType, std::string oldType, bool base, bool listing);
     void addHandleCommand(std::string handle, std::string newType, bool base, bool listing);
+    void addListSetsCommand(std::string fromType, std::string toType, bool base);
     void addTransformCommand(std::string funName, std::string typeName, std::string transformName);
     void addIncludeCommand(std::string funName, std::string includeName);
     void addPragmaCommand(std::string fromMatch, std::string toReplace);
+    void addFileCommand(std::string fileName);
     void nextCommand();
     TFTypeTransformer::VarTypeVarNameTupleList getTransformationList();
   private:

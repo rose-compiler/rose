@@ -1,4 +1,4 @@
-replace_vartype;main;f1;double
-replace_vartype;main;d1;float
-replace_vartype;function1;d1;float
-replace_vartype;main;varDoesNotExistTest;long double
+change_var_type;main;f1;double
+change_var_type;main;d1;float
+change_var_type;function1;d1;float
+change_var_type;main;varDoesNotExistTest;long double

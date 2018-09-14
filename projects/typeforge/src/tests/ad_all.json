@@ -21,12 +21,12 @@
       "to_type": "AD_end();"
     },
     {
-      "action": "introduce_include",
+      "action": "add_include",
       "name": "adapt.h",
       "scope": "*"
     },
     {
-      "action": "introduce_include",
+      "action": "add_include",
       "name": "adapt-impl.cpp",
       "scope": "main"
     },
@@ -37,13 +37,13 @@
       "name": "ad_intermediate_instrumentation"
     },
     {
-      "action": "change_basetype",
+      "action": "change_every_basetype",
       "scope": "*:args,ret,body",
       "from_type": "double",
       "to_type": "AD_real"
     },
     {
-      "action": "change_basetype",
+      "action": "change_every_basetype",
       "scope": "$global",
       "from_type": "double",
       "to_type": "AD_real"

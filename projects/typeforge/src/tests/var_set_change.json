@@ -6,10 +6,10 @@
   "tool_id": "Master",
   "actions": [
     {
-      "action": "list_changes_basetype",
-      "name": "craft_initial.json",
-      "to_type": "float",
-      "from_type": "double"
+      "action": "change_set_basetype",
+      "name": "set3_1",
+      "scope": "main",
+      "to_type": "float"
     }
   ]
 }

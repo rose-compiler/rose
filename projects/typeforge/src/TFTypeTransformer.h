@@ -5,7 +5,7 @@
 #include "CastTransformer.h"
 #include "TFTransformation.h"
 #include "ToolConfig.hpp"
-
+#include "TFAnalysis.h"
 class TFTypeTransformer;
 
 class Transformer{
@@ -55,6 +55,21 @@ class HandleTransformDirective : public TransformDirective{
     int run(SgProject* project, TFTypeTransformer* tt);
 };
 
+class FileTransformDirective : public TransformDirective{
+  private:
+    std::string fileName;
+  public:
+    FileTransformDirective(std::string file);
+    int run(SgProject* project, TFTypeTransformer* tt);
+};
+
+class SetTransformDirective : public TransformDirective{
+  private:
+    bool flag;
+  public:
+    SetTransformDirective(bool value);
+    int run(SgProject* project, TFTypeTransformer* tt);
+};
 
 class TFTypeTransformer {
  public:
@@ -64,18 +79,20 @@ class TFTypeTransformer {
   void addHandleTransformationToList(VarTypeVarNameTupleList& list,SgType* type,bool base,SgNode* handleNode, bool listing);
   void addTypeTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, SgType* fromType, bool listing);
   void addNameTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base=false, bool listing=false);
+  void addFileChangeToList(VarTypeVarNameTupleList& list, std::string file);
+  void addSetChangeToList(VarTypeVarNameTupleList& list, bool flag);
   // searches for variable in the given subtree 'root'
   int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type);
   int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type, bool base, SgType* fromType, bool listing);
   int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type);
   int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type, bool base, SgNode* handleNode, bool listing);
-  int nathan_changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base, SgNode* handleNode, bool listing);
+  int changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base, SgNode* handleNode, bool listing);
   void transformCommandLineFiles(SgProject* project);
   void transformCommandLineFiles(SgProject* project, VarTypeVarNameTupleList& list);
   void analyzeTransformations(SgProject* project, VarTypeVarNameTupleList& list);
   void executeTransformations(SgProject* project);
-  SgType* nathan_rebuildBaseType(SgType* root, SgType* newBaseType);
-  int nathan_changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode,bool listing);
+  SgType* rebuildBaseType(SgType* root, SgType* newBaseType);
+  int changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode,bool listing);
   void makeAllCastsExplicit(SgProject* root);
   void annotateImplicitCastsAsComments(SgProject* root);
   void transformCastsInCommandLineFiles(SgProject* project);
@@ -85,14 +102,20 @@ class TFTypeTransformer {
   int getTotalNumChanges();
   void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
-  void nathan_addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base);
-  void nathan_setConfig(ToolConfig* config);
-  void nathan_setConfigFile(std::string fileName);
-  int  nathan_changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing);
+  void addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base);
+  void setConfigFile(std::string fileName);
+  void writeConfig();
+  int  changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing);
+  bool changeSetFlag(bool value);
+  std::set<SgNode*>* getSet(SgNode* node, SgType* type);
+  void writeSets(SgProject* project, SgType* type, std::string toTypeString);
+  int changeSet(SgNode* node, SgType* fromType, SgType* toType, bool base, bool listing);
  private:
   CastTransformer _castTransformer;
   Transformer _transformer;
+  std::map<SgType*, TFAnalysis*> typeSets;
   static bool _traceFlag;
+  bool _setFlag = false;
   int _totalNumChanges=0;
   ToolConfig* _outConfig = nullptr;
   std::string _writeConfig = "";

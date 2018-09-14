@@ -12,43 +12,43 @@
       "name": "ad_intermediate_instrumentation"
     },
     {
-      "action": "replace_vartype",
+      "action": "change_var_type",
       "scope": "f0",
       "to_type": "float",
       "name": "a"
     },
     {
-      "action": "replace_vartype",
+      "action": "change_var_type",
       "scope": "f0",
       "to_type": "float",
       "name": "b"
     },
     {
-      "action": "replace_varbasetype",
+      "action": "change_var_basetype",
       "scope": "f0",
       "to_type": "float",
       "name": "c"
     },
     {
-      "action": "replace_varbasetype",
+      "action": "change_var_basetype",
       "scope": "f0",
       "to_type": "float",
       "name": "d"
     },
     {
-      "action": "replace_basetype",
+      "action": "change_every_basetype",
       "scope": "f0:body",
       "to_type": "double",
       "from_type": "float"
     },
     {
-      "action": "replace_basetype",
+      "action": "change_every_basetype",
       "scope": "$global",
       "to_type": "float",
       "from_type": "double"
     },
     {
-      "action": "replace_type",
+      "action": "change_every_type",
       "scope": "f0:body",
       "to_type": "float",
       "from_type": "double"
