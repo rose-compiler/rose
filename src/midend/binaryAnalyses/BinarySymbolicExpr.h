@@ -97,9 +97,9 @@ enum Operator {
     OP_XOR,                 /**< Bitwise exclusive disjunction. One or more operands, all the same width. */
     OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
 
-    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated
-    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated
-    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated
+    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
+    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
+    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
 };
 
 std::string toStr(Operator);
