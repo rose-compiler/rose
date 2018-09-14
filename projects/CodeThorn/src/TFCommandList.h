@@ -1,36 +1,10 @@
 #ifndef TYPEFORGE_COMMAND_LIST_H
 #define TYPEFORGE_COMMAND_LIST_H
 
-#include "TFCommandList.h"
 #include "sage3basic.h"
-#include "TFSpecFrontEnd.h"
-#include "TFTransformation.h"
-#include "CppStdUtilities.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <list>
-#include <vector>
-#include <map>
 #include "AstTerm.h"
-#include "SgNodeHelper.h"
-#include "AstProcessing.h"
-#include "AstMatching.h"
-#include "TFTypeTransformer.h"
-#include "TFSpecFrontEnd.h"
-#include "CastStats.h"
-#include "CastTransformer.h"
-#include "CastGraphVis.h"
-#include "CppStdUtilities.h"
-#include <utility>
-#include <functional>
-#include <regex>
-#include <algorithm>
-#include <list>
 #include "TFTransformation.h"
-#include <ToolConfig.hpp>
-#include "abstract_handle.h"
-#include "roseAdapter.h"
+#include "TFTypeTransformer.h"
 
 class Command{
   protected:
@@ -78,6 +52,22 @@ class TransformCommand : public Command{
     int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
 };
 
+class IncludeCommand : public Command{
+  std::string functionName;
+  std::string includeName;
+  public:
+    IncludeCommand(std::string funName, std::string inName, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
+class PragmaCommand : public Command{
+  std::string fromMatch;
+  std::string toReplace;
+  public:
+    PragmaCommand(std::string from, std::string to, int number);
+    int run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list);
+};
+
 class CommandList{
   public:
     CommandList(std::string spec);
@@ -88,6 +78,8 @@ class CommandList{
     void addTypeCommand(std::string location, std::string funName, std::string newType, std::string oldType, bool base, bool listing);
     void addHandleCommand(std::string handle, std::string newType, bool base, bool listing);
     void addTransformCommand(std::string funName, std::string typeName, std::string transformName);
+    void addIncludeCommand(std::string funName, std::string includeName);
+    void addPragmaCommand(std::string fromMatch, std::string toReplace);
     void nextCommand();
     TFTypeTransformer::VarTypeVarNameTupleList getTransformationList();
   private:

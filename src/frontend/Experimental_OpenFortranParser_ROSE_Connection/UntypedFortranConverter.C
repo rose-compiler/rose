@@ -411,7 +411,7 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 
       switch (ut_decl->get_statement_enum())
         {
-        case SgToken::FORTRAN_IMPORT:
+        case General_Language_Translation::e_fortran_import_stmt:
            {
               SgImportStatement* importStatement = new SgImportStatement();
               setSourcePositionFrom(importStatement, ut_decl);
@@ -514,7 +514,7 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 //----------------------
 
 SgStatement*
-UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       SgStatement* sg_stmt = NULL;
 

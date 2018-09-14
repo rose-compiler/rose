@@ -73,6 +73,13 @@ TEST_Objects = ${ALL_TESTCODES:.c=.o}
 $(TEST_Objects): ../../testTranslator
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
 
+PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
+TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
+TEST_TRANSLATOR = ../../testTranslator
+
+$(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
@@ -90,7 +97,7 @@ EXTRA_DIST = $(ALL_TESTCODES)
 
 check-local:
 	@echo "Tests for C99 examples."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C99_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
@@ -98,4 +105,7 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC]
 	rm -rf QMTest
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 

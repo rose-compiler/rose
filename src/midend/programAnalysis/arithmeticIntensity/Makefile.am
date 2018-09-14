@@ -8,13 +8,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # search path for .m4 macros
 #ACLOCAL_AMFLAGS = -I ./config
 
-AM_CPPFLAGS =  $(ROSE_INCLUDES) #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include
+AM_CPPFLAGS =  $(ROSE_INCLUDES) $(BOOST_CPPFLAGS)
 
-
-lib_LIBRARIES = libarithemeticMeasurement.a #libinstrumentor.a
-libarithemeticMeasurement_a_SOURCES = ai_measurement.cpp
+noinst_LIBRARIES = libarithmeticMeasurement.a #libinstrumentor.a
+libarithmeticMeasurement_la_SOURCES = ai_measurement.cpp
 #libinstrumentor_a_SOURCES = instrumentor_lib.c
 
-include_HEADERS = ai_measurement.h
+#include_HEADERS = ai_measurement.h
 
-EXTRA_DIST = 
+pkginclude_HEADERS = ai_measurement.h
+
+EXTRA_DIST = CMakeLists.txt

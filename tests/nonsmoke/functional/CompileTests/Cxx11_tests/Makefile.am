@@ -115,6 +115,7 @@ test2016_25.C \
 test2016_29.C \
 test2016_30.C \
 test2016_37.C \
+test2016_40.C \
 test2016_42.C \
 test2016_91.C \
 test2016_92.C \
@@ -163,6 +164,7 @@ test2018_30.C \
 test2018_31.C \
 test2018_34.C \
 test2018_35.C \
+test2018_36.C \
 test2018_37.C \
 test2018_38.C \
 test2018_39.C \
@@ -214,6 +216,7 @@ test2018_90.C \
 test2018_91.C \
 test2018_92.C \
 test2018_93.C \
+test2018_94.C \
 test2018_95.C \
 test2018_96.C \
 test2018_97.C \
@@ -232,9 +235,21 @@ test2018_115.C \
 test2018_116.C \
 test2018_117.C \
 test2018_118.C \
+test2018_119.C \
+test2018_120.C \
+test2018_121.C \
+test2018_124.C \
+test2018_127.C \
+test2018_130.C \
+test2018_131.C \
+test2018_132.C \
+test2018_133.C \
+test2018_134.C \
+test2018_135.C \
+test2018_136.C \
+test2018_137.C \
 ctor-list-init.C \
 $(PREVIOUSLY_FAILING_TESTS) \
-test2016_40.C \
 last.C
 
 
@@ -484,6 +499,24 @@ RajaInclude = /home/quinlan1/ROSE/RAJA/install/include
 rajaTest:../../testTranslator
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(RajaInclude) -I$(srcdir) -c $(srcdir)/test2017_33.C
 
+######
+# Try to use RTH here
+
+TEST_TRANSLATOR = ../../testTranslator
+
+TEST_Sources = $(addsuffix .passed, $(TESTCODES_REQUIRED_TO_PASS))
+ALL_TEST_Sources = $(addsuffix .passed, $(ALL_TESTCODES))
+
+$(ALL_TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+if !ROSE_USE_INSURE
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
+else
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+endif
+
 
 check-local:
 # DQ (2/19/2017): NEW VERSION OF LOGIC
@@ -502,7 +535,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "C++11 tests using EDG 4.9: GNU 4.9 backend compiler NOT allowed with the EDG 4.9 frontend (reconfigure with EDG 4.12)."
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "C++11 tests using EDG 4.9 and GNU version 4.8 backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 endif # ROSE_USING_GCC_VERSION_LATER_4_9
 # Exclude these tests on GNU 4.9 and later compilers).
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
@@ -535,7 +568,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "C++11 tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
 	@echo "C++11 tests using EDG 4.12 and any supported backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else
 	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
@@ -551,7 +584,7 @@ if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 	@echo "USING_INTEL_COMPILER == true"
 	@echo "C++11 tests using EDG 4.12 Intel backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 	@echo "USING_INTEL_COMPILER == false"
@@ -570,3 +603,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+
+status:
+	@$(MAKE) $(ALL_TEST_Sources)
+

@@ -3,8 +3,82 @@
 #include "SgNodeHelper.h"
 #include "TFTransformation.h"
 #include "AstTerm.h"
+#include "abstract_handle.h"
 
 using namespace std;
+
+//Methods for building transform list
+TransformationSpec::TransformationSpec(SgFunctionDefinition* def){funDef = def;}
+ADTransformation::ADTransformation(SgFunctionDefinition* def) : TransformationSpec(def){}
+ArrayStructTransformation::ArrayStructTransformation(SgFunctionDefinition* def, SgType* accessType) : TransformationSpec(def){type = accessType;}
+ReadWriteTransformation::ReadWriteTransformation(SgFunctionDefinition* def, SgType* accessType) : TransformationSpec(def){type = accessType;}
+PragmaTransformation::PragmaTransformation(string from, string to) : TransformationSpec(nullptr){fromString = from; toString = to;}
+IncludeTransformation::IncludeTransformation(string include, bool system) : TransformationSpec(nullptr){includeFile = include; systemHeader = system;}
+
+void TFTransformation::addADTransformation(SgFunctionDefinition* funDef){
+
+}
+
+void TFTransformation::addArrayStructTransformation(SgFunctionDefinition* funDef, SgType* accessType){
+
+}
+
+void TFTransformation::addReadWriteTransformation(SgFunctionDefinition* funDef, SgType* accessType){
+
+}
+
+void TFTransformation::addPragmaTransformation(string from, string to){
+
+}
+
+void TFTransformation::addIncludeTransformation(string includeFile, bool systemHeader){
+
+}
+
+//Methods to analyze and execute
+int ADTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int ArrayStructTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int ReadWriteTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+int IncludeTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
+  return 0;
+}
+
+ReplacementString::ReplacementString(string before, string overwrite, string after){
+  prepend = before; replace = overwrite; append = after;
+}
+
+void TFTransformation::prependNode(SgNode* node, string newCode){
+
+}
+
+void TFTransformation::replaceNode(SgNode* node, string newCode){
+
+}
+
+void TFTransformation::appendNode(SgNode* node, string newCode){
+
+}
+
+void TFTransformation::transformationAnalyze(SgProject* project){
+
+}
+
+void TFTransformation::transformationExecution(){
+
+}
 
 SgType* getElementType(SgType* type) {
   if(SgPointerType* ptrType=isSgPointerType(type)) {
@@ -254,6 +328,49 @@ bool isWithinBlockStmt(SgExpression* exp) {
   return isSgBasicBlock(current);
 }
 
+string getHandle(SgNode* node){
+ AbstractHandle::abstract_node* anode = AbstractHandle::buildroseNode(node);
+ AbstractHandle::abstract_handle* ahandle = new  AbstractHandle::abstract_handle(anode);
+ return ahandle->toString(); 
+}
+
+string getVarRefHandle(SgVarRefExp* varRef){
+  SgVariableSymbol* varSym = varRef->get_symbol();
+  SgInitializedName* varInit = varSym->get_declaration();
+  SgDeclarationStatement* varDec = varInit->get_declaration();
+  if(isSgVariableDeclaration(varDec)){
+    return getHandle(varDec);
+  }else{
+    return getHandle(varInit);
+  }
+}
+
+int instrumentADDecleration(SgInitializer* init){
+  if(SgInitializedName* initName = isSgInitializedName(init->get_parent())){
+    SgType* type = initName->get_type();
+    if(SgNodeHelper::isFloatingPointType(type)){
+      if(SgVariableDeclaration* varDec = isSgVariableDeclaration(initName->get_parent())){
+        SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
+        string varName   = SgNodeHelper::symbolToString(varSym); 
+        string handle    = getHandle(varDec);
+        string instrumentationString="AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);";
+        SgNode* stmtSearch=varDec;
+        while(!isSgStatement(stmtSearch)) {
+          stmtSearch=stmtSearch->get_parent();
+          if(!isSgStatement(stmtSearch)&&!isSgExpression(stmtSearch)) {
+            cerr<<"Error: Unsupported expression structure at "<<SgNodeHelper::sourceLineColumnToString(varDec)<<endl;
+            exit(1);
+          }
+        }
+        string newSource=stmtSearch->unparseToString()+"\n"+instrumentationString+"\n";
+        //SgNodeHelper::replaceAstWithString(stmtSearch,newSource);
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
 //Transformation ad_intermediate
 void TFTransformation::instrumentADIntermediate(SgNode* root) {
   RoseAst ast(root);
@@ -261,6 +378,10 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
     SgBinaryOp* assignOp = nullptr;
     if((assignOp = isSgAssignOp(*i)));
     else if((assignOp = isSgCompoundAssignOp(*i)));
+    else if(SgInitializer* init = isSgInitializer(*i)){
+      adIntermediateTransformations += instrumentADDecleration(init);
+      continue;
+    }
     else continue;
     SgExpression* refExp = assignOp->get_lhs_operand();  
     SgType* varType=refExp->get_type();
@@ -268,15 +389,17 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
     while(!varRefExp){
       if((varRefExp = isSgVarRefExp(refExp)));
       else if(SgPntrArrRefExp* arrRef = isSgPntrArrRefExp(refExp)) refExp = arrRef->get_lhs_operand();
-      else continue;
+      else break;
     }
+    if(!varRefExp) continue;
     if(SgNodeHelper::isFloatingPointType(varType)) {
       if(isWithinBlockStmt(assignOp)) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
+        string varHandle = getVarRefHandle(varRefExp);
         if(varRefExpSymbol) {
           SgName varName=varRefExpSymbol->get_name();
           string varNameString=varName;
-          string instrumentationString="AD_intermediate("+varNameString+",\""+varNameString+"\", FILE_INFO, FUNC_INFO);";
+          string instrumentationString="AD_intermediate("+assignOp->get_lhs_operand()->unparseToString()+",\""+varHandle+"\", SOURCE_INFO);";
           // locate root node of statement
           SgNode* stmtSearch=assignOp;
           while(!isSgStatement(stmtSearch)) {
@@ -294,5 +417,35 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
         }
       }
     }
+  }
+}
+
+void TFTransformation::instrumentADGlobals(SgNode* root, SgFunctionDefinition* funDef){
+  if(!funDef) return;
+  list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(isSgProject(root));
+  if(listOfGlobalVars.size() > 0){
+    string instString = "";
+    for(auto varDecl: listOfGlobalVars){
+      SgInitializedName* varInit = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+      if(varInit){
+        SgType* varType = varInit->get_type()->findBaseType();
+        if(SgNodeHelper::isFloatingPointType(varType)){
+          SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInit);
+          if(varInit->get_initializer() != nullptr){
+            if(varSym){
+              string varName = SgNodeHelper::symbolToString(varSym);
+              string handle = getHandle(varDecl);
+              instString += "AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);\n";
+              adIntermediateTransformations++;
+            }
+          }
+        }
+      }
+    }
+    SgStatementPtrList statementList = funDef->get_body()->get_statements();
+    SgStatement* firstStatement = statementList.front();
+    string oldSource = firstStatement->unparseToString();
+    string newSource = oldSource+"\n"+instString;
+    SgNodeHelper::replaceAstWithString(firstStatement,newSource);
   }
 }

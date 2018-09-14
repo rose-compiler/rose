@@ -1575,7 +1575,7 @@ APP_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 # in ROSE compiling ROSE)"
 TESTS_THAT_FAIL = test2013_242.C
 
-TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(ALL_TESTCODES)))
+TEST_Sources = $(addsuffix .passed, $(ALL_TESTCODES))
 PASSING_TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(TESTCODES) $(ROSE__CXX_TESTS__BOOST)))
 
 # DQ (9/18/2011): Added testing for new option to use folded constants or the original express trees.
@@ -1858,6 +1858,10 @@ test_MPI_LAM:
 test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
 	../../testTranslator -rose:verbose 1 -c $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C 
 
+# DQ (7/24/2018): Test for output spew from multiple files on the same command line.
+test_multiple_files_2: $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C 
+
 # DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 
@@ -1944,6 +1948,9 @@ clean-local:
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
+
+status:
+	@$(MAKE) $(TEST_Sources)
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests

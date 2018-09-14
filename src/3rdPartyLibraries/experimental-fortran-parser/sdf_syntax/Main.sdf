@@ -515,7 +515,7 @@ sorts
   EndSelectTypeStmt                   %% R849
   ExitStmt                            %% R850
 
-  CaseStmtAndBlock ElseIfStmtAndBlock
+  CaseStmtAndBlock ElseIfStmtAndBlock ElseIfStmtAndBlockList
   ElseStmtAndBlock OptElseStmtAndBlock
   TypeGuardStmtAndBlock OptLoopControl NoLow NoHigh
 
@@ -2602,15 +2602,17 @@ context-free syntax
 
 %%R832
   IfThenStmt Block
-  ElseIfStmtAndBlock* 
+  ElseIfStmtAndBlockList
   OptElseStmtAndBlock
-  EndIfStmt                                             -> IfConstruct         {cons("IfConstruct")}
+  EndIfStmt                                        -> IfConstruct            {cons("IfConstruct")}
 
-  ElseIfStmt Block                                      -> ElseIfStmtAndBlock  {cons("ElseIfStmtBlock")}
-  ElseStmt   Block                                      -> ElseStmtAndBlock    {cons("ElseStmtBlock")}
+  ElseIfStmt Block                                 -> ElseIfStmtAndBlock     {cons("ElseIfStmtBlock")}
+  ElseStmt   Block                                 -> ElseStmtAndBlock       {cons("ElseStmtBlock")}
 
-  ElseStmtAndBlock                                      -> OptElseStmtAndBlock
-  % empty %                                             -> OptElseStmtAndBlock {cons("no-else-stmt")}
+  ElseStmtAndBlock                                 -> OptElseStmtAndBlock
+  % empty %                                        -> OptElseStmtAndBlock    {cons("no-else-stmt")}
+
+  ElseIfStmtAndBlock*                              -> ElseIfStmtAndBlockList {cons("ElseIfStmtList")}
 
 %%R833
 %%       logical-expr substituted for scalar-logical-expr
