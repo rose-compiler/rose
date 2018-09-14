@@ -641,7 +641,6 @@ check-domain:
 	@echo ================================================================
 	@echo DOMAIN TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
