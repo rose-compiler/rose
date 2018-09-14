@@ -32,12 +32,12 @@ cp "$SAWYER_ROOT/LICENSE" LICENSE
         
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
-for f in															\
-    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached		\
-    Callbacks CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup	\
-    DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList	\
-    Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional	\
-    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch	\
+for f in																\
+    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached			\
+    Callbacks Clexer CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup	\
+    DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList		\
+    Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional		\
+    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch		\
     Synchronization ThreadWorkers Trace Type WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
@@ -80,6 +80,12 @@ for f in					\
 do
     srcbase="$SAWYER_ROOT/tests/$f";
     ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")
+done
+
+# Copy some of Sawyer's tools into the ROSE source tree
+for f in stringifyEnums.C; do
+    srcbase="$SAWYER_ROOT/tools/$f";
+    (emit_cpp_warning; cat "$srcbase" ) > ./$f
 done
 
 

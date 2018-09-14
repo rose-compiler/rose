@@ -34,6 +34,5 @@ set(distributedScripts
 	rth_run.pl
 	rth_stats.pl
 	runscript
-	shtool
-	stringify.pl)
+	shtool)
 install(FILES ${distributedScripts} DESTINATION bin)

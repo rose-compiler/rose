@@ -31,7 +31,7 @@ class callgraphVertexData {
 
 // install boost database graph property map types
 namespace boost {
-        enum vertex_callgraph_t { vertex_callgraph };
+        enum vertex_callgraph_t { vertex_callgraph };   // NO_STRINGIFY
         BOOST_INSTALL_PROPERTY( vertex, callgraph );
 }
 
