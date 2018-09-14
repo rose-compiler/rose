@@ -99,6 +99,16 @@ namespace General_Language_Translation
           e_explicit_dimension,
           e_star_dimension,
 
+       // Statements
+       // ----------
+
+       // Fortran specific
+          e_fortran_import_stmt,
+
+          e_fortran_if_then_stmt,
+          e_fortran_else_if_stmt,
+          e_fortran_else_stmt,
+
        // CUDA Attributes
        // ---------------
           e_cuda_host,
