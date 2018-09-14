@@ -9,6 +9,7 @@
 
 using namespace std;
 
+//Returns the base type of the given type or nullptr if it is the base type
 SgType* getBaseType(SgType* type){
   if(SgArrayType* arrayType = isSgArrayType(type)) return arrayType->get_base_type();
   if(SgPointerType* ptrType = isSgPointerType(type)) return ptrType->get_base_type();
@@ -18,6 +19,7 @@ SgType* getBaseType(SgType* type){
   return nullptr;
 }
 
+//returns true if the type contains a pointer or array
 bool isArrayPointerType(SgType* type){
   if(type == nullptr) return false;
   if(isSgArrayType(type)) return true;
@@ -25,29 +27,17 @@ bool isArrayPointerType(SgType* type){
   return isArrayPointerType(getBaseType(type));
 }
 
+
 bool checkMatch(bool base, SgType* typeOne, SgType* typeTwo){
   return typeOne == nullptr || typeTwo == nullptr || typeOne == typeTwo || (base && typeOne->findBaseType() == typeTwo->findBaseType());
 }
 
+//Method to compare if two types could be interconnected currently just looks at base type
 bool sameType(SgType* typeOne, SgType* typeTwo){
   return typeOne->findBaseType() == typeTwo->findBaseType();
-  if(typeOne == typeTwo) return true;
-  if(SgArrayType* array1 = isSgArrayType(typeOne)){
-    if(SgArrayType* array2 = isSgArrayType(typeTwo)) return sameType(array1->get_base_type(), array2->get_base_type());
-  }
-  if(SgPointerType* pointer1 = isSgPointerType(typeOne)){
-    if(SgPointerType* pointer2 = isSgPointerType(typeTwo)) return sameType(pointer1->get_base_type(), pointer2->get_base_type());
-  }
-  if(SgReferenceType* ref1 = isSgReferenceType(typeOne)){
-    if(SgReferenceType* ref2 = isSgReferenceType(typeTwo)) return sameType(ref1->get_base_type(), ref2->get_base_type());
-  }
-  if(SgTypedefType* typeDef = isSgTypedefType(typeOne)) return sameType(typeDef->get_base_type(), typeTwo);
-  if(SgTypedefType* typeDef = isSgTypedefType(typeTwo)) return sameType(typeOne, typeDef->get_base_type());
-  if(SgModifierType* modType = isSgModifierType(typeOne)) return sameType(modType->get_base_type(), typeTwo);
-  if(SgModifierType* modType = isSgModifierType(typeTwo)) return sameType(typeOne, modType->get_base_type());
-  return false;  
 }
 
+//given a node finds the enclosing function's name
 string getFunctionNameOfNode(SgNode* node){
   SgFunctionDefinition* funDef = SgNodeHelper::getClosestParentFunctionDefinitionOfLocatedNode(isSgLocatedNode(node));
   if(!funDef){
@@ -63,6 +53,7 @@ string getFunctionNameOfNode(SgNode* node){
   else return SgNodeHelper::getFunctionName(funDef);
 }
 
+//Returns true if the sets intersect
 bool setIntersect(set<SgNode*>* set1, set<SgNode*>* set2){
   for(auto i = set2->begin(); i != set2->end(); ++i){
     if(set1->count(*i)) return true;
@@ -70,12 +61,14 @@ bool setIntersect(set<SgNode*>* set1, set<SgNode*>* set2){
   return false;
 }
 
+//add all elements of set2 to set1
 void inPlaceUnion(set<SgNode*>* set1, set<SgNode*>* set2){
   for(auto i = set2->begin(); i != set2->end(); ++i){
     set1->insert(*i);
   }
 }
 
+//returns a new set that contains the same elements
 set<SgNode*>* copySet(set<SgNode*>* oldSet){
   set<SgNode*>* newSet = new set<SgNode*>;
   for(auto i = oldSet->begin(); i != oldSet->end(); ++i){
@@ -86,6 +79,8 @@ set<SgNode*>* copySet(set<SgNode*>* oldSet){
 
 TFAnalysis::TFAnalysis(){}
 
+//searches for locations where types may be connected through assignment, passing as argument and returns
+//then passes the associated node along with the expression to link variables.
 int TFAnalysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool base){
   RoseAst wholeAST(project);
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
@@ -189,6 +184,7 @@ int TFAnalysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool 
   return 0;
 }
 
+//finds the set containing the given node
 set<SgNode*>* TFAnalysis::getSet(SgNode* node){
   for(auto i = listSets.begin(); i != listSets.end(); ++i){
     if((*i)->count(node)) return *i;
@@ -196,6 +192,7 @@ set<SgNode*>* TFAnalysis::getSet(SgNode* node){
   return nullptr;
 }
 
+//takes a set of nodes and makes a string representation of their names
 string makeSetString(set<SgNode*>* variableSet){
   string setString = "";
   for(auto j = variableSet->begin(); j != variableSet->end(); ++j){
@@ -213,6 +210,7 @@ string makeSetString(set<SgNode*>* variableSet){
   return setString;
 }
 
+//writes the sets to a file
 void TFAnalysis::writeAnalysis(SgType* type, string toTypeString){
   for(auto i = setMap.begin(); i != setMap.end(); ++i){
     string leftName = "";
@@ -223,7 +221,6 @@ void TFAnalysis::writeAnalysis(SgType* type, string toTypeString){
     else if(SgVariableDeclaration* varDec = isSgVariableDeclaration(i->first)) varSym = SgNodeHelper::getSymbolOfVariableDeclaration(varDec);
     if(varSym){
       leftName = SgNodeHelper::symbolToString(varSym);
-//      cout<<rightFunName<<":"<<leftName<<" => "<<makeSetString(i->second)<<endl;
     }
   }
   for(auto i = listSets.begin(); i != listSets.end(); ++i){
@@ -233,6 +230,7 @@ void TFAnalysis::writeAnalysis(SgType* type, string toTypeString){
   }
 }
 
+//writes a dot graph of the sets to the given file
 void TFAnalysis::writeGraph(string fileName){
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> SetGraph;
   SetGraph graph(0);
@@ -262,6 +260,7 @@ void TFAnalysis::writeGraph(string fileName){
   fileStream.close();
 }
 
+//Searches through the expression for variables of the given type then links them with the key node provided
 void TFAnalysis::linkVariables(SgNode* key, SgType* type, SgExpression* expression){
   RoseAst ast(expression);
   for(RoseAst::iterator i = ast.begin(); i!=ast.end(); i++){
@@ -299,6 +298,7 @@ void TFAnalysis::linkVariables(SgNode* key, SgType* type, SgExpression* expressi
   }
 }
 
+//Adds the nodes to their respective sets and creates the sets if not already created.
 void TFAnalysis::addToMap(SgNode* originNode, SgNode* targetNode){
   if(!setMap.count(originNode)){
     setMap[originNode] = new set<SgNode*>;

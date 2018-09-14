@@ -124,10 +124,10 @@ TypeCommand::TypeCommand(string loc, string fun, string toType, string fromType,
 }
  
 int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
+  SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
+  SgType* oldBuiltType=buildTypeFromStringSpec(oldType,globalScope);
+  SgType* newBuiltType=buildTypeFromStringSpec(newType,globalScope);
   if(funName == "$global") {
-    SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
-    SgType* oldBuiltType=buildTypeFromStringSpec(oldType,globalScope);
-    SgType* newBuiltType=buildTypeFromStringSpec(newType,globalScope);
 //cout<<newBuiltType->unparseToString()<<"\n";
 //cout<<newType<<"\n";
     tt.addTypeTransformationToList(_list,newBuiltType,nullptr,"",base,oldBuiltType,listing);
@@ -146,8 +146,8 @@ int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt
       }
     }
     for (auto funDef : listOfFunctionDefinitions) {
-      SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
-      SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+      //SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
+      //SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
 //cout<<newType<<"\n";    
 //cout<<newBuiltType->unparseToString()<<"\n";
       tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGE"+location,base,oldBuiltType,listing);
@@ -165,18 +165,20 @@ VarTypeCommand::VarTypeCommand(string name, string fun, string toType, bool base
 
 int VarTypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
   SgFunctionDefinition* funDef;
-  SgType* builtType;
+  SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
+  //SgType* builtType;
+  SgType* builtType = buildTypeFromStringSpec(newType,globalScope);
   if(funName=="$global") {
     funDef=nullptr; 
-    SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
-    builtType = buildTypeFromStringSpec(newType,globalScope);
+    //SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
+    //builtType = buildTypeFromStringSpec(newType,globalScope);
   } else {
     funDef=completeAst.findFunctionByName(funName);
     if(funDef==0) {
       cerr<<"Error: Command "<<commandNumber<<": function "<<funName<<" does not exist in file."<<endl;
       return true;
     }
-    builtType=buildTypeFromStringSpec(newType,funDef);
+    //builtType=buildTypeFromStringSpec(newType,funDef);
   }
   if(builtType==nullptr) {
     cerr<<"Error: Command "<<commandNumber<<": unknown type "<<newType<<"."<<endl;

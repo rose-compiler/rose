@@ -61,6 +61,7 @@ bool checkTypeforgeExtension(string filePath, string extension){
   return false;
 }
 
+//Read in json then convert the actions to internal command list
 int TFSpecFrontEnd::convertJSON(string fileName){
   ToolConfig* config = new ToolConfig(fileName);
   vector<ToolAction>& actions = config->getActions();
@@ -138,6 +139,7 @@ int TFSpecFrontEnd::convertJSON(string fileName){
   return 0;
 }
 
+//parse will either call the json file parser or if it is a .tf file will begin parsing 
 bool TFSpecFrontEnd::parse(std::string specFileName) {  
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);

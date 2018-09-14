@@ -18,6 +18,7 @@
 \usepackage{natbib}
 \usepackage{colortbl}
 \usepackage{algorithm2e}
+\usepackage{syntax}
 % pantone colors
 
 % More sensible defaults akin to \sloppy
@@ -70,22 +71,22 @@
 }
 
 \begin{document}
-\title{Typeforge}
+\title{Typeforge User Manual}
 
 \author{\small Markus Schordan, Nathan Pinnow}
 %\end{tabular}
-%\date{September 20, 2018}
+\date{September 12, 2018}
 
 \maketitle
 
-\begin{abstract}
-\noindent Typeforge is a tool for analysis and transformation of variable types in 
-C/C++ programs. The main focus of development was to aid the development of 
-mixed-precision programs through modification and searching of the AST. 
-Typeforge does this through changing type information and inserting program 
-instrumentation then outputting modified source code for the user or other tools to use.
-
-\end{abstract}
+%\begin{abstract}
+%\noindent Typeforge is a tool for analysis and transformation of variable types in 
+%C/C++ programs. The main focus of development was to aid the development of 
+%mixed-precision programs through modification and searching of the AST. 
+%Typeforge does this through changing type information and inserting program 
+%instrumentation then outputting modified source code for the user or other tools to use.
+%
+%\end{abstract}
 
 \tableofcontents
 
@@ -104,17 +105,32 @@ Typeforge was also designed to work with CRAFT~\cite{CRAFT2013PARCO,CRAFT2013ICS
 for the purpose of searching mixed-precision configurations built by Typeforge 
 for the best performance.
 
-\subsection{Handles}
-Typeforge is capable of emitting string based handles for the purpose of variable identification. 
-These handles are guaranteed to uniquely identify a variable in the program and can be used to 
-specify a variable to Typeforge. The content of these handles is not guaranteed and is 
-subject to change.
+\subsection{CRAFT-ADAPT Pipeline}\label{sec:pipeline}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{pipeline.png}
+    \caption{\textsf{Diagram of pipeline structure}}
+    \label{fig:pipeline}
+\end{figure}
+\noindent
+Typeforge has several uses in the pipeline for automatic generation of mixed precision programs
+as seen in figure \ref{fig:pipeline}. 
+In order for craft to conduct a proper search it needs to define 
+a search space which can be done by Typeforge by looking for all declarations in the AST. This 
+list can be refined by looking at sets to avoid searching configurations that will not compile. 
+When CRAFT tests a configuration it passes the appropriate plugin to Typeforge so 
+that it can generate new source code and compile the configuration. This lets CRAFT gain 
+performance metrics on a configuration instead of estimations. To refine the search space ADAPT 
+feeds precision information to CRAFT but for ADAPT to run modifications need to be made to the 
+source code. These modifications are pragma replacement, adding includes, replacing floating point 
+types with AD\_real, and adding ADAPT function calls. All of the ADAPT modifications and Variable 
+listing can be done with Typeforge with a single plugin shown in section \ref{sec:expampleSpec}.
 
 \section{Installation}
 
-No additional configuration is required because Typeforge is configured as part of ROSE. Typeforge 
-is not installed by default as part of ROSE, to install Typeforge after installing ROSE run 'make',
-'make install', and optionally 'make check' in the \verb+projects/+ \verb+typeforge+ directory to 
+First step is to install ROSE which will also configure Typeforge but not install
+by default as part of ROSE. to install Typeforge after installing ROSE run
+'make install' and optionally 'make check' in the \verb+projects/+ \verb+typeforge+ directory to 
 install Typeforge. Typeforge is installed as 'typeforge' (at the same location as other ROSE tools, 
 in the 'bin' directory of the ROSE installation).
 
@@ -135,169 +151,221 @@ Supported Options:
   
   --compile                       Run backend compiler.
   
-  --explicit                      Make all implicit casts explicit.
+  --explicit                      Make all implicit casts explicit. Does not
+                                  work with other options.
   
   --stats                         Print statistics on casts of built-in 
                                   floating point types.
                                   
   --trace                         Print program transformation operations 
                                   as they are performed.
-\end{verbatim}
-%set analysis may become hidden option
-\begin{verbatim}
-  --set-analysis                  Perform set analysis to determine which 
-                                  variables must be changed together.
-                                  
-  --spec-file arg                 Name of Typeforge specification file.
+
+  --plugin arg                    Name of Typeforge plugin files.
   
   --csv-stats-file arg            Generate file [args] with transformation statistics.
   
-  --float-var arg                 Change type of var [arg] to float.
+  --typeforge-out                 File to store output inside of JSON.
   
-  --double-var arg                Change type of var [arg] to double.
-  
-  --long-double-var arg           Change type of var [arg] to long double.
 \end{verbatim}
-\section{Specification File}
-Typeforge uses a specification file for the user to specify what changes should be 
-made to the source code. There are two formats supported for these files. a .json 
-file and .tf file. The .json file is generated using ToolConfig and is intended 
-for other programs to create specifications for Typeforge and the .tf file is a 
-simplified version for developers to write manually. The .json format has a list 
-of ToolActions stored in the actions field while the .tf file has one specification 
-per line. Inside of ToolActions all fields are strings that describe the specification 
-with the .tf file being the same fields without labels in a semi-colon separated list. 
-The order in which specifications are written is not considered, if multiple 
-specifications contradict the behavior is undefined. 
+\section{Plugin Definition File}
+To define what actions Typeforge should perform it uses a JSON file as a format for the plugin definition. The JSON file is generated using ToolConfig and was designed to allow for other programs to create specifications for Typeforge. The ToolConfig JSON has several header string fields named executable, tool\_id, version, and a list of strings named source\_files. These fields are not used for input to Typeforge and a designed for information tracking. For providing the actions to Typeforge ToolConfig has a list of ToolAction named actions. Each item in the actions list is also a JSON object with each item defining an action for Typeforge to take. All actions have an analysis phase and some will have an execution phase where they will make modifications to the AST. The separation of phases allows for an action to find a change and later make the change without another action finding a change location based upon the changed code. If actions contradict the behavior is undefined.
 
-\subsection{Specifications}
-For all specifications both specification file formats are shown. When double quotes 
-are used it is to indicate that it is the literal string to use. For the JSON format 
-all fields are in double quotes as they are input as a string type but the double quotes 
-should not be used in the TF format.
-\begin{enumerate}
-\item{} Var Type Change -- This specification is for changing the type or base type 
-of a specified variable. See section \ref{change} for more information on type changing. 
-FunctionName can be either the name of the function where the variable is located or "\$global" 
-for a global variable. VariableName can be the name of a single variable or a comma separated 
-list of variables to change.
+\subsection{Handles} \label{sec:handles}
+Several actions are related to the use of compiler generated handles. Typeforge is capable of emitting string 
+based handles for the purpose of variable and function identification. These handles are guaranteed to 
+uniquely identify a variable or function in the program and can be used to specify them to Typeforge. 
+The content and format of these handles is not guaranteed and is 
+subject to change.
+
+\subsection{Actions}
+The grammar below defines how the plugin definition file is made.
+The symbols "$\langle\rangle$" are used to indicate a non-terminal, the symbol "$\mid$" is used to 
+indicate alternative, "()*" is used to indicate repeat what is in the group zero or more times. 
+All other symbols are terminal. 
+
+\begin{grammar}
+<PluginDefinitionFile> ::= \{''actions'' : [<Action>(, <Action>)*]\}
+
+<Action>                 ::= <ActionID>, ((<Scope>, <Name>) | <Handle>), <ToType>
+\alt <ActionID>, <Scope>, <FromType>, <ToType>
+\alt <ActionID>, <Scope>, <Name>
+\alt <ActionID>, <Scope>,
+\alt <ActionID>, <FromType>, <ToType>
+
+<ActionID> ::= ''"action"'': ''<ActionSpecifier>''
+
+<Scope> ::= ''"scope"'': ''<ScopeSpecifier>''
+
+<Name> ::= ''"name"'': ''<NameSpecifier>''
+
+<ToType> ::= ''"to_type"'': ''NewType''
+
+<FromType> ::= ''"from_type"'': ''MatchType''
+
+<Handle> ::= ''"handle"''":" ''CompilerHandle''
+\end{grammar}
+
+\subsubsection{Var Type Change} \label{sec:vartypechange}
+This action is for changing the type or base type of a specified variable. Actions related to 
+changing type end in type or basetype which is used to specify how the change should be made. 
+When type is used the type will be changed and potentially matched based on the exact type 
+regardless of pointers and arrays. When basetype is used Typeforge will match and change types 
+by stripping away then rebuilding arrays, pointers, typedefs, reference, and modifiers. 
+Scope can be either the name of the function where the variable is located or "\$global" 
+for a global variable. Name can be the name of a single variable or a comma separated 
+list of variables to change. A handle can be specified instead of using scope and variable name. New type 
+should be the type that the variable will be changed to.
+
+\begin{grammar}
+<ActionSpecifier> ::= "change_var_type" | "change_var_basetype"
+
+<ScopeSpecifier>    ::= FunctionName | "\$global"
+
+<NameSpecifier>     ::= VariableName(,VariableName)*
+\end{grammar}
 \begin{verbatim}
-JSON Format:
-action   = ("change_var_type" | "change_var_basetype")
-scope    = FunctionName
-name     = VariableName
-to_type  = NewType
 
-TF Format:
-action;scope;name;to_type
+Example:
+{
+  "action": "change_var_basetype",
+  "scope": "main",
+  "name": "x",
+  "to_type": "float"
+},
+{
+  "action": "change_var_basetype",
+  "handle": "Project<numbering,1>::FileList<numbering,1>::SourceFile
+              <name,/home/src/main.C>::VariableDeclaration<position,7.1-7.15>",
+  "to_type": "float"
+}
 \end{verbatim}
 
-\item{} Handle Change -- This specification is to change a variables type based upon 
-a compiler generated handle. For JSON providing a handle will override normal behavior 
-and for .tf files a special command needs to be specified.
-
-\begin{verbatim}
-JSON Format:
-action   = ("change_var_type" | "change_var_basetype")
-handle   = CompilerHandle
-to_type  = NewType
-
-TF Format:
-(change_handle_type | change_handle_basetype);handle;to_type
-\end{verbatim}
-
-\item{} Change Type -- This specification is to replace all variables of a type with a new type. 
-VariableLocations is the locations where variables should be changed and has several forms. 
+\subsubsection{Change Type} \label{sec:chagetype}
+This action is to replace all variables of a type with a new type. Match\_Type is the type that Typeforge
+will search for and New\_Type is the type that it will replace match type with.
+Scope is the locations where variables should be changed and has several forms. 
 Use "\$global" to specify replacing globals, otherwise use function name followed by colon 
-then parts of the function to change in a comma seperated list. Use args to change arguments, 
+then parts of the function to change in a comma separated list. Use args to change arguments, 
 body to change the body of the function, and ret to change the return type. The function name 
 can be replaced with * to change all functions. For example to change everything in main use 
-"main:args,ret,body".
+"main:args,ret,body". See section \ref{sec:vartypechange} for more information on type changing. 
 
+\begin{grammar}
+<ActionSpecifier>  ::= "change_every_type" | "change_every_basetype"
+
+<ScopeSpecifier>     ::=  FunctionName:<VariableLocationList> 
+\alt "*":<VariableLocationList> | "\$global"
+
+<VariableLocationList> ::= <VariableLocation>(, <VariableLocation>)*
+
+<VariableLocation> ::= "args" | "ret" | "body"
+
+\end{grammar}
 \begin{verbatim}
-JSON Format:
-action    = ("change_every_type" | "change_every_basetype")
-scope     = VariableLocations
-from_type = OldType
-to_type   = NewType
 
-TF Format:
-action;scope;from_type=>to_type
+Example:
+{
+  "action": "change_every_type",
+  "scope": "*:body",
+  "from_type": "double",
+  "to_type": "AD_real"
+}
 \end{verbatim}
 
-\item{} Listing Replacements -- Will output a list of possible replacements without 
-changing the type. Will output a JSON file with the actions set so when input as a 
-spec file will result in the changes being made. FileName is the file where the list will be 
-written to, if it already exists the list will be appended to. SearchLocations can be the name 
-of a function, "*" for all functions, "\$global" for just globals, or empty string for all. 
-NewType is only used for writing a valid specification file to output.
+\subsubsection{Listing Changes} \label{sec:listChange}
+Will output a list of possible replacements that have the same type as Match\_Type without changing the type. 
+Will output a JSON file with the actions set so when input as a plugin will result in the changes being made. 
+The output list will include the scope name and compiler handle. Scope is a function name, * for all functions, 
+or \$global for global variables. Scope can also be omitted for Typeforge to examine the entire program. 
+New\_Type is only used for writing a valid plugin definition file to output. 
+See section \ref{sec:vartypechange} for more information on type changing. 
 
-\begin{verbatim}
-action    = ("list_changes_type" | "list_changes_basetype")
-scope     = SearchLocations
-from_type = MatchType
-to_type   = NewType
-name      = FileName
+\begin{grammar}
+<ActionSpecifier>  ::= "list_changes_type" | "list_changes_basetype"
 
-TF Format:
-action;scope;from_type;to_type;name
+<ScopeSpecifier> ::= FunctionName | "*" | "\$global"
+\end{grammar}
+\begin{verbatim}  
+
+Example:
+{
+  "action": "list_changes_basetype",
+  "scope": "",
+  "from_type": "double",
+  "to_type": "float",
+}
 \end{verbatim}
 
-\item{} Transformation -- Looks for patterns in the AST and will transform or insert 
-code based upon the type of transformation. See section \ref{transform} for more 
-information on transformations and transformation names. FunctionName can be and 
-individual function name or "*" for all functions. MatchType semantics depends on 
-the transformation.
+\subsubsection{ADAPT Instrumentation}
+Inserts ADAPT function calls where appropriate. Will look for any location in the AST where a floating 
+point type is assigned to or initialized then insert the correct AD\_intermidiate function 
+call after the assignment with the name passed to ADAPT being set to the variables handle. 
+If "\#pragma adapt begin" is included in the body will insert instrumentation for initialized 
+globals immediately after the pragma. Will not do type replacement for AD\_real, including 
+of ADAPT headers, or adapt pragma replacement. Scope is the function name where 
+instrumentation should be inserted or "*" for all functions.
 
-\begin{verbatim}
-JSON Format:
-action    = "transform"
-scope     = FunctionName 
-from_type = MatchType
-name      = TransformationName
+\begin{grammar}
+<ActionSpecifier> ::= "ad_intermediate_instrumentation"
 
-TF Format:
-action;scope;from_type;name
+<ScopeSpecifier>     ::=  FunctionName | "*"
+\end{grammar}
+\begin{verbatim}  
+
+Example:
+{
+  "action": "ad_intermediate_instrumentation",
+  "scope": "*"
+}
 \end{verbatim}
 
-\item{} Add Include -- Will add include to files in the AST. MatchFunction is used to specify 
+\subsubsection{Add Include}
+Will add include to files in the AST. Scope is used to specify  to
 only insert the include in files that define a specific function or use "*" for all files. 
-IncludeFile is the name of the file to be included.
+Name is the name of the file to be included.
 
+\begin{grammar}
+<ActionSpecifier> ::= "add_include"
+
+<ScopeSpecifier>     ::=  FunctionName | "*"
+
+<NameSpecifier>     ::= FileName
+\end{grammar}
 \begin{verbatim}
-JSON Format:
-action = "add_include"
-scope  = MatchFunction
-name   = IncludeFile
 
-TF Format:
-action;scope;name
+Example:
+{
+  "action": "add_include",
+  "scope": "main",
+  "name": "adapt-impl.cpp"
+}
 \end{verbatim}
 
-\item{} Pragma Replacement -- Will perform simple pragma replacement inside the AST. Will only 
-replace pragmas that begin with MatchString excluding the \#pragma. Replace string is what the 
+\subsubsection{Pragma Replacement} 
+Will perform simple pragma replacement inside the AST. Will only 
+replace pragmas that begin with MatchType excluding the \#pragma. NewType is what the 
 pragma will be replaced with. Can specify arguments by writing \$N where N is the argument 
 number with 0 being the first token after the pragma in the source file including the matched string.
-If using a .tf spec file the MatchString may not include semicolons but ReplaceString may 
-use semicolons.
 
+\begin{grammar}
+<ActionSpecifier>  ::= "replace_pragma"
+\end{grammar}
 \begin{verbatim}
-JSON Format:
-action    = "replace_pragma"
-from_type = MatchString
-to_type   = ReplaceString
 
-TF Format:
-action;from_type;to_type
+Example:
+{
+  "action": "replace_pragma",
+  "from_type": "adapt begin",
+  "to_type": "AD_Begin();"
+}
 \end{verbatim}
-\end{enumerate}
 
 \subsection{Example Spec Files} \label{sec:expampleSpec}
-This specification file is used as setup for the pipeline in section \ref{sec:pipeline}. 
-Note there is a specification to change all doubles to AD\_real and a specification to 
+\subsubsection{Pipeline Initial Start}
+This plugin definition file is used as setup for the pipeline in section \ref{sec:pipeline}. 
+Note there is an action to change all doubles to AD\_real and an action to 
 list replacements for doubles. These can both work as they are performed on the original tree.
 \begin{verbatim}
-JSON Format:
 {
   "version": "1",
   "tool_id": "Master",
@@ -333,21 +401,14 @@ JSON Format:
     }
   ]
 }
-
-TF Format:
-replace_pragma;adapt begin;AD_begin();
-add_include;main;adapt-impl.cpp
-transform;*;float;ad_intermediate_instrumentation
-change_every_basetype;*:args,ret,body;double=>AD_real
-list_changes_basetype;;double;float;outputFile.json
 \end{verbatim}
-\vspace{5mm}
-The next specification file is to change the type of two specific variables to float types.
+
+\subsubsection{CRAFT Configuration}
+This plugin file is to change the type of two specific variables to float types.
 One change is based upon the handle while the other is based upon specifying function 
 name and variable name.
 
 \begin{verbatim}
-JSON Format:
 {
   "version": "1",
   "tool_id": "CRAFT",
@@ -366,39 +427,9 @@ JSON Format:
     }
   ]
 }
-
-TF Format:
-change_handle_basetype;Project<numbering,1>::FileList<numbering,1>::SourceFile
-    <name,/home/src/test.C>::VariableDeclaration<position,1.1-1.15>;float
-change_var_basetype;main;x;float
 \end{verbatim}
 
-\section{Type Change} \label{change}
-All forms of changing a variables type will change the original declaration inside the AST 
-as well as supporting base changing. If base is not specified the from type will be matched 
-exactly regardless of pointers, arrays etc. If base is specified Typeforge will match based 
-on types after stripping pointers, arrays, modifiers, reference, and typedefs. The type will 
-be changed to a rebuilt type with the to type as the new base. For typedefs Typeforge will 
-not create a new typedef, it will change the type to what the typedef represents with a 
-new base type.
-
-\section{Transformation} \label{transform}
-\subsection{Array of Structure Access}
-Can be done by specifying \verb+"name = arrayofstructs_access_transformation"+ to the transform 
-specification.
-\subsection{Hancock Access}
-Can be done by specifying \verb+"name = readwrite_access_transformation"+ to the transform 
-specification.
-\subsection{ADAPT Instrumentation}
-Can be done by specifying \verb+"name = ad_intermediate_instrumentation"+ to the transform 
-specification, MatchType is not used. Will look for any location in the AST where a floating 
-point type is assigned to or initialized then insert the correct AD\_intermidiate function 
-call after the assignment with the name passed to ADAPT being set to the variables handle. 
-If "\#pragma adapt begin" is included in the body will insert instrumentation for initialized 
-globals immediately after the pragma. Will not do type replacement for AD\_real, including 
-of ADAPT headers, or adapt pragma replacement.
-
-\section{Analysis} \label{analysis}
+\section{Experimental Features} \label{analysis}
 \subsection{Variable Sets}
 When changing the type of a variable it is possible that changing types will result in a 
 compilation error due to interdependent variables. This happens when variables are connected, 
@@ -408,6 +439,16 @@ in a given set must be changed together or the program will fail to compile. Giv
 dependence sets are defined all variables will be part of a class and the classes will not intersect. 
 Section \ref{sec:setAlg} shows the algorithm for set generation for just variables and 
 section \ref{sec:setDef} shows a definition for the sets.
+\subsubsection{Sets Definition} \label{sec:setDef}
+Let V be a set of all variables, function parameters, and function return types.
+Let M be a set of variable sets showing what a variable is directly related to. Each Variable is associated with a single set.
+Let S be resulting fully connected sets with the following properties.
+
+\begin{gather*} 
+\forall i \in V(\exists! j \in S(i \in j))\\
+\forall x \in M(\exists! y \in S(x \cap y \neq \emptyset) \wedge 
+\exists! z \in S(x \subseteq z))
+\end{gather*}
 
 \subsubsection{Sets Algorithm} \label{sec:setAlg}
 \begin{algorithm}[H]
@@ -416,24 +457,24 @@ section \ref{sec:setDef} shows a definition for the sets.
 \KwResult{Dependence\_Sets}
 Map$\langle$Node,Set$\langle$Node$\rangle\rangle$ Dependence\_Map;\\
 List$\langle$Set$\langle$Node$\rangle\rangle$ Dependence\_Sets;\\
-\For{All Variables}{
+\For{Variable $\in$ All\_Variables}{
   Dependence\_Map.Add(Variable, Variable);
 }
- \For{All AST Nodes}{
+ \For{Node $\in$ All AST Nodes}{
    \If{Node == Expression and Node.type == [Pointer or Array]}{
-     \If{Node == Assignment}{
-       Destination = Left  Hand Side;\\
+     \If{Node == Assignment\_Node}{
+       Destination  = Left  Hand Side;\\
        Origin       = Right Hand Side;\\
-       \For{All Variable References in Origin}{
+       \For{VarRef $\in$ All Variable References in Origin}{
        Dependence\_Map.Add(VarRef, Destination);\\
        Dependence\_Map.Add(Destination, VarRef);
        }
      }
    }
  }
- \For{All Variable\_Set in Dependence\_Map}{
+ \For{Variable\_Set $\in$ Dependence\_Map}{
    Matched = Null;\\
-   \For{All Set in Dependence\_Sets}{
+   \For{Set $\in$ Dependence\_Sets}{
      \If{Variable\_Set Intersects Set}{
        \eIf{Matched}{
          Matched.add(Set);\\
@@ -450,36 +491,44 @@ List$\langle$Set$\langle$Node$\rangle\rangle$ Dependence\_Sets;\\
  }
  \caption{Algorithm for building variable sets}
 \end{algorithm}
-\subsubsection{Sets Definition} \label{sec:setDef}
-\begin{gather} 
-V = \text{Set of all variables, function parameters, and function return.}\\
-M = \text{Set of variable sets. Each Variable Links to a single set.}\\
-S = \text{Final set of interdependent sets}\\
-\forall i \in V(\exists! j \in S(i \in j))\\
-\forall x \in M(\exists! y \in S(x \cap y \neq \emptyset) \wedge 
-\exists! z \in S(x \subseteq z))
-\end{gather}
-\section{Use Cases}
-\subsection{CRAFT-ADAPT Pipeline}\label{sec:pipeline}
-%\begin{figure}[h]
-%    \centering
-%    \includegraphics[width=\textwidth]{pipeline.png}
-%    \caption{\textsf{Diagram of pipeline structure}}
-%    \label{fig:pipeline}
-%\end{figure}
-\noindent
-Typeforge has several uses in the pipeline for automatic generation of mixed precision programs.
-%as seen in figure \ref{fig:pipeline}. 
-In order for craft to conduct a proper search it needs to define 
-a search space which can be done by Typeforge by looking for all declarations in the AST. This 
-list can be refined by looking at sets to avoid searching configurations that will not compile. 
-When CRAFT tests a configuration it passes the appropriate specification file to Typeforge so 
-that it can generate new source code and compile the configuration. This lets CRAFT gain 
-performance metrics on a configuration instead of estimations. To refine the search space ADAPT 
-feeds precision information to CRAFT but for ADAPT to run modifications need to be made to the 
-source code. These modifications are pragma replacement, adding includes, replacing floating point 
-types with AD\_real, and adding ADAPT function calls. All of the ADAPT modifications and Variable 
-listing can be done with Typeforge with a single specification shown in section \ref{sec:expampleSpec}.
+
+\subsubsection{Set List Action}
+This action functions the same as listing changes in section \ref{sec:listChange}. The difference is instead 
+of listing every action as a separate change the connected variables will be part of a single action 
+separated by '=='. When sent back to Typeforge as a plugin it will change the variables as an atomic action.
+
+\begin{grammar}
+<ActionSpecifier>  ::= "'set_changes_basetype'"
+\end{grammar}
+\begin{verbatim}  
+
+Example:
+{
+  "action": "set_changes_basetype",
+  "from_type": "double",
+  "to_type": "float",
+}
+\end{verbatim}
+
+\subsubsection{Change Variable Set Action}
+This command is similar to the change variable type action in section \ref{sec:vartypechange}. 
+The difference with this command is once it finds the variable to change it will look up the set for 
+that variable and change the entire set as an atomic action based on a representative element.
+
+\begin{grammar}
+<ActionSpecifier> ::= change_set_basetype
+\end{grammar}
+\begin{verbatim}
+
+Example:
+{
+  "action": "change_set_basetype",
+  "scope": "main",
+  "name": "x",
+  "to_type": "float"
+}
+\end{verbatim}
+
 \bibliographystyle{plain}
 \bibliography{typeforge}
 

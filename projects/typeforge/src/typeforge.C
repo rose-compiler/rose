@@ -120,15 +120,17 @@ int main (int argc, char* argv[])
     }
   }
 
-  bool objectFiles = false;
+  //check if given object files for linking allow 1 to account for -o to gcc
+  int objectFiles = 0;
   for(auto file : args["source-file"].as< vector<string> >()){
     boost::filesystem::path pathObj(file);
     if(pathObj.has_extension()){
       if(pathObj.extension().string() == ".o"){
-        objectFiles = true;
+        objectFiles += 1;
       }
     }
   }  
+  if(objectFiles <=1) objectFiles = 0;
  
   vector<string> argvList = po::collect_unrecognized(parsed.options, po::include_positional); 
   argvList.insert(argvList.begin(), "rose");
@@ -216,7 +218,7 @@ int main (int argc, char* argv[])
     //Execution Phase
     tt.executeTransformations(sageProject);
     tfTransformation.transformationExecution();
-    //Output Phase
+    //Output Phase`
     if(args.isUserProvided("csv-stats-file")) {
       string csvFileName=args.getString("csv-stats-file");
       tt.generateCsvTransformationStats(csvFileName,

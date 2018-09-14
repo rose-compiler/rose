@@ -191,6 +191,7 @@ void TFTypeTransformer::addToActionList(string varName, string scope, SgType* fr
   if(!fromType || !toType || !handleNode) return;
   if(varName == "") return;
   string handle = TFHandles::getAbstractHandle(handleNode);
+  if(handle == "") return;
   if(base) TFToolConfig::addChangeVarBaseType(handle, varName, scope, getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
   else TFToolConfig::addChangeVarType(handle, varName, scope, getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
 }
@@ -284,6 +285,7 @@ SgType* TFTypeTransformer::rebuildBaseType(SgType* root, SgType* newBaseType){
   }
 }
 
+//Changes the type of an a node. Likly came from resolving a handle
 int TFTypeTransformer::changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing){
   SgInitializedName* initName = isSgInitializedName(handle);
   if(SgVariableDeclaration* varDec = isSgVariableDeclaration(handle)){
@@ -321,6 +323,8 @@ int TFTypeTransformer::changeHandleType(SgNode* handle, SgType* newType, bool ba
   return 0;
 }
 
+
+//Given a node will change evey type that needs to be changed based upon type connections
 int TFTypeTransformer::changeSet(SgNode* node, SgType* fromType, SgType* toType, bool base, bool listing){
   set<SgNode*>* nodeSet = getSet(node, fromType);
   bool tempFlag = changeSetFlag(false);  
@@ -338,6 +342,7 @@ int TFTypeTransformer::changeSet(SgNode* node, SgType* fromType, SgType* toType,
   return changes;
 }
 
+//given an initialized name will change it's type to the new given type
 int TFTypeTransformer::changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode,bool listing){
   SgType* baseType;
   if(base){
@@ -382,6 +387,7 @@ int TFTypeTransformer::changeTypeIfInitNameMatches(SgInitializedName* varInitNam
   return foundVar;
 }
 
+//Will change the type of the variable if the from type matches else returns 0
 int TFTypeTransformer::changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base, SgNode* handleNode, bool listing){
   int foundVar = 0;
   if(varInitName){
@@ -402,6 +408,7 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
   return TFTypeTransformer::changeVariableType(root, varNameToFind, newType, false, nullptr, false);
 }
 
+//will search for variables to change. first by type if fromtype is provided then by name if it is not.
 int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, SgType* newType, bool base, SgType* fromType, bool listing) {
   RoseAst ast(root);
   int foundVar=0;
