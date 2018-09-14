@@ -6,7 +6,7 @@ using namespace std;
 using namespace AbstractHandle;
 
 string TFHandles::getAbstractHandle(SgNode* node){
- if(isSgTemplateInstantiationFunctionDecl(node) == nullptr) return "";
+ if(isSgTemplateInstantiationFunctionDecl(node) != nullptr) return "";
  abstract_node* anode = buildroseNode(node);
  abstract_handle ahandle(anode);
  return ahandle.toString();
