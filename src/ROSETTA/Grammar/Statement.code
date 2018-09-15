@@ -4322,6 +4322,14 @@ SgStatement::get_scope(void) const
 #if 0
                     printf ("stmt->sage_class_name() = %s \n",stmt->sage_class_name());
 #endif
+
+                    if (isSgNonrealDecl(stmt) != NULL && isSgStatement(stmt->get_parent()) == NULL) {
+                      printf("WARNING: In SgStatement::get_scope(): case of a non-real declaration with a parent which is not a SgStatement!!!\n");
+                      printf("  - stmt = %p (%s)\n", stmt, stmt ? stmt->class_name().c_str() : "");
+                      printf("  - stmt->get_parent() = %p (%s)\n", stmt->get_parent(), stmt->get_parent() ? stmt->get_parent()->class_name().c_str() : "");
+                      return NULL;
+                    }
+
                     if (stmt->get_parent() == NULL)
                        {
                          printf ("Error: NULL parent pointer not allowed for statement = %p = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
