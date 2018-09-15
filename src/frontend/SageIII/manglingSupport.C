@@ -879,7 +879,7 @@ mangleTemplateToString (const string& templ_name,
   // Mangle all the template arguments
 
   // DQ (10/29/2015): Added assertion.
-     ROSE_ASSERT(scope != NULL);
+  // ROSE_ASSERT(scope != NULL);
 
 #if 0
      printf ("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*): template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_args.size(),scope,scope->class_name().c_str());
@@ -933,7 +933,7 @@ mangleTemplateToString (const string& templ_name,
   // Mangle all the template parameters
 
   // DQ (10/29/2015): Added assertion.
-     ROSE_ASSERT(scope != NULL);
+  // ROSE_ASSERT(scope != NULL);
 
 #if 0
      printf ("In mangleTemplateToString(string&,SgTemplateParameterPtrList&,SgScopeStatement*): template name = %s templ_params.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_params.size(),scope,scope->class_name().c_str());
@@ -985,7 +985,7 @@ mangleTemplate (const SgName& templ_name,
                 const SgScopeStatement* scope)
    {
   // DQ (10/29/2015): Added assertion.
-     ROSE_ASSERT(scope != NULL);
+  // ROSE_ASSERT(scope != NULL);
 
 #if 0
      printf ("In mangleTemplate(SgName&,SgTemplateArgumentPtrList&,SgScopeStatement*): template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.str(),templ_args.size(),scope,scope->class_name().c_str());
