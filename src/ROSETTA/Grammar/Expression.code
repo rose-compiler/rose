@@ -318,6 +318,13 @@ HEADER_VAR_REF_EXPRESSION_START
 
 HEADER_VAR_REF_EXPRESSION_END
 
+HEADER_NONREAL_REF_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_NONREAL_REF_EXPRESSION_END
 
 HEADER_COMPOUND_LITERAL_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -3312,6 +3319,8 @@ SgVarRefExp::set_global_qualification_required ( bool global_qualification_requi
 
 SOURCE_VARIABLE_REFERENCE_EXPRESSION_END
 
+SOURCE_NONREAL_REF_EXPRESSION_START
+SOURCE_NONREAL_REF_EXPRESSION_END
 
 SOURCE_COMPOUND_LITERAL_EXPRESSION_START
 SOURCE_COMPOUND_LITERAL_EXPRESSION_END
@@ -8249,15 +8258,20 @@ SOURCE_GET_TYPE_THIS_EXPRESSION_START
 SgType*
 $CLASSNAME::get_type() const 
    {
-  // DQ (1/14/2006): The p_pobj_this data member was CC++ specific and no longer used (deprecated in Sage III), p_pobj_this is now removed
-     ROSE_ASSERT(get_class_symbol() != NULL);
-     ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+     SgType * type = NULL;
+     if (get_class_symbol() != NULL) {
+       type = get_class_symbol()->get_type();
+     }
+     if (get_nonreal_symbol() != NULL) {
+       type = get_nonreal_symbol()->get_type();
+     }
 
 #if 0
      printf ("In $CLASSNAME::get_type() \n");
 #endif
+     ROSE_ASSERT(type != NULL);
 
-     return SgPointerType::createType(get_class_symbol()->get_type());
+     return SgPointerType::createType(type);
    }
 
 SOURCE_GET_TYPE_THIS_EXPRESSION_END

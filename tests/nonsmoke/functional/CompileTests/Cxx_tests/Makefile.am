@@ -506,7 +506,6 @@ NEW_2017_TESTS = \
    test2017_105.C \
    test2017_106.C \
    test2017_107.C \
-   test2018_01.C \
    test2018_02.C \
    test2018_03.C \
    test2018_04.C \
@@ -864,6 +863,11 @@ if ROSE_USING_GCC_VERSION_LATER_4_4
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_135.C \
    test2015_136.C
+endif
+
+if !ROSE_USING_GCC_VERSION_LATER_6_0
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2018_01.C
 endif
 
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 

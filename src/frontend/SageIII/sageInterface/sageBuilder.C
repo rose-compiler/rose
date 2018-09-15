@@ -590,8 +590,6 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
        // DQ (9/15/2012): We need to communicate that the language so that SgBoolVal will not be unparsed to "1" instead of "true" (see test2012_215.C).
        // Calling the unparseToString (SgUnparse_Info *info) function instead of the version not taking an argument.
-       // unparseTemplateArgument(*i,info);
-       // returnName += (*i)->unparseToString();
           returnName += (*i)->unparseToString(info);
 
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
@@ -610,7 +608,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      if (emptyArgumentList == false)
           returnName += " > ";
 
-#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST || 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
 #endif
 
@@ -780,6 +778,13 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                break;
              }
 #endif
+
+          case V_SgNonrealDecl:
+             {
+               templateArgumentsList = &(isSgNonrealDecl(decl)->get_tpl_args());
+               break;
+             }
+
           default:
              {
                printf ("getTemplateArgumentList(): Default reached in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
@@ -878,6 +883,12 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
           case V_SgTemplateTypedefDeclaration:
              {
                templateParameterList = &(isSgTemplateTypedefDeclaration(decl)->get_templateParameters());
+               break;
+             }
+
+          case V_SgNonrealDecl:
+             {
+               templateParameterList = &(isSgNonrealDecl(decl)->get_tpl_params());
                break;
              }
 
@@ -1526,7 +1537,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 #if 0
           printf ("  --- Setting parent using topScopeStack() = %p = %s = %s \n",current_scope,current_scope->class_name().c_str(),SageInterface::get_name(current_scope).c_str());
 #endif
-          varDecl->set_parent(topScopeStack());
+          varDecl->set_parent(current_scope);
           ROSE_ASSERT(varDecl->get_parent() != NULL);
         }
 
@@ -1650,16 +1661,6 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT (scope != NULL);
      ROSE_ASSERT(type != NULL);
 
-  // At present we don't have a SgTemplateVariableDeclaration IR node, so use the base class SgTemplateDeclaration for now!
-  // printf ("ROSE maybe needs a SgTemplateVariableDeclaration IR node \n");
-
-  // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name, type, varInit);
-  // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name);
-
-  // DQ (12/21/2011): The new design for SgTemplateVariableDeclaration derives from the SgVariableDeclaration instead of SgTemplateDeclaration.
-  // SgTemplateDeclaration * varDecl = new SgTemplateVariableDeclaration(name);
-  // SgVariableDeclaration * varDecl = new SgTemplateVariableDeclaration();
-  // SgTemplateVariableDeclaration * varDecl = new SgTemplateVariableDeclaration();
      SgTemplateVariableDeclaration * varDecl = new SgTemplateVariableDeclaration(name, type, varInit);
      ROSE_ASSERT(varDecl);
 
@@ -1670,7 +1671,6 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT(variable != NULL);
      setSourcePosition(variable);
 
-#if 1
      if (name != "")
         {
        // Anonymous bit fields should not have symbols
@@ -1681,17 +1681,12 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
      ROSE_ASSERT(initName);
      ROSE_ASSERT((initName->get_declptr())!=NULL);
 
-#if 1
   // bug 119, SgVariableDefintion's File_info is needed for deep copy to work
   // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
   // have to set SgVariableDefintion explicitly
      SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
      ROSE_ASSERT(variableDefinition_original != NULL);
      setOneSourcePositionNull(variableDefinition_original);
-#endif
-#else
-     printf ("In buildTemplateVariableDeclaration_nfi(): Support for template variable declarations is not yet implemented into AST. \n");
-#endif
 
      setOneSourcePositionNull(varDecl);
 
@@ -2257,6 +2252,10 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
        // DQ (3/4/2018): If we have previously processed this typedef and there is a symbol in place, then return the declaration from that symbol.
           SgDeclarationStatement* declarationStatement = prexisting_template_typedef_symbol->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
+#if 0
+          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): Reusing the declaration from the symbol:\n");
+          printf ("    declarationStatement = %p (%s)\n", declarationStatement, declarationStatement ? declarationStatement->class_name().c_str() : "");
+#endif
           SgTemplateInstantiationTypedefDeclaration* return_declaration = isSgTemplateInstantiationTypedefDeclaration(declarationStatement);
           ROSE_ASSERT(return_declaration != NULL);
 #if 0
@@ -2754,94 +2753,17 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
 
 
 SgMemberFunctionType*
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassType *classType, unsigned int mfunc_specifier)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier, unsigned int ref_qualifiers)
    {
   // DQ (8/19/2012): This is a refactored version of the buildMemberFunctionType() below so that we can
   // isolate out the part that uses a SgClassType from the version that uses the SgClassDefinition.
 
-#if 0
-  // DQ (12/3/2011): We need to FIRST look into the global function type table to reuse types.
-  // SgMemberFunctionType * funcType = new SgMemberFunctionType(return_type, false, classType, mfunc_specifier);
-  // SgMemberFunctionType * funcType = SgMemberFunctionType::createType(return_type, false, classType, mfunc_specifier);
-  // SgPartialFunctionType* partialFunctionType = SgPartialFunctionType::createType(return_type, false, classType, mfunc_specifier);
-  // SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, false, classType, mfunc_specifier);
-     bool has_ellipses = false;
-     SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, has_ellipses, classType, mfunc_specifier);
-
-     ROSE_ASSERT(partialFunctionType != NULL);
-
-#error "DEAD CODE!"
-
-  // printf ("In buildMemberFunctionType(): partialFunctionType = %p = %s \n",partialFunctionType,partialFunctionType->class_name().c_str());
-
-  // DQ (3/8/2012): If this is non-zero then the SgPartialFunctionType should have somethin set internally.
-     if (mfunc_specifier != 0)
-        {
-#if 0
-          printf ("In buildMemberFunctionType(): partialFunctionType->isConstFunc()    = %s \n",partialFunctionType->isConstFunc()    ? "true" : "false");
-          printf ("In buildMemberFunctionType(): partialFunctionType->isVolatileFunc() = %s \n",partialFunctionType->isVolatileFunc() ? "true" : "false");
-          printf ("In buildMemberFunctionType(): partialFunctionType->isRestrictFunc() = %s \n",partialFunctionType->isRestrictFunc() ? "true" : "false");
-#endif
-       // ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true);
-          ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true || partialFunctionType->isRestrictFunc() == true);
-        }
-
-#error "DEAD CODE!"
-
-  // SgMemberFunctionType* funcType = SgMemberFunctionType::createType(partialFunctionType, NULL);
-     SgMemberFunctionType* funcType = SgMemberFunctionType::createType(partialFunctionType, NULL);
-     ROSE_ASSERT(funcType != NULL);
-
-  // printf ("In buildMemberFunctionType(): funcType = %p = %s \n",funcType,funcType->class_name().c_str());
-
-     if (typeList != NULL)
-        {
-       // DQ (12/5/2012): We want to avoid overwriting an existing SgFunctionParameterTypeList. Could be related to failing tests for AST File I/O.
-          if (funcType->get_argument_list() != NULL)
-             {
-               delete funcType->get_argument_list();
-               funcType->set_argument_list(NULL);
-             }
-          ROSE_ASSERT(funcType->get_argument_list() == NULL);
-
-          funcType->set_argument_list(typeList);
-          typeList->set_parent(funcType);
-        }
-
-     SgName typeName = funcType->get_mangled_type();
-
-#error "DEAD CODE!"
-
-  // Maintain the global type table
-     SgFunctionTypeTable* fTable = SgNode::get_globalFunctionTypeTable();
-     ROSE_ASSERT(fTable != NULL);
-
-  // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable BEFORE");
-
-     SgType* typeInTable = fTable->lookup_function_type(typeName);
-
-  // DQ (12/5/2012): I want to test that we are not building the SgMemberFunctionType correctly since we are not including the SgFunctionParameterTypeList in the lookup.
-        {
-#if 0
-          printf ("########### In buildMemberFunctionType(): Looking in global function type table for member function type = %p name = %s \n",funcType,typeName.str());
-#endif
-
-#error "DEAD CODE!"
-
-          SgName                alt_typeName    = SgMemberFunctionType::get_mangled(return_type,typeList,classType,mfunc_specifier);
-          SgType*               alt_typeInTable = fTable->lookup_function_type(alt_typeName);
-          SgMemberFunctionType* alt_funcType    = isSgMemberFunctionType(fTable->lookup_function_type(typeName));
-#if 0
-          printf ("########### In buildMemberFunctionType(): Looking in global function type table for alt member function type = %p alt name = %s alt typeInTable = %p \n",alt_funcType,alt_typeName.str(),alt_typeInTable);
-#endif
-        }
-#else
   // Maintain the global type table
      SgFunctionTypeTable* fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable != NULL);
 
   // DQ (12/6/2012): Added assertion.
-     ROSE_ASSERT(classType != NULL);
+  // ROSE_ASSERT(classType != NULL);
 
   // DQ (12/13/2012): Added assertion.
      ROSE_ASSERT(typeList != NULL);
@@ -2858,7 +2780,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      if (typeInTable == NULL)
         {
           bool has_ellipses = false;
-          SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, has_ellipses, classType, mfunc_specifier);
+          SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, has_ellipses, classType, mfunc_specifier, ref_qualifiers);
           ROSE_ASSERT(partialFunctionType != NULL);
 #if 0
           printf ("Building a SgPartialFunctionType: partialFunctionType = %p \n",partialFunctionType);
@@ -2898,8 +2820,6 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
           ROSE_ASSERT(funcType->get_argument_list() != NULL);
         }
-  // SgMemberFunctionType* funcType    = isSgMemberFunctionType(fTable->lookup_function_type(typeName));
-#endif
 
 #if 0
      printf ("########### In buildMemberFunctionType(): Looking in global function type table for member function type = %p name = %s typeInTable = %p \n",funcType,typeName.str(),typeInTable);
@@ -2923,57 +2843,15 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
        // DQ (3/22/2012): Added assertion.
           ROSE_ASSERT(typeInTable != funcType);
 
-#if 0
-
-#error "DEAD CODE!"
-
-       // DQ (4/25/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
-          printf ("(debugging) Skipping delete of funcType = %p = %s \n",funcType,funcType->class_name().c_str());
-#else
           delete funcType;
-#endif
           funcType = NULL;
-#if 0
-
-#error "DEAD CODE!"
-
-       // DQ (12/13/2011): Is this executed!
-          printf ("Is this executed! \n");
-          ROSE_ASSERT(false);
-#endif
        // Return the one from the global type table.
           funcType = isSgMemberFunctionType(typeInTable);
           ROSE_ASSERT(funcType != NULL);
         }
 #if 0
-
-#error "DEAD CODE!"
-
-        }
-       else
-        {
-       // DQ (12/4/2011): Templates should not really generate types, but we need just such a concept.
-          ROSE_ASSERT(templateClassDeclaration != NULL);
-
-          printf ("Not clear how to handle case of SgTemplateClassDeclaration \n");
-          ROSE_ASSERT(false);
-        }
+     fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable AFTER");
 #endif
-
-  // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable AFTER");
-
-  // DQ (1/21/2009): TODO: Need to mark the function type as const, volatile,
-  // or restrict (assert that none are set for now).
-  // ROSE_ASSERT(mfunc_specifier == 0);
-  // funcType->set_mfunc_specifier(mfunc_specifier);
-#if 0
-     printf ("Leaving buildMemberFunctionType(): returning funcType = %p = %s mfunc_specifier = %u \n",funcType,funcType->class_name().c_str(),mfunc_specifier);
-     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-#endif
-
-  // DQ (3/8/2012): This should be non-zero for a const member function type.
-  // ROSE_ASSERT(mfunc_specifier == 0);
-
      return funcType;
    }
 
@@ -2984,7 +2862,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 //
 // insert into symbol table when not duplicated
 SgMemberFunctionType*
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassDefinition *struct_name, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgScopeStatement * struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers)
    {
   // This function has to first build a version of the SgMemberFunctionType so that it can generate a mangled name.
   // If the mangled name can be use to lookup a SgMemberFunctionType then the "just built" SgMemberFunctionType
@@ -3008,18 +2886,23 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
-     SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(struct_name);
+     SgClassDefinition* classDefinition = isSgClassDefinition(struct_name);
+     SgDeclarationScope* decl_scope = isSgDeclarationScope(struct_name);
+
+     ROSE_ASSERT(classDefinition != NULL || decl_scope != NULL);
 
      SgDeclarationStatement* declaration = NULL;
-     if (templateClassDefinition != NULL)
+     if (classDefinition != NULL)
         {
-          declaration = templateClassDefinition->get_declaration();
-          ROSE_ASSERT(declaration != NULL);
+          declaration = classDefinition->get_declaration();
+        }
+       else if (decl_scope != NULL)
+        {
+          declaration = isSgDeclarationStatement(decl_scope->get_parent());
         }
        else
         {
-          declaration = struct_name->get_declaration();
-          ROSE_ASSERT(declaration != NULL);
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(declaration != NULL);
@@ -3039,50 +2922,29 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           printf ("WARNING: typeList == NULL \n");
         }
 
-#if 0
-  // DQ (8/15/2013): I think that the function type is computed the same for templates as non-templates, and template
-  // instantiations.  The difference is now template arguments or templae parameters are used to distinquish the
-  // different symbols in the symbol table lookup.
-     if (isSgTemplateClassDeclaration(declaration) != NULL)
-        {
-          printf ("In buildMemberFunctionType(): Not clear how to handle case of SgTemplateClassDeclaration \n");
-        }
-#endif
-#if 0
-     if (isSgTemplateClassDeclaration(declaration) != NULL)
-        {
-          printf ("Not clear how to handle case of SgTemplateClassDeclaration \n");
-          ROSE_ASSERT(false);
-        }
-#endif
-
      SgClassDeclaration*         classDeclaration         = isSgClassDeclaration(declaration);
      SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(declaration);
+     SgNonrealDecl *             nrdecl                   = isSgNonrealDecl(declaration);
+
+     ROSE_ASSERT(classDeclaration != NULL || nrdecl != NULL);
 
      SgMemberFunctionType* funcType = NULL;
-  // ROSE_ASSERT(classDeclaration != NULL);
-
-  // DQ (8/15/2013): I think we can asert this under the new design where
-  // SgTemplateClassDeclaration is derived from SgClassDeclaration.
-     ROSE_ASSERT(classDeclaration != NULL);
 
   // DQ (12/4/2011): Modified SgClassType to support template declarations (SgTemplateClassDeclaration now contains a type set to SgClassType.
   // The SgClassType has been modified (browdened) to support a SgDeclarationStatement instead of a SgClassDeclaration.
   // SgClassType* classType = classDeclaration->get_type();
-     SgClassType* classType = NULL;
+     SgType* classType = NULL;
      if (classDeclaration != NULL)
         {
           classType = classDeclaration->get_type();
-          ROSE_ASSERT(classType != NULL);
+        }
+       else if (decl_scope != NULL)
+        {
+          classType = nrdecl->get_type();
         }
        else
         {
-          ROSE_ASSERT(templateClassDeclaration != NULL);
-          SgType* type = templateClassDeclaration->get_type();
-          ROSE_ASSERT(type != NULL);
-
-          classType = isSgClassType(type);
-          ROSE_ASSERT(classType != NULL);
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(classType != NULL);
@@ -3295,6 +3157,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         }
 #endif
 
+#if 0
+     printf ("In buildNondefiningFunctionDeclaration_T(): XXX_name = %s\n", XXX_name.str());
+#endif
+
   // argument verification
      if (scope == NULL)
         {
@@ -3404,15 +3270,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // func_type = buildMemberFunctionType(return_type,paralist,NULL,0);
        // func_type = buildFunctionType(return_type,paralist);
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s build SgFunctionParameterTypeList \n",scope,scope->class_name().c_str());
+          printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s\n",scope,scope->class_name().c_str());
 #endif
-          SgClassDefinition *struct_name = isSgClassDefinition(scope);
-          ROSE_ASSERT(struct_name != NULL);
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
 
-       // DQ (11/6/2011): Modified function interfaces to support defining const and vaolatile functions (part of function type, but be built before types are shared).
-       // func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ 0);
-          func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ functionConstVolatileFlags);
+          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
 
        // printf ("Error: SgFunctionType built instead of SgMemberFunctionType \n");
        // ROSE_ASSERT(false);
@@ -3460,6 +3322,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                nameWithTemplateArguments.str(),func_type,func_type->get_mangled().str(),
                templateParameterList != NULL ? templateParameterList->size() : 999,
                templateArgumentsList != NULL ? templateArgumentsList->size() : 999);
+          printf(" --- scope = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
 #endif
 #if 0
        // Debugging output.
@@ -3486,6 +3349,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",nameWithTemplateArguments.str(),func_symbol);
+          if (func_symbol != NULL) {
+            printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol->get_declaration() = %p \n", func_symbol->get_declaration());
+          }
 #endif
 #if 0
           if (nameWithoutTemplateArguments == "getline")
@@ -3502,21 +3368,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                printf ("NOTE: Maybe template symbols for template function declarations should use the function type \n");
 #endif
                ROSE_ASSERT(func_type != NULL);
-
-#if 0
-            // DQ (12/12/2011): Because this is an just using the name, it could return the wrong symbol in the case of overloaded functions.
-            // func_symbol = scope->lookup_template_symbol(name);
-
-#error "DEAD CODE!"
-
-               func_symbol = scope->lookup_template_function_symbol(name,func_type);
-               printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->lookup_template_symbol(name = %s) = %p \n",name.str(),func_symbol);
-               if (func_symbol != NULL)
-                  {
-                 // Check that this is a SgTemplateFunctionDeclaration (could be a SgTemplateMemberFunctionDeclaration).
-                    ROSE_ASSERT(isSgTemplateFunctionDeclaration(func_symbol->get_symbol_basis()) != NULL);
-                  }
-#endif
              }
             else
              {
@@ -3674,43 +3525,17 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                   }
                  else
                   {
-#if 0
-                 // DQ (11/23/2011): This change allows this to compile for where SgTemplateFunctionDeclarations are used.
-                 // func_symbol = new SgFunctionSymbol(func);
-                    func_symbol = new SgFunctionSymbol(isSgFunctionDeclaration(func));
-                    ROSE_ASSERT(func_symbol->get_symbol_basis() != NULL);
-#else
                  // if (isSgFunctionDeclaration(func))
                     if (isSgTemplateFunctionDeclaration(func))
                        {
-#if 0
-                         printf ("THIS IS A TEMPLATE FUNCTION DECLARATION (MEMBER OR NON-MEMBER (build a SgTemplateFunctionSymbol) \n");
-#endif
                       // How should we handled template functions in the symbol table???
                       // DQ (11/24/2011): After some thought, I think that template declarations for function are more template declarations
-                      // than functions.  So all template function declarations will be handled as SgTemplateSymbols and not SgFunctionSymbols.
-#if 0
-                         SgTemplateDeclaration* templatedeclaration = isSgTemplateDeclaration(func);
-                         ROSE_ASSERT(templatedeclaration != NULL);
-                         SgTemplateSymbol* template_symbol = new SgTemplateSymbol(templatedeclaration);
-                         ROSE_ASSERT(template_symbol != NULL);
-                         ROSE_ASSERT(template_symbol->get_symbol_basis() != NULL);
-#else
-                      // DQ (12/27/2011): New design for symbols for template function declarations.
+                      // than functions.  So all template function declarations will be handled as SgTemplateSymbols and not SgFunctionSymbols.mplate function declarations.
                          SgTemplateFunctionDeclaration* templatedeclaration = isSgTemplateFunctionDeclaration(func);
                          ROSE_ASSERT(templatedeclaration != NULL);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                          SgTemplateFunctionSymbol* template_symbol = new SgTemplateFunctionSymbol(templatedeclaration);
-#else
-                         printf ("Error: This functionality is not yet been made backwardly compatable to EDG 3.3 template design \n");
-                         SgFunctionSymbol* template_symbol = new SgFunctionSymbol(NULL);
-#error "DEAD CODE!"
-                         printf ("Exiting to avoid further errors \n");
-                         ROSE_ASSERT(false);
-#endif
                          ROSE_ASSERT(template_symbol != NULL);
                          ROSE_ASSERT(template_symbol->get_symbol_basis() != NULL);
-#endif
                          func_symbol = template_symbol;
                        }
                       else
@@ -3718,7 +3543,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                          func_symbol = new SgFunctionSymbol(isSgFunctionDeclaration(func));
                          ROSE_ASSERT(func_symbol->get_symbol_basis() != NULL);
                        }
-#endif
                   }
 
                ROSE_ASSERT(func_symbol != NULL);
@@ -4485,6 +4309,10 @@ SageBuilder::buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* 
 SgTemplateFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateParameterPtrList* templateParameterList)
    {
+#if 0
+  printf("In SageBuilder::buildNondefiningTemplateFunctionDeclaration(name = %s):\n", name.str());
+#endif
+
   // DQ (8/15/2013): Note that we don't need template arguments because teplate functions can't support partial specialization.
 
   // DQ (11/25/2011): Adding support for template declarations in the AST.
@@ -4710,6 +4538,10 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgT
 SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateParameterPtrList* templateParameterList)
    {
+#if 0
+  printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s):\n", name.str());
+#endif
+
   // This function only builds template member function declarations.
 
   // SgTemplateMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,NULL,NULL);
@@ -4717,6 +4549,11 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
 
   // set definingdecl for SgCtorInitializerList
      ROSE_ASSERT(result != NULL);
+
+#if 0
+     printf(" In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(...): result = %p (%s)\n", result, result->class_name().c_str());
+     printf(" In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(...): result->get_firstNondefiningDeclaration() = %p\n", result->get_firstNondefiningDeclaration());
+#endif
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
@@ -4820,6 +4657,23 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
         {
           detectTransformations_local(result);
         }
+#endif
+
+#if 0
+  // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template member function
+     if (result == result->get_firstNondefiningDeclaration()) {
+       SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+
+       nonreal_decl_scope->set_parent(result);
+       result->set_nonreal_decl_scope(nonreal_decl_scope);
+
+       SageInterface::setSourcePosition(nonreal_decl_scope);
+       nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+       nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+#if 1
+       printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s): nrscope = %p (new)\n", name.str(), nonreal_decl_scope);
+#endif
+     }
 #endif
 
      return result;
@@ -5199,6 +5053,12 @@ template <class actualFunction>
 actualFunction*
 SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType* return_type, SgFunctionParameterList* paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefining_declaration, SgTemplateArgumentPtrList* templateArgumentsList)
    {
+#if 0
+     printf ("In buildDefiningFunctionDeclaration_T():\n");
+     printf ("  --- XXX_name = %s \n", XXX_name.str());
+     printf ("  --- return_type = %p (%s) \n", return_type, return_type ? return_type->class_name().c_str() : "");
+     printf ("  --- first_nondefining_declaration = %p (%s) \n", first_nondefining_declaration, first_nondefining_declaration ? first_nondefining_declaration->class_name().c_str() : "");
+#endif
   // Note that the semantics of this function now differs from that of the buildDefiningClassDeclaration().
   // We want to have the non-defining declaration already exist before calling this function.
   // We could still build a higher level function that built both together.  Or we could provide two versions
@@ -6728,9 +6588,9 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal_nfi(unsigned 
   return result;
 }
 
-SgTemplateType* SageBuilder::buildTemplateType(SgName name/* ="" */, int template_parameter_position/* = -1*/)
+SgTemplateType* SageBuilder::buildTemplateType(SgName name/* ="" */)
 {
-  SgTemplateType* result = new SgTemplateType (name, template_parameter_position);
+  SgTemplateType* result = new SgTemplateType (name);
   ROSE_ASSERT (result);
   setOneSourcePositionForTransformation(result);
   return result;
@@ -6769,6 +6629,64 @@ SgTemplateParameterVal* SageBuilder::buildTemplateParameterVal_nfi(int template_
   return templateParameterValue;
 }
 
+#define DEBUG_BUILD_NONREAL_DECL 0
+
+SgNonrealDecl * SageBuilder::buildNonrealDecl(const SgName & name, SgDeclarationScope * scope, SgDeclarationScope * child_scope) {
+  ROSE_ASSERT(scope != NULL);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("ENTER SageBuilder::buildNonrealDecl\n");
+  printf("  --- name = %s\n", name.str());
+  printf("  --- scope = %p (%s)\n", scope, scope->class_name().c_str());
+#endif
+
+  SgNonrealDecl * nrdecl = NULL;
+
+  nrdecl = new SgNonrealDecl(name);
+  SageInterface::setSourcePosition(nrdecl);
+  nrdecl->set_firstNondefiningDeclaration(nrdecl);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- nrdecl = %p (%s)\n", nrdecl, nrdecl->class_name().c_str());
+#endif
+
+  SgNonrealSymbol * symbol = new SgNonrealSymbol(nrdecl);
+  scope->insert_symbol(name, symbol);
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- symbol = %p (%s)\n", symbol, symbol->class_name().c_str());
+#endif
+
+  SgNonrealType * type = new SgNonrealType();
+  type->set_declaration(nrdecl);
+  type->set_parent(scope);
+  nrdecl->set_type(type);
+  // FIXME (???) insert `type` in `scope`
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- type = %p (%s)\n", type, type->class_name().c_str());
+#endif
+
+  if (child_scope == NULL) {
+    child_scope = new SgDeclarationScope();
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- child_scope = %p (new)\n", name.str(), child_scope);
+#endif
+    SageInterface::setSourcePosition(child_scope);
+    child_scope->get_startOfConstruct()->setCompilerGenerated();
+    child_scope->get_endOfConstruct()->setCompilerGenerated();
+  } else {
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("  --- child_scope = %p (provided)\n", name.str(), child_scope);
+#endif
+    
+  }
+  child_scope->set_parent(nrdecl);
+  nrdecl->set_nonreal_decl_scope(child_scope);
+  
+#if DEBUG_BUILD_NONREAL_DECL
+  printf("LEAVE SageBuilder::buildNonrealDecl\n");
+#endif
+
+  return nrdecl;
+}
+
 //! Build UPC THREADS (integer expression)
 SgUpcThreads* SageBuilder::buildUpcThreads()
 {
@@ -6805,17 +6723,17 @@ SgUpcMythread* SageBuilder::buildUpcMythread_nfi()
   return result;
 }
 
-SgThisExp* SageBuilder::buildThisExp(SgClassSymbol* sym)
+SgThisExp* SageBuilder::buildThisExp(SgSymbol* sym)
 {
-  SgThisExp* result = new SgThisExp(sym, 0);
+  SgThisExp* result = new SgThisExp(isSgClassSymbol(sym), isSgNonrealSymbol(sym), 0);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   return result;
 }
 
-SgThisExp* SageBuilder::buildThisExp_nfi(SgClassSymbol* sym)
+SgThisExp* SageBuilder::buildThisExp_nfi(SgSymbol* sym)
 {
-  SgThisExp* result = new SgThisExp(sym, 0);
+  SgThisExp* result = new SgThisExp(isSgClassSymbol(sym), isSgNonrealSymbol(sym), 0);
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
@@ -7851,6 +7769,15 @@ SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym)
 #endif
 
      return varRef;
+   }
+
+SgNonrealRefExp *
+SageBuilder::buildNonrealRefExp_nfi(SgNonrealSymbol * sym)
+   {
+     SgNonrealRefExp * refexp = new SgNonrealRefExp(sym);
+     ROSE_ASSERT(refexp != NULL);
+     setOneSourcePositionNull(refexp);
+     return refexp;
    }
 
 //!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType();
@@ -12636,7 +12563,6 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
         }
-
 #if 0
       printf ("In SageBuilder::buildClassDeclaration_nfi():\n");
       printf ("  -- nameWithoutTemplateArguments = %s\n", nameWithoutTemplateArguments.str());
@@ -13641,6 +13567,10 @@ SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL
 SgTemplateClassDeclaration*
 SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
    {
+#if 0
+  printf("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(XXX_name = %p):\n", XXX_name.str());
+#endif
+
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
@@ -13730,6 +13660,21 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
           nondefdecl->set_firstNondefiningDeclaration(mysymbol->get_declaration());
           ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != NULL);
 
+      // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template classes
+          if (nondefdecl == nondefdecl->get_firstNondefiningDeclaration()) {
+            SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+
+            nonreal_decl_scope->set_parent(nondefdecl);
+            nondefdecl->set_nonreal_decl_scope(nonreal_decl_scope);
+
+            SageInterface::setSourcePosition(nonreal_decl_scope);
+            nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+            nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+#if 0
+            printf("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(XXX_name = %p): nrscope = %p (new)\n", XXX_name.str(), nonreal_decl_scope);
+#endif
+          }
+
 #if 1
        // DQ (9/16/2012): This newly refactored function can only be called after firstNondefiningDeclaration is set.
        // This also sets the template argument parents to the firstNondefiningDeclaration.
@@ -13769,25 +13714,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
         }
        else // build a nondefnining declaration if it does not exist
         {
-       // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
-       // nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
-       // nondefdecl = new SgTemplateClassDeclaration(name,templateString,template_kind,templateParameters,template_class_kind,classType,classDef);
-       // nondefdecl = new SgTemplateClassDeclaration(name,templateString,template_kind,templateParameters,template_class_kind,classDef);
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // nondefdecl = new SgTemplateClassDeclaration(name,template_class_kind,classDef);
-
-       // DQ (9/12/2012): We want to include the template specialization into the name where it is required.
-       // DQ (12/21/2011): The new design for SgTemplateClassDeclaration derives from the SgClassDeclaration instead of SgTemplateDeclaration.
-       //    Uses same signature as: SgClassDeclaration (SgName name, SgClassDeclaration::class_types class_type, SgClassType *type, SgClassDefinition *definition)
-       // nondefdecl = new SgTemplateClassDeclaration(name,template_class_kind,NULL);
-       // nondefdecl = new SgTemplateClassDeclaration(name,kind,(SgClassType*)NULL,(SgClassDefinition*)NULL);
           nondefdecl = new SgTemplateClassDeclaration(nameWithTemplateSpecializationArguments,kind,(SgClassType*)NULL,(SgClassDefinition*)NULL);
-#else
-          nondefdecl = NULL;
-
-          printf ("In buildNondefiningTemplateClassDeclaration_nfi(): This function is not supported for older versions of ROSE \n");
-          ROSE_ASSERT(false);
-#endif
           ROSE_ASSERT(nondefdecl != NULL);
 
        // DQ (9/10/2012): Initialize the template parameter list.
@@ -13796,18 +13723,10 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
 
        // DQ (9/16/2012): Moved this initialization of firstNondefiningDeclaration from farther down in this branch.
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-#if 1
+
        // DQ (9/16/2012): This newly refactored function can only be called after firstNondefiningDeclaration is set.
        // This also sets the template argument parents to the firstNondefiningDeclaration.
           setTemplateSpecializationArgumentsInDeclaration(nondefdecl,templateSpecializationArgumentList);
-#else
-       // DQ (9/12/2012): Adding support for template specialization.
-          ROSE_ASSERT(templateSpecializationArgumentList != NULL);
-          nondefdecl->get_templateSpecializationArguments() = *templateSpecializationArgumentList;
-#endif
-       // DQ (9/12/2012): Adding support for template specialization.
-       // ROSE_ASSERT(templateSpecializationArgumentList != NULL);
-       // nondefdecl->get_templateSpecializationArguments() = *templateSpecializationArgumentList;
 
        // DQ (9/10/2012): Test the just built template with its template parameters.
           if (nondefdecl->get_templateParameters().size() == 0)
@@ -14168,207 +14087,136 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
 
   // Get the nondefining declaration from the symbol if it has been built (if this works,
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
-     SgTemplateClassDeclaration* nondefdecl = NULL;
+     SgTemplateClassDeclaration* nondefdecl = nonDefiningDecl;
+     if (nondefdecl == NULL) {
+       ROSE_ASSERT(scope != NULL);
 
-  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/nonsmoke/functional/roseTests/astInterfaceTests test codes.
-  // ROSE_ASSERT(scope != NULL);
-  // SgTemplateSymbol* mysymbol = NULL;
-     SgClassSymbol* mysymbol = NULL;
-     if (scope != NULL)
-        {
-       // DQ (9/12/2012): We want to include the template specialization into the name where it is required.
-       // mysymbol = scope->lookup_template_symbol(name);
-       // mysymbol = scope->lookup_class_symbol(name);
-       // mysymbol = scope->lookup_template_class_symbol(name);
-       // mysymbol = scope->lookup_template_class_symbol(name,templateParameterList,templateSpecializationArgumentList);
-          mysymbol = scope->lookup_template_class_symbol(nameWithTemplateSpecializationArguments,templateParameterList,templateSpecializationArgumentList);
-        }
-       else
-        {
-       // Liao 9/2/2009: This is not an error. We support bottom-up AST construction and scope can be unkown.
-       // DQ (1/26/2009): I think this should be an error, but that appears it would
-       // break the existing interface. Need to discuss this with Liao.
+       SgClassSymbol* mysymbol = scope->lookup_template_class_symbol(nameWithTemplateSpecializationArguments,templateParameterList,templateSpecializationArgumentList);
 #if 0
-          printf ("Warning: In SageBuilder::buildTemplateClassDeclaration_nfi(): scope == NULL \n");
+       printf ("In buildTemplateClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
-        }
 
+       if (mysymbol != NULL) {
+         nondefdecl = isSgTemplateClassDeclaration(mysymbol->get_declaration());
+         ROSE_ASSERT(nondefdecl != NULL);
+
+         nondefdecl->set_definingDeclaration(defdecl);
+         ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
+         ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+
+      // DQ (9/12/2012): Test that the templateName is set (name without template specialization parameters).
+         ROSE_ASSERT(nondefdecl->get_templateName().is_null() == false);
+
+      // DQ (9/16/2012): Test this previously setup firstNondefiningDeclaration.
+         ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() == nondefdecl);
+         testTemplateArgumentParents(nondefdecl);
+       } else {
 #if 0
-     printf ("In buildTemplateClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+         printf("  start build non-defn decl for %p\n",defdecl);
 #endif
+      // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
+         nondefdecl = new SgTemplateClassDeclaration(nameWithTemplateSpecializationArguments,kind,NULL,NULL);
+         ROSE_ASSERT(nondefdecl != NULL);
 
-     if (mysymbol != NULL) // set links if nondefining declaration already exists.
-        {
-          nondefdecl = isSgTemplateClassDeclaration(mysymbol->get_declaration());
-
-          ROSE_ASSERT(nondefdecl != NULL);
-
+         nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+         nondefdecl->set_definingDeclaration(defdecl);
 #if 0
-          printf ("In SageBuilder::buildTemplateClassDeclaration_nfi(): Skipped test of nondefdecl->get_parent() != NULL \n");
+         printf("  nondefdecl = %p\n",nondefdecl);
 #endif
-       // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+#if 0
+      // TV (04/12/2018): Add a scope for nonreal classes (and their member) on the first non-defining declaration of template classes
+         SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
 
-          nondefdecl->set_definingDeclaration(defdecl);
+         nonreal_decl_scope->set_parent(nondefdecl);
+         nondefdecl->set_nonreal_decl_scope(nonreal_decl_scope);
 
-          ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
-          ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
-
-       // DQ (9/12/2012): Test that the templateName is set (name without template specialization parameters).
-          ROSE_ASSERT(nondefdecl->get_templateName().is_null() == false);
-
-       // DQ (9/16/2012): Test this previously setup firstNondefiningDeclaration.
-          ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() == nondefdecl);
-          testTemplateArgumentParents(nondefdecl);
-        }
-       else // build a nondefnining declaration if it does not exist
-        {
-       // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
-       // nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
-       // nondefdecl = new SgTemplateClassDeclaration(name,templateString,template_kind,templateParameters,template_class_kind,classType,classDef);
-       // nondefdecl = new SgTemplateClassDeclaration(name,templateString,template_kind,templateParameters,template_class_kind,classDef);
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (9/12/2012): We want to include the template specialization into the name where it is required.
-       // nondefdecl = new SgTemplateClassDeclaration(name,template_class_kind,classDef);
-       // nondefdecl = new SgTemplateClassDeclaration(name,kind,NULL,classDef);
-       // nondefdecl = new SgTemplateClassDeclaration(name,kind,NULL,NULL);
-          nondefdecl = new SgTemplateClassDeclaration(nameWithTemplateSpecializationArguments,kind,NULL,NULL);
-#else
-          nondefdecl = NULL;
-
-          printf ("In buildTemplateClassDeclaration_nfi(): This function is not supported for older versions of ROSE \n");
-          ROSE_ASSERT(false);
-#endif
-          ROSE_ASSERT(nondefdecl != NULL);
-
-          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-          nondefdecl->set_definingDeclaration(defdecl);
-
-       // DQ (9/10/2012): Initialize the template parameter list.
-          ROSE_ASSERT(templateParameterList != NULL);
-          nondefdecl->get_templateParameters() = *templateParameterList;
-
+         SageInterface::setSourcePosition(nonreal_decl_scope);
+         nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+         nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
 #if 1
-       // DQ (9/16/2012): Newly refactored code.
-          setTemplateSpecializationArgumentsInDeclaration(nondefdecl,templateSpecializationArgumentList);
-#else
-       // DQ (9/12/2012): Adding support for template specialization.
-          ROSE_ASSERT(templateSpecializationArgumentList != NULL);
-          nondefdecl->get_templateSpecializationArguments() = *templateSpecializationArgumentList;
+         printf("In buildTemplateClassDeclaration_nfi(): nrscope = %p\n", nonreal_decl_scope);
 #endif
-          testTemplateArgumentParents(nondefdecl);
+#endif
+      // DQ (9/10/2012): Initialize the template parameter list.
+         ROSE_ASSERT(templateParameterList != NULL);
+         nondefdecl->get_templateParameters() = *templateParameterList;
 
-       // DQ (9/10/2012): Test the just built template with its template parameters.
-       // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
-          if (nondefdecl->get_templateParameters().size() == 0)
-             {
+      // DQ (9/16/2012): Newly refactored code.
+         setTemplateSpecializationArgumentsInDeclaration(nondefdecl,templateSpecializationArgumentList);
+         testTemplateArgumentParents(nondefdecl);
+
+      // DQ (9/10/2012): Test the just built template with its template parameters.
+      // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
+         if (nondefdecl->get_templateParameters().size() == 0)
+            {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-               printf ("WARNING: In buildTemplateClassDeclaration_nfi(): nondefdecl->get_templateParameters().size() == 0: OK for nested classes/structs in template declarations nondefdecl = %p \n",nondefdecl);
+              printf ("WARNING: In buildTemplateClassDeclaration_nfi(): nondefdecl->get_templateParameters().size() == 0: OK for nested classes/structs in template declarations nondefdecl = %p \n",nondefdecl);
 #endif
-             }
-       // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
-
-       // DQ (9/12/2012): Set the template name to be the name without template specialization arguments.
-          nondefdecl->set_templateName(nameWithoutTemplateArguments);
-
-       // DQ (12/26/2011): The non defining declaration should not have a valid pointer to the class definition.
-          ROSE_ASSERT(nondefdecl->get_definition() == NULL);
+            }
+      // ROSE_ASSERT(nondefdecl->get_templateParameters().size() > 0);
 #if 0
-       // DQ (12/4/2011): Now we want to enable this so that the SgClassType will be available from a SgTemplateClassDeclaration.
-          if (nondefdecl->get_type() == NULL)
-             {
-            // nondefdecl->set_type(SgClassType::createType(nondefdecl));
-            // nondefdecl->set_type(NULL);
-            // nondefdecl->set_type(SgTemplateType::createType(nondefdecl));
-            // nondefdecl->set_type(SgTemplateType::createType());
-               nondefdecl->set_type(SgClassType::createType(nondefdecl));
-             }
+         printf("  next 1\n");
 #endif
-       // printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
-       // The nondefining declaration will not appear in the source code, but is compiler
-       // generated (so we have something about the class that we can reference; e.g in
-       // types).  At the moment we make it a transformation, there might be another kind
-       // of source position that would be more precise.  FIXME.
-       // setOneSourcePositionNull(nondefdecl);
-          setOneSourcePositionForTransformation(nondefdecl);
-          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != NULL);
+      // DQ (9/12/2012): Set the template name to be the name without template specialization arguments.
+         nondefdecl->set_templateName(nameWithoutTemplateArguments);
 
-          nondefdecl->setForward();
+      // DQ (12/26/2011): The non defining declaration should not have a valid pointer to the class definition.
+         ROSE_ASSERT(nondefdecl->get_definition() == NULL);
 
-       // Liao, 9/2/2009. scope stack is optional, it can be empty
-       // nondefdecl->set_parent(topScopeStack());
-          nondefdecl->set_parent(scope);
+      // The nondefining declaration will not appear in the source code, but is compiler
+      // generated (so we have something about the class that we can reference; e.g in
+      // types).  At the moment we make it a transformation, there might be another kind
+      // of source position that would be more precise.  FIXME.
+         setOneSourcePositionForTransformation(nondefdecl);
+         ROSE_ASSERT (nondefdecl->get_startOfConstruct() != NULL);
 
-          nondefdecl->set_scope(scope);
-#if 1
-       // Do this after the scope has been set!
-       // DQ (12/4/2011): Now we want to enable this so that the SgClassType will be available from a SgTemplateClassDeclaration.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-          printf ("In buildTemplateClassDeclaration_nfi(): nondefdecl->get_type() = %p \n",nondefdecl->get_type());
-#endif
-          if (nondefdecl->get_type() == NULL)
-             {
-            // nondefdecl->set_type(SgClassType::createType(nondefdecl));
-            // nondefdecl->set_type(NULL);
-            // nondefdecl->set_type(SgTemplateType::createType(nondefdecl));
-            // nondefdecl->set_type(SgTemplateType::createType());
-               nondefdecl->set_type(SgClassType::createType(nondefdecl));
+         nondefdecl->setForward();
+
+      // Liao, 9/2/2009. scope stack is optional, it can be empty
+         nondefdecl->set_parent(scope);
+         nondefdecl->set_scope(scope);
 #if 0
-               printf ("In SageBuilder::buildTemplateClassDeclaration_nfi(): built class type: part 1: nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+         printf("  next 2\n");
 #endif
-             }
-#endif
-          if (scope != NULL)
-             {
+
+         if (nondefdecl->get_type() == NULL)
+            {
+              nondefdecl->set_type(SgClassType::createType(nondefdecl));
 #if 0
-               printf ("Building a SgTemplateSymbol using name = %s and nondefdecl = %p = %s \n",name.str(),nondefdecl,nondefdecl->class_name().c_str());
+              printf ("In SageBuilder::buildTemplateClassDeclaration_nfi(): built class type: part 1: nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
 #endif
-            // mysymbol = new SgTemplateSymbol(nondefdecl);
-            // mysymbol = new SgClassSymbol(nondefdecl);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-               mysymbol = new SgTemplateClassSymbol(nondefdecl);
-#else
-               printf ("Error: This functionality is not yet been made backwardly compatable to EDG 3.3 template design \n");
-               mysymbol = new SgClassSymbol(NULL);
-
-               printf ("Exiting to avoid further errors \n");
-               ROSE_ASSERT(false);
-#endif
-               ROSE_ASSERT(mysymbol != NULL);
-
-            // DQ (9/12/2012): We want to include the template specialization into the name where it is required.
-            // scope->insert_symbol(name, mysymbol);
-               scope->insert_symbol(nameWithTemplateSpecializationArguments, mysymbol);
-
+            }
 #if 0
-               printf ("SageBuilder::buildTemplateClassDeclaration_nfi() (after building symbol): scope = %p = %s \n",scope,scope->class_name().c_str());
+         printf("  next 3\n");
 #endif
 
-               ROSE_ASSERT(nondefdecl->get_scope() != NULL);
+      // DQ (9/12/2012): Test that the templateName is set (name without template specialization parameters).
+         ROSE_ASSERT(nondefdecl->get_templateName().is_null() == false);
 
-               ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
-             }
-            else
-             {
-            // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.
-             }
+      // DQ (7/16/2017): Added code to set the template parameters in the just build declaration (if it is a template declaration).
+      // We want to set the parents of the template paremters to the frst nondefining template class declaration, and we want to reset
+      // the scope of the declarations associated with any previously marked SgClassType objects associated with any template parameters.
+      // printf ("SageBuilder::buildTemplateClassDeclaration_nfi(): Calling setTemplateParametersInDeclaration(): nameWithTemplateSpecializationArguments = %s \n",nameWithTemplateSpecializationArguments.str());
 
-       // DQ (9/12/2012): Test that the templateName is set (name without template specialization parameters).
-          ROSE_ASSERT(nondefdecl->get_templateName().is_null() == false);
+         setTemplateParametersInDeclaration(nondefdecl,templateParameterList);
 
-#if 1
-       // DQ (7/16/2017): Added code to set the template parameters in the just build declaration (if it is a template declaration).
-       // We want to set the parents of the template paremters to the frst nondefining template class declaration, and we want to reset
-       // the scope of the declarations associated with any previously marked SgClassType objects associated with any template parameters.
-       // printf ("SageBuilder::buildTemplateClassDeclaration_nfi(): Calling setTemplateParametersInDeclaration(): nameWithTemplateSpecializationArguments = %s \n",nameWithTemplateSpecializationArguments.str());
+      // DQ (8/13/2013): Adding test of template parameter lists.
+         SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(nondefdecl);
+         ROSE_ASSERT(templateClassDeclaration == NULL || (templateParameterList != NULL && templateParameterList->size() == templateClassDeclaration->get_templateParameters().size()));
 
-          setTemplateParametersInDeclaration(nondefdecl,templateParameterList);
-
-       // DQ (8/13/2013): Adding test of template parameter lists.
-          SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(nondefdecl);
-          ROSE_ASSERT(templateClassDeclaration == NULL || (templateParameterList != NULL && templateParameterList->size() == templateClassDeclaration->get_templateParameters().size()));
+         mysymbol = new SgTemplateClassSymbol(nondefdecl);
+         scope->insert_symbol(nameWithTemplateSpecializationArguments, mysymbol);
+#if 0
+         printf("  end build non-defn decl\n");
 #endif
-        }
+       }
+     } else {
+       SgClassSymbol* mysymbol = scope->lookup_template_class_symbol(nameWithTemplateSpecializationArguments,templateParameterList,templateSpecializationArgumentList);
+       if (mysymbol == NULL) {
+         printf("WARNING: In buildTemplateClassDeclaration_nfi(): non-defining declaration was provided but cannot be located in the associated scope.\n");
+       }
+     }
 
 #if 0
      printf ("In buildTemplateClassDeclaration_nfi(): Setting the firstNondefiningDeclaration to be nondefdecl = %p \n",nondefdecl);
@@ -14798,6 +14646,28 @@ SageBuilder::buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefin
      baseclass->set_parent(classDefinition);
 
   // DQ (6/21/2005): Notice that this is copied by value (the base class list should be a list of pointers to SgBaseClass (later)
+     classDefinition->append_inheritance(baseclass);
+
+     return baseclass;
+   }
+
+
+SgNonrealBaseClass*
+SageBuilder::buildNonrealBaseClass ( SgNonrealDecl* nrdecl, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect )
+   {
+     ROSE_ASSERT(nrdecl != NULL);
+     ROSE_ASSERT(classDefinition != NULL);
+
+     SgNonrealBaseClass * baseclass = new SgNonrealBaseClass ( NULL , isDirect , nrdecl );
+     ROSE_ASSERT(baseclass != NULL);
+
+     if (isVirtual == true)
+        {
+          baseclass->get_baseClassModifier().setVirtual();
+        }
+
+     baseclass->set_parent(classDefinition);
+
      classDefinition->append_inheritance(baseclass);
 
      return baseclass;
