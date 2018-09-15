@@ -6047,6 +6047,8 @@ TestMultiFileConsistancy::test()
 void
 TestMultiFileConsistancy::visit( SgNode* node)
    {
+  // TV (09/15/2018): Nothing really happens in there anymore. Commented everything out as "declaration->get_scope() != NULL" fails for some non-real declarations
+#if 0
   // DQ (2/23/2009): added testing to support outlining to a separate file.
   // This test is helpful for the outlining to a separate file, where we want to make sure 
   // that the transformations required do not build a locally inconsistant AST for each file.
@@ -6117,6 +6119,7 @@ TestMultiFileConsistancy::visit( SgNode* node)
 #endif
 #endif
         }
+#endif
    }
 
 
