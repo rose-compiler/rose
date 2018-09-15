@@ -252,6 +252,7 @@ SgAsteriskShapeExp
 SgAterm
 SgAttribute
 SgAttributeSpecificationStatement
+SgAutoType
 SgBackspaceStatement
 SgBaseClass
 SgExpBaseClass
@@ -499,6 +500,11 @@ SgNoexceptOp
 SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
+SgNonrealDecl
+SgNonrealRefExp
+SgNonrealSymbol
+SgNonrealType
+SgNonrealBaseClass
 SgNullExpression
 SgNullptrValExp
 SgNullStatement
