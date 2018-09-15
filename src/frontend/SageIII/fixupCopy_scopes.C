@@ -660,8 +660,13 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                                  {
                                    printf ("Warning: (inner scope) this->get_definingDeclaration()->get_parent() == NULL (OK for some SgTemplateFunctionDeclaration and SgTemplateMemberFunctionDeclaration) \n");
                                  }
+                                else if (isSgTemplateClassDeclaration(this->get_definingDeclaration()) != NULL)
+                                 {
+                                   printf ("WARNING: %p (%s) has no parent! \n", this->get_definingDeclaration(), this->get_definingDeclaration()->class_name().c_str());
+                                 }
                                 else
                                  {
+                                   printf ("ERROR: %p (%s) has no parent! \n", this->get_definingDeclaration(), this->get_definingDeclaration()->class_name().c_str());
                                    ROSE_ASSERT(this->get_definingDeclaration()->get_parent() != NULL);
                                  }
                             }
