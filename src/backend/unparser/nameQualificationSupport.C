@@ -6815,10 +6815,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                         SgDeclarationStatement * tpldecl = isSgDeclarationStatement(tplParam->get_parent());
                         ROSE_ASSERT(tpldecl != NULL);
 #if 0
-                        printf("tplParam = %p (%s)\n", tplParam, tplParam ? tplParam->class_name().c_str() : "");
+                        printf("tpldecl = %p (%s)\n", tpldecl, tpldecl ? tpldecl->class_name().c_str() : "");
 #endif
                         ROSE_ASSERT(
                             isSgTemplateFunctionDeclaration(tpldecl) ||
+                            isSgTemplateMemberFunctionDeclaration(tpldecl) ||
                             isSgTemplateClassDeclaration(tpldecl) ||
                             isSgTemplateTypedefDeclaration(tpldecl) ||
                             isSgTemplateVariableDeclaration(tpldecl) ||
