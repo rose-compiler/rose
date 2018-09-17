@@ -737,6 +737,7 @@ SgUntypedValueExpression
 SgUntypedArrayReferenceExpression
 SgUntypedSubscriptExpression
 SgUntypedOtherExpression
+SgUntypedNamedExpression
 SgUntypedNullExpression
 SgUntypedExprListExpression
 SgUntypedFunctionCallOrArrayReferenceExpression

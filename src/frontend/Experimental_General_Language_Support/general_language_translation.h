@@ -89,7 +89,11 @@ namespace General_Language_Translation
        // -----------
 
           e_literalExpression,
-          e_referenceExpression,
+
+          e_function_reference,
+          e_procedure_call,
+          e_argument_list,
+          e_argument_keyword,
 
           e_case_range,
           e_case_selector,
