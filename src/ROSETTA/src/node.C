@@ -143,9 +143,11 @@ Grammar::setUpNodes ()
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
 
   // Additional IR nodes that we expect to require for expressions:
+  // Rasmussen (09/04/2018): Added SgUntypedNamedExpression
      NEW_TERMINAL_MACRO (UntypedUnaryOperator,            "UntypedUnaryOperator",            "TEMP_UntypedUnaryOperator" );
      NEW_TERMINAL_MACRO (UntypedBinaryOperator,           "UntypedBinaryOperator",           "TEMP_UntypedBinaryOperator" );
      NEW_TERMINAL_MACRO (UntypedExprListExpression,       "UntypedExprListExpression",       "TEMP_UntypedExprListExpression" );
+     NEW_TERMINAL_MACRO (UntypedNamedExpression,          "UntypedNamedExpression",          "TEMP_UntypedNamedExpression" );
      NEW_TERMINAL_MACRO (UntypedNullExpression,           "UntypedNullExpression",           "TEMP_UntypedNullExpression" );
      NEW_TERMINAL_MACRO (UntypedValueExpression,          "UntypedValueExpression",          "TEMP_UntypedValueExpression" );
      NEW_TERMINAL_MACRO (UntypedArrayReferenceExpression, "UntypedArrayReferenceExpression", "TEMP_UntypedArrayReferenceExpression" );
@@ -161,10 +163,11 @@ Grammar::setUpNodes ()
   //     UntypedReferenceExpression, "UntypedExpression", "UntypedExpressionTag", false);
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression and SgUntypedNullExpression
   // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
+  // Rasmussen (09/04/2018): Added SgUntypedNamedExpression
      NEW_NONTERMINAL_MACRO (UntypedExpression,
          UntypedUnaryOperator            | UntypedBinaryOperator  | UntypedExprListExpression  | UntypedValueExpression |
          UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression       |
-         UntypedSubscriptExpression      | UntypedNullExpression  | UntypedReferenceExpression,
+         UntypedSubscriptExpression      | UntypedNamedExpression | UntypedNullExpression      | UntypedReferenceExpression,
          "UntypedExpression", "UntypedExpressionTag", true);
 
      NEW_TERMINAL_MACRO (UntypedNameListDeclaration,      "UntypedNameListDeclaration",      "TEMP_UntypedNameListDeclaration" );
@@ -648,6 +651,13 @@ Grammar::setUpNodes ()
                                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedNullExpression.setFunctionPrototype     ( "HEADER_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
 
+  // Rasmussen (09/04/2018): Added SgUntypedNamedExpression
+     UntypedNamedExpression.setFunctionPrototype    ( "HEADER_UNTYPED_NAMED_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedNamedExpression.setDataPrototype        ( "std::string", "expression_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedNamedExpression.setDataPrototype        ( "SgUntypedExpression*", "expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
      UntypedSubscriptExpression.setDataPrototype    ( "SgUntypedExpression*", "lower_bound", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -711,7 +721,17 @@ Grammar::setUpNodes ()
      UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "rhs_operand", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (9/10/2018): Added additional parameters: statement_enum, function, args, and abort_name.
      UntypedFunctionCallStatement.setFunctionPrototype ( "HEADER_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedFunctionCallStatement.setDataPrototype     ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedFunctionCallStatement.setDataPrototype     ( "SgUntypedExpression*", "function", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedFunctionCallStatement.setDataPrototype     ( "SgUntypedExprListExpression*", "args", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedFunctionCallStatement.setDataPrototype     ( "std::string", "abort_name", "= \"\"",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      UntypedBlockStatement.setFunctionPrototype        ( "HEADER_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedBlockStatement.setDataPrototype            ( "SgUntypedScope*", "scope", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1446,6 +1466,7 @@ Grammar::setUpNodes ()
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
   // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
+  // Rasmussen (09/04/2018): Added SgUntypedNamedExpression
 
      UntypedNode.setFunctionSource                  ( "SOURCE_UNTYPED_NODE", "../Grammar/LocatedNode.code");
 
@@ -1455,6 +1476,7 @@ Grammar::setUpNodes ()
      UntypedExprListExpression.setFunctionSource    ( "SOURCE_UNTYPED_EXPR_LIST_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedValueExpression.setFunctionSource       ( "SOURCE_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedOtherExpression.setFunctionSource       ( "SOURCE_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedNamedExpression.setFunctionSource       ( "SOURCE_UNTYPED_NAMED_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedNullExpression.setFunctionSource        ( "SOURCE_UNTYPED_NULL_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedReferenceExpression.setFunctionSource   ( "SOURCE_UNTYPED_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedSubscriptExpression.setFunctionSource   ( "SOURCE_UNTYPED_SUBSCRIPT_EXPRESSION", "../Grammar/LocatedNode.code");

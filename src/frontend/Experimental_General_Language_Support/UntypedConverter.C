@@ -1066,7 +1066,6 @@ SgDeclarationStatement*
 UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
    {
       SgUntypedNamePtrList ut_names = ut_decl->get_names()->get_name_list();
-      SgUntypedNamePtrList::const_iterator it;
 
       switch (ut_decl->get_statement_enum())
         {
@@ -1080,9 +1079,9 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
 
               SgExpressionPtrList localList;
 
-              for (it = ut_names.begin(); it != ut_names.end(); it++)
+              BOOST_FOREACH(SgUntypedName* ut_name, ut_names)
               {
-                 SgName name = (*it)->get_name();
+                 SgName name = ut_name->get_name();
                  std::cout << "... IMPORT name is " << name << std::endl;
                  SgVariableSymbol* variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name, scope);
                  ROSE_ASSERT(variableSymbol != NULL);
@@ -1100,38 +1099,32 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
           {
           // TODO - name seems to need a parent found in get_name sageInterface.c, line 1528
           //      - actually may be attr_spec_stmt without a parent
-             SgAttributeSpecificationStatement* attr_spec_stmt = new SgAttributeSpecificationStatement();
+             SgAttributeSpecificationStatement::attribute_spec_enum attr_enum = SgAttributeSpecificationStatement::e_externalStatement;
+             SgAttributeSpecificationStatement* attr_spec_stmt = SageBuilder::buildAttributeSpecificationStatement(attr_enum);
+             ROSE_ASSERT(attr_spec_stmt);
              setSourcePositionFrom(attr_spec_stmt, ut_decl);
 
-             attr_spec_stmt->set_definingDeclaration(attr_spec_stmt);
-             attr_spec_stmt->set_firstNondefiningDeclaration(attr_spec_stmt);
-
-             attr_spec_stmt->set_attribute_kind(SgAttributeSpecificationStatement::e_externalStatement);
-
-          // Build the SgExprListExp in the attributeSpecificationStatement if it has not already been built
-          // TODO - check to see if this is done in constructor?????????
-             if (attr_spec_stmt->get_parameter_list() == NULL)
-                {
-                   SgExprListExp* parameterList = new SgExprListExp();
-                   attr_spec_stmt->set_parameter_list(parameterList);
-                   parameterList->set_parent(attr_spec_stmt);
-                   setSourcePositionUnknown(parameterList);
-                }
-
-             for (it = ut_names.begin(); it != ut_names.end(); it++)
+             BOOST_FOREACH(SgUntypedName* ut_name, ut_names)
              {
-                std::string name = (*it)->get_name();
-                std::cout << "... EXTERNAL name is " << name << std::endl;
+                SgName name = ut_name->get_name();
+                std::cout << "-x- EXTERNAL name is " << name << std::endl;
+
+                SgType* type = SageBuilder::buildFortranImplicitType(name);
+
+                SgFunctionRefExp* func_ref = SageBuilder::buildFunctionRefExp(name, type, scope);
+                attr_spec_stmt->get_parameter_list()->prepend_expression(func_ref);
+
+                std::cout << "-x-      func_ref is " << func_ref << std::endl;
 
 #if 0
              // TODO - pick and implement one of these
                 SgExpression* parameterExpression = astExpressionStack.front();
                 SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
-
                 attr_spec_stmt->get_parameter_list()->prepend_expression(parameterExpression);
+
 #endif
              }
-             scope->append_statement(attr_spec_stmt);
+             SageInterface::appendStatement(attr_spec_stmt, scope);
              convertLabel(ut_decl, attr_spec_stmt, scope);
 
              return attr_spec_stmt;
@@ -1312,6 +1305,47 @@ UntypedConverter::convertSgUntypedForStatement (SgUntypedForStatement* ut_stmt, 
 #endif
 
       SgStatement* sg_stmt = NULL;
+
+      return sg_stmt;
+   }
+
+SgExprStatement*
+UntypedConverter::convertSgUntypedFunctionCallStatement (SgUntypedFunctionCallStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      cout << "-x- convert func call: # children is " << children.size() << endl;
+
+      ROSE_ASSERT(children.size() == 2);
+
+      SgExprStatement* sg_stmt = NULL;
+
+      SgVarRefExp* function = isSgVarRefExp(children[0]);
+      ROSE_ASSERT(function);
+
+      SgName function_name = function->get_symbol()->get_name();
+
+      cout << "-x-     function_name class is " << function->class_name() << ": name is " << function_name << endl;
+
+      SgExprListExp* args = isSgExprListExp(children[1]);
+      ROSE_ASSERT(args);
+
+      cout << "-x-     args class is " << args->class_name() << endl;
+
+
+#if 0
+
+   // This is a subroutine/procedure call (probably should not be a FuctionCallStatement
+
+      SgFunctionType * func_type = buildFunctionType(return_type, typeList);
+      SgFunctionRefExp* func_ref = buildFunctionRefExp(name,func_type,scope);
+
+#endif
+
+      SgTypeVoid* func_type = SageBuilder::buildVoidType();
+
+      sg_stmt = SageBuilder::buildFunctionCallStmt(function_name, func_type, args, scope);
+      ROSE_ASSERT(sg_stmt);
+
+      SageInterface::appendStatement(sg_stmt, scope);
 
       return sg_stmt;
    }
@@ -1722,7 +1756,18 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
            case V_SgUntypedReferenceExpression:
               {
                  SgUntypedReferenceExpression* ref_expr = isSgUntypedReferenceExpression(ut_expr);
-                 sg_expr = SageBuilder::buildVarRefExp(ref_expr->get_name(), NULL);
+                 int expr_enum = ref_expr->get_expression_enum();
+                 SgScopeStatement* scope = SageBuilder::topScopeStack();
+
+                 if (expr_enum == General_Language_Translation::e_function_reference)
+                    {
+                       sg_expr = SageBuilder::buildFunctionRefExp(ref_expr->get_name(), scope);
+                    }
+                 else
+                    {
+                       sg_expr = SageBuilder::buildVarRefExp(ref_expr->get_name(), scope);
+                    }
+
                  ROSE_ASSERT(sg_expr != NULL);
                  setSourcePositionFrom(sg_expr, ut_expr);
                  break;
@@ -1741,7 +1786,8 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
               }
            default:
               {
-                 cerr << "UntypedConverter::convertSgUntypedExpression: unimplemented for class " << ut_expr->class_name() << endl;
+                 cerr << "UntypedConverter::convertSgUntypedExpression: unimplemented for class " << ut_expr->class_name()
+                      << ": " << ut_expr << endl;
                  ROSE_ASSERT(0);  // Unimplemented
               }
          }
@@ -2135,8 +2181,13 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 {
    SgExprListExp* sg_expr_list = NULL;
 
+   cout << "-x- convertSgUntypedExprListExpression: enum is " << ut_expr_list->get_expression_enum() << endl;
+
+   int expr_enum = ut_expr_list->get_expression_enum();
+
    // try doing this for specific nodes only, perhaps it will work for all of the expression lists
-   if (ut_expr_list->get_expression_enum() == General_Language_Translation::e_case_selector)
+   if (expr_enum == General_Language_Translation::e_case_selector ||
+       expr_enum == General_Language_Translation::e_argument_list   )
      {
         sg_expr_list = new SgExprListExp();
         ROSE_ASSERT(sg_expr_list);

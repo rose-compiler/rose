@@ -413,7 +413,6 @@ SgDeclarationStatement*
 UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
    {
       SgUntypedNamePtrList ut_names = ut_decl->get_names()->get_name_list();
-      SgUntypedNamePtrList::const_iterator it;
 
       switch (ut_decl->get_statement_enum())
         {
@@ -427,9 +426,9 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 
               SgExpressionPtrList localList;
 
-              for (it = ut_names.begin(); it != ut_names.end(); it++)
+              BOOST_FOREACH(SgUntypedName* ut_name, ut_names)
               {
-                 SgName name = (*it)->get_name();
+                 SgName name = ut_name->get_name();
                  std::cout << "... IMPORT name is " << name << std::endl;
                  SgVariableSymbol* variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name, scope);
                  ROSE_ASSERT(variableSymbol != NULL);
@@ -445,41 +444,35 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 
         case SgToken::FORTRAN_EXTERNAL:
           {
-          // TODO - name seems to need a parent found in get_name sageInterface.c, line 1528
-          //      - actually may be attr_spec_stmt without a parent
-             SgAttributeSpecificationStatement* attr_spec_stmt = new SgAttributeSpecificationStatement();
+             SgAttributeSpecificationStatement::attribute_spec_enum attr_enum = SgAttributeSpecificationStatement::e_externalStatement;
+             SgAttributeSpecificationStatement* attr_spec_stmt =SageBuilder::buildAttributeSpecificationStatement(attr_enum);
+             ROSE_ASSERT(attr_spec_stmt);
              setSourcePositionFrom(attr_spec_stmt, ut_decl);
 
-             attr_spec_stmt->set_definingDeclaration(attr_spec_stmt);
-             attr_spec_stmt->set_firstNondefiningDeclaration(attr_spec_stmt);
-
-             attr_spec_stmt->set_attribute_kind(SgAttributeSpecificationStatement::e_externalStatement);
-
-          // Build the SgExprListExp in the attributeSpecificationStatement if it has not already been built
-          // TODO - check to see if this is done in constructor?????????
-             if (attr_spec_stmt->get_parameter_list() == NULL)
-                {
-                   SgExprListExp* parameterList = new SgExprListExp();
-                   attr_spec_stmt->set_parameter_list(parameterList);
-                   parameterList->set_parent(attr_spec_stmt);
-                   setSourcePositionUnknown(parameterList);
-                }
-
-             for (it = ut_names.begin(); it != ut_names.end(); it++)
+             BOOST_FOREACH(SgUntypedName* ut_name, ut_names)
              {
-                std::string name = (*it)->get_name();
+                std::string name = ut_name->get_name();
                 std::cout << "... EXTERNAL name is " << name << std::endl;
 
-#if 0
-             // TODO - pick and implement one of these
-                SgExpression* parameterExpression = astExpressionStack.front();
-                SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
+             // TODO - what about symbol table, perhaps already typed ................................................................
+                SgType* return_type = SageBuilder::buildFortranImplicitType(name);
 
-                attr_spec_stmt->get_parameter_list()->prepend_expression(parameterExpression);
-#endif
+                SgFunctionParameterTypeList * func_params = SageBuilder::buildFunctionParameterTypeList();
+                SgFunctionType*               func_type   = SageBuilder::buildFunctionType(return_type, func_params);
+                SgFunctionRefExp *            func_ref    = SageBuilder::buildFunctionRefExp(name, func_type, scope);
+
+                attr_spec_stmt->get_parameter_list()->prepend_expression(func_ref);
+
+                std::cout << "...      func_ref is " << func_ref << std::endl;
+                std::cout << "...     func_type is " << func_type << " " << func_type->class_name() << std::endl;
+                std::cout << "...   func_params is " << func_params << endl;
+
              }
-             scope->append_statement(attr_spec_stmt);     
+             SageInterface::appendStatement(attr_spec_stmt, scope);
              UntypedFortranConverter::convertLabel(ut_decl, attr_spec_stmt);
+
+             std::cout << "...attr_spec_stmt is " << attr_spec_stmt << std::endl;
+             std::cout << "...    param_list is " << attr_spec_stmt->get_parameter_list() << std::endl;
 
              return attr_spec_stmt;
          }

@@ -3022,7 +3022,19 @@ SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_chil
    }
 
 
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedNamedExpression* SgUntypedNamedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string expression_name, SgUntypedExpression* expression)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNamedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string expression_name, SgUntypedExpression* expression): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNamedExpression* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 SgUntypedNullExpression* SgUntypedNullExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
@@ -3751,11 +3763,11 @@ SgUntypedAssignmentStatement* SgUntypedAssignmentStatement::build_node_from_nonl
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedFunctionCallStatement* SgUntypedFunctionCallStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgUntypedFunctionCallStatement* SgUntypedFunctionCallStatement::build_node_from_nonlist_children (Sg_File_Info*, int, SgUntypedExpression*, SgUntypedExprListExpression*)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedFunctionCallStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedFunctionCallStatement::build_node_from_nonlist_children (Sg_File_Info*, int, SgUntypedExpression*, SgUntypedExprListExpression*): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedFunctionCallStatement* returnNode = NULL;

@@ -50,6 +50,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
 
       // TODO - think about using SageBuild scope stack (currently used for programs)
          currentScope = SageBuilder::topScopeStack();
+    cout << "-x- program header decl scope is " << currentScope << endl;
          break;
       }
     case V_SgUntypedSubroutineDeclaration:
@@ -252,6 +253,14 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          SgUntypedForStatement* ut_stmt = dynamic_cast<SgUntypedForStatement*>(node);
          SgNodePtrList children(childAttrs);
          sg_node = pConverter->convertSgUntypedForStatement(ut_stmt, children, currentScope);
+         break;
+      }
+    case V_SgUntypedFunctionCallStatement:
+      {
+         SgUntypedFunctionCallStatement* ut_stmt = dynamic_cast<SgUntypedFunctionCallStatement*>(node);
+         SgNodePtrList children(childAttrs);
+         cout << "-x- traversing function call statement " << ut_stmt << endl;
+         sg_node = pConverter->convertSgUntypedFunctionCallStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedGotoStatement:

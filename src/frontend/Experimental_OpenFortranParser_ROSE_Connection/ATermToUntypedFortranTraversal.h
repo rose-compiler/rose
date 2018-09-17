@@ -279,6 +279,14 @@ ATbool traverse_ImportStmtList(ATerm term, SgUntypedDeclarationStatementList* de
 // R1210
 ATbool traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// R1220
+ATbool traverse_CallStmt(ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_ProcedureDesignator(ATerm term, SgUntypedExpression** procedure);
+
+// R1222
+ATbool traverse_ActualArgSpec      (ATerm term, SgUntypedExpression** arg);
+ATbool traverse_ActualArgSpecList  (ATerm term, SgUntypedExprListExpression** args);
+
 // R1225
 ATbool traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type);
 ATbool traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix);

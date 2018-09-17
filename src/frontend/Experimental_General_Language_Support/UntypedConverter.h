@@ -69,11 +69,14 @@ class UntypedConverter
 
    // Executable statements
    //
+      virtual SgExprStatement* convertSgUntypedFunctionCallStatement (SgUntypedFunctionCallStatement* ut_stmt,
+                                                                      SgNodePtrList& children, SgScopeStatement* scope);
+
       virtual SgExprStatement* convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedForStatement        (SgUntypedForStatement*        ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgIfStmt*        convertSgUntypedIfStatement         (SgUntypedIfStatement*         ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
-    virtual SgStatement*       convertSgUntypedCaseStatement       (SgUntypedCaseStatement*       ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+      virtual SgStatement*     convertSgUntypedCaseStatement       (SgUntypedCaseStatement*       ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgReturnStmt*    convertSgUntypedReturnStatement     (SgUntypedReturnStatement*     ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedStopStatement       (SgUntypedStopStatement*       ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
 

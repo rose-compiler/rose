@@ -749,6 +749,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    if (traverse_AssignmentStmt(term, stmt_list)) {
       // Matched AssignmentStmt
    }
+   else if (traverse_CallStmt(term, stmt_list)) {
+      // Matched CallStmt
+   }
    else if (traverse_IfConstruct(term, stmt_list)) {
       // Matched IfConstruct
    }
@@ -2047,8 +2050,22 @@ ATbool ATermToUntypedFortranTraversal::traverse_PartRef(ATerm term, SgUntypedExp
          //TODO_SgUntyped - need way to handle list
       } else return ATfalse;
 
+      cout << ".x........ creating new RefExpr, keyword: " << keyword << " name: " << name << endl;
+
+      SgUntypedExpression* expr = new SgUntypedReferenceExpression(keyword, name);
+
+      cout << ".x........ created  new RefExpr, keyword: " << expr << endl;
+
+//      *var_expr = expr;
+
       *var_expr = new SgUntypedReferenceExpression(keyword, name);
+
+      cout << ".x........ will set source position \n";
+
       setSourcePosition(*var_expr, term);
+
+      cout << ".x........ did set source position for " << *var_expr;
+
    }
    else return ATfalse;
 
@@ -4313,7 +4330,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptGenericSpec(ATerm term, std::
 }
 
 //========================================================================================
-// ImportStmt (R1209)
+// import-stmt (R1209)
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedFortranTraversal::traverse_ImportStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
@@ -4376,7 +4393,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ImportStmtList(ATerm term, SgUnt
 }
 
 //========================================================================================
-// ExternalStmt (R1210)
+// external-stmt (R1210)
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedFortranTraversal::traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
@@ -4418,7 +4435,170 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExternalStmt(ATerm term, SgUntyp
 }
 
 //========================================================================================
-// Prefix (R1225)
+// call-stmt (R1220)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_CallStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CallStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_proc, t_args, t_eos;
+   std::string label;
+   std::string eos;
+
+   SgUntypedExpression* procedure;
+   SgUntypedExprListExpression* args;
+   SgUntypedFunctionCallStatement* call_stmt;
+
+   if (ATmatch(term, "CallStmt(<term>,<term>,<term>,<term>)", &t_label,&t_proc,&t_args,&t_eos))
+   {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_ProcedureDesignator(t_proc, &procedure)) {
+         // MATCHED ProcedureDesignator
+      } else return ATfalse;
+      if (traverse_ActualArgSpecList(t_args, &args)) {
+         // MATCHED ActualArgSpecList
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED EOS
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = General_Language_Translation::e_procedure_call;
+   call_stmt = new SgUntypedFunctionCallStatement(label, stmt_enum, procedure, args, ""/*abort_name*/);
+   ROSE_ASSERT(call_stmt);
+   setSourcePositionExcludingTerm(call_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(call_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// procedure-designator (R1221)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ProcedureDesignator(ATerm term, SgUntypedExpression** procedure)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_CallStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_name;
+   std::string procedure_name;
+
+   if (ATmatch(term, "ProcedureDesignator(<term>)", &t_name))
+   {
+      if (traverse_Name(t_name, procedure_name)) {
+         // MATCHED ProcedureName
+         int expr_enum = General_Language_Translation::e_function_reference;
+         *procedure = new SgUntypedReferenceExpression(expr_enum, procedure_name);
+         setSourcePosition(*procedure, term);
+      }
+#if 0
+      else if (traverse_ProcComponentRef(term, procedure)) {
+         // MATCHED ProcComponentRef
+      }
+#endif
+      else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// actual-arg-spec (R1222)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ActualArgSpec(ATerm term, SgUntypedExpression** arg)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ActualArgSpec: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_keyword, t_arg;
+   std::string keyword;
+   SgUntypedExpression* actual_arg;
+
+   if (ATmatch(term, "ActualArgSpec(<term>,<term>)", &t_keyword, &t_arg))
+   {
+      cout << ".x. matched ActualArgSpec \n";
+
+      // first get the argument expression
+      if (traverse_Expression(t_arg, &actual_arg)) {
+         // MATCHED ActualArg expression
+      }
+
+      cout << ".x. matched expression \n";
+
+      if (ATmatch(t_keyword, "no-keyword()")) {
+         // MATCHED no-keyword
+         cout << ".x. matched no-keyword \n";
+         *arg = actual_arg;
+         cout << ".x. returning arg " << *arg << endl;
+      }
+      else if (traverse_Name(t_keyword, keyword)) {
+         // MATCHED Keyword
+         int expr_enum = General_Language_Translation::e_argument_keyword;
+         *arg = new SgUntypedNamedExpression(expr_enum, keyword, actual_arg);
+         ROSE_ASSERT(*arg);
+         setSourcePosition(*arg, term);
+      }
+      else return ATfalse;
+   }
+   else return ATfalse;
+
+   cout << ".x. returning arg " << *arg << endl;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_ActualArgSpecList(ATerm term, SgUntypedExprListExpression** args)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ActualArgSpecList: %s\n", ATwriteToString(term));
+#endif
+
+   SgUntypedExpression* arg;
+   SgUntypedExprListExpression* arg_list;
+
+   *args = NULL;
+
+   arg_list = new SgUntypedExprListExpression(General_Language_Translation::e_argument_list);
+   ROSE_ASSERT(arg_list);
+   setSourcePosition(arg_list, term);
+
+   if (ATmatch(term, "no-list()")) {
+      // There doesn't always have to be a list
+   }
+   else {
+      ATermList tail = (ATermList) ATmake("<term>", term);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_ActualArgSpec(head, &arg)) {
+            // MATCHED ActualArgSpec
+    cout << ".x. received arg  " << arg << endl;
+            arg_list->get_expressions().push_back(arg);
+         }
+         else {
+         // ERROR condition, cleanup
+            delete arg_list;
+            return ATfalse;
+         }
+      }
+   }
+
+   *args = arg_list;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// prefix (R1225)
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type)
 {
