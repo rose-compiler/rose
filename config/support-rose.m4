@@ -2047,6 +2047,7 @@ projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/CompilationDB/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
