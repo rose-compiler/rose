@@ -2629,11 +2629,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
 #if 0
                printf ("In SageInterface::generateUniqueNameForUseAsIdentifier_support(): case SgMemberFunctionDeclaration: not implemented \n");
 #endif
-               SgClassDeclaration* classDeclaration = isSgClassDeclaration(memberFunctionDeclaration->get_associatedClassDeclaration());
-               ROSE_ASSERT(classDeclaration != NULL);
-
             // We might at some point want the qualified name.
-               string class_name    = classDeclaration->get_name();
                string original_name = memberFunctionDeclaration->get_name();
 
             // string member_function_name = memberFunctionDeclaration->get_mangled_name();
