@@ -6467,7 +6467,15 @@ SgScopeStatement::getDeclarationList ()
                currentStatementList = &(namespaceScope->get_declarations());
                break;
              }
-
+#if 1
+          case V_SgNonrealDecl:
+          case V_SgDeclarationScope:
+             {
+            // TV (09/16/2018): (ROSE-1378) TODO
+               ROSE_ASSERT(!"ROSE-1378");
+               break;
+             }
+#endif
           default:
                printf ("ERROR: default reached in switch (getDeclarationList()) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
@@ -6528,7 +6536,15 @@ SgScopeStatement::getDeclarationList () const
                return namespaceScope->get_declarations();
                break;
              }
-
+#if 1
+          case V_SgNonrealDecl:
+          case V_SgDeclarationScope:
+             {
+            // TV (09/16/2018): (ROSE-1378) TODO
+               ROSE_ASSERT(!"ROSE-1378");
+               break;
+             }
+#endif
           default:
                printf ("ERROR: default reached in switch (getDeclarationList() const) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
@@ -6769,7 +6785,6 @@ SgScopeStatement::getStatementList ()
 	      currentStatementList = &(matlabForStatement->get_body()->getStatementList());
 	      break;
 	    }
-
 
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());

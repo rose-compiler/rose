@@ -788,6 +788,12 @@ SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclarati
      ROSE_ASSERT(functionDeclaration != NULL);
      ROSE_ASSERT(startingAtDeclaration != NULL);
 
+  // TV (09/17/2018): ROSE-1378
+     if (isSgDeclarationScope(scope)) {
+       printf("TODO: SgDeclarationScope handling in SageInterface::isPrototypeInScope see ROSE-1378\n");
+       return false;
+     }
+
   // These are the scopes for which get_declarationList() is properly defined.
      ROSE_ASSERT(scope->containsOnlyDeclarations() == true);
 
@@ -3083,6 +3089,15 @@ SageInterface::isOverloaded ( SgFunctionDeclaration* functionDeclaration )
        // Generate a key to use for comparision (avoids false positives)
        // SgMemberFunctionDeclaration* keyDeclaration = isSgMemberFunctionDeclaration(generateUniqueDeclaration(functionDeclaration));
        // ROSE_ASSERT(keyDeclaration != NULL);
+
+          SgScopeStatement * scope = memberFunctionDeclaration->get_scope();
+          ROSE_ASSERT(scope != NULL);
+
+       // TV (09/17/2018): ROSE-1378
+          if (isSgDeclarationScope(scope)) {
+            printf("TODO SageInterface::isOverloaded case when scope is SgDeclarationScope. See ROSE-1378.\n");
+            return false;
+          }
 
        // Get the class definition
           SgClassDefinition* classDefinition =
