@@ -256,6 +256,11 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 ROSE_FLAGS = -rose:C --edg:no_warnings -w
 
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
+##########################################################################################
+
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
@@ -271,14 +276,30 @@ $(TEST_Objects): ../../testTranslator
 # This requires a special makefile rule
 # Note that this will not link since gcc (typically) is used as the backend compiler and the source file lacks a "*.c" suffix.
 test2005_56.o: ../../testTranslator
-#	../../testTranslator -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/../Cxx_tests/test2005_56.C -o test2005_56.o
 	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
 	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.c)
 	../../testTranslator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(@:.o=.c)
 	rm -f $(@:.o=.c)
 
-../../testTranslator:
-	cd ../..; $(MAKE) testTranslator
+##########################################################################################
+
+PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed}
+TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
+TEST_TRANSLATOR = ../../testTranslator
+
+$(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
+	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.c)
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.C.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+	@rm -f $(@:.C.passed=.c)
+
+test2005_56.C.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
+	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.c)
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -DTEST_STRING_MACRO=\"\\\"Thu Apr 14 08:18:33 PDT 2005\"\\\" -c $(@:.C.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+	@rm -f $(@:.C.passed=.c)
+
+##########################################################################################
 
 CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
@@ -299,7 +320,7 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 
 check-local:
 	@echo "Tests for C language subset of C++ (some features in C are disallowed in C++ and are tested in C_tests directory)."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C_subset_of_Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
@@ -307,3 +328,7 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC]
 	rm -rf QMTest
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
+

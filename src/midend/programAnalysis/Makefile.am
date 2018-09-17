@@ -33,6 +33,7 @@ endif
 # Caution: include path cannot contain variable,
 #>..e.g. include $(cxxCodeGenerationPath)/Makefile_variables
 #
+include $(srcdir)/arithmeticIntensity/Makefile_variables
 include $(srcdir)/annotationLanguageParser/Makefile_variables
 include $(srcdir)/CallGraphAnalysis/Makefile_variables
 include $(srcdir)/CFG/Makefile_variables
@@ -51,6 +52,7 @@ include $(srcdir)/variableRenaming/Makefile_variables
 include $(srcdir)/EditDistance/Makefile_variables
 
 
+mpaArithmeticIntensityPath=$(srcdir)/arithmeticIntensity#
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
 mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
 mpaCFGPath=$(srcdir)/CFG#
@@ -82,6 +84,7 @@ AM_CPPFLAGS_OMP=\
 
 AM_CPPFLAGS=\
 	$(ROSE_INCLUDES) \
+	$(mpaArithmeticIntensity_includes) \
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
 	$(mpaBitvectorDataflow_includes) \
@@ -111,6 +114,7 @@ noinst_LTLIBRARIES=\
 ##################################################################
 
 libprogramAnalysis_la_SOURCES=\
+	$(mpaArithmeticIntensity_la_sources) \
 	$(mpaCallGraphAnalysis_la_sources) \
 	$(mpaCFG_la_sources) \
 	$(mpaBitvectorDataflow_la_sources) \
@@ -142,6 +146,7 @@ else
 endif
 
 pkginclude_HEADERS=\
+	$(mpaArithmeticIntensity_includeHeaders) \
 	$(mpaCallGraphAnalysis_includeHeaders) \
 	$(mpaCFG_includeHeaders) \
 	$(mpaBitvectorDataflow_includeHeaders) \
@@ -167,6 +172,7 @@ EXTRA_DIST=\
 	CMakeLists.txt \
 	OpenAnalysis \
 	PolicyControl.txt \
+	$(mpaArithmeticIntensity_extraDist) \
 	$(mpaAnnotationLanguageParser_extraDist) \
 	$(mpaCallGraphAnalysis_extraDist) \
 	$(mpaCFG_extraDist) \
@@ -187,6 +193,7 @@ EXTRA_DIST=\
 
 clean-local:
 #	rm -rf Templates.DB ii_files ti_files cxx_templates
+	$(mpaArithmeticIntensity_cleanLocal) \
 	$(mpaAnnotationLanguageParser_cleanLocal)
 	$(mpaCallGraphAnalysis_cleanLocal)
 	$(mpaCFG_cleanLocal)
@@ -205,6 +212,7 @@ clean-local:
 
 distclean-local:
 #	rm -rf Templates.DB
+	$(mpaArithmeticIntensity_distCleanLocal) \
 	$(mpaCallGraphAnalysis_distCleanLocal)
 	$(mpaCFG_distCleanLocal)
 	$(mpaBitvectorDataflow_distCleanLocal)

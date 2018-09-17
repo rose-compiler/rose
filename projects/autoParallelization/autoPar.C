@@ -202,6 +202,11 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
       .intrinsicValue(true, AutoParallelization::enable_diff)
       .doc("Compare user defined OpenMP pragmas to auto parallelization generated ones."));
 
+  switches.insert(Switch("enable_modeling")   
+      .intrinsicValue(true, AutoParallelization::enable_modeling)
+      .doc("Enabling cost modeling of loops to guide parallelization."));
+
+
   switches.insert(Switch("enable_distance")
       .intrinsicValue(true, AutoParallelization::enable_distance)
       .doc("Report the absolute dependence distance of each dependence relation preventing parallelization."));

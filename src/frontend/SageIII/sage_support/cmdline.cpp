@@ -413,8 +413,8 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
        // argument == "-MM" ||
 
-       // DQ (3/25/2014): We need the icpc/icc ‘-fp-model <arg>’  command-line compiler option to be
-       // passed to the backend compiler properly.  The ‘-fp-model’ option always has a single argument.
+       // DQ (3/25/2014): We need the icpc/icc [-fp-model <arg>]  command-line compiler option to be
+       // passed to the backend compiler properly.  The [-fp-model] option always has a single argument.
           argument == "-fp-model" ||
 
        // DQ (1/21/2015): -diag-disable can take a collection of optional parameters: e.g. cpu-dispatch
@@ -3824,6 +3824,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_relax_syntax_check(true);
         }
 
+  // TV (04/11/2018): Turn on generation of GraphViz representation of EDG's internal representation
+     set_edg_il_to_graphviz(false);
+     ROSE_ASSERT (get_edg_il_to_graphviz() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","edg_il_to_graphviz",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("EDG IL to GraphViz ON \n");
+          set_edg_il_to_graphviz(true);
+        }
+
   // DQ (5/24/2015): Record type of optimization (-Os, -O, -O1, -O2, -O3, -O4, -O5), note -O0 means no optimization.
   // This is required so that when optimization is specified we can turn on the __OPTIMIE__ macro.
   // See test2015_153.c.
@@ -4983,6 +4993,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library
   // to be linked in. (Not implemented yet).
      set_openmp(false);
+     //string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); // Mac OS complains this function does not exist!
+     string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION); 
      ROSE_ASSERT (get_openmp() == false);
      // We parse OpenMP and then stop now since Building OpenMP AST nodes is a work in progress.
      // so the default behavior is to turn on them all
@@ -5008,7 +5020,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          //We can later on back end option to turn on their OpenMP handling flags,
          //like -fopenmp for GCC, depending on the version of gcc
          //which will define this macro for GCC
-          argv.push_back("-D_OPENMP");
+          argv.push_back(ompmacro);
         }
 
      // Process sub-options for OpenMP handling, Liao 5/31/2009
@@ -5026,7 +5038,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back("-D_OPENMP");
+         argv.push_back(ompmacro);
        }
      }
 
@@ -5045,7 +5057,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back("-D_OPENMP");
+         argv.push_back(ompmacro);
        }
      }
 
@@ -5065,7 +5077,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back("-D_OPENMP");
+         argv.push_back(ompmacro);
        }
      }
 
@@ -5938,6 +5950,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (30/8/2017): Removing option to specify Cobol language support.
      optionCount = sla(argv, "-rose:", "($)", "(cobol|cobol_only)",1);
+
+  // TV (04/11/2018): Generates GraphViz from EDG internal representation
+     optionCount = sla(argv, "-rose:", "($)", "edg_il_to_graphviz",1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
@@ -8353,12 +8368,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // the backend).  I don't think there is a way to not see code in the front-end, yet see it in the backend.
           compilerNameString.push_back("-DUSE_ROSE_BACKEND");
 
-       // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
+       // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP=OMPVERSION should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
           if (get_openmp_lowering()||get_openmp())  
-             {
-               compilerNameString.push_back("-D_OPENMP");
-             }
+          {
+            string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION);
+            compilerNameString.push_back(ompmacro);
+          }
         }
 
   // DQ (3/31/2004): New cleaned up source file handling

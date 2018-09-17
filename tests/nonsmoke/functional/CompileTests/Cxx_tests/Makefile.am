@@ -1575,7 +1575,7 @@ APP_INCLUDES = -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
 # in ROSE compiling ROSE)"
 TESTS_THAT_FAIL = test2013_242.C
 
-TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(ALL_TESTCODES)))
+TEST_Sources = $(addsuffix .passed, $(ALL_TESTCODES))
 PASSING_TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(TESTCODES) $(ROSE__CXX_TESTS__BOOST)))
 
 # DQ (9/18/2011): Added testing for new option to use folded constants or the original express trees.
@@ -1948,6 +1948,9 @@ clean-local:
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
+
+status:
+	@$(MAKE) $(TEST_Sources)
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
