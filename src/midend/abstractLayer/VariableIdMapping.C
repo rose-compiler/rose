@@ -70,7 +70,18 @@ SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varI
 
 SgType* VariableIdMapping::getType(VariableId varId) {
   SgSymbol* varSym=getSymbol(varId);
-  return varSym->get_type();
+  SgType* type=varSym->get_type();
+  if(type) {
+    // TODO: is support for SgTypeOfType necessary as well?
+    if(SgTypedefType* typeDeftype=isSgTypedefType(type)) {
+      while(typeDeftype) {
+        //cout<<"DEBUG: found typedef type: "<<typeDeftype->unparseToString()<<endl;
+        type=typeDeftype->get_base_type();
+        typeDeftype=isSgTypedefType(type);
+      }
+    }
+  }
+  return type;
 }
 
 bool VariableIdMapping::hasReferenceType(VariableId varId) {

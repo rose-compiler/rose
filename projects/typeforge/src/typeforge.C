@@ -15,6 +15,8 @@
 #include "Sawyer/Graph.h"
 #include "TFTypeTransformer.h"
 #include "TFSpecFrontEnd.h"
+#include "TFAnalysis.h"
+#include "TFToolConfig.h"
 
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
@@ -59,31 +61,40 @@ int main (int argc, char* argv[])
 #else
     namespace po = boost::program_options;
 #endif
+  po::options_description all_desc("Supported Options");
 
-  po::options_description desc
-    ("Supported options");
+  po::options_description desc("Supported Options");
+  
+  po::options_description hidden_desc("Hidden Options");
 
   desc.add_options()
-    ("help,h", "produce this help message.")
-    ("version,v", "display the version.")
-    ("compile", "run backend compiler.")
+    ("help,h", "Produce this help message.")
+    ("version,v", "Display the version of Typeforge.")
+    ("compile", "Run back end compiler.")
     //("annotate", "annotate implicit casts as comments.")
-    ("explicit", "make all imlicit casts explicit.")
-    ("stats", "print statistics on casts of built-in floating point types.")
-    ("trace", "print program transformation operations as they are performed.")
+    ("explicit", "Make all implicit casts explicit.")
+    ("stats", "Print statistics on casts of built-in floating point types.")
+    ("trace", "Print program transformation operations as they are performed.")
+    ("plugin", po::value<vector<string> >(),"Name of Typeforge plugin files.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
-    ("spec-file", po::value< string >()," name of typeforge specification file.")
-    ("source-file", po::value<vector<string> >()," name of source files.")
-    ("csv-stats-file", po::value< string >()," generate file [args] with transformation statistics.")
-#ifdef EXPLICIT_VAR_FORGE
-    ("float-var", po::value< string >()," change type of var [arg] to float.")
-    ("double-var", po::value< string >()," change type of var [arg] to double.")
-    ("long-double-var", po::value< string >()," change type of var [arg] to long double.")
-#endif
+    ("csv-stats-file", po::value< string >(),"Generate file [args] with transformation statistics.")
+    ("typeforge-out", po::value< string >(),"File to store output inside of JSON.")
     ;
+
+  hidden_desc.add_options()
+    ("source-file", po::value<vector<string> >(),"Name of source files.")
+    ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
+    ("float-var", po::value< string >(),"Change type of var [arg] to float.")
+    ("double-var", po::value< string >(),"Change type of var [arg] to double.")
+    ("long-double-var", po::value< string >(),"Change type of var [arg] to long double.")
+    ("spec-file", po::value<vector<string> >(),"Name of Typeforge specification file.")
+    ;
+
+  all_desc.add(desc).add(hidden_desc);
+
   po::positional_options_description pos;
   pos.add("source-file", -1);
-  po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).positional(pos).allow_unregistered().run();
+  po::parsed_options parsed = po::command_line_parser(argc, argv).options(all_desc).positional(pos).allow_unregistered().run();
   po::store(parsed, args);
   po::notify(args);
 
@@ -94,7 +105,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.4.0"<<endl;
+    cout<<toolName<<" version 0.5.0"<<endl;
     return 0;
   }
 
@@ -109,15 +120,17 @@ int main (int argc, char* argv[])
     }
   }
 
-  bool objectFiles = false;
+  //check if given object files for linking allow 1 to account for -o to gcc
+  int objectFiles = 0;
   for(auto file : args["source-file"].as< vector<string> >()){
     boost::filesystem::path pathObj(file);
     if(pathObj.has_extension()){
       if(pathObj.extension().string() == ".o"){
-        objectFiles = true;
+        objectFiles += 1;
       }
     }
   }  
+  if(objectFiles <=1) objectFiles = 0;
  
   vector<string> argvList = po::collect_unrecognized(parsed.options, po::include_positional); 
   argvList.insert(argvList.begin(), "rose");
@@ -125,6 +138,18 @@ int main (int argc, char* argv[])
   //for(auto str : argvList) cout<<str<<"\n";
   SgProject* sageProject=frontend (argvList); 
   TFTypeTransformer tt;
+
+  if(args.isUserProvided("typeforge-out")){
+    TFToolConfig::open(args["typeforge-out"].as<string>());
+  }
+
+  if(args.isUserProvided("set-analysis")){
+    TFAnalysis analysis;
+    analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
+    analysis.writeAnalysis(SageBuilder::buildDoubleType(), "float");    
+    analysis.writeGraph("dotGraph.gv");
+    TFToolConfig::write();    
+  }
 
   if(args.isUserProvided("explicit")) {
     tt.makeAllCastsExplicit(sageProject);
@@ -162,16 +187,30 @@ int main (int argc, char* argv[])
   if(args.isUserProvided("trace")) {
     tt.setTraceFlag(true);
   }
-  if(args.isUserProvided("spec-file") && !objectFiles) {
+  
+  vector<string> plugins;
+  if(args.isUserProvided("plugin")){
+    vector<string> plugin = args["plugin"].as<vector<string>>();
+    plugins.insert(plugins.end(), plugin.begin(), plugin.end());
+  }
+
+  if(args.isUserProvided("spec-file")){
+    vector<string> spec = args["spec-file"].as<vector<string>>();
+    plugins.insert(plugins.end(), spec.begin(), spec.end());
+  }
+
+  if(plugins.size() > 0 && !objectFiles) {
     //Setup phase
-    string commandFileName=args.getString("spec-file");
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
     TFSpecFrontEnd typeforgeSpecFrontEnd;
-    bool error=typeforgeSpecFrontEnd.run(commandFileName,sageProject,tt,tfTransformation);
-    if(error) {
-      exit(1);
+    for(auto commandFileName : plugins){
+      bool error=typeforgeSpecFrontEnd.parse(commandFileName);
+      if(error) {
+        exit(1);
+      }
     }
+    typeforgeSpecFrontEnd.run(sageProject, tt, tfTransformation);
     auto list=typeforgeSpecFrontEnd.getTransformationList();
     //Analysis Phase
     tt.analyzeTransformations(sageProject,list);
@@ -179,7 +218,7 @@ int main (int argc, char* argv[])
     //Execution Phase
     tt.executeTransformations(sageProject);
     tfTransformation.transformationExecution();
-    //Output Phase
+    //Output Phase`
     if(args.isUserProvided("csv-stats-file")) {
       string csvFileName=args.getString("csv-stats-file");
       tt.generateCsvTransformationStats(csvFileName,
@@ -190,6 +229,8 @@ int main (int argc, char* argv[])
     tt.printTransformationStats(typeforgeSpecFrontEnd.getNumTypeReplace(),
 				tt,
 				tfTransformation);
+  
+    TFToolConfig::write();    
     backend(sageProject);
     return 0;
   }

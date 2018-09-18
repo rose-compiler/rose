@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPTIONS="--normalize"
+OPTIONS="--normalize-fcalls --ignore-unknown-functions --report-only-file-name"
 
 # test 1-9: normalization: YES
 # test 10:  normalization: NO
@@ -15,6 +15,7 @@ BENCH_FAIL=0
 
 testNumbers=`echo {001..013}`
 echo "Scheduled tests: $testNumbers"
+echo "skipping DC008"
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/DC${testNumber};
     for benchmark in ${benchmarkprefix}_*.C; do
@@ -23,7 +24,7 @@ for testNumber in $testNumbers; do
         rm -f test${p}_col1.csv
         benchmarkname=$(basename $benchmark)
         echo -n "Testing $benchmarkname : "
-        ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark --normalizefcalls --ignore-unknown-functions --report-only-file-name > /dev/null
+        ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark > /dev/null
         diff $benchmarkname.csv $TESTDIR/$benchmarkname.csv
         #cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
         #cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv

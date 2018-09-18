@@ -3,9 +3,10 @@
 #include "SgNodeHelper.h"
 #include "TFTransformation.h"
 #include "AstTerm.h"
-#include "abstract_handle.h"
 #include "CppStdUtilities.h"
 #include <boost/algorithm/string.hpp>
+#include "TFHandles.h"
+
 using namespace std;
 
 //Methods for building transform list
@@ -54,9 +55,7 @@ int ReadWriteTransformation::run(SgProject* project, RoseAst ast, TFTransformati
 }
 
 string getHandle(SgNode* node){
- AbstractHandle::abstract_node* anode = AbstractHandle::buildroseNode(node);
- AbstractHandle::abstract_handle* ahandle = new  AbstractHandle::abstract_handle(anode);
- return ahandle->toString(); 
+ return TFHandles::getAbstractHandle(node); 
 }
 
 SgScopeStatement* getNextScope(SgNode* node){
@@ -112,7 +111,7 @@ int PragmaTransformation::run(SgProject* project, RoseAst ast, TFTransformation*
           }
         }
       }
-      if(splitPragma.size() >= 4 && splitFrom.size() >= 2 &&splitFrom[0] == "adapt" && splitFrom[1] == "output"){
+      if(splitPragma.size() >= 4 && splitFrom.size() >= 2 && splitFrom[0] == "adapt" && splitFrom[1] == "output" && match){
         string handle = getHandleFromName(pragmaNode, splitPragma[2]);
         if(handle == "") handle = splitPragma[2];
         string replacement = "\nAD_dependent(" + splitPragma[2] + ", \"" + handle + "\", " + splitPragma[3] + ");";
@@ -269,8 +268,11 @@ void TFTransformation::transformRhs(SgType* accessType, SgNode* rhsRoot) {
       string oldCode0=(*j)["$ArrayAccessPattern"]->unparseToString();
       string newCode0=ds+".get("+e1+","+e2+")";
       string newCode=newCode0; // ';' is unparsed as part of the statement that contains the assignop
-      //SgNodeHelper::replaceAstWithString((*j)["$ArrayAccessPattern"], newCode);
+#if 1
+      SgNodeHelper::replaceAstWithString((*j)["$ArrayAccessPattern"], newCode);
+#else
       replaceNode((*j)["$ArrayAccessPattern"], newCode);
+#endif
       std::cout << std::endl;
       std::string lineCol=SgNodeHelper::sourceLineColumnToString((*j)["$ArrayAccessPattern"]);
       if(trace) {
@@ -448,6 +450,7 @@ bool isWithinBlockStmt(SgExpression* exp) {
   return isSgBasicBlock(current);
 }
 
+//Returns the handle of the referenced variable
 string getVarRefHandle(SgVarRefExp* varRef){
   SgVariableSymbol* varSym = varRef->get_symbol();
   SgInitializedName* varInit = varSym->get_declaration();
@@ -459,14 +462,16 @@ string getVarRefHandle(SgVarRefExp* varRef){
   }
 }
 
+//Instrumnet variable initilization
 int TFTransformation::instrumentADDecleration(SgInitializer* init){
   if(SgInitializedName* initName = isSgInitializedName(init->get_parent())){
     SgType* type = initName->get_type();
-    if(SgNodeHelper::isFloatingPointType(type)){
+    if(SgNodeHelper::isFloatingPointType(type->stripTypedefsAndModifiers())){
       if(SgVariableDeclaration* varDec = isSgVariableDeclaration(initName->get_parent())){
         SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
         string varName   = SgNodeHelper::symbolToString(varSym); 
         string handle    = getHandle(varDec);
+        if(handle == "") return 1; 
         string instrumentationString="AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);";
         SgNode* stmtSearch=varDec;
         while(!isSgStatement(stmtSearch)) {
@@ -506,10 +511,13 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
       else break;
     }
     if(!varRefExp) continue;
-    if(SgNodeHelper::isFloatingPointType(varType)) {
+    if(SgNodeHelper::isFloatingPointType(varType->stripTypedefsAndModifiers())) {
       if(isWithinBlockStmt(assignOp)) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
         string varHandle = getVarRefHandle(varRefExp);
+        //To group by assignment instead get the handle for the assignment
+        //varHandle = getHandle(assignOp);
+        if(varHandle == "") continue;
         if(varRefExpSymbol) {
           SgName varName=varRefExpSymbol->get_name();
           string varNameString=varName;
@@ -535,6 +543,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
   }
 }
 
+//Adds instrumentataion for initalized gobal variables after the pragma adapt begin
 void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
   if(listOfGlobalVars.size() > 0){
@@ -547,12 +556,13 @@ void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
         SgInitializedName* varInit = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
         if(varInit){
           SgType* varType = varInit->get_type()->findBaseType();
-          if(SgNodeHelper::isFloatingPointType(varType)){
+          if(SgNodeHelper::isFloatingPointType(varType->stripTypedefsAndModifiers())){
             SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(varInit);
             if(varInit->get_initializer() != nullptr){
               if(varSym){
                 string varName = SgNodeHelper::symbolToString(varSym);
                 string handle = getHandle(varDecl);
+                if(handle == "") continue;
                 instString += "AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);\n";
                 adIntermediateTransformations++;
               }

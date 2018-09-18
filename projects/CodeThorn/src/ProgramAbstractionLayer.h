@@ -20,8 +20,8 @@ namespace SPRAY {
     FunctionIdMapping* getFunctionIdMapping();
     void setModeArrayElementVariableId(bool val);
     bool getModeArrayElementVariableId();
-    void setLoweringOption(bool flag);
-    bool getLoweringOption();
+    void setNormalizationLevel(unsigned int level);
+    bool getNormalizationLevel();
     void setInliningOption(bool flag);
     bool getInliningOption();
   private:
@@ -29,7 +29,7 @@ namespace SPRAY {
     Labeler* _labeler=nullptr;
     VariableIdMapping* _variableIdMapping=nullptr;
     FunctionIdMapping* _functionIdMapping=nullptr;
-    bool _loweringOption=false;
+    bool _normalizationLevel=1;
     bool _inliningOption=false;
     SgProject* _root=nullptr;
   };

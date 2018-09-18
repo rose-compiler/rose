@@ -53,7 +53,7 @@
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 // test
 #include "SSAGenerator.h"
@@ -100,8 +100,8 @@ void handler(int sig) {
   void *array[10];
   size_t size;
 
-  // get void*'s for all entries on the stack
-  size = backtrace(array, 10);
+  size = backtrace (array, 10);
+  printf ("Obtained %zd stack frames.\n", size);
 
   // print out all the frames to stderr
   fprintf(stderr, "Error: signal %d:\n", sig);
@@ -360,8 +360,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   experimentalOptions.add_options()
-    ("normalize", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
-    ("lowering", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
+    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
+    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
@@ -853,7 +853,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     analyzer->setModeLTLDriven(true);
   }
 
-  if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+  if (args.isDefined("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
     analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
     args.setOption("no-input-input",true);
     args.setOption("with-ltl-counterexamples",true);
@@ -1058,7 +1058,7 @@ int main( int argc, char * argv[] ) {
 #ifndef HAVE_SPOT
     // display error message and exit in case SPOT is not avaiable, but related options are selected
     if (args.count("csv-stats-cegpra") ||
-	args.count("cegpra-ltl") ||
+	args.isDefined("cegpra-ltl") ||
 	args.getBool("cegpra-ltl-all") ||
 	args.count("cegpra-max-iterations") ||
 	args.count("viz-cegpra-detailed") ||
@@ -1243,23 +1243,26 @@ int main( int argc, char * argv[] ) {
 
     /* perform inlining before variable ids are computed, because
        variables are duplicated by inlining. */
-    Lowering lowering;
-    if(args.getBool("normalize")) {
-      bool fcallsOnly=true;
-      lowering.normalizeExpressions(sageProject,fcallsOnly);
+    Normalization lowering;
+    if(args.getBool("normalize-fcalls")) {
+      lowering.normalizeAst(sageProject,1);
       logger[TRACE]<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("lowering")) {
-      lowering.runLowering(sageProject);
-      cout<<"STATUS: lowered language constructs."<<endl;
+    if(args.getBool("normalize-all")) {
+      lowering.normalizeAst(sageProject,2);
+      logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
     }
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
     if(args.getBool("inline")) {
-      lowering.inlineDepth=args.getInt("inlinedepth");
-      size_t numInlined=lowering.inlineFunctions(sageProject);
+      InlinerBase* inliner=lowering.getInliner();
+      if(RoseInliner* roseInliner=dynamic_cast<SPRAY::RoseInliner*>(inliner)) {
+        roseInliner->inlineDepth=args.getInt("inlinedepth");
+      }
+      inliner->inlineFunctions(sageProject);
+      size_t numInlined=inliner->getNumInlinedFunctions();
       logger[TRACE]<<"inlined "<<numInlined<<" functions"<<endl;
     }
 
@@ -1275,7 +1278,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+    analyzer->initializeVariableIdMapping(sageProject);
     cout<<"STATUS: registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     
@@ -1665,7 +1668,7 @@ int main( int argc, char * argv[] ) {
       ltlResults = spotConnection.getLtlResults();
       logger[TRACE] << "LTL: results computed."<<endl;
 
-      if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+      if (args.isDefined("cegpra-ltl") || (args.isDefined("cegpra-ltl-all")&&args.getBool("cegpra-ltl-all"))) {
         if (args.count("csv-stats-cegpra")) {
           statisticsCegpra << "init,";
           printStgSize(analyzer->getTransitionGraph(), "initial abstract model", &statisticsCegpra);
@@ -1703,9 +1706,12 @@ int main( int argc, char * argv[] ) {
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_NO);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
       }
-      delete ltlResults;
-      ltlResults = NULL;
-
+#if 0
+      if(ltlResults) {
+        delete ltlResults;
+        ltlResults = NULL;
+      }
+#endif
       //temporaryTotalRunTime = totalRunTime + infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
       //printAnalyzerStatistics(analyzer, temporaryTotalRunTime, "LTL check complete. Reduced transition system:");
     }
