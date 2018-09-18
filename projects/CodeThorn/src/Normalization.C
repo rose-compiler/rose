@@ -187,7 +187,6 @@ namespace SPRAY {
    // transformation: switch(C) ... => T t=C; switch(t) ...
   // while/do-while/for: not applicable. Transform those before cond-hoisting.
   void Normalization::hoistCondition(SgStatement* stmt) {
-    ROSE_ASSERT(isSgIfStmt(stmt)||isSgSwitchStatement(stmt));
     SgNode* condNode=SgNodeHelper::getCond(stmt);
     ROSE_ASSERT(condNode);
     if(isSgExprStatement(condNode)) {
@@ -195,24 +194,57 @@ namespace SPRAY {
     }
     SgExpression* condExpr=isSgExpression(condNode);
     ROSE_ASSERT(condExpr);
-    // (i) build tmp var with cond as initializer
-    SgVariableDeclaration* tmpVarDeclaration = 0;
-    SgExpression* tmpVarReference = 0;
-    SgScopeStatement* scope=stmt->get_scope();
-    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(condExpr, scope);
-    tmpVarDeclaration->set_parent(scope);
-    ROSE_ASSERT(tmpVarDeclaration!= 0);
+    if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)||isSgDoWhileStmt(stmt)) {
+      // (i) build tmp var with cond as initializer
+      SgVariableDeclaration* tmpVarDeclaration = 0;
+      SgExpression* tmpVarReference = 0;
+      SgScopeStatement* scope=stmt->get_scope();
+      tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(condExpr, scope);
+      tmpVarDeclaration->set_parent(scope);
+      ROSE_ASSERT(tmpVarDeclaration!= 0);
+      
+      // (ii) replace cond with new tmp-varref
+      bool deleteReplacedExpression=false;
+      SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
+      
+      // (iii) set cond as initializer in new variable declaration
+      //TODO turn condition into initializer
+      //tmpVarDeclaration->reset_initializer(cond);
+      if(SgDoWhileStmt* doWhileStmt=isSgDoWhileStmt(stmt)) {
+        // (iv) insert at end of body
+        // (iv.1) get body
+        // (iv.2) append as last statement to body
+        SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(doWhileStmt));
+        ROSE_ASSERT(body);
+        SageInterface::appendStatement(tmpVarDeclaration,body);
+      } else {  
+        // (iv) insert declaration with initializer before stmt
+        // cases if and switch
+        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+      }
+    } else if(SgWhileStmt* whileStmt=isSgWhileStmt(stmt)) {
+      // transformation: while(C) {...} ==> while(1) { T t=C;if(t) break; ...} (implemented)
+      // alternative: while(C) {...} ==> T t=C; while(t) { ...; t=C; } (duplicates condition, not implemented)
 
-    // (ii) replace cond with new tmp-varref
-    bool deleteReplacedExpression=false;
-    SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
+      // (i) replace while-condition with constant 1 condition
+      SgStatement* oldWhileCond=isSgStatement(SgNodeHelper::getCond(whileStmt));
+      SgNodeHelper::setCond(whileStmt,SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1)));
 
-    // (iii) set cond as initializer in new variable declaration
-    //TODO turn condition into initializer
-    //tmpVarDeclaration->reset_initializer(cond);
+      // (iii) generate and insert if-conditional with old while-condition
+      SgIfStmt* ifStmt=SageBuilder::buildIfStmt(oldWhileCond,
+                                                SageBuilder::buildBreakStmt(),
+                                                0);
+      SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(whileStmt));
+      ROSE_ASSERT(body);
+      SageInterface::prependStatement(ifStmt,body);
+    
+      // (iv) hoistCondition from generated if-statement (recursive application of condition hoisting)
+      hoistCondition(ifStmt);
 
-    // (iv) insert declaration with initializer before stmt
-    SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+    } else {
+      cerr<<"Error: unsupported stmt selected for condition normalization at "<<SgNodeHelper::sourceLineColumnToString(stmt)<<endl;
+      exit(1);
+    }
   }
 
   void Normalization::hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
@@ -222,7 +254,7 @@ namespace SPRAY {
     for (auto node : ast) {
       if(SgNodeHelper::isCond(node)) {
         SgStatement* stmt=isSgStatement(node->get_parent());
-        if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
+        if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)||isSgWhileStmt(stmt)||isSgDoWhileStmt(stmt)) {
           if(onlyNormalizeFunctionCallExpressions) {
             if(hasFunctionCall(isSgExpression(SgNodeHelper::getCond(stmt)))) {
               hoistingTransformationList.push_back(stmt);
