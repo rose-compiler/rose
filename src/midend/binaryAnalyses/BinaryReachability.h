@@ -23,7 +23,8 @@ public:
         SIGNAL_HANDLER          = 0x00000004,           /**< Vertex is a signal handler. */
         PREDEFINED              = 0x000000ff,           /**< ROSE-defined reachability reasons. */
         USER_DEFINED            = 0xffffff00,           /**< User-defined reachability reasons. */
-        USER_DEFINED_0          = 0x00000100            /**< First user-defined reason bit. */
+        USER_DEFINED_0          = 0x00000100,           /**< First user-defined reason bit. */
+        ALL_REASONS             = 0xffffffff            /**< All reason bits. */
     };
 
 private:
@@ -90,13 +91,21 @@ public:
      *  value is a bit vector of @ref Reason bits, some of which might be user-defined. */
     unsigned isIntrinsicallyReachable(size_t vertexId) const;
 
+    /** Controls immediate propagation. */
+    struct Propagate {
+        enum Boolean {                                  /**< Propagation control type. */
+            NO,                                         /**< Do not propagate. */
+            YES                                         /**< Do propagate. */
+        };
+    };
+
     /** Change intrinsic reachability.
      *
      *  The intrinsic reachability of the specified vertex is changed to @p how, which is a bit vector of @ref Reason
      *  bits. Changing the intrinsic reachability of a vertex to @ref NOT_REACHABLE does not necessarily mark the vertex as
      *  unreachable since it might be reachable from other reachable vertices. The new reachability will be immediately
-     *  propagated through the graph unless @p doPropagate is false. */
-    void intrinsicallyReachable(size_t vertexId, unsigned how, bool doPropagate = true);
+     *  propagated through the graph if @p doPropagate is set. */
+    void intrinsicallyReachable(size_t vertexId, unsigned how, Propagate::Boolean propagate = Propagate::YES);
 
     /** Query computed reachability.
      *
