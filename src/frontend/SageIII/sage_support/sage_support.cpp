@@ -788,6 +788,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #endif
    {
      SgFile* file = NULL;
+#if 0
+     printf("In determineFileType():\n");
+     size_t cnt = 0;
+     for ( std::vector<std::string>::iterator i = argv.begin(); i != argv.end(); i++) {
+       printf("  argv[%zd] = %s\n", cnt++, i->c_str());
+     }
+#endif
 
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.

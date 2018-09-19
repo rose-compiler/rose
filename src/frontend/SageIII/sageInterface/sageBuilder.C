@@ -14919,7 +14919,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // DQ (2/6/2009): We will be compiling the source code generated in the
   // "rose_<inputFileName>" file, so we don't want this on the argument stack.
-     arglist.push_back(sourceFilename);
+  // TV (09/19/2018): only add if not already present
+     if (std::find(arglist.begin(), arglist.end(), sourceFilename) == arglist.end()) {
+       arglist.push_back(sourceFilename);
+     }
 
   // DQ (2/6/2009): Modified.
   // There is output file name specified for rose translators
