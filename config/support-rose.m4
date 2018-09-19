@@ -2048,6 +2048,12 @@ projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/CompilationDB/Makefile
+projects/CompilationDB/scripts/Makefile
+projects/CompilationDB/src/Makefile
+projects/CompilationDB/include/nlohmann/Makefile
+projects/CompilationDB/examples/demo/Makefile
+projects/CompilationDB/examples/demo/compile_commands.json
+projects/CompilationDB/examples/kripke/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
