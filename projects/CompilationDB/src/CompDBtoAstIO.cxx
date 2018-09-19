@@ -34,24 +34,26 @@ namespace ROSE {
 
         boost::filesystem::path cwd;
 
+      protected:
+        void frontend();
+
+        void init(const char * cdbfn, const char * bfn);
+
       public:
-        CompilationDB(const char * cdbfn);
+        CompilationDB(const char * cdbfn, const char * bfn);
         virtual ~CompilationDB();
 
-        void frontend();
         void unparse();
         void compile();
-        
-        void write(const char * obfn);
     };
   }
 }
 
 namespace ROSE { namespace SageInterface {
 
-CompilationDB::CompilationDB(const char * cdbfn) :
+CompilationDB::CompilationDB(const char * cdbfn, const char * bfn) :
   db(),
-  project(new SgProject()),
+  project(NULL),
   states(),
   directories(),
   filenames(),
@@ -59,6 +61,15 @@ CompilationDB::CompilationDB(const char * cdbfn) :
   backend_status(),
   cwd(boost::filesystem::current_path())
 {
+  init(cdbfn, bfn);
+}
+
+CompilationDB::~CompilationDB() {
+  if (project != NULL)
+    delete project;
+}
+
+void CompilationDB::init(const char * cdbfn, const char * bfn) {
   // Read JSON compilation database
   std::ifstream cdbf(cdbfn);
   cdbf >> db;
@@ -78,10 +89,42 @@ CompilationDB::CompilationDB(const char * cdbfn) :
     sourcefiles.push_back(NULL);
     backend_status.push_back(-1);
   }
-}
 
-CompilationDB::~CompilationDB() {
-  delete project;
+  // Either load the AST from binary or calls the frontend (then write the AST)
+  boost::filesystem::path bf(bfn);
+  if (boost::filesystem::exists(bf)) {
+    project = (SgProject*) AST_FILE_IO::readASTFromFile(bf.string());
+    assert(project != NULL);
+
+    SgFilePtrList & fl = project->get_fileList();
+    assert(fl.size() == states.size());
+
+    for (size_t i = 0; i < states.size(); i++) {
+      sourcefiles[i] = isSgSourceFile(fl[i]);
+      assert(sourcefiles[i] != NULL);
+
+      // TODO check match with filenames and arguments?
+
+      states[i] = e_loaded;
+    }
+  } else {
+    project = new SgProject();
+
+    for (size_t i = 0; i < states.size(); i++) {
+      boost::filesystem::current_path(directories[i]);
+
+      project->set_originalCommandLineArgumentList(arguments[i]);
+
+      sourcefiles[i] = isSgSourceFile(SageBuilder::buildFile(filenames[i].string(), SgName(), project));
+      ROSE_ASSERT(sourcefiles[i] != NULL);
+
+      states[i] = e_loaded;
+    }
+    boost::filesystem::current_path(cwd);
+
+    AST_FILE_IO::startUp(project);
+    AST_FILE_IO::writeASTToFile(bf.string());
+  }
 }
 
 void CompilationDB::frontend() {
@@ -129,24 +172,21 @@ void CompilationDB::compile() {
   boost::filesystem::current_path(cwd);
 }
 
-void CompilationDB::write(const char * obfn) {
-  AST_FILE_IO::startUp(project);
-  AST_FILE_IO::writeASTToFile(obfn);
-}
-
 }}
 
 int main(int argc, char ** argv) {
-  assert(argc >= 2);
+  assert(argc >= 3);
 
-  ROSE::SageInterface::CompilationDB cdb(argv[1]);
+  ROSE::SageInterface::CompilationDB cdb(argv[1], argv[2]);
 
-  cdb.frontend();
-  cdb.unparse();
-  cdb.compile();
+  std::vector<std::string> options(argv+3, argv+argc);
 
-  if (argc > 2) {
-    cdb.write(argv[2]);
+  if (std::find(options.begin(), options.end(), "unparse") != options.end()) {
+    cdb.unparse();
+  }
+
+  if (std::find(options.begin(), options.end(), "compile") != options.end()) {
+    cdb.compile();
   }
 
   return 0;
