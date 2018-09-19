@@ -1,5 +1,6 @@
 
 #include "sage3basic.h"
+#include "AST_FILE_IO.h"
 
 #include "nlohmann/json.hpp"
 
@@ -15,17 +16,21 @@ namespace ROSE {
           e_init,
           e_loaded,
           e_unparsed,
-          e_compiled
+          e_compiled,
+          e_failed
         } state_t;
 
       protected:
-        state_t state;
-
         json db;
 
         SgProject * project;
 
-        std::vector<std::pair<json, SgSourceFile *> > files;
+        std::vector<state_t> states;
+        std::vector<boost::filesystem::path> directories;
+        std::vector<boost::filesystem::path> filenames;
+        std::vector<std::vector<std::string>> arguments;
+        std::vector<SgSourceFile *> sourcefiles;
+        std::vector<int> backend_status;
 
         boost::filesystem::path cwd;
 
@@ -33,9 +38,11 @@ namespace ROSE {
         CompilationDB(const char * cdbfn);
         virtual ~CompilationDB();
 
-        void build();
+        void frontend();
         void unparse();
         void compile();
+        
+        void write(const char * obfn);
     };
   }
 }
@@ -43,95 +50,88 @@ namespace ROSE {
 namespace ROSE { namespace SageInterface {
 
 CompilationDB::CompilationDB(const char * cdbfn) :
-  state(e_init),
   db(),
   project(new SgProject()),
-  files(),
+  states(),
+  directories(),
+  filenames(),
+  sourcefiles(),
+  backend_status(),
   cwd(boost::filesystem::current_path())
 {
+  // Read JSON compilation database
   std::ifstream cdbf(cdbfn);
   cdbf >> db;
+
+  // Iterate over the compilation units
+  for (auto& desc : db) {
+    states.push_back(e_init);
+    directories.push_back(desc["directory"].get<std::string>());
+    filenames.push_back(desc["file"].get<std::string>());
+
+    arguments.push_back(std::vector<std::string>());
+    std::vector<std::string> & args = arguments.back();
+    for (auto& e: desc["arguments"]) {
+      args.push_back(e.get<std::string>());
+    }
+
+    sourcefiles.push_back(NULL);
+    backend_status.push_back(-1);
+  }
 }
 
 CompilationDB::~CompilationDB() {
   delete project;
 }
 
-void CompilationDB::build() {
-  // Check current state
-  ROSE_ASSERT(state == e_init);
+void CompilationDB::frontend() {
+  for (size_t i = 0; i < states.size(); i++) {
+    assert(states[i] == e_init);
 
-  // Iterate over the compilation units
-  for (auto& cu : db) {
+    boost::filesystem::current_path(directories[i]);
 
-    // Source file associated with this compilation unit
-    std::string filename = cu["file"].get<std::string>();
+    project->set_originalCommandLineArgumentList(arguments[i]);
 
-    // Loading the command line
-    std::vector<std::string> args;
-    for (auto& e: cu["arguments"]) {
-      args.push_back(e.get<std::string>());
-    }
+    sourcefiles[i] = isSgSourceFile(SageBuilder::buildFile(filenames[i].string(), SgName(), project));
+    ROSE_ASSERT(sourcefiles[i] != NULL);
 
-    project->set_originalCommandLineArgumentList(args);
-
-    // Set working directory (in case the command line contains relative path)
-    boost::filesystem::current_path(cu["directory"].get<std::string>());
-
-    // Calls the frontend
-    SgFile * file = SageBuilder::buildFile(filename, SgName(), project);
-    ROSE_ASSERT(file != NULL);
-
-    // Check: frontend must produce a source file
-    SgSourceFile * src_file = isSgSourceFile(file);
-    ROSE_ASSERT(src_file != NULL);
-
-    files.push_back(std::pair<json, SgSourceFile *>(cu, src_file));
+    states[i] = e_loaded;
   }
 
-  // Restore starting working directory
   boost::filesystem::current_path(cwd);
-
-  // Set new state
-  state = e_loaded;
 }
 
 void CompilationDB::unparse() {
-  // Check current state
-  ROSE_ASSERT(state == e_loaded);
+  for (size_t i = 0; i < states.size(); i++) {
+    assert(states[i] == e_loaded);
 
-  // Iterate over the compilation units
-  for (auto& f : files) {
-    json cu = f.first;
-    SgSourceFile * file = f.second;
+    boost::filesystem::current_path(directories[i]);
 
-    file->unparse();
+    sourcefiles[i]->unparse();
+
+    states[i]  = e_unparsed;
   }
 
-  // Restore starting working directory
   boost::filesystem::current_path(cwd);
-
-  // Set new state
-  state = e_unparsed;
 }
 
 void CompilationDB::compile() {
-  // Check current state
-  ROSE_ASSERT(state == e_unparsed);
+  for (size_t i = 0; i < states.size(); i++) {
+    assert(states[i] == e_unparsed);
 
-  // Iterate over the compilation units
-  for (auto& f : files) {
-    json cu = f.first;
-    SgSourceFile * file = f.second;
+    boost::filesystem::current_path(directories[i]);
 
-    file->compileOutput(0);
+    backend_status[i] = sourcefiles[i]->compileOutput(0);
+
+    states[i] = ( backend_status[i] == 0 ) ? e_compiled : e_failed;
   }
 
-  // Restore starting working directory
   boost::filesystem::current_path(cwd);
+}
 
-  // Set new state
-  state = e_compiled;
+void CompilationDB::write(const char * obfn) {
+  AST_FILE_IO::startUp(project);
+  AST_FILE_IO::writeASTToFile(obfn);
 }
 
 }}
@@ -141,9 +141,13 @@ int main(int argc, char ** argv) {
 
   ROSE::SageInterface::CompilationDB cdb(argv[1]);
 
-  cdb.build();
+  cdb.frontend();
   cdb.unparse();
   cdb.compile();
+
+  if (argc > 2) {
+    cdb.write(argv[2]);
+  }
 
   return 0;
 }
