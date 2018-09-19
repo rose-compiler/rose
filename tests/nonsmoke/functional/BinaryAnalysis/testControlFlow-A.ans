@@ -92,7 +92,7 @@ indeterminate [ label="indeterminate" fillcolor="#ff9999" shape=box style=filled
 V_0x08048290 -> indeterminate [ label="other"  ];
 V_0x080482a0 -> indeterminate [ label="other"  ];
 V_0x080482b0 -> indeterminate [ label="other"  ];
-V_0x080482c0 -> V_0x080482b0 [ label="call" color="#05ff00" ];
+V_0x080482c0 -> V_0x08048364 [ label="call" color="#05ff00" ];
 V_0x080484aa -> indeterminate [ label="return" color="#0500ff" ];
 V_0x080482e4 -> V_0x08048301 [ label=""  ];
 V_0x0804832b -> V_0x08048336 [ label="" style=dotted ];
@@ -123,6 +123,7 @@ V_0x0804833d -> indeterminate [ label="return" color="#0500ff" ];
 V_0x08048301 -> indeterminate [ label="return" color="#0500ff" ];
 V_0x080482e4 -> V_0x080482ff [ label="" style=dotted ];
 V_0x080482c0 -> V_0x080482e1 [ label="cret" style=dotted ];
+V_0x080482c0 -> V_0x080482b0 [ label="call" color="#05ff00" ];
 V_0x08048278 -> V_0x08048283 [ label="cret" style=dotted ];
 V_0x08048278 -> V_0x080482e4 [ label="call" color="#05ff00" ];
 V_0x08048283 -> V_0x08048288 [ label="cret" style=dotted ];

@@ -15,7 +15,7 @@ Functions detected from binary executable:
    11 0x08048404 0x08048404 0x08048418     7/20     .C...S.G.........  unknown       yes        +4 bar                             
    12 0x08048418 0x08048418 0x0804842f     6/23     .C...S.G.........  unknown        no           foo                             
    13 0x0804842f 0x0804842f 0x08048440     5/17     .....S.G.........  unknown        no           handler                         
-   14 0x0804845b 0x0804845b 0x08048486    12/43     .....S.G.........  unknown       yes        +4 main                            
+   14 0x0804845b 0x0804845b 0x08048486    12/43     .C...S.G.........  unknown       yes        +4 main                            
    15 0x08048490 0x08048490 0x080484f3    39/99     .....S.G.........  unknown       yes        +4 __libc_csu_init                 
    16 0x08048500 0x08048500 0x08048558    33/88     .....S.G.........  unknown       yes        +4 __libc_csu_fini                 
    17 0x08048560 0x08048560 0x08048590    19/48     .C...S.G.........  unknown       yes        +4 __do_global_ctors_aux           
