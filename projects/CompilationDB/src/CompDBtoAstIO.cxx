@@ -105,7 +105,7 @@ void CompilationDB::unparse() {
     json cu = f.first;
     SgSourceFile * file = f.second;
 
-    // TODO
+    file->unparse();
   }
 
   // Restore starting working directory
@@ -124,7 +124,7 @@ void CompilationDB::compile() {
     json cu = f.first;
     SgSourceFile * file = f.second;
 
-    // TODO
+    file->compileOutput(0);
   }
 
   // Restore starting working directory
