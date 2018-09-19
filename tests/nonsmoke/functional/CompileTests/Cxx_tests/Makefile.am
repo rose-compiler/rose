@@ -564,7 +564,8 @@ NEW_2017_TESTS = \
    test2018_63.C \
    test2018_64.C \
    rose-1379-a.C \
-   rose-1379-b.C
+   rose-1379-b.C \
+   rose-1380.C
 
 
 # DQ (4/7/2018): Updating failing tests.
