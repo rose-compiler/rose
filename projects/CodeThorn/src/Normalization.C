@@ -39,7 +39,7 @@ namespace SPRAY {
       eliminateForStatements=true;
       eliminateWhileStatements=false;
       hoistConditionExpressions=true;
-      normalizeVariableDeclarations=true;
+      normalizeVariableDeclarations=false;
       //eliminateShortCircuitOperators=true; // not iomplemented yet
       //eliminateConditionalExpressionOp=ture; // not iomplemented yet
       encapsulateNormalizedExpressionsInBlocks=false;
@@ -55,7 +55,7 @@ namespace SPRAY {
       eliminateForStatements=true;
       eliminateWhileStatements=true;  // different to level 1,2
       hoistConditionExpressions=true;
-      normalizeVariableDeclarations=true;
+      normalizeVariableDeclarations=false;
       //eliminateShortCircuitOperators=true; // not iomplemented yet
       //eliminateConditionalExpressionOp=ture; // not iomplemented yet
       encapsulateNormalizedExpressionsInBlocks=true; // different to level 1,2
@@ -81,6 +81,24 @@ namespace SPRAY {
   void Normalization::setInliner(SPRAY::InlinerBase* userDefInliner) {
     removeDefaultInliner();
     _inliner=userDefInliner;
+  }
+
+  void Normalization::normalizeLabel(SgLabelStatement* label) {
+    SgNode* parent=label->get_parent();
+    ROSE_ASSERT(!isSgIfStmt(parent) && !isSgWhileStmt(parent) && !isSgDoWhileStmt(parent));
+    SgStatement* stmt=label->get_statement();
+    if(stmt==0 || isSgNullStatement(stmt)) {
+      // nothing to normalize
+      return;
+    }
+    // label is attached to a statement (= stmt is the child of the label node)
+    // (i) create null statement
+    SgNullStatement* nullStmt=SageBuilder::buildNullStatement();
+    label->set_statement(nullStmt);
+    stmt->set_parent(0);
+    // (ii) insert statement stmt after label
+    bool autoMovePreprocessingInfo=true;
+    SageInterface::insertStatementAfter(label,stmt,autoMovePreprocessingInfo);
   }
 
   void Normalization::normalizeAllVariableDeclarations(SgNode* root) {
@@ -187,6 +205,10 @@ namespace SPRAY {
    // transformation: switch(C) ... => T t=C; switch(t) ...
   // while/do-while/for: not applicable. Transform those before cond-hoisting.
   void Normalization::hoistCondition(SgStatement* stmt) {
+    // check if this statement has an attached label and if yes: normalize label
+    if(SgLabelStatement* label=isSgLabelStatement(stmt->get_parent())) {
+      normalizeLabel(label);
+    }
     SgNode* condNode=SgNodeHelper::getCond(stmt);
     ROSE_ASSERT(condNode);
     if(isSgExprStatement(condNode)) {
@@ -194,7 +216,7 @@ namespace SPRAY {
     }
     SgExpression* condExpr=isSgExpression(condNode);
     ROSE_ASSERT(condExpr);
-    if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)||isSgDoWhileStmt(stmt)) {
+    if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
       // (i) build tmp var with cond as initializer
       SgVariableDeclaration* tmpVarDeclaration = 0;
       SgExpression* tmpVarReference = 0;
@@ -210,35 +232,35 @@ namespace SPRAY {
       // (iii) set cond as initializer in new variable declaration
       //TODO turn condition into initializer
       //tmpVarDeclaration->reset_initializer(cond);
-      if(SgDoWhileStmt* doWhileStmt=isSgDoWhileStmt(stmt)) {
-        // (iv) insert at end of body
-        // (iv.1) get body
-        // (iv.2) append as last statement to body
-        SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(doWhileStmt));
-        ROSE_ASSERT(body);
-        SageInterface::appendStatement(tmpVarDeclaration,body);
-      } else {  
-        // (iv) insert declaration with initializer before stmt
-        // cases if and switch
-        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
-      }
-    } else if(SgWhileStmt* whileStmt=isSgWhileStmt(stmt)) {
+
+      // (iv) insert declaration with initializer before stmt
+      // cases if and switch
+      SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+      
+    } else if(isSgWhileStmt(stmt)||isSgDoWhileStmt(stmt)) {
       // transformation: while(C) {...} ==> while(1) { T t=C;if(t) break; ...} (implemented)
       // alternative: while(C) {...} ==> T t=C; while(t) { ...; t=C; } (duplicates condition, not implemented)
+      // transformation: do {...} whilte (C) ==> do {...; T t=C; if(t) break; } (implemented)
+      // note: do {...} whilte (C) ==> do {...; T t=C;} while(t) (not possible because of C/C++ scoping rules)
 
       // (i) replace while-condition with constant 1 condition
-      SgStatement* oldWhileCond=isSgStatement(SgNodeHelper::getCond(whileStmt));
-      SgNodeHelper::setCond(whileStmt,SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1)));
+      SgStatement* oldWhileCond=isSgStatement(SgNodeHelper::getCond(stmt));
+      SgNodeHelper::setCond(stmt,SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1)));
 
-      // (iii) generate and insert if-conditional with old while-condition
+      // (iii) generate if-statement with old while-condition
       SgIfStmt* ifStmt=SageBuilder::buildIfStmt(oldWhileCond,
                                                 SageBuilder::buildBreakStmt(),
                                                 0);
-      SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(whileStmt));
+      SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(stmt));
       ROSE_ASSERT(body);
-      SageInterface::prependStatement(ifStmt,body);
+      // (iv) insert if-statement
+      if(isSgWhileStmt(stmt)) {
+        SageInterface::prependStatement(ifStmt,body);
+      } else {
+        SageInterface::appendStatement(ifStmt,body);
+      }
     
-      // (iv) hoistCondition from generated if-statement (recursive application of condition hoisting)
+      // (v) hoistCondition from generated if-statement (recursive application of condition hoisting)
       hoistCondition(ifStmt);
 
     } else {
