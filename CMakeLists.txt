@@ -1050,10 +1050,10 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface 
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astSupport 
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/symbolicVal 
-     ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses 
-     ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/dataflowanalyses 
-     ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/graph 
-     ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/instructionSemantics 
+     ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis 
+     ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/dataflowanalyses 
+     ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/graph 
+     ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/instructionSemantics 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/computation 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depGraph 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depInfo 

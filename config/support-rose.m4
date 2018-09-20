@@ -2378,7 +2378,7 @@ src/midend/MFB/lib/klt/Makefile
 src/midend/MFB/lib/sage/Makefile
 src/midend/MFB/lib/utils/Makefile
 src/midend/Makefile
-src/midend/binaryAnalyses/Makefile
+src/midend/BinaryAnalysis/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
