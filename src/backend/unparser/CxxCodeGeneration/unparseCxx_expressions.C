@@ -6687,12 +6687,24 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      SgSourceFile* sourceFile = info.get_current_source_file();
   // ROSE_ASSERT(sourceFile != NULL);
 
+#if 0
+     printf("In Unparse_ExprStmt::unparseAggrInit\n");
+     printf("  -- sourceFile = %p\n", sourceFile);
+     printf("     -- Cxx11_only = %s\n", sourceFile->get_Cxx11_only() ? "true" : "false");
+     printf("     -- Cxx14_only = %s\n", sourceFile->get_Cxx14_only() ? "true" : "false");
+     printf("  -- need_cxx11_class_specifier = %s\n", need_cxx11_class_specifier ? "true" : "false");
+#endif
+
   // TV (08/17/2018): sourceFile is NULL when called from unparseToString
   //                  FIXME will it be needed with C++ 14 and 17 ???
-     if ( !( (sourceFile != NULL) && ( sourceFile->get_Cxx11_only() || sourceFile->get_Cxx14_only() ) ) )
+     if ( (sourceFile != NULL) && !( sourceFile->get_Cxx11_only() || sourceFile->get_Cxx14_only() ) )
         {
           need_cxx11_class_specifier = false;
         }
+
+#if 0
+     printf("  -- need_cxx11_class_specifier = %s\n", need_cxx11_class_specifier ? "true" : "false");
+#endif
 
 #if 0
      printf ("DONE: Calling uses_cxx11_initialization: expr = %p type = %p = %s need_cxx11_class_specifier = %s \n",
