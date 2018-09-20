@@ -942,9 +942,9 @@ GLUT_LIBS = ${glut_path}
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/astUtil/astInterface \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/astUtil/astSupport \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
-@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/binaryAnalyses \
-@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
-@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
+@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/BinaryAnalysis \
+@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/BinaryAnalysis/dataflowanalyses \
+@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/BinaryAnalysis/instructionSemantics \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/computation \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depGraph \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_FALSE@     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depInfo \
@@ -1054,7 +1054,7 @@ GLUT_LIBS = ${glut_path}
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/midend/astProcessing \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/midend/astMatching \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/midend/astQuery \
-@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/midend/binaryAnalyses \
+@ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/midend/BinaryAnalysis \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/midend/programAnalysis \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/roseSupport \
 @ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT_TRUE@     -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
