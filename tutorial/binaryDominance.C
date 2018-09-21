@@ -24,6 +24,8 @@ main(int argc, char *argv[])
     ROSE_INITIALIZE;
     P2::Engine engine;
     engine.doingPostAnalysis(false);                    // not needed for this tool, and faster without
+    engine.namingSystemCalls(false);                    // for consistent results w.r.t. the answer file since the system...
+    engine.systemCallHeader("/dev/null");               // ...call mapping comes from run-time files.
     std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, programPurpose, programDescription).unreachedArgs();
     P2::Partitioner partitioner = engine.partition(specimen);
     //! [init]
@@ -58,7 +60,9 @@ main(int argc, char *argv[])
 
         //! [results]
         for (size_t i=0; i<idoms.size(); ++i) {
-            std::cout <<"  dominator of " <<P2::Partitioner::vertexName(*cfg.findVertex(i)) <<" is ";
+            std::cout <<"  function " <<Rose::StringUtility::addrToString(function->address())
+                      <<" dominator of " <<P2::Partitioner::vertexName(*cfg.findVertex(i))
+                      <<" is ";
             if (cfg.isValidVertex(idoms[i])) {
                 std::cout <<P2::Partitioner::vertexName(*idoms[i]) <<"\n";
             } else {

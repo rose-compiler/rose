@@ -422,7 +422,7 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
         try {
             BOOST_FOREACH (SgAsmInstruction *insn, insns) {
                 cpu->processInstruction(insn);
-                SAWYER_MESG(debug) <<"  state after " <<unparseInstructionWithAddress(insn) <<"\n" <<*ops;
+                SAWYER_MESG(debug) <<"  state after " <<insn->toString() <<"\n" <<*ops;
             }
             BaseSemantics::SValuePtr ip = ops->readRegister(IP);
             if (ip->is_number()) {
