@@ -49,14 +49,16 @@ namespace Container {
 /** %Container associating values with keys.
  *
  *  This container is similar to the <code>std::map</code> container in the standard template library, but with these
- *  differences in addition to those described in the documentation for the Sawyer::Container name space:
+ *  differences in addition to those described in the documentation for the @ref Sawyer::Container name space:
  *
  *  @li It extends the interface with additional methods that return optional values (@ref Optional) and a few
  *      convenience methods (like @ref exists).
  *  @li It provides iterators over keys and values in addition to the STL-like iterator over nodes.
  *  @li The insert methods always insert the specified value(s) regardless of whether a node with the same key already
  *      existed (i.e., they do what their name says they do). If you need STL behavior, then use the <code>insertMaybe</code>
- *      methods.  */
+ *      methods.
+ *
+ *  See also, @ref HashMap. */
 template<class K,
          class T,
          class Cmp = std::less<K>,

@@ -2632,7 +2632,7 @@ public:
 
     /** Remove a switch from the group.  The first declaration with the specified key is erased from this group. */
     SwitchGroup& removeByKey(const std::string &switchKey);
-
+    
     /** Property: Order of switches in documentation.  This property controls the sorting of keys within the group.  If the
      *  property's value is @ref DOCKEY_ORDER, the default, then switches are sorted according to the Switch::docKey values; if
      *  the property is @ref INSERTION_ORDER then switch documentation keys are ignored and switches are presented in the order
@@ -2654,6 +2654,7 @@ public:
 
 private:
     friend class Parser;
+    bool removeByPointer(const void*);
 };
 
 /** Subset of switches grouped by their switch groups. */
@@ -3092,6 +3093,21 @@ public:
      *
      *  Return an index containing all switches that are ambiguous and which cannot be made unambiguous by qualifying them. */
     NamedSwitches findUnresolvableAmbiguities() const;
+
+    /** Remove the switch by matching parse sentence.
+     *
+     *  Removes from this parser whichever switch is able to parse the specified command-line. The input should be either a
+     *  single command line argument string (like "--debug-level=5") or a vector of strings (like {"--debug-level", "5"}). Only
+     *  long-name switches (not single-letter switches) can be removed this way.  Only the first matched switch is removed from
+     *  the parser.
+     *
+     *  Returns either nothing, or a copy of the switch parser that was removed.  Since the switch parser is returned, it can
+     *  then be modified and added back to the same parser or to a different parser.
+     *
+     * @{ */
+    Sawyer::Optional<Switch> removeMatchingSwitch(const std::string &arg);
+    Sawyer::Optional<Switch> removeMatchingSwitch(const std::vector<std::string> &args);
+    /** @} */
 
 public:
     // Used internally

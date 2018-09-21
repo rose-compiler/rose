@@ -1,9 +1,11 @@
 #include <sage3basic.h>
+#include <BaseSemantics2.h>
 #include <BinaryUnparserBase.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
 #include <stringify.h>
+#include <TraceSemantics2.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -212,6 +214,10 @@ Settings::Settings() {
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
     insn.comment.fieldWidth = 1;
+    insn.semantics.showing = false;                     // not usually desired, and somewhat slow
+    insn.semantics.tracing = false;                     // not usually desired even for full output
+    insn.semantics.formatter.set_show_latest_writers(false);
+    insn.semantics.formatter.set_line_prefix("        ;; state: ");
 }
 
 // class method
@@ -244,6 +250,8 @@ Settings::minimal() {
     s.insn.operands.fieldWidth = 40;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
+    s.insn.semantics.showing = false;
+    s.insn.semantics.tracing = false;
 
     return s;
 }
@@ -253,7 +261,7 @@ commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
     using namespace Rose::CommandLine;
-    
+
     SwitchGroup sg("Unparsing switches");
     sg.name("out");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
@@ -370,6 +378,14 @@ commandLineSwitches(Settings &settings) {
                         "If comments are being shown and an instruction has an empty comment, then use the instruction "
                         "description instead.  This is especially useful for users that aren't familiar with the "
                         "instruction mnemonics for this architecture.");
+
+    insertBooleanSwitch(sg, "insn-semantics", settings.insn.semantics.showing,
+                        "Run each instruction on a clean semantic state and show the results. This is useful if you want "
+                        "to see the effect of each instruction.");
+
+    insertBooleanSwitch(sg, "insn-semantics-trace", settings.insn.semantics.tracing,
+                        "Show a trace of the individual semantic operations when showing semantics rather than just showing the "
+                        "net effect.");
 
     return sg;
 }
@@ -578,6 +594,34 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_LEFTOVERS,    "provisional");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_INTRABLOCK,   "possibly unreached (intra)");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_USERDEF,      "user defined");
+
+        if (flags & 0xff) {
+            switch (flags & 0xff) {
+                case SgAsmFunction::FUNC_INTERPADFUNC:
+                    strings.push_back("interpadfunc");
+                    break;
+                case SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH:
+                    strings.push_back("pescrambler dispatch");
+                    break;
+                case SgAsmFunction::FUNC_CONFIGURED:
+                    strings.push_back("configuration");
+                    break;
+                case SgAsmFunction::FUNC_CMDLINE:
+                    strings.push_back("command-line");
+                    break;
+                case SgAsmFunction::FUNC_SCAN_RO_DATA:
+                    strings.push_back("scanned read-only ptr");
+                    break;
+                case SgAsmFunction::FUNC_INSN_RO_DATA:
+                    strings.push_back("referenced read-only ptr");
+                    break;
+                default:
+                    strings.push_back("miscellaneous(" + StringUtility::numberToString(flags & 0xff) + ")");
+                    break;
+            }
+            flags &= ~0xff;
+        }
+
         if (flags != 0) {
             char buf[64];
             sprintf(buf, "0x%08x", flags);
@@ -585,6 +629,8 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         }
         if (!strings.empty())
             out <<";;; reasons for function: " <<boost::join(strings, ", ") <<"\n";
+        if (!function->reasonComment().empty())
+            out <<";;; reason comment: " <<function->reasonComment() <<"\n";
     }
 }
 
@@ -775,7 +821,7 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
         nextUnparser()->emitBasicBlockBody(out, bb, state);
     } else {
         if (0 == bb->nInstructions()) {
-            out <<"no instructions";
+            out <<"no instructions\n";
         } else {
             state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
@@ -1084,6 +1130,7 @@ Base::emitInstructionEpilogue(std::ostream &out, SgAsmInstruction *insn, State &
     if (nextUnparser()) {
         nextUnparser()->emitInstructionEpilogue(out, insn, state);
     } else {
+        state.frontUnparser().emitInstructionSemantics(out, insn, state);
     }
 }
 
@@ -1184,6 +1231,27 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
             comment = insn->description();
         if (!comment.empty())
             out <<"; " <<StringUtility::cEscape(comment);
+    }
+}
+
+void
+Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+    ASSERT_not_null(insn);
+    if (settings().insn.semantics.showing) {
+        S2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        if (settings().insn.semantics.tracing)
+            ops = S2::TraceSemantics::RiscOperators::instance(ops);
+
+        if (S2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+            try {
+                cpu->processInstruction(insn);
+                S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
+                std::ostringstream ss;
+                ss <<"\n" <<(*cpu->currentState()->registerState() + fmt) <<(*cpu->currentState()->memoryState() + fmt);
+                out <<StringUtility::trim(ss.str(), "\n", false, true);
+            } catch (...) {
+            }
+        }
     }
 }
 

@@ -42,7 +42,8 @@ private:
 
     SgAsmRegisterReferenceExpression *
     makeRegister(PowerpcRegisterClass reg_class, int reg_number,
-                 PowerpcConditionRegisterAccessGranularity reg_grainularity = powerpc_condreggranularity_whole) const;
+                 PowerpcConditionRegisterAccessGranularity reg_grainularity = powerpc_condreggranularity_whole,
+                 SgAsmType *type = NULL) const;
 
     static SgAsmPowerpcInstruction *makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic,
                                                                    PowerpcInstructionKind kind, uint32_t insn);
@@ -201,10 +202,10 @@ private:
     }
 
     SgAsmMemoryReferenceExpression* memref(SgAsmType* t) const {
-            return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(), D()), NULL, t);
+        return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(), D()), NULL, t);
     }
     SgAsmMemoryReferenceExpression* memrefx(SgAsmType* t) const {
-            return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(), RB()),
+        return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(), RB()),
                                                                   NULL, t);
     }
     SgAsmMemoryReferenceExpression* memrefu(SgAsmType* t) const {

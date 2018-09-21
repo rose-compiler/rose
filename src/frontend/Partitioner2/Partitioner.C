@@ -109,6 +109,9 @@ Partitioner::~Partitioner() {}
 
 void
 Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
+    // Start with a large hash table to reduce early rehashing. There's a high chance that we'll need this much.
+    vertexIndex_.rehash(100000);
+
     if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->unparser()->copy();
@@ -607,7 +610,7 @@ Partitioner::truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &pla
         throw BasicBlockError(bblock, basicBlockName(bblock) + " cannot be truncated at its initial instruction");
     if (!bblock->instructionExists(insn)) {
         throw BasicBlockError(bblock, basicBlockName(bblock) +
-                              " does not contain instruction \"" + unparseInstructionWithAddress(insn) + "\""
+                              " does not contain instruction \"" + insn->toString() + "\""
                               " for truncation");
     }
 
@@ -778,7 +781,7 @@ Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
 }
 
 BasicBlock::Successors
-Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
     BasicBlock::Successors successors;
 
@@ -788,7 +791,8 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
     SgAsmInstruction *lastInsn = bb->instructions().back();
     RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
-    if (BaseSemantics::StatePtr state = bb->finalState()) {
+    BaseSemantics::StatePtr state;
+    if (precision > Precision::LOW && (state = bb->finalState())) {
         // Use our own semantics if we have them.
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
@@ -844,7 +848,11 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
             ++i;
         }
     }
-    bb->successors() = successors;
+
+    // Cache the result, but not for low-precision results since that would mean a later call for high-precision results would
+    // only return low-precision results.
+    if (precision > Precision::LOW)
+        bb->successors() = successors;
     return successors;
 }
 
@@ -903,7 +911,7 @@ Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb, bool *isCom
 }
 
 bool
-Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
     bool retval = false;
 
@@ -919,105 +927,108 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
     // Use our own semantics if we have them.
-    if (BaseSemantics::StatePtr state = bb->finalState()) {
-        // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
-        // Is the block fall-through address equal to the value on the top of the stack?
-        ASSERT_not_null(bb->dispatcher());
-        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
-        const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
-        const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-        const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-        rose_addr_t returnVa = bb->fallthroughVa();
-        BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
-        BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
-        BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
-        topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
-        BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
-        bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
-        if (!isRetAddrOnTopOfStack) {
-            bb->isFunctionCall() = false;
-            return false;
-        }
-
-        // If the only successor is also the fall-through address then this isn't a function call.  This case handles code that
-        // obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and B are
-        // consecutive instruction addresses.
-        BasicBlock::Successors successors = basicBlockSuccessors(bb);
-        if (1==successors.size() && successors[0].expr()->is_number() && successors[0].expr()->get_number()==returnVa) {
-            bb->isFunctionCall() = false;
-            return false;
-        }
-
-        // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after all.
-        if (checkingCallBranch()) {
-            bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
-            BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
-                // Find callee basic block
-                if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-                rose_addr_t calleeVa = successor.expr()->get_number();
-                BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
-                if (!calleeBb)
-                    calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
-                if (!calleeBb) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // If the called block is also a function return (i.e., we're calling a function which is only one block long),
-                // then of course the block will pop the return address even though it's a legitimate function.
-                if (basicBlockIsFunctionReturn(calleeBb)) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Get callee block's initial and final states
-                BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
-                BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
-                if (!calleeState0 || !calleeStateN) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
-                // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll
-                // substitute a concrete value for the stack pointer.
-                BaseSemantics::SValuePtr sp0 =
-                    calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-                BaseSemantics::SValuePtr spN =
-                    calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-
-                SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-                SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
-                SymbolicExpr::Ptr spNExpr =
-                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
-                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
-
-                // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Did the callee return to somewhere other than caller's return address?
-                BaseSemantics::SValuePtr ipN =
-                    calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
-                if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-            }
-            if (allCalleesPopWithoutReturning) {
+    if (precision > Precision::LOW) {
+        if (BaseSemantics::StatePtr state = bb->finalState()) {
+            // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
+            // Is the block fall-through address equal to the value on the top of the stack?
+            ASSERT_not_null(bb->dispatcher());
+            BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+            const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
+            const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
+            const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
+            rose_addr_t returnVa = bb->fallthroughVa();
+            BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
+            BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
+            BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
+            topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
+            BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
+            bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
+            if (!isRetAddrOnTopOfStack) {
                 bb->isFunctionCall() = false;
                 return false;
             }
-        }
 
-        // This appears to be a function call
-        bb->isFunctionCall() = true;
-        return true;
+            // If the only successor is also the fall-through address then this isn't a function call.  This case handles code
+            // that obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and
+            // B are consecutive instruction addresses.
+            BasicBlock::Successors successors = basicBlockSuccessors(bb);
+            if (1==successors.size() && successors[0].expr()->is_number() && successors[0].expr()->get_number()==returnVa) {
+                bb->isFunctionCall() = false;
+                return false;
+            }
+
+            // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after
+            // all.
+            if (checkingCallBranch()) {
+                bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
+                BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
+                    // Find callee basic block
+                    if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+                    rose_addr_t calleeVa = successor.expr()->get_number();
+                    BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
+                    if (!calleeBb)
+                        calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
+                    if (!calleeBb) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // If the called block is also a function return (i.e., we're calling a function which is only one block
+                    // long), then of course the block will pop the return address even though it's a legitimate function.
+                    if (basicBlockIsFunctionReturn(calleeBb)) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Get callee block's initial and final states
+                    BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
+                    BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
+                    if (!calleeState0 || !calleeStateN) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
+                    // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore,
+                    // we'll substitute a concrete value for the stack pointer.
+                    BaseSemantics::SValuePtr sp0 =
+                        calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+                    BaseSemantics::SValuePtr spN =
+                        calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+
+                    SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
+                    SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+                    SymbolicExpr::Ptr spNExpr =
+                        Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+                    SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
+
+                    // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
+                    if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Did the callee return to somewhere other than caller's return address?
+                    BaseSemantics::SValuePtr ipN =
+                        calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
+                    if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+                }
+                if (allCalleesPopWithoutReturning) {
+                    bb->isFunctionCall() = false;
+                    return false;
+                }
+            }
+
+            // This appears to be a function call
+            bb->isFunctionCall() = true;
+            return true;
+        }
     }
 
     // An x86 idiom is two consecutive instructions "call next: pop ebx" where "next" is the address of the POP instruction
@@ -1070,9 +1081,9 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
         BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
         if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(lastInsn)) {
             if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
-                x86insn->get_operandList()->get_operands().size() == 1 &&
-                isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])) {
-                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])
+                x86insn->nOperands() == 1 &&
+                isSgAsmIntegerValueExpression(x86insn->operand(0))) {
+                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
                                   ->get_absoluteValue();
                 nbytes += REG_IP.get_nbits() / 8;       // size of return address
                 stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), nbytes));
@@ -1942,7 +1953,7 @@ Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
         if (startVa == *unmappedVa) {
             BOOST_FOREACH (const FunctionPrologueMatcher::Ptr &matcher, functionPrologueMatchers_) {
                 if (matcher->match(*this, startVa)) {
-                        std::vector<Function::Ptr> newFunctions = matcher->functions();
+                    std::vector<Function::Ptr> newFunctions = matcher->functions();
                     ASSERT_forbid(newFunctions.empty());
                     return newFunctions;
                 }
@@ -2390,7 +2401,9 @@ Partitioner::discoverCalledFunctions() const {
             BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
                 if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                     rose_addr_t entryVa = vertex.value().address();
-                    insertUnique(functions, Function::instance(entryVa), sortFunctionsByAddress);
+                    Function::Ptr function = Function::instance(entryVa, SgAsmFunction::FUNC_CALL_TARGET);
+                    function->reasonComment("called along CFG edge " + edgeName(edge));
+                    insertUnique(functions, function, sortFunctionsByAddress);
                     break;
                 }
             }
@@ -2589,6 +2602,27 @@ Partitioner::rebuildVertexIndices() {
     if (insnUnparser_)
         insnUnparser_->settings() = Unparser::Settings::minimal();
 }
+
+void
+Partitioner::showStatistics() const {
+    std::cout <<"Rose::BinaryAnalysis::Partitioner2::Parttioner statistics:\n";
+    std::cout <<"  address to CFG vertex mapping:\n";
+    std::cout <<"    size = " <<vertexIndex_.size() <<"\n";
+    std::cout <<"    number of hash buckets =  " <<vertexIndex_.nBuckets() <<"\n";
+    std::cout <<"    load factor = " <<vertexIndex_.loadFactor() <<"\n";
+    instructionProvider().showStatistics();
+}
+
+#ifdef ROSE_ENABLE_PYTHON_API
+void
+Partitioner::pythonUnparse() const {
+    if (Unparser::Base::Ptr u = unparser()) {
+        u->unparse(std::cout, *this);
+    } else {
+        std::cout <<"no unparser for this architecture\n";
+    }
+}
+#endif
 
 } // namespace
 } // namespace

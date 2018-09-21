@@ -227,7 +227,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (UseStatement,              "UseStatement",              "USE_STATEMENT" );
      NEW_TERMINAL_MACRO (StopOrPauseStatement,      "StopOrPauseStatement",      "STOP_OR_PAUSE_STATEMENT" );
 
-  // DQ (11/25/2007): Make this the base class of all the IR nodes for Frotran I/O
+  // DQ (11/25/2007): Make this the base class of all the IR nodes for Fortran I/O
   // NEW_TERMINAL_MACRO (IOStatement,               "IOStatement",               "IO_STATEMENT" );
 
   // NEW_TERMINAL_MACRO (InputOutputStatement,      "InputOutputStatement",      "INPUT_OUTPUT_STATEMENT" ); 
@@ -271,6 +271,13 @@ Grammar::setUpStatements ()
           InquireStatement | FlushStatement | BackspaceStatement | RewindStatement | EndfileStatement |
           WaitStatement,
           "IOStatement", "IO_STATEMENT", false);
+
+  // Rasmussen (9/20/2018): Fortran 2018 nodes related to synchronization
+     NEW_TERMINAL_MACRO (SyncAllStatement,     "SyncAllStatement",            "SYNC_ALL_STATEMENT" );
+
+     NEW_NONTERMINAL_MACRO (ImageControlStatement,
+          SyncAllStatement,
+          "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
      //SK(08/20/2015): Matlab For-loop
@@ -531,6 +538,7 @@ Grammar::setUpStatements ()
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
+  // Rasmussen (9/20/2018): Added ImageControlStatement
      NEW_NONTERMINAL_MACRO (Statement,
              ScopeStatement            | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
              LabelStatement            | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
@@ -545,7 +553,7 @@ Grammar::setUpStatements ()
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
              JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt                |
-             AtomicStmt                | WhenStmt /* | JavaPackageDeclaration */,
+             AtomicStmt                | WhenStmt               | ImageControlStatement /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -3313,6 +3321,19 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+  // Rasmussen (9/20/2018): Added F2018 image control statements
+     ImageControlStatement.setFunctionPrototype ( "HEADER_IMAGE_CONTROL_STATEMENT", "../Grammar/Statement.code" );
+     ImageControlStatement.setDataPrototype     ( "SgImageControlStatement::image_control_statement_enum", "image_control_statement", "= SgImageControlStatement::e_unknown",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ImageControlStatement.setDataPrototype     ( "SgExpression*", "stat", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ImageControlStatement.setDataPrototype     ( "SgExpression*", "err_msg", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Derived from ImageControlStatement
+     SyncAllStatement.setFunctionPrototype  ( "HEADER_SYNC_ALL_STATEMENT", "../Grammar/Statement.code" );
+
+
   // Derived from IOStatement, this adds the status (either "KEEP" or "DELETE")
      CloseStatement.setFunctionPrototype ( "HEADER_CLOSE_STATEMENT", "../Grammar/Statement.code" );
      CloseStatement.setDataPrototype ( "SgExpression*", "status", "= NULL",
@@ -4053,6 +4074,13 @@ Grammar::setUpStatements ()
      StopOrPauseStatement.setFunctionSource     ("SOURCE_STOP_OR_PAUSE_STATEMENT", "../Grammar/Statement.code" );
 
      IOStatement.setFunctionSource              ("SOURCE_IO_STATEMENT", "../Grammar/Statement.code" );
+
+  // Rasmussen (9/20/2018): Added F2018 image control statements
+     ImageControlStatement.setFunctionSource    ("SOURCE_IMAGE_CONTROL_STATEMENT", "../Grammar/Statement.code" );
+
+  // Derived from ImageControlStatement
+     SyncAllStatement.setFunctionSource         ("SOURCE_SYNC_ALL_STATEMENT", "../Grammar/Statement.code" );
+
 
   // DQ (12/27/2007): Added fortran entry statement.
      EntryStatement.setFunctionSource           ("SOURCE_ENTRY_STATEMENT", "../Grammar/Statement.code" );

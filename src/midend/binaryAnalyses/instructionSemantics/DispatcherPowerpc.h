@@ -11,6 +11,11 @@
 
 #include "BaseSemantics2.h"
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/split_member.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -19,6 +24,35 @@ namespace InstructionSemantics2 {
 typedef boost::shared_ptr<class DispatcherPowerpc> DispatcherPowerpcPtr;
 
 class DispatcherPowerpc: public BaseSemantics::Dispatcher {
+public:
+    typedef BaseSemantics::Dispatcher Super;
+
+    /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
+     *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
+     * @{ */
+    RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_CR, REG_CR0, REG_CTR;
+    /** @}*/
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void save(S &s, const unsigned /*version*/) const {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+    }
+
+    template<class S>
+    void load(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        regcache_init();
+        iproc_init();
+        memory_init();
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
 protected:
     // prototypical constructor
     DispatcherPowerpc(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_powerpc()) {}
@@ -41,12 +75,6 @@ protected:
     void memory_init();
 
 public:
-    /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
-     *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
-     * @{ */
-    RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_CR, REG_CR0, REG_CTR;
-    /** @}*/
-
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
      *  with the virtual @ref create method. */
     static DispatcherPowerpcPtr instance() {
@@ -95,5 +123,9 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherPowerpc);
+#endif
 
 #endif

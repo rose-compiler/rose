@@ -1187,6 +1187,17 @@ SwitchGroup::getByKey(const std::string &s) {
     throw std::runtime_error("switch key \"" + s + "\" not found\n");
 }
 
+SAWYER_EXPORT bool
+SwitchGroup::removeByPointer(const void *swptr) {
+    for (size_t i=0; i<switches_.size(); ++i) {
+        if (&switches_[i] == swptr) {
+            switches_.erase(switches_.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
 /*******************************************************************************************************************************
  *                                      Parser results
  *******************************************************************************************************************************/
@@ -1564,6 +1575,28 @@ Parser::parseInternal(const std::vector<std::string> &programArguments) {
     }
 
     return result;                                      // reached end of program arguments
+}
+
+SAWYER_EXPORT Sawyer::Optional<Switch>
+Parser::removeMatchingSwitch(const std::string &arg) {
+    return removeMatchingSwitch(std::vector<std::string>(1, arg));
+}
+
+SAWYER_EXPORT Sawyer::Optional<Switch>
+Parser::removeMatchingSwitch(const std::vector<std::string> &args) {
+    Cursor cursor(args);
+    Sawyer::Optional<std::runtime_error> error;
+    Sawyer::Optional<Switch> retval;
+    NamedSwitches ambiguities;
+    ParsedValues values;
+    if (const Switch *sw = parseLongSwitch(cursor, values, ambiguities, error)) {
+        retval = *sw;
+        BOOST_FOREACH (SwitchGroup &sg, switchGroups_) {
+            if (sg.removeByPointer(sw))
+                break;
+        }
+    }
+    return retval;
 }
 
 SAWYER_EXPORT bool

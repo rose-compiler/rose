@@ -530,6 +530,8 @@ YicesSolver::out_expr(const SymbolicExpr::Ptr &tn) {
             }
             case SymbolicExpr::OP_ITE:
                 return out_ite(in);
+            case SymbolicExpr::OP_LET:
+                throw Exception("OP_LET not implemented");
             case SymbolicExpr::OP_LSSB:
                 throw Exception("OP_LSSB not implemented");
             case SymbolicExpr::OP_MSSB:

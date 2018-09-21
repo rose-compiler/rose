@@ -58,6 +58,8 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Sawyer::Message::Common;                // DEBUG, INFO, WARN, ERROR etc.
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
+typedef Sawyer::Container::Map<std::string /*mnemonic*/, size_t> InstructionHistogram;
+
 Sawyer::Message::Facility mlog;
 
 // Command-line settings
@@ -70,6 +72,8 @@ struct Settings {
     bool showInitialValues;                             // show initial values in register states?
     bool showStates;                                    // show register and memory state after each instruction?
     bool showInitialState;                              // show initial state if showStates is set?
+    bool showHistogram;                                 // show instruction histogram?
+    bool showFailedHistogram;                           // show failed instructions?
     AddressInterval bblockInterval;                     // which basic blocks to process
     bool useMemoryMap;                                  // state uses MemoryMap to initialize memory?
     bool runNoopAnalysis;                               // run no-op analysis on each instruction individually?
@@ -77,11 +81,16 @@ struct Settings {
     SymbolicSemantics::DefinersMode computingDefiners;  // whether to track which instructions define each value
     SymbolicSemantics::WritersMode computingWriters;    // whether to track which instructions write to each location
     Settings()
-        : trace(false), showInitialValues(false), showStates(true), showInitialState(false),
-          bblockInterval(AddressInterval::whole()), useMemoryMap(false), runNoopAnalysis(false),
+        : trace(false), showInitialValues(false), showStates(true), showInitialState(false), showHistogram(false),
+          showFailedHistogram(false), bblockInterval(AddressInterval::whole()), useMemoryMap(false), runNoopAnalysis(false),
           testAdaptiveRegisterState(false), computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS),
           computingWriters(SymbolicSemantics::TRACK_NO_WRITERS) {}
 };
+
+static bool
+perInstructionOutput(const Settings &settings) {
+    return settings.trace || settings.showInitialValues || settings.showStates || settings.testAdaptiveRegisterState;
+}
 
 static std::vector<std::string>
 parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
@@ -242,9 +251,15 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(false, settings.showInitialState)
                .hidden(true));
 
-    
+    CommandLine::insertBooleanSwitch(out, "show-histogram", settings.showHistogram,
+                                     "Show a histogram of the instruction mnemonics.");
+
+    CommandLine::insertBooleanSwitch(out, "show-failure-histogram", settings.showFailedHistogram,
+                                     "Show a histogram of the instruction mnemonics for which semantics failed.");
+
     //------------------------------------------------
     parser.doc("Synopsis", "@prop{programName} @s{semantics} @v{class} [@v{switches}] @v{specimen_name}");
+    parser.errorStream(::mlog[FATAL]);
     return parser.with(sem).with(ctl).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
@@ -450,9 +465,6 @@ adjustSettings(Settings &settings) {
 // Test the API for various combinations of classes.
 static void
 testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
-    std::cout <<"=====================================================================================\n"
-              <<"=== Performing basic API tests                                                    ===\n"
-              <<"=====================================================================================\n";
     BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
     if (settings.opsClassName == settings.valueClassName &&
         settings.opsClassName == settings.rstateClassName &&
@@ -530,13 +542,16 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
 
 static void
 runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
-             const P2::Engine &engine, const P2::Partitioner &partitioner) {
+             const P2::Engine &engine, const P2::Partitioner &partitioner,
+             InstructionHistogram &allInsns, InstructionHistogram &failedInsns) {
     if (!settings.bblockInterval.isContaining(bblock->address()))
         return;
 
-    std::cout <<"=====================================================================================\n"
-              <<"=== Starting a new basic block                                                    ===\n"
-              <<"=====================================================================================\n";
+    if (perInstructionOutput(settings)) {
+        std::cout <<"=====================================================================================\n"
+                  <<"=== Starting a new basic block                                                    ===\n"
+                  <<"=====================================================================================\n";
+    }
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
 
@@ -568,7 +583,9 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
     if (settings.showStates && settings.showInitialState)
         std::cout <<"Initial state:\n" <<(*ops+formatter) <<"\n";
     BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
-        std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+        if (perInstructionOutput(settings))
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+        ++allInsns.insertMaybe(insn->get_mnemonic(), 0);
 
         // See the comments in $ROSE/binaries/samples/x86-64-adaptiveRegs.s for details
         if (settings.testAdaptiveRegisterState) {
@@ -591,9 +608,13 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         try {
             dispatcher->processInstruction(insn);
         } catch (const BaseSemantics::Exception &e) {
-            std::cout <<"Semantics error: " <<e <<"\n";
+            //if (perInstructionOutput(settings) || !settings.showFailedHistogram)
+                std::cout <<"Semantics error: " <<e <<"\n";
+            ++failedInsns.insertMaybe(insn->get_mnemonic(), 0);
         } catch (const SmtSolver::Exception &e) {
-            std::cout <<"SMT solver error: " <<e.what() <<"\n";
+            //if (perInstructionOutput(settings) || !settings.showFailedHistogram)
+                std::cout <<"SMT solver error: " <<e.what() <<"\n";
+            ++failedInsns.insertMaybe(insn->get_mnemonic(), 0);
         }
         if (settings.showStates)
             std::cout <<(*ops+formatter) <<"\n";
@@ -653,6 +674,30 @@ main(int argc, char *argv[]) {
     testSemanticsApi(settings, engine, partitioner);
     
     // Run sementics on each basic block
-    BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks())
-        runSemantics(bblock, settings, engine, partitioner);
+    Sawyer::ProgressBar<size_t> progress(partitioner.nBasicBlocks(), ::mlog[MARCH], "basic block semantics");
+    InstructionHistogram allInsns, failedInsns;
+    BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks()) {
+        runSemantics(bblock, settings, engine, partitioner, allInsns /*in,out*/, failedInsns /*in,out*/);
+        ++progress;
+    }
+    
+    // Show histogram results
+    if (settings.showHistogram) {
+        std::cout <<"Processed instructions:\n";
+        size_t total = 0;
+        BOOST_FOREACH (const InstructionHistogram::Node &node, allInsns.nodes()) {
+            Diagnostics::mfprintf(std::cout)("%-12zu %s\n", node.value(), node.key().c_str());
+            total += node.value();
+        }
+        Diagnostics::mfprintf(std::cout)("%-12zu total\n", total);
+    }
+    if (settings.showFailedHistogram) {
+        std::cout <<"Failed instructions:\n";
+        size_t total = 0;
+        BOOST_FOREACH (const InstructionHistogram::Node &node, failedInsns.nodes()) {
+            Diagnostics::mfprintf(std::cout)("%-12zu %s\n", node.value(), node.key().c_str());
+            total += node.value();
+        }
+        Diagnostics::mfprintf(std::cout)("%-12zu total\n", total);
+    }
 }

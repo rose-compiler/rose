@@ -1255,6 +1255,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 operator_result = emit_compare(o, "icmp eq", operands[0], SymbolicExpr::makeInteger(operands[0]->nBits(), 0));
                 break;
 
+            case SymbolicExpr::OP_LET:
             case SymbolicExpr::OP_NOOP:
             case SymbolicExpr::OP_WRITE:
             case SymbolicExpr::OP_SET:
