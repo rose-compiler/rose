@@ -410,6 +410,7 @@ SgIfDirectiveStatement
 SgIfStmt
 SgIfdefDirectiveStatement
 SgIfndefDirectiveStatement
+SgImageControlStatement
 SgImagPartOp
 SgImplicitStatement
 SgImpliedDo
@@ -613,6 +614,7 @@ SgAlignOfOp
 SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
+SgSyncAllStatement
 SgJavaThrowStatement
 SgJavaForEachStatement
 SgJavaSynchronizedStatement

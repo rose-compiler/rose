@@ -2347,6 +2347,27 @@ std::vector<CFGEdge> SgStopOrPauseStatement::cfgInEdges(unsigned int idx) {
   return result;
 }
 
+// Rasmussen (9/20/2018): TODO: I think expressions from the sync-stat-list need to be added.
+unsigned int
+SgSyncAllStatement::cfgIndexForEnd() const {
+  return 0;
+}
+
+std::vector<CFGEdge> SgSyncAllStatement::cfgOutEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  return result;
+}
+
+std::vector<CFGEdge> SgSyncAllStatement::cfgInEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+  return result;
+}
+
 static const unsigned int numberOfFortranIOCommonEdges = 5;
 
 static bool handleFortranIOCommonOutEdges(SgIOStatement* me, unsigned int idx, unsigned int numChildren, vector<CFGEdge>& result) {
