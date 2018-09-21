@@ -6272,6 +6272,21 @@ SgStopOrPauseStatement* SgStopOrPauseStatement::build_node_from_nonlist_children
    }
 
 
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncAllStatement* SgSyncAllStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncAllStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncAllStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+
 /* #line 5436 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
