@@ -3680,6 +3680,13 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
                                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                                  }
+                             // TV (09/21/2018): ROSE-1391: TODO: That should only happens when array_type->get_index() refers to a symbol that is not accessible
+                                else if (array_type->get_number_of_elements() > 0)
+                                 {
+                                     std::ostringstream oss;
+                                     oss << array_type->get_number_of_elements();
+                                     curprint(oss.str());
+                                 }
                                 else
                                  {
                                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
