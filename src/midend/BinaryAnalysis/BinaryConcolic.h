@@ -1,8 +1,6 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_H
 #define ROSE_BinaryAnalysis_Concolic_H
 
-#include <sage3basic.h>                                 // must be first
-
 #include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
@@ -92,12 +90,7 @@ protected:
 
 public:
     /** Allocating constructor. */
-    static Ptr instance(const boost::filesystem::path &executableName) {
-        Ptr self = Ptr(new Specimen);
-        if (!executableName.empty())
-            self->open(executableName);
-        return self;
-    }
+    static Ptr instance(const boost::filesystem::path &executableName);
 
     /** Open an executable file.
      *
@@ -110,7 +103,7 @@ public:
     /** Close the executable file.
      *
      *  Removes all content from this object, or does nothing if @ref isEmpty returns true. After this call, @ref isEmpty
-     *  returns true.
+     *  returns true. Throws an @ref Exception if this object is already non-empty.
      *
      *  Thread safety: This method is thread-safe. */
     void close();
