@@ -255,10 +255,11 @@ Grammar::setUpNodes ()
          UntypedInitializedNameListDeclaration, "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
-     NEW_TERMINAL_MACRO (UntypedFunctionCallStatement, "UntypedFunctionCallStatement", "TEMP_UntypedFunctionCallStatement" );
      NEW_TERMINAL_MACRO (UntypedBlockStatement,        "UntypedBlockStatement",        "TEMP_UntypedBlockStatement" );
-     NEW_TERMINAL_MACRO (UntypedNamedStatement,        "UntypedNamedStatement",        "TEMP_UntypedNamedStatement" );
      NEW_TERMINAL_MACRO (UntypedExpressionStatement,   "UntypedExpressionStatement",   "TEMP_UntypedExpressionStatement" );
+     NEW_TERMINAL_MACRO (UntypedFunctionCallStatement, "UntypedFunctionCallStatement", "TEMP_UntypedFunctionCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedImageControlStatement, "UntypedImageControlStatement", "TEMP_UntypedImageControlStatement" );
+     NEW_TERMINAL_MACRO (UntypedNamedStatement,        "UntypedNamedStatement",        "TEMP_UntypedNamedStatement" );
      NEW_TERMINAL_MACRO (UntypedOtherStatement,        "UntypedOtherStatement",        "TEMP_UntypedOtherStatement" );
 
   // DQ (3/6/2014): Added new IR node for untyped representation of scopes.
@@ -273,8 +274,8 @@ Grammar::setUpNodes ()
      NEW_NONTERMINAL_MACRO (UntypedScope, UntypedFunctionScope | UntypedModuleScope | UntypedGlobalScope,
          "UntypedScope", "UntypedScopeTag", true);
 
-     NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement           |
-         UntypedFunctionCallStatement    | UntypedBlockStatement          | UntypedNamedStatement                | UntypedExpressionStatement           |
+     NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement           | UntypedBlockStatement                |
+         UntypedExpressionStatement      | UntypedFunctionCallStatement   | UntypedImageControlStatement         | UntypedNamedStatement                |
          UntypedOtherStatement           | UntypedScope                   | UntypedNullStatement                 | UntypedIfStatement                   |
          UntypedCaseStatement            | UntypedLabelStatement          | UntypedLoopStatement                 | UntypedWhileStatement                |
          UntypedForStatement             | UntypedExitStatement           | UntypedGotoStatement                 | UntypedProcedureCallStatement        |
@@ -730,6 +731,21 @@ Grammar::setUpNodes ()
      UntypedFunctionCallStatement.setDataPrototype     ( "SgUntypedExprListExpression*", "args", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionCallStatement.setDataPrototype     ( "std::string", "abort_name", "= \"\"",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (9/22/2018): This node contains information for Fortran image control statements, i.e., sync-all-stmt, form-team-stmt
+     UntypedImageControlStatement.setFunctionPrototype ( "HEADER_UNTYPED_IMAGE_CONTROL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedImageControlStatement.setDataPrototype     ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedImageControlStatement.setDataPrototype     ( "SgUntypedExpression*", "variable", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedImageControlStatement.setDataPrototype     ( "SgUntypedExpression*", "expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedImageControlStatement.setDataPrototype     ( "SgUntypedExprListExpression*", "status_list", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedImageControlStatement.setDataPrototype     ( "bool", "has_variable", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedImageControlStatement.setDataPrototype     ( "bool", "has_expression", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UntypedBlockStatement.setFunctionPrototype        ( "HEADER_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
@@ -1485,8 +1501,10 @@ Grammar::setUpNodes ()
 
      UntypedStatement.setFunctionSource             ( "SOURCE_UNTYPED_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedAssignmentStatement.setFunctionSource   ( "SOURCE_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
-     UntypedFunctionCallStatement.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedBlockStatement.setFunctionSource        ( "SOURCE_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExpressionStatement.setFunctionSource   ( "SOURCE_UNTYPED_EXPRESSION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedFunctionCallStatement.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedImageControlStatement.setFunctionSource ( "SOURCE_UNTYPED_IMAGE_CONTROL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedOtherStatement.setFunctionSource        ( "SOURCE_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedUseStatement.setFunctionSource          ( "SOURCE_UNTYPED_USE_STATEMENT", "../Grammar/LocatedNode.code");
 
