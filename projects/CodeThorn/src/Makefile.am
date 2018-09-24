@@ -28,7 +28,8 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libspray.la
+lib_LTLIBRARIES = libspray.la libcodethorn.la
+
 libspray_la_LDFLAGS= -no-undefined
 libspray_la_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 libspray_la_SOURCES=\
@@ -114,20 +115,9 @@ libspray_la_SOURCES=\
  Timer.h \
  Timer.cpp
 
-codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
-# this line create speparately named object files
-codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
-codethorn_DEPENDENCIES=libspray.la
-
-#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
-if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd $(Z3_LINK)
-codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
-else
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-endif
-
-codethorn_SOURCES = \
+libcodethorn_la_LDFLAGS= -no-undefined
+libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
+libcodethorn_la_SOURCES=\
   AnalysisParameters.h             \
   Analyzer.C                       \
   Analyzer.h                       \
@@ -175,8 +165,6 @@ codethorn_SOURCES = \
   InternalChecks.h                 \
   ContNodeAttribute.h \
   ContNodeAttribute.C \
-  LTL.h                            \
-  LTLParser.y++                    \
   LtsminConnection.h		   \
   LtsminConnection.C		   \
   LanguageRestrictorCollection.C   \
@@ -202,7 +190,6 @@ codethorn_SOURCES = \
   ReadWriteAnalyzer.C \
   ReadWriteHistory.h \
   ReadWriteHistory.C \
-  RERS_empty_specialization.C      \
   RewriteStatistics.C \
   RewriteStatistics.h \
   RewriteSystem.C \
@@ -270,7 +257,25 @@ codethorn_SOURCES = \
   Visualizer.C                     \
   Visualizer.h                     \
   AstTermRepresentation.h \
-  AstTermRepresentation.C \
+  AstTermRepresentation.C
+
+codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
+# this line create speparately named object files
+codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
+codethorn_DEPENDENCIES=libspray.la libcodethorn.la
+
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
+if ROSE_WITH_SPOT
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lcodethorn -lspot -lbdd $(Z3_LINK)
+codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lcodethorn
+endif
+
+codethorn_SOURCES = \
+  RERS_empty_specialization.C \
+  LTL.h                            \
+  LTLParser.y++                    \
   codethorn.h \
   codethorn.C 
 
