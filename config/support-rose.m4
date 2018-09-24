@@ -623,6 +623,9 @@ AC_SUBST(ROSE_HOME)
 
 AC_LANG(C++)
 
+# Python check must occur before boost check since -lboost_python depends on python
+ROSE_SUPPORT_PYTHON
+
 ROSE_SUPPORT_BOOST
 
 # Rasmussen (12/16/2017): Added test for Bison version (Mac OSX Bison version may be too old)
@@ -1032,8 +1035,6 @@ ROSE_SUPPORT_POCC
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
-
-ROSE_SUPPORT_PYTHON
 
 #ASR
 ROSE_SUPPORT_LLVM
@@ -1890,6 +1891,8 @@ fi
 ROSE_SUPPORT_BINARY
 # ****************************************************
 
+ROSE_SUPPORT_PYTHON_API
+
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
 AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
 
@@ -2285,6 +2288,11 @@ projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
 projects/xgenTranslator/Makefile
+python/Makefile
+python/Rose/Makefile
+python/Rose/BinaryAnalysis/Makefile
+python/Rose/BinaryAnalysis/Partitioner2/Makefile
+python/Rose/BinaryAnalysis/Unparser/Makefile
 scripts/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile

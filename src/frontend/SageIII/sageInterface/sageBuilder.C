@@ -1521,9 +1521,9 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
        // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
 
+#if 0
        // DQ (6/25/2018): I think this is incorrect for test2018_109.C.
           SgScopeStatement* current_scope = topScopeStack();
-#if 0
           printf ("  --- Setting parent using topScopeStack() = %p = %s = %s \n",current_scope,current_scope->class_name().c_str(),SageInterface::get_name(current_scope).c_str());
 #endif
           varDecl->set_parent(topScopeStack());
@@ -8639,6 +8639,41 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
      initializeIfStmt(ifstmt,conditional,true_body,false_body);
      return ifstmt;
 #endif
+   }
+
+// Rasmussen (9/3/2018): Added build function for a Fortran do construct
+SgFortranDo * SageBuilder::buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body)
+  {
+     ROSE_ASSERT(initialization);
+     ROSE_ASSERT(bound);
+
+     if (increment == NULL)
+       {
+          increment = buildNullExpression();
+       }
+     ROSE_ASSERT(increment);
+
+     if (loop_body == NULL)
+       {
+          loop_body = buildBasicBlock();
+       }
+     ROSE_ASSERT(loop_body);
+
+     SgFortranDo * result = new SgFortranDo(initialization, bound, increment, loop_body);
+     ROSE_ASSERT(result);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+        result->setCaseInsensitive(true);
+
+     setOneSourcePositionForTransformation(result);
+
+     initialization->set_parent(result);
+     bound->set_parent(result);
+     increment->set_parent(result);
+     loop_body->set_parent(result);
+
+     return result;
    }
 
 // charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.

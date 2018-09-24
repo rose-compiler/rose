@@ -7,7 +7,7 @@ namespace General_Language_Translation
   // Enum for different types of expressions.  These are used with the SgUntypedExpression IR nodes.
      enum ExpressionKind
         {
-          e_unknown,
+          e_unknown = 0,
 
        // Access modifiers
        // --------------
@@ -51,6 +51,9 @@ namespace General_Language_Translation
        // Operators
        // ---------
 
+       // Assignment operator
+          e_operator_assign,
+
        // Arithmetic operators
           e_operator_exponentiate,
           e_operator_concatenate,
@@ -86,7 +89,14 @@ namespace General_Language_Translation
        // -----------
 
           e_literalExpression,
-          e_referenceExpression,
+
+          e_function_reference,
+          e_procedure_call,
+          e_argument_list,
+          e_argument_keyword,
+
+          e_case_range,
+          e_case_selector,
 
        // Special expressions denoting array declaration type
           e_array_shape,
@@ -102,12 +112,21 @@ namespace General_Language_Translation
        // Statements
        // ----------
 
+       // General
+          e_switch_stmt,
+          e_end_switch_stmt,
+          e_case_option_stmt,
+          e_case_default_option_stmt,
+
        // Fortran specific
+          e_fortran_dimension_stmt,
           e_fortran_import_stmt,
 
+          e_fortran_if_stmt,
           e_fortran_if_then_stmt,
           e_fortran_else_if_stmt,
           e_fortran_else_stmt,
+          e_fortran_end_do_stmt,
 
        // CUDA Attributes
        // ---------------
