@@ -117,6 +117,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+        ASSERT_not_null(ops);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
         SValuePtr orig_esp = SValue::promote(ops->readRegister(dispatcher->REG_anySP));
@@ -291,12 +292,20 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
             break;
         }
 
-        case x86_ret:
-        case x86_iret:
+        case x86_int:                                   // assumes interrupts return
         case x86_int1:
         case x86_int3:
         case x86_into:
+        case x86_syscall: {
+            retval.insert(get_address() + get_size());  // probable return point
+            *complete = false;
+            break;
+        }
+            
+        case x86_ret:
+        case x86_iret:
         case x86_rsm:
+        case x86_sysret:
         case x86_ud2:
         case x86_retf: {
             /* Unconditional branch to run-time specified address */

@@ -24,7 +24,7 @@ rajaChecker_SOURCES                       = rajaChecker.C
 
 #----------testing part 
 #  rose_inputrajaChecker.C 
-
+# To test an individual input, type 'make insideIfStmt.cpp.output'
 Checker_Test_Files =
 # C++ 11 features need GCC 4.9  and EDG 4.12 and later
 # Liao 4/10/2017
@@ -48,7 +48,10 @@ Checker_Test_Files += \
    nodalAccPattern3.cpp \
    nodalAccPattern4.cpp \
    definedTwice.cpp \
-   insideForLoop.cpp
+   insideForLoop.cpp \
+   integerPattern.cpp \
+   insideIfStmt.cpp \
+   nodalAccPattern5-multipleAssign.cpp
 endif
 endif
 endif

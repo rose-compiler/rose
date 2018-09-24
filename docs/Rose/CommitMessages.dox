@@ -48,7 +48,8 @@
  *      messages when they have a compile error due to changed names. (On a similar note, try not to change the API without
  *      first using ROSE_DEPRECATED for a suitable period of time.)
  *  @li The body should <b>reference a JIRA issue</b> if the commit is related to an issue, especially if that issue has
- *      relevant details, discussion, test cases, etc.
+ *      relevant details, discussion, test cases, etc. Place the issue name as the last line of the commit message, one
+ *      issue per line for the sake of automated tools. Most commits should correspond to at least one JIRA issue.
  *
  *  The body must be separated from the title by a blank line because some Git tools concatenate the first lines together into
  *  a single title line, which creates formatting problems since the title then becomes very long. Also, although ROSE uses a
@@ -70,6 +71,8 @@
     SymbolicExpr::TreeNodePtr      -> SymbolicExpr::Ptr
     SymbolicExpr::LeafNodePtr      -> SymbolicExpr::LeafPtr
     SymbolicExpr::InternalNodePtr  -> SymbolicExpr::InternalPtr
+
+    BINARY-123
  @endverbatim
  *
  * This commit makes it clear to the simulator2 project maintainer why a change was made since it was changed by someone that
@@ -80,6 +83,8 @@
     
     statfs::f_flags is only available since Linux 2.6.36.
     Our internal RHEL5 testing servers are Linux 2.6.18.
+
+    ROSE-123
  @endverbatim
  *
  * This commit explains why a change was made, which is not evident from the change itself:
@@ -101,5 +106,8 @@
     3. Remove the rose/scratch/edg.git repository once it
        has been entirely merged into the rose/edg4x/edg.git
        repository.
+
+    ROSE-123
+    JENKINS-456
  @endverbatim
  */

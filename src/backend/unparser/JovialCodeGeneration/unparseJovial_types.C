@@ -47,6 +47,8 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    {
+      ROSE_ASSERT(type != NULL);
+
       SgExpression* size = type->get_type_kind();
 
       if (size == NULL)

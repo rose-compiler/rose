@@ -77,7 +77,7 @@ std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumber
       SgType* expType=exp->get_type();
       typeTerm+="type:"+astTermWithNullValuesAndTypesToString(expType);
       if(SgArrayType* arrayType=isSgArrayType(expType)) {
-	typeTerm+=",basetype:"+astTermWithNullValuesAndTypesToString(arrayType->get_base_type());
+        typeTerm+=",basetype:"+astTermWithNullValuesAndTypesToString(arrayType->get_base_type());
       }
     }
   }
@@ -90,7 +90,7 @@ std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumber
     for(int i=0; i<arity;i++) {
       SgNode* child = node->get_traversalSuccessorByIndex(i);
       if(i!=0)
-	s+=",";
+        s+=",";
       s+=astTermWithNullValuesToString(child,withNumbers,withTypes);
     }
     s+=")";
