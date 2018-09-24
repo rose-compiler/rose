@@ -6,6 +6,8 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+/** Disassembly and partitioning utilities for Intel x86 and amd64. */
 namespace ModulesX86 {
 
 /** Matches an x86 function prologue.

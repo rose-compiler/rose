@@ -106,9 +106,16 @@ ATbool traverse_AssumedSize    (ATerm term, SgUntypedType* declared_type, SgUnty
 // R522
 ATbool traverse_AssumedOrImpliedSpec(ATerm term, SgUntypedExpression** lower_bound);
 
+// R545
+ATbool traverse_DimensionStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_ArrayNameSpec(ATerm term, SgUntypedType* base_type, SgUntypedInitializedNameList* name_list);
+
 // R560
 ATbool traverse_ImplicitStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_ImplicitSpecList(ATerm term, std::vector<FAST::ImplicitSpec> & ref_ImplicitSpecList);
+
+// R603
+ATbool traverse_VarRef(ATerm term, SgUntypedExpression** var_expr);
 
 // R611
 ATbool traverse_DataRef(ATerm term, SgUntypedExpression** var_expr);
@@ -136,6 +143,15 @@ ATbool traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list);
 // R801
 ATbool traverse_Block(ATerm term, SgUntypedBlockStatement** block_list);
 
+// R817
+ATbool traverse_NonlabelDoStmt(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R818
+ATbool traverse_OptLoopControl(ATerm term, SgUntypedExpression** initialization,
+                                           SgUntypedExpression** upper_bound, SgUntypedExpression** increment);
+// R822
+ATbool traverse_EndDoStmt     (ATerm term, SgUntypedStatementList* stmt_list);
+
 // R832
 ATbool traverse_IfConstruct(ATerm term, SgUntypedStatementList* stmt_list);
 
@@ -150,6 +166,28 @@ ATbool traverse_ElseIfStmtBlock (ATerm term, SgUntypedIfStatement** if_stmt);
 // R835
 ATbool traverse_ElseStmt(ATerm term, SgUntypedStatement** else_stmt);
 ATbool traverse_OptElseStmtAndBlock(ATerm term, SgUntypedStatement** else_stmt, SgUntypedBlockStatement** false_body);
+
+// R837
+ATbool traverse_IfStmt(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R838
+ATbool traverse_CaseConstruct    (ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_CaseStmtAndBlock (ATerm term, SgUntypedStatementList* stmt_list);
+
+// R839
+ATbool traverse_SelectCaseStmt(ATerm term, SgUntypedCaseStatement** case_stmt);
+
+// R840
+ATbool traverse_CaseStmt(ATerm term, SgUntypedCaseStatement** case_stmt);
+
+// R841
+ATbool traverse_EndSelectStmt(ATerm term, SgUntypedNamedStatement** end_select_stmt);
+
+// R843
+ATbool traverse_CaseSelector(ATerm term, SgUntypedExprListExpression** selector);
+
+// R844
+ATbool traverse_CaseValueRange(ATerm term, SgUntypedExpression** case_range);
 
 // R851
 ATbool traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list);
@@ -240,6 +278,14 @@ ATbool traverse_ImportStmtList(ATerm term, SgUntypedDeclarationStatementList* de
 
 // R1210
 ATbool traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
+// R1220
+ATbool traverse_CallStmt(ATerm term, SgUntypedStatementList* stmt_list);
+ATbool traverse_ProcedureDesignator(ATerm term, SgUntypedExpression** procedure);
+
+// R1222
+ATbool traverse_ActualArgSpec      (ATerm term, SgUntypedExpression** arg);
+ATbool traverse_ActualArgSpecList  (ATerm term, SgUntypedExprListExpression** args);
 
 // R1225
 ATbool traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type);

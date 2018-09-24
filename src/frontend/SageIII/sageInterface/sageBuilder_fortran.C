@@ -20,6 +20,45 @@ using namespace SageInterface;
 //
 // Liao 12/6/2010
 
+// Rasmussen (8/07/2018): created a function to build an implicit type
+
+//! Build a type based on Fortran's implicit typing rules.
+//! Currently this interface does not take into account possible implicit
+//! statements that change the rules.
+SgType*
+SageBuilder::buildFortranImplicitType(SgName sg_name)
+{
+  // The DEFAULT implicit typing is based on the first letter of the variable name
+  // A to H     REAL
+  // I to N     INTEGER
+  // O to Z     REAL
+
+     SgType* returnType = NULL;
+     std::string name = sg_name;
+
+     ROSE_ASSERT(tolower(name[0]) >= 'a');
+     ROSE_ASSERT(tolower(name[0]) <= 'z');
+
+     if (tolower(name[0]) < 'i')
+        {
+           returnType = buildFloatType();
+        }
+     else
+        {
+          if (tolower(name[0]) < 'o')
+             {
+                returnType = buildIntType();
+             }
+          else
+             {
+                returnType = buildFloatType();
+             }
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+}
+
 SgAttributeSpecificationStatement * 
 SageBuilder::buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::attribute_spec_enum kind)
 {

@@ -32,5 +32,14 @@ InstructionProvider::insert(SgAsmInstruction *insn) {
     insnMap_.insert(insn->get_address(), insn);
 }
 
+void
+InstructionProvider::showStatistics() const {
+    std::cout <<"Rose::BinaryAnalysis::InstructionProvider statistics:\n";
+    std::cout <<"  instruction map:\n";
+    std::cout <<"    size = " <<insnMap_.size() <<"\n";
+    std::cout <<"    number of hash buckets = " <<insnMap_.nBuckets() <<"\n";
+    std::cout <<"    load factor = " <<insnMap_.loadFactor() <<"\n";
+}
+
 } // namespace
 } // namespace

@@ -1,0 +1,7 @@
+START
+PROGRAM testPointerFormula ;
+BEGIN
+  ivar = P(3);
+  ivar = (P(3));
+END
+TERM

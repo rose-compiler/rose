@@ -254,12 +254,12 @@ VirtualTableLoad::VirtualTableLoad( SgAsmInstruction* instruction )
   // Constructor for VirtualTableLoad takes a SgAsmInstruction, and initializes the address of the virual table.
   // SgAsmX86Instruction* x86Instruction = isSgAsmX86Instruction(instruction);
      ROSE_ASSERT(instruction != NULL);
-     ROSE_ASSERT(instruction->get_operandList()->get_operands().size() == 2);
-     ROSE_ASSERT(instruction->get_operandList()->get_operands()[0] != NULL);
-     ROSE_ASSERT(instruction->get_operandList()->get_operands()[1] != NULL);
+     ROSE_ASSERT(instruction->nOperands() == 2);
+     ROSE_ASSERT(instruction->operand(0) != NULL);
+     ROSE_ASSERT(instruction->operand(1) != NULL);
 
   // Initialize the virtualTableAddress
-     virtualTableAddress = isSgAsmValueExpression(instruction->get_operandList()->get_operands()[1]);
+     virtualTableAddress = isSgAsmValueExpression(instruction->operand(1));
      ROSE_ASSERT(virtualTableAddress != NULL);
    }
 

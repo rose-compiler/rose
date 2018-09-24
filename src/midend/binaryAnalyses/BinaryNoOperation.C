@@ -216,7 +216,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     if (debug) {
         debug <<"findNoopSubsequences(\n";
         BOOST_FOREACH (SgAsmInstruction *insn, insns)
-            debug <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+            debug <<"  " <<insn->toString() <<"\n";
         debug <<")\n";
     }
 
@@ -237,7 +237,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
                 debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");
-                debug <<"  instruction: " <<unparseInstructionWithAddress(insn) <<"\n";
+                debug <<"  instruction: " <<insn->toString() <<"\n";
             }
             cpu_->processInstruction(insn);
         }

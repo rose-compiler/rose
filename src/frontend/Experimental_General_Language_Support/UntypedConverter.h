@@ -43,8 +43,10 @@ class UntypedConverter
 
       virtual void setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedExprListExpression* mod_list);
 
-      virtual SgType*   convertSgUntypedType        (SgUntypedType* ut_type,                SgScopeStatement* scope);
-      virtual SgGlobal* convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope,        SgScopeStatement* scope);
+      virtual SgType*   convertSgUntypedType (SgUntypedType* ut_type,            SgScopeStatement* scope);
+      virtual SgType*   convertSgUntypedType (SgUntypedInitializedName* ut_name, SgScopeStatement* scope, bool delete_ut_type=false);
+
+      virtual SgGlobal* convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope);
 
       virtual SgModuleStatement*          convertSgUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
       virtual SgProgramHeaderStatement*   convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
@@ -61,11 +63,20 @@ class UntypedConverter
       virtual SgVariableDeclaration*  convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
       virtual SgBasicBlock*           convertSgUntypedBlockStatement      (SgUntypedBlockStatement*      ut_stmt, SgScopeStatement* scope);
 
+   // Used by dimension, codimension, ... statements
+      virtual SgDeclarationStatement* convertSgUntypedInitializedNameListDeclaration (SgUntypedInitializedNameListDeclaration* ut_decl,
+                                                                                      SgScopeStatement* scope);
+
    // Executable statements
    //
+      virtual SgExprStatement* convertSgUntypedFunctionCallStatement (SgUntypedFunctionCallStatement* ut_stmt,
+                                                                      SgNodePtrList& children, SgScopeStatement* scope);
+
       virtual SgExprStatement* convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+      virtual SgStatement*     convertSgUntypedForStatement        (SgUntypedForStatement*        ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgIfStmt*        convertSgUntypedIfStatement         (SgUntypedIfStatement*         ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+      virtual SgStatement*     convertSgUntypedCaseStatement       (SgUntypedCaseStatement*       ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgReturnStmt*    convertSgUntypedReturnStatement     (SgUntypedReturnStatement*     ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedStopStatement       (SgUntypedStopStatement*       ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
 
@@ -79,16 +90,18 @@ class UntypedConverter
 
    // Expressions
    //
-      virtual SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr);
+      virtual SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr, bool delete_ut_expr=false);
       virtual SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr, SgNodePtrList& children);
       virtual SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr, SgNodePtrList& children, SgScopeStatement* scope);
 
-      virtual SgValueExp*   convertSgUntypedValueExpression (SgUntypedValueExpression* ut_expr);
+      virtual SgValueExp*   convertSgUntypedValueExpression (SgUntypedValueExpression* ut_expr, bool delete_ut_expr=false);
       virtual SgUnaryOp*    convertSgUntypedUnaryOperator   (SgUntypedUnaryOperator * untyped_operator, SgExpression* expr);
       virtual SgBinaryOp*   convertSgUntypedBinaryOperator  (SgUntypedBinaryOperator* untyped_operator, SgExpression* lhs, SgExpression* rhs);
 
-      virtual SgExprListExp* convertSgUntypedExprListExpression  (SgUntypedExprListExpression * ut_expr_list);
-      virtual SgExpression*  convertSgUntypedSubscriptExpression (SgUntypedSubscriptExpression* ut_expr);
+      virtual SgExprListExp* convertSgUntypedExprListExpression  (SgUntypedExprListExpression * ut_expr_list, bool delete_ut_expr=false);
+      virtual SgExprListExp* convertSgUntypedExprListExpression  (SgUntypedExprListExpression * ut_expr_list, SgNodePtrList& children);
+      virtual SgExpression*  convertSgUntypedSubscriptExpression (SgUntypedSubscriptExpression* ut_expr, bool delete_ut_expr=false);
+      virtual SgExpression*  convertSgUntypedSubscriptExpression (SgUntypedSubscriptExpression* ut_expr, SgNodePtrList& children);
 
     protected:
 

@@ -1,0 +1,10 @@
+START
+PROGRAM testif ;
+BEGIN
+  ITEM ivar S ;
+  IF ivar > 0 AND (ivar < 10 OR ibbr = 1);
+     ivar = ivar+1;
+  IF ivar < 0 OR ivar < 10;
+     ivar = ivar+2;
+END
+TERM

@@ -3,7 +3,9 @@
 
 #include <BaseSemantics2.h>
 #include <BinarySmtSolver.h>
+#include <BinarySymbolicExprParser.h>
 #include <Partitioner2/CfgPath.h>
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <boost/filesystem/path.hpp>
 
@@ -42,6 +44,7 @@ public:
         size_t maxCallDepth;                            /**< Max length of path in terms of function calls. */
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
         std::vector<SymbolicExpr::Ptr> postConditions;  /**< Additional constraints to be satisifed at the end of a path. */
+        std::vector<std::string> postConditionStrings;  /**< Additional post conditions as strings to be parsed. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
         std::string solverName;                         /**< Type of SMT solver. */
@@ -230,6 +233,12 @@ public:
     void settings(const Settings &s) { settings_ = s; }
     /** @} */
 
+    /** Describe command-line switches.
+     *
+     *  The @p settings provide default values. A reference to @p settings is saved and when the command-line is parsed and
+     *  applied, the settings are adjusted. */
+    static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Overridable processing functions
@@ -341,8 +350,8 @@ public:
      *  conditions is returned via @p pathConditions argument, which can also initially contain preconditions. */
     virtual boost::tribool
     isPathFeasible(const Partitioner2::CfgPath &path, const SmtSolverPtr&,
-                   const std::vector<SymbolicExpr::Ptr> &postConditions, PathProcessor *pathProcessor,
-                   std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
+                   std::vector<SymbolicExpr::Ptr> postConditions, const SymbolicExprParser::RegisterSubstituter::Ptr&,
+                   PathProcessor *pathProcessor, std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 
     

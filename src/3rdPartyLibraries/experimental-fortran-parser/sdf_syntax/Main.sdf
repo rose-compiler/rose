@@ -262,7 +262,7 @@ sorts
   ValueStmt                           %% R558
   VolatileStmt                        %% R559
 
-  ArrayNameSpec DataStmtSetList NoList
+  ArrayNameSpec ParensArraySpec DataStmtSetList NoList
   NoDataStmtRepeat
 
 %% 5.5 Implicit statement
@@ -1599,7 +1599,8 @@ context-free syntax
   OptLabel 'DIMENSION' '::' {ArrayNameSpec ','}+        EOS -> DimensionStmt     {cons("DimensionStmt")}
   OptLabel 'DIMENSION'      {ArrayNameSpec ','}+        EOS -> DimensionStmt     {cons("DimensionStmt")}
 
-  ArrayName '(' ArraySpec ')'                               -> ArrayNameSpec     {cons("ArrayNameSpec")}
+  ArrayName ParensArraySpec                                 -> ArrayNameSpec     {cons("ArrayNameSpec")}
+  '(' ArraySpec ')'                                         -> ParensArraySpec   {cons("ArraySpec")}
   Ident                                                     -> ArrayName
 
 %%R546

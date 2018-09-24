@@ -22,7 +22,11 @@ F90_TESTCODES = \
  R1120a.f90 \
  R404_a.f90 \
  R521.f90   \
+ R545.f90   \
  R719a.f90  \
+ R816.f90   \
+ R832.f90   \
+ R837.f90   \
  R854.f90   \
  R856.f90   \
  contiguous_attr.f90 \
@@ -74,8 +78,7 @@ F90_TESTCODES_WORKING_ON = \
  R804.f90 \
  R807.f90 \
  R831.f90 \
- R832.f90 \
- R837.f90 \
+ R838.f90 \
  R850.f90 \
  R851.f90 \
  R852.f90 \

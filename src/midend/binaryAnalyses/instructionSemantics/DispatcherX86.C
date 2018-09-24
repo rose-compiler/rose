@@ -5169,3 +5169,6 @@ DispatcherX86::saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr &src, s
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
+#endif

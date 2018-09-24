@@ -12,6 +12,9 @@ sorts
 
   CrayPointerStmt                     %% ER550
   CrayPointerDecl                     %% ER551
+  AsyncCallStmt                       %% ER1220
+  AsyncNotification
+  NotifyVariable
 
 context-free syntax
 
@@ -22,3 +25,23 @@ context-free syntax
 
 %% ER551
   '(' ObjectName ',' ObjectName OptArraySpec ')'            -> CrayPointerDecl {cons("CrayPointerDecl")}
+
+%% ER1220 Asynchronous Execution
+%%
+%%   Proposed for F2018
+%%
+  AsyncCallStmt                                       -> ActionStmt
+
+  OptLabel 'CALL' ProcedureDesignator
+                     NoActualArgSpecList
+                     AsyncNotification            EOS -> AsyncCallStmt         {cons("AsyncCallStmt")}
+  OptLabel 'CALL' ProcedureDesignator
+                  '(' {ActualArgSpec ','}* ')'
+                     AsyncNotification            EOS -> AsyncCallStmt         {cons("AsyncCallStmt")}
+
+  ',' 'NV' '=' NotifyVariable                         -> AsyncNotification     {cons("AsyncNotifyNV")}
+  ',' 'EV' '=' EventVariable                          -> AsyncNotification     {cons("AsyncNotifyEV")}
+
+%% ER602-F2015-N2007
+%%
+  ScalarVariable                                      -> NotifyVariable

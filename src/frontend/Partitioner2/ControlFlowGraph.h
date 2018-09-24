@@ -7,6 +7,7 @@
 
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Graph.h>
+#include <Sawyer/HashMap.h>
 #include <Sawyer/Map.h>
 
 #include <boost/serialization/access.hpp>
@@ -178,18 +179,30 @@ private:
 #endif
 
 public:
+    /** Construct a new normal edge. */
     CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
+
+    /** Construct an edge with a specified type and confidence. */
     /*implicit*/ CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
+
+    /** Return edge type. */
     EdgeType type() const { return type_; }
+
+    /** Property: Confidence.
+     *
+     *  The confidence that this edge is correct.
+     *
+     * @{ */
     Confidence confidence() const { return confidence_; }
     void confidence(Confidence c) { confidence_ = c; }
+    /** @} */
 };
 
 /** Control flow graph. */
 typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
 /** Mapping from basic block starting address to CFG vertex. */
-typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
+typedef Sawyer::Container::HashMap<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
 
 /** List of CFG vertex pointers.
  *

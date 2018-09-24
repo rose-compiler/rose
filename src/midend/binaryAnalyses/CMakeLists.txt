@@ -23,6 +23,7 @@ add_library(midend_binary OBJECT
   BinaryString.C
   BinarySymbolicExpr.C
   BinarySymbolicExprParser.C
+  BinarySystemCall.C
   BinaryTaintedFlow.C
   BinaryToSource.C
   BinaryYicesSolver.C
@@ -86,6 +87,7 @@ install(
     BinaryString.h
     BinarySymbolicExpr.h
     BinarySymbolicExprParser.h
+    BinarySystemCall.h
     BinaryTaintedFlow.h
     BinaryToSource.h
     BinaryYicesSolver.h

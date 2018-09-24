@@ -59,7 +59,8 @@ dictionaryMips() {
 const Dictionary&
 dictionaryPowerpc() {
     static Dictionary dict;
-    // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
+    if (dict.empty())
+        dict.push_back(Definition::ppc_32bit_ibm());
     return dict;
 }
 
@@ -148,7 +149,7 @@ dictionaryX86() {
     }
     return dict;
 }
-    
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Definition
@@ -177,7 +178,7 @@ Definition::Ptr
 Definition::x86_cdecl(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Ptr cc = instance(SP.get_nbits(), "cdecl", 
+    Ptr cc = instance(SP.get_nbits(), "cdecl",
                       "x86-" + StringUtility::numberToString(SP.get_nbits()) + " cdecl",
                       regDict);
 
@@ -215,6 +216,99 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
 
 // class method
 Definition::Ptr
+Definition::ppc_32bit_ibm() {
+    static Ptr cc;
+    if (!cc)
+        cc = ppc_ibm(RegisterDictionary::dictionary_powerpc());
+    return cc;
+}
+
+// class method
+Definition::Ptr
+Definition::ppc_ibm(const RegisterDictionary *regDict) {
+    // See https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.alangref/idalangref_reg_use_conv.htm
+    ASSERT_not_null(regDict);
+    const RegisterDescriptor SP = regDict->findLargestRegister(powerpc_regclass_gpr, 1);
+    Ptr cc = instance(SP.get_nbits(), "IBM", "PowerPC-" + StringUtility::numberToString(SP.get_nbits()) + " IBM", regDict);
+
+    // Stack characteristics
+    cc->stackPointerRegister(SP);
+    cc->stackDirection(GROWS_DOWN);
+    cc->nonParameterStackSize(0);                       // return address is in link register
+
+    // Function arguments are passed in registers
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 3));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 4));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 5));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 6));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 7));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 8));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 9));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 10));
+
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 1));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 2));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 3));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 4));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 5));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 6));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 7));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 8));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 9));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 10));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 11));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 12));
+    cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 13));
+
+    // Stack is generally not used for passing arguments
+    cc->stackParameterOrder(RIGHT_TO_LEFT);
+    cc->stackCleanup(CLEANUP_BY_CALLER);
+
+    // Return values
+    cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 3)); // primary return
+    cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 4)); // secondary return
+
+    cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 1));
+    cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 2));
+    cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 3));
+    cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 4));
+
+    // Scratch registers (function arguments that are not return values, plus others)
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 0));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 5));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 6));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 7));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 8));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 9));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 10));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 11));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 12));
+
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 0));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 5));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 6));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 7));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 8));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 9));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 10));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 11));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 12));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpr, 13));
+
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_cr, 0));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpscr, 0));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_iar, 0));
+
+    // Callee-saved registers (everything else)
+    RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
+    std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
+    cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+    return cc;
+}
+
+// class method
+Definition::Ptr
 Definition::x86_32bit_stdcall() {
     static Ptr cc;
     if (!cc)
@@ -236,7 +330,7 @@ Definition::Ptr
 Definition::x86_stdcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Ptr cc = instance(SP.get_nbits(), "stdcall", 
+    Ptr cc = instance(SP.get_nbits(), "stdcall",
                       "x86-" + StringUtility::numberToString(SP.get_nbits()) + " stdcall",
                       regDict);
 
@@ -422,7 +516,7 @@ Definition::x86_64bit_sysv() {
         cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 5));
         cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 6));
         cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 7));
-        
+
         // Callee-saved registers (everything else)
         RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
         std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
@@ -430,7 +524,7 @@ Definition::x86_64bit_sysv() {
     }
     return cc;
 }
-        
+
 void
 Definition::appendInputParameter(const ParameterLocation &newLocation) {
 #ifndef NDEBUG
@@ -538,7 +632,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
         }
         out <<" }";
     }
-    
+
     if (nonParameterStackSize_ > 0)
         out <<", " <<nonParameterStackSize_ <<"-byte return";
 
@@ -553,7 +647,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
         out <<", this=";
         thisParameter_.print(out, regNames);
     }
-    
+
     if (!outputParameters_.empty()) {
         out <<", outputs={";
         BOOST_FOREACH (const ParameterLocation &loc, outputParameters_) {
@@ -569,7 +663,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
             out <<" " <<regNames(loc);
         out <<" }";
     }
-    
+
     if (!calleeSavedRegisters_.empty()) {
         out <<", saved={";
         BOOST_FOREACH (RegisterDescriptor loc, calleeSavedRegisters_)
@@ -588,7 +682,7 @@ operator<<(std::ostream &out, const Definition &x) {
 //                                      Analysis
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    
+
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
@@ -692,7 +786,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
     }
-    
+
     // Get the final dataflow state
     StatePtr finalState = dfEngine.getInitialState(returnVertex->id());
     if (finalState == NULL) {
@@ -843,7 +937,7 @@ Analysis::print(std::ostream &out, bool multiLine) const {
         out <<separator <<"stackDelta=" <<(*stackDelta_>=0?"+":"") <<*stackDelta_;
         separator = multiLine ? "\n" : ", ";
     }
-    
+
     if (separator.empty())
         out <<"no I/O";
 }
@@ -903,7 +997,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             SAWYER_MESG(debug) <<"  mismatch: callee popped stack parameters but definition is caller-cleanup\n";
             return false;
         }
-        
+
         // For callee cleanup, the callee must pop all the stack variables. It may pop more than what it used (i.e., it must
         // pop even unused arguments).
         if (cc->stackCleanup() == CLEANUP_BY_CALLEE) {
@@ -918,7 +1012,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             }
         }
     }
-    
+
     // All analysis output registers must be a definition's output or scratch register.
     if (!(outputRegisters_ - ccOutputRegisters).isEmpty()) {
         if (debug) {
@@ -944,7 +1038,7 @@ Analysis::match(const Definition::Ptr &cc) const {
         }
         return false;
     }
-    
+
     // All analysis restored registers must be a definition's callee-saved register.
     if (!(restoredRegisters_ - cc->calleeSavedRegisterParts()).isEmpty()) {
         if (debug) {
@@ -957,7 +1051,7 @@ Analysis::match(const Definition::Ptr &cc) const {
         }
         return false;
     }
-    
+
     // If the definition has an object pointer ("this" parameter) then it should not be an anlysis output or scratch register,
     // but must be an analysis input register.
     if (cc->thisParameter().type() == ParameterLocation::REGISTER) {

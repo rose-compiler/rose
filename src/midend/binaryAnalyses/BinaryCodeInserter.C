@@ -56,6 +56,8 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
                                 std::vector<uint8_t> replacement, const std::vector<Relocation> &relocations) {
     ASSERT_not_null(bb);
     ASSERT_require(index + nInsns <= bb->nInstructions());
+    if (0 == nInsns && replacement.empty())
+        return true;
 
     const size_t insertAt = index;
     const size_t nDeletes = nInsns;
@@ -71,6 +73,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
         debug <<"replaceBlockInsns:\n";
         debug <<"  basic block with insertion point and deletions:\n";
         if (Unparser::Base::Ptr unparser = partitioner_.unparser()) {
+            unparser->settings().function.cg.showing = false;
             unparser->settings().insn.stackDelta.showing = false;
             for (size_t i=0; i<bb->nInstructions(); ++i) {
                 debug <<"    " <<(i==index ? "--> " : "    ") <<(i>=index && i<index+nInsns ? " X " : "   ");
@@ -83,7 +86,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     // Try to insert the replacement, enlarging the replacement set with subsequent then previous instructions.
     size_t relocStart = 0;
     while (true) {
@@ -117,7 +120,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             replacement.insert(replacement.end(), bytes.begin(), bytes.end());
 
             SAWYER_MESG(debug) <<"  enlarged area by redirecting a successor:\n"
-                               <<"    " <<unparseInstructionWithAddress(nextInsn) <<"\n";
+                               <<"    " <<nextInsn->toString() <<"\n";
 
         } else if ((aggregationDirection_ & AGGREGATE_PREDECESSORS) != 0 && index > 0) {
             // Enlarge to-be-replaced by prepending one of the block's instructions to the replacement
@@ -138,7 +141,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             relocStart += bytes.size();
 
             SAWYER_MESG(debug) <<"  enlarged area by redirecting a predecessor:\n"
-                               <<"    " <<unparseInstructionWithAddress(prevInsn) <<"\n";
+                               <<"    " <<prevInsn->toString() <<"\n";
         } else {
             break;
         }
@@ -185,14 +188,29 @@ CodeInserter::fillWithNops(const AddressIntervalSet &where) {
     std::string isa = partitioner_.instructionProvider().disassembler()->name();
     BOOST_FOREACH (const AddressInterval &interval, where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with no-op instructions\n";
+
+        // Create the vector containing the encoded instructions
+        std::vector<uint8_t> nops;
+        nops.reserve(interval.size());
         if ("i386" == isa || "amd64" == isa) {
-            std::vector<uint8_t> nops(interval.size(), 0x90);
-            if (partitioner_.memoryMap()->at(interval.least()).write(nops).size() != nops.size()) {
-                mlog[ERROR] <<"short write of " <<interval.size() <<"-byte NOP sequence at "
-                            <<StringUtility::addrToString(interval.least()) <<"\n";
-            }
+            nops.resize(interval.size(), 0x90);
+
+        } else if ("coldfire" == isa) {
+            // Although coldfire instructions are normally a multiple of 2 bytes, there is one exception: a bad instruction can
+            // be an odd number of bytes. Therefore we could be asked to fill an odd number of bytes with NOP instructions. If
+            // that happens, we fill even addresses with the first half of the NOP and odd addresses with the second half, this
+            // way preserving the usual m68k instruction alignment.
+            for (size_t i = 0; i < where.size(); ++i)
+                nops.push_back(i % 2 == 0 ? 0x4e : 0x71);
+
         } else {
             TODO("no-op insertion for " + isa + " is not implemented yet");
+        }
+
+        // Write the vector to memory
+        if (partitioner_.memoryMap()->at(interval.least()).write(nops).size() != nops.size()) {
+            mlog[ERROR] <<"short write of " <<interval.size() <<"-byte NOP sequence at "
+                        <<StringUtility::addrToString(interval.least()) <<"\n";
         }
     }
 }
@@ -217,6 +235,7 @@ CodeInserter::fillWithRandom(const AddressIntervalSet &where) {
 
 std::vector<uint8_t>
 CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
     std::vector<uint8_t> retval;
     std::string isa = partitioner_.instructionProvider().disassembler()->name();
     if ("i386" == isa || "amd64" == isa) {
@@ -227,9 +246,28 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
         retval.push_back((delta >>  8) & 0xff);
         retval.push_back((delta >> 16) & 0xff);
         retval.push_back((delta >> 24) & 0xff);
+
+    } else if ("coldfire" == isa) {
+        rose_addr_t delta = tgtVa - (srcVa + 2);
+        retval.push_back(0x60);                         // bra.l
+        retval.push_back(0xff);
+        retval.push_back((delta >> 24) & 0xff);
+        retval.push_back((delta >> 16) & 0xff);
+        retval.push_back((delta >>  8) & 0xff);
+        retval.push_back((delta >>  0) & 0xff);
+
     } else {
         TODO("jump encoding for " + isa + " is not implemented yet");
     }
+
+    if (debug) {
+        debug <<"  jump from " <<StringUtility::addrToString(srcVa) <<" to " <<StringUtility::addrToString(tgtVa)
+              <<" is encoded as [";
+        BOOST_FOREACH (uint8_t byte, retval)
+            Diagnostics::mfprintf(debug)(" %02x", byte);
+        debug <<" ]\n";
+    }
+
     return retval;
 }
 
@@ -245,7 +283,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     BOOST_FOREACH (const Relocation &reloc, relocations) {
         ASSERT_require(reloc.offset < replacement.size());
         rose_addr_t value = 0;
@@ -265,6 +303,20 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 break;
             }
 
+            case RELOC_INDEX_ABS_BE32: {
+                // Virtual address of one of the input bytes.
+                SAWYER_MESG(debug) <<"index_abs_be32(" <<StringUtility::addrToString(reloc.value) <<")";
+
+                value = va + reloc.value;
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                replacement[relocStart + reloc.offset + 0] = (value >> 24) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >>  0) & 0xff;
+                break;
+            }
+
             case RELOC_INDEX_ABS_LE32HI: {
                 // Virtual address of one of the input bytes (but only the high 32 bits)
                 SAWYER_MESG(debug) <<"index_abs_le32hi(" <<StringUtility::addrToString(reloc.value) <<")";
@@ -279,7 +331,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 break;
             }
 
-            case RELOC_INDEX_REL_LE32: {
+            case RELOC_ADDR_REL_LE32: {
                 // Offset from the input byte's virtual address to a specified virtual address, adjusted by adding the value
                 // originally stored in the input.
                 SAWYER_MESG(debug) <<"index_rel_le32(" <<StringUtility::addrToString(reloc.value);
@@ -299,6 +351,29 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 replacement[relocStart + reloc.offset + 1] = (value >>  8) & 0xff;
                 replacement[relocStart + reloc.offset + 2] = (value >> 16) & 0xff;
                 replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
+                break;
+            }
+
+            case RELOC_ADDR_REL_BE32: {
+                // Offset from the input byte's virtual address to a specified virtual address, adjusted by adding the value
+                // originally stored in the input.
+                SAWYER_MESG(debug) <<"index_rel_be32(" <<StringUtility::addrToString(reloc.value);
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                rose_addr_t addend = replacement[relocStart + reloc.offset + 0] << 24;
+                addend |= replacement[relocStart + reloc.offset + 1] << 16;
+                addend |= replacement[relocStart + reloc.offset + 1] <<  8;
+                addend |= replacement[relocStart + reloc.offset + 1] <<  0;
+                addend = IntegerOps::signExtend2(addend, 32, 64);
+
+                SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
+
+                value = reloc.value - (va + relocStart + reloc.offset) + addend;
+
+                replacement[relocStart + reloc.offset + 0] = (value >> 24) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >>  0) & 0xff;
                 break;
             }
 
@@ -347,8 +422,36 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 replacement[relocStart + reloc.offset + 3] = (value >> 24) & 0xff;
                 break;
             }
+
+            case RELOC_INSN_REL_BE32: {
+                // Offset from the input byte's virtual address to the virtual address of some possibly moved instruction of
+                // the original basic block, adjusted by adding the value originally stored in the input. The instruction is
+                // indicated by its index relative to the instructions that were removed by this insertion.
+                int relIdx = (int)reloc.value;
+                SAWYER_MESG(debug) <<"insn_rel_be32(" <<relIdx;
+                ASSERT_require(insnInfoMap.exists(relIdx));
+
+                ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
+                rose_addr_t addend = replacement[relocStart + reloc.offset + 0] << 24;
+                addend |= replacement[relocStart + reloc.offset + 1] << 16;
+                addend |= replacement[relocStart + reloc.offset + 1] << 8;
+                addend |= replacement[relocStart + reloc.offset + 1] << 0;
+                addend = IntegerOps::signExtend2(addend, 32, 64);
+                SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
+
+                const InstructionInfo &info = insnInfoMap[relIdx];
+                rose_addr_t targetVa = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
+                SAWYER_MESG(debug) <<" [target=" <<StringUtility::addrToString(targetVa) <<"]";
+                value = targetVa - (va + relocStart + reloc.offset) + addend;
+
+                replacement[relocStart + reloc.offset + 0] = (value >> 24) & 0xff;
+                replacement[relocStart + reloc.offset + 1] = (value >> 16) & 0xff;
+                replacement[relocStart + reloc.offset + 2] = (value >>  8) & 0xff;
+                replacement[relocStart + reloc.offset + 3] = (value >>  0) & 0xff;
+                break;
+            }
         }
-        SAWYER_MESG(debug) 
+        SAWYER_MESG(debug)
                            << " = " <<StringUtility::addrToString(value)
                            <<" written to " <<StringUtility::addrToString(va)
                            <<StringUtility::addrToString(va + relocStart + reloc.offset) <<"\n";
@@ -439,7 +542,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     // Figure out where the replacement should go
     if (replacement.size() > entryInterval.size()) {
         SAWYER_MESG(debug) <<"  replaceByOverwrite failed: replacement is larger than entryInterval\n";
@@ -477,7 +580,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
             fillWithRandom(toReplaceVas - replacementVas);
             break;
     }
-    
+
     SAWYER_MESG(debug) <<"  replaceByOverwrite succeeded\n";
     return true;
 }
@@ -504,7 +607,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
-    
+
     // Allocate memory for the replacement, plus enough to add a branch back to the first instruction after those being
     // replaced.
     rose_addr_t toReplaceFallThroughVa = toReplace.back()->get_address() + toReplace.back()->get_size();
@@ -523,7 +626,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
                            <<StringUtility::addrToString(replacementVas) <<"\n";
         return false;                               // write failed
     }
-    
+
     // Insert the jump back from the replacement
     rose_addr_t replacementFallThroughVa = replacementVas.least() + replacement.size();
     std::vector<uint8_t> jmpFrom = encodeJump(replacementFallThroughVa, toReplaceFallThroughVa);
@@ -532,7 +635,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
                            <<StringUtility::addrToString(replacementFallThroughVa) <<"\n";
         return false;                               // write failed
     }
-    
+
     // Insert the jump to the replacement code.  If we're nop-padding before the jump this becomes a bit complicated because
     // the size of the jump could change based on its address.  If that happens, give up.
     rose_addr_t jmpToSite = toReplace[0]->get_address();
@@ -558,11 +661,11 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
                            <<StringUtility::addrToString(jmpToVas) <<"\n";
         return false;                               // write failed
     }
-    
+
     // Nop-fill
     fillWithNops(toReplaceVas - jmpToVas);
     commitAllocation(replacementVas);
-    SAWYER_MESG(debug) <<"  replaceByTranser succeeded\n";
+    SAWYER_MESG(debug) <<"  replaceByTransfer succeeded\n";
     return true;
 }
 

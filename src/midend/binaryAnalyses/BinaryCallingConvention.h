@@ -295,6 +295,7 @@ public:
     static Ptr x86_64bit_stdcall();
     static Ptr x86_32bit_fastcall();
     static Ptr x86_64bit_sysv();
+    static Ptr ppc_32bit_ibm();
     /** @} */
 
     /** Constructs a new pre-defined calling convention based on a register dictionary.
@@ -303,6 +304,7 @@ public:
     static Ptr x86_cdecl(const RegisterDictionary*);
     static Ptr x86_stdcall(const RegisterDictionary*);
     static Ptr x86_fastcall(const RegisterDictionary*);
+    static Ptr ppc_ibm(const RegisterDictionary*);
     /** @} */
 
     /** Property: Register dictionary.

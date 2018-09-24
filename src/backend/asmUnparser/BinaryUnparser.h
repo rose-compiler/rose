@@ -3,6 +3,7 @@
 #define ROSE_BinaryAnalysis_Unparser_H
 
 #include <Sawyer/CommandLine.h>
+#include <BaseSemantics2.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -78,6 +79,12 @@ struct Settings {
             std::string post;                           /**< String to terminate a comment. */
             size_t fieldWidth;                          /**< Min characters to use for the comment field. */
         } comment;                                      /**< Settings for instruction comments. */
+
+        struct {
+            bool showing;                               /**< Show instruction semantics? */
+            InstructionSemantics2::BaseSemantics::Formatter formatter; /**< How to format the semantic state output. */
+            bool tracing;                               /**< Show instruction semantics traces when showing semantics. */
+        } semantics;
     } insn;                                             /**< Settings for instructions. */
 
     Settings();

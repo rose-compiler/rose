@@ -24,6 +24,7 @@ findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::
         void visit(SgNode *node) {
             if (SgAsmElfEHFrameEntryFD *fde = isSgAsmElfEHFrameEntryFD(node)) {
                 Function::Ptr function = Function::instance(fde->get_begin_rva().get_rva(), SgAsmFunction::FUNC_EH_FRAME);
+                function->reasonComment("from EhFrameEntry " + fde->get_begin_rva().to_string());
                 if (insertUnique(functions, function, sortFunctionsByAddress))
                     ++nInserted;
             }
@@ -64,10 +65,10 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
 
     // Look for the PLT entry.
     if (insnX86) {
-        if (!x86InstructionIsUnconditionalBranch(insnX86) || 1!=insn->get_operandList()->get_operands().size())
+        if (!x86InstructionIsUnconditionalBranch(insnX86) || insn->nOperands() != 1)
             return false;
 
-        SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
+        SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->operand(0));
         if (SgAsmExpression *addr = mref ? mref->get_address() : NULL) {
             ASSERT_not_null(mref->get_type());
             gotEntryNBytes_ = mref->get_type()->get_nBytes();

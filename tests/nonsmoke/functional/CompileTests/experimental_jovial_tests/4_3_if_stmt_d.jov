@@ -1,0 +1,10 @@
+START
+PROGRAM testif ;
+BEGIN
+  ITEM ivar S ;
+  IF TRUE;
+     ivar = 0;
+  ELSE
+     ivar = ivar+1;
+END
+TERM

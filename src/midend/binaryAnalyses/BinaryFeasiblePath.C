@@ -2,6 +2,7 @@
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
+#include <BinarySymbolicExprParser.h>
 #include <BinaryYicesSolver.h>
 #include <CommandLine.h>
 #include <Partitioner2/GraphViz.h>
@@ -340,7 +341,7 @@ public:
         if (mlog[DEBUG]) {
             SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
             mlog[DEBUG] <<"  +-------------------------------------------------\n"
-                        <<"  | " <<unparseInstructionWithAddress(insn) <<"\n"
+                        <<"  | " <<insn->toString() <<"\n"
                         <<"  +-------------------------------------------------\n"
                         <<"    state before instruction:\n"
                         <<(*currentState() + fmt);
@@ -484,6 +485,103 @@ FeasiblePath::initDiagnostics() {
     }
 }
 
+// class method
+Sawyer::CommandLine::SwitchGroup
+FeasiblePath::commandLineSwitches(Settings &settings) {
+    using namespace Sawyer::CommandLine;
+
+    SwitchGroup sg("Feasible path analysis switches");
+
+    sg.insert(Switch("search")
+              .argument("mode", enumParser(settings.searchMode)
+                        ->with("single-dfs", SEARCH_SINGLE_DFS)
+                        ->with("single-bfs", SEARCH_SINGLE_BFS)
+                        ->with("multi", SEARCH_MULTI))
+              .doc("Method to use when searching for feasible paths. The choices are: "
+
+                   "@named{single-dfs}{Drive the SMT solver along a particular path at a time using a depth first "
+                   "search of all possible paths.}"
+
+                   "@named{single-bfs}{Drive the SMT solver along a particular path at a time using a breadth first "
+                   "search of all possible paths.}"
+
+                   "@named{multi}{Submit all possible paths to the SMT solver at one time.}"
+
+                   "The default is " +
+                   std::string(SEARCH_SINGLE_DFS == settings.searchMode ? "single-dfs" :
+                               (SEARCH_SINGLE_BFS == settings.searchMode ? "single-bfs" :
+                                (SEARCH_MULTI == settings.searchMode ? "multi" :
+                                 "unknown"))) + "."));
+
+    sg.insert(Switch("initial-stack")
+              .argument("value", nonNegativeIntegerParser(settings.initialStackPtr))
+              .doc("Specifies an initial value for the stack pointer register for each analyzed function. The default "
+                   "is that the stack pointer register has an undefined (variable) value at the start of the analysis. "
+                   "Setting the initial stack pointer to a concrete value causes most stack reads and writes to have "
+                   "concrete addresses that are non-zero. The default is " +
+                   (settings.initialStackPtr ? StringUtility::addrToString(*settings.initialStackPtr) :
+                    std::string("to use a variable with an unknown value")) + "."));
+
+    sg.insert(Switch("vertex-visit-limit")
+              .argument("n", nonNegativeIntegerParser(settings.vertexVisitLimit))
+              .doc("Maximum number of times that a single CFG vertex can be visited during the analysis of some function. "
+                   "A function that's called from two (or more) places is considered to have two (or more) distinct sets "
+                   "of vertices. The default limit is " + StringUtility::numberToString(settings.vertexVisitLimit) + "."));
+
+    sg.insert(Switch("max-path-length")
+              .argument("n", nonNegativeIntegerParser(settings.maxPathLength))
+              .doc("Maximum length of a path measured in machine instructions. When exploring feasible paths to find null "
+                   "pointer dereferences, any paths longer than @v{n} instructions are ignored.  The default maximum path "
+                   "length is " + StringUtility::plural(settings.maxPathLength, "instructions") + "."));
+
+    sg.insert(Switch("max-call-depth")
+              .argument("n", nonNegativeIntegerParser(settings.maxCallDepth))
+              .doc("Maximum call depth for inter-procedural analysis. A value of zero makes the analysis intra-procedural. "
+                   "The default is " + StringUtility::plural(settings.maxCallDepth, "calls") + "."));
+
+    sg.insert(Switch("max-recursion-depth")
+              .argument("n", nonNegativeIntegerParser(settings.maxRecursionDepth))
+              .doc("Maximum call depth when analyzing recursive functions. The default is " +
+                   StringUtility::plural(settings.maxRecursionDepth, "calls") + "."));
+
+    sg.insert(Switch("post-condition")
+              .argument("sexpr", anyParser(settings.postConditionStrings))
+              .doc("Additional constraint to be satisfied at the ending vertex. This switch may appear more than once "
+                   "in order to specify multiple conditions that must all be satisfied. " +
+                   SymbolicExprParser::SymbolicExprCmdlineParser::docString()));
+
+    sg.insert(Switch("summarize-function")
+              .argument("addr_or_name", anyParser())
+              .doc("Summarize all occurrances of the specified function, replacing the function with a stub that returns "
+                   "an unconstrained value. The function can be specified by virtual address or name. "
+                   "@b{Not implemented yet.}"));
+
+    CommandLine::insertBooleanSwitch(sg, "assume-feasible", settings.nonAddressIsFeasible,
+                                     "Assume that indeterminate and undiscovered instruction addresses are feasible.");
+
+    sg.insert(Switch("smt-solver")
+               .argument("name", anyParser(settings.solverName))
+               .doc("When analyzing paths for model checking, use this SMT solver.  This switch overrides the general, "
+                    "global SMT solver. Since an SMT solver is required for model checking, in the absense of any specified "
+                    "solver the \"best\" solver is used.  The default solver is \"" + settings.solverName + "\"."));
+
+    CommandLine::insertBooleanSwitch(sg, "null-derefs", settings.nullDeref.check,
+                                     "Check for null dereferences along the paths.");
+
+    sg.insert(Switch("null-comparison")
+              .argument("modal", enumParser<FeasiblePath::MayOrMust>(settings.nullDeref.mode)
+                        ->with("may", MAY)
+                        ->with("must", MUST))
+              .doc("Mode of comparison when checking for null addresses, where model is \"may\" or \"must\"."
+                   "@named{may}{Report points where a null dereference may occur.}"
+                   "@named{must}{Report points where a null dereference must occur.}"
+                   "The default is \"" + std::string(MAY==settings.nullDeref.mode?"may":"must") + "\"."));
+
+    CommandLine::insertBooleanSwitch(sg, "null-const", settings.nullDeref.constOnly,
+                                     "Check for null dereferences only when a pointer is a constant or set of constants.");
+
+    return sg;
+}
 
 rose_addr_t
 FeasiblePath::virtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
@@ -511,6 +609,8 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, PathProcessor 
             REG_RETURN_ = *r;
         } else if ((r = registers_->lookup("d0"))) {
             REG_RETURN_ = *r;                           // m68k also typically has other return registers
+        } else if ((r = registers_->lookup("r3"))) {
+            REG_RETURN_ = *r;                           // PowerPC also returns via r4
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -732,7 +832,9 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 
 boost::logic::tribool
 FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver,
-                             const std::vector<SymbolicExpr::Ptr> &endConstraints, PathProcessor *pathProcessor,
+                             std::vector<SymbolicExpr::Ptr> endConstraints,
+                             const SymbolicExprParser::RegisterSubstituter::Ptr &subber,
+                             PathProcessor *pathProcessor,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
                              BaseSemantics::DispatcherPtr &cpu /*out*/) {
     static const char *prefix = "      ";
@@ -742,6 +844,12 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
 
+    // Replace placeholders in the endConstraints with current values of registers.
+    if (subber) {
+        for (size_t i=0; i<endConstraints.size(); ++i)
+            endConstraints[i] = subber->substitute(endConstraints[i], ops);
+    }
+    
     size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
         processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
@@ -1024,6 +1132,17 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
 
+    // Gather all post conditions. When parsing post condition strings to create symbolic expressions, replace register names
+    // with new placeholder variables that will be expanded to register values at the time the expression is used as a post
+    // condition.
+    std::vector<SymbolicExpr::Ptr> postConditionsIn; // expressions with placholders
+    postConditionsIn = settings_.postConditions;
+    SymbolicExprParser exprParser;
+    SymbolicExprParser::RegisterSubstituter::Ptr subber =
+        exprParser.defineRegisters(partitioner().instructionProvider().registerDictionary());
+    BOOST_FOREACH (const std::string &s, settings_.postConditionStrings)
+        postConditionsIn.push_back(exprParser.parse(s));
+
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
         P2::CfgPath path(pathsBeginVertex);
@@ -1048,9 +1167,9 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             SAWYER_MESG(debug) <<"    checking feasibility";
             std::vector<SymbolicExpr::Ptr> postConditions, pathConditions;
             if (atEndOfPath)
-                postConditions = settings_.postConditions;
+                postConditions = postConditionsIn;
             BaseSemantics::DispatcherPtr cpu;
-            boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions, &pathProcessor,
+            boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions, subber, &pathProcessor,
                                                               pathConditions /*in,out*/, cpu /*out*/);
             if (debug) {
                 if (isFeasible) {
@@ -1217,7 +1336,7 @@ FeasiblePath::VarDetail::toString() const {
         if (firstAccessIdx)
             ss <<" #" <<*firstAccessIdx;
         if (firstAccessInsn)
-            ss <<" " <<unparseInstructionWithAddress(firstAccessInsn);
+            ss <<" " <<firstAccessInsn->toString();
     }
     if (memAddress)
         ss <<" mem[" <<*memAddress <<"]";

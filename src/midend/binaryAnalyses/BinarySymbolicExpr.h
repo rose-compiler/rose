@@ -62,6 +62,7 @@ enum Operator {
     OP_EXTRACT,             /**< Extract subsequence of bits. Extract bits [A..B) of C. 0 <= A < B <= width(C). */
     OP_INVERT,              /**< Bitwise inversion. One operand. */
     OP_ITE,                 /**< If-then-else. A must be one bit. Returns B if A is set, C otherwise. */
+    OP_LET,                 /**< Let expression. Deferred substitution. Substitutes A for B in C. */
     OP_LSSB,                /**< Least significant set bit or zero. One operand. */
     OP_MSSB,                /**< Most significant set bit or zero. One operand. */
     OP_NE,                  /**< Inequality. Two operands, both the same width. */
@@ -96,9 +97,9 @@ enum Operator {
     OP_XOR,                 /**< Bitwise exclusive disjunction. One or more operands, all the same width. */
     OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
 
-    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated
-    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated
-    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated
+    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
+    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
+    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
 };
 
 std::string toStr(Operator);
@@ -1168,6 +1169,8 @@ Ptr makeInvert(const Ptr &a,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeIte(const Ptr &cond, const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeLet(const Ptr &a, const Ptr &b, const Ptr &c,
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeLssb(const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMssb(const Ptr &a,
@@ -1361,6 +1364,44 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
     return visitor.result;
 }
 /** @} */
+
+/** On-the-fly substitutions.
+ *
+ *  This function uses a user-defined substitutor to generate values that are substituted into the specified expression. This
+ *  operates by performing a depth-first search of the specified expression and calling the @p subber at each node. The @p
+ *  subber is invoked with two arguments: an expression to be replaced, and an optional SMT solver for simplifications. It
+ *  should return either the expression unmodified, or a new expression.  The return value of the @c substitute function as a
+ *  whole is either the original expression (if no substitutions were performed) or a new expression. */
+template<class Substitution>
+Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver = SmtSolverPtr()) {
+    if (!src)
+        return Ptr();                                   // no input implies no output
+
+    // Try substituting the whole expression, returning the result.
+    Ptr dst = subber(src, solver);
+    ASSERT_not_null(dst);
+    if (dst != src)
+        return dst;
+
+    // Try substituting all the subexpressions.
+    InteriorPtr inode = src->isInteriorNode();
+    if (!inode)
+        return src;
+    bool anyChildChanged = false;
+    Nodes newChildren;
+    newChildren.reserve(inode->nChildren());
+    BOOST_FOREACH (const Ptr &child, inode->children()) {
+        Ptr newChild = subber(child, solver);
+        if (newChild != child)
+            anyChildChanged = true;
+        newChildren.push_back(newChild);
+    }
+    if (!anyChildChanged)
+        return src;
+
+    // Some subexpression changed, so build a new expression
+    return Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+}
 
 } // namespace
 } // namespace

@@ -11,6 +11,11 @@
 #include <Progress.h>
 #include <Sawyer/DistinctList.h>
 
+#ifdef ROSE_ENABLE_PYTHON_API
+#undef slots                                            // stupid Qt pollution
+#include <boost/python.hpp>
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -184,6 +189,9 @@ private:
 
         // Return the next available constant if any.
         Sawyer::Optional<rose_addr_t> nextConstant(const Partitioner &partitioner);
+
+        // Address of instruction being examined.
+        rose_addr_t inProgress() const { return inProgress_; }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -702,7 +710,9 @@ public:
      *  that's already in the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
+     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
     virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
@@ -715,7 +725,9 @@ public:
      *  removed from the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found. */
+     *  function was found.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_INSN_RO_DATA reason. */
     virtual Function::Ptr makeNextCodeReferencedFunction(const Partitioner&);
 
     /** Make functions for function call edges.
@@ -1180,12 +1192,13 @@ public:
 
     /** Property: Whether to find intra-function code.
      *
-     *  If set, the partitioner will look for parts of memory that were not disassembled and occur between other parts of the
-     *  same function, and will attempt to disassemble that missing part and link it into the surrounding function.
+     *  If positive, the partitioner will look for parts of memory that were not disassembled and occur between other parts of
+     *  the same function, and will attempt to disassemble that missing part and link it into the surrounding function. It will
+     *  perform up to @p n passes across the entire address space.
      *
      * @{ */
-    bool findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
-    virtual void findingIntraFunctionCode(bool b) { settings_.partitioner.findingIntraFunctionCode = b; }
+    size_t findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
+    virtual void findingIntraFunctionCode(size_t n) { settings_.partitioner.findingIntraFunctionCode = n; }
     /** @} */
 
     /** Property: Whether to find intra-function data.
@@ -1346,6 +1359,27 @@ public:
     virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
     /** @} */
 
+    /** Property: Give names to system calls.
+     *
+     *  If this property is set, then the partitioner makes a pass after the control flow graph is finalized and tries to give
+     *  names to system calls using the @ref Rose::BinaryAnalysis::SystemCall analysis.
+     *
+     * @{ */
+    bool namingSystemCalls() const /*final*/ { return settings_.partitioner.namingSyscalls; }
+    virtual void namingSystemCalls(bool b) { settings_.partitioner.namingSyscalls = b; }
+    /** @} */
+
+    /** Property: Header file in which system calls are defined.
+     *
+     *  If this property is not empty, then the specified Linux header file is parsed to obtain the mapping between system call
+     *  numbers and their names. Otherwise, any analysis that needs system call names obtains them by looking in predetermined
+     *  system header files.
+     *
+     * @{ */
+    const boost::filesystem::path& systemCallHeader() const /*final*/ { return settings_.partitioner.syscallHeader; }
+    virtual void systemCallHeader(const boost::filesystem::path &filename) { settings_.partitioner.syscallHeader = filename; }
+    /** @} */
+
     /** Property: Demangle names.
      *
      *  If this property is set, then names are passed through a demangle step, which generally converts them from a low-level
@@ -1402,6 +1436,17 @@ public:
     bool astCopyAllInstructions() const /*final*/ { return settings_.astConstruction.copyAllInstructions; }
     virtual void astCopyAllInstructions(bool b) { settings_.astConstruction.copyAllInstructions = b; }
     /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Python API support functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_PYTHON_API
+
+    // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
+    Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
+    Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
+        
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal stuff
