@@ -14700,7 +14700,7 @@ void c_action_label(Token_t * lbl)
 
             // We don't need the current_IO_Control_Spec data structure in the code below.
 
-            // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
+            // The "unit=" string is optional, if it was not present then a token was pushed onto the stack with the text value "defaultString"
             if (strncasecmp(name->text, "unit", 4) == 0 || strncmp(name->text,
                             "defaultString", 13) == 0)
             {
