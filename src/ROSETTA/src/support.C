@@ -1017,6 +1017,9 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "skip_syntax_check", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TV (09/24/2018): Adding the ability to skip the parser when testing the backend with ROSE command line processing
+     File.setDataPrototype         ( "bool", "skip_parser", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (4/7/2010): This permits less agressive syntax checking, but still some syntax checking.
   // Some F90 code cannot be passed through the gfortran syntax check using "-std=f95" so we have

@@ -3726,6 +3726,14 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_exit_after_parser(true);
         }
 
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_parser)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("skip parser mode ON \n");
+          set_skip_parser(true);
+        }
+
+
   //
   // DQ (11/20/2010): Added token handling support.
   // Turn on the output of the tokens from the parser (only applies to C and Fortran support).
