@@ -631,9 +631,11 @@ void DivAnalysisTransfer::visit(SgMinusMinusOp *sgn) { transferIncrement(sgn); }
 void DivAnalysisTransfer::visit(SgUnaryAddOp *sgn) {
   DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
   getLattices(sgn, arg1Lat, arg2Lat, resLat);
+  ROSE_ASSERT(resLat);
   resLat->copy(arg1Lat);
   modified = true;
 }
+
 void DivAnalysisTransfer::visit(SgMinusOp *sgn) {
   DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
   getLattices(sgn, arg1Lat, arg2Lat, resLat);
