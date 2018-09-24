@@ -923,7 +923,7 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
   // if (info.isTypeFirstPart() == true)
      if (info.isTypeFirstPart() == true || (info.isTypeFirstPart() == false && info.isTypeSecondPart() == false) )
         {
-          curprint("typeof(");
+          curprint("__typeof(");
           if (typeof_node->get_base_expression() != NULL)
              {
                unp->u_exprStmt->unparseExpression(typeof_node->get_base_expression(),info);
