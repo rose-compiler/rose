@@ -1,128 +1,84 @@
 #ifndef LIBRARY_IDENTIFICATION_H
 #define LIBRARY_IDENTIFICATION_H
 
-#include "sqlite3x.h"
+#include "LibraryInfo.h"
+#include "FunctionInfo.h"
+#include "FunctionIdDatabaseInterface.h"
 
-// #include "functionIdentification.h"
-// #include "rose.h"
-// #include "libraryIdentification.h"
-
+/** LibraryIdentification.
+ *
+ *  This namespace encapsulates function for FLIRT ( Fast Library
+ *  Identification and Recognition Technology) like functionality for
+ *  ROSE binary analysis.
+ **/
 namespace LibraryIdentification
    {
-  // This is an implementation of Fast Library Identification and Recognition Technology
-     void generateLibraryIdentificationDataBase    ( std::string databaseName, SgProject* project );
-     void matchAgainstLibraryIdentificationDataBase( std::string databaseName, SgProject* project );
 
-  // Low level factored code to support generateLibraryIdentificationDataBase() and 
-  // matchAgainstLibraryIdentificationDataBase() interface functions.
-     void libraryIdentificationDataBaseSupport( std::string databaseName, SgProject* project, bool generate_database );
+/** typedef libToFuncMap
+ *  This is used as the type to list which functions are found in
+ *  which libraries from matchLibraryIdentificationDataBase.
+ *  The map is: libraryname -> set<functions matched in that library>
+ *
+ *  Functions that are not found in any library, will be placed in the
+ *  "UNKNOWN" bin.
+ **/
+       typedef std::map<LibraryInfo, std::set<FunctionInfo> > LibToFuncsMap;
+       
 
-  // Debugging support
-     void testForDuplicateEntries( const std::vector<SgUnsignedCharList> & functionOpcodeList );
+/** generate Library Identification Database
+ *  This function takes a binary project (presumeably a library) and
+ *  hashes every function, in it.  It then inserts the library and
+ *  functions into a new sqlite3 database.  If the project was
+ *  built with debug information, we should have a database that can
+ *  later identify functions in stripped libraries.
+ *
+ * @param[in] databaseName Filename of the database to create/access
+ * @param[in] libraryName  Library names cannot be discovered from all
+ *                         library types, so pass in name.
+ * @param[in] libraryVersion  Library version, same problem
+ * @param[in] project      Rose SgProject that has the functions to
+ * write or find
+ * @param[in] replace      If a function or library already exisits in
+ * the database, replace it?
+ **/     
+       void generateLibraryIdentificationDataBase    ( const std::string& databaseName, 
+                                                       const std::string& libraryName, 
+                                                       const std::string& libraryVersion, 
+                                                       SgProject* project,
+                                                       bool replace = false);
 
-     class library_handle
-        {
-          public:
-               std::string filename;
-               std::string function_name;
-               size_t begin;
-               size_t end;
 
-               library_handle() {}              
-        };
 
-  // Copied from Andreas' code in functionIdentification.h
-     class FunctionIdentification
-     {
-       public:
+/** match functions in project to  Library Identification Database
+ *  This is a function to simplify matching functions in a binary
+ *  project to library functions in the database.  It will attempt to
+ *  match every function defined in the project to a library function.
+ *
+ *  It returns a LibToFuncsMap that contains every function defined in
+ *  the project in the following form: Library->set(Function).  
+ *  Functions that could not be matched in the database are found in
+ *  the "UNKNOWN" library.
+ *
+ * @param[in] databaseName Filename of the database to create/access
+ * @param[in] project      Rose SgProject that has the functions to
+ * write or find
+ * @return libToFuncsMap Libraries->set(Functions) unmatched
+ * functions under "UNKNOWN"
+ **/     
+       LibToFuncsMap matchLibraryIdentificationDataBase (const std::string& databaseName,
+                                                          SgProject* project);
 
-         FunctionIdentification(std::string dbName);
-
-         //Make sure that all the tables are defined in the function identification
-         //database
-         void createTables();
-
-         //Add an entry to store the pair <library_handle,string> in the database
-         void set_function_match( const library_handle & handle, const std::string s );
-         void set_function_match( const library_handle & handle, const SgUnsignedCharList & opcode_vector);
-         void set_function_match( const library_handle & handle, const unsigned char* str, size_t str_length );
-
-      // Return the library_handle matching string from the database. bool false
-      // is returned if no such match was found, true otherwise.
-      // This can't be const (some sqlite problem).
-         bool get_function_match(library_handle & handle, const std::string s ) const;
-
-      // Make these const functions, since they are ment to be const.
-         bool get_function_match(library_handle & handle, const SgUnsignedCharList & opcode_vector) const;
-         bool get_function_match(library_handle & handle, const unsigned char* str, size_t str_length );
-
-       private:
-         std::string database_name;
-
-      // SQLite database handle
-         sqlite3x::sqlite3_connection con;
-     };
-
-  // Add an entry to store the pair <library_handle,string> in the database
-     void set_function_match( const library_handle & handle, const std::string & data );
-
-  // Return the library_handle matching string from the database. bool false
-  // is returned if no such match was found, true otherwise.
-     bool get_function_match( library_handle & handle, const std::string & data );
-
-     class FlattenAST: public AstSimpleProcessing
-        {
-          public:
-            // Save flattended AST in reference initialized at construction.
-               SgUnsignedCharList & data;
-
-               size_t startAddress;
-               size_t endAddress;
-
-               FlattenAST(SgUnsignedCharList & s) : data(s),startAddress(0),endAddress(0) {}
-
-               void visit(SgNode* n);
-        };
-
-  // DQ (7/11/2009): We need to use a synthesized attribute to gather the list of bit ranges 
-     class FlattenAST_SynthesizedAttribute
-        {
-          public:
-            // Save the list of ranges of where offsets are stored in each instruction's opcode (used to represent immediates).
-               std::vector<std::pair<unsigned char,unsigned char> > rangeList;
-        };
-
-  // DQ (7/11/2009): We need to use a synthesized attribute to gather the list of bit ranges form any nested 
-  // SgAsmExpression IR nodes where the opcode stores values (offsets) used to store immediate values (coded 
-  // values in the instruction's op-codes.
-     class FlattenAST_AndResetImmediateValues: public AstBottomUpProcessing<FlattenAST_SynthesizedAttribute>
-        {
-          public:
-            // Save flattended AST in reference initialized at construction.
-               SgUnsignedCharList & data;
-
-               size_t startAddress;
-               size_t endAddress;
-
-               FlattenAST_AndResetImmediateValues(SgUnsignedCharList & s) : data(s),startAddress(0),endAddress(0) {}
-
-               FlattenAST_SynthesizedAttribute evaluateSynthesizedAttribute ( SgNode* n, SynthesizedAttributesList childAttributes );
-        };
-
- //! This function calls the traversal defined by the FlattenAST class.
-     SgUnsignedCharList generateOpCodeVector(SgAsmInterpretation* asmInterpretation, SgNode* node, size_t & startOffset, size_t & endOffset);
-
-     void write_database ( FunctionIdentification & ident, const std::string & fileName, const std::string & functionName, size_t startOffset, size_t endOffset, const SgUnsignedCharList & s );
-     bool match_database ( const FunctionIdentification & ident, std::string & fileName, std::string & functionName, size_t & startOffset, size_t & endOffset, const SgUnsignedCharList & s );
-
-#if 0
-  //! Add an entry to store the pair <library_handle,string> in the database
-      void set_function_match( library_handle, std::string );
-
-  //! Return the library_handle matching string from the database. bool false
-  //! is returned if no such match was found, true otherwise.
-      bool get_function_match(library_handle&, std::string);
-#endif
+/** 
+ * Private helper function for adding idents to the libToFuncsMap.
+ * @param[inout] libToFuncsMap The map to insert to
+ * @param[in] libraryInfo      This libraryInfo to insert as key
+ * @param[in] functionInfo     The functionInfo to insert as value        
+ **/     
+       void insertFunctionToMap(LibToFuncsMap& libToFuncsMap, 
+                                const LibraryInfo& libraryInfo, 
+                                const FunctionInfo& functionInfo);
+       
+       
 
    }
 #endif

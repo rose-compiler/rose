@@ -7,11 +7,14 @@
 #include <iostream>
 #include <map>
 #include "RoseAst.h"
+#include "ai_measurement.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace Rose;
 using namespace OmpSupport;
 using namespace SageInterface;
+using namespace ArithmeticIntensityMeasurement;
 // Everything should go into the name space here!!
 namespace AutoParallelization
 {
@@ -20,6 +23,7 @@ namespace AutoParallelization
   bool enable_patch;
   bool keep_going;
   bool enable_diff;
+  bool enable_modeling = false;
   bool b_unique_indirect_index;
   bool enable_distance;
   bool no_aliasing=false; // assuming no pointer aliasing
@@ -34,6 +38,21 @@ namespace AutoParallelization
   {
     if (project == NULL)
       project = SageInterface::getProject();
+
+    if (enable_modeling)
+    {
+      // Prepare for cost modeling analysis, loading hardware feature file first
+      //TODO: support installed path of hardware file
+      string src_path(ROSE_SOURCE_TREE_PATH); 
+      string install_path(ROSE_INSTALLATION_PATH); 
+
+      // TODO: support user specified file? 
+      CSVReader reader1 (src_path+"/projects/autoParallelization/annot/GPU-hardware-features.csv");
+      std::vector <std::vector <std::string> >  csv_table = reader1.getResult();
+      cout<<"degug: loaded hardware csv file..."<<endl;
+      //reader1.prettyPrintResult();
+    }
+
     // Prepare def-use analysis
     if (defuse==NULL) 
     { 
@@ -1613,6 +1632,41 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
 
     int dep_dist = 999999; // the minimum dependence distance of all dependence relations for a loop. 
 
+    
+    // tentatively connect the cost model here
+    // TODO: better integration to guide conditional CPU vs. GPU selection
+    // a flag to control the debugging info. 
+    // hardware info. has already been loaded by initialize_analysis()
+    if (enable_modeling)
+    {
+        // Which GPU to target? we pick Pascal P100 as the default target GPU
+        // TODO: enable users to pick a target GPU later
+        Hardware_Info * hinfo = new Hardware_Info();
+        string peak_dp = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak FP64 (DP)"];
+        hinfo->peak_flops_dp = atof (peak_dp.c_str());
+
+        string peak_band_str = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak Global Memory Bandwidth specified"];
+        string peak_band_measured_str = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak Global Memory Bandwidth measured cuda-stream"];
+        hinfo->main_mem_bandwidth = atof (peak_band_str.c_str());
+        hinfo->main_mem_bandwidth_measured = atof (peak_band_measured_str.c_str()); 
+        //ROSE_ASSERT (fabs(hinfo->main_mem_bandwidth -732.16)/732.16 <0.01) ;
+        ROSE_ASSERT (hinfo->main_mem_bandwidth !=0.0 ) ;
+        ROSE_ASSERT (hinfo->peak_flops_dp!=0.0);
+
+        // TODO: add CPU hardware info. later
+        //
+        // call loop analysis to extract loop information
+        SgStatement* lbody = isSgForStatement(loop)->get_loop_body();
+        FPCounters* fp_counters = calculateArithmeticIntensity(lbody);
+//        cout<< fp_counters->toString() <<endl;
+        Loop_Info * linfo = new Loop_Info();
+        linfo->arithmetic_intensity = fp_counters->getIntensity();
+        linfo->iteration_count = 200*200; // TODO: better way to obtain iteration count, through profiling??
+        linfo->flops_per_iteration =  fp_counters->getTotalCount(); 
+        cout<< "debug: estimated execution time in seconds:"<<rooflineModeling (linfo, hinfo)<<endl;
+    }
+
+
     // collect array references with indirect indexing within a loop, save the result in a lookup table
     // This work is context sensitive (depending on the outer loops), so we declare the table for each loop.
     std::map<SgNode*, bool> indirect_array_table;
@@ -1622,6 +1676,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       uniformIndirectIndexedArrayRefs(isSgForStatement(loop));
       collectIndirectIndexedArrayReferences (loop, indirect_array_table);
     }
+
     // X. Compute dependence graph for the target loop
     SgNode* sg_node = loop;
     LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, array_interface, annot);
@@ -1637,7 +1692,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     // dependencies associated with the autoscoped variabled can be
     // eliminated.
     //OmpSupport::OmpAttribute* omp_attribute = new OmpSupport::OmpAttribute();
-    OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(e_unknown, NULL, false);
+    OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(OmpSupport::e_unknown, NULL, false);
     ROSE_ASSERT(omp_attribute != NULL);
 
 #if 0
@@ -2145,5 +2200,138 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     }
     return retval;
   }
+
+  //------------------------ this section supports cost modeling of loops
+  /* baseline roofline modeling
+   *
+   */
+  double rooflineModeling(Loop_Info *l, Hardware_Info *h)
+  {
+    double ret = 0.0; 
+    ROSE_ASSERT (l!=NULL);
+    ROSE_ASSERT (h!=NULL);
+
+    // we use the theoretical peak for now. TODO: Measured peak is a better choice. 
+    float peak_loop_gflops = min (h->peak_flops_dp, l->arithmetic_intensity * h->main_mem_bandwidth);
+    cout<<"\tdebug: peak_flops_dp:"<< h->peak_flops_dp<<endl;
+    cout<<"\tdebug: arithmetic intensity:"<< l->arithmetic_intensity<<endl;
+    cout<<"\tdebug: mem bandwidth:"<< h->main_mem_bandwidth<<endl;
+
+    ret = ((double)(l->iteration_count * l->flops_per_iteration))/ ((double) (peak_loop_gflops*1000000000));
+    return ret; 
+  }
+
+  // implement the functions for CSVReader
+  // Read and parse a line of a CSV stream
+  // Store cells into a vector of strings: 
+  //std::vector<std::string> readNextRow(std::istream istr)
+  std::istream& CSVReader::readNextRow(std::istream& istr, std::vector<std::string> & result)
+  {
+    std::string  line;
+    std::string  cell;
+
+    result.clear(); // Must clear result each time this function is called.
+    // extract a line from the input stream
+    std::getline(istr,line);
+
+    // Process the line
+    std::stringstream lineStream(line);
+
+    // extract comma separated fields
+    while(std::getline(lineStream, cell, ','))
+    {
+      result.push_back(cell);
+    }
+
+    // This checks for a trailing comma with no data after it: add an empty element
+    if (!lineStream && cell.empty())
+    {
+      result.push_back("");
+    }
+
+    return istr;
+  }
+
+  void CSVReader::outputVectorElement(std::string s)
+  {
+    if (cell_counter!=0)
+      std::cout <<"," <<s ;
+    else  // first cell? no leading , 
+    {
+      std::cout <<s ;
+      cell_counter ++;
+    }
+  }
+
+  void CSVReader::outputVector(std::vector <std::string> str_vec )
+  {
+    cell_counter =0; //reset the cell counter for each row
+    for_each (str_vec.begin(), str_vec.end(), outputVectorElement);
+    cout<<endl;
+  }
+
+  CSVReader::CSVReader (std::string fname):file_name(fname)
+  {
+    csv_table = readCSVFile (file_name);
+    // fill in the table model_name-> key-> value
+    /*
+       we assume a format for the hardware features
+       CSV file: https://docs.google.com/spreadsheets/d/1tDwUiJVXsBmoXri4T8fpY9Adt0oPiBR8-099F6cGPqs/edit#gid=0
+       Name  Measurement Units       Tesla K40m      Tesla P100-SXM2-16GB
+       Cluster Name    text    Surface Ray  
+       Compute Capability      float   3.5
+       Shared Memory Bandwidth, GB/s,  3360
+       */ 
+    int model_count = csv_table[0].size()-2 ; // how many gpus are represented in the table
+    // for each model
+    for (int i=0; i< model_count; i++)
+    {
+      string model_name = csv_table[0][2+i]; // first row: starting from 3rd column, stores gpu model names
+      //     cout<<"debug: store info. for the gpu model_name "<< model_name <<endl;
+      // skip the first row: it stores the captions for all columns
+      for (size_t j=1; j< csv_table.size(); j++)  
+      {
+        std::vector <std::string> row = csv_table[j]; 
+        // some rows are section names only, with only one column
+        if (row.size()>=2)
+        {
+          //         cout<<"debug: store key:"<< row[0] << ": value: " << row[2+i] <<endl;
+          // Must trim leading and trailing spaces to avoid ambiguity
+          boost::trim(model_name);
+          string key= row[0]; 
+          boost::trim(key);
+          string value = row[2+i];
+          boost::trim(value);
+          //hardwareDataBase[model_name][row[0]]= row[2+i];
+          hardwareDataBase[model_name][key]= value;
+        }
+      }
+    }
+  }
+
+  void CSVReader::prettyPrintResult()
+  {
+    std::cout<<"csv file line count="<< csv_table.size()<<std::endl;
+    for_each (csv_table.begin(), csv_table.end(), outputVector);
+  }
+
+  // read one entire CSV file, return vector of vectors of strings.
+  std::vector <std::vector <std::string> > CSVReader::readCSVFile (std::string filename)
+  {
+    std::vector <std::vector <std::string> >  all_results;
+    std::ifstream ifile (filename.c_str());
+    //error checking
+    std::vector<std::string> row_result;
+    while ( readNextRow ( ifile, row_result ))
+    {
+      all_results.push_back (row_result);
+    }
+    return all_results;
+  }
+
+  int CSVReader::cell_counter;
+  std::map < std::string,  std::map <std::string, string>  > CSVReader::hardwareDataBase;
+
+  //-----------------------------end of cost modeling cost -----------------------
 
 } // end namespace

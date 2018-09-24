@@ -19,6 +19,11 @@ pkginclude_HEADERS 	= \
 	include/rosetollvm/DoAstAttribute.h \
 	include/rosetollvm/ForAstAttribute.h \
 	include/rosetollvm/FunctionAstAttribute.h \
+	include/rosetollvm/DimensionAstAttribute.h \
+	include/rosetollvm/ConstantValue.h \
+	include/rosetollvm/ConstantIntegerEvaluator.h \
+	include/rosetollvm/ConstantExpressionEvaluator.h \
+	include/rosetollvm/ConstantCodeEvaluator.h \
 	include/rosetollvm/IfAstAttribute.h \
 	include/rosetollvm/IfComponentAstAttribute.h \
 	include/rosetollvm/IntAstAttribute.h \
@@ -28,6 +33,7 @@ pkginclude_HEADERS 	= \
 	include/rosetollvm/Option.h \
 	include/rosetollvm/Control.h \
 	include/rosetollvm/RoseToLLVM.hpp \
+	include/rosetollvm/SgCastAstAttribute.h \
 	include/rosetollvm/SgTypeAstAttribute.h \
 	include/rosetollvm/SizeOfAstAttribute.h \
 	include/rosetollvm/StringAstAttribute.h \
@@ -42,11 +48,14 @@ librosetollvm_la_SOURCES = \
 	CodeAttributesVisitor.cpp \
 	CodeEmitter.cpp \
 	CodeGeneratorVisitor.cpp \
-	ConstantFolder.cpp \
+	ConstantIntegerEvaluator.cpp \
+	ConstantExpressionEvaluator.cpp \
+	ConstantCodeEvaluator.cpp \
 	LLVMAstAttributes.cpp \
 	Option.cpp \
 	Control.cpp \
-	StringSet.cpp
+	StringSet.cpp \
+	llc.cpp
 
 librosetollvm_la_CPPFLAGS	= \
 	-I$(srcdir)/include \

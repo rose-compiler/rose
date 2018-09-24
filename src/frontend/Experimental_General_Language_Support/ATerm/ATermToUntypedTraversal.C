@@ -181,3 +181,33 @@ ATermToUntypedTraversal::setSourcePositionFromEndOnly( SgLocatedNode* locatedNod
 
    return setSourcePosition(locatedNode, pos);
 }
+
+SgUntypedStatement*
+ATermToUntypedTraversal::convert_Labels(std::vector<std::string> & labels, std::vector<PosInfo> & locations, SgUntypedStatement* stmt)
+{
+   ROSE_ASSERT(stmt != NULL);
+   ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
+   ROSE_ASSERT(stmt->get_endOfConstruct()   != NULL);
+   ROSE_ASSERT(locations.size() == labels.size());
+
+   for (int i = labels.size() - 1; i >= 0; i--) {
+      SgUntypedLabelStatement* label_stmt = new SgUntypedLabelStatement(labels[i], stmt);
+
+   // The label_stmt inherits the source position of the original statement,
+   // implying that the source position of the original statement needs to
+   // shrink because it "loses" the label.  Each successive label statement
+   // will "grow" until all the labels and the statement (without labels) make
+   // up the final label statement.
+
+      setSourcePositionFrom(label_stmt, stmt);
+
+   // shrink the original by losing the label
+      stmt->get_startOfConstruct()->set_line(locations[i].getEndLine());
+      stmt->get_startOfConstruct()->set_col (locations[i].getEndCol () + 1);
+
+      stmt->set_parent(label_stmt);
+      stmt = label_stmt;
+   }
+
+   return stmt;
+}

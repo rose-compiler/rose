@@ -10,7 +10,8 @@ BEGIN
   ia = ib / 4 ;
   bf = ib < 5 ;
 
-  PROC foo ;
-     ;
+%  PROC foo ; %
+%     ;       %
+
 END
 TERM

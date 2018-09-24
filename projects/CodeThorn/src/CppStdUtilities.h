@@ -19,6 +19,11 @@ namespace CppStdUtilities {
   // if the file can be written the function returns true, otherwise false.
   bool writeFile(std::string filename, std::string data);
 
+  // is true if string 'postfix' is a costfix of string 's'.
+  // e.g. "bba" is a postfix of "cccbba"
+  bool isPostfix(std::string const &postfix, std::string const &s);
+
+#if GCC_VERSION >= 40900
   // splits a string by commas into a vector of strings (C++11, requires at least gcc 4.9)
   std::vector<std::string> splitByComma(const std::string& input);
 
@@ -31,6 +36,8 @@ namespace CppStdUtilities {
   // regular expression 'regex' (e.g. "a,b,c" is split into a vector
   // of 3 strings)
   std::vector<std::string> splitByRegex(const std::string& input, const std::string& regex);
+#endif
+
 }
 
 #endif

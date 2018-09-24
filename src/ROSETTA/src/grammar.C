@@ -1547,8 +1547,10 @@ Grammar::buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass
   int generatedParam=0;
   //cout<<"DEBUG: includeList.size()="<<includeList.size()<<" :: ";
   for(vector<GrammarString *>::iterator gIt = includeList.begin(); gIt != includeList.end(); gIt++) {
+#ifndef NDEBUG
     GrammarString *memberFunctionCopy= *gIt;
     ROSE_ASSERT (memberFunctionCopy != NULL);
+#endif
     GrammarString& dataMember = **gIt;
 
     string dataMemberParameter;

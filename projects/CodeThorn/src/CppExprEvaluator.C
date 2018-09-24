@@ -9,6 +9,7 @@
 #include "SgNodeHelper.h"
 #include "BoolLattice.h"
 #include <cmath>
+#include "AstTerm.h"
 
 using namespace std;
 
@@ -180,8 +181,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         }
         lhsResult = ips->getVariable(lhsVarId);
       } else {
-        //        if(_showWarnings)
-          //          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
+        if(_showWarnings)
+          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
         VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
         ips->topifyVariableSet(varIdSet);
       }
@@ -246,6 +247,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
     case V_SgAddressOfOp:
     case V_SgPointerDerefExp:
+      //cout<<"DEBUG: SgPointerDerefExp: "<<isSgLocatedNode(node)->unparseToString()<<endl;
       // discard result as pointer value intervals are not represented in this domain, but evaluate to ensure all side-effects are represented in the state
       evaluate(operand);
       return NumberIntervalLattice::top();
@@ -257,7 +259,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
         IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
         Number plusOrMinusOne = (isSgMinusMinusOp(node) ? -1 : (isSgPlusPlusOp(node) ? 1 : (ROSE_ASSERT(false), 0)));
-        NumberIntervalLattice res=domain->arithAdd(evaluate(operand), plusOrMinusOne);
         if(variableIdMapping->hasReferenceType(varId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
@@ -268,22 +269,22 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         }
         else {
           if(SgNodeHelper::isPrefixIncDecOp(node)) {
-            ips->setVariable(varId,res);
+            NumberIntervalLattice oldValue=evaluate(operand);
+            NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);
+            ips->setVariable(varId,newValue);
+            return newValue;
           }
           if(SgNodeHelper::isPostfixIncDecOp(node)) {
-            if(isExprRootNode(node)) {
-              ips->setVariable(varId,res);
-            } else {
-              SgNode* exprRootNode=findExprRootNode(node);
-              cerr<<"Error: CppExprEvaluator: post-fix operator ++ not supported in sub-expressions yet: expression: "<<"\""<<(exprRootNode?exprRootNode->unparseToString():0)<<"\""<<endl;
-              exit(1);
-            }
+            NumberIntervalLattice oldValue=evaluate(operand);
+            NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);
+            ips->setVariable(varId,newValue);
+            return oldValue;
           }
         }
-        return res;
-      } else {
-        cerr<<"Error: CppExprEvaluator: ++/-- operation on lhs-expression not supported yet."<<endl;
+        cerr<<"Error: CppExprEvaluator: ++/-- operation: unknown operand."<<endl;
         exit(1);
+      } else {
+        return NumberIntervalLattice::top();
       }
     }
     default: // generates top element
@@ -388,6 +389,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   }
   case V_SgFunctionCallExp: {
     {
+      //cerr<<"AST:"<<AstTerm::astTermWithNullValuesToString(node);
       string funName=SgNodeHelper::getFunctionName(node);
       if(funName=="__assert_fail") {
         return NumberIntervalLattice::bot();

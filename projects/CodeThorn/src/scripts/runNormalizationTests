@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running NORMALIZATION TESTS"
+echo "------------------------------------------------"
+
+BENCH_PASS=0
+BENCH_FAIL=0
+
+testNumbers=`echo {01..14}`
+echo "Scheduled tests: $testNumbers"
+for testNumber in $testNumbers; do
+    benchmarkprefix=$TESTDIR/NORM${testNumber};
+    for benchmark in ${benchmarkprefix}*.C; do
+        benchmarkname=$(basename $benchmark)
+        echo -n "Testing $benchmarkname : "
+        g++ $benchmark
+        ./codethorn ${OPTIONS} $benchmark --normalize-all=yes --unparse=yes > /dev/null
+        g++ rose_${benchmarkname} 
+        if [ ! $? -eq 0 ]
+        then
+	    echo "FAIL"
+            exit 1
+        else
+	    echo "PASS"
+        fi
+    done
+done
+#rm -f rose_normalization*.C
+rm -f a.out
+

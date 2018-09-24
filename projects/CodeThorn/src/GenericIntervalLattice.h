@@ -517,7 +517,7 @@ class GenericIntervalLattice {
       return;
     } else {
       ROSE_ASSERT(_low<=_high);
-      return std::min(std::min(_low,other._low),other._high);
+      return std::min(std::min(_low,other._low),other._high);  
     }
   }
 
@@ -623,8 +623,6 @@ class GenericIntervalLattice {
     }
   }
 
-  // TODO: not finished for top/bot
-  // [a,b]%[c,d]=[min(a%c,a%d,b%c,b%d),max(a%c,a%d,b%c,b%d)]
   void arithMod(GenericIntervalLattice other) {
     // schroder3 (2016-07-05): TODO: make "other" a reference.
     checkForDivisionByZero(*this, other);
@@ -637,10 +635,15 @@ class GenericIntervalLattice {
               && !other.isHighInf()) {
       Type n1=_low;
       Type n2=_high;
-      Type n3=other._low;
+      //Type n3=other._low;
       Type n4=other._high;
-      Type nmin=std::min(n1%n3,std::min(n1%n4,std::min(n2%n3,n2%n4)));
-      Type nmax=std::max(n1%n3,std::max(n1%n4,std::max(n2%n3,n2%n4)));
+      Type nmin=n1-n1; // 0
+      Type nmax=n4-1;
+      // TODO: improve precision for constants and ranges smaller than the reminder value
+      nmax=std::min(n2,nmax);
+      if(n1<0 || n2<0) {
+        nmin=0-n4; // no unary minus
+      }
       setFiniteInterval(nmin, nmax);
       return;
     } else {

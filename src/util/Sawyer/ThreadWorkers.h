@@ -40,6 +40,7 @@ class ThreadWorkers {
     size_t nItemsFinished_;                             // number of work items that have been completed already
     size_t nWorkersRunning_;                            // number of workers that are currently busy doing something
     size_t nWorkersFinished_;                           // number of worker threads that have returned
+    std::set<size_t> runningTasks_;                     // tasks (vertex IDs) that are running
 
 public:
     /** Default constructor.
@@ -107,6 +108,7 @@ public:
             nWorkers = boost::thread::hardware_concurrency();
         nWorkers_ = std::max((size_t)1, std::min(nWorkers, dependencies.nVertices()));
         nItemsStarted_ = nWorkersFinished_ = 0;
+        runningTasks_.clear();
         fillWorkQueueNS();
         startWorkersNS(functor);
     }
@@ -126,6 +128,8 @@ public:
             workers_[i].join();
 
         lock.lock();
+        if (dependencies_.nEdges() != 0)
+            throw Exception::ContainsCycle("task dependency graph contains cycle(s)");
         dependencies_.clear();
     }
 
@@ -137,8 +141,6 @@ public:
     void run(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {
         start(dependencies, nWorkers, functor);
         wait();
-        if (dependencies_.nEdges() != 0)
-            throw Exception::ContainsCycle("task dependency graph contains cycle(s)");
     }
 
     /** Test whether all possible work is finished.
@@ -151,18 +153,30 @@ public:
 
     /** Number of tasks that have started.
      *
-     *  This is the number of tasks that have been started, some of which may have completed already. */
+     *  This is the number of tasks that have been started, some of which may have completed already. Although this function is
+     *  thread-safe, the returned data might be out of date by time the caller accesses it. */
     size_t nStarted() {
         boost::lock_guard<boost::mutex> lock(mutex_);
         return nItemsStarted_;
     }
 
-    /** Number of tasks that have completed. */
+    /** Number of tasks that have completed.
+     *
+     *  Although this function is thread-safe, the returned data might be out of date by time the caller accesses it. */
     size_t nFinished() {
         boost::lock_guard<boost::mutex> lock(mutex_);
         return nItemsFinished_;
     }
 
+    /** Tasks currently running.
+     *
+     *  Returns the set of tasks (dependency graph vertex IDs) that are currently running. Although this function is
+     *  thread-safe, the returned data might be out of date by time the caller accesses it. */
+    std::set<size_t> runningTasks() {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return runningTasks_;
+    }
+    
     /** Number of worker threads.
      *
      *  Returns a pair of numbers. The first is the total number of worker threads that are allocated, and the second is the
@@ -213,11 +227,13 @@ private:
 
             // Do the work
             ++nWorkersRunning_;
+            runningTasks_.insert(workItemId);
             lock.unlock();
             functor(workItemId, workItem);
             lock.lock();
             ++nItemsFinished_;
             --nWorkersRunning_;
+            runningTasks_.erase(workItemId);
 
             // Look for more work as we remove some dependency edges. Watch out for parallel edges (self edges not possible).
             std::set<typename DependencyGraph::ConstVertexIterator> candidateWorkItems;
@@ -261,12 +277,39 @@ private:
  *  the task being processed, and a reference to a copy of the task (vertex value) in the dependency graph.  The ID number is
  *  the vertex ID number in the @p dependencies graph.
  *
- *  The call does not return until all work has been completed. */
+ *  If a @p monitor is provided, it will be called once every @p period milliseconds the the following arguments: the @p
+ *  dependencies graph, @p nWorkers, and the set of @p dependencies vertex IDs (<code>std::set<size_t></code>) that are
+ *  currently running.
+ *
+ *  The call does not return until all work has been completed.
+ *
+ *  @{ */
 template<class DependencyGraph, class Functor>
 void
 workInParallel(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {
     ThreadWorkers<DependencyGraph, Functor>(dependencies, nWorkers, functor);
 }
+
+
+template<class DependencyGraph, class Functor, class Monitor>
+void
+workInParallel(const DependencyGraph &dependencies, size_t nWorkers, Functor functor,
+               Monitor monitor, boost::chrono::milliseconds period) {
+    ThreadWorkers<DependencyGraph, Functor> workers;
+    workers.start(dependencies, nWorkers, functor);
+    while (!workers.isFinished()) {
+        monitor(dependencies, nWorkers, workers.runningTasks());
+#if BOOST_VERSION >= 1050000
+        boost::this_thread::sleep_for(period);
+#else
+        // For ROSE's sake, don't make this a compile-time error just yet. [Robb Matzke 2018-04-24]
+        ASSERT_not_reachable("this old version of boost is not supported");
+#endif
+    }
+    monitor(dependencies, nWorkers, std::set<size_t>());
+    workers.wait();
+}
+/** @} */
 
 
 } // namespace

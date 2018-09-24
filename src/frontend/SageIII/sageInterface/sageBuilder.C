@@ -551,6 +551,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      ROSE_ASSERT(info != NULL);
 
      info->set_language(SgFile::e_Cxx_language);
+     info->set_requiresGlobalNameQualification();
 
   // DQ (4/28/2017): For template arguments we never want to output the definitions of classes, and enums.
      info->set_SkipClassDefinition();
@@ -566,107 +567,25 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
           returnName += " < ";
 
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
+     bool need_separator = false;
      while (i != templateArgumentsList.end())
         {
+          if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+             {
+               i++;
+               continue; 
+             }
+
+          if (need_separator)
+             {
+               returnName += " , ";
+             }
+
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %p = %s returnName = %s \n",*i,(*i)->class_name().c_str(),returnName.str());
 #endif
 #if 0
           string s = string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */";
-#endif
-
-#if 0
-       // DQ (4/29/2017): This is testing code for what is not better implemented in the unparseToString() function via a new filed to SgUnparse_Info.
-
-#error "DEAD CODE!"
-
-       // DQ (4/27/2017): Check for un-named types since they have to be handled in special ways (template arguments should not be empty strings).
-          if ((*i)->get_argumentType() == SgTemplateArgument::type_argument)
-             {
-               printf ("In parse_template_arguments(): (*i)->get_type() = %p = %s \n",(*i)->get_type(),(*i)->get_type()->class_name().c_str());
-               printf ("(*i)->get_type() = %s \n",(*i)->get_type()->unparseToString(info).c_str());
-
-            // DQ (4/27/2017): where this is generating a empty string it sppears to be due to a class declaration that is the closure class for a lambda.
-               SgNamedType* namedType = isSgNamedType((*i)->get_type());
-
-               SgReferenceType* referenceType = isSgReferenceType((*i)->get_type());
-
-#error "DEAD CODE!"
-
-            // Handle the case of SgClassType for the moment.
-               SgClassType* classType = isSgClassType(namedType);
-               if (classType != NULL)
-                  {
-                    ROSE_ASSERT(classType->get_declaration() != NULL);
-                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                    ROSE_ASSERT(classDeclaration != NULL);
-                    SgSymbol* symbol = classDeclaration->get_symbol_from_symbol_table();
-                    ROSE_ASSERT(symbol != NULL);
-                    SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
-                    ROSE_ASSERT(classSymbol != NULL);
-
-#error "DEAD CODE!"
-
-                    bool isUnnamed = (string(classSymbol->get_name()).substr(0,14) == "__anonymous_0x");
-#if 0
-                    printf ("In SageBuilder::appendTemplateArgumentsToName(): isUnnamed = %s \n",isUnnamed ? "true" : "false");
-#endif
-                    if (isUnnamed == true)
-                       {
-                      // DQ (4/27/2017): Use the generated name to support the name used for the template instantiation.
-                         returnName += classSymbol->get_name();
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-                  }
-
-#error "DEAD CODE!"
-
-               if (referenceType != NULL)
-                  {
-                    printf ("referenceType = %p base_type = %p = %s \n",referenceType,referenceType->get_base_type(),referenceType->get_base_type()->class_name().c_str());
-
-                 // DQ (4/27/2017): where this is generating a empty string it sppears to be due to a class declaration that is the closure class for a lambda.
-                    SgNamedType* namedType = isSgNamedType(referenceType->get_base_type());
-
-                    printf ("In parse_template_arguments(): handle reference type: referenceType->get_base_type() = %p = %s \n",referenceType->get_base_type(),referenceType->get_base_type()->class_name().c_str());
-                    printf ("referenceType->get_base_type() = %s \n",referenceType->get_base_type()->unparseToString(info).c_str());
-
-#error "DEAD CODE!"
-
-                 // Handle the case of SgClassType for the moment.
-                    SgClassType* classType = isSgClassType(namedType);
-                    if (classType != NULL)
-                       {
-                         ROSE_ASSERT(classType->get_declaration() != NULL);
-                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                         ROSE_ASSERT(classDeclaration != NULL);
-                         SgSymbol* symbol = classDeclaration->get_symbol_from_symbol_table();
-                         ROSE_ASSERT(symbol != NULL);
-                         SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
-                         ROSE_ASSERT(classSymbol != NULL);
-
-                         bool isUnnamed = (string(classSymbol->get_name()).substr(0,14) == "__anonymous_0x");
-#if 0
-                         printf ("In SageBuilder::appendTemplateArgumentsToName(): handle reference type: isUnnamed = %s \n",isUnnamed ? "true" : "false");
-#endif
-                         if (isUnnamed == true)
-                            {
-                           // DQ (4/27/2017): Use the generated name to support the name used for the template instantiation.
-                              returnName += classSymbol->get_name();
-#if 0
-                              printf ("Handling reference to class: Exiting as a test! \n");
-                              ROSE_ASSERT(false);
-#endif
-                            }
-                       }
-                  }
-
-#error "DEAD CODE!"
-
-             }
 #endif
 
        // DQ (9/15/2012): We need to communicate that the language so that SgBoolVal will not be unparsed to "1" instead of "true" (see test2012_215.C).
@@ -678,17 +597,8 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) *i = %p returnName = %s \n",*i,returnName.str());
 #endif
+          need_separator = true;
           i++;
-
-       // If there are more arguments then we need a "," to seperate them.
-          if (i != templateArgumentsList.end())
-             {
-            // Since we have a few places were these names are generated the code is sensative to names being
-            // generated exactly the same.  So the space on both sides of the "," is critical. This will be fixed
-            // and all locations where this is done are marked with "CRITICAL FUNCTION TO BE REFACTORED".
-            // returnName += ",";
-               returnName += " , ";
-             }
 
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (bottom of loop) returnName = %s \n",returnName.str());
@@ -850,6 +760,12 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                templateArgumentsList = &(isSgTemplateInstantiationTypedefDeclaration(decl)->get_templateArguments());
                break;
              }
+
+          case V_SgTemplateDeclaration:
+             {
+               templateArgumentsList = NULL;
+               break;
+             }
 #if 0
      // DQ (12/14/2016): Added new case
         case V_SgFunctionDeclaration:
@@ -866,7 +782,7 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
 #endif
           default:
              {
-               printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
+               printf ("getTemplateArgumentList(): Default reached in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -965,9 +881,15 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
                break;
              }
 
+          case V_SgTemplateDeclaration:
+             {
+               templateParameterList = &(isSgTemplateDeclaration(decl)->get_templateParameters());
+               break;
+             }
+
           default:
              {
-               printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
+               printf ("getTemplateParameterList(): Default reached in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -1532,9 +1454,11 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // DQ (7/18/2012): Added debugging code (should fail for test2011_75.C).
      SgVariableSymbol* variableSymbol = scope->lookup_variable_symbol(name);
   // ROSE_ASSERT(variableSymbol == NULL);
+
 #if 0
      printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol = %p \n",variableSymbol);
 #endif
+
   // If there was a previous use of the variable, then there will be an existing symbol with it's declaration pointing to the SgInitializedName object.
      SgVariableDeclaration * varDecl = NULL;
      if (variableSymbol == NULL)
@@ -1596,6 +1520,12 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
         {
        // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
        // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
+
+       // DQ (6/25/2018): I think this is incorrect for test2018_109.C.
+          SgScopeStatement* current_scope = topScopeStack();
+#if 0
+          printf ("  --- Setting parent using topScopeStack() = %p = %s = %s \n",current_scope,current_scope->class_name().c_str(),SageInterface::get_name(current_scope).c_str());
+#endif
           varDecl->set_parent(topScopeStack());
           ROSE_ASSERT(varDecl->get_parent() != NULL);
         }
@@ -1650,6 +1580,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // because we have added statements explicitly marked as transformations.
   // checkIsModifiedFlag(varDecl);
      unsetNodesMarkedAsModified(varDecl);
+
+  // DQ (6/25/2018): Added assertion.
+     ROSE_ASSERT(varDecl != NULL);
+
+#if 0
+     printf ("Leaving buildVariableDeclaration_nfi(): varDecl = %p varDecl->get_parent() = %p \n",varDecl,varDecl->get_parent());
+#endif
 
      return varDecl;
    }
@@ -2436,7 +2373,9 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
      printf ("AFTER: type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
 #endif
 
-     type_decl->set_templateName(type_decl->get_name());
+  // DQ (4/15/2018): I don't think we want to reset the template name and certainly not to a name that 
+  // includes template arguments (which is inconsistant with all other usage).
+  // type_decl->set_templateName(type_decl->get_name());
 
 #if 0
      printf ("AFTER: type_decl->set_templateName(): type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
@@ -9767,8 +9706,13 @@ SageBuilder::buildGotoStatement_nfi(SgExpression*  label_expression)
 SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */)
 {
   // Liao 2/6/2013. We no longer allow NULL express pointer. Use SgNullExpression instead.
+  // Rasmussen (4/27/18): The expression argument to the builder function is optional
+  // (NULL is allowed).  What is not allowed is constructing an SgReturnStmt with a NULL
+  // expression argument.
   if (expression == NULL)
-    expression = buildNullExpression();
+  {
+     expression = buildNullExpression();
+  }
   SgReturnStmt * result = new SgReturnStmt(expression);
   ROSE_ASSERT(result);
   if (expression != NULL) expression->set_parent(result);
@@ -12721,7 +12665,6 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
      SgClassDeclaration* nondefdecl = NULL;
 
-#if 1
      SgName nameWithoutTemplateArguments = XXX_name;
      SgName nameWithTemplateArguments    = nameWithoutTemplateArguments;
      if (buildTemplateInstantiation == true)
@@ -12729,19 +12672,11 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
         }
-#else
-  // SgName nameWithTemplateArguments    = name;
-  // SgName nameWithoutTemplateArguments = generateTemplateNameFromTemplateNameWithTemplateArguments(name);
-     SgName nameWithTemplateArguments;
-     SgName nameWithoutTemplateArguments;
 
-#error "DEAD CODE!"
-
-     if (buildTemplateInstantiation == true)
-        {
-          nameWithTemplateArguments    = name;
-          nameWithoutTemplateArguments = generateTemplateNameFromTemplateNameWithTemplateArguments(name);
-        }
+#if 0
+      printf ("In SageBuilder::buildClassDeclaration_nfi():\n");
+      printf ("  -- nameWithoutTemplateArguments = %s\n", nameWithoutTemplateArguments.str());
+      printf ("  -- nameWithTemplateArguments    = %s\n", nameWithTemplateArguments.str());
 #endif
 
   // DQ (7/27/2012): Note that the input name should not have template argument syntax.

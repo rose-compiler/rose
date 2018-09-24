@@ -9,7 +9,6 @@
 #include "SgNodeHelper.h"
 
 #include "Timer.h"
-#include "TFTransformation.h"
 
 using namespace std;
 
@@ -43,8 +42,6 @@ int main (int argc, char* argv[])
   SgNode* root;
   root=sageProject;
 
-  TFTransformation tfTransformation;
-  //tfTransformation.transformHancockAccess(0,root);
 #if 0
   std::cout << "TERM INFO OUTPUT: START\n";
   std::cout << astTermToMultiLineString(root,0);

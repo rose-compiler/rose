@@ -10,10 +10,19 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-void
-UntypedFortranConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
-                                SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
+bool
+UntypedFortranConverter::convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt, SgScopeStatement* label_scope)
 {
+// Assume a start label type as the most common
+   return convertLabel(ut_stmt, sg_stmt, SgLabelSymbol::e_start_label_type, label_scope);
+}
+
+bool
+UntypedFortranConverter::convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
+                                      SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
+{
+   bool hasLabel = false;
+
    std::string label_name = ut_stmt->get_label_string();
    if (!label_name.empty())
       {
@@ -22,7 +31,67 @@ UntypedFortranConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement*
       // The modifications in setFortranNumericLabel should be moved to SageInterface
          setFortranNumericLabel(sg_stmt, strtoul(label_name.c_str(),&next,10), label_type, label_scope);
          ROSE_ASSERT(next != label_name.c_str());
+         hasLabel = true;
       }
+   return hasLabel;
+}
+
+//! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and
+//  SgLabelRefExp are created transparently as needed.
+void
+UntypedFortranConverter::setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
+{
+// TODO - convert from Fortran specific (at least in name and perhaps digit values, ...)
+   ROSE_ASSERT (stmt != NULL);
+   ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
+
+   if (label_scope == NULL)
+      {
+         label_scope = SageInterface::getEnclosingFunctionDefinition(stmt);
+      }
+   ROSE_ASSERT (label_scope != NULL);
+
+   SgName label_name(Rose::StringUtility::numberToString(label_value));
+   SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
+   if (symbol == NULL)
+      {
+      // DQ (12/4/2011): This is the correct handling for SgLabelStatement (always in the function scope, same as C and C++).
+      // DQ (2/2/2011): We want to call the old constructor (we now have another constructor that takes a SgInitializedName pointer).
+      // symbol = new SgLabelSymbol(NULL);
+         symbol = new SgLabelSymbol((SgLabelStatement*) NULL);
+         ROSE_ASSERT(symbol != NULL);
+         symbol->set_fortran_statement(stmt);
+         symbol->set_numeric_label_value(label_value);
+         symbol->set_label_type(label_type);
+         label_scope->insert_symbol(label_name,symbol);
+      }
+   else
+      {
+         cerr << "Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!" << endl;
+         ROSE_ASSERT (false);
+      }
+
+   SgLabelRefExp* ref_exp = SageBuilder::buildLabelRefExp(symbol);
+   ref_exp->set_parent(stmt);
+
+   switch(label_type)
+      {
+        case SgLabelSymbol::e_start_label_type:
+           {
+              stmt->set_numeric_label(ref_exp);
+              break;
+           }
+        case SgLabelSymbol::e_end_label_type:
+           {
+              stmt->set_end_numeric_label(ref_exp);
+              break;
+           }
+         default:
+            {
+               fprintf(stderr, "SageInterface::setFortranNumericLabel: unimplemented for label_type %d \n", label_type);
+               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+            }
+        }
 }
 
 void
@@ -322,7 +391,7 @@ UntypedFortranConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDe
    SgImplicitStatement* implicitStatement = new SgImplicitStatement(isImplicitNone);
    setSourcePositionFrom(implicitStatement, ut_decl);
 
-   ROSE_ASSERT(scope->variantT() == V_SgBasicBlock);
+   ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
    scope->append_statement(implicitStatement);
 
    convertLabel(ut_decl, implicitStatement);
@@ -342,7 +411,7 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 
       switch (ut_decl->get_statement_enum())
         {
-        case SgToken::FORTRAN_IMPORT:
+        case General_Language_Translation::e_fortran_import_stmt:
            {
               SgImportStatement* importStatement = new SgImportStatement();
               setSourcePositionFrom(importStatement, ut_decl);
@@ -445,7 +514,7 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 //----------------------
 
 SgStatement*
-UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       SgStatement* sg_stmt = NULL;
 

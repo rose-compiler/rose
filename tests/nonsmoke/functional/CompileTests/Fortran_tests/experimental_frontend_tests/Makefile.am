@@ -22,6 +22,7 @@ F90_TESTCODES = \
  R1120a.f90 \
  R404_a.f90 \
  R521.f90   \
+ R719a.f90  \
  R854.f90   \
  R856.f90   \
  contiguous_attr.f90 \
@@ -32,6 +33,7 @@ F2018_TESTCODES = \
  R511-F2015-N2007.f90
 
 F90_TESTCODES_WORKING_ON = \
+ issue-38.f90 \
  R404.f90   \
  R1001.f90 \
  R1109.f90 \

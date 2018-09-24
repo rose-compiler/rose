@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <rosetollvm/StringSet.h>
 #include <rose.h>
+#include <rosetollvm/StringSet.h>
 #include <rosetollvm/RootAstAttribute.h>
 
 class DeclarationsAstAttribute : public RootAstAttribute { 

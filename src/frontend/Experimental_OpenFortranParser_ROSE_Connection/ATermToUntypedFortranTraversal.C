@@ -24,7 +24,7 @@ static ATbool convert_list_item(ATerm term, const char* match, std::map<std::str
    char * str1, * str2;
    if (ATmatch(term, match, &str1, &str2)) {
       // MATCHED Rename
-      std::cout << "--- Matched: " << match << " " << str1 << " " << str2 << std::endl;
+      cout << "--- Matched: " << match << " " << str1 << " " << str2 << endl;
       map[str1] = str2;
    } else return ATfalse;
 
@@ -410,7 +410,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DefinedOperator(ATerm term, std:
    printf("... traverse_DefinedOperator: %s\n", ATwriteToString(term));
 #endif
 
-   std::cout << "TODO - traverse_DefinedOperator \n";
+   cout << "TODO - traverse_DefinedOperator \n";
 
    //  DefinedUnaryOp                -> DefinedOperator {prefer} %% AMBIGUOUS both unary and binary are DOP
    //  DefinedBinaryOp               -> DefinedOperator
@@ -506,11 +506,19 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptImplicitPart(ATerm term, SgUn
    printf("... traverse_OptImplicitPart: %s\n", ATwriteToString(term));
 #endif
 
+   ATerm t_stmt_list, t_implicit_stmt;
+
    if (ATmatch(term, "no-implicit-part()")) {
       // MATCHED no-implicit-part
    }
-   else if (traverse_ImplicitPartStmtList(term, decl_list)) {
-      // MATCHED ImplicitPartStmt list
+   else if (ATmatch(term, "ImplicitPart(<term>,<term>)", &t_stmt_list, &t_implicit_stmt)) {
+      // MATCHED ImplicitPart
+      if (traverse_ImplicitPartStmtList(t_stmt_list, decl_list)) {
+         // MATCHED ImplicitPartStmt list
+      } else return ATfalse;
+      if (traverse_ImplicitStmt(t_implicit_stmt, decl_list)) {
+         // MATCHED ImplicitStmt
+      } else return ATfalse;
    }
    else return ATfalse;
 
@@ -523,7 +531,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptImplicitPart(ATerm term, SgUn
 ATbool ATermToUntypedFortranTraversal::traverse_ImplicitPartStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_ImplicitPartStmtList: %s\n", ATwriteToString(term));
+   printf("... traverse_ImplicitPartStmtList: \n");
 #endif
 
 // NOTE: The statements in this list are formally supposed to end with an ImplicitStmt.
@@ -636,6 +644,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecutionPartConstruct(ATerm ter
    printf("... traverse_ExecutionPartConstruct: %s\n", ATwriteToString(term));
 #endif
 
+// TODO - Not sure about the format, entry, and data statements here (see grammar Main.sdf and BlockExecutionPartConstruct)
 // TODO - traverse_FormatStmt
 // TODO - traverse_EntryStmt
 // TODO - traverse_DataStmt
@@ -644,6 +653,26 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecutionPartConstruct(ATerm ter
    }
    else {
       std::cerr << "...TODO... implement FormatStmt, EntryStmt, DataStmt in ExecutionPartConstruct" << std::endl;
+      return ATfalse;
+   }
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_BlockExecutionPartConstruct(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BlockExecutionPartConstruct: %s\n", ATwriteToString(term));
+#endif
+
+// TODO - traverse_FormatStmt
+// TODO - traverse_EntryStmt
+// TODO - traverse_DataStmt
+   if (traverse_ExecStmt(term, stmt_list)) {
+      // MATCHED an executable statement
+   }
+   else {
+      std::cerr << "...TODO... implement FormatStmt, EntryStmt, DataStmt in BlockExecutionPartConstruct" << std::endl;
       return ATfalse;
    }
 
@@ -717,8 +746,14 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    if (traverse_AssignmentStmt(term, stmt_list)) {
       // Matched AssignmentStmt
    }
+   else if (traverse_IfConstruct(term, stmt_list)) {
+      // Matched IfConstruct
+   }
    else if (traverse_ContinueStmt(term, stmt_list)) {
       // Matched ContinueStmt
+   }
+   else if (traverse_GotoStmt(term, stmt_list)) {
+      // Matched GotoStmt
    }
    else if (traverse_StopStmt(term, stmt_list)) {
       // Matched StopStmt
@@ -929,10 +964,19 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
 
    *var_expr = NULL;
    if (ATmatch(term, "IntVal(<str>)", &arg1)) {
-      // MATCHED IntVal
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
+   else if (ATmatch(term, "TRUE()")) {
+      value += "TRUE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+   else if (ATmatch(term, "FALSE()")) {
+      value += "FALSE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+   }
+
+// Handle literals with kind expressions
    else if (ATmatch(term, "IntVal(<str>,<term>)", &arg1,&t_kind)) {
       SgUntypedExpression* kind;
       if (traverse_Expression(t_kind, &kind)) {
@@ -940,6 +984,17 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
       } else return ATfalse;
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
+   // add type kind expression
+      type->set_has_kind(true);
+      type->set_type_kind(kind);
+   }
+   else if (ATmatch(term, "TRUE(<term>)", &t_kind)) {
+      SgUntypedExpression* kind;
+      if (traverse_Expression(t_kind, &kind)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      value += "TRUE";
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
    // add type kind expression
       type->set_has_kind(true);
       type->set_type_kind(kind);
@@ -1905,8 +1960,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptExpr( ATerm term, SgUntypedEx
 
    if (ATmatch(term, "no-expr()")) {
       // No Expression
-      *expr = new SgUntypedNullExpression();
-      setSourcePositionUnknown(*expr);
+      *expr = UntypedBuilder::buildUntypedNullExpression();
    }
    else if (traverse_Expression(term, expr)) {
       // MATCHED an Expression
@@ -1956,6 +2010,395 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssignmentStmt(ATerm term, SgUnt
 }
 
 //========================================================================================
+// R801 block
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_Block(ATerm term, SgUntypedBlockStatement** block_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_Block: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_block;
+   SgUntypedStatementList* stmt_list;
+
+   if (ATmatch(term, "Block(<term>)", &t_block)) {
+      // MATCHED Block
+
+      *block_stmt = SageBuilder::buildUntypedBlockStatement("");
+      stmt_list = (*block_stmt)->get_scope()->get_statement_list();
+
+      ATermList tail = (ATermList) ATmake("<term>", t_block);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_BlockExecutionPartConstruct(head, stmt_list)) {
+            // MATCHED stmt in block list
+         } else return ATfalse;
+      }
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R832 if-construct
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_IfConstruct(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IfConstruct: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_ifthen, t_block, t_elseif, t_else, t_endif;
+   SgUntypedExpressionStatement* if_then_stmt;
+   SgUntypedStatement* else_stmt;
+   SgUntypedBlockStatement *if_block, *else_block;
+   SgUntypedIfStatement *first_else_if, *last_else_if;
+   SgUntypedStatement *true_body, *false_body;
+
+   if (ATmatch(term, "IfConstruct(<term>,<term>,<term>,<term>,<term>)", &t_ifthen,&t_block,&t_elseif,&t_else,&t_endif)) {
+      if (traverse_IfThenStmt(t_ifthen, &if_then_stmt)) {
+         // MATCHED IfThenStmt
+      } else return ATfalse;
+
+      if (traverse_Block(t_block, &if_block)) {
+         // MATCHED Block
+      } else return ATfalse;
+
+      if (traverse_ElseIfStmtList(t_elseif, &first_else_if, &last_else_if)) {
+         // MATCHED ElseIfStmtList; first_else_if and last_else_if will be NULL if list is empty
+      } else return ATfalse;
+
+      if (traverse_OptElseStmtAndBlock(t_else, &else_stmt, &else_block)) {
+         // MATCHED OptElseStmtAndBlock; else_stmt and else_block will be NULL if not present
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedExpression* conditional = if_then_stmt->get_statement_expression();
+   ROSE_ASSERT(conditional);
+
+#if 0
+   std::cout << "--- traverseIfConstruct first_else_if " << first_else_if << std::endl;
+   std::cout << "--- traverseIfConstruct last_else_if " << last_else_if << std::endl;
+   std::cout << "--- traverseIfConstruct else_block " << else_block << std::endl;
+#endif
+
+   if (first_else_if != NULL) {
+      false_body = first_else_if;
+      last_else_if->set_false_body(else_block);
+   }
+   else {
+      false_body = else_block;
+   }
+   true_body = if_block;
+
+#if 0
+   std::cout << "--- traverseIfConstruct  true_body " <<  true_body << std::endl;
+   std::cout << "--- traverseIfConstruct false_body " << false_body << std::endl;
+#endif
+
+   // TODO - create begin and end statements for SgUntypedBlockStatement
+
+   SgUntypedIfStatement* if_stmt = SageBuilder::buildUntypedIfStatement("",conditional,true_body,false_body);
+   setSourcePosition(if_stmt, term);
+
+   stmt_list->get_stmt_list().push_back(if_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R833 if-then-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_IfThenStmt(ATerm term, SgUntypedExpressionStatement** if_then_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IfThenStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_name, t_expr, t_eos;
+   std::string label;
+   std::string if_name;
+   std::string eos;
+   SgUntypedExpression* conditional;
+   int stmt_enum = General_Language_Translation::e_fortran_if_then_stmt;
+
+   *if_then_stmt = NULL;
+
+   if (ATmatch(term, "IfThenStmt(<term>,<term>,<term>,<term>)", &t_label,&t_name,&t_expr,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(t_name, if_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_Expression(t_expr, &conditional)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   // Generic SgUntypedExpressionStatement used for Fortran if-then-stmt
+   //   1. Note that the if-construct-name is used for the label_name slot
+   //   2. TODO - if there is an actual label statement, use SgUntypedLabelStatement as container
+   *if_then_stmt = new SgUntypedExpressionStatement(if_name, stmt_enum, conditional);
+   setSourcePosition(*if_then_stmt, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R834 else-if-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ElseIfStmt(ATerm term, SgUntypedExpressionStatement** else_if_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ElseIfStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_expr, t_name, t_eos;
+   std::string label;
+   std::string if_name;
+   std::string eos;
+   SgUntypedExpression* conditional;
+   int stmt_enum = General_Language_Translation::e_fortran_else_if_stmt;
+
+   *else_if_stmt = NULL;
+
+   if (ATmatch(term, "ElseIfStmt(<term>,<term>,<term>,<term>)", &t_label,&t_expr,&t_name,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_Expression(t_expr, &conditional)) {
+         // MATCHED Expression
+      } else return ATfalse;
+      if (traverse_OptName(t_name, if_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   // Generic SgUntypedExpressionStatement used for Fortran else-if-stmt
+   //   1. Note that the if-construct-name is used for the label_name slot
+   //   2. TODO - if there is an actual label statement, use SgUntypedLabelStatement as container
+   *else_if_stmt = new SgUntypedExpressionStatement(if_name, stmt_enum, conditional);
+   setSourcePosition(*else_if_stmt, term);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_ElseIfStmtList(ATerm term, SgUntypedIfStatement** if_stmt,
+                                                                           SgUntypedIfStatement** last_if_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ElseIfStmtList: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_elseif_list;
+
+   SgUntypedIfStatement* previous_if_stmt = NULL;
+   SgUntypedIfStatement*  current_if_stmt = NULL;
+
+   *if_stmt = NULL;
+
+   if (ATmatch(term, "ElseIfStmtList(<term>)", &t_elseif_list)) {
+
+      ATermList tail = (ATermList) ATmake("<term>", t_elseif_list);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+
+         if (traverse_ElseIfStmtBlock(head, &current_if_stmt)) {
+            // This if statement will have a NULL false body
+         } else return ATfalse;
+
+#if 0
+         std::cout << "-w- elseiflist: previous_if_stmt = " << previous_if_stmt << std::endl;
+         std::cout << "-w- elseiflist:  current_if_stmt = " <<  current_if_stmt << std::endl;
+#endif
+
+         if (previous_if_stmt != NULL) {
+            previous_if_stmt->set_false_body(current_if_stmt);
+         }
+         previous_if_stmt = current_if_stmt;
+
+         if (*if_stmt == NULL) {
+            *if_stmt = current_if_stmt;
+            // source position has already been set, check to see if it needs refinement
+            // setSourcePosition(*if_stmt, term);
+         }
+#if 0
+         std::cout << "-w- elseiflist:          if_stmt = " <<         *if_stmt << std::endl;
+#endif
+      }
+   }
+   else return ATfalse;
+
+   // The false body of the last else if statement is needed for the else statement
+   *last_if_stmt = current_if_stmt;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_ElseIfStmtBlock(ATerm term, SgUntypedIfStatement** if_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ElseIfStmtBlock: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_else_if, t_block;
+   SgUntypedExpressionStatement* else_if_stmt;
+   SgUntypedBlockStatement* true_body;
+   SgUntypedBlockStatement* false_body;
+
+   *if_stmt = NULL;
+
+   if (ATmatch(term, "ElseIfStmtBlock(<term>,<term>)", &t_else_if,&t_block)) {
+
+      if (traverse_ElseIfStmt(t_else_if, &else_if_stmt)) {
+         // MATCHED ElseIfStmt
+      } else return ATfalse;
+
+      if (traverse_Block(t_block, &true_body)) {
+         // MATCHED Block
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   // The false body of the (else) if statement is NULL, unless
+   // there is an else-stmt, in which case if becomes the false body
+   false_body = NULL;
+
+   SgUntypedExpression* conditional = else_if_stmt->get_statement_expression();
+   ROSE_ASSERT(conditional);
+
+   *if_stmt = SageBuilder::buildUntypedIfStatement("",conditional,true_body,false_body);
+   setSourcePosition(*if_stmt, term);
+
+#if 0
+   std::cout << "--- traverseElseIf  true_body " <<  true_body << std::endl;
+   std::cout << "--- traverseElseIf false_body " << false_body << std::endl;
+   std::cout << "--- traverseElseIf else_if_stmt " << else_if_stmt << std::endl;
+   std::cout << "--- traverseElseIf      if_stmt " << *if_stmt << std::endl;
+#endif
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R835 else-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ElseStmt(ATerm term, SgUntypedStatement** else_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ElseStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_name, t_eos;
+   std::string label;
+   std::string if_name;
+   std::string eos;
+   int stmt_enum = General_Language_Translation::e_fortran_else_stmt;
+
+   *else_stmt = NULL;
+
+   if (ATmatch(term, "ElseStmt(<term>,<term>,<term>)", &t_label,&t_name,&t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(t_name, if_name)) {
+         // MATCHED OptName
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   // Generic SgUntypedExpressionStatement used for Fortran else-stmt
+   //   1. Note that the if-construct-name is used for the label_name slot
+   //   2. TODO - if there is an actual label statement, use SgUntypedLabelStatement as container
+   *else_stmt = new SgUntypedOtherStatement(if_name, stmt_enum);
+   setSourcePosition(*else_stmt, term);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedFortranTraversal::traverse_OptElseStmtAndBlock(ATerm term, SgUntypedStatement** else_stmt,
+                                                                                SgUntypedBlockStatement** false_body)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptElseStmtAndBlock: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_else, t_block;
+
+   *else_stmt = NULL;
+   *false_body = NULL;
+
+   if (ATmatch(term, "no-else-stmt()")) {
+      return ATtrue;
+   }
+
+   if (ATmatch(term, "ElseStmtBlock(<term>,<term>)", &t_else, &t_block)) {
+
+      if (traverse_ElseStmt(t_else, else_stmt)) {
+         // MATCHED ElseStmt
+      } else return ATfalse;
+
+      if (traverse_Block(t_block, false_body)) {
+         // MATCHED Block
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R851 goto-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_GotoStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_GotoStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_label, t_target, t_eos;
+   char* char_target;
+   std::string label;
+   std::string eos;
+
+   if (ATmatch(term, "GotoStmt(<term>,<term>,<term>)", &t_label, &t_target, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (ATmatch(t_target, "<str>", &char_target)) {
+         // MATCHED target label string
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedGotoStatement* goto_stmt = new SgUntypedGotoStatement(label, char_target);
+   setSourcePosition(goto_stmt, term);
+
+   stmt_list->get_stmt_list().push_back(goto_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
 // R854 continue-stmt
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedFortranTraversal::traverse_ContinueStmt(ATerm term, SgUntypedStatementList* stmt_list)
@@ -1963,7 +2406,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ContinueStmt(ATerm term, SgUntyp
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ContinueStmt: %s\n", ATwriteToString(term));
 #endif
-  
+
    ATerm term1, term_eos;
    std::string label;
    std::string eos;
@@ -1996,13 +2439,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_StopStmt(ATerm term, SgUntypedSt
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_StopStmt: %s\n", ATwriteToString(term));
 #endif
-  
+
    ATerm term1, term2, term_eos;
    std::string label;
    std::string eos;
    SgUntypedExpression* stop_code;
-
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;
 
    if (ATmatch(term, "StopStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
@@ -2017,7 +2458,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_StopStmt(ATerm term, SgUntypedSt
    }
    else return ATfalse;
 
-   SgUntypedExpressionStatement* stop_stmt = new SgUntypedExpressionStatement(label, keyword, stop_code);
+   SgUntypedStopStatement* stop_stmt = new SgUntypedStopStatement(label, stop_code);
    setSourcePositionExcludingTerm(stop_stmt, term, term_eos);
 
    stmt_list->get_stmt_list().push_back(stop_stmt);
@@ -2033,7 +2474,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ErrorStopStmt(ATerm term, SgUnty
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ErrorStopStmt: %s\n", ATwriteToString(term));
 #endif
-  
+
    ATerm term1, term2, term_eos;
    std::string label;
    std::string eos;
@@ -2067,7 +2508,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptStopCode(ATerm term, SgUntype
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptStopStmt: %s\n", ATwriteToString(term));
 #endif
-  
+
    if (ATmatch(term, "no-stop-code()")) {
       // No StopCode
       *stop_code = new SgUntypedNullExpression();
@@ -3215,7 +3656,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ImportStmt(ATerm term, SgUntyped
    }
    else return ATfalse;
 
-   import_stmt = new SgUntypedNameListDeclaration(label, SgToken::FORTRAN_IMPORT, name_list);
+   import_stmt = new SgUntypedNameListDeclaration(label, General_Language_Translation::e_fortran_import_stmt, name_list);
    setSourcePositionExcludingTerm(import_stmt, term, eos_term);
 
    decl_list->get_decl_list().push_back(import_stmt);
@@ -3886,8 +4327,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_ReturnStmt(ATerm term, SgUntyped
    std::string eos;
    SgUntypedExpression* expr;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_RETURN;
-
    if (ATmatch(term, "ReturnStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -3901,7 +4340,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ReturnStmt(ATerm term, SgUntyped
    }
    else return ATfalse;
 
-   SgUntypedExpressionStatement* return_stmt = new SgUntypedExpressionStatement(label, keyword, expr);
+   SgUntypedReturnStatement* return_stmt = new SgUntypedReturnStatement(label, expr);
    setSourcePositionExcludingTerm(return_stmt, term, term_eos);
 
    stmt_list->get_stmt_list().push_back(return_stmt);

@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <Sawyer/IntervalSet.h>
 
 #if ROSE_MICROSOFT_OS
 // This is the boost solution for lack of support for stdint.h (e.g. types such as "uint64_t")
@@ -42,6 +43,10 @@ ROSE_UTIL_API std::string htmlEscape(const std::string&);
  *  resulting string. */
 ROSE_UTIL_API std::string cEscape(const std::string&);
 
+/**  Escapes characters that are special to the Bourne shell.
+ *
+ *   Assumes that the context is outside of any quoting and possibly adds quotes. */
+ROSE_UTIL_API std::string bourneEscape(const std::string&);
 
 // [Robb Matzke 2016-05-06]: I am deprecating escapeNewLineCharaters because:
 //   1. Its name is spelled wrong: "Charater"
@@ -248,6 +253,19 @@ template<typename T> std::string unsignedToHex(T value) { return unsignedToHex2(
  *  represents at least @p nbits bits (four bits per hexadecimal digits). If @p nbits is zero then the function uses 32 bits
  *  for values that fit in 32 bits, otherwise 64 bits. */
 ROSE_UTIL_API std::string addrToString(uint64_t value, size_t nbits = 0);
+
+/** Convert an interval of virtual addresses to a string.
+ *
+ *  Converts an interval to a string by converting each address to a string, separating them with a comma, and enclosing the
+ *  whole string in square brackets. */
+ROSE_UTIL_API std::string addrToString(const Sawyer::Container::Interval<uint64_t> &interval, size_t nbits = 0);
+
+/** Convert an interval set of virtual addresses to a string.
+ *
+ *  Converts the interval-set to a string by converting each interval to a string, separating the intervals with commas, and
+ *  enclosing the whole string in curly braces. */
+ROSE_UTIL_API std::string addrToString(const Sawyer::Container::IntervalSet<Sawyer::Container::Interval<uint64_t> > &iset,
+                                       size_t nbits = 0);
 
 
 
@@ -482,6 +500,8 @@ std::string plural(T n, const std::string &plural_word, const std::string &singu
     if (1==n) {
         if (!singular_word.empty()) {
             retval += singular_word;
+        } else if (plural_word == "vertices") {
+            retval = "vertex";
         } else if (plural_word.size()>3 && 0==plural_word.substr(plural_word.size()-3).compare("ies")) {
             // string ends with "ies", as in "parties", so emit "party" instead
             retval += plural_word.substr(0, plural_word.size()-3) + "y";

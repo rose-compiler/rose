@@ -6205,12 +6205,16 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                          addCompileOnlyFlag = false;
                        }
                   }
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
+
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
                printf ("addCompileOnlyFlag = %s \n",addCompileOnlyFlag ? "true" : "false");
 #endif
                if (addCompileOnlyFlag == true)
                   {
                  // We might want to check if "-c" is already present so we don't add it redundantly.
+#if 0
+                    printf ("Adding \"-c\" to the backend command line \n");
+#endif
                     compilerCmdLine.push_back("-c");
                   }
 
@@ -6752,16 +6756,18 @@ SgProject::compileOutput()
                   {
                     int localErrorCode = 0;
                     SgFile & file = get_file(i);
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
+
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE || 0
                     printf ("In Project::compileOutput(): Processing file #%d of %d: filename = %s \n",i,numberOfFiles(),file.getFileName().c_str());
 #endif
                     if (multifile_support_compile_only_flag == true)
                        {
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE || 0
                          printf ("multifile_support_compile_only_flag == true: Turn ON compileOnly flag \n");
 #endif
                          file.set_compileOnly(true);
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
+
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE || 0
                          printf ("Need to supporess the generation of object file specification in backend compiler link line \n");
 #endif
                          file.set_multifile_support(true);

@@ -4983,6 +4983,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library
   // to be linked in. (Not implemented yet).
      set_openmp(false);
+     //string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); // Mac OS complains this function does not exist!
+     string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION); 
      ROSE_ASSERT (get_openmp() == false);
      // We parse OpenMP and then stop now since Building OpenMP AST nodes is a work in progress.
      // so the default behavior is to turn on them all
@@ -5008,7 +5010,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          //We can later on back end option to turn on their OpenMP handling flags,
          //like -fopenmp for GCC, depending on the version of gcc
          //which will define this macro for GCC
-          argv.push_back("-D_OPENMP");
+          argv.push_back(ompmacro);
         }
 
      // Process sub-options for OpenMP handling, Liao 5/31/2009
@@ -5026,7 +5028,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back("-D_OPENMP");
+         argv.push_back(ompmacro);
        }
      }
 
@@ -5045,7 +5047,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back("-D_OPENMP");
+         argv.push_back(ompmacro);
        }
      }
 
@@ -5065,7 +5067,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back("-D_OPENMP");
+         argv.push_back(ompmacro);
        }
      }
 
@@ -8353,12 +8355,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // the backend).  I don't think there is a way to not see code in the front-end, yet see it in the backend.
           compilerNameString.push_back("-DUSE_ROSE_BACKEND");
 
-       // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
+       // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP=OMPVERSION should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
           if (get_openmp_lowering()||get_openmp())  
-             {
-               compilerNameString.push_back("-D_OPENMP");
-             }
+          {
+            string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION);
+            compilerNameString.push_back(ompmacro);
+          }
         }
 
   // DQ (3/31/2004): New cleaned up source file handling
@@ -8973,12 +8976,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        }
 #endif
                   }
-#endif                  
-                 // Liao 5/1/2015: support both single and multiple files like: identityTranslator main.c
-                 // introduce -c to compile this single file first.
-                 // the linking step will happen when handling SgProject
+#endif
+
+#if 0
+                 printf ("In SgFile::buildCompilerCommandLineOptions(): Adding \"-c\" to backend command line! \n");
+#endif
+              // Liao 5/1/2015: support both single and multiple files like: identityTranslator main.c
+              // introduce -c to compile this single file first.
+              // the linking step will happen when handling SgProject
                  compilerNameString.push_back("-c");
-                 // compilation step of the two (compile+ link) steps
+              // compilation step of the two (compile + link) steps
                  std::string objectFileName = generateOutputFileName();
 
                  compilerNameString.push_back("-o");

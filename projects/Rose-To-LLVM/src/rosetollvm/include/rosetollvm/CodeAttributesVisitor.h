@@ -29,7 +29,11 @@ protected:
 
     std::vector<SgSourceFile *> sourceFiles;
 
-    void processVariableDeclaration(SgInitializedName *);
+    bool isTrivialCast(SgType *type1, SgType *type2);
+    
+    void oldprocessVariableDeclaration(SgInitializedName *);
+    void preprocessVariableDeclaration(SgInitializedName *);
+    void postprocessVariableDeclaration(SgInitializedName *);
 
     /**
      * This stack keeps track of the current switch statement, if any, is being processed.
@@ -50,6 +54,8 @@ protected:
         return getFunctionDefinition(scope -> get_scope());
     }
 
+    long long computeCaseValue(SgExpression *);
+
     void checkVariableDeclaration(SgVarRefExp *);
     void checkFunctionDeclaration(SgFunctionRefExp *);
     void tagAggregate(SgAggregateInitializer *, SgType *, bool);
@@ -61,7 +67,10 @@ protected:
     virtual void preVisit(SgNode *);
     virtual void preVisitExit(SgNode *);
 
-    void addBooleanExtensionAttributeIfNeeded(SgExpression *);
+    void addBooleanCast(SgExpression *);
+    void promoteExpression(SgExpression *n, SgType *target_type);
+    void demoteExpression(SgExpression *n, SgType *target_type);
+    void addBooleanExtensionAttributeIfNeeded(SgExpression *, SgType *target_type = NULL);
     void addConversionAttributeIfNeeded(SgBinaryOp *);
     void checkIntegralOperation(SgBinaryOp *);
 

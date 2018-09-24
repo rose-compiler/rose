@@ -23,7 +23,7 @@ main(int argc, char** argv)
      AstTests::runAllTests(project);
 
   // Build a Library Identification database (in the current directory).
-     generateLibraryIdentificationDataBase( "testLibraryIdentification.db", project );
+     generateLibraryIdentificationDataBase( "testLibraryIdentification.db", "foo", "0.0", project );
 
 #if 0
   // Match functions in AST against Library Identification database.

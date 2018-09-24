@@ -1006,6 +1006,44 @@ public:
     virtual void memoryIsExecutable(bool b) { settings_.loader.memoryIsExecutable = b; }
     /** @} */
 
+    /** Property: Link object files.
+     *
+     *  Object files (".o" files) typically don't contain information about how the object is mapped into virtual memory, and
+     *  thus machine instructions are not found. Turning on linking causes all the object files (and possibly library archives)
+     *  to be linked into an output file and the output file is analyzed instead.
+     *
+     *  See also, @ref linkArchives, @ref linkerCommand.
+     *
+     * @{ */
+    bool linkObjectFiles() const /*final*/ { return settings_.loader.linkObjectFiles; }
+    virtual void linkObjectFiles(bool b) { settings_.loader.linkObjectFiles = b; }
+    /** @} */
+
+    /** Property: Link library archives.
+     *
+     *  Static library archives (".a" files) contain object files that typically don't have information about where the object
+     *  is mapped in virtual memory. Turning on linking causes all archives (and possibly object files) to be linked into an
+     *  output file that is analyzed instead.
+     *
+     *  See also, @ref linkObjectFiles, @ref linkerCommand.
+     *
+     * @{ */
+    bool linkStaticArchives() const /*final*/ { return settings_.loader.linkStaticArchives; }
+    virtual void linkStaticArchives(bool b) { settings_.loader.linkStaticArchives = b; }
+    /** @} */
+
+    /** Property: Linker command.
+     *
+     *  This is the Bourne shell command used to link object files and static library archives depending on the @ref
+     *  linkObjectFiles and @ref linkStaticArchives properties.  The "%o" substring is replaced by the name of the linker output
+     *  file, and the "%f" substring is replaced by a space separated list of input files (the objects and libraries). These
+     *  substitutions are escaped using Bourne shell syntax and thus should not be quoted.
+     *
+     * @{ */
+    const std::string& linkerCommand() const /*final*/ { return settings_.loader.linker; }
+    virtual void linkerCommand(const std::string &cmd) { settings_.loader.linker = cmd; }
+    /** @} */
+
     /** Property: Disassembler.
      *
      *  This property holds the disassembler to use whenever a new partitioner is created. If null, then the engine will choose
@@ -1077,6 +1115,17 @@ public:
      * @{ */
     bool discontiguousBlocks() const /*final*/ { return settings_.partitioner.discontiguousBlocks; }
     virtual void discontiguousBlocks(bool b) { settings_.partitioner.discontiguousBlocks = b; }
+    /** @} */
+
+    /** Property: Maximum size for basic blocks.
+     *
+     *  This property is the maximum size for basic blocks measured in number of instructions. Any basic block that would
+     *  contain more than this number of instructions is split into multiple basic blocks.  Having smaller basic blocks makes
+     *  some intra-block analysis faster, but they have less information.  A value of zero indicates no limit.
+     *
+     * @{ */
+    size_t maxBasicBlockSize() const /*final*/ { return settings_.partitioner.maxBasicBlockSize; }
+    virtual void maxBasicBlockSize(size_t n) { settings_.partitioner.maxBasicBlockSize = n; }
     /** @} */
 
     /** Property: Whether to find function padding.

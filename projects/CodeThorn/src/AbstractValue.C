@@ -21,7 +21,7 @@ using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
-SgTypeSizeMapping* AbstractValue::_typeSizeMapping=new SgTypeSizeMapping();
+SgTypeSizeMapping* AbstractValue::_typeSizeMapping=nullptr;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -49,9 +49,11 @@ AbstractValue::AbstractValue(bool val) {
 }
 
 void AbstractValue::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
+#if 0
   if(AbstractValue::_typeSizeMapping!=nullptr) {
     delete _typeSizeMapping;
   }
+#endif
   AbstractValue::_typeSizeMapping=typeSizeMapping;
 }
 
@@ -140,6 +142,12 @@ AbstractValue::AbstractValue(long double x) {
   initFloat(BITYPE_LONG_DOUBLE,x);
 }
 
+AbstractValue AbstractValue::createNullPtr() {
+  AbstractValue aval(0);
+  // create an integer 0, not marked as pointer value.
+  return aval;
+}
+
 AbstractValue 
 AbstractValue::createAddressOfVariable(SPRAY::VariableId varId) {
   return AbstractValue::createAddressOfArray(varId);
@@ -185,13 +193,18 @@ bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && 
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
 bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
-bool AbstractValue::isPtr() const {return valueType==AbstractValue::PTR;}
+bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 
 long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
-    else if(isPtr()) return getVariableId().getIdCode()+getIntValue();
+  else if(isPtr()) {
+    VariableId varId=getVariableId();
+    ROSE_ASSERT(varId.isValid());
+    return varId.getIdCode()+getIntValue();
+  }
   else throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
 }
 
@@ -535,7 +548,7 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
     return getFloatValueString();
   }
   case PTR: {
-    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
+    //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
         <<variableId.toString(vim)
@@ -543,9 +556,9 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
         <<getIntValue()
         <<")";
       return ss.str();
-    } else {
-      return variableId.toString(vim);
-    }
+      //    } else {
+      //      return variableId.toString(vim);
+      //    }
   }
   default:
     throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");

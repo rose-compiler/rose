@@ -10,8 +10,10 @@ libbinaryMidend_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
     AbstractLocation.C						\
+    BinaryAstHash.C						\
     BinaryBestMapAddress.C					\
     BinaryCallingConvention.C					\
+    BinaryCodeInserter.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDemangler.C						\
@@ -61,18 +63,14 @@ else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
 endif
 
-if ROSE_USE_SQLITE_DATABASE
-libbinaryMidend_la_SOURCES +=					\
-    libraryIdentification/libraryIdentification_reader.C	\
-    libraryIdentification/libraryIdentification_writer.C	\
-    libraryIdentification/functionIdentification.C 
-endif
 
 pkginclude_HEADERS =					\
     AbstractLocation.h					\
     BinaryAnalysisUtils.h				\
+    BinaryAstHash.h					\
     BinaryBestMapAddress.h				\
     BinaryCallingConvention.h				\
+    BinaryCodeInserter.h				\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDemangler.h					\
@@ -121,9 +119,24 @@ pkginclude_HEADERS =					\
     instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
-    instructionSemantics/TraceSemantics2.h		\
-    libraryIdentification/functionIdentification.h	\
-    libraryIdentification/libraryIdentification.h
+    instructionSemantics/TraceSemantics2.h		
 
+if ROSE_USE_SQLITE_DATABASE
+libbinaryMidend_la_SOURCES +=					\
+    libraryIdentification/FunctionIdDatabaseInterface.C         \
+    libraryIdentification/libraryIdentification.C
+#    libraryIdentification/libraryIdentification_reader.C	\
+#    libraryIdentification/libraryIdentification_writer.C	\
+#    libraryIdentification/functionIdentification.C 
+
+pkginclude_HEADERS +=					\
+    libraryIdentification/FunctionIdDatabaseInterface.h \
+    libraryIdentification/FunctionInfo.h \
+    libraryIdentification/libraryIdentification.h \
+    libraryIdentification/LibraryInfo.h
+#    libraryIdentification/functionIdentification.h	\
+#    libraryIdentification/libraryIdentification.h
+
+endif
 
 EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C

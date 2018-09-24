@@ -4,7 +4,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#define ALTERNATIVE_LOCAL_EDGE_HANDLING
+//#define ALTERNATIVE_LOCAL_EDGE_HANDLING
 
 #include "sage3basic.h"
 
@@ -16,10 +16,23 @@
 
 using namespace SPRAY;
 using namespace std;
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility CFAnalysis::logger;
+void CFAnalysis::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::CFAnalysis", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
 
 CFAnalysis::CFAnalysis(Labeler* l):labeler(l),_createLocalEdge(false){
+  initDiagnostics();
 }
 CFAnalysis::CFAnalysis(Labeler* l, bool createLocalEdge):labeler(l),_createLocalEdge(createLocalEdge){
+  initDiagnostics();
 }
 void CFAnalysis::setCreateLocalEdge(bool createLocalEdge) {
   _createLocalEdge=createLocalEdge;
@@ -120,16 +133,19 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
-  //cout<<"STATUS: establishing inter-flow ..."<<endl;
+  cout<<"STATUS: establishing inter-flow ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
-  //int callLabsNum=callLabs.size();
-  //cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
+  int callLabsNum=callLabs.size();
+  cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
   int callLabNr=0;
+  int externalFunCalls=0;
+  int externalFunCallsWithoutDecl=0;
+  int functionsFound=0;
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
     SgNode* callNode=getNode(*i);
-    //cout<<"INFO: creating inter-flow for "<<callNode->unparseToString()<<endl;
+    //cout<<"INFO: Functioncall: creating inter-flow for "<<callNode->unparseToString()<<endl;
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
@@ -140,26 +156,36 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       //cout<<" [no definition found]"<<endl;
       // we were not able to find the funDef in the AST
       //cout << "STATUS: External function ";
-      //if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
-      //  cout << SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
-      //else
-      //  cout << "cannot be determined."<<endl;
+      SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+      if(funDecl) {
+        //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
+        externalFunCalls++;
+      } else {
+        //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
+        externalFunCallsWithoutDecl++;
+      }
       callLabel=*i;
       entryLabel=Labeler::NO_LABEL;
       exitLabel=Labeler::NO_LABEL;
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
       //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
     } else {
-      //cout<<" [definition found]"<<endl;
+      cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
       callLabel=*i;
       entryLabel=labeler->functionEntryLabel(funDef);
       exitLabel=labeler->functionExitLabel(funDef);
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
+      functionsFound++;
     }
     interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
     callLabNr++;
   }
-  //cout<<"STATUS: inter-flow established."<<endl;
+  cout<<"STATUS: inter-flow established."<<endl;
+  cout<<"INFO: Call labels: "<<callLabNr<<endl;
+  cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+  cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+  cout<<"INFO: functions found: "<<functionsFound<<endl;
+
   return interFlow;
 }
 
@@ -272,19 +298,20 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
 
     // all omp statements
+  case V_SgOmpTargetStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement:
+  case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
-  case V_SgOmpForStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
@@ -470,20 +497,28 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
+  case V_SgOmpTargetStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement: {
+    // the final label is the final label of the child node's construct
+    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
+    LabelSet finalLabelSet=finalLabels(nextNestedStmt);
+    finalSet+=finalLabelSet;
+    return finalSet;
+  }
+    
     // all omp statements
+  case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
-  case V_SgOmpForStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
@@ -512,8 +547,27 @@ Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
   LabelSet finalSets1=finalLabels(s1);
   Label initLabel2=initialLabel(s2);
   for(LabelSet::iterator i=finalSets1.begin();i!=finalSets1.end();++i) {
+
+    // special case: case-blocks of switch: an edge between case-labels never goes
+    // directly from case to case, but instead to the other case's following statement (to
+    // model switch-case fallthrough). The edge directly to each case label is
+    // created by the CFG creation for the switch node.
+    SgNode* node=getNode(initLabel2);
+    if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
+      // adjust init label to stmt following the case label (the child of the SgCaseStmt node).
+      SgNode* body=caseStmt->get_body();
+      ROSE_ASSERT(body);
+      initLabel2=initialLabel(body);
+    } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(node)) {
+      SgNode* body=caseStmt->get_body();
+      ROSE_ASSERT(body);
+      initLabel2=initialLabel(body);
+    }
+
     Edge e(*i,initLabel2);
-    if(SgNodeHelper::isCond(labeler->getNode(*i))) { // special case (all TRUE edges are created explicitly)
+
+    // special case FALSE edges of conditions (all TRUE edges are created by the respective CFG construction)
+    if(SgNodeHelper::isCond(labeler->getNode(*i))) { 
       e.addType(EDGE_FALSE);
     }
     e.addType(EDGE_FORWARD);
@@ -701,6 +755,7 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         EdgeTypeSet tset=localEdgeIter.getTypes();
         tset.erase(EDGE_LOCAL);
         tset.insert(EDGE_EXTERNAL);
+        getLabeler()->setExternalFunctionCallLabel((*i).call);
         localEdgeIter.setTypes(tset);
 #endif
         //cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
@@ -711,7 +766,9 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::sourceLineColumnToString(getNode((*i).call))<<endl;
       }
 #else
-      Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);      
+      Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
+      // register in Labaler as external function call
+      getLabeler()->setExternalFunctionCallLabel((*i).call);
       flow.insert(externalEdge);
 #endif
     } else {
@@ -926,6 +983,8 @@ Flow CFAnalysis::flow(SgNode* node) {
 
   switch (node->variantT()) {
   case V_SgFunctionDefinition: {
+    
+    //cout<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<<endl;
     SgBasicBlock* body=isSgFunctionDefinition(node)->get_body();
     Edge edge=Edge(labeler->functionEntryLabel(node),EDGE_FORWARD,initialLabel(body));
     edgeSet.insert(edge);
@@ -994,20 +1053,33 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgEnumDeclaration:
     return edgeSet;
 
-    // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
+    // parallel nested omp constructs
+  case V_SgOmpTargetStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement: {
+    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
+    // need to compute flow of next stmt because it is nested (and not at basic-block level)
+    Flow nextNestedStmtFlow=flow(nextNestedStmt);
+    edgeSet+=nextNestedStmtFlow;
+
+    // the label is the final label (but function finalLabels cannot be used here because it gives the final labels of the entire nested construct)
+    Label lab=getLabel(node);
+    Edge edge1=Edge(lab,EDGE_FORWARD,initialLabel(nextNestedStmt));
+    edgeSet.insert(edge1);
+    return edgeSet;
+  }
+    // these omp statements do not generate edges in addition to the ingoing and outgoing edge
+  case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
-  case V_SgOmpForStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
-  case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
@@ -1187,7 +1259,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     SgNode* condNode=SgNodeHelper::getCond(node);
     if(!condNode)
-      throw SPRAY::Exception("Error: for-loop: empty condition not supported yet.");
+      throw SPRAY::Exception("Error: for-loop: empty condition not supported. Normalization required.");
     Flow flowInitToCond=flow(lastNode,condNode);
     edgeSet+=flowInitToCond;
     Label condLabel=getLabel(condNode);
@@ -1202,7 +1274,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     // Increment Expression:
     SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
     if(!incExp)
-      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported yet.");
+      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported. Normalization required.");
     ROSE_ASSERT(incExp);
     Label incExpLabel=getLabel(incExp);
     ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);

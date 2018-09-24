@@ -73,6 +73,9 @@ class CFAnalysis {
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
   static bool isLoopConstructRootNode(SgNode* node);
+ protected:
+  static void initDiagnostics();
+  static Sawyer::Message::Facility logger;
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);

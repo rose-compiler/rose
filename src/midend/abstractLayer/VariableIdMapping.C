@@ -70,12 +70,28 @@ SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varI
 
 SgType* VariableIdMapping::getType(VariableId varId) {
   SgSymbol* varSym=getSymbol(varId);
-  return varSym->get_type();
+  SgType* type=varSym->get_type();
+  if(type) {
+    // TODO: is support for SgTypeOfType necessary as well?
+    if(SgTypedefType* typeDeftype=isSgTypedefType(type)) {
+      while(typeDeftype) {
+        //cout<<"DEBUG: found typedef type: "<<typeDeftype->unparseToString()<<endl;
+        type=typeDeftype->get_base_type();
+        typeDeftype=isSgTypedefType(type);
+      }
+    }
+  }
+  return type;
 }
 
 bool VariableIdMapping::hasReferenceType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgReferenceType(type);
+}
+
+bool VariableIdMapping::hasBoolType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgTypeBool(type);
 }
 
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
@@ -389,6 +405,8 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
       }
     }
   }
+  // creates variableid for each string literal in the entire program
+  registerStringLiterals(project);
   return;
 }
 
@@ -776,4 +794,53 @@ VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNo
 SgExpressionPtrList& VariableIdMapping::getInitializerListOfArrayVariable(VariableId arrayVar) {
   SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
   return SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
+}
+
+std::map<SgStringVal*,VariableId>* VariableIdMapping::getStringLiteralsToVariableIdMapping() {
+  return &sgStringValueToVariableIdMapping;
+}
+
+VariableId VariableIdMapping::getStringLiteralVariableId(SgStringVal* sval) {
+  return sgStringValueToVariableIdMapping[sval];
+}
+
+int VariableIdMapping::numberOfRegisteredStringLiterals() {
+  return (int)sgStringValueToVariableIdMapping.size();
+}
+
+bool VariableIdMapping::isStringLiteralAddress(VariableId stringVarId) {
+  return variableIdToSgStringValueMapping.find(stringVarId)!=variableIdToSgStringValueMapping.end();
+}
+
+void VariableIdMapping::registerStringLiterals(SgNode* root) {
+  string prefix="$string";
+  int num=1;
+  RoseAst ast(root);
+  for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgNode* node=*i;
+    if(SgStringVal* stringVal=isSgStringVal(node)) {
+      //cout<<"registerStringLiterals:: found string literal"<<stringVal->unparseToString()<<endl;
+      if(sgStringValueToVariableIdMapping.find(stringVal)==sgStringValueToVariableIdMapping.end()) {
+        // found new string literal
+        // obtain new variableid
+        stringstream ss;
+        ss<<prefix<<num++;
+        SPRAY::VariableId newVariableId=createAndRegisterNewVariableId(ss.str());
+        sgStringValueToVariableIdMapping[stringVal]=newVariableId;
+        variableIdToSgStringValueMapping[newVariableId]=stringVal;
+        ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
+        //cout<<"registered."<<endl;
+      } else {
+        //cout<<"NOT registered."<<endl;
+      }
+    }
+  }
+}
+
+void VariableIdMapping::setModeVariableIdForEachArrayElement(bool active) {
+  ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active;
+}
+
+bool VariableIdMapping::getModeVariableIdForEachArrayElement() {
+  return modeVariableIdForEachArrayElement;
 }
