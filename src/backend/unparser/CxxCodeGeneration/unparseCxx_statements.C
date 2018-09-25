@@ -972,8 +972,15 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
        // output the type name for each argument
           if (tmp_type != NULL)
              {
+               SgUnparse_Info ninfo(info);
+
+               if (initializedName->get_needs_definitions()) {
+                 ninfo.unset_SkipClassDefinition();
+                 ninfo.unset_SkipEnumDefinition();
+               }
+
             // DQ (5/5/2013): Refactored code used here and in the unparseTemplateArgument().
-               unp->u_type->outputType<SgInitializedName>(initializedName,tmp_type,info);
+               unp->u_type->outputType<SgInitializedName>(initializedName,tmp_type,ninfo);
              }
             else
              {
