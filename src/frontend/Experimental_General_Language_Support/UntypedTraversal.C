@@ -132,6 +132,12 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          currentScope = sg_basic_block;
          break;
       }
+    case V_SgUntypedImageControlStatement:
+      {
+         SgUntypedImageControlStatement* ut_stmt = dynamic_cast<SgUntypedImageControlStatement*>(node);
+         pConverter->convertSgUntypedImageControlStatement(ut_stmt, currentScope);
+         break;
+      }
     case V_SgUntypedLabelStatement:
       {
          SgUntypedLabelStatement* ut_decl = dynamic_cast<SgUntypedLabelStatement*>(node);
@@ -235,6 +241,13 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
 
          break;
       }
+    case V_SgUntypedCaseStatement:
+      {
+         SgUntypedCaseStatement* ut_stmt = dynamic_cast<SgUntypedCaseStatement*>(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertSgUntypedCaseStatement(ut_stmt, children, currentScope);
+         break;
+      }
     case V_SgUntypedExpressionStatement:
       {
          SgUntypedExpressionStatement* ut_stmt = dynamic_cast<SgUntypedExpressionStatement*>(node);
@@ -273,15 +286,14 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedIfStatement* ut_stmt = dynamic_cast<SgUntypedIfStatement*>(node);
          SgNodePtrList children(childAttrs);
-
          sg_node = pConverter->convertSgUntypedIfStatement(ut_stmt, children, currentScope);
          break;
       }
-    case V_SgUntypedCaseStatement:
+    case V_SgUntypedImageControlStatement:
       {
-         SgUntypedCaseStatement* ut_stmt = dynamic_cast<SgUntypedCaseStatement*>(node);
+         SgUntypedImageControlStatement* ut_stmt = dynamic_cast<SgUntypedImageControlStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedCaseStatement(ut_stmt, children, currentScope);
+         pConverter->convertSgUntypedImageControlStatement(ut_stmt, children, currentScope);
          break;
       }
 #if 0

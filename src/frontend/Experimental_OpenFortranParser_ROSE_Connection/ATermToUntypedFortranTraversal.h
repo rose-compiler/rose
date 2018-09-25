@@ -242,6 +242,10 @@ ATbool traverse_ParentIdentifier(ATerm term, std::string & ancestor, std::string
 // R1119
 ATbool traverse_EndSubmoduleStmt(ATerm term, SgUntypedNamedStatement** end_submodule_stmt);
 
+// R1164-2018-N2146
+ATbool traverse_SyncAllStmt   ( ATerm term, SgUntypedStatementList* stmt_list  );
+ATbool traverse_SyncStatList  ( ATerm term, SgUntypedExprListExpression* sync_stat_list);
+
 // R1120
 ATbool traverse_BlockData (ATerm term, SgUntypedScope* scope);
 

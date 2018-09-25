@@ -128,6 +128,11 @@ namespace General_Language_Translation
           e_fortran_else_stmt,
           e_fortran_end_do_stmt,
 
+          e_fortran_sync_all_stmt,
+          e_fortran_sync_stat_list,
+          e_fortran_sync_stat_stat,
+          e_fortran_sync_stat_errmsg,
+
        // CUDA Attributes
        // ---------------
           e_cuda_host,

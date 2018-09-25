@@ -787,6 +787,12 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    else if (traverse_ReturnStmt(term, stmt_list)) {
       // Matched ReturnStmt
    }
+
+// Image control statements (F2018)
+   else if (traverse_SyncAllStmt(term, stmt_list)) {
+      // Matched SyncAllStmt
+   }
+
    else {
       return ATfalse;
    }
@@ -2050,22 +2056,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_PartRef(ATerm term, SgUntypedExp
          //TODO_SgUntyped - need way to handle list
       } else return ATfalse;
 
-      cout << ".x........ creating new RefExpr, keyword: " << keyword << " name: " << name << endl;
-
-      SgUntypedExpression* expr = new SgUntypedReferenceExpression(keyword, name);
-
-      cout << ".x........ created  new RefExpr, keyword: " << expr << endl;
-
-//      *var_expr = expr;
-
       *var_expr = new SgUntypedReferenceExpression(keyword, name);
-
-      cout << ".x........ will set source position \n";
-
+      ROSE_ASSERT(*var_expr);
       setSourcePosition(*var_expr, term);
-
-      cout << ".x........ did set source position for " << *var_expr;
-
    }
    else return ATfalse;
 
@@ -4059,6 +4052,98 @@ ATbool ATermToUntypedFortranTraversal::traverse_EndBlockDataStmt(ATerm term, SgU
 
    *end_block_data_stmt = new SgUntypedNamedStatement(label,keyword,name);
    setSourcePositionExcludingTerm(*end_block_data_stmt, term, term_eos);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-all-stmt (R1164-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SyncAllStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SyncAllStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "SyncAllStmt(<term>,<term>,<term>)", &t_label, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_SyncStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_sync_all_stmt;
+
+   SgUntypedImageControlStatement* sync_all_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, NULL, sync_stat_list, false, false);
+   ROSE_ASSERT(sync_all_stmt);
+   setSourcePositionExcludingTerm(sync_all_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(sync_all_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-stat-list (R1165-F2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SyncStatList( ATerm term, SgUntypedExprListExpression* sync_stat_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SyncStatList: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_expr;
+   SgUntypedExprListExpression* status_container = NULL;
+
+   if (ATmatch(term, "no-list()")) {
+   }
+   else {
+      ATermList tail = (ATermList) ATmake("<term>", term);
+      while (! ATisEmpty(tail)) {
+         SgUntypedExpression* status = NULL;
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (ATmatch(head, "STAT(<term>)", &t_expr)) {
+            traverse_Expression(t_expr, &status);
+            status_container = new SgUntypedExprListExpression(e_fortran_sync_stat_stat);
+         }
+         else if (ATmatch(head, "ERRMSG(<term>)", &t_expr)) {
+            traverse_Expression(t_expr, &status);
+            status_container = new SgUntypedExprListExpression(e_fortran_sync_stat_errmsg);
+         }
+
+         else {
+            std::cerr << "ERROR: unknown sync-stat" << std::endl;
+            return ATfalse;
+         }
+
+         ROSE_ASSERT(status);
+         ROSE_ASSERT(status_container);
+
+         status_container->get_expressions().push_back(status);
+         sync_stat_list->get_expressions().push_back(status_container);
+      }
+   }
 
    return ATtrue;
 }

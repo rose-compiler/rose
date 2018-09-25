@@ -258,6 +258,8 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseEndfileStatement         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWaitStatement            (SgStatement* stmt, SgUnparse_Info& info);
 
+          virtual void unparseSyncAllStatement         (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseAssociateStatement       (SgStatement* stmt, SgUnparse_Info& info);
 
        // Unparse base class data members

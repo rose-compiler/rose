@@ -1677,6 +1677,44 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
        }
    }
 
+SgImageControlStatement*
+UntypedConverter::convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      switch (ut_stmt->get_statement_enum())
+        {
+
+    // Nothing so far for general languages
+       default:
+          {
+             cerr << "UntypedConverter::convertSgUntypedImageControlStatement: implemented only for Fortran, statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+       }
+
+   // Should never reach here.
+      return NULL;
+   }
+
+SgImageControlStatement*
+UntypedConverter::convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      switch (ut_stmt->get_statement_enum())
+        {
+
+    // Nothing so far for general languages
+       default:
+          {
+             cerr << "UntypedConverter::convertSgUntypedImageControlStatement: implemented only for Fortran, statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+       }
+
+   // Should never reach here.
+      return NULL;
+   }
+
 SgReturnStmt*
 UntypedConverter::convertSgUntypedReturnStatement (SgUntypedReturnStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
@@ -2185,9 +2223,10 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 
    int expr_enum = ut_expr_list->get_expression_enum();
 
-   // try doing this for specific nodes only, perhaps it will work for all of the expression lists
-   if (expr_enum == General_Language_Translation::e_case_selector ||
-       expr_enum == General_Language_Translation::e_argument_list   )
+// Image control status lists are converted explicitly (not via a traversal) so they don't belong here
+   if ( expr_enum == General_Language_Translation::e_case_selector ||
+        expr_enum == General_Language_Translation::e_argument_list
+      )
      {
         sg_expr_list = new SgExprListExp();
         ROSE_ASSERT(sg_expr_list);
@@ -2200,6 +2239,10 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
              ROSE_ASSERT(sg_expr);
              sg_expr_list->append_expression(sg_expr);
           }
+     }
+   else
+     {
+        cerr << "WARNING: convertSgUntypedExprListExpression: unknown enum, is " << ut_expr_list->get_expression_enum() << endl;
      }
 
    return sg_expr_list;
