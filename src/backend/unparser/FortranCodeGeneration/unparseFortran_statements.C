@@ -235,6 +235,9 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgEndfileStatement:           unparseEndfileStatement(stmt, info);      break;
           case V_SgWaitStatement:              unparseWaitStatement(stmt, info);         break;
 
+       // Rasmussen (9/21/2018): These are derived from SgImageControlStatement
+          case V_SgSyncAllStatement:           unparseSyncAllStatement(stmt, info);      break;
+
        // DQ (11/30/2007): Added support for associate statement (F2003)
           case V_SgAssociateStatement:         unparseAssociateStatement(stmt, info);    break;
 
@@ -3540,6 +3543,34 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
    }
 
 void 
+FortranCodeGeneration_locatedNode::unparseSyncAllStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncAllStatement* sync_stmt = isSgSyncAllStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_comma = false;
+
+     curprint("SYNC ALL (");
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERR_MSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+
+     unp->cur.insert_newline(1);
+   }
+
+void
 FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
