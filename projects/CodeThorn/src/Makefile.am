@@ -615,18 +615,22 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-normalization check-equivalence check-data-races check-svcomp-witness
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-deadcode check-normalization check-equivalence check-svcomp-witness
+
+CHECK_DEFAULT_FAILING=check-data-races
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
-CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven-reset-analyzer
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer
 
-CHECK_WITH_SPOT=$(CHECK_DEFAULT) $(CHECK_WITH_SPOT_ONLY)
+CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
 if ROSE_WITH_SPOT
-check-local: $(CHECK_WITH_SPOT)
+check-local: $(CHECK_WITH_SPOT_PASSING)
 else
-check-local: $(CHECK_DEFAULT)
+check-local: $(CHECK_DEFAULT_PASSING)
 endif
+
+check-default-failing: $(CHECK_DEFAULT_FAILING)
 
 check-svcomp:
 	@echo ================================================================

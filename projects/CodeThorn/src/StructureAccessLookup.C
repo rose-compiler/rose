@@ -39,13 +39,11 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
   int numUnknownVarType=0;
   int numNonValidVarId=0;
   int numZeroTypeSize=0;
-#if 1
   for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     SgNode* node=*i;
     ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
       //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
-#if 1                
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
@@ -63,7 +61,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               int typeSize=typeSizeMapping->determineTypeSize(varType);
               if(typeSize==0) {
                 numZeroTypeSize++;
-                cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
+                //cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
               }
               
               // different varids can be mapped to the same offset
@@ -89,14 +87,14 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
           }
         }
       }
-#endif
     }
   }
-#endif
+#if 0
   cerr<<"DEBUG: Number of unknown var types: "<<numUnknownVarType<<endl;
   cerr<<"DEBUG: Number of non-valid varids: "<<numNonValidVarId<<endl;
   cerr<<"DEBUG: Number of types with 0 size: "<<numZeroTypeSize<<endl;
   cerr<<"DEBUG: typesize map size: "<<varIdTypeSizeMap.size()<<endl;
+#endif
 }
 
 int StructureAccessLookup::getOffset(SPRAY::VariableId varId) {
