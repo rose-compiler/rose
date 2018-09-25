@@ -249,6 +249,9 @@ test2018_135.C \
 test2018_136.C \
 test2018_137.C \
 ctor-list-init.C \
+rose-1379-a.C \
+rose-1379-b.C \
+rose-1380.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 last.C
 

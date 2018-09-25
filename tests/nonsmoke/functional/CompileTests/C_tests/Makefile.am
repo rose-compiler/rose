@@ -614,6 +614,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_62.c \
      test2018_63.c \
      test2018_64.c \
+     rose-1391-a.c \
+     rose-1391-b.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 FAILING_2017_TESTS = \
