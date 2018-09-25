@@ -1528,7 +1528,7 @@ if (!sgClassType) { \
     // The check ignores const and reference modifiers.
     static bool CheckIfFunctionAcceptsArgumentIgnoreConstRefAndTypedef(SgMemberFunctionDeclaration* decl, SgType * args = NULL){
         // if no args was passed, we will take the class type as the arg
-        args = decl->get_class_scope()->get_declaration()->get_type()->stripType(SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+        args = decl->get_associatedClassDeclaration()->get_type()->stripType(SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE);
         
         // Must not be const or typedef or ref type
         ROSE_ASSERT( isConstType(args) == 0 );

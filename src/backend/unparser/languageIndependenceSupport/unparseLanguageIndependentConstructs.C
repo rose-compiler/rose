@@ -7931,6 +7931,8 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgRealPartOp:
           case V_SgImagPartOp:
                                      precedence_value = 0; break;
+          case V_SgNonrealRefExp:
+                                     precedence_value = 0; break;
 
           default:
              {
