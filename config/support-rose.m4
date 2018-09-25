@@ -2148,6 +2148,14 @@ projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
 projects/StencilManyCore/Makefile
+projects/TemplateAnalysis/Makefile
+projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
+projects/TemplateAnalysis/include/ROSE/proposed/Makefile
+projects/TemplateAnalysis/include/nlohmann/Makefile
+projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
+projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
+projects/TemplateAnalysis/src/Makefile
+projects/TemplateAnalysis/examples/Makefile
 projects/TileK/Makefile
 projects/TileK/doc/Makefile
 projects/TileK/doc/dlx.doxy

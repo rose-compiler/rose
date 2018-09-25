@@ -44,10 +44,20 @@ MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(SgTem
   // SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node);
      if (templateDeclaration != NULL)
         {
+#if 0
+          printf ("In MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated():\n");
+          printf ("  --- templateDeclaration = %p (%s)\n", templateDeclaration, templateDeclaration ? templateDeclaration->class_name().c_str() : "");
+          if (isSgTemplateClassDeclaration(templateDeclaration)) {
+            printf ("  --- templateDeclaration->get_specialization() = %d\n", isSgTemplateClassDeclaration(templateDeclaration)->get_specialization());
+          }
+#endif
        // Get the structural representation from the parent since in the case of a 
        // global function marked as friend we want to ignore the scope.
 
           SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
+#if 0
+          printf ("  --- parentScope = %p (%s)\n", parentScope, parentScope ? parentScope->class_name().c_str() : "");
+#endif
           SgGlobal* globalScope = isSgGlobal(parentScope);
           SgNamespaceDefinitionStatement* namespaceScope = isSgNamespaceDefinitionStatement(parentScope);
           if (globalScope != NULL || namespaceScope != NULL)

@@ -3810,6 +3810,30 @@ SgVarRefExp::cfgInEdges(unsigned int idx)
      return result;
    }
 
+unsigned int
+SgNonrealRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgNonrealRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgNonrealRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
 // DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
 unsigned int
 SgCompoundLiteralExp::cfgIndexForEnd() const
