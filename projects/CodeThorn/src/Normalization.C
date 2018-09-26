@@ -6,6 +6,7 @@
 #include "SgNodeHelper.h"
 #include "CFAnalysis.h"
 #include <list>
+#include "AstConsistencyTests.h"
 
 // Author: Markus Schordan, 2018
 
@@ -95,10 +96,13 @@ namespace SPRAY {
     // (i) create null statement
     SgNullStatement* nullStmt=SageBuilder::buildNullStatement();
     label->set_statement(nullStmt);
-    stmt->set_parent(0);
+    nullStmt->set_parent(label);
+    stmt->set_parent(0); // unset parent (was label)
     // (ii) insert statement stmt after label
     bool autoMovePreprocessingInfo=true;
+    // sets parent pointer of stmt
     SageInterface::insertStatementAfter(label,stmt,autoMovePreprocessingInfo);
+    ROSE_ASSERT(label->get_parent()==stmt->get_parent());
   }
 
   void Normalization::normalizeAllVariableDeclarations(SgNode* root) {
@@ -167,6 +171,10 @@ namespace SPRAY {
   void Normalization::normalizeAst(SgNode* root, unsigned int level) {
     options.configureLevel(level);
     normalizeAst(root);
+    // AST consistency tests
+    if(SgProject* project=isSgProject(root)) {
+      AstTests::runAllTests(project);
+    }
   }
 
   void Normalization::normalizeAst(SgNode* root) {
@@ -245,7 +253,9 @@ namespace SPRAY {
 
       // (i) replace while-condition with constant 1 condition
       SgStatement* oldWhileCond=isSgStatement(SgNodeHelper::getCond(stmt));
-      SgNodeHelper::setCond(stmt,SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1)));
+      SgExprStatement* exprStmt=SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1));
+      SgNodeHelper::setCond(stmt,exprStmt);
+      exprStmt->set_parent(stmt);
 
       // (iii) generate if-statement with old while-condition
       SgIfStmt* ifStmt=SageBuilder::buildIfStmt(oldWhileCond,

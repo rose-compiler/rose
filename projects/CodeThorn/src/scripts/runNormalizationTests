@@ -19,7 +19,7 @@ for testNumber in $testNumbers; do
         benchmarkname=$(basename $benchmark)
         echo -n "Testing $benchmarkname : "
         g++ $benchmark
-        ./codethorn ${OPTIONS} $benchmark --normalize-all=yes --unparse=yes > /dev/null
+        ./codethorn ${OPTIONS} $benchmark --normalize-all=yes --unparse=yes #> /dev/null
         g++ rose_${benchmarkname} 
         if [ ! $? -eq 0 ]
         then
