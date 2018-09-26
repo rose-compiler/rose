@@ -246,6 +246,8 @@ ATbool traverse_EndSubmoduleStmt(ATerm term, SgUntypedNamedStatement** end_submo
 ATbool traverse_SyncAllStmt   ( ATerm term, SgUntypedStatementList* stmt_list  );
 ATbool traverse_SyncStatList  ( ATerm term, SgUntypedExprListExpression* sync_stat_list);
 
+ATbool traverse_SyncMemoryStmt( ATerm term, SgUntypedStatementList* stmt_list  );
+
 // R1120
 ATbool traverse_BlockData (ATerm term, SgUntypedScope* scope);
 

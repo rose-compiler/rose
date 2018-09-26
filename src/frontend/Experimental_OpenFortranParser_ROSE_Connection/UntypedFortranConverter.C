@@ -624,9 +624,11 @@ UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement
              labelStatement->set_scope(currentFunctionScope);
              ROSE_ASSERT(labelStatement->get_scope() != NULL);
 
-             SageInterface::appendStatement(labelStatement, scope);
+          // SageInterface should be used but probably can't until SgFortranContinueStmt is used
+          // SageInterface::appendStatement(labelStatement, scope);
+             scope->append_statement(labelStatement);
 
-          // TODO - why does this only work here??????
+          // TODO - why does this only work here?????? (this may be an old comment; check if need to pass scope immediately below)
           // UntypedFortranConverter::convertLabel(ut_stmt, labelStatement, currentFunctionScope);
              UntypedFortranConverter::convertLabel(ut_stmt, labelStatement);
 
@@ -662,9 +664,34 @@ UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageCo
         {
         case e_fortran_sync_all_stmt:
           {
-             cout << "-dn- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
-                  << ut_stmt->get_statement_enum() << " e_fortran_sync_all_stmt"<< endl;
              sg_stmt = new SgSyncAllStatement();
+
+             SgUntypedExprListExpression* ut_status_list = ut_stmt->get_status_list();
+             ROSE_ASSERT(ut_status_list);
+
+             BOOST_FOREACH(SgUntypedExpression* ut_expr, ut_status_list->get_expressions())
+                {
+                   SgUntypedExprListExpression* ut_status_container = isSgUntypedExprListExpression(ut_expr);
+                   ROSE_ASSERT(ut_status_container);
+
+                   SgExpression* sg_expr = convertSgUntypedExpression(ut_status_container->get_expressions().front());
+                   ROSE_ASSERT(sg_expr);
+
+                   switch (ut_status_container->get_expression_enum())
+                     {
+                     case e_fortran_sync_stat_stat:    sg_stmt->set_stat    (sg_expr);  break;
+                     case e_fortran_sync_stat_errmsg:  sg_stmt->set_err_msg (sg_expr);  break;
+                     default: ROSE_ASSERT(0);
+                     }
+
+                }
+             break;
+          }
+        case e_fortran_sync_memory_stmt:
+          {
+             cout << "-dn- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
+                  << ut_stmt->get_statement_enum() << " e_fortran_sync_memory_stmt"<< endl;
+             sg_stmt = new SgSyncMemoryStatement();
              cout << "-dn- sg_stmt = " << sg_stmt << endl;
 
              SgUntypedExprListExpression* ut_status_list = ut_stmt->get_status_list();
@@ -719,9 +746,10 @@ UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageCo
       switch (ut_stmt->get_statement_enum())
         {
         case General_Language_Translation::e_fortran_sync_all_stmt:
+        case General_Language_Translation::e_fortran_sync_memory_stmt:
           {
              cout << "-up- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
-                  << ut_stmt->get_statement_enum() << " e_fortran_sync_all_stmt"<< endl;
+                  << ut_stmt->get_statement_enum() << " e_fortran_sync_all/memory_stmt"<< endl;
              SgStatement* sg_node = scope->getStatementList().back();
              cout << "-up- sg_node = " << sg_node << endl;
              SgImageControlStatement* sg_stmt = dynamic_cast<SgImageControlStatement*>(sg_node);

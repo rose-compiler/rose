@@ -615,6 +615,9 @@ SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
 SgSyncAllStatement
+SgSyncImagesStatement
+SgSyncMemoryStatement
+SgSyncTeamStatement
 SgJavaThrowStatement
 SgJavaForEachStatement
 SgJavaSynchronizedStatement

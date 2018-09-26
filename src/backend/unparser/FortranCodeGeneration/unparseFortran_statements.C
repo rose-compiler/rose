@@ -237,6 +237,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
        // Rasmussen (9/21/2018): These are derived from SgImageControlStatement
           case V_SgSyncAllStatement:           unparseSyncAllStatement(stmt, info);      break;
+          case V_SgSyncMemoryStatement:        unparseSyncMemoryStatement(stmt, info);   break;
 
        // DQ (11/30/2007): Added support for associate statement (F2003)
           case V_SgAssociateStatement:         unparseAssociateStatement(stmt, info);    break;
@@ -3551,6 +3552,34 @@ FortranCodeGeneration_locatedNode::unparseSyncAllStatement(SgStatement* stmt, Sg
      bool print_comma = false;
 
      curprint("SYNC ALL (");
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERR_MSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncMemoryStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncMemoryStatement* sync_stmt = isSgSyncMemoryStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_comma = false;
+
+     curprint("SYNC MEMORY (");
 
      if (sync_stmt->get_stat())
         {

@@ -792,6 +792,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    else if (traverse_SyncAllStmt(term, stmt_list)) {
       // Matched SyncAllStmt
    }
+   else if (traverse_SyncMemoryStmt(term, stmt_list)) {
+      // Matched SyncMemoryStmt
+   }
 
    else {
       return ATfalse;
@@ -4092,11 +4095,56 @@ ATbool ATermToUntypedFortranTraversal::traverse_SyncAllStmt(ATerm term, SgUntype
 
    int stmt_enum = e_fortran_sync_all_stmt;
 
-   SgUntypedImageControlStatement* sync_all_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, NULL, sync_stat_list, false, false);
+   SgUntypedImageControlStatement* sync_all_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, NULL, sync_stat_list);
    ROSE_ASSERT(sync_all_stmt);
    setSourcePositionExcludingTerm(sync_all_stmt, term, t_eos);
 
    stmt_list->get_stmt_list().push_back(sync_all_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-memory-stmt (R1168-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SyncMemoryStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SyncMemoryStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "SyncMemoryStmt(<term>,<term>,<term>)", &t_label, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_SyncStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_sync_memory_stmt;
+
+   SgUntypedImageControlStatement* sync_memory_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, NULL, sync_stat_list);
+   ROSE_ASSERT(sync_memory_stmt);
+   setSourcePositionExcludingTerm(sync_memory_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(sync_memory_stmt);
 
    return ATtrue;
 }
