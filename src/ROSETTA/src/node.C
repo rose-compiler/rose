@@ -1385,6 +1385,9 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     InitializedName.setDataPrototype     ( "bool", "needs_definitions", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      JavaMemberValuePair.setFunctionPrototype     ( "HEADER_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");
      JavaMemberValuePair.setDataPrototype("SgName","name", "= NULL",

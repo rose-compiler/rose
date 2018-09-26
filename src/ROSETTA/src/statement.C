@@ -929,7 +929,7 @@ Grammar::setUpStatements ()
   // DQ (7/25/2014): Adding support for C11 static assertions.
      StaticAssertionDeclaration.setFunctionPrototype ( "HEADER_STATIC_ASSERTION_DECLARATION", "../Grammar/Statement.code" );
      StaticAssertionDeclaration.setDataPrototype ( "SgExpression*", "condition", "= NULL",
-                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      StaticAssertionDeclaration.setDataPrototype ( "SgName", "string_literal", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

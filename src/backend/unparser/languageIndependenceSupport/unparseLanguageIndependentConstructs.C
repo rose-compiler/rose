@@ -5736,7 +5736,10 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      ROSE_ASSERT(enum_val != NULL);
 
 #if 0
-     printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
+     printf ("In Unparse_ExprStmt::unparseEnumVal:\n");
+     printf ("  -- info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
+     printf ("  -- enum_val->get_requiresNameQualification() = %s\n", enum_val->get_requiresNameQualification() ? "true" : "false");
+     printf ("  -- enum_val->get_qualified_name_prefix() = %s\n", enum_val->get_qualified_name_prefix().getString().c_str());
 #endif
 #if 0
      curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");

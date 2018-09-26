@@ -2050,6 +2050,13 @@ projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/RaaS/Makefile
+projects/RaaS/scripts/Makefile
+projects/RaaS/src/Makefile
+projects/RaaS/include/nlohmann/Makefile
+projects/RaaS/examples/demo/Makefile
+projects/RaaS/examples/demo/compile_commands.json
+projects/RaaS/examples/kripke/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
