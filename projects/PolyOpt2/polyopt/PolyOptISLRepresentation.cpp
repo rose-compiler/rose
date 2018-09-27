@@ -57,6 +57,9 @@
 
 #include <polyopt/PolyOptISLRepresentation.hpp>
 
+#include <isl/space.h>
+#include <isl/constraint.h>
+#include <isl/union_set.h>
 
 
 PolyOptISLRepresentation::PolyOptISLRepresentation()
