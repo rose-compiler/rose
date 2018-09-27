@@ -109,6 +109,8 @@ namespace General_Language_Translation
           e_explicit_dimension,
           e_star_dimension,
 
+          e_star_expression,
+
        // Statements
        // ----------
 
