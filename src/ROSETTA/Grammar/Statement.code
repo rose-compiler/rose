@@ -12956,10 +12956,10 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
        decl = decl->get_definingDeclaration();
        ROSE_ASSERT(decl != NULL);
 
-       SgClassDeclaration* cdecl = isSgClassDeclaration(decl);
+       SgClassDeclaration* xdecl = isSgClassDeclaration(decl);
        SgNonrealDecl* nrdecl = isSgNonrealDecl(decl);
-       if (cdecl != NULL) {
-         parentScope = cdecl->get_definition();
+       if (xdecl != NULL) {
+         parentScope = xdecl->get_definition();
        } else if (nrdecl != NULL) {
          parentScope = nrdecl->get_nonreal_decl_scope();
        } else {
@@ -14507,11 +14507,11 @@ SgNonrealDecl::get_mangled_name (void) const {
 #if 0
     printf("  - decl_parent = %p (%s)\n", decl_parent, decl_parent ? decl_parent->class_name().c_str() : "");
 #endif
-    SgClassDeclaration * cdecl = isSgClassDeclaration(decl_parent);
+    SgClassDeclaration * xdecl = isSgClassDeclaration(decl_parent);
     SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(decl_parent);
     SgNonrealDecl * nrdecl = isSgNonrealDecl(decl_parent);
-    if (cdecl != NULL) {
-       mangled_name << cdecl->get_mangled_name().getString() << "___";
+    if (xdecl != NULL) {
+       mangled_name << xdecl->get_mangled_name().getString() << "___";
     } else if (tplcdecl != NULL) {
        mangled_name << tplcdecl->get_mangled_name().getString() << "___";
     } else if (nrdecl != NULL) {

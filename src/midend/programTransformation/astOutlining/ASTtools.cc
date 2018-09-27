@@ -446,10 +446,10 @@ ASTtools::getClassName (const SgMemberFunctionDeclaration* mem_func)
   } else if (nrscope != NULL) {
     const SgNode* parent = nrscope->get_parent();
     ROSE_ASSERT (parent != NULL);
-    const SgClassDeclaration * cdecl = isSgClassDeclaration(parent);
+    const SgClassDeclaration * xdecl = isSgClassDeclaration(parent);
     const SgNonrealDecl * nrdecl = isSgNonrealDecl(parent);
-    if (cdecl != NULL) {
-      return cdecl->get_name ();
+    if (xdecl != NULL) {
+      return xdecl->get_name ();
     } else if (nrdecl != NULL) {
       return nrdecl->get_name ();
     } else {
