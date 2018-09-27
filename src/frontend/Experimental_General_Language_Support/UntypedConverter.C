@@ -1809,7 +1809,7 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
                  ROSE_ASSERT(sg_expr != NULL);
                  setSourcePositionFrom(sg_expr, ut_expr);
                  break;
-         }
+              }
            case V_SgUntypedValueExpression:
               {
                  SgUntypedValueExpression* ut_value_expr = isSgUntypedValueExpression(ut_expr);
@@ -1821,6 +1821,18 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
                        ut_value_expr->set_type(NULL);
                     }
                  break;
+              }
+           case V_SgUntypedOtherExpression:
+              {
+                 SgUntypedOtherExpression* ut_other_expr = isSgUntypedOtherExpression(ut_expr);
+                 int expr_enum = ut_other_expr->get_expression_enum();
+                 if (expr_enum == General_Language_Translation::e_star_expression)
+                    {
+                    // Ignore source position information for now, for some reason it is broken (perhaps filename)
+                       sg_expr = SageBuilder::buildNullExpression();
+                    // Break here on purpose to otherwise fall through to default
+                       break;
+                    }
               }
            default:
               {

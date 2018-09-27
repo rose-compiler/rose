@@ -657,9 +657,6 @@ UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageCo
 
       SgImageControlStatement* sg_stmt = NULL;
 
-      cout << "-dn- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
-           << ut_stmt->get_statement_enum() << endl;
-
       switch (ut_stmt->get_statement_enum())
         {
         case e_fortran_sync_all_stmt:
@@ -687,11 +684,72 @@ UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageCo
                 }
              break;
           }
+        case e_fortran_sync_images_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_expression());
+
+             SgExpression* image_set = convertSgUntypedExpression(ut_stmt->get_expression());
+             ROSE_ASSERT(image_set);
+
+             sg_stmt = new SgSyncImagesStatement(image_set);
+
+             SgUntypedExprListExpression* ut_status_list = ut_stmt->get_status_list();
+             ROSE_ASSERT(ut_status_list);
+
+             BOOST_FOREACH(SgUntypedExpression* ut_expr, ut_status_list->get_expressions())
+                {
+                   SgUntypedExprListExpression* ut_status_container = isSgUntypedExprListExpression(ut_expr);
+                   ROSE_ASSERT(ut_status_container);
+
+                   SgExpression* sg_expr = convertSgUntypedExpression(ut_status_container->get_expressions().front());
+                   ROSE_ASSERT(sg_expr);
+
+                   switch (ut_status_container->get_expression_enum())
+                     {
+                     case e_fortran_sync_stat_stat:    sg_stmt->set_stat    (sg_expr);  break;
+                     case e_fortran_sync_stat_errmsg:  sg_stmt->set_err_msg (sg_expr);  break;
+                     default: ROSE_ASSERT(0);
+                     }
+
+                }
+             break;
+          }
         case e_fortran_sync_memory_stmt:
           {
-             cout << "-dn- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
-                  << ut_stmt->get_statement_enum() << " e_fortran_sync_memory_stmt"<< endl;
              sg_stmt = new SgSyncMemoryStatement();
+
+             SgUntypedExprListExpression* ut_status_list = ut_stmt->get_status_list();
+             ROSE_ASSERT(ut_status_list);
+
+             BOOST_FOREACH(SgUntypedExpression* ut_expr, ut_status_list->get_expressions())
+                {
+                   SgUntypedExprListExpression* ut_status_container = isSgUntypedExprListExpression(ut_expr);
+                   ROSE_ASSERT(ut_status_container);
+
+                   SgExpression* sg_expr = convertSgUntypedExpression(ut_status_container->get_expressions().front());
+                   ROSE_ASSERT(sg_expr);
+
+                   switch (ut_status_container->get_expression_enum())
+                     {
+                     case e_fortran_sync_stat_stat:    sg_stmt->set_stat    (sg_expr);  break;
+                     case e_fortran_sync_stat_errmsg:  sg_stmt->set_err_msg (sg_expr);  break;
+                     default: ROSE_ASSERT(0);
+                     }
+
+                }
+             break;
+          }
+        case e_fortran_sync_team_stmt:
+          {
+             cout << "-dn- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
+                  << ut_stmt->get_statement_enum() << " e_fortran_sync_team_stmt"<< endl;
+
+             ROSE_ASSERT(ut_stmt->get_expression());
+
+             SgExpression* team_value = convertSgUntypedExpression(ut_stmt->get_expression());
+             ROSE_ASSERT(team_value);
+
+             sg_stmt = new SgSyncTeamStatement(team_value);
              cout << "-dn- sg_stmt = " << sg_stmt << endl;
 
              SgUntypedExprListExpression* ut_status_list = ut_stmt->get_status_list();
@@ -746,10 +804,12 @@ UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageCo
       switch (ut_stmt->get_statement_enum())
         {
         case General_Language_Translation::e_fortran_sync_all_stmt:
+        case General_Language_Translation::e_fortran_sync_images_stmt:
         case General_Language_Translation::e_fortran_sync_memory_stmt:
+        case General_Language_Translation::e_fortran_sync_team_stmt:
           {
              cout << "-up- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
-                  << ut_stmt->get_statement_enum() << " e_fortran_sync_all/memory_stmt"<< endl;
+                  << ut_stmt->get_statement_enum() << " e_fortran_sync_all..team_stmt"<< endl;
              SgStatement* sg_node = scope->getStatementList().back();
              cout << "-up- sg_node = " << sg_node << endl;
              SgImageControlStatement* sg_stmt = dynamic_cast<SgImageControlStatement*>(sg_node);

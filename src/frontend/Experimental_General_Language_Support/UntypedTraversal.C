@@ -50,7 +50,6 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
 
       // TODO - think about using SageBuild scope stack (currently used for programs)
          currentScope = SageBuilder::topScopeStack();
-    cout << "-x- program header decl scope is " << currentScope << endl;
          break;
       }
     case V_SgUntypedSubroutineDeclaration:
