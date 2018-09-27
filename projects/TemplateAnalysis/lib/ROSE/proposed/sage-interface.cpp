@@ -8,13 +8,13 @@ namespace ROSE { namespace proposed { namespace SageInterface {
 SgScopeStatement * getScopeDefinedBy(SgDeclarationStatement * decl) {
   ROSE_ASSERT(decl != NULL);
 
-  SgClassDeclaration * cdecl = isSgClassDeclaration(decl);
+  SgClassDeclaration * xdecl = isSgClassDeclaration(decl);
   SgTypedefDeclaration * tddecl = isSgTypedefDeclaration(decl);
   SgNamespaceDeclarationStatement * nspdecl = isSgNamespaceDeclarationStatement(decl);
 
   SgScopeStatement * scope = NULL;
-  if (cdecl != NULL) {
-    scope = getScopeDefinedBy(cdecl);
+  if (xdecl != NULL) {
+    scope = getScopeDefinedBy(xdecl);
   } else if (tddecl != NULL) {
     scope = getScopeDefinedBy(tddecl);
   } else if (nspdecl != NULL) {

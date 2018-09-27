@@ -1231,11 +1231,11 @@ static bool isCopyConstructor(SgMemberFunctionDeclaration *memberFunctionDeclara
       SgDeclarationStatement * methodDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
       ROSE_ASSERT(methodDeclaration != NULL);
       
-      SgClassDeclaration * cdecl = isSgClassDeclaration(methodDeclaration);
+      SgClassDeclaration * xdecl = isSgClassDeclaration(methodDeclaration);
       SgNonrealDecl * nrdecl = isSgNonrealDecl(methodDeclaration);
 
-      if (cdecl != NULL) {
-        if ( classDeclaration->get_type()->get_name() != cdecl->get_type()->get_name() )
+      if (xdecl != NULL) {
+        if ( classDeclaration->get_type()->get_name() != xdecl->get_type()->get_name() )
           return false;
       } else if (nrdecl != NULL) {
         if ( classDeclaration->get_type()->get_name() != nrdecl->get_type()->get_name() )
@@ -1344,10 +1344,10 @@ static bool isOperatorEquals(SgMemberFunctionDeclaration *memberFunctionDeclarat
 
   SgDeclarationStatement * decl = memberFunctionDeclaration->get_associatedClassDeclaration();
   ROSE_ASSERT(decl != NULL);
-  SgClassDeclaration * cdecl = isSgClassDeclaration(decl);
+  SgClassDeclaration * xdecl = isSgClassDeclaration(decl);
   SgNonrealDecl * nrdecl = isSgNonrealDecl(decl);
-  if (cdecl != NULL) {
-     SgClassType * desiredClassType = SgClassType::createType(cdecl);
+  if (xdecl != NULL) {
+     SgClassType * desiredClassType = SgClassType::createType(xdecl);
     return isCopyAssignmentTypeEquivalent(desiredClassType, memberFnType->get_arguments().front());
   } else if (nrdecl != NULL) {
     return isCopyAssignmentTypeEquivalent(nrdecl->get_type(), memberFnType->get_arguments().front());

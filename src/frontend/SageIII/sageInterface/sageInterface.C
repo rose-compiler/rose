@@ -18495,13 +18495,13 @@ bool isLambdaCapturedVariable (SgVarRefExp* varRef)
     {
       SgClassSymbol* csym = te->get_class_symbol();
       ROSE_ASSERT (csym!= NULL);
-      SgClassDeclaration* cdecl = isSgClassDeclaration(csym->get_declaration());
+      SgClassDeclaration* xdecl = isSgClassDeclaration(csym->get_declaration());
       // each this exp should have a class decl
-      ROSE_ASSERT (cdecl != NULL); 
-      SgLambdaExp* le = isSgLambdaExp(cdecl->get_parent());
+      ROSE_ASSERT (xdecl != NULL); 
+      SgLambdaExp* le = isSgLambdaExp(xdecl->get_parent());
       if (le != NULL)
       {
-        if (le->get_lambda_closure_class() == cdecl ) // the class is a lambda closure class
+        if (le->get_lambda_closure_class() == xdecl ) // the class is a lambda closure class
           rt = true; 
       }
     }

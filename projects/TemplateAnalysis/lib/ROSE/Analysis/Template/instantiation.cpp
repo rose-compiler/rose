@@ -254,13 +254,13 @@ void TemplateInstantiation::construct() {
 
   SgClassSymbol * csym = isSgClassSymbol(symbol);
   assert(csym != NULL);
-  SgClassDeclaration * cdecl = isSgClassDeclaration(csym->get_declaration());
-  assert(cdecl != NULL);
-  SgDeclarationStatement * decl = cdecl->get_definingDeclaration();
+  SgClassDeclaration * xdecl = isSgClassDeclaration(csym->get_declaration());
+  assert(xdecl != NULL);
+  SgDeclarationStatement * decl = xdecl->get_definingDeclaration();
   if (decl != NULL) {
-    cdecl = isSgClassDeclaration(decl);
-    assert(cdecl != NULL);
-    assert(cdecl->get_definition() != NULL);
+    xdecl = isSgClassDeclaration(decl);
+    assert(xdecl != NULL);
+    assert(xdecl->get_definition() != NULL);
     is_defined = true;
   }
 }

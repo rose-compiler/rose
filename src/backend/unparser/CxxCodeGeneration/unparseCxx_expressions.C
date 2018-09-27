@@ -2701,11 +2701,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
   // SgClassDefinition, else use get_scope() if we want a SgScopeStatement.
   // SgClassDefinition*           cdef = mfd->get_scope();
      SgDeclarationStatement* decl = mfd->get_associatedClassDeclaration();
-     SgClassDeclaration* cdecl = isSgClassDeclaration(decl);
+     SgClassDeclaration* xdecl = isSgClassDeclaration(decl);
      SgNonrealDecl* nrdecl = isSgNonrealDecl(decl);
 
 #if MFuncRefSupport_DEBUG
-     printf ("In unparseMFuncRefSupport(): expr = %p (name = %s::%s) \n",expr,cdecl? cdecl->get_name().str() : ( nrdecl ? nrdecl->get_name().str() : "" ),mfd->get_name().str());
+     printf ("In unparseMFuncRefSupport(): expr = %p (name = %s::%s) \n",expr,xdecl? xdecl->get_name().str() : ( nrdecl ? nrdecl->get_name().str() : "" ),mfd->get_name().str());
 #endif
 #if 0
      curprint ("\n /* Inside of unparseMFuncRef */ \n");
@@ -2847,7 +2847,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         {
        // DQ (3/5/2017): Converted to use message logging.
           mprintf ("Note: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) (OK for index expresion in array type) \n",
-               decl,decl->class_name().c_str(),cdecl? cdecl->get_name().str() : ( nrdecl ? nrdecl->get_name().str() : "" ),mfd->get_name().str());
+               decl,decl->class_name().c_str(),xdecl? xdecl->get_name().str() : ( nrdecl ? nrdecl->get_name().str() : "" ),mfd->get_name().str());
         }
   // DQ (5/30/2016): This need not have a parent if it is an expression in index for an array type (see test2016_33.C).
   // ROSE_ASSERT(decl->get_parent() != NULL);
