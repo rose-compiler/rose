@@ -906,6 +906,7 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                 // Merge the dataflow states above all the return statements in the function, storing the results in Fact 0 of
                 // the function
                 DFStateAtReturns* dfsar = dynamic_cast<DFStateAtReturns*>(fState->state.getFact(this, 0));
+                ROSE_ASSERT(dfsar != NULL);
                 bool modified = dfsar->mergeReturnStates(func, fState, dynamic_cast<IntraProceduralDataflow*>(intraAnalysis));  
                 
                 if(analysisDebugLevel>=1) {
