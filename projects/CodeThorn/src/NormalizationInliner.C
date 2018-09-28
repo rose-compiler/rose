@@ -24,7 +24,8 @@ namespace SPRAY {
     size_t nInlined = 0;
     for (int count=0; count<inlineDepth; ++count) {
       bool changed = false;
-      BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(root)) {
+      auto functionCalls=SageInterface::querySubTree<SgFunctionCallExp>(root);
+      BOOST_FOREACH(SgFunctionCallExp *call, functionCalls) {
         if (doInline(call)) {
           ASSERT_always_forbid2(isAstContaining(root, call),
                                 "Inliner says it inlined, but the call expression is still present in the AST.");

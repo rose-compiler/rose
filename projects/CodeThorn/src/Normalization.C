@@ -8,6 +8,9 @@
 #include <list>
 #include "AstConsistencyTests.h"
 
+#include "AstFixup.h"
+#include "astPostProcessing.h"
+
 // Author: Markus Schordan, 2018
 
 using namespace std;
@@ -174,6 +177,7 @@ namespace SPRAY {
     // AST consistency tests
     if(SgProject* project=isSgProject(root)) {
       AstTests::runAllTests(project);
+      AstPostProcessing(project);
     }
   }
 
@@ -527,6 +531,7 @@ namespace SPRAY {
   }
 
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
+  // ==>  Label: (function-scope is inferred from 'target')
   SgLabelStatement* Normalization::createLabel(SgStatement* target) {
     SgLabelStatement* newLabel =
       SageBuilder::buildLabelStatement(Normalization::newLabelName(),
@@ -536,7 +541,9 @@ namespace SPRAY {
     return newLabel;
   }
   
-    // creates a goto at end of 'block', and inserts a label before statement 'target'.
+  // creates a goto-stmt and inserts the goto-stmt referring to the
+  // provided label before statement 'target'.
+  // Label: ... targetStmt; ==>  Label: ... goto Label; targetStmt;
   SgGotoStatement* Normalization::createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target) {
     SageInterface::insertStatement(target, newLabel, true);
     SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabel);
