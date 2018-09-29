@@ -262,6 +262,11 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseSyncImagesStatement      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseSyncMemoryStatement      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseSyncTeamStatement        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseLockStatement            (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUnlockStatement          (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparse_Image_Ctrl_Stmt_Support (SgImageControlStatement* stmt, bool print_comma, SgUnparse_Info& info);
+
 
           virtual void unparseAssociateStatement       (SgStatement* stmt, SgUnparse_Info& info);
 
