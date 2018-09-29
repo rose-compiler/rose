@@ -264,6 +264,12 @@ ATbool traverse_SyncMemoryStmt(ATerm term, SgUntypedStatementList* stmt_list);
 // R1169-2018-N2146
 ATbool traverse_SyncTeamStmt  (ATerm term, SgUntypedStatementList* stmt_list);
 
+// R1179-2018-N2146
+ATbool traverse_LockStmt  (ATerm term, SgUntypedStatementList* stmt_list);
+
+// R1181-2018-N2146
+ATbool traverse_UnlockStmt  (ATerm term, SgUntypedStatementList* stmt_list);
+
 // R1201
 ATbool traverse_InterfaceBlock(ATerm term, SgUntypedDeclarationStatementList* parent_decl_list);
 
