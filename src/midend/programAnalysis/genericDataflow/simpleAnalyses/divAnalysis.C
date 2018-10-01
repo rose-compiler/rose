@@ -653,7 +653,7 @@ void DivAnalysisTransfer::visit(SgMinusOp *sgn) {
     resLat->set(0 - resLat->getValue());
   else if(resLat->getLevel() == DivLattice::divKnown)
     resLat->set(resLat->getDiv(), (resLat->getDiv() - resLat->getRem()) % resLat->getDiv());
-  if (arg2Lat != NULL)) {
+  if (arg2Lat != NULL) {
     delete arg2Lat;
   }
 }
