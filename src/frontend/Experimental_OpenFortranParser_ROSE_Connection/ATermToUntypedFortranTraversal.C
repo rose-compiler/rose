@@ -929,11 +929,12 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
    else if (ATmatch(t_type, "DOUBLEPRECISION()")) {
       //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
    }
-   else if (ATmatch(t_type, "COMPLEX()")) {
-      //*type = UntypedBuilder::buildType(SgUntypedType::e_complex);
-   }
    else if (ATmatch(t_type, "CHARACTER()")) {
+   // No length parameter given so build a char type
       *type = UntypedBuilder::buildType(SgUntypedType::e_char);
+   }
+   else if (ATmatch(t_type, "COMPLEX()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_complex);
    }
    else if (ATmatch(t_type, "LOGICAL()")) {
       *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
