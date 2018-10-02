@@ -637,7 +637,7 @@ void DivAnalysisTransfer::visit(SgUnaryAddOp *sgn) {
   ROSE_ASSERT(resLat != NULL);
   resLat->copy(arg1Lat);
   modified = true;
-  if (arg2Lat != NULL)) {
+  if (arg2Lat != NULL) {
     delete arg2Lat;
   }
 }
