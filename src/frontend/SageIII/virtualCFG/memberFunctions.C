@@ -2421,6 +2421,42 @@ std::vector<CFGEdge> SgSyncTeamStatement::cfgInEdges(unsigned int idx) {
   return result;
 }
 
+unsigned int
+SgLockStatement::cfgIndexForEnd() const {
+  return 0;
+}
+std::vector<CFGEdge> SgLockStatement::cfgOutEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  return result;
+}
+std::vector<CFGEdge> SgLockStatement::cfgInEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+  return result;
+}
+
+unsigned int
+SgUnlockStatement::cfgIndexForEnd() const {
+  return 0;
+}
+std::vector<CFGEdge> SgUnlockStatement::cfgOutEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  return result;
+}
+std::vector<CFGEdge> SgUnlockStatement::cfgInEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+  return result;
+}
+
 
 static const unsigned int numberOfFortranIOCommonEdges = 5;
 
