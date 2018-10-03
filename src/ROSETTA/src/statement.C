@@ -277,9 +277,12 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (SyncImagesStatement,  "SyncImagesStatement",         "SYNC_IMAGES_STATEMENT" );
      NEW_TERMINAL_MACRO (SyncMemoryStatement,  "SyncMemoryStatement",         "SYNC_MEMORY_STATEMENT" );
      NEW_TERMINAL_MACRO (SyncTeamStatement,    "SyncTeamStatement",           "SYNC_TEAM_STATEMENT" );
+     NEW_TERMINAL_MACRO (LockStatement,        "LockStatement",               "LOCK_STATEMENT" );
+     NEW_TERMINAL_MACRO (UnlockStatement,      "UnlockStatement",             "UNLOCK_STATEMENT" );
 
      NEW_NONTERMINAL_MACRO (ImageControlStatement,
-          SyncAllStatement | SyncImagesStatement | SyncMemoryStatement | SyncTeamStatement,
+          SyncAllStatement | SyncImagesStatement | SyncMemoryStatement | SyncTeamStatement |
+          LockStatement    | UnlockStatement,
           "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
@@ -3332,6 +3335,8 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ImageControlStatement.setDataPrototype     ( "SgExpression*", "err_msg", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ImageControlStatement.setDataPrototype     ( "SgExpression*", "acquired_lock", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Derived from ImageControlStatement
      SyncAllStatement.setFunctionPrototype      ( "HEADER_SYNC_ALL_STATEMENT", "../Grammar/Statement.code" );
@@ -3341,6 +3346,12 @@ Grammar::setUpStatements ()
      SyncMemoryStatement.setFunctionPrototype   ( "HEADER_SYNC_MEMORY_STATEMENT", "../Grammar/Statement.code" );
      SyncTeamStatement.setFunctionPrototype     ( "HEADER_SYNC_TEAM_STATEMENT", "../Grammar/Statement.code" );
      SyncTeamStatement.setDataPrototype         ( "SgExpression*", "team_value", "= NULL",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LockStatement.setFunctionPrototype         ( "HEADER_LOCK_STATEMENT", "../Grammar/Statement.code" );
+     LockStatement.setDataPrototype             ( "SgExpression*", "lock_variable", "= NULL",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UnlockStatement.setFunctionPrototype       ( "HEADER_UNLOCK_STATEMENT", "../Grammar/Statement.code" );
+     UnlockStatement.setDataPrototype           ( "SgExpression*", "lock_variable", "= NULL",
                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Derived from IOStatement, this adds the status (either "KEEP" or "DELETE")
@@ -4092,6 +4103,8 @@ Grammar::setUpStatements ()
      SyncImagesStatement.setFunctionSource      ("SOURCE_SYNC_IMAGES_STATEMENT", "../Grammar/Statement.code" );
      SyncMemoryStatement.setFunctionSource      ("SOURCE_SYNC_MEMORY_STATEMENT", "../Grammar/Statement.code" );
      SyncTeamStatement.setFunctionSource        ("SOURCE_SYNC_TEAM_STATEMENT", "../Grammar/Statement.code" );
+     LockStatement.setFunctionSource            ("SOURCE_LOCK_STATEMENT", "../Grammar/Statement.code" );
+     UnlockStatement.setFunctionSource          ("SOURCE_UNLOCK_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (12/27/2007): Added fortran entry statement.
      EntryStatement.setFunctionSource           ("SOURCE_ENTRY_STATEMENT", "../Grammar/Statement.code" );
