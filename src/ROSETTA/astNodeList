@@ -618,6 +618,8 @@ SgSyncAllStatement
 SgSyncImagesStatement
 SgSyncMemoryStatement
 SgSyncTeamStatement
+SgLockStatement
+SgUnlockStatement
 SgJavaThrowStatement
 SgJavaForEachStatement
 SgJavaSynchronizedStatement

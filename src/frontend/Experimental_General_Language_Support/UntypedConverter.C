@@ -389,17 +389,34 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
         case SgUntypedType::e_bit:            sg_type = SgTypeBool::createType(kindExpression);    break;
         case SgUntypedType::e_bool:           sg_type = SgTypeBool::createType(kindExpression);    break;
 
-        case SgUntypedType::e_char:           sg_type = SgTypeChar::createType(kindExpression);    break;
+        case SgUntypedType::e_char:
+           {
+              ROSE_ASSERT(kindExpression == NULL);
+              sg_type = SageBuilder::buildCharType();
+              break;
+           }
         case SgUntypedType::e_string:
            {
-              SgNodePtrList children;
-              SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
-           // TODO - figure out how to handle operators (or anything with children)
-              ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
+              SgExpression* sg_length = NULL;
 
-              SgExpression* sg_length = convertSgUntypedExpression(ut_length, children, scope);
+              if (ut_type->get_char_length_is_string())
+                 {
+                    SgIntVal* str_length = SageBuilder::buildIntVal(atoi(ut_type->get_char_length_string().c_str()));
+                    ROSE_ASSERT(str_length);
+                    str_length->set_valueString(ut_type->get_char_length_string());
+                    sg_length = str_length;
+                 }
+              else
+                 {
+                    SgNodePtrList children;
+                    SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
+                 // TODO - figure out how to handle operators (or anything with children)
+                    ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
+
+                    sg_length = convertSgUntypedExpression(ut_length, children, scope);
+                 }
+
               ROSE_ASSERT(sg_length != NULL);
-
               sg_type = SageBuilder::buildStringType(sg_length);
               break;
            }
@@ -1809,7 +1826,7 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
                  ROSE_ASSERT(sg_expr != NULL);
                  setSourcePositionFrom(sg_expr, ut_expr);
                  break;
-         }
+              }
            case V_SgUntypedValueExpression:
               {
                  SgUntypedValueExpression* ut_value_expr = isSgUntypedValueExpression(ut_expr);
@@ -1821,6 +1838,18 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
                        ut_value_expr->set_type(NULL);
                     }
                  break;
+              }
+           case V_SgUntypedOtherExpression:
+              {
+                 SgUntypedOtherExpression* ut_other_expr = isSgUntypedOtherExpression(ut_expr);
+                 int expr_enum = ut_other_expr->get_expression_enum();
+                 if (expr_enum == General_Language_Translation::e_star_expression)
+                    {
+                    // Ignore source position information for now, for some reason it is broken (perhaps filename)
+                       sg_expr = SageBuilder::buildNullExpression();
+                    // Break here on purpose to otherwise fall through to default
+                       break;
+                    }
               }
            default:
               {
