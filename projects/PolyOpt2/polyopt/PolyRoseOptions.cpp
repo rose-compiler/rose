@@ -49,6 +49,7 @@ PolyRoseOptions::initialize()
   sc_f2c_scop_extractor = false;
   sc_allow_math_func = false;
   sc_with_pragmas_only = false;
+  polyopt_scop_in_separate_files = false;
 
   // Annotation functions.
   polyopt_annotate_only = false;
