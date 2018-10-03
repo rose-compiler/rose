@@ -122,7 +122,7 @@ std::cerr << "***************end sub tree *******\n";
        LoopTreeDepGraphNode *n = 
           static_cast<LoopTreeDepGraphNode*>(iter.Current()); 
        LoopTreeNode*         ltn = tc.GetTreeNode(n);
-       ROSE_ASSERT(ltn != NULL);
+//     ROSE_ASSERT(ltn != NULL);
        treeSet.insert( ltn );
     }
     if (treeSet.NumberOfEntries()) {
