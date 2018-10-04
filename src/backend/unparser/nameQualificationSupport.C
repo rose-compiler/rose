@@ -6914,6 +6914,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        {
                          SgScopeStatement* currentScope = currentStatement->get_scope();
                          ROSE_ASSERT(currentScope != NULL);
+#if 0
+                         printf ("INFO: currentStatement = %p (%s)\n", currentStatement, currentStatement->class_name().c_str());
+                         printf ("INFO: currentScope     = %p (%s)\n", currentScope, currentScope->class_name().c_str());
+#endif
 
                          int amountOfNameQualificationRequiredForType = nameQualificationDepth(associatedTypeDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
