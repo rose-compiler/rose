@@ -1716,8 +1716,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
            case SgTemplateArgument::start_of_pack_expansion_argument:
              {
-               printf ("Error start_of_pack_expansion_argument in Unparse_ExprStmt::unparseTemplateArgument (should never be reach)\n");
-               ROSE_ABORT();
+               printf ("WARNING: start_of_pack_expansion_argument in Unparse_ExprStmt::unparseTemplateArgument (can happen from some debug output)\n");
                break;
              }
 

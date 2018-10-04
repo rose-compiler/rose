@@ -288,6 +288,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_80.C \
    test2015_97.C \
    Area-01.C \
+   rose-1437-0.C \
    $(NEW_TESTCODES)
 
 # DQ (11/13/2015): Added test codes:
@@ -562,7 +563,8 @@ NEW_2017_TESTS = \
    test2018_61.C \
    test2018_62.C \
    test2018_63.C \
-   test2018_64.C
+   test2018_64.C \
+   rose-1431-0.C
 
 
 # DQ (4/7/2018): Updating failing tests.
