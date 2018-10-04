@@ -3834,6 +3834,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_edg_il_to_graphviz(true);
         }
 
+  // TV (10/01/2018): ROSE-1424
+     set_no_optimize_flag_for_frontend(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","no_optimize_flag_for_frontend",true) == true ) {
+       set_no_optimize_flag_for_frontend(true);
+     }
+
   // DQ (5/24/2015): Record type of optimization (-Os, -O, -O1, -O2, -O3, -O4, -O5), note -O0 means no optimization.
   // This is required so that when optimization is specified we can turn on the __OPTIMIE__ macro.
   // See test2015_153.c.
@@ -5954,6 +5960,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // TV (04/11/2018): Generates GraphViz from EDG internal representation
      optionCount = sla(argv, "-rose:", "($)", "edg_il_to_graphviz",1);
 
+  // TV (04/11/2018): Do not pass -D__OPTIMIZE__ to EDG frontend (ROSE-1424)
+     optionCount = sla(argv, "-rose:", "($)", "no_optimize_flag_for_frontend",1);
+
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
 
@@ -6465,7 +6474,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // DQ (5/24/2015): Adding support for specification of optimization to trigger use of __OPTIMIZE__ macro (required for compatability with GNU gcc API).
-     if (get_optimization() == true)
+     if (get_optimization() == true && get_no_optimize_flag_for_frontend() == false)
         {
 #if 0
           printf ("Adding -D__OPTIMIZE__ flag to EDG command line \n");
