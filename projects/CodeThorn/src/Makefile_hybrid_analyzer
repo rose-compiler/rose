@@ -4,7 +4,7 @@
 
 # ROSE_SRC_DIR=${PRIV_ROSE}
 # ROSE_BUILD_TREE=${PRIV_ROSE}/build_tree
-# ROSE_LIB_DIR=${PRIV_ROSE}/install_tree/lib
+# ROSE_INSTALL_LIB=${PRIV_ROSE}/install_tree/lib
 # SPOT_PREFIX=..
 # EXTRA_INCLUDES=..
 # Z3_LIBRARY_INSTALL_PATH=... (library name: 
@@ -29,8 +29,8 @@ CXXFLAGS              = -Wno-deprecated -std=c++11
 LDFLAGS               = 
 YACC                  = bison
 
-# ROSE_LIB_DIR is environment variable referring to installed libs dir
-ROSE_LIBS_OPTIONS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lspray -lrose
+# ROSE_INSTALL_LIB is environment variable referring to installed libs dir
+ROSE_LIBS_OPTIONS = -Wl,-rpath -Wl,$(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lspray -lrose
 
 # Default make rule to use
 all: RERS_BINARY
