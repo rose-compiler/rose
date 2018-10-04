@@ -44,7 +44,7 @@ TODO: build_tree and Z3 directory provided by script
 
 # build_tree necessary for rose_config.h
 %.o: %.C
-	$(CXX) -I/home/schordan/development/priv-rose/build_tree $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
+	$(CXX) -I$(ROSE_BUILD_TREE) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
 
 $(TOOLNAME3): $(OBJECT_FILES) RERS_empty_specialization.o $(TOOLNAME3).o 
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) RERS_empty_specialization.o $(OBJECT_FILES) $(TOOLNAME3).o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -o$(TOOLNAME3)

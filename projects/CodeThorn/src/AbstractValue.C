@@ -188,6 +188,10 @@ std::string AbstractValue::valueTypeToString() const {
   }
 }
 
+// currently maps to isTop(); in preparation for explicit handling of
+// undefined values.
+bool AbstractValue::isUndefined() const {return isTop();}
+
 bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}

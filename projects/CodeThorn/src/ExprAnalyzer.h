@@ -78,6 +78,8 @@ namespace CodeThorn {
     bool getSkipSelectedFunctionCalls();
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
+    void setIgnoreUndefinedDereference(bool skip);
+    bool getIgnoreUndefinedDereference();
     void setSVCompFunctionSemantics(bool flag);
     bool getSVCompFunctionSemantics();
     // deprecated
@@ -274,6 +276,7 @@ namespace CodeThorn {
     bool _skipArrayAccesses=false;
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
+    bool _ignoreUndefinedDereference=false;
     Analyzer* _analyzer;
   public:
     StructureAccessLookup structureAccessLookup;

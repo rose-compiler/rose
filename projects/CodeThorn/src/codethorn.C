@@ -394,6 +394,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state.")
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
+    ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
     ;
 
   rersOptions.add_options()
@@ -1204,6 +1205,9 @@ int main( int argc, char * argv[] ) {
     RewriteSystem rewriteSystem;
     if(args.getBool("print-rewrite-trace")) {
       rewriteSystem.setTrace(true);
+    }
+    if(args.getBool("ignore-undefined-dereference")) {
+      analyzer->setIgnoreUndefinedDereference(true);
     }
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
       analyzer->setSkipSelectedFunctionCalls(true);

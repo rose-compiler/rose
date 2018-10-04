@@ -1555,6 +1555,14 @@ bool Analyzer::getSkipArrayAccesses() {
   return exprAnalyzer.getSkipArrayAccesses();
 }
 
+void Analyzer::setIgnoreUndefinedDereference(bool skip) {
+  exprAnalyzer.setIgnoreUndefinedDereference(skip);
+}
+
+bool Analyzer::getIgnoreUndefinedDereference() {
+  return exprAnalyzer.getIgnoreUndefinedDereference();
+}
+
 void Analyzer::set_finished(std::vector<bool>& v, bool val) {
   ROSE_ASSERT(v.size()>0);
   for(vector<bool>::iterator i=v.begin();i!=v.end();++i) {
@@ -2267,6 +2275,8 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         exit(1);
       } else if(variableIdMapping.hasIntegerType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
+      } else if(variableIdMapping.hasFloatingPointType(lhsVar)) {
+        newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasBoolType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasPointerType(lhsVar)) {
@@ -2412,13 +2422,21 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
       if(!(lhsPointerValue.isPtr())) {
-        cerr<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<endl;
-        exit(1);
+        if(lhsPointerValue.isUndefined() && getIgnoreUndefinedDereference()) {
+          //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+          PState pstate2=*(estate->pstate());
+          // skip write access, just create new state (no effect)
+          estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
+        } else {
+          cerr<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<endl;
+          exit(1);
+        }
+      } else {
+        //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+        PState pstate2=*(estate->pstate());
+        pstate2.writeToMemoryLocation(lhsPointerValue,(*i).result);
+        estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
-      //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
-      PState pstate2=*(estate->pstate());
-      pstate2.writeToMemoryLocation(lhsPointerValue,(*i).result);
-      estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
       if(getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {

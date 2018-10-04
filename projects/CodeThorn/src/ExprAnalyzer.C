@@ -61,6 +61,14 @@ bool ExprAnalyzer::getSkipArrayAccesses() {
   return _skipArrayAccesses;
 }
 
+void ExprAnalyzer::setIgnoreUndefinedDereference(bool skip) {
+  _ignoreUndefinedDereference=skip;
+}
+
+bool ExprAnalyzer::getIgnoreUndefinedDereference() {
+  return _ignoreUndefinedDereference;
+}
+
 void ExprAnalyzer::setSVCompFunctionSemantics(bool flag) {
   _svCompFunctionSemantics=flag;
 }
@@ -1020,7 +1028,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEva
     res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
     return listify(res);
   } else {
-    // TODO: build proper error state and check error state in solver.
+    // Alternative to above null pointer dereference recording: build
+    // proper error state and check error state in solver.  once this
+    // is added above null pointer recording should be adapated to use
+    // the generated error state.
     list<SingleEvalResultConstInt> empty;
     return empty;
   }
