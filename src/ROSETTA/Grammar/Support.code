@@ -8823,9 +8823,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                    printf ("-----    --- templateParameterOrArgumentLocal->get_type()      = %p = %s \n",templateParameterOrArgumentLocal->get_type(),     templateParameterOrArgumentLocal->get_type()->class_name().c_str());
                                    printf ("-----    --- templateParameterOrArgumentFromSymbol->get_type() = %p = %s \n",templateParameterOrArgumentFromSymbol->get_type(),templateParameterOrArgumentFromSymbol->get_type()->class_name().c_str());
 #endif
-                                   isTemplateType = SageInterface::isEquivalentType(test_typeLocal,test_typeFromSymbol);
-#endif
-#endif
+                                   isTemplateType = SageInterface::isEquivalentType(templateParameterOrArgumentLocal->get_type(),templateParameterOrArgumentFromSymbol->get_type());
                                  }
                                 else
                                  {
