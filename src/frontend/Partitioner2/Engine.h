@@ -145,9 +145,27 @@ private:
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
+        // The following lists are used for adding outgoing E_CALL_RETURN edges to basic blocks based on whether the basic
+        // block is a call to a function that might return.  When a new basic block is inserted into the CFG (or a previous
+        // block is removed, modified, and re-inserted), the operator() is called and conditionally inserts the block into the
+        // "pendingCallReturn" list (if the block is a function call that lacks an E_CALL_RETURN edge and the function is known
+        // to return or the analysis was incomplete).
+        //
+        // When we run out of other ways to create basic blocks, we process the pendingCallReturn list from back to front. If
+        // the back block (which gets popped) has a positive may-return result then an E_CALL_RETURN edge is added to the CFG
+        // and the normal recursive BB discovery is resumed. Otherwise if the analysis is incomplete the basic block is moved
+        // to the processedCallReturn list.  The entire pendingCallReturn list is processed before proceeding.
+        //
+        // If there is no more pendingCallReturn work to be done, then the processedCallReturn blocks are moved to the
+        // finalCallReturn list and finalCallReturn is sorted by descending call depth (i.e., leaf functions first). One
+        // block is moved from the finalCallReturn list to the pendingCallReturn list and this entire algorithm is repeated
+        // with the only difference being that the may-analysis will return an assuemd Boolean value if the analysis doesn't
+        // complete (i.e., it doesn't return an indeterminate value).
+        //
         Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
         Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
         Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminate call sites awaiting final analysis
+
         Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
         Engine *engine_;                                                   // engine to which this callback belongs
     protected:
