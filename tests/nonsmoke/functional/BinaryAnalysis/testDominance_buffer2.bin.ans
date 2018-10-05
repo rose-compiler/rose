@@ -35,20 +35,20 @@ CFG dominators for function 0x08048364 "main":
   function 0x08048364 dominator of 0x080483a6<3> is 0x08048381<2>
   function 0x08048364 dominator of 0x080483ac<4> is 0x080483a6<3>
 CFG dominators for function 0x080483c0 "__libc_csu_init":
-  function 0x080483c0 dominator of 0x080483f8<0> is 0x080483f4<4>
-  function 0x080483c0 dominator of 0x080483fb<1> is 0x080483f8<0>
+  function 0x080483c0 dominator of 0x080483f4<0> is 0x080483da<1>
+  function 0x080483c0 dominator of 0x080483da<1> is 0x080483c0<2>
   function 0x080483c0 dominator of 0x080483c0<2> is none
-  function 0x080483c0 dominator of 0x0804840a<3> is 0x080483da<5>
-  function 0x080483c0 dominator of 0x080483f4<4> is 0x080483da<5>
-  function 0x080483c0 dominator of 0x080483da<5> is 0x080483c0<2>
+  function 0x080483c0 dominator of 0x080483f8<3> is 0x080483f4<0>
+  function 0x080483c0 dominator of 0x080483fb<4> is 0x080483f8<3>
+  function 0x080483c0 dominator of 0x0804840a<5> is 0x080483da<1>
 CFG dominators for function 0x08048414 "__libc_csu_fini":
   function 0x08048414 dominator of 0x0804843f<0> is none
-  function 0x08048414 dominator of 0x08048414<1> is none
-  function 0x08048414 dominator of 0x08048440<2> is 0x08048444<4>
-  function 0x08048414 dominator of 0x0804844e<3> is 0x08048449<6>
-  function 0x08048414 dominator of 0x08048444<4> is 0x08048414<1>
-  function 0x08048414 dominator of 0x08048443<5> is 0x08048440<2>
-  function 0x08048414 dominator of 0x08048449<6> is 0x08048444<4>
+  function 0x08048414 dominator of 0x08048443<1> is 0x08048440<2>
+  function 0x08048414 dominator of 0x08048440<2> is 0x08048444<6>
+  function 0x08048414 dominator of 0x08048449<3> is 0x08048444<6>
+  function 0x08048414 dominator of 0x08048414<4> is none
+  function 0x08048414 dominator of 0x0804844e<5> is 0x08048449<3>
+  function 0x08048414 dominator of 0x08048444<6> is 0x08048414<4>
 CFG dominators for function 0x08048460 "__do_global_ctors_aux":
   function 0x08048460 dominator of 0x08048460<0> is none
   function 0x08048460 dominator of 0x08048480<1> is 0x08048476<4>

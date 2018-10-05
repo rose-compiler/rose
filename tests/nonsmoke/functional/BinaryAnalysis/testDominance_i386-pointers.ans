@@ -14,13 +14,13 @@ CFG dominators for function 0x080482e0 "_start":
   function 0x080482e0 dominator of 0x08048301<0> is 0x080482e0<1>
   function 0x080482e0 dominator of 0x080482e0<1> is none
 CFG dominators for function 0x08048310 "__do_global_dtors_aux":
-  function 0x08048310 dominator of 0x0804833a<0> is 0x08048320<5>
+  function 0x08048310 dominator of 0x08048320<0> is 0x08048310<1>
   function 0x08048310 dominator of 0x08048310<1> is none
-  function 0x08048310 dominator of 0x08048340<2> is 0x0804833a<0>
+  function 0x08048310 dominator of 0x08048340<2> is 0x0804833a<5>
   function 0x08048310 dominator of 0x0804834f<3> is 0x08048340<2>
-  function 0x08048310 dominator of 0x0804835f<4> is 0x08048310<1>
-  function 0x08048310 dominator of 0x08048320<5> is 0x08048310<1>
-  function 0x08048310 dominator of 0x08048358<6> is 0x08048320<5>
+  function 0x08048310 dominator of 0x08048358<4> is 0x08048320<0>
+  function 0x08048310 dominator of 0x0804833a<5> is 0x08048320<0>
+  function 0x08048310 dominator of 0x0804835f<6> is 0x08048310<1>
 CFG dominators for function 0x08048370 "frame_dummy":
   function 0x08048370 dominator of 0x0804837f<0> is 0x08048370<1>
   function 0x08048370 dominator of 0x08048370<1> is none
@@ -71,17 +71,17 @@ CFG dominators for function 0x08048487 "simple20":
 CFG dominators for function 0x08048491 "simple21":
   function 0x08048491 dominator of 0x08048491<0> is none
 CFG dominators for function 0x080484a0 "simple22":
-  function 0x080484a0 dominator of 0x080484a0<0> is none
-  function 0x080484a0 dominator of 0x080484ab<1> is 0x080484a0<0>
+  function 0x080484a0 dominator of 0x080484ab<0> is 0x080484a0<1>
+  function 0x080484a0 dominator of 0x080484a0<1> is none
 CFG dominators for function 0x080484ad "simple23":
-  function 0x080484ad dominator of 0x080484c5<0> is 0x080484ad<1>
-  function 0x080484ad dominator of 0x080484ad<1> is none
+  function 0x080484ad dominator of 0x080484ad<0> is none
+  function 0x080484ad dominator of 0x080484c5<1> is 0x080484ad<0>
 CFG dominators for function 0x080484c7 "simple24":
-  function 0x080484c7 dominator of 0x080484c7<0> is none
-  function 0x080484c7 dominator of 0x080484d8<1> is 0x080484c7<0>
+  function 0x080484c7 dominator of 0x080484d8<0> is 0x080484c7<1>
+  function 0x080484c7 dominator of 0x080484c7<1> is none
 CFG dominators for function 0x080484da "simple25":
-  function 0x080484da dominator of 0x080484ed<0> is 0x080484da<1>
-  function 0x080484da dominator of 0x080484da<1> is none
+  function 0x080484da dominator of 0x080484da<0> is none
+  function 0x080484da dominator of 0x080484ed<1> is 0x080484da<0>
 CFG dominators for function 0x080484ef "flow01":
   function 0x080484ef dominator of 0x080484ff<0> is 0x080484ef<2>
   function 0x080484ef dominator of 0x080484f8<1> is 0x080484ef<2>
@@ -126,13 +126,13 @@ CFG dominators for function 0x080485ed "flow07":
 CFG dominators for function 0x08048620 "__libc_csu_fini":
   function 0x08048620 dominator of 0x08048620<0> is none
 CFG dominators for function 0x08048630 "__libc_csu_init":
-  function 0x08048630 dominator of 0x0804865e<0> is 0x08048649<1>
-  function 0x08048630 dominator of 0x08048649<1> is 0x0804863b<4>
-  function 0x08048630 dominator of 0x08048660<2> is 0x0804865e<0>
-  function 0x08048630 dominator of 0x0804867b<3> is 0x08048660<2>
-  function 0x08048630 dominator of 0x0804863b<4> is 0x08048630<5>
-  function 0x08048630 dominator of 0x08048630<5> is none
-  function 0x08048630 dominator of 0x08048682<6> is 0x08048649<1>
+  function 0x08048630 dominator of 0x0804863b<0> is 0x08048630<3>
+  function 0x08048630 dominator of 0x08048660<1> is 0x0804865e<5>
+  function 0x08048630 dominator of 0x0804867b<2> is 0x08048660<1>
+  function 0x08048630 dominator of 0x08048630<3> is none
+  function 0x08048630 dominator of 0x08048682<4> is 0x08048649<6>
+  function 0x08048630 dominator of 0x0804865e<5> is 0x08048649<6>
+  function 0x08048630 dominator of 0x08048649<6> is 0x0804863b<0>
 CFG dominators for function 0x0804868a "__i686.get_pc_thunk.bx":
   function 0x0804868a dominator of 0x0804868a<0> is none
 CFG dominators for function 0x08048690 "__do_global_ctors_aux":
