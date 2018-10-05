@@ -453,6 +453,7 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
   std::vector<SgNode*> sageArrays;
   std::vector<SgNode*> sageStatementBodies;
   int i;
+
   for (i = 0; i < scop->nb_parameters; ++i)
     {
       SgVariableSymbol* symbol =
@@ -474,8 +475,17 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
 	{
 	  SgVariableSymbol* symbol =
 	    isSgVariableSymbol((SgNode*) stm->iterators[i]);
-	  sageIterators.push_back(symbol);
-	  stm->iterators[i] = strdup(symbol->get_name().getString().c_str());
+	  if (symbol)
+	    {
+	      sageIterators.push_back(symbol);
+	      stm->iterators[i] =
+		strdup(symbol->get_name().getString().c_str());
+	    }
+	  else
+	    {
+	      stm->iterators[i] = strdup ("fakeiter");
+	      sageIterators.push_back(NULL);
+	    }
 	}
       sageStatementBodies.push_back((SgNode*) stm->body);
       stm->body =
