@@ -81,6 +81,37 @@ void optimizeSingleScop(scoplib_scop_p scoplibScop,
 /************************* PolyOpt convenience routines *************************/
 /******************************************************************************/
 
+/**
+ * AffineConverter and ScopParser can create fake SgVariableSymbol
+ * with 'new' without attaching them to the AST. When calling
+ * fixupVariableReferences, the variable symbols in the memory pool
+ * are all checked, and deleted for unused one, but after only
+ * checking their declaration... So delete here all SgVariableSymbol*
+ * in the pool that do not have a declaration, assuming optimistically
+ * PolyOpt's analyzer is the only reason for these nodes to be in the
+ * pool. The code is mostly extracted from
+ * sageInterface.C:clearUnusedVariableSymbols().
+ *
+ */
+static void deleteFakeSymbols()
+{
+  Rose_STL_Container<SgNode*> symbolList;
+  VariantVector sym_vv(V_SgVariableSymbol);
+  symbolList = NodeQuery::queryMemoryPool(sym_vv);
+  for (Rose_STL_Container<SgNode*>::iterator i = symbolList.begin();
+       i != symbolList.end(); ++i)
+    {
+      SgVariableSymbol* symbolToDelete = isSgVariableSymbol(*i);
+      if (! strncmp (symbolToDelete->get_name().str(),
+		     "__fake_polyopt_mangling_",
+		     strlen ("__fake_polyopt_mangling_")))
+	{
+	  delete symbolToDelete->get_declaration();
+	  delete symbolToDelete;
+	}
+    }
+}
+
 
 static std::vector<SgNode*> getAddr(SgNode* root)
 {
@@ -1172,6 +1203,9 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
 	annot = new ScopRootAnnotation();
       annot->scopId = scopId;
       sageScop.getBasicBlock()->setAttribute("ScopRoot", annot);
+      // Delete any SgVariableSymbol* in the memory pool without an
+      // explicit variable declaration link.
+      //deleteFakeSymbols();
 
       if (polyoptions.getProgramStats ())
 	PolyOptStatsNode (scopRoot, polyoptions);

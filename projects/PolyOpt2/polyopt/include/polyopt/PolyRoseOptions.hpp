@@ -89,6 +89,8 @@ public:
   bool getScopInSeparateFile();
   void setScopInSeparateFile(bool val);
 
+  bool getProgramStats();
+  void setProgramStats(bool val);
 
   /**
    * Static attributes for verbosity.
@@ -117,6 +119,7 @@ private:
   char*		polyopt_single_function_name;
   bool		polyopt_pocc_past2past;
   bool		sc_with_pragmas_only;
+  bool		polyopt_program_stats;
 
   // Histencil mode option.
   char*		polyopt_histencil_optfilename;

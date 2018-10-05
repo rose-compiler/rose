@@ -55,11 +55,13 @@
 #include <polyfeat/islinterface.h>
 #include <isl/id.h>
 
+#include <isl/space.h>
+#include <isl/union_set.h>
+#include <isl/map.h>
+#include <isl/constraint.h>
+
 #include <polyopt/PolyOptISLRepresentation.hpp>
 
-#include <isl/space.h>
-#include <isl/constraint.h>
-#include <isl/union_set.h>
 
 
 PolyOptISLRepresentation::PolyOptISLRepresentation()

@@ -50,6 +50,7 @@ PolyRoseOptions::initialize()
   sc_allow_math_func = false;
   sc_with_pragmas_only = false;
   polyopt_scop_in_separate_files = false;
+  polyopt_program_stats = false;
 
   // Annotation functions.
   polyopt_annotate_only = false;
@@ -174,6 +175,7 @@ print_help ()
   fprintf (stderr, "--polyopt-scop-extractor-verbose=2\n");
   fprintf (stderr, "--polyopt-scop-extractor-verbose=3\n");
   fprintf (stderr, "--polyopt-scop-extractor-verbose=4\n");
+  fprintf (stderr, "--polyopt-program-stats\n");  
   fprintf (stderr, "Main driver related options: \n");
   fprintf (stderr, "--polyopt-annotate-only\n");
   fprintf (stderr, "--polyopt-annotate-inner-loops\n");
@@ -272,7 +274,8 @@ PolyRoseOptions::parse(int argc, char** argv)
 		sc_scop_extractor_verbose_level = 4);
       check_opt(argv[i], "--polyopt-scop-extractor-verbose=5",
 		sc_scop_extractor_verbose_level = 5);
-
+      check_opt(argv[i], "--polyopt-program-stats",
+		polyopt_program_stats = true);
       // Verbose option.
       check_opt(argv[i], "--polyopt-quiet",
 		polyopt_quiet = true);
@@ -830,4 +833,15 @@ bool PolyRoseOptions::getScopInSeparateFile()
 void PolyRoseOptions::setScopInSeparateFile(bool val)
 {
   polyopt_scop_in_separate_files = val;
+}
+
+
+bool PolyRoseOptions::getProgramStats()
+{
+  return polyopt_program_stats;
+}
+
+void PolyRoseOptions::setProgramStats(bool val)
+{
+  polyopt_program_stats = val;
 }
