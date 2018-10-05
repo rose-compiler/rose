@@ -252,6 +252,7 @@ ctor-list-init.C \
 rose-1379-a.C \
 rose-1379-b.C \
 rose-1380.C \
+rose-1437-0.C \
 $(PREVIOUSLY_FAILING_TESTS) \
 last.C
 
