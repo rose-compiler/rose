@@ -31,7 +31,7 @@ YACC                  = bison
 
 ROSE_INSTALLED = $(shell rose-config prefix)
 CXX      = $(shell $(ROSE_INSTALLED)/bin/rose-config cxx)
-CPPFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cppflags) -I. $(EXTRA_INCLUDES) -fopenmp
+CPPFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cppflags) -I. $(EXTRA_INCLUDES) -fopenmp -w
 CXXFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cxxflags)
 LDFLAGS  = $(shell $(ROSE_INSTALLED)/bin/rose-config ldflags) -L.
 LIBDIRS  = $(shell $(ROSE_INSTALLED)/bin/rose-config libdirs)
