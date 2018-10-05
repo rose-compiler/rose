@@ -1326,17 +1326,14 @@ void polyoptStatsRegion(SgNode* body, PolyRoseOptions& polyoptions,
       do
 	{
 	  parent = parent->get_parent ();
-	  if (parent == NULL && maxdepth == 1)
-	    ++(*nb_for_loop_nests);
-	  else
-	    {
-	      if (isSgForStatement (parent))
-		maxdepth++;
-	    }
+	  if (isSgForStatement (parent))
+	    maxdepth++;
 	}
-      while (parent != NULL);
+      while (parent != NULL && parent != body);
       if (maxdepth > *max_loop_depth)
 	(*max_loop_depth) = maxdepth;
+      if (maxdepth == 1)
+	++(*nb_for_loop_nests);
     }
   SgNodePtrList whileloops =
     NodeQuery::querySubTree(body, V_SgWhileStmt);
