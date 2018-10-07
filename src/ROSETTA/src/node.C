@@ -187,6 +187,7 @@ Grammar::setUpNodes ()
   // Rasmussen (1/16/2018): Added UntypedNullDeclaration
   // Rasmussen (5/28/2018): Added UntypedLabelStatement
   // Rasmussen (6/ 5/2018): Added UntypedStopStatement
+  // Rasmussen (10/2/2018): Added UntypedForAllStatement
      NEW_TERMINAL_MACRO (UntypedNullDeclaration,               "UntypedNullDeclaration",               "TEMP_UntypedNullDeclaration" );
      NEW_TERMINAL_MACRO (UntypedNullStatement,                 "UntypedNullStatement",                 "TEMP_UntypedNullStatement" );
      NEW_TERMINAL_MACRO (UntypedLabelStatement,                "UntypedLabelStatement",                "TEMP_UntypedLabelStatement" );
@@ -195,6 +196,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedLoopStatement,                 "UntypedLoopStatement",                 "TEMP_UntypedLoopStatement" );
      NEW_TERMINAL_MACRO (UntypedWhileStatement,                "UntypedWhileStatement",                "TEMP_UntypedWhileStatement" );
      NEW_TERMINAL_MACRO (UntypedForStatement,                  "UntypedForStatement",                  "TEMP_UntypedForStatement" );
+     NEW_TERMINAL_MACRO (UntypedForAllStatement,               "UntypedForAllStatement",               "TEMP_UntypedForAllStatement" );
   // NEW_TERMINAL_MACRO (UntypedBlockStatement,                "UntypedBlockStatement",                "TEMP_UntypedBlockStatement" );
      NEW_TERMINAL_MACRO (UntypedExitStatement,                 "UntypedExitStatement",                 "TEMP_UntypedExitStatement" );
      NEW_TERMINAL_MACRO (UntypedGotoStatement,                 "UntypedGotoStatement",                 "TEMP_UntypedGotoStatement" );
@@ -282,7 +284,8 @@ Grammar::setUpNodes ()
          UntypedReturnStatement          | UntypedExtendedReturnStatement | UntypedAcceptStatement               | UntypedEntryCallStatement            |
          UntypedRequeueStatement         | UntypedDelayUntilStatement     | UntypedDelayRelativeStatement        | UntypedTerminateAlternativeStatement |
          UntypedSelectiveAcceptStatement | UntypedTimedEntryCallStatement | UntypedConditionalEntryCallStatement | UntypedAsynchronousSelectStatement   |
-         UntypedAbortStatement           | UntypedRaiseStatement          | UntypedStopStatement                 | UntypedCodeStatement,
+         UntypedAbortStatement           | UntypedRaiseStatement          | UntypedStopStatement                 | UntypedCodeStatement                 |
+         UntypedForAllStatement,
          "UntypedStatement", "UntypedStatementTag", false);
 
      NEW_TERMINAL_MACRO (UntypedArrayType, "UntypedArrayType", "TEMP_UntypedArrayType" );
@@ -816,6 +819,19 @@ Grammar::setUpNodes ()
      UntypedForStatement.setDataPrototype             ( "SgUntypedStatement*", "body", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedForStatement.setDataPrototype             ( "std::string", "do_construct_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (10/2/2018): Added to support Fortran DO CONCURRENT construct
+     UntypedForAllStatement.setFunctionPrototype ( "HEADER_UNTYPED_FORALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForAllStatement.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedForAllStatement.setDataPrototype     ( "SgUntypedExprListExpression*", "iterates", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedForAllStatement.setDataPrototype     ( "SgUntypedExprListExpression*", "local", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedForAllStatement.setDataPrototype     ( "SgUntypedExpression*", "mask", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedForAllStatement.setDataPrototype     ( "std::string", "do_construct_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UntypedLoopStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
@@ -1519,6 +1535,7 @@ Grammar::setUpNodes ()
      UntypedLoopStatement.setFunctionSource                 ( "SOURCE_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedWhileStatement.setFunctionSource                ( "SOURCE_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedForStatement.setFunctionSource                  ( "SOURCE_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForAllStatement.setFunctionSource               ( "SOURCE_UNTYPED_FORALL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedExitStatement.setFunctionSource                 ( "SOURCE_UNTYPED_EXIT_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedGotoStatement.setFunctionSource                 ( "SOURCE_UNTYPED_GOTO_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedProcedureCallStatement.setFunctionSource        ( "SOURCE_UNTYPED_PROCEDURE_CALL_STATEMENT", "../Grammar/LocatedNode.code");
