@@ -754,6 +754,7 @@ SgUntypedNamedStatement
 SgUntypedAssignmentStatement
 SgUntypedBlockStatement
 SgUntypedExpressionStatement
+SgUntypedForAllStatement
 SgUntypedFunctionCallStatement
 SgUntypedImageControlStatement
 SgUntypedOtherStatement

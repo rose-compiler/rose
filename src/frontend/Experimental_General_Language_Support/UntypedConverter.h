@@ -82,9 +82,11 @@ class UntypedConverter
 
       virtual SgStatement*     convertSgUntypedAbortStatement      (SgUntypedAbortStatement*  ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedExitStatement       (SgUntypedExitStatement*   ut_stmt, SgScopeStatement* scope);
+      virtual SgStatement*     convertSgUntypedForAllStatement     (SgUntypedForAllStatement* ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedGotoStatement       (SgUntypedGotoStatement*   ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedLabelStatement_decl (SgUntypedLabelStatement*  ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedLabelStatement      (SgUntypedLabelStatement*  ut_stmt, SgStatement* stmt, SgScopeStatement* scope);
+      virtual SgStatement*     convertSgUntypedNamedStatement      (SgUntypedNamedStatement*  ut_stmt, SgScopeStatement* scope);
       virtual SgNullStatement* convertSgUntypedNullStatement       (SgUntypedNullStatement*   ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedOtherStatement      (SgUntypedOtherStatement*  ut_stmt, SgScopeStatement* scope);
 

@@ -1326,6 +1326,74 @@ UntypedConverter::convertSgUntypedForStatement (SgUntypedForStatement* ut_stmt, 
       return sg_stmt;
    }
 
+SgStatement*
+UntypedConverter::convertSgUntypedForAllStatement (SgUntypedForAllStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      SgUntypedType* type = ut_stmt->get_type();
+      SgUntypedExprListExpression* iterates = ut_stmt->get_iterates();
+      SgUntypedExprListExpression* locality = ut_stmt->get_local();
+      SgUntypedExpression* mask = ut_stmt->get_mask();
+      std::string name = ut_stmt->get_do_construct_name();
+
+#if 0
+      cout << "-x- convert forall: type is "       << type << endl;
+      cout << "-x- convert forall: iterates are "  << iterates << endl;
+      cout << "-x- convert forall: locality is "   << locality << endl;
+      cout << "-x- convert forall: mask is "       << mask << endl;
+      cout << "-x- convert forall: name is "       << name << endl;
+#endif
+
+      SgExprListExp* sg_expr_list = new SgExprListExp();
+      setSourcePositionFrom(sg_expr_list, iterates);
+
+      BOOST_FOREACH(SgUntypedExpression* ut_expr, iterates->get_expressions())
+         {
+            SgUntypedNamedExpression* named_expr = dynamic_cast<SgUntypedNamedExpression*>(ut_expr);
+            ROSE_ASSERT(isSgUntypedNamedExpression(named_expr));
+
+            SgName name = named_expr->get_expression_name();
+
+            SgUntypedExpression* expr = named_expr->get_expression();
+            SgUntypedSubscriptExpression* ut_triplet = dynamic_cast<SgUntypedSubscriptExpression*>(expr);
+
+         // First assume easy case where variable has been declared yet
+            SgVariableSymbol* sg_var_sym = SageInterface::lookupVariableSymbolInParentScopes(name, scope);
+            ROSE_ASSERT(sg_var_sym);
+
+            SgVarRefExp* sg_var_ref = SageBuilder::buildVarRefExp(sg_var_sym);
+            ROSE_ASSERT(sg_var_ref);
+
+            SgExpression* sg_triplet = convertSgUntypedSubscriptExpression(ut_triplet, false);
+
+         // Append the variable and iteration bounds as a pair
+            sg_expr_list->append_expression(sg_var_ref);
+            sg_expr_list->append_expression(sg_triplet);
+         }
+
+      SgBasicBlock* body = SageBuilder::buildBasicBlock();
+      ROSE_ASSERT(body);
+      SageInterface::setSourcePosition(body);
+
+      SgForAllStatement* sg_stmt = new SgForAllStatement(sg_expr_list, body);
+      ROSE_ASSERT(sg_stmt);
+      setSourcePositionFrom(sg_stmt, ut_stmt);
+
+      body->setCaseInsensitive(true);
+      body->set_parent(sg_stmt);
+
+      sg_expr_list->set_parent(sg_stmt);
+
+      sg_stmt->setCaseInsensitive(true);
+      sg_stmt->set_has_end_statement(true);
+
+      SageInterface::appendStatement(sg_stmt, scope);
+
+   // The ForAllStatement body becomes the current scope
+      SageBuilder::pushScopeStack(body);
+
+      return sg_stmt;
+   }
+
 SgExprStatement*
 UntypedConverter::convertSgUntypedFunctionCallStatement (SgUntypedFunctionCallStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
@@ -1665,13 +1733,35 @@ UntypedConverter::convertSgUntypedLabelStatement (SgUntypedLabelStatement* ut_st
       return label_stmt;
    }
 
+SgStatement*
+UntypedConverter::convertSgUntypedNamedStatement (SgUntypedNamedStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      using namespace General_Language_Translation;
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case e_fortran_end_do_stmt:
+           {
+              SageBuilder::popScopeStack();
+              scope = SageBuilder::topScopeStack();
+              break;
+           }
+        default:
+           {
+              cout << "Warning: UntypedNamedStatement stmt_enum not handled is " << ut_stmt->get_statement_enum() << endl;
+           }
+        }
+
+      return scope;
+   }
+
 SgNullStatement*
 UntypedConverter::convertSgUntypedNullStatement (SgUntypedNullStatement* ut_stmt, SgScopeStatement* scope)
    {
       SgNullStatement* nullStatement = SageBuilder::buildNullStatement();
       setSourcePositionFrom(nullStatement, ut_stmt);
 
-      scope->append_statement(nullStatement);
+      SageInterface::appendStatement(nullStatement, scope);
       convertLabel(ut_stmt, nullStatement, scope);
 
       return nullStatement;
@@ -2246,32 +2336,39 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 SgExprListExp*
 UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression* ut_expr_list, SgNodePtrList& children)
 {
+   using namespace General_Language_Translation;
+
    SgExprListExp* sg_expr_list = NULL;
 
-   cout << "-x- convertSgUntypedExprListExpression: enum is " << ut_expr_list->get_expression_enum() << endl;
-
-   int expr_enum = ut_expr_list->get_expression_enum();
-
-// Image control status lists are converted explicitly (not via a traversal) so they don't belong here
-   if ( expr_enum == General_Language_Translation::e_case_selector ||
-        expr_enum == General_Language_Translation::e_argument_list
-      )
+   switch(ut_expr_list->get_expression_enum())
      {
-        sg_expr_list = new SgExprListExp();
-        ROSE_ASSERT(sg_expr_list);
+       case e_argument_list:
+       case e_case_selector:
+         {
+            sg_expr_list = new SgExprListExp();
+            ROSE_ASSERT(sg_expr_list);
 
-        setSourcePositionFrom(sg_expr_list, ut_expr_list);
+            setSourcePositionFrom(sg_expr_list, ut_expr_list);
 
-        BOOST_FOREACH(SgLocatedNode* sg_node, children)
-          {
-             SgExpression* sg_expr = dynamic_cast<SgExpression*>(sg_node);
-             ROSE_ASSERT(sg_expr);
-             sg_expr_list->append_expression(sg_expr);
-          }
-     }
-   else
-     {
-        cerr << "WARNING: convertSgUntypedExprListExpression: unknown enum, is " << ut_expr_list->get_expression_enum() << endl;
+            BOOST_FOREACH(SgLocatedNode* sg_node, children)
+               {
+                  SgExpression* sg_expr = dynamic_cast<SgExpression*>(sg_node);
+                  ROSE_ASSERT(sg_expr);
+                  sg_expr_list->append_expression(sg_expr);
+               }
+            break;
+         }
+
+    // Image control status lists are converted explicitly (not via a traversal) so they don't belong here
+       case e_fortran_sync_stat_list:       break;
+       case e_fortran_sync_stat_stat:       break;
+       case e_fortran_sync_stat_errmsg:     break;
+       case e_fortran_stat_acquired_lock:   break;
+
+       default:
+         {
+            cerr << "WARNING: convertSgUntypedExprListExpression: unknown enum, is " << ut_expr_list->get_expression_enum() << endl;
+         }
      }
 
    return sg_expr_list;
@@ -2280,6 +2377,8 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 SgExpression*
 UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpression* ut_expr, bool delete_ut_expr)
 {
+   using namespace General_Language_Translation;
+
 #if 0
    cout << "UntypedConverter::convertSgUntypedSubscriptExpression: class " << ut_expr->class_name() << " " << ut_expr << endl;
    cout << "UntypedConverter::convertSgUntypedSubscriptExpression:  enum " << ut_expr->get_expression_enum() << endl;
@@ -2292,17 +2391,19 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
 #endif
 
    SgExpression* sg_expr = NULL;
+   SgExpression* sg_lower_bound = NULL;
    SgExpression* sg_upper_bound = NULL;
+   SgExpression* sg_stride = NULL;
 
    switch(ut_expr->get_expression_enum())
       {
-        case General_Language_Translation::e_explicit_shape:
-        case General_Language_Translation::e_explicit_dimension:
+        case e_explicit_shape:
+        case e_explicit_dimension:
            {
               sg_upper_bound = convertSgUntypedExpression(ut_expr->get_upper_bound(), delete_ut_expr);
               break;
            }
-        case General_Language_Translation::e_assumed_shape:
+        case e_assumed_shape:
            {
               cout << "... assumed shape\n";
               if (isSgUntypedNullExpression(ut_expr->get_lower_bound()))
@@ -2312,13 +2413,22 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
               setSourcePositionUnknown(sg_upper_bound);
               break;
            }
-        case General_Language_Translation::e_assumed_or_implied_shape:
-        case General_Language_Translation::e_assumed_size:
-        case General_Language_Translation::e_star_dimension:
+        case e_assumed_or_implied_shape:
+        case e_assumed_size:
+        case e_star_dimension:
            {
               cout << "... assumed size\n";
               sg_upper_bound = new SgAsteriskShapeExp();
               setSourcePositionUnknown(sg_upper_bound);
+              break;
+           }
+        case e_array_index_triplet:
+           {
+              sg_upper_bound = convertSgUntypedExpression(ut_expr->get_upper_bound(), delete_ut_expr);
+              if (!isSgUntypedNullExpression(ut_expr->get_stride()))
+                 {
+                    sg_stride = convertSgUntypedExpression(ut_expr->get_stride(), delete_ut_expr);
+                 }
               break;
            }
         default:
@@ -2336,11 +2446,20 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
       }
    else
       {
-         SgExpression* sg_lower_bound = convertSgUntypedExpression(ut_expr->get_lower_bound(), delete_ut_expr);
-         SgExpression* sg_stride = new SgIntVal(1,"1");
-         setSourcePositionUnknown(sg_stride);
+         sg_lower_bound = convertSgUntypedExpression(ut_expr->get_lower_bound(), delete_ut_expr);
+         if (sg_stride == NULL)
+            {
+               // PLEASE clean this up, PLEASE (look at e_array_index_triplet logic)
+               sg_stride = new SgIntVal(1,"1");
+               setSourcePositionUnknown(sg_stride);
+            }
          sg_expr = new SgSubscriptExpression(sg_lower_bound, sg_upper_bound, sg_stride);
          setSourcePositionFrom(sg_expr, ut_expr);
+
+      // Set the parents of all the parts of the SgSubscriptExpression
+         sg_lower_bound->set_parent(sg_expr);
+         sg_upper_bound->set_parent(sg_expr);
+         sg_stride     ->set_parent(sg_expr);
       }
 
    if (delete_ut_expr)

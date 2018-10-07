@@ -3349,6 +3349,19 @@ SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(S
    }
 
 
+SgUntypedForAllStatement* SgUntypedForAllStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedForAllStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedForAllStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 // Rasmussen (4/18/2018): Added target_expression so that the goto statement has a place to go to.
 SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string target_label)
    {

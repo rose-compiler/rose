@@ -299,7 +299,9 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
 
-          case V_SgForAllStatement:            unparseForAllStatement(stmt, info); break;
+       // Rasmussen (10/02/2018): This is temporary fix (actual ForAllStatements aren't created)
+       // case V_SgForAllStatement:            unparseForAllStatement(stmt, info); break;
+          case V_SgForAllStatement:            unparseDoConcurrentStatement(stmt, info); break;
 
           case V_SgContainsStatement:          unparseContainsStatement(stmt, info); break;
 
@@ -2405,6 +2407,70 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
         {
           unparseStatementNumbersSupport(forAllStatement->get_end_numeric_label(),info);
           curprint("END FORALL");
+        }
+   }
+
+
+void
+FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
+     ROSE_ASSERT(forAllStatement != NULL);
+
+     SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
+     ROSE_ASSERT(forAllHeader != NULL);
+
+     SgExpressionPtrList header = forAllHeader->get_expressions();
+
+  // The expressions in the forall header are in pairs (var, SgSubscriptExpression)
+     ROSE_ASSERT( ( forAllHeader->get_expressions().size() % 2 ) == 0);
+     int num_vars = forAllHeader->get_expressions().size() / 2;
+
+     curprint("DO CONCURRENT (");
+
+     for (int i = 0; i <= num_vars; i += 2)
+        {
+           if (i != 0) curprint(", ");
+
+        // variable
+           unparseExpression(header[i],  info);
+           curprint("=");
+        // subscripts
+           unparseExpression(header[i+1],info);
+        }
+
+     curprint(")");
+
+  // Unparse the body
+     SgStatement* statement = NULL;
+     if (forAllStatement->get_has_end_statement() == true)
+        {
+          statement = forAllStatement->get_body();
+          ROSE_ASSERT(statement != NULL);
+
+          unparseStatement(statement,info);
+        }
+       else
+        {
+          SgBasicBlock* body = isSgBasicBlock(forAllStatement->get_body());
+          ROSE_ASSERT(body != NULL);
+
+          SgStatementPtrList & statementList = body->get_statements();
+          ROSE_ASSERT(statementList.size() == 1);
+          statement = *(statementList.begin());
+          ROSE_ASSERT(statement != NULL);
+
+          unparseLanguageSpecificStatement(statement,info);
+        }
+
+     unp->cur.insert_newline(1);
+
+  // Unparse the end statement
+     if (forAllStatement->get_has_end_statement() == true)
+        {
+          unparseStatementNumbersSupport(forAllStatement->get_end_numeric_label(),info);
+          curprint("END DO");
+          unp->cur.insert_newline(1);
         }
    }
 

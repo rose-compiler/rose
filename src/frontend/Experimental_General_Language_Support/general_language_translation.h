@@ -105,6 +105,9 @@ namespace General_Language_Translation
           e_assumed_shape,
           e_assumed_size,
 
+       // Expressions for array indexing
+          e_array_index_triplet,
+
        // Explicitly for Jovial but try to reuse for Fortran
           e_explicit_dimension,
           e_star_dimension,
@@ -129,6 +132,10 @@ namespace General_Language_Translation
           e_fortran_else_if_stmt,
           e_fortran_else_stmt,
           e_fortran_end_do_stmt,
+
+          e_fortran_concurrent_header,
+          e_fortran_concurrent_control,
+          e_fortran_concurrent_locality,
 
           e_fortran_sync_all_stmt,
           e_fortran_sync_images_stmt,

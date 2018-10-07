@@ -2267,9 +2267,21 @@ ATbool ATermToUntypedFortranTraversal::traverse_NonlabelDoStmt(ATerm term, SgUnt
    std::string label;
    std::string do_construct_name;
    std::string eos;
+
+// Variables for do loop
    SgUntypedExpression* initialization = NULL;
    SgUntypedExpression* upper_bound = NULL;
    SgUntypedExpression* increment = NULL;
+
+// Variables for do concurrent
+   SgUntypedType* concur_type = NULL;
+   SgUntypedExpression*  mask = NULL;
+   SgUntypedExprListExpression* iterates = NULL;
+   SgUntypedExprListExpression* locality = NULL;
+
+   SgUntypedStatement* loop_stmt = NULL;
+
+   bool isConcurrent = false;
 
    if (ATmatch(term, "NonlabelDoStmt(<term>,<term>,<term>,<term>)", &t_label,&t_name,&t_loop_ctrl,&t_eos)) {
       if (traverse_OptLabel(t_label, label)) {
@@ -2278,9 +2290,19 @@ ATbool ATermToUntypedFortranTraversal::traverse_NonlabelDoStmt(ATerm term, SgUnt
       if (traverse_OptName(t_name, do_construct_name)) {
          // MATCHED OptName
       } else return ATfalse;
+
+   // Regular do loops are checked first
+   //   - first if statement handles the optional part (no-loop-control)
       if (traverse_OptLoopControl(t_loop_ctrl, &initialization, &upper_bound, &increment)) {
          // MATCHED OptLoopControl
-      } else return ATfalse;
+      }
+   // DO CONCURRENT
+      else if (traverse_LoopConcurrentControl(t_loop_ctrl, &concur_type, &iterates, &locality, &mask)) {
+         // This is a DO CONCURRENT construct
+         isConcurrent = true;
+      }
+      else return ATfalse;
+
       if (traverse_eos(t_eos, eos)) {
          // MATCHED eos string
       } else return ATfalse;
@@ -2290,10 +2312,23 @@ ATbool ATermToUntypedFortranTraversal::traverse_NonlabelDoStmt(ATerm term, SgUnt
 // The do body is not used currently in the grammar, it must be found during conversion to Sage nodes.
    SgUntypedStatement * body = NULL;
 
-   SgUntypedForStatement* for_stmt = new SgUntypedForStatement("", initialization, upper_bound, increment, body, do_construct_name);
-   setSourcePosition(for_stmt, term);
+   if (isConcurrent) {
+      SgUntypedForAllStatement* forall_stmt = new SgUntypedForAllStatement("", concur_type, iterates, locality, mask, do_construct_name);
+      ROSE_ASSERT(forall_stmt);
+      setSourcePosition(forall_stmt, term);
 
-   stmt_list->get_stmt_list().push_back(for_stmt);
+      loop_stmt = forall_stmt;
+   }
+   else {
+      SgUntypedForStatement* for_stmt = new SgUntypedForStatement("", initialization, upper_bound, increment, body, do_construct_name);
+      ROSE_ASSERT(for_stmt);
+      setSourcePosition(for_stmt, term);
+
+      loop_stmt = for_stmt;
+   }
+
+   ROSE_ASSERT(loop_stmt);
+   stmt_list->get_stmt_list().push_back(loop_stmt);
 
    return ATtrue;
 }
@@ -4075,6 +4110,187 @@ ATbool ATermToUntypedFortranTraversal::traverse_EndBlockDataStmt(ATerm term, SgU
 
    *end_block_data_stmt = new SgUntypedNamedStatement(label,keyword,name);
    setSourcePositionExcludingTerm(*end_block_data_stmt, term, term_eos);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// loop-control (R1123-2018-N2146): DO CONCURRENT
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_LoopConcurrentControl(ATerm term, SgUntypedType** type, SgUntypedExprListExpression** header,
+                                                                                  SgUntypedExprListExpression** locality, SgUntypedExpression** mask)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_LoopConcurrentControl: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_header, t_locality;
+
+   *type     = NULL;
+   *header   = NULL;
+   *locality = NULL;
+   *mask     = NULL;
+
+   if (ATmatch(term, "LoopConcurrentControl(<term>,<term>)", &t_header, &t_locality)) {
+
+      if (traverse_ConcurrentHeader(t_header, type, header, mask)) {
+         // MATCHED ConcurrentHeader
+      } else return ATfalse;
+      if (traverse_ConcurrentLocality(t_locality, locality)) {
+         // MATCHED ConcurrentLocality
+      } else return ATfalse;
+
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// concurrent-header (R1125-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ConcurrentHeader(ATerm term, SgUntypedType** type,
+                                                                             SgUntypedExprListExpression** header, SgUntypedExpression** mask)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ConcurrentHeader: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_type, t_header, t_mask;
+
+   SgUntypedExprListExpression* concurrent_header  = NULL;
+   SgUntypedNamedExpression*    concurrent_control = NULL;
+
+   *type     = NULL;
+   *header   = NULL;
+   *mask     = NULL;
+
+   if (ATmatch(term, "ConcurrentHeader(<term>,<term>,<term>)", &t_type, &t_header, &t_mask)) {
+
+      if (ATmatch(t_type, "no-type-spec()")) {
+         // there is no type spec
+         *type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
+      }
+      else if (traverse_IntrinsicTypeSpec(t_type, type)) {
+         // MATCHED TypeSpec
+      }
+      else return ATfalse;
+
+   // slightly easier to check for mask first (note doesn't match parse order)
+      if (ATmatch(t_mask, "no-mask-expr()")) {
+         // there is no mask expression
+      }
+      else if (traverse_Expression(t_mask, mask)) {
+         // MATCHED Expression
+      }
+      else return ATfalse;
+
+      concurrent_header = new SgUntypedExprListExpression(e_fortran_concurrent_header);
+      ROSE_ASSERT(concurrent_header);
+      setSourcePosition(concurrent_header, t_header);
+
+      ATermList tail = (ATermList) ATmake("<term>", t_header);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+
+         if (traverse_ConcurrentControl(head, &concurrent_control)) {
+            // MATCHED ConcurrentControl
+         } else return ATfalse;
+         ROSE_ASSERT(concurrent_control);
+         concurrent_header->get_expressions().push_back(concurrent_control);
+      }
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(concurrent_header);
+   *header = concurrent_header;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// concurrent-control (R1126-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ConcurrentControl(ATerm term, SgUntypedNamedExpression** control)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ConcurrentControl: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_name, t_begin, t_end, t_step, t_step_ctrl;
+   std::string name;
+   SgUntypedExpression* begin = NULL;
+   SgUntypedExpression* end   = NULL;
+   SgUntypedExpression* step  = NULL;
+
+   *control = NULL;
+
+   if (ATmatch(term, "ConcurrentControl(<term>,<term>,<term>,<term>)", &t_name, &t_begin, &t_end, &t_step_ctrl)) {
+
+      if (traverse_Name(t_name, name)) {
+         // MATCHED ProcedureName string
+      } else return ATfalse;
+
+      if (traverse_Expression(t_begin, &begin)) {
+         // MATCHED begin expression
+      } else return ATfalse;
+
+      if (traverse_Expression(t_end, &end)) {
+         // MATCHED end expression
+      } else return ATfalse;
+
+      if (ATmatch(t_step_ctrl, "no-concurrent-step()")) {
+         step = UntypedBuilder::buildUntypedNullExpression();
+         ROSE_ASSERT(step);
+         setSourcePositionUnknown(step);
+      }
+      else if (ATmatch(t_step_ctrl, "ConcurrentStep(<term>)", &t_step)) {
+         if (traverse_Expression(t_step, &step)) {
+            // MATCHED step expression
+         } else return ATfalse;
+      }
+      else return ATfalse;
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(begin && end && step);
+
+   SgUntypedSubscriptExpression* triplet = new SgUntypedSubscriptExpression(e_array_index_triplet, begin, end, step);
+   ROSE_ASSERT(triplet);
+   setSourcePositionIncludingNode(triplet, t_begin, step);
+
+   *control = new SgUntypedNamedExpression(e_fortran_concurrent_control, name, triplet);
+   ROSE_ASSERT(*control);
+   setSourcePosition(*control, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// concurrent-locality (R1130-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ConcurrentLocality(ATerm term, SgUntypedExprListExpression** locality)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ConcurrentLocality: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_namelist;
+
+   *locality = NULL;
+
+   if (ATmatch(term, "ConcurrentLocality(<term>)", &t_namelist)) {
+      cout << "WARNING: need to implement locality expr_enum is " << e_fortran_concurrent_locality << endl;
+      *locality = new SgUntypedExprListExpression(e_fortran_concurrent_locality);
+   }
+   else return ATfalse;
 
    return ATtrue;
 }

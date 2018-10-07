@@ -769,6 +769,14 @@ sorts
   EndChangeTeamStmt                   %% R1114-F2018-N2146
   TeamValue                           %% R1115-F2018-N2146
 
+  ConcurrentHeader                    %% R1125-F2025-N2146
+  ConcurrentControl                   %% R1126-F2025-N2146
+  ConcurrentLimit                     %% R1127-F2025-N2146
+  ConcurrentLocality                  %% R1129-F2025-N2146
+  LocalitySpec                        %% R1130-F2025-N2146
+
+  OptConcurrentStep
+
   ImageSelector                       %% R924-F2018-N2146, R624
   Cosubscript                         %% R925-F2018-N2146
   ImageSelectorSpec                   %% R926-F2018-N2146
@@ -2541,8 +2549,6 @@ context-free syntax
   ',' DoVariable '=' Expr ',' Expr OptExpr              -> LoopControl    {cons("LoopControl")}
       'WHILE' '(' Expr ')'                              -> LoopControl    {cons("LoopWhileControl")}
   ',' 'WHILE' '(' Expr ')'                              -> LoopControl    {cons("LoopWhileControl")}
-      'CONCURRENT' ForallHeader                         -> LoopControl    {cons("LoopConcurrentControl")}
-  ',' 'CONCURRENT' ForallHeader                         -> LoopControl    {cons("LoopConcurrentControl")}
 
   LoopControl                                           -> OptLoopControl
   % empty %                                             -> OptLoopControl {cons("no-loop-control")}
@@ -3953,6 +3959,46 @@ context-free syntax
   ScalarIntExpr                                         -> TeamValue
 
   Expr                                                  -> ScalarIntExpr
+
+
+%% 11.1.7.2 Form of the DO construct
+%% ---------------------------------
+
+%% R1123-F2018-N2146
+%%
+      'CONCURRENT' ConcurrentHeader ConcurrentLocality  -> LoopControl       {cons("LoopConcurrentControl")}
+  ',' 'CONCURRENT' ConcurrentHeader ConcurrentLocality  -> LoopControl       {cons("LoopConcurrentControl")}
+
+%% R1125-F2018-N2146
+%%
+  '('
+      OptTypeSpec {ConcurrentControl ','}+ OptMaskExpr
+   ')'                                                  -> ConcurrentHeader  {cons("ConcurrentHeader")}
+
+%% R1126-F2018-N2146
+%%
+  Name '=' ConcurrentLimit ':' ConcurrentLimit
+                               OptConcurrentStep        -> ConcurrentControl {cons("ConcurrentControl")}
+
+%% R1127-F2018-N2146
+%%
+  ScalarIntExpr                                         -> ConcurrentLimit
+
+%% R1128-F2018-N2146
+%%
+  ':' ScalarIntExpr                                     -> OptConcurrentStep {cons("ConcurrentStep")}
+  % empty %                                             -> OptConcurrentStep {cons("no-concurrent-step")}
+
+%% R1129-F2018-N2146
+%%
+  {LocalitySpec ','}*                                   -> ConcurrentLocality {cons("ConcurrentLocality")}
+
+%% R1130-F2018-N2146
+%%
+  'LOCAL'      '(' {VariableName ','}+ ')'              -> LocalitySpec      {cons("LocalitySpecLOCAL")}
+  'LOCAL_INIT' '(' {VariableName ','}+ ')'              -> LocalitySpec      {cons("LocalitySpecLOCAL_INIT")}
+  'SHARED'     '(' {VariableName ','}+ ')'              -> LocalitySpec      {cons("LocalitySpecSHARED")}
+  'DEFAULT'    '(' 'NONE' ')'                           -> LocalitySpec      {cons("LocalitySpecDEFAULT")}
 
 
 %% 11.5 FAIL IMAGE statement

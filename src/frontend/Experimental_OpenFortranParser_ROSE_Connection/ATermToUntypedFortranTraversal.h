@@ -251,6 +251,19 @@ ATbool traverse_BlockDataStmt(ATerm term, SgUntypedNamedStatement** block_data_s
 // R1122
 ATbool traverse_EndBlockDataStmt(ATerm term, SgUntypedNamedStatement** end_block_data_stmt);
 
+// R1123-2018-N2146
+ATbool traverse_LoopConcurrentControl(ATerm term, SgUntypedType** type, SgUntypedExprListExpression** header,
+                                                  SgUntypedExprListExpression** locality, SgUntypedExpression** mask);
+
+// R1125-2018-N2146
+ATbool traverse_ConcurrentHeader(ATerm term, SgUntypedType** type, SgUntypedExprListExpression** header, SgUntypedExpression** mask);
+
+// R1126-2018-N2146
+ATbool traverse_ConcurrentControl(ATerm term, SgUntypedNamedExpression** control);
+
+// R1130-2018-N2146
+ATbool traverse_ConcurrentLocality(ATerm term, SgUntypedExprListExpression** locality);
+
 // R1164-2018-N2146
 ATbool traverse_SyncAllStmt   (ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_ImageControlStatList (ATerm term, SgUntypedExprListExpression* sync_stat_list);
