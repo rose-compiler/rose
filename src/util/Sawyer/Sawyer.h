@@ -331,22 +331,34 @@
 #endif
 
 #ifdef BOOST_WINDOWS
-// FIXME[Robb Matzke 2014-06-18]: get rid of ROSE_UTIL_EXPORTS; cmake can only have one DEFINE_SYMBOL
-#   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_UTIL_EXPORTS) // defined in CMake when compiling libsawyer
-#       define SAWYER_EXPORT __declspec(dllexport)
-#       if _MSC_VER
-#           define SAWYER_EXPORT_NORETURN __declspec(dllexport noreturn)
-#       else
+    //--------------------------
+    // Microsoft Windows
+    //--------------------------
+    // FIXME[Robb Matzke 2014-06-18]: get rid of ROSE_UTIL_EXPORTS; cmake can only have one DEFINE_SYMBOL
+    #if defined(SAWYER_DO_EXPORTS) || defined(ROSE_UTIL_EXPORTS) // defined in CMake when compiling libsawyer
+        #define SAWYER_EXPORT __declspec(dllexport)
+        #if _MSC_VER
+            #define SAWYER_EXPORT_NORETURN __declspec(dllexport noreturn)
+        #else
             // MinGW complains about __declspec(dllexport noreturn), so use only __declspec(dllexport) instead.
-#           define SAWYER_EXPORT_NORETURN __declspec(dllexport)
-#       endif
-#   else
-#       define SAWYER_EXPORT __declspec(dllimport)
-#       define SAWYER_EXPORT_NORETURN __declspec(noreturn)
-#   endif
+            #define SAWYER_EXPORT_NORETURN __declspec(dllexport)
+        #endif
+    #else
+        #define SAWYER_EXPORT __declspec(dllimport)
+        #define SAWYER_EXPORT_NORETURN __declspec(noreturn)
+    #endif
+#elif defined(__APPLE__) && defined(__MACH__)
+    //--------------------------
+    // Apple OSX, iOS, Darwin
+    //--------------------------
+    #define SAWYER_EXPORT /*void*/
+    #define SAWYER_EXPORT_NORETURN _Noreturn
 #else
-#   define SAWYER_EXPORT /*void*/
-#   define SAWYER_EXPORT_NORETURN /*void*/
+    //--------------------------
+    // Other OS compilers
+    //--------------------------
+    #define SAWYER_EXPORT /*void*/
+    #define SAWYER_EXPORT_NORETURN /*void*/
 #endif
 
 #define SAWYER_LINKAGE_INFO SAWYER_VERSION_MAJOR, SAWYER_VERSION_MINOR, SAWYER_VERSION_PATCH, SAWYER_MULTI_THREADED
@@ -453,7 +465,7 @@ SAWYER_EXPORT std::string thisExecutableName();
 # define SAWYER_STATIC_INIT /*void*/
 # define SAWYER_DEPRECATED(WHY) /*void*/
 
-// Apple compilers doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector,
+// Apple compilers don't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector,
 // which will be cleaned up propertly at end of scope or exceptions.
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
     std::vector<TYPE> NAME##Vec_(SIZE);                 \
@@ -476,10 +488,23 @@ SAWYER_EXPORT std::string thisExecutableName();
 # define SAWYER_STATIC_INIT __attribute__((init_priority(101)))
 
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
-    TYPE NAME[SIZE];
+    TYPE NAME[SIZE]; memset(NAME, 0, (SIZE)*sizeof(TYPE))
 
 #endif
 
 #define SAWYER_CONFIGURED /*void*/
 
 #endif
+
+// Clean up namespace pollution (shame on Qt for attempting to unilaterally change the language!)
+// These need to be outside the #ifndef Sawyer_H that protects the rest of this file, otherwise the following
+// is possible:
+//     #include "foo.h" // which includes Saywer.h"
+//     #include "bar.h" // which includes #define emit...
+//     #include "baz.h" // which has "emit" symbols clobbered by the pollution
+//
+// I decided it's better to fail early/fail often, therefore these are always deleted.
+// Please fix your Qt headers. Qt's "moc" tool has a command-line switch that prevents the pollution.
+#undef slot
+#undef emit
+

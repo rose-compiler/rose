@@ -304,6 +304,17 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+            // Generate a name for SgDeclarationScope
+               case V_SgDeclarationScope:
+                  {
+                    key = "__declaration_scope_";
+
+                 // Make the key unique for each declaration scope!
+                    const SgDeclarationScope* declarationScope = isSgDeclarationScope(statement);
+                    key = key + StringUtility::numberToString(declarationScope);
+                    break;
+                  }
+
             // Declarations
 
             // Generate a name for SgGlobal

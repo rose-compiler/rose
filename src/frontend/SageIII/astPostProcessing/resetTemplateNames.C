@@ -547,8 +547,12 @@ ResetTemplateNamesOnMemoryPool::visit ( SgNode* node )
      ROSE_ASSERT(node);
   // cerr << "reset parent for node " << node->unparseToString();
 
+  // DQ (6/30/2018): Added to support debuggin test2018_118.C (infinit loop).
+     static int counter = 0;
+
 #if 0
-     printf ("#### ResetTemplateNamesOnMemoryPool::visit(node = %p = %s) \n",node,node->sage_class_name());
+  // printf ("#### ResetTemplateNamesOnMemoryPool::visit(node = %p = %s) \n",node,node->sage_class_name());
+     printf ("#### ResetTemplateNamesOnMemoryPool::visit(node = %p = %s): counter = %d \n",node,node->sage_class_name(),counter++);
 #endif
      
      switch (node->variantT())
@@ -557,16 +561,17 @@ ResetTemplateNamesOnMemoryPool::visit ( SgNode* node )
              {
                SgTemplateInstantiationDecl* templateClassDeclaration = isSgTemplateInstantiationDecl(node);
                ROSE_ASSERT(templateClassDeclaration != NULL);
-
-            // string oldName     = templateClassDeclaration->get_name().str();
-            // string mangledName = templateClassDeclaration->get_mangled_name().str();
-            // printf ("template class: oldName = %s mangledName = %s \n",oldName.c_str(),mangledName.c_str());
-
+#if 0
+               string oldName     = templateClassDeclaration->get_name().str();
+               string mangledName = templateClassDeclaration->get_mangled_name().str();
+               printf ("template class: oldName = %s mangledName = %s \n",oldName.c_str(),mangledName.c_str());
+#endif
             // Calling resetTemplateName()
                templateClassDeclaration->resetTemplateName();
-
-            // string newName     = templateClassDeclaration->get_name().str();
-            // printf ("template class: oldName = %s mangledName = %s newName = %s \n",oldName.c_str(),mangledName.c_str(),newName.c_str());
+#if 0
+               string newName     = templateClassDeclaration->get_name().str();
+               printf ("template class: oldName = %s mangledName = %s newName = %s \n",oldName.c_str(),mangledName.c_str(),newName.c_str());
+#endif
                break;
              }
 

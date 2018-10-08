@@ -470,6 +470,8 @@ namespace sg
     GEN_VISIT(SgUnaryOp)
     GEN_VISIT(SgBinaryOp)
     GEN_VISIT(SgValueExp)
+    GEN_VISIT(SgRangeExp)
+    GEN_VISIT(SgMatrixTransposeOp)
     GEN_VISIT(SgVariableSymbol)
     GEN_VISIT(SgFunctionTypeSymbol)
     GEN_VISIT(SgClassSymbol)
@@ -932,7 +934,7 @@ namespace sg
 
     while (res.second != NULL)
     {
-      res = sg::dispatch(AncestorFinder(), res.second);
+      res = (typename AncestorFinder::Pair) sg::dispatch(AncestorFinder(), res.second);
     }
 
     return res.first;

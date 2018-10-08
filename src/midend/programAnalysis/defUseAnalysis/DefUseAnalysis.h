@@ -88,8 +88,8 @@ class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
   std::string getInitName(SgNode* sgNode);
 
   // the main table of all entries
-  tabletype table;
-  tabletype usetable;
+  tabletype table;   // definition table
+  tabletype usetable;  // use table
   // table for indirect definitions
   //ideftype idefTable;
   // the helper table for visualization
@@ -101,7 +101,7 @@ class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
   std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
 
   void addAnyElement(tabletype* tabl, SgNode* sgNode, SgInitializedName* initName, SgNode* defNode);
-  void mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other, SgNode* current);
+  void mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other, SgNode* current); // current = before Union other
   void printAnyMap(tabletype* tabl);
 
 
@@ -131,6 +131,7 @@ class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
   multitype getDefMultiMapFor(SgNode* node);
   multitype  getUseMultiMapFor(SgNode* node);
   std::vector < SgNode* > getAnyFor(const multitype* mul, SgInitializedName* initName);
+  // for any given node, return all definitions of initName
   std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName);
   std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName);
   bool isNodeGlobalVariable(SgInitializedName* node);
@@ -143,6 +144,7 @@ class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
   int getDefSize();
   int getUseSize();
   void printMultiMap(const multitype* type);
+  void printMultiMap(const multitype& type);
   void printDefMap();  
   void printUseMap();
 

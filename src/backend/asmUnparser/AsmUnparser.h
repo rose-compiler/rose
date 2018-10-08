@@ -345,12 +345,12 @@ public:
          *         added to one of the function callback lists.</li>
          *  </ol>
          *  @{ */
-        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); return false; }
-        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); return false; }
-        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); return false; }
-        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); return false; }
-        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); return false; }
-        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const InsnArgs&)           { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const BasicBlockArgs&)     { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const StaticDataArgs&)     { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const DataBlockArgs&)      { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const FunctionArgs&)       { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const InterpretationArgs&) { abort(); return false; }
         /** @} */
     };
 
@@ -946,7 +946,7 @@ public:
     /** Called when an invalid register is encountered.  This function is called when a RegisterDescriptor is found that isn't
      *  a member of the RegisterDictionary.  It should construct a string to describe the invalid register in the assembly
      *  code, and may also optionally emit a diagnostic message. */
-    static std::string invalid_register(SgAsmInstruction*, const RegisterDescriptor&, const RegisterDictionary*);
+    static std::string invalid_register(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionary*);
 
 public:
     static void initDiagnostics();                      /**< Initialize diagnostic messages subsystem. */

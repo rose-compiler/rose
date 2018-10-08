@@ -1,4 +1,21 @@
 
+// TV (02/27/2018): Added guards for the definition of CUDA's built-in types, variables, functions, and API
+#ifdef ROSE_DEFINE_CUDA
+  #define ROSE_DEFINE_CUDA_BUILTIN 1
+  #define ROSE_DEFINE_CUDA_API 1
+#endif
+#ifdef ROSE_DEFINE_CUDA_BUILTIN
+  #define ROSE_DEFINE_CUDA_BUILTIN_TYPES 1
+  #define ROSE_DEFINE_CUDA_BUILTIN_VARIABLES 1
+  #define ROSE_DEFINE_CUDA_BUILTIN_FUNCTIONS 1
+#endif
+
+#include <vector_types.h>
+
+#define ROSE_DEFINE_CUDA_BUILTIN_VARIABLES 1
+//#define ROSE_DEFINE_GNU_BUILTIN_FOR_CUDA 1
+#define ROSE_DEFINE_CUDA_BUILTIN_SYNC_FUNCTIONS 1
+
 // TV (7/24/2015): including cstdlib causes:
 //      rose/src/backend/unparser/nameQualificationSupport.C:5293:
 //               virtual NameQualificationInheritedAttribute NameQualificationTraversal::evaluateInheritedAttribute(SgNode*, NameQualificationInheritedAttribute):
@@ -33,6 +50,8 @@ typedef unsigned long size_t;
   */
 
   /* Vector Types */
+
+#ifdef ROSE_DEFINE_CUDA_VECTOR_TYPES
 
 struct char1
 {
@@ -303,6 +322,10 @@ typedef struct ulonglong2 ulonglong2;
 typedef struct double1 double1;
 typedef struct double2 double2;
 
+#endif /* ROSE_DEFINE_CUDA_VECTOR_TYPES */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_TYPES
+
 typedef struct dim3 dim3;
 
 struct dim3
@@ -314,6 +337,10 @@ struct dim3
     operator uint3(void) { uint3 t; t.x = x; t.y = y; t.z = z; return t; }
 #endif
 };
+
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_TYPES */
+
+#ifdef ROSE_DEFINE_CUDA_API_TYPES
 
 enum cudaError
 {
@@ -497,6 +524,10 @@ struct textureReference
   int                          __cudaReserved[16];
 };
 
+#endif /* ROSE_DEFINE_CUDA_API_TYPES */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_VARIABLES
+
 /* CUDA Built-in Variables */
 
 dim3  gridDim;
@@ -505,6 +536,9 @@ dim3  blockDim;
 uint3 threadIdx;
 int   warpSize;
 
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_VARIABLES */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_VECTOR_FUNCTIONS
 
 /* CUDA Built-in Functions */
 
@@ -553,6 +587,10 @@ static __inline__ __host__ __device__ ulonglong2 make_ulonglong2(unsigned long l
 static __inline__ __host__ __device__ double1 make_double1(double x);
 static __inline__ __host__ __device__ double2 make_double2(double x, double y);
   
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_VECTOR_FUNCTIONS */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_SYNC_FUNCTIONS
+
   /* Synchronization functions */
 
 __device__ void __threadfence_block();
@@ -563,11 +601,19 @@ __device__ int  __syncthreads_count(int predicate);
 __device__ int  __syncthreads_and(int predicate);
 __device__ int  __syncthreads_or(int predicate);
   
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_SYNC_FUNCTIONS */
+
   /* Time function */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_CLOCK_FUNCTIONS
   
 //__device__ clock_t clock();
   
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_CLOCK_FUNCTIONS */
+
   /* Atomic functions */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_ATOMIC_FUNCTIONS
 
 static __inline__ __device__ int atomicAdd(int *address, int val);
 static __inline__ __device__ unsigned int atomicAdd(unsigned int *address, unsigned int val);
@@ -595,21 +641,39 @@ static __inline__ __device__ unsigned int atomicOr(unsigned int *address, unsign
 static __inline__ __device__ int atomicXor(int *address, int val);
 static __inline__ __device__ unsigned int atomicXor(unsigned int *address, unsigned int val);
 
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_ATOMIC_FUNCTIONS */
+
   /* Warp Vote functions */
   
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_VOTE_FUNCTIONS
+
 __device__ int __all(int cond);
 __device__ int __any(int cond);
 __device__ unsigned int __ballot(int);
 
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_VOTE_FUNCTIONS */
+
   /* Profiler Counter functions */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_PROFILE_FUNCTIONS
 
 __device__ void __prof_trigger(int);
 
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_PROFILE_FUNCTIONS */
+
   /* Mathematical functions (TODO-CUDA) */
+
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_MATH_FUNCTIONS
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_MATH_FUNCTIONS */
 
   /* Texture functions (TODO-CUDA) */
 
+#ifdef ROSE_DEFINE_CUDA_BUILTIN_TEXTURE_FUNCTIONS
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_TEXTURE_FUNCTIONS */
+
 /* CUDA API (TODO-CUDA) */
+
+#ifdef ROSE_DEFINE_CUDA_API
 
 #if !defined(__dv)
 
@@ -810,6 +874,10 @@ cudaError_t cudaDeviceSynchronize();
 }
 #endif /* __cplusplus */
 
+#endif /* ROSE_DEFINE_CUDA_API */
+
+#if ROSE_DEFINE_GNU_BUILTIN_FOR_CUDA
+
 /* DQ (3/1/2017): Moved this to be outside of the extern "C" declarations above (required to 
    support possible multiple overloaded declarations of __builtin_bswap32).
    DQ (2/28/2017): Added builtin function to support CUDA code (this declaration is required 
@@ -824,4 +892,7 @@ __INT32_TYPE__ __builtin_bswap32 (__INT32_TYPE__ x);
 int __builtin_bswap32 (int x);
 #endif
 
+
+
+#endif /* ROSE_DEFINE_GNU_BUILTIN_FOR_CUDA */
 

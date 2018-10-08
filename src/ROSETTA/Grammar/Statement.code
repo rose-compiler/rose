@@ -916,6 +916,9 @@ HEADER_DECLARATION_STATEMENT_START
        // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
           SgType* get_type() const;
 
+       // DQ (3/10/2018): Adding support to output the name, useful for debugging template instantiations which have more complex name using template arguments.
+          std::string unparseNameToString();
+
 HEADER_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_SPECIALIZATION_SUPPORT_START
@@ -1404,6 +1407,46 @@ HEADER_MATLAB_FOR_STATEMENT_START
 HEADER_MATLAB_FOR_STATEMENT_END
 
 
+HEADER_RANGE_BASED_FOR_STATEMENT_START
+
+       // void post_construction_initialization() $ROSE_OVERRIDE;
+
+     protected:
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression ) $ROSE_OVERRIDE;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
+       // DQ (2/22/2007): Added for uniform support of mangled names
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+#else
+       // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+
+     public:
+       // DQ (3/28/2018): Get the range variable (target container, name used for unparser).
+       // SgInitializedName* range_variable();
+       // SgVarRefExp* range_variable_reference();
+          SgExpression* range_expression();
+
+HEADER_RANGE_BASED_FOR_STATEMENT_END
+
+
 HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1427,6 +1470,13 @@ HEADER_CATCH_STATEMENT_SEQ_END
 
 HEADER_STATIC_ASSERTION_DECLARATION_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
        // We need this to be defined to avoid calling the base class version (which is an error).
           SgName get_mangled_name() const $ROSE_OVERRIDE;
 
@@ -1437,6 +1487,17 @@ HEADER_STATIC_ASSERTION_DECLARATION_END
 
 HEADER_FUNCTION_PARAMETER_SCOPE_START
 HEADER_FUNCTION_PARAMETER_SCOPE_END
+
+
+HEADER_DECLARATION_SCOPE_START
+
+       // DQ (7/19/2017): Adding support for mangled name support for new scope.
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
+
+       // DQ (7/19/2017): Added to support general name qualification
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
+
+HEADER_DECLARATION_SCOPE_END
 
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_START
@@ -2172,6 +2233,13 @@ HEADER_EXPRESSION_STATEMENT_END
 
 
 HEADER_LABEL_STATEMENT_START
+
+     // DQ (1/15/2018): Need to support this member function now that we traverse the statement of the label statement.
+        protected:
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
+        public:
+
        // DQ (10/20/2004): This is not part of a uniform interface for all statements 
        // so it is not a particularly useful interface within a minimalist design.
        // Thus I have deprecated this function, users should use the get_label() 
@@ -2179,6 +2247,9 @@ HEADER_LABEL_STATEMENT_START
           SgName get_name() const ROSE_DEPRECATED_FUNCTION;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+       // DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
@@ -3034,10 +3105,22 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
 //#endif
 
+       // DQ (2/25/2018): This appears to be built as a function prototype by default, so I think we don't need this here (redundant).
+       // DQ (2/25/2018): Added a specific version of the post_construction_initialization() function 
+       // to allow it to be run after the SgTypedefDeclaration::post_construction_initialization() function.
+       // void post_construction_initialization();
+
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+
+       // DQ (2/26/2018): get_name assembles the full template name with arguments (e.g. "ABC<int>")
+          void resetTemplateName();
+
+       // DQ (2/28/2018): Added function
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
+
 HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
 
@@ -3404,10 +3487,16 @@ HEADER_USE_STATEMENT_END
 
 HEADER_STOP_OR_PAUSE_STATEMENT_START
      public:
+       // Rasmussen (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
+       // Rasmussen (5/21/2018): Added e_abort for Jovial, perhaps should rethink naming
+       //                        of SgStopOrPauseStatement (or create new node?)
           enum stop_or_pause_enum
              {
                e_unknown,
+               e_abort,
                e_stop,
+               e_error_stop,
+               e_exit,
                e_pause
              };
 
@@ -3418,6 +3507,84 @@ HEADER_STOP_OR_PAUSE_STATEMENT_START
 #endif
 
 HEADER_STOP_OR_PAUSE_STATEMENT_END
+
+// Rasmussen (9/20/2018): Added image control statements
+//
+HEADER_IMAGE_CONTROL_STATEMENT_START
+  // This is a base class for all the image control statements.
+  // Except for allocate and deallocate statements
+
+     public:
+      //! Fortran specific classification for image control statements
+          enum image_control_statement_enum
+             {
+               e_unknown,
+               e_sync_all,
+               e_sync_images,
+               e_sync_memory,
+               e_sync_team,
+               e_change_team,
+               e_critical,
+               e_event_post,
+               e_event_wait,
+               e_form_team,
+               e_lock,
+               e_unlock,
+            // e_allocate,      /* does not derive from SgImageControlStatement */
+            // e_deallocate,    /* does not derive from SgImageControlStatement */
+               e_last_image_control_statement
+             };
+
+HEADER_IMAGE_CONTROL_STATEMENT_END
+
+HEADER_SYNC_ALL_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_SYNC_ALL_STATEMENT_END
+
+HEADER_SYNC_IMAGES_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_SYNC_IMAGES_STATEMENT_END
+
+HEADER_SYNC_MEMORY_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_SYNC_MEMORY_STATEMENT_END
+
+HEADER_SYNC_TEAM_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_SYNC_TEAM_STATEMENT_END
+
+HEADER_LOCK_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_LOCK_STATEMENT_END
+
+HEADER_UNLOCK_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_UNLOCK_STATEMENT_END
+
 
 HEADER_IO_STATEMENT_START
   // This is a base class for all the I/O statements: read, write, open, close, inquire
@@ -4820,16 +4987,18 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
                          aliasSymbol = new SgAliasSymbol(s);
                        }
 #if 0
+                    printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                     printf ("In SgScopeStatement::insert_symbol(): Insert SgAliasSymbol = %p for input symbol = %p = %s into the globalScopeAcrossFiles = %p global_scope = %p \n",
                          aliasSymbol,s,s->class_name().c_str(),globalScopeAcrossFiles,global_scope);
+                    printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
                     globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
                   }
                  else
                   {
-#if 1
+// #if 1
                     printf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
-#endif
+// #endif
                   }
              }
             else
@@ -5712,6 +5881,35 @@ SgScopeStatement::find_symbol_from_declaration(const T* node) const
      printf ("In SgScopeStatement::find_symbol_from_declaration(): calling p_symbol_table->find(node): node %p = %s \n",node,node->class_name().c_str());
 #endif
 
+  // DQ (4/14/2018): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find(node);
+          SgSymbol* symbolFromGlobalNamespace = globalNamespaceDefinitionStatement->get_symbol_table()->find(node);
+          if (symbolFromGlobalNamespace != NULL)
+             {
+            // Check is this is a alias symbol (it should be).
+               SgAliasSymbol* alias = isSgAliasSymbol(symbolFromGlobalNamespace);
+               if (alias != NULL)
+                  {
+                    symbolFromGlobalNamespace = alias->get_alias();
+
+                 // This should not be an alias (chains of alias symbol are not allowed by design).
+                    alias = isSgAliasSymbol(symbolFromGlobalNamespace);
+                    ROSE_ASSERT(alias == NULL);
+                  }
+#if 0
+               printf ("Found symbol for node = %p = %s in global namespace: returning symbolFromGlobalNamespace = %p = %s \n",
+                    node,node->class_name().c_str(),symbolFromGlobalNamespace,symbolFromGlobalNamespace->class_name().c_str());
+#endif
+               return symbolFromGlobalNamespace;
+             }
+        }
+
      return p_symbol_table->find(node);
    }
 
@@ -5938,7 +6136,34 @@ SgScopeStatement::print_symboltable( const std::string& str )
    {
      printf ("In SgScopeStatement::print_symboltable(label = %s): \n",str.c_str());
      ROSE_ASSERT (p_symbol_table != NULL);
+
+#if 0
      p_symbol_table->print("Called from SgScopeStatement::print_symboltable",V_SgSymbol);
+#else
+  // DQ (3/5/2018): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+
+     if (namespaceDefinitionStatement != NULL)
+        {
+          printf ("In SgScopeStatement::print_symboltable(): \n");
+          printf ("   --- namespaceDefinitionStatement->get_symbol_table()->size()                          = %d \n",namespaceDefinitionStatement->get_symbol_table()->size());
+          printf ("   --- namespaceDefinitionStatement->get_global_definition()->get_symbol_table()->size() = %d \n",namespaceDefinitionStatement->get_global_definition()->get_symbol_table()->size());
+          printf ("Symbols: \n");
+
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+
+          ROSE_ASSERT(namespaceDefinitionStatement != globalNamespaceDefinitionStatement);
+
+          globalNamespaceDefinitionStatement->get_symbol_table()->print("Called from SgScopeStatement::print_symboltable",V_SgSymbol);
+        }
+       else
+        {
+       // Case of not a SgNamespaceDefinitionStatement.
+          p_symbol_table->print("Called from SgScopeStatement::print_symboltable",V_SgSymbol);
+        }
+#endif
+
    }
 
 
@@ -5997,6 +6222,9 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
           case V_SgForStatement:
+
+       // DQ (3/26/2018): Added support for new C++11 IR node.
+          case V_SgRangeBasedForStatement:
 
        // Liao, 6/17/2008, upc_forall
           case V_SgUpcForAllStatement:
@@ -6692,6 +6920,19 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+       // DQ (3/26/2018): Added support for new C++11 IR node.
+          case V_SgRangeBasedForStatement:
+             { 
+               const SgRangeBasedForStatement* forScope = isSgRangeBasedForStatement(currentScope);
+               ROSE_ASSERT (forScope != NULL);
+               ROSE_ASSERT (forScope->get_loop_body() != NULL);
+            // Should this be defined given that there are two SgBasicBlock objects in a SgForStatement
+            // currentStatementList = forScope->get_init_stmt();
+            // currentStatementList = &(forScope->get_loop_body()->getStatementList());
+               return isSgBasicBlock(forScope->get_loop_body()) ? isSgBasicBlock(forScope->get_loop_body())->getStatementList() : emptyStatementList;
+               break;
+             }
+
           case V_SgJavaForEachStatement:
              { 
                const SgJavaForEachStatement* forScope = isSgJavaForEachStatement(currentScope);
@@ -6954,7 +7195,7 @@ SgScopeStatement::generateUniqueStatementNumberForScopeHelper(unsigned int& coun
   // by this function should only be relied upon to be unique for the given scope (nothing more).
   // This function may be useful for naming unnamed scopes such as though in loop constructs.
 
-#if 1
+#if 0
      printf ("In SgScopeStatement::generateUniqueStatementNumberForScope() containsOnlyDeclarations() = %s \n",
           containsOnlyDeclarations() ? "true" : "false");
 #endif
@@ -8001,7 +8242,16 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
      printf ("In resetTemplateNamesInScope: traversing through parent scopes (scope = %p = %s) \n",scope,scope->class_name().c_str());
 #endif
 
-     while ( scope != NULL && isSgGlobal(scope) == NULL )
+#if 0
+  // DQ (6/30/2018): Returning from top of function to test infinit loop over declarations in typedef base types.
+     printf ("In resetTemplateNamesInScope: Skipping body of function, return \n");
+     return;
+#endif
+
+  // DQ (7/24/2017): Allow both SgGlobal and SgDeclarationScope to be stoping criteria for this iteration.
+  // Unless this causes name collissions because we truncated the scope names.
+  // while ( scope != NULL && isSgGlobal(scope) == NULL )
+     while ( scope != NULL && isSgGlobal(scope) == NULL && isSgDeclarationScope(scope) == NULL )
         {
 #if 0
           printf ("In resetTemplateNamesInScope(%s) \n",scope->class_name().c_str());
@@ -8065,6 +8315,13 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
                     break;
                   }
 
+            // DQ (7/20/2017): I don't think we have anything to do here, since there can only be class declarations in this scope, where it exists.
+               case V_SgDeclarationScope:
+                  {
+                 // Nothing to do here!
+                    break;
+                  }
+
                default:
                   {
                     printf ("Error: default reached in evaluation of scope within resetTemplateNamesInScope scope = %s \n",scope->sage_class_name());
@@ -8077,6 +8334,13 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
        // scope = scope->get_scope();
           ROSE_ASSERT(scope != NULL);
           SgScopeStatement* next_scope = scope->get_scope();
+#if 0
+          printf ("In resetTemplateNamesInScope(): next_scope = %p \n",next_scope);
+          if (next_scope != NULL)
+             {
+               printf ("In resetTemplateNamesInScope(): next_scope = %p = %s \n",next_scope,next_scope->class_name().c_str());
+             }
+#endif
           ROSE_ASSERT(scope != next_scope);
           scope = next_scope;
         }
@@ -8118,12 +8382,24 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
   // be reserved for after the Sage III AST is fully constructed and all post processing fixup 
   // (currently limited to setting all parent pointers) is complete.
 
+  // DQ (3/1/2018): Note: the name generated here can contain extra spaces between template arguments, 
+  // different from the name generated by the SageBuilder::appendTemplateArgumentsToName() function.
+  // So this function should not be called in the initial construction of the AST (and serves a different 
+  // purpose) than the function in SageBuilder.  This function is intended to be called as part of the 
+  // postprocessing normalization of name.  Still it would be good to refactor this code so that the names
+  // generated would be identical (and tested to be identical).
+
 #if 0
      printf ("In SgDeclarationStatement::resetTemplateNameSupport(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
 
      ROSE_ASSERT (this != NULL);
      string returnName;
+
+#if 0
+  // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
+     printf ("$$$$$$$$$$$$$$ In resetTemplateNameSupport(): this = %p = %s name = %s \n",this,this->class_name().c_str(),name.str());
+#endif
 
 #if 0
   // DQ (9/25/2007): Old test, no longer valid.
@@ -8149,7 +8425,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
      SgScopeStatement* parentScope = get_scope();
 
 #if 0
-     printf ("In resetTemplateNameSupport(): At %s parentScope = %s \n",sage_class_name(),parentScope->sage_class_name());
+     printf ("In resetTemplateNameSupport(): At %s parentScope = %s \n",class_name().c_str(),parentScope->class_name().c_str());
 #endif
 
   // DQ (2/10/2007): I hope we can assert this!
@@ -8158,6 +8434,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
   // DQ (10/26/2015): Moved into the conditional test below.
   // This function loops over all parent scopes
   // resetTemplateNamesInScope(parentScope);
+
+#if 0
+     printf ("In SgDeclarationStatement::resetTemplateNameSupport(): nameResetFromMangledForm = %s \n",nameResetFromMangledForm ? "true" : "false");
+#endif
 
   // If the name has not been reset to the form "ABC<int>" then reset it now!
   // DQ (2/15/2005): Modified to reference input parameters
@@ -8168,9 +8448,19 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
        // recursive calls from the evaluation of the template arguments.
           nameResetFromMangledForm = true;
 
+#if 0
+       // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
+          printf ("In resetTemplateNameSupport(): Calling resetTemplateNamesInScope(): parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
+#endif
+
        // DQ (10/26/2015): Moved to after the conditional test to avoid resetting the template name again on this declaration.
        // This function loops over all parent scopes
           resetTemplateNamesInScope(parentScope);
+
+#if 0
+       // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
+          printf ("DONE: In resetTemplateNameSupport(): Calling resetTemplateNamesInScope(): parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
+#endif
 
        // returnName = get_templateName().str();
        // SgTemplateArgumentPtrListPtr templateArgListPtr = get_templateArguments();
@@ -8266,6 +8556,25 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                     break;
                   }
 #endif
+
+            // DQ (2/26/2018): Added support for the template instantiation typedef declaration.
+               case V_SgTemplateInstantiationTypedefDeclaration:
+                  {
+                    SgTemplateInstantiationTypedefDeclaration* node = isSgTemplateInstantiationTypedefDeclaration(this);
+                    ROSE_ASSERT(node != NULL);
+#if 0
+                    printf ("In resetTemplateNameSupport(): case V_SgTemplateInstantiationTypedefDeclaration:node = %p = (templateName) %s = (name) %s \n",
+                         node,node->get_templateName().str(),node->get_name().str());
+#endif
+                    returnName         = node->get_templateName().str();
+                    templateArgListPtr = &node->get_templateArguments();
+
+                 // DQ (2/21/2005): Error checking on existence of substrings that can be common
+                 // in building template name and which are a source of errors in generated code.
+                    testForBadGenerateTemplateName(returnName);
+                    break;
+                  }
+
                default:
                   {
                  // ... nothing to do here
@@ -8273,6 +8582,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
              }
 
           ROSE_ASSERT(templateArgListPtr != NULL);
+
+#if 0
+          printf ("In resetTemplateNameSupport(): Handle the template arguments (where available) \n");
+#endif
 
        // DQ (4/13/2005): Sometimes template parameters are present but were not specified in the source code and if so we 
        // should also not output "<>".  This is a stronger test than that implemented previously (fixes output of "std::endl<>" as well).
@@ -8297,11 +8610,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                  // that were explicit in the source code.  Only meaningful for function 
                  // and member function template arguments.
                     bool templateArgumentWasExplicitlySpecified = (*i)->get_explicitlySpecified();
-                 // bool templateArgumentWasExplicitlySpecified = true;
-                 // if (templateArgumentWasExplicitlySpecified == true)
                     bool outputTemplateArgument = false;
-                    if ( (functionTemplateArguments == false) || 
-                         ( (functionTemplateArguments == true) && (templateArgumentWasExplicitlySpecified == true) ) )
+                    if ( ( (*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) &&
+                         ( (functionTemplateArguments == false) || 
+                         ( (functionTemplateArguments == true) && (templateArgumentWasExplicitlySpecified == true) ) ) )
                        {
                          outputTemplateArgument = true;
                        }
@@ -8405,6 +8717,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                              while (true)
                                                 {
 #if 0
+                                               // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                   printf ("In while(true) loop over all modifiers: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
 #endif
                                                   if ( (modType = isSgModifierType(currentType)) )
@@ -8514,11 +8827,30 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                                        SgScopeStatement* typedefScope = typedefDeclaration->get_scope();
                                                        ROSE_ASSERT(typedefScope != NULL);
 #if 0
+                                                    // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                        printf ("In resetTemplateName: traversing through parent scopes to reset any instantiated template names: typedefScope = %p = %s \n",
                                                             typedefScope,typedefScope->class_name().c_str());
 #endif
-                                                       resetTemplateNamesInScope(typedefScope);
+
+                                                    // DQ (6/30/2018): Detect an break cycles in typedefs (debugging test2018_118.C).
+                                                    // resetTemplateNamesInScope(typedefScope);
+                                                       static std::set<SgScopeStatement*> scopeSet;
+                                                       if (scopeSet.find(typedefScope) == scopeSet.end())
+                                                          {
+                                                            scopeSet.insert(typedefScope);
+                                                            resetTemplateNamesInScope(typedefScope);
+                                                          }
+                                                         else
+                                                          {
 #if 0
+                                                         // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
+                                                            printf ("In resetTemplateName: scope was previously seen: typedefScope = %p = %s \n",typedefScope,typedefScope->class_name().c_str());
+#endif
+                                                         // Exit the while(true){} loop!
+                                                            break;
+                                                          }
+#if 0
+                                                    // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                     // DQ (10/24/2015): When we are in an infinite loop (current bug) we never get to this location in the code (I think). 
                                                        printf ("DONE: In resetTemplateName: traversing through parent scopes to reset any instantiated template names: typedefScope = %p = %s \n",
                                                             typedefScope,typedefScope->class_name().c_str());
@@ -8534,6 +8866,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
                                                   ROSE_ASSERT(currentType != NULL);
 #if 0
+                                               // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
                                                   printf ("END OF WHILE LOOP: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
 #endif
                                                 }
@@ -8571,6 +8904,9 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                           // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                                              static int count = 0;
+
+                                          // DQ (6/30/2018): Debuging infinite loop in test2018_117.C.
+                                          // if (count++ % 1 == 0)
                                              if (count++ % 100 == 0)
                                                 {
                                                   printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::type_argument: Found a SgTemplateType ... (nothing done in this case) \n");
@@ -8732,11 +9068,13 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                       // This simplifies the implementation and permits the unparser to call the functions 
                       // required to generate qualified names (which require that the parent pointers be set).
                       // returnName += (*i)->unparseToString(unparseInfo);
-
-                      // printf ("Before globalUnparseToString: returnName = %s \n",returnName.c_str());
+#if 0
+                         printf ("Before globalUnparseToString: returnName = %s \n",returnName.c_str());
+#endif
                          returnName += globalUnparseToString(*i,&unparseInfo);
-                      // printf ("After globalUnparseToString: returnName = %s \n",returnName.c_str());
-
+#if 0
+                         printf ("After globalUnparseToString: returnName = %s \n",returnName.c_str());
+#endif
                       // DQ (2/21/2005): Error checking on existence of substrings that can be common
                       // in building template name and which are a source of errors in generated code.
                          testForBadGenerateTemplateName(returnName);
@@ -8788,6 +9126,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
        // SageInterface::outputLocalSymbolTables(parentScope);
 
 #if 0
+          printf ("In resetTemplateNameSupport(): Handle the symbol support \n");
+#endif
+
+#if 0
        // DQ (2/10/2007): Unload the associated symbol using the old name and reload it into the symbol table using the new name!
           printf ("\n\nCalling this->get_symbol_from_symbol_table() on %s parentScope = %p = %s name = %s count = %ld \n",
                this->class_name().c_str(),parentScope,parentScope->class_name().c_str(),name.str(),parentScope->count_symbol(name));
@@ -8817,7 +9159,9 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
           if (symbol == NULL)
              {
             // If searching for the old name returned a null symbol pointer then make sure that there is an entry for the new name
-            // printf ("Searching for returnName = %s \n",returnName.c_str());
+#if 0
+               printf ("Searching for returnName = %s \n",returnName.c_str());
+#endif
 #if 0
                if (parentScope->count_symbol(returnName) >= 1)
                   {
@@ -8838,6 +9182,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                printf ("In SgDeclarationStatement::resetTemplateNameSupport(): Output the symbol table for scope = %p = %s: \n",parentScope,parentScope->class_name().c_str());
                SageInterface::outputLocalSymbolTables(parentScope);
                printf ("******************** DONE ***********************\n");
+#endif
+#if 0
+               printf ("Exiting as a test in resetTemplateNameSupport(): symbol = %p returnName = %s \n",symbol,returnName.c_str());
+               ROSE_ASSERT(false);
 #endif
              }
             else
@@ -8896,6 +9244,11 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
        // in building template name and which are a source of errors in generated code.
           testForBadGenerateTemplateName(returnName);
         }
+
+#if 0
+  // DQ (6/30/2018): This is helpful in tracing through typedef circular dependences possible with templates (see test2018_118.C).
+     printf ("$$$$$$$$$$$$$$ Leaving SgDeclarationStatement::resetTemplateNameSupport(): name = %s \n",name.str());
+#endif
    }
 
 
@@ -9531,7 +9884,7 @@ SgDeclarationStatement::get_template_name() const
   // DQ (12/22/2011): This is an ugly aspect of supporting template declarations as derived from that which they are associated.
   // (e.g. SgTemplateClassDeclaration derived from a SgClassDeclaration).
 
-  // But at least it is not islolated to a single function.
+  // But at least it is now islolated to a single function.
 
      SgName templateDeclarationName;
   // switch (templateDeclaration->variantT())
@@ -9722,13 +10075,189 @@ SgDeclarationStatement::get_type() const
   // DQ (3/15/2014): Added warning since we don't want to be calling this function (unless we make it virtual).
      printf ("WARNING: Non-virtual base class SgDeclarationStatement::get_type() called: this = %p = %s \n",this,this->class_name().c_str());
 
-#if 0
+#if 1
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
 
      return NULL;
    }
+
+
+// DQ (3/10/2018): Adding support to output the name, useful for debugging template instantiations which have more complex name using template arguments.
+std::string
+SgDeclarationStatement::unparseNameToString()
+   {
+  // DQ (3/10/2018): I think tis IR node is no longer being used, so I need to move this support to the declarations.
+  // DQ (3/10/2018): Adding debugging support.
+
+  // DQ (9/24/2012): Don't add "< >" if there are no template arguments (see test2012_221.C).
+  // SgName returnName = name + " < ";
+     string returnName;
+
+     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+     switch(this->variantT())
+        {
+       // DQ (8/17/2013): These cases do not use templates.
+       // This function has to handle these cases because it is called in a general context
+       // on many types of declarations as part of the name qualification support.
+          case V_SgNamespaceDeclarationStatement:
+          case V_SgEnumDeclaration:
+          case V_SgVariableDeclaration:
+          case V_SgTypedefDeclaration:
+             {
+               templateArgumentsList = NULL;
+               break;
+             }
+
+       // PC (10/11/13):  Added case of SgJavaPackageDeclaration
+       // DQ (8/11/2013): Added cases for SgFunctionDeclaration and SgMemberFunctionDeclaration
+       // I forget why we needed this case...
+          case V_SgJavaPackageDeclaration:
+          case V_SgFunctionDeclaration:
+          case V_SgMemberFunctionDeclaration:
+          case V_SgClassDeclaration:
+             {
+               templateArgumentsList = NULL;
+               break;
+             }
+
+          case V_SgTemplateInstantiationDecl:
+             {
+               SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(this);
+
+               returnName = templateInstantiation->get_templateName();
+
+               templateArgumentsList = &(templateInstantiation->get_templateArguments());
+               break;
+             }
+
+          case V_SgTemplateClassDeclaration:
+             {
+               templateArgumentsList = &(isSgTemplateClassDeclaration(this)->get_templateSpecializationArguments());
+               break;
+             }
+
+          case V_SgTemplateInstantiationFunctionDecl:
+             {
+               SgTemplateInstantiationFunctionDecl* templateInstantiation = isSgTemplateInstantiationFunctionDecl(this);
+               templateArgumentsList = &(isSgTemplateInstantiationFunctionDecl(this)->get_templateArguments());
+               returnName = templateInstantiation->get_templateName();
+               break;
+             }
+
+          case V_SgTemplateFunctionDeclaration:
+             {
+               templateArgumentsList = &(isSgTemplateFunctionDeclaration(this)->get_templateSpecializationArguments());
+               break;
+             }
+
+          case V_SgTemplateInstantiationMemberFunctionDecl:
+             {
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantiation = isSgTemplateInstantiationMemberFunctionDecl(this);
+               templateArgumentsList = &(isSgTemplateInstantiationMemberFunctionDecl(this)->get_templateArguments());
+               returnName = templateInstantiation->get_templateName();
+               break;
+             }
+
+          case V_SgTemplateMemberFunctionDeclaration:
+             {
+               templateArgumentsList = &(isSgTemplateMemberFunctionDeclaration(this)->get_templateSpecializationArguments());
+               break;
+             }
+
+          case V_SgTemplateVariableDeclaration:
+             {
+               templateArgumentsList = &(isSgTemplateVariableDeclaration(this)->get_templateSpecializationArguments());
+               break;
+             }
+
+       // DQ (11/10/2014): Added support for template typedef declarations.
+          case V_SgTemplateTypedefDeclaration:
+             {
+               templateArgumentsList = &(isSgTemplateTypedefDeclaration(this)->get_templateSpecializationArguments());
+               break;
+             }
+
+       // DQ (11/10/2014): Added support for template typedef declarations.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+             {
+               SgTemplateInstantiationTypedefDeclaration* templateInstantiation = isSgTemplateInstantiationTypedefDeclaration(this);
+               templateArgumentsList = &(isSgTemplateInstantiationTypedefDeclaration(this)->get_templateArguments());
+               returnName = templateInstantiation->get_templateName();
+               break;
+             }
+#if 0
+     // DQ (12/14/2016): Added new case
+        case V_SgFunctionDeclaration:
+             {
+               SgFunctionDeclaration* function_declaration = isSgFunctionDeclaration(this);
+               printf ("In SageBuilder::getTemplateArgumentList(): function name = %s \n",function_declaration->get_name().str());
+
+               function_declaration->get_file_info()->display("Not clear that we should need this case since there would not be any template arguments: debug");
+
+               printf ("Error: Not clear that we should need this case since there would not be any template arguments \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+#endif
+          default:
+             {
+               printf ("In SgDeclarationStatement::unparseNameToString(): Default reched in switch: decl = %p = %s \n",this,this->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     bool emptyArgumentList = true;
+     if (templateArgumentsList != NULL)
+        {
+          emptyArgumentList = templateArgumentsList->empty();
+
+          if (emptyArgumentList == false)
+               returnName += " < ";
+
+#define DEBUG_UNPARSE_DECLARATION_NAME 0
+
+#if 1
+          SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList->begin();
+          while (i != templateArgumentsList->end())
+             {
+#if DEBUG_UNPARSE_DECLARATION_NAME
+               printf ("In SgDeclarationStatement::unparseNameToString(): label = %s \n",label.c_str());
+#endif
+
+               returnName += (*i)->unparseToStringSupport();
+
+               i++;
+
+            // If there are more arguments then we need a "," to seperate them.
+               if (i != templateArgumentsList->end())
+                  {
+                 // Since we have a few places were these names are generated the code is sensative to names being
+                 // generated exactly the same.  So the space on both sides of the "," is critical. This will be fixed
+                 // and all locations where this is done are marked with "CRITICAL FUNCTION TO BE REFACTORED".
+                 // returnName += ",";
+                    returnName += " , ";
+                  }
+
+#if DEBUG_UNPARSE_DECLARATION_NAME
+               printf ("In SgDeclarationStatement::unparseNameToString(): (bottom of loop) returnName = %s \n",returnName.str());
+#endif
+             }
+#endif
+
+       // DQ (9/24/2012): Don't add "< >" if there are no tempalte arguments.
+          if (emptyArgumentList == false)
+             {
+               returnName += " > ";
+             }
+        }
+
+     return returnName;
+   }
+
+
 
 SOURCE_DECLARATION_STATEMENT_END
 
@@ -10258,6 +10787,154 @@ SgMatlabForStatement::post_construction_initialization()
 SOURCE_MATLAB_FOR_STATEMENT_END
 
 
+
+SOURCE_RANGE_BASED_FOR_STATEMENT_START
+
+void
+SgRangeBasedForStatement::post_construction_initialization()
+   {
+#if 0
+     printf ("In SgRangeBasedForStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (3/24/2018): Uses the same semantics as for the normal for loop IR node.
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_iterator_declaration != NULL)
+        {
+          p_iterator_declaration->set_parent(this);
+        }
+
+     if (p_range_declaration != NULL)
+        {
+          p_range_declaration->set_parent(this);
+        }
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_begin_declaration != NULL)
+        {
+          p_begin_declaration->set_parent(this);
+        }
+
+     if (p_end_declaration != NULL)
+        {
+          p_end_declaration->set_parent(this);
+        }
+
+     if (p_not_equal_expression != NULL)
+        {
+          p_not_equal_expression->set_parent(this);
+        }
+
+     if (p_increment_expression != NULL)
+        {
+          p_increment_expression->set_parent(this);
+        }
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_loop_body != NULL)
+        {
+          p_loop_body->set_parent(this);
+        }
+   }
+
+
+bool
+SgRangeBasedForStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
+   {
+     if ( StatementReplace(this, p_loop_body, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_iterator_declaration, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_range_declaration, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_begin_declaration, target, newstmt) == true )
+           return true;
+       else if ( StatementReplace(this, p_end_declaration, target, newstmt) == true )
+           return true;
+       else 
+           return false;
+   }
+
+
+int
+SgRangeBasedForStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
+   {
+  // DQ (3/25/2018): This function should have the semantics that it will represent a
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(original_expression != NULL);
+     ROSE_ASSERT(new_expression != NULL);
+
+  // DQ (3/26/2018): I think we need to test for each case of an SgExpression IR date member in this class (similar to statements).
+  // ROSE_ASSERT(original_expression == p_range_expression);
+  // set_range_expression(new_expression);
+
+     printf ("ERROR: Semantics of SgRangeBasedForStatement::replace_expression() not implemented! \n");
+
+     new_expression->set_parent(this);
+
+  // DQ: Let this be a memory leak for now to avoid initial problems.
+     ROSE_ASSERT(original_expression != NULL);
+  // delete original_expression;
+
+     return 0;
+   }
+
+// DQ (3/25/2018): Added to provide uniform support of mangle names for all scopes
+SgName
+SgRangeBasedForStatement::get_mangled_name(void) const
+   {
+     return SgName ("");
+   }
+
+
+// SgVarRefExp* SgRangeBasedForStatement::range_variable_reference()
+SgExpression*
+SgRangeBasedForStatement::range_expression()
+   {
+  // DQ (3/28/2018): Get the range variable (target container, name used for unparser).
+
+  // Note: The container being iterated upon by the range-based for loop is reference through the initializer to the range_declaration.
+
+     SgVariableDeclaration* local_range_declaration = get_range_declaration();
+     ROSE_ASSERT(local_range_declaration != NULL);
+
+     SgInitializedName* local_range_variable = SageInterface::getFirstInitializedName(local_range_declaration);
+     ROSE_ASSERT(local_range_variable != NULL);
+
+     SgInitializer* initializer = local_range_variable->get_initializer();
+     ROSE_ASSERT(initializer != NULL);
+
+#if 1
+  // It would be general to support just returning the initializer, since there can be different kinds 
+  // of initializers used (see test2018_61.C, test2018_63.C, and test2018_64.C).
+     return initializer;
+#else
+     SgAssignInitializer* assign_initializer = isSgAssignInitializer(initializer);
+     if (assign_initializer == NULL)
+        {
+          printf ("In SgRangeBasedForStatement::range_variable_reference(): initializer = %p = %s \n",initializer,initializer->class_name().c_str());
+        }
+     ROSE_ASSERT(assign_initializer != NULL);
+
+     SgExpression* range_expression = assign_initializer->get_operand();
+     ROSE_ASSERT(range_expression != NULL);
+
+     SgVarRefExp* range_reference = isSgVarRefExp(range_expression);
+     if (range_reference == NULL)
+        {
+          printf ("In SgRangeBasedForStatement::range_variable_reference(): range_expression = %p = %s \n",range_expression,range_expression->class_name().c_str());
+        }
+     ROSE_ASSERT(range_reference != NULL);
+
+     return range_reference;
+#endif
+   }
+
+SOURCE_RANGE_BASED_FOR_STATEMENT_END
+
+
+
 SOURCE_UPC_FORALL_STATEMENT_START
 
 $CLASSNAME::$CLASSNAME(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression * affinity, SgStatement * loop_body) :
@@ -10536,6 +11213,37 @@ SgFunctionParameterScope::post_construction_initialization()
    }
 
 SOURCE_FUNCTION_PARAMETER_SCOPE_END
+
+
+SOURCE_DECLARATION_SCOPE_START
+
+void
+SgDeclarationScope::post_construction_initialization()
+   {
+  // Nothing to do here, but we need this function to be defined.
+   }
+
+// DQ (7/20/2017): I think that the mangled name support requires the definition of this function.
+SgName
+SgDeclarationScope::get_mangled_name(void) const
+   {
+  // I think that for this scope we need not return anything.
+     return SgName ("__declaration_scope__");
+   }
+
+// DQ (7/19/2017): Added to support qualified name generation
+SgName
+SgDeclarationScope::get_qualified_name() const
+   {
+     std::string globalScopeDelimiter;
+
+  // globalScopeDelimiter = "/* declaration scope */";
+     globalScopeDelimiter = "";
+
+     return SgName (globalScopeDelimiter);
+   }
+
+SOURCE_DECLARATION_SCOPE_END
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START
@@ -13416,6 +14124,17 @@ SgClassDeclaration::post_construction_initialization()
 #endif
 
 #if 0
+  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+     if (p_type != NULL)
+        {
+          printf ("Note: SgClassDeclaration::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
+        }
+  // ROSE_ASSERT(p_type == NULL);
+#endif
+
+#if 0
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
      printf ("In SgClassDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
 #endif
@@ -13478,6 +14197,8 @@ SgClassDeclaration::get_qualified_name() const
      return returnName;
    }
 
+#define DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME 0
+
 // RV (1/31/2006): Added mangler for class declarations.
 SgName
 SgClassDeclaration::get_mangled_name(void) const
@@ -13516,7 +14237,7 @@ SgClassDeclaration::get_mangled_name(void) const
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgClassDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
-#if 0
+#if DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME
           printf ("In SgClassDeclaration::get_mangled_name(): (FOUND in cache) mangledNameString = %s \n",mangledNameString.c_str());
 #endif
           return mangledNameString;
@@ -13525,14 +14246,14 @@ SgClassDeclaration::get_mangled_name(void) const
         {
        // DQ (3/14/2012): Make sure that this is a valid pointer else it might explain why qualification is not being use to generate the mangled names.
           ROSE_ASSERT(get_scope() != NULL);
-#if 0
+#if DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME
           printf ("In SgClassDeclaration::get_mangled_name(): calling joinMangledQualifiers(mangleQualifiers(get_scope()),get_name()) --- get_name() = %s \n",get_name().str());
 #endif
        // DQ (3/14/2012): Seperating the steps to computing the mangled name (which should include some qualification via non empty mangledScopeName)
        // SgName mangledName = joinMangledQualifiers(mangleQualifiers(get_scope()),get_name());
           SgName mangledScopeName = mangleQualifiers(get_scope());
 
-#if 0
+#if DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME
           printf ("In SgClassDeclaration::get_mangled_name(): mangleQualifiers(get_scope()) mangledScopeName = %s \n",mangledScopeName.str());
 #endif
        // DQ (3/14/2012): I think that we can assert this.  No, if the scope is SgGlobal (for example) then the mangledName is empty.
@@ -13542,12 +14263,12 @@ SgClassDeclaration::get_mangled_name(void) const
        // SgName mangledName = joinMangledQualifiers(mangledScopeName,get_name());
           SgName prefixed_name = "class_" + get_name();
           SgName mangledName = joinMangledQualifiers(mangledScopeName,prefixed_name);
-#if 0
+#if DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME
           printf ("In SgClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s \n",mangledName.str());
 #endif
           if (mangledName.is_null() == true)
              {
-#if 0
+#if DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME
                printf ("In SgClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s get_name() = %s \n",mangledName.str(),get_name().str());
 #endif
                mangledName = "unknown_scope_and_name";
@@ -13575,7 +14296,7 @@ SgClassDeclaration::get_mangled_name(void) const
 #endif
        // p_globalMangledNameMap[classDeclaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgClassDeclaration*>(this),mangledName);
-#if 0
+#if DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME
           printf ("In SgClassDeclaration::get_mangled_name(): (AFTER adding to cache) mangledName = %s \n",mangledName.str());
 #endif
        // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
@@ -13587,9 +14308,9 @@ SgClassDeclaration::get_mangled_name(void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 0
+#if DEBUG_CLASS_DECLARATION_GET_MANGLED_NAME
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
-          printf (">>>>>>>>>> SgClassDeclaration::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
+          printf ("In SgClassDeclaration::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif
 
           return mangledName;
@@ -13784,6 +14505,10 @@ SgTemplateInstantiationDecl::post_construction_initialization()
         }
 #endif
 
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+  // ROSE_ASSERT(p_type == NULL);
+
 #if 0
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
      printf ("In SgTemplateInstantiationDecl::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
@@ -13857,6 +14582,8 @@ SgTemplateInstantiationDecl::get_qualified_name() const
    }
 
 
+#define DEBUG_TEMPLATE_INSTANTIATION_DECL_GET_MANGLED_NAME 0
+
 // RV (2/1/2006): Added mangler for template instantiations.
 SgName
 SgTemplateInstantiationDecl::get_mangled_name (void) const
@@ -13907,7 +14634,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
      if (mangledNameString.empty() == false)
         {
        // return i->second.c_str();
-#if 0
+#if DEBUG_TEMPLATE_INSTANTIATION_DECL_GET_MANGLED_NAME
           printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (FOUND in cache) mangledNameString = %s get_name() = %s \n",mangledNameString.c_str(),get_name().str());
 #endif
           return mangledNameString;
@@ -13930,7 +14657,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
              }
           ROSE_ASSERT(template_name.is_null() == false);
 
-#if 0
+#if DEBUG_TEMPLATE_INSTANTIATION_DECL_GET_MANGLED_NAME
           printf ("In SgTemplateInstantiationDecl::get_mangled_name(): template_name = %s get_templateArguments().size() = %" PRIuPTR " get_scope() = %p \n",template_name.str(),get_templateArguments().size(),get_scope());
 #endif
 
@@ -13945,7 +14672,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
 
        // DQ (3/22/2012): Added assertion to detect bad (default) names being used.
           ROSE_ASSERT(template_name != "SETME_NONDEFINING_DECL<>");
-#if 0
+#if DEBUG_TEMPLATE_INSTANTIATION_DECL_GET_MANGLED_NAME
           printf ("Before mangleTemplate(): template_name = %s \n",template_name.str());
 #endif
 #if 0
@@ -13974,7 +14701,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
 
        // SgName mangledName = mangleTemplate (get_templateName(),get_templateArguments(),get_scope());
           SgName mangledName = mangleTemplate(template_name,get_templateArguments(),get_scope());
-#if 0
+#if DEBUG_TEMPLATE_INSTANTIATION_DECL_GET_MANGLED_NAME
           printf ("After mangleTemplate(): get_templateArguments().size() = %" PRIuPTR " mangledName = %s \n",get_templateArguments().size(),mangledName.str());
 #endif
           ROSE_ASSERT(get_firstNondefiningDeclaration() != NULL);
@@ -13984,14 +14711,14 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
                printf ("After mangleTemplate(): get_definingDeclaration()->get_templateArguments().size() = %" PRIuPTR " \n",isSgTemplateInstantiationDecl(get_definingDeclaration())->get_templateArguments().size());
 #endif
 #if 0
-          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (NOT found in cache) mangledNameString = %s get_name() = %s get_templateName() = %s \n",mangledNameString.c_str(),get_name().str(),get_templateName().str());
+          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (NOT found in cache) mangledName = %s get_name() = %s get_templateName() = %s \n",mangledName.c_str(),get_name().str(),get_templateName().str());
 #endif
        // DQ (7/24/2010): Added to support type tables.
           ROSE_ASSERT(mangledName.is_null() == false);
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateInstantiationDecl*>(this),mangledName);
-#if 0
+#if DEBUG_TEMPLATE_INSTANTIATION_DECL_GET_MANGLED_NAME
           printf ("After SageInterface::addMangledNameToCache(): mangledName = %s \n",mangledName.str());
 #endif
        // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
@@ -14003,9 +14730,9 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 0
+#if DEBUG_TEMPLATE_INSTANTIATION_DECL_GET_MANGLED_NAME
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
-          printf (">>>>>>>>>> SgTemplateInstantiationDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
+          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif
 
           return mangledName;
@@ -14038,6 +14765,11 @@ SgTemplateInstantiationDecl::set_definition( SgClassDefinition* definition )
 void
 SgTemplateInstantiationDecl::resetTemplateName ()
    {
+#if 0
+  // DQ (6/30/2018): Adding debugging for infinite loop in test2018_117.C.
+     printf ("In SgTemplateInstantiationDecl::resetTemplateName(): calling resetTemplateNameSupport(): p_nameResetFromMangledForm = %s p_name = %s \n",p_nameResetFromMangledForm ? "true" : "false",p_name.str());
+#endif
+
   // local version of function to support generation of template names
      resetTemplateNameSupport (p_nameResetFromMangledForm,p_name);
    }
@@ -14079,6 +14811,17 @@ SgTemplateInstantiationFunctionDecl::post_construction_initialization()
         {
           printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationFunctionDecl = %p \n",this);
         }
+#endif
+
+#if 0
+  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+     if (p_type != NULL)
+        {
+          printf ("Note: SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
+        }
+  // ROSE_ASSERT(p_type == NULL);
 #endif
 
 #if 0
@@ -14218,6 +14961,17 @@ SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization()
         {
           printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationMemberFunctionDecl = %p \n",this);
         }
+#endif
+
+#if 0
+  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+     if (p_type != NULL)
+        {
+          printf ("Note: SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
+        }
+  // ROSE_ASSERT(p_type == NULL);
 #endif
 
 #if 0
@@ -14611,6 +15365,8 @@ SgEnumDeclaration::post_construction_initialization()
           printf ("In $CLASSNAME::post_construction_initialization(): setting the SgEnumType type internally (using the declaration) \n");
 #endif
 #endif
+       // DQ (2/27/2018): It is an inconsistancy that this class's semantics sets the type here (not done for other declaration IR nodes).
+       // Note: that this is now the only IR node that constrcuts its type within its constructor (or post_construction_initialization() function).
           set_type(SgEnumType::createType(this));
         }
 
@@ -15016,6 +15772,13 @@ SgLabelStatement::get_type() const
   // call this function and it is not a virtual function that will cause derived class versions to be called
   // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
      return NULL;
+   }
+
+bool
+SgLabelStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
+   {
+  // DQ (1/15/2018): Added support for the statement of the label to be traversed.
+     return ( StatementReplace(this, p_statement, target, newstmt) == true );
    }
 
 SOURCE_LABEL_STATEMENT_END
@@ -15897,11 +16660,23 @@ SgTypedefDeclaration::post_construction_initialization()
         }
 #endif
 
-     set_type(SgTypedefType::createType(this));
+#if 0
+     printf ("In SgTypedefDeclaration::post_construction_initialization(): NO LONGER calling SgTypedefType::createType() using this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (2/27/2018): It is an inconsistancy for the type to be set here.
+  // set_type(SgTypedefType::createType(this));
+
+#if 0
+  // printf ("In SgTypedefDeclaration::post_construction_initialization(): DONE calling SgTypedefType::createType() using this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
      ROSE_ASSERT (get_base_type() != NULL);
      ROSE_ASSERT (get_base_type()->get_typedefs() != NULL);
-     ROSE_ASSERT (get_base_type()->get_typedefs()->get_typedefs().size() > 0);
+
+  // DQ (2/27/2018): Since we don't build the typedef type here, we have to modify this assertion.
+  // ROSE_ASSERT (get_base_type()->get_typedefs()->get_typedefs().size() > 0);
+     ROSE_ASSERT (get_base_type()->get_typedefs()->get_typedefs().size() >= 0);
    }
 
 // SgStatement *get_next(int&) const;
@@ -15977,12 +16752,15 @@ SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
      return nameQualifier;
    }
 
-
+#define DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME 0
 
 // RV (1/30/2006): Revised to follow typedef chains to their base types.
 SgName
 SgTypedefDeclaration::get_mangled_name (void) const
    {
+#if 0
+     printf ("In SgTypedefDeclaration::get_mangled_name(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
 #if 0
   // Ask for a mangled name from the base type
      SgType* baseType = get_base_type();
@@ -16025,18 +16803,30 @@ SgTypedefDeclaration::get_mangled_name (void) const
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgTypedefDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
-       // return i->second.c_str();
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
+          printf ("In SgTypedefDeclaration::get_mangled_name(): (from cache) %s \n", mangledNameString.c_str() );
+#endif
           return mangledNameString;
         }
        else
         {
           SgName mangledName;
-#if 0
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
           printf ("In SgTypedefDeclaration::get_mangled_name(): before calling get_base_type() \n");
 #endif
           SgType* baseType = get_base_type();
-#if 0
-          printf ("In SgTypedefDeclaration::get_mangled_name(): after calling get_base_type() \n");
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
+       // DQ (5/23/2018): Added assertion prior to the debug statement below.
+          ROSE_ASSERT(baseType != NULL);
+          printf ("In SgTypedefDeclaration::get_mangled_name(): after calling get_base_type(): baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+          if (get_file_info() != NULL)
+             {
+               printf ("   --- typedef source position: line = %d \n",get_file_info()->get_line());
+             }
+            else
+             {
+               printf ("   --- typedef source position: line = (unknown) \n");
+             }
 #endif
 
        // DQ (6/3/2006): I think this is a better implementation of name mangling for a typedef 
@@ -16057,37 +16847,81 @@ SgTypedefDeclaration::get_mangled_name (void) const
           SgScopeStatement* scope = get_scope();
           if (scope == NULL)
              {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-               printf ("WARNING: SgTypedefDeclaration::get_mangled_name(): get_scope() == NULL, mangleQualifiers will be incomplete (empty) \n");
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
+               printf ("ERROR: SgTypedefDeclaration::get_mangled_name(): get_scope() == NULL, mangleQualifiers would be invalid\n");
+               printf ("  -- this = %p (%s) = %s\n", this, this->class_name().c_str(), this->get_name().getString().c_str());
+               SgNode * parent = get_parent();
+               printf ("  -- parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+               ROSE_ASSERT(false);
 #endif
             // DQ (3/20/2012): Added for debugging.
             // ROSE_ASSERT(false);
              }
             else
              {
-#if 0
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
                printf ("In SgTypedefDeclaration::get_mangled_name(): scope = %p = %s (calling mangleQualifiers()) \n",scope,scope->class_name().c_str());
 #endif
                mangleQualifiersString = mangleQualifiers(scope);
-#if 0
-               printf ("DONE: In SgTypedefDeclaration::get_mangled_name(): scope = %p = %s (calling mangleQualifiers()) \n",scope,scope->class_name().c_str());
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
+               printf ("DONE: In SgTypedefDeclaration::get_mangled_name(): mangleQualifiersString = %s scope = %p = %s (calling mangleQualifiers()) \n",mangleQualifiersString.c_str(),scope,scope->class_name().c_str());
 #endif
              }
 
        // DQ (9/6/2016): We require a prefix to the name to avoid name collisions (see test2005_199.C and simplified test (but non-failing) in test2016_60.C).
        // mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
           SgName prefixed_name = "typedef_" + get_name();
-          mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseType->get_mangled();
+
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): prefixed_name = %s \n",prefixed_name.str());
+#endif
+
+       // DQ (6/30/2018): I think the call to the baseType->get_mangled() is the cause of the infinite loop in test2018_118.C.
+       // mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseType->get_mangled();
+       // SgName baseTypeMangleName = baseType->get_mangled();
+
+          static int base_type_counter = 0;
+          static std::set<SgType*> baseTypeSet;
+
+          SgName baseTypeMangleName;
+          if (baseTypeSet.find(baseType) == baseTypeSet.end())
+             {
+               baseTypeSet.insert(baseType);
+               baseTypeMangleName = baseType->get_mangled();
+             }
+            else
+             {
+            // Avoid infinite recursion in computation of mangled names.
+               baseTypeMangleName = "_previously_seen_baseType_" + Rose::StringUtility::numberToString(baseType);
+             }
+
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): calling baseType->get_mangled(): base_type_counter = %d baseType = %p = %s \n",base_type_counter++,baseType,baseType->class_name().c_str());
+#endif
+
+#if 0
+          printf ("DONE: In SgTypedefDeclaration::get_mangled_name(): calling baseType->get_mangled(): baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): baseTypeMangleName = %s \n",baseTypeMangleName.str());
+#endif
+          mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseTypeMangleName;
 
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";
-#if 0
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
           printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
           ROSE_ASSERT (mangledName.get_length() > 0);
+#if 0
+          printf ("In SgTypedefDeclaration::get_mangled_name(): calling SageInterface::addMangledNameToCache(): mangledName = %s \n",mangledName.str());
+#endif
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTypedefDeclaration*>(this),mangledName);
+#if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
+          printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
+#endif
           return mangledName;
         }
 #endif
@@ -16216,6 +17050,7 @@ SOURCE_TEMPLATE_DECLARATION_STATEMENT_START
 void
 SgTemplateDeclaration::post_construction_initialization()
    {
+  // Nothing to do here.
    }
 
 // DQ (9/8/2004): added support for qualified names
@@ -16391,6 +17226,17 @@ SgTemplateClassDeclaration::post_construction_initialization()
    {
   // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
   // this->set_template_kind(e_template_class);
+
+#if 0
+  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+     if (p_type != NULL)
+        {
+          printf ("Note: SgTemplateClassDeclaration::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
+        }
+  // ROSE_ASSERT(p_type == NULL);
+#endif
    }
 
 // DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
@@ -16568,6 +17414,17 @@ SgTemplateFunctionDeclaration::post_construction_initialization()
      p_type_elaboration_required_for_return_type     = false;
      p_global_qualification_required_for_return_type = false;
 #endif
+
+#if 0
+  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+     if (p_type != NULL)
+        {
+          printf ("Note: SgTemplateFunctionDeclaration::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
+        }
+  // ROSE_ASSERT(p_type == NULL);
+#endif
    }
 
 SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_END
@@ -16599,6 +17456,17 @@ SgTemplateMemberFunctionDeclaration::post_construction_initialization()
 #endif
 
      p_CtorInitializerList->set_parent(this);
+
+#if 0
+  // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+     if (p_type != NULL)
+        {
+          printf ("Note: SgTemplateMemberFunctionDeclaration::post_construction_initialization(): p_type != NULL: name = %s \n",p_name.str());
+        }
+  // ROSE_ASSERT(p_type == NULL);
+#endif
    }
 
 SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
@@ -16656,12 +17524,15 @@ SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
 SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 
+#if 0
+// DQ (2/25/2018): This function is more correctly represented below.
 void
 SgTemplateTypedefDeclaration::post_construction_initialization()
    {
   // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
   // this->set_template_kind(e_template_m_data);
    }
+#endif
 
 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
@@ -16694,16 +17565,171 @@ SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
 
 #endif
 
+void
+SgTemplateTypedefDeclaration::post_construction_initialization()
+   {
+  // DQ (2/25/2018): Added this is new support to allos the SgTypedefType::createType() to be called with the 
+  // SgTemplateTypedefDeclaration's "this" pointer instead of the SgTypedefDeclaration's "this" pointer.
+
+  // DQ (10/6/2004): I think this should be dependent upon if the type was provided as an input in 
+  // the constructor parameter list (else why bother specifying it in the constructor parameter list!)
+#if 0
+#if PRINT_DEVELOPER_WARNINGS
+     printf ("In SgTemplateTypedefDeclaration::post_construction_initialization(): generating SgTypedefType internally! \n");
+#endif
+#endif
+
+#if 0
+  // DQ (3/20/2012): We would like to assert this, but I don't think it is always possible. For example, test2001_19.C fails for this test.
+  // ROSE_ASSERT(this->get_parent_scope() != NULL);
+     if (this->get_parent_scope() == NULL)
+        {
+          printf ("WARNING: In SgTypedefDeclaration::post_construction_initialization(): this->get_parent_scope() == NULL \n");
+        }
+#endif
+
+  // DQ (2/27/2018): This should be null, since we just changed the semantics to defer the construction of the type (now consistant with other IR nodes).
+  // DQ (2/25/2018): This should be non-null, but we might hae to make sure it is not overwritten.
+  // ROSE_ASSERT(p_type != NULL);
+  // p_type = NULL;
+     ROSE_ASSERT(p_type == NULL);
+
+#if 0
+  // DQ (2/25/2018): Added debugging support.
+     printf ("In SgTemplateTypedefDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (2/25/2018): Built the type seperately so that we can insert debugging.
+  // set_type(SgTypedefType::createType(this));
+  // SgTypedefType* typedefType = SgTypedefType::createType(this);
+  // ROSE_ASSERT(typedefType != NULL);
+
+  // DQ (2/27/2018): It is an inconsistancy for the type to be set here.
+  // set_type(typedefType);
+
+  // DQ (2/25/2018): This should be non-null, since we just built the new type.
+  // ROSE_ASSERT(p_type != NULL);
+     ROSE_ASSERT(p_type == NULL);
+
+     ROSE_ASSERT (get_base_type() != NULL);
+     ROSE_ASSERT (get_base_type()->get_typedefs() != NULL);
+
+  // DQ (2/27/2018): Modified to reflect that we no longer build the type in the constructor 
+  // call (or the post_construction_initialization() function called by the constructor).
+  // ROSE_ASSERT (get_base_type()->get_typedefs()->get_typedefs().size() > 0);
+     ROSE_ASSERT (get_base_type()->get_typedefs()->get_typedefs().size() >= 0);
+   }
+
 SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
 
+#if 0
+// DQ (2/25/2018): This function is more correctly represented below.
 void
 SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()
    {
   // DQ (11/4/2014): I don't think we need to do anything here.
    }
+#endif
+
+void
+SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()
+   {
+  // DQ (2/25/2018): Added this is new support to allos the SgTypedefType::createType() to be called with the 
+  // SgTemplateInstantiationTypedefDeclaration's "this" pointer instead of the SgTypedefDeclaration's "this" pointer.
+
+  // DQ (10/6/2004): I think this should be dependent upon if the type was provided as an input in 
+  // the constructor parameter list (else why bother specifying it in the constructor parameter list!)
+#if 0
+#if PRINT_DEVELOPER_WARNINGS
+     printf ("In SgTemplateInstantiationTypedefDeclaration::post_construction_initialization(): generating SgTypedefType internally! \n");
+#endif
+#endif
+
+#if 0
+  // DQ (3/20/2012): We would like to assert this, but I don't think it is always possible. For example, test2001_19.C fails for this test.
+  // ROSE_ASSERT(this->get_parent_scope() != NULL);
+     if (this->get_parent_scope() == NULL)
+        {
+          printf ("WARNING: In SgTemplateInstantiationTypedefDeclaration::post_construction_initialization(): this->get_parent_scope() == NULL \n");
+        }
+#endif
+
+  // DQ (2/25/2018): This should be non-null, but we might hae to make sure it is not overwritten.
+  // ROSE_ASSERT(p_type != NULL);
+  // p_type = NULL;
+     ROSE_ASSERT(p_type == NULL);
+
+#if 0
+  // DQ (2/25/2018): Added debugging support.
+     printf ("In SgTemplateInstantiationTypedefDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (2/26/2018): We need to set the p_templateName, is this a reasonable place to do this?
+  // The support to resetting the template name requires the parent to be set and this is only 
+  // done after the constructor, and post_construction_initialization() function, are called.
+  // resetTemplateName();
+
+#if 0
+  // printf ("In SgTemplateInstantiationTypedefDeclaration::post_construction_initialization(): calling SgTypedefType::createType(this) \n");
+#endif
+
+#if 0
+  // DQ (2/25/2018): Built the type seperately so that we can insert debugging.
+  // set_type(SgTypedefType::createType(this));
+     SgTypedefType* typedefType = SgTypedefType::createType(this);
+     ROSE_ASSERT(typedefType != NULL);
+
+  // DQ (2/27/2018): It is an inconsistancy for the type to be set here.
+     set_type(typedefType);
+
+  // DQ (2/25/2018): This should be non-null, since we just built the new type.
+     ROSE_ASSERT(p_type != NULL);
+#else
+  // printf ("In SgTemplateInstantiationTypedefDeclaration::post_construction_initialization(): we have to defer the construction of the template instantiation name in the type to after the template name is reset \n");
+#endif
+
+     ROSE_ASSERT (get_base_type() != NULL);
+     ROSE_ASSERT (get_base_type()->get_typedefs() != NULL);
+
+  // DQ (3/1/2018): Since we no longer set the type in this function (to be uniformally consistant 
+  // in where types are set accross all declarations), we have to modify this assertion.
+  // ROSE_ASSERT (get_base_type()->get_typedefs()->get_typedefs().size() > 0);
+     ROSE_ASSERT (get_base_type()->get_typedefs()->get_typedefs().size() >= 0);
+   }
+
+void
+SgTemplateInstantiationTypedefDeclaration::resetTemplateName()
+   {
+  // DQ (2/26/2018): Added support for resetting the template name.
+
+  // local version of function to support generation of template names
+
+#if 0
+     printf ("In SgTemplateInstantiationTypedefDeclaration::resetTemplateName(): p_name = %s \n",p_name.str());
+#endif
+
+     resetTemplateNameSupport (p_nameResetFromMangledForm,p_name);
+
+#if 0
+     printf ("Leaving SgTemplateInstantiationTypedefDeclaration::resetTemplateName(): p_name = %s p_templateName = %s \n",p_name.str(),p_templateName.str());
+#endif
+
+  // ROSE_ASSERT(p_templateName != "");
+   }
+
+// DQ (2/28/2018): Added support for getting the symbol from the declaration.
+SgSymbol*
+SgTemplateInstantiationTypedefDeclaration::get_symbol_from_symbol_table() const
+   {
+     ROSE_ASSERT(get_scope() != NULL);
+  // ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
+  // return get_scope()->get_symbol_table()->find(this);
+     return get_scope()->find_symbol_from_declaration(this);
+   }
+
 
 SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
@@ -17540,7 +18566,13 @@ $CLASSNAME::post_construction_initialization()
 #if PRINT_DEVELOPER_WARNINGS
      printf ("In $CLASSNAME::post_construction_initialization(): generating SgTypedefType internally! \n");
 #endif
-     set_type($GRAMMAR_PREFIX_$GRAMMAR_X_MARKER_TypedefType::createType(this));
+
+  // DQ (2/27/2018): I think this is a redundant implementation, not used by ROSETTA.
+     printf ("I think this implementation of this function via ROSETTA is not used! \n");
+     ROSE_ASSERT(false);
+
+  // DQ (2/27/2018): It is inconsistant for thetype to be set here.
+  // set_type($GRAMMAR_PREFIX_$GRAMMAR_X_MARKER_TypedefType::createType(this));
 
      ROSE_ASSERT (get_base_type() != NULL);
      ROSE_ASSERT (get_base_type()->get_typedefs() != NULL);
@@ -17599,6 +18631,13 @@ SOURCE_TEMPLATE_DECLARATION_STATEMENT_START
 void
 $CLASSNAME::post_construction_initialization()
    {
+  // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+  // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
+     ROSE_ASSERT(p_type == NULL);
+
+  // DQ (2/27/2018): I think this is a redundant implementation, not used by ROSETTA.
+     printf ("I think this implementation of this function via ROSETTA is not used! \n");
+     ROSE_ASSERT(false);
    }
 
 // DQ (9/8/2004): added support for qualified names
@@ -17781,6 +18820,65 @@ SgStopOrPauseStatement::post_construction_initialization()
 
 SOURCE_STOP_OR_PAUSE_STATEMENT_END
 
+SOURCE_IMAGE_CONTROL_STATEMENT_START
+
+void
+SgImageControlStatement::post_construction_initialization()
+   {}
+
+SOURCE_IMAGE_CONTROL_STATEMENT_END
+
+SOURCE_SYNC_ALL_STATEMENT_START
+
+void
+SgSyncAllStatement::post_construction_initialization()
+   {}
+
+SOURCE_SYNC_ALL_STATEMENT_END
+
+SOURCE_SYNC_IMAGES_STATEMENT_START
+
+void
+SgSyncImagesStatement::post_construction_initialization()
+   {}
+
+SOURCE_SYNC_IMAGES_STATEMENT_END
+
+SOURCE_SYNC_MEMORY_STATEMENT_START
+
+void
+SgSyncMemoryStatement::post_construction_initialization()
+   {}
+
+SOURCE_SYNC_MEMORY_STATEMENT_END
+
+SOURCE_SYNC_TEAM_STATEMENT_START
+
+void
+SgSyncTeamStatement::post_construction_initialization()
+   {}
+
+SOURCE_SYNC_TEAM_STATEMENT_END
+
+
+SOURCE_LOCK_STATEMENT_START
+
+void
+SgLockStatement::post_construction_initialization()
+   {}
+
+SOURCE_LOCK_STATEMENT_END
+
+
+SOURCE_UNLOCK_STATEMENT_START
+
+void
+SgUnlockStatement::post_construction_initialization()
+   {}
+
+SOURCE_UNLOCK_STATEMENT_END
+
+
 SOURCE_IO_STATEMENT_START
 
 void
@@ -17788,7 +18886,6 @@ SgIOStatement::post_construction_initialization()
    {}
 
 SOURCE_IO_STATEMENT_END
-
 
 SOURCE_PRINT_STATEMENT_START
 

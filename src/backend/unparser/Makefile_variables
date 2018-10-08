@@ -23,7 +23,9 @@ unparser_la_sources=\
 	$(unparseLanguageIndependenceSupport_la_sources) \
 	$(unparsePHPCodeGeneration_la_sources) \
 	$(unparsePythonCodeGeneration_la_sources) \
-	$(unparseX10CodeGeneration_la_sources)
+	$(unparseX10CodeGeneration_la_sources) \
+	$(unparseAdaCodeGeneration_la_sources) \
+	$(unparseJovialCodeGeneration_la_sources)
 
 
 unparser_includeHeaders=\
@@ -35,7 +37,9 @@ unparser_includeHeaders=\
 	$(unparseLanguageIndependenceSupport_includeHeaders) \
 	$(unparsePHPCodeGeneration_includeHeaders) \
 	$(unparsePythonCodeGeneration_includeHeaders) \
-	$(unparseX10CodeGeneration_includeHeaders)
+	$(unparseX10CodeGeneration_includeHeaders) \
+	$(unparseAdaCodeGeneration_includeHeaders) \
+	$(unparseJovialCodeGeneration_includeHeaders)
 
 unparser_extraDist=\
 	$(unparserPath)/CMakeLists.txt \
@@ -47,7 +51,9 @@ unparser_extraDist=\
 	$(unparseLanguageIndependenceSupport_extraDist) \
 	$(unparsePHPCodeGeneration_extraDist) \
 	$(unparsePythonCodeGeneration_extraDist) \
-	$(unparseX10CodeGeneration_extraDist)
+	$(unparseX10CodeGeneration_extraDist) \
+	$(unparseAdaCodeGeneration_extraDist) \
+	$(unparseJovialCodeGeneration_extraDist)
 
 unparser_cleanLocal=\
 	$(unparseCxxCodeGeneration_cleanLocal) \
@@ -57,7 +63,9 @@ unparser_cleanLocal=\
 	$(unparseLanguageIndependenceSupport_cleanLocal) \
 	$(unparsePHPCodeGeneration_cleanLocal) \
 	$(unparsePythonCodeGeneration_cleanLocal) \
-	$(unparseX10CodeGeneration_cleanLocal)
+	$(unparseX10CodeGeneration_cleanLocal) \
+	$(unparseAdaCodeGeneration_cleanLocal) \
+	$(unparseJovialCodeGeneration_cleanLocal)
 
 
 #	rm -rf \

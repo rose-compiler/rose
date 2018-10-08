@@ -49,7 +49,12 @@ class Unparse_MOD_SAGE
           bool isUnaryAddressOperator(SgExpression* expr);
           bool isUnaryDereferenceOperator(SgExpression* expr);
           bool isUnaryComplementOperator(SgExpression* expr);
-          bool isUnaryOrOperator(SgExpression* expr);
+
+       // DQ (2/1/2018): I don't think this operator can exist.
+       // bool isUnaryOrOperator(SgExpression* expr);
+
+       // DQ (2/1/2018): Added support for operator!
+          bool isUnaryNotOperator(SgExpression* expr);
 
        // DQ (2/20/2005): The overloaded versions of these operators have to be recognized so that we can skip 
        // the output of their function arguments which control the interpritation as prefix/postfix operators 

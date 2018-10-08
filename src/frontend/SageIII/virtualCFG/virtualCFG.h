@@ -59,7 +59,10 @@ extern int efgh;
     eckArithmeticIfLess, //! Edge for the arithmetic if expression being less than zero
     eckArithmeticIfEqual, //! Edge for the arithmetic if expression being equal to zero
     eckArithmeticIfGreater, //! Edge for the arithmetic if expression being greater than zero
-    eckInterprocedural //! Edge spanning two procedures
+    eckInterprocedural, //! Edge spanning two procedures
+
+ // DQ (1/19/2018): Allow an error value to use for debugging.
+    eckError //! Allow an error value
   };
 
   //! A node in the control flow graph.  Each CFG node corresponds to an AST

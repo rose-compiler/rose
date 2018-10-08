@@ -215,7 +215,7 @@
  *  + Sections and subsections are introduced by @c @@section or @c @@subsection followed by a unique identifier followed by
  *    the name of the section using Title capitalization described above.
  *
- *  + Function parameter names are indicated with @c @@p followed by the parameter name. This typesets them in a consistent
+ *  + %Function parameter names are indicated with @c @@p followed by the parameter name. This typesets them in a consistent
  *    style.
  *
  *  + References to other symbols, pages, and modules  are indicated with @c @@ref followed by the name or ID.  The look-up
@@ -250,7 +250,7 @@
  *    make doxygen_docs
  *
  *   Please note that you can ignore warning messages about things not documented. 
- *   When it is doen, you can open it by typing "firefox $ROSE_BUILD/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html"
+ *   When it is done, you can open it by typing "firefox $ROSE_BUILD/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html"
  * 
  *  @section doxy_next Next steps
  *

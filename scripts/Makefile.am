@@ -37,8 +37,7 @@ distributedScripts =				 \
 	rth_run.pl				 \
 	rth_stats.pl				 \
 	runscript				 \
-	shtool					 \
-	stringify.pl
+	shtool
 
 # scripts put into the distribution
 EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory hudson \

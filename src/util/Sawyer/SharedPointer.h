@@ -72,7 +72,7 @@ public:
         acquireOwnership(pointee_);
     }
     template<class Y>
-    SharedPointer(const SharedPointer<Y> &other): pointee_(getRawPointer(other)) {
+    SharedPointer(const SharedPointer<Y> &other): pointee_(other.getRawPointer()) {
         acquireOwnership(pointee_);
     }
     /** @} */
@@ -102,10 +102,10 @@ public:
     }
     template<class Y>
     SharedPointer& operator=(const SharedPointer<Y> &other) {
-        if (pointee_!=getRawPointer(other)) {
+        if (pointee_!=other.getRawPointer()) {
             if (pointee_!=NULL && 0==releaseOwnership(pointee_))
                 delete pointee_;
-            pointee_ = getRawPointer(other);
+            pointee_ = other.getRawPointer();
             acquireOwnership(pointee_);
         }
         return *this;
@@ -151,27 +151,27 @@ public:
      *  @{ */
     template<class U>
     bool operator==(const SharedPointer<U> &other) const {
-        return pointee_ == getRawPointer(other);
+        return pointee_ == other.getRawPointer();
     }
     template<class U>
     bool operator!=(const SharedPointer<U> &other) const {
-        return pointee_ != getRawPointer(other);
+        return pointee_ != other.getRawPointer();
     }
     template<class U>
     bool operator<(const SharedPointer<U> &other) const {
-        return pointee_ < getRawPointer(other);
+        return pointee_ < other.getRawPointer();
     }
     template<class U>
     bool operator<=(const SharedPointer<U> &other) const {
-        return pointee_ <= getRawPointer(other);
+        return pointee_ <= other.getRawPointer();
     }
     template<class U>
     bool operator>(const SharedPointer<U> &other) const {
-        return pointee_ > getRawPointer(other);
+        return pointee_ > other.getRawPointer();
     }
     template<class U>
     bool operator>=(const SharedPointer<U> &other) const {
-        return pointee_ >= getRawPointer(other);
+        return pointee_ >= other.getRawPointer();
     }
 
     /** Comparison of two pointers.
@@ -219,7 +219,7 @@ public:
      *
      *  Printing a shared pointer is the same as printing the pointee's address. */
     friend std::ostream& operator<<(std::ostream &out, const SharedPointer &ptr) {
-        out <<getRawPointer(ptr);
+        out <<ptr.getRawPointer();
         return out;
     }
     
@@ -263,10 +263,13 @@ public:
      *   SharedPointer<MyType> ptr = ...;
      *   MyType *obj = &*ptr;
      *  @endcode */
-    friend Pointee* getRawPointer(const SharedPointer &ptr) {
-        return ptr.pointee_;
+    Pointee* getRawPointer() {
+        return pointee_;
     }
-
+    Pointee* getRawPointer() const {
+        return pointee_;
+    }
+        
     /** Returns the pointed-to object's reference count. Returns zero for empty pointers. */
     friend size_t ownershipCount(const SharedPointer &ptr) {
         return ptr.ownershipCount(ptr.pointee_);
@@ -274,6 +277,12 @@ public:
 private:
     static size_t ownershipCount(Pointee *rawPtr);
 };
+
+template<class Pointer>
+typename Pointer::Pointee*
+getRawPointer(Pointer& ptr) {
+    return ptr.getRawPointer();
+}
 
 /** Make pointer point to nothing.
  *

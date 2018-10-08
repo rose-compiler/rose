@@ -125,7 +125,7 @@ class StmtVarAliasCollect
 : public StmtInfoCollect, public AliasAnalysisInterface
 {
  public:
-   class VarAliasMap {
+   class VarAliasMap {  // name -> disjoint-set ID, we only need to check if two variables belong to the same group
       std::map<std::string, UF_elem*, std::less<std::string> > aliasmap;
       static Ast2StringMap scopemap;
      public:
@@ -135,6 +135,7 @@ class StmtVarAliasCollect
                delete (*p).second;
          }
        }
+       //! Obtain the Union-find element from a variable within a scope
        UF_elem* get_alias_map( const std::string& varname, const AstNodePtr& scope);
    };
  private:

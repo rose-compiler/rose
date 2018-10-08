@@ -20,10 +20,12 @@ class ROSE_DLL_API LivenessAnalysis : public DefUseAnalysisAbstract {
   bool DEBUG_MODE;
 
   SgNode* searchNode;
+  //! Print out live-in and live-out variables for a node
   void printInAndOut(SgNode* sgNode);
 
   bool abort;
   int counter;
+  //Store Live-In and Live-Out variable sets for each node. 
   std::map<SgNode*, std::vector<SgInitializedName*> > in;
   std::map<SgNode*, std::vector<SgInitializedName*> > out;
 
@@ -32,7 +34,7 @@ class ROSE_DLL_API LivenessAnalysis : public DefUseAnalysisAbstract {
   //std::set<SgNode*> breakPointForWhileNode;
   int breakPointForWhile;
   SgNode* breakPointForWhileNode;
-
+  // the transfer function for each type of CFG node, called by run()
   template <typename T> bool defuse(T cfgNode, bool *unhandled);
   std::map<SgNode*,int> visited;
   template <typename T> bool hasANodeAboveCurrentChanged(T source);

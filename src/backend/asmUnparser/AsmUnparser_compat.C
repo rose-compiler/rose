@@ -137,8 +137,9 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
     // We will try to disassemble static data blocks (i.e., disassembling data as instructions), but we need to choose an
     // appropriate disassembler.  We don't have available the disassembler that was originally used, so we'll obtain a default
     // disassembler based on the interpretation's first file header (if it has one).
-    Disassembler *disassembler = Disassembler::lookup(interp)->clone();
+    Disassembler *disassembler = Disassembler::lookup(interp);
     if (disassembler) {
+        disassembler = disassembler->clone();
         unparser.staticDataDisassembler.init(disassembler);
     }
 

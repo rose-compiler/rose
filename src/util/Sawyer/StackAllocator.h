@@ -8,6 +8,8 @@
 #ifndef SAWYER_STACK_ALLOCATOR
 #define SAWYER_STACK_ALLOCATOR
 
+#include <Sawyer/Sawyer.h>
+
 namespace Sawyer {
 
 /** Stack-like allocator.

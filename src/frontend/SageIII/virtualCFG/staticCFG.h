@@ -54,9 +54,13 @@ public:
     
     //! The constructor building the CFG.
     /*! The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName. */
+#if 0
     CFG(SgNode* node, bool is_filtered = false)
         : graph_(NULL), start_(node), entry_(NULL), exit_(NULL), is_filtered_(is_filtered)
     { buildCFG(); }
+#else
+    CFG(SgNode* node, bool is_filtered = false);
+#endif
 
     //! Get the pointer pointing to the graph used by static CFG.
     SgIncidenceDirectedGraph* getGraph() const

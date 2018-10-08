@@ -4,6 +4,7 @@
 #include "rewrite.h"
 #include "sageBuilder.h"
 #include <iostream>
+#include <string>
 #include <iomanip>
 #include "pre.h"
 #include "rose_config.h" // for BOOST_FILESYSTEM_VERSION
@@ -21,9 +22,16 @@
 #include "inlinerSupport.h"
 #include "inliner.h"
 
+using namespace std;
+using namespace Rose;
 using namespace SageInterface;
 // void FixSgTree(SgNode*);
 // void FixSgProject(SgProject&);
+
+// a namespace
+namespace Inliner {
+  bool skipHeaders = false;
+} 
 
 SgExpression* generateAssignmentMaybe(SgExpression* lhs, SgExpression* rhs)
    {
@@ -142,6 +150,7 @@ class ReplaceParameterUseVisitor: public AstSimpleProcessing {
   const paramMapType& paramMap;
 
   public:
+  // constructor accepts the formal-actual parameter mapping
   ReplaceParameterUseVisitor(const paramMapType& paramMap):
     paramMap(paramMap) {}
 
@@ -217,7 +226,7 @@ bool
 doInline(SgFunctionCallExp* funcall, bool allowRecursion)
    {
 #if 0
-  // DQ (4/6/2015): Adding code to check for consitancy of checking the isTransformed flag.
+  // DQ (4/6/2015): Adding code to check for consistency of checking the isTransformed flag.
      ROSE_ASSERT(funcall != NULL);
      ROSE_ASSERT(funcall->get_parent() != NULL);
      SgGlobal* globalScope = TransformationSupport::getGlobalScope(funcall);
@@ -226,14 +235,28 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      checkTransformedFlagsVisitor(globalScope);
 #endif
 
+    if (Inliner::skipHeaders)
+    {
+      // Liao 1/23/2018. we ignore function calls within header files, which are not unparsed by ROSE. 
+      string filename= funcall->get_file_info()->get_filename();
+      string suffix = StringUtility ::fileNameSuffix(filename);
+      //vector.tcc: This is an internal header file, included by other library headers
+      if (suffix=="h" ||suffix=="hpp"|| suffix=="hh"||suffix=="H" ||suffix=="hxx"||suffix=="h++" ||suffix=="tcc")
+        return false; 
+
+      // also check if it is compiler generated, mostly template instantiations. They are not from user code.
+      if (funcall->get_file_info()->isCompilerGenerated() )
+        return false; 
+    }
+
      SgExpression* funname = funcall->get_function();
-     SgExpression* funname2 = isSgFunctionRefExp(funname);
+     SgExpression* func_ref_exp = isSgFunctionRefExp(funname);
      SgDotExp* dotexp = isSgDotExp(funname);
      SgArrowExp* arrowexp = isSgArrowExp(funname);
      SgExpression* thisptr = 0;
      if (dotexp || arrowexp)
         {
-          funname2 = isSgBinaryOp(funname)->get_rhs_operand();
+          func_ref_exp = isSgBinaryOp(funname)->get_rhs_operand();
           if (dotexp) {
             SgExpression* lhs = dotexp->get_lhs_operand();
 
@@ -244,7 +267,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
             if (!is_lvalue) {
               SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
               ROSE_ASSERT (isSgInitializer(ai->get_operand()));
-#if 1
+#if 0
               printf ("ai = %p ai->isTransformation() = %s \n",ai,ai->isTransformation() ? "true" : "false");
 #endif
               SgInitializedName* in = isSgInitializedName(ai->get_parent());
@@ -260,20 +283,24 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           }
         }
 
-     if (!funname2)
+     if (!func_ref_exp)
         {
        // std::cout << "Inline failed: not a call to a named function" << std::endl;
           return false; // Probably a call through a fun ptr
         }
 
      SgFunctionSymbol* funsym = 0;
-     if (isSgFunctionRefExp(funname2))
-          funsym = isSgFunctionRefExp(funname2)->get_symbol();
+     if (isSgFunctionRefExp(func_ref_exp))
+          funsym = isSgFunctionRefExp(func_ref_exp)->get_symbol();
        else
-          if (isSgMemberFunctionRefExp(funname2))
-               funsym = isSgMemberFunctionRefExp(funname2)->get_symbol();
-            else
-               assert (false);
+          if (isSgMemberFunctionRefExp(func_ref_exp))
+               funsym = isSgMemberFunctionRefExp(func_ref_exp)->get_symbol();
+            else // template member function is not supported yet
+            {
+               cerr<<"doInline() unhandled function reference type:"<< func_ref_exp->class_name() <<endl;
+               //assert (false);
+               return false;
+            }
 
      assert (funsym);
      if (isSgMemberFunctionSymbol(funsym) &&
@@ -292,9 +319,14 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        // std::cout << "Inline failed: no definition is visible" << std::endl;
           return false; // No definition of the function is visible
         }
+
+     // check for direct recursion call
+     // TODO: handle indirect recursive calls: funcA-> funcB , funcB->funcA
+     // Need to build a call graph to answer this question.
      if (!allowRecursion)
         {
           SgNode* my_fundef = funcall;
+          // find enclosing function definition of the call site
           while (my_fundef && !isSgFunctionDefinition(my_fundef))
              {
             // printf ("Before reset: my_fundef = %p = %s \n",my_fundef,my_fundef->class_name().c_str());
@@ -315,6 +347,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgName thisname("this__");
      thisname << ++gensym_counter;
      SgInitializedName* thisinitname = 0;
+
+     // static member functions cannot access this->data (non-static data). That is why we check non-static for thisptr case. 
      if (isSgMemberFunctionSymbol(funsym) && !fundecl->get_declarationModifier().get_storageModifier().isStatic())
         {
           assert (thisptr != NULL);
@@ -337,11 +371,11 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        // cout << thisptrtype->unparseToString() << " --- " << thiscv.isConst() << " " << thiscv.isVolatile() << endl;
           SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, thisptr);
           assignInitializer->set_endOfConstruct(SgNULL_FILE);
-#if 1
+#if 0
           printf ("before new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
 #endif
           thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
-#if 1
+#if 0
           printf ("(after new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
 #endif
           thisdecl->set_endOfConstruct(SgNULL_FILE);
@@ -379,8 +413,14 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgBasicBlock* funbody_copy = function_copy->get_body();
 
      renameLabels(funbody_copy, targetFunction);
-     ASSERT_require(funbody_raw->get_symbol_table()->size() == funbody_copy->get_symbol_table()->size());
 
+     // print more information in case the following assertion fails
+     if(funbody_raw->get_symbol_table()->size() != funbody_copy->get_symbol_table()->size()) {
+        cerr<<"funbody_raw symbol table size: "<<funbody_raw->get_symbol_table()->size()<<endl;
+        cerr<<"funbody_copy symbol table size: "<<funbody_copy->get_symbol_table()->size()<<endl;
+     }
+     ASSERT_require(funbody_raw->get_symbol_table()->size() == funbody_copy->get_symbol_table()->size());
+   
      // We don't need to keep the copied SgFunctionDefinition now that the labels in it have been moved to the target function
      // (having it in the memory pool confuses the AST tests), but we must not delete the formal argument list or the body
      // because we need them below.
@@ -424,7 +464,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          SgAssignInitializer* initializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
          ASSERT_not_null(initializer);
          initializer->set_endOfConstruct(SgNULL_FILE);
-#if 1
+#if 0
          printf ("initializer = %p initializer->isTransformation() = %s \n",initializer,initializer->isTransformation() ? "true" : "false");
 #endif
          SgName shadow_name(formalArg->get_name());

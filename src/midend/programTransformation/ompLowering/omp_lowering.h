@@ -223,6 +223,9 @@ namespace OmpSupport
   //! Return the OpenMP data sharing attribute type of a variable reference
   ROSE_DLL_API omp_construct_enum getDataSharingAttribute (SgVarRefExp* varRef);
 
+  //! Check if a variable access is a shared access , assuming it is already within an OpenMP region.
+  ROSE_DLL_API bool isSharedAccess (SgVarRefExp* varRef);
+
   //! Extract map clause information
   void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses,
       std::map<SgSymbol*, std::vector< std::pair <SgExpression*, SgExpression*> > > & array_dimensions,

@@ -15,6 +15,12 @@ else (WIN32)
   if(enable-x10)
     add_subdirectory(X10CodeGeneration)
   endif()
+  if(enable-ada)
+    add_subdirectory(AdaCodeGeneration)
+  endif()
+  if(enable-jovial)
+    add_subdirectory(JovialCodeGeneration)
+  endif()
   if(enable-php)
     add_subdirectory(PHPCodeGeneration)
   endif()
@@ -31,6 +37,8 @@ add_library (unparser OBJECT
   FortranCodeGeneration/unparseFortran_modfile.C
   FortranCodeGeneration/unparseFortran_statements.C
   FortranCodeGeneration/unparseFortran_types.C
+  MatlabCodeGeneration/MatlabUnparserBottomUpTraversal.C
+  MatlabCodeGeneration/MatlabUnparser.C
   JavaCodeGeneration/unparseJava_expressions.C
   JavaCodeGeneration/unparseJava_statements.C
   JavaCodeGeneration/unparseJava_types.C
@@ -53,7 +61,13 @@ add_library (unparser OBJECT
   languageIndependenceSupport/unparseLanguageIndependentConstructs.C
   X10CodeGeneration/unparseX10_expressions.C
   X10CodeGeneration/unparseX10_statements.C
-  X10CodeGeneration/unparseX10_types.C)
+  X10CodeGeneration/unparseX10_types.C
+  AdaCodeGeneration/unparseAda_expressions.C
+  AdaCodeGeneration/unparseAda_statements.C
+  AdaCodeGeneration/unparseAda_types.C
+  JovialCodeGeneration/unparseJovial_expressions.C
+  JovialCodeGeneration/unparseJovial_statements.C
+  JovialCodeGeneration/unparseJovial_types.C)
 add_dependencies(unparser rosetta_generated)
 
 ########### install files ###############

@@ -168,5 +168,6 @@ main( int argc, char * argv[] )
 #else
      project->unparse();
 #endif
+     return 0;
    }
 

@@ -161,6 +161,9 @@ ROSE_DLL_API void setSourcePositionClassificationMode(SourcePositionClassificati
 //! DQ (7/27/2012): changed semantics from removing the template arguments in names to adding the template arguments to names.
 ROSE_DLL_API SgName appendTemplateArgumentsToName( const SgName & name, const SgTemplateArgumentPtrList & templateArgumentsList);
 
+//! DQ (3/9/2018): Added to support debugging.
+SgName unparseTemplateArgumentToString (SgTemplateArgument* templateArgument);
+
 // *************************************************************************************************************
 
 
@@ -193,6 +196,10 @@ ROSE_DLL_API SgTypeString* buildStringType( SgExpression* stringLengthExpression
 ROSE_DLL_API SgTypeVoid * buildVoidType();
 ROSE_DLL_API SgTypeWchar* buildWcharType();
 
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+ROSE_DLL_API SgTypeChar16* buildChar16Type();
+ROSE_DLL_API SgTypeChar32* buildChar32Type();
+
 ROSE_DLL_API SgTypeSignedChar*  buildSignedCharType();
 ROSE_DLL_API SgTypeSignedInt*   buildSignedIntType();
 ROSE_DLL_API SgTypeSignedLong*  buildSignedLongType();
@@ -210,6 +217,11 @@ ROSE_DLL_API SgTypeUnsignedLong*    buildUnsignedLongType();
 ROSE_DLL_API SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 ROSE_DLL_API SgTypeUnsignedShort*    buildUnsignedShortType();
 ROSE_DLL_API SgTypeUnknown * buildUnknownType();
+
+//! Build a type based on Fortran's implicit typing rules.
+//! Currently this interface does not take into account possible implicit
+//! statements that change the rules.
+ROSE_DLL_API SgType* buildFortranImplicitType(SgName name);
 
 //! Build a pointer type
 ROSE_DLL_API SgPointerType* buildPointerType(SgType *base_type = NULL);
@@ -244,6 +256,16 @@ ROSE_DLL_API SgModifierType* buildRestrictType(SgType* base_type);
 
 //! Build ArrayType
 ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
+
+// RASMUSSEN (1/25/2018)
+//! Build an ArrayType based on dimension information.
+//! Note, the index member variable will be set to a NullExpression.
+//!
+//! \param base_type The base type of the array.
+//!        Note that if the base type is itself an array type, the shape of the array may be changed.
+//! \param dim_info A list of expressions describing the shape of the array.
+//!        The rank of the array is set from the length of this list.
+ROSE_DLL_API SgArrayType* buildArrayType(SgType* base_type, SgExprListExp* dim_info);
 
 // DQ (8/27/2010): Added Fortran specific support for types based on kind expressions.
 //! Build a type based on the Fortran kind mechanism
@@ -368,6 +390,12 @@ ROSE_DLL_API SgNullptrValExp* buildNullptrValExp_nfi();
 
 ROSE_DLL_API SgWcharVal* buildWcharVal(wchar_t value = 0);
 ROSE_DLL_API SgWcharVal* buildWcharVal_nfi(wchar_t value, const std::string& str);
+
+// DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+ROSE_DLL_API SgChar16Val* buildChar16Val(unsigned short value = 0);
+ROSE_DLL_API SgChar16Val* buildChar16Val_nfi(unsigned short value, const std::string& str);
+ROSE_DLL_API SgChar32Val* buildChar32Val(unsigned int value = 0);
+ROSE_DLL_API SgChar32Val* buildChar32Val_nfi(unsigned int value, const std::string& str);
 
 // DQ (3/20/2017): This function has never existed (inputs must be SgValueExp pointers).
 // ROSE_DLL_API SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
@@ -914,7 +942,7 @@ buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgSc
 // ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
 // buildTemplateInstantiationTypedefDeclaration_nfi();
 ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentList);
+buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentsList);
 #endif
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
@@ -1062,6 +1090,10 @@ SgGotoStatement * buildGotoStatement_nfi(SgLabelStatement *  label);
 //! Build a goto statement from a label symbol, supporting both C/C++ and Fortran cases
 ROSE_DLL_API SgGotoStatement * buildGotoStatement(SgLabelSymbol*  symbol);
 
+// DQ (11/22/2017): Added support for computed code goto as defined by GNU C/C++ extension.
+//! Build a goto statement from a label expression, supporting only C/C++ and not Fortran cases
+SgGotoStatement * buildGotoStatement_nfi(SgExpression*  expr);
+
 //! Build a case option statement
 ROSE_DLL_API SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);
 SgCaseOptionStmt * buildCaseOptionStmt_nfi( SgExpression * key,SgStatement *body);
@@ -1094,6 +1126,10 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 
 ROSE_DLL_API SgIfStmt* buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
+// Rasmussen (9/3/2018)
+//! Build a Fortran do construct
+ROSE_DLL_API SgFortranDo * buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body);
+
 //! Build a for init statement
 ROSE_DLL_API SgForInitStatement* buildForInitStatement();
 ROSE_DLL_API SgForInitStatement* buildForInitStatement(const SgStatementPtrList & statements);
@@ -1107,6 +1143,14 @@ ROSE_DLL_API SgForStatement * buildForStatement(SgStatement* initialize_stmt,  S
 ROSE_DLL_API SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 ROSE_DLL_API SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 ROSE_DLL_API void buildForStatement_nfi(SgForStatement* result, SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
+
+// DQ (3/26/2018): Adding support for range based for statement.
+// ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(SgVariableDeclaration* initializer, SgExpression* range, SgStatement* body);
+ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(
+     SgVariableDeclaration* initializer, SgVariableDeclaration* range, 
+     SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, 
+     SgExpression* not_equal_expression, SgExpression* increment_expression,
+     SgStatement* body);
 
 // EDG 4.8 handled the do-while statement differently (more similar to a block scope than before in EDG 4.7 (i.e. with an end-of-construct statement).
 // So we need an builder function that can use the existing SgDoWhileStatement scope already on the stack.
@@ -1493,17 +1537,25 @@ terms of non-untyped IR nodes.
 
 /*! \brief build a concept of scope in the untyped AST.
 */
+ROSE_DLL_API SgUntypedScope* buildUntypedScope();
 ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 
 ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 
+ROSE_DLL_API SgUntypedBlockStatement* buildUntypedBlockStatement(std::string label_string, SgUntypedScope* scope=NULL);
+
 ROSE_DLL_API SgUntypedFunctionDeclaration*      buildUntypedFunctionDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
 ROSE_DLL_API SgUntypedProgramHeaderDeclaration* buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
 ROSE_DLL_API SgUntypedSubroutineDeclaration*    buildUntypedSubroutineDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
 
 ROSE_DLL_API SgUntypedFile* buildUntypedFile(SgUntypedGlobalScope* scope);
+
+
+ROSE_DLL_API SgUntypedIfStatement* buildUntypedIfStatement(std::string label, SgUntypedExpression* conditional,
+                                                           SgUntypedStatement* true_body, SgUntypedStatement* false_body);
+
 
 //@}
 

@@ -226,7 +226,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
             s & BOOST_SERIALIZATION_NVP(p_condition);
@@ -375,7 +375,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
             s & BOOST_SERIALIZATION_NVP(p_baseSize);
@@ -471,7 +471,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
         }
@@ -484,6 +484,12 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
 #endif // SgAsmPowerpcInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -528,7 +534,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
         }
@@ -590,7 +596,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
         }
@@ -634,7 +640,27 @@ void Grammar::setUpBinaryInstructions() {
 #endif // SgAsmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
-    /** Base class for machine instructions. */
+    /** Base class for machine instructions.
+     *
+     *  @li Each instruction is represented by one or more instances of SgAsmInstruction.
+     *
+     *  @li An instruction obtained from a full AST will have a parent pointer. The instruction's first ancestor of type @ref
+     *  SgAsmBlock is the basic block in which the instruction appears, and its first ancestor of type @ref SgAsmFunction is
+     *  the function in which the instruction appears. There may be intervening AST nodes having other types.
+     *
+     *  @li An instruction obtained from a @ref Rose::BinaryAnalysis::Partitioner2::Partitioner "Partitioner" will not have a
+     *  parent pointer. You can find ownership information using the Partitioner API.
+     *
+     *  @li An instruction's bytes will always be contiguous in the virtual address space from which the instruction was
+     *  decoded, but might not be contiguous in the file (if any) where the instruction was stored. In fact, there's no
+     *  guarantee that the instruction even exists entirely within one file.
+     *
+     *  @li Two distinct instructions (with different encodings) can start at the same virtual address if the specimen is
+     *  self-modifying. Most ROSE analysis assumes that specimens are not self-modifying and uses the instruction's starting
+     *  virtual address to uniquely identify the instruction.
+     *
+     *  @li Two distinct instructions (with different encodings) can occupy overlapping bytes in the virtual address space, and
+     *  are guaranteed to have different starting addresses unless the specimen is self-modifying. */
     class SgAsmInstruction: public SgAsmStatement {
     public:
 #endif
@@ -721,7 +747,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
             s & BOOST_SERIALIZATION_NVP(p_mnemonic);
             s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
@@ -746,6 +772,14 @@ void Grammar::setUpBinaryInstructions() {
 
         // FIXME[Robb P Matzke 2017-02-13]: unused?
         void appendSources( SgAsmInstruction* instruction );
+
+        /** Number of operands. */
+        size_t nOperands() const;
+
+        /** Nth operand.
+         *
+         *  If the operand index is out of range, then null is returned. */
+        SgAsmExpression* operand(size_t) const;
 
         /** Determines if this instruction normally terminates a basic block.
          *
@@ -1030,6 +1064,12 @@ void Grammar::setUpBinaryInstructions() {
          *  }
          * @endcode */
         virtual unsigned get_anyKind() const;
+
+        /** Converts the instruction to a string.
+         *
+         *  The return value is an address, colon, mnemonic, and arguments. Only one space is used between the parts. */
+        virtual std::string toString() const;
+
 #endif // SgAsmInstruction_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1078,7 +1118,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_operands);
         }
@@ -1114,7 +1154,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1142,7 +1182,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1170,7 +1210,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1198,7 +1238,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1226,7 +1266,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1254,7 +1294,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1282,7 +1322,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1310,7 +1350,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1338,7 +1378,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1366,7 +1406,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1394,7 +1434,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1422,7 +1462,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1450,7 +1490,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
@@ -1509,7 +1549,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_lhs);
             s & BOOST_SERIALIZATION_NVP(p_rhs);
@@ -1539,7 +1579,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
@@ -1567,7 +1607,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
@@ -1595,7 +1635,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
@@ -1623,7 +1663,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
@@ -1666,7 +1706,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_operand);
         }
@@ -1708,7 +1748,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
             s & BOOST_SERIALIZATION_NVP(p_psr_mask);
         }
@@ -1756,8 +1796,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "stride" referred to in the documentation for this class.  This is not an actual register.
          *
          * @{ */
-        const RegisterDescriptor& get_stride() const;
-        void set_stride(const RegisterDescriptor&);
+        RegisterDescriptor get_stride() const;
+        void set_stride(RegisterDescriptor);
         /** @} */
 #else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
@@ -1770,8 +1810,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "offset" referred to in the documentation for this class.
          *
          * @{ */
-        const RegisterDescriptor& get_offset() const;
-        void set_offset(const RegisterDescriptor&);
+        RegisterDescriptor get_offset() const;
+        void set_offset(RegisterDescriptor);
         /** @} */
 #else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
@@ -1813,7 +1853,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
             s & BOOST_SERIALIZATION_NVP(p_stride);
             s & BOOST_SERIALIZATION_NVP(p_offset);
@@ -1849,8 +1889,8 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Descriptor for accessed register.
          *
          *  @{ */
-        const RegisterDescriptor& get_descriptor() const;
-        void set_descriptor(const RegisterDescriptor&);
+        RegisterDescriptor get_descriptor() const;
+        void set_descriptor(RegisterDescriptor);
         /** @} */
 #else
         AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
@@ -1879,7 +1919,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_descriptor);
             s & BOOST_SERIALIZATION_NVP(p_adjustment);
@@ -1944,7 +1984,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_registers);
             s & BOOST_SERIALIZATION_NVP(p_mask);
@@ -2007,7 +2047,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
             s & BOOST_SERIALIZATION_NVP(p_baseNode);
         }
@@ -2142,7 +2182,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
             s & BOOST_SERIALIZATION_NVP(p_nativeValue);
             s & BOOST_SERIALIZATION_NVP(p_nativeValueIsValid);
@@ -2228,7 +2268,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmValueExpression);
             s & BOOST_SERIALIZATION_NVP(p_bitVector);
         }
@@ -2340,7 +2380,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_unfolded_expression_tree);
             s & BOOST_SERIALIZATION_NVP(p_bit_offset);
@@ -2408,7 +2448,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_address);
             s & BOOST_SERIALIZATION_NVP(p_segment);
@@ -2443,7 +2483,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_bit_flags);
         }
@@ -2477,7 +2517,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_subexpression);
         }
@@ -2597,6 +2637,7 @@ void Grammar::setUpBinaryInstructions() {
             OP_peekRegister,
             OP_writeRegister,
             OP_readMemory,                              /**< Three or four args depending on whether segment reg is present. */
+            OP_peekMemory,
             OP_writeMemory,                             /**< Three or four args depending on whether segment reg is present. */
             OP_N_OPERATORS                              /**< Number of operators in this enum. */ // MUST BE LAST!
         };
@@ -2606,7 +2647,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_riscOperator);
             s & BOOST_SERIALIZATION_NVP(p_operands);
@@ -2651,7 +2692,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(p_expressions);
         }
@@ -2714,7 +2755,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_type);
             s & BOOST_SERIALIZATION_NVP(p_comment);
@@ -2726,6 +2767,19 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Returns the width of the expression in bits according to its data type. The "type" property must be non-null. */
         size_t get_nBits() const;
+
+        /** Return a constant if possible.
+         *
+         *  If this expression is an integer expression with a constant that fits in a 64-bit unsigned type, then return it,
+         *  otherwise return nothing. */
+        Sawyer::Optional<uint64_t> asUnsigned() const;
+
+        /** Return a signed constant if possible.
+         *
+         *  If this expression is an integer expression with a constant that fits in a 64-bit signed type, then return it,
+         *  otherwise return nothing. */
+        Sawyer::Optional<int64_t> asSigned() const;
+
 #endif // SgAsmExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2770,7 +2824,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmScalarType);
             s & BOOST_SERIALIZATION_NVP(p_isSigned);
         }
@@ -2837,7 +2891,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmScalarType);
             s & BOOST_SERIALIZATION_NVP(p_significandOffset);
             s & BOOST_SERIALIZATION_NVP(p_significandNBits);
@@ -2925,7 +2979,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
             s & BOOST_SERIALIZATION_NVP(p_minorOrder);
             s & BOOST_SERIALIZATION_NVP(p_majorOrder);
@@ -2989,7 +3043,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
             s & BOOST_SERIALIZATION_NVP(p_nElmts);
             s & BOOST_SERIALIZATION_NVP(p_elmtType);
@@ -3038,7 +3092,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         }
 #endif
@@ -3153,6 +3207,22 @@ void Grammar::setUpBinaryInstructions() {
 #else
         AsmFunction.setDataPrototype("unsigned", "reason", "= SgAsmFunction::FUNC_NONE", /*bit flags*/
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Additional function existance reason comment.
+         *
+         *  This reason comment gets filled in automatically by certain function analyses. It's a free-form string that
+         *  contains additional information about why this function exists and is used in conjunction with the @ref get_reason
+         *  property.
+         *
+         * @{ */
+        const std::string& get_reasonComment() const;
+        void set_reasonComment(const std::string&);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("std::string", "reasonComment", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #ifdef DOCUMENTATION
@@ -3296,10 +3366,11 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
             s & BOOST_SERIALIZATION_NVP(p_name);
             s & BOOST_SERIALIZATION_NVP(p_reason);
+            s & BOOST_SERIALIZATION_NVP(p_reasonComment);
             s & BOOST_SERIALIZATION_NVP(p_function_kind);
             s & BOOST_SERIALIZATION_NVP(p_may_return);
             s & BOOST_SERIALIZATION_NVP(p_name_md5);
@@ -3425,9 +3496,15 @@ void Grammar::setUpBinaryInstructions() {
                                                  *   be stored at a time.  These are not used to control which partitioning
                                                  *   heuristics to use, but rather to indicate which one (of possibly many)
                                                  *   that detected the function. */
-                FUNC_INTERPADFUNC = 0x00000001  /**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
+                FUNC_INTERPADFUNC = 1,          /**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
                                                  *   space between two inter-function padding blocks and makes the first such
                                                  *   address the beginning of one of these functions. */
+                FUNC_PESCRAMBLER_DISPATCH = 2, /**<  Dispatcher function for code generated by pescrambler. */
+                FUNC_CONFIGURED = 3,           /**<  Function is defined in a configuration file. */
+                FUNC_CMDLINE = 4,              /**<  Function mentioned on the command-line. */
+                FUNC_SCAN_RO_DATA = 5,         /**<  Address was found in read-only data area by scanning the data. */
+                FUNC_INSN_RO_DATA = 6,         /**<  Address was found in read-only data referenced by an existing
+                                                *    instruction. */
         };
 
         /** Multi-line description of function reason keys from unparser.
@@ -3529,8 +3606,24 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     /** Instruction basic block.
      *
-     *  One entry point (first instruction) and one exit point (last instruction).  However, SgAsmBlock has also historically
-     *  been used for other things, such as collections of functions. */
+     *  A SgAsmBlock usually represents a sequence of instructions. It's also used for grouping other things such as
+     *  functions. A SgAsmBlock represents a basic block if and only if it has at least one descendant of type @ref
+     *  SgAsmInstruction and it has no descendants of type SgAsmBlock.
+     *
+     *  In the absence of interrupt handling, the instructions of a basic block are executed entirely.  In the absense of
+     *  multi-threading, no other instructions intervene.
+     *
+     *  The instructions of a basic block need not be contiguous in virtual memory. They also do not need to be at increasing
+     *  virtual addresses.
+     *
+     *  If the basic block has a parent pointer, then the closest @ref SgAsmFunction ancestor is the one to which this basic
+     *  block belongs. In the @ref Rose::BinaryAnalysis::Partitioner2::Partitioner "Partitioner" API, a basic block can be
+     *  owned by more than one function.
+     *
+     *  An AST may have multiple SgAsmBlock objects that represent the same basic block. This happens when a single block
+     *  belongs to more than one function.
+     *
+     *  See also, @ref Rose::BinaryAnalysis::Partitioner2::BasicBlock, which represents a basic block outside the AST. */
     class SgAsmBlock: public SgAsmStatement {
     public:
 #endif
@@ -3706,7 +3799,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
             s & BOOST_SERIALIZATION_NVP(p_reason);
             s & BOOST_SERIALIZATION_NVP(p_statementList);
@@ -3865,7 +3958,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
             s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
         }
@@ -3910,7 +4003,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S & s, const unsigned version) {
+        void serialize(S & s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
         }
 #endif
@@ -3975,7 +4068,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
         }
 #endif
@@ -4012,7 +4105,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
         };
 #endif
@@ -4032,13 +4125,37 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmStatement);
 
 #ifdef DOCUMENTATION
+    /** Base class for statement-like subclasses.
+     *
+     *  This is a base class for those binary analysis entities, such as instructions and basic blocks, that have a starting
+     *  address in the virtual address space. */
     class SgAsmStatement: public SgAsmNode {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Starting virtual address.
+         *
+         *  Virtual address of first byte of instruction, block, or whatever, depending on subclass.
+         *
+         *  @{ */
+        rose_addr_t get_address() const;
+        void set_address(rose_addr_t);
+        /** @} */
+#else
         AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Commentary.
+         *
+         *  @{ */
+        const std::string& get_comment() const;
+        void set_comment(const std::string&);
+        /** @} */
+#else
         AsmStatement.setDataPrototype("std::string", "comment", "= \"\"",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
@@ -4050,7 +4167,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
             s & BOOST_SERIALIZATION_NVP(p_address);
             s & BOOST_SERIALIZATION_NVP(p_comment);
@@ -4108,7 +4225,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_interpretations);
         }
@@ -4195,7 +4312,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_headers);
             s & BOOST_SERIALIZATION_NVP(p_global_block);
@@ -4526,7 +4643,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_e_ident_file_class);
             s & BOOST_SERIALIZATION_NVP(p_e_ident_data_encoding);
@@ -4723,7 +4840,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         }
 #endif
@@ -4950,7 +5067,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_sh_name);
             s & BOOST_SERIALIZATION_NVP(p_sh_type);
@@ -5124,7 +5241,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         }
 #endif
@@ -5212,7 +5329,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         }
 #endif
@@ -5380,7 +5497,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_index);
             s & BOOST_SERIALIZATION_NVP(p_type);
@@ -5567,7 +5684,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_is_dynamic);
             s & BOOST_SERIALIZATION_NVP(p_symbols);
@@ -5658,7 +5775,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_symbols);
         }
@@ -5760,7 +5877,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSymbol);
             s & BOOST_SERIALIZATION_NVP(p_st_info);
             s & BOOST_SERIALIZATION_NVP(p_st_res1);
@@ -5917,7 +6034,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -5984,7 +6101,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_value);
         }
@@ -6043,7 +6160,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -6092,7 +6209,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -6229,7 +6346,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -6329,7 +6446,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_version);
             s & BOOST_SERIALIZATION_NVP(p_flags);
@@ -6418,7 +6535,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -6458,7 +6575,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_name);
         }
@@ -6550,7 +6667,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -6632,7 +6749,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -6702,8 +6819,10 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_version);
+            s & BOOST_SERIALIZATION_NVP(p_file_name);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
 #endif
@@ -6787,7 +6906,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -6870,7 +6989,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_hash);
             s & BOOST_SERIALIZATION_NVP(p_flags);
@@ -6996,7 +7115,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_uses_addend);
             s & BOOST_SERIALIZATION_NVP(p_target_section);
@@ -7068,7 +7187,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -7165,7 +7284,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_r_offset);
             s & BOOST_SERIALIZATION_NVP(p_r_addend);
@@ -7374,7 +7493,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -7448,7 +7567,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -7524,7 +7643,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_d_tag);
             s & BOOST_SERIALIZATION_NVP(p_d_val);
@@ -7719,7 +7838,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_strtab);
         }
@@ -7783,7 +7902,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
         }
 #endif
@@ -7890,7 +8009,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -7954,7 +8073,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -8018,7 +8137,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_type);
             s & BOOST_SERIALIZATION_NVP(p_name);
@@ -8113,7 +8232,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
             s & BOOST_SERIALIZATION_NVP(p_ci_entries);
         }
@@ -8189,7 +8308,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -8417,7 +8536,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_version);
             s & BOOST_SERIALIZATION_NVP(p_augmentation_string);
@@ -8495,7 +8614,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
@@ -8580,7 +8699,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_begin_rva);
             s & BOOST_SERIALIZATION_NVP(p_size);
@@ -8677,7 +8796,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
             s & BOOST_SERIALIZATION_NVP(p_linked_section);
             s & BOOST_SERIALIZATION_NVP(p_section_entry);
@@ -9032,7 +9151,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_e_last_page_size);
             s & BOOST_SERIALIZATION_NVP(p_e_total_pages);
@@ -9279,7 +9398,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
             s & BOOST_SERIALIZATION_NVP(p_e_res1);
             s & BOOST_SERIALIZATION_NVP(p_e_oemid);
@@ -9892,7 +10011,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_e_cpu_type);
             s & BOOST_SERIALIZATION_NVP(p_e_nsections);
@@ -10165,7 +10284,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_pairs);
         }
@@ -10242,7 +10361,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_e_rva);
             s & BOOST_SERIALIZATION_NVP(p_e_size);
@@ -10431,7 +10550,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_by_ordinal);
             s & BOOST_SERIALIZATION_NVP(p_ordinal);
@@ -10516,7 +10635,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_vector);
         }
@@ -10689,7 +10808,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_dll_name);
             s & BOOST_SERIALIZATION_NVP(p_dll_name_rva);
@@ -10732,8 +10851,8 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  The import directory is parsed from the specified virtual address via the PE header's loader map. Return value is
          *  this directory entry on success, or the null pointer if the entry is all zero (which marks the end of the directory
-         *  list). */
-        SgAsmPEImportDirectory *parse(rose_addr_t va);
+         *  list). The @p isLastEntry is true if the caller thinks this should be an all-zero entry. */
+        SgAsmPEImportDirectory *parse(rose_addr_t va, bool isLastEntry);
 
         /** Allocates space for this import directory's name, import lookup table, and import address table.
          *
@@ -10821,7 +10940,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_vector);
         }
@@ -11006,7 +11125,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
             s & BOOST_SERIALIZATION_NVP(p_import_directories);
         }
@@ -11104,7 +11223,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
             s & BOOST_SERIALIZATION_NVP(p_export_dir);
             s & BOOST_SERIALIZATION_NVP(p_exports);
@@ -11332,7 +11451,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_res1);
             s & BOOST_SERIALIZATION_NVP(p_timestamp);
@@ -11421,7 +11540,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_exports);
         }
@@ -11506,7 +11625,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_name);
             s & BOOST_SERIALIZATION_NVP(p_ordinal);
@@ -11578,7 +11697,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
             s & BOOST_SERIALIZATION_NVP(p_strtab);
         }
@@ -11630,7 +11749,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         }
 #endif
@@ -11803,7 +11922,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_name);
             s & BOOST_SERIALIZATION_NVP(p_virtual_size);
@@ -11935,7 +12054,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
             s & BOOST_SERIALIZATION_NVP(p_section_entry);
         }
@@ -11959,8 +12078,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -11969,45 +12086,312 @@ void Grammar::setUpBinaryInstructions() {
      *************************************************************************************************************************/
 
     NEW_TERMINAL_MACRO(AsmCoffSymbolTable, "AsmCoffSymbolTable", "AsmCoffSymbolTableTag");
-    AsmCoffSymbolTable.setFunctionPrototype("HEADER_PE_COFF_SYMBOL_TABLE", "../Grammar/BinaryInstruction.code");
-    AsmCoffSymbolTable.setDataPrototype("SgAsmGenericSection*", "strtab", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbolTable.setDataPrototype("SgAsmCoffSymbolList*", "symbols", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    AsmCoffSymbolTable.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCoffSymbolTable);
 
+#ifdef DOCUMENTATION
+    /** COFF symbol table.
+     *
+     *  This is a symbol table used by Microsoft PE format. */
+    class SgAsmCoffSymbolTable: public SgAsmGenericSection {
+    public:
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: String table.
+         *
+         *  Table that holds the strings for the symbol names.
+         *
+         * @{ */
+        SgAsmGenericSection* get_strtab() const;
+        void set_strtab(SgAsmGenericSection*);
+        /** @} */
+#else
+        AsmCoffSymbolTable.setDataPrototype("SgAsmGenericSection*", "strtab", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: List of symbols.
+         *
+         * @{ */
+        SgAsmCoffSymbolList* get_symbols() const;
+        void set_symbols(SgAsmCoffSymbolList*);
+        /** @} */
+#else
+        AsmCoffSymbolTable.setDataPrototype("SgAsmCoffSymbolList*", "symbols", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCoffSymbolTable);
+#if defined(SgAsmCoffSymbolTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_strtab);
+            s & BOOST_SERIALIZATION_NVP(p_symbols);
+        }
+#endif
+
+    public:
+        explicit SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr) {ctor();}
+        size_t get_nslots() const;
+        virtual SgAsmCoffSymbolTable *parse() $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
+    private:
+        void ctor();
+#endif // SgAsmCoffSymbolTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     NEW_TERMINAL_MACRO(AsmCoffSymbolList, "AsmCoffSymbolList", "AsmCoffSymbolListTag");
-    AsmCoffSymbolList.setDataPrototype("SgAsmCoffSymbolPtrList", "symbols", "",
-                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    AsmCoffSymbolList.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCoffSymbolList);
+
+#ifdef DOCUMENTATION
+    /** List of COFF symbols. */
+    class SgAsmCoffSymbolList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of symbol pointers.
+         *
+         * @{ */
+        const SgAsmCoffSymbolPtrList& get_symbols() const;
+        void set_symbols(const SgAsmCoffSymbolPtrList&);
+        /** @} */
+#else
+        AsmCoffSymbolList.setDataPrototype("SgAsmCoffSymbolPtrList", "symbols", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCoffSymbolList);
+#if defined(SgAsmCoffSymbolList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
 
 
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_symbols);
+        }
+#endif
+#endif // SgAsmCoffSymbolList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_TERMINAL_MACRO(AsmCoffSymbol, "AsmCoffSymbol", "AsmCoffSymbolTag");
-    AsmCoffSymbol.setFunctionPrototype("HEADER_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
+    AsmCoffSymbol.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCoffSymbol);
     AsmCoffSymbol.setFunctionSource("SOURCE_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
-    AsmCoffSymbol.setDataPrototype("std::string", "st_name", "= \"\"",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("rose_addr_t", "st_name_offset", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("int", "st_section_num", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("unsigned", "st_type", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("unsigned", "st_storage_class", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("unsigned", "st_num_aux_entries", "= 0",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmCoffSymbol.setDataPrototype("SgUnsignedCharList", "aux_data", "",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#ifdef DOCUMENTATION
+    /** COFF symbol. */
+    class SgAsmCoffSymbol: public SgAsmGenericSymbol {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol name.
+         *
+         *  @{ */
+        const std::string& get_st_name() const;
+        void set_st_name(const std::string&)
+        /** @} */
+#else
+            AsmCoffSymbol.setDataPrototype("std::string", "st_name", "= \"\"",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol name offset.
+         *
+         * @{ */
+        rose_addr_t get_st_name_offset() const;
+        void set_st_name_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("rose_addr_t", "st_name_offset", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Section number.
+         *
+         * @{ */
+        int get_st_section_num() const;
+        void set_st_section_num(int);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("int", "st_section_num", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol type constant.
+         *
+         * @{ */
+        unsigned get_st_type() const;
+        void set_st_type(unsigned);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("unsigned", "st_type", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Symbol storage class.
+         *
+         * @{ */
+        unsigned get_st_storage_class() const;
+        void set_st_storage_class(unsigned);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("unsigned", "st_storage_class", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of auxilliary entries.
+         *
+         * @{ */
+        unsigned get_st_num_aux_entries() const;
+        void set_st_num_aux_entries(unsigned);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("unsigned", "st_num_aux_entries", "= 0",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Auxilliary data.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_aux_data() const;
+        void set_aux_data(const SgUnsignedCharList&);
+        /** @} */
+#else
+        AsmCoffSymbol.setDataPrototype("SgUnsignedCharList", "aux_data", "",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCoffSymbol);
+#if defined(SgAsmCoffSymbol_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSymbol);
+            s & BOOST_SERIALIZATION_NVP(p_st_name);
+            s & BOOST_SERIALIZATION_NVP(p_st_name_offset);
+            s & BOOST_SERIALIZATION_NVP(p_st_section_num);
+            s & BOOST_SERIALIZATION_NVP(p_st_type);
+            s & BOOST_SERIALIZATION_NVP(p_st_storage_class);
+            s & BOOST_SERIALIZATION_NVP(p_st_num_aux_entries);
+            s & BOOST_SERIALIZATION_NVP(p_aux_data);
+        }
+#endif
+        
+    public:
+
+        static const unsigned int COFFSymbol_disk_size = 18;
+
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        struct COFFSymbol_disk {
+            union {
+                char            st_name[8];
+                struct {
+                    uint32_t    st_zero;
+                    uint32_t    st_offset;
+                };
+            };
+            uint32_t            st_value;
+            int16_t             st_section_num;
+            uint16_t            st_type;
+            unsigned char       st_storage_class;
+            unsigned char       st_num_aux_entries;
+        }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
+        void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
+        virtual void dump(FILE *f, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+    
+    private:
+        void ctor(SgAsmPEFileHeader*, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
+#endif // SgAsmCoffSymbol_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_TERMINAL_MACRO(AsmCoffStrtab, "AsmCoffStrtab", "AsmCoffStrtabTag");
-    AsmCoffStrtab.setFunctionPrototype("HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
+    AsmCoffStrtab.setCppCondition("!defined(DOCUMENTATION)");
     AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
+    IS_SERIALIZABLE(AsmCoffStrtab);
 
+#ifdef DOCUMENTATION
+    /** COFF symbol string table. */
+    class SgAsmCoffStrtab: public SgAsmGenericStrtab {
+    public:
+#endif
 
+        DECLARE_OTHERS(AsmCoffStrtab);
+#if defined(SgAsmCoffStrtab_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
+        }
+#endif
+        
+    public:
+        explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section)
+            : SgAsmGenericStrtab(containing_section) {}
+        virtual ~SgAsmCoffStrtab();
+        virtual void unparse(std::ostream&) const;
+        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) $ROSE_OVERRIDE;
+        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) $ROSE_OVERRIDE;
+#endif // SgAsmCoffStrtab_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
     /*************************************************************************************************************************
      *                                         NE File Header
@@ -12925,7 +13309,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_strtab);
             s & BOOST_SERIALIZATION_NVP(p_string);
@@ -12980,7 +13364,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericString);
             s & BOOST_SERIALIZATION_NVP(p_string);
         }
@@ -13040,7 +13424,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericString);
             s & BOOST_SERIALIZATION_NVP(p_storage);
         }
@@ -13120,7 +13504,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         }
 #endif
@@ -13194,7 +13578,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_headers);
         }
@@ -13312,7 +13696,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
             s & BOOST_SERIALIZATION_NVP(p_exec_format);
             s & BOOST_SERIALIZATION_NVP(p_magic);
@@ -13478,7 +13862,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_symbols);
         }
@@ -13591,7 +13975,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_def_state);
             s & BOOST_SERIALIZATION_NVP(p_binding);
@@ -13740,7 +14124,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_container);
             s & BOOST_SERIALIZATION_NVP(p_storage_list);
@@ -13804,7 +14188,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) {abort(); return NULL;}
+        virtual SgAsmStringStorage *create_storage(rose_addr_t /*offset*/, bool /*shared*/) {abort(); return NULL;}
         virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
         virtual void rebind(SgAsmStringStorage*, rose_addr_t) {abort();}
 
@@ -13849,7 +14233,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_sections);
         }
@@ -14129,7 +14513,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_file);
             s & BOOST_SERIALIZATION_NVP(p_header);
@@ -14539,7 +14923,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_dlls);
         }
@@ -14587,7 +14971,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_name);
             s & BOOST_SERIALIZATION_NVP(p_symbols);
@@ -14742,7 +15126,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_family);
             s & BOOST_SERIALIZATION_NVP(p_purpose);
@@ -14797,7 +15181,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_files);
         }
@@ -14973,7 +15357,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
             s & BOOST_SERIALIZATION_NVP(p_dwarf_info);
             s & BOOST_SERIALIZATION_NVP(p_name);
@@ -15293,7 +15677,7 @@ void Grammar::setUpBinaryInstructions() {
         const SgAsmGenericFormat::fileDetails &get_sb() {
             return p_sb;
         }
-        void set_sb(const SgAsmGenericFormat::fileDetails &sb) {
+        void set_sb(const SgAsmGenericFormat::fileDetails&) {
             printf("set_sb() not implemented!\n");
             ROSE_ASSERT(false);
         }
@@ -15353,7 +15737,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         }
 #endif
@@ -15729,7 +16113,7 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
         }
 #endif

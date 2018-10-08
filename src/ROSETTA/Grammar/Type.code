@@ -875,6 +875,10 @@ HEADER_PARTIAL_FUNCTION_TYPE_START
 HEADER_PARTIAL_FUNCTION_TYPE_END
 
 HEADER_TYPEDEF_TYPE_START
+
+       // DQ (2/20/2018): Adding support to build typedef type from template instantiation
+          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
+
 HEADER_TYPEDEF_TYPE_END
 
 
@@ -1568,6 +1572,11 @@ SgType::isIntegerType() const
           case T_SIGNED_LONG:
           case T_UNSIGNED_LONG:
           case T_WCHAR:
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          case T_CHAR16:
+          case T_CHAR32:
+
           case T_LONG_LONG:
           case T_SIGNED_LONG_LONG:
           case T_UNSIGNED_LONG_LONG:
@@ -2903,6 +2912,16 @@ SOURCE_TYPE_WCHAR_TYPE_START
 SOURCE_TYPE_WCHAR_TYPE_END
 
 
+SOURCE_TYPE_CHAR16_TYPE_START
+
+SOURCE_TYPE_CHAR16_TYPE_END
+
+
+SOURCE_TYPE_CHAR32_TYPE_START
+
+SOURCE_TYPE_CHAR32_TYPE_END
+
+
 SOURCE_TYPE_FLOAT_TYPE_START
 SOURCE_TYPE_FLOAT_TYPE_END
 
@@ -3429,12 +3448,13 @@ SgClassType::get_name() const
  *    typedef struct { int a; char b; } tag_t;
  *  then this routine returns an empty name.
  */
+#define DEBUG_CLASS_TYPE_GET_MANGLED 0
 SgName
 SgClassType::get_mangled(void) const
    {
      ROSE_ASSERT(this != NULL);
 
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
      printf ("In SgClassType::get_mangled(): get_name() = %s \n",get_name().str());
 #endif
 
@@ -3443,7 +3463,7 @@ SgClassType::get_mangled(void) const
      if (get_name().is_null() == false) // not anonymous
         {
           const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
           printf ("In SgClassType::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
 #endif
           if (class_decl != NULL)
@@ -3456,7 +3476,7 @@ SgClassType::get_mangled(void) const
                if (template_class_decl != NULL)
                   {
                     mangled_name = template_class_decl->get_mangled_name();
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
                     printf ("In SgClassType::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
 #endif
 #if 0
@@ -3471,14 +3491,14 @@ SgClassType::get_mangled(void) const
 
                  // This is for just a simple SgClassDeclaration.
                     mangled_name = class_decl->get_mangled_name();
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
                     printf ("In SgClassType::get_mangled(): SgClassDeclaration calling class_decl->get_mangled_name() --- mangled_name = %s \n",mangled_name.str());
 #endif
                   }
              }
         }
 
-#if 0
+#if DEBUG_CLASS_TYPE_GET_MANGLED
      printf ("Leaving SgClassType::get_mangled(): mangled_name = %s \n",mangled_name.str());
 #endif
 
@@ -3980,7 +4000,23 @@ SgTypedefType::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
 
      const SgTypedefDeclaration* decl = isSgTypedefDeclaration (get_declaration());
-     ROSE_ASSERT (decl);
+     ROSE_ASSERT (decl != NULL);
+
+#if 0
+  // DQ (5/23/2018): Added debugging support for infinite loop bug.
+     printf ("In SgTypedefType::get_mangled(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),decl->get_name().str());
+#endif
+#if 0
+     if (decl->get_file_info() != NULL)
+        {
+          printf ("   --- typedef source position: decl = %p line = %d \n",decl,decl->get_file_info()->get_line());
+        }
+       else
+        {
+          printf ("   --- typedef source position: line = (unknown) \n");
+        }
+#endif
+
      return decl->get_mangled_name();
    }
 
@@ -5652,6 +5688,14 @@ SgArrayType::get_name(void) const {
     else if (isSgTypeWchar(type)) {
         name = "char";
     }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar16(type)) {
+        name = "char16";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar32(type)) {
+        name = "char32";
+    }
     else if (isSgTypeInt(type)) {
         name = "int";
     }
@@ -5712,6 +5756,14 @@ SgArrayType::get_qualified_name(void) const {
     }
     else if (isSgTypeWchar(type)) {
         name = "char";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar16(type)) {
+        name = "char16";
+    }
+ // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+    else if (isSgTypeChar32(type)) {
+        name = "char32";
     }
     else if (isSgTypeInt(type)) {
         name = "int";
@@ -6202,7 +6254,7 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
             // SgName dname = decl->get_name();
             // SgTypedefType *tptr= isSgTypedefType((*i).irep());
                ROSE_ASSERT( (*i) != NULL);
-               SgTypedefType *tptr= isSgTypedefType(*i);
+               SgTypedefType *tptr = isSgTypedefType(*i);
                ROSE_ASSERT(tptr != NULL);
 
             // DQ (3/21/2012): No, test2004_48.C fails this test.
@@ -6213,9 +6265,66 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
             // DQ (3/3/2012): I think this is always NULL pointer to a SgSymbol. 
             // ROSE_ASSERT(tptr->get_parent_scope() == NULL);
 
-               if( (decl->get_name() == tptr->get_name()) &&
-                   (decl->get_parent_scope() == tptr->get_parent_scope()) )
+#if 0
+            // DQ (2/27/2018): I think this is the wrong code because the value returned by get_name() contains 
+            // the name of the template instantiation with template arguments, and the value of the function 
+            // get_templateName() has the value of the associated template name (without template arguments).
+
+               SgName name = decl->get_name();
+            // SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+               SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(decl);
+               if (templateInstantiationTypedefDeclaration != NULL)
+                 {
+                   name = templateInstantiationTypedefDeclaration->get_templateName();
+                   printf ("In SgTypedefType::createType(): case of SgTemplateInstantiationTypedefDeclaration: name = %s \n",name.str());
+                   ROSE_ASSERT(name != "");
+                 }
+                else
+                 {
+                // DQ (2/25/2018): If this is a SgTemplateTypedefDeclaration then it might be that we can't just use the name (but I'm not ceertain).
+                   SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+                   if (templateTypedefDeclaration != NULL)
+                      {
+                        printf ("In SgTypedefType::createType(): case of SgTemplateTypedefDeclaration: Need to handle this special case (I think)! \n");
+                      }
+                 }
+
+               SgName i_name = decl->get_name();
+            // SgTemplateTypedefDeclaration* i_templateTypedefDeclaration = isSgTemplateTypedefDeclaration(decl);
+               SgTemplateInstantiationTypedefDeclaration* i_templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(tptr->get_declaration());
+               if (i_templateInstantiationTypedefDeclaration != NULL)
+                 {
+                   i_name = i_templateInstantiationTypedefDeclaration->get_templateName();
+                   printf ("In SgTypedefType::createType(): case of SgTemplateInstantiationTypedefDeclaration: i_name = %s \n",i_name.str());
+                   ROSE_ASSERT(i_name != "");
+                 }
+                else
+                 {
+                // DQ (2/25/2018): If this is a SgTemplateTypedefDeclaration then it might be that we can't just use the name (but I'm not ceertain).
+                   SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(tptr->get_declaration());
+                   if (templateTypedefDeclaration != NULL)
+                      {
+                        printf ("In SgTypedefType::createType(): case of SgTemplateTypedefDeclaration: Need to handle this special case (I think)! \n");
+                      }
+                 }
+#if 1
+               printf ("In SgTypedefType::createType(): decl = %p decl->get_firstNondefiningDeclaration() = %p \n",decl,decl->get_firstNondefiningDeclaration());
+               printf ("In SgTypedefType::createType(): decl = %p decl->get_definingDeclaration()         = %p \n",decl,decl->get_definingDeclaration());
+               printf ("In SgTypedefType::createType(): case of %s: name   = %s \n",decl->class_name().c_str(),name.str());
+               printf ("In SgTypedefType::createType(): case of %s: i_name = %s \n",tptr->get_declaration()->class_name().c_str(),i_name.str());
+#endif
+            // if ( (decl->get_name() == tptr->get_name()) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+               if ( (name == i_name) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+                  {
                     return (tptr);
+                  }
+#else
+            // DQ (2/27/2018): This is the original code, and I think it maybe the best version.
+               if ( (decl->get_name() == tptr->get_name()) && (decl->get_parent_scope() == tptr->get_parent_scope()) )
+                  {
+                    return tptr;
+                  }
+#endif
                i++;
              }
 
@@ -7883,7 +7992,7 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
      SgName name = returnType->get_mangled();
 
 #if 0
-     printf ("In SgTypeString::createType(): Building an character string [exp = %p] mangled name = %s \n",idx,name.str());
+     printf ("In SgTypeString::createType(): Building an character string [exp = %p] mangled name = %s \n",lengthExpression,name.str());
 #endif
 
   // Only look for pointers to type in the global type table.
@@ -8077,12 +8186,25 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
           printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
           get_globalTypeTable()->insert_type(name,newType);
 #else
-          SgType* root_type = result->stripType();
+       // DQ (7/30/2018): This function can't just strip down to the bae type (past typedefs, since we need 
+       // to resolve different typedefs in different classes to be different, we need to stop at typedefs.
+       // This issue is important ot Cxx11_tests/test2018_134.C where a typedef is not to be shared since it 
+       // exists in two different classes.  Basically typedefs have a declaration which make then have a local 
+       // scope which is different from other types (such a modifiers, references, pointers, and array types).
+       // SgType* root_type = result->stripType();
+       // unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE;
+       // unsigned char bit_array = STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE;
+          unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE;
+          SgType* root_type = result->stripType(bit_array);
           ROSE_ASSERT(root_type != NULL);
+#if 0
+          printf ("insertModifierTypeIntoTypeTable(): result not previously seen (or not in globalTypeTable) result = %p = %s name = %s \n",result,result->class_name().c_str(),name.str());
+          printf ("insertModifierTypeIntoTypeTable(): root_type = %p = %s \n",root_type,root_type->class_name().c_str());
+#endif
           if (handledUsingLocalTable(root_type) == false)
              {
 #if 0
-               printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+               printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                get_globalTypeTable()->insert_type(name,result);
              }

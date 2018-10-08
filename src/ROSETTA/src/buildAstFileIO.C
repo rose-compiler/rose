@@ -31,21 +31,25 @@ Grammar::generateAST_FILE_IOFiles()
    * class has to work on are static, as well.
    */
      fstream AST_FILE_IO_HeaderFile ( std::string(target_directory+"/AST_FILE_IO.h").c_str(),ios::out) ;
-     std::cout << "Building AST_FILE_IO.h" << std::flush;
+     if (verbose)
+         std::cout << "Building AST_FILE_IO.h" << std::flush;
      string header_AST_FILE_IO_CLASS = build_header_AST_FILE_IO_CLASS () ;
      AST_FILE_IO_HeaderFile << header_AST_FILE_IO_CLASS ;
      AST_FILE_IO_HeaderFile.close();
-     std::cout << " ... done " << std::endl;
+     if (verbose)
+         std::cout << " ... done " << std::endl;
   /* JH(10/25/2005): Build source for the file I/O class AST_FILE_IO.
    * Hereby, the static member functions are defined and the static 
    * data becomes allocated. 
    */
      fstream AST_FILE_IO_SourceFile ( std::string(target_directory+"/AST_FILE_IO.C").c_str(),ios::out) ;
-     std::cout << "Building AST_FILE_IO.C" << std::flush;
+     if (verbose)
+         std::cout << "Building AST_FILE_IO.C" << std::flush;
      string source_AST_FILE_IO_CLASS = build_source_AST_FILE_IO_CLASS () ;
      AST_FILE_IO_SourceFile << source_AST_FILE_IO_CLASS ;
      AST_FILE_IO_SourceFile.close();
-     std::cout << " ... done " << std::endl;
+     if (verbose)
+         std::cout << " ... done " << std::endl;
      return;
    }
 

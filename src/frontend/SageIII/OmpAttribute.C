@@ -115,6 +115,10 @@ namespace OmpSupport
     // check clause types
     sort (clauseList1.begin(), clauseList1.end());
     sort (clauseList2.begin(), clauseList2.end());
+    // Must compare size first, otherwise if range 1 is empty, 
+    // std::equal() will always return true!!
+    if (clauseList1.size() != clauseList2.size())
+        return false; 
     if (!equal(clauseList1.begin(), clauseList1.end(), clauseList2.begin()))
       return false;
     // For each clause, further check the following ...
@@ -142,6 +146,10 @@ namespace OmpSupport
 #endif 
       // The assumption here is variable name and SgInitializedName are used as pairs
       // names and SgInitializedNames should be unique for each variable
+      // Must compare size first, otherwise if range 1 is empty, 
+      // std::equal() will always return true!!
+      if (varList1.size()!=varList2.size())
+          return false;
       if (!equal(varList1.begin(), varList1.end(), varList2.begin()))
         return false;
 
@@ -173,6 +181,8 @@ namespace OmpSupport
     vector <omp_construct_enum> reductionList2 = a2->getReductionOperators(); 
     sort (reductionList1.begin(), reductionList1.end());
     sort (reductionList2.begin(), reductionList2.end());
+    if (reductionList1.size() != reductionList2.size())
+        return false;
     if (!equal(reductionList1.begin(), reductionList1.end(), reductionList2.begin()))
       return false;
     for (size_t i = 0; i < reductionList1.size(); i++)
@@ -184,6 +194,8 @@ namespace OmpSupport
       sort (varList2.begin(), varList2.end());
       // The assumption here is variable name and SgInitializedName are used as pairs
       // names and SgInitializedNames should be unique for each variable
+      if (varList1.size()!=varList2.size())
+          return false;
       if (!equal(varList1.begin(), varList1.end(), varList2.begin()))
         return false;
     }
@@ -1560,6 +1572,17 @@ namespace OmpSupport
     return result;
   }
 
+  // MS2018: added to fix warning
+  std::string OmpAttributeList::attribute_class_name() const {
+    return "OmpAttributeList";
+  }
+  OmpAttributeList* OmpAttributeList::copy() {
+    OmpAttributeList* newCopy=new OmpAttributeList();
+    // TODO: implement deep copy
+    return newCopy;
+  }
+
+  
   std::string OmpAttributeList::toOpenMPString()
   {
     string result;
@@ -1673,6 +1696,7 @@ namespace OmpSupport
 
         string pragma_str= att->toOpenMPString();
         SgPragmaDeclaration * pragma = SageBuilder::buildPragmaDeclaration("omp "+ pragma_str);
+        //cout<<"insert pragma before a loop ..."<<endl;
         SageInterface::insertStatementBefore(cur_stmt, pragma);
       }
     } // if (attlist)

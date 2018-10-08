@@ -168,6 +168,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // void setNameQualification ( SgConstructorInitializer* constructorInitializer, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired);
           void setNameQualification ( SgConstructorInitializer* constructorInitializer, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired);
 
+       // DQ (3/22/2018): Added support for name qualification of type output within C++11 specific support for initalization (see Cxx11_tests/test2018_47.C).
+          void setNameQualification(SgAggregateInitializer* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
+
        // DQ (8/4/2012): Added support to permit global qualification be be skipped explicitly (see test2012_164.C and test2012_165.C for examples where this is important).
        // void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification );
@@ -249,6 +252,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (3/31/2014): Adding support for global qualifiction.
           size_t depthOfGlobalNameQualification(SgDeclarationStatement* declaration);
+
+       // DQ (4/5/2018): Debugging support.
+          void functionReport(SgFunctionDeclaration* functionDeclaration);
    };
 
 

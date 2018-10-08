@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
+bin_SCRIPTS =
+pkgdata_DATA =
 MOSTLYCLEANFILES =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -36,17 +38,22 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+# Rasmussen (01/21/2018): Adding general support for experimental languages
+# Rasmussen (05/29/2018): Moved parse tables for installation in $(prefix)/share/rose
+if ROSE_BUILD_ATERM_SUPPORT
+   libroseExperimentalGeneralLanguagelibraries = \
+        frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
+        frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/Fortran.tbl
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/CUDA_Fortran.tbl
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl
+else
+   libroseExperimentalGeneralLanguagelibraries =
+endif
+
+# Rasmussen (01/29/2018): Removed building of ATerm traversal in 3rdPartyLibraries. Replaced with C++ traversals of ATerms.
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-
-# DQ (1/26/2017): This is built in the new way that Craig and I are working together on the new OFP.
-# Rasmussen (2/7/2017): The ATerm traversal library is needed by the frontend/Experimental_OpenFortranParser_ROSE_Connection.
-# Adding this library is ok because it is built with the normal 64-bit mode of the compiler (no -m32 CFLAGS) and then linked with the 64-bit ATerm library.
-   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
-
-#  libroseExperimentalOpenFortranParserlibraries =
-#  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
-#  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
+   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
 else
    libroseExperimentalOpenFortranParserlibraries =
 endif
@@ -69,6 +76,55 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    librosePythonlibraries = frontend/PythonFrontend/librosePythonFrontend.la
 else
    librosePythonlibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+   libroseCsharplibraries = frontend/Experimental_Csharp_ROSE_Connection/libexperimentalRoseCsharp.la
+else
+   libroseCsharplibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+   libroseAdalibraries = frontend/Experimental_Ada_ROSE_Connection/libexperimentalRoseAda.la
+
+# DQ (31/8/2017): This library needs to be provided at configure time.
+   dot_asis_lib_dir = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
+
+# DQ (31/8/2017): At least the Asis library needs to be provided built in to GNAT (atypical installation of GNAT).
+#  asis_lib_dir = @gnat_home@/lib/asis/asislib
+#  gnat_lib_dir = @gnat_home@/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
+
+# DQ (31/8/2017): Some of these need to be built in ROSE as libtool constructed libraries (maybe also as dynamic libraries).
+# Charles is working on this and it should be ready 4/9/2017.
+# libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.a ${asis_lib_dir}/libasis.a ${gnat_lib_dir}/libgnarl.a ${gnat_lib_dir}/libgnat.a
+#  libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
+#  libroseAdalibraries += -Wl,-rpath -Wl,${dot_asis_lib_dir}/libdot_asis.so
+   libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
+else
+   libroseAdalibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+   libroseJoviallibraries = frontend/Experimental_Jovial_ROSE_Connection/libexperimentalRoseJovial.la
+else
+   libroseJoviallibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+   libroseCobollibraries = frontend/Experimental_Cobol_ROSE_Connection/libexperimentalRoseCobol.la
+else
+   libroseCobollibraries =
+endif
+
+# Rasmussen (11/19/2017): Adding language support for Matlab
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+   libroseMatlablibraries = frontend/Experimental_Matlab_ROSE_Connection/libexperimentalRoseMatlab.la
+else
+   libroseMatlablibraries =
 endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -133,16 +189,22 @@ libroseLibraries = \
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
+   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseExperimentalGeneralLanguagelibraries) \
    $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
    $(librosePythonlibraries) \
    $(libroseBinaryLibraries) \
    $(libroseX10Libraries) \
+   $(libroseCsharplibraries) \
+   $(libroseAdalibraries) \
+   $(libroseJoviallibraries) \
+   $(libroseCobollibraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
@@ -156,6 +218,10 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+# DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
+# This is being done to fix the "make install" rule (which failes for me).
+# Added: $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la above.
 
 # DQ (12/18/2016): Moved below to make POET optional.
 #  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
@@ -267,10 +333,15 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)\
-          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) \
+          $(ROSE_COBOL_PT_LIBS_WITH_PATH)
+
+# DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
+# This was located after the BOOST_WAVE_LIB line in the librose_la_LIBADD rule above.
+#          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf 
+# Added this library to the libroseLibraries rule farther above in this file.
 endif
 
 # libelf is a prerequisite for using libdwarf
@@ -288,7 +359,7 @@ if ROSE_USE_GCC_OMP
 endif
 
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
-librose_la_LDFLAGS = -no-undefined
+librose_la_LDFLAGS = -no-undefined $(ROSE_RPATHS)
 
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 
@@ -350,6 +421,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_SQLITE_DATABASE_INCLUDE)		\
 	$(ROSE_PHP_INCLUDES)			\
 	$(ROSE_YICES_INCLUDES)			\
+	$(ROSE_Z3_INCLUDES)			\
 	$(ROSE_YAML_INCLUDES)			\
 	$(ROSE_LIBMAGIC_INCLUDES)		\
 	$(ROSE_ELF_INCLUDES)			\
@@ -360,6 +432,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_ETHER_INCLUDE)			\
 	$(ROSE_ATERM_INCLUDE)			\
 	$(ROSE_DLIB_INCLUDES)			\
+	$(ROSE_GCRYPT_INCLUDES)			\
 	$(BOOST_CPPFLAGS)
 
 rose_config_installed_ldflags =			\
@@ -374,10 +447,12 @@ rose_config_installed_ldflags =			\
 	$(BOOST_SERIALIZATION_LIB)		\
 	$(BOOST_WAVE_LIB)			\
 	$(BOOST_IOSTREAMS_LIB)			\
+	$(BOOST_CHRONO_LIB)			\
 	$(JAVA_JVM_LINK)			\
 	$(SQLITE_DATABASE_LIBS)			\
 	$(RT_LIBS)				\
 	$(ROSE_YICES_LIBS_WITH_PATH)		\
+	$(ROSE_Z3_LIBS_WITH_PATH)		\
 	$(ROSE_PHP_LIBS_WITH_PATH)		\
 	$(ROSE_ELF_LIBS_WITH_PATH)		\
 	$(ROSE_DWARF_LIBS_WITH_PATH)		\
@@ -386,30 +461,41 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ETHER_LIBS)			\
 	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
 	$(ROSE_ATERM_LIBS)			\
+	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
+	$(ROSE_GCRYPT_LIBS_WITH_PATH)		\
 	-lm
 
 rose_config_cfgdir = $(libdir)
 rose_config_cfg_DATA = rose-config.cfg
 
+# Rasmussen (3/23/2018): Added ROSE_RPATHS and ROSE_LINK_RPATHS to enable
+# linking on Mac OSX from a ROSE installations.
 rose-config.cfg:
 	$(AM_V_GEN) (								\
 		echo "# Things that the 'rose-config' tool can report";		\
-		echo "cc       = $(CC)";					\
-		echo "cxx      = $(CXX)";					\
-		echo "cppflags = $(rose_config_installed_cppflags)";		\
-		echo "cflags   = $(CFLAGS)";					\
-		echo "cxxflags = $(CXXFLAGS)";					\
-		echo "ldflags  = $(rose_config_installed_ldflags)";		\
-		echo "libdirs  = $(filter-out -R, $(ROSE_RPATHS))";		\
-		echo "prefix   = $(prefix)";					\
+		echo "ROSE_CC       = $(CC)";					\
+		echo "ROSE_CXX      = $(CXX)";					\
+		echo "ROSE_CPPFLAGS = $(rose_config_installed_cppflags)";	\
+		echo "ROSE_CFLAGS   = $(CFLAGS)";				\
+		echo "ROSE_CXXFLAGS = $(CXXFLAGS)";				\
+		echo "ROSE_LDFLAGS  = $(rose_config_installed_ldflags)";	\
+		echo "ROSE_LIBDIRS  = $(filter-out -R, $(ROSE_RPATHS))";	\
+		echo "ROSE_PREFIX   = $(prefix)";				\
+		echo "# Additional items useful to include in Makefiles";	\
+		echo "ROSE_RPATHS       = $(ROSE_RPATHS)";			\
+		echo "ROSE_LINK_RPATHS  = $(ROSE_LINK_RPATHS)";			\
 	) >$@
 
 MOSTLYCLEANFILES += rose-config.cfg
 
 ########################################################################################################################
+
+# Rasmussen (3/23/2018): Added installing libtool to the bin directory to support
+# linking an application using ROSE from a ROSE installations.
+bin_SCRIPTS += ../libtool
 
 
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
@@ -445,7 +531,3 @@ endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
-
-
-
-

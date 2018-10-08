@@ -13,7 +13,6 @@
 
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
-#include "TypeSizeMapping.h"
 
 namespace SPRAY {
 
@@ -50,6 +49,7 @@ class VariableIdMapping {
    */
   VariableId createUniqueTemporaryVariableId(std::string name);
   bool isTemporaryVariableId(VariableId varId);
+  bool isHeapMemoryRegionId(VariableId varId);
 
   // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
   void deleteUniqueTemporaryVariableId(VariableId uniqueVarSym);
@@ -78,6 +78,8 @@ class VariableIdMapping {
   bool hasReferenceType(VariableId varId);
   // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
   bool hasIntegerType(VariableId varId);
+  // returns true if this variable has type bool. This also include the C type _Bool.
+  bool hasBoolType(VariableId varId);
   // returns true if this variable has any floating-point type (float,double,longdouble)
   bool hasFloatingPointType(VariableId varId);
   bool hasPointerType(VariableId varId);
@@ -87,8 +89,7 @@ class VariableIdMapping {
   // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
   bool isVariableIdValid(VariableId varId);
   std::string variableName(VariableId varId);
-  std::string uniqueLongVariableName(VariableId varId);
-  std::string uniqueShortVariableName(VariableId varId);
+  std::string uniqueVariableName(VariableId varId);
 
   // set number of elements of the memory region determined by this variableid
   void setNumberOfElements(VariableId variableId, size_t size);
@@ -118,14 +119,26 @@ class VariableIdMapping {
      e.g. a[3] gets assigned 3 variable-ids (where the first one denotes a[0])
      this mode must be set before the mapping is computed with computeVariableSymbolMapping
   */
-  void setModeVariableIdForEachArrayElement(bool active) { ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active; }
-  bool getModeVariableIdForEachArrayElement() { return modeVariableIdForEachArrayElement; }
+  void setModeVariableIdForEachArrayElement(bool active);
+  bool getModeVariableIdForEachArrayElement();
   SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
   size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
   size_t getArrayElementCount(SgArrayType* t);
   size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
   VariableId idForArrayRef(SgPntrArrRefExp* ref);
+
+  
+  // memory locations of string literals
+  VariableId getStringLiteralVariableId(SgStringVal* sval);
+  void registerStringLiterals(SgNode* root);
+  int numberOfRegisteredStringLiterals();
+  bool isStringLiteralAddress(VariableId stringVarId);
+  std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
+
  private:
+  std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
+  std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
+
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   std::string generateDotSgSymbol(SgSymbol* sym);
   typedef std::pair<std::string,SgSymbol*> MapPair;
@@ -162,7 +175,7 @@ class VariableId {
   std::string toUniqueString(VariableIdMapping& vid) const;
 
   /* if VariableIdMapping is a valid pointer a variable name is returned
-     otherwise toString() is called and a generic name (V..) is returend.
+     otherwise toString() is called and a generic name (V..) is returned.
   */
   std::string toString(VariableIdMapping* vid) const;
   std::string toUniqueString(VariableIdMapping* vid) const;

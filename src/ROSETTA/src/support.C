@@ -99,6 +99,7 @@ Grammar::setUpSupport ()
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
      NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
+     BinaryComposite.isBoostSerializable(true);
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
@@ -125,6 +126,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (TemplateParameter, "TemplateParameter", "TemplateParameterTag" );
      NEW_TERMINAL_MACRO (TemplateArgument, "TemplateArgument", "TemplateArgumentTag" );
 
+  // DQ (3/10/2018): I think these IR nodes are no longer used, and if so then they could be deleted.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      NEW_TERMINAL_MACRO (TemplateParameterList, "TemplateParameterList", "TemplateParameterListTag" );
      NEW_TERMINAL_MACRO (TemplateArgumentList, "TemplateArgumentList", "TemplateArgumentListTag" );
@@ -259,6 +261,8 @@ Grammar::setUpSupport ()
   //                       Header Code Declaration
   // ***********************************************************************
   // ***********************************************************************
+
+     Support.isBoostSerializable(true);
 
   // Header declarations for Support
   // Support.setSubTreeFunctionPrototype ( "HEADER", "../Grammar/sageCommon.code");
@@ -537,11 +541,14 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("int","nestingLevel","= 0",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (29/8/2017): changed the language enum name so that we could use it for both input and output language specifications.
   // DQ (9/15/2012): Added support to specify the language directly (required to unparse SgBoolVal in some cases where 
   // they are used in SgTemplateParameters in a SgTemplateInstantiation which would be constrcuted before having its
   // parent set (thus not allowing the unparseBoolVal() to call TransformationSupport::getFile(expr) and find the 
   // associated SgFile IR node). This is only an issue during AST construction.
-     Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
+  // Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Unparse_Info.setDataPrototype("SgFile::languageOption_enum","language","= SgFile::e_default_language",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
   // DQ (1/10/2015): We need to save a pointer to the SgSourceFile to support the token based unparsing efficiently.
@@ -819,6 +826,7 @@ Grammar::setUpSupport ()
 // DQ (4/25/2009): Must fix code in sageInterface/sageBuilder.C before we can use the proper BUILD_LIST_ACCESS_FUNCTIONS macro above.
 #warning "This should be using the BUILD_LIST_ACCESS_FUNCTIONS"
 #endif
+     File.isBoostSerializable(true);
 
   // Modified ROSE to hold variables into the File object
   // DQ (8/10/2004): modified to be an int instead of a bool
@@ -915,11 +923,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Java_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     // X10 support
+  // X10 support
      File.setDataPrototype         ( "bool", "X10_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     // PHP support
+  // PHP support
      File.setDataPrototype         ( "bool", "PHP_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -932,6 +940,26 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // TV (05/17/2010) OpenCL support
      File.setDataPrototype         ( "bool", "OpenCL_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Csharp support
+     File.setDataPrototype         ( "bool", "Csharp_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Ada support
+     File.setDataPrototype         ( "bool", "Ada_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Jovial support
+     File.setDataPrototype         ( "bool", "Jovial_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/25/2017): Added more language support.
+  // Cobol support
+     File.setDataPrototype         ( "bool", "Cobol_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
@@ -1045,9 +1073,15 @@ Grammar::setUpSupport ()
   // shared between C/C++ and Fortran (for example).  This is also how the Promela support should be
   // provided, though this work only handles C (not C++, or Fortran) and only a subset of C, plus
   // numerous translations are required (See Christian Iwainsky's thesis).
-     File.setDataPrototype         ( "SgFile::outputLanguageOption_enum", "outputLanguage", "= SgFile::e_default_output_language",
+  // File.setDataPrototype         ( "SgFile::outputLanguageOption_enum", "outputLanguage", "= SgFile::e_default_output_language",
+  //                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "SgFile::languageOption_enum", "outputLanguage", "= SgFile::e_default_language",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (29/8/2017): Specification of input language (we will want to get this to match all of the get_Cxx_only flags and 
+  // likely reimplement those functions to use this single enum). This is general work to support more languages.
+     File.setDataPrototype         ( "SgFile::languageOption_enum", "inputLanguage", "= SgFile::e_default_language",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Internal data
   // File.setDataPrototype         ( "int"    , "numberOfSourceFileNames", "= -1",
@@ -1248,6 +1282,16 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileUsesX10FileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (28/8/2017): Adding language support.
+     File.setDataPrototype         ( "bool", "sourceFileUsesCsharpFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesAdaFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesJovialFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesCobolFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (9/26/2011): Added support to detect dangling pointers in ROSE translators.
   // This is not an expensive test, but it fails for isolated parts of ROSE currently 
   // so it should be made optional at this early stage (before it is made a default 
@@ -1257,6 +1301,10 @@ Grammar::setUpSupport ()
 
   // DQ (6/7/2013): Added support for use of experimental fortran front-end.
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     File.setDataPrototype("bool", "experimental_cuda_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
@@ -1399,6 +1447,14 @@ Grammar::setUpSupport ()
   // File.setDataPrototype ("bool", "allow_multiple_names_in_variable_declarations", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype ("bool", "suppress_variable_declaration_normalization", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // TV (04/11/2018): Whether or not to generate a graphviz representation of EDG internal representation
+     File.setDataPrototype("bool", "edg_il_to_graphviz", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // TV (10/01/2018): ROSE-1424
+     File.setDataPrototype("bool", "no_optimize_flag_for_frontend", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -2477,6 +2533,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (3/10/2018): I think these IR nodes are not longer used.  If so then we could remove them.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateArgumentList.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT_LIST", "../Grammar/Support.code");
      TemplateArgumentList.setDataPrototype ( "SgTemplateArgumentPtrList", "args",  "",

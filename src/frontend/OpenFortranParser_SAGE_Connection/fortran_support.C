@@ -1503,7 +1503,7 @@ SgLabelSymbol*
 buildNumericLabelSymbol(Token_t* label)
    {
   // This is the function we use to create the label that might refer to a 
-  // preivously seen statement or a statement we will see in the future.
+  // previously seen statement or a statement we will see in the future.
 
      ROSE_ASSERT(label != NULL);
      ROSE_ASSERT(label->text != NULL);
@@ -1535,7 +1535,7 @@ buildNumericLabelSymbol(Token_t* label)
        // printf ("Looping iterator i scope = %p = %s \n",*i,(*i)->class_name().c_str());
         }
 
-  // A label on a program statment will not have a scope in which to be identified. "10 program main"
+  // A label on a program statement will not have a scope in which to be identified. "10 program main"
   // It is not clear what scope such a label should be added (global scope?).
      if (i != astScopeStack.end())
         {
@@ -4500,7 +4500,7 @@ convertExpressionOnStackToFunctionCallExp()
 SgArrayType*
 convertTypeOnStackToArrayType( int count )
    {
-  // This function uses the entry on the top of the type stach and the expressions on the astExpressionStack
+  // This function uses the entry on the top of the type stack and the expressions on the astExpressionStack
   // and replaced the top o the typeStack with a SgArrayType.  This conversion of base type to array type is
   // required because we often find out later after having declarated a variable that it is an array (either
   // in the process of building the variable declaration or because an "allocatable statement" is seen after

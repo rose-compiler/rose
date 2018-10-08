@@ -42,7 +42,7 @@ SgAsmGenericFile::parse(std::string fileName)
     set_name(fileName);
     p_fd = open(fileName.c_str(), O_RDONLY);
     if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
-        std::string mesg = "Could not open binary file";
+        std::string mesg = "Could not open binary file \"" + StringUtility::cEscape(fileName) + "\"";
         throw FormatError(mesg + ": " + strerror(errno));
     }
     size_t nbytes = p_sb.st_size;

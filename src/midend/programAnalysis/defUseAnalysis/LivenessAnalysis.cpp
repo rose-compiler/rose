@@ -210,7 +210,7 @@ void LivenessAnalysis::getAllNodesBelow(T source, std::vector<T>& visited) {
 }
 
 /**********************************************************
- * Def-use algorithm used for variable live analysis
+ * Def-use algorithm used for variable live analysis: the transfer function for each node
  * This algorithm is almost a match to def-use algorithm
  *********************************************************/
 template<typename T>
@@ -583,7 +583,7 @@ FilteredCFGNode<IsDFAFilter> LivenessAnalysis::run(
         // filter functions -- to only functions in analyzed file
 
         // ---------------------------------------------------------------
-        // algorithm to interate over all CFG nodes and determine liveness
+        // algorithm to iterate over all CFG nodes and determine liveness
         // ---------------------------------------------------------------
         abort = false;
         counter = 0;

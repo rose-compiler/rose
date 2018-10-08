@@ -5,6 +5,7 @@
 
 cmd = ${VALGRIND} ${CMD}
 answer = ${ANS}
+filter = ${FILTER}
 
 # Other things that are sometimes convenient to set in the makefile
 title = ${TITLE}

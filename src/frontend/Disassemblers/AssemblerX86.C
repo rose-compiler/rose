@@ -53,6 +53,7 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
         }
         case V_SgAsmFloatValueExpression: {
             SgAsmFloatValueExpression *ee = isSgAsmFloatValueExpression(e);
+            ASSERT_not_null(ee);
             fprintf(f, "FloatValue {value=%g", ee->get_nativeValue());
             printSgAsmExpression(f, e, prefix, V_SgAsmValueExpression);
             fprintf(f, "}");
@@ -766,7 +767,7 @@ AssemblerX86::matches(const InsnDefn *defn, SgAsmX86Instruction *insn, int64_t *
 {
     if (insn->get_kind()!=defn->kind)
         throw Exception("insn kind doesn't match definition", insn);
-    if (insn->get_operandList()->get_operands().size()!=defn->operands.size())
+    if (insn->nOperands() != defn->operands.size())
         throw Exception("wrong number of operands", insn);
     if (insn->get_baseSize()==x86_insnsize_64) {
         if (0==(defn->compatibility & COMPAT_64))
@@ -777,7 +778,7 @@ AssemblerX86::matches(const InsnDefn *defn, SgAsmX86Instruction *insn, int64_t *
 
     if (disp_p || imm_p) {
         for (size_t i=0; i<defn->operands.size(); i++) {
-            if (!matches(defn->operands[i], insn->get_operandList()->get_operands()[i], insn, disp_p, imm_p)) {
+            if (!matches(defn->operands[i], insn->operand(i), insn, disp_p, imm_p)) {
                 throw Exception("operand " + StringUtility::numberToString(i) + " is incorrect type", insn);
             }
         }
@@ -875,7 +876,7 @@ AssemblerX86::build_modreg(const InsnDefn *defn, SgAsmX86Instruction *insn, size
                            uint8_t *modrm/*in,out*/, uint8_t *rex/*in,out*/) const
 {
     ROSE_ASSERT(insn!=NULL);
-    ROSE_ASSERT(argno<insn->get_operandList()->get_operands().size());
+    ROSE_ASSERT(argno<insn->nOperands());
     ROSE_ASSERT(argno<defn->operands.size());
     ROSE_ASSERT(modrm && 0==(*modrm & 070)); /*reg field must be zero*/
 
@@ -906,10 +907,10 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
                           uint8_t *sib/*out*/, int64_t *displacement/*out*/, uint8_t *rex/*in,out*/) const
 {
     ROSE_ASSERT(insn!=NULL);
-    ROSE_ASSERT(argno<insn->get_operandList()->get_operands().size());
+    ROSE_ASSERT(argno<insn->nOperands());
     ROSE_ASSERT(argno<defn->operands.size());
 
-    SgAsmExpression *expr = insn->get_operandList()->get_operands()[argno];
+    SgAsmExpression *expr = insn->operand(argno);
     uint8_t mod=0, reg=0, rm=0;     /*parts of modR/M byte */
     uint8_t ss=0, index=0, base=0;  /*parts of SIB byte */
 
@@ -1366,8 +1367,8 @@ AssemblerX86::assemble(SgAsmX86Instruction *insn, const InsnDefn *defn)
         
     /* Adjust opcode according to register number. */
     if (defn->opcode_modifiers & od_r_mask) {
-        ROSE_ASSERT(insn->get_operandList()->get_operands().size()>=1);
-        SgAsmExpression *expr = insn->get_operandList()->get_operands()[0];
+        ROSE_ASSERT(insn->nOperands() >= 1);
+        SgAsmExpression *expr = insn->operand(0);
         SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr);
         ROSE_ASSERT(rre!=NULL);
         ROSE_ASSERT(rre->get_descriptor().get_major()==x86_regclass_gpr);
@@ -1380,7 +1381,7 @@ AssemblerX86::assemble(SgAsmX86Instruction *insn, const InsnDefn *defn)
     if (defn->opcode_modifiers & od_i) {
         for (size_t i=0; i<defn->operands.size(); i++) {
             if (defn->operands[i]==od_sti) {
-                SgAsmExpression *expr = insn->get_operandList()->get_operands()[i];
+                SgAsmExpression *expr = insn->operand(i);
                 SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr);
                 ROSE_ASSERT(rre && x86_regclass_st==rre->get_descriptor().get_major());
                 opcode += rre->get_descriptor().get_minor();
@@ -1690,8 +1691,8 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         fprintf(p_debug, "  baseSize=%d, operandSize=%d\n", 
                (x86_insnsize_16==insn->get_baseSize()?16:(x86_insnsize_32==insn->get_baseSize()?32:64)),
                (x86_insnsize_16==insn->get_operandSize()?16:(x86_insnsize_32==insn->get_operandSize()?32:64)));
-        for (size_t i=0; i<insn->get_operandList()->get_operands().size(); i++) {
-            SgAsmExpression *operand = insn->get_operandList()->get_operands()[i];
+        for (size_t i=0; i<insn->nOperands(); i++) {
+            SgAsmExpression *operand = insn->operand(i);
             fprintf(p_debug, "  operand[%" PRIuPTR "]=", i);
             printSgAsmExpression(p_debug, operand, "    ");
             fprintf(p_debug, "\n");

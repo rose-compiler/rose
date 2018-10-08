@@ -3,6 +3,7 @@
 
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
 #include "DispatcherM68k.h"
@@ -167,7 +168,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
         SValuePtr orig_sp = SValue::promote(ops->readRegister(dispatcher->REG_A[7]));
@@ -225,7 +226,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis::InstructionSemantics2;
         using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
         try {
@@ -455,7 +456,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
             for (size_t i=0; i<insns.size(); ++i) {
                 dispatcher->processInstruction(insns[i]);
                 if (debug)
-                    debug << "  state after " <<unparseInstructionWithAddress(insns[i]) <<"\n" <<*ops;
+                    debug << "  state after " <<insns[i]->toString() <<"\n" <<*ops;
             }
             SValuePtr ip = SValue::promote(ops->readRegister(dispatcher->REG_PC));
             if (ip->is_number()) {

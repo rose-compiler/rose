@@ -1,0 +1,11 @@
+// -*- c++ -*-
+
+/** @page tooldev_page Developing ROSE-based tools
+ *
+ *  How to build tools based on the ROSE library.
+ *
+ *  See @ref tooldev */
+
+/** @defgroup tooldev Developing ROSE-based tools
+ *
+ *  How to build tools based on the ROSE library. */
