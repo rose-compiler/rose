@@ -139,4 +139,6 @@ clean-local:
 	rm -f *.err *.passed *.failed
 	rm -f token_trailing_*.c token_leading_*.c
 
+status:
+	@$(MAKE) $(TEST_Source_passed)
 

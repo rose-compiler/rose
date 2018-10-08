@@ -48,8 +48,6 @@
 
 \newcommand{\DatabaseExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/dataBaseExamples}
 
-\newcommand{\BinQExampleDirectory}{@top_srcdir@/projects/BinQ}
-
 % Software version number
 \newcommand{\VersionNumber}{@VERSION@}
 

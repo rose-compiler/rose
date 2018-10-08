@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+bin_PROGRAMS =
 
 SUBDIRS = stringSupport commandlineProcessing support graphs
 
@@ -6,6 +7,7 @@ SUBDIRS = stringSupport commandlineProcessing support graphs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -28,11 +30,11 @@ noinst_LTLIBRARIES = libroseutil.la
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_SOURCES =			\
 	Color.C					\
-	Combinatorics.C				\
 	compilationFileDatabase.C		\
 	FileSystem.C				\
 	LinearCongruentialGenerator.C		\
 	processSupport.C			\
+	Progress.C				\
 	rose_getline.C				\
 	rose_strtoull.C
 nodist_libroseutil_la_SOURCES = rose_paths.C
@@ -50,7 +52,6 @@ libroseutil_la_LIBADD = \
 
 pkginclude_HEADERS =				\
 	Color.h					\
-	Combinatorics.h				\
 	compilationFileDatabase.h		\
 	FileSystem.h				\
 	FormatRestorer.h			\
@@ -60,6 +61,8 @@ pkginclude_HEADERS =				\
 	timing.h				\
 	ParallelSort.h				\
 	processSupport.h			\
+	Progress.h				\
+	RecursionCounter.h			\
 	rose_isnan.h				\
 	rose_getline.h				\
 	rose_override.h				\
@@ -78,6 +81,7 @@ libroseSawyer_la_CPPFLAGS = $(ROSE_INCLUDES) -DCOMPILING_ROSE
 libroseSawyer_la_SOURCES =			\
 	Sawyer/Assert.C				\
 	Sawyer/Attribute.C			\
+	Sawyer/Clexer.C				\
 	Sawyer/CommandLine.C			\
 	Sawyer/CommandLineBoost.C		\
 	Sawyer/DocumentBaseMarkup.C		\
@@ -106,6 +110,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Buffer.h				\
 	Sawyer/Cached.h				\
 	Sawyer/Callbacks.h			\
+	Sawyer/Clexer.h				\
 	Sawyer/CommandLine.h			\
 	Sawyer/CommandLineBoost.h		\
 	Sawyer/DefaultAllocator.h		\
@@ -121,6 +126,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
 	Sawyer/GraphTraversal.h			\
+	Sawyer/HashMap.h			\
 	Sawyer/IndexedList.h			\
 	Sawyer/Interval.h			\
 	Sawyer/IntervalMap.h			\
@@ -147,6 +153,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Synchronization.h		\
 	Sawyer/ThreadWorkers.h			\
 	Sawyer/Trace.h				\
+	Sawyer/Type.h				\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h
 
@@ -154,6 +161,12 @@ EXTRA_DIST += Sawyer/CMakeLists.txt
 
 # These are used in the doxygen documentation examples
 EXTRA_DIST += Sawyer/docs/examples/commandLineEx1.C Sawyer/docs/examples/graphIso.C
+
+# # This rule should really be in the subdirectory's makefile, but if we place it there
+# # it won't work because the library on which the tool depends is built in this directory.
+# bin_PROGRAMS += stringify-enums
+# stringify_enums_SOURCES = Sawyer/stringifyEnums.C
+# stringify_enums_LDFLAGS = libroseSawyer.la $(filter-out %/librose.la, $(ROSE_LIBS))
 
 ########################################################################################################################
 # automake boilerplate

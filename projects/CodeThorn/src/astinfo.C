@@ -7,6 +7,7 @@
 
 #include "VariableIdMapping.h"
 #include "LineColInfo.h"
+#include "AstTerm.h"
 
 #ifdef USE_SAWYER_COMMANDLINE
 #include "Sawyer/CommandLineBoost.h"
@@ -27,27 +28,40 @@ using namespace std;
 
 namespace po = boost::program_options;
 
-void printLineColInfo(SgNode* astRoot) {
-  RoseAst ast(astRoot);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgLocatedNode* loc=isSgLocatedNode(*i)) {
-      if(/*!isSgInitializedName(loc)&&*/!loc->isCompilerGenerated()&&!isSgGlobal(loc)) {
-        LineColInfo li(loc);
-        cout<<li.toString()<<": "<<(*i)->class_name()<<" #"<<(*i)->unparseToString()<<"#"<<endl;
-      }
+void printLineColInfo(SgNode* i) {
+  if(SgLocatedNode* loc=isSgLocatedNode(i)) {
+    if(/*!isSgInitializedName(loc)&&*/!loc->isCompilerGenerated()&&!isSgGlobal(loc)) {
+      LineColInfo li(loc);
+      cout<<li.toString()<<": "<<(i)->class_name()<<" #"<<(i)->unparseToString()<<"#"<<endl;
     }
   }
 }
 
-void printClassName(SgNode* astRoot) {
+void printClassName(SgNode* i) {
+  if(SgClassDeclaration* classDecl=isSgClassDeclaration(i)) {
+    //      SgClassDeclaration* classDecl=classDefinition->get_declaration();
+    std::string name=classDecl->get_name();
+    LineColInfo li(classDecl);
+    cout<<li.toString()<<": "<<(i)->class_name()<<" #"<<name<<"#"<<endl;
+  }
+}
+
+void printAstTerm(SgNode* i) {
+  if(isSgExpression(i)) {
+    cout<<AstTerm::astTermWithNullValuesToString(i)<<endl;
+  }
+}
+
+void printInfo(SgNode* astRoot, bool optLineColInfo, bool optClassName, bool optAstTerm) {
   RoseAst ast(astRoot);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgClassDeclaration* classDecl=isSgClassDeclaration(*i)) {
-      //      SgClassDeclaration* classDecl=classDefinition->get_declaration();
-      std::string name=classDecl->get_name();
-      LineColInfo li(classDecl);
-      cout<<li.toString()<<": "<<(*i)->class_name()<<" #"<<name<<"#"<<endl;
-    }
+    SgNode* node=*i;
+    if(optLineColInfo)
+      printLineColInfo(node);
+    if(optClassName)
+      printClassName(node);
+    if(optAstTerm)
+      printAstTerm(node);
   }
 }
 
@@ -55,7 +69,7 @@ int main( int argc, char *argv[] ) {
   try {
     // Command line option handling.
     po::options_description desc
-      ("astinfo 0.1\n"
+      ("astinfo 0.2\n"
        "Written by Markus Schordan 2017\n"
        "Supported options");
     desc.add_options()
@@ -64,6 +78,7 @@ int main( int argc, char *argv[] ) {
       ("varidmapping", "print variable-id mapping")
       ("linecol", "print line:column information for SgLocated nodes")
       ("classname", "print class name SgClass nodes")
+      ("exprterm", "print ast of expressions as terms (tree expressions)")
       ("version,v", "display the version")
       ;
     
@@ -96,12 +111,8 @@ int main( int argc, char *argv[] ) {
       cout<<"-------------------------------------- OK --------------------------------------"<<endl;
       //variableIdMapping.generateDot("vidmapping.dot",astRoot);
     }
-    if(args.count("linecol")) {
-      printLineColInfo(astRoot);
-    }
-    if(args.count("classname")) {
-      printClassName(astRoot);
-    }
+    printInfo(astRoot,args.count("linecol")>0, args.count("classname")>0, args.count("exprterm")>0);
+
   } catch(char* str) {
     cerr << "*Exception raised: " << str << endl;
     return 1;

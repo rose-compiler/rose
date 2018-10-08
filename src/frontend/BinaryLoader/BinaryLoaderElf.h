@@ -266,9 +266,11 @@ protected:
      *  were already added to the list as ELF Segments. */
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*) ROSE_OVERRIDE;
 
+public:
     /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
     virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) ROSE_OVERRIDE;
 
+protected:
     /** Linux-specific ELF Segment and Section alignment. */
     virtual MappingContribution align_values(SgAsmGenericSection*, const MemoryMap::Ptr&,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,

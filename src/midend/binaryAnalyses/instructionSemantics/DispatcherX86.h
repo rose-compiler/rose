@@ -64,13 +64,13 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(processorMode_);
     }
     
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(processorMode_);
         regcache_init();
@@ -177,13 +177,13 @@ public:
     /** Architecture-specific read from register.
      *
      *  Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&, AccessMode mode = READ_REGISTER);
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor, AccessMode mode = READ_REGISTER);
 
     /** Architecture-specific write to register.
      *
      *  Similar to RiscOperators::writeRegister, but might do additional architecture-specific things. For instance, writing to
      *  a 32-bit GPR such as "eax" on x86-64 will write zeros to the upper half of "rax". */
-    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr &result);
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &result);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);

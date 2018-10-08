@@ -74,7 +74,6 @@ using namespace Rose;
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0
 
-
 //It is needed because otherwise, the default destructor breaks something.
 
 AttachPreprocessingInfoTreeTrav::~AttachPreprocessingInfoTreeTrav() {
@@ -679,7 +678,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           //AS(4/3/09): FIXME: We are doing this quick fix because the fileNameForDirectivesAndComments is
           //incorrect for Fortran
           //PC(08/17/2009): Now conditional on the output language, otherwise breaks -rose:collectAllCommentsAndDirectives
-          if (sourceFile->get_outputLanguage() == SgFile::e_Fortran_output_language)
+          if (sourceFile->get_outputLanguage() == SgFile::e_Fortran_language)
              {
                fileNameForDirectivesAndComments = sourceFile->get_sourceFileNameWithPath();
                fileNameForTokenStream           = fileNameForDirectivesAndComments;
@@ -1339,6 +1338,13 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // These used to be a problem, so we can continue to test these specific cases.
   // ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
      SgCaseOptionStmt* caseOptionStm = isSgCaseOptionStmt(n);
+
+  // DQ (11/25/2017): Added debugging info to support new switch implementation.
+     if (caseOptionStm != NULL && caseOptionStm->get_body() == NULL)
+        {
+          printf ("Error: In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm = %p \n",caseOptionStm);
+          caseOptionStm->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm: debug");
+        }
      ROSE_ASSERT (caseOptionStm == NULL || caseOptionStm->get_body() != NULL);
 
   // DQ (3/4/2016): Klocworks reports a problem with "isSgClassDeclaration(n)->get_endOfConstruct() != NULL".

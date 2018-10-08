@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2016.
 
 #ifndef PAR_PRO_LTL_MINER_H
 #define PAR_PRO_LTL_MINER_H
@@ -26,6 +25,12 @@ namespace CodeThorn {
 
   class ParProExplorer;
 
+  /*! 
+   * \brief Sub-system of parallel process graphs (a.k.a. synchronized labeled transition
+   systems). Also stores pointers to respective (approximated) transition graphs.
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParallelSystem {
   public:
     ParallelSystem();
@@ -62,6 +67,10 @@ namespace CodeThorn {
   bool operator==(const ParallelSystem& p1, const ParallelSystem& p2);
   bool operator!=(const ParallelSystem& p1, const ParallelSystem& p2);
 
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class ParallelSystemHashFun {
   public:
     ParallelSystemHashFun() {}
@@ -75,6 +84,10 @@ namespace CodeThorn {
     }
   };
   
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class ParallelSystemEqualToPred {
   public:
     ParallelSystemEqualToPred() {}
@@ -92,6 +105,10 @@ namespace CodeThorn {
     }
   };
 
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class ParallelSystemSet : public HSetMaintainer<ParallelSystem,ParallelSystemHashFun,ParallelSystemEqualToPred> {
   public:
     typedef HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>::ProcessingResult PSProcessingResult;
@@ -99,6 +116,11 @@ namespace CodeThorn {
 
   typedef boost::unordered_map<const ParallelSystem*, std::list<const ParallelSystem*> > ParallelSystemDag;
 
+  /*! 
+   * \brief Mines randomly generated valid and violated LTL properties on parallel process graphs.
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParProLtlMiner {
   public:
   ParProLtlMiner(ParProExplorer* explorer) : _numberOfMiningsPerSubsystem(10), _parProExplorer(explorer) {}

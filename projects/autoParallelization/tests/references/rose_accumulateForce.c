@@ -1,4 +1,4 @@
-#include "omp.h" 
+#include <omp.h> 
 
 void AccumulateForce(int *idxBound,int *idxList,int len,double *tmp,double *force)
 {

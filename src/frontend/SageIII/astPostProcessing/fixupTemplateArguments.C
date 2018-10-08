@@ -26,6 +26,8 @@ static size_t global_depth = 0;
 
 bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStatement* targetScope)
    {
+  // DQ (4/2/2018): Note that this function now addresses requirements of supporting both private and protected types.
+
 #if DEBUGGING_USING_RECURSIVE_DEPTH
   // For debugging, keep track of the recursive depth.
      static size_t depth = 0;
@@ -54,7 +56,13 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
           SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(typedefType->get_declaration());
           ROSE_ASSERT(typedefDeclaration != NULL);
 
+#if 0
           bool isPrivate = typedefDeclaration->get_declarationModifier().get_accessModifier().isPrivate();
+#else
+       // DQ (4/2/2018): Fix this to address requirements of both private and protected class members (see Cxx11_tests/test2018_71.C).
+          bool isPrivate = typedefDeclaration->get_declarationModifier().get_accessModifier().isPrivate() ||
+                           typedefDeclaration->get_declarationModifier().get_accessModifier().isProtected();
+#endif
 #if DEBUG_PRIVATE_TYPE || 0
           printf ("typedefDeclaration isPrivate = %s \n",isPrivate ? "true" : "false");
 #endif
@@ -197,12 +205,26 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
         {
 #if DEBUG_PRIVATE_TYPE || 0
           printf ("could be a wrapped type: type = %p = %s (not a template class instantiaton) \n",type,type->class_name().c_str());
+          if (isSgModifierType(type) != NULL)
+             {
+               SgModifierType* modifierType = isSgModifierType(type);
+               SgType* base_type = modifierType->get_base_type();
+               printf ("--- base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+               SgNamedType* namedType = isSgNamedType(base_type);
+               if (namedType != NULL)
+                  {
+                    printf ("--- base_type: name = %s \n",namedType->get_name().str());
+                  }
+             }
 #endif
        // If this is a default SgModifierType then unwrap it.
 #if 0
           SgModifierType* modifierType = isSgModifierType(type);
           if (modifierType != NULL)
              {
+
+#error "DEAD CODE!"
+
             // What kind of modifier is this?
                printf ("What kind of type modifier: %s \n",modifierType->get_typeModifier().displayString().c_str());
                if (modifierType->get_typeModifier().isDefault() == true)
@@ -217,11 +239,19 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
                   }
              }
 #else
-       // Strip past pointers and other wrapping modifiers.
+       // Strip past pointers and other wrapping modifiers (but not the typedef types, since the whole point is to detect private instatances).
        // type = type->strip_type(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_TYPEDEF_TYPE);
           type = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
 #endif
 
+#if 0
+          printf ("After stripType(): type = %p = %s \n",type,type->class_name().c_str());
+          SgNamedType* namedType = isSgNamedType(type);
+          if (namedType != NULL)
+             {
+               printf ("--- stripType: name = %s \n",namedType->get_name().str());
+             }
+#endif
           ROSE_ASSERT(type != NULL);
 
        // Make sure this is not a simple template type (else we will have infinite recursion).
@@ -290,7 +320,7 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
 #if 0
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                     ROSE_ASSERT(classDeclaration != NULL);
-                    printf ("classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+                    printf ("--------- classDeclaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
 #endif
                     SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(classType->get_declaration());
                     if (templateInstantiationDeclaration != NULL)
@@ -312,12 +342,15 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
                               templateInstantiationDeclaration,templateInstantiationDeclaration->get_name().str());
 #endif
                        }
+#if 0
+                    printf ("DONE: --- classDeclaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
                   }
              }
         }
 
-#if DEBUG_PRIVATE_TYPE
-     printf ("Leaving contains_private_type(SgType*): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#if DEBUG_PRIVATE_TYPE || 0
+     printf ("Leaving contains_private_type(SgType*): type = %p = %s = %s returnValue = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str(),returnValue ? "true" : "false");
 #endif
 
      return returnValue;
@@ -347,6 +380,9 @@ bool FixupTemplateArguments::contains_private_type ( SgTemplateArgumentPtrList &
           printf ("################# Already been or being processed: templateArgumentListSet.size() = %zu \n",templateArgumentListSet.size());
 #endif
 
+#if 0
+          printf ("Leaving contains_private_type(SgTemplateArgumentPtrList): templateArgumentListSet.size() = %zu returning FALSE \n",templateArgumentListSet.size());
+#endif
        // DQ (2/15/2017): Unclear if this is the correct return value, it might be that we want to record 
        // the associated value from the first time the argument list was processed and use that value.
        // Then again, if the value had already been substituted into the template argument then no further 
@@ -380,6 +416,10 @@ bool FixupTemplateArguments::contains_private_type ( SgTemplateArgumentPtrList &
           counter++;
         }
 
+#if DEBUG_PRIVATE_TYPE || 0
+     printf ("Leaving contains_private_type(SgTemplateArgumentPtrList): templateArgumentListSet.size() = %zu returnValue = %s \n",templateArgumentListSet.size(),returnValue ? "true" : "false");
+#endif
+
      return returnValue;
    }
 
@@ -402,6 +442,11 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
 #if DEBUGGING_USING_RECURSIVE_DEPTH
           printf ("@@@@@@@@@@@@@@@@@ Already been or being processed: templateArgument = %p = %s templateArgumentSet.size() = %zu \n",templateArgument,templateArgument->unparseToString().c_str(),templateArgumentSet.size());
 #endif
+
+#if 0
+          printf ("Leaving contains_private_type(SgTemplateArgument): templateArgument = %p returning FALSE \n",templateArgument);
+#endif
+
        // DQ (2/15/2017): Unclear if this is the correct return value, it might be that we want to record 
        // the associated value from the first time the argument list was processed and use that value.
        // Then again, if the value had already been substituted into the template argument then no further 
@@ -410,7 +455,7 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
         }
 
 #if DEBUGGING_USING_RECURSIVE_DEPTH
-     printf ("--- added templateArgument = %p templateArgumentList.size() = %zu \n",templateArgument,templateArgumentSet.size());
+     printf ("--- added templateArgument = %p templateArgumentSet.size() = %zu \n",templateArgument,templateArgumentSet.size());
 #endif
 
 #if DEBUGGING_USING_RECURSIVE_DEPTH
@@ -451,12 +496,26 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                SgType* templateArgumentType = templateArgument->get_type();
 #if DEBUG_PRIVATE_TYPE
                printf ("templateArgumentType = %p = %s \n",templateArgumentType,templateArgumentType->class_name().c_str());
+               if (isSgModifierType(templateArgumentType) != NULL)
+                  {
+                    SgModifierType* modifierType = isSgModifierType(templateArgumentType);
+                    SgType* base_type = modifierType->get_base_type();
+                    printf ("--- base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+                    SgNamedType* namedType = isSgNamedType(base_type);
+                    if (namedType != NULL)
+                       {
+                         printf ("--- base_type: name = %s \n",namedType->get_name().str());
+                       }
+                  }
 #endif
 #if DEBUGGING_USING_RECURSIVE_DEPTH
                depth++;
                global_depth++;
 #endif
 
+#if 0
+               printf ("In contains_private_type(SgTemplateArgument*): case SgTemplateArgument::type_argument: Calling contains_private_type(templateArgumentType) \n");
+#endif
             // DQ (2/14/2017): We might want to generate a list of the private types used so
             // that we can check them against the scope of the declaration where they occur.
             // Note also that this does not address types that might appear in name qualification.
@@ -466,13 +525,34 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                depth--;
                global_depth--;
 #endif
-
+#if 0
+               printf ("In contains_private_type(SgTemplateArgument*): case SgTemplateArgument::type_argument: DONE calling contains_private_type(templateArgumentType): returnValue = %s \n",returnValue ? "true" : "false");
+#endif
                if (returnValue == true)
                   {
                  // Find an alternative typedef to use instead.
 
                  // Note that this need not be a SgTypedefType (the lists are available in every SgType).
                     SgTypedefType* typedefType = isSgTypedefType(templateArgumentType);
+
+                    if (typedefType == NULL && isSgModifierType(templateArgumentType) != NULL)
+                       {
+                         SgModifierType* modifierType = isSgModifierType(templateArgumentType);
+                         SgType* base_type = modifierType->get_base_type();
+#if 0
+                         printf ("Found SgModifierType: --- base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+                         SgNamedType* namedType = isSgNamedType(base_type);
+                         if (namedType != NULL)
+                            {
+                              printf ("--- base_type: name = %s \n",namedType->get_name().str());
+                            }
+#endif
+#if 0
+                         printf ("******* Reset the typedefType to what was found in the modifier type as a base type = %p = %s \n",base_type,base_type->class_name().c_str());
+#endif
+                         typedefType = isSgTypedefType(base_type);
+                       }
+
                     if (typedefType != NULL)
                        {
                       // Check if this is a type from a typedef that is in the same scope as the target declaration (variable declaration).
@@ -554,6 +634,11 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                               printf ("SageInterface::whereAmI(typedefDeclaration): \n");
                               SageInterface::whereAmI(typedefDeclaration);
 #endif
+#if 0
+                              printf ("Selecting alternative type to use for unparsing: \n");
+                              printf ("--- were going to use: %s \n",templateArgument->unparseToString().c_str());
+                              printf ("--- selecing instead : %s \n",suitableTypeAlias->unparseToString().c_str());
+#endif
                               templateArgument->set_unparsable_type_alias(suitableTypeAlias);
 
                            // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
@@ -579,6 +664,20 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
 #if DEBUG_PRIVATE_TYPE
                          printf ("Alternative types not searched for in nontypedef types (not implemented) \n");
 #endif
+#if 0
+                         printf ("####### Alternative types not searched: templateArgumentType = %p = %s \n",templateArgumentType,templateArgumentType->class_name().c_str());
+                         if (isSgModifierType(templateArgumentType) != NULL)
+                            {
+                              SgModifierType* modifierType = isSgModifierType(templateArgumentType);
+                              SgType* base_type = modifierType->get_base_type();
+                              printf ("--- base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+                              SgNamedType* namedType = isSgNamedType(base_type);
+                              if (namedType != NULL)
+                                 {
+                                   printf ("--- base_type: name = %s \n",namedType->get_name().str());
+                                 }
+                            }
+#endif
                        }
                   }
 
@@ -602,6 +701,10 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
 
 #if DEBUGGING_USING_RECURSIVE_DEPTH
      printf ("--- pop templateArgument = %p templateArgumentSet.size() = %zu \n",templateArgument,templateArgumentSet.size());
+#endif
+
+#if 0
+     printf ("Leaving contains_private_type(SgTemplateArgument): templateArgument = %p returnValue = %s \n",templateArgument,returnValue ? "true" : "false");
 #endif
 
      return returnValue;
@@ -739,6 +842,7 @@ FixupTemplateArguments::visit ( SgNode* node )
           SgType* type = initializedName->get_type();
           ROSE_ASSERT(type != NULL);
 #if 0
+          printf ("\n**************************************************************************** \n");
           printf ("FixupTemplateArguments::visit(): variableDeclaration = %p = %s initializedName = %s \n",variableDeclaration,variableDeclaration->class_name().c_str(),initializedName->get_name().str());
           printf ("   --- type = %p = %s \n",type,type->class_name().c_str());
           string filename = initializedName->get_file_info()->get_filename();

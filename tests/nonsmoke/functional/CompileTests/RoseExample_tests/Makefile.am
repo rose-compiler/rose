@@ -74,12 +74,21 @@ $(TEST_TRANSLATOR):
 #                  Yes, it really does take nearly 45 minutes (38 actually) to run when when ROSE is compiled with
 #                  "-D_GLIBCXX_DEBUG -O0" with g++ 4.4.5 on x86_64-linux-gnu, Debian Squeeze, 12 cores at 3.33GHz, 48GB memory.
 # RPM (2016-02-29) Added MEMORY=20GB so that the test is skipped (passes) on machines that don't have this much memory.
+if ROSE_USE_LCOV
+$(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/%
+	@$(RTH_RUN)														\
+		TIMEOUT=90m													\
+		MEMORY=20GB													\
+		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)"	\
+		$(top_srcdir)/scripts/test_exit_status $@
+else
 $(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/%
 	@$(RTH_RUN)														\
 		TIMEOUT=45m													\
 		MEMORY=20GB													\
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
+endif
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 

@@ -1,6 +1,9 @@
 # we define various list of files to be used for testing OpenMP support
 
-
+# removed experimental dist_data, mpi examples
+#    axpy_ompacc_parseonly.c
+#    axpy_ompacc_mpi.c
+#    axpy_ompacc4.c 
 # this is the all set of OpenMP C input tests
 # all other C test lists can be a subset of this one
 nonsmoke_specimens_openmp_c = \
@@ -12,10 +15,7 @@ nonsmoke_specimens_openmp_c = \
     atoms-2.c \
     axpy_ompacc2.c \
     axpy_ompacc3.c \
-    axpy_ompacc4.c \
     axpy_ompacc.c \
-    axpy_ompacc_mpi.c \
-    axpy_ompacc_parseonly.c \
     barrier.c \
     bonds-2.c \
     collapse_2.c \
@@ -112,6 +112,7 @@ nonsmoke_specimens_openmp_c = \
     reduction2.c \
     reduction.c \
     reduction-classic.c \
+    reduction_min_max.c \
     rice1.c \
     section1.c \
     section.c \
@@ -159,10 +160,7 @@ nonsmoke_getDataSharingAttribute_c = \
     atoms-2.c \
     axpy_ompacc2.c \
     axpy_ompacc3.c \
-    axpy_ompacc4.c \
     axpy_ompacc.c \
-    axpy_ompacc_mpi.c \
-    axpy_ompacc_parseonly.c \
     barrier.c \
     bonds-2.c \
     collapse_2.c \
@@ -258,6 +256,7 @@ nonsmoke_getDataSharingAttribute_c = \
     reduction2.c \
     reduction.c \
     reduction-classic.c \
+    reduction_min_max.c \
     rice1.c \
     section1.c \
     section.c \
@@ -291,6 +290,7 @@ nonsmoke_getDataSharingAttribute_c = \
     upperCase.c \
     variables.c
 
+# TODO: move typical test cases above into verify category, or at least into dataRaceBench
 nonsmoke_getDataSharingAttribute_c_verify = \
     3loops.c \
     alignment.c \
@@ -300,10 +300,7 @@ nonsmoke_getDataSharingAttribute_c_verify = \
     atoms-2.c \
     axpy_ompacc2.c \
     axpy_ompacc3.c \
-    axpy_ompacc4.c \
     axpy_ompacc.c \
-    axpy_ompacc_mpi.c \
-    axpy_ompacc_parseonly.c \
     barrier.c \
     bonds-2.c \
     collapse_2.c \
@@ -320,5 +317,6 @@ nonsmoke_getDataSharingAttribute_c_verify = \
     empty.c \
     endif2.c \
     endif3.c \
-    endif.c
- 
+    endif.c \
+    reduction_min_max.c
+

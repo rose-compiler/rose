@@ -1,0 +1,4 @@
+START
+  DEF PROC procname ;
+      ;
+TERM

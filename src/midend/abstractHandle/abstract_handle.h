@@ -216,7 +216,7 @@ namespace AbstractHandle{
     virtual std::string toString();
 
     //! Initialize a handle from a handle string, generate full parent handles when necessary
-    virtual void fromString(abstract_handle* ancester_handle, const std::string &handle_str_multiple);
+    virtual bool fromString(abstract_handle* ancester_handle, const std::string &handle_str_multiple);
 
     //! Only output the handle itself to a string, excluding parent handles
     virtual std::string toStringSelf();

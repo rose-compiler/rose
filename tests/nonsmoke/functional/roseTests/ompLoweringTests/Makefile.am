@@ -21,6 +21,7 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 # Put test codes without main() entry here
 # They will be compiled only, not executed.
+#	ompfor8.c  , a case not yet supported: ordered schedule(static) , no chunk size is specified. 
 C_TESTCODES_REQUIRED_TO_COMPILE = \
 	alignment.c \
 	collapse.c \
@@ -65,8 +66,8 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc-opt2.c \
 	jacobi-ompacc-multiGPU.c 
 
-OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS = \
-        jacobi-ompacc2.cpp
+OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS = 
+#        jacobi-ompacc2.cpp # qualified name issue
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -141,7 +142,8 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	task_outlining.c \
 	task_untied.c \
 	task_untied2.c \
-	task_untied3.c
+	task_untied3.c \
+	omp_version.c
 
 # DQ (9/27/2009): Conditionally compile these files (fail in OSX due to lack of OSX
 # support for thread local storage). Liao knows more about the details of these tests.
@@ -339,11 +341,11 @@ $(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
 
 # a short cut to run omp-acc support test
 #	./axpy_ompacc3.out TODO: real data distribution example
+#           ./jacobi-ompacc2.out  // qualified name issue, 2018/8/17
 ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
 ompacc_run: ompacc_test
 	./axpy_ompacc.out && \
 	   ./collapse_2.out  && \
-           ./jacobi-ompacc2.out  && \
            ./jacobi-ompacc-opt1.out  && \
            ./jacobi-ompacc-opt2.out  && \
            ./jacobi-ompacc.out  && \

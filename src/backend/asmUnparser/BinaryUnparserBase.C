@@ -1,7 +1,11 @@
 #include <sage3basic.h>
+#include <BaseSemantics2.h>
 #include <BinaryUnparserBase.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
+#include <stringify.h>
+#include <TraceSemantics2.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -210,6 +214,10 @@ Settings::Settings() {
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
     insn.comment.fieldWidth = 1;
+    insn.semantics.showing = false;                     // not usually desired, and somewhat slow
+    insn.semantics.tracing = false;                     // not usually desired even for full output
+    insn.semantics.formatter.set_show_latest_writers(false);
+    insn.semantics.formatter.set_line_prefix("        ;; state: ");
 }
 
 // class method
@@ -242,6 +250,8 @@ Settings::minimal() {
     s.insn.operands.fieldWidth = 40;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
+    s.insn.semantics.showing = false;
+    s.insn.semantics.tracing = false;
 
     return s;
 }
@@ -250,6 +260,7 @@ Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
+    using namespace Rose::CommandLine;
 
     SwitchGroup sg("Unparsing switches");
     sg.name("out");
@@ -367,6 +378,14 @@ commandLineSwitches(Settings &settings) {
                         "If comments are being shown and an instruction has an empty comment, then use the instruction "
                         "description instead.  This is especially useful for users that aren't familiar with the "
                         "instruction mnemonics for this architecture.");
+
+    insertBooleanSwitch(sg, "insn-semantics", settings.insn.semantics.showing,
+                        "Run each instruction on a clean semantic state and show the results. This is useful if you want "
+                        "to see the effect of each instruction.");
+
+    insertBooleanSwitch(sg, "insn-semantics-trace", settings.insn.semantics.tracing,
+                        "Show a trace of the individual semantic operations when showing semantics rather than just showing the "
+                        "net effect.");
 
     return sg;
 }
@@ -575,6 +594,34 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_LEFTOVERS,    "provisional");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_INTRABLOCK,   "possibly unreached (intra)");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_USERDEF,      "user defined");
+
+        if (flags & 0xff) {
+            switch (flags & 0xff) {
+                case SgAsmFunction::FUNC_INTERPADFUNC:
+                    strings.push_back("interpadfunc");
+                    break;
+                case SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH:
+                    strings.push_back("pescrambler dispatch");
+                    break;
+                case SgAsmFunction::FUNC_CONFIGURED:
+                    strings.push_back("configuration");
+                    break;
+                case SgAsmFunction::FUNC_CMDLINE:
+                    strings.push_back("command-line");
+                    break;
+                case SgAsmFunction::FUNC_SCAN_RO_DATA:
+                    strings.push_back("scanned read-only ptr");
+                    break;
+                case SgAsmFunction::FUNC_INSN_RO_DATA:
+                    strings.push_back("referenced read-only ptr");
+                    break;
+                default:
+                    strings.push_back("miscellaneous(" + StringUtility::numberToString(flags & 0xff) + ")");
+                    break;
+            }
+            flags &= ~0xff;
+        }
+
         if (flags != 0) {
             char buf[64];
             sprintf(buf, "0x%08x", flags);
@@ -582,6 +629,8 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         }
         if (!strings.empty())
             out <<";;; reasons for function: " <<boost::join(strings, ", ") <<"\n";
+        if (!function->reasonComment().empty())
+            out <<";;; reason comment: " <<function->reasonComment() <<"\n";
     }
 }
 
@@ -772,7 +821,7 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
         nextUnparser()->emitBasicBlockBody(out, bb, state);
     } else {
         if (0 == bb->nInstructions()) {
-            out <<"no instructions";
+            out <<"no instructions\n";
         } else {
             state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
@@ -819,8 +868,16 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
         if (current != functions.end())
             functions.erase(current);
         BOOST_FOREACH (P2::Function::Ptr function, functions)
-            out <<"\t;; block owned by " <<function->printableName() <<"\n";
+            out <<"\t;; block also owned by " <<function->printableName() <<"\n";
     }
+}
+
+static std::string
+edgeTypeName(const P2::EdgeType &edgeType) {
+    std::string retval = stringifyBinaryAnalysisPartitioner2EdgeType(edgeType, "E_");
+    BOOST_FOREACH (char &ch, retval)
+        ch = '_' == ch ? ' ' : tolower(ch);
+    return retval;
 }
 
 void
@@ -841,17 +898,17 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
                         rose_addr_t insnVa = pred->value().bblock()->instructions().back()->get_address();
                         std::string s = "instruction " + StringUtility::addrToString(insnVa) +
                                         " from " + pred->value().bblock()->printableName();
-                        preds.insert(insnVa, s);
+                        preds.insert(insnVa, edgeTypeName(edge.value().type()) + " edge from " + s);
                     } else {
                         std::ostringstream ss;
                         state.frontUnparser().emitAddress(ss, pred->value().address(), state);
-                        preds.insert(pred->value().address(), ss.str());
+                        preds.insert(pred->value().address(), edgeTypeName(edge.value().type()) + " edge from " + ss.str());
                     }
                     break;
                 case P2::V_USER_DEFINED: {
                     std::ostringstream ss;
                     state.frontUnparser().emitAddress(ss, pred->value().address(), state);
-                    preds.insert(pred->value().address(), ss.str());
+                    preds.insert(pred->value().address(), edgeTypeName(edge.value().type()) + " edge from " + ss.str());
                     break;
                 }
                 case P2::V_NONEXISTING:
@@ -878,16 +935,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
 
         // Real successors
         BOOST_FOREACH (const P2::BasicBlock::Successor &succ, succs) {
-            std::string s;
-            switch (succ.type()) {
-                case P2::E_CALL_RETURN:     s = "call return to ";  break;
-                case P2::E_FUNCTION_CALL:   s = "call to ";         break;
-                case P2::E_FUNCTION_XFER:   s = "xfer to ";         break;
-                case P2::E_FUNCTION_RETURN: s = "return to ";       break;
-                case P2::E_NORMAL:                                  break;
-                case P2::E_USER_DEFINED:    s = "user-defined to "; break;
-                default: ASSERT_not_implemented("basic block successor type");
-            }
+            std::string s = edgeTypeName(succ.type()) + " edge to ";
             ASSERT_not_null(succ.expr());
             SymbolicExpr::Ptr expr = succ.expr()->get_expression();
             if (expr->isNumber() && expr->nBits() <= 64) {
@@ -1082,6 +1130,7 @@ Base::emitInstructionEpilogue(std::ostream &out, SgAsmInstruction *insn, State &
     if (nextUnparser()) {
         nextUnparser()->emitInstructionEpilogue(out, insn, state);
     } else {
+        state.frontUnparser().emitInstructionSemantics(out, insn, state);
     }
 }
 
@@ -1182,6 +1231,27 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
             comment = insn->description();
         if (!comment.empty())
             out <<"; " <<StringUtility::cEscape(comment);
+    }
+}
+
+void
+Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+    ASSERT_not_null(insn);
+    if (settings().insn.semantics.showing) {
+        S2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        if (settings().insn.semantics.tracing)
+            ops = S2::TraceSemantics::RiscOperators::instance(ops);
+
+        if (S2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+            try {
+                cpu->processInstruction(insn);
+                S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
+                std::ostringstream ss;
+                ss <<"\n" <<(*cpu->currentState()->registerState() + fmt) <<(*cpu->currentState()->memoryState() + fmt);
+                out <<StringUtility::trim(ss.str(), "\n", false, true);
+            } catch (...) {
+            }
+        }
     }
 }
 
@@ -1320,7 +1390,7 @@ Base::emitUnsignedInteger(std::ostream &out, const Sawyer::Container::BitVector 
 }
 
 void
-Base::emitRegister(std::ostream &out, const RegisterDescriptor &reg, State &state) const {
+Base::emitRegister(std::ostream &out, RegisterDescriptor reg, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitRegister(out, reg, state);
     } else {
@@ -1357,6 +1427,15 @@ Base::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
 
         } else if (SgAsmFloatType *ft = isSgAsmFloatType(type)) {
             out <<"f" <<ft->get_nBits();
+
+        } else if (SgAsmVectorType *vt = isSgAsmVectorType(type)) {
+            out <<"vector(" <<vt->get_nElmts() <<" * ";
+            if (SgAsmType *subtype = vt->get_elmtType()) {
+                emitTypeName(out, subtype, state);
+            } else {
+                out <<"unknown";
+            }
+            out <<")";
 
         } else {
             ASSERT_not_implemented(type->toString());

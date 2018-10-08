@@ -1,0 +1,5 @@
+operator VectorXY::VectorXY(double xx, double yy)
+{
+  read {xx, yy};
+  modify {VectorXY::x, VectorXY::y};
+}

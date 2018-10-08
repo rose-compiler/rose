@@ -11,7 +11,7 @@ dnl Contact: P. Sadayappan <saday@cse.ohio-state.edu>
 dnl @file: Makefile.am
 dnl @author: Louis-Noel Pouchet <pouchet@colostate.edu>
 
-AC_INIT([polyopt], [2.0-beta], [pouchet@colostate.edu])
+AC_INIT([polyopt], [2.1-beta], [pouchet@colostate.edu])
 ## A common file, which should be included by every source file.
 AC_CONFIG_SRCDIR([polyopt/include/polyopt/PolyOpt.hpp])
 ## Put as most as possible configuration files to an auxialiry

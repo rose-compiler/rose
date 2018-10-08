@@ -18,7 +18,7 @@ std::string unparseMipsMnemonic(SgAsmMipsInstruction *insn) {
 /** Returns the name of a MIPS register.
  *
  * FIXME: This assumes MIPS32 */
-std::string unparseMipsRegister(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *registers) {
+std::string unparseMipsRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary *registers) {
     using namespace StringUtility;
     if (!registers)
         registers = RegisterDictionary::dictionary_mips32();

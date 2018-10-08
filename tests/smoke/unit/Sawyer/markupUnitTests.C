@@ -12,6 +12,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
+#include <iostream>
 
 using namespace Sawyer::Message::Common;
 namespace doc = Sawyer::Document;

@@ -1546,9 +1546,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=blueviolet,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                 // DQ (5/10/2018): Added more debugging information now the we explicitly mark when a function is implicit.
+                    string implicitFlagString = (functionDeclaration->get_is_implicit_function() == true) ? "is_implicit_function" : "!is_implicit_function";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
                                           "\\n  " + forwardFlagString +
                                           "\\n  " + friendFlagString +
+                                          "\\n  " + implicitFlagString +
                                           "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
 #if 0
                     printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
@@ -1567,9 +1570,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=royalblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                 // DQ (5/10/2018): Added more debugging information now the we explicitly mark when a function is implicit.
+                    string implicitFlagString = (functionDeclaration->get_is_implicit_function() == true) ? "is_implicit_function" : "!is_implicit_function";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
                                           "\\n  " + forwardFlagString +
                                           "\\n  " + friendFlagString +
+                                          "\\n  " + implicitFlagString +
                                           "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
                  // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
                     break;
@@ -1583,9 +1589,12 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=lightseagreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
+                 // DQ (5/10/2018): Added more debugging information now the we explicitly mark when a function is implicit.
+                    string implicitFlagString = (functionDeclaration->get_is_implicit_function() == true) ? "is_implicit_function" : "!is_implicit_function";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
                                           "\\n  " + forwardFlagString +
                                           "\\n  " + friendFlagString +
+                                          "\\n  " + implicitFlagString +
                                           "\\n  " + StringUtility::numberToString(functionDeclaration) + "  ";
                  // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
                     break;
@@ -1673,7 +1682,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                                           "\\n  " + flagString +
                                           "\\n  " + flagString2 +
                                           "\\n  " + StringUtility::numberToString(templateTypedefDeclaration) + "  ";
-#if 1
+#if 0
                     printf ("########## templateTypedefDeclaration->get_name() = %s \n",templateTypedefDeclaration->get_name().str());
 #endif
                     break;
@@ -1744,6 +1753,16 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                        }
 
                     labelWithSourceCode += "\\n  " +  StringUtility::numberToString(node) + "  ";
+                    break;
+                  }
+
+            // DQ (4/8/2018): Added support for the namespace alias.
+               case V_SgNamespaceAliasDeclarationStatement:
+                  {
+                    SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " + namespaceAliasDeclaration->get_name().getString() + 
+                                          "\\n  " + StringUtility::numberToString(namespaceAliasDeclaration) + "  ";
                     break;
                   }
 
@@ -1926,6 +1945,15 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
              {
             // printf ("Graph this node (%s) \n",node->class_name().c_str());
                labelWithSourceCode += string("\\n  name = ") + templateType->get_name().str() + "  " + "position = " + StringUtility::numberToString(templateType->get_template_parameter_position()) + " ";
+             }
+
+       // DQ (2/28/2018): Added name to the graph node for all SgNamedType IR nodes.
+          SgNamedType* namedType = isSgNamedType(node);
+          if (namedType != NULL)
+             {
+            // printf ("Graph this node (%s) \n",node->class_name().c_str());
+            // labelWithSourceCode += string("\\n  name = ") + namedType->get_name().str() + "  ";
+               labelWithSourceCode += string("\\n") + namedType->get_name().str();
              }
 
           SgModifierType* modifierType = isSgModifierType(node);
@@ -2164,6 +2192,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                             }
                        }
 
+                 // DQ (1/21/2018): Add debugging information to output in each graph node.
+                    typeString += string("\\n explicitlySpecified = ") +  ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + "  ";
+
                     labelWithSourceCode = string("\\n  ") + typeString + 
                                           string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
                     break;
@@ -2277,7 +2308,22 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
        // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
           string labelWithSourceCode;
 
-          labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          SgSymbol* symbol = isSgSymbol(node);
+#if 0
+          printf ("In CustomMemoryPoolDOTGeneration::defaultColorFilter(): symbol = %p = %s name = %s \n",symbol,symbol->class_name().c_str(),symbol->get_name().str());
+#endif
+#if 1
+       // DQ (2/28/2018): Added debugging code to make symbols in the graphs more clear.
+          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(node);
+          if (aliasSymbol != NULL)
+             {
+               labelWithSourceCode += string("\\n alias to: ") + aliasSymbol->get_base()->class_name();
+             }
+
+          labelWithSourceCode += string("\\n name: ") + symbol->get_name();
+#endif
+       // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(node) + "  ";
 
           AST_NODE_ID id = TransformationTracking::getId(node) ;
           if (id != 0)

@@ -5,15 +5,17 @@ int main()
      int x;
      switch(x)
         {
+#if 0
           case 1: {}
                int y;
                a++;
+#endif
 #if 1
           case 2: {}
                int z;
                b++;
 #endif
-#if 1
+#if 0
           default: 
              {
                int zz;

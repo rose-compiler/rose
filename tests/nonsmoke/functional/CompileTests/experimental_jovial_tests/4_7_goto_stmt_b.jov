@@ -1,0 +1,11 @@
+START
+PROGRAM testgoto ;
+BEGIN
+ GOTO label1 ;
+ GOTO label1 ;
+ label1: exit;
+ GOTO label1 ;
+ GOTO label2 ;
+ label2: EXIT;
+END
+TERM

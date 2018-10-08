@@ -1,6 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Reachability_H
 #define ROSE_BinaryAnalysis_Reachability_H
 
+#include <boost/serialization/access.hpp>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <set>
 #include <vector>
@@ -22,15 +23,34 @@ public:
         SIGNAL_HANDLER          = 0x00000004,           /**< Vertex is a signal handler. */
         PREDEFINED              = 0x000000ff,           /**< ROSE-defined reachability reasons. */
         USER_DEFINED            = 0xffffff00,           /**< User-defined reachability reasons. */
-        USER_DEFINED_0          = 0x00000100            /**< First user-defined reason bit. */
+        USER_DEFINED_0          = 0x00000100,           /**< First user-defined reason bit. */
+        ALL_REASONS             = 0xffffffff            /**< All reason bits. */
     };
 
 private:
     Partitioner2::ControlFlowGraph cfg_;                // CFG upon which we're operating
     std::vector<unsigned> intrinsicReachability_;      // intrinsic reachability of each vertex in the CFG
     std::vector<unsigned> reachability_;                // computed reachability of each vertex in the CFG
+    bool savingCfg_;                                    // whether to save the CFG when serializing.
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(savingCfg_);
+        if (savingCfg_)
+            s & BOOST_SERIALIZATION_NVP(cfg_);
+        s & BOOST_SERIALIZATION_NVP(intrinsicReachability_);
+        s & BOOST_SERIALIZATION_NVP(reachability_);
+    }
+#endif
 
 public:
+    Reachability()
+        : savingCfg_(true) {}
+
     /** Property: Control flow graph.
      *
      *  Assigning a new control flow graph to this analysis will erase all previous information. Assigning an empty control
@@ -41,10 +61,24 @@ public:
     void cfg(const Partitioner2::ControlFlowGraph&);
     /** @} */
 
+    /** Replace CFG without adjusting other data.
+     *
+     *  Unlike setting the @ref cfg property directly, this version doesn't update any other result data. It's intended to be
+     *  used when restoring previous data from a Boost archive when the @ref savingCfg property was clear. The caller must
+     *  ensure that the new CFG has the same size and vertex numbering as the original CFG. */
+    void replaceCfg(const Partitioner2::ControlFlowGraph&);
+
     /** Clear previous results.
      *
      *  This is the same as setting the control flow graph to an empty graph. */
     void clear();
+
+    /** Property: Whether to save the CFG when serializing.
+     *
+     * @{ */
+    bool savingCfg() const { return savingCfg_; }
+    void savingCfg(bool b) { savingCfg_ = b; }
+    /** @} */
 
     /** Clear all reachability.
      *
@@ -57,13 +91,21 @@ public:
      *  value is a bit vector of @ref Reason bits, some of which might be user-defined. */
     unsigned isIntrinsicallyReachable(size_t vertexId) const;
 
+    /** Controls immediate propagation. */
+    struct Propagate {
+        enum Boolean {                                  /**< Propagation control type. */
+            NO,                                         /**< Do not propagate. */
+            YES                                         /**< Do propagate. */
+        };
+    };
+
     /** Change intrinsic reachability.
      *
      *  The intrinsic reachability of the specified vertex is changed to @p how, which is a bit vector of @ref Reason
      *  bits. Changing the intrinsic reachability of a vertex to @ref NOT_REACHABLE does not necessarily mark the vertex as
      *  unreachable since it might be reachable from other reachable vertices. The new reachability will be immediately
-     *  propagated through the graph unless @p doPropagate is false. */
-    void intrinsicallyReachable(size_t vertexId, unsigned how, bool doPropagate = true);
+     *  propagated through the graph if @p doPropagate is set. */
+    void intrinsicallyReachable(size_t vertexId, unsigned how, Propagate::Boolean propagate = Propagate::YES);
 
     /** Query computed reachability.
      *

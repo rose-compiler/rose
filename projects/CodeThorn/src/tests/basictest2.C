@@ -7,5 +7,7 @@ int main() {
   y=3;
   y=-3;
   y=-x;
+  x=x+1;
+  x=x+y;
   return -2;
 }

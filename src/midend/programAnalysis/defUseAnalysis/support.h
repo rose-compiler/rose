@@ -49,9 +49,9 @@ class Support {
 
 
   /* *****************************************
-   * retrieve a sepcific name for functionNodes
+   * retrieve a specific name for functionNodes: convert function parameters to a string
    * must be the same for all retrievals, so that
-   * analyses work.
+   * analysis work.
    * *****************************************/
 #if 1
  // DQ (6/25/2011): Moved function definition to source file (function definitions should not be in the header files).
@@ -83,7 +83,7 @@ class Support {
 
 #if 1
  // DQ (6/25/2011): Moved function definition to source file (function definitions should not be in the header files).
-    std::string getFullName(SgFunctionDefinition* functionDef);
+    std::string getFullName(SgFunctionDefinition* functionDef);// qualified function name+ parameter list
 #else
 // std::string Support::getFullName(SgFunctionDefinition* functionDef);
   std::string getFullName(SgFunctionDefinition* functionDef) {

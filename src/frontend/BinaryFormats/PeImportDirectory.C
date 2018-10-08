@@ -61,7 +61,7 @@ SgAsmPEImportDirectory::hintname_table_extent(AddressIntervalSet &extent/*in,out
 }
 
 SgAsmPEImportDirectory *
-SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
+SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool isLastEntry)
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
     ROSE_ASSERT(fhdr!=NULL);
@@ -82,6 +82,13 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
     /* An all-zero entry marks the end of the list. In this case return null. */
     if (!memcmp(&disk, &zero, sizeof zero))
         return NULL;
+#if 0 // [Robb Matzke 2017-10-16]: this mechanism to find end-of-list is not documented by Microsoft and might be wrong.
+    if (isLastEntry) {
+        mlog[WARN] <<"SgAsmPEImportDirectory::parse: import directory at va " <<StringUtility::addrToString(idir_va)
+                   <<" is last in section but has a non-zero value (pretending it's zero)\n";
+        return NULL;
+    }
+#endif
 
     p_ilt_rva         = ByteOrder::le_to_host(disk.ilt_rva);
     p_time            = ByteOrder::le_to_host(disk.time);
@@ -149,7 +156,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
     assert(get_imports()!=NULL);
     SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
     bool processing_iat = !imports.empty(); // we always process the ILT first (but it might be empty)
-    
+
     if (0==table_start.get_rva())
         return;                 // no ILT/IAT present
 
@@ -440,7 +447,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                 }
             }
             if (bufsz>=2) {
-                uint8_t *buf = new uint8_t[bufsz];
+                std::vector<uint8_t> buf(bufsz, 0);
                 unsigned hint = imports[idx]->get_hint();
                 std::string name = imports[idx]->get_name()->get_string();
                 if (0!=(hint & ~0xffff)) {
@@ -451,11 +458,11 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                     }
                 }
                 ByteOrder::host_to_le(hint, &hint); // nudge, nudge. Know what I mean?
-                memcpy(buf, &hint, 2);
-                memcpy(buf+2, name.c_str(), std::min(name.size()+1, bufsz-2));
+                memcpy(&buf[0], &hint, 2);
+                memcpy(&buf[2], name.c_str(), std::min(name.size()+1, bufsz-2));
                 if (bufsz>2)
                     buf[bufsz-1] = '\0';
-                hn_rva.get_section()->write(f, hn_rva.get_rel(), bufsz, buf);
+                hn_rva.get_section()->write(f, hn_rva.get_rel(), bufsz, &buf[0]);
                 if (0!=(hn_rva.get_rva() & by_ordinal_bit)) {
                     if (SgAsmPEImportSection::show_import_mesg()) {
                         mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
@@ -464,7 +471,6 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                                    <<" has by_ordinal bit set\n";
                     }
                 }
-                delete[] buf;
             }
             entry_word = hn_rva.get_rva() & ~by_ordinal_bit;
         }
@@ -482,7 +488,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
         entry_rva.get_section()->write(f, entry_rva.get_rel(), entry_size, &disk);
     }
 }
-    
+
 void *
 SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 {
@@ -557,12 +563,10 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
                        <<StringUtility::plural(p_dll_name_nalloc, "bytes") <<")"
                        <<" for DLL name (need " <<StringUtility::plural(p_dll_name->get_string().size()+1, "bytes") <<")\n";
         }
-    } else {
-        uint8_t *buf = new uint8_t[p_dll_name_nalloc];
-        memcpy(buf, p_dll_name->get_string().c_str(), p_dll_name->get_string().size());
-        memset(buf+p_dll_name->get_string().size(), 0, p_dll_name_nalloc - p_dll_name->get_string().size());
-        p_dll_name_rva.get_section()->write(f, p_dll_name_rva.get_rel(), p_dll_name_nalloc, buf);
-        delete[] buf;
+    } else if (p_dll_name_nalloc > 0) {
+        std::vector<uint8_t> buf(p_dll_name_nalloc, 0);
+        memcpy(&buf[0], p_dll_name->get_string().c_str(), p_dll_name->get_string().size());
+        p_dll_name_rva.get_section()->write(f, p_dll_name_rva.get_rel(), p_dll_name_nalloc, &buf[0]);
     }
 
     /* Import Lookup Table and Import Address Table (and indirectly, Hint/Name entries). According to the PE secification: "The
@@ -572,7 +576,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
         unparse_ilt_iat(f, p_ilt_rva, false, p_ilt_nalloc);
     if (p_iat_rva>0)
         unparse_ilt_iat(f, p_iat_rva, false, p_iat_nalloc);
-    
+
     PEImportDirectory_disk disk;
     encode(&disk);
     section->write(f, idx*sizeof disk, sizeof disk, &disk);

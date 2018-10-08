@@ -30,7 +30,6 @@ struct Settings {
     SearchMode searchMode;                              // path finding mode
     size_t maxExprDepth;                                // max depth when printing expressions
     bool showExprWidth;                                 // show expression widths in bits?
-    bool debugSmtSolver;                                // turn on SMT debugging?
     Sawyer::Optional<rose_addr_t> initialStackPtr;      // concrete value to use for stack pointer register initial value
     size_t nThreads;                                    // number of threads for algorithms that support multi-threading
     std::vector<std::string> postConditionsStr;         // final conditions for registers and memory
@@ -38,7 +37,7 @@ struct Settings {
         : beginVertex("_start"), maxRecursionDepth(4), maxCallDepth(100), maxPathLength(1600), vertexVisitLimit(1),
           showInstructions(true), showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
           graphVizPrefix("path-"), graphVizOutput(NO_PATHS), maxPaths(1), searchMode(SEARCH_SINGLE_BFS), maxExprDepth(4),
-          showExprWidth(false), debugSmtSolver(false), nThreads(1) {}
+          showExprWidth(false), nThreads(1) {}
 };
 
 extern Settings settings;

@@ -99,6 +99,13 @@ static std::string mustNotParse(const std::string &errmesg, Parser &p, const std
 //                                      The tests
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Empty parser
+static void test00() {
+    std::cerr <<"test00: empty parser\n";
+    Parser p;
+    mustParse(0, p, "--foo");
+}
+
 // Most basic switch possible
 static void test01() {
     std::cerr <<"test01: most basic switch possible\n";
@@ -177,9 +184,9 @@ static void test06() {
 // Saving intrinsic values using a parser
 static void test07a() {
     std::cerr <<"test07a: saving intrinsic values using a parser\n";
-    bool b;
-    int i;
-    double d;
+    bool b = false;
+    int i = 0;
+    double d = 0.0;
     Parser p;
     p.with(Switch("bool")
            .intrinsicValue("true", booleanParser(b)));
@@ -216,9 +223,9 @@ static void test07a() {
 // Saving intrinsic values without a parser
 static void test07b() {
     std::cerr <<"test07b: saving intrinsic values without a parser\n";
-    bool b;
-    int i;
-    double d;
+    bool b = false;
+    int i = 0;
+    double d = 0.0;
     std::string s;
     Parser p;
     p.with(Switch("bool")
@@ -300,10 +307,10 @@ static void test09() {
 // Integer parser
 static void test10() {
     std::cerr <<"test10: integer parser\n";
-    int si;
-    short ss;
-    unsigned int ui;
-    unsigned short us;
+    int si = 0;
+    short ss = 0;
+    unsigned int ui = 0;
+    unsigned short us = 0;
     Parser p;
     p.with(Switch("si", 'a')
            .argument("arg", integerParser(si)));
@@ -425,10 +432,10 @@ static void test10() {
 // non-negative integer parser
 static void test11() {
     std::cerr <<"test11: non-negative integer parser\n";
-    int si;
-    short ss;
-    unsigned int ui;
-    unsigned short us;
+    int si = 0;
+    short ss = 0;
+    unsigned int ui = 0;
+    unsigned short us = 0;
     Sawyer::Optional<int> oss;
     Parser p;
     p.with(Switch("si", 'a')
@@ -628,7 +635,7 @@ static void test13() {
 enum TestColor { RED, REDDISH, ISH };
 static void test14() {
     std::cerr <<"test14: enum parser\n";
-    TestColor s;
+    TestColor s = RED;
     Parser p;
     p.with(Switch("bkg", 'd')
            .argument("color",
@@ -655,7 +662,7 @@ static void test14() {
 // List parser
 static void test15() {
     std::cerr <<"test15: list parser\n";
-    int v1, v2;
+    int v1 = 0, v2 = 0;
     std::string s1, s2;
     Parser p;
     p.with(Switch("ints", 'I')
@@ -1549,7 +1556,48 @@ static void test33() {
     ASSERT_always_require(x=="x");
 }
 
+static void test34() {
+    std::cerr <<"test34: removal of switch definitions from a parser\n";
+
+    std::string x, y;
+    SwitchGroup sg1;
+    sg1.insert(Switch("foo").argument("x", anyParser(x)));
+    sg1.insert(Switch("bar").argument("y", anyParser(y), "default-y"));
+
+    Parser p1;
+    p1.with(sg1);
+
+    std::cerr <<"  == initial parser ==\n";
+    mustParse(1, p1, "--foo=x1");
+    ASSERT_always_require(x == "x1");
+    mustParse(1, p1, "--bar");
+    ASSERT_always_require(y == "default-y");
+    mustParse(1, p1, "--bar=y1");
+    ASSERT_always_require(y == "y1");
+
+    Sawyer::Optional<Switch> removed;
+    std::cerr <<"  == removing nothing ==\n";
+    removed = p1.removeMatchingSwitch("--foo");
+    ASSERT_always_require(!removed);
+
+    std::cerr <<"  == removing --foo=x ==\n";
+    removed = p1.removeMatchingSwitch("--foo=xxx");
+    ASSERT_always_require(removed);
+    ASSERT_always_require(removed->key() == "foo");
+    ASSERT_always_require(x == "x1");                   // not changed by removal
+    mustNotParse("unrecognized switch", p1, "--foo=x2");     // no long recognized
+
+    std::cerr <<" == removing --bar and --bar=x ==\n";
+    removed = p1.removeMatchingSwitch("--bar");
+    ASSERT_always_require(removed);
+    ASSERT_always_require(removed->key() == "bar");
+    ASSERT_always_require(y == "y1");                   // not changed by removal
+    mustParse(0, p1, "--bar");                          // nothing left, so parsing is not an error,
+    mustParse(0, p1, "--bar=y2");                       // it just doesn't parse any switches
+}
+
 int main() {
+    test00();
     test01();
     test02();
     test03();
@@ -1584,6 +1632,7 @@ int main() {
     test31();
     test32();
     test33();
+    test34();
     std::cout <<"All tests passed\n";
     return 0;
 }

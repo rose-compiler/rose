@@ -2,9 +2,11 @@
 #define ROSE_BinaryAnalysis_FeasiblePath_H
 
 #include <BaseSemantics2.h>
+#include <BinarySmtSolver.h>
+#include <BinarySymbolicExprParser.h>
 #include <Partitioner2/CfgPath.h>
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
-#include <SMTSolver.h>
 #include <boost/filesystem/path.hpp>
 
 namespace Rose {
@@ -20,8 +22,21 @@ class FeasiblePath {
 public:
     enum SearchMode { SEARCH_SINGLE_DFS, SEARCH_SINGLE_BFS, SEARCH_MULTI };
 
+    /** Organization of semantic memory. */
+    enum SemanticMemoryParadigm {
+        LIST_BASED_MEMORY,                              /**< Precise but slow. */
+        MAP_BASED_MEMORY                                /**< Fast but not precise. */
+    };
+
+    /** Read or write operation. */
+    enum IoMode { READ, WRITE };
+
+    /** Types of comparisons. */
+    enum MayOrMust { MAY, MUST };
+
     /** Settings that control this analysis. */
     struct Settings {
+        // Path feasibility
         SearchMode searchMode;                          /**< Method to use when searching for feasible paths. */
         Sawyer::Optional<rose_addr_t> initialStackPtr;  /**< Concrete value to use for stack pointer register initial value. */
         size_t vertexVisitLimit;                        /**< Max times to visit a particular vertex in one path. */
@@ -29,13 +44,27 @@ public:
         size_t maxCallDepth;                            /**< Max length of path in terms of function calls. */
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
         std::vector<SymbolicExpr::Ptr> postConditions;  /**< Additional constraints to be satisifed at the end of a path. */
+        std::vector<std::string> postConditionStrings;  /**< Additional post conditions as strings to be parsed. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
+        std::string solverName;                         /**< Type of SMT solver. */
+        SemanticMemoryParadigm memoryParadigm;          /**< Type of memory state when there's a choice to be made. */
+
+        // Null dereferences
+        struct NullDeref {
+            bool check;                                 /**< If true, look for null dereferences along the paths. */
+            MayOrMust mode;                             /**< Check for addrs that may or must be null. */
+            bool constOnly;                             /**< If true, check only constants or sets of constants. */
+
+            NullDeref()
+                : check(false), mode(MUST), constOnly(false) {}
+        } nullDeref;                                    /**< Settings for null-dereference analysis. */
 
         /** Default settings. */
         Settings()
             : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
-              maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true) {}
+              maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
+              memoryParadigm(LIST_BASED_MEMORY) {}
     };
 
     /** Diagnostic output. */
@@ -76,10 +105,25 @@ public:
         };
 
         virtual ~PathProcessor() {}
+
+        /** Function invoked whenever a complete path is found. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const std::vector<SymbolicExpr::Ptr> &pathConditions,
                              const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
-                             SMTSolver &solver) = 0;
+                             const SmtSolverPtr &solver) = 0;
+
+        /** Function invoked whenever a null pointer dereference is detected.
+         *
+         *  The @p ioMode indicates whether the null address was read or written, and the @p addr is the address that was
+         *  accessed. The address might not be the constant zero depending on other settings (for example, it could be an
+         *  unknown value represented as a variable if "may" analysis is used and the comparison is not limited to only
+         *  constant expressions).
+         *
+         *  The instruction during which the null dereference occurred is also passed as an argument, but it may be a null
+         *  pointer in some situations. For instance, the instruction will be null if the dereference occurs when popping the
+         *  return address from the stack for a function that was called but whose implementation is not present (such as when
+         *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
+        virtual void nullDeref(IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -100,7 +144,37 @@ public:
     /** Summaries for multiple functions. */
     typedef Sawyer::Container::Map<rose_addr_t, FunctionSummary> FunctionSummaries;
 
+    /** Base class for callbacks for function summaries.
+     *
+     *  See the @ref functionSummarizer property. These objects are reference counted and allocated on the heap. */
+    class FunctionSummarizer: public Sawyer::SharedObject {
+    public:
+        /** Reference counting pointer. */
+        typedef Sawyer::SharedPointer<FunctionSummarizer> Ptr;
+    protected:
+        FunctionSummarizer() {}
+    public:
+        /** Invoked when a new summary is created. */
+        virtual void init(const FeasiblePath &analysis, FunctionSummary &summary /*in,out*/,
+                          const Partitioner2::Function::Ptr &function,
+                          Partitioner2::ControlFlowGraph::ConstVertexIterator cfgCallTarget) = 0;
 
+        /** Invoked when the analysis traverses the summary.
+         *
+         *  Returns true if the function was processed, false if we decline to process the function. If returning false, then
+         *  the caller will do some basic processing based on the calling convention. */
+        virtual bool process(const FeasiblePath &analysis, const FunctionSummary &summary,
+                             const InstructionSemantics2::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
+
+        /** Return value for function.
+         *
+         *  This is called after @ref process in order to obtain the primary return value for the function. If the function
+         *  doesn't return anything, then this method returns a null pointer. */
+        virtual InstructionSemantics2::SymbolicSemantics::SValuePtr
+        returnValue(const FeasiblePath &analysis, const FunctionSummary &summary,
+                    const InstructionSemantics2::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
+    };
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,6 +190,7 @@ private:
     Partitioner2::CfgConstVertexSet pathsEndVertices_;  // vertices of paths_ where searching stops
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
+    FunctionSummarizer::Ptr functionSummarizer_;         // user-defined function for handling function summaries
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,6 +233,12 @@ public:
     void settings(const Settings &s) { settings_ = s; }
     /** @} */
 
+    /** Describe command-line switches.
+     *
+     *  The @p settings provide default values. A reference to @p settings is saved and when the command-line is parsed and
+     *  applied, the settings are adjusted. */
+    static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Overridable processing functions
@@ -169,7 +250,7 @@ public:
      *  specified partitioner and augments it with a "path" pseudo-register that holds a symbolic expressions on which the
      *  current CFG path depends. */
     virtual InstructionSemantics2::BaseSemantics::DispatcherPtr
-    buildVirtualCpu(const Partitioner2::Partitioner&);
+    buildVirtualCpu(const Partitioner2::Partitioner&, PathProcessor*);
 
     /** Initialize state for first vertex of path.
      *
@@ -223,6 +304,17 @@ public:
     virtual bool
     shouldInline(const Partitioner2::CfgPath &path, const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget);
 
+    /** Property: Function summary handling.
+     *
+     *  As an alternative to creating a subclass to override the @ref processFunctionSummary, this property can contain an
+     *  object that will be called in various ways whenever a function summary is processed.  If non-null, then whenever a
+     *  function summary is created, the object's @c init method is called, and whenever a function summary is traversed its @c
+     *  process method is called.
+     *
+     *  @{ */
+    FunctionSummarizer::Ptr functionSummarizer() const { return functionSummarizer_; }
+    void functionSummarizer(const FunctionSummarizer::Ptr &f) { functionSummarizer_ = f; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Utilities
@@ -257,11 +349,12 @@ public:
      *  @p postConditions are additional optional conditions that must be satisified at the end of the path.  The entire set of
      *  conditions is returned via @p pathConditions argument, which can also initially contain preconditions. */
     virtual boost::tribool
-    isPathFeasible(const Partitioner2::CfgPath &path, SMTSolver&, const std::vector<SymbolicExpr::Ptr> &postConditions,
-                   std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
+    isPathFeasible(const Partitioner2::CfgPath &path, const SmtSolverPtr&,
+                   std::vector<SymbolicExpr::Ptr> postConditions, const SymbolicExprParser::RegisterSubstituter::Ptr&,
+                   PathProcessor *pathProcessor, std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 
-
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for describing the search space
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

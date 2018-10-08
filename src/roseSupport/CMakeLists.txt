@@ -1,10 +1,10 @@
 ########### build library ###############
 add_definitions(-DROSE_DLL_EXPORTS)
 add_library(roseSupport OBJECT
-  transformationSupport.C optionDeclaration.C
+  transformationSupport.C optionDeclaration.C Combinatorics.C
   sourceLocationInheritedAttribute.C rangemap.C roseTranslators.C
   utility_functions.C memoryUsage.C IncludeDirective.C
-  SqlDatabase.C Diagnostics.C stringify.C initialize.C)
+  SqlDatabase.C Diagnostics.C stringify.C initialize.C CommandLine.C)
 add_dependencies(roseSupport rosetta_generated)
 
 ########### install files ###############
@@ -22,5 +22,7 @@ install(FILES  transformationSupport.h
                utility_functionsImpl.C
                stringify.h
 	       initialize.h
+	       CommandLine.h
+	       Combinatorics.h
 	DESTINATION ${INCLUDE_INSTALL_DIR}
   )

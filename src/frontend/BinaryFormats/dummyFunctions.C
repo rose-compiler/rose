@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include <Combinatorics.h>
 
 using namespace Rose::BinaryAnalysis;
 
@@ -93,6 +94,7 @@ void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
 namespace Rose {
 namespace BinaryAnalysis {
 void MemoryMap::dump(FILE *f, const char *prefix) const {}
+Combinatorics::Hasher& MemoryMap::hash(Combinatorics::Hasher &x) const { return x; }
 } // namespace
 } // namespace
 
@@ -174,7 +176,7 @@ std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iref_typ
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iord_type    & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iname_type   & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::osfixup_type & x ) { return os; }
-std::ostream & operator<< ( std::ostream & os, const RegisterDescriptor & x ) { return os; }
+std::ostream & operator<< ( std::ostream & os, RegisterDescriptor ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const rose_rva_t & x ) { return os; }
 std::ostream& operator<<(std::ostream &os, const AddressIntervalSet&) { return os; }
 

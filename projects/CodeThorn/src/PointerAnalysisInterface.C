@@ -25,6 +25,16 @@ bool SPRAY::PointerAnalysisInterface::hasDereferenceOperation(SgExpression* exp)
   return false;
 }
 
+bool SPRAY::PointerAnalysisInterface::hasAddressOfOperation(SgExpression* exp) {
+  RoseAst ast(exp);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(isSgAddressOfOp(*i)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 SPRAY::PointerAnalysisEmptyImplementation::PointerAnalysisEmptyImplementation(VariableIdMapping* vim) {
   _variableIdMapping=vim;
 }

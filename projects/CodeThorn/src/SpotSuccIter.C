@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "SpotSuccIter.h"
 
 using namespace CodeThorn;
@@ -115,3 +118,5 @@ bdd SpotSuccIter::conjunctivePredicate(std::set<int> nonNegated, std::set<int> a
   }	
   return result;
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

@@ -4,6 +4,12 @@ bin_PROGRAMS =
 DEFAULT_DATABASE       = postgresql://rose:fcdc7b4207660a1372d0cd5491ad856e@www.hoosierfocus.com/rose_matrix
 DEFAULT_DATABASE_LOCAL = postgresql://rose:fcdc7b4207660a1372d0cd5491ad856e@localhost/rose_matrix
 
+bin_SCRIPTS =					\
+	matrixApplicationReport.sh		\
+	matrixErrorsUpdateLoop.sh		\
+	matrixScanEnvironment.sh		\
+	matrixTestResultEmail.sh
+
 bin_PROGRAMS += matrixNextTest
 matrixNextTest_SOURCES = matrixNextTest.C
 matrixNextTest_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'

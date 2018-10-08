@@ -140,7 +140,7 @@ std::string DefUseVarsInfo::varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdM
   for( ; it != vars_info.first.end();  )
   {
     // oss << "<" << (*it).first.toString() << ", " << vidm.variableName((*it).first) << ", ";
-    oss << "<" << vidm.uniqueShortVariableName((*it).first) << ", " << variableIdTypeInfoToString((*it).second);
+    oss << "<" << vidm.uniqueVariableName((*it).first) << ", " << variableIdTypeInfoToString((*it).second);
     oss <<">";
     it++;
     if(it != vars_info.first.end())

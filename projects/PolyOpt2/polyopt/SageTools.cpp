@@ -381,14 +381,16 @@ SageTools::getFakeSymbol(SgDotExp* node,
   SgVarRefExp* v2 = isSgVarRefExp(node->get_rhs_operand());
   if (! (v1 && v2))
     return NULL;
-  std::string fakename = v1->get_symbol()->get_name().getString() +
+  std::string fakename = "__fake_polyopt_mangling_" +
+    v1->get_symbol()->get_name().getString() +
     "." + v2->get_symbol()->get_name().getString();
   std::map<std::string, SgVariableSymbol*>::iterator i =
     map.find(fakename);
   if (i == map.end())
     {
-      SgInitializedName* iname = new SgInitializedName();
-      iname->set_name(SgName(fakename));
+      SgInitializedName* iname =
+	new SgInitializedName(v1->get_file_info(), SgName(fakename), NULL);
+      iname->set_scope(SageInterface::getEnclosingNode<SgScopeStatement> (v1));
       SgVariableSymbol* symbol = new SgVariableSymbol(iname);
       std::pair<std::string, SgVariableSymbol*> newelt(fakename, symbol);
       map.insert(newelt);

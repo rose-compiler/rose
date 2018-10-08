@@ -10,6 +10,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <boost/filesystem.hpp>
+#include <boost/noncopyable.hpp>
 #include <fstream>
 
 namespace Sawyer {
@@ -21,24 +22,20 @@ namespace FileSystem {
  *
  *  Creates a file with the specified name (or a pseudo-random name in the system temp directory), and make sure it gets
  *  deleted from the file system upon object destruction. */
-class SAWYER_EXPORT TemporaryFile {
+class SAWYER_EXPORT TemporaryFile: private boost::noncopyable {
     boost::filesystem::path name_;
     std::ofstream stream_;
-
-private:
-    // Don't depend on C++11's explicit delete of member functions
-    TemporaryFile(const TemporaryFile&) { ASSERT_not_reachable("no copy constructor"); }
-    TemporaryFile& operator=(const TemporaryFile&) { ASSERT_not_reachable("no assignment operator"); }
+    bool keep_;
 
 public:
     /** Create a temporary file in the system temp directory. */
-    TemporaryFile() {
+    TemporaryFile(): keep_(false) {
         name_ = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
         stream_.open(name_.native().c_str());
     }
 
     /** Create a temporary file with the specified name. */
-    explicit TemporaryFile(const boost::filesystem::path &name) {
+    explicit TemporaryFile(const boost::filesystem::path &name): keep_(false) {
         name_ = name;
         stream_.open(name.native().c_str());
     }
@@ -48,7 +45,8 @@ public:
      *  This also closes the stream if it's open. */
     ~TemporaryFile() {
         stream_.close();
-        boost::filesystem::remove(name_);
+        if (!keep_)
+            boost::filesystem::remove(name_);
     }
 
     /** Path of temporary file. */
@@ -56,26 +54,29 @@ public:
 
     /** Output stream for temporary file. */
     std::ofstream& stream() { return stream_; }
+
+    /** Property: Keep file instead of deleting it.
+     *
+     * @{ */
+    bool keep() const { return keep_; }
+    void keep(bool b) { keep_ = b; }
+    /** @} */
 };
 
 /** Create a temporary directory.
  *
  *  Creates a directory with the specified name (or a pseudo-random name in the system temp directory), and makes sure it gets
  *  deleted recursively upon object destruction. */
-class SAWYER_EXPORT TemporaryDirectory {
+class SAWYER_EXPORT TemporaryDirectory: private boost::noncopyable {
     boost::filesystem::path name_;
-
-private:
-    // Don't depend on C++11's explicit delete of member functions
-    TemporaryDirectory(const TemporaryDirectory&) { ASSERT_not_reachable("no copy constructor"); }
-    TemporaryDirectory& operator=(const TemporaryDirectory&) { ASSERT_not_reachable("no assignment operator"); }
+    bool keep_;
 
 public:
     /** Create a temporary subdirectory in the system's temp directory.
      *
      *  The directory is recursively unlinked from the filesystem when this object is destroyed. */
     TemporaryDirectory()
-        : name_(boost::filesystem::temp_directory_path() / boost::filesystem::unique_path()) {
+        : name_(boost::filesystem::temp_directory_path() / boost::filesystem::unique_path()), keep_(false) {
         createOrThrow();
     }
 
@@ -84,7 +85,7 @@ public:
      *  Creates the specified directory. Parent directories must already exist. The directory is recursively unlinked from the
      *  filesystem when this object is destroyed. */
     explicit TemporaryDirectory(const boost::filesystem::path &name)
-        : name_(name) {
+        : name_(name), keep_(false) {
         createOrThrow();
     }
 
@@ -93,11 +94,19 @@ public:
      *  This destructor recursively unlinks the directory and its contents from the filesystem, but does not remove any parent
      *  directories even if they would become empty. */
     ~TemporaryDirectory() {
-        boost::filesystem::remove_all(name_);
+        if (!keep_)
+            boost::filesystem::remove_all(name_);
     }
 
     /** Path of temporary directory. */
     const boost::filesystem::path& name() const { return name_; }
+
+    /** Property: Keep directory instead of deleting it.
+     *
+     * @{ */
+    bool keep() const { return keep_; }
+    void keep(bool b) { keep_ = b; }
+    /** @} */
 
 private:
     // Create directory or throw exception

@@ -205,8 +205,8 @@ Arm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) con
     ASSERT_not_null(insn);
 
     if (insn->get_kind() == arm_b || insn->get_kind() == arm_bl) {
-        ASSERT_require(insn->get_operandList()->get_operands().size()==1);
-        ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
+        ASSERT_require(insn->nOperands() == 1);
+        ASSERT_require(insn->operand(0) == expr);
         SgAsmIntegerValueExpression *tgt = isSgAsmIntegerValueExpression(expr);
         ASSERT_not_null(tgt);
         state.frontUnparser().emitAddress(out, tgt->get_bitVector(), state);

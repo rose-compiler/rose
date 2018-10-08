@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 #include <AsmUnparser_compat.h>
 #include <BinaryNoOperation.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <MemoryCellList.h>
@@ -130,7 +131,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SMTSolver *solver = NULL;
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
         ops->computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS);
         ops->computingMemoryWriters(SymbolicSemantics::TRACK_LATEST_WRITER); // necessary to erase non-written memory
@@ -215,7 +216,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     if (debug) {
         debug <<"findNoopSubsequences(\n";
         BOOST_FOREACH (SgAsmInstruction *insn, insns)
-            debug <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+            debug <<"  " <<insn->toString() <<"\n";
         debug <<")\n";
     }
 
@@ -236,7 +237,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
                 debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");
-                debug <<"  instruction: " <<unparseInstructionWithAddress(insn) <<"\n";
+                debug <<"  instruction: " <<insn->toString() <<"\n";
             }
             cpu_->processInstruction(insn);
         }
@@ -257,11 +258,15 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // FIXME[Robb P Matzke 2017-05-31]: We look at the terminal instruction in isolation to find its successors, but maybe a
     // better way would be to use the instruction pointer register from the state we already computed. Doing so would be a
     // more accurate way to handle opaque predicates.
-    if (ignoreTerminalBranches_ && insns.size() > 1) {
-        ASSERT_forbid(states.size() == insns.size());
+    //
+    // The check for states.size()+1==insns.size() is because if there was an exception above, then there won't be as
+    // many states as instructions and we're in effect already ignoring the state for the last instruction (and possibly
+    // more). There's normally one more state than instructions because we've saved the initial state plus the state
+    // after each instruction.
+    if (ignoreTerminalBranches_ && insns.size() > 1 && states.size() == insns.size() + 1) {
         bool isComplete = true;
         std::set<rose_addr_t> succs = insns.back()->getSuccessors(&isComplete);
-        if (succs.size() > 1 || isComplete) {
+        if (succs.size() > 1 || !isComplete) {
             states.pop_back();
         } else if (succs.size() == 1 && *succs.begin() != insns.back()->get_address() + insns.back()->get_size()) {
             states.pop_back();

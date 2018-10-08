@@ -7,10 +7,11 @@
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
-// #include "wholeAST.h"
 
 #ifdef _MSC_VER
 #include <direct.h>     // getcwd
+#else
+#include "plugin.h"  // dlopen() is not available on Windows
 #endif
 
 #include <time.h>
@@ -34,6 +35,9 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
+
+// DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+#include<signal.h>
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -466,9 +470,18 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
   // printf ("In frontend(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
 
+  // We parse plugin related command line options before calling project();
+     std::vector<std::string> argv2= argv;  // workaround const argv
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::processPluginCommandLine () ...\n");
+#else
+     Rose::processPluginCommandLine(argv2);
+#endif
+
   // Error code checks and reporting are done in SgProject constructor
   // return new SgProject (argc,argv);
-     SgProject* project = new SgProject (argv,frontendConstantFolding);
+     SgProject* project = new SgProject (argv2,frontendConstantFolding);
      ROSE_ASSERT (project != NULL);
 
   // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
@@ -485,9 +498,18 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // checkIsModifiedFlag(project);
      unsetNodesMarkedAsModified(project);
 
+   
   // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
+
+  // Connect to Ast Plugin Mechanism
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::obtainAndExecuteActions ()\n");
+#else  
+     Rose::obtainAndExecuteActions(project);
+#endif
      return project;
    }
 
@@ -599,6 +621,23 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
      int finalCombinedExitStatus = 0;
 
+     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+        {
+          printf ("Inside of backend(SgProject*) \n");
+        }
+
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+  // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+  // signal(SIG_DFL,NULL);
+     signal(SIGABRT,SIG_DFL);
+#endif
+
+#if 0
+  // DQ (9/8/2017): Debugging ROSE_ASSERT.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      if (project->get_binary_only() == true)
         {
           ROSE_ASSERT(project != NULL);
@@ -609,9 +648,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
           project->skipfinalCompileStep(true);
         }
-
-     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-          printf ("Inside of backend(SgProject*) \n");
 
   // printf ("   project->get_useBackendOnly() = %s \n",project->get_useBackendOnly() ? "true" : "false");
      if (project->get_useBackendOnly() == false)
@@ -737,7 +773,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
   // Note that the command generated may have to be fixup later to include more subtle details 
   // required to link libraries, etc.  At present this function only handles the support required
   // to build an object file.
-     string commandLineToGenerateObjectFile;
+     SgStringList commandLineToGenerateObjectFile;
 
      enum language_enum
         {
@@ -766,15 +802,15 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
      switch (language)
         {
-          case e_c       : commandLineToGenerateObjectFile = BACKEND_C_COMPILER_NAME_WITH_PATH;       break;
-          case e_cxx     : commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;     break;
-          case e_fortran : commandLineToGenerateObjectFile = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH; break;
+        case e_c       : commandLineToGenerateObjectFile.push_back(BACKEND_C_COMPILER_NAME_WITH_PATH);       break;
+        case e_cxx     : commandLineToGenerateObjectFile.push_back(BACKEND_CXX_COMPILER_NAME_WITH_PATH);     break;
+        case e_fortran : commandLineToGenerateObjectFile.push_back(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH); break;
 
           default:
              {
-            // Note that the default is C++, and that if there are no SgFile objects then there is no place to hold the default
-            // since the SgProject does not have any such state to hold this information.  A better idea might be to give the
-            // SgProject state so that it can hold if it is used with -rose:C or -rose:Cxx or -rose:Fortran on the command line.
+                 // Note that the default is C++, and that if there are no SgFile objects then there is no place to hold the default
+                 // since the SgProject does not have any such state to hold this information.  A better idea might be to give the
+                 // SgProject state so that it can hold if it is used with -rose:C or -rose:Cxx or -rose:Fortran on the command line.
 
                printf ("Default reached in switch in backendCompilesUsingOriginalInputFile() \n");
                printf ("   Note use options: -rose:C or -rose:Cxx or -rose:Fortran to specify which language backend compiler to link object files. \n");
@@ -787,7 +823,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
        // DQ (11/3/2011): Mark this as being called from ROSE (even though the backend compiler is being used).
        // This will help us detect where strings handed in using -D options may have lost some outer quotes.
        // There may also be a better fix to detect quoted strings and requote them, so this should be considered also.
-          commandLineToGenerateObjectFile += " -DUSE_ROSE ";
+            commandLineToGenerateObjectFile.push_back("-DUSE_ROSE");
         }
 
      int finalCombinedExitStatus = 0;
@@ -805,35 +841,42 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
           if (it != originalCommandLineArgumentList.end())
                it++;
 
-       // Make a list of the remaining command line arguments
+       // JL (03/15/2018) Changed system to systemFromVector so that
+       // command line arguments will be handled correctly ROSE-813
           for (SgStringList::iterator i = it; i != originalCommandLineArgumentList.end(); i++)
-             {
-               commandLineToGenerateObjectFile += " " + *i;
-             }
-       // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+          {
+              commandLineToGenerateObjectFile.push_back(*i);
+          }
 
           if ( SgProject::get_verbose() >= 1 )
-             {
-               printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
-             }
+          {
+              printf("Compile Line: ");                 
+              for (SgStringList::iterator i = it; i != commandLineToGenerateObjectFile.end(); i++)
+              {
+                  printf("%s ", (*i).c_str());
+              }
+              printf("\n");                 
+          }
+          
 
        // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
        // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
        // for which the tests/nonsmoke/functional/testTokenGeneration.C translator uses this function to generate object files.
        // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
           if (project->get_skipfinalCompileStep() == false)
-             {
-               finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
-             }
+          {
+              finalCombinedExitStatus = systemFromVector (commandLineToGenerateObjectFile);
+          }
         }
        else
         {
        // Note that in general it is not possible to tell whether to use gcc, g++, or gfortran to do the linking.
        // When we just have a list of object files then we can't assume anything (and project->get_C_only() will be false).
-
        // Note that commandLineToGenerateObjectFile is just the name of the backend compiler to use!
-       // finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
-          finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
+       // JL (03/15/2018) Put in ROSE_ASSERT to verify command line is just the linker
+       //Thats all link is supposed to take
+            ROSE_ASSERT(commandLineToGenerateObjectFile.size() == 1);
+            finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile[0]);
         }
 
      return finalCombinedExitStatus;
@@ -961,6 +1004,25 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
                printf ("In generateDOT(): AST graph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
         }
    }
+
+
+void
+generateDOT ( SgNode* node, std::string filename )
+   {
+  // DQ (9/22/2017): This function is being provided to support the generation of a dot file from any subtree.
+  // The more imediate use for this function is to support generation of dot files from trees built using the ROSE Untyped nodes.
+
+  // DQ (6/14/2007): Added support for timing of the generateDOT() function.
+     TimingPerformance timer ("ROSE generateDOT():");
+
+     AstDOTGeneration astdotgen;
+
+  // This used to be the default, but it would output too much data (from include files).
+  // std::string filenamePostfix = ".dot";
+     std::string filenamePostfix = "";
+     astdotgen.generate(node, filename, DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP, filenamePostfix);
+   }
+
 
 void
 generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfix )

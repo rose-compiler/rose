@@ -9,6 +9,7 @@
 #include "SgNodeHelper.h"
 #include "BoolLattice.h"
 #include <cmath>
+#include "AstTerm.h"
 
 using namespace std;
 
@@ -180,8 +181,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         }
         lhsResult = ips->getVariable(lhsVarId);
       } else {
-        //        if(_showWarnings)
-          //          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
+        if(_showWarnings)
+          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
         VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
         ips->topifyVariableSet(varIdSet);
       }
@@ -246,6 +247,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
     case V_SgAddressOfOp:
     case V_SgPointerDerefExp:
+      //cout<<"DEBUG: SgPointerDerefExp: "<<isSgLocatedNode(node)->unparseToString()<<endl;
       // discard result as pointer value intervals are not represented in this domain, but evaluate to ensure all side-effects are represented in the state
       evaluate(operand);
       return NumberIntervalLattice::top();
@@ -257,7 +259,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
         IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
         Number plusOrMinusOne = (isSgMinusMinusOp(node) ? -1 : (isSgPlusPlusOp(node) ? 1 : (ROSE_ASSERT(false), 0)));
-        NumberIntervalLattice res=domain->arithAdd(evaluate(operand), plusOrMinusOne);
         if(variableIdMapping->hasReferenceType(varId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
@@ -268,22 +269,22 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         }
         else {
           if(SgNodeHelper::isPrefixIncDecOp(node)) {
-            ips->setVariable(varId,res);
+            NumberIntervalLattice oldValue=evaluate(operand);
+            NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);
+            ips->setVariable(varId,newValue);
+            return newValue;
           }
           if(SgNodeHelper::isPostfixIncDecOp(node)) {
-            if(isExprRootNode(node)) {
-              ips->setVariable(varId,res);
-            } else {
-              SgNode* exprRootNode=findExprRootNode(node);
-              cerr<<"Error: CppExprEvaluator: post-fix operator ++ not supported in sub-expressions yet: expression: "<<"\""<<(exprRootNode?exprRootNode->unparseToString():0)<<"\""<<endl;
-              exit(1);
-            }
+            NumberIntervalLattice oldValue=evaluate(operand);
+            NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);
+            ips->setVariable(varId,newValue);
+            return oldValue;
           }
         }
-        return res;
-      } else {
-        cerr<<"Error: CppExprEvaluator: ++/-- operation on lhs-expression not supported yet."<<endl;
+        cerr<<"Error: CppExprEvaluator: ++/-- operation: unknown operand."<<endl;
         exit(1);
+      } else {
+        return NumberIntervalLattice::top();
       }
     }
     default: // generates top element
@@ -352,11 +353,15 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   case V_SgNullptrValExp: return NumberIntervalLattice(Number(0));
 
   // schroder3 (2016-08-25): empty expression (e.g. ";;")
-  case V_SgNullExpression: throw SPRAY::Exception("CppExprEvaluator can not handle SgNullExpression nodes.");
+  case V_SgNullExpression: return NumberIntervalLattice::top(); //throw SPRAY::Exception("CppExprEvaluator can not handle SgNullExpression nodes.");
 
   // schroder3 (2016-08-25): Convert char to integer:
   case V_SgCharVal: {
     char value = isSgCharVal(node)->get_value();
+    return NumberIntervalLattice(Number(static_cast<int>(value)));
+  }
+  case V_SgEnumVal: {
+    int value = isSgEnumVal(node)->get_value();
     return NumberIntervalLattice(Number(static_cast<int>(value)));
   }
 
@@ -383,13 +388,28 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
   }
   case V_SgFunctionCallExp: {
-    if(SgNodeHelper::getFunctionName(node)=="__assert_fail") {
-      return NumberIntervalLattice::bot();
-    } else {
-      // schroder3 (2016-08-25): The CppExprEvaluator can not handle calls. Instead, calls should be handled by the corresponding transfer function. This call is
-      //  probably inside an expresion and was therefore not handled by the transfer function. This means that the input is not normalized and we abort here
-      //  because even returning top would be wrong because the function call can change other variables.
-      throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " + node->unparseToString() + ").");
+    {
+      //cerr<<"AST:"<<AstTerm::astTermWithNullValuesToString(node);
+      string funName=SgNodeHelper::getFunctionName(node);
+      if(funName=="__assert_fail") {
+        return NumberIntervalLattice::bot();
+      } else {
+        if(getSkipSelectedFunctionCalls()) {
+          //cout<<"Warning: unknown function call inside expression: "<<node->unparseToString()<<". Assuming function is side-effect free."<<endl;
+          return NumberIntervalLattice::top();
+        } else {
+          // schroder3 (2016-08-25): The CppExprEvaluator can not
+          //  handle calls. Instead, calls should be handled by the
+          //  corresponding transfer function. This call is probably
+          //  inside an expresion and was therefore not handled by the
+          //  transfer function. This means that the input is not
+          //  normalized and we abort here because even returning top
+          //  would be wrong because the function call can change
+          //  other variables.
+          throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " 
+                                                      + node->unparseToString() + ").");
+        }
+      }
     }
   }
   default: // generates top element
@@ -438,4 +458,13 @@ SgNode* SPRAY::CppExprEvaluator::findExprRootNode(SgNode* node) {
     return 0;
   }
 }
+
+void SPRAY::CppExprEvaluator::setSkipSelectedFunctionCalls(bool flag) {
+  _skipSelectedFunctionCalls=flag;
+}
+
+bool SPRAY::CppExprEvaluator::getSkipSelectedFunctionCalls() {
+  return _skipSelectedFunctionCalls;
+}
+
 #endif

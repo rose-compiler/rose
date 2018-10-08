@@ -15,8 +15,10 @@
 
 | mov    eax, 0x00000001
 | int    0x80<-128>
-| hlt    
 0x00000000080480b9: not_call target=0xffffffffffffffff return=0xffffffffffffffff
+
+| hlt    
+0x00000000080480c0: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
 | call   0x08048118<callee>
 0x00000000080480c1:  is_call target=0x0000000008048118 return=0x00000000080480c6

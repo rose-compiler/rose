@@ -3,6 +3,7 @@
 #include <AsmUnparser_compat.h>
 #include <BinaryDataFlow.h>
 #include <BinaryStackDelta.h>
+#include <CommandLine.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -147,7 +148,9 @@ struct StackDeltaWorker {
             trace <<"stack-delta for " <<function->printableName() <<" took " <<t <<" seconds\n";
         }
 
+        // Progress reports
         ++progress;
+        partitioner.updateProgress("stack-delta", progress.ratio());
     }
 };
 
@@ -155,7 +158,7 @@ struct StackDeltaWorker {
 // so that callees are before callers.
 void
 Partitioner::allFunctionStackDelta() const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "stack-delta analysis");

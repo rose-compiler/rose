@@ -56,8 +56,8 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
       num=evalExpression(lab, caseExpr, pstate);
     } else {
       // case NUM1 ... NUM2:
-      NumberIntervalLattice numStart=evalExpression(lab, caseExpr, pstate);;
-      NumberIntervalLattice numEnd=evalExpression(lab, caseExprOptionalRangeEnd, pstate);;
+      NumberIntervalLattice numStart=evalExpression(lab, caseExpr, pstate);
+      NumberIntervalLattice numEnd=evalExpression(lab, caseExprOptionalRangeEnd, pstate);
       num=NumberIntervalLattice::join(numStart,numEnd);
       //cout<<"DEBUG: range: "<<num.toString()<<endl;
     }
@@ -74,7 +74,12 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
       return;
     }
     if(varId.isValid()) {
+#if 1
       ips.setVariable(varId,num);
+#else
+      // join with any value that flows in [for testing only]
+      ips.setVariable(varId,NumberIntervalLattice::join(num,ips.getVariable(varId)));
+#endif
     }
   } else {
     cerr<<"Error: switch condition not a SgExprStmt. Unsupported program structure."<<endl;
@@ -167,8 +172,15 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   ips.addVariable(varId);
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);
-  if(initExp) {
-    //NumberIntervalLattice res=_cppExprEvaluator->evaluate(initExp,ips);
+
+  // Static local variables in functions are always set to top irrespective of their initialization,
+  // since this would require a calling context abstraction which is not available yet.
+  // in all other cases the initializer is analyzed.
+  if(SageInterface::isStatic(declnode)) {
+    NumberIntervalLattice res; // 
+    res.setTop();
+    ips.setVariable(varId,res);
+  } else if(initExp) {
     NumberIntervalLattice res=evalExpression(lab,initExp,ips);
     ROSE_ASSERT(!res.isBot());
     ips.setVariable(varId,res);
@@ -183,11 +195,22 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
 void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
   int paramNr=0;
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
-  for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
-    VariableId paramId=getParameterVariableId(paramNr);
-    ips.addVariable(paramId);
-    ips.setVariable(paramId,evalExpression(lab,*i,ips));
-    paramNr++;
+  // TODO: handle external function call: do not add paramters and model pointer arguments
+  //cout<<"DEBUG: label: "<<lab.toString()<<" is-external: "<<getLabeler()->isExternalFunctionCallLabel(lab)<<endl;
+  if(getLabeler()->isExternalFunctionCallLabel(lab)) {
+    //cout<<"DEBUG: external function call detected: "<<callExp->unparseToString()<<endl;
+    // arguments must be processed for worst-case assumptions: any pointer/address passed can be used by external function to potentially modifiy reachable memory cells
+    // an external function my modify any address-taken variable in the program (including global variables)
+    SPRAY::PointerAnalysisInterface* pa=getPointerAnalysisInterface();
+    ips.topifyVariableSet(pa->getModByPointer());
+  } else {
+    //cout<<"DEBUG: function call detected: "<<callExp->unparseToString()<<endl;
+    for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
+      VariableId paramId=getParameterVariableId(paramNr);
+      ips.addVariable(paramId);
+      ips.setVariable(paramId,evalExpression(lab,*i,ips));
+      paramNr++;
+    }
   }
 }
 /*! 
@@ -200,7 +223,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
     cerr<<"Error: transferFunctionCallReturn: compound assignment of function call results not supported. Normalization required."<<endl;
     exit(1);
   }
-  // determine variable-id of dedivated variable for holding the return value
+  // determine variable-id of dedicated variable for holding the return value
   VariableId resVarId=getResultVariableId();
   if(lhsVar!=0) {
     //cout<<"DEBUG: updated var=f(...)."<<endl;
@@ -254,4 +277,9 @@ SPRAY::CppExprEvaluator* SPRAY::IntervalTransferFunctions::getCppExprEvaluator()
 
 void SPRAY::IntervalTransferFunctions::setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval) {
   _cppExprEvaluator=expEval;
+}
+
+void SPRAY::IntervalTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
+  ROSE_ASSERT(getCppExprEvaluator());
+  getCppExprEvaluator()->setSkipSelectedFunctionCalls(flag);
 }

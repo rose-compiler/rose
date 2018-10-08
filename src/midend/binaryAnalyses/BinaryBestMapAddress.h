@@ -3,6 +3,7 @@
 
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
+#include <Progress.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {
@@ -43,11 +44,12 @@ private:
     bool upToDate_;                                     // are results_ up-to-date w.r.t. address sets?
     size_t maxMatches_;                                 // maximum number of matches possible for results_
     size_t nBits_;                                      // number of bits in an address
+    Progress::Ptr progress_;                            // for progress reporting
 
 public:
     /** Construct an empty analysis. */
     BestMapAddress()
-        : upToDate_(true), maxMatches_(0), nBits_(0) {}
+        : upToDate_(true), maxMatches_(0), nBits_(0), progress_(Progress::instance()) {}
 
     /** Clear gathered addresses.
      *
@@ -68,6 +70,16 @@ public:
      *
      *  This is called automatically by @ref Rose::Diagnostics::initialize. */
     static void initDiagnostics();
+
+    /** Property: Progress reporter.
+     *
+     *  Optional progress reporter object. If non-null, then some of the long-running methods will update this object with
+     *  periodic progress reports.
+     *
+     * @{ */
+    Progress::Ptr progress() const { return progress_; }
+    void progress(const Progress::Ptr &p) { progress_ = p; }
+    /** @} */
 
     /** Property: Number of bits in an address.
      *
@@ -95,8 +107,11 @@ public:
      *
      *  Given a configured partitioning engine with a memory map already defined, disassemble and partition the executable
      *  areas of the map that fall within the specified interval and create the two lists of addresses used by future
-     *  analysis.  See the class description for details about these lists. */
-    void gatherAddresses(Partitioner2::Engine&);
+     *  analysis.  See the class description for details about these lists.
+     *
+     *  Although calls to this method can be expensive, the progress report associated with this analyzer (if any) is not used;
+     *  rather, the progress reporting associated with the @p engine is used instead. */
+    void gatherAddresses(Partitioner2::Engine &engine);
 
     /** Insert a function entry address.
      *
@@ -131,8 +146,11 @@ public:
      *  line up with the target addresses. Only those entry addresses and target addresses that fall within the specified
      *  intervals are used.
      *
-     *  This method operates in parallel according to the global setting for the number of threads. This property is normally
+     *  This method operates in parallel according to the global setting for the number of threads. That property is normally
      *  configured with the --threads command-line switch and stored in @ref CommandlineProcessing::GenericSwitchArgs::threads.
+     *
+     *  If a progress reporting object has been configured for this analysis, then this method periodically updates it with
+     *  progress reports.
      *
      *  Returns a reference to the analysis object so for easy chaining to a query. */
     BestMapAddress& analyze(const AddressInterval &restrictEntryAddresses = AddressInterval::whole(),

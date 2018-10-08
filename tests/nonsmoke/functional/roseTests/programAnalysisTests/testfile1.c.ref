@@ -36,7 +36,7 @@ goto exit;
 modref:  ;  readref:  ;  killref: 
 i < 2 * j;
 modref:  ;  readref:  i j ;  killref: 
-for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}
+for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}
 modref:  i i i i j j ;  readref:  i j i i i i i j j i ;  killref:  i i i i j j
 Unknown 
 i = 500;
@@ -45,7 +45,7 @@ i > j;
 modref:  ;  readref:  i j ;  killref: 
 i;
 modref:  ;  readref:  i ;  killref: 
-case 200:{printf("init");break;}
+case 200:printf("init");
 modref:  ;  readref:  ;  killref: 
 Unknown 
 printf("init");
@@ -59,7 +59,7 @@ Unknown
 printf(" tmp");
 modref:  ;  readref:  ;  killref: 
 Unknown 
-case 2:{printf(" error");return ;}
+case 2:printf(" error");
 modref:  ;  readref:  ;  killref: 
 Unknown 
 printf(" error");
@@ -71,8 +71,8 @@ case 120:continue;
 modref:  ;  readref:  ;  killref: 
 continue;
 modref:  ;  readref:  ;  killref: 
-case 100:{printf(" ending");i = i + 1;break;}
-modref:  i ;  readref:  i ;  killref:  i
+case 100:printf(" ending");
+modref:  ;  readref:  ;  killref: 
 Unknown 
 printf(" ending");
 modref:  ;  readref:  ;  killref: 
@@ -85,7 +85,7 @@ case 98:goto exit;
 modref:  ;  readref:  ;  killref: 
 goto exit;
 modref:  ;  readref:  ;  killref: 
-case 101:{i = i - 1;break;}
+case 101:i = i - 1;
 modref:  i ;  readref:  i ;  killref:  i
 i = i - 1;
 modref:  i ;  readref:  i ;  killref:  i
@@ -105,7 +105,7 @@ i == 101;
 modref:  ;  readref:  i ;  killref: 
 break;
 modref:  ;  readref:  ;  killref: 
-exit:
+exit:return ;
 modref:  ;  readref:  ;  killref: 
 return ;
 modref:  ;  readref:  ;  killref: 

@@ -2,7 +2,6 @@
  * Combined parallel for
  * with multiple clauses
  * */
-#include <omp.h>
 int main(void)
 {
   int i, a[1000];

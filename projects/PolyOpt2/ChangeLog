@@ -1,5 +1,34 @@
 2017-06-23  Louis-Noel Pouchet  <pouchet@colostate.edu>
 
+	* projects/PolyOpt2/tests/Makefile.am,
+	* projects/PolyOpt2/tests/scripts/checker.sh: Update to run make check
+	in builddir (no more modification of srcdir).
+
+	* projects/PolyOpt2/tests/unitary/assigniter.passthru.c,
+	* projects/PolyOpt2/tests/unitary/assigniter2.passthru.c,
+	* projects/PolyOpt2/tests/unitary/basicnest.passthru.c,
+	* projects/PolyOpt2/tests/unitary/binop.passthru.c,
+	* projects/PolyOpt2/tests/unitary/classicloop.passthru.c,
+	* projects/PolyOpt2/tests/unitary/comments.passthru.c,
+	* projects/PolyOpt2/tests/unitary/complexcond.passthru.c,
+	* projects/PolyOpt2/tests/unitary/complexop.passthru.c,
+	* projects/PolyOpt2/tests/unitary/field.passthru.c,
+	* projects/PolyOpt2/tests/unitary/functioncall2.passthru.c,
+	* projects/PolyOpt2/tests/unitary/intaddit.passthru.c,
+	* projects/PolyOpt2/tests/unitary/negassign.passthru.c,
+	* projects/PolyOpt2/tests/unitary/parenthesis.passthru.c,
+	* projects/PolyOpt2/tests/unitary/redefiter.passthru.c,
+	* projects/PolyOpt2/tests/unitary/simplecond.passthru.c,
+	* projects/PolyOpt2/tests/unitary/simpleloop.passthru.c,
+	* projects/PolyOpt2/tests/unitary/ternary.passthru.c,
+	* projects/PolyOpt2/tests/unitary/twocondincond.passthru.c,
+	* projects/PolyOpt2/tests/unitary/twoconds.passthru.c,
+	* projects/PolyOpt2/tests/unitary/underscore.passthru.c: Update test suite
+	to be compliant with new removal of useless variable declarations after polyopt
+	transformation.
+
+2017-06-23  Louis-Noel Pouchet  <pouchet@colostate.edu>
+
 	* projects/PolyOpt2/tests/scripts/checker.sh: update to loosen
 	constraints on the order of iterator declaration.
 

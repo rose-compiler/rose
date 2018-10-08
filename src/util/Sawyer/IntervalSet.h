@@ -730,6 +730,13 @@ public:
         tmp.eraseMultiple(other);
         return tmp;
     }
+
+    /** Subtract an interval from this set. */
+    IntervalSet operator-(const Interval &interval) const {
+        IntervalSet tmp = *this;
+        tmp.erase(interval);
+        return tmp;
+    }
 };
 
 } // namespace

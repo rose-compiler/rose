@@ -70,7 +70,7 @@ public:
   VariableId varId;
   AbstractValue varValue;
   string toString(VariableIdMapping& varIdMapping) {
-    string varNameString=varIdMapping.uniqueShortVariableName(varId);
+    string varNameString=varIdMapping.uniqueVariableName(varId);
     string varValueString=varValue.toString();
     return varNameString+"="+varValueString;
   }
@@ -110,6 +110,8 @@ class FIConstAnalysis {
   // removes all variables that are NOT in this provided set
   void filterVariables(VariableIdSet& variableIdSet);
 
+  static void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map);
+
  private:
   // Expression evaluation functions
   EvalValueType eval(SgExpression* node);
@@ -124,7 +126,7 @@ class FIConstAnalysis {
   bool isConstVal(SgExpression* node);
   bool isRelationalOperator(SgExpression* node);
 
-private:
+ private:
   VariableIdMapping* global_variableIdMapping;
   VarConstSetMap _varConstSetMap;
   VariableConstInfo* global_variableConstInfo;

@@ -87,7 +87,6 @@ if (with-roseQt)
   add_definitions(-DQT3_SUPPORT)
 
   add_subdirectory(AstEquivalence)
-  add_subdirectory(BinQ)
   add_subdirectory(QtDesignerPlugins)
   add_subdirectory(RoseQt)
 endif()

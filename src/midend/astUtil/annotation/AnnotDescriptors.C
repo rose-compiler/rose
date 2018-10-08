@@ -159,6 +159,22 @@ bool TypeDescriptor:: read(istream& in)
   }
   return true;
 }
+
+//! Read in a variable name, supporting qualified names
+bool NameDescriptor:: read(istream& in)
+{
+  if (!StringDescriptor::read(in))// read the first string
+        return false;
+  char c = peek_ch(in);
+  while ( c == ':' && peek_next(in,2) == "::") {
+     read_ch(in,':');
+     read_ch(in,':');
+     get_name() = get_name() + "::" + read_id(in);
+     c = peek_ch(in);
+  } 
+ return true;
+}
+
 #endif
 
 

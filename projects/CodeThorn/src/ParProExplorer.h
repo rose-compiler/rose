@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2016.
 
 #ifndef PAR_PRO_EXPLORER_H
 #define PAR_PRO_EXPLORER_H
@@ -13,6 +12,7 @@
 #include "ParProAnalyzer.h"
 #include "ParProLtlMiner.h"
 #include "SpotConnection.h"
+#include "Visualizer.h"
 
 // CodeThorn includes
 
@@ -35,6 +35,12 @@ namespace CodeThorn {
   enum RandomSubsetMode { PAR_PRO_NUM_SUBSETS_NONE, PAR_PRO_NUM_SUBSETS_FINITE, PAR_PRO_NUM_SUBSETS_INFINITE };
   enum LtlMode { PAR_PRO_LTL_MODE_NONE, PAR_PRO_LTL_MODE_CHECK, PAR_PRO_LTL_MODE_MINE };
 
+  /*!
+   * \brief Explores a system of parallel process graphs by means of (abstract) state-space 
+   exploration and/or LTL mining.
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParProExplorer {
   public:
     

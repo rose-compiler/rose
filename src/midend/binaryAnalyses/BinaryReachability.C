@@ -26,6 +26,11 @@ Reachability::cfg(const P2::ControlFlowGraph &g) {
     clearReachability();
 }
 
+void
+Reachability::replaceCfg(const P2::ControlFlowGraph &g) {
+    cfg_ = g;
+}
+
 unsigned
 Reachability::isIntrinsicallyReachable(size_t vertexId) const {
     ASSERT_require(vertexId < cfg_.nVertices());
@@ -80,12 +85,12 @@ Reachability::propagate() {
 }
 
 void
-Reachability::intrinsicallyReachable(size_t vertexId, unsigned how, bool doPropagate) {
+Reachability::intrinsicallyReachable(size_t vertexId, unsigned how, Propagate::Boolean doPropagate) {
     ASSERT_require(vertexId < cfg_.nVertices());
     if (how == intrinsicReachability_[vertexId])
         return;
     intrinsicReachability_[vertexId] = how;
-    if (doPropagate)
+    if (doPropagate != Propagate::NO)
         propagate();
 }
 
@@ -110,7 +115,7 @@ Reachability::markSpecialFunctions(const P2::Partitioner &partitioner) {
             reachable |= EXPORTED_FUNCTION;
 
         if (reachable != wasReachable) {
-            intrinsicallyReachable(vertex->id(), reachable, false /*do_not_propagate*/);
+            intrinsicallyReachable(vertex->id(), reachable, Propagate::NO);
             changed = true;
         }
     }

@@ -20,6 +20,7 @@ Label::Label() {
   }
 
 Label::Label(size_t labelId) {
+  ROSE_ASSERT(labelId!=NO_LABEL_ID);
   _labelId=labelId;
 }
 
@@ -72,23 +73,33 @@ size_t Label::getId() const {
   return _labelId;
 }
 
+std::string Label::toString() const {
+  if(_labelId==NO_LABEL_ID) {
+    return "NO_LABEL_ID";
+  } else {
+    stringstream ss;
+    ss<<_labelId;
+    return ss.str();
+  }
+}
+
 // friend function
 ostream& SPRAY::operator<<(ostream& os, const Label& label) {
-  os<<label._labelId;
+  os<<label.toString();
   return os;
 }
 
-LabelProperty::LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+LabelProperty::LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false),_isExternalFunctionCallLabel(false) {
 }
-LabelProperty::LabelProperty(SgNode* node):_isValid(true),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+LabelProperty::LabelProperty(SgNode* node):_isValid(true),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false),_isExternalFunctionCallLabel(false) {
 }
-LabelProperty::LabelProperty(SgNode* node, LabelType labelType):_isValid(true),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+LabelProperty::LabelProperty(SgNode* node, LabelType labelType):_isValid(true),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false),_isExternalFunctionCallLabel(false) {
 }
-LabelProperty::LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+LabelProperty::LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false),_isExternalFunctionCallLabel(false) {
   initializeIO(variableIdMapping);
   assert(_isValid);
 }
-LabelProperty::LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+LabelProperty::LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false),_isExternalFunctionCallLabel(false) {
   initializeIO(variableIdMapping); 
   assert(_isValid);
 }
@@ -233,14 +244,19 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgGotoStatement:
-  case V_SgVariableDeclaration:
   case V_SgLabelStatement:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgSwitchStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
+    return 1;
+
+    // declarations
+  case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
+  case V_SgEnumDeclaration:
+  case V_SgTypedefDeclaration:
     return 1;
 
     // represent all parallel omp constructs as nodes
@@ -324,6 +340,10 @@ void Labeler::createLabels(SgNode* root) {
     //   }
     if(isSgExprStatement(*i)||isSgReturnStmt(*i)/*||isSgVariableDeclaration(*i)*/)
       i.skipChildrenOnForward();
+    // MS 2018: skip templates (only label template instantiations)
+    if(isSgTemplateClassDeclaration(*i)||isSgTemplateClassDefinition(*i)) {
+      i.skipChildrenOnForward();
+    }
   }
   //std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
   //std::cout << "DEBUG: mappingLabelToLabelProperty:\n"<<this->toString()<<std::endl;
@@ -489,6 +509,14 @@ bool Labeler::isFunctionCallLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isFunctionCallLabel();
 }
 
+bool Labeler::isExternalFunctionCallLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].isExternalFunctionCallLabel();
+}
+
+void Labeler::setExternalFunctionCallLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].setExternalFunctionCallLabel();
+}
+
 bool Labeler::isFunctionCallReturnLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isFunctionCallReturnLabel();
 }
@@ -587,6 +615,16 @@ Labeler::iterator Labeler::begin() {
 Labeler::iterator Labeler::end() {
   return iterator(0,0);
 }
+
+bool LabelProperty::isExternalFunctionCallLabel() {
+  return _isExternalFunctionCallLabel;
+}
+
+void LabelProperty::setExternalFunctionCallLabel() {
+  ROSE_ASSERT(isFunctionCallLabel());
+  _isExternalFunctionCallLabel=true;
+}
+
 
 
 /*

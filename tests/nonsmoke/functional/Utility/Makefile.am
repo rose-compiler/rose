@@ -109,6 +109,35 @@ graphIO.passed: $(top_srcdir)/scripts/test_exit_status graphIO
 		CMD="./graphIO"			\
 		$< $@
 
+########################################################################################################################
+# Test asynchronous progress reporting
+########################################################################################################################
+
+noinst_PROGRAMS += progressReports
+progressReports_SOURCES = progressReports.C
+
+TEST_TARGETS += progressReports.passed
+
+progressReports.passed: $(top_srcdir)/scripts/test_exit_status progressReports
+	@$(RTH_RUN)						\
+		TITLE="asynchronous progress reports [$@]"	\
+		CMD="./progressReports"				\
+		$< $@
+
+########################################################################################################################
+# Test hash functions
+########################################################################################################################
+
+noinst_PROGRAMS += hash
+hash_SOURCES = hash.C
+
+TEST_TARGETS += hash.passed
+
+hash.passed: $(top_srcdir)/scripts/test_exit_status progressReports
+	@$(RTH_RUN)						\
+		TITLE="hash algorithms [$@]"			\
+		CMD="./hash"					\
+		$< $@
 
 ########################################################################################################################
 # Boilerplate

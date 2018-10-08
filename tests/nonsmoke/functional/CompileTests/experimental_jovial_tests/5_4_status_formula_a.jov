@@ -1,0 +1,7 @@
+START
+PROGRAM testStatusFormula ;
+BEGIN
+  ivar = 13;
+  ivar = V(RED);
+END
+TERM

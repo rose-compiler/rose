@@ -27,10 +27,18 @@ namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a sequence of distinct instructions with linear control flow from the first instruction to the last.  No
  *  edges are permitted to enter or leave the basic block except to the first instruction and from the last instruction,
- *  respectively.  The instructions of a basic block are not required to be contiguous or non-overlapping.
+ *  respectively.  The instructions of a basic block are not required to be contiguous or non-overlapping or at increasing
+ *  addresses.
+ *
+ *  In the absense of interrupt handling, the instructions of a basic block are executed entirely. In the absense of
+ *  multi-threading, no other instructions intervene.
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
- *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
+ *  threads.  The memory for these objects is shared and managed by a shared pointer implementation.
+ *
+ *  A basic block may belong to multiple functions.
+ *
+ *  See also, @ref SgAsmBlock which is how a basic block (and some other things) are represented in the AST. */
 class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
@@ -48,7 +56,7 @@ public:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(expr_);
             s & BOOST_SERIALIZATION_NVP(type_);
             s & BOOST_SERIALIZATION_NVP(confidence_);
@@ -69,6 +77,7 @@ public:
 
         /** Type of successor. */
         EdgeType type() const { return type_; }
+        void type(EdgeType t) { type_ = t; }
 
         /** Confidence level of this successor.  Did we prove that this is a successor, or only assume it is?
          *
@@ -135,7 +144,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not saved
         s & BOOST_SERIALIZATION_NVP(isFrozen_);
         s & BOOST_SERIALIZATION_NVP(startVa_);
@@ -370,8 +379,12 @@ public:
      *  The control flow successors indicate how control leaves the end of a basic block. These successors should be the
      *  most basic level of information; e.g., a basic block that results in an unconditional function call should not have
      *  an edge representing the return from that call. The successors are typically computed in the partitioner and cached
-     *  in the basic block. */
+     *  in the basic block.
+     *
+     *  @{ */
     const Sawyer::Cached<Successors>& successors() const { return successors_; }
+    void successors(const Successors&);
+    /** @} */
 
     /** Ghost successors.
      *

@@ -39,10 +39,10 @@ namespace CodeThorn {
 
   class EState {
   public:
-  EState():_label(Label()),_pstate(0),_constraints(0){}
-  EState(Label label, const CodeThorn::PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
-  EState(Label label, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
-  EState(Label label, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset, CodeThorn::InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
+    EState():_label(Label()),_pstate(0),_constraints(0){}
+    EState(Label label, const CodeThorn::PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
+    EState(Label label, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
+    EState(Label label, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset, CodeThorn::InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
     
     std::string toString() const;
     std::string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
@@ -70,7 +70,7 @@ namespace CodeThorn {
     Label _label;
     const CodeThorn::PState* _pstate;
     const CodeThorn::ConstraintSet* _constraints;
- public:
+  public:
     CodeThorn::InputOutput io;
   };
 

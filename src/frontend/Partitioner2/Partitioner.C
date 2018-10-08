@@ -8,17 +8,34 @@
 
 #include "AsmUnparser_compat.h"
 #include "BinaryUnparserBase.h"
-#include "SymbolicSemantics2.h"
+#include "CommandLine.h"
 #include "Diagnostics.h"
+#include "RecursionCounter.h"
+#include "SymbolicSemantics2.h"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/config.hpp>
 #include <boost/foreach.hpp>
+#include <boost/thread.hpp>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
-#include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
+
+#ifndef BOOST_WINDOWS
+    #include <errno.h>
+    #include <fcntl.h>
+    #include <fstream>
+    #include <string.h>
+    #include <unistd.h>
+    #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        #include <boost/archive/binary_iarchive.hpp>
+        #include <boost/archive/binary_oarchive.hpp>
+        #include <boost/iostreams/device/file_descriptor.hpp>
+        #include <boost/iostreams/stream.hpp>
+    #endif
+#endif
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace Rose::Diagnostics;
@@ -28,16 +45,16 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 Partitioner::Partitioner()
-    : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);
 }
 
 Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
-    : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
+    : memoryMap_(map), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
       autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(disassembler, map);
 }
 
@@ -48,8 +65,8 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
 // after a while.
 Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : solver_(NULL), progressTotal_(0), isReportingProgress_(true), autoAddCallReturnEdges_(false),
-      assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);                             // initialize just like default
     *this = other;                                      // then delegate to the assignment operator
 }
@@ -65,8 +82,6 @@ Partitioner::operator=(const Partitioner &other) {
     vertexIndex_.clear();                               // initialized by init(other)
     aum_ = other.aum_;
     solver_ = other.solver_;
-    progressTotal_ = other.progressTotal_;
-    isReportingProgress_ = other.isReportingProgress_;
     functions_ = other.functions_;
     autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
     assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
@@ -79,6 +94,13 @@ Partitioner::operator=(const Partitioner &other) {
     functionPrologueMatchers_ = other.functionPrologueMatchers_;
     functionPaddingMatchers_ = other.functionPaddingMatchers_;
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
+
+    {
+        SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
+        cfgProgressTotal_ = other.cfgProgressTotal_;
+        progress_ = other.progress_;
+    }
+
     init(other);                                        // copies graph iterators, etc.
     return *this;
 }
@@ -87,6 +109,9 @@ Partitioner::~Partitioner() {}
 
 void
 Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
+    // Start with a large hash table to reduce early rehashing. There's a high chance that we'll need this much.
+    vertexIndex_.rehash(100000);
+
     if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->unparser()->copy();
@@ -219,28 +244,62 @@ operator<<(std::ostream &out, const ProgressBarSuffix &x) {
     return out;
 };
 
-void
-Partitioner::reportProgress() const {
-    // All partitioners share a single progress bar.
-    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+Progress::Ptr
+Partitioner::progress() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return progress_;
+}
 
-    if (0==progressTotal_) {
+void
+Partitioner::progress(const Progress::Ptr &p) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    progress_ = p;
+}
+
+void
+Partitioner::updateProgress(const std::string &phase, double completion) const {
+    Progress::Ptr progress;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        progress = progress_;
+    }
+    if (progress)
+        progress->update(Progress::Report(phase, completion));
+}
+
+// Updates progress information during the main partitioning phase. The progress is the ratio of the number of bytes
+// represented in the CFG to the number of executable bytes in the memory map.
+void
+Partitioner::updateCfgProgress() {
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (!progress_)
+            return;
+    }
+
+    // How many bytes are mapped with execute permission
+    if (0 == cfgProgressTotal_) {
         BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
             if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
-                progressTotal_ += node.key().size();
+                cfgProgressTotal_ += node.key().size();
         }
     }
-    
-    if (!bar)
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[MARCH], "cfg");
 
-    if (progressTotal_) {
-        // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
-        // appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also immediately
-        // updates the progress bar (we don't want that, so update only if necessary).
+    double completion = cfgProgressTotal_ > 0 ? (double)nBytes() / cfgProgressTotal_ : 0.0;
+    updateProgress("partition", completion);
+
+    // All partitioners share a single progress bar for the CFG completion amount
+    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+    if (!bar)
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(cfgProgressTotal_, mlog[MARCH], "cfg");
+
+    // Update the progress bar. If multiple partitioners are sharing the progress bar then also make sure that the lower and
+    // upper limits are appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also
+    // immediately updates the progress bar (we don't want that, so update only if necessary).
+    if (cfgProgressTotal_) {
         bar->suffix(ProgressBarSuffix(this));
-        if (bar->domain().first!=0 || bar->domain().second!=progressTotal_) {
-            bar->value(0, nBytes(), progressTotal_);
+        if (bar->domain().first!=0 || bar->domain().second!=cfgProgressTotal_) {
+            bar->value(0, nBytes(), cfgProgressTotal_);
         } else {
             bar->value(nBytes());
         }
@@ -359,8 +418,12 @@ Partitioner::newOperators() const {
 
 BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators(SemanticMemoryParadigm memType) const {
+    //  Create a new SMT solver each call because this might be called from different threads and each thread should have its
+    //  own SMT solver.
+    SmtSolver::Ptr solver = solver_ ? solver_->create() : SmtSolver::Ptr();
+
     Semantics::RiscOperatorsPtr ops =
-        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, memType);
+        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver, memType);
     BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->memoryMap(memoryMap_);
@@ -528,7 +591,7 @@ done:
                 retval->insertSuccessor(successorVa, nBits);
         }
     }
-    
+
     retval->freeze();
     return retval;
 }
@@ -547,7 +610,7 @@ Partitioner::truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &pla
         throw BasicBlockError(bblock, basicBlockName(bblock) + " cannot be truncated at its initial instruction");
     if (!bblock->instructionExists(insn)) {
         throw BasicBlockError(bblock, basicBlockName(bblock) +
-                              " does not contain instruction \"" + unparseInstructionWithAddress(insn) + "\""
+                              " does not contain instruction \"" + insn->toString() + "\""
                               " for truncation");
     }
 
@@ -640,7 +703,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
                 edgeType = E_FUNCTION_RETURN;
             }
         }
-        
+
         CfgEdge edge(edgeType, successor.confidence());
         if (successor.expr()->is_number()) {
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
@@ -718,7 +781,7 @@ Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
 }
 
 BasicBlock::Successors
-Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
     BasicBlock::Successors successors;
 
@@ -728,7 +791,8 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
     SgAsmInstruction *lastInsn = bb->instructions().back();
     RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
-    if (BaseSemantics::StatePtr state = bb->finalState()) {
+    BaseSemantics::StatePtr state;
+    if (precision > Precision::LOW && (state = bb->finalState())) {
         // Use our own semantics if we have them.
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
@@ -784,7 +848,11 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
             ++i;
         }
     }
-    bb->successors() = successors;
+
+    // Cache the result, but not for low-precision results since that would mean a later call for high-precision results would
+    // only return low-precision results.
+    if (precision > Precision::LOW)
+        bb->successors() = successors;
     return successors;
 }
 
@@ -795,25 +863,30 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
 
     if (bb->isEmpty() || bb->ghostSuccessors().getOptional().assignTo(ghosts))
         return ghosts;
-    
-    std::set<rose_addr_t> insnVas;
+
+    // Addresses of all instructions in this basic block
+    Sawyer::Container::Set<rose_addr_t> insnVas;
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
         insnVas.insert(insn->get_address());
-    
-    const BasicBlock::Successors &successors = basicBlockSuccessors(bb);
+
+    // Find naive per-instruction successors that are not pointing to another instruction and which aren't in the set of basic
+    // block successors.  "Naive" successors are obtained by considering each insn in isolation (e.g., conditional branches
+    // have two naive successors even if the predicate is opaque.
+    const BasicBlock::Successors &bblockSuccessors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        BOOST_FOREACH (rose_addr_t naiveVa, insn->getSuccessors(&complete)) {
-            if (insnVas.find(naiveVa)==insnVas.end()) {
+        BOOST_FOREACH (rose_addr_t naiveSuccessor, insn->getSuccessors(&complete)) {
+            if (!insnVas.exists(naiveSuccessor)) {
+                // Is naiveSuccessor also a basic block successor?
                 bool found = false;
-                BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
-                    if (successor.expr()->is_number() && successor.expr()->get_number()==naiveVa) {
+                BOOST_FOREACH (const BasicBlock::Successor &bblockSuccessor, bblockSuccessors) {
+                    if (bblockSuccessor.expr()->is_number() && bblockSuccessor.expr()->get_number()==naiveSuccessor) {
                         found = true;
                         break;
                     }
                 }
                 if (!found)
-                    ghosts.insert(naiveVa);
+                    ghosts.insert(naiveSuccessor);
             }
         }
     }
@@ -838,123 +911,124 @@ Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb, bool *isCom
 }
 
 bool
-Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
     bool retval = false;
 
     if (bb->isEmpty() || bb->isFunctionCall().getOptional().assignTo(retval))
         return retval;                                  // already cached
 
+    // Avoid infinite recursion
+    static size_t recursionDepth = 0;
+    RecursionCounter recursion(recursionDepth);
+    if (recursionDepth > 2 /*arbitrary*/)
+        return false;      // if we can't prove it, assume false
+
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
     // Use our own semantics if we have them.
-    if (BaseSemantics::StatePtr state = bb->finalState()) {
-        // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
-        // Is the block fall-through address equal to the value on the top of the stack?
-        ASSERT_not_null(bb->dispatcher());
-        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
-        const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
-        const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-        const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-        rose_addr_t returnVa = bb->fallthroughVa();
-        BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
-        BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
-        BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
-        topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
-        BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
-        bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
-        if (!isRetAddrOnTopOfStack) {
-            bb->isFunctionCall() = false;
-            return false;
-        }
-        
-        // If the only successor is also the fall-through address then this isn't a function call.  This case handles code that
-        // obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and B are
-        // consecutive instruction addresses.
-        BasicBlock::Successors successors = basicBlockSuccessors(bb);
-        if (1==successors.size() && successors[0].expr()->is_number() && successors[0].expr()->get_number()==returnVa) {
-            bb->isFunctionCall() = false;
-            return false;
-        }
-
-        // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after all.
-        if (checkingCallBranch()) {
-            bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
-            BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
-                // Find callee basic block
-                if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-                rose_addr_t calleeVa = successor.expr()->get_number();
-                BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
-                if (!calleeBb) {
-                    // Avoid never-ending recursive calls to discoverBasicBlock.
-                    // FIXME[Robb P Matzke 2017-02-03]: This only fixes direct recursion to the same block, but the infinite
-                    // recursion can also be triggered by mutually recursive functions. I'm not fixing that at the moment.
-                    if (calleeVa == bb->address()) {
-                        allCalleesPopWithoutReturning = false;
-                        break;
-                    }
-                    calleeBb = discoverBasicBlock(calleeVa);
-                }
-                if (!calleeBb) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // If the called block is also a function return (i.e., we're calling a function which is only one block long),
-                // then of course the block will pop the return address even though it's a legitimate function.
-                if (basicBlockIsFunctionReturn(calleeBb)) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Get callee block's initial and final states
-                BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
-                BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
-                if (!calleeState0 || !calleeStateN) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
-                // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll
-                // substitute a concrete value for the stack pointer.
-                BaseSemantics::SValuePtr sp0 =
-                    calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-                BaseSemantics::SValuePtr spN =
-                    calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-
-                SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-                SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
-                SymbolicExpr::Ptr spNExpr =
-                    Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew);
-                SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew);
-
-                // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false), NULL)) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-
-                // Did the callee return to somewhere other than caller's return address?
-                BaseSemantics::SValuePtr ipN =
-                    calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
-                if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
-                    allCalleesPopWithoutReturning = false;
-                    break;
-                }
-            }
-            if (allCalleesPopWithoutReturning) {
+    if (precision > Precision::LOW) {
+        if (BaseSemantics::StatePtr state = bb->finalState()) {
+            // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
+            // Is the block fall-through address equal to the value on the top of the stack?
+            ASSERT_not_null(bb->dispatcher());
+            BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+            const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
+            const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
+            const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
+            rose_addr_t returnVa = bb->fallthroughVa();
+            BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
+            BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
+            BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
+            topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
+            BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
+            bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
+            if (!isRetAddrOnTopOfStack) {
                 bb->isFunctionCall() = false;
                 return false;
             }
+
+            // If the only successor is also the fall-through address then this isn't a function call.  This case handles code
+            // that obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and
+            // B are consecutive instruction addresses.
+            BasicBlock::Successors successors = basicBlockSuccessors(bb);
+            if (1==successors.size() && successors[0].expr()->is_number() && successors[0].expr()->get_number()==returnVa) {
+                bb->isFunctionCall() = false;
+                return false;
+            }
+
+            // If all callee blocks pop the return address without returning, then this perhaps isn't a function call after
+            // all.
+            if (checkingCallBranch()) {
+                bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
+                BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
+                    // Find callee basic block
+                    if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+                    rose_addr_t calleeVa = successor.expr()->get_number();
+                    BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
+                    if (!calleeBb)
+                        calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
+                    if (!calleeBb) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // If the called block is also a function return (i.e., we're calling a function which is only one block
+                    // long), then of course the block will pop the return address even though it's a legitimate function.
+                    if (basicBlockIsFunctionReturn(calleeBb)) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Get callee block's initial and final states
+                    BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
+                    BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
+                    if (!calleeState0 || !calleeStateN) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
+                    // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore,
+                    // we'll substitute a concrete value for the stack pointer.
+                    BaseSemantics::SValuePtr sp0 =
+                        calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+                    BaseSemantics::SValuePtr spN =
+                        calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+
+                    SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
+                    SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+                    SymbolicExpr::Ptr spNExpr =
+                        Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+                    SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
+
+                    // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
+                    if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+
+                    // Did the callee return to somewhere other than caller's return address?
+                    BaseSemantics::SValuePtr ipN =
+                        calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
+                    if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
+                }
+                if (allCalleesPopWithoutReturning) {
+                    bb->isFunctionCall() = false;
+                    return false;
+                }
+            }
+
+            // This appears to be a function call
+            bb->isFunctionCall() = true;
+            return true;
         }
-        
-        // This appears to be a function call
-        bb->isFunctionCall() = true;
-        return true;
     }
 
     // An x86 idiom is two consecutive instructions "call next: pop ebx" where "next" is the address of the POP instruction
@@ -974,7 +1048,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             }
         }
     }
-    
+
     // We don't have semantics, so delegate to the SgAsmInstruction subclass.
     retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
     bb->isFunctionCall() = retval;
@@ -993,18 +1067,37 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 
     // Use our own semantics if we have them.
     if (BaseSemantics::StatePtr state = bb->finalState()) {
-        // This is a function return if the instruction pointer has the same value as the memory for one past the end of the
-        // stack pointer.  The assumption is that a function return pops the return-to address off the top of the stack and
-        // unconditionally branches to it.  It may pop other things from the stack as well.  Assuming stacks grow down. This
-        // will not work for callee-cleans-up returns where the callee also pops off some arguments that were pushed before
-        // the call.
+        // This is a function return if the new instruction pointer (after processing this basic block semantically) has a
+        // value equal to a return address which is now past the top of the stack.
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
         const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP),
-                                                       ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8)));
+
+        // Find the pointer to the return address. Since the return instruction (e.g., x86 RET) has been processed semantically
+        // already, the return address is beyond the end of the stack.  Here we handle architecture-specific instructions that
+        // might pop more than just the return address (e.g., x86 "RET 4").
+        BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
+        if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(lastInsn)) {
+            if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
+                x86insn->nOperands() == 1 &&
+                isSgAsmIntegerValueExpression(x86insn->operand(0))) {
+                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
+                                  ->get_absoluteValue();
+                nbytes += REG_IP.get_nbits() / 8;       // size of return address
+                stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), nbytes));
+            }
+        }
+        if (!stackOffset) {
+            // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
+            // downward.
+            stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
+        }
+        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP), stackOffset);
+
+        // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
+        // pointer. If equal, then the basic block returns to the caller.
         BaseSemantics::SValuePtr retAddr = ops->undefined_(REG_IP.get_nbits());
         retAddr = ops->readMemory(REG_SS, retAddrPtr, retAddr, ops->boolean_(true));
         BaseSemantics::SValuePtr isEqual = ops->equalToZero(ops->add(retAddr, ops->negate(ops->readRegister(REG_IP))));
@@ -1359,8 +1452,7 @@ void
 Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
     ASSERT_require(newVertex!=cfg_.vertices().end());
     ASSERT_require(newVertex->value().type() == V_BASIC_BLOCK);
-    if (isReportingProgress_)
-        reportProgress();
+    updateCfgProgress();
     rose_addr_t startVa = newVertex->value().address();
     BasicBlock::Ptr bblock = newVertex->value().bblock();
 
@@ -1748,7 +1840,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 }
             }
         }
-        
+
         // Show instructions in execution order
         if (showBlocks) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
@@ -1812,7 +1904,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 out <<"unknown\n";
             }
         }
-        
+
         // Sort outgoing edges according to destination (makes comparisons easier)
         std::vector<ControlFlowGraph::ConstEdgeIterator> sortedOutEdges;
         for (ControlFlowGraph::ConstEdgeIterator ei=vertex->outEdges().begin(); ei!=vertex->outEdges().end(); ++ei)
@@ -1861,7 +1953,7 @@ Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
         if (startVa == *unmappedVa) {
             BOOST_FOREACH (const FunctionPrologueMatcher::Ptr &matcher, functionPrologueMatchers_) {
                 if (matcher->match(*this, startVa)) {
-                        std::vector<Function::Ptr> newFunctions = matcher->functions();
+                    std::vector<Function::Ptr> newFunctions = matcher->functions();
                     ASSERT_forbid(newFunctions.empty());
                     return newFunctions;
                 }
@@ -1995,7 +2087,7 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
         attachFunction(newFunction);
         return newFunction;
     }
-    
+
     // Perhapse use this new function's name.  If the names are the same except for the "@plt" part then use the version with
     // the "@plt".
     if (existingFunction->name().empty()) {
@@ -2044,10 +2136,10 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
 
         attachFunction(existingFunction);
     }
-    
+
     return existingFunction;
 }
-    
+
 size_t
 Partitioner::attachFunctionBasicBlocks(const Functions &functions) {
     size_t nNewBlocks = 0;
@@ -2147,13 +2239,15 @@ struct CallingConventionWorker {
             trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<" seconds\n";
         }
 
+        // Update progress reports
         ++progress;
+        partitioner.updateProgress("call-conv", progress.ratio());
     }
 };
 
 void
 Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
@@ -2307,7 +2401,9 @@ Partitioner::discoverCalledFunctions() const {
             BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
                 if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                     rose_addr_t entryVa = vertex.value().address();
-                    insertUnique(functions, Function::instance(entryVa), sortFunctionsByAddress);
+                    Function::Ptr function = Function::instance(entryVa, SgAsmFunction::FUNC_CALL_TARGET);
+                    function->reasonComment("called along CFG edge " + edgeName(edge));
+                    insertUnique(functions, function, sortFunctionsByAddress);
                     break;
                 }
             }
@@ -2499,10 +2595,34 @@ Partitioner::rebuildVertexIndices() {
                 ASSERT_not_reachable("user-defined vertices cannot be saved or restored");
         }
     }
-    unparser_ = instructionProvider().disassembler()->unparser()->copy();
-    insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
-    insnUnparser_->settings() = Unparser::Settings::minimal();
+    if (!isDefaultConstructed() && instructionProvider().disassembler()) {
+        unparser_ = instructionProvider().disassembler()->unparser()->copy();
+        insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
+    }
+    if (insnUnparser_)
+        insnUnparser_->settings() = Unparser::Settings::minimal();
 }
+
+void
+Partitioner::showStatistics() const {
+    std::cout <<"Rose::BinaryAnalysis::Partitioner2::Parttioner statistics:\n";
+    std::cout <<"  address to CFG vertex mapping:\n";
+    std::cout <<"    size = " <<vertexIndex_.size() <<"\n";
+    std::cout <<"    number of hash buckets =  " <<vertexIndex_.nBuckets() <<"\n";
+    std::cout <<"    load factor = " <<vertexIndex_.loadFactor() <<"\n";
+    instructionProvider().showStatistics();
+}
+
+#ifdef ROSE_ENABLE_PYTHON_API
+void
+Partitioner::pythonUnparse() const {
+    if (Unparser::Base::Ptr u = unparser()) {
+        u->unparse(std::cout, *this);
+    } else {
+        std::cout <<"no unparser for this architecture\n";
+    }
+}
+#endif
 
 } // namespace
 } // namespace

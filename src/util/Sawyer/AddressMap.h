@@ -869,7 +869,7 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  *  Value buf[bufsz];
  *  Address addr = 1000;
  *  while (Interval accessed = map.within(addr, 1999).require(READABLE).prohibit(WRITABLE).limit(bufsz).read(buf)) {
- *      for (Address i=accessed.least(); i<=access.greatest(); ++i)
+ *      for (Address i=accessed.least(); i<=accessed.greatest(); ++i)
  *          std::cout <<i <<": " <<buf[i-accessed.least()] <<"\n";
  *      addr += accessed.size();
  *  }

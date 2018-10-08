@@ -193,7 +193,7 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
         debugger.attach(exeArgs());
     }
 
-    process->get_memory()->insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
+    process->get_memory()->insertProcess(debugger.isAttached(), MemoryMap::Attach::NO);
 
     const RegisterDictionary *regs = disassembler->registerDictionary();
     initialRegs_.ax = debugger.readRegister(*regs->lookup("rax")).toInteger();

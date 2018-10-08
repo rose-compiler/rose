@@ -1,0 +1,16 @@
+-----------------------------------------------
+OpenMP region SgOmpSingleStatement @ 11
+"par_res"@16:5	shared
+"n"@16:20	shared
+-----------------------------------------------
+OpenMP region SgOmpSingleStatement @ 28
+"par_res"@32:5	shared
+"n"@32:20	shared
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 43
+"par_res"@49:3	shared
+"n"@49:18	shared
+-----------------------------------------------
+OpenMP region SgOmpSingleStatement @ 44
+"par_res"@49:3	shared
+"n"@49:18	shared

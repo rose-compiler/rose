@@ -1755,7 +1755,7 @@ struct IP_fp_move: P {
                 result = ops->fpToInteger(d->read(args[0], srcNBits), srcType, dflt);
             }
         } else {
-            ASSERT_require2(isSgAsmDirectRegisterExpression(args[1]), unparseInstructionWithAddress(insn));
+            ASSERT_require2(isSgAsmDirectRegisterExpression(args[1]), insn->toString());
             if (!dstType)
                 dstType = SageBuilderAsm::buildIeee754Binary64();
             if (srcType) {
@@ -1820,6 +1820,7 @@ struct IP_fp_mul: P {
         ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
         SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
         SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
+        ASSERT_not_null(dstType);
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
         SValuePtr a;
         if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
@@ -2151,7 +2152,7 @@ struct IP_mac: P {
         // Load the accumulator
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[3]);
         ASSERT_not_null2(rre, "fourth operand must be a MAC accumulator register");
-        const RegisterDescriptor &macAccReg = rre->get_descriptor();
+        RegisterDescriptor macAccReg = rre->get_descriptor();
         ASSERT_require2(macAccReg.get_major()==m68k_regclass_mac, "fourth operand must be a MAC accumulator register");
         ASSERT_require2(macAccReg.get_nbits()==32, "MAC accumulator register must be 32 bits");
         RegisterDescriptor macExtReg;

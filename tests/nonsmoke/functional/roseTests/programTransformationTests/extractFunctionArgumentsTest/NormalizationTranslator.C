@@ -6,7 +6,7 @@
 #define foreach BOOST_FOREACH
 
 int main(int argc, char** argv)
-{
+   {
 	SgProject* project = frontend(argc, argv);
 	ROSE_ASSERT(project != NULL);
 	AstTests::runAllTests(project);
@@ -22,6 +22,7 @@ int main(int argc, char** argv)
      // Check IsNormalized()
         std::cout << "\n e.IsNormalized:" << e.IsNormalized(function);
 #endif
+
      // Normalize now...
         e.NormalizeTree(function);
 
@@ -37,7 +38,8 @@ int main(int argc, char** argv)
 #endif
       }
 
-	SageInterface::fixVariableReferences(project);
+        SageInterface::fixVariableReferences(project);
+
 	AstTests::runAllTests(project);
 	return backend(project);
-}
+   }

@@ -711,9 +711,17 @@ int main(int argc, char *argv[]) {
         partitioner.memoryMap()->dump(std::cout);
 
     // Run the partitioner
-    engine.runPartitioner(partitioner);
-    if (partitioner.functions().empty() && engine.startingVas().empty())
-        mlog[WARN] <<"no starting points for recursive disassembly; perhaps you need --start?\n";
+    bool mustDisassemble = settings.doListCfg || settings.doListAum || settings.doListAsm || settings.doListFunctions ||
+                           settings.doListFunctionAddresses || settings.doListInstructionAddresses ||
+                           settings.doShowStats || settings.doListUnused || !settings.triggers.empty() ||
+                           !settings.gvCfgFunctions.empty() || settings.gvCfgGlobal || !settings.gvCfgInterval.isEmpty() ||
+                           settings.gvCallGraph;
+
+    if (mustDisassemble) {
+        engine.runPartitioner(partitioner);
+        if (partitioner.functions().empty() && engine.startingVas().empty())
+            mlog[WARN] <<"no starting points for recursive disassembly; perhaps you need --start?\n";
+    }
 
     //-------------------------------------------------------------- 
     // The rest of main() is just about showing the results...

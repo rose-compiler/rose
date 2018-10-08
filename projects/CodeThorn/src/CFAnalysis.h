@@ -29,7 +29,9 @@ class CFAnalysis {
   LabelSet functionCallLabels(Flow& flow);
   LabelSet functionEntryLabels(Flow& flow);
   LabelSet conditionLabels(Flow& flow);
+  // computes function exit label for a provided function entry label
   Label correspondingFunctionExitLabel(Label entryLabel);
+  // computes function return label for a provided function call label
   Label correspondingFunctionCallReturnLabel(Label callLabel);
   int numberOfFunctionParameters(Label entryNode);
   bool isVoidFunction(Label entryNode);
@@ -70,12 +72,15 @@ class CFAnalysis {
   static SgStatement* getLastStmtInBlock(SgBasicBlock* block);
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
+  static bool isLoopConstructRootNode(SgNode* node);
+ protected:
+  static void initDiagnostics();
+  static Sawyer::Message::Facility logger;
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   SPRAY::Labeler* labeler;
   bool _createLocalEdge;
-  bool isLoopConstructRootNode(SgNode* node);
   SgNode* correspondingLoopConstruct(SgNode* node);
 };    
 

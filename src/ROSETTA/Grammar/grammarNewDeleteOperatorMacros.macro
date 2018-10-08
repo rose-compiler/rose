@@ -431,4 +431,11 @@ void $CLASSNAME::operator delete(void *Pointer, size_t sizeOfObject)
 // DQ (4/5/2007): This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE.
 // Also, note comment below from Robb (copied from the Common.code file).
 /* RPM (2009-06-03): Apparently this must all be on one line for configuration "--with-javaport"; reverting r5427 */
+//
+// Matzke (2018-02-16): We don't need to provide both operator delete(void*) and operator delete(void*,size_t) because the C++
+// runtime calls exactly one of them (whichever is defined). Futhermore, the Boost serialization library assumes that classes
+// don't provide both versions at once (doing so causes compile errors in boost header files that try to invoke the
+// destructor).  Therefore, I'm commenting out operator delete(void*). See [http://en.cppreference.com/w/cpp/language/delete].
+#if 0
 void $CLASSNAME::operator delete(void* pointer) { $CLASSNAME::operator delete (pointer, sizeof($CLASSNAME)); };
+#endif

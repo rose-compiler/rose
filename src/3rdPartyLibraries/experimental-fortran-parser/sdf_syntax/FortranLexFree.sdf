@@ -16,9 +16,11 @@ lexical syntax
 %% Continuation can optionally be separated by comment.
 %% The & on the next line is also optional.
 %%
-  "&" [\ \t]* ("!" ~[\n\r]*)? EOL ( [\ \t]+ "&" )?  -> Continuation
-  Continuation                                      -> LAYOUT    
-  Continuation [\ \t]* "!" ~[\n\r]* EOL             -> LAYOUT    
+  "&"           [\ \t]*  Comment?     EOL     -> Continuation
+  Continuation  [\ \t]*  Comment      EOL     -> Continuation  %% ignore comment lines in a continuation
+  Continuation  [\ \t]*               EOL     -> Continuation  %% ignore   blank lines in a continuation
+  Continuation ([\ \t]* "&" )?                -> Continuation  %% continuation continues after "&" symbol
+  Continuation                                -> LAYOUT        %% continuation is whitespace
 
 context-free restrictions
 

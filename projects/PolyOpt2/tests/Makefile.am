@@ -12,7 +12,7 @@ SUBDIRS 		=
 #############################################################################
 MAINTAINERCLEANFILES    = Makefile.in
 
-TESTS_ENVIRONMENT       = top_builddir=$(top_builddir)
+TESTS_ENVIRONMENT       = top_builddir=$(top_builddir) top_srcdir=$(top_srcdir)
 
 EXTRA_DIST              = scripts/checker.sh
 #############################################################################

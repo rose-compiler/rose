@@ -16,12 +16,17 @@ LDADD = $(ROSE_LIBS)
 
 fortran_parser_tests =
 
-if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-fortran_parser_tests += testBafio
-noinst_PROGRAMS      += testBafio
-endif
-
-testBafio_SOURCES = testBafio.C
+# Rasmussen (11.17.2017): This test only checks if the Fortran parse table, Fortran.tbl, is installed.
+# It should actually check for stratego and ATerm libraries as well.  But this should be done in
+# the configure scripts so doesn't need to be here. And, in any case, the macro variable OFP_BIN_PATH
+# is no longer used.
+#if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+#fortran_parser_tests += testBafio
+#noinst_PROGRAMS      += testBafio
+#endif
+#
+#testBafio_SOURCES = testBafio.C
+testBafio_SOURCES =
 
 ## Test targets
 #

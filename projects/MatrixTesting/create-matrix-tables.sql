@@ -187,9 +187,13 @@ insert into dependencies values ('yaml',         '0.5.2',            0);
 insert into dependencies values ('yaml',         '0.5.3',            0);
 
 -- Yices SMT solver version or "system" or "none"
-insert into dependencies values ('yices',        'no',               1);
+insert into dependencies values ('yices',        'none',             1);
 insert into dependencies values ('yices',        '1.0.28',           0);
-insert into dependencies values ('yices',        '1.0.34',           1);
+insert into dependencies values ('yices',        '1.0.34',           0);
+
+-- Z3 SMT solver version or "none"
+insert into dependencies values ('z3',           'none',             1);
+insert into dependencies values ('z3',           '4.5.0',            1);
 
 
 --
@@ -251,6 +255,7 @@ create table test_results (
     rmc_wt              varchar(64) default 'unknown',
     rmc_yaml            varchar(64) default 'unknown',
     rmc_yices           varchar(64) default 'unknown',
+    rmc_z3              varchar(64) default 'unknown',
 
     -- Test disposition.  This is a word that says where the test failed. Rather than simply "passed"
     -- or "failed", we have a lattice of dispositions. A simple example is a lattice with a single path:

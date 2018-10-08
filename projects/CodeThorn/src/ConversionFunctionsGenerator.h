@@ -1,10 +1,14 @@
+#ifndef CONVERSION_FUNCTIONS_GENERATOR_H
+#define CONVERSION_FUNCTIONS_GENERATOR_H
+
 #include <string>
 #include <set>
 #include <iostream>
 
-using namespace std;
-
 class ConversionFunctionsGenerator {
  public:
-  string generateCodeForGlobalVarAdressMaps(set<string> vars);
+  std::string generateCodeForGlobalVarAdressMaps(std::set<std::string> vars);
+  void generateFile(SgProject* root, std::string conversionFunctionsFileName);
 };
+
+#endif

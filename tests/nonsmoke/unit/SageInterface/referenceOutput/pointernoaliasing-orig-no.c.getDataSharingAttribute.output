@@ -1,0 +1,20 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 56
+"i"@57:17	private
+"N"@57:21	shared
+"i"@57:26	private
+"m_pdv_sum"@59:5	shared
+"i"@59:16	private
+"m_nvol"@60:5	shared
+"i"@60:13	private
+"i"@60:21	private
+-----------------------------------------------
+OpenMP region SgOmpForStatement @ 56
+"i"@57:17	private
+"N"@57:21	shared
+"i"@57:26	private
+"m_pdv_sum"@59:5	shared
+"i"@59:16	private
+"m_nvol"@60:5	shared
+"i"@60:13	private
+"i"@60:21	private

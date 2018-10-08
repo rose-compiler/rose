@@ -5,10 +5,10 @@
 using namespace CodeThorn;
 using namespace std;
 
-CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer) 
+CounterexampleAnalyzer::CounterexampleAnalyzer(IOAnalyzer* analyzer) 
 			: _analyzer(analyzer), _csvOutput(NULL), _maxCounterexamples(0) {}
 
-CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer, stringstream* csvOutput) 
+CounterexampleAnalyzer::CounterexampleAnalyzer(IOAnalyzer* analyzer, stringstream* csvOutput) 
                         : _analyzer(analyzer), _csvOutput(csvOutput), _maxCounterexamples(-1) {}
 
 CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexample, const EState* startState, 
@@ -42,6 +42,7 @@ CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexa
   } else {
     startEState = const_cast<EState*>((_analyzer->getTransitionGraph())->getStartEState());
   }
+  ROSE_ASSERT(startEState);
   _analyzer->setAnalyzerToSolver8(startEState, resetAnalyzerData);
   setInputSequence(cePrefix);
   _analyzer->runSolver();
@@ -328,7 +329,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
       falsified = true;
       verified = false;
     } else if (ceaResult.analysisResult == CE_TYPE_SPURIOUS) {
-      if(!boolOptions["keep-error-states"]) {
+      if(!args.getBool("keep-error-states")) {
         // remove a trace leading to an error state and mark the branches to it (do not reconnect in phase 3) 
         removeAndMarkErroneousBranches(model);
       }
@@ -348,7 +349,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     addAllPrefixOutputStates(startAndOuputStatesPrefix, model);
     for (set<const EState*>::iterator i=startAndOuputStatesPrefix.begin(); i!=startAndOuputStatesPrefix.end(); ++i) {
       vector<bool> inputSuccessors(ltlInAlphabet.size(), false);
-      if(!boolOptions["keep-error-states"]) {
+      if(!args.getBool("keep-error-states")) {
         inputSuccessors = setErrorBranches(inputSuccessors, *i); 
       }
       // determine which input states exist as successors in the prefix

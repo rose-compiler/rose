@@ -14,19 +14,10 @@
 using namespace SPRAY;
 using namespace std;
 
-DFAnalysisBase::DFAnalysisBase():
-  _programAbstractionLayer(0),
-  _cfanalyzer(0),
-  _numberOfLabels(0),
-  _preInfoIsValid(false),
-  _postInfoIsValid(false),
-  _transferFunctions(0),
-  _initialElementFactory(0),
-  _analysisType(DFAnalysisBase::FORWARD_ANALYSIS),
-  _no_topological_sort(false),
-  _pointerAnalysisInterface(0),
-  _pointerAnalysisEmptyImplementation(0)
-{}
+DFAnalysisBase::DFAnalysisBase()
+{
+  // all data member initializers are specified in class definition
+}
 
 DFAnalysisBase::~DFAnalysisBase() {
   if(_pointerAnalysisEmptyImplementation)
@@ -92,7 +83,7 @@ void DFAnalysisBase::setInitialElementFactory(PropertyStateFactory* pf) {
   _initialElementFactory=pf;
 }
 
-void DFAnalysisBase::setExtremalLabels(set<Label> extremalLabels) {
+void DFAnalysisBase::setExtremalLabels(LabelSet extremalLabels) {
   _extremalLabels=extremalLabels;
 }
 
@@ -135,7 +126,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
   Lattice* elem=_initialElementFactory->create();
   initializeExtremalValue(elem);
-  cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
+  //cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
   list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
   for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
     if(usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()) {
@@ -146,19 +137,12 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
       cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
     }
   }
-  cout << "INIT: initial state: ";
-  elem->toStream(cout,getVariableIdMapping());
-  cout<<endl;
+  //cout << "INIT: initial state: ";
+  //elem->toStream(cout,getVariableIdMapping());
+  //cout<<endl;
   _globalVariablesState=elem;
   return elem;
 }
-
-void
-DFAnalysisBase::normalizeProgram(SgProject* root) {
-  cout<<"STATUS: Normalizing program."<<endl;
-  SPRAY::Normalization::normalizeAst(root);
-}
-
 
 void
 DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/* = false*/) {
@@ -180,6 +164,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
+#if 0
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
     size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
@@ -187,6 +172,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
     int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (reduced nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
+#endif
 
   ROSE_ASSERT(_initialElementFactory);
   for(long l=0;l<getLabeler()->numberOfLabels();++l) {
@@ -227,7 +213,7 @@ SPRAY::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
 }
 
 void
-DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
+DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot,bool onlySingleStartLabel) {
   if(startFunRoot) {
     if(isForwardAnalysis()) {
       Label startLabel=_cfanalyzer->getLabel(startFunRoot);
@@ -235,22 +221,36 @@ DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
     } else if(isBackwardAnalysis()) {
       if(isSgFunctionDefinition(startFunRoot)) {
         Label startLabel=_cfanalyzer->getLabel(startFunRoot);
-        // TODO: temporary hack (requires get-methods for different types of labels
-        // or a list of all labels that are associated with a node)
-        int startLabelId=startLabel.getId();
-        // exit-label = entry-label + 1
-        Label endLabel(startLabelId+1);
+        Label endLabel=_cfanalyzer->correspondingFunctionExitLabel(startLabel);
         _extremalLabels.insert(endLabel);
       } else {
-        cerr<<"Error: backward analysis only supported for start at a function exit label."<<endl;
+        cerr<<"Error: backward analysis only supported for start at function exit label."<<endl;
         exit(1);
       }
     }
   } else {
-    // naive way of initializing all labels
-    for(long i=0;i<getLabeler()->numberOfLabels();++i) {
-      Label lab=i;
-      _extremalLabels.insert(lab);
+    if(!onlySingleStartLabel) {
+      Labeler* labeler=getLabeler();
+      long numLabels=labeler->numberOfLabels();
+      // naive way of initializing all labels
+      for(long i=0;i<numLabels;++i) {
+        Label lab=i;
+        // only add function entry labels as extremal labels
+        if(isForwardAnalysis()) {
+          if(labeler->isFunctionEntryLabel(i)) {
+            _extremalLabels.insert(lab);
+          }
+        } else {
+          ROSE_ASSERT(isBackwardAnalysis());
+          if(labeler->isFunctionExitLabel(i)) {
+            _extremalLabels.insert(lab);
+          }
+        }
+      }
+    } else {
+      // keep _extremalLabels an empty set if no start function is
+      // determined and only a single start label is requested.
+      // _extremalLabels remains empty. Analysis will not be run.
     }
   }
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
@@ -281,9 +281,9 @@ DFAnalysisBase::run() {
     initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
     // combine extremal value with global variables initialization state (computed by initializeGlobalVariables)
     _analyzerDataPreInfo[(*i).getId()]->combine(*_globalVariablesState);
-    cout<<"INFO: Initialized "<<*i<<" with ";
-    cout<<_analyzerDataPreInfo[(*i).getId()]->toString(getVariableIdMapping());
-    cout<<endl;
+    //cout<<"INFO: Initialized "<<*i<<" with ";
+    //cout<<_analyzerDataPreInfo[(*i).getId()]->toString(getVariableIdMapping());
+    //cout<<endl;
     // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
     //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
     if(_no_topological_sort || !isForwardAnalysis()) {
@@ -304,16 +304,24 @@ DFAnalysisBase::run() {
   //  unnecessary computations that might occur (e.g. if the if-branch and else-branch
   //  do not have an equivalent number of nodes).
   if(!_no_topological_sort && isForwardAnalysis()) {
-    ROSE_ASSERT(_extremalLabels.size() == 1);
-    Label startLabel = *(_extremalLabels.begin());
-    std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
-    cout << "INFO: Using topological sorted CFG as work list initialization." << endl;
-    for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
-      //cout << (*i).toString() << endl;
-      _workList.add(*i);
+    if(_extremalLabels.size() == 1) {
+      Label startLabel = *(_extremalLabels.begin());
+      std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
+      cout << "INFO: Using topologically sorted CFG as work list initialization." << endl;
+      for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
+        //cout << (*i).toString() << endl;
+        _workList.add(*i);
+      } 
+    } else {
+      cout << "INFO: Using non-topologically sorted CFG with multiple function entries as work list initialization." << endl;
+      for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
+        Flow outEdges=_flow.outEdges(*i);
+        for(Flow::iterator i=outEdges.begin();i!=outEdges.end();++i) {
+          _workList.add(*i);
+        }
+      }
     }
   }
-
   cout<<"INFO: work list size after initialization: "<<_workList.size()<<endl;
   solve();
 }
@@ -446,5 +454,17 @@ void DFAnalysisBase::attachInInfoToAst(string attributeName) {
 
 void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2018.
+ */
+
+void DFAnalysisBase::setSkipSelectedFunctionCalls(bool defer) {
+  _skipSelectedFunctionCalls=defer;
+  if(_transferFunctions) {
+    _transferFunctions->setSkipSelectedFunctionCalls(defer);
+  }
 }
 

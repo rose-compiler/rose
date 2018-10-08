@@ -437,7 +437,7 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
 #endif
 
     // Initialize the stack pointer register
-    const RegisterDescriptor &REG_SP = thread->dispatcher()->stackPointerRegister();
+    RegisterDescriptor REG_SP = thread->dispatcher()->stackPointerRegister();
     thread->operators()->writeRegister(REG_SP, thread->operators()->number_(REG_SP.get_nbits(), sp));
 }
 

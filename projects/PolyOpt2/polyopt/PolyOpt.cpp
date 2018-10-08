@@ -81,6 +81,7 @@ void optimizeSingleScop(scoplib_scop_p scoplibScop,
 /************************* PolyOpt convenience routines *************************/
 /******************************************************************************/
 
+
 static std::vector<SgNode*> getAddr(SgNode* root)
 {
 
@@ -403,6 +404,10 @@ int PolyOptOptimizeProject(SgProject* project, PolyRoseOptions& polyoptions)
   /// loops/pragmas.
 //   if (polyoptions.getGeneratePragmas())
 //     PolyOptAnnotateProject(project, polyoptions);
+
+  if (polyoptions.getProgramStats ())
+    PolyOptStatsProject (project, polyoptions);
+
 
   return EXIT_SUCCESS;
 }
@@ -1078,6 +1083,45 @@ erasePlutoFiles()
 }
 
 /**
+ * Cleans the function (n, or the one enclosing n) from useless variable
+ * declarations.
+ *
+ */
+void
+PolyOptCleanUselessVariableDeclarations(SgNode* n)
+{
+  if (! isSgFunctionDeclaration(n))
+    n = SageInterface::getEnclosingNode<SgFunctionDeclaration>(n);
+  ROSE_ASSERT(n);
+  std::vector<SgNode*> vardecls =
+    NodeQuery::querySubTree(n, V_SgVariableDeclaration);
+  std::vector<SgNode*> varrefs =
+    NodeQuery::querySubTree(n, V_SgVarRefExp);
+
+  std::set<SgName> allsymbs;
+  for (std::vector<SgNode*>::iterator i = varrefs.begin();
+       i != varrefs.end(); ++i)
+    {
+      SgVarRefExp* ref = isSgVarRefExp(*i);
+      allsymbs.insert(ref->get_symbol()->get_name());
+    }
+
+  for (std::vector<SgNode*>::iterator i = vardecls.begin();
+       i != vardecls.end(); ++i)
+    {
+      SgVariableDeclaration* vd = isSgVariableDeclaration(*i);
+      SgName name = vd->get_definition()->get_vardefn()->get_qualified_name();
+      std::set<SgName>::iterator j;
+      for (j = allsymbs.begin(); j != allsymbs.end(); ++j)
+	if (! strcmp ((*j).str(), name.str()))
+	  break;
+      if (j == allsymbs.end())
+	SageInterface::removeStatement(isSgStatement(*i));
+    }
+}
+
+
+/**
  * Helper. Process a single scop with PoCC.
  *
  */
@@ -1129,10 +1173,14 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
       annot->scopId = scopId;
       sageScop.getBasicBlock()->setAttribute("ScopRoot", annot);
 
+      if (polyoptions.getProgramStats ())
+	PolyOptStatsNode (scopRoot, polyoptions);
+
       // 2.2- Reinsert.
       if (polyoptions.getScopInSeparateFile())
 	{
-	  // 1. Place the transformed scop in the tree, for subsequent outlining.
+	  // 1. Place the transformed scop in the tree, for subsequent
+	  // outlining.
 	  SageInterface::insertStatement(scopRoot, sageScop.getBasicBlock());
 
 	  // 2. Outline both original and transformed codes.
@@ -1192,6 +1240,7 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
 	{
 	  // Default mode, replace the original AST by the transformed one.
 	  SageInterface::replaceStatement(scopRoot, sageScop.getBasicBlock(), true);
+	  PolyOptCleanUselessVariableDeclarations(sageScop.getBasicBlock());
 	  past_deep_free (pastRoot);
 	}
 
@@ -1246,4 +1295,199 @@ int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int t
   free (polyargv[2]);
   return retval;
 
+}
+
+
+
+/******************************************************************************/
+/*************************** PolyOpt Stats routines ***************************/
+/******************************************************************************/
+
+static
+void polyoptStatsRegion(SgNode* body, PolyRoseOptions& polyoptions,
+			int* nb_for_loops,
+			int* nb_for_loop_nests,
+			int* nb_while_loops,
+			int* nb_expr_statements,
+			int* nb_array_refs,
+			int* max_loop_depth,
+			int* nb_flops)
+{
+  // Compute the metrics for the function.
+  SgNodePtrList loops =
+    NodeQuery::querySubTree (body, V_SgForStatement);
+  (*nb_for_loops) += loops.size ();
+  SgNodePtrList::const_iterator iter;
+  for (iter = loops.begin (); iter != loops.end (); ++iter)
+    {
+      //SgForStatement* parentfor = isSgForStatement (*iter);
+      SgNode* parent = (*iter);
+      int maxdepth = 1;
+      do
+	{
+	  parent = parent->get_parent ();
+	  if (isSgForStatement (parent))
+	    maxdepth++;
+	}
+      while (parent != NULL && parent != body);
+      if (maxdepth > *max_loop_depth)
+	(*max_loop_depth) = maxdepth;
+      if (maxdepth == 1)
+	++(*nb_for_loop_nests);
+    }
+  SgNodePtrList whileloops =
+    NodeQuery::querySubTree(body, V_SgWhileStmt);
+  (*nb_while_loops) += whileloops.size ();
+  SgNodePtrList exprstmts =
+    NodeQuery::querySubTree(body, V_SgExprStatement);
+  for (iter = exprstmts.begin (); iter != exprstmts.end (); ++iter)
+    {
+      // Skip flops in array references.
+      if (SageInterface::getEnclosingNode<SgPntrArrRefExp> (*iter))
+	continue;
+      SgNodePtrList flops =
+	NodeQuery::querySubTree(*iter, V_SgBinaryOp);
+      SgNodePtrList::const_iterator iter2;
+      for (iter2 = flops.begin (); iter2 != flops.end (); ++iter2)
+	if (isSgAddOp (*iter2) ||
+	    isSgMinusOp (*iter2) ||
+	    isSgMultiplyOp (*iter2) ||
+	    isSgDivideOp (*iter2))
+	  ++(*nb_flops);
+    }
+  (*nb_expr_statements) += exprstmts.size ();
+  SgNodePtrList arrayrefs =
+    NodeQuery::querySubTree (body, V_SgPntrArrRefExp);
+  for (iter = arrayrefs.begin (); iter != arrayrefs.end (); ++iter)
+    {
+      SgPntrArrRefExp* parentref =
+	SageInterface::getEnclosingNode<SgPntrArrRefExp> (*iter);
+      if (parentref == NULL)
+	++(*nb_array_refs);
+    }
+}
+
+
+void
+PolyOptStatsProject(SgProject* project, PolyRoseOptions& polyoptions)
+{
+  SgFilePtrList& file_list = project->get_fileList();
+  SgFilePtrList::const_iterator file_iter;
+  // Iterate on all files of the project.
+  int nb_files = 0;
+  int nb_functions = 0;
+  int nb_functions_ok = 0;
+  int nb_for_loops = 0;
+  int nb_for_loop_nests = 0;
+  int nb_while_loops = 0;
+  int nb_expr_statements = 0;
+  int nb_array_refs = 0;
+  int max_loop_depth = 0;
+  int nb_flops = 0;
+
+  for (file_iter = file_list.begin(); file_iter != file_list.end(); file_iter++)
+    {
+      ++nb_files;
+      SgSourceFile* file = isSgSourceFile(*file_iter);
+      SgNodePtrList funcDefnList =
+	NodeQuery::querySubTree(file, V_SgFunctionDefinition);
+      SgNodePtrList::const_iterator iter;
+      // Iterate on all function defined in a file.
+      for (iter = funcDefnList.begin(); iter != funcDefnList.end(); ++iter)
+	{
+	  ++nb_functions;
+	  SgFunctionDefinition *fun = isSgFunctionDefinition(*iter);
+	  if (!fun)
+	    {
+	      std::cout << "[Extr] Warning: Expected SgFunctionDefinition in "
+			<< file->getFileName() << std::endl;
+	      continue; // with the next function definition
+	    }
+	  SgName name = fun->get_declaration()->get_name();
+	  if (polyoptions.getExtractorFunctionName() &&
+	      strcmp (name.getString().c_str(),
+		      polyoptions.getExtractorFunctionName()))
+	    {
+	      if (polyoptions.getScVerboseLevel())
+		std::cout << "[Extr] Skipping function " << name.getString()
+			  << " (mismatch with "
+			  << polyoptions.getExtractorFunctionName() << ")"
+			  << std::endl;
+	      continue;
+	    }
+	  if (polyoptions.getScVerboseLevel())
+	    std::cout << "[Extr] Function: " << name.getString() << std::endl;
+	  SgBasicBlock* body = fun->get_body();
+	  ++nb_functions_ok;
+
+	  polyoptStatsRegion (body, polyoptions,
+			      &nb_for_loops,
+			      &nb_for_loop_nests,
+			      &nb_while_loops,
+			      &nb_expr_statements,
+			      &nb_array_refs,
+			      &max_loop_depth,
+			      &nb_flops);
+	}
+    }
+
+  std::cout << "[PolyOpt][Stats][Project] Project summary:" << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of files: " << nb_files
+	    << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of functions: "
+	    << nb_functions << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of processed functions: "
+	    << nb_functions_ok << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of for loop nests: "
+	    << nb_for_loop_nests << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of for loops: "
+	    << nb_for_loops << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of while loops: "
+	    << nb_while_loops << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of SgExprStatements: "
+	    << nb_expr_statements << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of array references: "
+	    << nb_array_refs << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Maximal for loop depth: "
+	    << max_loop_depth << std::endl;
+  std::cout << "[PolyOpt][Stats][Project] Number of syntactic flop instructions: "
+	    << nb_flops << std::endl;
+}
+
+
+
+void
+PolyOptStatsNode(SgNode* body, PolyRoseOptions& polyoptions)
+{
+  int nb_for_loops = 0;
+  int nb_for_loop_nests = 0;
+  int nb_while_loops = 0;
+  int nb_expr_statements = 0;
+  int nb_array_refs = 0;
+  int max_loop_depth = 0;
+  int nb_flops = 0;
+
+  polyoptStatsRegion (body, polyoptions,
+		      &nb_for_loops,
+		      &nb_for_loop_nests,
+		      &nb_while_loops,
+		      &nb_expr_statements,
+		      &nb_array_refs,
+		      &max_loop_depth,
+		      &nb_flops);
+  std::cout << "[PolyOpt][Stats][Region] Region summary:" << std::endl;
+  std::cout << "[PolyOpt][Stats][Region] Number of for loop nests: "
+	    << nb_for_loop_nests << std::endl;
+  std::cout << "[PolyOpt][Stats][Region] Number of for loops: "
+	    << nb_for_loops << std::endl;
+  std::cout << "[PolyOpt][Stats][Region] Number of while loops: "
+	    << nb_while_loops << std::endl;
+  std::cout << "[PolyOpt][Stats][Region] Number of SgExprStatements: "
+	    << nb_expr_statements << std::endl;
+  std::cout << "[PolyOpt][Stats][Region] Number of array references: "
+	    << nb_array_refs << std::endl;
+  std::cout << "[PolyOpt][Stats][Region] Maximal for loop depth: "
+	    << max_loop_depth << std::endl;
+  std::cout << "[PolyOpt][Stats][Region] Number of syntactic flop instructions: "
+	    << nb_flops << std::endl;
 }

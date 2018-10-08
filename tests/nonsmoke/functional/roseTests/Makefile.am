@@ -28,7 +28,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
-	      astLValueTests abstractMemoryObjectTests 
+              astLValueTests abstractMemoryObjectTests
 
 # DQ (11/5/2016): Skip these tests when using the address sanitizer since they would 
 # take SO LONG (at least over an hour for initial testing, I think).
@@ -76,6 +76,11 @@ else  # NOT ROSE_USE_EDG_VERSION_4_9
 # DQ (3/11/2017): It is unclear if these tests are robust enough to work with EDG 4.12 (this needs to be investigated seperately, before EDG 4.12 is made the default).
 
 endif # ROSE_USE_EDG_VERSION_4_9
+
+
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+  SUBDIRS += varDeclNorm
+endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPTests

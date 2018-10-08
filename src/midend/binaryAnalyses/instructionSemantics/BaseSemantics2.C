@@ -96,536 +96,9 @@ Exception::print(std::ostream &o) const
 {
     o <<"Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
     if (insn)
-        o <<": " <<unparseInstructionWithAddress(insn);
+        o <<": " <<insn->toString();
     o <<"\n";
 }
-
-/*******************************************************************************************************************************
- *                                      RegisterStateX86
- *******************************************************************************************************************************/
-
-std::string
-RegisterStateX86::initialValueName(const RegisterDescriptor &reg) const {
-    std::string s;
-    if (regdict!=NULL) {
-        s = regdict->lookup(reg);
-        if (!s.empty())
-            s += "_0";
-    }
-    return s;
-}
-
-void
-RegisterStateX86::clear()
-{
-    ip = protoval()->undefined_(32);
-    for (size_t i=0; i<n_gprs; ++i) {
-        const RegisterDescriptor reg(x86_regclass_gpr, i, 0, 32);
-        gpr[i] = protoval()->undefined_(32);
-        gpr[i]->set_comment(initialValueName(reg));
-    }
-    for (size_t i=0; i<n_segregs; ++i) {
-        const RegisterDescriptor reg(x86_regclass_segment, i, 0, 16);
-        segreg[i] = protoval()->undefined_(16);
-        segreg[i]->set_comment(initialValueName(reg));
-    }
-    for (size_t i=0; i<n_flags; ++i) {
-        const RegisterDescriptor reg(x86_regclass_flags, x86_flags_status, i, 1);
-        flag[i] = protoval()->undefined_(1);
-        flag[i]->set_comment(initialValueName(reg));
-    }
-    for (size_t i=0; i<n_st; ++i) {
-        const RegisterDescriptor reg(x86_regclass_st, i, 0, 80);
-        st[i] = protoval()->undefined_(80);
-        st[i]->set_comment(initialValueName(reg));
-    }
-    for (size_t i=0; i<n_xmm; ++i) {
-        const RegisterDescriptor reg(x86_regclass_xmm, i, 0, 128);
-        xmm[i] = protoval()->undefined_(128);
-        xmm[i]->set_comment(initialValueName(reg));
-    }
-    
-    const RegisterDescriptor reg(x86_regclass_flags, x86_flags_fpstatus, 0, 16);
-    fpstatus = protoval()->undefined_(16);
-    fpstatus->set_comment(initialValueName(reg));
-}
-
-void
-RegisterStateX86::zero()
-{
-    ip = protoval()->number_(32, 0);
-    for (size_t i=0; i<n_gprs; ++i)
-        gpr[i] = protoval()->number_(32, 0);
-    for (size_t i=0; i<n_segregs; ++i)
-        segreg[i] = protoval()->number_(16, 0);
-    for (size_t i=0; i<n_flags; ++i)
-        flag[i] = protoval()->number_(1, 0);
-    for (size_t i=0; i<n_st; ++i)
-        st[i] = protoval()->number_(80, 0);
-    for (size_t i=0; i<n_xmm; ++i)
-        xmm[i] = protoval()->number_(128, 0);
-    fpstatus = protoval()->number_(16, 0);
-}
-
-SValuePtr
-RegisterStateX86::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops)
-{
-    // "dflt" is not used because this state doesn't distinguish between registers that have never been accessed and registers
-    // that have only been read; all registers were initialized with some value when the state was created.
-    switch (reg.get_major()) {
-        case x86_regclass_gpr:
-            return readRegisterGpr(reg, ops);
-        case x86_regclass_flags:
-            if (reg.get_minor()==x86_flags_status)
-                return readRegisterFlag(reg, ops);
-            if (reg.get_minor()==x86_flags_fpstatus)
-                return readRegisterFpStatus(reg, ops);
-            throw Exception("invalid flags minor number: " + StringUtility::numberToString(reg.get_minor()),
-                            ops->currentInstruction());
-        case x86_regclass_segment:
-            return readRegisterSeg(reg, ops);
-        case x86_regclass_ip:
-            return readRegisterIp(reg, ops);
-        case x86_regclass_st:
-            return readRegisterSt(reg, ops);
-        case x86_regclass_xmm:
-            return readRegisterXmm(reg, ops);
-        default:
-            throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
-                            " (wrong RegisterDictionary?)", ops->currentInstruction());
-    }
-}
-
-SValuePtr
-RegisterStateX86::readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_not_null(ops);
-    ASSERT_require(reg.get_major()==x86_regclass_gpr);
-    if (reg.get_minor()>=n_gprs) {
-        throw Exception("invalid general purpose register minor number: " +
-                        numberToString(reg.get_minor()), ops->currentInstruction());
-    }
-    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits() != 32) {
-        throw Exception("invalid general purpose register width: " +
-                        numberToString(reg.get_nbits()), ops->currentInstruction());
-    }
-    if ((reg.get_offset()!=0 && (reg.get_offset()!=8 || reg.get_nbits()!=8)) ||
-        (reg.get_offset() + reg.get_nbits() > 32))
-        throw Exception("invalid general purpose sub-register: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    SValuePtr result = gpr[reg.get_minor()];
-    if (reg.get_offset()!=0 || reg.get_nbits()!=32)
-        result = ops->extract(result, reg.get_offset(), reg.get_offset()+reg.get_nbits());
-    ASSERT_require(result->get_width()==reg.get_nbits());
-    return result;
-}
-
-SValuePtr
-RegisterStateX86::readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_not_null(ops);
-    ASSERT_require(reg.get_major()==x86_regclass_flags);
-    if (reg.get_minor()!=0)
-        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->currentInstruction());
-    if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
-        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->currentInstruction());
-    if ((reg.get_nbits()>1 && reg.get_offset()!=0) ||
-        (reg.get_offset() + reg.get_nbits() > 32))
-        throw Exception("invalid flag subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    SValuePtr result = flag[reg.get_offset()];
-    for (size_t i=1; i<reg.get_nbits(); ++i)
-        result = ops->concat(result, flag[reg.get_offset()+i]);
-    ASSERT_require(result->get_width()==reg.get_nbits());
-    return result;
-}
-
-SValuePtr
-RegisterStateX86::readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_not_null(ops);
-    ASSERT_require(reg.get_major()==x86_regclass_segment);
-    if (reg.get_minor()>=n_segregs)
-        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->currentInstruction());
-    if (reg.get_offset()!=0 || reg.get_nbits()!=16)
-        throw Exception("invalid segment subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    SValuePtr result = segreg[reg.get_minor()];
-    ASSERT_require(result->get_width()==reg.get_nbits());
-    return result;
-}
-
-SValuePtr
-RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_not_null(ops);
-    ASSERT_require(reg.get_major()==x86_regclass_ip);
-    if (reg.get_minor()!=0) {
-        throw Exception("invalid instruction pointer register minor number: " +
-                        numberToString(reg.get_minor()), ops->currentInstruction());
-    }
-    if (reg.get_offset()!=0 || reg.get_nbits()!=32) {
-        throw Exception("invalid instruction pointer subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    }
-    ASSERT_require(ip->get_width()==reg.get_nbits());
-    return ip;
-}
-
-SValuePtr
-RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops)
-{
-    ASSERT_require(reg.get_major()==x86_regclass_st);
-    ASSERT_require(reg.get_minor()<8);
-    ASSERT_require(reg.get_offset()==0);
-    SValuePtr retval = st[reg.get_minor()];
-    ASSERT_require(retval!=NULL && retval->get_width()==80);
-    if (reg.get_nbits()==64)
-        retval = ops->extract(retval, 0, 64);           // reading MM register, low-order 64 bits of ST
-    return retval;
-}
-
-SValuePtr
-RegisterStateX86::readRegisterXmm(const RegisterDescriptor &reg, RiscOperators *ops)
-{
-    ASSERT_require(reg.get_major()==x86_regclass_xmm);
-    ASSERT_require(reg.get_minor()<8);
-    ASSERT_require(reg.get_offset()==0);
-    ASSERT_require(reg.get_nbits()==128);
-    SValuePtr retval = xmm[reg.get_minor()];
-    ASSERT_require(retval!=NULL && retval->get_width()==128);
-    return retval;
-}
-
-SValuePtr
-RegisterStateX86::readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops)
-{
-    ASSERT_require(reg.get_major()==x86_regclass_flags);
-    ASSERT_require(reg.get_minor()==x86_flags_fpstatus);
-    ASSERT_require(reg.get_offset() + reg.get_nbits() <= 16);
-    ASSERT_require(fpstatus!=NULL && fpstatus->get_width()==16);
-    if (16==reg.get_nbits())
-        return fpstatus;
-    return ops->extract(fpstatus, reg.get_offset(), reg.get_offset()+reg.get_nbits());
-}
-
-void
-RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    switch (reg.get_major()) {
-        case x86_regclass_gpr:
-            return writeRegisterGpr(reg, value, ops);
-        case x86_regclass_flags:
-            if (reg.get_minor()==x86_flags_status)
-                return writeRegisterFlag(reg, value, ops);
-            if (reg.get_minor()==x86_flags_fpstatus)
-                return writeRegisterFpStatus(reg, value, ops);
-            throw Exception("invalid register minor number: " + StringUtility::numberToString(reg.get_minor()),
-                            ops->currentInstruction());
-        case x86_regclass_segment:
-            return writeRegisterSeg(reg, value, ops);
-        case x86_regclass_ip:
-            return writeRegisterIp(reg, value, ops);
-        case x86_regclass_st:
-            return writeRegisterSt(reg, value, ops);
-        case x86_regclass_xmm:
-            return writeRegisterXmm(reg, value, ops);
-        default:
-            throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
-                            " (wrong RegisterDictionary?)", ops->currentInstruction());
-    }
-}
-
-void
-RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_require(reg.get_major()==x86_regclass_gpr);
-    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
-    ASSERT_not_null(ops);
-    if (reg.get_minor()>=n_gprs) {
-        throw Exception("invalid general purpose register minor number: " +
-                        numberToString(reg.get_minor()), ops->currentInstruction());
-    }
-    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32) {
-        throw Exception("invalid general purpose register width: " +
-                        numberToString(reg.get_nbits()), ops->currentInstruction());
-    }
-    if ((reg.get_offset()!=0 && (reg.get_offset()!=8 || reg.get_nbits()!=8)) ||
-        (reg.get_offset() + reg.get_nbits() > 32)) {
-        throw Exception("invalid general purpose sub-register: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    }
-    SValuePtr towrite = value;
-    if (reg.get_offset()!=0)
-        towrite = ops->concat(ops->extract(gpr[reg.get_minor()], 0, reg.get_offset()), towrite);
-    if (reg.get_offset() + reg.get_nbits()<32)
-        towrite = ops->concat(towrite, ops->extract(gpr[reg.get_minor()], reg.get_offset()+reg.get_nbits(), 32));
-    ASSERT_require(towrite->get_width()==32);
-    gpr[reg.get_minor()] = towrite;
-}
-
-void
-RegisterStateX86::writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_require(reg.get_major()==x86_regclass_flags);
-    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
-    ASSERT_not_null(ops);
-    if (reg.get_minor()!=0)
-        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->currentInstruction());
-    if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
-        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->currentInstruction());
-    if ((reg.get_nbits()>1 && reg.get_offset()!=0) ||
-        (reg.get_offset() + reg.get_nbits() > 32))
-        throw Exception("invalid flag subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    if (reg.get_nbits()==1) {
-        flag[reg.get_offset()] = value;
-    } else {
-        for (size_t i=0; i<reg.get_nbits(); ++i)
-            flag[reg.get_offset()+i] = ops->extract(value, i, 1);
-    }
-}
-
-void
-RegisterStateX86::writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_require(reg.get_major()==x86_regclass_segment);
-    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
-    ASSERT_not_null(ops);
-    if (reg.get_minor()>=n_segregs)
-        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->currentInstruction());
-    if (reg.get_offset()!=0 || reg.get_nbits()!=16)
-        throw Exception("invalid segment subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    segreg[reg.get_minor()] = value;
-}
-
-void
-RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    using namespace StringUtility;
-    ASSERT_require(reg.get_major()==x86_regclass_ip);
-    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
-    ASSERT_not_null(ops);
-    if (reg.get_minor()!=0) {
-        throw Exception("invalid instruction pointer register minor number: " +
-                        numberToString(reg.get_minor()), ops->currentInstruction());
-    }
-    if (reg.get_offset()!=0 || reg.get_nbits()!=32) {
-        throw Exception("invalid instruction pointer subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
-    }
-    ip = value;
-}
-
-void
-RegisterStateX86::writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    ASSERT_require(reg.get_major()==x86_regclass_st);
-    ASSERT_require(reg.get_minor()<8);
-    ASSERT_require(reg.get_offset()==0);
-    ASSERT_require(reg.get_nbits()==80);
-    ASSERT_not_null(value);
-    ASSERT_require(value->get_width()==80);
-    st[reg.get_minor()] = value;
-}
-
-void
-RegisterStateX86::writeRegisterXmm(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    ASSERT_require(reg.get_major()==x86_regclass_xmm);
-    ASSERT_require(reg.get_minor()<8);
-    ASSERT_require(reg.get_offset()==0);
-    ASSERT_require(reg.get_nbits()==128);
-    ASSERT_not_null(value);
-    ASSERT_require(value->get_width()==128);
-    xmm[reg.get_minor()] = value;
-}
-
-void
-RegisterStateX86::writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    ASSERT_require(reg.get_major()==x86_regclass_flags);
-    ASSERT_require(reg.get_minor()==x86_flags_fpstatus);
-    ASSERT_require(reg.get_offset()+reg.get_nbits() <= 16);
-    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
-
-    SValuePtr towrite = value;
-    if (reg.get_offset()!=0)
-        towrite = ops->concat(ops->extract(fpstatus, 0, reg.get_offset()), towrite);
-    if (reg.get_offset() + reg.get_nbits()<32)
-        towrite = ops->concat(towrite, ops->extract(fpstatus, reg.get_offset()+reg.get_nbits(), 16));
-    ASSERT_require(towrite->get_width()==16);
-    fpstatus = towrite;
-}
-
-bool
-RegisterStateX86::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOperators *ops) {
-    RegisterStateX86Ptr other = boost::dynamic_pointer_cast<RegisterStateX86>(other_);
-    ASSERT_not_null(other);
-    bool changed = false;
-    SValuePtr merged;
-
-    if (ip->createOptionalMerge(other->ip, merger(), ops->solver()).assignTo(merged)) {
-        ip = merged;
-        changed = true;
-    }
-
-    for (size_t i=0; i<n_gprs; ++i) {
-        if (gpr[i]->createOptionalMerge(other->gpr[i], merger(), ops->solver()).assignTo(merged)) {
-            gpr[i] = merged;
-            changed = true;
-        }
-    }
-
-    for (size_t i=0; i<n_segregs; ++i) {
-        if (segreg[i]->createOptionalMerge(other->segreg[i], merger(), ops->solver()).assignTo(merged)) {
-            segreg[i] = merged;
-            changed = true;
-        }
-    }
-
-    for (size_t i=0; i<n_flags; ++i) {
-        if (flag[i]->createOptionalMerge(other->flag[i], merger(), ops->solver()).assignTo(merged)) {
-            flag[i] = merged;
-            changed = true;
-        }
-    }
-
-    for (size_t i=0; i<n_st; ++i) {
-        if (st[i]->createOptionalMerge(other->st[i], merger(), ops->solver()).assignTo(merged)) {
-            st[i] = merged;
-            changed = true;
-        }
-    }
-
-    if (fpstatus->createOptionalMerge(other->fpstatus, merger(), ops->solver()).assignTo(merged)) {
-        fpstatus = merged;
-        changed = true;
-    }
-
-    for (size_t i=0; i<n_xmm; ++i) {
-        if (xmm[i]->createOptionalMerge(other->xmm[i], merger(), ops->solver()).assignTo(merged)) {
-            xmm[i] = merged;
-            changed = true;
-        }
-    }
-
-    return changed;
-}
-
-void
-RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const 
-{
-    const RegisterDictionary *regdict = fmt.get_register_dictionary();
-    if (!regdict)
-        regdict = get_register_dictionary();
-    RegisterNames regnames(regdict);
-
-    struct ShouldShow {
-        Formatter &fmt;
-        ShouldShow(Formatter &fmt): fmt(fmt) {}
-        bool operator()(const std::string &regname, const BaseSemantics::SValuePtr &value) {
-            return (!fmt.get_suppress_initial_values() || value->get_comment().empty() ||
-                    0!=value->get_comment().compare(regname+"_0"));
-        }
-    } should_show(fmt);
-
-    // Two passes: first figure out column widths for the register names, then print
-    size_t namewidth = 7;
-    FormatRestorer save_fmt(stream);
-    for (int pass=0; pass<2; ++pass) {
-        for (size_t i=0; i<n_gprs; ++i) {
-            std::string regname = regnames(RegisterDescriptor(x86_regclass_gpr, i, 0, 32));
-            if (should_show(regname, gpr[i])) {
-                if (0==pass) {
-                    namewidth = std::max(namewidth, regname.size());
-                } else {
-                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
-                           <<" = { " <<(*gpr[i]+fmt) <<" }\n";
-                }
-            }
-        }
-        for (size_t i=0; i<n_segregs; ++i) {
-            std::string regname = regnames(RegisterDescriptor(x86_regclass_segment, i, 0, 16));
-            if (should_show(regname, segreg[i])) {
-                if (0==pass) {
-                    namewidth = std::max(namewidth, regname.size());
-                } else {
-                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
-                           <<" = { " <<(*segreg[i]+fmt) <<" }\n";
-                }
-            }
-        }
-        for (size_t i=0; i<n_flags; ++i) {
-            std::string regname = regnames(RegisterDescriptor(x86_regclass_flags, 0, i, 1)); // flags are all part of minor #0
-            if (should_show(regname, flag[i])) {
-                if (0==pass) {
-                    namewidth = std::max(namewidth, regname.size());
-                } else {
-                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
-                           <<" = { " <<(*flag[i]+fmt) <<" }\n";
-                }
-            }
-        }
-        for (size_t i=0; i<n_st; ++i) {
-            std::string regname = regnames(RegisterDescriptor(x86_regclass_st, i, 0, 80));
-            if (should_show(regname, st[i])) {
-                if (0==pass) {
-                    namewidth = std::max(namewidth, regname.size());
-                } else {
-                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
-                           <<" = { " <<(*st[i]+fmt) <<" }\n";
-                }
-            }
-        }
-        for (size_t i=0; i<n_xmm; ++i) {
-            std::string regname = regnames(RegisterDescriptor(x86_regclass_xmm, i, 0, 128));
-            if (should_show(regname, xmm[i])) {
-                if (0==pass) {
-                    namewidth = std::max(namewidth, regname.size());
-                } else {
-                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
-                           <<" = { " <<(*xmm[i]+fmt) <<" }\n";
-                }
-            }
-        }
-        {
-            std::string regname = regnames(RegisterDescriptor(x86_regclass_flags, x86_flags_fpstatus, 0, 16));
-            if (should_show(regname, fpstatus)) {
-                if (0==pass) {
-                    namewidth = std::max(namewidth, regname.size());
-                } else {
-                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
-                           <<" = { " <<(*fpstatus+fmt) <<" }\n";
-                }
-            }
-        }
-        {
-            std::string regname = regnames(RegisterDescriptor(x86_regclass_ip, 0, 0, 32));
-            if (should_show(regname, ip)) {
-                if (0==pass) {
-                    namewidth = std::max(namewidth, regname.size());
-                } else {
-                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
-                           <<" = { " <<(*ip+fmt) <<" }\n";
-                }
-            }
-        }
-    }
-}
-
-/*******************************************************************************************************************************
- *                                      MemoryState
- *******************************************************************************************************************************/
-
 
 /*******************************************************************************************************************************
  *                                      State
@@ -648,15 +121,23 @@ State::clear_memory() {
 }
 
 SValuePtr
-State::readRegister(const RegisterDescriptor &desc, const SValuePtr &dflt, RiscOperators *ops) {
+State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_require(desc.is_valid());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
     return registers_->readRegister(desc, dflt, ops);
 }
 
+SValuePtr
+State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
+    ASSERT_require(desc.is_valid());
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(ops);
+    return registers_->peekRegister(desc, dflt, ops);
+}
+
 void
-State::writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
+State::writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops) {
     ASSERT_require(desc.is_valid());
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
@@ -672,6 +153,15 @@ State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
     return memory_->readMemory(address, dflt, addrOps, valOps);
 }
 
+SValuePtr
+State::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(address);
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    return memory_->peekMemory(address, dflt, addrOps, valOps);
+}
+    
 void
 State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(addr);
@@ -734,7 +224,7 @@ State::print(std::ostream &stream, Formatter &fmt) const
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
-    SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<unparseInstructionWithAddress(insn) <<"\n";
+    SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<insn->toString() <<"\n";
     currentInsn_ = insn;
     ++nInsns_;
 };
@@ -937,12 +427,7 @@ RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
 }
 
 SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt_) {
-    return peekRegister(reg, dflt_);
-}
-
-SValuePtr
-RiscOperators::peekRegister(const RegisterDescriptor &reg, const SValuePtr &dflt_) {
+RiscOperators::readRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
     SValuePtr dflt = dflt_;
     ASSERT_not_null(currentState_);
     ASSERT_not_null(dflt);
@@ -952,6 +437,14 @@ RiscOperators::peekRegister(const RegisterDescriptor &reg, const SValuePtr &dflt
         dflt = initialState()->readRegister(reg, dflt, this);
 
     return currentState_->readRegister(reg, dflt, this);
+}
+
+SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
+    SValuePtr dflt = dflt_;
+    ASSERT_not_null(currentState_);
+    ASSERT_not_null(dflt);
+    return currentState_->peekRegister(reg, dflt, this);
 }
 
 /*******************************************************************************************************************************
@@ -1030,7 +523,7 @@ Dispatcher::iproc_get(int key)
     return iproc_table[key];
 }
 
-const RegisterDescriptor &
+RegisterDescriptor
 Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing) const
 {
     const RegisterDictionary *regdict = get_register_dictionary();
@@ -1065,7 +558,7 @@ Dispatcher::decrementRegisters(SgAsmExpression *e)
         T1(const RiscOperatorsPtr &ops): ops(ops) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                const RegisterDescriptor &reg = rre->get_descriptor();
+                RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() < 0) {
                     SValuePtr adj = ops->number_(64, (int64_t)rre->get_adjustment());
                     if (reg.get_nbits() <= 64) {
@@ -1089,7 +582,7 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
         T1(const RiscOperatorsPtr &ops): ops(ops) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                const RegisterDescriptor &reg = rre->get_descriptor();
+                RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() > 0) {
                     SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.get_nbits());
                     ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
@@ -1113,7 +606,7 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         retval = effectiveAddress(mre->get_address(), nbits);
     } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        const RegisterDescriptor &reg = rre->get_descriptor();
+        RegisterDescriptor reg = rre->get_descriptor();
         retval = operators->readRegister(reg);
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);

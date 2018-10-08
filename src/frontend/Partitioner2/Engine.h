@@ -2,12 +2,19 @@
 #define ROSE_Partitioner2_Engine_H
 
 #include <BinaryLoader.h>
+#include <boost/noncopyable.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <Progress.h>
 #include <Sawyer/DistinctList.h>
+
+#ifdef ROSE_ENABLE_PYTHON_API
+#undef slots                                            // stupid Qt pollution
+#include <boost/python.hpp>
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -96,7 +103,7 @@ namespace Partitioner2 {
  *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
  *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
  */
-class ROSE_DLL_API Engine {
+class ROSE_DLL_API Engine: private boost::noncopyable {
 public:
     /** Settings for the engine.
      *
@@ -129,6 +136,10 @@ private:
     public:
         static Ptr instance() { return Ptr(new BasicBlockFinalizer); }
         virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+    private:
+        void fixFunctionReturnEdge(const Args&);
+        void fixFunctionCallEdges(const Args&);
+        void addPossibleIndeterminateEdge(const Args&);
     };
     
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
@@ -178,6 +189,9 @@ private:
 
         // Return the next available constant if any.
         Sawyer::Optional<rose_addr_t> nextConstant(const Partitioner &partitioner);
+
+        // Address of instruction being examined.
+        rose_addr_t inProgress() const { return inProgress_; }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,6 +205,7 @@ private:
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
+    Progress::Ptr progress_;                            // optional progress reporting
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -198,17 +213,18 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)),
+        progress_(Progress::instance()) {
         init();
     }
 
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
-        : settings_(settings),
-          interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
+        : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        basicBlockWorkList_(BasicBlockWorkList::instance(this)), progress_(Progress::instance()) {
         init();
     }
-
+    
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -694,7 +710,9 @@ public:
      *  that's already in the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
+     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
     virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
@@ -707,7 +725,9 @@ public:
      *  removed from the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found. */
+     *  function was found.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_INSN_RO_DATA reason. */
     virtual Function::Ptr makeNextCodeReferencedFunction(const Partitioner&);
 
     /** Make functions for function call edges.
@@ -923,6 +943,15 @@ public:
     virtual void exitOnError(bool b) { settings_.engine.exitOnError = b; }
     /** @} */
 
+    /** Property: progress reporting.
+     *
+     *  The optional object to receive progress reports.
+     *
+     * @{ */
+    Progress::Ptr progress() const /*final*/ { return progress_; }
+    virtual void progress(const Progress::Ptr &progress) { progress_ = progress; }
+    /** @} */
+
     /** Property: interpretation
      *
      *  The interpretation which is being analyzed. The interpretation is chosen when an ELF or PE container is parsed, and the
@@ -987,6 +1016,44 @@ public:
      * @{ */
     bool memoryIsExecutable() const /*final*/ { return settings_.loader.memoryIsExecutable; }
     virtual void memoryIsExecutable(bool b) { settings_.loader.memoryIsExecutable = b; }
+    /** @} */
+
+    /** Property: Link object files.
+     *
+     *  Object files (".o" files) typically don't contain information about how the object is mapped into virtual memory, and
+     *  thus machine instructions are not found. Turning on linking causes all the object files (and possibly library archives)
+     *  to be linked into an output file and the output file is analyzed instead.
+     *
+     *  See also, @ref linkArchives, @ref linkerCommand.
+     *
+     * @{ */
+    bool linkObjectFiles() const /*final*/ { return settings_.loader.linkObjectFiles; }
+    virtual void linkObjectFiles(bool b) { settings_.loader.linkObjectFiles = b; }
+    /** @} */
+
+    /** Property: Link library archives.
+     *
+     *  Static library archives (".a" files) contain object files that typically don't have information about where the object
+     *  is mapped in virtual memory. Turning on linking causes all archives (and possibly object files) to be linked into an
+     *  output file that is analyzed instead.
+     *
+     *  See also, @ref linkObjectFiles, @ref linkerCommand.
+     *
+     * @{ */
+    bool linkStaticArchives() const /*final*/ { return settings_.loader.linkStaticArchives; }
+    virtual void linkStaticArchives(bool b) { settings_.loader.linkStaticArchives = b; }
+    /** @} */
+
+    /** Property: Linker command.
+     *
+     *  This is the Bourne shell command used to link object files and static library archives depending on the @ref
+     *  linkObjectFiles and @ref linkStaticArchives properties.  The "%o" substring is replaced by the name of the linker output
+     *  file, and the "%f" substring is replaced by a space separated list of input files (the objects and libraries). These
+     *  substitutions are escaped using Bourne shell syntax and thus should not be quoted.
+     *
+     * @{ */
+    const std::string& linkerCommand() const /*final*/ { return settings_.loader.linker; }
+    virtual void linkerCommand(const std::string &cmd) { settings_.loader.linker = cmd; }
     /** @} */
 
     /** Property: Disassembler.
@@ -1062,6 +1129,17 @@ public:
     virtual void discontiguousBlocks(bool b) { settings_.partitioner.discontiguousBlocks = b; }
     /** @} */
 
+    /** Property: Maximum size for basic blocks.
+     *
+     *  This property is the maximum size for basic blocks measured in number of instructions. Any basic block that would
+     *  contain more than this number of instructions is split into multiple basic blocks.  Having smaller basic blocks makes
+     *  some intra-block analysis faster, but they have less information.  A value of zero indicates no limit.
+     *
+     * @{ */
+    size_t maxBasicBlockSize() const /*final*/ { return settings_.partitioner.maxBasicBlockSize; }
+    virtual void maxBasicBlockSize(size_t n) { settings_.partitioner.maxBasicBlockSize = n; }
+    /** @} */
+
     /** Property: Whether to find function padding.
      *
      *  If set, then the partitioner will look for certain padding bytes appearing before the lowest address of a function and
@@ -1114,12 +1192,13 @@ public:
 
     /** Property: Whether to find intra-function code.
      *
-     *  If set, the partitioner will look for parts of memory that were not disassembled and occur between other parts of the
-     *  same function, and will attempt to disassemble that missing part and link it into the surrounding function.
+     *  If positive, the partitioner will look for parts of memory that were not disassembled and occur between other parts of
+     *  the same function, and will attempt to disassemble that missing part and link it into the surrounding function. It will
+     *  perform up to @p n passes across the entire address space.
      *
      * @{ */
-    bool findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
-    virtual void findingIntraFunctionCode(bool b) { settings_.partitioner.findingIntraFunctionCode = b; }
+    size_t findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
+    virtual void findingIntraFunctionCode(size_t n) { settings_.partitioner.findingIntraFunctionCode = n; }
     /** @} */
 
     /** Property: Whether to find intra-function data.
@@ -1280,6 +1359,27 @@ public:
     virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
     /** @} */
 
+    /** Property: Give names to system calls.
+     *
+     *  If this property is set, then the partitioner makes a pass after the control flow graph is finalized and tries to give
+     *  names to system calls using the @ref Rose::BinaryAnalysis::SystemCall analysis.
+     *
+     * @{ */
+    bool namingSystemCalls() const /*final*/ { return settings_.partitioner.namingSyscalls; }
+    virtual void namingSystemCalls(bool b) { settings_.partitioner.namingSyscalls = b; }
+    /** @} */
+
+    /** Property: Header file in which system calls are defined.
+     *
+     *  If this property is not empty, then the specified Linux header file is parsed to obtain the mapping between system call
+     *  numbers and their names. Otherwise, any analysis that needs system call names obtains them by looking in predetermined
+     *  system header files.
+     *
+     * @{ */
+    const boost::filesystem::path& systemCallHeader() const /*final*/ { return settings_.partitioner.syscallHeader; }
+    virtual void systemCallHeader(const boost::filesystem::path &filename) { settings_.partitioner.syscallHeader = filename; }
+    /** @} */
+
     /** Property: Demangle names.
      *
      *  If this property is set, then names are passed through a demangle step, which generally converts them from a low-level
@@ -1336,6 +1436,17 @@ public:
     bool astCopyAllInstructions() const /*final*/ { return settings_.astConstruction.copyAllInstructions; }
     virtual void astCopyAllInstructions(bool b) { settings_.astConstruction.copyAllInstructions = b; }
     /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Python API support functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_PYTHON_API
+
+    // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
+    Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
+    Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
+        
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal stuff

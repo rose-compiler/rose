@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2016.
 
 #ifndef DOT_GRAPH_CFG_FRONTEND_H
 #define DOT_GRAPH_CFG_FRONTEND_H
@@ -26,7 +25,11 @@ namespace SPRAY {
   typedef boost::unordered_map<std::string, boost::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
   typedef std::pair<std::list<Flow>, EdgeAnnotationMap> CfgsAndAnnotationMap;
 
-  // Parses a .dot-file digraph into a Flow CFG
+  /*! 
+   * \brief Parses a .dot file digraph into a Flow CFG (using string annotations).
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class DotGraphCfgFrontend {
   public:
     // initializing the dot graph frontend

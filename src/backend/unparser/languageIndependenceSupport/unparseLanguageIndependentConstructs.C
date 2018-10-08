@@ -327,7 +327,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // statementfilename = stmt->get_file_info()->get_filenameString();
                statementfilename = stmt->get_file_info()->get_physical_filename();
 
-               if (info.get_language() == SgFile::e_Fortran_output_language)
+               if (info.get_language() == SgFile::e_Fortran_language)
                   {
                  // DQ (9/24/2013): In the case of Fortran we need to generate the preprocessor name (at least for file requireing CPP).
                  // This was handled properly under the previous implementation using the logical source position, so for Fortran we 
@@ -469,9 +469,17 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
      ROSE_ASSERT(locatedNode != NULL);
      AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
 
+#if 0
+     curprint ("/* Inside of printOutComments() */");
+#endif
+
      if (comments != NULL)
         {
+#if 0
           printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+          curprint ("/* Inside of printOutComments(): comments != NULL */");
+#endif
+
           AttachedPreprocessingInfoType::iterator i;
           for (i = comments->begin(); i != comments->end(); i++)
              {
@@ -480,6 +488,8 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
                     ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                     (*i)->getString().c_str());
                printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               curprint (string("/* Inside of printOutComments(): comments = ") +  (*i)->getString() + " */");
+
 #if 0
                (*i)->get_file_info()->display("comment/directive location");
 #endif
@@ -1703,6 +1713,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
        // DQ (10/30/2013): This code is executed for C++ code (e.g. for test2004_58.C -- template support).
 
+#if 0
+          printf ("fixup ordering of comments and any compiler generated code: returning after push onto queue \n");
+#endif
+
        // push all compiler generated nodes onto the static stack and unparse them after comments and directives 
        // of the next statement are output but before the associated statement to which they are attached.
 
@@ -1717,6 +1731,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      if ( unparseLineReplacement(stmt,info) )
         {
        // DQ (10/30/2013): Not clear why we want a return here...
+#if 0
+          printf ("In unparseLineReplacement() case \n");
+#endif
           return;
         }
 
@@ -1740,10 +1757,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
   // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL) || (isSgTypedefDeclaration(stmt) != NULL);
      bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
+
 #if 0
      printf ("In unparseStatement(): skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
      printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
+
      if (skipOutputOfPreprocessingInfo == false)
         {
 #if 0
@@ -1812,7 +1831,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // printf ("Unparser Delegate found! \n");
           if (unp->repl->unparse_statement(stmt,info, unp->cur))
              {
-            // printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
+#if 1
+               printf ("Delegate unparser retruned true for repl->unparse_statement(%p) \n",stmt);
+#endif
                return;
              }
         }
@@ -2261,11 +2282,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                       // Note that becasue of the logic below, this is the first CR for a SgBasicBlock (I don't know exactly why).
                       // The other CR frequenty introduces is in the unparseLanguageSpecificStatement() function.
                          unp->cur.reset_chars_on_line();
-#if 1
+#if 0
                          curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
 #endif
                          unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
-#if 1
+#if 0
                          curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
 #endif
                        }
@@ -2501,6 +2522,13 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // DQ (1/10/2015) We have added support to carry a pointer to the SgSourceFile within the SgUnparse_Info.
           SgSourceFile* sourceFile = info.get_current_source_file();
 
+#if 0
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): sourceFile         = %p \n",sourceFile);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): scope              = %p \n",scope);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): globalScope        = %p \n",globalScope);
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): functionDefinition = %p \n",functionDefinition);
+#endif
+
        // DQ (1/10/2015): We can't enforce this for all expresions (not clear why).
        // ROSE_ASSERT(sourceFile != NULL);
           if (sourceFile != NULL)
@@ -2522,6 +2550,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                          lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
                        }
                     isLastStatementOfScope = (stmt == lastStatement);
+#if 0
+                    printf ("isLastStatementOfScope = %s \n",isLastStatementOfScope ? "true" : "false");
+#endif
                   }
                  else
                   {
@@ -2689,7 +2720,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (5/31/2005): special handling for compiler generated statements
      if (isSgGlobal(stmt) != NULL)
         {
-       // printf ("Output template definitions after the final comments in the file \n");
+#if 0
+          printf ("Output template definitions after the final comments in the file \n");
+#endif
           outputCompilerGeneratedStatements(info);
         }
 
@@ -2916,6 +2949,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
        // QY (7/9/2004): revised to use the new unp->u_sage->PrintStartParen test
           bool printParen = requiresParentheses(expr,info);
 #if 0
+          printf ("In unparseExpression(): expr = %p = %s printParen = %s \n",expr,expr->class_name().c_str(),printParen ? "true" : "false");
           curprint (string("\n/* In unparseExpression(): printParen = ") + (printParen ? "true" : "false") + " */ \n ");
 #endif
 
@@ -3676,13 +3710,26 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  !info.SkipClassDefinition() &&
                                  !info.SkipFunctionDefinition();
 
+#if 0
+          printf ("info.SkipEnumDefinition()     = %s \n",info.SkipEnumDefinition() ? "true" : "false");
+          printf ("info.SkipClassDefinition()    = %s \n",info.SkipClassDefinition() ? "true" : "false");
+          printf ("info.SkipFunctionDefinition() = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+          printf ("Test 1: infoSaysGoAhead       = %s \n",infoSaysGoAhead ? "true" : "false");
+#endif
+
+#if 0
+          printf ("Reset infoSaysGoAhead == true \n");
+          infoSaysGoAhead = true;
+#endif
+
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
        // Liao 11/9/2010: allow SgInitializedName also
        // negara1 (08/15/2011): Allow SgHeaderFileBody as well.
           infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) || (isSgHeaderFileBody(stmt) != NULL);
 
 #if 0
-          printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
+          printf ("stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("Test 2: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
 #endif
 
 #if 0
@@ -4125,7 +4172,7 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
 #if 0
                     printf ("In isDotExprWithAnonymousUnion(): (hidden in SgBinaryOp): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
 #endif
-                    returnValue = isAnonymousName;
+                   returnValue = isAnonymousName;
                   }
              }
             else
@@ -4152,27 +4199,113 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
    {
      bool suppressOutputOfImplicitArrowExp = false;
 
+#define DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA 0
+
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+     printf ("&&&&&&&&&&&&& In isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s info.supressImplicitThisOperator = %s \n",expr,expr->class_name().c_str(),info.supressImplicitThisOperator() ? "true" : "false");
+#endif
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+     curprint (" /* &&&&&&&&&&&&& In isImplicitArrowExpWithinLambdaFunction() */ ");
+#endif
+
      if (info.supressImplicitThisOperator() == true)
         {
           SgArrowExp* arrowExp = isSgArrowExp(expr);
           if (arrowExp != NULL)
              {
+               SgExpression* lhs = arrowExp->get_lhs_operand();
+               ROSE_ASSERT(lhs != NULL);
 
-                SgExpression* lhs = arrowExp->get_lhs_operand();
-                ROSE_ASSERT(lhs != NULL);
-                SgThisExp* thisExp = isSgThisExp(lhs);
-                if (thisExp != NULL)
-                   {
-                     if (thisExp->get_file_info()->isCompilerGenerated() == true)
-                        {
-                          suppressOutputOfImplicitArrowExp = true;
-                        }
-                   }
+               SgThisExp* thisExp = isSgThisExp(lhs);
+               if (thisExp != NULL)
+                  {
+                    if (thisExp->get_file_info()->isCompilerGenerated() == true)
+                       {
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                         printf ("In isImplicitArrowExpWithinLambdaFunction(): found compiler generated this expression: thisExp = %p = %s \n",thisExp,thisExp->class_name().c_str());
+#endif
+                         suppressOutputOfImplicitArrowExp = true;
+                       }
+                  }
+
+#if 0
+            // DQ (7/23/2018): Need to support cases where the rhs is a valid operand (see test2018_85.C).
+            // But we still want test2018_120.C to work properly.
+               SgExpression* rhs = arrowExp->get_rhs_operand();
+               if (rhs != NULL)
+                  {
+                 // suppressOutputOfImplicitArrowExp = false;
+                    if (rhs->get_file_info()->isCompilerGenerated() == false)
+                       {
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                         printf ("In isImplicitArrowExpWithinLambdaFunction(): found NON-compiler generated this expression: rhs = %p = %s \n",rhs,rhs->class_name().c_str());
+#endif
+                      // suppressOutputOfImplicitArrowExp = false;
+                         suppressOutputOfImplicitArrowExp = false;
+#if 0
+                         printf ("found NON-compiler generated this expression: exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+#endif
+
+            // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
+               SgArrowExp* nested_arrowExp = isSgArrowExp(lhs);
+               if (nested_arrowExp != NULL)
+                  {
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                    printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
+#endif
+                    suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+
+                 // DQ (2/12/2018): And if the rhs is not compiler generated then we want to return false.
+                    SgExpression* nested_operator_rhs = nested_arrowExp->get_rhs_operand();
+                    if (nested_operator_rhs->get_file_info()->isCompilerGenerated() == false)
+                       {
+// #if DEBUG_ARROW_OPERATOR_CHAIN
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                         printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: found NON compiler generated expression: nested_operator_rhs = %p = %s \n",
+                              nested_operator_rhs,nested_operator_rhs->class_name().c_str());
+#endif
+                         suppressOutputOfImplicitArrowExp = false;
+                       }
+                  }
+#if 0
+            // DQ (7/24/2018): I now think this is a mistake to make this a recursive function.
+            // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
+               SgCastExp* nested_cast = isSgCastExp(lhs);
+               if (nested_cast != NULL)
+                  {
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                    printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested cast expression: nested_cast = %p = %s \n",nested_cast,nested_cast->class_name().c_str());
+#endif
+                    if (nested_cast->get_file_info()->isCompilerGenerated() == true)
+                       {
+                         ROSE_ASSERT(nested_cast->get_operand() != NULL);
+                         SgArrowExp* nested_arrowExp = isSgArrowExp(nested_cast->get_operand());
+                         if (nested_arrowExp != NULL)
+                            {
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                              printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression behind cast: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
+#endif
+                              suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+                              printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression behind cast: nested_arrowExp = %p = %s suppressOutputOfImplicitArrowExp = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
+                            }
+                       }
+                  }
+#endif
              }
         }
 
-#if 0
-     printf ("In isImplicitArrowExpWithinLambdaFunction(): suppressOutputOfImplicitArrowExp = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+     printf ("&&&&&&&&&&&&& Leaving isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",expr,expr->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
+#if DEBUG_IMPLICIT_ARROWEXP_WITHIN_LAMBDA
+     curprint (" /* &&&&&&&&&&&&& Leaving isImplicitArrowExpWithinLambdaFunction() */ ");
 #endif
 
      return suppressOutputOfImplicitArrowExp;
@@ -4184,7 +4317,9 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
 bool
 partOfArrowOperatorChain(SgExpression* expr)
    {
-#define DEBUG_ARROW_OPERATOR_CHAIN 1
+#define DEBUG_ARROW_OPERATOR_CHAIN 0
+
+#error "DEAD CODE!"
 
      SgBinaryOp* binary_op = isSgBinaryOp(expr);
      ROSE_ASSERT(binary_op != NULL);
@@ -4195,10 +4330,14 @@ partOfArrowOperatorChain(SgExpression* expr)
      printf ("Inside of partOfArrowOperatorChain(): binary_op = %p = %s \n",binary_op,binary_op->class_name().c_str());
 #endif
 
+#error "DEAD CODE!"
+
   // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
   // required in places even though we have historically defaulted to the generation of the 
   // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
      SgNode* possibleParentFunctionCall = binary_op->get_parent();
+
+#error "DEAD CODE!"
 
   // DQ (4/9/2013): This fails for test2006_92.C.
   // ROSE_ASSERT(possibleFunctionCall != NULL);
@@ -4208,6 +4347,9 @@ partOfArrowOperatorChain(SgExpression* expr)
      bool parent_function_call_is_compiler_generated   = false;
      if (possibleParentFunctionCall != NULL)
         {
+
+#error "DEAD CODE!"
+
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
           if (functionCallExp != NULL)
              {
@@ -4231,6 +4373,9 @@ partOfArrowOperatorChain(SgExpression* expr)
                        }
                   }
 #endif
+
+#error "DEAD CODE!"
+
                if (parent_function_is_overloaded_arrow_operator == true)
                   {
                     SgExpression* expression = isSgExpression(functionCallExp->get_parent());
@@ -4250,6 +4395,8 @@ partOfArrowOperatorChain(SgExpression* expr)
                        {
                          result = false;
                        }
+#error "DEAD CODE!"
+
                   }
                  else
                   {
@@ -4257,6 +4404,8 @@ partOfArrowOperatorChain(SgExpression* expr)
                   }
              }
         }
+
+#error "DEAD CODE!"
 
      return result;
    }
@@ -4275,20 +4424,65 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
      ROSE_ASSERT(binary_op != NULL);
 
 #if DEBUG_BINARY_OPERATORS
-      curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
-      printf ("\n @@@@@ In unparseBinaryExpr(): expr = %p %s \n",expr,expr->class_name().c_str());
+     curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
+     printf ("\n @@@@@ In unparseBinaryExpr(): expr = %p %s \n",expr,expr->class_name().c_str());
 #endif
 
-   // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
-      bool suppressOutputOfDotExp           = isDotExprWithAnonymousUnion(expr);
-      bool suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(expr,info);
+  // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
+     bool suppressOutputOfDotExp           = isDotExprWithAnonymousUnion(expr);
+     bool suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(expr,info);
+
+  // DQ (4/15/2018): Fixup for Cxx11_tests/test2018_85.C
+     SgArrowExp* arrowExp = isSgArrowExp(expr);
+     if (suppressOutputOfImplicitArrowExp == true && arrowExp != NULL)
+        {
+          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+          if (memberFunctionRefExp != NULL)
+             {
+            // If this is a member function, then we will need to include that reference to the calling class through the arrow operator.
+
+            // DQ (7/5/2018): If we are going to force the output of the "->" operator, then we have to force the output of the lhs 
+            // expression (see test2018_120.C) or the lhs of the lhs, ... unclear how to handle this more complex case.  Unless we 
+            // explicitly search the lhs expression for the "this" operand so that we can unparse it when there is not a variable
+            // reference expression as in test2018_85.C.  I would rather output the "this->" part of the unparsed expression than
+            // skip it, however, the case in test2018_120.C has a compiler generated "this" and so it might be better to use this
+            // as a test for if we should make this a special case and unparse the "->" operator.  This would be inconsistant with
+            // the original code, but then the EDG AST does marks even the "this" expression as comnpiler generated and that is 
+            // equivalent semantics, so that might be the best solution.  EDG just normalizes the code with respect to the source 
+            // position information in this case.
+
+#if 0
+               printf ("In unparseBinaryExpr(): Set suppressOutputOfImplicitArrowExp = false: as special case of a member function reference: memberFunctionRefExp = %p = %s \n",memberFunctionRefExp,memberFunctionRefExp->class_name().c_str());
+               curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " : suppressOutputOfImplicitArrowExp set to false */ \n");
+#endif
+            // DQ (7/24/2018): Instead of making this an exception, we should try to handle this case better in test2018_85.C and test2018_130.C.
+            // suppressOutputOfImplicitArrowExp = false;
+             }
+            else
+             {
+#if 0
+               printf ("In unparseBinaryExpr(): arrowExp->get_rhs_operand() = %p = %s \n",arrowExp->get_rhs_operand(),arrowExp->get_rhs_operand()->class_name().c_str());
+#endif
+             }
+        }
+
+#if 0
+  // DQ (2/12/2018): Debuging Cxx11_tests/test2018_10.C
+     printf ("In unparseBinaryExpr(): suppressOutputOfImplicitArrowExp: expr = %p = %s suppressOutputOfImplicitArrowExp = %s \n",
+          expr,expr->class_name().c_str(),suppressOutputOfImplicitArrowExp ? "true" : "false");
+     curprint ("/* In unparseBinaryExpr(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+     curprint ("/* In unparseBinaryExpr(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " rhs = " + binary_op->get_rhs_operand()->class_name() + " */\n ");
+     curprint ("/* In unparseBinaryExpr(): suppressOutputOfImplicitArrowExp: suppressOutputOfImplicitArrowExp = " + string(suppressOutputOfImplicitArrowExp ? "true" : "false") + " */\n");
+  // suppressOutputOfImplicitArrowExp = false;
+  // suppressOutputOfImplicitArrowExp = false;
+#endif
 
 #if DEBUG_BINARY_OPERATORS
-   // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
-      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " */ \n");
-      curprint ( string("\n /*                              lhs class name         = ") + StringUtility::numberToString(binary_op->get_lhs_operand()) + " = " + binary_op->get_lhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              rhs class name         = ") + StringUtility::numberToString(binary_op->get_rhs_operand()) + " = " + binary_op->get_rhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              suppressOutputOfDotExp = ") + (suppressOutputOfDotExp ? "true" : "false") + " */ \n");
+  // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
+     curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " */ \n");
+     curprint ( string("\n /*                              lhs class name         = ") + StringUtility::numberToString(binary_op->get_lhs_operand()) + " = " + binary_op->get_lhs_operand()->class_name() + " */ \n");
+     curprint ( string("\n /*                              rhs class name         = ") + StringUtility::numberToString(binary_op->get_rhs_operand()) + " = " + binary_op->get_rhs_operand()->class_name() + " */ \n");
+     curprint ( string("\n /*                              suppressOutputOfDotExp = ") + (suppressOutputOfDotExp ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
@@ -4527,15 +4721,36 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 
 #if DEBUG_BINARY_OPERATORS
-          curprint ("/* STARTING LHS: Calling unparseExpression(): " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          curprint ("/* STARTING LHS: Calling unparseExpression(): " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n");
           printf ("STARTING LHS: Calling unparseExpression(): for LHS = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
+          printf ("STARTING LHS: Calling unparseExpression(): suppressOutputOfImplicitArrowExp = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+          curprint ("/* STARTING LHS: Calling unparseExpression(): suppressOutputOfImplicitArrowExp = " + string(suppressOutputOfImplicitArrowExp ? "true" : "false") + " */\n");
 #endif
 
        // DQ (9/3/2014): Adding support to supress the output if this operators in lambda functions.
        // unparseExpression(binary_op->get_lhs_operand(), info);
           if (suppressOutputOfImplicitArrowExp == false)
              {
+            // DQ (7/12/2018): Check if this is a member function and if it is from a compiler generated variable and then if "this" should be output.
+#if 0
+               printf ("NOTE: suppressOutputOfImplicitArrowExp == false: unparse the binary_op->get_lhs_operand() = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
+#endif
+#if 0
+           // Test for if this should be output by calling: 
+               bool inner_suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(binary_op->get_lhs_operand(),info);
+#if 1
+               printf ("################# inner_suppressOutputOfImplicitArrowExp = %s \n",inner_suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
+#endif
                unparseExpression(binary_op->get_lhs_operand(), info);
+
+#if 0
+               printf ("DONE: NOTE: suppressOutputOfImplicitArrowExp == false: unparse the binary_op->get_lhs_operand() = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
+#endif
+#if 0
+               printf ("NOTE: suppressOutputOfImplicitArrowExp == false: exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
 
 #if DEBUG_BINARY_OPERATORS
@@ -4606,6 +4821,11 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                printf ("In unparseBinaryExpr(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
 #endif
              }
+#endif
+
+#if DEBUG_BINARY_OPERATORS
+          printf ("In unparseBinaryExpr(): (after LHS): suppressOutputOfImplicitArrowExp            = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+          curprint ("/* In unparseBinaryExpr(): (after LHS): suppressOutputOfImplicitArrowExp = " + string(suppressOutputOfImplicitArrowExp ? "true" : "false") + " */\n ");
 #endif
 
        // DQ: This is handling that is specific to anonomous unions.
@@ -5089,6 +5309,11 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgShortVal:               { unparseShortVal(expr, info);        break; }
                case V_SgUnsignedCharVal:        { unparseUCharVal(expr, info);        break; }
                case V_SgWcharVal:               { unparseWCharVal(expr, info);        break; }
+
+            // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+               case V_SgChar16Val:              { unparseChar16Val(expr, info);       break; }
+               case V_SgChar32Val:              { unparseChar32Val(expr, info);       break; }
+
                case V_SgStringVal:              { unparseStringVal(expr, info);       break; }
                case V_SgUnsignedShortVal:       { unparseUShortVal(expr, info);       break; }
                case V_SgEnumVal:                { unparseEnumVal(expr, info);         break; }
@@ -5154,12 +5379,12 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
         {
        // DQ (9/15/2012): We have added a mechanism for the language to be specified directly.
        // C_language_support = true;
-          if (info.get_language() != SgFile::e_default_output_language)
+          if (info.get_language() != SgFile::e_default_language)
              {
 #if 0
                printf ("In unparseBoolVal(): The output language has been specified directly info.get_language() = %d \n");
 #endif
-               C_language_support = (info.get_language() == SgFile::e_C_output_language);
+               C_language_support = (info.get_language() == SgFile::e_C_language);
              }
             else
              {
@@ -5379,6 +5604,42 @@ UnparseLanguageIndependentConstructs::unparseWCharVal(SgExpression* expr, SgUnpa
         }
    }
 
+void
+UnparseLanguageIndependentConstructs::unparseChar16Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar16Val* char_val = isSgChar16Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseChar32Val(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgChar32Val* char_val = isSgChar32Val(expr);
+     ROSE_ASSERT(char_val != NULL);
+
+  // DQ (8/30/2006): Make change suggested by Rama (patch)
+  // curprint ( (int) wchar_val->get_value();
+     if (char_val->get_valueString() == "")
+        {
+          curprint (tostring(char_val->get_value()));
+        }
+       else
+        {
+          curprint (char_val->get_valueString());
+        }
+   }
+
 #if 0
 // Because of the details of Fortran string, this can't be language independent.
 void
@@ -5475,8 +5736,13 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      ROSE_ASSERT(enum_val != NULL);
 
 #if 0
-     printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-  // curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
+     printf ("In Unparse_ExprStmt::unparseEnumVal:\n");
+     printf ("  -- info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
+     printf ("  -- enum_val->get_requiresNameQualification() = %s\n", enum_val->get_requiresNameQualification() ? "true" : "false");
+     printf ("  -- enum_val->get_qualified_name_prefix() = %s\n", enum_val->get_qualified_name_prefix().getString().c_str());
+#endif
+#if 0
+     curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
 #endif
 
   // todo: optimize this so that the qualified name is only printed when necessary.
@@ -5583,7 +5849,31 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
           if ( (enum_val->get_name().is_null() == false) && (isGeneratedName == false) )
              {
             // This is the typical case.
-               curprint(enum_val->get_name().str());
+            // curprint(enum_val->get_name().str());
+
+            // DQ (5/14/2018): For C++11 enum class declarations, the assocated enum value will 
+            // ALWAYS require an explicit cast or additional name qualification.
+               SgEnumDeclaration* enumDeclaration = enum_val->get_declaration();
+               if (enumDeclaration != NULL)
+                  {
+                    if (enumDeclaration->get_isScopedEnum() == true)
+                       {
+                      // curprint(enum_val->get_name().str());
+                         curprint(enumDeclaration->get_name().str());
+                         curprint("(");
+                         string valueString = StringUtility::numberToString(enum_val->get_value());
+                         curprint(valueString);
+                         curprint(")");
+                       }
+                      else
+                       {
+                         curprint(enum_val->get_name().str());
+                       }
+                  }
+                 else
+                  {
+                    curprint(enum_val->get_name().str());
+                  }
              }
             else
              {
@@ -5593,7 +5883,9 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-  // curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
+#endif
+#if 0
+     curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
 #endif
 
 #if 0
@@ -6745,10 +7037,21 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
   ROSE_ASSERT  (c);
   SgOmpExpressionClause* exp_clause = isSgOmpExpressionClause(c);
   ROSE_ASSERT(exp_clause);
+ 
+
+  // ordered (n) vs ordered : (n) is optional
+  if (isSgOmpOrderedClause(c) && (exp_clause->get_expression() == NULL))
+  {  
+    curprint(string(" ordered"));
+    return; 
+  }  
+
   if (isSgOmpCollapseClause(c))
     curprint(string(" collapse("));
   else if (isSgOmpIfClause(c))
     curprint(string(" if("));
+  else if (isSgOmpOrderedClause(c))
+    curprint(string(" ordered("));
   else if (isSgOmpFinalClause(c))
     curprint(string(" final("));
   else if (isSgOmpPriorityClause(c))
@@ -6816,12 +7119,13 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         curprint(string(" notinbranch"));
         break;
       }
- 
+#if 0  // this becomes an expression clause since OpenMP 4.5
     case V_SgOmpOrderedClause:
       {
         curprint(string(" ordered"));
         break;
       }
+#endif      
     case V_SgOmpUntiedClause:
       {
         curprint(string(" untied"));
@@ -6855,6 +7159,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpNumThreadsClause:  
     case V_SgOmpSafelenClause:  
     case V_SgOmpSimdlenClause:  
+    case V_SgOmpOrderedClause:
       //case V_SgOmpExpressionClause: // there should be no instance for this clause
       {
         unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);
@@ -7668,7 +7973,16 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
   // is equal to A**(B**C) rather than (A**B)**C. All other FORTRAN operators are left to right associative (left associative)
   // (however it appears to contradict the stated rule for minus (above).
 
+  // DQ (4/20/2018): Added assertion.
+     ROSE_ASSERT(expr != NULL);
+
      int variant = GetOperatorVariant(expr);
+
+#if 0
+     printf ("In getAssociativity(): variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+     curprint(string("\n/* In getAssociativity(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " */ \n");
+#endif
+
      switch (variant)
         {
        // DQ (7/23/2013): Added cast operator.
@@ -7696,15 +8010,90 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
 
                AssociativitySpecifier associativitySpecifier = e_assoc_none;
 
+               ROSE_ASSERT(expr != NULL);
                SgUnaryOp* unaryOp = isSgUnaryOp(expr);
-               if (unaryOp->get_mode() == SgUnaryOp::prefix)
+
+            // DQ (4/20/2018): Added suppofr for function and member function operator++ and operator-- and there prefix and postfix variations.
+               if (unaryOp == NULL)
                   {
-                    associativitySpecifier = e_assoc_right;
+#if 0
+                    printf ("ERROR: unaryOp == NULL: expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
+                    SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
+                    ROSE_ASSERT(functionCallExp != NULL);
+                    SgExpression* functionExp = functionCallExp->get_function();
+                    ROSE_ASSERT(functionExp != NULL);
+                    SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
+                    ROSE_ASSERT(functionRefExp != NULL);
+                    ROSE_ASSERT(functionRefExp->get_symbol() != NULL);
+#if 0
+                    printf ("function name = %s \n",functionRefExp->get_symbol()->get_name().str());
+#endif
+                    SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+                    ROSE_ASSERT(functionSymbol != NULL);
+                    SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+                    ROSE_ASSERT(functionDeclaration != NULL);
+#if 0
+                    printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+                    printf ("functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
+                    printf ("   --- functionDeclaration->get_args().size() = %zu \n",functionDeclaration->get_args().size());
+#endif
+                    int numberOfArguments = functionDeclaration->get_args().size();
+
+                 // The number of function parametes is what determins if this is a prefix or postfix operator.
+                 // For non-member functions: The prefix operator has 1, and the postfix operator has 2.
+                 // For member functions: The prefix operator has 0, and the postfix operator has 1.
+                    SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+                    bool isPrefixOperator = false;
+                    if (memberFunctionDeclaration != NULL)
+                       {
+                         if (numberOfArguments == 0)
+                            {
+                              isPrefixOperator = true;
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(numberOfArguments == 1);
+                              isPrefixOperator = false;
+                            }
+
+                       }
+                      else
+                       {
+                         if (numberOfArguments == 1)
+                            {
+                              isPrefixOperator = true;
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(numberOfArguments == 2);
+                              isPrefixOperator = false;
+                            }
+                       }
+
+                    if (isPrefixOperator == true)
+                       {
+                         associativitySpecifier = e_assoc_right;
+                       }
+                      else
+                       {
+                         associativitySpecifier = e_assoc_left;
+                       }
+
                   }
                  else
                   {
-                    ROSE_ASSERT(unaryOp->get_mode() == SgUnaryOp::postfix);
-                    associativitySpecifier = e_assoc_left;
+                    ROSE_ASSERT(unaryOp != NULL);
+
+                    if (unaryOp->get_mode() == SgUnaryOp::prefix)
+                       {
+                         associativitySpecifier = e_assoc_right;
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(unaryOp->get_mode() == SgUnaryOp::postfix);
+                         associativitySpecifier = e_assoc_left;
+                       }
                   }
 
                return associativitySpecifier;
@@ -7735,7 +8124,9 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
           case V_SgSizeOfOp:
+             {
               return e_assoc_left;
+             }
 
           case V_SgCommaOpExp:
           case V_SgOrOp:
@@ -7763,15 +8154,21 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgPntrArrRefExp:
           case V_SgArrowExp:
           case V_SgDotExp:
+             {
               return e_assoc_right;
+             }
 
        // DQ (9/25/2013): The Fortran SgExponentiationOp has right associativity.
            case V_SgExponentiationOp:
-              return e_assoc_right;
+             {
+               return e_assoc_right;
+             }
 
        // DQ (9/25/2013): I believe that the Fortran SgConcatenationOp has left associativity.
           case V_SgConcatenationOp:
-              return e_assoc_left;
+             {
+               return e_assoc_left;
+             }
 
        // DQ (1/25/2014): This is not really defined for unary operators, but it does not make sense to output the warning below either.
           case V_SgMinusOp:
@@ -7812,7 +8209,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
 #define DEBUG_PARENTHESIS_PLACEMENT 0
 
-#if DEBUG_PARENTHESIS_PLACEMENT
+#if DEBUG_PARENTHESIS_PLACEMENT || 0
      printf ("\n\n***** In requiresParentheses() \n");
      printf ("In requiresParentheses(): expr = %p = %s need_paren = %s \n",expr,expr->class_name().c_str(),expr->get_need_paren() ? "true" : "false");
      printf ("In requiresParentheses(): isOverloadedArrowOperator(expr) = %s \n",(unp->u_sage->isOverloadedArrowOperator(expr) == true) ? "true" : "false");
@@ -7948,15 +8345,111 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
             // DQ (8/29/2014): If this is a user-defined operator (SgFunctionCallExp) nested in a user-defined 
             // operator (SgFunctionCallExp) then we need a more useful parent than the parent function's SgExprListExpr.
                SgExprListExp* parent_exprListExp = isSgExprListExp(parentExpr);
+#if 0
+               printf ("parent_exprListExp = %p \n",parent_exprListExp);
+#endif
                if (parent_exprListExp != NULL)
                   {
+                 // DQ (4/19/2018): This might be looking at the wrong node for the SgFunctionCallExp.
+#if 0
+                    printf ("NOTE: Look at the parent of the SgExprListExp not the expr for the next SgFunctionCallExp \n");
+#endif
+                 // SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
                     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
+#if 0
+                    printf ("   --- current expr functionCallExp = %p \n",functionCallExp);
+#endif
                     if (functionCallExp != NULL)
                        {
                       // Find a better parent node to use (reach to the parent SgFunctionCallExp).
                          SgNode* local_parentExpr = parentExpr;
                          local_parentExpr = local_parentExpr->get_parent();
                          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(local_parentExpr);
+#if 0
+                         printf ("   --- --- functionCallExp = %p \n",functionCallExp);
+#endif
+                         if (functionCallExp != NULL)
+                            {
+#if DEBUG_PARENTHESIS_PLACEMENT || 0
+                              printf ("In requiresParentheses(): Found a better node to use in determining precedence: functionCallExp = %p \n",functionCallExp);
+#endif
+                              parentExpr = functionCallExp;
+                            }
+                       }
+                      else
+                       {
+                      // DQ (4/19/2018): This is the case of both expressions in a binary operator not being overloaded.
+#if 0
+                         printf ("parent_exprListExp->get_expressions().size() = %zu \n",parent_exprListExp->get_expressions().size());
+#endif
+                      // Find a better parent node to use (reach to the parent SgFunctionCallExp).
+                         SgNode* local_parentExpr = parentExpr;
+                         ROSE_ASSERT(local_parentExpr != NULL);
+#if 0
+                         printf ("local_parentExpr = parentExpr: local_parentExpr = %p \n",local_parentExpr);
+                         if (local_parentExpr->get_parent() == NULL)
+                            {
+                              printf ("local_parentExpr->get_parent() == NULL: local_parentExpr = %p = %s \n",local_parentExpr,local_parentExpr->class_name().c_str());
+                            }
+#endif
+                         local_parentExpr = local_parentExpr->get_parent();
+#if 0
+                         printf ("local_parentExpr = local_parentExpr->get_parent(): local_parentExpr = %p \n",local_parentExpr);
+#endif
+                      // ROSE_ASSERT(local_parentExpr != NULL);
+
+                         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(local_parentExpr);
+#if 0
+                         printf ("   --- --- parent parent functionCallExp = %p \n",functionCallExp);
+#endif
+                         SgFunctionRefExp*       functionRefExp       = NULL;
+                         SgMemberFunctionRefExp* memberFunctionRefExp = NULL;
+                         if (functionCallExp != NULL)
+                            {
+#if 0
+                              printf ("functionRefExp == NULL: local_parentExpr = %p = %s \n",local_parentExpr,local_parentExpr->class_name().c_str());
+#endif
+                              functionRefExp       = isSgFunctionRefExp(functionCallExp->get_function());
+                              memberFunctionRefExp = isSgMemberFunctionRefExp(functionCallExp->get_function());
+
+                            }
+
+                      // ROSE_ASSERT(functionRefExp != NULL);
+                         if (memberFunctionRefExp != NULL || functionRefExp != NULL)
+                            {
+                              SgFunctionSymbol* functionSymbol = NULL;
+                              if (functionRefExp != NULL)
+                                 {
+#if 0
+                                   printf ("functionRefExp != NULL: functionCallExp->get_function() = %p = %s \n",functionCallExp->get_function(),functionCallExp->get_function()->class_name().c_str());
+#endif
+                                   functionSymbol = functionRefExp->get_symbol();
+                                 }
+                                else
+                                 {
+                                   ROSE_ASSERT(memberFunctionRefExp != NULL);
+#if 0
+                                   printf ("memberFunctionRefExp != NULL: functionCallExp->get_function() = %p = %s \n",functionCallExp->get_function(),functionCallExp->get_function()->class_name().c_str());
+#endif
+                                   functionSymbol = memberFunctionRefExp->get_symbol();
+                                 }
+                              ROSE_ASSERT(functionSymbol != NULL);
+                              SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+#if 0
+                              printf ("functionDeclaration->get_specialFunctionModifier().isOperator() = %s \n",functionDeclaration->get_specialFunctionModifier().isOperator() ? "true" : "false");
+#endif
+                           // DQ (4/21/2018): We need to avoid puting out too many parenthesis.
+                              bool isOperator = functionDeclaration->get_specialFunctionModifier().isOperator();
+                              if (isOperator == false)
+                                 {
+#if 0
+                                   printf ("Detected that this was not an operator, so suppresss the parenthesis \n");
+#endif
+                                   return false;
+                                 }
+                            }
+
+                      // if (functionCallExp != NULL)
                          if (functionCallExp != NULL)
                             {
 #if DEBUG_PARENTHESIS_PLACEMENT || 0
@@ -7977,7 +8470,9 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #endif
                     return false;
                   }
-
+#if 0
+               printf ("Calling getPrecedence(): parentExpr = %p = %s \n",parentExpr,parentExpr->class_name().c_str());
+#endif
                PrecedenceSpecifier parentPrecedence = getPrecedence(parentExpr);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -8003,12 +8498,15 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                     return true;
                   }
 
+#if 0
+               printf ("Calling getPrecedence(): expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
             // int exprVariant = GetOperatorVariant(expr);
                PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
                int exprVariant = GetOperatorVariant(expr);
-               printf ("expr = %p = %s exprVariant = %d  exprPrecedence = %d \n",expr,expr->class_name().c_str(),exprVariant,exprPrecedence);
+               printf ("expr = %p = %s exprVariant = %d  exprPrecedence = %d parentPrecedence = %d \n",expr,expr->class_name().c_str(),exprVariant,exprPrecedence,parentPrecedence);
 #endif
                if (exprPrecedence > parentPrecedence)
                   {

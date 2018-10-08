@@ -8,8 +8,8 @@
 : ${CPP11_STL_TESTS:="yes"}
 
 # DQ (3/12/2017): restore this setting for before checkin.
-CLEANUP_ON_SUCCESS="yes"
-# CLEANUP_ON_SUCCESS="no"
+# CLEANUP_ON_SUCCESS="yes"
+CLEANUP_ON_SUCCESS="no"
 
 CLEANUP_AND_EXIT="no"
 ASAN_USED="no"

@@ -1,0 +1,14 @@
+--------------------------------------------------
+Function name:"::foo1"
+q1@5:3 No Aliasing  pi@5:9
+q1@5:3 No Aliasing  q2@6:3
+q1@5:3 No Aliasing  pi@6:9
+q1@5:3 No Aliasing  q3@7:3
+q1@5:3 No Aliasing  pi@7:7
+pi@5:9 No Aliasing  q2@6:3
+pi@5:9 No Aliasing  q3@7:3
+q2@6:3 No Aliasing  pi@6:9
+q2@6:3 No Aliasing  q3@7:3
+q2@6:3 No Aliasing  pi@7:7
+pi@6:9 No Aliasing  q3@7:3
+q3@7:3 No Aliasing  pi@7:7

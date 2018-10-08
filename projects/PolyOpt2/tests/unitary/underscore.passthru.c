@@ -1,11 +1,8 @@
 
 int main()
 {
-  int i;
   int M;
   int N;
-  int j;
-  int k;
   int K;
   int C[N][N];
   int _C_[N][N];

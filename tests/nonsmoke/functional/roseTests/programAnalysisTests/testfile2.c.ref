@@ -1,15 +1,15 @@
 color;
 modref:  ;  readref:  color ;  killref: 
-case 1:{a--;c = b;break;}
-modref:  a c ;  readref:  a b ;  killref:  a c
+case 1:a--;
+modref:  a ;  readref:  a ;  killref:  a
 a--;
 modref:  a ;  readref:  a ;  killref:  a
 c = b;
 modref:  c ;  readref:  b ;  killref:  c
 break;
 modref:  ;  readref:  ;  killref: 
-case 2:{b++;c = a;break;}
-modref:  b c ;  readref:  b a ;  killref:  b c
+case 2:b++;
+modref:  b ;  readref:  b ;  killref:  b
 b++;
 modref:  b ;  readref:  b ;  killref:  b
 c = a;

@@ -91,8 +91,25 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
             // have been visited from somewhere else then the typedefDeclaration).
                nodeList.insert(typedefDeclaration);
 
+
             // Can this cause recursion?
-               addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+            // addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+
+            // DQ (6/30/2018): Detect a break cycles in typedefs (debugging test2018_118.C).
+               static std::set<SgTypedefDeclaration*> typedefDeclarationSet;
+               if (typedefDeclarationSet.find(typedefDeclaration) == typedefDeclarationSet.end())
+                  {
+                    typedefDeclarationSet.insert(typedefDeclaration);
+
+                 // Can this cause recursion?
+                    addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In addAssociatedNodes: typedefDeclaration was previously seen: typedefDeclaration = %p = %s \n",typedefDeclaration,typedefDeclaration->class_name().c_str());
+#endif
+                  }
 
             // DQ (6/23/2010): We need to include the type defined by the typedef as well.
             // addAssociatedNodes(typedefDeclaration->get_type(),nodeList,markMemberNodesDefinedToBeDeleted);
@@ -342,6 +359,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
        // DQ (3/29/2015): Added support for GNU C language extension typeof.
           case V_SgTypeOfType:
+
+       // DQ (1/21/2018): Added support for C++11 language type.
+          case V_SgRvalueReferenceType:
 
        // These are primative types
           case V_SgJavaWildcardType:
@@ -2020,6 +2040,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (1/21/2018): Added C++11 support
+          case V_SgStaticAssertionDeclaration:
+
        // DQ (8/22/2007): Added Fortran support
           case V_SgImplicitStatement:
           case V_SgWhereStatement:
@@ -2138,6 +2161,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgNullifyStatement:
 
           case V_SgMatlabForStatement:
+
+       // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
+          case V_SgDeclarationScope:
+
+       // DQ (3/26/2018): Added support for new C++11 IR node.
+          case V_SgRangeBasedForStatement:
 
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:

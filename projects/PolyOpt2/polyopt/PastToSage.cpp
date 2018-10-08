@@ -970,7 +970,8 @@ SgExpression* PastToSage::buildVariableReference(s_past_varref_t* varref)
 	{
 	  /// FIXME: deal with struct of struct.
 	  std::vector<std::string> names;
-	  std::string str = i->first;
+	  int len = strlen("__fake_polyopt_mangling_");
+	  std::string str = (i->first).substr(len, (i->first).size() - len);
 	  int cutAt;
 	  while((cutAt = str.find_first_of(".")) != str.npos)
 	    {

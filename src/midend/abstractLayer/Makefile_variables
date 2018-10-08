@@ -8,9 +8,7 @@ mAbstractLayer_includeHeaders=\
 	$(mAbstractLayerPath)/Labeler.h \
 	$(mAbstractLayerPath)/RDAstAttributeInterface.h \
 	$(mAbstractLayerPath)/SgNodeHelper.h \
-	$(mAbstractLayerPath)/VariableIdMapping.h \
-	$(mAbstractLayerPath)/TypeSizeMapping.h \
-   	$(mAbstractLayerPath)/SgTypeSizeMapping.h
+	$(mAbstractLayerPath)/VariableIdMapping.h
 
 mAbstractLayer_la_sources=\
 	$(mAbstractLayerPath)/AstAnnotator.C \
@@ -19,9 +17,7 @@ mAbstractLayer_la_sources=\
 	$(mAbstractLayerPath)/Labeler.C \
 	$(mAbstractLayerPath)/RDAstAttributeInterface.C \
 	$(mAbstractLayerPath)/SgNodeHelper.C \
-	$(mAbstractLayerPath)/VariableIdMapping.C \
-	$(mAbstractLayerPath)/TypeSizeMapping.C \
-	$(mAbstractLayerPath)/SgTypeSizeMapping.C
+	$(mAbstractLayerPath)/VariableIdMapping.C
 
 mAbstractLayer_extraDist=\
 	$(mAbstractLayerPath)/CMakeLists.txt \

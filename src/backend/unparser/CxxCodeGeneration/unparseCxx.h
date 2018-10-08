@@ -322,6 +322,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (9/3/2014): Adding C++11 Lambda expression support.
           virtual void unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (11/21/2017): Adding support for GNU C extension for computed goto.
+          virtual void unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info& info);
+
       //! unparse statement functions implememted in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
        // virtual void unparseStatement        (SgStatement* stmt, SgUnparse_Info& info);
@@ -336,7 +339,12 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseForStmt          (SgStatement* stmt, SgUnparse_Info& info);
+
+       // DQ (3/26/2018): Adding support for C++11 IR node (previously missed).
+          virtual void unparseRangeBasedForStmt(SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseFuncDeclStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseMFuncDeclStmt    (SgStatement* stmt, SgUnparse_Info& info);
@@ -505,6 +513,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (2/8/2014): The name of the constructor call for a SgConstructorInitializer must 
        // be output differently for the GNU g++ 4.5 version compiler and later.
           SgName trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName);
+
+       // DQ (1/21/2018): Added support for lambda function capture variables in annonymous compiler generated classes passed as template arguments
+          bool isAnonymousClass(SgType* templateArgumentType);
 
 #if 0
        // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.

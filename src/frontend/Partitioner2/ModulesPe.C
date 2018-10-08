@@ -165,6 +165,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
     BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
         // First, pack it as little-endian
         uint8_t packed[8];
+        memset(packed, 0, 8);
         for (size_t i=0; i<wordSize; ++i)
             packed[i] = (node.key() >> (8*i)) & 0xff;
 
@@ -226,9 +227,9 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             }
             return;
         }
-        if (insn->get_kind()!=x86_jmp || insn->get_operandList()->get_operands().size()!=1)
+        if (insn->get_kind()!=x86_jmp || insn->nOperands() != 1)
             continue;                                   // ...that is a JMP...
-        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(0));
         SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
         if (!addr)
             continue;                                   // ...with addressing mode [C] where C is a constant...

@@ -99,7 +99,7 @@ class RiscOperators: public ConcreteSemantics::RiscOperators {
     BinaryDebugger &subordinate_;
 protected:
     RiscOperators(const BaseSemantics::StatePtr &state, BinaryDebugger &subordinate)
-        : ConcreteSemantics::RiscOperators(state, NULL), subordinate_(subordinate) {
+        : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()), subordinate_(subordinate) {
         name("Verification");
     }
 public:
@@ -113,7 +113,7 @@ public:
     
 public:
     // Reads a register from the subordinate process, unless we've already written to that register.
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg) ROSE_OVERRIDE {
         using namespace Sawyer::Container;
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         if (regs->is_partly_stored(reg))
@@ -129,7 +129,7 @@ public:
 
 public:
     // Reads memory from the subordinate process.
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
@@ -184,10 +184,10 @@ public:
                                        cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_af, 1) ||
                                        cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_pf, 1);
                             // Destination operand (arg 0) is undefined if source operand (arg 1) is zero
-                            ASSERT_require(insn->get_operandList()->get_operands().size() == 2);
-                            ASSERT_require(isSgAsmDirectRegisterExpression(insn->get_operandList()->get_operands()[0]));
+                            ASSERT_require(insn->nOperands() == 2);
+                            ASSERT_require(isSgAsmDirectRegisterExpression(insn->operand(0)));
                             if (cell.desc ==
-                                isSgAsmDirectRegisterExpression(insn->get_operandList()->get_operands()[0])->get_descriptor())
+                                isSgAsmDirectRegisterExpression(insn->operand(0))->get_descriptor())
                                 dontCare = true;
                             break;
                         case x86_bt:

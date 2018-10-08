@@ -1,8 +1,6 @@
 #ifndef LTSMIN_CONNECTION_H
 #define LTSMIN_CONNECTION_H
 
-//to-do: license, author etc.
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -33,6 +31,12 @@ using namespace std;
 
 namespace CodeThorn {
 
+  /*! 
+   * \brief Uses LTSmin to check LTL properties on synchronized process graphs (prototype implementation).
+   * \author Marc Jasper
+   * \date 2017.
+   * \details Graphs are translated to Petri nets. 
+   */
   class LtsminConnection {
     public:
       LtsminConnection(): _startTransitionAnnotation("") {};

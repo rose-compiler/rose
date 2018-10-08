@@ -115,7 +115,7 @@ test2016_25.C \
 test2016_29.C \
 test2016_30.C \
 test2016_37.C \
-test2016_39.C \
+test2016_40.C \
 test2016_42.C \
 test2016_91.C \
 test2016_92.C \
@@ -136,7 +136,132 @@ test2017_20.C \
 test2017_21.C \
 test2017_22.C \
 test2017_23.C \
+test2018_04.C \
+test2018_05.C \
+test2018_06.C \
+test2018_07.C \
+test2018_08.C \
+test2018_09.C \
+test2018_10.C \
+test2018_11.C \
+test2018_12.C \
+test2018_13.C \
+test2018_14.C \
+test2018_15.C \
+test2018_16.C \
+test2018_17.C \
+test2018_18.C \
+test2018_19.C \
+test2018_20.C \
+test2018_21.C \
+test2018_23.C \
+test2018_24.C \
+test2018_26.C \
+test2018_27.C \
+test2018_28.C \
+test2018_29.C \
+test2018_30.C \
+test2018_31.C \
+test2018_34.C \
+test2018_35.C \
+test2018_36.C \
+test2018_37.C \
+test2018_38.C \
+test2018_39.C \
+test2018_40.C \
+test2018_41.C \
+test2018_42.C \
+test2018_43.C \
+test2018_44.C \
+test2018_45.C \
+test2018_46.C \
+test2018_47.C \
+test2018_48.C \
+test2018_51.C \
+test2018_52.C \
+test2018_53.C \
+test2018_54.C \
+test2018_55.C \
+test2018_56.C \
+test2018_57.C \
+test2018_58.C \
+test2018_59.C \
+test2018_60.C \
+test2018_61.C \
+test2018_62.C \
+test2018_65.C \
+test2018_67.C \
+test2018_68.C \
+test2018_69.C \
+test2018_70.C \
+test2018_71.C \
+test2018_72.C \
+test2018_73.C \
+test2018_74.C \
+test2018_75.C \
+test2018_76.C \
+test2018_77.C \
+test2018_78.C \
+test2018_79.C \
+test2018_80.C \
+test2018_81.C \
+test2018_82.C \
+test2018_83.C \
+test2018_84.C \
+test2018_85.C \
+test2018_86.C \
+test2018_88.C \
+test2018_89.C \
+test2018_90.C \
+test2018_91.C \
+test2018_92.C \
+test2018_93.C \
+test2018_94.C \
+test2018_95.C \
+test2018_96.C \
+test2018_97.C \
+test2018_98.C \
+test2018_99.C \
+test2018_105.C \
+test2018_107.C \
+test2018_108.C \
+test2018_109.C \
+test2018_110.C \
+test2018_111.C \
+test2018_112.C \
+test2018_113.C \
+test2018_114.C \
+test2018_115.C \
+test2018_116.C \
+test2018_117.C \
+test2018_118.C \
+test2018_119.C \
+test2018_120.C \
+test2018_121.C \
+test2018_124.C \
+test2018_127.C \
+test2018_130.C \
+test2018_131.C \
+test2018_132.C \
+test2018_133.C \
+test2018_134.C \
+test2018_135.C \
+test2018_136.C \
+test2018_137.C \
+ctor-list-init.C \
+rose-1379-a.C \
+rose-1379-b.C \
+rose-1380.C \
+$(PREVIOUSLY_FAILING_TESTS) \
 last.C
+
+
+# DQ (7/1/2018): Failing test which can't find boost files explicitly referenced (likely this is not a portable test code).
+# test2018_100.C
+
+# DQ (7/26/2017): Failing test after newest fix for classes built from template parameters (might not be related).
+FAILING_TEST = \
+test2016_39.C 
 
 # DQ (5/12/2017): Note that tests test2017_21.C and test2017_22.C will fail using the 
 # testTemplates translator, but test2017_23.C will pass. This is part of on-going work 
@@ -147,6 +272,12 @@ last.C
 # test2017_17.C 
 # test2017_18.C 
 
+if ROSE_USING_GCC_VERSION_LATER_4_9
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2018_63.C \
+test2018_64.C \
+test2018_66.C
+endif
 
 # DQ (2/21/2017): This fails due to missing builtin functions (still to be addressed).
 if !USING_CLANG_COMPILER
@@ -160,9 +291,21 @@ if ROSE_USE_EDG_VERSION_4_9
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_25.C \
    test2014_28.C \
-   test2015_11.C \
-   test2016_40.C
+   test2015_11.C 
+
+# test2016_40.C
+
+# DQ (7/31/2017): Failing test after newest fix for classes built from template parameters (might not be related).
+# FAILING_TEST += 
+# test2016_40.C 
+
 endif
+
+# DQ (4/7/2018): This is a failing test (only one we have presently for C++11).
+FAILING_TEST += \
+test2014_85.C \
+last.C
+
 
 if !OS_MACOSX
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -200,10 +343,25 @@ endif
 # test2014_53.C 
 
 # These are incomplete non-compilable code fragments
-TESTCODE_CURRENTLY_FAILING = \
+# TESTCODE_CURRENTLY_FAILING = 
+PREVIOUSLY_FAILING_TESTS = \
 test2012_03.C \
 test2012_04.C \
 test2012_06.C \
+test2012_21.C \
+test2012_22.C \
+test2012_25.C \
+test2012_26.C \
+test2012_28.C \
+test2012_31.C \
+test2014_03.C \
+test2014_82.C \
+test2014_88.C \
+test2017_10.C \
+last.C
+
+# DQ (4/7/2018): These test appear to not be valid C++11 code.
+TESTCODE_CURRENTLY_FAILING = \
 test2012_07.C \
 test2012_08.C \
 test2012_09.C \
@@ -218,25 +376,14 @@ test2012_17.C \
 test2012_18.C \
 test2012_19.C \
 test2012_20.C \
-test2012_21.C \
-test2012_22.C \
 test2012_23.C \
 test2012_24.C \
-test2012_25.C \
-test2012_26.C \
 test2012_27.C \
-test2012_28.C \
 test2012_29.C \
 test2012_30.C \
-test2012_31.C \
 test2012_32.C \
 test2012_33.C \
 test2012_34.C \
-test2014_03.C \
-test2014_82.C \
-test2014_85.C \
-test2014_88.C \
-test2017_10.C \
 last.C
 
 # Note: last.C just simplifies the Makefile.am it
@@ -348,6 +495,31 @@ print_testcodes:
 globalVariablesInLambdas_test: globalVariablesInLambdas
 	./globalVariablesInLambdas -std=c++11 --edg:no_warnings -c $(srcdir)/globalVariablesInLambdas_test_01.C
 
+# DQ (12/13/2017): Need to add support for multiple versions of Raja.
+# Use --with-research-raja=... and --with-ares-raja=... , and for other specific applications dependent on Raja.
+RajaInclude = /home/quinlan1/ROSE/RAJA/install/include
+
+rajaTest:../../testTranslator
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(RajaInclude) -I$(srcdir) -c $(srcdir)/test2017_33.C
+
+######
+# Try to use RTH here
+
+TEST_TRANSLATOR = ../../testTranslator
+
+TEST_Sources = $(addsuffix .passed, $(TESTCODES_REQUIRED_TO_PASS))
+ALL_TEST_Sources = $(addsuffix .passed, $(ALL_TESTCODES))
+
+$(ALL_TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+if !ROSE_USE_INSURE
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
+else
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+endif
+
 
 check-local:
 # DQ (2/19/2017): NEW VERSION OF LOGIC
@@ -366,7 +538,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "C++11 tests using EDG 4.9: GNU 4.9 backend compiler NOT allowed with the EDG 4.9 frontend (reconfigure with EDG 4.12)."
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "C++11 tests using EDG 4.9 and GNU version 4.8 backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 endif # ROSE_USING_GCC_VERSION_LATER_4_9
 # Exclude these tests on GNU 4.9 and later compilers).
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
@@ -399,7 +571,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "C++11 tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
 	@echo "C++11 tests using EDG 4.12 and any supported backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else
 	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
@@ -415,7 +587,7 @@ if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 	@echo "USING_INTEL_COMPILER == true"
 	@echo "C++11 tests using EDG 4.12 Intel backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TEST_Sources)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 	@echo "USING_INTEL_COMPILER == false"
@@ -434,3 +606,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+
+status:
+	@$(MAKE) $(ALL_TEST_Sources)
+

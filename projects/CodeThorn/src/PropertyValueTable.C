@@ -2,6 +2,8 @@
 #include "CodeThornException.h"
 #include "Miscellaneous2.h"
 
+#include "rose_config.h"
+
 // basic file operations
 #include <iostream>
 #include <fstream>
@@ -212,7 +214,7 @@ string PropertyValueTable::reachToString(PropertyValue num) {
   case PROPERTY_VALUE_YES: return "yes"; //,9";
   case PROPERTY_VALUE_NO: return "no"; //,9";
   default: {
-    cerr<<"Error: unkown reachability information.";
+    cerr<<"Error: unknown reachability information.";
     assert(0);
   }
   }
@@ -229,7 +231,7 @@ void PropertyValueTable::finishedReachability(bool isPrecise, bool isComplete) {
     return;
   }
   if(isPrecise&&!isComplete) {
-    // yes remains yes and unkown remains unknown (no cannot exist)
+    // yes remains yes and unknown remains unknown (no cannot exist)
     return;
   }
   if(!isPrecise&&isComplete) {
@@ -360,7 +362,7 @@ void PropertyValueTable::printResultsStatistics() {
       <<endl;
 }
 
-#ifndef SPOT_NOT_AVAILABLE
+#ifdef HAVE_SPOT
 string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations) {
   stringstream propertiesSpinSyntax;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {

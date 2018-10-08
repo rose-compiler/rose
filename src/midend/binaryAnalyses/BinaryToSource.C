@@ -25,7 +25,7 @@ void
 BinaryToSource::init(const P2::Partitioner &partitioner) {
     disassembler_ = partitioner.instructionProvider().disassembler();
     const RegisterDictionary *regDict = disassembler_->registerDictionary();
-    raisingOps_ = RiscOperators::instance(regDict, NULL);
+    raisingOps_ = RiscOperators::instance(regDict, SmtSolverPtr());
     BaseSemantics::DispatcherPtr protoCpu = disassembler_->dispatcher();
     if (!protoCpu)
         throw Exception("no instruction semantics for architecture");
@@ -136,7 +136,7 @@ BinaryToSource::emitInstruction(SgAsmInstruction *insn, std::ostream &out) {
     out <<"                /* "<<unparseInstruction(insn) <<" */\n";
     if (settings_.traceInsnExecution)
         out <<"                fputs("
-            <<"\"" <<StringUtility::cEscape(unparseInstructionWithAddress(insn)) <<"\\n\""
+            <<"\"" <<StringUtility::cEscape(insn->toString()) <<"\\n\""
             <<", stderr);\n";
 
     raisingOps_->reset();

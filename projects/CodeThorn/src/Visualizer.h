@@ -14,7 +14,12 @@
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 #include "ReadWriteData.h"
+
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+// SPOT include
 #include "tgba/tgba.hh"
+#endif
 
 using CodeThorn::Analyzer;
 using CodeThorn::PStateSet;
@@ -63,7 +68,9 @@ class Visualizer {
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
   std::string parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph);
+#ifdef HAVE_SPOT
   std::string spotTgbaToDot(spot::tgba& tgba);
+#endif
   // used for displaying abstract ("topified") transition graphs.
   std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);

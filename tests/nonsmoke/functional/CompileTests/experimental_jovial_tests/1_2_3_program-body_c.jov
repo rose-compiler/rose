@@ -1,0 +1,7 @@
+START
+PROGRAM testbody ;
+BEGIN
+  ITEM ivar S ;
+  ivar = 13 ;
+END
+TERM

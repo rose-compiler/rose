@@ -28,6 +28,11 @@ BasicBlock::clearSuccessors() {
 }
 
 void
+BasicBlock::successors(const Successors &successors) {
+    successors_ = successors;
+}
+
+void
 BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType type, Confidence confidence) {
     if (successor_ != NULL) {
         Semantics::SValuePtr successor = Semantics::SValue::promote(successor_);

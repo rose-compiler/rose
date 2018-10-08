@@ -11,254 +11,178 @@
 // #include "rosePublicConfig.h"
 
 #include "fortran_support.h"
+#include "ATermToUntypedFortranTraversal.h"
+#include "UntypedFortranTraversal.h"
+#include "UntypedFortranConverter.h"
 
-#include <aterm2.h>
-#include "OFPTraversal.hpp"
-#include "FASTtoSgConverter.h"
-#include "UntypedTraversal.h"
-
-using namespace std;
 using namespace Rose;
+using std::string;
+using std::cout;
+using std::endl;
 
-#define DEBUG_ROSE_EXPERIMENTAL 0
+#define DEBUG_EXPERIMENTAL_FORTRAN 0
+#define DOT_FILE_GENERATION 0
 
-#define USE_STRATEGO_TRANSFORMATION 0
-#define USE_EXECUTABLE_FROM_PATH 1
+#if DOT_FILE_GENERATION
+#   include "wholeAST_API.h"
+#endif
+
 
 int
-experimental_openFortranParser_main(int argc, char **argv)
+experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file)
    {
-  // Make system call to call the parser and build an ATERM file (put into the build tree).
+  // Make system call to call the parser, then traverse resulting ATerm file to create AST.
 
-     int i, err;
+     int i, status;
      string parse_table;
-     FASTtoSgConverter* fast_converter = NULL;
-     OFP::Traversal*     ofp_traversal = NULL;
+     ATermSupport::ATermToUntypedFortranTraversal* aterm_traversal = NULL;
 
-     if (argc < 4)
+     ROSE_ASSERT(sg_source_file != NULL);
+     ROSE_ASSERT(sg_source_file->get_experimental_fortran_frontend() == true);
+
+  // Rasmussen (11/13/2017): Moved parse table to ROSE 3rdPartyLibraries (no longer set by caller).
+     if (argc < 2)
         {
-          printf("usage: fortran_parser --parseTable parse_table_path filename(s)\n");
+          printf("usage: fortran_parser filename(s)\n");
           return 1;
         }
 
-  // DQ (1/22/2016): We want to assume that the stratego sglri executable is in the user's path, which is better than using a hard coded path.
-  // Nowever it appears that sglri must be run with it's full path.  So we need to know that path to the stratego binary in order to avoid
-  // hard coding it into ROSE (as we have done here). The experimental fortran support now requires both aterm and stratego library locations
-  // to be specified at configure time for ROSE (this is also now enforced).
+  // Rasmussen (11/13/2017): The experimental fortran support now requires both aterm and stratego
+  // library locations to be specified at configure time for ROSE (this is also now enforced).
 
      string stratego_bin_path = STRATEGO_BIN_PATH;
      ROSE_ASSERT(stratego_bin_path.empty() == false);
 
+  // Step 1 - Parse the input file
+  // ------
      string commandString = stratego_bin_path + "/sglri ";
 
-  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
+  // Rasmussen (11/13/2017): Moved parse table to ROSE 3rdPartyLibraries (no longer set by caller).
      for (i = 1; i < argc; i++)
         {
-          if (strncmp(argv[i], "--parseTable", 12) == 0)
-             {
-               commandString += "-p ";
-               commandString += argv[i+1];
-               commandString += " ";
-
-               parse_table = string(argv[i+1]);
-               i += 1;
-             }
-            else
-             {
-            // This skips over commands line arguments that begin with "--" (this does not appears to be meaningful).
-               if (strncmp(argv[i], "--", 2) == 0) 
-                  {
-                // skip args that are not files
-                   i += 1;
-                   continue;
-                  }
-                 else
-                  {
-                 // This only skips over the options that begin with "-I" but not "-I <path>" (where the "-I" and the path are seperated by a space).
-                    if (strncmp(argv[i], "-I", 2) == 0)
-                       {
-                      // Skip the include dir stuff; it's handled by the lexer.
-                      // TODO - not currently true, so skip arg for now? 
-                         i += 1;
-                         continue;
-                       }
-                      else
-                       {
-                      // All other options are ignored.
-                      // commandString += argv[i];
-                       }
-                  }
-             }
+        // Skips over commands line arguments that begin with "--" (none are meaningful).
+           if (strncmp(argv[i], "--", 2) == 0) 
+              {
+              // skip args that are not files
+                 i += 1;
+                 continue;
+              }
+           else if (strncmp(argv[i], "-I", 2) == 0)
+              {
+              // Rasmussen (11/14/2017): Skips for now but needs to be tested (also -Ipath_to_file)
+                 i += 1;
+                 continue;
+              }
         }
 
-     string filenameWithPath = argv[argc-1];
+  // Parse table location is now stored in the source tree
+     string parse_table_path = "src/3rdPartyLibraries/experimental-fortran-parser/share/rose";
+     parse_table = findRoseSupportPathFromSource(parse_table_path, "share/rose");
 
-  // Finished processing command line arguments, make sure there is a parse table
-     if (parse_table.empty() == true)
+     if (sg_source_file->get_experimental_cuda_fortran_frontend() == false)
         {
-          fprintf(stderr, "fortran_parser: no parse table provided, use option --parseTable\n");
-          return 1;
+           parse_table += "/Fortran.tbl";
         }
+     else
+        {
+           parse_table += "/CUDA_Fortran.tbl";
+        }
+     commandString += "-p " + parse_table + " ";
 
+  // Rasmussen (11/14/2017): TODO: What about multiple files?
+  // string filenameWithPath = argv[argc-1];
+     string filenameWithPath = sg_source_file->getFileName();
      string filenameWithoutPath = StringUtility::stripPathFromFileName(filenameWithPath);
 
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): filenameWithPath    = %s \n",filenameWithPath.c_str());
-     printf ("In experimental_openFortranParser_main(): filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
-#endif
-
-     commandString += "-i ";
-     commandString += filenameWithPath;
+     commandString += "-i " + filenameWithPath;
 
   // Add source code location information to output
      commandString += " --preserve-locations";
 
-#if USE_STRATEGO_TRANSFORMATION
-     string path_to_fortran_stratego_transformations_directory
-                    = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations", "bin");
+  // Output the transformed aterm file
+     commandString += " -o " + filenameWithoutPath + ".aterm";
 
-  // Add pipe to begin transforming OFP's ATerm parse tree
-     commandString += " | ";
-
-#if USE_EXECUTABLE_FROM_PATH
-     commandString += "ofp2fast";
-#else
-     commandString += path_to_fortran_stratego_transformations_directory;
-     commandString += "/ofp2fast";
+#if DEBUG_EXPERIMENTAL_FORTRAN
+     cout << "experimental_fortran_main(): filenameWithoutPath = " << filenameWithoutPath << endl;
+     cout << "... filenameWithPath = " << filenameWithPath << endl;
+     cout << "... commandString    = " << commandString << endl;
+     cout << "... is experimental_cuda_fortran_frontend: " << sg_source_file->get_experimental_cuda_fortran_frontend() << endl;
 #endif
 
-     string path_to_fortran_aterm_traversal_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal", "bin");
-#endif
+     status = system(commandString.c_str());
 
-   //CER bool process_using_ofp_roundtrip_support = OpenFortranParser_globalFilePointer->get_experimental_fortran_frontend_OFP_test();
-     bool process_using_ofp_roundtrip_support = false;
-
-     if (process_using_ofp_roundtrip_support == false)
-        {
-#if USE_STRATEGO_TRANSFORMATION
-       // Convert from OFP's internal representation (FAST) to a ROSE SgUntyped aterm representation
-          commandString += " | ";
-#if USE_EXECUTABLE_FROM_PATH
-          commandString += "fast2sage";
-#else
-          commandString += path_to_fortran_aterm_traversal_directory;
-          commandString += "/fast2sage";
-#endif
-#endif
-
-       // Output the transformed aterm file
-          commandString += " -o ";
-          commandString += filenameWithoutPath;
-          commandString += ".aterm";
-        }
-     else
-        {
-#if USE_STRATEGO_TRANSFORMATION
-       // Prepare the FAST representation for pretty printing
-          commandString += " | ";
-          commandString += path_to_fortran_stratego_transformations_directory;
-          commandString += "/fast2pp";
-
-       // Generate a Fortran text file from the FAST aterm representation (using a stratego tool).
-          commandString += " | ";
-          commandString += stratego_bin_path + "/ast2text";
-
-       // Add the pretty-printing table command line argument
-          commandString += " -p ";
-       // string path_to_fortran_pretty_print_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/pretty_print", "bin");
-          string path_to_fortran_pretty_print_directory = ROSE_AUTOMAKE_TOP_SRCDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/pretty_print";
-          commandString += path_to_fortran_pretty_print_directory;
-          commandString += "/Fortran.pp";
-
-       // Output a text file with prefix.
-          commandString += " -o ";
-          commandString += "pretty_print" + filenameWithoutPath;
-#endif
-        }
-
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
-#endif
-
-     err = system(commandString.c_str());
-
-     if (err)
+     if (status != 0)
         {
           fprintf(stderr, "fortran_parser: error parsing file %s\n", argv[i]);
           return 1;
         }
 
-  // At this point we have a valid aterm file in the working (current) directory.
-  // We have to read that aterm file and generate an uninterpreted AST, then iterate
-  // on the uninterpreted AST to resolve types, disambiguate function calls and 
+  // At this point we have a valid ATerm file in the working (current) directory.
+  // We have to read that ATerm file and generate an untyped AST, then iterate
+  // on the untyped AST to resolve types, disambiguate function calls and 
   // array references, etc.; until we have a correctly formed AST.  These operations
   // will be separate passes over the AST which should build a simpler frontend to
   // use as a basis for fortran research and also permit a better design for the
   // frontend to maintain and develop cooperatively with community support.
 
-     if (process_using_ofp_roundtrip_support == false)
-        {
-       // Initialize the ATerm library
-          ATinitialize(argc, argv);
+  // Initialize the ATerm library
+     ATinitialize(argc, argv);
 
-          filenameWithoutPath += ".aterm";
+     string aterm_filename = filenameWithoutPath + ".aterm";
 
-#if DEBUG_ROSE_EXPERIMENTAL
-          printf ("In experimental_openFortranParser_main(): Opening aterm file filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+#if DEBUG_EXPERIMENTAL_FORTRAN
+     printf ("In experimental_openFortranParser_main(): Opening aterm file = %s \n", aterm_filename.c_str());
 #endif
 
-       // Read the ATerm file that was created by the parser
-          FILE * file = fopen(filenameWithoutPath.c_str(), "r");
-
-          if (file == NULL)
-             {
-               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to open file %s\n\n", filenameWithoutPath.c_str());
-               return 1;
-             }
-
-          ATerm program_term = ATreadFromTextFile(file);
-          fclose(file);
-
-#if DEBUG_ROSE_EXPERIMENTAL
-          printf ("In experimental_openFortranParser_main(): Calling traverse_SgUntypedFile() \n");
-#endif
-
-          fast_converter = new FASTtoSgConverter(OpenFortranParser_globalFilePointer);
-          ofp_traversal  = new OFP::Traversal(fast_converter);
-
-       // Rasmussen (4/15/2017): changing from using stratego transformations
-       // if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
-          if (ofp_traversal->traverse_Program(program_term) != ATtrue)
-             {
-               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to traverse file %s\n\n", filenameWithoutPath.c_str());
-               return 1;
-             }
-        }
-
-     if (fast_converter == NULL || ofp_traversal == NULL)
+  // Read the ATerm file that was created by the parser
+     FILE * file = fopen(aterm_filename.c_str(), "r");
+     if (file == NULL)
         {
-           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), fast_converter or ofp_traversal is NULL\n\n");
+           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to open file %s\n\n", aterm_filename.c_str());
            return 1;
         }
 
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): successfully traversed ATerms, beginning traversal \n");
-     printf ("--------------------------------------------------------------\n\n");
+     ATerm program_term = ATreadFromTextFile(file);
+     fclose(file);
+
+  // Step 2 - Traverse the ATerm parse tree and convert into Untyped nodes
+  // ------
+
+  // Create object to traverse the ATerm file
+     aterm_traversal = new ATermSupport::ATermToUntypedFortranTraversal(OpenFortranParser_globalFilePointer);
+
+     if (aterm_traversal->traverse_Program(program_term) != ATtrue)
+        {
+           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to traverse file %s\n\n", aterm_filename.c_str());
+           return 1;
+        }
+
+  // Rasmussen (01/22/18): Create a dot file.  This is temporary or should
+  // at least be a rose option.
+#if DOT_FILE_GENERATION
+     SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
+     generateDOT(global_scope, filenameWithoutPath + ".ut");
 #endif
 
-//----------------------------------------------------------------------
-//  Traverse the SgUntypedFile object and convert to regular sage nodes
-//----------------------------------------------------------------------
+  // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
+  // ------
 
-  // Build the traversal object
-     Fortran::Untyped::UntypedTraversal sg_traversal(OpenFortranParser_globalFilePointer);
-     Fortran::Untyped::InheritedAttribute scope = NULL;
+  // Create the untyped traversal object
+
+     Untyped::UntypedFortranConverter sg_converter;
+     Untyped::UntypedFortranTraversal sg_traversal(OpenFortranParser_globalFilePointer, &sg_converter);
+     Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
-     sg_traversal.traverse(fast_converter->get_file(),scope);
+     sg_traversal.traverse(aterm_traversal->get_file(), scope);
 
-     if (fast_converter) delete fast_converter;
-     if (ofp_traversal)  delete ofp_traversal;
+  // Generate dot file for Sage nodes.
+#if DOT_FILE_GENERATION
+     generateDOT(SageBuilder::getGlobalScopeFromScopeStack(), filenameWithoutPath);
+  // generateWholeGraphOfAST(filenameWithoutPath+"_WholeAST");
+#endif
+
+     if (aterm_traversal)  delete aterm_traversal;
 
      return 0;
   }

@@ -66,6 +66,13 @@ PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions);
 PolyOptISLRepresentation
 PolyOptConvertScopToISL(scoplib_scop_p scop);
 
+/**
+ * Cleans the function (n, or the one enclosing n) from useless variable 
+ * declarations.
+ *
+ */
+void
+PolyOptCleanUselessVariableDeclarations(SgNode* n);
 
 
 
@@ -117,5 +124,21 @@ int PolyOptAnnotateSubTree(SgNode* root, PolyRoseOptions& polyoptions);
  *
  */
 int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int tileArg3);
+
+
+/**
+ * Print basic stats on the project.
+ *
+ *
+ */
+void
+PolyOptStatsProject(SgProject* project, PolyRoseOptions& polyoptions);
+
+/**
+ * Print basic stats on a subtree. 
+ *
+ */
+void
+PolyOptStatsNode(SgNode* body, PolyRoseOptions& polyoptions);
 
 #endif

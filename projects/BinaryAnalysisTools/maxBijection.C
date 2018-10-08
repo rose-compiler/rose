@@ -1,6 +1,7 @@
 #include "rose.h"
 #include "rose_getline.h"
 #include "rose_strtoull.h"
+#include <CommandLine.h>                                // ROSE
 #include "Diagnostics.h"
 #include "integerOps.h"
 #include <Sawyer/CommandLine.h>
@@ -21,7 +22,7 @@ struct Settings {
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup generic = CommandlineProcessing::genericSwitches();
+    SwitchGroup generic = Rose::CommandLine::genericSwitches();
 
     SwitchGroup tool("Tool-specific switches");
     tool.insert(Switch("width")

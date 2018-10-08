@@ -28,6 +28,11 @@ do
     #run cegpra and generate the results (do not keep error states as part of the model)
     eval ${SRCDIR}/scripts/test_cases_cegpra \${P${i}} ${p} ${1} ${2} ${2}/${TEMP_DIR}
 
+    if [ ! $? -eq 0 ] 
+    then 
+      exit 1 
+    fi
+
     #compare LTL results with RERS'14 solutions
     eval $SRCDIR/scripts/check_consistency ${2}/${TEMP_DIR}/\${P${i}}_ltl_results_make_check.csv $SRCDIR/regressiondata2/\${P${i}}_ltl_solutions.csv 2>&1
     if [ ! $? -eq 0 ] 

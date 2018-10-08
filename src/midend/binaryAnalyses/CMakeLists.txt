@@ -3,6 +3,7 @@ add_library(midend_binary OBJECT
   AbstractLocation.C
   BinaryBestMapAddress.C
   BinaryCallingConvention.C
+  BinaryCodeInserter.C
   BinaryControlFlow.C
   BinaryDataFlow.C
   BinaryDemangler.C
@@ -15,12 +16,18 @@ add_library(midend_binary OBJECT
   BinaryPointerDetection.C
   BinaryReachability.C
   BinaryReturnValueUsed.C
+  BinarySmtCommandLine.C
+  BinarySmtSolver.C
+  BinarySmtlibSolver.C
   BinaryStackDelta.C
   BinaryString.C
   BinarySymbolicExpr.C
   BinarySymbolicExprParser.C
+  BinarySystemCall.C
   BinaryTaintedFlow.C
   BinaryToSource.C
+  BinaryYicesSolver.C
+  BinaryZ3Solver.C
   DwarfLineMapper.C
   instructionSemantics/BaseSemantics2.C
   instructionSemantics/ConcreteSemantics2.C
@@ -38,13 +45,11 @@ add_library(midend_binary OBJECT
   instructionSemantics/NullSemantics2.C
   instructionSemantics/PartialSymbolicSemantics2.C
   instructionSemantics/RegisterStateGeneric.C
-  instructionSemantics/SMTSolver.C
   instructionSemantics/SourceAstSemantics2.C
   instructionSemantics/StaticSemantics2.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics2.C
-  instructionSemantics/TraceSemantics2.C
-  instructionSemantics/YicesSolver.C)
+  instructionSemantics/TraceSemantics2.C)
 else()
 add_library(midend_binary OBJECT
   dummyBinaryMidend.C
@@ -60,6 +65,7 @@ install(
     BinaryAnalysisUtils.h
     BinaryBestMapAddress.h
     BinaryCallingConvention.h
+    BinaryCodeInserter.h
     BinaryControlFlow.h
     BinaryDataFlow.h
     BinaryDemangler.h
@@ -73,13 +79,19 @@ install(
     BinaryPointerDetection.h
     BinaryReachability.h
     BinaryReturnValueUsed.h
+    BinarySmtCommandLine.h
+    BinarySmtSolver.h
+    BinarySmtlibSolver.h
     BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
     BinarySymbolicExpr.h
     BinarySymbolicExprParser.h
+    BinarySystemCall.h
     BinaryTaintedFlow.h
     BinaryToSource.h
+    BinaryYicesSolver.h
+    BinaryZ3Solver.h
     DwarfLineMapper.h
     ether.h
     instructionSemantics/BaseSemantics2.h
@@ -97,14 +109,14 @@ install(
     instructionSemantics/NullSemantics2.h
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/RegisterStateGeneric.h
-    instructionSemantics/SMTSolver.h
     instructionSemantics/SourceAstSemantics2.h
     instructionSemantics/StaticSemantics2.h
     instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/TestSemantics2.h
     instructionSemantics/TraceSemantics2.h
-    instructionSemantics/YicesSolver.h
-    libraryIdentification/functionIdentification.h
+    libraryIdentification/FunctionIdDatabaseInterface.h  
+    libraryIdentification/FunctionInfo.h  
     libraryIdentification/libraryIdentification.h
+    libraryIdentification/LibraryInfo.h    
   DESTINATION include)

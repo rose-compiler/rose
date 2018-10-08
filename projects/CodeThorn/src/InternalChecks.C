@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include "SgTypeSizeMapping.h"
 
 #ifdef USE_SAWYER_COMMANDLINE
 #include "Sawyer/CommandLineBoost.h"
@@ -46,6 +47,8 @@ void check(string checkIdentifier, bool checkResult, bool check);
 extern bool checkresult;
 
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
+  SgTypeSizeMapping* typeSizeMapping=new SgTypeSizeMapping();
+  AbstractValue::setTypeSizeMapping(typeSizeMapping);
   try {
     // checkTypes() writes into checkresult
     checkTypes();
@@ -68,6 +71,8 @@ bool CodeThorn::internalChecks(int argc, char *argv[]) {
   cout << color("white")<<"-------------------------"<<endl;
   cout << color("default-bg-color");
   cout << color("normal");
+  AbstractValue::setTypeSizeMapping(nullptr);
+  delete typeSizeMapping;
   return checkresult;
 }
 

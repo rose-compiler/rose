@@ -1,3 +1,5 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
 
 #include "SpotRenameVisitor.h"
 
@@ -16,4 +18,6 @@ void SpotRenameVisitor::visit(const atomic_prop* ap) {
   std::string newName = _newAtomicPropNames[ap->name()];
   result_ = default_environment::instance().require(newName);
 }
+
+#endif // end of "#ifdef HAVE_SPOT"
 

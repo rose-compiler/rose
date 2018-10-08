@@ -3,4 +3,4 @@
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
 17) AST Normalization (operators ++,--; function calls)
-19) for all Ids generate a CSV file with the mapped information
+

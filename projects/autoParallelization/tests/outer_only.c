@@ -6,7 +6,7 @@ void foo()
   double b[n][m];
   int i,j;
   for (i=0;i<n;i++)
-    for (j=0;j<m;j++)
+    for (j=1;j<m;j++)
       b[i][j]=b[i][j-1];
 }
 /*

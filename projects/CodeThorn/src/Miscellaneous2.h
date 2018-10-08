@@ -15,6 +15,9 @@
 #include <list>
 #include <algorithm>
 
+// DQ (3/24/2018): Added include file (using Boost 1.60, if that makes a difference).
+#include <vector>
+
 namespace SPRAY {
   std::string replace_string(std::string toModify, std::string toReplace, std::string with);
   int randomIntInRange(std::pair<int,int> range);
@@ -38,7 +41,8 @@ namespace SPRAY {
    int whitespaces(std::istream& is);
    std::set<int> integerSet(std::string intSet);
    std::list<int> integerList(std::string intList);
-   std::list<std::set<int> >integerSetList(std::string intSetList);
+   std::list<std::set<int> > integerSetList(std::string intSetList);
+   std::vector<std::string> commandLineArgs(std::string commandLine);
  }
 
 } // end of namespace SPRAY

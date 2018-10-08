@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "ParProSpotTgba.h"
 
 using namespace CodeThorn;
@@ -62,3 +65,5 @@ bdd ParProSpotTgba::compute_support_conditions(const spot::state* state) const {
 bdd ParProSpotTgba::compute_support_variables(const spot::state* state) const {
   return bddtrue;
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

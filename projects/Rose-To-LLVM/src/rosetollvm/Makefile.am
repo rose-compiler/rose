@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) 
+AM_LDFLAGS = $(ROSE_LIBS) $(LLVM_LDFLAGS) $(ROSE_RPATHS) 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/include -Wno-deprecated -Wall -Wextra -g -O0 
 
 pkginclude_HEADERS 	= \
@@ -19,6 +19,11 @@ pkginclude_HEADERS 	= \
 	include/rosetollvm/DoAstAttribute.h \
 	include/rosetollvm/ForAstAttribute.h \
 	include/rosetollvm/FunctionAstAttribute.h \
+	include/rosetollvm/DimensionAstAttribute.h \
+	include/rosetollvm/ConstantValue.h \
+	include/rosetollvm/ConstantIntegerEvaluator.h \
+	include/rosetollvm/ConstantExpressionEvaluator.h \
+	include/rosetollvm/ConstantCodeEvaluator.h \
 	include/rosetollvm/IfAstAttribute.h \
 	include/rosetollvm/IfComponentAstAttribute.h \
 	include/rosetollvm/IntAstAttribute.h \
@@ -28,6 +33,7 @@ pkginclude_HEADERS 	= \
 	include/rosetollvm/Option.h \
 	include/rosetollvm/Control.h \
 	include/rosetollvm/RoseToLLVM.hpp \
+	include/rosetollvm/SgCastAstAttribute.h \
 	include/rosetollvm/SgTypeAstAttribute.h \
 	include/rosetollvm/SizeOfAstAttribute.h \
 	include/rosetollvm/StringAstAttribute.h \
@@ -42,17 +48,20 @@ librosetollvm_la_SOURCES = \
 	CodeAttributesVisitor.cpp \
 	CodeEmitter.cpp \
 	CodeGeneratorVisitor.cpp \
-	ConstantFolder.cpp \
+	ConstantIntegerEvaluator.cpp \
+	ConstantExpressionEvaluator.cpp \
+	ConstantCodeEvaluator.cpp \
 	LLVMAstAttributes.cpp \
 	Option.cpp \
 	Control.cpp \
-	StringSet.cpp
+	StringSet.cpp \
+	llc.cpp
 
 librosetollvm_la_CPPFLAGS	= \
 	-I$(srcdir)/include \
-	$(LLVM_CPPFLAGS) 
+	$(LLVM_CPPFLAGS) -std=c++11
 
-librosetollvm_la_LDFLAGS = $(ROSE_LIBS) $(LLVM_LDFLAGS)
+#librosetollvm_la_LDFLAGS = $(ROSE_LIBS) $(LLVM_LDFLAGS)
 
 librosetollvm_la_CXXFLAGS = -Wno-deprecated 
 

@@ -26,6 +26,7 @@ public:
   //private:
   CppExprEvaluator* getCppExprEvaluator();
   void setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval);
+  void setSkipSelectedFunctionCalls(bool);
 private:
   SPRAY::CppExprEvaluator* _cppExprEvaluator;
   NumberIntervalLattice* _domain;

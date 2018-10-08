@@ -6,11 +6,13 @@
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "AsmUnparser.h"                                // Rose::BinaryAnalysis::AsmUnparser
 #include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
+#include "BinaryCodeInserter.h"                         // Rose::BinaryAnalysis::CodeInserter
 #include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
 #include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // Rose::BinaryAnalysis::BinaryLoader
 #include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
+#include "BinarySmtSolver.h"                            // Rose::BinaryAnalysis::SmtSolver
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
@@ -23,6 +25,7 @@ namespace BinaryAnalysis {
     namespace ReturnValueUsed { void initDiagnostics(); }
     namespace StackDelta { void initDiagnostics(); }
     namespace Strings { void initDiagnostics(); }
+    void SerialIo_initDiagnostics();
 } // namespace
 } // namespace
 #endif
@@ -98,8 +101,8 @@ void initialize() {
         Sawyer::Message::assertionStream = mlog[FATAL];
 
         // Turn down the progress bar rates
-        Sawyer::ProgressBarSettings::initialDelay(12.0);
-        Sawyer::ProgressBarSettings::minimumUpdateInterval(2.5);
+        Sawyer::ProgressBarSettings::initialDelay(1.0);
+        Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2);
 
         // Register logging facilities from other software layers.  Calling these initializers should make all the streams
         // point to the Rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
@@ -109,6 +112,7 @@ void initialize() {
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
+        BinaryAnalysis::CodeInserter::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();
@@ -118,6 +122,8 @@ void initialize() {
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();
+        BinaryAnalysis::SerialIo_initDiagnostics();
+        BinaryAnalysis::SmtSolver::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();

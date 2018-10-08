@@ -552,11 +552,89 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2016_13.c \
      test2016_14.c \
      test2016_15.c \
+     test2017_01.c \
+     test2017_04.c \
+     test2017_06.c \
+     test2017_07.c \
+     test2017_08.c \
+     test2017_09.c \
+     test2017_10.c \
+     test2017_11.c \
+     test2017_12.c \
+     test2017_13.c \
+     test2017_14.c \
+     test2017_15.c \
+     test2017_17.c \
+     test2017_18.c \
+     test2017_19.c \
+     test2017_20.c \
+     test2017_21.c \
+     test2017_22.c \
+     test2017_23.c \
+     test2017_24.c \
+     test2017_25.c \
+     test2018_01.c \
+     test2018_02.c \
+     test2018_03.c \
+     test2018_04.c \
+     test2018_05.c \
+     test2018_06.c \
+     test2018_07.c \
+     test2018_08.c \
+     test2018_09.c \
+     test2018_10.c \
+     test2018_11.c \
+     test2018_12.c \
+     test2018_13.c \
+     test2018_14.c \
+     test2018_15.c \
+     test2018_16.c \
+     test2018_17.c \
+     test2018_18.c \
+     test2018_19.c \
+     test2018_20.c \
+     test2018_21.c \
+     test2018_22.c \
+     test2018_23.c \
+     test2018_24.c \
+     test2018_25.c \
+     test2018_28.c \
+     test2018_29.c \
+     test2018_30.c \
+     test2018_31.c \
+     test2018_32.c \
+     test2018_33.c \
+     test2018_35.c \
+     test2018_36.c \
+     test2018_37.c \
+     test2018_41.c \
+     test2018_42.c \
+     test2018_43.c \
+     test2018_44.c \
+     test2018_62.c \
+     test2018_63.c \
+     test2018_64.c \
+     rose-1391-a.c \
+     rose-1391-b.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+FAILING_2017_TESTS = \
+     test2017_02.c \
+     test2017_03.c \
+     test2017_05.c \
+     test2017_16.c 
+
+FAILING_2018_TESTS = \
+     test2018_26.c \
+     test2018_27.c \
+     test2018_34.c \
+     test2018_38.c \
+     test2018_39.c \
+     test2018_40.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
-TESTCODES_REQUIRED_TO_PASS = \
+TESTCODES_REQUIRED_TO_PASS += \
      test2010_12.c \
      test2012_14.c \
      test2012_25.c \
@@ -1150,6 +1228,12 @@ check-pthread.passed: needs_reentrant.c $(testTranslator)
 		USE_SUBDIR=no							\
 		$(top_srcdir)/scripts/test_exit_status $@
 
+print:
+	@echo "Output Makefile variables:"
+	@echo "PASSING_TEST_Objects = $(PASSING_TEST_Objects)"
+	@echo "TEST_Source_passed   = $(TEST_Source_passed)"
+	@echo "TEST_Objects_passed  = $(TEST_Objects_passed)"
+
 check-local: check-pthread.passed
 	@echo "Tests for C."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -1190,6 +1274,9 @@ clean-local:
 	rm -f token_trailing_*.c token_leading_*.c
 	rm -f test2014_83 test2014_93
 	rm -f test2015_162 test2015_86
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 
 ################################################################################
 #

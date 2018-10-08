@@ -1,7 +1,6 @@
 
 int main()
 {
-  int k;
   int N;
   int alpha;
   int sum;

@@ -1,6 +1,7 @@
 #include <rose.h>
 
 #include <boost/foreach.hpp>
+#include <CommandLine.h>                                // from ROSE
 #include <FileSystem.h>                                 // from ROSE
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
@@ -74,7 +75,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                    "like normal, but the final COMMIT is skipped, causing the database to roll back to its initial "
                    "state."));
 
-    return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 static bool

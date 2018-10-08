@@ -22,7 +22,7 @@ int ArrayElementAccessData::getDimensions() const {
 string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) const {
   if(isValid()) {
     stringstream ss;
-    ss<< variableIdMapping->uniqueShortVariableName(varId);
+    ss<< variableIdMapping->uniqueVariableName(varId);
     for(vector<int>::const_iterator i=subscripts.begin();i!=subscripts.end();++i) {
       ss<<"["<<*i<<"]";
     }
@@ -57,7 +57,7 @@ ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdM
   SageInterface::isArrayReference(ref, &arrayNameExp, &subscripts);
   //cout<<"Name:"<<arrayNameExp->unparseToString()<<" arity"<<subscripts->size()<<"subscripts:";
   varId=variableIdMapping->variableId(SageInterface::convertRefToInitializedName(ref));
-  //cout<<"NameCheck:"<<variableIdMapping->uniqueShortVariableName(access.varId)<<" ";
+  //cout<<"NameCheck:"<<variableIdMapping->uniqueVariableName(access.varId)<<" ";
   for(size_t i=0;i<(*subscripts).size();++i) {
     //cout<<(*subscripts)[i]<<":"<<(*subscripts)[i]->unparseToString()<<" ";
     if(SgIntVal* subscriptint=isSgIntVal((*subscripts)[i])) {
@@ -81,19 +81,27 @@ bool operator!=(const ArrayElementAccessData& a, const ArrayElementAccessData& o
   return !(a==other);
 }
 bool operator<(const ArrayElementAccessData& a, const ArrayElementAccessData& other) {
-    if(a.varId!=other.varId)
-      return a.varId<other.varId;
-    if(a.subscripts.size()!=other.subscripts.size())
-      return a.subscripts.size()<other.subscripts.size();
-    vector<int>::const_iterator i=a.subscripts.begin();
-    vector<int>::const_iterator j=other.subscripts.begin();
-    while(i!=a.subscripts.end() && j!=other.subscripts.end()) {
-      if(*i!=*j) {
-        return *i<*j;
-      } else {
-        ++i;++j;
-      }
+  if(a.varId!=other.varId)
+    return a.varId<other.varId;
+  if(a.subscripts.size()!=other.subscripts.size())
+    return a.subscripts.size()<other.subscripts.size();
+  vector<int>::const_iterator i=a.subscripts.begin();
+  vector<int>::const_iterator j=other.subscripts.begin();
+  while(i!=a.subscripts.end() && j!=other.subscripts.end()) {
+    if(*i!=*j) {
+      return *i<*j;
+    } else {
+      ++i;++j;
     }
-    ROSE_ASSERT(i==a.subscripts.end() && j==other.subscripts.end());
-    return false; // both are equal
   }
+  ROSE_ASSERT(i==a.subscripts.end() && j==other.subscripts.end());
+  return false; // both are equal
+}
+
+bool ArrayElementAccessData::hasNegativeIndex() const {
+  for (auto index : subscripts ) {
+    if(index<0)
+      return true;
+  }
+  return false;
+}

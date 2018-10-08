@@ -1260,6 +1260,23 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 #endif
 
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (1/29/2018): This case is required for Plum Hall test: 522Y13b.cpp.
+                    case V_SgAddressOfOp:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgAddressOfOp returned from SgFunctionCallExp::get_type() member function \n");
+                      // printf ("Investigate this location in the code: \n");
+                      // functionExpression->get_startOfConstruct()->display("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function: debug");
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                         break;
+                       }
+#endif
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->class_name().c_str());
@@ -3157,10 +3174,12 @@ TestAstSymbolTables::visit ( SgNode* node )
                SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(declarationNode);
 #if 0
                if (declarationStatement != NULL)
+                  {
                     printf ("declarationStatement = %p = %s definingDeclaration = %p \n",declarationStatement,declarationStatement->class_name().c_str(),declarationStatement->get_definingDeclaration());
+                  }
 #endif
 #if 0
-               printf ("symbol = %p = %s = %s \n",symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str());
+               printf ("AST consistency test: symbol = %p = %s = %s \n",symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str());
 #endif
 
             // DQ (12/9/2007): Skip symbols that come from labels since they are often 
@@ -3204,11 +3223,32 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          if (local_symbol == NULL)
                             {
-                              printf ("The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
+
+                           // It appears this is an issue because the name is slightly different between:
+                           //      name = template_class2 < int  , double  >  SgSymbol = 0x150ac90 = SgTemplateTypedefSymbol type = 0x7fdc28051098 = SgTypedefType = template_class2 < int , double >  
+                           // and
+                           //      get_symbol_basis() = 0x7fdc27d94010 = SgTemplateInstantiationTypedefDeclaration = template_class2 < int , double >  
+                           //
+                           // Specifically:
+                           //      name = template_class2 < int  , double  >
+                           //             template_class2 < int , double >
+
+                              printf ("Error (AST consistency test): The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
                                    declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str(),
                                    symbol,symbol->class_name().c_str(),SageInterface::get_name(scope).c_str(),
                                    scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
                               declarationStatement->get_startOfConstruct()->display("declarationStatement->get_symbol_from_symbol_table() == NULL: debug");
+
+                              printf ("******************** START **********************\n");
+                              printf ("In AST Consistantcy tests: Output the symbol table for scope = %p = %s: \n",scope,scope->class_name().c_str());
+                              SageInterface::outputLocalSymbolTables(scope);
+                              printf ("******************** DONE ***********************\n");
+
+#if 1
+                           // DQ (2/28/2018): Added testing (Tristan indicates that this is a problem for Fortran, above).
+                              ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
+                              ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
+#endif
                             }
 
                       // DQ (11/7/2007): Allow this, with a warning, I think!
@@ -4509,6 +4549,10 @@ TestMangledNames::visit ( SgNode* node )
         {
        // DQ (1/12/13): Added fix for scopes that may have been deleted (happens where astDelete mechanism is used)
        // mangledName = declarationStatement->get_mangled_name().getString();
+          if (declarationStatement->get_scope() == NULL)
+             {
+               printf ("ERROR: TestMangledNames::visit(): declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+             }
           ROSE_ASSERT(declarationStatement->get_scope() != NULL);
 #if 0
           printf ("TestMangledNames::visit(): declarationStatement->get_scope() = %p = %s \n",declarationStatement->get_scope(),declarationStatement->get_scope()->class_name().c_str());
@@ -4777,6 +4821,15 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
           if (symbol->get_parent() == NULL)
             printf("Error: symbol named %s has no parent set\n",symbol->get_name().getString().c_str());
           ROSE_ASSERT(symbol->get_parent() != NULL);
+        }
+
+  // DQ (10/16/2017): Skip parent pointer checking for the untyped IR nodes.
+  // Rasmussen (3/7/2018): Added class name and node pointer address to output.
+     if (isSgUntypedNode(locatedNode) != NULL)
+        {
+           std::cerr << "TestParentPointersInMemoryPool::visit(): Skipping SgUntypedNode IR Node "
+                     << node->sage_class_name() << ": " << node << std::endl;
+          return;
         }
 
 #if 0

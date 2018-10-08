@@ -73,7 +73,7 @@ class RiscOperators: public MultiSemantics::RiscOperators {
     // The normal C++ constructors; protected because this object is reference counted
 protected:
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &userDomain)
-        : MultiSemantics::RiscOperators(MultiSemantics::SValue::instance(), NULL) {
+        : MultiSemantics::RiscOperators(MultiSemantics::SValue::instance(), SmtSolverPtr()) {
         init(userDomain);
     }
 
@@ -90,7 +90,7 @@ public:
     // dataflow semantics framework only through the "instance" method. (But we still must override them.)
 private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -98,7 +98,7 @@ private:
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -154,19 +154,28 @@ private:
     // behave differently.  When reading, they return the set of abstract locations that were read (either a register or the
     // address for the bytes of memory); when writing they add vertices and edges to the dataflow graph.
 public:
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr peekRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
-    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
 
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
-    virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
+    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
+                                                const BaseSemantics::SValuePtr &dflt_) ROSE_OVERRIDE;
+
+    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                              const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+protected:
+    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                                                      const BaseSemantics::SValuePtr &dflt,
+                                                      const BaseSemantics::SValuePtr &cond, bool allowSideEffects);
+
 };
 
 } // namespace

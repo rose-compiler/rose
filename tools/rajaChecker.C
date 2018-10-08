@@ -3,12 +3,14 @@
 //
 // Liao, 4/6/2017
 #include "rose.h"
+#include <CommandLine.h>
 #include <iostream>
 #include "keep_going.h"
 #include <string>
 #include "AstMatching.h"
 #include "AstTerm.h"
 #include "RoseAst.h"
+#include "DefUseAnalysis.h"
 
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool detects various patterns in input source files.";
@@ -24,6 +26,51 @@ using namespace SageInterface;
 // It will be used for diff-based correctness checking. So don't output varying debugging  info into this file.
 ofstream ofile; 
 
+// A helper function to match simple regular expression patterns
+// .  match a single character
+// *  match zero or more of the preceding element
+bool isMatch(string s, string p) {
+  /**
+   * f[i][j]: if s[0..i-1] matches p[0..j-1]
+
+   * if p[j - 1] != '*'
+   *      f[i][j] = f[i - 1][j - 1] && (s[i - 1] == p[j - 1] || p[i-1=='.'])
+   * if p[j - 1] == '*', denote p[j - 2] with x
+   *      f[i][j] is true iff any of the following is true
+   *      1) "x*" repeats 0 time and matches empty: = f[i][j - 2] // eliminate the last two chars of p [j-2]
+   *      2) "x*" repeats >= 1 times and matches "x*x": s[i - 1] == x && f[i - 1][j]  
+   * '.' matches any single character
+   */
+  int m = s.size(), n = p.size();
+
+  // (m+1) x (n+1) matrix 
+  vector < vector <bool> > f(m + 1, vector<bool>(n + 1, false));
+
+
+  f[0][0] = true; // bootstrap point: from true
+  // if p size is 0: no match is possible, set to false
+  for (int i = 1; i <= m; i++)
+    f[i][0] = false;
+  // p[0.., j - 3, j - 2, j - 1] matches empty iff p[j - 1] is '*' and p[0..j - 3] matches empty
+  for (int j = 1; j <= n; j++)
+    f[0][j] = j > 1 && '*' == p[j - 1] && f[0][j - 2];
+
+  // go through all i, j values , both start from 1
+  for (int i = 1; i <= m; i++)
+    for (int j = 1; j <= n; j++)
+    {
+      if (p[j - 1] != '*') // straightforward match
+        f[i][j] = f[i - 1][j - 1] && (s[i - 1] == p[j - 1] || '.' == p[j - 1]);
+      else
+        // p[0] cannot be '*' so no need to check "j > 1" here
+        f[i][j] = (f[i][j - 2] || ((s[i - 1] == p[j - 2] || '.' == p[j - 2]) && f[i - 1][j]));
+    }
+
+  return f[m][n];
+} // end isMatch
+
+
+
 namespace RAJA_Checker 
 {
   bool enable_debug = false;
@@ -33,8 +80,14 @@ namespace RAJA_Checker
   bool checkDataMember = false; 
   bool checkNodalAccumulationPattern = true;
 
+  // A helper function to stringify a located node, often for debugging purposes.
+  std::string toString (SgNode* snode);
+
   //! Processing command line options
   std::vector<std::string> commandline_processing(std::vector< std::string > & argvList);
+
+  //! Retrieve def use info. for a node's enclosing function definition. run for entire project for now
+  DFAnalysis* obtainDFAnalysis ();
 
   //! If a for loop is a nodal accumulation loop , return the recognized first accumulation statement
   bool isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt);
@@ -48,16 +101,35 @@ namespace RAJA_Checker
   //! Check if a lambda function has the nodal accumulation pattern
   bool hasNodalAccumulationBody( SgLambdaExp* exp, SgExprStatement*& fstmt);
 
+  //! Check if a variable is only initialized once since its declaration, at the entry point of a loop.
+  // Internally reaching definition analysis is used to retrieve such information. 
+  bool initializedOnceWithBasePlusOffset (SgInitializedName* iname, SgStatement* loopStatement, bool*);
+
   //! Check if an expression is used as a function call parameter to a RAJA function. 
   bool isRAJATemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
                          SgExprStatement* & callStmt, // return  the call statement
                          SgFunctionDeclaration*& raja_func_decl);
 
-  //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
-  bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
+  //! Check if an expression is used as a function call parameter to a template function with a given name 
+  bool isWrapperTemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
+                         const vector<string>& func_names, // the matching names of wrapper functions
+                         SgExprStatement* & callStmt, // return  the call statement
+                         SgFunctionDeclaration*& template_func_decl);
+
+  //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable and a loop stmt
+  bool isNodalAccumulationBodyAtomic(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt, SgStatement* loopStmt);
+
+  //! Check if a block of statement, including its eligible nested basic blocks, has the nodal accumulation pattern, with a known loop index variable and a loop stmt
+  bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt, SgStatement* loopStmt);
+
+  //! Check if a statement is an accumulation statement , lhsInitPatternMatch is set to true if the lhs is declared/initialized using a form of base+offset
+  bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar, bool * lhsInitPatternMatch, SgStatement* loopStmt, bool* lhsUniqueDef); 
 
   //!  if there is a form like: int varRef1 = indexSet[loopIndex]; 
   bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
+
+  //!  if there is a form like: int varRef1 = loopIndex; 
+  bool connectedViaAssignment (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
 
   // TODO: move some functions to SageInterface if needed.
   //! Find and warn if there are data member accesses within a scope
@@ -191,6 +263,69 @@ namespace RAJA_Checker
     return retval;
   }
 
+  //! Check if a lambda function is inside a call to a template function matching a given name. Return the function decl if it is. 
+  // This is a key interface function. Developers can first find a lambda expression , 
+  // then check if it is a RAJA template function's parameter.
+  //
+  //
+  // The AST should look like  SgFunctionCallExp
+  //                           * SgExprListExp
+  //                           ** SgLambdaExp 
+  bool isWrapperTemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
+                       const vector<string>& func_names, // the matching names of wrapper functions
+                       SgExprStatement* & callStmt, 
+                       SgFunctionDeclaration*& raja_func_decl)
+  {
+    bool retval = false; 
+    ROSE_ASSERT (n!= NULL);
+    // Add another case: the call to the lambda exp is indirectly through a variable reference.
+    SgExpression* le = isSgExpression(n);
+    if (isSgLambdaExp (le) || isSgVarRefExp(le))
+    {
+      SgNode* parent = le->get_parent();
+      ROSE_ASSERT(parent!=NULL);
+      parent = parent->get_parent();
+      ROSE_ASSERT(parent!=NULL);
+      if (SgFunctionCallExp* call_exp = isSgFunctionCallExp (parent)) 
+      {
+        // check if the function name matches a given name
+        retval = isCallToRAJAFunction (call_exp);
+
+        SgFunctionDeclaration* func_decl = call_exp->getAssociatedFunctionDeclaration();
+        string obtained_name = (func_decl->get_qualified_name()).getString(); 
+       
+        for (size_t i=0; i< func_names.size(); i++)
+        {
+          string func_name = func_names[i];
+          //  if (func_name == obtained_name) // the full qualified name is ::for_all < seq_exec ,  >, we only match the first portion for now
+          //if (obtained_name.find (func_name,0) !=string::npos)
+          if (isMatch(obtained_name, func_name)) 
+          {
+            retval = true; 
+            break; 
+          }
+        }
+
+        if (enable_debug)
+        {
+          if (!retval)
+          {
+            cout<<"\t obtained func name is: "<< obtained_name <<" no matching given names: "<<endl;
+            for (size_t i=0; i< func_names.size(); i++)
+              cout<<func_names[i]<<endl;
+          }
+        }
+
+        //if (raja_func_decl != NULL)
+        raja_func_decl = call_exp-> getAssociatedFunctionDeclaration();
+        callStmt = isSgExprStatement(call_exp->get_parent());
+        ROSE_ASSERT(callStmt);
+      }
+    }
+
+    return retval;
+  }
+
 } // end RAJA_Checker namespace
 
 //! Initialize the switch group and its switches.
@@ -235,15 +370,37 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches()
   return switches;                                                                                                    
 } 
 
+std::string RAJA_Checker::toString (SgNode* node)
+{
+  ROSE_ASSERT (node);
+  ostringstream ss; 
+
+  ss<<node->class_name() <<" @";
+  ss<<node<<" :";
+
+  SgLocatedNode* snode = isSgLocatedNode(node);
+  if (!snode)
+  {
+    return ss.str();
+  }
+  
+  if (SgInitializedName* iname = isSgInitializedName(snode))
+    ss<<iname->get_name()<<" :";
+
+  ss<<snode->get_file_info()->get_line(); 
+
+  return ss.str();
+}
+
 std::vector<std::string> RAJA_Checker::commandline_processing(std::vector< std::string > & argvList)
 {
   using namespace Sawyer::CommandLine;                                                                                
-  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);                                     
+  Parser p = Rose::CommandLine::createEmptyParserStage(purpose, description);                                     
   p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");                                                  
   p.longPrefix("-");                                                                                                  
 
 // initialize generic Sawyer switches: assertion, logging, threads, etc.                                              
-  p.with(CommandlineProcessing::genericSwitches());                                                                   
+  p.with(Rose::CommandLine::genericSwitches());                                                                   
                                                                                                                       
 // initialize this tool's switches                                                                                    
   p.with(commandLineSwitches());                                                                                      
@@ -270,7 +427,81 @@ std::vector<std::string> RAJA_Checker::commandline_processing(std::vector< std::
 }
 
 using namespace RAJA_Checker;
+using namespace SageInterface;
 
+
+//! We avoid calling def-use analysis for input codes with unsupported constructs
+// TODO: refine the granularity to be function level later
+bool hasUnsupportedLanguageFeatures( VariantT* unsupportedConstruct)
+{
+  std::set<VariantT> blackListDict; 
+  blackListDict.insert(V_SgLambdaExp);
+
+  // build a dictionary of language constructs shown up in the loop, then query it
+  RoseAst ast ( getProject());
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if (blackListDict.find( (*i)->variantT()) != blackListDict.end())
+    {
+      *unsupportedConstruct= (*i)->variantT(); 
+      return true; 
+    }
+  }
+  return false;
+}
+
+
+//! Retrieve def use info. for a node's enclosing function definition
+// Three possible cases: 
+// 1. first time calling of the analysis
+// 2. already called, analysis fails.  return NULL
+// 3. already called, analysis succeeds.  return defuse value
+// We use integer values to indicate them
+// TODO: optimize it later , per function, not for the entire project, too expensive
+DFAnalysis* RAJA_Checker::obtainDFAnalysis ()
+{
+  // run for entire project for now, later optimize for function level run only.
+  static std::map <SgFunctionDefinition*, int> callingStatus; 
+  static std::map <SgFunctionDefinition* , DFAnalysis*> cachedResults;
+
+  static int called =0; 
+  // must be static to persist across calls
+  static DFAnalysis* defuse = NULL; 
+  
+  if (called ==0)
+  {
+    called = 1; 
+    VariantT badConstruct; 
+    if (hasUnsupportedLanguageFeatures (&badConstruct))
+    {
+     if (enable_debug)
+          cout<<"Warning, defuse analysis skipped due to unsupported construct ..."<< badConstruct <<endl;
+       return NULL; 
+    }
+    else
+    {
+      defuse = new DefUseAnalysis(getProject());
+      int val = defuse->run(false); // debug is false
+      if (val == 1)  // failed analysis? reset defuse to be NULL
+      {
+        if (enable_debug)
+          cout<<"Warning, dfuse analysis fails..."<<endl;
+        defuse = NULL;
+      }
+    }
+  }
+  
+#if 0
+  ROSE_ASSERT (node);
+  SgFunctionDefinition* fd = getEnclosingFunctionDefinition (node);
+
+  // def-use analysis never been called upon this function def?
+  if (callingStatus[fd]==0)
+  {
+
+  }
+#endif
+  return defuse;
+}
 /*
 
 Algorithm:
@@ -362,8 +593,78 @@ bool RAJA_Checker::connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName
   return false;
 }
 
+// Check if varRef1 is defined by loopIndex 
+// We accept both direct assignment and deriving value of lhs from loopIndex
+// e.g 1: int varRef1 = loopIndex;
+// e.g 2: int varRef1 = (loopIndex < nnalls )? loopIndex: loopIndex - nnalls;
+// This helps to find loop index buried behind another variable. 
+bool RAJA_Checker::connectedViaAssignment(SgVarRefExp* varRef1, SgInitializedName* loopIndex)
+{
+  AstMatching m;
+  ROSE_ASSERT (varRef1!=NULL);
+  ROSE_ASSERT (loopIndex!=NULL);
+  if (enable_debug)
+  {
+    cout<<"\t\t Entering connectedViaAssignment() ..."<<endl;
+  }  
+
+  // symbol and decl for varRef1  
+  SgVariableSymbol* sym = varRef1->get_symbol();
+  SgInitializedName* iname = sym->get_declaration();
+  SgDeclarationStatement* decl = iname->get_declaration();
+  
+  // check if loopIndex appears within rhs
+  RoseAst ast(decl);
+
+  SgSymbol* idxSym = loopIndex->search_for_symbol_from_symbol_table(); 
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if (SgVarRefExp * varRef = isSgVarRefExp(*i))
+    {
+      if (varRef->get_symbol() == idxSym)
+        return true; 
+    }
+  }
+
+#if 0  
+  if (enable_debug)
+  {
+    cout<<"\t\t the ast term for var decl:"<<endl;
+    string p("$rhs=SgVariableDeclaration");
+    MatchResult res=m.performMatching(p, decl);
+    for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+      SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+      cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+    }
+  }
+
+  //SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgVarRefExp:zoneIdx)))
+  //string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,$rhs=SgVarRefExp))))");
+  // there may be this-> pointer for indeSet variable reference!!
+  //string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(_,$rhs=SgVarRefExp))))");
+  string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer($rhs=SgVarRefExp)))");
+  MatchResult res=m.performMatching(p, decl);
+  if (enable_debug)
+    cout<<"\t\t matched result size():"<<res.size()<<endl;
+  for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+     SgVarRefExp* rhs = isSgVarRefExp((*i)["$rhs"]);
+
+     //SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+     //cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+
+     ROSE_ASSERT (rhs);
+     SgVariableSymbol* sym2= rhs->get_symbol();
+     ROSE_ASSERT (sym2);
+     SgInitializedName* i2 = sym2->get_declaration();
+     if (loopIndex==i2 ) 
+       return true; 
+  }
+#endif  
+  return false;
+}
+
+
 // Check if an operand is a form of x[index], x is a pointer to a double, index is a loop index
-bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
+bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefExp** varRefOut)
 {
   ROSE_ASSERT (lvar != NULL);
   if (exp == NULL) 
@@ -385,6 +686,40 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t lhs of a[i] is NULL " <<endl;
     return false;
   }
+  // The lhs should be a form of simple double pointer used as array, not complex data member like obj->array[i]. 
+  SgVarRefExp* ref = isSgVarRefExp(lhs);
+ if (!ref)
+  {
+    bool isThis = false; 
+    SgArrowExp * arrow = isSgArrowExp (lhs);
+    if (arrow)
+    {
+      SgThisExp * thisexp = isSgThisExp(arrow->get_lhs_operand());
+      if (thisexp)
+        isThis = true; 
+    }
+
+    // we allow this->data[i], but not a->data[i] as lhs
+    if (!isThis)
+    {
+      if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var is not a simple variable reference type, but " << lhs->class_name() <<endl;
+      return false;
+    }
+    else
+    {
+      // store rhs of this->rhs as the varRefOut
+      // would it always be SgVarRefExp ?
+      *varRefOut = isSgVarRefExp(arrow->get_rhs_operand());
+    }
+  }
+  else
+  {
+    // store ref if not NULL
+    *varRefOut = ref; 
+  }
+ 
+  ROSE_ASSERT (*varRefOut != NULL);
+
   rhs = arr->get_rhs_operand();
   if (rhs == NULL) 
   {
@@ -400,15 +735,22 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var's type is not a pointer type, but " << lhs->get_type()->class_name() <<endl;
     return false;
   }
-  // lhs is a pointer to double  
-   if (! isSgTypeDouble( ptype->get_base_type()) )
+  // lhs is a pointer to double, float or integer 
+   SgType* bst = ptype->get_base_type();
+   if (! isSgTypeDouble( bst) && ! isSgTypeInt ( bst )  && ! isSgTypeFloat ( bst) )
    {
-    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double type, but " << ptype->get_base_type()->class_name()<<endl;
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double, int or float type, but " << ptype->get_base_type()->class_name()<<endl;
     return false;
    }
   
   // rhs is a loop index
+ 
+ // strip off one or more levels of index arrays
+  while (isSgPntrArrRefExp(rhs))
+    rhs = isSgPntrArrRefExp(rhs)->get_rhs_operand();
+
   SgVarRefExp* varRef = isSgVarRefExp(rhs) ;
+  
   if (varRef == NULL) 
   {
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t rhs of a[i] is not SgVarRefExp, but " << rhs->class_name() <<endl;
@@ -417,13 +759,13 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
 
   SgSymbol * s1 = varRef->get_symbol();
   SgSymbol * s2 = lvar->get_symbol_from_symbol_table ();
-  if ( s1 != s2 && !connectedViaIndexSet(varRef, lvar))
+  if ( s1 != s2 && !connectedViaIndexSet(varRef, lvar) && ! connectedViaAssignment(varRef, lvar))
   {
     if (RAJA_Checker::enable_debug) 
     {
       cout<<"\t\t\t symbol is not equal to loop index symbol" <<endl;
-      cout<< "\t\t\t rhs of a[i] var Ref:" << varRef->unparseToString() <<" : "<<s1->unparseToString() <<endl;
-      cout<< "\t\t\t loop index var:" << lvar->unparseToString() <<" : "<<s2->unparseToString() <<endl;
+      cout<< "\t\t\t\t rhs of a[i] var Ref:" << varRef->unparseToString() <<" : "<<s1->unparseToString() <<endl;
+      cout<< "\t\t\t\t loop index var:" << lvar->unparseToString() <<" : "<<s2->unparseToString() <<endl;
     }
     return false;
   }
@@ -432,31 +774,364 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
 }
 
 //  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
-bool isNodalAccumulationOp (SgExpression* op)
+bool isNodalAccumulationOp (SgExpression* op, bool& isAssign )
 {
   if (op == NULL) return false;
 
   if (isSgPlusAssignOp(op) ||
       isSgMinusAssignOp(op) ||
       isSgMultAssignOp(op) ||
-      isSgDivAssignOp(op)  // TODO: MIN() and MAX ()
+      isSgDivAssignOp(op)  || 
+       isSgAssignOp(op)  // MIN() and MAX () expanded to  xm[i]= xm[i]<op2 ? xm[i]: op2 or xm[i]= xm[i]>op2 ? xm[i]: op2
      )
+  {
+    isAssign = isSgAssignOp (op);
     return true;
+  }
+
+  return false;
+}
+
+// only check expression statement: single line statement
+bool isMatchedAssignment (SgExprStatement * input, SgVariableDeclaration* decl)
+{
+  ROSE_ASSERT (input !=NULL);
+  SgExpression* lhs=NULL, *rhs=NULL;
+  
+  if (isAssignmentStatement (input, &lhs, &rhs))
+  {
+    if (SgVarRefExp* var = isSgVarRefExp (lhs))
+    {
+      // match left hand side
+      if (var->get_symbol() == getFirstVarSym(decl))
+      {
+        // right hand is a + operation
+        SgAddOp * addop = isSgAddOp(rhs); 
+        if (addop)
+          return true; 
+        else
+        {
+          if (RAJA_Checker::enable_debug)
+            cout <<"\t\t\t\t\t rhs is not an add op, but "<< rhs->class_name()<< endl;
+        }
+      }
+      else
+      {
+        if (RAJA_Checker::enable_debug)
+          cout <<"\t\t\t\t\t lhs symbol does not match decl's symbol"<< endl;
+      }
+    }
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout <<"\t\t\t\t\t lhs is not VarRefExp, but "<< lhs->class_name() <<endl;
+    }
+  }
+//  else if (isSgScopeStatement (input)) 
+//  {
+//  }
+  return false;
+}
+
+// Check a scope statement for any matching assignment for decl
+//TODO: This is really a workaround due to lack of def-use analysis for RAJA code
+bool hasMatchedAssignmentInside (SgScopeStatement* sinput, SgVariableDeclaration* decl)
+{
+  RoseAst ast(sinput);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgExprStatement* estmt = isSgExprStatement(*i);
+    if (estmt)
+    {
+      if (isMatchedAssignment (estmt, decl)) 
+        return true;
+    }
+  }
+  return false;   
+}
+
+
+// For a variable declaration without initialization, find its followed unique assignment
+// within the same scope right after the declaration, if there is a unique assignment 
+// with a format like: var = base +offset; 
+// This has to recognize the assignment statement buried within if-statement.
+bool findUniqueNextAssignment (SgVariableDeclaration* decl, SgStatement* loopStmt)
+{
+  ROSE_ASSERT (decl);
+
+  int counter = 0; 
+  SgStatement* current = decl;
+  while ((current = getNextStatement(current)))
+  {
+    if (RAJA_Checker::enable_debug)
+      cout <<"\t\t\t\t\t checking next stmt at line "<< current->get_file_info()->get_line() <<endl;
+    if (SgExprStatement* estmt =  isSgExprStatement(current))
+    {
+      if (isMatchedAssignment(estmt, decl))
+        counter++;
+    } // end if assignment
+    else if (SgScopeStatement* scopestmt=  isSgScopeStatement(current))
+    {
+      if (hasMatchedAssignmentInside(scopestmt, decl))
+        counter++;
+    }
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout <<"\t\t\t\t\t Not an assignment stmt "<< current->get_file_info()->get_line() <<endl;
+    }
+  } // end while
+
+  if (counter>=1)
+  {
+    if (RAJA_Checker::enable_debug)
+      cout <<"\t\t\t\t\t Met condition: findUniqueNextAssignment() finds  "<< counter << " matched assignment "<<endl;
+  }
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+      cout <<"\t\t\t\t\t Failed condition: findUniqueNextAssignment() finds  "<< counter << " matched assignment "<<endl;
+  }
+
+  // TODO need users confirmation about this new pattern test case: nodalAccPattern5-multipleAssign.cpp
+  //what will happen if we only check if >=1? 
+  return (counter >= 1); 
+  //return (counter == 1); 
+}
+
+// check if it is an initialization with a form of base+offset
+bool conformingAssignInitializer(SgAssignInitializer * assign_init)
+{
+  ROSE_ASSERT (assign_init);
+  SgAddOp * addop = isSgAddOp(assign_init->get_operand_i());
+  if (addop)
+    return true;
+  return false;
+}
+
+// Check if an assign op is the only def place for a variable iname
+// its previous statement should have 0 or 1 def place as OUT DEF set
+bool uniqueAssignOp (SgAssignOp* assign_op, SgInitializedName* iname)
+{
+  ROSE_ASSERT (assign_op);
+  // unique value assignment, right after variable declaration without initialization
+  // This is a unique assignment , its IN set is its declaration
+  SgStatement* prevStmt = getPreviousStatement (getEnclosingStatement(assign_op));
+  ROSE_ASSERT (prevStmt);
+
+  if (RAJA_Checker::enable_debug)
+    cout<<"previous stmt is "<< toString(prevStmt) <<endl;
+
+  DFAnalysis* dfa = obtainDFAnalysis();
+  if (dfa)
+  { 
+    // OUT_def_set (prevStmt): only one def node, which can be either assignInitializer (with assign initializer) or but a naked variable decl
+    // which is SgInitializedName
+    vector <SgNode*> defs = dfa->getDefFor(prevStmt, iname);
+    if (defs.size() ==0) //no previous definition. This may be caused by wrong def-use analysis results. It should have at least one def (declared)
+    {
+
+      if (RAJA_Checker::enable_debug)
+        cout<<"cond 1 is met: no previous definition within OUT set of prev statement "<<endl;
+      return true;    
+    }
+    else
+      if (defs.size() ==1)
+      {
+        if (isSgInitializedName(defs[0]) || isSgAssignInitializer (defs[0]) )
+        {
+          if (RAJA_Checker::enable_debug)
+            cout<<"cond 1 is met: no previous definition within OUT set of prev statement "<<endl;
+          return true;
+        }
+        else
+        {
+          if (RAJA_Checker::enable_debug)
+            cout<<"in uniqueAssignOp(): the DEF OUT set of prevstmt is size 1, but the DEF node is not initialized name or assign initializer. It is "<< toString(defs[0])<<endl;
+        }
+      }
+      else
+      {
+        if (RAJA_Checker::enable_debug)
+        {
+          cout<<"Not uniquely assigned before reaching the loop!  OUT DEF of prev statement is not size 1, but "<<defs.size() <<endl;
+          for (size_t i =0; i< defs.size(); i++)
+          {
+            cout<<toString(defs[i])<<endl;
+          }
+        }
+      }
+  }
+
+  // if dfa fails, assuming the worst. Cannot decide
+  return false;
+}
+
+// unique assign operation in the path of variable declaration to the entry of loop
+bool conformingAssignOp(SgAssignOp* assign_op)
+{
+  ROSE_ASSERT (assign_op);
+  // rhs is a form of base+ offset
+  SgAddOp * addop = isSgAddOp(assign_op->get_rhs_operand());
+  if (addop)
+    return true;
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+       cout<<"rhs op is not a conforming plus operation, but "<< assign_op->get_rhs_operand()->class_name()<<endl;
+    
+  }
 
   return false;
 }
 
 
-/*
+// Check if a variable is declared within a declaration with a form of 
+// 1. double var = base + offset;  Or
+// 2. double var; ...; var = base + offset;  
+// Up to then IN entry to a loopstatement
+// TODO: all variables should be consistent about the choice of two ???
+bool initializedWithBasePlusOffset (SgInitializedName* iname, SgStatement* loopStatement)
+{
+  ROSE_ASSERT (iname != NULL);
+  if (RAJA_Checker::enable_debug)
+    cout<<"\t\t\t Checking if initName is previously initialized with base+offset: "<< iname->get_name() <<endl;
+  
+//  SgVariableSymbol* sym = isSgVariableSymbol(iname->get_symbol_from_symbol_table()); 
+//  ROSE_ASSERT (sym != NULL);
+  SgVariableDeclaration* decl = isSgVariableDeclaration(iname->get_declaration()); 
+
+  if (decl==NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t left side iname variable's declaration is not a SgVariableDeclaration, but a "<< iname->get_declaration()->class_name()<<endl;
+    return false;
+  }
+
+  // form 1: initialized as part of declaration
+  bool form1=false, form2=false;
+  SgAssignInitializer * assign_init = isSgAssignInitializer (iname->get_initptr());
+  if (assign_init)
+  {
+    form1 = conformingAssignInitializer (assign_init); 
+  }
+  else // the variable is initialized later, search and find it! TODO
+  {
+    if (findUniqueNextAssignment (decl, loopStatement))
+      form2 = true; 
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout <<"No unique next assignment stmt of a format of: var = base + offset;"<<endl;
+    } 
+  }
+
+  return (form1 || form2); 
+}
+
+
+//! Check if a variable is only initialized once since its declaration, at the entry point of a loop.
+// Internally reaching definition analysis is used to retrieve such information. 
+bool RAJA_Checker::initializedOnceWithBasePlusOffset (SgInitializedName* iname, SgStatement* loopStatement, bool * defOnce)
+{
+  ROSE_ASSERT (iname);
+  //TODO: support lambda function call later, not a for loop anymore
+  ROSE_ASSERT (loopStatement);
+  // Initialize it to be true
+  * defOnce = true; 
+
+  // This analysis only stores OUT set of def or use variables for each CFG node. 
+  // We use the OUT_definition set of SgForInitStatement as an approximation of IN-definition for the loop. 
+  DFAnalysis* dfa = obtainDFAnalysis(); 
+  if(dfa)
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"DFA analyis successful .."<<endl;
+    if(SgForStatement* fs = isSgForStatement(loopStatement))
+    {
+      SgForInitStatement* finit = fs->get_for_init_stmt();
+      vector <SgNode*> defs = dfa->getDefFor(finit, iname); 
+      // TODO: There should be only one reaching definition
+      // we should check if more than two, they are from mutual exclusive paths, like true-false branches.  
+      // get their previous DEF nodes, must be AssignInitialzer
+      bool hasAssign= false; 
+      // Check all reaching definitions one by one
+      // at least one of them is base+offset
+      for (size_t i=0; i< defs.size(); i++)
+      {
+        // if (RAJA_Checker::enable_debug)
+        SgLocatedNode * lnode = isSgLocatedNode (defs[i]);
+        ROSE_ASSERT (lnode);
+        if (RAJA_Checker::enable_debug)
+          cout<< toString(iname) << " Defined at "  << toString(lnode) <<endl;
+        // assign initializer?  
+        if (SgAssignInitializer * init = isSgAssignInitializer(lnode))
+        {
+          if (conformingAssignInitializer(init))
+          {
+            // for an assign intializer, there is no other previous definition possible. So it is defOnce on this CFG path
+            // *defOnce = true;  // no effect for defOnce
+            hasAssign=true;
+          }
+        } // assignment operation within an assignment statement
+        else if (SgAssignOp * assign = isSgAssignOp(lnode))
+        {
+           if (conformingAssignOp(assign))
+           {
+             hasAssign = true; // instead of returning true, we just keep the value, let the iteration finish with checking all
+             // it is possible a later def operation is a conforming assign initializer but with defs.size() !=1
+              if (RAJA_Checker::enable_debug)
+                cout<<"this assign op is conforming"<<endl;
+           }
+           else
+           {
+              if (RAJA_Checker::enable_debug)
+                cout<<"this assign op is not conforming"<<endl;
+           }
+           // If any of the assignment is not unique reaching definition, defOnce is set to be false
+           if (!uniqueAssignOp (assign, iname))
+           {
+             *defOnce = false;
+              if (RAJA_Checker::enable_debug)
+                cout<<"this assign op is not unique reaching definition, defOnce set to be false"<<endl;
+           }
+        }
+        else
+        {
+        if (RAJA_Checker::enable_debug)
+          cout<<"warning, RAJA_Checker::initializedOnceWithBasePlusOffset() encounters unhandled def node type: "<<endl;
+        }
+      } // end for
+
+      // Now at least one path is initialized with base+offset
+      if (hasAssign) 
+        return true; 
+    } // end if for statement
+  }
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t\t DFA analysis returns NULL ..."<<endl;
+  }
+  return false;  
+}
+
+
+/* lvar is the enclosing loop's loop index variable. 
  * xa4[i] += ax; within a for-loop, i is loop index
  *  lhs: array element access using loop index  xm[loop_index], xm is a pointer to a double type
  *  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
  *
+ *  More conditions for the variable on the left side
+ *   1. Must declared within the enclosing function body, not as function parameter
+ *   2. must be assigned between the declaration and the entry of the enclosing loop body
+ *   3. the assignment must have a form of base + offset for the rhs // at least one of the statement!!
+ *   4. must be declared/initialized in a straight line code block. 
+ *
  * */
-bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
+bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar, bool * lhsInitPatternMatch, SgStatement* loopStatement, bool* lhsUniqueDef)
 {
   if (RAJA_Checker::enable_debug)  // ofile is used for diffing,   cout is for checking traces
-    cout<<"\t checking isNodalAccumulationStmt for stmt at line:"<<s->get_file_info()->get_line()<<endl;
+    cout<<"\t Checking isNodalAccumulationStmt() for stmt at line:"<<s->get_file_info()->get_line()<<endl;
 
   ROSE_ASSERT (lvar != NULL);
   if (s==NULL) return false;
@@ -464,55 +1139,199 @@ bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
   if (es==NULL) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not SgExprStatement"<<endl;
+      cout<<"\t\t Failed: is SgExprStatement, returning false"<<endl;
     return false;
   }
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t Met condition: Is SgExprStatement, continue next check"<<endl;
+  }  
 
   SgExpression* exp = es->get_expression();
   if (exp==NULL)
   {
     if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not SgExpression"<<endl;
+      cout<<"\t\t Failed: is SgExpression, return false"<<endl;
     return false;
   }
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t Met condition: is SgExpression, continue next check "<<endl;
+  }  
 
-  if (! isNodalAccumulationOp (exp) )
+  bool isAssign = false; // is direct assignment statement or not: differentiate MIN/MAX pattern
+  if (! isNodalAccumulationOp (exp, isAssign) )
   {  
     if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not NodalAccumulationOp"<<endl;
+      cout<<"\t\t Failed  isNodalAccumulationOp, returning false"<<endl;
     return false;
   }
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t Met condition: isNodalAccumulationOp, continue next check "<<endl;
+  }  
 
   SgBinaryOp* bop = isSgBinaryOp (exp);
   ROSE_ASSERT (bop != NULL);
 
+  // check properties of lhs = ..  ----------------------------
   // lhs is x[i]
-  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
+  SgVarRefExp* varRef=NULL; 
+  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar, &varRef))
   {
     if (RAJA_Checker::enable_debug)
-     cout<<"\t\t not DoubleArrayAccess like array[index] for lhs"<<endl;
+      cout<<"\t\t Failed: is DoubleArrayAccess like array[index] for lhs, returning false"<<endl;
     return false;
+  }
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t Met condition: lhs has a form of array[index], continue next check "<<endl;
+  }  
+
+  // check lhs should be declared within the enclosing function's body
+  //
+  ROSE_ASSERT (varRef!=NULL); 
+  SgVariableSymbol* sym= varRef->get_symbol();
+  ROSE_ASSERT (sym !=NULL); 
+  SgInitializedName* iname= sym->get_declaration();
+  ROSE_ASSERT (iname!=NULL); 
+  if (isSgFunctionParameterList(iname->get_parent()))
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t Failed: declared within the enclsoing function's body: variable is a function parameter, returning false"<<endl;
+    return false;
+  }
+  else
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t Met condition: lhs is declared within the enclosing function's body, continue next check"<<endl;
+  }  
+
+  // lhs should be initialized in advance using a form of  lhs = base+offset; 
+
+  // for variables captured within a labmda expression,a new variable is created.
+  // We have to find the original variable SgInitializedName. 
+  SgLambdaExp* le = NULL; 
+  le = getEnclosingNode<SgLambdaExp> (s);
+  if (le)
+  {
+    SgStatement* call_stmt = getEnclosingStatement (le);
+    SgVariableSymbol* orig_sym =  lookupVariableSymbolInParentScopes (iname->get_name(), call_stmt->get_scope());
+    ROSE_ASSERT (orig_sym);
+    iname = orig_sym->get_declaration();
   }
 
-  // rhs is a scalar type
-  SgType* rhs_type = bop->get_rhs_operand()->get_type();
-  rhs_type = rhs_type->stripType(SgType::STRIP_REFERENCE_TYPE);
-  if (!SageInterface::isScalarType (rhs_type)) 
+  // Check the patter of initialized once with base+offset, like: xa1 = base +offset.
+  // We use two methods together: 
+  //      1 . structural analysis: initializedWithBasePlusOffset ()
+  //      2.  we then further use data flow analysis to tighten the screw for for-loop: only initialized once
+  // TODO: only use one of initializedWithBasePlusOffset () and initializedOnceWithBasePlusOffset()
+  // old structure based checking, not accurate. But handles both for-loop and lambda exps.
+  if (initializedWithBasePlusOffset (iname, loopStatement) )
   {
+    *lhsInitPatternMatch = true;
     if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not scalar type for rhs, but "<< rhs_type->class_name()<<endl;
-    return false;
+      cout<<"\t\t Met condition: initialized-with-base+offset using structural analysis , continue next check"<<endl;
   }
-  // skip const or typedef chain
-  rhs_type =rhs_type->stripTypedefsAndModifiers();
+  else
+  {
+    *lhsInitPatternMatch = false;
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t Failed: not Found initialized-with-base+offset using structural analysis, continue next check using DFA analysis"<<endl;
+  }
 
-  // rhs is a double type
-  if (!isSgTypeDouble(rhs_type)) 
-  {
-    if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not double type for rhs"<<endl;
-    return false;
+
+  // What will happen if no uniqueness check at all ?? 
+#if 0
+  // new version using def-use analysis , tighten the screw further for supported for-loops 
+  // TODO: DFA may report wrong reaching definition number for nodalAccPattern5-multipleAssign.cpp
+  if ( loopStatement) //TODO handle lambda body!!
+  { // obtain two conditions: 
+    // Condition 1. has at least one reaching def as base + offset
+    // condition 2: all reaching definitions are unique
+    if( initializedOnceWithBasePlusOffset (iname, loopStatement, lhsUniqueDef))
+    {
+      *lhsInitPatternMatch = true; 
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t Met condition: initialized once with base+offset according to def-use analysis, continue next check "<<endl;
+    }
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t Failed: Initialized once with base+offset according to def-use analysis or analysis fails "<<endl;
+    }
   }
+  else // for lambda function , we assuming conditions are always met for now TODO, def-use analysis for lambda??
+  {
+    *lhsUniqueDef= true; 
+  }
+#else
+   *lhsUniqueDef= true;
+
+#endif
+
+  if (RAJA_Checker::enable_debug)
+    cout<<"\t\t Failed: initialized once with base+offset according to both structual or def-use analysis"<<endl;
+
+
+  // check properties of rhs ------------------------   
+  if (isAssign) // match rhs pattern for MIN/MAX
+  {
+    SgExpression* rhs = bop->get_rhs_operand(); 
+    if (!isSgConditionalExp(rhs))
+    { // TODO : more restrictive pattern match here: 
+      // xm[i] = xm[i]<op2 ? xm[i]: op2
+      // xm[i] = xm[i]>op2 ? xm[i]: op2
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t not conditional operation for rhs within lhs = rhs, but "<< rhs->class_name() << "  returning false.." <<endl;
+      return false;
+    }  
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t Met condition: rhs has a pattern of MIN/MAX, continue next check"<<endl;
+    }
+  }
+  else // match rhs pattern for += rhs, -= rhs, etc. 
+  {
+    // rhs is a scalar type
+    SgType* rhs_type = bop->get_rhs_operand()->get_type();
+    rhs_type = rhs_type->stripType(SgType::STRIP_REFERENCE_TYPE);
+    if (!SageInterface::isScalarType (rhs_type)) 
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t Failed : scalar type for rhs, but "<< rhs_type->class_name()<< "  returning false.." << endl;
+      return false;
+    }
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t Met condition: rhs has a scalar type, continue check"<<endl;
+    }
+
+    // skip const or typedef chain
+    rhs_type =rhs_type->stripTypedefsAndModifiers();
+
+    // rhs is a double, float or integer type, both integer and float arrays are allowed
+    if (!isSgTypeDouble(rhs_type) && !isSgTypeFloat(rhs_type) && !isSgTypeInt(rhs_type)) 
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t Failed: not double, float or integer type for rhs, but a type of "<< rhs_type->class_name() <<endl;
+      return false;
+    }
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout<<"\t\t Met condition: rhs type is double, float or int, continue check"<<endl;
+    }
+  }
+
+  if (RAJA_Checker::enable_debug)
+      cout<< "\t\t Met all conditions for isNodalAccumulationStmt(), returning true ..."<<endl;
   // meet all conditions above
   return true;
 }
@@ -546,39 +1365,134 @@ SgStatement* getNextNonNullStatement(SgStatement* s)
   return r; 
 }
 // With a known loop variable lvar, check if a basic block contains the 4-statement pattern
-bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt)
+// This is the finest level of checking. We call it atomic. 
+bool RAJA_Checker::isNodalAccumulationBodyAtomic(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt, SgStatement* loopStmt)
 {
   ROSE_ASSERT (bb != NULL);
   ROSE_ASSERT (lvar != NULL);
   if (enable_debug)
-    cout<<"\tEntering isNodalAccumulationBody() for basic block at line:"<<bb->get_file_info()->get_line()<<endl;
+    cout<<"\tEntering isNodalAccumulationBodyAtomic() for basic block at line:"<<bb->get_file_info()->get_line()<<endl;
   //if the body contains at least 4 nodal accumulation statement in a row, then it is a matched loop
   // Find all expression statements. if there is one Nodal Accumulation Statement (NAS) , and it is followed by 3 other NAS.
   // then there is a match. 
   Rose_STL_Container<SgNode*> stmtList = NodeQuery::querySubTree(bb, V_SgExprStatement);
   for (Rose_STL_Container<SgNode*>::iterator iter = stmtList.begin(); iter != stmtList.end(); iter++)
   {
+    bool init1=false, init2=false, init3=false, init4=false;
+    bool unique1=false, unique2=false, unique3=false, unique4=false;
     SgExprStatement* s = isSgExprStatement(*iter);
-    if (isNodalAccumulationStmt (s, lvar))
+    if (isNodalAccumulationStmt (s, lvar, &init1, loopStmt, &unique1))
     {
       SgStatement* s2, *s3, *s4; 
       s2= getNextNonNullStatement(s);
-      if (s2!=NULL && isNodalAccumulationStmt (s2, lvar))
+      if (enable_debug)
+        cout<<"\t\t "<<toString(s)<<" base + offset "<< init1 << " unique reaching def "<< unique1<<endl;
+      if (s2!=NULL && isNodalAccumulationStmt (s2, lvar, &init2, loopStmt, &unique2))
       {
+        if (enable_debug)
+          cout<<"\t\t "<<toString(s2)<<" base + offset "<< init2 << " unique reaching def "<< unique2<<endl;
         s3 = getNextNonNullStatement (s2);
-        if (s3!=NULL && isNodalAccumulationStmt (s3, lvar))
+        if (s3!=NULL && isNodalAccumulationStmt (s3, lvar, &init3, loopStmt, &unique3))
         {
-           s4 = getNextNonNullStatement (s3);
-           if (s4 != NULL && isNodalAccumulationStmt (s4, lvar))
-           { 
-             fstmt = s; 
-             return true;
-           } // end s4
+          if (enable_debug)
+            cout<<"\t\t "<<toString(s3)<<" base + offset "<< init3 << " unique reaching def "<< unique3<<endl;
+          s4 = getNextNonNullStatement (s3);
+          if (s4 != NULL && isNodalAccumulationStmt (s4, lvar, &init4, loopStmt, &unique4))
+          { 
+            if (enable_debug)
+              cout<<"\t\t "<<toString(s4)<<" base + offset "<< init4 << " unique reaching def "<< unique4<<endl;
+            fstmt = s; 
+            // why or here?  should be all matching?
+            // already 4 levels of if conditions, already && of 4 statements with accumulation pattern
+            // at least one variable is initialized with base+ offset
+            // Add another condition: all variables are assigned/initialized once before enter this point
+            if ((init1 || init2 || init3 ||init4)
+                && (unique1 && unique2 && unique3 && unique4))
+              return true;
+            else
+            {
+              if (enable_debug)
+              {
+                cout<<"\t\t Failed to matched 4 accumulation statement pattern, but none of the accumulation statements have lhs initialized with base + offset "<<endl;
+                cout << "\t\t sub cond1: (init1|| init2 || init3 ||init4): " << (init1 || init2 || init3 ||init4) << " init1 ="<< init1 <<" init2 ="<< init2 << " init3 ="<< init3 << " init4 ="<< init4   <<endl;
+                cout << "\t\t sub cond2: (unique1 && unique2 && unique3 && unique4): " << (unique1 && unique2 && unique3 && unique4) << " unique1="<< unique1 <<" unique2 ="<< unique2 << " unique3 ="<< unique3 << " unique4 ="<< unique4 <<endl;
+              }
+
+            }
+          } // end s4
         } //end s3
       } // end s2
     } // end s1 
   } // end for loop  
-  
+
+  if (enable_debug)
+    cout<<"\t\t Failed isNodalAccumulationBodyAtomic () return false.. "<<endl;
+  return false;
+}
+
+// With a known loop variable lvar, check if a basic block contains the 4-statement pattern
+// We have to find all eligible basic blocks within this bb (self included). 
+// The reason is that the pattern may be buried inside if-stmt's true of false bodies.
+/*
+The algorithm : iterate over for-loop's body: start with for_loop->get_loop_body()
+* or in the case of RAJA function call: body of lambda function expression.
+
+for all statement in the iterator
+  if is another for loop, skip its entire subtree 
+  if while loop, skip its entire subtree
+
+ if (SgBasic block) // find all basic blocks, do the match
+  {
+    call the atomic check for the found BB  
+    if found , match , if not?
+    iterator ++;  
+   }
+ */
+bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt, SgStatement* loopStmt)
+{
+  if (enable_debug)
+    cout<<"\t\t Entering isNodalAccumulationBody ()..."<<endl;
+
+  RoseAst ast(bb); 
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgLocatedNode* lnode = isSgLocatedNode(*i); 
+    if (lnode == NULL) continue; 
+#if 0
+    // skip things in system header
+    if (SageInterface::insideSystemHeader (lnode)) 
+    { 
+      i.skipChildrenOnForward(); 
+      continue; 
+    }
+#endif 
+    SgForStatement* forstmt= isSgForStatement(*i);
+    // TODO: do users want to skip while or do-while loops?
+    //  We should not see nested raja function calls. Nested raja patterns have their own versions. 
+    if (forstmt)
+    { 
+      i.skipChildrenOnForward();  
+      if (enable_debug)
+        cout<<"\t\t\t Skipping a nested loop at line "<<forstmt->get_file_info()->get_line() <<endl;
+    }
+    else if (SgBasicBlock* cur_bb = isSgBasicBlock(*i))
+    {
+      SgExprStatement* firststmt= NULL; 
+      if (enable_debug)
+        cout<<"\t\t\t Search a basic block at line..."<<cur_bb->get_file_info()->get_line() <<endl;
+      if (isNodalAccumulationBodyAtomic (cur_bb, lvar, firststmt, loopStmt) )
+      {
+        fstmt = firststmt; 
+        if (enable_debug)
+          cout<<"\t\t\t Met condition: isNodalAccumulationBodyAtomic () for a basic block at line..."<<cur_bb->get_file_info()->get_line() <<endl;
+        return true; 
+      }
+      else
+      {
+        if (enable_debug)
+          cout<<"\t\t\t Failed condition: isNodalAccumulationBodyAtomic () for a basic block at line..."<<cur_bb->get_file_info()->get_line() <<endl;
+      }
+    }
+  }
   return false;
 }
 
@@ -604,7 +1518,7 @@ bool RAJA_Checker::hasNodalAccumulationBody( SgLambdaExp* exp, SgExprStatement*&
    SgBasicBlock* bb = def->get_body();
    if (bb ==NULL) return false;
 
-  return isNodalAccumulationBody (bb, lvar, fstmt);
+  return isNodalAccumulationBody (bb, lvar, fstmt, NULL); // TODO: handle lambda call statement 
   
 }
 bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt)
@@ -613,7 +1527,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (body == NULL) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<< "NULL body, return false;"<<endl;
+      cout<< "\t Failed condition: NULL body, return false;"<<endl;
     return false;
   }
 
@@ -621,7 +1535,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (bb == NULL) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<< "NULL Basic Block as body, return false;"<<endl;
+      cout<< "\t Failed condition: NULL Basic Block as body, return false;"<<endl;
     return false;
   }
 
@@ -640,14 +1554,14 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
     }
 #endif    
     if (RAJA_Checker::enable_debug)
-    {
-
-      cout<<"Warning: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
-    }
+      cout<<"Failed condition: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
     return false;
   }
 
-  return isNodalAccumulationBody (bb, lvar, fstmt);
+  if (RAJA_Checker::enable_debug)
+    cout<<"\t Met conditions: for loop body, basic block body, valid loop index variable for loop:"<<forloop->get_file_info()->displayString()<<endl;
+
+  return isNodalAccumulationBody (bb, lvar, fstmt, forloop);
 }
 /*
 RAJA::forall< class RAJA::seq_exec  > (0,n, [=] (int i)
@@ -673,10 +1587,31 @@ bool RAJA_Checker::isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
   // this is the raja template function declaration!!
   SgFunctionDeclaration* raja_func = NULL;
   SgExprStatement* call_stmt = NULL;
-  if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func))
+  vector<string> wrappers; 
+  wrappers.push_back("::for_all <.*");
+  // use regular expression to describe all patterns
+  wrappers.push_back("::for_all_.* <.*");
+/*
+  wrappers.push_back("::for_all_zones <");
+  wrappers.push_back("::for_all_region_zones <");
+  wrappers.push_back("::for_all_zones_tiled <");
+  wrappers.push_back("::for_all_mixed_slots <");
+  wrappers.push_back("::for_all_mixed_zones <");
+*/
+  if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func)  && 
+      !isWrapperTemplateFunctionCallParameter (exp, wrappers,  call_stmt, raja_func))
+  {
+    if (RAJA_Checker::enable_debug)
+       cout<<"\tLambda exp is not a raja template function call parameter "<<endl;   
     return false;
+  }
    
-   if (raja_func ==NULL) return false;
+   if (raja_func ==NULL) 
+   {
+     if (RAJA_Checker::enable_debug)
+       cout<<"\t raja template function declaration is NULL"<<endl;   
+     return false;
+   }
 
   return hasNodalAccumulationBody (exp, fstmt);
 }
@@ -801,8 +1736,8 @@ void RoseVisitor::visit ( SgNode* n)
         if ( isNodalAccumulationLoop (forloop, fstmt))
         {
             ostringstream oss;
-            oss<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
-            oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+            oss<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line();
+            oss<<" 1st acc. stmt at line:"<< fstmt->get_file_info()->get_line()<<endl;
 
             SgSourceFile* file = getEnclosingSourceFile(forloop);
             string s(":");
@@ -810,8 +1745,25 @@ void RoseVisitor::visit ( SgNode* n)
             Rose::KeepGoing::File2StringMap[file]+= entry;
           if (RAJA_Checker::enable_debug)
           {
-            ofile<<oss.str();
-            cout<<oss.str(); // also output to std out
+            ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+            cout<<forloop->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+
+          }
+        }
+        else // we also report negative findings for loops, to calculate true/false negatives
+        {
+          ostringstream oss;
+          oss<<"Not a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+
+          SgSourceFile* file = getEnclosingSourceFile(forloop);
+          string s(":");
+          string entry= forloop->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries
+          Rose::KeepGoing::File2StringMap[file]+= entry;
+          if (RAJA_Checker::enable_debug)
+          {
+            ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+            cout<<forloop->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+
           }
         }
       }
@@ -833,8 +1785,8 @@ void RoseVisitor::visit ( SgNode* n)
           if ( isEmbeddedNodalAccumulationLambda(le, fstmt) || isIndirectNodalAccumulationLambda (le, fstmt, callstmt) )
           {
               ostringstream oss; 
-              oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
-              oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+              oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line();
+              oss<<" 1st acc. stmt at line:"<< fstmt->get_file_info()->get_line()<<endl;
               if (callstmt)
                 oss<<"\t This labmda function is used as a function parameter in a RAJA function is at line:"<< callstmt->get_file_info()->get_line()<<endl;
 
@@ -844,12 +1796,25 @@ void RoseVisitor::visit ( SgNode* n)
               Rose::KeepGoing::File2StringMap[file]+= entry;
             if (RAJA_Checker::enable_debug)
             {
-              ofile<<oss.str();
-              cout<<oss.str(); // also output to std out
+              ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+              cout<<le->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+            }
+          }
+          else // collect negative cases, calculating true/false negatives
+          {
+            ostringstream oss; 
+            oss<<"Not a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+            SgSourceFile* file = getEnclosingSourceFile(le);
+            string s(":");
+            string entry= le->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries.
+            Rose::KeepGoing::File2StringMap[file]+= entry;
+            if (RAJA_Checker::enable_debug)
+            {
+              ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+              cout<<le->get_file_info()->get_filename()+s+oss.str(); // also output to std out
             }
           }
         }
-
 
 //----------- Check if the lambda expression is used as a parameter of RAJA function call
         SgFunctionDeclaration* raja_func = NULL; 
@@ -911,9 +1876,9 @@ main ( int argc, char* argv[])
   if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
   {                                                                                                                   
     std::cout                                                                                                         
-      << "[WARN] "                                                                                                    
-      << "Configured to keep going after catching a "                                                                 
-      << "signal in AutoPar"                                                                                          
+      << "[WARN] "
+      << "Configured to keep going after catching a "
+      << "signal in rajaChecker"
       << std::endl;                                                                                                   
     Rose::KeepGoing::setMidendErrorCode (project, 100);                                                               
     goto label_end;                                                                                                   

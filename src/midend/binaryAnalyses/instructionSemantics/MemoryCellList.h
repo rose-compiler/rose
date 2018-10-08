@@ -49,7 +49,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryCellState);
         s & BOOST_SERIALIZATION_NVP(cells);
         s & BOOST_SERIALIZATION_NVP(occlusionsErased_);
@@ -147,6 +147,9 @@ public:
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+
     /** Write a value to memory.
      *
      *  See BaseSemantics::MemoryState() for requirements.  This implementation creates a new memory cell and pushes it onto
@@ -161,6 +164,24 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
 public:
+    /** Merge two states without aliasing.
+     *
+     *  The @p other state is merged into this state without considering any aliasing. Returns true if this state changed,
+     *  false otherwise. */
+    bool mergeNoAliasing(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
+
+    /** Merge two states with aliasing.
+     *
+     *  The @p other state is merged into this state while considering any aliasing. Returns true if this state changed,
+     *  false otherwise. */
+    bool mergeWithAliasing(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps);
+
+    /** Predicate to determine whether all bytes are present.
+     *
+     *  Returns true if bytes at the specified address and the following consecutive addresses are all present in this
+     *  memory state. */
+    virtual bool isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps, RiscOperators *valOps) const;
+
     /** Property: erase occluded cells.
      *
      *  If this property is true, then writing a new cell to memory will also erase all older cells that must alias the new

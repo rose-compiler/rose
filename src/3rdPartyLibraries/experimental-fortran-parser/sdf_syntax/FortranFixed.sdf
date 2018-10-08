@@ -511,10 +511,6 @@ sorts
 
   LabelList LockStatList SyncStatList
 
-%% Deleted features
-
-  PauseStmt
-
 %% Identifier aliases
 
   AssociateConstructName AssociateName BlockConstructName
@@ -2551,11 +2547,6 @@ context-free syntax
   Variable                                              -> LockVariable         {cons("LockVariable")}
 
 
-%% Deleted Statements
-%%
-  Label? 'PAUSE' StopCode?                          EOS -> StopStmt             {cons("PauseStmt")}
-
-
 %%%%%%%%%%
 %% Fortran ISO/IEC 1539:1991 section R9xx Input/Output Statements
 %%%%%%%%%%
@@ -3116,8 +3107,6 @@ context-free syntax
   LabelDoStmt                            -> ActionStmt  {cons("ActionStmt")}
   NonlabelDoStmt                         -> ActionStmt  {cons("ActionStmt")}
   EndDoStmt                              -> ActionStmt  {cons("ActionStmt")}
-%% Deleted features
-  PauseStmt                              -> PauseStmt   {cons("ActionStmt")}
 
 %%215
   Name                                 -> Keyword     {cons("Keyword")}

@@ -27,12 +27,9 @@ string PState::toString() const {
   for(PState::const_iterator j=begin();j!=end();++j) {
     if(j!=begin()) ss<<",";
     ss<<"(";
+    ss<<"@";
     ss <<(*j).first.toString();
-#if 0
-    ss<<"->";
-#else
-    ss<<",";
-#endif
+    ss<<":";
     ss<<varValueToString((*j).first);
     ss<<")";
   }
@@ -45,16 +42,14 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   //ss << "PState=";
   ss<< "{";
   for(PState::const_iterator j=begin();j!=end();++j) {
-    if(j!=begin()) ss<<", ";
-    ss<<"(";
+    if(j!=begin()) 
+      ss<<", ";
+    //ss<<"(";
+    ss<<"@";
     ss <<((*j).first).toString(variableIdMapping);
-#if 0
-    ss<<"->";
-#else
-    ss<<",";
-#endif
+    ss<<":";
     ss<<(((*j).second).toString(variableIdMapping)); // ss<<varValueToString((*j).first);
-    ss<<")";
+    //ss<<")";
   }
   ss<<"}";
   return ss.str();

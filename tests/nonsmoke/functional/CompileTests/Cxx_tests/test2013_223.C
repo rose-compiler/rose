@@ -5,6 +5,7 @@ class bar
    {
      void foo() 
         {
+       // The issue here is that that has not yet been an instnatiation.
           ::foo<int>();
         }
    };

@@ -97,6 +97,7 @@ elif [ "$RMC_HASH" != "" -a "$SPOCK_VERSION" != "" ]; then
     append_rmc_record wt         WT_VERSION        RMC_WT
     append_rmc_record yaml       YAMLCPP_VERSION   RMC_YAML
     append_rmc_record yices      YICES_VERSION     RMC_YICES
+    append_rmc_record z3         Z3_VERSION        RMC_Z3
 
     case "$CXX_VENDOR" in
 	gnu) cxx_vendor=gcc ;;

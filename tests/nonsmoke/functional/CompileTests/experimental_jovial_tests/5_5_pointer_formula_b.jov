@@ -1,0 +1,7 @@
+START
+PROGRAM testPointerFormula ;
+BEGIN
+  ivar = NULL;
+  ivar = (NULL);
+END
+TERM

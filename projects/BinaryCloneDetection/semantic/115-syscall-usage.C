@@ -16,10 +16,10 @@
 #include "AsmUnparser.h"
 #include "BinaryLoader.h"
 #include "PartialSymbolicSemantics.h"
-#include "SMTSolver.h"
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinaryDominance.h"
+#include "BinarySmtSolver.h"
 
 static SqlDatabase::TransactionPtr transaction;
 
