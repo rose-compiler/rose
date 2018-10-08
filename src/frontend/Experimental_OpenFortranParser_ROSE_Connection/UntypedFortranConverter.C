@@ -221,7 +221,7 @@ UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDat
       SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(blockDataDeclaration);
       currentScopeOfFunctionDeclaration->insert_symbol(blockDataDeclaration->get_name(), functionSymbol);
 
-      SgBasicBlock*         blockDataBody       = new SgBasicBlock();
+      SgBasicBlock*         blockDataBody       = SageBuilder::buildBasicBlock();
       SgFunctionDefinition* blockDataDefinition = new SgFunctionDefinition(blockDataDeclaration, blockDataBody);
 
       setSourcePositionFrom(blockDataDefinition, ut_block_data);
@@ -230,10 +230,12 @@ UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDat
       ROSE_ASSERT(blockDataDeclaration->get_definition() != NULL);
 
    // Specify case insensitivity for Fortran.
-      blockDataBody->setCaseInsensitive(true);
       blockDataDefinition->setCaseInsensitive(true);
       blockDataDeclaration->set_scope (currentScopeOfFunctionDeclaration);
       blockDataDeclaration->set_parent(currentScopeOfFunctionDeclaration);
+
+      SageBuilder::pushScopeStack(blockDataDefinition);
+      SageBuilder::pushScopeStack(blockDataBody);
 
    // Convert the labels for the program begin and end statements
       UntypedFortranConverter::convertLabel(ut_block_data,                      blockDataDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ blockDataDefinition);

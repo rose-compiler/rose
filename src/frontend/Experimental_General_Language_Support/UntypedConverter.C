@@ -827,6 +827,9 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
 SgProcedureHeaderStatement*
 UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
    {
+   // This is implemented in UntypedFortranConverter subclass.  Is there any need for it here?
+      ROSE_ASSERT(0);
+
    // The block data statement is implemented to build a function (which initializes data)
    // Note that it can be declared with the "EXTERNAL" statement and as such it works much
    // the same as any other procedure.
@@ -872,8 +875,11 @@ UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclar
       SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(blockDataDeclaration);
       currentScopeOfFunctionDeclaration->insert_symbol(blockDataDeclaration->get_name(), functionSymbol);
 
-      SgBasicBlock*         blockDataBody       = new SgBasicBlock();
+      SgBasicBlock*         blockDataBody       = SageBuilder::buildBasicBlock();
       SgFunctionDefinition* blockDataDefinition = new SgFunctionDefinition(blockDataDeclaration, blockDataBody);
+
+      ROSE_ASSERT(blockDataBody);
+      ROSE_ASSERT(blockDataDefinition);
 
       setSourcePositionFrom(blockDataDefinition, ut_block_data);
       setSourcePositionFrom(blockDataBody,       ut_block_data->get_declaration_list());
@@ -881,10 +887,12 @@ UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclar
       ROSE_ASSERT(blockDataDeclaration->get_definition() != NULL);
 
    // May be case insensitive (Fortran)
-      blockDataBody->setCaseInsensitive(pCaseInsensitive);
       blockDataDefinition->setCaseInsensitive(pCaseInsensitive);
       blockDataDeclaration->set_scope (currentScopeOfFunctionDeclaration);
       blockDataDeclaration->set_parent(currentScopeOfFunctionDeclaration);
+
+      SageBuilder::pushScopeStack(blockDataDefinition);
+      SageBuilder::pushScopeStack(blockDataBody);
 
    // Convert the labels for the program begin and end statements
       convertLabel(ut_block_data,                      blockDataDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ blockDataDefinition);
@@ -912,6 +920,7 @@ SgBasicBlock*
 UntypedConverter::convertSgUntypedBlockStatement (SgUntypedBlockStatement* ut_block_stmt, SgScopeStatement* scope)
 {
    SgBasicBlock* sg_basic_block = SageBuilder::buildBasicBlock();
+   ROSE_ASSERT(sg_basic_block);
 
 #if 0
    cout << "--- UntypedConverter:: SgBasicBlock: " << sg_basic_block << endl;
@@ -920,6 +929,10 @@ UntypedConverter::convertSgUntypedBlockStatement (SgUntypedBlockStatement* ut_bl
    // I think this is the containing scope based on the parent.
    //   cout << "--- UntypedConverter:: scope  is : " << sg_basic_block->get_scope() << endl;
 #endif
+
+// Who sets the parent of this?
+// This definitely needs more work.  Currently hacked to work with case/switch statements I believe
+   SageBuilder::pushScopeStack(sg_basic_block);
 
    return sg_basic_block;
 }
@@ -2643,6 +2656,9 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
      procedureDefinition->setCaseInsensitive(pCaseInsensitive);
      procedureDeclaration->set_scope (currentScopeOfFunctionDeclaration);
      procedureDeclaration->set_parent(currentScopeOfFunctionDeclaration);
+
+     SageBuilder::pushScopeStack(procedureDefinition);
+     SageBuilder::pushScopeStack(procedureBody);
 
 #if TODO_TODO
   // Now push the function definition onto the astScopeStack (so that the function parameters will be build in the correct scope)
