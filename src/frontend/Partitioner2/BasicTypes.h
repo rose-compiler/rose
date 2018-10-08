@@ -326,6 +326,7 @@ struct PartitionerSettings {
     bool doingPostCallingConvention;                /**< Run calling-convention analysis if doingPostAnalysis is set? */
     bool doingPostFunctionNoop;                     /**< Find and name functions that are effectively no-ops. */
     FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
+    size_t functionReturnAnalysisMaxSorts;          /**< Number of times functions are sorted before using unsorted lists. */
     bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
     bool findingCodeFunctionPointers;               /**< Look for function pointers in instructions. */
     bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
@@ -369,6 +370,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(doingPostCallingConvention);
         s & BOOST_SERIALIZATION_NVP(doingPostFunctionNoop);
         s & BOOST_SERIALIZATION_NVP(functionReturnAnalysis);
+        if (version >= 3)
+            s & BOOST_SERIALIZATION_NVP(functionReturnAnalysisMaxSorts);
         s & BOOST_SERIALIZATION_NVP(findingDataFunctionPointers);
         s & BOOST_SERIALIZATION_NVP(findingCodeFunctionPointers);
         s & BOOST_SERIALIZATION_NVP(findingThunks);
@@ -397,9 +400,10 @@ public:
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(10), findingIntraFunctionData(true),
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
-          functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingCodeFunctionPointers(false),
-          findingThunks(true), splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true),
-          namingStrings(true), namingSyscalls(true), demangleNames(true) {}
+          functionReturnAnalysis(MAYRETURN_DEFAULT_YES), functionReturnAnalysisMaxSorts(50), findingDataFunctionPointers(false),
+          findingCodeFunctionPointers(false), findingThunks(true), splittingThunks(false),
+          semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true), namingSyscalls(true),
+          demangleNames(true) {}
 };
 
 // BOOST_CLASS_VERSION(PartitionerSettings, 1); -- see end of file (cannot be in a namespace)
@@ -439,6 +443,6 @@ typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 2);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 3);
 
 #endif

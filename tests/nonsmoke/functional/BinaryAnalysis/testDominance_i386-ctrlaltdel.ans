@@ -41,11 +41,11 @@ CFG dominators for function 0x080484e8:
   function 0x080484e8 dominator of 0x08048518<5> is 0x080484e8<4>
   function 0x080484e8 dominator of 0x08048511<6> is 0x08048506<1>
 CFG dominators for function 0x0804851c:
-  function 0x0804851c dominator of 0x0804853e<0> is 0x08048534<2>
+  function 0x0804851c dominator of 0x0804852b<0> is 0x0804851c<1>
   function 0x0804851c dominator of 0x0804851c<1> is none
-  function 0x0804851c dominator of 0x08048534<2> is 0x0804852b<4>
+  function 0x0804851c dominator of 0x08048534<2> is 0x0804852b<0>
   function 0x0804851c dominator of 0x08048544<3> is 0x0804851c<1>
-  function 0x0804851c dominator of 0x0804852b<4> is 0x0804851c<1>
+  function 0x0804851c dominator of 0x0804853e<4> is 0x08048534<2>
 CFG dominators for function 0x08048550:
   function 0x08048550 dominator of 0x080485a0<0> is 0x08048598<19>
   function 0x08048550 dominator of 0x0804862e<1> is 0x08048598<19>
@@ -89,8 +89,8 @@ CFG dominators for function 0x080486f8:
   function 0x080486f8 dominator of 0x080486f8<1> is none
   function 0x080486f8 dominator of 0x08048718<2> is 0x08048713<3>
   function 0x080486f8 dominator of 0x08048713<3> is 0x080486f8<1>
-  function 0x080486f8 dominator of 0x08048711<4> is 0x0804870c<5>
-  function 0x080486f8 dominator of 0x0804870c<5> is 0x08048713<3>
+  function 0x080486f8 dominator of 0x0804870c<4> is 0x08048713<3>
+  function 0x080486f8 dominator of 0x08048711<5> is 0x0804870c<4>
 CFG dominators for function 0x0804871c:
   function 0x0804871c dominator of 0x08048732<0> is 0x0804871c<1>
   function 0x0804871c dominator of 0x0804871c<1> is none

@@ -157,10 +157,10 @@ private:
         // to the processedCallReturn list.  The entire pendingCallReturn list is processed before proceeding.
         //
         // If there is no more pendingCallReturn work to be done, then the processedCallReturn blocks are moved to the
-        // finalCallReturn list and finalCallReturn is sorted by descending call depth (i.e., leaf functions first). One
-        // block is moved from the finalCallReturn list to the pendingCallReturn list and this entire algorithm is repeated
-        // with the only difference being that the may-analysis will return an assuemd Boolean value if the analysis doesn't
-        // complete (i.e., it doesn't return an indeterminate value).
+        // finalCallReturn list and finalCallReturn is sorted by approximate CFG height (i.e., leafs first). The contents
+        // of the finalCallReturn list is then analyzed and the result (or the default may-return value for failed analyses)
+        // is used to decide whether a new CFG edge should be created, possibly adding new basic block addresses to the
+        // list of undiscovered blocks.
         //
         Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
         Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
@@ -168,11 +168,12 @@ private:
 
         Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
         Engine *engine_;                                                   // engine to which this callback belongs
+        size_t maxSorts_;                                                  // max sorts before using unsorted lists
     protected:
-        explicit BasicBlockWorkList(Engine *engine): engine_(engine) {}
+        BasicBlockWorkList(Engine *engine, size_t maxSorts): engine_(engine), maxSorts_(maxSorts) {}
     public:
         typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
-        static Ptr instance(Engine *engine) { return Ptr(new BasicBlockWorkList(engine)); }
+        static Ptr instance(Engine *engine, size_t maxSorts) { return Ptr(new BasicBlockWorkList(engine, maxSorts)); }
         virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
         virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
         Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
@@ -231,7 +232,8 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)),
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
     }
@@ -239,7 +241,8 @@ public:
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
         : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
-        basicBlockWorkList_(BasicBlockWorkList::instance(this)), progress_(Progress::instance()) {
+        basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+        progress_(Progress::instance()) {
         init();
     }
     
@@ -1294,6 +1297,22 @@ public:
      * @{ */
     FunctionReturnAnalysis functionReturnAnalysis() const /*final*/ { return settings_.partitioner.functionReturnAnalysis; }
     virtual void functionReturnAnalysis(FunctionReturnAnalysis x) { settings_.partitioner.functionReturnAnalysis = x; }
+    /** @} */
+
+    /** Property: Maximum number of function may-return sorting operations.
+     *
+     *  If function may-return analysis is being run, the functions are normally sorted according to their call depth (after
+     *  arbitrarily breaking cycles) and the analysis is run from the leaf functions to the higher functions in order to
+     *  minimize forward dependencies. However, the functions need to be resorted each time a new function is discovered and/or
+     *  when the global CFG is sufficiently modified. Therefore, the total cost of the sorting can be substantial for large
+     *  specimens. This property limits the total number of sorting operations and reverts to unsorted analysis once the limit
+     *  is reached. This allows smaller specimens to be handled as accurately as possible, but still allows large specimens to
+     *  be processed in a reasonable amount of time.  The limit is based on the number of sorting operations rather than the
+     *  specimen size.
+     *
+     * @{ */
+    size_t functionReturnAnalysisMaxSorts() const /*final*/ { return settings_.partitioner.functionReturnAnalysisMaxSorts; }
+    virtual void functionReturnAnalysisMaxSorts(size_t n) { settings_.partitioner.functionReturnAnalysisMaxSorts = n; }
     /** @} */
 
     /** Property: Whether to search for function calls between exiting functions.

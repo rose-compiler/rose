@@ -40,18 +40,18 @@ CFG dominators for function 0x004005b0:
   function 0x004005b0 dominator of 0x004005be<2> is 0x004005b0<1>
   function 0x004005b0 dominator of 0x004005d4<3> is 0x004005b0<1>
 CFG dominators for function 0x00400660:
-  function 0x00400660 dominator of 0x0040069b<0> is 0x00400697<4>
-  function 0x00400660 dominator of 0x004006a3<1> is 0x00400681<3>
-  function 0x00400660 dominator of 0x00400694<2> is 0x00400681<3>
+  function 0x00400660 dominator of 0x004006a3<0> is 0x00400681<3>
+  function 0x00400660 dominator of 0x00400694<1> is 0x00400681<3>
+  function 0x00400660 dominator of 0x0040069b<2> is 0x00400697<4>
   function 0x00400660 dominator of 0x00400681<3> is 0x00400660<5>
-  function 0x00400660 dominator of 0x00400697<4> is 0x00400694<2>
+  function 0x00400660 dominator of 0x00400697<4> is 0x00400694<1>
   function 0x00400660 dominator of 0x00400660<5> is none
 CFG dominators for function 0x00400700:
   function 0x00400700 dominator of 0x00400719<0> is none
-  function 0x00400700 dominator of 0x0040072f<1> is 0x00400729<2>
-  function 0x00400700 dominator of 0x00400729<2> is 0x00400700<5>
-  function 0x00400700 dominator of 0x00400726<3> is 0x00400720<4>
-  function 0x00400700 dominator of 0x00400720<4> is 0x00400729<2>
+  function 0x00400700 dominator of 0x00400729<1> is 0x00400700<5>
+  function 0x00400700 dominator of 0x00400726<2> is 0x00400720<4>
+  function 0x00400700 dominator of 0x0040072f<3> is 0x00400729<1>
+  function 0x00400700 dominator of 0x00400720<4> is 0x00400729<1>
   function 0x00400700 dominator of 0x00400700<5> is none
 CFG dominators for function 0x00400b3c:
   function 0x00400b3c dominator of 0x00400b3c<0> is none

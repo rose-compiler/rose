@@ -105,11 +105,11 @@ CFG dominators for function 0x08048c64:
   function 0x08048c64 dominator of 0x08048c78<5> is 0x08048c82<6>
   function 0x08048c64 dominator of 0x08048c82<6> is 0x08048c64<1>
 CFG dominators for function 0x08048c98:
-  function 0x08048c98 dominator of 0x08048cba<0> is 0x08048cb0<2>
+  function 0x08048c98 dominator of 0x08048ca7<0> is 0x08048c98<1>
   function 0x08048c98 dominator of 0x08048c98<1> is none
-  function 0x08048c98 dominator of 0x08048cb0<2> is 0x08048ca7<4>
+  function 0x08048c98 dominator of 0x08048cb0<2> is 0x08048ca7<0>
   function 0x08048c98 dominator of 0x08048cc0<3> is 0x08048c98<1>
-  function 0x08048c98 dominator of 0x08048ca7<4> is 0x08048c98<1>
+  function 0x08048c98 dominator of 0x08048cba<4> is 0x08048cb0<2>
 CFG dominators for function 0x08048cc4:
   function 0x08048cc4 dominator of 0x08048d38<0> is 0x08048d24<6>
   function 0x08048cc4 dominator of 0x08048cc4<1> is none
@@ -354,8 +354,8 @@ CFG dominators for function 0x080498b4:
   function 0x080498b4 dominator of 0x080498d4<1> is 0x080498cf<3>
   function 0x080498b4 dominator of 0x080498c5<2> is none
   function 0x080498b4 dominator of 0x080498cf<3> is 0x080498b4<0>
-  function 0x080498b4 dominator of 0x080498cd<4> is 0x080498c8<5>
-  function 0x080498b4 dominator of 0x080498c8<5> is 0x080498cf<3>
+  function 0x080498b4 dominator of 0x080498c8<4> is 0x080498cf<3>
+  function 0x080498b4 dominator of 0x080498cd<5> is 0x080498c8<4>
 CFG dominators for function 0x080498d8:
   function 0x080498d8 dominator of 0x080498d8<0> is none
   function 0x080498d8 dominator of 0x080498ee<1> is 0x080498d8<0>

@@ -62,9 +62,9 @@ CFG dominators for function 0x08048500:
   function 0x08048500 dominator of 0x08048511<0> is none
   function 0x08048500 dominator of 0x08048514<1> is 0x0804851b<3>
   function 0x08048500 dominator of 0x08048520<2> is 0x0804851b<3>
-  function 0x08048500 dominator of 0x0804851b<3> is 0x08048500<5>
-  function 0x08048500 dominator of 0x08048519<4> is 0x08048514<1>
-  function 0x08048500 dominator of 0x08048500<5> is none
+  function 0x08048500 dominator of 0x0804851b<3> is 0x08048500<4>
+  function 0x08048500 dominator of 0x08048500<4> is none
+  function 0x08048500 dominator of 0x08048519<5> is 0x08048514<1>
 CFG dominators for function 0x08048524:
   function 0x08048524 dominator of 0x0804853a<0> is 0x08048524<1>
   function 0x08048524 dominator of 0x08048524<1> is none

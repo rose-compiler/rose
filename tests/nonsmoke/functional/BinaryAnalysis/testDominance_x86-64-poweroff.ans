@@ -236,10 +236,10 @@ CFG dominators for function 0x00401dd0:
   function 0x00401dd0 dominator of 0x00401dd0<5> is none
 CFG dominators for function 0x00401e70:
   function 0x00401e70 dominator of 0x00401e89<0> is none
-  function 0x00401e70 dominator of 0x00401e99<1> is 0x00401e70<3>
-  function 0x00401e70 dominator of 0x00401e96<2> is 0x00401e90<4>
+  function 0x00401e70 dominator of 0x00401e96<1> is 0x00401e90<4>
+  function 0x00401e70 dominator of 0x00401e99<2> is 0x00401e70<3>
   function 0x00401e70 dominator of 0x00401e70<3> is none
-  function 0x00401e70 dominator of 0x00401e90<4> is 0x00401e99<1>
-  function 0x00401e70 dominator of 0x00401e9f<5> is 0x00401e99<1>
+  function 0x00401e70 dominator of 0x00401e90<4> is 0x00401e99<2>
+  function 0x00401e70 dominator of 0x00401e9f<5> is 0x00401e99<2>
 CFG dominators for function 0x00402a7c:
   function 0x00402a7c dominator of 0x00402a7c<0> is none
