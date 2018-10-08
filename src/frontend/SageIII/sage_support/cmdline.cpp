@@ -3840,6 +3840,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        set_no_optimize_flag_for_frontend(true);
      }
 
+  // TV (10/08/2018): ROSE-1392
+     set_unparse_edg_normalized_method_ROSE_1392(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","unparse_edg_normalized_method_ROSE_1392",true) == true ) {
+       set_unparse_edg_normalized_method_ROSE_1392(true);
+     }
+
   // DQ (5/24/2015): Record type of optimization (-Os, -O, -O1, -O2, -O3, -O4, -O5), note -O0 means no optimization.
   // This is required so that when optimization is specified we can turn on the __OPTIMIE__ macro.
   // See test2015_153.c.
