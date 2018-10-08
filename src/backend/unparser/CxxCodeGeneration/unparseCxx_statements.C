@@ -10762,34 +10762,6 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // Debugging code
        // functionDeclaration->get_file_info()->display("string_represents_function_body == true");
 
-       // DQ (9/10/2014): Test for test2014_187_work_around.C (as a test for the new template unparsing support).
-          string asociatedFilename = functionDeclaration->get_file_info()->get_filenameString();
-          string asociatedFilenameWithoutPath = StringUtility::stripPathFromFileName(asociatedFilename);
-       // printf ("asociatedFilenameWithoutPath = %s \n",asociatedFilenameWithoutPath.c_str());
-          if (asociatedFilenameWithoutPath == "test2014_187_work_around.C" || asociatedFilenameWithoutPath == "AlignedPool.cxx")
-             {
-               printf ("Detected target for work around: asociatedFilenameWithoutPath = %s \n",asociatedFilenameWithoutPath.c_str());
-             }
-            else
-             {
-#if 1
-            // DQ (9/13/2014): Turn this on until we have a few more bugs fixed.
-            // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
-#if 1
-               printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
-#endif
-#if 1
-               curprint (" /* (string_represents_function_body == true): Skip unparsing of partial template function declarations */ ");
-#endif
-               return;
-#endif
-             }
-#if 0
-       // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
-          printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
-          return;
-#endif
-
 #if 0
           curprint(" /* unparse the template header */ \n");
 #endif
