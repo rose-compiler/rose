@@ -5966,8 +5966,11 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // TV (04/11/2018): Generates GraphViz from EDG internal representation
      optionCount = sla(argv, "-rose:", "($)", "edg_il_to_graphviz",1);
 
-  // TV (04/11/2018): Do not pass -D__OPTIMIZE__ to EDG frontend (ROSE-1424)
+  // TV (10/04/2018): Do not pass -D__OPTIMIZE__ to EDG frontend (ROSE-1424)
      optionCount = sla(argv, "-rose:", "($)", "no_optimize_flag_for_frontend",1);
+
+  // TV (10/09/2018): ROSE-1392
+     optionCount = sla(argv, "-rose:", "($)", "unparse_edg_normalized_method_ROSE_1392",1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
