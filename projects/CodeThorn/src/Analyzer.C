@@ -203,6 +203,7 @@ bool Analyzer::isPrecise() {
   return true;
 }
 
+// only relevant for maximum values (independent of topify mode)
 bool Analyzer::isIncompleteSTGReady() {
   if(_maxTransitions==-1 && _maxIterations==-1 && _maxBytes==-1 && _maxSeconds==-1)
     return false;
@@ -431,8 +432,14 @@ bool Analyzer::isActiveGlobalTopify() {
 }
 
 void Analyzer::eventGlobalTopifyTurnedOn() {
-  logger[TRACE] << "mode global-topify activated."<<endl;
-  AbstractValueSet vset=variableValueMonitor.getVariables();
+  cout << "STATUS: mode global-topify activated:"<<endl
+       << "Transitions  : "<<(long int)transitionGraph.size()<<","<<_maxTransitionsForcedTop<<endl
+       << "Iterations   : "<<getIterations()<<":"<< _maxIterationsForcedTop<<endl
+       << "Memory(bytes): "<<getPhysicalMemorySize()<<":"<< _maxBytesForcedTop<<endl
+       << "Runtime(s)   : "<<analysisRunTimeInSeconds() <<":"<< _maxSecondsForcedTop<<endl
+       <<endl;
+
+AbstractValueSet vset=variableValueMonitor.getVariables();
   int n=0;
   int nt=0;
   for(AbstractValueSet::iterator i=vset.begin();i!=vset.end();++i) {

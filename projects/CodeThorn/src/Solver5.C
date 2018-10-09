@@ -65,7 +65,7 @@ void Solver5::run() {
           if (_analyzer->estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
             _analyzer->reduceStgToInOutAssertWorklistStates();
             estatesLastReduction = _analyzer->estateSet.size();
-            logger[TRACE]<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
+            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
           }
         }
       }
@@ -193,7 +193,7 @@ void Solver5::run() {
   }
   if(_analyzer->isIncompleteSTGReady()) {
     _analyzer->printStatusMessage(true);
-    logger[TRACE]<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    cout<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
     _analyzer->transitionGraph.setIsComplete(!isComplete);
   } else {
@@ -201,7 +201,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
+    cout<< "analysis finished (worklist is empty)."<<endl;
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }
