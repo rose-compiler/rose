@@ -12,6 +12,7 @@ my $nfail=0;
 
 sub checkdir {
   my($dir) = @_;
+  return if $dir =~ /\/CxxFrontend\/EDG\//;
   opendir DIR, $dir or return;
   my @entries = readdir DIR;
   close DIR;
