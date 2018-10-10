@@ -512,7 +512,7 @@ SgVariableSymbol* LookupVar( const std::string& name, SgScopeStatement* loc)
 
   SgClassDefinition *cdef = isSgClassDefinition(loc);
   if (cdef != 0) {
-     SgSymbol* r = cdef->lookup_symbol(start);
+     SgVariableSymbol* r = dynamic_cast<SgVariableSymbol*>(cdef->lookup_symbol(start));
      if (DebugSymbol()) {
            if (r == 0) 
               std:: cerr << "failed to find variable " << start;
@@ -540,9 +540,9 @@ SgVariableSymbol* LookupVar( const std::string& name, SgScopeStatement* loc)
      return 0;
   }
   else {
-     SgSymbol* f = 0;
+     SgVariableSymbol* f = 0;
      do {
-        f = loc->lookup_symbol(start);
+        f = dynamic_cast<SgVariableSymbol*>(loc->lookup_symbol(start));
         if (DebugSymbol()) {
            if (f == 0) 
               std:: cerr << "failed to find variable ";
