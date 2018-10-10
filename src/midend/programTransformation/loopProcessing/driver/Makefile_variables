@@ -22,7 +22,6 @@ mptlpDriver_includeHeaders=\
 	$(mptlpDriverPath)/LoopTransformInterface.h \
 	$(mptlpDriverPath)/FusionAnal.h \
 	$(mptlpDriverPath)/ParallelizeLoop.h \
-	$(mptlpDriverPath)/AutoTuningInterface.h \
 	$(mptlpDriverPath)/AutoTuningInterface.h
 
 mptlpDriver_extraDist=\
