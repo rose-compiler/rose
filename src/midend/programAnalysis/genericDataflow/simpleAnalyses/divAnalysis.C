@@ -660,7 +660,7 @@ void DivAnalysisTransfer::visit(SgMinusOp *sgn) {
 
 void DivAnalysisTransfer::transferMultiplicative(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat) {
   if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j * k\n";
-	  /*printf("arg1Lat = %s\n", arg1Lat->str().c_str());
+          /*printf("arg1Lat = %s\n", arg1Lat->str().c_str());
     printf("arg2Lat = %s\n", arg2Lat->str().c_str());*/
                                 
   // Both Bottom
