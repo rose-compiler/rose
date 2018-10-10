@@ -382,6 +382,23 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                        }
                   }
              }
+#if 1
+            // DQ (1/4/2014): commented out to test with using token based unparsing.
+
+            // DQ (12/22/2014): this is the most general way to supress the output of normalized template declaration member and non-member functions.
+            // The alternative approach is implemented in the unparseTemplateDeclarationStatment_support() function.
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
+               if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
+                  {
+                    SgSourceFile* sourcefile = info.get_current_source_file();
+                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) {
+#if 0
+                      printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration
+#endif
+                      statementInFile = false;
+                    }
+                  }
+#endif
 #if 0
           printf ("In statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
                (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", stmt, 
