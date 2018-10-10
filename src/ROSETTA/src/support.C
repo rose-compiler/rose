@@ -2532,6 +2532,11 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // TV (10/05/2018): create a double-link chain of instances of a template argument instead of sharing (ROSE-1431)
+     TemplateArgument.setDataPrototype("SgTemplateArgument*","previous_instance","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateArgument.setDataPrototype("SgTemplateArgument*","next_instance","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/10/2018): I think these IR nodes are not longer used.  If so then we could remove them.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.

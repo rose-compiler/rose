@@ -505,7 +505,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
      ROSE_ASSERT(currentScope      != NULL);
      ROSE_ASSERT(positionStatement != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
           declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
@@ -554,10 +554,11 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
                     ROSE_ASSERT(templateInstantiationDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                  // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
                     printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
 #endif
+
                  // Evaluate all template arguments.
                     evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
                     break;
@@ -567,7 +568,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
                     ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
 #endif
                  // Evaluate all template arguments.
@@ -578,7 +579,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
 #endif
                     ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
@@ -609,7 +610,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                   {
                     SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(declaration);
                     ROSE_ASSERT(templateInstantiationTypedefDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("$$$$$$$$$ --- templateInstantiationTypedefDeclaration = %p \n",templateInstantiationTypedefDeclaration);
 #endif
                  // Evaluate all template arguments.
@@ -620,7 +621,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
 
                default:
                   {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
                   }
@@ -3195,6 +3196,8 @@ NameQualificationTraversal::getDeclarationAssociatedWithType( SgType* type )
    }
 
 
+#define DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS 0
+
 // void evaluateNameQualificationForTemplateArgumentList (SgTemplateArgumentPtrList & templateArgumentList, SgScopeStatement* currentScope, SgStatement* positionStatement);
 void
 NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplateArgumentPtrList & templateArgumentList, SgScopeStatement* currentScope, SgStatement* positionStatement)
@@ -3207,7 +3210,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
   // Used for debugging...
      int counter = 0;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("\n\n*********************************************************************************************************************\n");
      printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      printf ("*********************************************************************************************************************\n");
@@ -3225,7 +3228,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           SgTemplateArgument* templateArgument = *i;
           ROSE_ASSERT(templateArgument != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
           printf ("*** Processing template argument #%d templateArgument = %p \n",counter,templateArgument);
        // SgName testNameInMap = templateArgument->get_qualified_name_prefix();
 #endif
@@ -3248,7 +3251,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                   {
                  // This could be a type that requires name qualification (reference to a declaration).
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                     printf ("templateArgument = %p contains type which is namedType = %p = %s \n",templateArgument,namedType,namedType->class_name().c_str());
 #endif
                     SgDeclarationStatement* templateArgumentTypeDeclaration = getDeclarationAssociatedWithType(type);
@@ -3260,7 +3263,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                       // (less nested types).
 
                       // DQ (5/15/2011): Added recursive handling of template arguments which can require name qualification.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                          printf ("xxxxxx --- Making a RECURSIVE call to nameQualificationDepth() on the template argument recursiveDepth = %d \n",recursiveDepth);
                       // DQ (9/24/2012): I think this is the way to make the recursive call to handle name qualification of template arguments in nexted template instantiations.
                          printf ("Need to call evaluateNameQualificationForTemplateArgumentList() on any possible template argument list for type in templateArgument = %p (namely namedType = %p = %s) \n",
@@ -3274,7 +3277,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                               ROSE_ASSERT(classDeclaration != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                               printf ("namedType is a SgClassType: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
 #endif
                               SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(classDeclaration);
@@ -3288,18 +3291,28 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                            else
                             {
                            // If not a class then (e.g. typedef) then it is relative to the typedef declaration, but we don't have to recursively evaluate the type.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                               printf ("This is not a SgClassType, so we don't have to recursively evaluate for template arguments. \n");
 #endif
                             }
 
                          int amountOfNameQualificationRequiredForTemplateArgument = nameQualificationDepth(namedType,currentScope,positionStatement);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         printf ("xxxxxx --- amountOfNameQualificationRequiredForTemplateArgument = %d (for type = %p = %s) (counter = %d recursiveDepth = %d) \n",
-                              amountOfNameQualificationRequiredForTemplateArgument,namedType,namedType->class_name().c_str(),counter,recursiveDepth);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
+                         printf ("xxxxxx --- amountOfNameQualificationRequiredForTemplateArgument = %d (for type = %p (%s) = %s) (counter = %d recursiveDepth = %d) \n",
+                              amountOfNameQualificationRequiredForTemplateArgument,namedType,namedType->class_name().c_str(), namedType->get_name().str(),counter,recursiveDepth);
                          printf ("xxxxxx --- Must call a function to set the name qualification data in the SgTemplateArgument = %p \n",templateArgument);
 #endif
+                      // TV (10/09/2018): FIXME ROSE-1431
+                         SgNamespaceDefinitionStatement * nsp_defn = isSgNamespaceDefinitionStatement(currentScope);
+                         if (nsp_defn != NULL) {
+                           SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
+                           ROSE_ASSERT(nsp_decl != NULL);
+                           if (nsp_decl->get_name() == "std" && namedType->get_name().getString().find("allocator") == 0) {
+                             amountOfNameQualificationRequiredForTemplateArgument = 1;
+                           }
+                         }
+
                          setNameQualification(templateArgument,templateArgumentTypeDeclaration,amountOfNameQualificationRequiredForTemplateArgument);
                        }
                   }
@@ -3310,34 +3323,34 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
              }
             else if (expression != NULL)
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                printf ("Template argument was an expression = %p \n",expression);
 #endif
             // Check if this is a variable in which case it might require name qualification.  If we we have to traverse this expression recursively.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
             // We need to traverse this expression and evaluate if any name qualification is required on its pieces (e.g. referenced variables)
                printf ("Recursive call to generateNameQualificationSupport() with expression = %p = %s \n",expression,expression->class_name().c_str());
 #endif
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                     printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): Calling generateNestedTraversalWithExplicitScope(): with expression = %p = %s and currentScope = %p = %s \n",
                          expression,expression->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
                     generateNestedTraversalWithExplicitScope(expression,currentScope);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                     printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): DONE: Recursive call to generateNameQualificationSupport() with expression = %p = %s \n",expression,expression->class_name().c_str());
 #endif
              }
             else if (iname != NULL)
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): template argument is an initialized name = %p \n",iname);
 #endif
              }
             else if (tpldecl != NULL)
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): template argument is a template = %p (%s)\n", tpldecl, tpldecl->class_name().c_str());
 #endif
               int amountOfNameQualificationRequiredForTemplateArgument = nameQualificationDepth( tpldecl, currentScope, positionStatement );
@@ -3345,9 +3358,11 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 
              }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
           printf ("===== After finishing with evaluation of templateArgument name qualification: templateArgument = %p testNameInMap = %s \n",templateArgument,templateArgument->unparseToString().c_str());
 #endif
+
+//        ROSE_ASSERT(templateArgument->unparseToString() != "allocator< int >");
 
           i++;
 
@@ -3355,7 +3370,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           counter++;
         }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
      printf ("*****************************************************************************************************************************\n");
      printf ("Leaving NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      printf ("*****************************************************************************************************************************\n\n");
@@ -3369,6 +3384,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 
    }
 
+#define DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH 0
 
 int
 NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement )
@@ -3377,7 +3393,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
 
      ROSE_ASSERT(type != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
      printf ("In nameQualificationDepth(SgType*): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
@@ -3394,7 +3410,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
 
        // Check the visability and unambiguity of this declaration.
           amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
           printf ("amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
 
@@ -3402,7 +3418,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
           if (templateClassInstantiationDeclaration != NULL)
              {
             // We need to handle any possible template arguments.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
                printf ("In nameQualificationDepth(SgType*): declaration = %p = %s Unhandled template arguments \n",declaration,declaration->class_name().c_str());
 #endif
             // ROSE_ASSERT(false);
@@ -3410,12 +3426,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
         }
        else
         {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
           printf ("ERROR: In nameQualificationDepth(SgType*): declaration NOT found for type = %p = %s\n",type,type->class_name().c_str());
 #endif
         }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
      printf ("Leaving nameQualificationDepth(SgType*): type = %p = %s amountOfNameQualificationRequired = %d \n",type,type->class_name().c_str(),amountOfNameQualificationRequired);
 #endif
 
@@ -4819,6 +4835,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgInitializedName* initializedName = isSgInitializedName(n);
      if (initializedName != NULL)
         {
+
        // We want to handle types from every where a SgInitializedName might be used.
           SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
 #if 0

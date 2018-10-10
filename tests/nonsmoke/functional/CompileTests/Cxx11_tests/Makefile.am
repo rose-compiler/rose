@@ -607,6 +607,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+	rm -f *.failed *.passed
 
 status:
 	@$(MAKE) $(ALL_TEST_Sources)
