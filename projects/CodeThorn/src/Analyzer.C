@@ -320,7 +320,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
       ;
-    ss<<" "<<analyzerStateToString();
+    ss<<" "<<color("normal")<<analyzerStateToString();
     ss<<endl;
     printStatusMessage(ss.str());
   }
@@ -436,8 +436,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
        << "Transitions  : "<<(long int)transitionGraph.size()<<","<<_maxTransitionsForcedTop<<endl
        << "Iterations   : "<<getIterations()<<":"<< _maxIterationsForcedTop<<endl
        << "Memory(bytes): "<<getPhysicalMemorySize()<<":"<< _maxBytesForcedTop<<endl
-       << "Runtime(s)   : "<<analysisRunTimeInSeconds() <<":"<< _maxSecondsForcedTop<<endl
-       <<endl;
+       << "Runtime(s)   : "<<analysisRunTimeInSeconds() <<":"<< _maxSecondsForcedTop<<endl;
 
 AbstractValueSet vset=variableValueMonitor.getVariables();
   int n=0;
