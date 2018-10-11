@@ -46,6 +46,10 @@ namespace Untyped {
       virtual SgStatement* convertSgUntypedForStatement        (SgUntypedForStatement*        ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement* convertSgUntypedOtherStatement      (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope);
 
+   // Fortran image control statements
+      virtual SgImageControlStatement* convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgScopeStatement* scope);
+      virtual SgImageControlStatement* convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt,
+                                                                              SgNodePtrList& children, SgScopeStatement* scope);
    // Expressions
    //
   };

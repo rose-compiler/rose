@@ -40,7 +40,7 @@ INCLUDES		=						\
 	-I$(POCC_INSTALL)/math/install-fm/include			\
 	-I$(POCC_INSTALL)/math/install-isl/include			\
 	-I$(POCC_INSTALL)/math/install-barvinok/include			\
-	-I$(POCC_INSTALL)/math/install-ntl-6.2.0/include			\
+	-I$(POCC_INSTALL)/math/install-ntl-11.3.0/include		\
 	-I$(POCC_INSTALL)/math/external/install/include			\
 	-I$(top_srcdir)/polyopt/include					\
 	-I$(top_srcdir)/pocc/driver/pocc/include			\
@@ -73,8 +73,8 @@ INCLUDES		=						\
 	-I$(top_srcdir)/pocc/math/install-polylib/include		\
 	-I$(top_srcdir)/pocc/math/install-fm/include			\
 	-I$(top_srcdir)/pocc/math/install-isl/include			\
-	-I$(top_srcdir)/pocc/math/install-barvinok/include			\
-	-I$(top_srcdir)/pocc/math/install-ntl-6.2.0/include			\
+	-I$(top_srcdir)/pocc/math/install-barvinok/include		\
+	-I$(top_srcdir)/pocc/math/install-ntl-11.3.0/include		\
 	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
 #############################################################################
@@ -121,11 +121,12 @@ libpolyopt_la_SOURCES 	=			\
 	PolyOptISLRepresentation.cpp
 
 libpolyopt_la_CPPFLAGS	=
-	-DHAVE_LIBPOCC_UTILS -DPOCC_ROOT_DIR=$(abs_top_srcdir)/pocc \
+	-DHAVE_LIBPOCC_UTILS -DPOCC_ROOT_DIR=$(abs_top_builddir)/pocc \
 	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
 libpolyopt_la_LIBADD	=					\
-	$(POCC_INSTALL)/driver/install-pocc/lib/libpocc.la
+	$(POCC_INSTALL)/driver/install-pocc/lib/libpocc.la	\
+	$(POCC_INSTALL)/driver/install-pocc/lib/libpocc-utils.la
 
 libpolyopt_la_LDFLAGS = $(ROSE_LDFLAGS) $(BOOST_LDFLAGS)
 

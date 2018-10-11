@@ -787,6 +787,27 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
    else if (traverse_ReturnStmt(term, stmt_list)) {
       // Matched ReturnStmt
    }
+
+// Image control statements (F2018)
+   else if (traverse_SyncAllStmt(term, stmt_list)) {
+      // Matched SyncAllStmt
+   }
+   else if (traverse_SyncImagesStmt(term, stmt_list)) {
+      // Matched SyncImagesStmt
+   }
+   else if (traverse_SyncMemoryStmt(term, stmt_list)) {
+      // Matched SyncMemoryStmt
+   }
+   else if (traverse_SyncTeamStmt(term, stmt_list)) {
+      // Matched SyncMemoryStmt
+   }
+   else if (traverse_LockStmt(term, stmt_list)) {
+      // Matched LockStmt
+   }
+   else if (traverse_UnlockStmt(term, stmt_list)) {
+      // Matched UnlockStmt
+   }
+
    else {
       return ATfalse;
    }
@@ -908,11 +929,12 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
    else if (ATmatch(t_type, "DOUBLEPRECISION()")) {
       //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
    }
-   else if (ATmatch(t_type, "COMPLEX()")) {
-      //*type = UntypedBuilder::buildType(SgUntypedType::e_complex);
-   }
    else if (ATmatch(t_type, "CHARACTER()")) {
+   // No length parameter given so build a char type
       *type = UntypedBuilder::buildType(SgUntypedType::e_char);
+   }
+   else if (ATmatch(t_type, "COMPLEX()")) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_complex);
    }
    else if (ATmatch(t_type, "LOGICAL()")) {
       *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
@@ -2050,22 +2072,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_PartRef(ATerm term, SgUntypedExp
          //TODO_SgUntyped - need way to handle list
       } else return ATfalse;
 
-      cout << ".x........ creating new RefExpr, keyword: " << keyword << " name: " << name << endl;
-
-      SgUntypedExpression* expr = new SgUntypedReferenceExpression(keyword, name);
-
-      cout << ".x........ created  new RefExpr, keyword: " << expr << endl;
-
-//      *var_expr = expr;
-
       *var_expr = new SgUntypedReferenceExpression(keyword, name);
-
-      cout << ".x........ will set source position \n";
-
+      ROSE_ASSERT(*var_expr);
       setSourcePosition(*var_expr, term);
-
-      cout << ".x........ did set source position for " << *var_expr;
-
    }
    else return ATfalse;
 
@@ -2124,22 +2133,29 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptImageSelector(ATerm term)
 ATbool ATermToUntypedFortranTraversal::traverse_Expression(ATerm term, SgUntypedExpression** var_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
-  printf("... traverse_Expression: %s\n", ATwriteToString(term));
+   printf("... traverse_Expression: %s\n", ATwriteToString(term));
 #endif
 
-  *var_expr = NULL;
-  if (traverse_LiteralConstant(term, var_expr)) {
-    // MATCHED LiteralConstant
-  }
-  else if (traverse_Operator(term, var_expr)) {
-    // SgUntypedBinaryOperator
-  }
-  else if (traverse_DataRef(term, var_expr)) {
-    // MATCHED DataRef
-  }
-  else if (traverse_VarRef(term, var_expr)) {
-    // MATCHED VarRef
-  }
+   *var_expr = NULL;
+   if (traverse_LiteralConstant(term, var_expr)) {
+      // MATCHED LiteralConstant
+   }
+   else if (traverse_Operator(term, var_expr)) {
+      // SgUntypedBinaryOperator
+   }
+   else if (traverse_DataRef(term, var_expr)) {
+      // MATCHED DataRef
+   }
+   else if (traverse_VarRef(term, var_expr)) {
+      // MATCHED VarRef
+   }
+   else if (ATmatch(term, "STAR()")) {
+      // at times, '*' is used as a stand-in for an expression, e.g., dimension(1,*)
+      *var_expr = new SgUntypedOtherExpression(General_Language_Translation::e_star_expression);
+      ROSE_ASSERT(*var_expr);
+      setSourcePositionUnknown(*var_expr);
+   }
+
   else return ATfalse;
 
   return ATtrue;
@@ -4059,6 +4075,350 @@ ATbool ATermToUntypedFortranTraversal::traverse_EndBlockDataStmt(ATerm term, SgU
 
    *end_block_data_stmt = new SgUntypedNamedStatement(label,keyword,name);
    setSourcePositionExcludingTerm(*end_block_data_stmt, term, term_eos);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-all-stmt (R1164-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SyncAllStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SyncAllStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "SyncAllStmt(<term>,<term>,<term>)", &t_label, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_ImageControlStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_sync_all_stmt;
+
+   SgUntypedImageControlStatement* sync_all_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, NULL, sync_stat_list);
+   ROSE_ASSERT(sync_all_stmt);
+   setSourcePositionExcludingTerm(sync_all_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(sync_all_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-images-stmt (R1166-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SyncImagesStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SyncImagesStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_image_set, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExpression* image_set = NULL;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "SyncImagesStmt(<term>,<term>,<term>,<term>)", &t_label, &t_image_set, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      if (traverse_Expression(t_image_set, &image_set)) {
+         // MATCHED ImagesValue (scalar-expr)
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_ImageControlStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_sync_images_stmt;
+
+   SgUntypedImageControlStatement* sync_images_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, image_set, sync_stat_list);
+   ROSE_ASSERT(sync_images_stmt);
+   setSourcePositionExcludingTerm(sync_images_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(sync_images_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-memory-stmt (R1168-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SyncMemoryStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SyncMemoryStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "SyncMemoryStmt(<term>,<term>,<term>)", &t_label, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_ImageControlStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_sync_memory_stmt;
+
+   SgUntypedImageControlStatement* sync_memory_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, NULL, sync_stat_list);
+   ROSE_ASSERT(sync_memory_stmt);
+   setSourcePositionExcludingTerm(sync_memory_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(sync_memory_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-team-stmt (R1169-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_SyncTeamStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SyncTeamStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_team, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExpression* team_value = NULL;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "SyncTeamStmt(<term>,<term>,<term>,<term>)", &t_label, &t_team, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      if (traverse_Expression(t_team, &team_value)) {
+         // MATCHED TeamValue (scalar-expr)
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_ImageControlStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_sync_team_stmt;
+
+   SgUntypedImageControlStatement* sync_team_stmt = new SgUntypedImageControlStatement(label, stmt_enum, NULL, team_value, sync_stat_list);
+   ROSE_ASSERT(sync_team_stmt);
+   setSourcePositionExcludingTerm(sync_team_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(sync_team_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// sync-stat-list (R1165-F2018-N2146)
+//
+// Plus:
+//
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_ImageControlStatList( ATerm term, SgUntypedExprListExpression* sync_stat_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ImageControlStatList: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_expr, t_stat_list;
+   SgUntypedExprListExpression* status_container = NULL;
+
+   if (ATmatch(term, "no-list()")) {
+   }
+   else if (ATmatch(term, "image-ctrl-stat-list(<term>)", &t_stat_list)) {
+
+      ATermList tail = (ATermList) ATmake("<term>", t_stat_list);
+      while (! ATisEmpty(tail)) {
+         SgUntypedExpression* status = NULL;
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (ATmatch(head, "STAT(<term>)", &t_expr)) {
+            traverse_Expression(t_expr, &status);
+            status_container = new SgUntypedExprListExpression(e_fortran_sync_stat_stat);
+         }
+         else if (ATmatch(head, "ERRMSG(<term>)", &t_expr)) {
+            traverse_Expression(t_expr, &status);
+            status_container = new SgUntypedExprListExpression(e_fortran_sync_stat_errmsg);
+         }
+         else if (ATmatch(head, "ACQUIRED_LOCK(<term>)", &t_expr)) {
+            traverse_Expression(t_expr, &status);
+            status_container = new SgUntypedExprListExpression(e_fortran_stat_acquired_lock);
+         }
+         else {
+            std::cerr << "ERROR: unknown sync-stat/lock-stat" << std::endl;
+            return ATfalse;
+         }
+
+         ROSE_ASSERT(status);
+         ROSE_ASSERT(status_container);
+
+         status_container->get_expressions().push_back(status);
+         sync_stat_list->get_expressions().push_back(status_container);
+      }
+   }
+
+   return ATtrue;
+}
+
+//========================================================================================
+// lock-stmt (R1179-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_LockStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_LockStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_lock_variable, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExpression* lock_variable = NULL;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "LockStmt(<term>,<term>,<term>,<term>)", &t_label, &t_lock_variable, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      if (traverse_Expression(t_lock_variable, &lock_variable)) {
+         // MATCHED TeamValue (scalar-expr)
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_ImageControlStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_lock_stmt;
+
+   SgUntypedImageControlStatement* lock_stmt = new SgUntypedImageControlStatement(label, stmt_enum, lock_variable, NULL, sync_stat_list);
+   ROSE_ASSERT(lock_stmt);
+   setSourcePositionExcludingTerm(lock_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(lock_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// unlock-stmt (R1181-2018-N2146)
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_UnlockStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_UnlockStmt: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_label, t_lock_variable, t_stat_list, t_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExpression* lock_variable = NULL;
+   SgUntypedExprListExpression* sync_stat_list = NULL;
+
+   if (ATmatch(term, "UnlockStmt(<term>,<term>,<term>,<term>)", &t_label, &t_lock_variable, &t_stat_list, &t_eos)) {
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      if (traverse_Expression(t_lock_variable, &lock_variable)) {
+         // MATCHED TeamValue (scalar-expr)
+      } else return ATfalse;
+
+      sync_stat_list = new SgUntypedExprListExpression(e_fortran_sync_stat_list);
+      ROSE_ASSERT(sync_stat_list);
+      setSourcePosition(sync_stat_list, t_stat_list);
+
+      if (traverse_ImageControlStatList(t_stat_list, sync_stat_list)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   int stmt_enum = e_fortran_unlock_stmt;
+
+   SgUntypedImageControlStatement* lock_stmt = new SgUntypedImageControlStatement(label, stmt_enum, lock_variable, NULL, sync_stat_list);
+   ROSE_ASSERT(lock_stmt);
+   setSourcePositionExcludingTerm(lock_stmt, term, t_eos);
+
+   stmt_list->get_stmt_list().push_back(lock_stmt);
 
    return ATtrue;
 }

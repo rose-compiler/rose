@@ -63,9 +63,22 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
                  break;
                }
+             case SgUntypedType::e_complex:
+               {
+                 type = new SgUntypedType("complex",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                 break;
+               }
              case SgUntypedType::e_bool:
                {
                  type = new SgUntypedType("logical",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                 break;
+               }
+             case SgUntypedType::e_char:
+             case SgUntypedType::e_string:
+               {
+                 type = new SgUntypedType("character",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
                  break;
                }

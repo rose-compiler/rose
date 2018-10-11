@@ -3545,6 +3545,46 @@ HEADER_SYNC_ALL_STATEMENT_START
 #endif
 HEADER_SYNC_ALL_STATEMENT_END
 
+HEADER_SYNC_IMAGES_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_SYNC_IMAGES_STATEMENT_END
+
+HEADER_SYNC_MEMORY_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_SYNC_MEMORY_STATEMENT_END
+
+HEADER_SYNC_TEAM_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_SYNC_TEAM_STATEMENT_END
+
+HEADER_LOCK_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_LOCK_STATEMENT_END
+
+HEADER_UNLOCK_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+HEADER_UNLOCK_STATEMENT_END
+
 
 HEADER_IO_STATEMENT_START
   // This is a base class for all the I/O statements: read, write, open, close, inquire
@@ -18795,6 +18835,48 @@ SgSyncAllStatement::post_construction_initialization()
    {}
 
 SOURCE_SYNC_ALL_STATEMENT_END
+
+SOURCE_SYNC_IMAGES_STATEMENT_START
+
+void
+SgSyncImagesStatement::post_construction_initialization()
+   {}
+
+SOURCE_SYNC_IMAGES_STATEMENT_END
+
+SOURCE_SYNC_MEMORY_STATEMENT_START
+
+void
+SgSyncMemoryStatement::post_construction_initialization()
+   {}
+
+SOURCE_SYNC_MEMORY_STATEMENT_END
+
+SOURCE_SYNC_TEAM_STATEMENT_START
+
+void
+SgSyncTeamStatement::post_construction_initialization()
+   {}
+
+SOURCE_SYNC_TEAM_STATEMENT_END
+
+
+SOURCE_LOCK_STATEMENT_START
+
+void
+SgLockStatement::post_construction_initialization()
+   {}
+
+SOURCE_LOCK_STATEMENT_END
+
+
+SOURCE_UNLOCK_STATEMENT_START
+
+void
+SgUnlockStatement::post_construction_initialization()
+   {}
+
+SOURCE_UNLOCK_STATEMENT_END
 
 
 SOURCE_IO_STATEMENT_START

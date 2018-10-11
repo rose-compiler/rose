@@ -6316,6 +6316,70 @@ SgSyncAllStatement* SgSyncAllStatement::build_node_from_nonlist_children ( Sg_Fi
      return returnNode;
    }
 
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncImagesStatement* SgSyncImagesStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* image_set )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncImagesStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* image_set): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncImagesStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncMemoryStatement* SgSyncMemoryStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncMemoryStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncMemoryStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncTeamStatement* SgSyncTeamStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* team_value )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncTeamStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* team_value): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncTeamStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgLockStatement* SgLockStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* lock_variable )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgLockStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* lock_variable): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgLockStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUnlockStatement* SgUnlockStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* lock_variable )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUnlockStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* lock_variable): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUnlockStatement* returnNode = NULL;
+
+     return returnNode;
+   }
 
 
 /* #line 5436 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */

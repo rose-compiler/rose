@@ -11,8 +11,8 @@
 
 
 ## Install the release version of PoCC.
-ADDRESS="https://downloads.sourceforge.net/project/pocc/1.4"
-SOFTVERSION="pocc-1.4"
+ADDRESS="https://downloads.sourceforge.net/project/pocc/1.5"
+SOFTVERSION="pocc-1.5.0-beta"
 ARCHVERSION="-netinstall"
 
 new_file=0;

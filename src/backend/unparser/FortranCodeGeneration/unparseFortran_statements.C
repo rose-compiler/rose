@@ -235,6 +235,14 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgEndfileStatement:           unparseEndfileStatement(stmt, info);      break;
           case V_SgWaitStatement:              unparseWaitStatement(stmt, info);         break;
 
+       // Rasmussen (9/21/2018): These are derived from SgImageControlStatement
+          case V_SgSyncAllStatement:           unparseSyncAllStatement(stmt, info);      break;
+          case V_SgSyncImagesStatement:        unparseSyncImagesStatement(stmt, info);   break;
+          case V_SgSyncMemoryStatement:        unparseSyncMemoryStatement(stmt, info);   break;
+          case V_SgSyncTeamStatement:          unparseSyncTeamStatement(stmt, info);     break;
+          case V_SgLockStatement:              unparseLockStatement(stmt, info);         break;
+          case V_SgUnlockStatement:            unparseUnlockStatement(stmt, info);       break;
+
        // DQ (11/30/2007): Added support for associate statement (F2003)
           case V_SgAssociateStatement:         unparseAssociateStatement(stmt, info);    break;
 
@@ -3491,7 +3499,7 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
      unp->cur.insert_newline(1); 
    }
 
-void 
+void
 FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
@@ -3515,7 +3523,7 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
      unp->cur.insert_newline(1); 
    }
 
-void 
+void
 FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
@@ -3539,7 +3547,186 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
      unp->cur.insert_newline(1); 
    }
 
-void 
+void
+FortranCodeGeneration_locatedNode::unparse_Image_Ctrl_Stmt_Support(SgImageControlStatement* stmt, bool print_comma, SgUnparse_Info& info)
+   {
+      ROSE_ASSERT(stmt);
+
+      if (stmt->get_stat())
+        {
+           if (print_comma) curprint(", "); else print_comma = true;
+           curprint("STAT=");
+           unparseExpression(stmt->get_stat(), info);
+        }
+     if (stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(stmt->get_err_msg(), info);
+        }
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncAllStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncAllStatement* sync_stmt = isSgSyncAllStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_initial_comma = false;
+
+     curprint("SYNC ALL (");
+
+     unparse_Image_Ctrl_Stmt_Support(sync_stmt, print_initial_comma, info);
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncImagesStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncImagesStatement* sync_stmt = isSgSyncImagesStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     SgExpression* image_set = sync_stmt->get_image_set();
+     ROSE_ASSERT(image_set);
+
+     bool print_comma = true;
+
+     curprint("SYNC IMAGES (");
+
+  // unparse the image set
+     if (isSgNullExpression(image_set))
+        {
+        // A null expression is used to indicate lack of an actual/"real" expression
+           curprint("*");
+        }
+     else
+        {
+           unparseExpression(sync_stmt->get_image_set(), info);
+        }
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncMemoryStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncMemoryStatement* sync_stmt = isSgSyncMemoryStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_comma = false;
+
+     curprint("SYNC MEMORY (");
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncTeamStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncTeamStatement* sync_stmt = isSgSyncTeamStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_comma = true;
+
+     curprint("SYNC TEAM (");
+
+  // unparse the team value
+     unparseExpression(sync_stmt->get_team_value(), info);
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseLockStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgLockStatement* lock_stmt = isSgLockStatement(stmt);
+     ROSE_ASSERT(lock_stmt);
+
+     bool print_initial_comma = true;
+
+     curprint("LOCK (");
+
+  // unparse the lock variable
+     unparseExpression(lock_stmt->get_lock_variable(), info);
+
+     if (lock_stmt->get_acquired_lock())
+        {
+          curprint(", ");
+          curprint("ACQUIRED_LOCK=");
+          unparseExpression(lock_stmt->get_acquired_lock(), info);
+        }
+     unparse_Image_Ctrl_Stmt_Support(lock_stmt, print_initial_comma, info);
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseUnlockStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnlockStatement* unlock_stmt = isSgUnlockStatement(stmt);
+     ROSE_ASSERT(unlock_stmt);
+
+     bool print_initial_comma = true;
+
+     curprint("UNLOCK (");
+
+  // unparse the lock variable
+     unparseExpression(unlock_stmt->get_lock_variable(), info);
+
+     unparse_Image_Ctrl_Stmt_Support(unlock_stmt, print_initial_comma, info);
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
 FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
@@ -3571,7 +3758,7 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
    }
 
 #if 0
-void 
+void
 FortranCodeGeneration_locatedNode::unparseIOFileControlStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement

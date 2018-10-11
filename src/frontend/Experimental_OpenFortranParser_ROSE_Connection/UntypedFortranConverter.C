@@ -445,7 +445,7 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
         case SgToken::FORTRAN_EXTERNAL:
           {
              SgAttributeSpecificationStatement::attribute_spec_enum attr_enum = SgAttributeSpecificationStatement::e_externalStatement;
-             SgAttributeSpecificationStatement* attr_spec_stmt =SageBuilder::buildAttributeSpecificationStatement(attr_enum);
+             SgAttributeSpecificationStatement* attr_spec_stmt = SageBuilder::buildAttributeSpecificationStatement(attr_enum);
              ROSE_ASSERT(attr_spec_stmt);
              setSourcePositionFrom(attr_spec_stmt, ut_decl);
 
@@ -540,7 +540,7 @@ UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressio
           }
         case SgToken::FORTRAN_RETURN:
           {
-             sg_stmt = new SgReturnStmt(sg_expr);
+             sg_stmt = SageBuilder::buildReturnStmt(sg_expr);
              break;
           }
         default:
@@ -624,9 +624,11 @@ UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement
              labelStatement->set_scope(currentFunctionScope);
              ROSE_ASSERT(labelStatement->get_scope() != NULL);
 
+          // SageInterface should be used but probably can't until SgFortranContinueStmt is used
+          // SageInterface::appendStatement(labelStatement, scope);
              scope->append_statement(labelStatement);
 
-          // TODO - why does this only work here??????
+          // TODO - why does this only work here?????? (this may be an old comment; check if need to pass scope immediately below)
           // UntypedFortranConverter::convertLabel(ut_stmt, labelStatement, currentFunctionScope);
              UntypedFortranConverter::convertLabel(ut_stmt, labelStatement);
 
@@ -639,8 +641,175 @@ UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement
            }
        default:
           {
-             fprintf(stderr, "UntypedFortranConverter::convertSgUntypedOtherStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
+             cerr << "UntypedFortranConverter::convertSgUntypedOtherStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
              ROSE_ASSERT(0);
           }
        }
+   }
+
+SgImageControlStatement*
+UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      using namespace General_Language_Translation;
+
+      ROSE_ASSERT(ut_stmt);
+
+      SgImageControlStatement* sg_stmt = NULL;
+
+      SgUntypedExprListExpression* ut_status_list = ut_stmt->get_status_list();
+      ROSE_ASSERT(ut_status_list);
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case e_fortran_sync_all_stmt:
+          {
+             sg_stmt = new SgSyncAllStatement();
+             break;
+          }
+        case e_fortran_sync_images_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_expression());
+
+             SgExpression* image_set = convertSgUntypedExpression(ut_stmt->get_expression());
+             ROSE_ASSERT(image_set);
+
+             sg_stmt = new SgSyncImagesStatement(image_set);
+             break;
+          }
+        case e_fortran_sync_memory_stmt:
+          {
+             sg_stmt = new SgSyncMemoryStatement();
+             break;
+          }
+        case e_fortran_sync_team_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_expression());
+
+             SgExpression* team_value = convertSgUntypedExpression(ut_stmt->get_expression());
+             ROSE_ASSERT(team_value);
+
+             sg_stmt = new SgSyncTeamStatement(team_value);
+             break;
+          }
+        case e_fortran_lock_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_variable());
+
+             SgExpression* lock_variable = convertSgUntypedExpression(ut_stmt->get_variable());
+             ROSE_ASSERT(lock_variable);
+
+             sg_stmt = new SgLockStatement(lock_variable);
+             break;
+          }
+        case e_fortran_unlock_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_variable());
+
+             SgExpression* lock_variable = convertSgUntypedExpression(ut_stmt->get_variable());
+             ROSE_ASSERT(lock_variable);
+
+             sg_stmt = new SgUnlockStatement(lock_variable);
+             break;
+          }
+        default:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedImageControlStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+        }
+
+      ROSE_ASSERT(sg_stmt);
+
+      cout << "-dn- ICS: sg_stmt = " << sg_stmt << ": " << sg_stmt->class_name()  << endl;
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case e_fortran_sync_all_stmt:
+        case e_fortran_sync_images_stmt:
+        case e_fortran_sync_memory_stmt:
+        case e_fortran_sync_team_stmt:
+        case e_fortran_lock_stmt:
+        case e_fortran_unlock_stmt:
+          {
+             BOOST_FOREACH(SgUntypedExpression* ut_expr, ut_status_list->get_expressions())
+                {
+                   SgUntypedExprListExpression* ut_status_container = isSgUntypedExprListExpression(ut_expr);
+                   ROSE_ASSERT(ut_status_container);
+
+                   SgExpression* sg_expr = convertSgUntypedExpression(ut_status_container->get_expressions().front());
+                   ROSE_ASSERT(sg_expr);
+
+                   switch (ut_status_container->get_expression_enum())
+                     {
+                     case e_fortran_sync_stat_stat:    sg_stmt->set_stat    (sg_expr);  break;
+                     case e_fortran_sync_stat_errmsg:  sg_stmt->set_err_msg (sg_expr);  break;
+                     case e_fortran_stat_acquired_lock:
+                        {
+                           SgLockStatement* lock_stmt = isSgLockStatement(sg_stmt);
+                           ROSE_ASSERT(lock_stmt);
+                           lock_stmt->set_acquired_lock(sg_expr);
+                           break;
+                        }
+                     default: ROSE_ASSERT(0);
+                     }
+
+                }
+             break;
+          }
+       default:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedImageControlStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+       }
+
+      ROSE_ASSERT(sg_stmt);
+      setSourcePositionFrom(sg_stmt, ut_stmt);
+
+      SageInterface::appendStatement(sg_stmt, scope);
+
+      return sg_stmt;
+   }
+
+SgImageControlStatement*
+UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt,
+                                                                SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      SgImageControlStatement* sg_stmt = NULL;
+
+      cout << "-up- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
+           << ut_stmt->get_statement_enum() << " # children is " << children.size() << endl;
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case General_Language_Translation::e_fortran_sync_all_stmt:
+        case General_Language_Translation::e_fortran_sync_images_stmt:
+        case General_Language_Translation::e_fortran_sync_memory_stmt:
+        case General_Language_Translation::e_fortran_sync_team_stmt:
+        case General_Language_Translation::e_fortran_lock_stmt:
+        case General_Language_Translation::e_fortran_unlock_stmt:
+          {
+             cout << "-up- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
+                  << ut_stmt->get_statement_enum() << " e_fortran_sync_all..team_stmt"<< endl;
+             SgStatement* sg_node = scope->getStatementList().back();
+             cout << "-up- sg_node = " << sg_node << endl;
+             SgImageControlStatement* sg_stmt = dynamic_cast<SgImageControlStatement*>(sg_node);
+             ROSE_ASSERT(sg_stmt);
+             break;
+          }
+       default:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedImageControlStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+       }
+
+   // The source position has already been set for the node in the down traversal (see previous function).
+   // No need to append sg_stmt either.
+
+      return sg_stmt;
    }
