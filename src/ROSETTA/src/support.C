@@ -1453,6 +1453,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "edg_il_to_graphviz", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // TV (10/01/2018): ROSE-1424
+     File.setDataPrototype("bool", "no_optimize_flag_for_frontend", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // ******************************************************************************
   // ******************************************************************************

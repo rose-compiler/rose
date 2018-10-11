@@ -109,6 +109,8 @@ namespace General_Language_Translation
           e_explicit_dimension,
           e_star_dimension,
 
+          e_star_expression,
+
        // Statements
        // ----------
 
@@ -127,6 +129,18 @@ namespace General_Language_Translation
           e_fortran_else_if_stmt,
           e_fortran_else_stmt,
           e_fortran_end_do_stmt,
+
+          e_fortran_sync_all_stmt,
+          e_fortran_sync_images_stmt,
+          e_fortran_sync_memory_stmt,
+          e_fortran_sync_team_stmt,
+          e_fortran_lock_stmt,
+          e_fortran_unlock_stmt,
+
+          e_fortran_sync_stat_list,
+          e_fortran_sync_stat_stat,
+          e_fortran_sync_stat_errmsg,
+          e_fortran_stat_acquired_lock,
 
        // CUDA Attributes
        // ---------------
