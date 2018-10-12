@@ -207,6 +207,8 @@ SUBDIRS += SatSolver
 SUBDIRS += PolyhedralModel
 SUBDIRS += TileK
 SUBDIRS += RaaS
+SUBDIRS += CompilationDB
+
 # SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
