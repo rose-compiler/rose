@@ -1457,6 +1457,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "no_optimize_flag_for_frontend", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // TV (10/08/2018): ROSE-1392
+     File.setDataPrototype("bool", "unparse_edg_normalized_method_ROSE_1392", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ******************************************************************************
   // ******************************************************************************
