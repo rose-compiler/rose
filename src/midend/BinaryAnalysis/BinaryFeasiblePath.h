@@ -94,6 +94,9 @@ public:
         std::string toString() const;
     };
 
+    /** Variable detail by name. */
+    typedef Sawyer::Container::Map<std::string /*name*/, FeasiblePath::VarDetail> VarDetails;
+
     /** Path searching functor.
      *
      *  This is the base class for user-defined functors called when searching for feasible paths. */
@@ -110,7 +113,7 @@ public:
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const std::vector<SymbolicExpr::Ptr> &pathConditions,
                              const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
-                             const SmtSolverPtr &solver) = 0;
+                             const SmtSolverPtr &solver) { return CONTINUE; };
 
         /** Function invoked whenever a null pointer dereference is detected.
          *
@@ -124,6 +127,15 @@ public:
          *  return address from the stack for a function that was called but whose implementation is not present (such as when
          *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
         virtual void nullDeref(IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
+
+        /** Function invoked every time a memory reference occurs.
+         *
+         *  The @p ioMode indicates whether the memory location was read or written, and the @p value is the value read or
+         *  written. */
+        virtual void memoryIo(const FeasiblePath &analyzer, IoMode ioMode,
+                              const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                              const InstructionSemantics2::BaseSemantics::SValuePtr &value,
+                              const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {}
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -417,6 +429,9 @@ public:
 
     /** Details about a variable. */
     const VarDetail& varDetail(const InstructionSemantics2::BaseSemantics::StatePtr &state, const std::string &varName) const;
+
+    /** Details about all variables by name. */
+    const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr &state) const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
