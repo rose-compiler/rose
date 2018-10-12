@@ -1024,7 +1024,8 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                     printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
 #endif
                     // Liao 12/15/2016, we need explicit typename here
-                    unp->u_exprStmt->curprint(" typename ");
+                    // TV (10/02/2018): removed when fixing ROSE-1392
+//                  unp->u_exprStmt->curprint(" typename ");
                     curprint(name);
                   }
 
@@ -1716,8 +1717,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
            case SgTemplateArgument::start_of_pack_expansion_argument:
              {
-               printf ("Error start_of_pack_expansion_argument in Unparse_ExprStmt::unparseTemplateArgument (should never be reach)\n");
-               ROSE_ABORT();
+               printf ("WARNING: start_of_pack_expansion_argument in Unparse_ExprStmt::unparseTemplateArgument (can happen from some debug output)\n");
                break;
              }
 

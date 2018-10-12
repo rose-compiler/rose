@@ -288,6 +288,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_80.C \
    test2015_97.C \
    Area-01.C \
+   method-defn-in-tpldecl-0.C \
+   method-defn-in-tpldecl-1.C \
    $(NEW_TESTCODES)
 
 # DQ (11/13/2015): Added test codes:
@@ -562,7 +564,8 @@ NEW_2017_TESTS = \
    test2018_61.C \
    test2018_62.C \
    test2018_63.C \
-   test2018_64.C
+   test2018_64.C \
+   rose-1431-0.C
 
 
 # DQ (4/7/2018): Updating failing tests.
@@ -1657,6 +1660,18 @@ $(FAILING_TEST_targets): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/
 		DISABLED="this test is disabled because it does not pass reliably" \
 		$(top_srcdir)/scripts/test_exit_status $@
 
+method-defn-in-tpldecl-0.C.passed: $(srcdir)/method-defn-in-tpldecl-0.C $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+	@$(RTH_RUN) \
+	    CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-0 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-0" \
+	    TITLE="testTranslator $(notdir $<) [$@]" \
+	    $(top_srcdir)/scripts/test_exit_status $@
+
+method-defn-in-tpldecl-1.C.passed: $(srcdir)/method-defn-in-tpldecl-1.C $(srcdir)/method-defn-in-tpldecl-1.h $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+	@$(RTH_RUN) \
+	    CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-1 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-1" \
+	    TITLE="testTranslator $(notdir $<) [$@]" \
+	    $(top_srcdir)/scripts/test_exit_status $@
+
 # DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
 $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
 	$(VALGRIND) ../../testTranslatorFoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.foldedConstants-o=.C) && touch $@
@@ -1825,7 +1840,8 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
-     test2004_82.C test2014_130.h test2015_08.h test2015_29.h test2015_85.h
+     test2004_82.C test2014_130.h test2015_08.h test2015_29.h test2015_85.h \
+     method-defn-in-tpldecl-1.h
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h

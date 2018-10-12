@@ -154,17 +154,8 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
 
                               SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(templateInstantiationDefinition->get_declaration());
                               ROSE_ASSERT(templateInstantiationDeclaration != NULL);
-#if 0
-                              printf ("templateInstantiationDeclaration = %p name = %s \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_name().str());
-#endif
-#if 0
-                              printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
-#endif
-                           // SgTemplateArgumentList* templateArgumentList = templateInstantiationDeclaration->get_templateArguments();
-                           // ROSE_ASSERT(templateArgumentList != NULL);
-                              SgTemplateArgumentPtrList & templateArgumentPtrList = templateInstantiationDeclaration->get_templateArguments();
 
+                              SgTemplateArgumentPtrList & templateArgumentPtrList = templateInstantiationDeclaration->get_templateArguments();
                               for (SgTemplateArgumentPtrList::iterator i = templateArgumentPtrList.begin(); i != templateArgumentPtrList.end(); i++)
                                  {
 #if DEBUG_PRIVATE_TYPE
@@ -173,6 +164,7 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
 #if DEBUGGING_USING_RECURSIVE_DEPTH
                                    global_depth++;
 #endif
+
                                    bool isPrivateType = contains_private_type(*i,targetScope);
 
 #if DEBUGGING_USING_RECURSIVE_DEPTH
@@ -639,10 +631,23 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                               printf ("--- were going to use: %s \n",templateArgument->unparseToString().c_str());
                               printf ("--- selecing instead : %s \n",suitableTypeAlias->unparseToString().c_str());
 #endif
-                              templateArgument->set_unparsable_type_alias(suitableTypeAlias);
 
-                           // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
-                              templateArgument->set_type(suitableTypeAlias);
+                           // TV (10/05/2018): (ROSE-1431) Traverse the chain of all associated template arguments (coming from the same EDG template argument)
+                              SgTemplateArgument * templateArgument_it = templateArgument;
+                              while (templateArgument_it->get_previous_instance() != NULL) {
+                                templateArgument_it = templateArgument_it->get_previous_instance();
+                              }
+                              ROSE_ASSERT(templateArgument_it != NULL && templateArgument_it->get_previous_instance() == NULL);
+                              do {
+                                printf ("  Update templateArgument = %p\n", templateArgument);
+                                templateArgument_it->set_unparsable_type_alias(suitableTypeAlias);
+
+                             // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
+                                templateArgument_it->set_type(suitableTypeAlias);
+
+                                templateArgument_it = templateArgument_it->get_next_instance();
+                              } while (templateArgument_it != NULL);
+                              ROSE_ASSERT(templateArgument_it == NULL);
 
 // #if DEBUG_PRIVATE_TYPE_TRANSFORMATION
 #if 0
